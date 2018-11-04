@@ -92,6 +92,7 @@
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <PreprocessorDefinitions>SE_BUILD_DLL;SE_PLATFORM_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)SirEngineThe3rd\vendor\spdlog\include</AdditionalIncludeDirectories>
     </ClCompile>
     <PostBuildEvent>
       <Command>copy /Y "$(TargetDir)$(TargetName).dll" "$(SolutionDir)bin\$(Configuration)-$(Platform)\Sandbox\$(TargetName).dll"</Command>
@@ -120,6 +121,7 @@
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <PreprocessorDefinitions>SE_BUILD_DLL;SE_PLATFORM_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)SirEngineThe3rd\vendor\spdlog\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -130,12 +132,14 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\SirEngine\log.h" />
     <ClInclude Include="src\SirEngine.h" />
     <ClInclude Include="src\SirEngine\application.h" />
     <ClInclude Include="src\SirEngine\core.h" />
     <ClInclude Include="src\SirEngine\entryPoint.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\SirEngine\Log.cpp" />
     <ClCompile Include="src\SirEngine\application.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
