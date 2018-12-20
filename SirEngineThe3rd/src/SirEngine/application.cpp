@@ -1,3 +1,4 @@
+#include "SirEnginepch.h"
 #include "application.h"
 
 namespace SirEngine {
