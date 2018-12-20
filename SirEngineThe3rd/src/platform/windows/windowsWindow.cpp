@@ -2,6 +2,7 @@
 
 #include "SirEngine/log.h"
 #include "platform/windows/windowsWindow.h"
+#include "SirEngine/events/appliacationEvent.h"
 
 namespace SirEngine {
 // This needs to be implemented per platform
@@ -24,7 +25,6 @@ WindowsWindow::WindowsWindow(const WindowProps &props) {
   m_hinstance = GetModuleHandle(NULL);
 
   // Give the application a name.
-  m_applicationName = L"Engine";
 
   // Setup the windows class with default settings.
   wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
@@ -37,7 +37,8 @@ WindowsWindow::WindowsWindow(const WindowProps &props) {
   wc.hCursor = LoadCursor(NULL, IDC_ARROW);
   wc.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
   wc.lpszMenuName = NULL;
-  wc.lpszClassName = m_applicationName;
+  std::wstring title(props.title.begin(), props.title.end());
+  wc.lpszClassName = title.c_str();
   wc.cbSize = sizeof(WNDCLASSEX);
 
   // Register the window class.
@@ -88,7 +89,7 @@ WindowsWindow::WindowsWindow(const WindowProps &props) {
   RECT wr{0, 0, (LONG)m_data.width, (LONG)m_data.height};
   // needed to create the window of the right size, or wont match the gui
   AdjustWindowRectEx(&wr, style, false, NULL);
-  m_hwnd = CreateWindowEx(0, m_applicationName, m_applicationName, style, 0, 0,
+  m_hwnd = CreateWindowEx(0, title.c_str(), title.c_str(), style, 0, 0,
                           wr.right - wr.left, wr.bottom - wr.top, NULL, NULL,
                           GetModuleHandle(NULL), 0);
 
@@ -111,34 +112,35 @@ void WindowsWindow::OnUpdate() {
   ZeroMemory(&msg, sizeof(MSG));
 
   // Loop until there is a quit message from the window or the user.
-  done = false;
-  while (!done) {
-    // Handle the windows messages.
-    if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
-      TranslateMessage(&msg);
-      DispatchMessage(&msg);
-    }
-
-    // If windows signals to end the application then exit out.
-    if (msg.message == WM_QUIT) {
-      done = true;
-    } else {
-      // if (m_input->IsKeyDown(VK_ESCAPE)) {
-      //  done = true;
-      //  continue;
-      //}
-      //// Otherwise do the frame processing.
-      // if (m_graphics != nullptr) {
-      //  result = m_graphics->frame();
-      //  if (!result) {
-      //    done = true;
-      //  }
-      //}
-    }
+  // Handle the windows messages.
+  if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+    TranslateMessage(&msg);
+    DispatchMessage(&msg);
   }
+
+  // If windows signals to end the application then exit out.
+//   if (msg.message == WM_QUIT) {
+//	   int x = 0;
+//  }// else {
+  // if (m_input->IsKeyDown(VK_ESCAPE)) {
+  //  done = true;
+  //  continue;
+  //}
+  //// Otherwise do the frame processing.
+  // if (m_graphics != nullptr) {
+  //  result = m_graphics->frame();
+  //  if (!result) {
+  //    done = true;
+  //  }
+  //}
+  // }
 }
-unsigned int WindowsWindow::getWidth() const { return 0; }
-unsigned int WindowsWindow::getHeight() const { return 0; }
+//}
+unsigned int WindowsWindow::getWidth() const { return m_data.width; }
+unsigned int WindowsWindow::getHeight() const { return m_data.height; }
+void WindowsWindow::setEventCallback(const EventCallbackFn &callback) {
+  m_callback = callback;
+}
 void WindowsWindow::setVSync(bool ennabled) {}
 void WindowsWindow::isVSync() const {}
 
@@ -155,6 +157,17 @@ return true;
 }*/
 
   switch (umsg) {
+
+  case WM_QUIT: {
+    int x = 0;
+	return 0;
+  }
+  case WM_CLOSE:{
+  
+	  WindowCloseEvent closeEvent;
+	  m_callback(closeEvent);
+	  int y = 0;
+  }
 
   case WM_SIZE: {
     //  std::cout << "resizing" << std::endl;
@@ -255,16 +268,16 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT umessage, WPARAM wparam,
                          LPARAM lparam) {
   switch (umessage) {
     // Check if the window is being destroyed.
-  case WM_DESTROY: {
-    PostQuitMessage(0);
-    return 0;
-  }
+    // case WM_DESTROY: {
+    //  PostQuitMessage(0);
+    //  return 0;
+    //}
 
-    // Check if the window is being closed.
-  case WM_CLOSE: {
-    PostQuitMessage(0);
-    return 0;
-  }
+    //  // Check if the window is being closed.
+    // case WM_CLOSE: {
+    //  PostQuitMessage(0);
+    //  return 0;
+    //}
 
     // All other messages pass to the message handler in the system class.
   default: {

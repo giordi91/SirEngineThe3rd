@@ -13,7 +13,7 @@ public:
   unsigned int getHeight() const override;
 
   // window attributes
-  // virtual void setEvantCallback(const EventCallbackFn& callback) = 0;
+  virtual void setEventCallback(const EventCallbackFn& callback) override;
   void setVSync(bool ennabled) override;
   void isVSync() const override;
 
@@ -27,10 +27,10 @@ private:
   };
 
 private:
-  LPCWSTR m_applicationName;
   HINSTANCE m_hinstance;
   HWND m_hwnd;
   WindowData m_data;
+  EventCallbackFn m_callback;
 };
 
 } // namespace SirEngine
