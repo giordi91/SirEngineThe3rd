@@ -1,5 +1,6 @@
 #pragma once
 #include "SirEnginepch.h"
+#include "SirEngine/events/event.h"
 #include "core.h"
 
 namespace SirEngine {
@@ -11,7 +12,7 @@ struct WindowProps {
 
 class SIR_ENGINE_API Window {
 public:
-  // using EventCallbackFn = std::function<void(Event&)>;
+  using EventCallbackFn = std::function<void(Event&)>;
 
   virtual ~Window() = default;
   virtual void OnUpdate() = 0;
@@ -20,7 +21,7 @@ public:
   virtual unsigned int getHeight() const = 0;
 
   // window attributes
-  // virtual void setEvantCallback(const EventCallbackFn& callback) = 0;
+  virtual void setEventCallback(const EventCallbackFn& callback) = 0;
   virtual void setVSync(bool ennabled) = 0;
   virtual void isVSync() const = 0;
 

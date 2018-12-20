@@ -9,3 +9,6 @@
 #else
 #error Sir Engine only runs on windows
 #endif
+
+
+#define SET_BIT(x) 1 << x
