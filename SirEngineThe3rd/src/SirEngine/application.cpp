@@ -3,11 +3,14 @@
 
 namespace SirEngine {
 
-Application::Application() {}
+Application::Application() {
+	m_window = std::unique_ptr<Window>(Window::create());
+}
 
 Application::~Application() {}
 void Application::run() {
   while (true) {
+	  m_window->OnUpdate();
   }
 
 }
