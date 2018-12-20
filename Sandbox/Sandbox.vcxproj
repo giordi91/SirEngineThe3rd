@@ -85,6 +85,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PreprocessorDefinitions>SE_PLATFORM_WINDOWS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)SirEngineThe3rd\src;$(SolutionDir)SirEngineThe3rd\vendor\spdlog\include</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -119,6 +120,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PreprocessorDefinitions>SE_PLATFORM_WINDOWS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)SirEngineThe3rd\src;$(SolutionDir)SirEngineThe3rd\vendor\spdlog\include</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>

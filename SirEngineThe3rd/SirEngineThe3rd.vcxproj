@@ -93,6 +93,9 @@
       <ConformanceMode>true</ConformanceMode>
       <PreprocessorDefinitions>SE_BUILD_DLL;SE_PLATFORM_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)SirEngineThe3rd\vendor\spdlog\include</AdditionalIncludeDirectories>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>SirEnginepch.h</PrecompiledHeaderFile>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <PostBuildEvent>
       <Command>copy /Y "$(TargetDir)$(TargetName).dll" "$(SolutionDir)bin\$(Configuration)-$(Platform)\Sandbox\$(TargetName).dll"</Command>
@@ -122,6 +125,9 @@
       <ConformanceMode>true</ConformanceMode>
       <PreprocessorDefinitions>SE_BUILD_DLL;SE_PLATFORM_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)SirEngineThe3rd\vendor\spdlog\include</AdditionalIncludeDirectories>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>SirEnginepch.h</PrecompiledHeaderFile>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -132,6 +138,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\SirEnginepch.h" />
     <ClInclude Include="src\SirEngine\log.h" />
     <ClInclude Include="src\SirEngine.h" />
     <ClInclude Include="src\SirEngine\application.h" />
@@ -141,6 +148,10 @@
   <ItemGroup>
     <ClCompile Include="src\SirEngine\Log.cpp" />
     <ClCompile Include="src\SirEngine\application.cpp" />
+    <ClCompile Include="src\SirEnginepch.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -2,17 +2,16 @@
 
 #include "core.h"
 #include "spdlog/spdlog.h"
-#include <memory>
 
 namespace SirEngine {
 
-class SIR_ENGINE_API Log {
+class Log {
 public:
-  static void init();
-  inline static std::shared_ptr<spdlog::logger> &getCoreLogger() {
+  static void SIR_ENGINE_API init();
+  inline static SIR_ENGINE_API std::shared_ptr<spdlog::logger> &getCoreLogger() {
     return s_coreLogger;
   }
-  inline static std::shared_ptr<spdlog::logger> &getClientLogger() {
+  inline static SIR_ENGINE_API std::shared_ptr<spdlog::logger> &getClientLogger() {
     return s_clientLogger;
   }
 
