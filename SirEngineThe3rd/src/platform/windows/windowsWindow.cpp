@@ -1,8 +1,8 @@
 #include "SirEnginepch.h"
 
+#include "SirEngine/events/appliacationEvent.h"
 #include "SirEngine/log.h"
 #include "platform/windows/windowsWindow.h"
-#include "SirEngine/events/appliacationEvent.h"
 
 namespace SirEngine {
 // This needs to be implemented per platform
@@ -118,10 +118,6 @@ void WindowsWindow::OnUpdate() {
     DispatchMessage(&msg);
   }
 
-  // If windows signals to end the application then exit out.
-//   if (msg.message == WM_QUIT) {
-//	   int x = 0;
-//  }// else {
   // if (m_input->IsKeyDown(VK_ESCAPE)) {
   //  done = true;
   //  continue;
@@ -133,9 +129,8 @@ void WindowsWindow::OnUpdate() {
   //    done = true;
   //  }
   //}
-  // }
 }
-//}
+
 unsigned int WindowsWindow::getWidth() const { return m_data.width; }
 unsigned int WindowsWindow::getHeight() const { return m_data.height; }
 void WindowsWindow::setEventCallback(const EventCallbackFn &callback) {
@@ -160,13 +155,13 @@ return true;
 
   case WM_QUIT: {
     int x = 0;
-	return 0;
+    return 0;
   }
-  case WM_CLOSE:{
-  
-	  WindowCloseEvent closeEvent;
-	  m_callback(closeEvent);
-	  int y = 0;
+  case WM_CLOSE: {
+
+    WindowCloseEvent closeEvent;
+    m_callback(closeEvent);
+    int y = 0;
   }
 
   case WM_SIZE: {
