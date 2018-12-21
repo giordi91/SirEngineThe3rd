@@ -13,13 +13,12 @@ public:
   unsigned int getHeight() const override;
 
   // window attributes
-  virtual void setEventCallback(const EventCallbackFn& callback) override;
+  virtual void setEventCallback(const EventCallbackFn &callback) override;
   void setVSync(bool ennabled) override;
   void isVSync() const override;
+  inline EventCallbackFn getEventCallback() const { return m_callback; }
 
-  LRESULT CALLBACK messageHandler(HWND, UINT, WPARAM, LPARAM);
 private:
-
   struct WindowData {
     std::string title;
     unsigned int width;
@@ -34,4 +33,3 @@ private:
 };
 
 } // namespace SirEngine
-

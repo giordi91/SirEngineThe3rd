@@ -12,8 +12,147 @@ namespace WindowsImpl {
 static SirEngine::WindowsWindow *windowsApplicationHandle = nullptr;
 LRESULT CALLBACK WndProc(HWND hwnd, UINT umessage, WPARAM wparam,
                          LPARAM lparam) {
-  return windowsApplicationHandle->messageHandler(hwnd, umessage, wparam,
-                                                  lparam);
+
+#define ASSERT_CALLBACK_AND_DISPATCH(e)                                        \
+  auto callback = windowsApplicationHandle->getEventCallback();                \
+  assert(callback != nullptr);                                                 \
+  callback(e);
+
+  switch (umessage) {
+
+  case WM_QUIT: {
+    WindowCloseEvent closeEvent;
+    ASSERT_CALLBACK_AND_DISPATCH(closeEvent);
+    return 0;
+  }
+  case WM_CLOSE: {
+    WindowCloseEvent closeEvent;
+    ASSERT_CALLBACK_AND_DISPATCH(closeEvent);
+    return 0;
+  }
+
+  case WM_SIZE: {
+    // the reason for this check is because the window call a resize immediately
+    // before the user has time to set the callback to the window if
+    auto callback = windowsApplicationHandle->getEventCallback();
+    if (callback != nullptr) {
+      unsigned int w = (UINT)LOWORD(lparam);
+      unsigned int h = (UINT)HIWORD(lparam);
+      WindowResizeEvent resizeEvent{w, h};
+      callback(resizeEvent);
+    }
+
+    //  std::cout << "resizing" << std::endl;
+    // if (m_graphics != nullptr && (m_graphics->m_Direct3D!= nullptr) &&
+    // m_graphics->m_Direct3D->getDevice()!= NULL && wparam !=
+    // SIZE_MINIMIZED)
+    //{
+    //    ImGui_ImplDX11_InvalidateDeviceObjects();
+
+    //	auto* render = rendering::RenderingManager::get_instance();
+    //	render->m_screenWidth= (UINT)LOWORD(lparam);
+    //	render->m_screenHeight= (UINT)HIWORD(lparam);
+    //    m_graphics->m_Direct3D->resize(render->m_screenWidth,render->m_screenHeight);
+
+    //	/*
+    //	auto* deferred = deferred::DeferredTargets::get_instance();
+    //	if (render->m_screenWidth != -1 && render->m_screenHeight != 1)
+    //	{
+    //		deferred->resize(render->m_screenWidth,
+    // render->m_screenHeight);
+    //	}
+    //	*/
+    //    //m_graphics->m_Direct3D->m_swapChain->ResizeBuffers(0,
+    //    //(UINT)LOWORD(lparam), (UINT)HIWORD(lparam), DXGI_FORMAT_UNKNOWN,
+    //    0);
+    //
+    //    ////m_Graphics->m_Direct3D->initialize( (UINT)LOWORD(lparam),
+    //    //(UINT)HIWORD(lparam),true,hwnd,false,0.0f,1.0f);
+    //    ImGui_ImplDX11_CreateDeviceObjects();
+    //}
+    return 0;
+  }
+    // Check if a key has been pressed on the keyboard.
+  case WM_KEYDOWN: {
+    // repeated key message not supported as differentiator for now,
+    // if I wanted to do that seems like bit 30 of lparam is the one
+    // giving you if the first press or a repeat, not sure how to get the
+    //"lag" in before sending repeats.
+    KeyboardPressEvent e{static_cast<unsigned int>(wparam)};
+    ASSERT_CALLBACK_AND_DISPATCH(e);
+
+    return 0;
+  }
+
+    // Check if a key has been released on the keyboard.
+  case WM_KEYUP: {
+    KeyboardReleaseEvent e{static_cast<unsigned int>(wparam)};
+
+#ifdef QUIT_ESCAPE
+    // here we hard-coded this behavior where if the VK_ESCAPE button
+    // is pressed I want the message to be sent out as close window,
+    // this is a personal preference
+    if (wparam == VK_ESCAPE) {
+      WindowCloseEvent closeEvent;
+      ASSERT_CALLBACK_AND_DISPATCH(closeEvent);
+      return 0;
+    }
+#endif
+
+    ASSERT_CALLBACK_AND_DISPATCH(e);
+    return 0;
+  }
+  case WM_LBUTTONDOWN: {
+    MouseButtonPressEvent e{MOUSE_BUTTONS_EVENT::LEFT};
+    ASSERT_CALLBACK_AND_DISPATCH(e);
+    return 0;
+  }
+  case WM_RBUTTONDOWN: {
+    MouseButtonPressEvent e{MOUSE_BUTTONS_EVENT::RIGHT};
+    ASSERT_CALLBACK_AND_DISPATCH(e);
+    return 0;
+  }
+  case WM_MBUTTONDOWN: {
+    MouseButtonPressEvent e{MOUSE_BUTTONS_EVENT::MIDDLE};
+    ASSERT_CALLBACK_AND_DISPATCH(e);
+    return 0;
+  }
+  case WM_MOUSEWHEEL: {
+    float movementX = static_cast<float>(GET_WHEEL_DELTA_WPARAM(wparam));
+    // side tilt of the scroll currently not supported, always 0.0f
+    MouseScrollEvent e{movementX, 0.0f};
+    ASSERT_CALLBACK_AND_DISPATCH(e);
+    return 0;
+  }
+  case WM_LBUTTONUP: {
+    MouseButtonReleaseEvent e{MOUSE_BUTTONS_EVENT::LEFT};
+    ASSERT_CALLBACK_AND_DISPATCH(e);
+    return 0;
+  }
+  case WM_RBUTTONUP: {
+    MouseButtonReleaseEvent e{MOUSE_BUTTONS_EVENT::RIGHT};
+    ASSERT_CALLBACK_AND_DISPATCH(e);
+    return 0;
+  }
+  case WM_MBUTTONUP: {
+    MouseButtonReleaseEvent e{MOUSE_BUTTONS_EVENT::MIDDLE};
+    ASSERT_CALLBACK_AND_DISPATCH(e);
+    return 0;
+  }
+  case WM_MOUSEMOVE: {
+    float posX = static_cast<float>(GET_X_LPARAM(lparam));
+    float posY = static_cast<float>(GET_Y_LPARAM(lparam));
+    MouseMoveEvent e{posX, posY};
+    ASSERT_CALLBACK_AND_DISPATCH(e);
+    return 0;
+  }
+
+  // Any other messages send to the default message handler as our application
+  // won't make use of them.
+  default: {
+    return DefWindowProc(hwnd, umessage, wparam, lparam);
+  }
+  }
 }
 } // namespace WindowsImpl
 
@@ -148,145 +287,9 @@ unsigned int WindowsWindow::getHeight() const { return m_data.height; }
 void WindowsWindow::setEventCallback(const EventCallbackFn &callback) {
   m_callback = callback;
 }
-void WindowsWindow::setVSync(bool ennabled) {}
-void WindowsWindow::isVSync() const {}
-
-LRESULT CALLBACK WindowsWindow::messageHandler(HWND hwnd, UINT umsg,
-                                               WPARAM wparam, LPARAM lparam) {
-
-  /*
-//if (m_ui_handler != nullptr) {
-//  bool res = m_ui_handler(hwnd, umsg, wparam, lparam);
-//  if (res) { return true; };
-//}
-if (ImGui_ImplWin32_WndProcHandler(hwnd, umsg, wparam, lparam)) {
-return true;
-}*/
-#define ASSERT_CALLBACK_AND_DISPATCH(e)                                        \
-  assert(m_callback != nullptr);                                               \
-  m_callback(e);
-
-  switch (umsg) {
-
-  case WM_QUIT: {
-    WindowCloseEvent closeEvent;
-    ASSERT_CALLBACK_AND_DISPATCH(closeEvent);
-    return 0;
-  }
-  case WM_CLOSE: {
-    WindowCloseEvent closeEvent;
-    ASSERT_CALLBACK_AND_DISPATCH(closeEvent);
-    return 0;
-  }
-
-  case WM_SIZE: {
-    // the reason for this check is because the window call a resize immediately
-    // before the user has time to set the callback to the window if
-    if (m_callback != nullptr) {
-      unsigned int w = (UINT)LOWORD(lparam);
-      unsigned int h = (UINT)HIWORD(lparam);
-      WindowResizeEvent resizeEvent{w, h};
-      m_callback(resizeEvent);
-    }
-
-    //  std::cout << "resizing" << std::endl;
-    // if (m_graphics != nullptr && (m_graphics->m_Direct3D!= nullptr) &&
-    // m_graphics->m_Direct3D->getDevice()!= NULL && wparam !=
-    // SIZE_MINIMIZED)
-    //{
-    //    ImGui_ImplDX11_InvalidateDeviceObjects();
-
-    //	auto* render = rendering::RenderingManager::get_instance();
-    //	render->m_screenWidth= (UINT)LOWORD(lparam);
-    //	render->m_screenHeight= (UINT)HIWORD(lparam);
-    //    m_graphics->m_Direct3D->resize(render->m_screenWidth,render->m_screenHeight);
-
-    //	/*
-    //	auto* deferred = deferred::DeferredTargets::get_instance();
-    //	if (render->m_screenWidth != -1 && render->m_screenHeight != 1)
-    //	{
-    //		deferred->resize(render->m_screenWidth,
-    // render->m_screenHeight);
-    //	}
-    //	*/
-    //    //m_graphics->m_Direct3D->m_swapChain->ResizeBuffers(0,
-    //    //(UINT)LOWORD(lparam), (UINT)HIWORD(lparam), DXGI_FORMAT_UNKNOWN,
-    //    0);
-    //
-    //    ////m_Graphics->m_Direct3D->initialize( (UINT)LOWORD(lparam),
-    //    //(UINT)HIWORD(lparam),true,hwnd,false,0.0f,1.0f);
-    //    ImGui_ImplDX11_CreateDeviceObjects();
-    //}
-    return 0;
-  }
-    // Check if a key has been pressed on the keyboard.
-  case WM_KEYDOWN: {
-    // repeated key message not supported as differentiator for now,
-    // if I wanted to do that seems like bit 30 of lparam is the one
-    // giving you if the first press or a repeat, not sure how to get the
-    //"lag" in before sending repeats.
-    KeyboardPressEvent e{static_cast<unsigned int>(wparam)};
-    ASSERT_CALLBACK_AND_DISPATCH(e);
-
-    return 0;
-  }
-
-    // Check if a key has been released on the keyboard.
-  case WM_KEYUP: {
-    KeyboardReleaseEvent e{static_cast<unsigned int>(wparam)};
-    ASSERT_CALLBACK_AND_DISPATCH(e);
-    return 0;
-  }
-  case WM_LBUTTONDOWN: {
-    MouseButtonPressEvent e{MOUSE_BUTTONS_EVENT::LEFT};
-    ASSERT_CALLBACK_AND_DISPATCH(e);
-    return 0;
-  }
-  case WM_RBUTTONDOWN: {
-    MouseButtonPressEvent e{MOUSE_BUTTONS_EVENT::RIGHT};
-    ASSERT_CALLBACK_AND_DISPATCH(e);
-    return 0;
-  }
-  case WM_MBUTTONDOWN: {
-    MouseButtonPressEvent e{MOUSE_BUTTONS_EVENT::MIDDLE};
-    ASSERT_CALLBACK_AND_DISPATCH(e);
-    return 0;
-  }
-  case WM_MOUSEWHEEL: {
-    float movementX = static_cast<float>(GET_WHEEL_DELTA_WPARAM(wparam));
-    // side tilt of the scroll currently not supported, always 0.0f
-    MouseScrollEvent e{movementX, 0.0f};
-    ASSERT_CALLBACK_AND_DISPATCH(e);
-    return 0;
-  }
-  case WM_LBUTTONUP: {
-    MouseButtonReleaseEvent e{MOUSE_BUTTONS_EVENT::LEFT};
-    ASSERT_CALLBACK_AND_DISPATCH(e);
-    return 0;
-  }
-  case WM_RBUTTONUP: {
-    MouseButtonReleaseEvent e{MOUSE_BUTTONS_EVENT::RIGHT};
-    ASSERT_CALLBACK_AND_DISPATCH(e);
-    return 0;
-  }
-  case WM_MBUTTONUP: {
-    MouseButtonReleaseEvent e{MOUSE_BUTTONS_EVENT::MIDDLE};
-    ASSERT_CALLBACK_AND_DISPATCH(e);
-    return 0;
-  }
-  case WM_MOUSEMOVE: {
-    float posX = static_cast<float>(GET_X_LPARAM(lparam));
-    float posY = static_cast<float>(GET_Y_LPARAM(lparam));
-    MouseMoveEvent e{posX, posY};
-    ASSERT_CALLBACK_AND_DISPATCH(e);
-    return 0;
-  }
-
-    // Any other messages send to the default message handler as our application
-    // won't make use of them.
-  default: {
-    return DefWindowProc(hwnd, umsg, wparam, lparam);
-  }
-  }
+void WindowsWindow::setVSync(bool ennabled) {
+  assert(0 && "not implemented yet");
 }
+void WindowsWindow::isVSync() const { assert(0 && "not implemented yet"); }
+
 } // namespace SirEngine
