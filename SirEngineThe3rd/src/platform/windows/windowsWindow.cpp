@@ -1,11 +1,22 @@
 #include "SirEnginepch.h"
 
 #include "SirEngine/events/appliacationEvent.h"
+#include "SirEngine/events/keyboardEvent.h"
 #include "SirEngine/events/mouseEvent.h"
 #include "SirEngine/log.h"
 #include "platform/windows/windowsWindow.h"
 
 namespace SirEngine {
+
+namespace WindowsImpl {
+static SirEngine::WindowsWindow *windowsApplicationHandle = nullptr;
+LRESULT CALLBACK WndProc(HWND hwnd, UINT umessage, WPARAM wparam,
+                         LPARAM lparam) {
+  return windowsApplicationHandle->messageHandler(hwnd, umessage, wparam,
+                                                  lparam);
+}
+} // namespace WindowsImpl
+
 // This needs to be implemented per platform
 Window *Window::create(const WindowProps &props) {
   return new WindowsWindow(props);
@@ -20,7 +31,7 @@ WindowsWindow::WindowsWindow(const WindowProps &props) {
   int posX, posY;
 
   // Get an external pointer to this object.
-  windowsApplicationHandle = this;
+  WindowsImpl::windowsApplicationHandle = this;
 
   // Get the instance of this application.
   m_hinstance = GetModuleHandle(NULL);
@@ -29,7 +40,7 @@ WindowsWindow::WindowsWindow(const WindowProps &props) {
 
   // Setup the windows class with default settings.
   wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
-  wc.lpfnWndProc = WndProc;
+  wc.lpfnWndProc = WindowsImpl::WndProc;
   wc.cbClsExtra = 0;
   wc.cbWndExtra = 0;
   wc.hInstance = m_hinstance;
@@ -140,7 +151,7 @@ void WindowsWindow::setEventCallback(const EventCallbackFn &callback) {
 void WindowsWindow::setVSync(bool ennabled) {}
 void WindowsWindow::isVSync() const {}
 
-LRESULT CALLBACK WindowsWindow::MessageHandler(HWND hwnd, UINT umsg,
+LRESULT CALLBACK WindowsWindow::messageHandler(HWND hwnd, UINT umsg,
                                                WPARAM wparam, LPARAM lparam) {
 
   /*
@@ -214,14 +225,16 @@ return true;
     // if I wanted to do that seems like bit 30 of lparam is the one
     // giving you if the first press or a repeat, not sure how to get the
     //"lag" in before sending repeats.
+    KeyboardPressEvent e{static_cast<unsigned int>(wparam)};
+    ASSERT_CALLBACK_AND_DISPATCH(e);
+
     return 0;
   }
 
     // Check if a key has been released on the keyboard.
   case WM_KEYUP: {
-    // If a key is released then send it to the input object so it can unset the
-    // state for that key.
-    // m_input->KeyUp((unsigned int)wparam);
+    KeyboardReleaseEvent e{static_cast<unsigned int>(wparam)};
+    ASSERT_CALLBACK_AND_DISPATCH(e);
     return 0;
   }
   case WM_LBUTTONDOWN: {
@@ -276,11 +289,4 @@ return true;
   }
   }
 }
-
 } // namespace SirEngine
-
-LRESULT CALLBACK WndProc(HWND hwnd, UINT umessage, WPARAM wparam,
-                         LPARAM lparam) {
-  return windowsApplicationHandle->MessageHandler(hwnd, umessage, wparam,
-                                                  lparam);
-}
