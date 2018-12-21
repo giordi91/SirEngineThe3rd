@@ -8,6 +8,8 @@
 
 namespace SirEngine {
 
+// specific windows implementation, most notably window proc
+// and message pump handle
 namespace WindowsImpl {
 static SirEngine::WindowsWindow *windowsApplicationHandle = nullptr;
 LRESULT CALLBACK WndProc(HWND hwnd, UINT umessage, WPARAM wparam,
@@ -195,8 +197,8 @@ WindowsWindow::WindowsWindow(const WindowProps &props) {
   // Register the window class.
   RegisterClassEx(&wc);
 
+  // stuff for full-screen not supported yet
   // Determine the resolution of the clients desktop screen.
-
   // Setup the screen settings depending on whether it is running in full screen
   // or in windowed mode.
   // if (constants->FULL_SCREEN) {
@@ -216,10 +218,6 @@ WindowsWindow::WindowsWindow(const WindowProps &props) {
   // screenHeight = GetSystemMetrics(SM_CYSCREEN);
   //  // Set the position of the window to the top left corner.
   //  posX = posY = 0;
-  //} else {
-  // If windowed then set it to 800x600 resolution.
-  // screenWidth =  constants->SCREEN_WIDTH;
-  // screenHeight = constants->SCREEN_HEIGHT;
   m_data.width = props.width;
   m_data.height = props.height;
   m_data.title = props.title;
@@ -269,10 +267,6 @@ void WindowsWindow::OnUpdate() {
     DispatchMessage(&msg);
   }
 
-  // if (m_input->IsKeyDown(VK_ESCAPE)) {
-  //  done = true;
-  //  continue;
-  //}
   //// Otherwise do the frame processing.
   // if (m_graphics != nullptr) {
   //  result = m_graphics->frame();
