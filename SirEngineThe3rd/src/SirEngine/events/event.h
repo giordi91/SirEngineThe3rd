@@ -25,7 +25,7 @@ enum EventCategory {
   EventCategoryApplication = SET_BIT(0),
   EventCategoryInput = SET_BIT(1),
   EventCategoryKeyboard = SET_BIT(2),
-  EventCategoryMouseMouseMouse = SET_BIT(3),
+  EventCategoryMouse = SET_BIT(3),
   EventCategoryMouseButton = SET_BIT(4)
 };
 
@@ -62,7 +62,9 @@ public:
 
   //This is the dispatcher, the way the dispatcher works is the following,
   //the dispatcher has been created with an event, which is going to reference to.
-  //
+  //then when dispatch is called, if the type matches, we are going to call the 
+  //function on the event the dispatcher was associated to. The function will 
+  //be					
   template <typename T> bool dispatch(EventFn<T> funct) {
     if (m_event.getEventType() == T::getStaticType()) {
       m_event.m_handled = funct(*(T *)&m_event);

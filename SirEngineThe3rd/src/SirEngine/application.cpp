@@ -9,7 +9,6 @@ Application::Application() {
 
   m_window = Window::create();
   m_window->setEventCallback(
-      // std::bind(&Application::onEvent, this, std::placeholders::_1));
       [this](Event &e) -> void { this->onEvent(e); });
 }
 
@@ -29,7 +28,6 @@ void Application::onEvent(Event &e) {
   // close event dispatch
   EventDispatcher dispatcher(e);
   dispatcher.dispatch<WindowCloseEvent>(
-      // std::bind(&Application::onCloseWindow, this, std::placeholders::_1));
       [this](WindowCloseEvent &e) -> bool { return (this->onCloseWindow(e)); });
 }
 bool Application::onCloseWindow(WindowCloseEvent &e) {
