@@ -17,7 +17,7 @@ public:
   void setVSync(bool ennabled) override;
   void isVSync() const override;
 
-  LRESULT CALLBACK MessageHandler(HWND, UINT, WPARAM, LPARAM);
+  LRESULT CALLBACK messageHandler(HWND, UINT, WPARAM, LPARAM);
 private:
 
   struct WindowData {
@@ -35,5 +35,3 @@ private:
 
 } // namespace SirEngine
 
-static LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
-static SirEngine::WindowsWindow *windowsApplicationHandle = nullptr;
