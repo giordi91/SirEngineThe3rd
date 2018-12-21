@@ -41,7 +41,7 @@ class SIR_ENGINE_API Event {
   friend class EventDispatcher;
 
 public:
-  virtual EventType getEventType()const  = 0;
+  virtual EventType getEventType() const = 0;
   virtual const char *getName() const = 0;
   virtual int getCategoryFlags() const = 0;
   virtual std::string toString() const { return getName(); }
@@ -60,9 +60,12 @@ class EventDispatcher {
 public:
   EventDispatcher(Event &event) : m_event(event) {}
 
+  //This is the dispatcher, the way the dispatcher works is the following,
+  //the dispatcher has been created with an event, which is going to reference to.
+  //
   template <typename T> bool dispatch(EventFn<T> funct) {
     if (m_event.getEventType() == T::getStaticType()) {
-      m_event.m_handled = funct(*(T*) & m_event);
+      m_event.m_handled = funct(*(T *)&m_event);
       return true;
     }
     return false;

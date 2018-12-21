@@ -7,12 +7,18 @@ namespace SirEngine {
 
 Application::Application() {
 
-  m_window = std::unique_ptr<Window>(Window::create());
+  m_window = Window::create();
   m_window->setEventCallback(
-      std::bind(&Application::onEvent, this, std::placeholders::_1));
+      // std::bind(&Application::onEvent, this, std::placeholders::_1));
+      [this](Event &e) -> void { this->onEvent(e); });
 }
 
-Application::~Application() {}
+Application::~Application() {
+
+  if (m_window != nullptr) {
+    delete m_window;
+  }
+}
 void Application::run() {
   while (m_run) {
     m_window->OnUpdate();
@@ -20,9 +26,11 @@ void Application::run() {
 }
 void Application::onEvent(Event &e) {
   SE_CORE_INFO("{0}", e);
+  // close event dispatch
   EventDispatcher dispatcher(e);
   dispatcher.dispatch<WindowCloseEvent>(
-      std::bind(&Application::onCloseWindow, this, std::placeholders::_1));
+      // std::bind(&Application::onCloseWindow, this, std::placeholders::_1));
+      [this](WindowCloseEvent &e) -> bool { return (this->onCloseWindow(e)); });
 }
 bool Application::onCloseWindow(WindowCloseEvent &e) {
   m_run = false;

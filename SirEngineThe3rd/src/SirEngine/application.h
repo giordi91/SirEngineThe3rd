@@ -15,7 +15,7 @@ public:
   bool onCloseWindow(WindowCloseEvent& e);
 
 private:
-  std::unique_ptr<Window> m_window;
+  Window* m_window = nullptr;
   bool m_run = true;
 };
 
