@@ -146,6 +146,7 @@
     <ClInclude Include="src\SirEngine\events\event.h" />
     <ClInclude Include="src\SirEngine\events\keyboardEvent.h" />
     <ClInclude Include="src\SirEngine\events\mouseEvent.h" />
+    <ClInclude Include="src\SirEngine\layer.h" />
     <ClInclude Include="src\SirEngine\log.h" />
     <ClInclude Include="src\SirEngine.h" />
     <ClInclude Include="src\SirEngine\application.h" />
