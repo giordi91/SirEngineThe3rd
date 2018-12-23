@@ -54,6 +54,9 @@
     <ClInclude Include="src\SirEngine\layer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\SirEngine\layerStack.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\SirEngine\application.cpp">
@@ -66,6 +69,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\platform\windows\windowsWindow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\SirEngine\layerStack.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

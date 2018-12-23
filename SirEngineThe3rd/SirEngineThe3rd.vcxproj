@@ -97,6 +97,7 @@
       <PrecompiledHeaderFile>SirEnginepch.h</PrecompiledHeaderFile>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp14</LanguageStandard>
+      <DisableSpecificWarnings>4251 </DisableSpecificWarnings>
     </ClCompile>
     <PostBuildEvent>
       <Command>copy /Y "$(TargetDir)$(TargetName).dll" "$(SolutionDir)bin\$(Configuration)-$(Platform)\Sandbox\$(TargetName).dll"</Command>
@@ -130,6 +131,7 @@
       <PrecompiledHeaderFile>SirEnginepch.h</PrecompiledHeaderFile>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <LanguageStandard>stdcpp14</LanguageStandard>
+      <DisableSpecificWarnings>4251 </DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -147,6 +149,7 @@
     <ClInclude Include="src\SirEngine\events\keyboardEvent.h" />
     <ClInclude Include="src\SirEngine\events\mouseEvent.h" />
     <ClInclude Include="src\SirEngine\layer.h" />
+    <ClInclude Include="src\SirEngine\layerStack.h" />
     <ClInclude Include="src\SirEngine\log.h" />
     <ClInclude Include="src\SirEngine.h" />
     <ClInclude Include="src\SirEngine\application.h" />
@@ -156,6 +159,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\platform\windows\windowsWindow.cpp" />
+    <ClCompile Include="src\SirEngine\layerStack.cpp" />
     <ClCompile Include="src\SirEngine\Log.cpp" />
     <ClCompile Include="src\SirEngine\application.cpp" />
     <ClCompile Include="src\SirEnginepch.cpp">
