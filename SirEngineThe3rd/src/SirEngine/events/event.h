@@ -49,6 +49,7 @@ public:
   inline bool isInCategor(EventCategory category) {
     return getCategoryFlags() & category;
   }
+  inline bool handled() { return m_handled; };
 
 protected:
   bool m_handled = false;

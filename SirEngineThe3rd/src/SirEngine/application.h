@@ -2,8 +2,9 @@
 #include "Window.h"
 #include "core.h"
 
-#include "SirEngine/events/event.h"
 #include "SirEngine/events/appliacationEvent.h"
+#include "SirEngine/events/event.h"
+#include "SirEngine/layerStack.h"
 namespace SirEngine {
 class SIR_ENGINE_API Application {
 public:
@@ -12,11 +13,14 @@ public:
   void run();
 
   void onEvent(Event &e);
-  bool onCloseWindow(WindowCloseEvent& e);
+  bool onCloseWindow(WindowCloseEvent &e);
+  void pushLayer(Layer *layer);
+  void pushOverlay(Layer *layer);
 
 private:
-  Window* m_window = nullptr;
+  Window *m_window = nullptr;
   bool m_run = true;
+  LayerStack m_layerStack;
 };
 
 // To be implemented by the client
