@@ -1,10 +1,11 @@
 #include "SirEnginepch.h"
 
-#include <d3d12.h>
 #include "platform/windows/graphics/dx12/adapter.h"
+#include <d3d12.h>
 #include <iostream>
 #include <wrl.h>
 
+namespace SirEngine {
 namespace dx12 {
 Adapter::~Adapter() {
   if (m_adapter != nullptr) {
@@ -61,3 +62,4 @@ bool Adapter::findBestAdapter(IDXGIFactory4 *dxgiFactory, bool verbose) {
   return dxgiAdapter != nullptr;
 }
 } // namespace dx12
+} // namespace SirEngine

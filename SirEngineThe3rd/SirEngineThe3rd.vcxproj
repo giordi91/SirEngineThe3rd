@@ -102,6 +102,9 @@
     <PostBuildEvent>
       <Command>copy /Y "$(TargetDir)$(TargetName).dll" "$(SolutionDir)bin\$(Configuration)-$(Platform)\Sandbox\$(TargetName).dll"</Command>
     </PostBuildEvent>
+    <Link>
+      <AdditionalDependencies>d3dcompiler.lib;DXGI.lib;D3D12.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>

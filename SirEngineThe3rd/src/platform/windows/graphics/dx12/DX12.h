@@ -1,19 +1,18 @@
 #pragma once
 #include <d3d12.h>
 #include <dxgi1_6.h>
-#include "platform/windows/graphics/dx12/adapter.h"
 
-namespace dx12
-{
-  //DescriptorHeap m_cbvSrvUavHeap;
-  //DescriptorHeap m_rtvHeap;
-  //DescriptorHeap m_dsvHeap;
-  //Adapter* m_adapter;
-  extern ID3D12Device5 *device;
-  extern ID3D12Debug *debugController;
-  extern IDXGIFactory6 *dxiFactory;
+namespace SirEngine {
+namespace dx12 {
+class Adapter;
 
-  //CommandQueue m_commandQueue;
-}
+extern ID3D12Device5 *device;
+extern ID3D12Debug *debugController;
+extern IDXGIFactory6 *dxiFactory;
+extern Adapter *adapter;
 
+bool initializeGraphics();
 
+// CommandQueue m_commandQueue;
+} // namespace dx12
+} // namespace SirEngine
