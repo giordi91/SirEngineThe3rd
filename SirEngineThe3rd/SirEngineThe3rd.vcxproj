@@ -146,7 +146,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\platform\windows\graphics\dx12\adapter.h" />
+    <ClInclude Include="src\platform\windows\graphics\dx12\d3dx12.h" />
+    <ClInclude Include="src\platform\windows\graphics\dx12\depthTexture.h" />
+    <ClInclude Include="src\platform\windows\graphics\dx12\descriptorHeap.h" />
     <ClInclude Include="src\platform\windows\graphics\dx12\DX12.h" />
+    <ClInclude Include="src\platform\windows\graphics\dx12\swapChain.h" />
+    <ClInclude Include="src\platform\windows\graphics\dx12\texture2D.h" />
     <ClInclude Include="src\platform\windows\windowsWindow.h" />
     <ClInclude Include="src\SirEnginepch.h" />
     <ClInclude Include="src\SirEngine\events\appliacationEvent.h" />
@@ -164,7 +169,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\platform\windows\graphics\dx12\adapter.cpp" />
+    <ClCompile Include="src\platform\windows\graphics\dx12\depthTexture.cpp" />
+    <ClCompile Include="src\platform\windows\graphics\dx12\descriptorHeap.cpp" />
     <ClCompile Include="src\platform\windows\graphics\dx12\DX12.cpp" />
+    <ClCompile Include="src\platform\windows\graphics\dx12\swapChain.cpp" />
+    <ClCompile Include="src\platform\windows\graphics\dx12\texture2D.cpp" />
     <ClCompile Include="src\platform\windows\windowsWindow.cpp" />
     <ClCompile Include="src\SirEngine\layerStack.cpp" />
     <ClCompile Include="src\SirEngine\Log.cpp" />
