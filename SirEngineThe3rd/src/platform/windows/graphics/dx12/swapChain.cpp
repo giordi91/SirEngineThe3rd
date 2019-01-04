@@ -1,15 +1,20 @@
-/*
-#include "Illuminati/rendering/swapChain.h"
-#include "Illuminati/rendering/texture2D.h"
-#include "Illuminati/system/DXInterfaces.h"
+#include "SirEnginepch.h"
+
+#include "platform/windows/graphics/dx12/swapChain.h"
+//#include "Illuminati/rendering/texture2D.h"
+//#include "Illuminati/system/DXInterfaces.h"
+#include "platform/windows/graphics/dx12/DX12.h"
+#include "platform/windows/graphics/dx12/d3dx12.h"
+#include "platform/windows/graphics/dx12/texture2D.h"
+#include "platform/windows/graphics/dx12/depthTexture.h"
+#include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include <d3d12.h>
+
+namespace SirEngine {
 namespace dx12 {
-namespace rendering {
 
-bool SwapChain::initialize(system::DXInterfaces *interfaces, HWND window,
-                           int width, int height) {
+bool SwapChain::initialize(HWND window, int width, int height) {
 
-  m_dxInterfaces = interfaces;
   // Check 4X MSAA quality support for our back buffer format.
   // All Direct3D 11 capable devices support 4X MSAA for all render
   // target formats, so we only need to check quality support.
@@ -18,7 +23,7 @@ bool SwapChain::initialize(system::DXInterfaces *interfaces, HWND window,
   msQualityLevels.SampleCount = 4;
   msQualityLevels.Flags = D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE;
   msQualityLevels.NumQualityLevels = 0;
-  HRESULT result = interfaces->getDevice()->CheckFeatureSupport(
+  HRESULT result = DX12Handles::device->CheckFeatureSupport(
       D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS, &msQualityLevels,
       sizeof(msQualityLevels));
 
@@ -47,10 +52,9 @@ bool SwapChain::initialize(system::DXInterfaces *interfaces, HWND window,
 
   // the reason why we pass a queue is because when the swap chain flushes uses
   // the queue
-  auto *factory = interfaces->getDXGIFactory();
-  auto *queue = interfaces->getCommandQueue();
-  result = factory->CreateSwapChain(queue->getCommandQueue(), &swapDesc,
-                                    &m_swapChain);
+
+  result = DX12Handles::dxiFactory->CreateSwapChain(DX12Handles::commandQueue,
+                                                    &swapDesc, &m_swapChain);
 
   if (FAILED(result)) {
     return false;
@@ -58,22 +62,30 @@ bool SwapChain::initialize(system::DXInterfaces *interfaces, HWND window,
   return true;
 }
 
-bool SwapChain::resize(int width, int height) {
+bool SwapChain::resize(CommandList *command, int width, int height) {
+
   // Flush before changing any resources.
   // FlushCommandQueue();
 
   // HRESULT result = m_commandList->Reset(m_commandAllocator.Get(), nullptr);
-  auto *queue = m_dxInterfaces->getCommandQueue();
-  queue->resetCommandList();
-
-  // Release the previous resources we will be recreating.
-  for (int i = 0; i < m_swapChainBufferCount; ++i) {
-    m_swapChainBuffersResource[i].clear();
+  resetCommandList(command);
+  if (m_swapChainBuffersResource != nullptr) {
+    delete m_swapChainBuffersResource;
+	m_swapChainBuffersResource = nullptr;
   }
+
+  m_swapChainBuffersResource = new Texture2D[m_swapChainBufferCount];
+  // Release the previous resources we will be recreating.
+  // for (int i = 0; i < m_swapChainBufferCount; ++i) {
+  //  m_swapChainBuffersResource[i].clear();
+  //}
   // if (m_depthStencilBufferResource.resource) {
   //  m_depthStencilBufferResource.resource->Release();
   //}
-  m_depth.clear();
+  if (m_depth != nullptr) {
+    delete m_depth;
+	m_depth = nullptr;
+  }
 
   // Resize the swap chain.
   HRESULT result = m_swapChain->ResizeBuffers(
@@ -84,35 +96,35 @@ bool SwapChain::resize(int width, int height) {
   m_currentBackBuffer = 0;
 
   CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHeapHandle(
-      m_dxInterfaces->getRtvHeap()->getCPUStart());
+      DX12Handles::globalRTVheap->getCPUStart());
 
-  auto *device = m_dxInterfaces->getDevice();
   ID3D12Resource *resource;
   for (UINT i = 0; i < m_swapChainBufferCount; i++) {
     HRESULT res = m_swapChain->GetBuffer(i, IID_PPV_ARGS(&resource));
 
     m_swapChainBuffersResource[i].initializeRTFromResource(
-        m_dxInterfaces, resource, width, height);
+         resource, width, height);
 
     // createRTVSRV(m_dxInterfaces->getRtvHeap(), m_dxInterfaces->getDevice(),
     //             &m_swapChainBuffersResource[i]);
   }
 
-
   // Transition the resource from its initial state to be used as a depth
   // buffer.
-  m_depth.initialize(m_dxInterfaces, width, height);
+  m_depth->initialize( width, height);
 
-  queue->getCommandList()->ResourceBarrier(
+  command->commandList->ResourceBarrier(
       1, &CD3DX12_RESOURCE_BARRIER::Transition(
-             m_depth.getResource(), D3D12_RESOURCE_STATE_COMMON,
+             m_depth->getResource(), D3D12_RESOURCE_STATE_COMMON,
              D3D12_RESOURCE_STATE_DEPTH_WRITE));
 
   // Execute the resize commands.
-  queue->executeCommandList();
+  // queue->executeCommandList();
+  executeCommandList(DX12Handles::commandQueue, command);
 
   // Wait until resize is complete.
-  queue->flushCommandQueue();
+  flushCommandQueue(DX12Handles::commandQueue);
+
 
   // Update the viewport transform to cover the client area.
   m_screenViewport.TopLeftX = 0;
@@ -125,6 +137,5 @@ bool SwapChain::resize(int width, int height) {
   m_scissorRect = {0, 0, width, height};
   return true;
 }
-} // namespace rendering
 } // namespace dx12
-*/
+} // namespace SirEngine

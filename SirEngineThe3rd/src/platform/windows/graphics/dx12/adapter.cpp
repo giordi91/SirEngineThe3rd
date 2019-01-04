@@ -33,17 +33,17 @@ bool Adapter::findBestAdapter(IDXGIFactory4 *dxgiFactory, bool verbose) {
 
       bool isDXR = false;
       bool requiresDXR = m_feature == AdapterFeature::DXR;
-      // for now only checking dxr assuming nvidia
+      // for now only checking DXR assuming Nvidia
       if (requiresDXR) {
         isDXR = (wcsstr(desc.Description, L"RTX") != 0);
       }
 
-      // checking for microsfoft sofware adapter, we want to skip it
+      // checking for Microsoft software adapter, we want to skip it
       bool isSoftwareVendor = desc.VendorId == 0x1414;
       bool isSoftwareId = desc.DeviceId == 0x8c;
       bool isSoftware = isSoftwareVendor & isSoftwareId;
       if (!(isSoftware) & (isDXR & requiresDXR)) {
-        // then we just prioritazie memory size, in the future we
+        // then we just prioritize memory size, in the future we
         // might want to use also other metrics
         if (desc.DedicatedVideoMemory > adapterMemory) {
           dxgiAdapter = adapter;

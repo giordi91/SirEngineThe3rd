@@ -2,29 +2,38 @@
 
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/adapter.h"
+#include "platform/windows/graphics/dx12/descriptorHeap.h"
 
 namespace SirEngine {
 namespace dx12 {
+namespace DX12Handles {
 ID3D12Device5 *device = nullptr;
 ID3D12Debug *debugController = nullptr;
 IDXGIFactory6 *dxiFactory = nullptr;
 Adapter *adapter = nullptr;
+ID3D12CommandQueue *commandQueue = nullptr;
+DescriptorHeap* globalCBVSRVUAVheap = nullptr;
+DescriptorHeap* globalRTVheap = nullptr;
+DescriptorHeap *globalDSVheap =nullptr;
+UINT64 currentFence=0 ;
+ID3D12Fence *fence =nullptr;
+} // namespace DX12Handles
 
 bool initializeGraphics() {
 
   IDXGIFactory6 *m_dxiFactory = nullptr;
-  HRESULT result = CreateDXGIFactory1(IID_PPV_ARGS(&dxiFactory));
+  HRESULT result = CreateDXGIFactory1(IID_PPV_ARGS(&DX12Handles::dxiFactory));
   if (FAILED(result)) {
     return false;
   }
 
-  adapter = new Adapter();
-  adapter->setFeture(AdapterFeature::ANY);
-  adapter->setVendor(AdapterVendor::ANY);
-  adapter->findBestAdapter(dxiFactory);
+  DX12Handles::adapter = new Adapter();
+  DX12Handles::adapter->setFeture(AdapterFeature::ANY);
+  DX12Handles::adapter->setVendor(AdapterVendor::ANY);
+  DX12Handles::adapter->findBestAdapter(DX12Handles::dxiFactory);
 
-  result = D3D12CreateDevice(adapter->getAdapter(), D3D_FEATURE_LEVEL_12_1,
-                             IID_PPV_ARGS(&device));
+  result = D3D12CreateDevice(DX12Handles::adapter->getAdapter(), D3D_FEATURE_LEVEL_12_1,
+                             IID_PPV_ARGS(&DX12Handles::device));
   if (FAILED(result)) {
     // falling back to WARP device
     IDXGIAdapter *warpAdapter;
@@ -34,7 +43,7 @@ bool initializeGraphics() {
     }
 
     result = D3D12CreateDevice(warpAdapter, D3D_FEATURE_LEVEL_12_1,
-                               IID_PPV_ARGS(&device));
+                               IID_PPV_ARGS(&DX12Handles::device));
     if (FAILED(result)) {
       return false;
     }
@@ -46,17 +55,40 @@ bool initializeGraphics() {
   D3D12_FEATURE_DATA_FEATURE_LEVELS featureLevels = {};
   featureLevels.NumFeatureLevels = 1;
   featureLevels.pFeatureLevelsRequested = featureLevelsArray;
-  HRESULT r = device->CheckFeatureSupport(
+  HRESULT r = DX12Handles::device->CheckFeatureSupport(
       D3D12_FEATURE_FEATURE_LEVELS, &featureLevels, sizeof(featureLevels));
   assert(featureLevels.MaxSupportedFeatureLevel == D3D_FEATURE_LEVEL_12_1);
 
-  if (adapter->getFeature() == AdapterFeature::DXR) {
+  if (DX12Handles::adapter->getFeature() == AdapterFeature::DXR) {
     D3D12_FEATURE_DATA_D3D12_OPTIONS5 opts5 = {};
-    device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &opts5,
+    DX12Handles::device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &opts5,
                                 sizeof(opts5));
     if (opts5.RaytracingTier == D3D12_RAYTRACING_TIER_NOT_SUPPORTED)
       assert(0);
   }
+
+  //creating the command queue
+  D3D12_COMMAND_QUEUE_DESC queueDesc = {};
+  queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+  queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+  auto qresult = DX12Handles::device->CreateCommandQueue(
+      &queueDesc, IID_PPV_ARGS(&DX12Handles::commandQueue));
+  if (FAILED(qresult)) {
+    return false;
+  }
+
+  //creating global heaps
+  DX12Handles::globalCBVSRVUAVheap = new DescriptorHeap();
+  DX12Handles::globalCBVSRVUAVheap->initializeAsCBVSRVUAV(1000); 
+
+  DX12Handles::globalRTVheap= new DescriptorHeap();
+  DX12Handles::globalRTVheap->initializeAsRTV(20); 
+
+  DX12Handles::globalDSVheap= new DescriptorHeap();
+  DX12Handles::globalDSVheap->initializeAsDSV(20); 
+
+
+
   return true;
 }
 } // namespace dx12
