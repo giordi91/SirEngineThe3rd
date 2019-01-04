@@ -52,6 +52,7 @@ extern ID3D12Fence *fence;
 extern DescriptorHeap *globalCBVSRVUAVheap;
 extern DescriptorHeap *globalRTVheap;
 extern DescriptorHeap *globalDSVheap;
+extern CommandList* commandList;
 } // namespace DX12Handles
 
 inline void flushCommandQueue(ID3D12CommandQueue *queue) {

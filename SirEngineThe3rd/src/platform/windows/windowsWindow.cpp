@@ -6,6 +6,9 @@
 #include "SirEngine/log.h"
 #include "platform/windows/windowsWindow.h"
 
+#include "platform/windows/graphics/dx12/DX12.h"
+#include "platform/windows/graphics/dx12/swapChain.h"
+
 namespace SirEngine {
 
 // specific windows implementation, most notably window proc
@@ -250,6 +253,14 @@ WindowsWindow::WindowsWindow(const WindowProps &props) {
 
   // Hide the mouse cursor.
   ShowCursor(true);
+
+  //initialize dx12
+  dx12::initializeGraphics();
+  m_swapChain = new dx12::SwapChain();
+  m_swapChain->initialize(m_hwnd, m_data.width, m_data.height);
+  dx12::flushCommandQueue(dx12::DX12Handles::commandQueue);
+  m_swapChain->resize(dx12::DX12Handles::commandList,m_data.width, m_data.height);
+
 }
 void WindowsWindow::OnUpdate() {
 
