@@ -111,6 +111,7 @@ bool SwapChain::resize(CommandList *command, int width, int height) {
 
   // Transition the resource from its initial state to be used as a depth
   // buffer.
+  m_depth = new DepthTexture();
   m_depth->initialize( width, height);
 
   command->commandList->ResourceBarrier(

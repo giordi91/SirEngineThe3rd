@@ -12,14 +12,31 @@ ID3D12Debug *debugController = nullptr;
 IDXGIFactory6 *dxiFactory = nullptr;
 Adapter *adapter = nullptr;
 ID3D12CommandQueue *commandQueue = nullptr;
-DescriptorHeap* globalCBVSRVUAVheap = nullptr;
-DescriptorHeap* globalRTVheap = nullptr;
-DescriptorHeap *globalDSVheap =nullptr;
-UINT64 currentFence=0 ;
-ID3D12Fence *fence =nullptr;
+DescriptorHeap *globalCBVSRVUAVheap = nullptr;
+DescriptorHeap *globalRTVheap = nullptr;
+DescriptorHeap *globalDSVheap = nullptr;
+UINT64 currentFence = 0;
+ID3D12Fence *fence = nullptr;
+CommandList *commandList = nullptr;
 } // namespace DX12Handles
 
 bool initializeGraphics() {
+
+// lets enable debug layer if needed
+#if defined(DEBUG) || defined(_DEBUG)
+  {
+    HRESULT result =
+        D3D12GetDebugInterface(IID_PPV_ARGS(&DX12Handles::debugController));
+    if (FAILED(result)) {
+      return false;
+    }
+    DX12Handles::debugController->EnableDebugLayer();
+
+    //    ID3D12Debug1* debug1;
+    //    m_debugController->QueryInterface(IID_PPV_ARGS(&debug1));
+    //    debug1->SetEnableGPUBasedValidation(true);
+  }
+#endif
 
   IDXGIFactory6 *m_dxiFactory = nullptr;
   HRESULT result = CreateDXGIFactory1(IID_PPV_ARGS(&DX12Handles::dxiFactory));
@@ -30,9 +47,10 @@ bool initializeGraphics() {
   DX12Handles::adapter = new Adapter();
   DX12Handles::adapter->setFeture(AdapterFeature::ANY);
   DX12Handles::adapter->setVendor(AdapterVendor::ANY);
-  DX12Handles::adapter->findBestAdapter(DX12Handles::dxiFactory);
+  bool found = DX12Handles::adapter->findBestAdapter(DX12Handles::dxiFactory);
 
-  result = D3D12CreateDevice(DX12Handles::adapter->getAdapter(), D3D_FEATURE_LEVEL_12_1,
+  result = D3D12CreateDevice(DX12Handles::adapter->getAdapter(),
+                             D3D_FEATURE_LEVEL_12_1,
                              IID_PPV_ARGS(&DX12Handles::device));
   if (FAILED(result)) {
     // falling back to WARP device
@@ -61,13 +79,13 @@ bool initializeGraphics() {
 
   if (DX12Handles::adapter->getFeature() == AdapterFeature::DXR) {
     D3D12_FEATURE_DATA_D3D12_OPTIONS5 opts5 = {};
-    DX12Handles::device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &opts5,
-                                sizeof(opts5));
+    DX12Handles::device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5,
+                                             &opts5, sizeof(opts5));
     if (opts5.RaytracingTier == D3D12_RAYTRACING_TIER_NOT_SUPPORTED)
       assert(0);
   }
 
-  //creating the command queue
+  // creating the command queue
   D3D12_COMMAND_QUEUE_DESC queueDesc = {};
   queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
   queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
@@ -77,17 +95,39 @@ bool initializeGraphics() {
     return false;
   }
 
-  //creating global heaps
+  DX12Handles::commandList = new CommandList;
+  result = DX12Handles::device->CreateCommandAllocator(
+      D3D12_COMMAND_LIST_TYPE_DIRECT,
+      IID_PPV_ARGS(&DX12Handles::commandList->commandAllocator));
+  if (FAILED(result)) {
+    return false;
+  }
+
+  result = DX12Handles::device->CreateCommandList(
+      0, D3D12_COMMAND_LIST_TYPE_DIRECT,
+      DX12Handles::commandList->commandAllocator, nullptr,
+      IID_PPV_ARGS(&DX12Handles::commandList->commandList));
+  if (FAILED(result)) {
+    return false;
+  }
+  DX12Handles::commandList->commandList->Close();
+  DX12Handles::commandList->isListOpen = false;
+
+
+  result = DX12Handles::device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&DX12Handles::fence));
+  if (FAILED(result)) {
+    return false;
+  }
+
+  // creating global heaps
   DX12Handles::globalCBVSRVUAVheap = new DescriptorHeap();
-  DX12Handles::globalCBVSRVUAVheap->initializeAsCBVSRVUAV(1000); 
+  DX12Handles::globalCBVSRVUAVheap->initializeAsCBVSRVUAV(1000);
 
-  DX12Handles::globalRTVheap= new DescriptorHeap();
-  DX12Handles::globalRTVheap->initializeAsRTV(20); 
+  DX12Handles::globalRTVheap = new DescriptorHeap();
+  DX12Handles::globalRTVheap->initializeAsRTV(20);
 
-  DX12Handles::globalDSVheap= new DescriptorHeap();
-  DX12Handles::globalDSVheap->initializeAsDSV(20); 
-
-
+  DX12Handles::globalDSVheap = new DescriptorHeap();
+  DX12Handles::globalDSVheap->initializeAsDSV(20);
 
   return true;
 }
