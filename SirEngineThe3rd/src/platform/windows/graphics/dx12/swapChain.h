@@ -14,7 +14,7 @@ class DepthTexture;
 class SwapChain {
 public:
   SwapChain() = default;
-  ~SwapChain() = default;
+  ~SwapChain();
   bool initialize(HWND window, int width, int height);
   inline IDXGISwapChain *getSwapChain() { return m_swapChain; }
   bool resize(CommandList *command, int width, int height);

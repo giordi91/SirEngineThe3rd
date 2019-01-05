@@ -47,35 +47,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT umessage, WPARAM wparam,
       WindowResizeEvent resizeEvent{w, h};
       callback(resizeEvent);
     }
-
-    //  std::cout << "resizing" << std::endl;
-    // if (m_graphics != nullptr && (m_graphics->m_Direct3D!= nullptr) &&
-    // m_graphics->m_Direct3D->getDevice()!= NULL && wparam !=
-    // SIZE_MINIMIZED)
-    //{
-    //    ImGui_ImplDX11_InvalidateDeviceObjects();
-
-    //	auto* render = rendering::RenderingManager::get_instance();
-    //	render->m_screenWidth= (UINT)LOWORD(lparam);
-    //	render->m_screenHeight= (UINT)HIWORD(lparam);
-    //    m_graphics->m_Direct3D->resize(render->m_screenWidth,render->m_screenHeight);
-
-    //	/*
-    //	auto* deferred = deferred::DeferredTargets::get_instance();
-    //	if (render->m_screenWidth != -1 && render->m_screenHeight != 1)
-    //	{
-    //		deferred->resize(render->m_screenWidth,
-    // render->m_screenHeight);
-    //	}
-    //	*/
-    //    //m_graphics->m_Direct3D->m_swapChain->ResizeBuffers(0,
-    //    //(UINT)LOWORD(lparam), (UINT)HIWORD(lparam), DXGI_FORMAT_UNKNOWN,
-    //    0);
-    //
-    //    ////m_Graphics->m_Direct3D->initialize( (UINT)LOWORD(lparam),
-    //    //(UINT)HIWORD(lparam),true,hwnd,false,0.0f,1.0f);
-    //    ImGui_ImplDX11_CreateDeviceObjects();
-    //}
     return 0;
   }
     // Check if a key has been pressed on the keyboard.
@@ -229,13 +200,6 @@ WindowsWindow::WindowsWindow(const WindowProps &props) {
   // Place the window in the middle of the screen.
   posX = (GetSystemMetrics(SM_CXSCREEN) - m_data.width) / 2;
   posY = (GetSystemMetrics(SM_CYSCREEN) - m_data.height) / 2;
-  //}
-
-  // Create the window with the screen settings and get the handle to it.
-  // m_hwnd = CreateWindowEx(
-  //    WS_EX_APPWINDOW, m_applicationName, m_applicationName,
-  //    WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, posX, posY,
-  //    screenWidth, screenHeight, NULL, NULL, m_hinstance, NULL);
 
   constexpr DWORD style =
       WS_OVERLAPPEDWINDOW | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
@@ -338,14 +302,6 @@ void WindowsWindow::OnUpdate() {
 
   //do render
   render();
-
-  //// Otherwise do the frame processing.
-  // if (m_graphics != nullptr) {
-  //  result = m_graphics->frame();
-  //  if (!result) {
-  //    done = true;
-  //  }
-  //}
 }
 
 unsigned int WindowsWindow::getWidth() const { return m_data.width; }
