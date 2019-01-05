@@ -1,5 +1,6 @@
 #include "SirEnginepch.h"
 
+#include "SirEngine/log.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/adapter.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
@@ -48,6 +49,15 @@ bool initializeGraphics() {
   DX12Handles::adapter->setFeture(AdapterFeature::ANY);
   DX12Handles::adapter->setVendor(AdapterVendor::ANY);
   bool found = DX12Handles::adapter->findBestAdapter(DX12Handles::dxiFactory);
+
+  //log the adapter used
+  auto *adapter = DX12Handles::adapter->getAdapter();
+  DXGI_ADAPTER_DESC desc;
+  HRESULT adapterDescRes = SUCCEEDED(adapter->GetDesc(&desc));
+  char t[128];
+  size_t converted=0;
+  size_t res = wcstombs_s(&converted,t, desc.Description, 128);
+  SE_CORE_INFO(t);
 
   result = D3D12CreateDevice(DX12Handles::adapter->getAdapter(),
                              D3D_FEATURE_LEVEL_12_1,
@@ -113,8 +123,8 @@ bool initializeGraphics() {
   DX12Handles::commandList->commandList->Close();
   DX12Handles::commandList->isListOpen = false;
 
-
-  result = DX12Handles::device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&DX12Handles::fence));
+  result = DX12Handles::device->CreateFence(0, D3D12_FENCE_FLAG_NONE,
+                                            IID_PPV_ARGS(&DX12Handles::fence));
   if (FAILED(result)) {
     return false;
   }
