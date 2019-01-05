@@ -8,6 +8,7 @@
 
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/swapChain.h"
+#include "platform/windows/graphics/dx12/barrierUtils.h"
 
 namespace SirEngine {
 
@@ -262,6 +263,63 @@ WindowsWindow::WindowsWindow(const WindowProps &props) {
   m_swapChain->resize(dx12::DX12Handles::commandList,m_data.width, m_data.height);
 
 }
+
+void WindowsWindow::render()
+{
+  // Clear the back buffer and depth buffer.
+  float gray[4] = {0.5f, 0.9f, 0.5f, 1.0f};
+  // Reuse the memory associated with command recording.
+  // We can only reset when the associated command lists have finished execution
+  // on the GPU.
+  resetAllocatorAndList(dx12::DX12Handles::commandList);
+  // Indicate a state transition on the resource usage.
+  auto *commandList = dx12::DX12Handles::commandList->commandList;
+  D3D12_RESOURCE_BARRIER rtbarrier[1];
+
+  int rtcounter = dx12::transitionTexture2DifNeeded(
+      m_swapChain->currentBackBuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET,
+      rtbarrier, 0);
+  if (rtcounter != 0) {
+    commandList->ResourceBarrier(rtcounter, rtbarrier);
+  }
+
+  // Set the viewport and scissor rect.  This needs to be reset whenever the
+  // command list is reset.
+  commandList->RSSetViewports(1, m_swapChain->getViewport());
+  commandList->RSSetScissorRects(1, m_swapChain->getScissorRect());
+
+  // Clear the back buffer and depth buffer.
+  commandList->ClearRenderTargetView(m_swapChain->currentBackBufferView(), gray,
+                                     0, nullptr);
+
+  m_swapChain->clearDepth();
+  // Specify the buffers we are going to render to.
+  auto back = m_swapChain->currentBackBufferView();
+  auto depth = m_swapChain->getDepthCPUDescriptor();
+  commandList->OMSetRenderTargets(1, &back, true, &depth);
+  //&m_depthStencilBufferResource.cpuDescriptorHandle);
+
+
+  // finally transition the resource to be present
+  rtcounter = dx12::transitionTexture2D(m_swapChain->currentBackBuffer(),
+                                             D3D12_RESOURCE_STATE_PRESENT,
+                                             rtbarrier, 0);
+  commandList->ResourceBarrier(rtcounter, rtbarrier);
+
+  // Done recording commands.
+  dx12::executeCommandList(dx12::DX12Handles::commandQueue,dx12::DX12Handles::commandList);
+
+  // swap the back and front buffers
+  m_swapChain->present();
+
+  // Wait until frame commands are complete.  This waiting is inefficient and is
+  // done for simplicity.  Later we will show how to organize our rendering code
+  // so we do not have to wait per frame.
+  dx12::flushCommandQueue(dx12::DX12Handles::commandQueue);
+
+}
+
+
 void WindowsWindow::OnUpdate() {
 
   MSG msg;
@@ -277,6 +335,9 @@ void WindowsWindow::OnUpdate() {
     TranslateMessage(&msg);
     DispatchMessage(&msg);
   }
+
+  //do render
+  render();
 
   //// Otherwise do the frame processing.
   // if (m_graphics != nullptr) {

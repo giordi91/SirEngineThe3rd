@@ -28,6 +28,26 @@ inline HRESULT resetCommandList(CommandList *command) {
   return res;
 }
 
+// should be used only at beginning of the frame
+  inline HRESULT resetAllocatorAndList(CommandList* command) {
+
+    assert(!command->isListOpen);
+
+    // Reuse the memory associated with command recording.
+    // We can only reset when the associated command lists have finished
+    // execution on the GPU.
+    HRESULT result = command->commandAllocator->Reset();
+    assert(SUCCEEDED(result) && "failed resetting allocator");
+
+    // A command list can be reset after it has been added to the command queue
+    // via ExecuteCommandList.
+    // Reusing the command list reuses memory.
+    HRESULT result2 = command->commandList->Reset(command->commandAllocator, nullptr);
+    assert(SUCCEEDED(result) && "failed resetting allocator");
+    command->isListOpen= SUCCEEDED(result) & SUCCEEDED(result2);
+    return result2;
+  }
+
 inline bool executeCommandList(ID3D12CommandQueue *queue,
                                CommandList *command) {
   assert(command->isListOpen);

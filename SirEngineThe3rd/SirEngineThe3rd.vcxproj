@@ -146,6 +146,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\platform\windows\graphics\dx12\adapter.h" />
+    <ClInclude Include="src\platform\windows\graphics\dx12\barrierUtils.h" />
     <ClInclude Include="src\platform\windows\graphics\dx12\d3dx12.h" />
     <ClInclude Include="src\platform\windows\graphics\dx12\depthTexture.h" />
     <ClInclude Include="src\platform\windows\graphics\dx12\descriptorHeap.h" />
