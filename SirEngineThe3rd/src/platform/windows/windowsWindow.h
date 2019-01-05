@@ -28,6 +28,7 @@ private:
     unsigned int width;
     unsigned int height;
   };
+  void render();
 
 private:
   HINSTANCE m_hinstance;

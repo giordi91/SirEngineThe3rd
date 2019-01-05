@@ -5,8 +5,6 @@
 //#include "Illuminati/system/DXInterfaces.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/d3dx12.h"
-#include "platform/windows/graphics/dx12/texture2D.h"
-#include "platform/windows/graphics/dx12/depthTexture.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include <d3d12.h>
 

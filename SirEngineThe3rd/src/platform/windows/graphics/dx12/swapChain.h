@@ -1,5 +1,7 @@
 #pragma once
 #include "platform/windows/graphics/dx12/DX12.h"
+#include "platform/windows/graphics/dx12/texture2D.h"
+#include "platform/windows/graphics/dx12/depthTexture.h"
 #include <dxgi1_4.h>
 
 struct ID3D12Resource;
@@ -15,21 +17,21 @@ public:
   ~SwapChain() = default;
   bool initialize(HWND window, int width, int height);
   inline IDXGISwapChain *getSwapChain() { return m_swapChain; }
-  bool resize(CommandList* command,int width, int height);
+  bool resize(CommandList *command, int width, int height);
 
-  // inline D3D12_CPU_DESCRIPTOR_HANDLE currentBackBufferView() {
-  //  return m_swapChainBuffersResource[m_currentBackBuffer].getCPUDescriptor();
-  //}
-  // inline Texture2D *currentBackBufferTexture() {
-  //  return &m_swapChainBuffersResource[m_currentBackBuffer];
-  //}
-  // inline DepthTexture* getCurrentDepth()
-  //{
-  //    return &m_depth;
-  //}
-  // inline Texture2D *currentBackBuffer() {
-  //  return &m_swapChainBuffersResource[m_currentBackBuffer];
-  //};
+   inline D3D12_CPU_DESCRIPTOR_HANDLE currentBackBufferView() {
+    return m_swapChainBuffersResource[m_currentBackBuffer].getCPUDescriptor();
+  }
+   inline Texture2D *currentBackBufferTexture() {
+    return &m_swapChainBuffersResource[m_currentBackBuffer];
+  }
+   inline DepthTexture* getCurrentDepth()
+  {
+      return m_depth;
+  }
+   inline Texture2D *currentBackBuffer() {
+    return &m_swapChainBuffersResource[m_currentBackBuffer];
+  };
 
   inline D3D12_VIEWPORT *getViewport() { return &m_screenViewport; }
   inline D3D12_RECT *getScissorRect() { return &m_scissorRect; }
@@ -37,17 +39,15 @@ public:
     m_swapChain->Present(0, 0);
     m_currentBackBuffer = (m_currentBackBuffer + 1) % m_swapChainBufferCount;
   }
-  // void clearDepth() {
-  //  m_dxInterfaces->getCommandQueue()->getCommandList()->ClearDepthStencilView(
-  //      m_depth.getCPUDescriptor(),
-  //      // m_depthStencilBufferResource.cpuDescriptorHandle,
-  //      D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0,
-  //      nullptr);
-  //}
-  // inline D3D12_CPU_DESCRIPTOR_HANDLE getDepthCPUDescriptor() {
-  //  return m_depth.getCPUDescriptor();
-  //  // return m_depthStencilBufferResource.cpuDescriptorHandle;
-  //}
+  void clearDepth() {
+    DX12Handles::commandList->commandList->ClearDepthStencilView(
+        m_depth->getCPUDescriptor(),
+        D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+  }
+   inline D3D12_CPU_DESCRIPTOR_HANDLE getDepthCPUDescriptor() {
+    return m_depth->getCPUDescriptor();
+    // return m_depthStencilBufferResource.cpuDescriptorHandle;
+  }
 
 private:
   SwapChain(const SwapChain &) = delete;
