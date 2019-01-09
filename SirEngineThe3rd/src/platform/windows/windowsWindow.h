@@ -2,6 +2,10 @@
 #include "SirEngine/Window.h"
 
 namespace SirEngine {
+namespace dx12
+{
+	class SwapChain;
+}
 class WindowsWindow : public Window {
 
 public:
@@ -24,12 +28,14 @@ private:
     unsigned int width;
     unsigned int height;
   };
+  void render();
 
 private:
   HINSTANCE m_hinstance;
   HWND m_hwnd;
   WindowData m_data;
   EventCallbackFn m_callback;
+  dx12::SwapChain* m_swapChain;
 };
 
 } // namespace SirEngine

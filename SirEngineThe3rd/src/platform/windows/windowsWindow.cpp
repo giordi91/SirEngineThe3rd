@@ -6,6 +6,10 @@
 #include "SirEngine/log.h"
 #include "platform/windows/windowsWindow.h"
 
+#include "platform/windows/graphics/dx12/DX12.h"
+#include "platform/windows/graphics/dx12/swapChain.h"
+#include "platform/windows/graphics/dx12/barrierUtils.h"
+
 namespace SirEngine {
 
 // specific windows implementation, most notably window proc
@@ -43,35 +47,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT umessage, WPARAM wparam,
       WindowResizeEvent resizeEvent{w, h};
       callback(resizeEvent);
     }
-
-    //  std::cout << "resizing" << std::endl;
-    // if (m_graphics != nullptr && (m_graphics->m_Direct3D!= nullptr) &&
-    // m_graphics->m_Direct3D->getDevice()!= NULL && wparam !=
-    // SIZE_MINIMIZED)
-    //{
-    //    ImGui_ImplDX11_InvalidateDeviceObjects();
-
-    //	auto* render = rendering::RenderingManager::get_instance();
-    //	render->m_screenWidth= (UINT)LOWORD(lparam);
-    //	render->m_screenHeight= (UINT)HIWORD(lparam);
-    //    m_graphics->m_Direct3D->resize(render->m_screenWidth,render->m_screenHeight);
-
-    //	/*
-    //	auto* deferred = deferred::DeferredTargets::get_instance();
-    //	if (render->m_screenWidth != -1 && render->m_screenHeight != 1)
-    //	{
-    //		deferred->resize(render->m_screenWidth,
-    // render->m_screenHeight);
-    //	}
-    //	*/
-    //    //m_graphics->m_Direct3D->m_swapChain->ResizeBuffers(0,
-    //    //(UINT)LOWORD(lparam), (UINT)HIWORD(lparam), DXGI_FORMAT_UNKNOWN,
-    //    0);
-    //
-    //    ////m_Graphics->m_Direct3D->initialize( (UINT)LOWORD(lparam),
-    //    //(UINT)HIWORD(lparam),true,hwnd,false,0.0f,1.0f);
-    //    ImGui_ImplDX11_CreateDeviceObjects();
-    //}
     return 0;
   }
     // Check if a key has been pressed on the keyboard.
@@ -225,13 +200,6 @@ WindowsWindow::WindowsWindow(const WindowProps &props) {
   // Place the window in the middle of the screen.
   posX = (GetSystemMetrics(SM_CXSCREEN) - m_data.width) / 2;
   posY = (GetSystemMetrics(SM_CYSCREEN) - m_data.height) / 2;
-  //}
-
-  // Create the window with the screen settings and get the handle to it.
-  // m_hwnd = CreateWindowEx(
-  //    WS_EX_APPWINDOW, m_applicationName, m_applicationName,
-  //    WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, posX, posY,
-  //    screenWidth, screenHeight, NULL, NULL, m_hinstance, NULL);
 
   constexpr DWORD style =
       WS_OVERLAPPEDWINDOW | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
@@ -250,7 +218,72 @@ WindowsWindow::WindowsWindow(const WindowProps &props) {
 
   // Hide the mouse cursor.
   ShowCursor(true);
+
+  //initialize dx12
+  dx12::initializeGraphics();
+  m_swapChain = new dx12::SwapChain();
+  m_swapChain->initialize(m_hwnd, m_data.width, m_data.height);
+  dx12::flushCommandQueue(dx12::DX12Handles::commandQueue);
+  m_swapChain->resize(dx12::DX12Handles::commandList,m_data.width, m_data.height);
+
 }
+
+void WindowsWindow::render()
+{
+  // Clear the back buffer and depth buffer.
+  float gray[4] = {0.5f, 0.9f, 0.5f, 1.0f};
+  // Reuse the memory associated with command recording.
+  // We can only reset when the associated command lists have finished execution
+  // on the GPU.
+  resetAllocatorAndList(dx12::DX12Handles::commandList);
+  // Indicate a state transition on the resource usage.
+  auto *commandList = dx12::DX12Handles::commandList->commandList;
+  D3D12_RESOURCE_BARRIER rtbarrier[1];
+
+  int rtcounter = dx12::transitionTexture2DifNeeded(
+      m_swapChain->currentBackBuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET,
+      rtbarrier, 0);
+  if (rtcounter != 0) {
+    commandList->ResourceBarrier(rtcounter, rtbarrier);
+  }
+
+  // Set the viewport and scissor rect.  This needs to be reset whenever the
+  // command list is reset.
+  commandList->RSSetViewports(1, m_swapChain->getViewport());
+  commandList->RSSetScissorRects(1, m_swapChain->getScissorRect());
+
+  // Clear the back buffer and depth buffer.
+  commandList->ClearRenderTargetView(m_swapChain->currentBackBufferView(), gray,
+                                     0, nullptr);
+
+  m_swapChain->clearDepth();
+  // Specify the buffers we are going to render to.
+  auto back = m_swapChain->currentBackBufferView();
+  auto depth = m_swapChain->getDepthCPUDescriptor();
+  commandList->OMSetRenderTargets(1, &back, true, &depth);
+  //&m_depthStencilBufferResource.cpuDescriptorHandle);
+
+
+  // finally transition the resource to be present
+  rtcounter = dx12::transitionTexture2D(m_swapChain->currentBackBuffer(),
+                                             D3D12_RESOURCE_STATE_PRESENT,
+                                             rtbarrier, 0);
+  commandList->ResourceBarrier(rtcounter, rtbarrier);
+
+  // Done recording commands.
+  dx12::executeCommandList(dx12::DX12Handles::commandQueue,dx12::DX12Handles::commandList);
+
+  // swap the back and front buffers
+  m_swapChain->present();
+
+  // Wait until frame commands are complete.  This waiting is inefficient and is
+  // done for simplicity.  Later we will show how to organize our rendering code
+  // so we do not have to wait per frame.
+  dx12::flushCommandQueue(dx12::DX12Handles::commandQueue);
+
+}
+
+
 void WindowsWindow::OnUpdate() {
 
   MSG msg;
@@ -267,13 +300,8 @@ void WindowsWindow::OnUpdate() {
     DispatchMessage(&msg);
   }
 
-  //// Otherwise do the frame processing.
-  // if (m_graphics != nullptr) {
-  //  result = m_graphics->frame();
-  //  if (!result) {
-  //    done = true;
-  //  }
-  //}
+  //do render
+  render();
 }
 
 unsigned int WindowsWindow::getWidth() const { return m_data.width; }

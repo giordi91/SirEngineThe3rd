@@ -78,6 +78,9 @@
     <ClInclude Include="src\platform\windows\graphics\dx12\descriptorHeap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\platform\windows\graphics\dx12\barrierUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\SirEngine\application.cpp">
