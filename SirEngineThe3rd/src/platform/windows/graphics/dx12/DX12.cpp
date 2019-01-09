@@ -8,7 +8,7 @@
 namespace SirEngine {
 namespace dx12 {
 namespace DX12Handles {
-ID3D12Device5 *device = nullptr;
+ID3D12Device4 *device = nullptr;
 ID3D12Debug *debugController = nullptr;
 IDXGIFactory6 *dxiFactory = nullptr;
 Adapter *adapter = nullptr;
@@ -39,33 +39,39 @@ bool initializeGraphics() {
   }
 #endif
 
-  IDXGIFactory6 *m_dxiFactory = nullptr;
   HRESULT result = CreateDXGIFactory1(IID_PPV_ARGS(&DX12Handles::dxiFactory));
   if (FAILED(result)) {
     return false;
   }
 
   DX12Handles::adapter = new Adapter();
+#if DXR_ENABLED
+  DX12Handles::adapter->setFeture(AdapterFeature::DXR);
+  DX12Handles::adapter->setVendor(AdapterVendor::NVIDIA);
+#else
   DX12Handles::adapter->setFeture(AdapterFeature::ANY);
   DX12Handles::adapter->setVendor(AdapterVendor::ANY);
+#endif
   bool found = DX12Handles::adapter->findBestAdapter(DX12Handles::dxiFactory);
 
-  //log the adapter used
+  // log the adapter used
   auto *adapter = DX12Handles::adapter->getAdapter();
   DXGI_ADAPTER_DESC desc;
   HRESULT adapterDescRes = SUCCEEDED(adapter->GetDesc(&desc));
   char t[128];
-  size_t converted=0;
-  size_t res = wcstombs_s(&converted,t, desc.Description, 128);
+  size_t converted = 0;
+  size_t res = wcstombs_s(&converted, t, desc.Description, 128);
   SE_CORE_INFO(t);
 
   result = D3D12CreateDevice(DX12Handles::adapter->getAdapter(),
                              D3D_FEATURE_LEVEL_12_1,
                              IID_PPV_ARGS(&DX12Handles::device));
   if (FAILED(result)) {
+    SE_CORE_ERROR("Could not create device with requested features");
     // falling back to WARP device
     IDXGIAdapter *warpAdapter;
-    result = m_dxiFactory->EnumWarpAdapter(IID_PPV_ARGS(&warpAdapter));
+    result =
+        DX12Handles::dxiFactory->EnumWarpAdapter(IID_PPV_ARGS(&warpAdapter));
     if (FAILED(result)) {
       return false;
     }

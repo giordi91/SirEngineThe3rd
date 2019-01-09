@@ -62,7 +62,11 @@ inline bool executeCommandList(ID3D12CommandQueue *queue,
 }
 
 namespace DX12Handles {
+#if DXR_ENABLED
 extern ID3D12Device5 *device;
+#else
+extern ID3D12Device4 *device;
+#endif
 extern ID3D12Debug *debugController;
 extern IDXGIFactory6 *dxiFactory;
 extern Adapter *adapter;
@@ -80,7 +84,7 @@ inline void flushCommandQueue(ID3D12CommandQueue *queue) {
   DX12Handles::currentFence++;
 
   // Add an instruction to the command queue to set a new fence point. Because
-  // we are on the GPU timeline, the new fence point won't be set until the
+  // we are on the GPU time line, the new fence point won't be set until the
   // GPU finishes processing all the commands prior to this Signal().
   HRESULT res = queue->Signal(DX12Handles::fence, DX12Handles::currentFence);
   auto id = DX12Handles::fence->GetCompletedValue();
