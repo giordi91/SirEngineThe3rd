@@ -9,7 +9,11 @@ class DescriptorHeap;
 
 struct CommandList {
   ID3D12CommandAllocator *commandAllocator = nullptr;
+#if DXR_ENABLED
   ID3D12GraphicsCommandList4 *commandList = nullptr;
+#else 
+  ID3D12GraphicsCommandList3 *commandList = nullptr;
+#endif
   bool isListOpen = false;
 };
 
