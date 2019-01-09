@@ -220,7 +220,10 @@ WindowsWindow::WindowsWindow(const WindowProps &props) {
   ShowCursor(true);
 
   //initialize dx12
-  dx12::initializeGraphics();
+  bool result = dx12::initializeGraphics();
+  if (!result){
+	  SE_CORE_ERROR("FATAL: could not initialize graphics");
+  }
   m_swapChain = new dx12::SwapChain();
   m_swapChain->initialize(m_hwnd, m_data.width, m_data.height);
   dx12::flushCommandQueue(dx12::DX12Handles::commandQueue);
