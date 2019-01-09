@@ -1,18 +1,25 @@
 #include "SirEnginepch.h"
 
 #include "platform/windows/graphics/dx12/swapChain.h"
-//#include "Illuminati/rendering/texture2D.h"
-//#include "Illuminati/system/DXInterfaces.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/d3dx12.h"
-#include "platform/windows/graphics/dx12/texture2D.h"
-#include "platform/windows/graphics/dx12/depthTexture.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include <d3d12.h>
 
 namespace SirEngine {
 namespace dx12 {
+SwapChain::~SwapChain() {
+  if (m_swapChainBuffersResource != nullptr) {
+    delete m_swapChainBuffersResource;
+    m_swapChainBuffersResource = nullptr;
+  }
 
+  // freeing depth and re-creating it;
+  if (m_depth != nullptr) {
+    delete m_depth;
+    m_depth = nullptr;
+  }
+}
 bool SwapChain::initialize(HWND window, int width, int height) {
 
   // Check 4X MSAA quality support for our back buffer format.
@@ -71,21 +78,18 @@ bool SwapChain::resize(CommandList *command, int width, int height) {
   resetCommandList(command);
   if (m_swapChainBuffersResource != nullptr) {
     delete m_swapChainBuffersResource;
-	m_swapChainBuffersResource = nullptr;
+    m_swapChainBuffersResource = nullptr;
   }
 
   m_swapChainBuffersResource = new Texture2D[m_swapChainBufferCount];
-  // Release the previous resources we will be recreating.
-  // for (int i = 0; i < m_swapChainBufferCount; ++i) {
-  //  m_swapChainBuffersResource[i].clear();
-  //}
-  // if (m_depthStencilBufferResource.resource) {
-  //  m_depthStencilBufferResource.resource->Release();
-  //}
+
+  // freeing depth and re-creating it;
   if (m_depth != nullptr) {
     delete m_depth;
-	m_depth = nullptr;
+    m_depth = nullptr;
   }
+  m_depth = new DepthTexture();
+  m_depth->initialize(width, height);
 
   // Resize the swap chain.
   HRESULT result = m_swapChain->ResizeBuffers(
@@ -102,16 +106,12 @@ bool SwapChain::resize(CommandList *command, int width, int height) {
   for (UINT i = 0; i < m_swapChainBufferCount; i++) {
     HRESULT res = m_swapChain->GetBuffer(i, IID_PPV_ARGS(&resource));
 
-    m_swapChainBuffersResource[i].initializeRTFromResource(
-         resource, width, height);
-
-    // createRTVSRV(m_dxInterfaces->getRtvHeap(), m_dxInterfaces->getDevice(),
-    //             &m_swapChainBuffersResource[i]);
+    m_swapChainBuffersResource[i].initializeRTFromResource(resource, width,
+                                                           height);
   }
 
   // Transition the resource from its initial state to be used as a depth
   // buffer.
-  m_depth->initialize( width, height);
 
   command->commandList->ResourceBarrier(
       1, &CD3DX12_RESOURCE_BARRIER::Transition(
@@ -119,12 +119,10 @@ bool SwapChain::resize(CommandList *command, int width, int height) {
              D3D12_RESOURCE_STATE_DEPTH_WRITE));
 
   // Execute the resize commands.
-  // queue->executeCommandList();
   executeCommandList(DX12Handles::commandQueue, command);
 
   // Wait until resize is complete.
   flushCommandQueue(DX12Handles::commandQueue);
-
 
   // Update the viewport transform to cover the client area.
   m_screenViewport.TopLeftX = 0;
