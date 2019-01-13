@@ -7,3 +7,6 @@
 [submodule "vendors/imgui"]
 	path = vendors/imgui
 	url = https://github.com/giordi91/imgui.git
+[submodule "vendors/cxxopts"]
+	path = vendors/cxxopts
+	url = https://github.com/giordi91/cxxopts.git
