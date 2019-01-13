@@ -10,3 +10,9 @@
 [submodule "vendors/cxxopts"]
 	path = vendors/cxxopts
 	url = https://github.com/giordi91/cxxopts.git
+[submodule "vendors/tinyobjloader"]
+	path = vendors/tinyobjloader
+	url = https://github.com/giordi91/tinyobjloader.git
+[submodule "vendors/json"]
+	path = vendors/json
+	url = https://github.com/giordi91/json.git

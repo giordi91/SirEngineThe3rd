@@ -25,3 +25,4 @@ project(ResourceCompilerLib)
     add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES} ${INCLUDES_FILES})
 	SET(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 	target_link_libraries(${PROJECT_NAME} SirEngineThe3rdLib)
+

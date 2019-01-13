@@ -1,7 +1,7 @@
 #include "resourcePlugin.h"
 
 #include "SirEngine/log.h"
-#include "fileUtils.h"
+#include "SirEngine/fileUtils.h"
 #include <cassert>
 
 const std::string SHARED_LIBRARY_EXTENSION = "dll";

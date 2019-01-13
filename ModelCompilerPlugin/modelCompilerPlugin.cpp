@@ -1,13 +1,13 @@
 #include "modelCompilerPlugin.h"
-#include "ResourceCompilerLib/resourceCompiler/fileUtils.h"
-#include "ResourceCompilerLib/resourceCompiler/log.h"
-#include "ResourceCompilerLib/vendor/cxxopts/include/cxxopts.hpp"
+#include "SirEngine/fileUtils.h"
+#include "SirEngine/log.h"
+#include "cxxopts/cxxopts.hpp"
 #include <iostream>
 
-#include "ResourceCompilerLib/resourceCompiler/argsUtils.h"
-#include "ResourceCompilerLib/resourceCompiler/binaryFile.h"
+#include "resourceCompilerLib/argsUtils.h"
+#include "SirEngine/binary/binaryFile.h"
 #include "processObj.h"
-#include "vendor/tiny_obj_loader.h"
+#include "tinyobjloader/tiny_obj_loader.h"
 #include <filesystem>
 const std::string PLUGIN_NAME = "modelCompilerPlugin";
 const unsigned int versionMajor = 0;

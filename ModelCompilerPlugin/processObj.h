@@ -1,7 +1,7 @@
 #pragma once
-#include "vendor/tiny_obj_loader.h"
 #include <DirectXMath.h>
 #include <memory>
+#include "tinyobjloader/tiny_obj_loader.h"
 
 struct Model {
   std::vector<float> vertices;
