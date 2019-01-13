@@ -1,5 +1,5 @@
 #pragma once
-#include "ResourceCompilerLib/resourceCompiler/fileUtils.h"
+#include "SirEngine/fileUtils.h"
 #include <fstream>
 
 struct BinaryFileHeader {

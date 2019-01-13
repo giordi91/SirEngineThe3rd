@@ -1,14 +1,16 @@
+
+#define TINYOBJLOADER_IMPLEMENTATION
+
 #include "processObj.h"
-#include "vendor/tiny_obj_loader.h"
 #include <DirectXMath.h>
 #include <limits>
 #include <unordered_map>
 #include <vector>
-#include "ResourceCompilerLib/resourceCompiler/fileUtils.h"
-#include "ResourceCompilerLib/vendor/nlohmann/json.hpp"
+#include "SirEngine/fileUtils.h"
+#include "nlohmann/json.hpp"
 #include <fstream>
 #include <sstream>
-#include "ResourceCompilerLib/resourceCompiler/log.h"
+#include "SirEngine/log.h"
 
 static const float VERTEX_DELTA = 0.00001f;
 struct VertexCompare {
