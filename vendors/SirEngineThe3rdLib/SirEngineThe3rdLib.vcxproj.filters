@@ -1,0 +1,117 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\WORK_IN_PROGRESS\C\directX\SirEngineThe3rd\SirEngineThe3rdLib\src\SirEngine\Log.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\WORK_IN_PROGRESS\C\directX\SirEngineThe3rd\SirEngineThe3rdLib\src\SirEngine\application.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\WORK_IN_PROGRESS\C\directX\SirEngineThe3rd\SirEngineThe3rdLib\src\SirEngine\layerStack.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\WORK_IN_PROGRESS\C\directX\SirEngineThe3rd\SirEngineThe3rdLib\src\SirEnginepch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\WORK_IN_PROGRESS\C\directX\SirEngineThe3rd\SirEngineThe3rdLib\src\platform\windows\graphics\dx12\DX12.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\WORK_IN_PROGRESS\C\directX\SirEngineThe3rd\SirEngineThe3rdLib\src\platform\windows\graphics\dx12\adapter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\WORK_IN_PROGRESS\C\directX\SirEngineThe3rd\SirEngineThe3rdLib\src\platform\windows\graphics\dx12\depthTexture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\WORK_IN_PROGRESS\C\directX\SirEngineThe3rd\SirEngineThe3rdLib\src\platform\windows\graphics\dx12\descriptorHeap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\WORK_IN_PROGRESS\C\directX\SirEngineThe3rd\SirEngineThe3rdLib\src\platform\windows\graphics\dx12\swapChain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\WORK_IN_PROGRESS\C\directX\SirEngineThe3rd\SirEngineThe3rdLib\src\platform\windows\graphics\dx12\texture2D.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\WORK_IN_PROGRESS\C\directX\SirEngineThe3rd\SirEngineThe3rdLib\src\platform\windows\windowsWindow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="C:\WORK_IN_PROGRESS\C\directX\SirEngineThe3rd\SirEngineThe3rdLib\src\SirEngine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WORK_IN_PROGRESS\C\directX\SirEngineThe3rd\SirEngineThe3rdLib\src\SirEngine\Window.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WORK_IN_PROGRESS\C\directX\SirEngineThe3rd\SirEngineThe3rdLib\src\SirEngine\application.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WORK_IN_PROGRESS\C\directX\SirEngineThe3rd\SirEngineThe3rdLib\src\SirEngine\core.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WORK_IN_PROGRESS\C\directX\SirEngineThe3rd\SirEngineThe3rdLib\src\SirEngine\entryPoint.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WORK_IN_PROGRESS\C\directX\SirEngineThe3rd\SirEngineThe3rdLib\src\SirEngine\events\appliacationEvent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WORK_IN_PROGRESS\C\directX\SirEngineThe3rd\SirEngineThe3rdLib\src\SirEngine\events\event.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WORK_IN_PROGRESS\C\directX\SirEngineThe3rd\SirEngineThe3rdLib\src\SirEngine\events\keyboardEvent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WORK_IN_PROGRESS\C\directX\SirEngineThe3rd\SirEngineThe3rdLib\src\SirEngine\events\mouseEvent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WORK_IN_PROGRESS\C\directX\SirEngineThe3rd\SirEngineThe3rdLib\src\SirEngine\layer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WORK_IN_PROGRESS\C\directX\SirEngineThe3rd\SirEngineThe3rdLib\src\SirEngine\layerStack.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WORK_IN_PROGRESS\C\directX\SirEngineThe3rd\SirEngineThe3rdLib\src\SirEngine\log.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WORK_IN_PROGRESS\C\directX\SirEngineThe3rd\SirEngineThe3rdLib\src\SirEnginepch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WORK_IN_PROGRESS\C\directX\SirEngineThe3rd\SirEngineThe3rdLib\src\platform\windows\graphics\dx12\DX12.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WORK_IN_PROGRESS\C\directX\SirEngineThe3rd\SirEngineThe3rdLib\src\platform\windows\graphics\dx12\adapter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WORK_IN_PROGRESS\C\directX\SirEngineThe3rd\SirEngineThe3rdLib\src\platform\windows\graphics\dx12\barrierUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WORK_IN_PROGRESS\C\directX\SirEngineThe3rd\SirEngineThe3rdLib\src\platform\windows\graphics\dx12\d3dx12.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WORK_IN_PROGRESS\C\directX\SirEngineThe3rd\SirEngineThe3rdLib\src\platform\windows\graphics\dx12\depthTexture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WORK_IN_PROGRESS\C\directX\SirEngineThe3rd\SirEngineThe3rdLib\src\platform\windows\graphics\dx12\descriptorHeap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WORK_IN_PROGRESS\C\directX\SirEngineThe3rd\SirEngineThe3rdLib\src\platform\windows\graphics\dx12\swapChain.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WORK_IN_PROGRESS\C\directX\SirEngineThe3rd\SirEngineThe3rdLib\src\platform\windows\graphics\dx12\texture2D.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\WORK_IN_PROGRESS\C\directX\SirEngineThe3rd\SirEngineThe3rdLib\src\platform\windows\windowsWindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\WORK_IN_PROGRESS\C\directX\SirEngineThe3rd\SirEngineThe3rdLib\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{4E913664-BBF0-3856-B3DA-1C595EF7636E}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{1ADB8714-B190-3388-9EAD-5D2C8CD4B36A}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

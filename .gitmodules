@@ -1,6 +1,6 @@
-[submodule "SirEngineThe3rd/vendor/spdlog"]
-	path = SirEngineThe3rd/vendor/spdlog
-	url = https://github.com/gabime/spdlog
 [submodule "SirEngineThe3rd/vendor/imgui"]
 	path = SirEngineThe3rd/vendor/imgui
 	url = https://github.com/ocornut/imgui.git
+[submodule "vendors/spdlog"]
+	path = vendors/spdlog
+	url = https://github.com/giordi91/spdlog.git
