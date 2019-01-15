@@ -91,6 +91,7 @@ bool initializeGraphics() {
       D3D12_FEATURE_FEATURE_LEVELS, &featureLevels, sizeof(featureLevels));
   assert(featureLevels.MaxSupportedFeatureLevel == D3D_FEATURE_LEVEL_12_1);
 
+#if DXR_ENABLED
   if (DX12Handles::adapter->getFeature() == AdapterFeature::DXR) {
     D3D12_FEATURE_DATA_D3D12_OPTIONS5 opts5 = {};
     DX12Handles::device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5,
@@ -98,6 +99,7 @@ bool initializeGraphics() {
     if (opts5.RaytracingTier == D3D12_RAYTRACING_TIER_NOT_SUPPORTED)
       assert(0);
   }
+#endif
 
   // creating the command queue
   D3D12_COMMAND_QUEUE_DESC queueDesc = {};

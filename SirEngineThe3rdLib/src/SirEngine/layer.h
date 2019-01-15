@@ -8,7 +8,7 @@ namespace SirEngine {
 class SIR_ENGINE_API Layer {
 public:
   Layer() : m_debugName("Layer") {}
-  Layer(std::string &debugName) : m_debugName(debugName) {}
+  Layer(const char* debugName) : m_debugName(debugName) {}
   virtual ~Layer() = default;
 
   virtual void onAttach() = 0;

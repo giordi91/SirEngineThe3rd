@@ -9,18 +9,17 @@ class DescriptorHeap {
 public:
   DescriptorHeap() = default;
   ~DescriptorHeap();
-  bool initialize(int size,
-                  D3D12_DESCRIPTOR_HEAP_TYPE type);
-  inline bool initializeAsCBVSRVUAV( int size) {
-    return initialize( size, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+  bool initialize(int size, D3D12_DESCRIPTOR_HEAP_TYPE type);
+  inline bool initializeAsCBVSRVUAV(int size) {
+    return initialize(size, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
   }
 
-  inline bool initializeAsRTV( int size) {
-    return initialize( size, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+  inline bool initializeAsRTV(int size) {
+    return initialize(size, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
   }
 
   inline bool initializeAsDSV(int size) {
-    return initialize( size, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+    return initialize(size, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
   }
   inline D3D12_GPU_DESCRIPTOR_HANDLE getGPUStart() {
     return m_heap->GetGPUDescriptorHandleForHeapStart();
@@ -43,10 +42,11 @@ public:
   UINT allocateDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE *cpuDescriptor,
                           UINT descriptorIndexToUse = UINT_MAX);
 
-  UINT createBufferSRV(D3DBuffer *buffer, UINT numElements,
-                       UINT elementSize);
+  UINT createBufferSRV(D3DBuffer *buffer, UINT numElements, UINT elementSize);
 
   UINT createBufferCBV(D3DBuffer *buffer, int totalSizeInByte);
+
+  int reserveDescriptor(D3DBuffer* buffer);
 
   UINT createTexture2DUAV(D3DBuffer *buffer, DXGI_FORMAT format);
   UINT createTexture2DSRV(D3DBuffer *buffer, DXGI_FORMAT format);
