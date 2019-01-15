@@ -21,6 +21,7 @@ private:
   Window *m_window = nullptr;
   bool m_run = true;
   LayerStack m_layerStack;
+  Layer* layer;
 };
 
 // To be implemented by the client
