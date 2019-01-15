@@ -60,8 +60,7 @@ bool Texture2D::initializeEmptyRT( int width,
 
 }
 
-bool Texture2D::initializeFromResource( ID3D12Resource *resource, int width,
-                                       int height, DXGI_FORMAT format) {
+bool Texture2D::initializeFromResource( ID3D12Resource *resource, DXGI_FORMAT format) {
 
   m_texture.resource = resource;
   auto desc = resource->GetDesc();
@@ -71,8 +70,7 @@ bool Texture2D::initializeFromResource( ID3D12Resource *resource, int width,
 
   return true;
 }
-bool Texture2D::initializeRTFromResource( ID3D12Resource *resource, int width,
-                                         int height) {
+bool Texture2D::initializeRTFromResource( ID3D12Resource *resource) {
 
   m_texture.resource = resource;
   createRTVSRV(DX12Handles::globalRTVheap,  &m_texture);

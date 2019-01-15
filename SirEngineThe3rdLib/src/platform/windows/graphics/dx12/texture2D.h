@@ -17,11 +17,10 @@ public:
 
   bool initializeEmptyRT( int width,
                          int height, DXGI_FORMAT format);
-  bool initializeFromResource( ID3D12Resource *resource, int width, int height,
+  bool initializeFromResource( ID3D12Resource *resource, 
                               DXGI_FORMAT format = DXGI_FORMAT_R8G8B8A8_UNORM);
 
-  bool initializeRTFromResource( ID3D12Resource *resource, int width,
-                                int height);
+  bool initializeRTFromResource( ID3D12Resource *resource);
   void clear();
 
   inline ID3D12Resource *getResource() { return m_texture.resource; };

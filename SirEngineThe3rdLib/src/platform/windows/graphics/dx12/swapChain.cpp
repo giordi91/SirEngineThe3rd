@@ -94,6 +94,7 @@ bool SwapChain::resize(CommandList *command, int width, int height) {
   HRESULT result = m_swapChain->ResizeBuffers(
       m_swapChainBufferCount, width, height, m_backBufferFormat,
       DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH);
+  assert(SUCCEEDED(result) && "failed to resize swap chain");
 
   // resetting the current back buffer
   m_currentBackBuffer = 0;
@@ -105,8 +106,7 @@ bool SwapChain::resize(CommandList *command, int width, int height) {
   for (UINT i = 0; i < m_swapChainBufferCount; i++) {
     HRESULT res = m_swapChain->GetBuffer(i, IID_PPV_ARGS(&resource));
 
-    m_swapChainBuffersResource[i].initializeRTFromResource(resource, width,
-                                                           height);
+    m_swapChainBuffersResource[i].initializeRTFromResource(resource);
   }
 
   // Transition the resource from its initial state to be used as a depth
