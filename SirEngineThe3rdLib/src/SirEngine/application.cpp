@@ -1,6 +1,7 @@
 #include "SirEngine/application.h"
 #include "SirEngine/layer.h"
 #include "SirEngine/log.h"
+#include "layers/imguiLayer.h"
 
 namespace SirEngine {
 
@@ -8,6 +9,9 @@ Application::Application() {
 
   m_window = Window::create();
   m_window->setEventCallback([this](Event &e) -> void { this->onEvent(e); });
+
+  layer = new ImguiLayer();
+  m_layerStack.pushLayer(layer);
 }
 
 Application::~Application() {

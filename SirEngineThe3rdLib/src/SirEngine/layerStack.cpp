@@ -10,6 +10,7 @@ LayerStack::~LayerStack() {
 }
 void LayerStack::pushLayer(Layer *layer) {
   m_layerInsert = m_layers.emplace(m_layerInsert, layer);
+  layer->onAttach();
 }
 void LayerStack::popLayer(Layer *layer) {
 
