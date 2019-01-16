@@ -2,6 +2,7 @@
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/adapter.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
+#include "platform/windows/graphics/dx12/swapChain.h"
 
 namespace SirEngine {
 namespace dx12 {
@@ -17,6 +18,7 @@ DescriptorHeap *globalDSVheap = nullptr;
 UINT64 currentFence = 0;
 ID3D12Fence *fence = nullptr;
 CommandList *commandList = nullptr;
+SwapChain* swapChain = nullptr;
 } // namespace DX12Handles
 
 bool initializeGraphics() {

@@ -1,11 +1,12 @@
 #pragma once
 #include "SirEngine/Window.h"
+#include <Windows.h>
 
 namespace SirEngine {
-namespace dx12
-{
-	class SwapChain;
-}
+namespace dx12 {
+class SwapChain;
+class D3DBuffer;
+} // namespace dx12
 class WindowsWindow : public Window {
 
 public:
@@ -35,7 +36,6 @@ private:
   HWND m_hwnd;
   WindowData m_data;
   EventCallbackFn m_callback;
-  dx12::SwapChain* m_swapChain;
 };
 
 } // namespace SirEngine

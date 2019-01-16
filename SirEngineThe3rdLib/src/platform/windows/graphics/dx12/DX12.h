@@ -8,6 +8,7 @@ namespace SirEngine {
 namespace dx12 {
 class Adapter;
 class DescriptorHeap;
+class SwapChain;
 
 struct CommandList {
   ID3D12CommandAllocator *commandAllocator = nullptr;
@@ -84,6 +85,7 @@ extern DescriptorHeap *globalCBVSRVUAVheap;
 extern DescriptorHeap *globalRTVheap;
 extern DescriptorHeap *globalDSVheap;
 extern CommandList *commandList;
+extern SwapChain* swapChain;
 } // namespace DX12Handles
 
 inline void flushCommandQueue(ID3D12CommandQueue *queue) {

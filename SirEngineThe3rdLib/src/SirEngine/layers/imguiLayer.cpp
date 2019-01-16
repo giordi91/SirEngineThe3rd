@@ -8,6 +8,7 @@ namespace SirEngine {
 void ImguiLayer::onAttach() {
   // need to initialize ImGui dx12
 
+	/*
   assert(m_fontTextureDescriptor == nullptr);
   m_fontTextureDescriptor = new dx12::D3DBuffer();
   m_descriptorIndex = dx12::DX12Handles::globalCBVSRVUAVheap->reserveDescriptor(
@@ -16,15 +17,19 @@ void ImguiLayer::onAttach() {
   ImGui_ImplDX12_Init(dx12::DX12Handles::device, 1, DXGI_FORMAT_R8G8B8A8_UNORM,
                       m_fontTextureDescriptor->cpuDescriptorHandle,
                       m_fontTextureDescriptor->gpuDescriptorHandle);
+					  */
 }
 
 void ImguiLayer::onDetach() {
+	/*
   ImGui_ImplDX12_Shutdown();
   delete m_fontTextureDescriptor;
   m_fontTextureDescriptor == nullptr;
+  */
 }
 
 void ImguiLayer::onUpdate() {
+	/*
   ImGui_ImplDX12_NewFrame();
 
   ImGuiIO &io = ImGui::GetIO();
@@ -109,6 +114,7 @@ void ImguiLayer::onUpdate() {
     //g_fenceLastSignaledValue = fenceValue;
     //frameCtxt->FenceValue = fenceValue;
   }
+	*/
 }
 
 void ImguiLayer::onEvent(Event &event) {}

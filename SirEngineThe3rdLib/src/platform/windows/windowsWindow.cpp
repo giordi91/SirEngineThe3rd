@@ -1,13 +1,18 @@
 
+#include "platform/windows/windowsWindow.h"
+#include "platform/windows/graphics/dx12/DX12.h"
+
 #include "SirEngine/events/appliacationEvent.h"
 #include "SirEngine/events/keyboardEvent.h"
 #include "SirEngine/events/mouseEvent.h"
 #include "SirEngine/log.h"
-#include "platform/windows/windowsWindow.h"
 
-#include "platform/windows/graphics/dx12/DX12.h"
-#include "platform/windows/graphics/dx12/swapChain.h"
 #include "platform/windows/graphics/dx12/barrierUtils.h"
+#include "platform/windows/graphics/dx12/descriptorHeap.h"
+#include "platform/windows/graphics/dx12/swapChain.h"
+
+#include "imgui/imgui.h"
+#include "platform/windows/graphics/dx12/imgui_impl_dx12.h"
 
 #include <windowsx.h>
 
@@ -220,20 +225,30 @@ WindowsWindow::WindowsWindow(const WindowProps &props) {
   // Hide the mouse cursor.
   ShowCursor(true);
 
-  //initialize dx12
+  // initialize dx12
   bool result = dx12::initializeGraphics();
-  if (!result){
-	  SE_CORE_ERROR("FATAL: could not initialize graphics");
+  if (!result) {
+    SE_CORE_ERROR("FATAL: could not initialize graphics");
   }
-  m_swapChain = new dx12::SwapChain();
-  m_swapChain->initialize(m_hwnd, m_data.width, m_data.height);
+  dx12::DX12Handles::swapChain = new dx12::SwapChain();
+  dx12::DX12Handles::swapChain->initialize(m_hwnd, m_data.width, m_data.height);
   dx12::flushCommandQueue(dx12::DX12Handles::commandQueue);
-  m_swapChain->resize(dx12::DX12Handles::commandList,m_data.width, m_data.height);
+  dx12::DX12Handles::swapChain->resize(dx12::DX12Handles::commandList,
+                                       m_data.width, m_data.height);
 
+  dx12::D3DBuffer *m_fontTextureDescriptor = nullptr;
+  int m_descriptorIndex;
+  assert(m_fontTextureDescriptor == nullptr);
+  m_fontTextureDescriptor = new dx12::D3DBuffer();
+  m_descriptorIndex = dx12::DX12Handles::globalCBVSRVUAVheap->reserveDescriptor(
+      m_fontTextureDescriptor);
+
+  ImGui_ImplDX12_Init(dx12::DX12Handles::device, 1, DXGI_FORMAT_R8G8B8A8_UNORM,
+                      m_fontTextureDescriptor->cpuDescriptorHandle,
+                      m_fontTextureDescriptor->gpuDescriptorHandle);
 }
 
-void WindowsWindow::render()
-{
+void WindowsWindow::render() {
   // Clear the back buffer and depth buffer.
   float gray[4] = {0.5f, 0.9f, 0.5f, 1.0f};
   // Reuse the memory associated with command recording.
@@ -245,48 +260,136 @@ void WindowsWindow::render()
   D3D12_RESOURCE_BARRIER rtbarrier[1];
 
   int rtcounter = dx12::transitionTexture2DifNeeded(
-      m_swapChain->currentBackBuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET,
-      rtbarrier, 0);
+      dx12::DX12Handles::swapChain->currentBackBuffer(),
+      D3D12_RESOURCE_STATE_RENDER_TARGET, rtbarrier, 0);
   if (rtcounter != 0) {
     commandList->ResourceBarrier(rtcounter, rtbarrier);
   }
 
   // Set the viewport and scissor rect.  This needs to be reset whenever the
   // command list is reset.
-  commandList->RSSetViewports(1, m_swapChain->getViewport());
-  commandList->RSSetScissorRects(1, m_swapChain->getScissorRect());
+  commandList->RSSetViewports(1, dx12::DX12Handles::swapChain->getViewport());
+  commandList->RSSetScissorRects(
+      1, dx12::DX12Handles::swapChain->getScissorRect());
 
   // Clear the back buffer and depth buffer.
-  commandList->ClearRenderTargetView(m_swapChain->currentBackBufferView(), gray,
-                                     0, nullptr);
+  commandList->ClearRenderTargetView(
+      dx12::DX12Handles::swapChain->currentBackBufferView(), gray, 0, nullptr);
 
-  m_swapChain->clearDepth();
+  dx12::DX12Handles::swapChain->clearDepth();
+  dx12::SwapChain *swapChain = dx12::DX12Handles::swapChain;
   // Specify the buffers we are going to render to.
-  auto back = m_swapChain->currentBackBufferView();
-  auto depth = m_swapChain->getDepthCPUDescriptor();
+  auto back = swapChain->currentBackBufferView();
+  auto depth = swapChain->getDepthCPUDescriptor();
   commandList->OMSetRenderTargets(1, &back, true, &depth);
   //&m_depthStencilBufferResource.cpuDescriptorHandle);
+  auto* heap = dx12::DX12Handles::globalCBVSRVUAVheap->getResource();
+  commandList->SetDescriptorHeaps(1, &heap);
 
+
+
+  ImGui_ImplDX12_NewFrame();
+
+  ImGuiIO &io = ImGui::GetIO();
+  IM_ASSERT(io.Fonts->IsBuilt() &&
+            "Font atlas not built! It is generally built by the renderer "
+            "back-end. Missing call to renderer _NewFrame() function? e.g. "
+            "ImGui_ImplOpenGL3_NewFrame().");
+
+  io.DisplaySize = ImVec2((float)(1280), (float)(720));
+
+  bool show_demo_window = true;
+  bool show_another_window = false;
+  ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+  ImGui::NewFrame();
+  // ImGui::ShowDemoWindow(&show_demo_window);
+  static float f = 0.0f;
+  static int counter = 0;
+
+  ImGui::Begin("Hello, world!"); // Create a window called "Hello, world!" and
+                                 // append into it.
+
+  ImGui::Text("This is some useful text."); // Display some text (you can use
+                                            // a format strings too)
+  ImGui::Checkbox(
+      "Demo Window",
+      &show_demo_window); // Edit bools storing our window open/close state
+  ImGui::Checkbox("Another Window", &show_demo_window);
+
+  ImGui::SliderFloat("float", &f, 0.0f,
+                     1.0f); // Edit 1 float using a slider from 0.0f to 1.0f
+  ImGui::ColorEdit3(
+      "clear color",
+      (float *)&clear_color); // Edit 3 floats representing a color
+
+  if (ImGui::Button("Button")) // Buttons return true when clicked (most
+                               // widgets return true when edited/activated)
+    counter++;
+  ImGui::SameLine();
+  ImGui::Text("counter = %d", counter);
+
+  ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
+              1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+  ImGui::End();
+
+  // Rendering
+  // FrameContext *frameCtxt = WaitForNextFrameResources();
+  // UINT backBufferIdx = g_pSwapChain->GetCurrentBackBufferIndex();
+  // frameCtxt->CommandAllocator->Reset();
+
+  // D3D12_RESOURCE_BARRIER barrier = {};
+  // barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+  // barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+  // barrier.Transition.pResource = g_mainRenderTargetResource[backBufferIdx];
+  // barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+  // barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
+  // barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
+
+  // g_pd3dCommandList->Reset(frameCtxt->CommandAllocator, NULL);
+  // g_pd3dCommandList->ResourceBarrier(1, &barrier);
+  // g_pd3dCommandList->ClearRenderTargetView(
+  //    g_mainRenderTargetDescriptor[backBufferIdx], (float *)&clear_color, 0,
+  //    NULL);
+  // g_pd3dCommandList->OMSetRenderTargets(
+  //    1, &g_mainRenderTargetDescriptor[backBufferIdx], FALSE, NULL);
+  // g_pd3dCommandList->SetDescriptorHeaps(1, &g_pd3dSrvDescHeap);
+  ImGui::Render();
+  ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(),
+                                dx12::DX12Handles::commandList->commandList);
+  // barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
+  // barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
+  // g_pd3dCommandList->ResourceBarrier(1, &barrier);
+  // g_pd3dCommandList->Close();
+
+  // g_pd3dCommandQueue->ExecuteCommandLists(
+  //    1, (ID3D12CommandList *const *)&g_pd3dCommandList);
+
+  // g_pSwapChain->Present(1, 0); // Present with vsync
+  //// g_pSwapChain->Present(0, 0); // Present without vsync
+
+  // UINT64 fenceValue = g_fenceLastSignaledValue + 1;
+  // g_pd3dCommandQueue->Signal(g_fence, fenceValue);
+  // g_fenceLastSignaledValue = fenceValue;
+  // frameCtxt->FenceValue = fenceValue;
 
   // finally transition the resource to be present
-  rtcounter = dx12::transitionTexture2D(m_swapChain->currentBackBuffer(),
-                                             D3D12_RESOURCE_STATE_PRESENT,
-                                             rtbarrier, 0);
+  rtcounter =
+      dx12::transitionTexture2D(swapChain->currentBackBuffer(),
+                                D3D12_RESOURCE_STATE_PRESENT, rtbarrier, 0);
   commandList->ResourceBarrier(rtcounter, rtbarrier);
 
   // Done recording commands.
-  dx12::executeCommandList(dx12::DX12Handles::commandQueue,dx12::DX12Handles::commandList);
+  dx12::executeCommandList(dx12::DX12Handles::commandQueue,
+                           dx12::DX12Handles::commandList);
 
   // swap the back and front buffers
-  m_swapChain->present();
+  swapChain->present();
 
   // Wait until frame commands are complete.  This waiting is inefficient and is
   // done for simplicity.  Later we will show how to organize our rendering code
   // so we do not have to wait per frame.
   dx12::flushCommandQueue(dx12::DX12Handles::commandQueue);
-
 }
-
 
 void WindowsWindow::OnUpdate() {
 
@@ -304,7 +407,7 @@ void WindowsWindow::OnUpdate() {
     DispatchMessage(&msg);
   }
 
-  //do render
+  // do render
   render();
 }
 
