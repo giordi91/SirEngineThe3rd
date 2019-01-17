@@ -1,20 +1,16 @@
+#include <Windows.h>
 
 #include "platform/windows/windowsWindow.h"
-#include "platform/windows/graphics/dx12/DX12.h"
 
-#include "SirEngine/events/appliacationEvent.h"
+#include "SirEngine/events/applicationEvent.h"
 #include "SirEngine/events/keyboardEvent.h"
 #include "SirEngine/events/mouseEvent.h"
 #include "SirEngine/log.h"
 
-#include "platform/windows/graphics/dx12/barrierUtils.h"
+#include <windowsx.h>
+
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/swapChain.h"
-
-#include "imgui/imgui.h"
-#include "platform/windows/graphics/dx12/imgui_impl_dx12.h"
-
-#include <windowsx.h>
 
 namespace SirEngine {
 
@@ -42,6 +38,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT umessage, WPARAM wparam,
     ASSERT_CALLBACK_AND_DISPATCH(closeEvent);
     return 0;
   }
+  case WM_CHAR: {
+    // You can also use ToAscii()+GetKeyboardState() to retrieve characters.
+    if (wparam > 0 && wparam < 0x10000) {
+      KeyTypeEvent e{static_cast<unsigned int>(wparam)};
+      ASSERT_CALLBACK_AND_DISPATCH(e);
+    }
+    return 0;
+  }
 
   case WM_SIZE: {
     // the reason for this check is because the window call a resize immediately
@@ -55,7 +59,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT umessage, WPARAM wparam,
     }
     return 0;
   }
-    // Check if a key has been pressed on the keyboard.
+// Check if a key has been pressed on the keyboard.
   case WM_KEYDOWN: {
     // repeated key message not supported as differentiator for now,
     // if I wanted to do that seems like bit 30 of lparam is the one
@@ -101,9 +105,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT umessage, WPARAM wparam,
     return 0;
   }
   case WM_MOUSEWHEEL: {
-    float movementX = static_cast<float>(GET_WHEEL_DELTA_WPARAM(wparam));
+    float movementY = static_cast<float>(GET_WHEEL_DELTA_WPARAM(wparam));
     // side tilt of the scroll currently not supported, always 0.0f
-    MouseScrollEvent e{movementX, 0.0f};
+    MouseScrollEvent e{ 0.0f,movementY};
     ASSERT_CALLBACK_AND_DISPATCH(e);
     return 0;
   }
@@ -242,154 +246,9 @@ WindowsWindow::WindowsWindow(const WindowProps &props) {
   m_fontTextureDescriptor = new dx12::D3DBuffer();
   m_descriptorIndex = dx12::DX12Handles::globalCBVSRVUAVheap->reserveDescriptor(
       m_fontTextureDescriptor);
-
-  ImGui_ImplDX12_Init(dx12::DX12Handles::device, 1, DXGI_FORMAT_R8G8B8A8_UNORM,
-                      m_fontTextureDescriptor->cpuDescriptorHandle,
-                      m_fontTextureDescriptor->gpuDescriptorHandle);
 }
 
-void WindowsWindow::render() {
-  // Clear the back buffer and depth buffer.
-  float gray[4] = {0.5f, 0.9f, 0.5f, 1.0f};
-  // Reuse the memory associated with command recording.
-  // We can only reset when the associated command lists have finished execution
-  // on the GPU.
-  resetAllocatorAndList(dx12::DX12Handles::commandList);
-  // Indicate a state transition on the resource usage.
-  auto *commandList = dx12::DX12Handles::commandList->commandList;
-  D3D12_RESOURCE_BARRIER rtbarrier[1];
-
-  int rtcounter = dx12::transitionTexture2DifNeeded(
-      dx12::DX12Handles::swapChain->currentBackBuffer(),
-      D3D12_RESOURCE_STATE_RENDER_TARGET, rtbarrier, 0);
-  if (rtcounter != 0) {
-    commandList->ResourceBarrier(rtcounter, rtbarrier);
-  }
-
-  // Set the viewport and scissor rect.  This needs to be reset whenever the
-  // command list is reset.
-  commandList->RSSetViewports(1, dx12::DX12Handles::swapChain->getViewport());
-  commandList->RSSetScissorRects(
-      1, dx12::DX12Handles::swapChain->getScissorRect());
-
-  // Clear the back buffer and depth buffer.
-  commandList->ClearRenderTargetView(
-      dx12::DX12Handles::swapChain->currentBackBufferView(), gray, 0, nullptr);
-
-  dx12::DX12Handles::swapChain->clearDepth();
-  dx12::SwapChain *swapChain = dx12::DX12Handles::swapChain;
-  // Specify the buffers we are going to render to.
-  auto back = swapChain->currentBackBufferView();
-  auto depth = swapChain->getDepthCPUDescriptor();
-  commandList->OMSetRenderTargets(1, &back, true, &depth);
-  //&m_depthStencilBufferResource.cpuDescriptorHandle);
-  auto* heap = dx12::DX12Handles::globalCBVSRVUAVheap->getResource();
-  commandList->SetDescriptorHeaps(1, &heap);
-
-
-
-  ImGui_ImplDX12_NewFrame();
-
-  ImGuiIO &io = ImGui::GetIO();
-  IM_ASSERT(io.Fonts->IsBuilt() &&
-            "Font atlas not built! It is generally built by the renderer "
-            "back-end. Missing call to renderer _NewFrame() function? e.g. "
-            "ImGui_ImplOpenGL3_NewFrame().");
-
-  io.DisplaySize = ImVec2((float)(1280), (float)(720));
-
-  bool show_demo_window = true;
-  bool show_another_window = false;
-  ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-  ImGui::NewFrame();
-  // ImGui::ShowDemoWindow(&show_demo_window);
-  static float f = 0.0f;
-  static int counter = 0;
-
-  ImGui::Begin("Hello, world!"); // Create a window called "Hello, world!" and
-                                 // append into it.
-
-  ImGui::Text("This is some useful text."); // Display some text (you can use
-                                            // a format strings too)
-  ImGui::Checkbox(
-      "Demo Window",
-      &show_demo_window); // Edit bools storing our window open/close state
-  ImGui::Checkbox("Another Window", &show_demo_window);
-
-  ImGui::SliderFloat("float", &f, 0.0f,
-                     1.0f); // Edit 1 float using a slider from 0.0f to 1.0f
-  ImGui::ColorEdit3(
-      "clear color",
-      (float *)&clear_color); // Edit 3 floats representing a color
-
-  if (ImGui::Button("Button")) // Buttons return true when clicked (most
-                               // widgets return true when edited/activated)
-    counter++;
-  ImGui::SameLine();
-  ImGui::Text("counter = %d", counter);
-
-  ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
-              1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-  ImGui::End();
-
-  // Rendering
-  // FrameContext *frameCtxt = WaitForNextFrameResources();
-  // UINT backBufferIdx = g_pSwapChain->GetCurrentBackBufferIndex();
-  // frameCtxt->CommandAllocator->Reset();
-
-  // D3D12_RESOURCE_BARRIER barrier = {};
-  // barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-  // barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-  // barrier.Transition.pResource = g_mainRenderTargetResource[backBufferIdx];
-  // barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-  // barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
-  // barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
-
-  // g_pd3dCommandList->Reset(frameCtxt->CommandAllocator, NULL);
-  // g_pd3dCommandList->ResourceBarrier(1, &barrier);
-  // g_pd3dCommandList->ClearRenderTargetView(
-  //    g_mainRenderTargetDescriptor[backBufferIdx], (float *)&clear_color, 0,
-  //    NULL);
-  // g_pd3dCommandList->OMSetRenderTargets(
-  //    1, &g_mainRenderTargetDescriptor[backBufferIdx], FALSE, NULL);
-  // g_pd3dCommandList->SetDescriptorHeaps(1, &g_pd3dSrvDescHeap);
-  ImGui::Render();
-  ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(),
-                                dx12::DX12Handles::commandList->commandList);
-  // barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
-  // barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
-  // g_pd3dCommandList->ResourceBarrier(1, &barrier);
-  // g_pd3dCommandList->Close();
-
-  // g_pd3dCommandQueue->ExecuteCommandLists(
-  //    1, (ID3D12CommandList *const *)&g_pd3dCommandList);
-
-  // g_pSwapChain->Present(1, 0); // Present with vsync
-  //// g_pSwapChain->Present(0, 0); // Present without vsync
-
-  // UINT64 fenceValue = g_fenceLastSignaledValue + 1;
-  // g_pd3dCommandQueue->Signal(g_fence, fenceValue);
-  // g_fenceLastSignaledValue = fenceValue;
-  // frameCtxt->FenceValue = fenceValue;
-
-  // finally transition the resource to be present
-  rtcounter =
-      dx12::transitionTexture2D(swapChain->currentBackBuffer(),
-                                D3D12_RESOURCE_STATE_PRESENT, rtbarrier, 0);
-  commandList->ResourceBarrier(rtcounter, rtbarrier);
-
-  // Done recording commands.
-  dx12::executeCommandList(dx12::DX12Handles::commandQueue,
-                           dx12::DX12Handles::commandList);
-
-  // swap the back and front buffers
-  swapChain->present();
-
-  // Wait until frame commands are complete.  This waiting is inefficient and is
-  // done for simplicity.  Later we will show how to organize our rendering code
-  // so we do not have to wait per frame.
-  dx12::flushCommandQueue(dx12::DX12Handles::commandQueue);
-}
+void WindowsWindow::render() {}
 
 void WindowsWindow::OnUpdate() {
 

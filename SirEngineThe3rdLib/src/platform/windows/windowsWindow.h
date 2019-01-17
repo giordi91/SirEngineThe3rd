@@ -1,12 +1,8 @@
 #pragma once
 #include "SirEngine/Window.h"
-#include <Windows.h>
 
 namespace SirEngine {
-namespace dx12 {
-class SwapChain;
-class D3DBuffer;
-} // namespace dx12
+
 class WindowsWindow : public Window {
 
 public:

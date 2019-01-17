@@ -12,3 +12,4 @@
 
 
 #define SET_BIT(x) 1 << x
+#define SE_BIND_EVENT_FN(fn) std::bind(&fn, this,std::placeholders::_1)

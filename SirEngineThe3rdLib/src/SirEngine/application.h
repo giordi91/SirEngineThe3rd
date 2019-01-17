@@ -2,7 +2,7 @@
 #include "Window.h"
 #include "core.h"
 
-#include "SirEngine/events/appliacationEvent.h"
+#include "SirEngine/events/applicationEvent.h"
 #include "SirEngine/events/event.h"
 #include "SirEngine/layerStack.h"
 namespace SirEngine {

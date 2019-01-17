@@ -147,6 +147,8 @@ bool initializeGraphics() {
   DX12Handles::globalDSVheap = new DescriptorHeap();
   DX12Handles::globalDSVheap->initializeAsDSV(20);
 
+
+
   return true;
 }
 } // namespace dx12

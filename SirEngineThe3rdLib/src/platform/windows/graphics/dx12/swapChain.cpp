@@ -40,7 +40,7 @@ bool SwapChain::initialize(HWND window, int width, int height) {
   DXGI_SWAP_CHAIN_DESC swapDesc;
   swapDesc.BufferDesc.Width = width;
   swapDesc.BufferDesc.Height = height;
-  swapDesc.BufferDesc.RefreshRate.Numerator = 60;
+  swapDesc.BufferDesc.RefreshRate.Numerator =0 ;
   swapDesc.BufferDesc.RefreshRate.Denominator = 1;
   swapDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
   swapDesc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
