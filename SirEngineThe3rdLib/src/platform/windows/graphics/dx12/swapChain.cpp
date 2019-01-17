@@ -50,7 +50,7 @@ bool SwapChain::initialize(HWND window, int width, int height) {
   swapDesc.SampleDesc.Quality = m_4xMsaaState ? m_msaaQuality - 1 : 0;
   swapDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
   // double buffering
-  swapDesc.BufferCount = 2;
+  swapDesc.BufferCount = 4;
   swapDesc.OutputWindow = window;
   swapDesc.Windowed = 1;
   swapDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
