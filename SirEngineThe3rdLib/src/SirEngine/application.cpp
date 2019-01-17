@@ -2,6 +2,8 @@
 #include "SirEngine/layer.h"
 #include "SirEngine/log.h"
 #include "layers/imguiLayer.h"
+#include "SirEngine/graphics/graphicsCore.h"
+#include <chrono>
 
 namespace SirEngine {
 
@@ -23,9 +25,12 @@ Application::~Application() {
 void Application::run() {
   while (m_run) {
     m_window->OnUpdate();
+	graphics::newFrame();
     for (Layer *l : m_layerStack) {
       l->onUpdate();
     }
+	graphics::dispatchFrame();
+	SE_CORE_INFO("FRAME");
   }
 }
 void Application::onEvent(Event &e) {
