@@ -13,9 +13,12 @@ public:
   void run();
 
   void onEvent(Event &e);
-  bool onCloseWindow(WindowCloseEvent &e);
   void pushLayer(Layer *layer);
   void pushOverlay(Layer *layer);
+
+private:
+  bool onCloseWindow(WindowCloseEvent &e);
+  bool onResizeWindow(WindowResizeEvent&e);
 
 private:
   Window *m_window = nullptr;

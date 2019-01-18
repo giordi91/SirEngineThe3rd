@@ -59,7 +59,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT umessage, WPARAM wparam,
     }
     return 0;
   }
-// Check if a key has been pressed on the keyboard.
+    // Check if a key has been pressed on the keyboard.
   case WM_KEYDOWN: {
     // repeated key message not supported as differentiator for now,
     // if I wanted to do that seems like bit 30 of lparam is the one
@@ -107,7 +107,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT umessage, WPARAM wparam,
   case WM_MOUSEWHEEL: {
     float movementY = static_cast<float>(GET_WHEEL_DELTA_WPARAM(wparam));
     // side tilt of the scroll currently not supported, always 0.0f
-    MouseScrollEvent e{ 0.0f,movementY};
+    MouseScrollEvent e{0.0f, movementY};
     ASSERT_CALLBACK_AND_DISPATCH(e);
     return 0;
   }
@@ -250,7 +250,7 @@ WindowsWindow::WindowsWindow(const WindowProps &props) {
 
 void WindowsWindow::render() {}
 
-void WindowsWindow::OnUpdate() {
+void WindowsWindow::onUpdate() {
 
   MSG msg;
   bool done = false;
@@ -268,6 +268,11 @@ void WindowsWindow::OnUpdate() {
 
   // do render
   render();
+}
+
+void WindowsWindow::onResize(unsigned int width, unsigned int height) {
+  m_data.width = width;
+  m_data.height = height;
 }
 
 unsigned int WindowsWindow::getWidth() const { return m_data.width; }
