@@ -10,8 +10,6 @@ Here a I will keep a chronological list of the progress:
 
 ##### Table of Contents  
 [0.1.0: basic window](#v010)  
-[Emphasis](#emphasis)  
-...snip...    
 
 ## 0.1.0 <a name="v010"/>
 This version is the most basic version of the engine, but starts to put togheter the foundation of the engine:
