@@ -16,3 +16,6 @@
 [submodule "vendors/json"]
 	path = vendors/json
 	url = https://github.com/giordi91/json.git
+[submodule "vendors/Catch2"]
+	path = vendors/Catch2
+	url = https://github.com/giordi91/Catch2.git
