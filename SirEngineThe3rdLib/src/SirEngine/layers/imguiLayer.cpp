@@ -7,6 +7,7 @@
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/imgui_impl_dx12.h"
+#include "SirEngine/globals.h"
 
 namespace SirEngine {
 void ImguiLayer::onAttach() {
@@ -48,6 +49,8 @@ void ImguiLayer::onAttach() {
 
   ::QueryPerformanceFrequency((LARGE_INTEGER *)&g_TicksPerSecond);
   ::QueryPerformanceCounter((LARGE_INTEGER *)&g_Time);
+
+  io.DisplaySize = ImVec2(Globals::SCREEN_WIDTH, Globals::SCREEN_HEIGHT);
 }
 
 void ImguiLayer::onDetach() {
@@ -74,7 +77,6 @@ void ImguiLayer::onUpdate() {
   io.KeyAlt = (::GetKeyState(VK_MENU) & 0x8000) != 0;
   io.KeySuper = false;
 
-  io.DisplaySize = ImVec2((float)(1280), (float)(720));
   ImGui_ImplDX12_NewFrame();
 
   IM_ASSERT(io.Fonts->IsBuilt() &&
