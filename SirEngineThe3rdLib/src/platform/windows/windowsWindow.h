@@ -8,7 +8,8 @@ class WindowsWindow : public Window {
 public:
   explicit WindowsWindow(const WindowProps &props);
   virtual ~WindowsWindow() = default;
-  void OnUpdate() override;
+  void onUpdate() override;
+  void onResize(unsigned int width, unsigned int height) override;
 
   unsigned int getWidth() const override;
   unsigned int getHeight() const override;

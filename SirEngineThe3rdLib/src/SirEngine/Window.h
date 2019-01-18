@@ -14,7 +14,8 @@ public:
   using EventCallbackFn = std::function<void(Event&)>;
 
   virtual ~Window() = default;
-  virtual void OnUpdate() = 0;
+  virtual void onUpdate() = 0;
+  virtual void onResize(unsigned int width, unsigned int height) = 0;
 
   virtual unsigned int getWidth() const = 0;
   virtual unsigned int getHeight() const = 0;

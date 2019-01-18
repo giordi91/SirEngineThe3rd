@@ -17,7 +17,7 @@ public:
   ~SwapChain();
   bool initialize(HWND window, int width, int height);
   inline IDXGISwapChain *getSwapChain() { return m_swapChain; }
-  bool resize(CommandList *command, int width, int height);
+  bool resize(FrameCommand *command, int width, int height);
 
    inline D3D12_CPU_DESCRIPTOR_HANDLE currentBackBufferView() {
     return m_swapChainBuffersResource[m_currentBackBuffer].getCPUDescriptor();
@@ -65,7 +65,7 @@ private:
 
   UINT m_currentBackBuffer = 0;
   // Hard-coded double buffering for the time being
-  static const UINT m_swapChainBufferCount = 2;
+  static const UINT m_swapChainBufferCount = 4;
 
   ID3D12Resource *m_swapChainBuffers = nullptr;
   Texture2D *m_swapChainBuffersResource = nullptr;
@@ -73,6 +73,7 @@ private:
 
   D3D12_VIEWPORT m_screenViewport;
   D3D12_RECT m_scissorRect;
+
 };
 } // namespace dx12
 } // namespace SirEngine

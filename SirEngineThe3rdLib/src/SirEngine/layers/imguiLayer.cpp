@@ -82,7 +82,6 @@ void ImguiLayer::onUpdate() {
             "back-end. Missing call to renderer _NewFrame() function? e.g. "
             "ImGui_ImplOpenGL3_NewFrame().");
 
-
   bool show_demo_window = true;
   bool show_another_window = false;
   ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
@@ -141,7 +140,6 @@ void ImguiLayer::onEvent(Event &event) {
       SE_BIND_EVENT_FN(ImguiLayer::OnKeyReleasedEvent));
   dispatcher.dispatch<WindowResizeEvent>(
       SE_BIND_EVENT_FN(ImguiLayer::OnWindowResizeEvent));
-
 }
 bool ImguiLayer::OnMouseButtonPressEvent(MouseButtonPressEvent &e) {
   ImGuiIO &io = ImGui::GetIO();
@@ -177,7 +175,14 @@ bool ImguiLayer::OnKeyReleasedEvent(KeyboardReleaseEvent &e) {
   io.KeysDown[e.getKeyCode()] = false;
   return false;
 }
-bool ImguiLayer::OnWindowResizeEvent(WindowResizeEvent &e) { return false; }
+bool ImguiLayer::OnWindowResizeEvent(WindowResizeEvent &e) {
+  ImGuiIO &io = ImGui::GetIO();
+  io.DisplaySize = ImVec2(e.getWidth(), e.getHeight());
+  io.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
+  ImGui_ImplDX12_InvalidateDeviceObjects();
+
+  return false;
+}
 bool ImguiLayer::OnKeyTypeEvent(KeyTypeEvent &e) {
   ImGuiIO &io = ImGui::GetIO();
   io.AddInputCharacter((unsigned short)e.getKeyCode());

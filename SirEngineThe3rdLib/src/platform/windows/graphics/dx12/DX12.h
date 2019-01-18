@@ -10,7 +10,7 @@ class Adapter;
 class DescriptorHeap;
 class SwapChain;
 
-struct CommandList {
+struct FrameCommand {
   ID3D12CommandAllocator *commandAllocator = nullptr;
 #if DXR_ENABLED
   ID3D12GraphicsCommandList4 *commandList = nullptr;
@@ -26,7 +26,7 @@ struct D3DBuffer {
   D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptorHandle;
 };
 
-inline HRESULT resetCommandList(CommandList *command) {
+inline HRESULT resetCommandList(FrameCommand *command) {
 
   assert(!command->isListOpen);
   HRESULT res = command->commandList->Reset(command->commandAllocator, nullptr);
@@ -36,7 +36,7 @@ inline HRESULT resetCommandList(CommandList *command) {
 }
 
 // should be used only at beginning of the frame
-inline HRESULT resetAllocatorAndList(CommandList *command) {
+inline HRESULT resetAllocatorAndList(FrameCommand *command) {
 
   assert(!command->isListOpen);
 
@@ -57,7 +57,7 @@ inline HRESULT resetAllocatorAndList(CommandList *command) {
 }
 
 inline bool executeCommandList(ID3D12CommandQueue *queue,
-                               CommandList *command) {
+                               FrameCommand *command) {
   assert(command->isListOpen);
   HRESULT res = command->commandList->Close();
   assert(SUCCEEDED(res) && "Error closing command list");
@@ -84,7 +84,7 @@ extern ID3D12Fence *fence;
 extern DescriptorHeap *globalCBVSRVUAVheap;
 extern DescriptorHeap *globalRTVheap;
 extern DescriptorHeap *globalDSVheap;
-extern CommandList *commandList;
+extern FrameCommand *commandList;
 extern SwapChain* swapChain;
 } // namespace DX12Handles
 

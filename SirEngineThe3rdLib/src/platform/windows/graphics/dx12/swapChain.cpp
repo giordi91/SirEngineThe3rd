@@ -40,7 +40,7 @@ bool SwapChain::initialize(HWND window, int width, int height) {
   DXGI_SWAP_CHAIN_DESC swapDesc;
   swapDesc.BufferDesc.Width = width;
   swapDesc.BufferDesc.Height = height;
-  swapDesc.BufferDesc.RefreshRate.Numerator =0 ;
+  swapDesc.BufferDesc.RefreshRate.Numerator = 0;
   swapDesc.BufferDesc.RefreshRate.Denominator = 1;
   swapDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
   swapDesc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
@@ -50,11 +50,12 @@ bool SwapChain::initialize(HWND window, int width, int height) {
   swapDesc.SampleDesc.Quality = m_4xMsaaState ? m_msaaQuality - 1 : 0;
   swapDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
   // double buffering
-  swapDesc.BufferCount = 4;
+  swapDesc.BufferCount = m_swapChainBufferCount;
   swapDesc.OutputWindow = window;
   swapDesc.Windowed = 1;
   swapDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-  swapDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+  swapDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH |
+                   DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
 
   // the reason why we pass a queue is because when the swap chain flushes uses
   // the queue
@@ -68,15 +69,15 @@ bool SwapChain::initialize(HWND window, int width, int height) {
   return true;
 }
 
-bool SwapChain::resize(CommandList *command, int width, int height) {
+bool SwapChain::resize(FrameCommand *command, int width, int height) {
 
   // Flush before changing any resources.
   // FlushCommandQueue();
-
+  flushCommandQueue(DX12Handles::commandQueue);
   // HRESULT result = m_commandList->Reset(m_commandAllocator.Get(), nullptr);
   resetCommandList(command);
   if (m_swapChainBuffersResource != nullptr) {
-    delete m_swapChainBuffersResource;
+    delete[] m_swapChainBuffersResource;
     m_swapChainBuffersResource = nullptr;
   }
 
@@ -93,7 +94,7 @@ bool SwapChain::resize(CommandList *command, int width, int height) {
   // Resize the swap chain.
   HRESULT result = m_swapChain->ResizeBuffers(
       m_swapChainBufferCount, width, height, m_backBufferFormat,
-      DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH);
+      DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH |DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING);
   assert(SUCCEEDED(result) && "failed to resize swap chain");
 
   // resetting the current back buffer

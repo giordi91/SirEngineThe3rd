@@ -17,14 +17,14 @@ DescriptorHeap *globalRTVheap = nullptr;
 DescriptorHeap *globalDSVheap = nullptr;
 UINT64 currentFence = 0;
 ID3D12Fence *fence = nullptr;
-CommandList *commandList = nullptr;
+FrameCommand *commandList = nullptr;
 SwapChain* swapChain = nullptr;
 } // namespace DX12Handles
 
 bool initializeGraphics() {
 
 // lets enable debug layer if needed
-#if defined(DEBUG) || defined(_DEBUG)
+//#if defined(DEBUG) || defined(_DEBUG)
   {
     HRESULT result =
         D3D12GetDebugInterface(IID_PPV_ARGS(&DX12Handles::debugController));
@@ -37,7 +37,7 @@ bool initializeGraphics() {
     //    m_debugController->QueryInterface(IID_PPV_ARGS(&debug1));
     //    debug1->SetEnableGPUBasedValidation(true);
   }
-#endif
+//#endif
 
   HRESULT result = CreateDXGIFactory1(IID_PPV_ARGS(&DX12Handles::dxiFactory));
   if (FAILED(result)) {
@@ -113,7 +113,7 @@ bool initializeGraphics() {
     return false;
   }
 
-  DX12Handles::commandList = new CommandList;
+  DX12Handles::commandList = new FrameCommand;
   result = DX12Handles::device->CreateCommandAllocator(
       D3D12_COMMAND_LIST_TYPE_DIRECT,
       IID_PPV_ARGS(&DX12Handles::commandList->commandAllocator));
@@ -142,10 +142,10 @@ bool initializeGraphics() {
   DX12Handles::globalCBVSRVUAVheap->initializeAsCBVSRVUAV(1000);
 
   DX12Handles::globalRTVheap = new DescriptorHeap();
-  DX12Handles::globalRTVheap->initializeAsRTV(20);
+  DX12Handles::globalRTVheap->initializeAsRTV(2000);
 
   DX12Handles::globalDSVheap = new DescriptorHeap();
-  DX12Handles::globalDSVheap->initializeAsDSV(20);
+  DX12Handles::globalDSVheap->initializeAsDSV(2000);
 
 
 

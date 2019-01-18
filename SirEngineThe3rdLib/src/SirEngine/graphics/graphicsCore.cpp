@@ -6,6 +6,11 @@
 
 namespace SirEngine {
 namespace graphics {
+void onResize(unsigned int width, unsigned int height) {
+
+  dx12::DX12Handles::swapChain->resize(dx12::DX12Handles::commandList, width,
+                                       height);
+}
 void newFrame() {
   // Clear the back buffer and depth buffer.
   float gray[4] = {0.5f, 0.9f, 0.5f, 1.0f};
