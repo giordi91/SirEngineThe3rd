@@ -1,5 +1,7 @@
 A dx12 game engine (kind of).
 
+Initially inspired by The Cherno project game engine series: https://www.youtube.com/user/TheChernoProject
+
 This is my attempt to a dx12 engine, this is my third iteration to a so called engine. 
 My first one was a poor Opengl viewport, then a more serious approach to a dx11 engine, but mostly geared toward getting stuff on screen quickly. 
 Finally this is my third attempt trying to use dx12. 
@@ -21,4 +23,3 @@ This version is the most basic version of the engine, but starts to put togheter
 * Started basic resource compiler for meshes
 
 ![alt text](./images/01_clearImgui.jpg "test")
-
