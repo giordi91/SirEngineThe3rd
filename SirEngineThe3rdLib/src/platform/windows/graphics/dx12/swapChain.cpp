@@ -94,7 +94,8 @@ bool SwapChain::resize(FrameCommand *command, int width, int height) {
   // Resize the swap chain.
   HRESULT result = m_swapChain->ResizeBuffers(
       m_swapChainBufferCount, width, height, m_backBufferFormat,
-      DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH |DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING);
+      DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH |
+          DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING);
   assert(SUCCEEDED(result) && "failed to resize swap chain");
 
   // resetting the current back buffer

@@ -5,6 +5,7 @@
 
 struct ID3D12Resource;
 namespace SirEngine {
+
 namespace dx12 {
 
 class Texture2D {
@@ -12,15 +13,13 @@ class Texture2D {
 public:
   Texture2D() = default;
   ~Texture2D();
-  bool initializeEmpty( int width, int height,
-                       DXGI_FORMAT format);
+  bool initializeEmpty(int width, int height, DXGI_FORMAT format);
 
-  bool initializeEmptyRT( int width,
-                         int height, DXGI_FORMAT format);
-  bool initializeFromResource( ID3D12Resource *resource, 
+  bool initializeEmptyRT(int width, int height, DXGI_FORMAT format);
+  bool initializeFromResource(ID3D12Resource *resource,
                               DXGI_FORMAT format = DXGI_FORMAT_R8G8B8A8_UNORM);
 
-  bool initializeRTFromResource( ID3D12Resource *resource);
+  bool initializeRTFromResource(ID3D12Resource *resource);
   void clear();
 
   inline ID3D12Resource *getResource() { return m_texture.resource; };

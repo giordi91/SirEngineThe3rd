@@ -1,15 +1,44 @@
 
+#include "platform/windows/graphics/dx12/texture2D.h"
+#include "SirEngine/log.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/d3dx12.h"
-#include "platform/windows/graphics/dx12/texture2D.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 
-namespace SirEngine{
+namespace SirEngine {
 namespace dx12 {
-Texture2D::~Texture2D() { clear(); }
-bool Texture2D::initializeEmpty( int width,
-                                int height, DXGI_FORMAT format) {
 
+inline void freeTextureDescriptor(D3DBuffer &buffer) {
+
+  if (buffer.descriptorType == DescriptorType::NONE) {
+    return;
+  }
+  switch (buffer.descriptorType) {
+  case (DescriptorType::CBV):
+  case (DescriptorType::SRV):
+  case (DescriptorType::UAV): {
+    dx12::DX12Handles::globalCBVSRVUAVheap->freeDescritpor(buffer);
+    break;
+  }
+  case (DescriptorType::RTV): {
+    dx12::DX12Handles::globalRTVheap->freeDescritpor(buffer);
+    break;
+  }
+  case (DescriptorType::DSV): {
+    dx12::DX12Handles::globalDSVheap->freeDescritpor(buffer);
+    break;
+  }
+  }
+}
+
+Texture2D::~Texture2D() {
+  clear();
+
+  // free the descriptor
+  freeTextureDescriptor(m_texture);
+  freeTextureDescriptor(m_textureSRV);
+}
+bool Texture2D::initializeEmpty(int width, int height, DXGI_FORMAT format) {
 
   // Create the output resource. The dimensions and format should match the
   // swap-chain.
@@ -33,9 +62,7 @@ bool Texture2D::initializeEmpty( int width,
   return true;
 }
 
-bool Texture2D::initializeEmptyRT( int width,
-                                  int height, DXGI_FORMAT format) {
-
+bool Texture2D::initializeEmptyRT(int width, int height, DXGI_FORMAT format) {
 
   // Create the output resource. The dimensions and format should match the
   // swap-chain.
@@ -56,11 +83,10 @@ bool Texture2D::initializeEmptyRT( int width,
   m_currentState = D3D12_RESOURCE_STATE_RENDER_TARGET;
 
   return true;
-
-
 }
 
-bool Texture2D::initializeFromResource( ID3D12Resource *resource, DXGI_FORMAT format) {
+bool Texture2D::initializeFromResource(ID3D12Resource *resource,
+                                       DXGI_FORMAT format) {
 
   m_texture.resource = resource;
   auto desc = resource->GetDesc();
@@ -70,10 +96,10 @@ bool Texture2D::initializeFromResource( ID3D12Resource *resource, DXGI_FORMAT fo
 
   return true;
 }
-bool Texture2D::initializeRTFromResource( ID3D12Resource *resource) {
+bool Texture2D::initializeRTFromResource(ID3D12Resource *resource) {
 
   m_texture.resource = resource;
-  createRTVSRV(DX12Handles::globalRTVheap,  &m_texture);
+  createRTVSRV(DX12Handles::globalRTVheap, &m_texture);
   m_currentState = D3D12_RESOURCE_STATE_PRESENT;
 
   return true;
@@ -83,5 +109,5 @@ void Texture2D::clear() {
     m_texture.resource->Release();
   }
 }
-} // namespace rendering
 } // namespace dx12
+} // namespace SirEngine
