@@ -8,7 +8,7 @@ namespace SirEngine {
 namespace graphics {
 void onResize(unsigned int width, unsigned int height) {
 
-  dx12::DX12Handles::swapChain->resize(dx12::DX12Handles::commandList, width,
+  dx12::DX12Handles::swapChain->resize(dx12::DX12Handles::frameCommand, width,
                                        height);
 }
 void newFrame() {
@@ -17,9 +17,9 @@ void newFrame() {
   // Reuse the memory associated with command recording.
   // We can only reset when the associated command lists have finished execution
   // on the GPU.
-  resetAllocatorAndList(dx12::DX12Handles::commandList);
+  resetAllocatorAndList(dx12::DX12Handles::frameCommand);
   // Indicate a state transition on the resource usage.
-  auto *commandList = dx12::DX12Handles::commandList->commandList;
+  auto *commandList = dx12::DX12Handles::frameCommand->commandList;
   D3D12_RESOURCE_BARRIER rtbarrier[1];
 
   int rtcounter = dx12::transitionTexture2DifNeeded(
@@ -56,12 +56,12 @@ void dispatchFrame() {
   int rtcounter = dx12::transitionTexture2D(
       dx12::DX12Handles::swapChain->currentBackBuffer(),
       D3D12_RESOURCE_STATE_PRESENT, rtbarrier, 0);
-  dx12::DX12Handles::commandList->commandList->ResourceBarrier(rtcounter,
+  dx12::DX12Handles::frameCommand->commandList->ResourceBarrier(rtcounter,
                                                                rtbarrier);
 
   // Done recording commands.
   dx12::executeCommandList(dx12::DX12Handles::commandQueue,
-                           dx12::DX12Handles::commandList);
+                           dx12::DX12Handles::frameCommand);
 
   // swap the back and front buffers
   dx12::DX12Handles::swapChain->present();

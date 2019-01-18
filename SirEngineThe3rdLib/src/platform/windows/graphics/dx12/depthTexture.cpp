@@ -4,7 +4,9 @@
 
 namespace SirEngine {
 namespace dx12 {
-DepthTexture::~DepthTexture() {}
+DepthTexture::~DepthTexture() {
+	dx12::DX12Handles::globalDSVheap->freeDescritpor(m_texture);
+}
 bool DepthTexture::initialize(int width, int height) {
 
   bool m_4xMsaaState = false;

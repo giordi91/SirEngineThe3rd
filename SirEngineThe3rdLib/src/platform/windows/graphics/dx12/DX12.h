@@ -20,10 +20,20 @@ struct FrameCommand {
   bool isListOpen = false;
 };
 
+enum class DescriptorType {
+	NONE = 0,
+	CBV = 1,
+	SRV = 2,
+	UAV = 4,
+	RTV = 8,
+	DSV = 16
+};
+
 struct D3DBuffer {
   ID3D12Resource *resource;
   D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptorHandle;
   D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptorHandle;
+  DescriptorType descriptorType;
 };
 
 inline HRESULT resetCommandList(FrameCommand *command) {
@@ -84,8 +94,8 @@ extern ID3D12Fence *fence;
 extern DescriptorHeap *globalCBVSRVUAVheap;
 extern DescriptorHeap *globalRTVheap;
 extern DescriptorHeap *globalDSVheap;
-extern FrameCommand *commandList;
-extern SwapChain* swapChain;
+extern FrameCommand *frameCommand;
+extern SwapChain *swapChain;
 } // namespace DX12Handles
 
 inline void flushCommandQueue(ID3D12CommandQueue *queue) {

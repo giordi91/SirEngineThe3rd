@@ -120,7 +120,7 @@ void ImguiLayer::onUpdate() {
 
   ImGui::Render();
   ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(),
-                                dx12::DX12Handles::commandList->commandList);
+                                dx12::DX12Handles::frameCommand->commandList);
 }
 
 void ImguiLayer::onEvent(Event &event) {

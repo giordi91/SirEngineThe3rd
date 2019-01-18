@@ -237,7 +237,7 @@ WindowsWindow::WindowsWindow(const WindowProps &props) {
   dx12::DX12Handles::swapChain = new dx12::SwapChain();
   dx12::DX12Handles::swapChain->initialize(m_hwnd, m_data.width, m_data.height);
   dx12::flushCommandQueue(dx12::DX12Handles::commandQueue);
-  dx12::DX12Handles::swapChain->resize(dx12::DX12Handles::commandList,
+  dx12::DX12Handles::swapChain->resize(dx12::DX12Handles::frameCommand,
                                        m_data.width, m_data.height);
 
   dx12::D3DBuffer *m_fontTextureDescriptor = nullptr;

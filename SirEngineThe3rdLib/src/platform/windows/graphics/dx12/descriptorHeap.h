@@ -1,5 +1,6 @@
 #pragma once
 #include "platform/windows/graphics/dx12/DX12.h"
+#include <vector>
 
 namespace SirEngine {
 namespace dx12 {
@@ -39,14 +40,28 @@ public:
     m_descriptorsAllocated = 0;
   }
 
+  inline UINT
+  findCPUDescriptorIndexFromHandle(D3D12_CPU_DESCRIPTOR_HANDLE handle) {
+    int idx = (handle.ptr - m_heap->GetCPUDescriptorHandleForHeapStart().ptr) /
+              m_descriptorSize;
+    return idx;
+  }
+
   UINT allocateDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE *cpuDescriptor,
                           UINT descriptorIndexToUse = UINT_MAX);
+  void freeDescritpor(D3DBuffer &handles) {
+    assert(handles.cpuDescriptorHandle.ptr != 0);
+    int idx = findCPUDescriptorIndexFromHandle(handles.cpuDescriptorHandle);
+    // freeing is just a matter of freeing up the index
+    // then it will get overritten
+    m_freeList[m_freeListIdx++] = idx;
+  }
 
   UINT createBufferSRV(D3DBuffer *buffer, UINT numElements, UINT elementSize);
 
   UINT createBufferCBV(D3DBuffer *buffer, int totalSizeInByte);
 
-  int reserveDescriptor(D3DBuffer* buffer);
+  int reserveDescriptor(D3DBuffer *buffer);
 
   UINT createTexture2DUAV(D3DBuffer *buffer, DXGI_FORMAT format);
   UINT createTexture2DSRV(D3DBuffer *buffer, DXGI_FORMAT format);
@@ -57,6 +72,10 @@ private:
   ID3D12DescriptorHeap *m_heap = nullptr;
   UINT m_descriptorSize = 0;
   D3D12_DESCRIPTOR_HEAP_TYPE m_type;
+
+  //
+  std::vector<unsigned int> m_freeList;
+  unsigned int m_freeListIdx = 0;
 };
 
 // this function are kept externally because refer to a particular type of

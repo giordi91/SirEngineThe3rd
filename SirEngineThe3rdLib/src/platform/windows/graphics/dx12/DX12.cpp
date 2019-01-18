@@ -17,7 +17,7 @@ DescriptorHeap *globalRTVheap = nullptr;
 DescriptorHeap *globalDSVheap = nullptr;
 UINT64 currentFence = 0;
 ID3D12Fence *fence = nullptr;
-FrameCommand *commandList = nullptr;
+FrameCommand *frameCommand = nullptr;
 SwapChain* swapChain = nullptr;
 } // namespace DX12Handles
 
@@ -113,23 +113,23 @@ bool initializeGraphics() {
     return false;
   }
 
-  DX12Handles::commandList = new FrameCommand;
+  DX12Handles::frameCommand = new FrameCommand;
   result = DX12Handles::device->CreateCommandAllocator(
       D3D12_COMMAND_LIST_TYPE_DIRECT,
-      IID_PPV_ARGS(&DX12Handles::commandList->commandAllocator));
+      IID_PPV_ARGS(&DX12Handles::frameCommand->commandAllocator));
   if (FAILED(result)) {
     return false;
   }
 
   result = DX12Handles::device->CreateCommandList(
       0, D3D12_COMMAND_LIST_TYPE_DIRECT,
-      DX12Handles::commandList->commandAllocator, nullptr,
-      IID_PPV_ARGS(&DX12Handles::commandList->commandList));
+      DX12Handles::frameCommand->commandAllocator, nullptr,
+      IID_PPV_ARGS(&DX12Handles::frameCommand->commandList));
   if (FAILED(result)) {
     return false;
   }
-  DX12Handles::commandList->commandList->Close();
-  DX12Handles::commandList->isListOpen = false;
+  DX12Handles::frameCommand->commandList->Close();
+  DX12Handles::frameCommand->isListOpen = false;
 
   result = DX12Handles::device->CreateFence(0, D3D12_FENCE_FLAG_NONE,
                                             IID_PPV_ARGS(&DX12Handles::fence));
@@ -142,10 +142,10 @@ bool initializeGraphics() {
   DX12Handles::globalCBVSRVUAVheap->initializeAsCBVSRVUAV(1000);
 
   DX12Handles::globalRTVheap = new DescriptorHeap();
-  DX12Handles::globalRTVheap->initializeAsRTV(2000);
+  DX12Handles::globalRTVheap->initializeAsRTV(20);
 
   DX12Handles::globalDSVheap = new DescriptorHeap();
-  DX12Handles::globalDSVheap->initializeAsDSV(2000);
+  DX12Handles::globalDSVheap->initializeAsDSV(20);
 
 
 
