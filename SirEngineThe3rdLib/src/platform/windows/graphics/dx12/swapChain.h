@@ -65,7 +65,7 @@ private:
 
   UINT m_currentBackBuffer = 0;
   // Hard-coded double buffering for the time being
-  static const UINT m_swapChainBufferCount = 4;
+  static const UINT m_swapChainBufferCount = 2;
 
   ID3D12Resource *m_swapChainBuffers = nullptr;
   Texture2D *m_swapChainBuffersResource = nullptr;

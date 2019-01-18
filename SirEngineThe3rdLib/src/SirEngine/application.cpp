@@ -1,9 +1,10 @@
 #include "SirEngine/application.h"
+#include "SirEngine/globals.h"
 #include "SirEngine/graphics/graphicsCore.h"
 #include "SirEngine/layer.h"
 #include "SirEngine/log.h"
 #include "layers/imguiLayer.h"
-#include "SirEngine/globals.h"
+#include "layers/graphics3DLayer.h"
 
 namespace SirEngine {
 
@@ -12,12 +13,14 @@ Application::Application() {
   m_window = Window::create();
   m_window->setEventCallback([this](Event &e) -> void { this->onEvent(e); });
 
-  layer = new ImguiLayer();
-  m_layerStack.pushLayer(layer);
+  imGuiLayer = new ImguiLayer();
+  graphicsLayer = new Graphics3DLayer();
+  m_layerStack.pushLayer(graphicsLayer);
+  //m_layerStack.pushLayer(imGuiLayer);
+  m_layerStack.pushOverlayLayer(imGuiLayer);
 }
 
 Application::~Application() {
-
   if (m_window != nullptr) {
     delete m_window;
   }
@@ -30,7 +33,6 @@ void Application::run() {
       l->onUpdate();
     }
     graphics::dispatchFrame();
-    SE_CORE_INFO("FRAME");
   }
 }
 void Application::onEvent(Event &e) {
@@ -42,8 +44,9 @@ void Application::onEvent(Event &e) {
   if (e.handled()) {
     return;
   }
-  dispatcher.dispatch<WindowResizeEvent>(
-      [this](WindowResizeEvent &e) -> bool { return (this->onResizeWindow(e)); });
+  dispatcher.dispatch<WindowResizeEvent>([this](WindowResizeEvent &e) -> bool {
+    return (this->onResizeWindow(e));
+  });
 
   for (auto it = m_layerStack.end(); it != m_layerStack.begin();) {
     (*--it)->onEvent(e);
@@ -56,14 +59,13 @@ bool Application::onCloseWindow(WindowCloseEvent &e) {
   m_run = false;
   return true;
 }
-bool Application::onResizeWindow(WindowResizeEvent & e)
-{
-	Globals::SCREEN_WIDTH = e.getWidth();
-	Globals::SCREEN_HEIGHT= e.getHeight();
+bool Application::onResizeWindow(WindowResizeEvent &e) {
+  Globals::SCREEN_WIDTH = e.getWidth();
+  Globals::SCREEN_HEIGHT = e.getHeight();
 
-	m_window->onResize(Globals::SCREEN_WIDTH, Globals::SCREEN_HEIGHT);
-	graphics::onResize(Globals::SCREEN_WIDTH, Globals::SCREEN_HEIGHT);
-	return true;
+  m_window->onResize(Globals::SCREEN_WIDTH, Globals::SCREEN_HEIGHT);
+  graphics::onResize(Globals::SCREEN_WIDTH, Globals::SCREEN_HEIGHT);
+  return true;
 }
 void Application::pushLayer(Layer *layer) { m_layerStack.pushLayer(layer); }
 void Application::pushOverlay(Layer *layer) {

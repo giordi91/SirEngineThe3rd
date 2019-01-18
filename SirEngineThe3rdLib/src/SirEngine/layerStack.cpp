@@ -21,6 +21,7 @@ void LayerStack::popLayer(Layer *layer) {
 }
 void LayerStack::pushOverlayLayer(Layer *layer) {
   m_layers.emplace_back(layer);
+  layer->onAttach();
 }
 void LayerStack::popOverlayLayer(Layer *layer) {
   auto it = std::find(m_layers.begin(), m_layers.end(), layer);
