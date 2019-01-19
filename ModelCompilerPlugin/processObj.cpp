@@ -1,16 +1,15 @@
-
 #define TINYOBJLOADER_IMPLEMENTATION
 
 #include "processObj.h"
+#include "SirEngine/fileUtils.h"
+#include "SirEngine/log.h"
+#include "resourceCompilerLib/jsonUtils.h"
 #include <DirectXMath.h>
+#include <fstream>
 #include <limits>
+#include <sstream>
 #include <unordered_map>
 #include <vector>
-#include "SirEngine/fileUtils.h"
-#include "nlohmann/json.hpp"
-#include <fstream>
-#include <sstream>
-#include "SirEngine/log.h"
 
 static const float VERTEX_DELTA = 0.00001f;
 struct VertexCompare {
@@ -89,39 +88,12 @@ struct equalsFunc {
     return lhs == rhs;
   }
 };
-inline nlohmann::json getJsonObj(std::string path) {
-
-  bool res = fileExists(path);
-  if (res) {
-    // let s open the stream
-    std::ifstream st(path);
-    std::stringstream s_buffer;
-    s_buffer << st.rdbuf();
-    std::string s_buff = s_buffer.str();
-
-    try {
-      // try to parse
-      nlohmann::json j_obj = nlohmann::json::parse(s_buff);
-      return j_obj;
-    } catch (...) {
-      // if not lets throw an error
-		SE_CORE_ERROR("Error parsing json file from path {0}", path);
-      auto ex = std::current_exception();
-      ex._RethrowException();
-      return nlohmann::json();
-    }
-  } else {
-    assert(0);
-    return nlohmann::json();
-  }
-}
 
 std::vector<float> loadTangents(std::string tan_path) {
   assert(fileExists(tan_path));
   nlohmann::json j_obj = getJsonObj(tan_path);
-  int sz = j_obj.size();
+  size_t sz = j_obj.size();
   // int buffer_size = vtx_ids_size * 3;
-  int buffer_size = sz;
   std::vector<float> temp_t;
   temp_t.resize(sz);
   int counter = 0;
@@ -136,10 +108,6 @@ std::vector<float> loadTangents(std::string tan_path) {
 void convertObjNoTangents(const tinyobj::attrib_t &attr,
                           const tinyobj::shape_t &shape, Model &model,
                           const std::string &skinPath) {
-
-  const float *const sourceVtx = attr.vertices.data();
-  const float *const sourceNorm = attr.normals.data();
-  const float *const sourceUv = attr.texcoords.data();
 
   // how it works:
   // first of all we need  to iterate over all the geometry, we expand all
@@ -156,7 +124,6 @@ void convertObjNoTangents(const tinyobj::attrib_t &attr,
   // Loop over faces(polygon)
   size_t index_offset = 0;
   int indexCount = 0;
-  int maxInt = std::numeric_limits<int>::max();
   for (size_t f = 0; f < shape.mesh.num_face_vertices.size(); f++) {
     int fv = shape.mesh.num_face_vertices[f];
     assert(fv == 3);
@@ -190,20 +157,17 @@ void convertObjNoTangents(const tinyobj::attrib_t &attr,
       indices.push_back(uniqueVertices[c]);
     }
     index_offset += fv;
-
-    // per-face material
-    // shapes[s].mesh.material_ids[f];
   }
 
   // model is loaded, lets copy data to output struct
-  int indicesCount = indices.size();
-  int vertexCompareCount = vertexData.size();
+  size_t indicesCount = indices.size();
+  size_t vertexCompareCount = vertexData.size();
 
   model.indices.resize(indicesCount);
   model.vertices.resize(vertexCompareCount * 16);
-  model.vertexCount = vertexCompareCount;
+  model.vertexCount = static_cast<int>(vertexCompareCount);
   model.strideInByte = sizeof(float) * 16;
-  model.triangleCount = shape.mesh.num_face_vertices.size();
+  model.triangleCount = static_cast<int>(shape.mesh.num_face_vertices.size());
 
   memcpy(model.vertices.data(), vertexData.data(),
          vertexCompareCount * 16 * sizeof(float));
@@ -216,14 +180,10 @@ void convertObj(const tinyobj::attrib_t &attr, const tinyobj::shape_t &shape,
 
   if (tangentsPath.empty()) {
     convertObjNoTangents(attr, shape, model, skinPath);
-	return;
+    return;
   }
 
-  //here we need to process a model wich has tangents
-  const float *const sourceVtx = attr.vertices.data();
-  const float *const sourceNorm = attr.normals.data();
-  const float *const sourceUv = attr.texcoords.data();
-
+  // here we need to process a model which has tangents
   std::vector<float> tangents = loadTangents(tangentsPath);
 
   // how it works:
@@ -241,7 +201,6 @@ void convertObj(const tinyobj::attrib_t &attr, const tinyobj::shape_t &shape,
   // Loop over faces(polygon)
   size_t index_offset = 0;
   int indexCount = 0;
-  int maxInt = std::numeric_limits<int>::max();
   for (size_t f = 0; f < shape.mesh.num_face_vertices.size(); f++) {
     int fv = shape.mesh.num_face_vertices[f];
     assert(fv == 3);
@@ -281,14 +240,14 @@ void convertObj(const tinyobj::attrib_t &attr, const tinyobj::shape_t &shape,
   }
 
   // model is loaded, lets copy data to output struct
-  int indicesCount = indices.size();
-  int vertexCompareCount = vertexData.size();
+  size_t indicesCount = indices.size();
+  size_t vertexCompareCount = vertexData.size();
 
   model.indices.resize(indicesCount);
   model.vertices.resize(vertexCompareCount * 16);
-  model.vertexCount = vertexCompareCount;
+  model.vertexCount = static_cast<int>(vertexCompareCount);
   model.strideInByte = sizeof(float) * 16;
-  model.triangleCount = shape.mesh.num_face_vertices.size();
+  model.triangleCount = static_cast<int>(shape.mesh.num_face_vertices.size());
 
   memcpy(model.vertices.data(), vertexData.data(),
          vertexCompareCount * 16 * sizeof(float));

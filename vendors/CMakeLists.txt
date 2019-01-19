@@ -7,8 +7,7 @@ file(COPY "cxxopts/include/cxxopts.hpp" DESTINATION "${CMAKE_SOURCE_DIR}/Resourc
 
 file(COPY "cxxopts/include/cxxopts.hpp" DESTINATION "${CMAKE_SOURCE_DIR}/ModelCompilerPlugin/vendors/includes/cxxopts" )
 file(COPY "tinyobjloader/tiny_obj_loader.h" DESTINATION "${CMAKE_SOURCE_DIR}/ModelCompilerPlugin/vendors/includes/tinyobjloader" )
-file(COPY "json/include/nlohmann" DESTINATION "${CMAKE_SOURCE_DIR}/ModelCompilerPlugin/vendors/includes" )
-file(COPY "json/include/nlohmann" DESTINATION "${CMAKE_SOURCE_DIR}/ResourceCompiler/vendors/includes" )
+file(COPY "json/include/nlohmann" DESTINATION "${CMAKE_SOURCE_DIR}/ResourceCompilerLib/vendors/includes" )
 
 
 add_subdirectory(imgui)

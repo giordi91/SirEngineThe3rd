@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.13.0)
 project(ResourceCompilerLib)   
 
     #looking for  files
-    file(GLOB_RECURSE SOURCE_FILES "ResourceCompilerLib/*.cpp" "ResourceCompilerLib/*.h")
+    file(GLOB_RECURSE SOURCE_FILES "src/resourceCompilerLib/*.cpp" "src/resourceCompilerLib/*.h")
 
     message (STATUS ${CMAKE_CURRENT_SOURCE_DIR})
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/vendors/includes
