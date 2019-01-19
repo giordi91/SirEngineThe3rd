@@ -30,3 +30,8 @@ inline const std::string getFileName(const std::string &path) {
 inline bool fileExists(const std::string &name) {
   return std::experimental::filesystem::exists(name);
 }
+inline bool filePathExists(const std::string &name) {
+	std::experimental::filesystem::path path(name);
+	std::experimental::filesystem::path parent= path.parent_path();
+	return std::experimental::filesystem::exists(parent);
+}

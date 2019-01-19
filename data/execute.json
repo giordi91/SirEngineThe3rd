@@ -1,0 +1,6 @@
+{
+  "commands": 
+    [
+      "-p data/meshes/armorChest.obj -o data/processed/armorChest.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  data/meshes/armorChest.tangents\""
+    ]
+}

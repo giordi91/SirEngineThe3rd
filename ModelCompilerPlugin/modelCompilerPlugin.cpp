@@ -58,7 +58,8 @@ bool processModel(const std::string &assetPath, const std::string &outputPath,
     SE_CORE_ERROR("[Model Compiler] : could not find path/file {0}", assetPath);
   }
 
-  exits = fileExists(outputPath);
+  exits = filePathExists(outputPath);
+  std::cout << "outputPath " << outputPath << std::endl;
   if (!exits) {
     SE_CORE_ERROR("[Model Compiler] : could not find path/file {0}",
                   outputPath);
@@ -85,7 +86,7 @@ bool processModel(const std::string &assetPath, const std::string &outputPath,
 
   std::experimental::filesystem::path inp(assetPath);
   const std::string fileName = inp.stem().string().c_str();
-  const std::string outFilePath = outputPath + "/" + fileName + ".model";
+  const std::string outFilePath = outputPath;
   request.outPath = outFilePath.c_str();
 
   // need to merge indices and vertices

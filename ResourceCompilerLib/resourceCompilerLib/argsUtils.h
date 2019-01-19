@@ -7,7 +7,7 @@
 
 // regex used to pars plugin arguments
 static const std::regex
-    ARGS_REGEX("(--[a-zA-Z]+)|(\\.*\\.*[_:/a-zA-Z]+\\.[a-zA-Z]+)");
+    ARGS_REGEX("(--*[a-zA-Z]+)|(\\.*\\.*[_:/a-zA-Z]+\\.[a-zA-Z]+)|([a-zA-Z]+)|(\".+\")");
 
 struct SplitArgs {
   int argc = -1;
