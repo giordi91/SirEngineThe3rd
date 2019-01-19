@@ -4,9 +4,9 @@
 #include "cxxopts/cxxopts.hpp"
 #include <iostream>
 
-#include "resourceCompilerLib/argsUtils.h"
 #include "SirEngine/binary/binaryFile.h"
 #include "processObj.h"
+#include "resourceCompilerLib/argsUtils.h"
 #include "tinyobjloader/tiny_obj_loader.h"
 #include <filesystem>
 const std::string PLUGIN_NAME = "modelCompilerPlugin";
@@ -20,9 +20,8 @@ struct ModelMapperData {
   unsigned int strideInByte;
 };
 
-
-void processArgs(const std::string args, std::string& tangentPath, std::string& skinPath)
-{
+void processArgs(const std::string args, std::string &tangentPath,
+                 std::string &skinPath) {
   // lets get arguments like they were from commandline
   auto v = splitArgs(args);
   // lets build the options
@@ -34,20 +33,18 @@ void processArgs(const std::string args, std::string& tangentPath, std::string& 
   char **argv = v.argv.get();
   auto result = options.parse(v.argc, argv);
 
-  int c = result.count("tangents");
-  if (c) {
+  if (result.count("tangents")) {
     tangentPath = result["tangents"].as<std::string>();
   }
-  if (result.count("skin")) {
-    skinPath= result["skin"].as<std::string>();
+  if (result.count("skin") != 0) {
+    skinPath = result["skin"].as<std::string>();
   }
-
 }
 
 bool processModel(const std::string &assetPath, const std::string &outputPath,
                   const std::string &args) {
 
-  //processing plugins args 
+  // processing plugins args
   std::string tangentsPath = "";
   std::string skinPath = "";
   processArgs(args, tangentsPath, skinPath);
@@ -65,7 +62,7 @@ bool processModel(const std::string &assetPath, const std::string &outputPath,
                   outputPath);
   }
 
-  //loading the obj
+  // loading the obj
   tinyobj::attrib_t attr;
   std::vector<tinyobj::shape_t> shapes;
   std::vector<tinyobj::material_t> materials;
@@ -74,8 +71,12 @@ bool processModel(const std::string &assetPath, const std::string &outputPath,
   std::string err;
   bool ret = tinyobj::LoadObj(&attr, &shapes, &materials, &warn, &err,
                               assetPath.c_str());
+  if (!ret) {
+    SE_CORE_ERROR("Error in parsing obj file {0}", assetPath);
+    return false ;
+  }
 
-  //processing the model so that is ready for the GPU 
+  // processing the model so that is ready for the GPU
   Model model;
   convertObj(attr, shapes[0], model, tangentsPath, skinPath);
 
@@ -92,9 +93,9 @@ bool processModel(const std::string &assetPath, const std::string &outputPath,
   // need to merge indices and vertices
   std::vector<float> data;
   int floatVertexCount = model.vertexCount * 16;
-  int indicesCount = model.indices.size();
-  int totalSizeFloat = floatVertexCount + indicesCount;
-  int totalSizeByte = totalSizeFloat * sizeof(float);
+  size_t indicesCount = model.indices.size();
+  size_t totalSizeFloat = floatVertexCount + indicesCount;
+  size_t totalSizeByte = totalSizeFloat * sizeof(float);
 
   data.resize(totalSizeFloat);
   memcpy(data.data(), model.vertices.data(), floatVertexCount * sizeof(float));
@@ -105,7 +106,8 @@ bool processModel(const std::string &assetPath, const std::string &outputPath,
   request.bulkDataSizeInBtye = totalSizeByte;
 
   ModelMapperData mapperData;
-  mapperData.indexDataSizeInByte = indicesCount * sizeof(float);
+  mapperData.indexDataSizeInByte =
+      static_cast<unsigned int>(indicesCount * sizeof(float));
   mapperData.vertexDataSizeInByte = floatVertexCount * sizeof(float);
   mapperData.strideInByte = 16 * sizeof(float);
   request.mapperData = &mapperData;

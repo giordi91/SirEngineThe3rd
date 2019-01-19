@@ -1,7 +1,6 @@
 #include "SirEngine/fileUtils.h"
 #include "cxxopts/cxxopts.hpp"
-#include "nlohmann/json.hpp"
-#include <fstream>
+#include "resourceCompilerLib/jsonUtils.h"
 
 #include "SirEngine/log.h"
 #include "resourceCompilerLib/argsUtils.h"
@@ -33,50 +32,24 @@ const std::string getExecutablePath() {
   auto exp_path = std::experimental::filesystem::path(path);
   return exp_path.parent_path().string();
 }
-inline nlohmann::json getJsonObj(std::string path) {
-
-  bool res = fileExists(path);
-  if (res) {
-    // let s open the stream
-    std::ifstream st(path);
-    std::stringstream s_buffer;
-    s_buffer << st.rdbuf();
-    std::string s_buff = s_buffer.str();
-
-    try {
-      // try to parse
-      nlohmann::json j_obj = nlohmann::json::parse(s_buff);
-      return j_obj;
-    } catch (...) {
-      // if not lets throw an error
-      SE_CORE_ERROR("Error parsing json file from path {0}", path);
-      auto ex = std::current_exception();
-      ex._RethrowException();
-      return nlohmann::json();
-    }
-  } else {
-    assert(0);
-    return nlohmann::json();
-  }
-}
 
 inline std::string getPluginsArgs(const cxxopts::ParseResult &result) {
   const std::string &args = result["pluginArgs"].as<std::string>();
   // lest smake sure it does not start or ends with a quote
   int start = 0;
-  int end = args.length()-1;
+  int end = static_cast<int>(args.length() - 1);
   if (args[0] == '"') {
     ++start;
   }
   if (args[args.length() - 1] == '"') {
     --end;
   }
-  std::string out= args.substr(start, end);
+  std::string out = args.substr(start, end);
   return out;
 }
 void executeFromArgs(const cxxopts::ParseResult &result) {
-  int countIn = result.count("filePath");
-  int countOut = result.count("outPath");
+  size_t countIn = result.count("filePath");
+  size_t countOut = result.count("outPath");
   if (countIn == 0) {
     SE_CORE_ERROR("No filePath provided");
     return;
@@ -92,7 +65,7 @@ void executeFromArgs(const cxxopts::ParseResult &result) {
 
   const std::string name = result["pluginName"].as<std::string>();
 
-  int plugArgsCount = result.count("pluginArgs");
+  size_t plugArgsCount = result.count("pluginArgs");
   std::string args = "";
   if (plugArgsCount != 0) {
     args = getPluginsArgs(result);
@@ -105,8 +78,7 @@ void executeFromArgs(const cxxopts::ParseResult &result) {
   func(fpath, opath, args);
 }
 
-void executeFile(const std::string &compilerPath,
-                 const cxxopts::ParseResult &result) {
+void executeFile(const cxxopts::ParseResult &result) {
   const std::string executeFile = result["execute"].as<std::string>();
   const nlohmann::json jobj = getJsonObj(executeFile);
 
@@ -119,8 +91,8 @@ void executeFile(const std::string &compilerPath,
       SplitArgs args = splitArgs(cs);
       auto options = getCxxOptions();
       char **argv = args.argv.get();
-      auto result = options.parse(args.argc, argv);
-      executeFromArgs(result);
+      auto pluginResult = options.parse(args.argc, argv);
+      executeFromArgs(pluginResult);
     }
 
   } else {
@@ -143,10 +115,10 @@ int main(int argc, char *argv[]) {
 
   const cxxopts::ParseResult result = options.parse(argc, argv);
 
-  int executeCount = result.count("execute");
+  size_t executeCount = result.count("execute");
 
   if (executeCount) {
-    executeFile(basePath, result);
+    executeFile(result);
   } else {
     executeFromArgs(result);
   }

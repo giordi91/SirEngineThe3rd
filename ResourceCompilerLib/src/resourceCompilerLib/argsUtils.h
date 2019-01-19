@@ -35,7 +35,7 @@ SplitArgs splitArgs(const std::string &args) {
     ++it;
   }
 
-  sp.argc = sp.storage->size();
+  sp.argc = static_cast<int>(sp.storage->size());
   sp.argv = std::make_unique<char *[]>(sp.argc + 1);
 
   // now that we splitted the strings we are going to extract the
