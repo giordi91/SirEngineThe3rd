@@ -27,10 +27,9 @@ project(ShaderCompilerPlugin)
     #adding the executable
     add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES} ${INCLUDES_FILES})
 
-	#setting the pluging folder in the solution
+	#setting the plug-in folder in the solution
 	set_target_properties (${PROJECT_NAME} PROPERTIES
-    FOLDER plugins
-)
+    FOLDER plugins)
 
     #message (STATUS  ${CMAKE_RUNTIME_OUTPUT_DIRECTORY} SHIT)
 	target_link_libraries(${PROJECT_NAME} SirEngineThe3rdLib ResourceCompilerLib dxcompiler.lib  DXGI.lib D3D12.lib)
