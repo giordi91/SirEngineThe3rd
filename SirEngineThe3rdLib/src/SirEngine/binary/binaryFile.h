@@ -56,11 +56,29 @@ WriteBinaryFileStatus writeBinaryFile(const BinaryFileWriteRequest &request) {
   BinaryFileHeader header;
   header.fileType = request.fileType;
   header.version = request.version;
-  header.mapperDataOffsetInByte = sizeof(BinaryFileHeader) + request.bulkDataSizeInBtye;
-  //lets write the header
-  myFile.write((const char*)&header, sizeof(header));
-  myFile.write((const char*)request.bulkData, request.bulkDataSizeInBtye);
-  myFile.write((const char*)request.mapperData, request.mapperDataSizeInByte);
+  header.mapperDataOffsetInByte =
+      sizeof(BinaryFileHeader) + request.bulkDataSizeInBtye;
+  // lets write the header
+  myFile.write((const char *)&header, sizeof(header));
+  myFile.write((const char *)request.bulkData, request.bulkDataSizeInBtye);
+  myFile.write((const char *)request.mapperData, request.mapperDataSizeInByte);
   myFile.close();
   return WriteBinaryFileStatus::SUCCESS;
 }
+
+void readAllBytes(const std::string &filename, std::vector<char> &data) {
+  bool res = fileExists(filename);
+  std::ifstream ifs(filename, std::ios::binary | std::ios::ate);
+  std::ifstream::pos_type pos = ifs.tellg();
+
+  data.resize(pos);
+
+  ifs.seekg(0, std::ios::beg);
+  ifs.read(data.data(), pos);
+}
+
+struct ModelMapperData {
+  unsigned int vertexDataSizeInByte;
+  unsigned int indexDataSizeInByte;
+  unsigned int strideInByte;
+};
