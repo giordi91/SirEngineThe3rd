@@ -11,6 +11,8 @@ project(Tests)
 						${CMAKE_CURRENT_SOURCE_DIR}
 						${CMAKE_SOURCE_DIR}/SirEngineThe3rdLib/src
 						${CMAKE_SOURCE_DIR}/SirEngineThe3rdLib/vendors/includes
+						${CMAKE_SOURCE_DIR}/ResourceCompilerLib/src
+						${CMAKE_SOURCE_DIR}/ResourceCompilerLib/vendors/includes
 	)
 
 	#lets add specific windows build definitions
