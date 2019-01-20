@@ -1,7 +1,7 @@
 #include "resourcePlugin.h"
 
-#include "SirEngine/log.h"
 #include "SirEngine/fileUtils.h"
+#include "SirEngine/log.h"
 #include <cassert>
 
 const std::string SHARED_LIBRARY_EXTENSION = "dll";
@@ -27,6 +27,23 @@ void PluginRegistry::loadPlugin(const std::string &dllPath) {
       }
     }
     FreeLibrary(loadedDLL);
+  } else {
+    SE_CORE_ERROR("Could not load dll: {0}", dllPath);
+    DWORD error = GetLastError();
+    // Get the error message, if any.
+    DWORD errorMessageID = ::GetLastError();
+    LPSTR messageBuffer = nullptr;
+    size_t size = FormatMessageA(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
+            FORMAT_MESSAGE_IGNORE_INSERTS,
+        NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+        (LPSTR)&messageBuffer, 0, NULL);
+
+    std::string message(messageBuffer, size);
+	SE_CORE_ERROR("DLL load error: {0}", message);
+
+    // Free the buffer.
+    LocalFree(messageBuffer);
   }
 }
 
