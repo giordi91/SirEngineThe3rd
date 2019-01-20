@@ -121,6 +121,7 @@ void convertObjNoTangents(const tinyobj::attrib_t &attr,
   std::vector<int> indices;
   std::vector<VertexCompare> vertexData;
 
+
   // Loop over faces(polygon)
   size_t index_offset = 0;
   int indexCount = 0;
@@ -144,8 +145,6 @@ void convertObjNoTangents(const tinyobj::attrib_t &attr,
       c.t.x = 0.0f;
       c.t.y = 0.0f;
       c.t.z = 0.0f;
-
-      assert(f < maxInt);
 
       // if the vertex is not in the map, it means is unique
       // and needs to be added and is a valid ne vertex in the vertex buffer
@@ -222,7 +221,6 @@ void convertObj(const tinyobj::attrib_t &attr, const tinyobj::shape_t &shape,
       c.t.y = tangents[3 * idx.vertex_index + 1];
       c.t.z = tangents[3 * idx.vertex_index + 2];
 
-      assert(f < maxInt);
 
       // if the vertex is not in the map, it means is unique
       // and needs to be added and is a valid ne vertex in the vertex buffer

@@ -12,7 +12,6 @@
 namespace SirEngine {
 void ImguiLayer::onAttach() {
   // need to initialize ImGui dx12
-
   assert(m_fontTextureDescriptor == nullptr);
   m_fontTextureDescriptor = new dx12::D3DBuffer();
   m_descriptorIndex = dx12::DX12Handles::globalCBVSRVUAVheap->reserveDescriptor(

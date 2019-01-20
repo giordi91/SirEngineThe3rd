@@ -5,6 +5,7 @@
 //#include "SirEngine/events/mouseEvent.h"
 #include "SirEngine/graphics/camera.h"
 #include "SirEngine/layer.h"
+#include "platform/windows/graphics/dx12/mesh.h"
 namespace SirEngine {
 
 namespace dx12 {
@@ -31,5 +32,7 @@ private:
   // bool OnWindowResizeEvent(WindowResizeEvent &e);
   // bool OnKeyTypeEvent(KeyTypeEvent &e);
   Camera3dPivot *m_camera;
+  dx12::Dx12RaytracingMesh m_mesh;
+
 };
 } // namespace SirEngine

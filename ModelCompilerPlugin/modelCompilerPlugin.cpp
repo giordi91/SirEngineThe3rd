@@ -14,12 +14,6 @@ const unsigned int versionMajor = 0;
 const unsigned int versionMinor = 1;
 const unsigned int versionPatch = 0;
 
-struct ModelMapperData {
-  unsigned int vertexDataSizeInByte;
-  unsigned int indexDataSizeInByte;
-  unsigned int strideInByte;
-};
-
 void processArgs(const std::string args, std::string &tangentPath,
                  std::string &skinPath) {
   // lets get arguments like they were from commandline
