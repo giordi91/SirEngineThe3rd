@@ -77,8 +77,18 @@ void readAllBytes(const std::string &filename, std::vector<char> &data) {
   ifs.read(data.data(), pos);
 }
 
+enum BinaryFileType {
+  MODEL = 1,
+  SHADER = 2
+};
+
 struct ModelMapperData {
   unsigned int vertexDataSizeInByte;
   unsigned int indexDataSizeInByte;
   unsigned int strideInByte;
+};
+
+struct ShaderMapperData {
+  unsigned int shaderType;
+  unsigned int shaderSizeInBtye;
 };

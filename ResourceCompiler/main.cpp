@@ -9,6 +9,7 @@
 #include <filesystem>
 #include <iostream>
 
+
 inline cxxopts::Options getCxxOptions() {
   cxxopts::Options options("ResourceCompiler 1.0",
                            "Converts assets in game ready binary blob");
@@ -73,7 +74,11 @@ void executeFromArgs(const cxxopts::ParseResult &result) {
 
   PluginRegistry *registry = PluginRegistry::getInstance();
   ResourceProcessFunction func = registry->getFunction(name);
-  assert(func != nullptr);
+  if (func == nullptr) {
+    SE_CORE_ERROR("Resource compiler: could not find requested plugin {0}",
+                  name);
+    return;
+  }
 
   func(fpath, opath, args);
 }

@@ -2,7 +2,6 @@
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
 #include "cxxopts/cxxopts.hpp"
-#include <iostream>
 
 #include "SirEngine/binary/binaryFile.h"
 #include "processObj.h"
@@ -50,7 +49,6 @@ bool processModel(const std::string &assetPath, const std::string &outputPath,
   }
 
   exits = filePathExists(outputPath);
-  std::cout << "outputPath " << outputPath << std::endl;
   if (!exits) {
     SE_CORE_ERROR("[Model Compiler] : could not find path/file {0}",
                   outputPath);
@@ -76,7 +74,7 @@ bool processModel(const std::string &assetPath, const std::string &outputPath,
 
   // writing binary file
   BinaryFileWriteRequest request;
-  request.fileType = 1;
+  request.fileType = BinaryFileType::MODEL;
   request.version = ((versionMajor << 16) | (versionMinor << 8) | versionPatch);
 
   std::experimental::filesystem::path inp(assetPath);
@@ -108,6 +106,8 @@ bool processModel(const std::string &assetPath, const std::string &outputPath,
   request.mapperDataSizeInByte = sizeof(ModelMapperData);
 
   writeBinaryFile(request);
+
+  SE_CORE_INFO("Model successfully compiled ---> {0}", outputPath);
   return true;
 }
 

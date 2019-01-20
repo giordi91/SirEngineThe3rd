@@ -1,9 +1,8 @@
 cmake_minimum_required(VERSION 3.13.0)
 
-project(ModelCompilerPlugin)   
+project(ShaderCompilerPlugin)   
 
 	set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-
 
     #looking for  files
     file(GLOB_RECURSE SOURCE_FILES "*.cpp" "*.h")
@@ -27,21 +26,23 @@ project(ModelCompilerPlugin)
 
     #adding the executable
     add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES} ${INCLUDES_FILES})
-	set_target_properties (ModelCompilerPlugin PROPERTIES
+
+	#setting the pluging folder in the solution
+	set_target_properties (${PROJECT_NAME} PROPERTIES
     FOLDER plugins
 )
 
     #message (STATUS  ${CMAKE_RUNTIME_OUTPUT_DIRECTORY} SHIT)
-	target_link_libraries(${PROJECT_NAME} SirEngineThe3rdLib ResourceCompilerLib)
+	target_link_libraries(${PROJECT_NAME} SirEngineThe3rdLib ResourceCompilerLib dxcompiler.lib  DXGI.lib D3D12.lib)
 
 	#This madness is needed because in order to have a plugin folder inside the 
 	#output dir, I have to do a post copy, by default on windows it adds a Debug/Release 
 	#after you build it. putting plugins in the wrong folder, might need to put this
 	#being a if(WIN32)
 	add_custom_command(
-    TARGET ModelCompilerPlugin 
+    TARGET ${PROJECT_NAME} 
     POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy
-        $<TARGET_FILE:ModelCompilerPlugin>
-        ${CMAKE_BINARY_DIR}/bin/$<CONFIGURATION>/plugins/$<TARGET_FILE_NAME:ModelCompilerPlugin>
+        $<TARGET_FILE:${PROJECT_NAME}>
+        ${CMAKE_BINARY_DIR}/bin/$<CONFIGURATION>/plugins/$<TARGET_FILE_NAME:${PROJECT_NAME}>
 	)
