@@ -6,6 +6,10 @@
 #include "SirEngine/graphics/camera.h"
 #include "SirEngine/layer.h"
 #include "platform/windows/graphics/dx12/mesh.h"
+#include "platform/windows/graphics/dx12/shaderManager.h"
+#include "platform/windows/graphics/dx12/rootSignatureManager.h"
+#include "platform/windows/graphics/dx12/PSOManager.h"
+#include "platform/windows/graphics/dx12/shaderLayout.h"
 namespace SirEngine {
 
 namespace dx12 {
@@ -33,6 +37,10 @@ private:
   // bool OnKeyTypeEvent(KeyTypeEvent &e);
   Camera3dPivot *m_camera;
   dx12::Dx12RaytracingMesh m_mesh;
+  temp::rendering::ShaderManager* m_shaderManager;
+  temp::rendering::RootSignatureManager* m_root;
+  temp::rendering::ShadersLayoutRegistry* m_reg;
+  temp::rendering::PSOManager* m_pso;
 
 };
 } // namespace SirEngine

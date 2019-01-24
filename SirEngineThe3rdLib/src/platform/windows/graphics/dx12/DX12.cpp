@@ -7,7 +7,12 @@
 namespace SirEngine {
 namespace dx12 {
 namespace DX12Handles {
-ID3D12Device4 *device = nullptr;
+
+#if DXR_ENABLED
+ID3D12Device5 *device;
+#else
+ID3D12Device4 *device;
+#endif
 ID3D12Debug *debugController = nullptr;
 IDXGIFactory6 *dxiFactory = nullptr;
 Adapter *adapter = nullptr;
