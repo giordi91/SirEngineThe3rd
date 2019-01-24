@@ -1,5 +1,9 @@
 #pragma once
 #include <filesystem>
+#include <fstream>
+#include <sstream>
+#include "nlohmann/json.hpp"
+#include <iostream>
 
 // NOTE: requires c++17 filesystem
 inline void listFilesInFolder(const char *folder_path,
@@ -34,4 +38,41 @@ inline bool filePathExists(const std::string &name) {
 	std::experimental::filesystem::path path(name);
 	std::experimental::filesystem::path parent= path.parent_path();
 	return std::experimental::filesystem::exists(parent);
+}
+
+template <typename T>
+T getValueIfInJson(const nlohmann::json &data, const std::string &key,
+                   const T &default_value) {
+  if (data.find(key) != data.end()) {
+    return data[key].get<T>();
+  }
+  return default_value;
+}
+
+inline nlohmann::json get_json_obj(std::string path) {
+
+  bool res = fileExists(path);
+  if (res) {
+    // let s open the stream
+    std::ifstream st(path);
+    std::stringstream s_buffer;
+    s_buffer << st.rdbuf();
+    std::string s_buff = s_buffer.str();
+
+    try {
+      // try to parse
+      nlohmann::json j_obj = nlohmann::json::parse(s_buff);
+      return j_obj;
+    } catch (...) {
+      // if not lets throw an error
+      std::cout << "ERROR, in parsing json file at path: \n"
+                << path << std::endl;
+      auto ex = std::current_exception();
+      ex._RethrowException();
+      return nlohmann::json();
+    }
+  } else {
+    assert(0);
+    return nlohmann::json();
+  }
 }
