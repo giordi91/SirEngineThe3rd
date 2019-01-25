@@ -30,11 +30,11 @@ const std::unordered_map<std::string, ROOT_TYPES> m_stringToRootType{
     {"SRV", ROOT_TYPES::SRV},
     {"CBV", ROOT_TYPES::CBV}};
 
-const std::unordered_map<std::string, temp::rendering::ROOT_FILE_TYPE>
+const std::unordered_map<std::string, SirEngine::dx12::ROOT_FILE_TYPE>
     m_stringToRootFileType{
-        {"RASTER", temp::rendering::ROOT_FILE_TYPE::RASTER},
-        {"COMPUTE", temp::rendering::ROOT_FILE_TYPE::COMPUTE},
-        {"DXR", temp::rendering::ROOT_FILE_TYPE::DXR},
+        {"RASTER", SirEngine::dx12::ROOT_FILE_TYPE::RASTER},
+        {"COMPUTE", SirEngine::dx12::ROOT_FILE_TYPE::COMPUTE},
+        {"DXR", SirEngine::dx12::ROOT_FILE_TYPE::DXR},
     };
 
 ROOT_TYPES
@@ -46,13 +46,13 @@ getTypeEnum(const std::string &type) {
   assert(0 && "could not convert root type from string to enum");
   return ROOT_TYPES::NULL_TYPE;
 }
-temp::rendering::ROOT_FILE_TYPE getFileTypeEnum(const std::string &type) {
+SirEngine::dx12::ROOT_FILE_TYPE getFileTypeEnum(const std::string &type) {
   auto found = m_stringToRootFileType.find(type);
   if (found != m_stringToRootFileType.end()) {
     return found->second;
   }
   assert(0 && "could not convert root type from string to enum");
-  return temp::rendering::ROOT_FILE_TYPE::NULL_TYPE;
+  return SirEngine::dx12::ROOT_FILE_TYPE::NULL_TYPE;
 }
 
 void processSRV(nlohmann::json &jobj, CD3DX12_ROOT_PARAMETER &param) {
@@ -247,7 +247,7 @@ void processSignatureFile(const char *path, std::vector<ResultRoot> &blobs) {
       }
     }
 
-    temp::rendering::ROOT_FILE_TYPE fileTypeEnum = getFileTypeEnum(fileType);
+    SirEngine::dx12::ROOT_FILE_TYPE fileTypeEnum = getFileTypeEnum(fileType);
     ID3DBlob *blob = serializeAndCreateRaytracingRootSignature(
         globalRootSignatureDesc, &rootSig);
     blobs.emplace_back(ResultRoot{name, blob, fileTypeEnum});

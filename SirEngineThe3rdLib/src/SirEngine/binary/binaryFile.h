@@ -1,11 +1,11 @@
 #pragma once
+#include "SirEngine/core.h"
 #include "SirEngine/fileUtils.h"
-#include <fstream>
 
 struct BinaryFileHeader {
-  unsigned int fileType;
-  unsigned int version;
-  size_t mapperDataOffsetInByte;
+  unsigned int fileType = 0;
+  unsigned int version = 0;
+  size_t mapperDataOffsetInByte =0;
 };
 
 /*
@@ -50,48 +50,49 @@ struct BinaryFileWriteRequest {
 
 enum WriteBinaryFileStatus { SUCCESS };
 
-inline WriteBinaryFileStatus
-writeBinaryFile(const BinaryFileWriteRequest &request) {
+WriteBinaryFileStatus SIR_ENGINE_API
+writeBinaryFile(const BinaryFileWriteRequest &request); 
 
-  std::ofstream myFile(request.outPath, std::ios::out | std::ios::binary);
-  BinaryFileHeader header;
-  header.fileType = request.fileType;
-  header.version = request.version;
-  header.mapperDataOffsetInByte =
-      sizeof(BinaryFileHeader) + request.bulkDataSizeInBtye;
-  // lets write the header
-  myFile.write((const char *)&header, sizeof(header));
-  myFile.write((const char *)request.bulkData, request.bulkDataSizeInBtye);
-  myFile.write((const char *)request.mapperData, request.mapperDataSizeInByte);
-  myFile.close();
-  return WriteBinaryFileStatus::SUCCESS;
+bool SIR_ENGINE_API readAllBytes(const std::string &filename, std::vector<char> &data);
+
+
+#define BINARY_FILE_TYPES\
+    X(NONE) \
+    X(MODEL) \
+    X(SHADER) \
+    X(RS)
+
+enum BinaryFileType { NONE = 0, MODEL = 1, SHADER = 2, RS=3 };
+
+SIR_ENGINE_API
+extern const std::unordered_map<BinaryFileType,std::string> m_binaryFileTypeToString;
+
+
+inline std::string getBinaryFileTypeName(BinaryFileType type)
+{
+	auto found = m_binaryFileTypeToString.find(type);
+	if(found != m_binaryFileTypeToString.end())
+	{
+		return found->second;
+	}
+	return "";
 }
 
-inline void readAllBytes(const std::string &filename, std::vector<char> &data) {
-  bool res = fileExists(filename);
-  std::ifstream ifs(filename, std::ios::binary | std::ios::ate);
-  std::ifstream::pos_type pos = ifs.tellg();
-
-  data.resize(pos);
-
-  ifs.seekg(0, std::ios::beg);
-  ifs.read(data.data(), pos);
-}
-
-enum BinaryFileType { MODEL = 1, SHADER = 2 };
-
-struct ModelMapperData {
+struct ModelMapperData final
+{
   unsigned int vertexDataSizeInByte = 0;
   unsigned int indexDataSizeInByte = 0;
   unsigned int strideInByte = 0;
 };
 
-struct ShaderMapperData {
+struct ShaderMapperData final
+{
   unsigned int shaderType = 0;
   unsigned int shaderSizeInBtye = 0;
 };
 
-struct RootSignatureMappedData {
+struct RootSignatureMappedData final
+{
   unsigned int type = 0;
   unsigned int sizeInByte = 0;
 };

@@ -48,7 +48,7 @@ private:
   //Camera3dPivot *m_camera;
   dx12::Dx12RaytracingMesh m_mesh;
   temp::rendering::ShaderManager* m_shaderManager;
-  temp::rendering::RootSignatureManager* m_root;
+  dx12::RootSignatureManager* m_root;
   temp::rendering::ShadersLayoutRegistry* m_reg;
   temp::rendering::PSOManager* m_pso;
   temp::system::ConstantBuffer m_camBuffer;

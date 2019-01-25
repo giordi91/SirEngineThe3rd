@@ -32,8 +32,7 @@ void Graphics3DLayer::onAttach() {
   m_shaderManager->loadShadersInFolder("data/processed/shaders/rasterization");
   //m_shaderManager->loadShadersInFolder("data/shaders/rasterization");
 
-  m_root = new temp::rendering::RootSignatureManager();
-  m_root->init(dx12::DX12Handles::device);
+  m_root = new dx12::RootSignatureManager();
   //m_root->loadSingaturesInFolder("data/rs");
   m_root->loadSingaturesInFolder("data/processed/rs");
 

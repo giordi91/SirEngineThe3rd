@@ -5,13 +5,14 @@
 #include "nlohmann/json.hpp"
 #include <iostream>
 
+
 // NOTE: requires c++17 filesystem
-inline void listFilesInFolder(const char *folder_path,
-                              std::vector<std::string> &file_paths,
+inline void listFilesInFolder(const char *folderPath,
+                              std::vector<std::string> &filePaths,
                               std::string extension = "NONE") {
   bool shouldFilter = extension != "NONE";
   std::string _extension = "." + extension;
-  auto program_p = std::experimental::filesystem::path(folder_path);
+  auto program_p = std::experimental::filesystem::path(folderPath);
   auto dir_it = std::experimental::filesystem::directory_iterator(program_p);
   for (auto p : dir_it) {
     bool is_dir = std::experimental::filesystem::is_directory(p);
@@ -22,7 +23,7 @@ inline void listFilesInFolder(const char *folder_path,
         continue;
       }
       auto f_path = std::string(path.native().begin(), path.native().end());
-      file_paths.push_back(f_path);
+      filePaths.push_back(f_path);
     }
   }
 }
@@ -61,13 +62,13 @@ inline nlohmann::json get_json_obj(std::string path) {
   if (res) {
     // let s open the stream
     std::ifstream st(path);
-    std::stringstream s_buffer;
-    s_buffer << st.rdbuf();
-    std::string s_buff = s_buffer.str();
+    std::stringstream sBuffer;
+    sBuffer << st.rdbuf();
+    std::string sBuffStr = sBuffer.str();
 
     try {
       // try to parse
-      nlohmann::json j_obj = nlohmann::json::parse(s_buff);
+      nlohmann::json j_obj = nlohmann::json::parse(sBuffStr);
       return j_obj;
     } catch (...) {
       // if not lets throw an error
