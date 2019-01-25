@@ -28,7 +28,7 @@ public:
       return found->second;
     }
     assert(0 && "could not find requested root signature in register");
-    return nullptr;
+	return nullptr;
   }
 
 private:

@@ -30,10 +30,8 @@ void Graphics3DLayer::onAttach() {
   m_shaderManager = new temp::rendering::ShaderManager();
   m_shaderManager->init();
   m_shaderManager->loadShadersInFolder("data/processed/shaders/rasterization");
-  //m_shaderManager->loadShadersInFolder("data/shaders/rasterization");
 
   m_root = new dx12::RootSignatureManager();
-  //m_root->loadSingaturesInFolder("data/rs");
   m_root->loadSingaturesInFolder("data/processed/rs");
 
   m_reg = new temp::rendering::ShadersLayoutRegistry();
