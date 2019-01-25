@@ -146,7 +146,7 @@ void convertObjNoTangents(const tinyobj::attrib_t &attr,
       c.t.z = 0.0f;
 
       // if the vertex is not in the map, it means is unique
-      // and needs to be added and is a valid ne vertex in the vertex buffer
+      // and needs to be added and is a valid vertex in the vertex buffer
       if (uniqueVertices.count(c) == 0) {
         uniqueVertices[c] = indexCount++;
         vertexData.push_back(c);
@@ -221,7 +221,7 @@ void convertObj(const tinyobj::attrib_t &attr, const tinyobj::shape_t &shape,
       c.t.z = tangents[3 * idx.vertex_index + 2];
 
       // if the vertex is not in the map, it means is unique
-      // and needs to be added and is a valid ne vertex in the vertex buffer
+      // and needs to be added and is a valid vertex in the vertex buffer
       if (uniqueVertices.count(c) == 0) {
         uniqueVertices[c] = indexCount++;
         vertexData.push_back(c);
