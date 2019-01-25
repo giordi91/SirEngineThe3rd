@@ -10,9 +10,9 @@
 #include <filesystem>
 
 const std::string PLUGIN_NAME = "shaderCompilerPlugin";
-const unsigned int versionMajor = 0;
-const unsigned int versionMinor = 1;
-const unsigned int versionPatch = 0;
+const unsigned int VERSION_MAJOR = 0;
+const unsigned int VERSION_MINOR = 1;
+const unsigned int VERSION_PATCH = 0;
 
 LPCWSTR COMPILATION_FLAGS_DEBUG[] = {L"/Zi", L"/Od"};
 LPCWSTR COMPILATION_FLAGS[] = {L"/O3"};
@@ -141,7 +141,7 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
   //save the file by building a binary request
   BinaryFileWriteRequest request;
   request.fileType = BinaryFileType::SHADER;
-  request.version = ((versionMajor << 16) | (versionMinor << 8) | versionPatch);
+  request.version = ((VERSION_MAJOR << 16) | (VERSION_MINOR << 8) | VERSION_PATCH);
 
   // writing binary file
   std::experimental::filesystem::path inp(assetPath);

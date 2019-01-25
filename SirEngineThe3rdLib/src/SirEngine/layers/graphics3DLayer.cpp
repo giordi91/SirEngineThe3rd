@@ -34,7 +34,8 @@ void Graphics3DLayer::onAttach() {
 
   m_root = new temp::rendering::RootSignatureManager();
   m_root->init(dx12::DX12Handles::device);
-  m_root->loadSingaturesInFolder("data/rs");
+  //m_root->loadSingaturesInFolder("data/rs");
+  m_root->loadSingaturesInFolder("data/processed/rs");
 
   m_reg = new temp::rendering::ShadersLayoutRegistry();
 
@@ -66,9 +67,9 @@ void Graphics3DLayer::onUpdate() {
       DirectX::XMMatrixTranspose(Globals::mainCamera->getMVP(DirectX::XMMatrixIdentity()));
   m_camBuffer.update(&m_camBufferCPU);
 
-  auto* pso = m_pso->getComputePSOByName("simpleMeshPSO.json");
+  auto* pso = m_pso->getComputePSOByName("simpleMeshPSO");
   commandList->SetPipelineState(pso);
-  auto* rs = m_root->getRootSignatureFromName("simpleMesh_RS");
+  auto* rs = m_root->getRootSignatureFromName("simpleMeshRS");
   commandList->SetGraphicsRootSignature(rs);
   auto vview = m_mesh.getVertexBufferView();
   auto iview = m_mesh.getIndexBufferView();

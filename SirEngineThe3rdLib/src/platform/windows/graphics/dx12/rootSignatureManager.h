@@ -12,11 +12,13 @@ struct ID3D12RootSignature;
 struct D3D12_ROOT_SIGNATURE_DESC;
 struct ID3D12Device;
 
-namespace temp{
+namespace temp {
 namespace rendering {
 
-class RootSignatureManager 
-{
+enum class ROOT_FILE_TYPE { RASTER = 0, COMPUTE = 1, DXR = 2, NULL_TYPE };
+
+class RootSignatureManager {
+
   enum class ROOT_TYPES {
     CONSTANT,
     DESCRIPTOR_TABLE,
@@ -34,6 +36,7 @@ public:
   void init(ID3D12Device *device);
   void cleanup();
   void loadSingaturesInFolder(const char *directory);
+  void loadSignatureBinaryFile(const char* directory);
   void clear();
   inline ID3D12RootSignature *getRootSignatureFromName(const char *name) {
     auto found = m_rootRegister.find(name);
@@ -86,4 +89,4 @@ private:
   static const std::unordered_map<std::string, ROOT_TYPES> m_stringToRootType;
 };
 } // namespace rendering
-} // namespace dx12
+} // namespace temp
