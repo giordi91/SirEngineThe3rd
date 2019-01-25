@@ -31,6 +31,7 @@ public:
   ShaderManager(const ShaderManager &) = delete;
   ShaderManager &operator=(const ShaderManager &) = delete;
   void loadShaderFile(const char *path);
+  void loadShaderBinaryFile(const char *path);
 
 private:
   // data caching

@@ -156,16 +156,30 @@ void Dx12RaytracingMesh::loadFromFile(ID3D12Device *device,
 
   // lets get the vertex data
   float *vertexData = (float *)(data.data() + sizeof(BinaryFileHeader));
-  float *indexData = (float *)(data.data() + sizeof(BinaryFileHeader) +
+  int*indexData = (int*)(data.data() + sizeof(BinaryFileHeader) +
                                mapper->vertexDataSizeInByte);
 
-  m_defaultVertex = createDefaultBuffer(DX12Handles::device,
-                      DX12Handles::frameCommand->commandList, vertexData,
-                      sz * m_stride * sizeof(float), m_uploadVertex);
-  m_defaultIndex= createDefaultBuffer(DX12Handles::device,
-                      DX12Handles::frameCommand->commandList, indexData,
-                      render_index_size * sizeof(int), m_uploadIndex);
+  m_indexCount = render_index_size;
+  m_defaultVertex = createDefaultBuffer(
+      DX12Handles::device, DX12Handles::frameCommand->commandList, vertexData,
+      sz * m_stride * sizeof(float), m_uploadVertex);
+  m_defaultIndex = createDefaultBuffer(
+      DX12Handles::device, DX12Handles::frameCommand->commandList, indexData,
+      render_index_size * sizeof(int), m_uploadIndex);
+  
+  m_bufferVS.resource = m_defaultVertex.Get();
+  m_bufferIDX.resource = m_defaultIndex.Get();
 
+  heap->createBufferSRV(
+      &(m_bufferIDX),
+      getIndexCount() 
+           // getIndexCount return the numeber of 16 bit elements,
+            // srv expect the 32 bit number of elements, so dividing by 2
+      ,
+      sizeof(int));
+  m_vertexCount = sz;
+  m_vertexSize = m_stride;
+  heap->createBufferSRV(&(m_bufferVS), getVertexCount(), getVertexSize());
   // m_vertexBuffer = getVertexBuffer(sz * m_stride * sizeof(float),
   // vertexData); m_indexBuffer = getIndexBuffer(render_index_size *
   // sizeof(int), indexData);

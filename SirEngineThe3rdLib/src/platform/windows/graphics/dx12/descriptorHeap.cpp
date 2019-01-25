@@ -152,6 +152,7 @@ UINT DescriptorHeap::createBufferSRV(D3DBuffer *buffer, UINT numElements,
 
     srvDesc.Format = DXGI_FORMAT_R32_TYPELESS;
     srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_RAW;
+    srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
     srvDesc.Buffer.StructureByteStride = 0;
 
   } else {

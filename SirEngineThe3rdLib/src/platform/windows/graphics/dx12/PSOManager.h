@@ -21,7 +21,7 @@ class PSOManager
 
 public:
   virtual ~PSOManager() = default;
-  void init(ID3D12Device5 *device, ShadersLayoutRegistry*,RootSignatureManager*,ShaderManager* );
+  void init(ID3D12Device4 *device, ShadersLayoutRegistry*,RootSignatureManager*,ShaderManager* );
   void cleanup();
   void loadPSOInFolder(const char *directory);
 
@@ -50,20 +50,20 @@ public:
 
 private:
   void loadPSOFile(const char *path);
-  void processDXRPSO(nlohmann::json &jobj, const std::string &path);
+  //void processDXRPSO(nlohmann::json &jobj, const std::string &path);
   void processComputePSO(nlohmann::json &jobj, const std::string &path);
   void processRasterPSO(nlohmann::json &jobj, const std::string &path);
-  void processHitGrops(nlohmann::json &jobj, CD3DX12_STATE_OBJECT_DESC &pipe);
-  void processPayload(nlohmann::json &jobj, CD3DX12_STATE_OBJECT_DESC &pipe);
-  void processLocalRootSignatures(nlohmann::json &jobj,
-                                  CD3DX12_STATE_OBJECT_DESC &pipe);
+  //void processHitGrops(nlohmann::json &jobj, CD3DX12_STATE_OBJECT_DESC &pipe);
+  //void processPayload(nlohmann::json &jobj, CD3DX12_STATE_OBJECT_DESC &pipe);
+  //void processLocalRootSignatures(nlohmann::json &jobj,
+  //                                CD3DX12_STATE_OBJECT_DESC &pipe);
   void processGlobalRootSignature(nlohmann::json &jobj,
                                   CD3DX12_STATE_OBJECT_DESC &pipe);
   void processPipelineConfig(nlohmann::json &jobj,
                              CD3DX12_STATE_OBJECT_DESC &pipe);
 
 private:
-  ID3D12Device5 *m_dxrDevice = nullptr;
+  ID3D12Device4 *m_dxrDevice = nullptr;
   std::unordered_map<std::string, ID3D12StateObject *> m_psoDXRRegister;
   std::unordered_map<std::string, ID3D12PipelineState *> m_psoRegister;
 
