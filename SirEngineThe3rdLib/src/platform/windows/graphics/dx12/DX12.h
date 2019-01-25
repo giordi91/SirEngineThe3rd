@@ -10,7 +10,8 @@ class Adapter;
 class DescriptorHeap;
 class SwapChain;
 
-struct FrameCommand {
+struct FrameCommand final
+{
   ID3D12CommandAllocator *commandAllocator = nullptr;
 #if DXR_ENABLED
   ID3D12GraphicsCommandList4 *commandList = nullptr;
