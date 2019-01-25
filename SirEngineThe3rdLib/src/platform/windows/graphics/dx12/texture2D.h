@@ -45,7 +45,7 @@ private:
   D3DBuffer m_texture;
   D3DBuffer m_textureSRV;
   D3D12_RESOURCE_STATES m_currentState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-};
+		};
 
 } // namespace dx12
 } // namespace SirEngine

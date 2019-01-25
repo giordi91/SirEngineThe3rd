@@ -9,9 +9,9 @@
 #include "tinyobjloader/tiny_obj_loader.h"
 #include <filesystem>
 const std::string PLUGIN_NAME = "modelCompilerPlugin";
-const unsigned int versionMajor = 0;
-const unsigned int versionMinor = 1;
-const unsigned int versionPatch = 0;
+const unsigned int VERSION_MAJOR = 0;
+const unsigned int VERSION_MINOR = 1;
+const unsigned int VERSION_PATCH = 0;
 
 void processArgs(const std::string args, std::string &tangentPath,
                  std::string &skinPath) {
@@ -75,7 +75,7 @@ bool processModel(const std::string &assetPath, const std::string &outputPath,
   // writing binary file
   BinaryFileWriteRequest request;
   request.fileType = BinaryFileType::MODEL;
-  request.version = ((versionMajor << 16) | (versionMinor << 8) | versionPatch);
+  request.version = ((VERSION_MAJOR << 16) | (VERSION_MINOR << 8) | VERSION_PATCH);
 
   std::experimental::filesystem::path inp(assetPath);
   const std::string fileName = inp.stem().string().c_str();

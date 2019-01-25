@@ -1,11 +1,13 @@
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
+#include "SirEngine/binary/binaryFile.h"
 #include "SirEngine/fileUtils.h"
-#include "platform/windows/graphics/dx12/d3dx12.h"
 #include "nlohmann/json.hpp"
+#include "platform/windows/graphics/dx12/d3dx12.h"
 #include <d3d12.h>
+#include <d3dcompiler.h>
 #include <iostream>
 
-namespace temp{
+namespace temp {
 namespace rendering {
 
 const std::string RootSignatureManager::ROOT_KEY_CONFIG = "config";
@@ -45,13 +47,41 @@ void RootSignatureManager::cleanup() {
   }
   m_rootRegister.clear();
 }
+
+void RootSignatureManager::loadSignatureBinaryFile(const char *directory) {
+  auto exp_path = std::experimental::filesystem::path(directory);
+  std::string name = exp_path.stem().string();
+  if (m_rootRegister.find(name) == m_rootRegister.end()) {
+
+    std::vector<char> data;
+    readAllBytes(directory, data);
+
+    const BinaryFileHeader *h = getHeader(data.data());
+    auto mapper = getMapperData<RootSignatureMappedData>(data.data());
+    void *shaderPointer = data.data() + sizeof(BinaryFileHeader);
+    ID3DBlob *blob;
+    HRESULT hr = D3DCreateBlob(mapper->sizeInByte, &blob);
+    memcpy(blob->GetBufferPointer(), shaderPointer, blob->GetBufferSize());
+
+    ID3D12RootSignature *rootSig;
+    HRESULT res = m_device->CreateRootSignature(1, blob->GetBufferPointer(),
+                                                blob->GetBufferSize(),
+                                                IID_PPV_ARGS(&(rootSig)));
+    assert(res == S_OK);
+    blob->Release();
+    m_rootRegister[name] = rootSig;
+  }
+}
+
 void RootSignatureManager::loadSingaturesInFolder(const char *directory) {
 
   std::vector<std::string> paths;
-  listFilesInFolder(directory, paths, "json");
+  // listFilesInFolder(directory, paths, "json");
+  listFilesInFolder(directory, paths, "root");
 
   for (const auto &p : paths) {
-    loadSignatureFile(p.c_str());
+    // loadSignatureFile(p.c_str());
+    loadSignatureBinaryFile(p.c_str());
   }
 }
 
@@ -223,10 +253,11 @@ void RootSignatureManager::loadSignatureFile(const char *path) {
           globalRootSignatureDesc.Flags |=
               D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
         }
-		if (subFlag.get<std::string>() == "D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT")
-		{
-			globalRootSignatureDesc.Flags |= D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
-		}
+        if (subFlag.get<std::string>() ==
+            "D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT") {
+          globalRootSignatureDesc.Flags |=
+              D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+        }
       }
     }
 
@@ -244,9 +275,9 @@ void RootSignatureManager::SerializeAndCreateRaytracingRootSignature(
   {
     HRESULT res = D3D12SerializeRootSignature(
         &desc, D3D_ROOT_SIGNATURE_VERSION_1, &blob, &error);
-  if (error!= nullptr) {
-    std::cout << ((char *)error->GetBufferPointer()) << std::endl;
-  }
+    if (error != nullptr) {
+      std::cout << ((char *)error->GetBufferPointer()) << std::endl;
+    }
     assert(res == S_OK);
     //	  , error ?
     //  static_cast<wchar_t*>(error->GetBufferPointer()) : nullptr);
@@ -262,12 +293,12 @@ void RootSignatureManager::SerializeAndCreateRaytracingRootSignature(
 }
 
 void RootSignatureManager::createNullRootSignature() {
-	return;
+  return;
   ID3D12RootSignature *rootSig;
   CD3DX12_ROOT_SIGNATURE_DESC localRootSignatureDesc(D3D12_DEFAULT);
   localRootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
   SerializeAndCreateRaytracingRootSignature(localRootSignatureDesc, &rootSig);
-  //m_rootRegister[ROOT_EMPTY] = rootSig;
+  // m_rootRegister[ROOT_EMPTY] = rootSig;
 }
 
 RootSignatureManager::ROOT_TYPES
@@ -283,4 +314,4 @@ RootSignatureManager::getTypeEnum(const std::string &type) {
   return ROOT_TYPES();
 }
 } // namespace rendering
-} // namespace dx12
+} // namespace temp

@@ -50,7 +50,8 @@ struct BinaryFileWriteRequest {
 
 enum WriteBinaryFileStatus { SUCCESS };
 
-inline WriteBinaryFileStatus writeBinaryFile(const BinaryFileWriteRequest &request) {
+inline WriteBinaryFileStatus
+writeBinaryFile(const BinaryFileWriteRequest &request) {
 
   std::ofstream myFile(request.outPath, std::ios::out | std::ios::binary);
   BinaryFileHeader header;
@@ -77,18 +78,20 @@ inline void readAllBytes(const std::string &filename, std::vector<char> &data) {
   ifs.read(data.data(), pos);
 }
 
-enum BinaryFileType {
-  MODEL = 1,
-  SHADER = 2
-};
+enum BinaryFileType { MODEL = 1, SHADER = 2 };
 
 struct ModelMapperData {
-  unsigned int vertexDataSizeInByte;
-  unsigned int indexDataSizeInByte;
-  unsigned int strideInByte;
+  unsigned int vertexDataSizeInByte = 0;
+  unsigned int indexDataSizeInByte = 0;
+  unsigned int strideInByte = 0;
 };
 
 struct ShaderMapperData {
-  unsigned int shaderType;
-  unsigned int shaderSizeInBtye;
+  unsigned int shaderType = 0;
+  unsigned int shaderSizeInBtye = 0;
+};
+
+struct RootSignatureMappedData {
+  unsigned int type = 0;
+  unsigned int sizeInByte = 0;
 };
