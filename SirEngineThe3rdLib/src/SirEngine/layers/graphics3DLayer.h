@@ -10,9 +10,19 @@
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
 #include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/shaderLayout.h"
+#include "platform/windows/graphics/dx12/constantBuffer.h"
 namespace SirEngine {
 
 namespace dx12 {
+
+struct CameraBuffer {
+  DirectX::XMMATRIX MVP;
+  DirectX::XMMATRIX ViewMatrix;
+  float vFov;
+  float screenWidth;
+  float screenHeight;
+  float padding;
+};
 struct D3DBuffer;
 }
 class SIR_ENGINE_API Graphics3DLayer : public Layer {
@@ -35,12 +45,15 @@ private:
   // bool OnKeyReleasedEvent(KeyboardReleaseEvent &e);
   // bool OnWindowResizeEvent(WindowResizeEvent &e);
   // bool OnKeyTypeEvent(KeyTypeEvent &e);
-  Camera3dPivot *m_camera;
+  //Camera3dPivot *m_camera;
   dx12::Dx12RaytracingMesh m_mesh;
   temp::rendering::ShaderManager* m_shaderManager;
   temp::rendering::RootSignatureManager* m_root;
   temp::rendering::ShadersLayoutRegistry* m_reg;
   temp::rendering::PSOManager* m_pso;
+  temp::system::ConstantBuffer m_camBuffer;
+  dx12::CameraBuffer m_camBufferCPU;
+
 
 };
 } // namespace SirEngine

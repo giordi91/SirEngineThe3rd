@@ -27,7 +27,7 @@ same for the index buffer, what kind of attributes we have in the mesh etc.
 
 */
 
-const BinaryFileHeader *getHeader(void *binaryData) {
+inline const BinaryFileHeader *getHeader(void *binaryData) {
   return reinterpret_cast<const BinaryFileHeader *>(binaryData);
 };
 
@@ -50,7 +50,7 @@ struct BinaryFileWriteRequest {
 
 enum WriteBinaryFileStatus { SUCCESS };
 
-WriteBinaryFileStatus writeBinaryFile(const BinaryFileWriteRequest &request) {
+inline WriteBinaryFileStatus writeBinaryFile(const BinaryFileWriteRequest &request) {
 
   std::ofstream myFile(request.outPath, std::ios::out | std::ios::binary);
   BinaryFileHeader header;
@@ -66,7 +66,7 @@ WriteBinaryFileStatus writeBinaryFile(const BinaryFileWriteRequest &request) {
   return WriteBinaryFileStatus::SUCCESS;
 }
 
-void readAllBytes(const std::string &filename, std::vector<char> &data) {
+inline void readAllBytes(const std::string &filename, std::vector<char> &data) {
   bool res = fileExists(filename);
   std::ifstream ifs(filename, std::ios::binary | std::ios::ate);
   std::ifstream::pos_type pos = ifs.tellg();

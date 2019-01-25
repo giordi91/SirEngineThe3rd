@@ -6,7 +6,6 @@
 
 #include "platform/windows/graphics/dx12/dxgiFormatsDefine.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
-#include "platform/windows/graphics/dx12/shaderCompiler.h"
 #include "platform/windows/graphics/dx12/shaderLayout.h"
 #include "platform/windows/graphics/dx12/shaderManager.h"
 
@@ -102,7 +101,7 @@ void assertInJson(const nlohmann::json &jobj, const std::string &key) {
   assert(found != jobj.end());
 }
 
-void PSOManager::init(ID3D12Device5 *device, ShadersLayoutRegistry *registry,
+void PSOManager::init(ID3D12Device4 *device, ShadersLayoutRegistry *registry,
                       RootSignatureManager *root, ShaderManager *shader)
 {
   m_dxrDevice = device;
@@ -142,10 +141,10 @@ void PSOManager::loadPSOFile(const char *path) {
     processComputePSO(jobj, path);
     break;
   }
-  case (PSOType::DXR): {
-    processDXRPSO(jobj, path);
-    break;
-  }
+  //case (PSOType::DXR): {
+  //  processDXRPSO(jobj, path);
+  //  break;
+  //}
   case (PSOType::RASTER): {
     processRasterPSO(jobj, path);
     break;
@@ -312,6 +311,7 @@ void PSOManager::processRasterPSO(nlohmann::json &jobj,
   // assert(m_psoRegister.find(name) == m_psoRegister.end());
   m_psoRegister[name] = pso;
 }
+/*
 void PSOManager::processDXRPSO(nlohmann::json &jobj, const std::string &path) {
   CD3DX12_STATE_OBJECT_DESC raytracingPipeline{
       D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE};
@@ -422,6 +422,7 @@ void PSOManager::processLocalRootSignatures(nlohmann::json &jobj,
     rootSignatureAssociation->AddExport(exportNameW.c_str());
   }
 }
+*/
 void PSOManager::processGlobalRootSignature(nlohmann::json &jobj,
                                             CD3DX12_STATE_OBJECT_DESC &pipe) {
   const std::string globalRootSignatureName =

@@ -6,11 +6,6 @@
 #include <unordered_map>
 #include <wrl.h>
 
-namespace tinyobj {
-struct attrib_t;
-struct shape_t;
-} // namespace tinyobj
-
 namespace SirEngine {
 namespace dx12 {
 
@@ -42,8 +37,8 @@ public:
   inline D3D12_INDEX_BUFFER_VIEW getIndexBufferView() const {
     D3D12_INDEX_BUFFER_VIEW ibv;
     ibv.BufferLocation = m_bufferIDX.resource->GetGPUVirtualAddress();
-    ibv.Format = DXGI_FORMAT_R16_UINT;
-    ibv.SizeInBytes = m_indexCount * sizeof(uint16_t);
+    ibv.Format = DXGI_FORMAT_R32_UINT;
+    ibv.SizeInBytes = m_indexCount * sizeof(int);
     return ibv;
   }
 

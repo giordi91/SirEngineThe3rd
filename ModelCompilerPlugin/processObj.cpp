@@ -5,34 +5,32 @@
 #include "SirEngine/log.h"
 #include "resourceCompilerLib/jsonUtils.h"
 #include <DirectXMath.h>
-#include <fstream>
 #include <limits>
-#include <sstream>
 #include <unordered_map>
 #include <vector>
 
 static const float VERTEX_DELTA = 0.00001f;
 struct VertexCompare {
-  DirectX::XMFLOAT3 p;
+  DirectX::XMFLOAT3 p{};
   float pad1 = 1.0f;
-  DirectX::XMFLOAT3 n;
+  DirectX::XMFLOAT3 n{};
   float pad2 = 0.0f;
-  DirectX::XMFLOAT2 uv;
+  DirectX::XMFLOAT2 uv{};
   float pad3 = 0.0f;
   float pad4 = 0.0f;
-  DirectX::XMFLOAT3 t;
+  DirectX::XMFLOAT3 t{};
   float pad5 = 0.0f;
 };
 
 inline int float2Compare(const DirectX::XMFLOAT2 a, const DirectX::XMFLOAT2 b) {
-  // fix fabs, for faster solution
+  //TODO fix fabs, for faster solution, if is an up/down cast to double
   bool xSame = std::fabsf(a.x - b.x) < VERTEX_DELTA;
   bool ySame = std::fabsf(a.y - b.y) < VERTEX_DELTA;
   return (xSame & ySame) ? 1 : 0;
 }
 
 inline int float3Compare(const DirectX::XMFLOAT3 a, const DirectX::XMFLOAT3 b) {
-  // fix fabs, for faster solution
+  //TODO fix fabs, for faster solution, if is an up/down cast to double
   bool xSame = std::fabsf(a.x - b.x) < VERTEX_DELTA;
   bool ySame = std::fabsf(a.y - b.y) < VERTEX_DELTA;
   bool zSame = std::fabsf(a.z - b.z) < VERTEX_DELTA;
@@ -63,7 +61,8 @@ template <> struct hash<DirectX::XMFLOAT2> {
   }
 };
 
-template <> struct hash<DirectX::XMFLOAT3> {
+template <> struct hash<DirectX::XMFLOAT3>final
+{
   size_t operator()(DirectX::XMFLOAT3 const &v) const noexcept {
     auto h1 = std::hash<float>{}(v.x);
     auto h2 = std::hash<float>{}(v.y);
@@ -74,7 +73,8 @@ template <> struct hash<DirectX::XMFLOAT3> {
 };
 } // namespace std
 
-struct hashFunc {
+struct HashFunc final
+{
   size_t operator()(const VertexCompare &k) const {
     return std::hash<DirectX::XMFLOAT3>()(k.p) ^
            (std::hash<DirectX::XMFLOAT3>()(k.n) << 1) ^
@@ -83,26 +83,26 @@ struct hashFunc {
   }
 };
 
-struct equalsFunc {
+struct EqualsFunc final
+{
   bool operator()(const VertexCompare &lhs, const VertexCompare &rhs) const {
     return lhs == rhs;
   }
 };
 
-std::vector<float> loadTangents(std::string tan_path) {
-  assert(fileExists(tan_path));
-  nlohmann::json j_obj = getJsonObj(tan_path);
-  size_t sz = j_obj.size();
-  // int buffer_size = vtx_ids_size * 3;
-  std::vector<float> temp_t;
-  temp_t.resize(sz);
-  int counter = 0;
-  for (auto t : j_obj) {
-    temp_t[counter] = t.get<float>();
+std::vector<float> loadTangents(const std::string& tanPath) {
+  assert(fileExists(tanPath));
+  nlohmann::json jObj = getJsonObj(tanPath);
+  size_t sz = jObj.size();
+  std::vector<float> tempT;
+  tempT.resize(sz);
+  size_t counter = 0;
+  for (const auto& t : jObj) {
+    tempT[counter] = t.get<float>();
     assert(counter < sz);
     ++counter;
   }
-  return temp_t;
+  return tempT;
 }
 
 void convertObjNoTangents(const tinyobj::attrib_t &attr,
@@ -116,23 +116,22 @@ void convertObjNoTangents(const tinyobj::attrib_t &attr,
   // index. every vertex we add it to a struct, so we know how many faces
   // use the vertex, or how many faces share a vertex.
 
-  std::unordered_map<VertexCompare, uint32_t, hashFunc, equalsFunc>
+  std::unordered_map<VertexCompare, uint32_t, HashFunc, EqualsFunc>
       uniqueVertices = {};
   std::vector<int> indices;
   std::vector<VertexCompare> vertexData;
 
-
   // Loop over faces(polygon)
-  size_t index_offset = 0;
+  size_t indexOffset = 0;
   int indexCount = 0;
   for (size_t f = 0; f < shape.mesh.num_face_vertices.size(); f++) {
-    int fv = shape.mesh.num_face_vertices[f];
+    size_t fv = shape.mesh.num_face_vertices[f];
     assert(fv == 3);
 
     // Loop over vertices in the face.
     for (size_t v = 0; v < fv; v++) {
       // access to vertex
-      tinyobj::index_t idx = shape.mesh.indices[index_offset + v];
+      tinyobj::index_t idx = shape.mesh.indices[indexOffset + v];
       VertexCompare c;
       c.p.x = attr.vertices[3 * idx.vertex_index + 0];
       c.p.y = attr.vertices[3 * idx.vertex_index + 1];
@@ -155,7 +154,7 @@ void convertObjNoTangents(const tinyobj::attrib_t &attr,
 
       indices.push_back(uniqueVertices[c]);
     }
-    index_offset += fv;
+    indexOffset += fv;
   }
 
   // model is loaded, lets copy data to output struct
@@ -192,7 +191,7 @@ void convertObj(const tinyobj::attrib_t &attr, const tinyobj::shape_t &shape,
   // index. every vertex we add it to a struct, so we know how many faces
   // use the vertex, or how many faces share a vertex.
 
-  std::unordered_map<VertexCompare, uint32_t, hashFunc, equalsFunc>
+  std::unordered_map<VertexCompare, uint32_t, HashFunc, EqualsFunc>
       uniqueVertices = {};
   std::vector<int> indices;
   std::vector<VertexCompare> vertexData;
@@ -201,7 +200,7 @@ void convertObj(const tinyobj::attrib_t &attr, const tinyobj::shape_t &shape,
   size_t index_offset = 0;
   int indexCount = 0;
   for (size_t f = 0; f < shape.mesh.num_face_vertices.size(); f++) {
-    int fv = shape.mesh.num_face_vertices[f];
+    size_t fv = shape.mesh.num_face_vertices[f];
     assert(fv == 3);
 
     // Loop over vertices in the face.
@@ -220,7 +219,6 @@ void convertObj(const tinyobj::attrib_t &attr, const tinyobj::shape_t &shape,
       c.t.x = tangents[3 * idx.vertex_index + 0];
       c.t.y = tangents[3 * idx.vertex_index + 1];
       c.t.z = tangents[3 * idx.vertex_index + 2];
-
 
       // if the vertex is not in the map, it means is unique
       // and needs to be added and is a valid ne vertex in the vertex buffer
