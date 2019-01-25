@@ -27,14 +27,14 @@ void Graphics3DLayer::onAttach() {
                            dx12::DX12Handles::frameCommand);
   dx12::flushCommandQueue(dx12::DX12Handles::commandQueue);
 
-  m_shaderManager = new temp::rendering::ShaderManager();
+  m_shaderManager = new SirEngine::dx12::ShaderManager();
   m_shaderManager->init();
   m_shaderManager->loadShadersInFolder("data/processed/shaders/rasterization");
 
   m_root = new dx12::RootSignatureManager();
   m_root->loadSingaturesInFolder("data/processed/rs");
 
-  m_reg = new temp::rendering::ShadersLayoutRegistry();
+  m_reg = new dx12::ShadersLayoutRegistry();
 
   m_pso = new temp::rendering::PSOManager();
   m_pso->init(dx12::DX12Handles::device, m_reg, m_root, m_shaderManager);

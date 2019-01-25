@@ -11,20 +11,10 @@
 
 #include <iostream>
 
-namespace temp{
+namespace temp {
 namespace rendering {
 
-static const std::string PSO_KEY_DXILLIB = "DXILLibrary";
-static const std::string PSO_KEY_HIT_GROUPS = "hitGroups";
-static const std::string PSO_KEY_HIT_GROUP_NAME = "hitGroupName";
-static const std::string PSO_KEY_HIT_CLOSEST_SHADER_NAME = "closestShaderName";
-static const std::string PSO_KEY_HIT_ANY_HIT_SHADER_NAME = "anyHitShaderName";
-static const std::string PSO_KEY_PAYLOAD_SIZE = "payloadSizeInByte";
-static const std::string PSO_KEY_ATTRIBUTE_SIZE = "attributeSizeInByte";
-static const std::string PSO_KEY_LOCAL_ROOTS = "localRootSignatures";
 static const std::string PSO_KEY_GLOBAL_ROOT = "globalRootSignature";
-static const std::string PSO_KEY_ROOT_SIGNATURE_NAME = "rootSignatureName";
-static const std::string PSO_KEY_EXPORT_NAME = "exportName";
 static const std::string PSO_KEY_MAX_RECURSION = "maxRecursionDepth";
 static const std::string PSO_KEY_TYPE = "type";
 static const std::string PSO_KEY_TYPE_DXR = "DXR";
@@ -101,12 +91,12 @@ void assertInJson(const nlohmann::json &jobj, const std::string &key) {
   assert(found != jobj.end());
 }
 
-void PSOManager::init(ID3D12Device4 *device, ShadersLayoutRegistry *registry,
-                      SirEngine::dx12::RootSignatureManager *root, ShaderManager *shader)
-{
+void PSOManager::init(ID3D12Device4 *device, SirEngine::dx12::ShadersLayoutRegistry *registry,
+                      SirEngine::dx12::RootSignatureManager *root,
+                      SirEngine::dx12::ShaderManager *shader) {
   m_dxrDevice = device;
-  rs_manager= root;
-  shaderManager= shader;
+  rs_manager = root;
+  shaderManager = shader;
   layoutManger = registry;
 }
 void PSOManager::cleanup() {
@@ -141,7 +131,7 @@ void PSOManager::loadPSOFile(const char *path) {
     processComputePSO(jobj, path);
     break;
   }
-  //case (PSOType::DXR): {
+  // case (PSOType::DXR): {
   //  processDXRPSO(jobj, path);
   //  break;
   //}
@@ -221,7 +211,7 @@ void PSOManager::processRasterPSO(nlohmann::json &jobj,
   // find the input layout
   const std::string layoutString =
       getValueIfInJson(jobj, PSO_KEY_INPUT_LAYOUT, DEFAULT_STRING);
-  rendering::LayoutHandle layout =
+  SirEngine::dx12::LayoutHandle layout =
       layoutManger->getShaderLayoutFromName(layoutString);
 
   const std::string rootSignatureString =
@@ -262,7 +252,7 @@ void PSOManager::processRasterPSO(nlohmann::json &jobj,
   D3D12_PRIMITIVE_TOPOLOGY_TYPE topologyType =
       convertStringToTopology(topologyString);
 
-  int renderTargets =
+  size_t renderTargets =
       getValueIfInJson(jobj, PSO_KEY_RENDER_TARGETS, DEFAULT_INT);
 
   assertInJson(jobj, PSO_KEY_RTV_FORMATS);
@@ -297,7 +287,7 @@ void PSOManager::processRasterPSO(nlohmann::json &jobj,
   psoDesc.SampleMask = sampleMask;
   psoDesc.PrimitiveTopologyType = topologyType;
   psoDesc.NumRenderTargets = renderTargets;
-  for (int i = 0; i < formats.size(); ++i) {
+  for (size_t i = 0; i < formats.size(); ++i) {
     psoDesc.RTVFormats[i] = formats[i];
   }
   psoDesc.SampleDesc.Count = sampleDescCount;
@@ -335,7 +325,7 @@ void PSOManager::processPipelineConfig(nlohmann::json &jobj,
   // Defines the maximum TraceRay() recursion depth.
   auto pipelineConfig =
       pipe.CreateSubobject<CD3DX12_RAYTRACING_PIPELINE_CONFIG_SUBOBJECT>();
-  // PERFOMANCE TIP: Set max recursion depth as low as needed
+  // PERFORMANCE TIP: Set max recursion depth as low as needed
   // as drivers may apply optimization strategies for low recursion depths.
   pipelineConfig->Config(maxRecursionDepth);
 }
@@ -352,7 +342,7 @@ void PSOManager::printStateObjectDesc(const D3D12_STATE_OBJECT_DESC *desc) {
   if (desc->Type == D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE)
     wstr << L"Raytracing Pipeline\n";
 
-  auto ExportTree = [](UINT depth, UINT numExports,
+  auto exportTree = [](UINT depth, UINT numExports,
                        const D3D12_EXPORT_DESC *exports) {
     std::wostringstream woss;
     for (UINT i = 0; i < numExports; i++) {
@@ -395,7 +385,7 @@ void PSOManager::printStateObjectDesc(const D3D12_STATE_OBJECT_DESC *desc) {
           desc->pSubobjects[i].pDesc);
       wstr << lib->DXILLibrary.pShaderBytecode << L", "
            << lib->DXILLibrary.BytecodeLength << L" bytes\n";
-      wstr << ExportTree(1, lib->NumExports, lib->pExports);
+      wstr << exportTree(1, lib->NumExports, lib->pExports);
       break;
     }
     case D3D12_STATE_SUBOBJECT_TYPE_EXISTING_COLLECTION: {
@@ -403,7 +393,7 @@ void PSOManager::printStateObjectDesc(const D3D12_STATE_OBJECT_DESC *desc) {
       auto collection = static_cast<const D3D12_EXISTING_COLLECTION_DESC *>(
           desc->pSubobjects[i].pDesc);
       wstr << collection->pExistingCollection << L"\n";
-      wstr << ExportTree(1, collection->NumExports, collection->pExports);
+      wstr << exportTree(1, collection->NumExports, collection->pExports);
       break;
     }
     case D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION: {
@@ -470,13 +460,13 @@ void PSOManager::printStateObjectDesc(const D3D12_STATE_OBJECT_DESC *desc) {
            << L"\n";
       break;
     }
+    default:;
     }
     wstr << L"|----------------------------------------------------------------"
             L"----\n";
   }
   wstr << L"\n";
-  // OutputDebugStringW(wstr.str().c_str());
   std::wcout << wstr.str() << std::endl;
 }
 } // namespace rendering
-} // namespace dx12
+} // namespace temp

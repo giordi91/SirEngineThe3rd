@@ -1,15 +1,14 @@
 #pragma once
 #include <cassert>
+#include <d3dcommon.h>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <d3dcommon.h>
 
-namespace temp{
-namespace rendering {
+namespace SirEngine {
+namespace dx12 {
 
-class ShaderManager 
-{
+class ShaderManager {
 
 public:
   ~ShaderManager() = default;
@@ -37,5 +36,5 @@ private:
   // data caching
   std::unordered_map<std::string, ID3DBlob *> m_stringToShader;
 };
-} // namespace rendering
 } // namespace dx12
+} // namespace SirEngine

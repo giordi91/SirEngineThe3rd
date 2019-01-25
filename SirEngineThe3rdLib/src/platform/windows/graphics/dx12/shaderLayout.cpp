@@ -1,14 +1,16 @@
 #include "platform/windows/graphics/dx12/shaderLayout.h"
-namespace temp{
-namespace rendering {
-const std::unordered_map<std::string, ShaderLayout>
-    ShadersLayoutRegistry::NAME_TO_SHADER_LAYOUT = {
-        {"vertexColor", ShaderLayout::vertexColor},
-        {"basicMesh", ShaderLayout::basicMesh},
-        {"fullMesh", ShaderLayout::fullMesh},
-        {"vertexUV", ShaderLayout::vertexUV},
-        {"dxrMesh", ShaderLayout::dxrMesh},
-        {"positionOnly", ShaderLayout::positionOnly}};
+#include <cassert>
+
+namespace SirEngine {
+namespace dx12 {
+
+const std::unordered_map<std::string, ShaderLayout> NAME_TO_SHADER_LAYOUT = {
+    {"vertexColor", ShaderLayout::vertexColor},
+    {"basicMesh", ShaderLayout::basicMesh},
+    {"fullMesh", ShaderLayout::fullMesh},
+    {"vertexUV", ShaderLayout::vertexUV},
+    {"dxrMesh", ShaderLayout::dxrMesh},
+    {"positionOnly", ShaderLayout::positionOnly}};
 
 ShadersLayoutRegistry::ShadersLayoutRegistry() { generateLayouts(); }
 
@@ -20,7 +22,6 @@ void ShadersLayoutRegistry::cleanup() {
 
 LayoutHandle
 ShadersLayoutRegistry::getShaderLayoutFromName(const std::string name) {
-  // const char* layoutName = name.c_str();
   auto found = NAME_TO_SHADER_LAYOUT.find(name);
   if (found != NAME_TO_SHADER_LAYOUT.end()) {
     auto layoutFound = m_registry.find(found->second);
@@ -30,9 +31,7 @@ ShadersLayoutRegistry::getShaderLayoutFromName(const std::string name) {
     assert(0 && "could not find shader layout of given type");
   }
   assert(0 && "could not find shader layout");
-  return LayoutHandle{ nullptr ,-1};
-
-  // return ShaderLayout::INVALID;
+  return LayoutHandle{nullptr, -1};
 }
 
 inline void zeroOutLayouts(LayoutHandle &handle) {
@@ -124,7 +123,7 @@ void ShadersLayoutRegistry::generateLayouts() {
   zeroOutLayouts(vertexColorHandle);
 
   generatePositionFloat3(vertexColorHandle.layout);
-  generateColorFloat4(vertexColorHandle.layout + 1,12);
+  generateColorFloat4(vertexColorHandle.layout + 1, 12);
 
   m_registry[ShaderLayout::vertexColor] = vertexColorHandle;
 
@@ -133,7 +132,7 @@ void ShadersLayoutRegistry::generateLayouts() {
   zeroOutLayouts(vertexColorHandle);
 
   generatePositionFloat4(dxrMeshHandle.layout);
-  generateNormalsFloat4(dxrMeshHandle.layout + 1,16);
+  generateNormalsFloat4(dxrMeshHandle.layout + 1, 16);
 
   m_registry[ShaderLayout::dxrMesh] = dxrMeshHandle;
 
@@ -172,17 +171,6 @@ void ShadersLayoutRegistry::generateLayouts() {
 
   generatePositionFloat4(positionOnlyHandleHandle.layout);
   m_registry[ShaderLayout::positionOnly] = positionOnlyHandleHandle;
-
-  /*
-  //"null layout for deferred"
-  LayoutHandle deferredNull{new D3D12_INPUT_ELEMENT_DESC[2], 2};
-  zeroOutLayouts(deferredNull);
-
-  generatePositionFloat4(deferredNull.layout);
-  generateUVsFloat2(deferredNull.layout +1, 16);
-
-  m_registry[ShaderLayout::DeferredNull] = deferredNull;
-  */
 }
-} // namespace rendering
 } // namespace dx12
+} // namespace SirEngine

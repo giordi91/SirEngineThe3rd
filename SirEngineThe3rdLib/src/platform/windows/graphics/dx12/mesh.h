@@ -14,18 +14,9 @@ struct Dx12RaytracingMesh {
 public:
   Dx12RaytracingMesh() = default;
 
-  // void load(ID3D12Device *device, tinyobj::attrib_t &attr,
-  //          tinyobj::shape_t &shape);
   void loadFromFile(ID3D12Device *device, const std::string &path,
                     DescriptorHeap *heap);
-  // void loadExternal(ID3D12Device *device, ID3D12Resource *idxData,
-  //                  ID3D12Resource *vsData, int stride, int idxCount,
-  //                  int vtxCount, DescriptorHeap *heap);
 
-  // void loadExternalCPU(ID3D12Device *device, uint16_t *idxData, float
-  // *vsData,
-  //                     int stride, int idxCount, int vtxCount,
-  //                     DescriptorHeap *heap);
   inline D3D12_VERTEX_BUFFER_VIEW getVertexBufferView() const {
     D3D12_VERTEX_BUFFER_VIEW vbv;
     vbv.BufferLocation = m_bufferVS.resource->GetGPUVirtualAddress();
@@ -44,14 +35,14 @@ public:
 
   void translate(float x, float y, float z);
 
-  inline DirectX::XMMATRIX getMatrix() { return transform; }
+  inline DirectX::XMMATRIX getMatrix() const { return transform; }
 
-  inline UINT getIndexCount() { return m_indexCount; }
-  inline UINT getIndexSize() { return m_indexSize; }
-  inline UINT getVertexCount() { return m_vertexCount; }
-  inline UINT getVertexSize() { return m_vertexSize; }
-  inline UINT getStride() { return m_stride; }
-  inline const std::vector<float> &getCPUVertex() { return m_vertexs; };
+  inline UINT getIndexCount() const { return m_indexCount; }
+  inline UINT getIndexSize() const { return m_indexSize; }
+  inline UINT getVertexCount() const { return m_vertexCount; }
+  inline UINT getVertexSize() const { return m_vertexSize; }
+  inline UINT getStride() const { return m_stride; }
+  inline const std::vector<float> &getCpuVertex() const { return m_vertexs; };
 
 public:
   ID3D12Resource *idxdata;

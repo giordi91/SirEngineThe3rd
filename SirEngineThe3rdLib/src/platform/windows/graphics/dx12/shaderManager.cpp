@@ -3,10 +3,9 @@
 #include "SirEngine/binary/binaryFile.h"
 #include "SirEngine/fileUtils.h"
 #include <d3dcompiler.h>
-#include <iostream>
 
-namespace temp {
-namespace rendering {
+namespace SirEngine{
+namespace dx12{
 
 void ShaderManager::cleanup() {
   // we need to de-allocate everything
