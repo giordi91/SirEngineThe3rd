@@ -47,12 +47,12 @@ private:
   // bool OnKeyTypeEvent(KeyTypeEvent &e);
   //Camera3dPivot *m_camera;
   dx12::Dx12RaytracingMesh m_mesh;
-  temp::rendering::ShaderManager* m_shaderManager;
-  dx12::RootSignatureManager* m_root;
-  temp::rendering::ShadersLayoutRegistry* m_reg;
-  temp::rendering::PSOManager* m_pso;
   temp::system::ConstantBuffer m_camBuffer;
   dx12::CameraBuffer m_camBufferCPU;
+  dx12::ShaderManager* m_shaderManager;
+  dx12::RootSignatureManager* m_root;
+  dx12::ShadersLayoutRegistry* m_reg;
+  temp::rendering::PSOManager* m_pso;
 
 
 };

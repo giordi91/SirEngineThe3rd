@@ -5,7 +5,7 @@
 struct BinaryFileHeader {
   unsigned int fileType = 0;
   unsigned int version = 0;
-  size_t mapperDataOffsetInByte =0;
+  size_t mapperDataOffsetInByte = 0;
 };
 
 /*
@@ -51,48 +51,44 @@ struct BinaryFileWriteRequest {
 enum WriteBinaryFileStatus { SUCCESS };
 
 WriteBinaryFileStatus SIR_ENGINE_API
-writeBinaryFile(const BinaryFileWriteRequest &request); 
+writeBinaryFile(const BinaryFileWriteRequest &request);
 
-bool SIR_ENGINE_API readAllBytes(const std::string &filename, std::vector<char> &data);
+bool SIR_ENGINE_API readAllBytes(const std::string &filename,
+                                 std::vector<char> &data);
 
+#define BINARY_FILE_TYPES                                                      \
+  X(NONE)                                                                      \
+  X(MODEL)                                                                     \
+  X(SHADER)                                                                    \
+  X(RS)                                                                        \
+  X(PSO)
 
-#define BINARY_FILE_TYPES\
-    X(NONE) \
-    X(MODEL) \
-    X(SHADER) \
-    X(RS)
-
-enum BinaryFileType { NONE = 0, MODEL = 1, SHADER = 2, RS=3 };
+enum BinaryFileType { NONE = 0, MODEL = 1, SHADER = 2, RS = 3, PSO = 4};
 
 SIR_ENGINE_API
-extern const std::unordered_map<BinaryFileType,std::string> m_binaryFileTypeToString;
+extern const std::unordered_map<BinaryFileType, std::string>
+    m_binaryFileTypeToString;
 
-
-inline std::string getBinaryFileTypeName(BinaryFileType type)
-{
-	auto found = m_binaryFileTypeToString.find(type);
-	if(found != m_binaryFileTypeToString.end())
-	{
-		return found->second;
-	}
-	return "";
+inline std::string getBinaryFileTypeName(BinaryFileType type) {
+  auto found = m_binaryFileTypeToString.find(type);
+  if (found != m_binaryFileTypeToString.end()) {
+    return found->second;
+  }
+  return "";
 }
 
-struct ModelMapperData final
-{
+struct ModelMapperData final {
   unsigned int vertexDataSizeInByte = 0;
   unsigned int indexDataSizeInByte = 0;
   unsigned int strideInByte = 0;
 };
 
-struct ShaderMapperData final
-{
+struct ShaderMapperData final {
   unsigned int shaderType = 0;
   unsigned int shaderSizeInBtye = 0;
 };
 
-struct RootSignatureMappedData final
-{
+struct RootSignatureMappedData final {
   unsigned int type = 0;
   unsigned int sizeInByte = 0;
 };

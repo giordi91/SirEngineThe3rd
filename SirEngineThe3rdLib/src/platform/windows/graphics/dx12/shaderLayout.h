@@ -1,11 +1,9 @@
 #pragma once
 #include <d3d12.h>
-
-#include <DirectXMath.h>
 #include <unordered_map>
 
-namespace temp{
-namespace rendering {
+namespace SirEngine{
+namespace dx12{
 enum class ShaderLayout {
   vertexColor = 0,
   basicMesh,
@@ -17,12 +15,14 @@ enum class ShaderLayout {
   INVALID
 };
 
-struct LayoutHandle {
+struct LayoutHandle final
+{
   D3D12_INPUT_ELEMENT_DESC *layout;
   int size;
 };
 
-class ShadersLayoutRegistry {
+class ShadersLayoutRegistry final
+{
 
 public:
   // ID3D12InputLayout *getLayout(ShaderLayout layout,
@@ -35,14 +35,12 @@ public:
   ShadersLayoutRegistry(ShadersLayoutRegistry const &) =
       delete; // private copy constructor
   ShadersLayoutRegistry &operator=(ShadersLayoutRegistry const &) =
-      delete; // private assignemnt operator
+      delete; // private assignment operator
 
   void generateLayouts();
 
 private:
   std::unordered_map<ShaderLayout, LayoutHandle> m_registry;
-  static const std::unordered_map<std::string, ShaderLayout>
-      NAME_TO_SHADER_LAYOUT;
 };
 
 } // end namespace rendering
