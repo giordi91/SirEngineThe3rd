@@ -21,12 +21,12 @@ struct FrameCommand {
 };
 
 enum class DescriptorType {
-	NONE = 0,
-	CBV = 1,
-	SRV = 2,
-	UAV = 4,
-	RTV = 8,
-	DSV = 16
+  NONE = 0,
+  CBV = 1,
+  SRV = 2,
+  UAV = 4,
+  RTV = 8,
+  DSV = 16
 };
 
 struct D3DBuffer {
@@ -106,14 +106,17 @@ inline void flushCommandQueue(ID3D12CommandQueue *queue) {
   // we are on the GPU time line, the new fence point won't be set until the
   // GPU finishes processing all the commands prior to this Signal().
   HRESULT res = queue->Signal(DX12Handles::fence, DX12Handles::currentFence);
+  assert(SUCCEEDED(res));
   auto id = DX12Handles::fence->GetCompletedValue();
   // Wait until the GPU has completed commands up to this fence point.
   if (id < DX12Handles::currentFence) {
-    HANDLE eventHandle = CreateEventEx(nullptr, false, false, EVENT_ALL_ACCESS);
+    HANDLE eventHandle =
+        CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
 
     // Fire event when GPU hits current fence.
     res = DX12Handles::fence->SetEventOnCompletion(DX12Handles::currentFence,
                                                    eventHandle);
+    assert(SUCCEEDED(res));
 
     // Wait until the GPU hits current fence event is fired.
     WaitForSingleObject(eventHandle, INFINITE);

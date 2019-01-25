@@ -40,7 +40,7 @@ bool processRoot(const std::string &assetPath, const std::string &outputPath,
     }
     // writing binary file
     BinaryFileWriteRequest request;
-    request.fileType = BinaryFileType::MODEL;
+    request.fileType = BinaryFileType::RS;
     request.version =
         ((VERSION_MAJOR << 16) | (VERSION_MINOR << 8) | VERSION_PATCH);
 

@@ -102,7 +102,7 @@ void assertInJson(const nlohmann::json &jobj, const std::string &key) {
 }
 
 void PSOManager::init(ID3D12Device4 *device, ShadersLayoutRegistry *registry,
-                      RootSignatureManager *root, ShaderManager *shader)
+                      SirEngine::dx12::RootSignatureManager *root, ShaderManager *shader)
 {
   m_dxrDevice = device;
   rs_manager= root;
@@ -311,118 +311,7 @@ void PSOManager::processRasterPSO(nlohmann::json &jobj,
   // assert(m_psoRegister.find(name) == m_psoRegister.end());
   m_psoRegister[name] = pso;
 }
-/*
-void PSOManager::processDXRPSO(nlohmann::json &jobj, const std::string &path) {
-  CD3DX12_STATE_OBJECT_DESC raytracingPipeline{
-      D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE};
 
-  const std::string dxilName =
-      getValueIfInJson(jobj, PSO_KEY_DXILLIB, DEFAULT_STRING);
-  assert(!dxilName.empty());
-
-  assert(jobj.find(PSO_KEY_HIT_GROUPS) != jobj.end());
-  auto &hitgroups = jobj[PSO_KEY_HIT_GROUPS];
-
-  processHitGrops(hitgroups, raytracingPipeline);
-
-  // payload
-  processPayload(jobj, raytracingPipeline);
-
-  // local root signatures
-  processLocalRootSignatures(jobj, raytracingPipeline);
-
-  // global root signature
-  processGlobalRootSignature(jobj, raytracingPipeline);
-
-  // pipeline config
-  processPipelineConfig(jobj, raytracingPipeline);
-
-  ID3D12StateObject *dxrStateObject;
-  printStateObjectDesc(raytracingPipeline);
-  HRESULT res = m_dxrDevice->CreateStateObject(raytracingPipeline,
-                                               IID_PPV_ARGS(&dxrStateObject));
-  assert(res == S_OK);
-  std::string name = getFileName(path);
-  m_psoDXRRegister[name] = dxrStateObject;
-}
-
-void PSOManager::processHitGrops(nlohmann::json &jobj,
-                                 CD3DX12_STATE_OBJECT_DESC &pipe) {
-  // process all the hitgroups
-  for (auto &subj : jobj) {
-    std::string hitGroupName =
-        getValueIfInJson(subj, PSO_KEY_HIT_GROUP_NAME, DEFAULT_STRING);
-    assert(!hitGroupName.empty());
-
-    std::string closestShaderName =
-        getValueIfInJson(subj, PSO_KEY_HIT_CLOSEST_SHADER_NAME, DEFAULT_STRING);
-
-    std::string anyHitShaderName =
-        getValueIfInJson(subj, PSO_KEY_HIT_ANY_HIT_SHADER_NAME, DEFAULT_STRING);
-
-    auto hitGroup = pipe.CreateSubobject<CD3DX12_HIT_GROUP_SUBOBJECT>();
-    if (!closestShaderName.empty()) {
-      std::wstring closestShaderNameW(closestShaderName.begin(),
-                                      closestShaderName.end());
-      hitGroup->SetClosestHitShaderImport(closestShaderNameW.c_str());
-    }
-    if (!anyHitShaderName.empty()) {
-      std::wstring anyHitShaderNameW(anyHitShaderName.begin(),
-                                     anyHitShaderName.end());
-      hitGroup->SetAnyHitShaderImport(anyHitShaderNameW.c_str());
-    }
-
-    std::wstring hitGroupNameW(hitGroupName.begin(), hitGroupName.end());
-    hitGroup->SetHitGroupExport(hitGroupNameW.c_str());
-  }
-}
-void PSOManager::processPayload(nlohmann::json &jobj,
-                                CD3DX12_STATE_OBJECT_DESC &pipe) {
-  int defaultInt = -1;
-  UINT payloadSize = getValueIfInJson(jobj, PSO_KEY_PAYLOAD_SIZE, defaultInt);
-  assert(payloadSize != -1);
-  UINT attributeSize =
-      getValueIfInJson(jobj, PSO_KEY_ATTRIBUTE_SIZE, defaultInt);
-  assert(attributeSize != -1);
-
-  auto shaderConfig =
-      pipe.CreateSubobject<CD3DX12_RAYTRACING_SHADER_CONFIG_SUBOBJECT>();
-  shaderConfig->Config(payloadSize, attributeSize);
-}
-void PSOManager::processLocalRootSignatures(nlohmann::json &jobj,
-                                            CD3DX12_STATE_OBJECT_DESC &pipe) {
-
-  assert(jobj.find(PSO_KEY_LOCAL_ROOTS) != jobj.end());
-  auto rootj = jobj[PSO_KEY_LOCAL_ROOTS];
-
-  for (auto &subj : rootj) {
-    const std::string rootSignatureName =
-        getValueIfInJson(subj, PSO_KEY_ROOT_SIGNATURE_NAME, DEFAULT_STRING);
-    assert(!rootSignatureName.empty());
-
-    const std::string exportName =
-        getValueIfInJson(subj, PSO_KEY_EXPORT_NAME, DEFAULT_STRING);
-    assert(!exportName.empty());
-
-    if (rootSignatureName == "empty") {
-      continue;
-    }
-    auto *raygenS =
-        rs_manager->getRootSignatureFromName(rootSignatureName.c_str());
-    auto localRootSignature =
-        pipe.CreateSubobject<CD3DX12_LOCAL_ROOT_SIGNATURE_SUBOBJECT>();
-    localRootSignature->SetRootSignature(raygenS);
-    // m_raytracingLocalRootSignatureRaygen.Get());
-    // Shader association
-    auto rootSignatureAssociation = pipe.CreateSubobject<
-        CD3DX12_SUBOBJECT_TO_EXPORTS_ASSOCIATION_SUBOBJECT>();
-    rootSignatureAssociation->SetSubobjectToAssociate(*localRootSignature);
-
-    std::wstring exportNameW(exportName.begin(), exportName.end());
-    rootSignatureAssociation->AddExport(exportNameW.c_str());
-  }
-}
-*/
 void PSOManager::processGlobalRootSignature(nlohmann::json &jobj,
                                             CD3DX12_STATE_OBJECT_DESC &pipe) {
   const std::string globalRootSignatureName =

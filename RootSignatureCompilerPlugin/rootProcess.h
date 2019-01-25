@@ -7,7 +7,7 @@
 struct ResultRoot {
   std::string name;
   ID3DBlob *blob;
-  temp::rendering::ROOT_FILE_TYPE type;
+  SirEngine::dx12::ROOT_FILE_TYPE type;
 };
 
 void processSignatureFile(const char *path, std::vector<ResultRoot> &blobs);
