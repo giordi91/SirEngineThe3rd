@@ -1,5 +1,6 @@
 #include "SirEngine/layers/graphics3DLayer.h"
 #include "SirEngine/globals.h"
+#include "SirEngine/graphics/camera.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/swapChain.h"
 #include <DirectXMath.h>
@@ -11,10 +12,6 @@ void Graphics3DLayer::onAttach() {
   Globals::mainCamera->setLookAt(0, 125, 0);
   Globals::mainCamera->setPosition(00, 125, 60);
   Globals::mainCamera->Render();
-  m_camBuffer.initialize(dx12::DX12Handles::device,
-                         dx12::DX12Handles::globalCBVSRVUAVheap,
-                         sizeof(dx12::CameraBuffer), 0);
-  m_camBuffer.map();
 
   dx12::flushCommandQueue(dx12::DX12Handles::commandQueue);
   auto *currentFc = &dx12::DX12Handles::currenFrameResource->fc;
@@ -65,7 +62,7 @@ void Graphics3DLayer::onUpdate() {
   commandList->OMSetRenderTargets(1, &back, true, &depth);
   static float step = 0.0f;
 
-  Globals::mainCamera->setPosition(10.0f*sin(step), 125, 60);
+  Globals::mainCamera->setPosition(10.0f * sin(step), 125, 60);
   step += 0.001;
   Globals::mainCamera->Render();
   m_camBufferCPU.vFov = 60.0f;
@@ -73,7 +70,6 @@ void Graphics3DLayer::onUpdate() {
   m_camBufferCPU.screenHeight = Globals::SCREEN_HEIGHT;
   m_camBufferCPU.MVP = DirectX::XMMatrixTranspose(
       Globals::mainCamera->getMVP(DirectX::XMMatrixIdentity()));
-  m_camBuffer.update(&m_camBufferCPU);
 
   m_constantBufferManager.updateConstantBuffer(m_cameraHandle, &m_camBufferCPU);
 
@@ -88,7 +84,7 @@ void Graphics3DLayer::onUpdate() {
   commandList->IASetVertexBuffers(0, 1, &vview);
   commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-  //commandList->SetGraphicsRootDescriptorTable(0, m_camBuffer.getGPUView());
+  // commandList->SetGraphicsRootDescriptorTable(0, m_camBuffer.getGPUView());
   commandList->SetGraphicsRootDescriptorTable(
       0, m_constantBufferManager.getConstantBufferDescriptor(m_cameraHandle)
              .gpuDescriptorHandle);
