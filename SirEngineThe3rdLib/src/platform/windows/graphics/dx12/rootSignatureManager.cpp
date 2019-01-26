@@ -41,10 +41,11 @@ void RootSignatureManager::loadSignatureBinaryFile(const char *directory) {
     void *shaderPointer = data.data() + sizeof(BinaryFileHeader);
     ID3DBlob *blob;
     HRESULT hr = D3DCreateBlob(mapper->sizeInByte, &blob);
+	assert(SUCCEEDED(hr) && "failed create blob of data for root signature");
     memcpy(blob->GetBufferPointer(), shaderPointer, blob->GetBufferSize());
 
     ID3D12RootSignature *rootSig;
-    HRESULT res = SirEngine::dx12::DX12Handles::device->CreateRootSignature(
+    HRESULT res = SirEngine::dx12::DEVICE->CreateRootSignature(
         1, blob->GetBufferPointer(), blob->GetBufferSize(),
         IID_PPV_ARGS(&(rootSig)));
     assert(res == S_OK);

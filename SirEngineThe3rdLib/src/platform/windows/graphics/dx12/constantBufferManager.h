@@ -23,7 +23,7 @@ public:
   inline void assertMagicNumber(ConstantBufferHandle handle) {
     uint32_t magic = getMagicFromHandel(handle);
     uint32_t idx = getIndexFromHandel(handle);
-    assert(m_dynamicStorage[dx12::DX12Handles::currentFrame][idx].magicNumber ==
+    assert(m_dynamicStorage[dx12::CURRENT_FRAME][idx].magicNumber ==
                magic &&
            "invalid magic handle for constant buffer");
   }
@@ -34,7 +34,7 @@ public:
     assertMagicNumber(handle);
 
     uint32_t index = getIndexFromHandel(handle);
-    uint32_t dIndex = m_dynamicStorage[dx12::DX12Handles::currentFrame][index]
+    uint32_t dIndex = m_dynamicStorage[dx12::CURRENT_FRAME][index]
                           .descriptorIndex;
     return m_descriptorStorage[dIndex];
   }
@@ -43,7 +43,7 @@ public:
   {
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandel(handle);
-	const ConstantBufferData& data = m_dynamicStorage[dx12::DX12Handles::currentFrame][index];
+	const ConstantBufferData& data = m_dynamicStorage[dx12::CURRENT_FRAME][index];
 
     assert(data.mappedData != nullptr);
     memcpy(data.mappedData, dataToUpload, data.size);

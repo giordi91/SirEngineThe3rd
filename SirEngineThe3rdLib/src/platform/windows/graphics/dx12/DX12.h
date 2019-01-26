@@ -3,6 +3,7 @@
 #include <dxgi1_6.h>
 
 #include <cassert>
+#include "SirEngine/globals.h"
 
 namespace SirEngine {
 namespace dx12 {
@@ -85,47 +86,45 @@ inline bool executeCommandList(ID3D12CommandQueue *queue,
   return succeded;
 }
 
-const int FRAME_BUFFERING_COUNT = 2;
-
-namespace DX12Handles {
+//global declarations
 #if DXR_ENABLED
-extern ID3D12Device5 *device;
+extern ID3D12Device5 *DEVICE;
 #else
-extern ID3D12Device4 *device;
+extern ID3D12Device4 *DEVICE;
 #endif
-extern ID3D12Debug *debugController;
-extern IDXGIFactory6 *dxiFactory;
-extern Adapter *adapter;
-extern ID3D12CommandQueue *commandQueue;
-extern UINT64 currentFence;
-extern UINT64 currentFrame;
+extern ID3D12Debug *DEBUG_CONTROLLER;
+extern IDXGIFactory6 *DXGI_FACTORY;
+extern Adapter *ADAPTER;
 extern UINT64 TOTAL_CPU_FRAMES;
-extern ID3D12Fence *fence;
-extern DescriptorHeap *globalCBVSRVUAVheap;
-extern DescriptorHeap *globalRTVheap;
-extern DescriptorHeap *globalDSVheap;
-extern SwapChain *swapChain;
-extern FrameResource frameResources[FRAME_BUFFERING_COUNT];
-extern FrameResource* currenFrameResource;
-} // namespace DX12Handles
+extern UINT64 CURRENT_FENCE;
+extern UINT64 CURRENT_FRAME;
+extern DescriptorHeap *GLOBAL_CBV_SRV_UAV_HEAP;
+extern DescriptorHeap *GLOBAL_RTV_HEAP;
+extern DescriptorHeap *GLOBAL_DSV_HEAP;
+extern ID3D12CommandQueue *GLOBAL_COMMAND_QUEUE;
+extern ID3D12Fence *GLOBAL_FENCE;
+extern SwapChain *SWAP_CHAIN;
+extern FrameResource FRAME_RESOURCES[FRAME_BUFFERS_COUNT];
+extern FrameResource* CURRENT_FRAME_RESOURCE;
+
 
 inline void flushCommandQueue(ID3D12CommandQueue *queue) {
   // Advance the fence value to mark commands up to this fence point.
-  DX12Handles::currentFence++;
+  CURRENT_FENCE++;
 
   // Add an instruction to the command queue to set a new fence point. Because
   // we are on the GPU time line, the new fence point won't be set until the
   // GPU finishes processing all the commands prior to this Signal().
-  HRESULT res = queue->Signal(DX12Handles::fence, DX12Handles::currentFence);
+  HRESULT res = queue->Signal(GLOBAL_FENCE, CURRENT_FENCE);
   assert(SUCCEEDED(res));
-  auto id = DX12Handles::fence->GetCompletedValue();
+  auto id = GLOBAL_FENCE->GetCompletedValue();
   // Wait until the GPU has completed commands up to this fence point.
-  if (id < DX12Handles::currentFence) {
+  if (id < CURRENT_FENCE) {
     HANDLE eventHandle =
         CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
 
     // Fire event when GPU hits current fence.
-    res = DX12Handles::fence->SetEventOnCompletion(DX12Handles::currentFence,
+    res = GLOBAL_FENCE->SetEventOnCompletion(CURRENT_FENCE,
                                                    eventHandle);
     assert(SUCCEEDED(res));
 

@@ -18,14 +18,14 @@ bool DescriptorHeap::initialize(int size, D3D12_DESCRIPTOR_HEAP_TYPE type) {
   cbvHeapDesc.Type = type;
   cbvHeapDesc.Flags = shaderVisible;
   cbvHeapDesc.NodeMask = 0;
-  HRESULT result = DX12Handles::device->CreateDescriptorHeap(
+  HRESULT result = DEVICE->CreateDescriptorHeap(
       &cbvHeapDesc, IID_PPV_ARGS(&m_heap));
   if (FAILED(result)) {
     return false;
   }
 
   m_descriptorSize =
-      DX12Handles::device->GetDescriptorHandleIncrementSize(type);
+      DEVICE->GetDescriptorHandleIncrementSize(type);
   m_type = type;
 
   // resize the freelist change
@@ -64,12 +64,12 @@ UINT DescriptorHeap::allocateDescriptor(
 
 UINT DescriptorHeap::createBufferCBV(D3DBuffer *buffer, int totalSizeInByte) {
 
-  D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
+  D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
   cbvDesc.BufferLocation = buffer->resource->GetGPUVirtualAddress();
   cbvDesc.SizeInBytes = totalSizeInByte;
 
   UINT descriptorIndex = allocateDescriptor(&buffer->cpuDescriptorHandle);
-  DX12Handles::device->CreateConstantBufferView(&cbvDesc,
+  DEVICE->CreateConstantBufferView(&cbvDesc,
                                                 buffer->cpuDescriptorHandle);
 
   buffer->gpuDescriptorHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(
@@ -84,7 +84,7 @@ UINT DescriptorHeap::createTexture2DUAV(D3DBuffer *buffer, DXGI_FORMAT format) {
   D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc = {};
   UAVDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
   UAVDesc.Format = format;
-  DX12Handles::device->CreateUnorderedAccessView(
+  DEVICE->CreateUnorderedAccessView(
       buffer->resource, nullptr, &UAVDesc, buffer->cpuDescriptorHandle);
   buffer->gpuDescriptorHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(
       getGPUStart(), descriptorIndex, m_descriptorSize);
@@ -101,7 +101,7 @@ UINT DescriptorHeap::createTexture2DSRV(D3DBuffer *buffer, DXGI_FORMAT format) {
   srvDesc.Texture2D.MipLevels = 1;
   srvDesc.Texture2D.MostDetailedMip = 0;
   srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-  DX12Handles::device->CreateShaderResourceView(buffer->resource, &srvDesc,
+  DEVICE->CreateShaderResourceView(buffer->resource, &srvDesc,
                                                 buffer->cpuDescriptorHandle);
   buffer->gpuDescriptorHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(
       getGPUStart(), descriptorIndex, m_descriptorSize);
@@ -123,7 +123,7 @@ UINT createDSV(DescriptorHeap *heap, D3DBuffer *buffer) {
   dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
   dsvDesc.Format = m_depthStencilFormat;
   dsvDesc.Texture2D.MipSlice = 0;
-  DX12Handles::device->CreateDepthStencilView(buffer->resource, &dsvDesc,
+  DEVICE->CreateDepthStencilView(buffer->resource, &dsvDesc,
                                               buffer->cpuDescriptorHandle);
 
   buffer->gpuDescriptorHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(
@@ -143,7 +143,6 @@ UINT DescriptorHeap::createBufferSRV(D3DBuffer *buffer, UINT numElements,
                                      UINT elementSize) {
 
   // SRV
-  auto s = buffer->resource->GetGPUVirtualAddress();
   D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
   srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
   srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -161,7 +160,7 @@ UINT DescriptorHeap::createBufferSRV(D3DBuffer *buffer, UINT numElements,
     srvDesc.Buffer.StructureByteStride = elementSize;
   }
   UINT descriptorIndex = allocateDescriptor(&buffer->cpuDescriptorHandle);
-  DX12Handles::device->CreateShaderResourceView(buffer->resource, &srvDesc,
+  DEVICE->CreateShaderResourceView(buffer->resource, &srvDesc,
                                                 buffer->cpuDescriptorHandle);
   buffer->gpuDescriptorHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(
       getGPUStart(), descriptorIndex, m_descriptorSize);
@@ -174,7 +173,7 @@ UINT createRTVSRV(DescriptorHeap *heap, D3DBuffer *buffer) {
 
   assert(heap->getType() == D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
   UINT descriptorIndex = heap->allocateDescriptor(&buffer->cpuDescriptorHandle);
-  DX12Handles::device->CreateRenderTargetView(buffer->resource, nullptr,
+  DEVICE->CreateRenderTargetView(buffer->resource, nullptr,
                                               buffer->cpuDescriptorHandle);
 
   buffer->gpuDescriptorHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(
