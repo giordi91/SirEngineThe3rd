@@ -1,7 +1,7 @@
 #pragma once
 #include "platform/windows/graphics/dx12/DX12.h"
-#include "platform/windows/graphics/dx12/texture2D.h"
 #include "platform/windows/graphics/dx12/depthTexture.h"
+#include "platform/windows/graphics/dx12/texture2D.h"
 #include <dxgi1_4.h>
 
 struct ID3D12Resource;
@@ -15,21 +15,21 @@ class SwapChain {
 public:
   SwapChain() = default;
   ~SwapChain();
+  SwapChain(const SwapChain &) = delete;
+  SwapChain &operator=(const SwapChain &) = delete;
+
   bool initialize(HWND window, int width, int height);
   inline IDXGISwapChain *getSwapChain() { return m_swapChain; }
   bool resize(FrameCommand *command, int width, int height);
 
-   inline D3D12_CPU_DESCRIPTOR_HANDLE currentBackBufferView() {
+  inline D3D12_CPU_DESCRIPTOR_HANDLE currentBackBufferView() const {
     return m_swapChainBuffersResource[m_currentBackBuffer].getCPUDescriptor();
   }
-   inline Texture2D *currentBackBufferTexture() {
+  inline Texture2D *currentBackBufferTexture() const {
     return &m_swapChainBuffersResource[m_currentBackBuffer];
   }
-   inline DepthTexture* getCurrentDepth()
-  {
-      return m_depth;
-  }
-   inline Texture2D *currentBackBuffer() {
+  inline DepthTexture *getCurrentDepth() const { return m_depth; }
+  inline Texture2D *currentBackBuffer() const {
     return &m_swapChainBuffersResource[m_currentBackBuffer];
   };
 
@@ -39,19 +39,15 @@ public:
     m_swapChain->Present(0, 0);
     m_currentBackBuffer = (m_currentBackBuffer + 1) % m_swapChainBufferCount;
   }
-  void clearDepth() {
-    DX12Handles::frameCommand->commandList->ClearDepthStencilView(
+  void clearDepth() const {
+    DX12Handles::currenFrameResource->fc.commandList->ClearDepthStencilView(
         m_depth->getCPUDescriptor(),
         D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
   }
-   inline D3D12_CPU_DESCRIPTOR_HANDLE getDepthCPUDescriptor() {
+  inline D3D12_CPU_DESCRIPTOR_HANDLE getDepthCPUDescriptor() {
     return m_depth->getCPUDescriptor();
     // return m_depthStencilBufferResource.cpuDescriptorHandle;
   }
-
-private:
-  SwapChain(const SwapChain &) = delete;
-  SwapChain &operator=(const SwapChain &) = delete;
 
 private:
   // framebuffer configuration, hardcoded for the time being
@@ -65,15 +61,14 @@ private:
 
   UINT m_currentBackBuffer = 0;
   // Hard-coded double buffering for the time being
+  //TODO this values should be a constant engine defined somewhere
   static const UINT m_swapChainBufferCount = 2;
 
-  ID3D12Resource *m_swapChainBuffers = nullptr;
   Texture2D *m_swapChainBuffersResource = nullptr;
   DepthTexture *m_depth = nullptr;
 
   D3D12_VIEWPORT m_screenViewport;
   D3D12_RECT m_scissorRect;
-
 };
 } // namespace dx12
 } // namespace SirEngine

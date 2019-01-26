@@ -96,12 +96,13 @@ void Dx12RaytracingMesh::loadFromFile(ID3D12Device *device,
   int*indexData = reinterpret_cast<int*>(data.data() + sizeof(BinaryFileHeader) +
 	  mapper->vertexDataSizeInByte);
 
+  auto* currentFC = &DX12Handles::currenFrameResource->fc;
   m_indexCount = render_index_size;
   m_defaultVertex = createDefaultBuffer(
-      DX12Handles::device, DX12Handles::frameCommand->commandList, vertexData,
+      DX12Handles::device, currentFC->commandList, vertexData,
       sz * m_stride * sizeof(float), m_uploadVertex);
   m_defaultIndex = createDefaultBuffer(
-      DX12Handles::device, DX12Handles::frameCommand->commandList, indexData,
+      DX12Handles::device, currentFC->commandList, indexData,
       render_index_size * sizeof(int), m_uploadIndex);
   
   m_bufferVS.resource = m_defaultVertex.Get();

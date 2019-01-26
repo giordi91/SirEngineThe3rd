@@ -3,23 +3,44 @@
 #include "platform/windows/graphics/dx12/barrierUtils.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/swapChain.h"
+#include <d3d12.h>
 
 namespace SirEngine {
 namespace graphics {
 void onResize(unsigned int width, unsigned int height) {
 
-  dx12::DX12Handles::swapChain->resize(dx12::DX12Handles::frameCommand, width,
-                                       height);
+  dx12::DX12Handles::swapChain->resize(
+      &dx12::DX12Handles::currenFrameResource->fc, width, height);
 }
 void newFrame() {
+
+  // TODO clear here, there should be no specific dx12 stuff
+  // here we need to check which frame resource we are going to use
+  dx12::DX12Handles::currentFrame =
+      (dx12::DX12Handles::currentFrame + 1) % dx12::FRAME_BUFFERING_COUNT;
+  dx12::DX12Handles::currenFrameResource =
+      &dx12::DX12Handles::frameResources[dx12::DX12Handles::currentFrame];
+
+  // check if the resource has finished rendering if not we have to wait
+  if (dx12::DX12Handles::currenFrameResource->fence != 0 &&
+      dx12::DX12Handles::fence->GetCompletedValue() <
+          dx12::DX12Handles::currenFrameResource->fence) {
+    HANDLE eventHandle = CreateEventEx(nullptr, false, false, EVENT_ALL_ACCESS);
+    auto handleResult = dx12::DX12Handles::fence->SetEventOnCompletion(
+        dx12::DX12Handles::currenFrameResource->fence, eventHandle);
+    WaitForSingleObject(eventHandle, INFINITE);
+    CloseHandle(eventHandle);
+  }
+  // at this point we know we are ready to go
+
   // Clear the back buffer and depth buffer.
   float gray[4] = {0.5f, 0.9f, 0.5f, 1.0f};
   // Reuse the memory associated with command recording.
-  // We can only reset when the associated command lists have finished execution
-  // on the GPU.
-  resetAllocatorAndList(dx12::DX12Handles::frameCommand);
+  // We can only reset when the associated command lists have finished
+  // execution on the GPU.
+  resetAllocatorAndList(&dx12::DX12Handles::currenFrameResource->fc);
   // Indicate a state transition on the resource usage.
-  auto *commandList = dx12::DX12Handles::frameCommand->commandList;
+  auto *commandList = dx12::DX12Handles::currenFrameResource->fc.commandList;
   D3D12_RESOURCE_BARRIER rtbarrier[1];
 
   int rtcounter = dx12::transitionTexture2DifNeeded(
@@ -56,20 +77,23 @@ void dispatchFrame() {
   int rtcounter = dx12::transitionTexture2D(
       dx12::DX12Handles::swapChain->currentBackBuffer(),
       D3D12_RESOURCE_STATE_PRESENT, rtbarrier, 0);
-  dx12::DX12Handles::frameCommand->commandList->ResourceBarrier(rtcounter,
-                                                               rtbarrier);
+  auto *commandList = dx12::DX12Handles::currenFrameResource->fc.commandList;
+  commandList->ResourceBarrier(rtcounter, rtbarrier);
 
   // Done recording commands.
   dx12::executeCommandList(dx12::DX12Handles::commandQueue,
-                           dx12::DX12Handles::frameCommand);
+                           &dx12::DX12Handles::currenFrameResource->fc);
 
+  dx12::DX12Handles::currenFrameResource->fence =
+      ++dx12::DX12Handles::currentFence;
+  dx12::DX12Handles::commandQueue->Signal(dx12::DX12Handles::fence,
+                                          dx12::DX12Handles::currentFence);
   // swap the back and front buffers
   dx12::DX12Handles::swapChain->present();
 
-  // Wait until frame commands are complete.  This waiting is inefficient and is
-  // done for simplicity.  Later we will show how to organize our rendering code
-  // so we do not have to wait per frame.
-  dx12::flushCommandQueue(dx12::DX12Handles::commandQueue);
+  // Wait until frame commands are complete.  This waiting is inefficient and
+  // is done for simplicity.  Later we will show how to organize our rendering
+  // code so we do not have to wait per frame.
 }
 } // namespace graphics
 } // namespace SirEngine

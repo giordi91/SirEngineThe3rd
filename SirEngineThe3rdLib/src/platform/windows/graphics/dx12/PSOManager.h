@@ -45,9 +45,9 @@ private:
   void processComputePSO(nlohmann::json &jobj, const std::string &path);
   void processRasterPSO(nlohmann::json &jobj, const std::string &path);
   void processGlobalRootSignature(nlohmann::json &jobj,
-                                  CD3DX12_STATE_OBJECT_DESC &pipe);
+                                  CD3DX12_STATE_OBJECT_DESC &pipe) const;
   void processPipelineConfig(nlohmann::json &jobj,
-                             CD3DX12_STATE_OBJECT_DESC &pipe);
+                             CD3DX12_STATE_OBJECT_DESC &pipe) const;
 
 private:
   ID3D12Device4 *m_dxrDevice = nullptr;
