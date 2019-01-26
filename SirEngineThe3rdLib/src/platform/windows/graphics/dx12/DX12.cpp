@@ -1,5 +1,5 @@
-#include "SirEngine/log.h"
 #include "platform/windows/graphics/dx12/DX12.h"
+#include "SirEngine/log.h"
 #include "platform/windows/graphics/dx12/adapter.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/swapChain.h"
@@ -21,15 +21,37 @@ DescriptorHeap *globalCBVSRVUAVheap = nullptr;
 DescriptorHeap *globalRTVheap = nullptr;
 DescriptorHeap *globalDSVheap = nullptr;
 UINT64 currentFence = 0;
+UINT64 currentFrame = 0;
 ID3D12Fence *fence = nullptr;
 FrameCommand *frameCommand = nullptr;
-SwapChain* swapChain = nullptr;
+SwapChain *swapChain = nullptr;
+FrameResource frameResources[FRAME_BUFFERING_COUNT];
+FrameResource *currenFrameResource = nullptr;
 } // namespace DX12Handles
+
+bool createFrameCommand(FrameCommand *fc) {
+
+  auto result = DX12Handles::device->CreateCommandAllocator(
+      D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&fc->commandAllocator));
+  if (FAILED(result)) {
+    return false;
+  }
+
+  result = DX12Handles::device->CreateCommandList(
+      0, D3D12_COMMAND_LIST_TYPE_DIRECT,
+      DX12Handles::frameCommand->commandAllocator, nullptr,
+      IID_PPV_ARGS(&fc->commandList));
+  if (FAILED(result)) {
+    return false;
+  }
+  fc->commandList->Close();
+  fc->isListOpen = false;
+}
 
 bool initializeGraphics() {
 
-// lets enable debug layer if needed
-//#if defined(DEBUG) || defined(_DEBUG)
+  // lets enable debug layer if needed
+  //#if defined(DEBUG) || defined(_DEBUG)
   {
     HRESULT result =
         D3D12GetDebugInterface(IID_PPV_ARGS(&DX12Handles::debugController));
@@ -42,7 +64,7 @@ bool initializeGraphics() {
     //    m_debugController->QueryInterface(IID_PPV_ARGS(&debug1));
     //    debug1->SetEnableGPUBasedValidation(true);
   }
-//#endif
+  //#endif
 
   HRESULT result = CreateDXGIFactory1(IID_PPV_ARGS(&DX12Handles::dxiFactory));
   if (FAILED(result)) {
@@ -118,23 +140,8 @@ bool initializeGraphics() {
     return false;
   }
 
-  DX12Handles::frameCommand = new FrameCommand;
-  result = DX12Handles::device->CreateCommandAllocator(
-      D3D12_COMMAND_LIST_TYPE_DIRECT,
-      IID_PPV_ARGS(&DX12Handles::frameCommand->commandAllocator));
-  if (FAILED(result)) {
-    return false;
-  }
-
-  result = DX12Handles::device->CreateCommandList(
-      0, D3D12_COMMAND_LIST_TYPE_DIRECT,
-      DX12Handles::frameCommand->commandAllocator, nullptr,
-      IID_PPV_ARGS(&DX12Handles::frameCommand->commandList));
-  if (FAILED(result)) {
-    return false;
-  }
-  DX12Handles::frameCommand->commandList->Close();
-  DX12Handles::frameCommand->isListOpen = false;
+  DX12Handles::frameCommand = new FrameCommand();
+  createFrameCommand(DX12Handles::frameCommand);
 
   result = DX12Handles::device->CreateFence(0, D3D12_FENCE_FLAG_NONE,
                                             IID_PPV_ARGS(&DX12Handles::fence));
@@ -152,8 +159,11 @@ bool initializeGraphics() {
   DX12Handles::globalDSVheap = new DescriptorHeap();
   DX12Handles::globalDSVheap->initializeAsDSV(20);
 
+  for (int i = 0; i < FRAME_BUFFERING_COUNT; ++i) {
+    createFrameCommand(&DX12Handles::frameResources[i].fc);
+  }
 
-
+  DX12Handles::currenFrameResource = &DX12Handles::frameResources[0];
   return true;
 }
 } // namespace dx12

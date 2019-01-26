@@ -2,8 +2,8 @@
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include <d3d12.h>
 
-namespace temp{
-namespace system{
+namespace SirEngine{
+namespace dx12{
 bool ConstantBuffer::initialize(ID3D12Device *device, SirEngine::dx12::DescriptorHeap *heap,
                                 int dataSizeInBytes, int offset) {
   m_size = dataSizeInBytes;

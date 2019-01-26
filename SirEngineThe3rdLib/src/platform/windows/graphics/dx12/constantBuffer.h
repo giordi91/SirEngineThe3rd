@@ -3,13 +3,17 @@
 #include "platform/windows/graphics/dx12/d3dx12.h"
 #include <cassert>
 
-namespace temp{
-namespace system {
-struct ConstantBuffer {
+namespace SirEngine{
+namespace dx12{
+struct ConstantBuffer final
+{
 public:
   ConstantBuffer() = default;
+  ConstantBuffer(const ConstantBuffer &) = delete;
+  ConstantBuffer &operator=(const ConstantBuffer &) = delete;
+
   bool initialize(ID3D12Device *device, SirEngine::dx12::DescriptorHeap *heap,
-                  int dataSyzeInByte, int offset);
+                  int dataSizeInBytes, int offset);
   ~ConstantBuffer() { clear(); };
   inline ID3D12Resource *getBuffer() const { return m_buffer.resource; }
   inline D3D12_CPU_DESCRIPTOR_HANDLE getCPUView() const {
@@ -46,14 +50,11 @@ public:
 
   inline UINT getActualSize() const { return m_actualSize; }
 
-private:
-  ConstantBuffer(const ConstantBuffer &) = delete;
-  ConstantBuffer &operator=(const ConstantBuffer &) = delete;
 
 private:
-  SirEngine::dx12::D3DBuffer m_buffer;
-  int m_actualSize;
-  int m_size;
+  SirEngine::dx12::D3DBuffer m_buffer{};
+  int m_actualSize =0 ;
+  int m_size =0;
   BYTE *mappedData = nullptr;
   bool m_isMapped = false;
 };

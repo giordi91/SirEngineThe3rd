@@ -1,13 +1,13 @@
 #include <Windows.h>
 
 #include "SirEngine/core.h"
+#include "SirEngine/globals.h"
 #include "SirEngine/log.h"
 #include "imgui/imgui.h"
 #include "imguiLayer.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/imgui_impl_dx12.h"
-#include "SirEngine/globals.h"
 
 namespace SirEngine {
 void ImguiLayer::onAttach() {
@@ -118,8 +118,9 @@ void ImguiLayer::onUpdate() {
   ImGui::End();
 
   ImGui::Render();
-  ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(),
-                                dx12::DX12Handles::frameCommand->commandList);
+  ImGui_ImplDX12_RenderDrawData(
+      ImGui::GetDrawData(),
+      dx12::DX12Handles::currenFrameResource->fc.commandList);
 }
 
 void ImguiLayer::onEvent(Event &event) {

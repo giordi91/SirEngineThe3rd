@@ -275,7 +275,7 @@ void PSOManager::processRasterPSO(nlohmann::json &jobj,
   D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc;
   ID3D12PipelineState *pso = nullptr;
   ZeroMemory(&psoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
-  psoDesc.InputLayout = {layout.layout, (UINT)layout.size};
+  psoDesc.InputLayout = {layout.layout, static_cast<UINT>(layout.size)};
   psoDesc.pRootSignature = rootSignature;
   psoDesc.VS = {reinterpret_cast<BYTE *>(vs->GetBufferPointer()),
                 vs->GetBufferSize()};
@@ -286,7 +286,7 @@ void PSOManager::processRasterPSO(nlohmann::json &jobj,
   psoDesc.DepthStencilState = dsState;
   psoDesc.SampleMask = sampleMask;
   psoDesc.PrimitiveTopologyType = topologyType;
-  psoDesc.NumRenderTargets = renderTargets;
+  psoDesc.NumRenderTargets = static_cast<UINT>(renderTargets);
   for (size_t i = 0; i < formats.size(); ++i) {
     psoDesc.RTVFormats[i] = formats[i];
   }
@@ -303,7 +303,8 @@ void PSOManager::processRasterPSO(nlohmann::json &jobj,
 }
 
 void PSOManager::processGlobalRootSignature(nlohmann::json &jobj,
-                                            CD3DX12_STATE_OBJECT_DESC &pipe) {
+                                            CD3DX12_STATE_OBJECT_DESC &pipe) const
+{
   const std::string globalRootSignatureName =
       getValueIfInJson(jobj, PSO_KEY_GLOBAL_ROOT, DEFAULT_STRING);
   assert(!globalRootSignatureName.empty());
@@ -315,10 +316,11 @@ void PSOManager::processGlobalRootSignature(nlohmann::json &jobj,
   globalRootSignature->SetRootSignature(globalS);
 }
 void PSOManager::processPipelineConfig(nlohmann::json &jobj,
-                                       CD3DX12_STATE_OBJECT_DESC &pipe) {
+                                       CD3DX12_STATE_OBJECT_DESC &pipe) const
+{
 
   int defaultInt = -1;
-  UINT maxRecursionDepth =
+  int maxRecursionDepth =
       getValueIfInJson(jobj, PSO_KEY_MAX_RECURSION, defaultInt);
   assert(maxRecursionDepth != -1);
   // Pipeline config

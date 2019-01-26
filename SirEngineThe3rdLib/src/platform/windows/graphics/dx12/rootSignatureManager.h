@@ -22,7 +22,7 @@ public:
   void cleanup();
   void loadSingaturesInFolder(const char *directory);
   void loadSignatureBinaryFile(const char *directory);
-  inline ID3D12RootSignature *getRootSignatureFromName(const char *name) {
+  inline ID3D12RootSignature *getRootSignatureFromName(const char *name) const {
     auto found = m_rootRegister.find(name);
     if (found != m_rootRegister.end()) {
       return found->second;

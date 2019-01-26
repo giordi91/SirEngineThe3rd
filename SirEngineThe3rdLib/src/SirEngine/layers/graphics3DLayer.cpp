@@ -16,15 +16,18 @@ void Graphics3DLayer::onAttach() {
                          sizeof(dx12::CameraBuffer), 0);
   m_camBuffer.map();
 
-  if (!dx12::DX12Handles::frameCommand->isListOpen) {
-    dx12::resetAllocatorAndList(dx12::DX12Handles::frameCommand);
+  dx12::flushCommandQueue(dx12::DX12Handles::commandQueue);
+  auto* currentFc = &dx12::DX12Handles::currenFrameResource->fc;
+
+  if (!currentFc->isListOpen) {
+    dx12::resetAllocatorAndList(currentFc);
   }
   m_mesh.loadFromFile(dx12::DX12Handles::device,
-                      "data/processed/armorChest.model",
+                      "data/processed/meshes/armorChest.model",
                       dx12::DX12Handles::globalCBVSRVUAVheap);
 
   dx12::executeCommandList(dx12::DX12Handles::commandQueue,
-                           dx12::DX12Handles::frameCommand);
+                           currentFc);
   dx12::flushCommandQueue(dx12::DX12Handles::commandQueue);
 
   m_shaderManager = new SirEngine::dx12::ShaderManager();
@@ -43,11 +46,12 @@ void Graphics3DLayer::onAttach() {
 void Graphics3DLayer::onDetach() {}
 void Graphics3DLayer::onUpdate() {
 
-  if (!dx12::DX12Handles::frameCommand->isListOpen) {
-    dx12::resetAllocatorAndList(dx12::DX12Handles::frameCommand);
+  auto* currentFc = &dx12::DX12Handles::currenFrameResource->fc;
+  if (!currentFc->isListOpen) {
+    dx12::resetAllocatorAndList(currentFc);
   }
 
-  auto commandList = dx12::DX12Handles::frameCommand->commandList;
+  auto commandList = currentFc->commandList;
   commandList->RSSetViewports(1, dx12::DX12Handles::swapChain->getViewport());
   commandList->RSSetScissorRects(
       1, dx12::DX12Handles::swapChain->getScissorRect());

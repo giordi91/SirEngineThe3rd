@@ -10,8 +10,7 @@ class Adapter;
 class DescriptorHeap;
 class SwapChain;
 
-struct FrameCommand final
-{
+struct FrameCommand final {
   ID3D12CommandAllocator *commandAllocator = nullptr;
 #if DXR_ENABLED
   ID3D12GraphicsCommandList4 *commandList = nullptr;
@@ -19,6 +18,12 @@ struct FrameCommand final
   ID3D12GraphicsCommandList3 *commandList = nullptr;
 #endif
   bool isListOpen = false;
+};
+
+struct FrameResource final
+{
+	FrameCommand fc;
+	UINT64 fence =0;
 };
 
 enum class DescriptorType {
@@ -80,6 +85,8 @@ inline bool executeCommandList(ID3D12CommandQueue *queue,
   return succeded;
 }
 
+const int FRAME_BUFFERING_COUNT = 2;
+
 namespace DX12Handles {
 #if DXR_ENABLED
 extern ID3D12Device5 *device;
@@ -91,12 +98,15 @@ extern IDXGIFactory6 *dxiFactory;
 extern Adapter *adapter;
 extern ID3D12CommandQueue *commandQueue;
 extern UINT64 currentFence;
+extern UINT64 currentFrame;
 extern ID3D12Fence *fence;
 extern DescriptorHeap *globalCBVSRVUAVheap;
 extern DescriptorHeap *globalRTVheap;
 extern DescriptorHeap *globalDSVheap;
-extern FrameCommand *frameCommand;
+//extern FrameCommand *frameCommand;
 extern SwapChain *swapChain;
+extern FrameResource frameResources[FRAME_BUFFERING_COUNT];
+extern FrameResource* currenFrameResource;
 } // namespace DX12Handles
 
 inline void flushCommandQueue(ID3D12CommandQueue *queue) {
