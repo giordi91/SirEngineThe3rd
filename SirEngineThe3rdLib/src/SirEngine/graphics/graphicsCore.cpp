@@ -28,6 +28,7 @@ void newFrame() {
     HANDLE eventHandle = CreateEventEx(nullptr, false, false, EVENT_ALL_ACCESS);
     auto handleResult = dx12::DX12Handles::fence->SetEventOnCompletion(
         dx12::DX12Handles::currenFrameResource->fence, eventHandle);
+	assert(SUCCEEDED(handleResult));
     WaitForSingleObject(eventHandle, INFINITE);
     CloseHandle(eventHandle);
   }
@@ -90,6 +91,7 @@ void dispatchFrame() {
                                           dx12::DX12Handles::currentFence);
   // swap the back and front buffers
   dx12::DX12Handles::swapChain->present();
+  dx12::DX12Handles::TOTAL_CPU_FRAMES++;
 
   // Wait until frame commands are complete.  This waiting is inefficient and
   // is done for simplicity.  Later we will show how to organize our rendering

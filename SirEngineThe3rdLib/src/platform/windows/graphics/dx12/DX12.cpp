@@ -22,6 +22,7 @@ DescriptorHeap *globalRTVheap = nullptr;
 DescriptorHeap *globalDSVheap = nullptr;
 UINT64 currentFence = 0;
 UINT64 currentFrame = 0;
+UINT64 TOTAL_CPU_FRAMES =0;
 ID3D12Fence *fence = nullptr;
 FrameCommand *frameCommand = nullptr;
 SwapChain *swapChain = nullptr;

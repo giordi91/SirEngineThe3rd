@@ -4,9 +4,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include "nlohmann/json_fwd.hpp"
 #include <cassert>
-
+	
 // forward declares
 struct ID3D12Device;
 struct ID3D12Resource;

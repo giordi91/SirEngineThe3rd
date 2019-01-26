@@ -17,7 +17,7 @@ void Graphics3DLayer::onAttach() {
   m_camBuffer.map();
 
   dx12::flushCommandQueue(dx12::DX12Handles::commandQueue);
-  auto* currentFc = &dx12::DX12Handles::currenFrameResource->fc;
+  auto *currentFc = &dx12::DX12Handles::currenFrameResource->fc;
 
   if (!currentFc->isListOpen) {
     dx12::resetAllocatorAndList(currentFc);
@@ -26,8 +26,7 @@ void Graphics3DLayer::onAttach() {
                       "data/processed/meshes/armorChest.model",
                       dx12::DX12Handles::globalCBVSRVUAVheap);
 
-  dx12::executeCommandList(dx12::DX12Handles::commandQueue,
-                           currentFc);
+  dx12::executeCommandList(dx12::DX12Handles::commandQueue, currentFc);
   dx12::flushCommandQueue(dx12::DX12Handles::commandQueue);
 
   m_shaderManager = new SirEngine::dx12::ShaderManager();
@@ -42,11 +41,15 @@ void Graphics3DLayer::onAttach() {
   m_pso = new temp::rendering::PSOManager();
   m_pso->init(dx12::DX12Handles::device, m_reg, m_root, m_shaderManager);
   m_pso->loadPSOInFolder("data/pso");
+
+  // ask for the camera buffer handle;
+  m_cameraHandle =
+      m_constantBufferManager.allocateDynamic(sizeof(dx12::CameraBuffer));
 }
 void Graphics3DLayer::onDetach() {}
 void Graphics3DLayer::onUpdate() {
 
-  auto* currentFc = &dx12::DX12Handles::currenFrameResource->fc;
+  auto *currentFc = &dx12::DX12Handles::currenFrameResource->fc;
   if (!currentFc->isListOpen) {
     dx12::resetAllocatorAndList(currentFc);
   }
@@ -60,27 +63,37 @@ void Graphics3DLayer::onUpdate() {
   auto depth = dx12::DX12Handles::swapChain->getDepthCPUDescriptor();
 
   commandList->OMSetRenderTargets(1, &back, true, &depth);
+  static float step = 0.0f;
+
+  Globals::mainCamera->setPosition(10.0f*sin(step), 125, 60);
+  step += 0.001;
   Globals::mainCamera->Render();
   m_camBufferCPU.vFov = 60.0f;
   m_camBufferCPU.screenWidth = Globals::SCREEN_WIDTH;
   m_camBufferCPU.screenHeight = Globals::SCREEN_HEIGHT;
-  m_camBufferCPU.MVP =
-      DirectX::XMMatrixTranspose(Globals::mainCamera->getMVP(DirectX::XMMatrixIdentity()));
+  m_camBufferCPU.MVP = DirectX::XMMatrixTranspose(
+      Globals::mainCamera->getMVP(DirectX::XMMatrixIdentity()));
   m_camBuffer.update(&m_camBufferCPU);
 
-  auto* pso = m_pso->getComputePSOByName("simpleMeshPSO");
+  m_constantBufferManager.updateConstantBuffer(m_cameraHandle, &m_camBufferCPU);
+
+  auto *pso = m_pso->getComputePSOByName("simpleMeshPSO");
   commandList->SetPipelineState(pso);
-  auto* rs = m_root->getRootSignatureFromName("simpleMeshRS");
+  auto *rs = m_root->getRootSignatureFromName("simpleMeshRS");
   commandList->SetGraphicsRootSignature(rs);
   auto vview = m_mesh.getVertexBufferView();
   auto iview = m_mesh.getIndexBufferView();
 
   commandList->IASetIndexBuffer(&iview);
-  commandList->IASetVertexBuffers(0,1,&vview);
+  commandList->IASetVertexBuffers(0, 1, &vview);
   commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-  commandList->SetGraphicsRootDescriptorTable(0, m_camBuffer.getGPUView());
-  commandList->DrawIndexedInstanced(m_mesh.getIndexCount(), 1, 0, 0, 0);
 
+  //commandList->SetGraphicsRootDescriptorTable(0, m_camBuffer.getGPUView());
+  commandList->SetGraphicsRootDescriptorTable(
+      0, m_constantBufferManager.getConstantBufferDescriptor(m_cameraHandle)
+             .gpuDescriptorHandle);
+
+  commandList->DrawIndexedInstanced(m_mesh.getIndexCount(), 1, 0, 0, 0);
 }
 void Graphics3DLayer::onEvent(Event &event) {}
 } // namespace SirEngine
