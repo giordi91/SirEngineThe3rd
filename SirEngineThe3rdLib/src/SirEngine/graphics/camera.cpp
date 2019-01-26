@@ -16,19 +16,6 @@ const DirectX::XMVECTOR Camera3dPivot::MOUSE_ROT_SPEED_VECTOR =
 const DirectX::XMVECTOR Camera3dPivot::MOUSE_PAN_SPEED_VECTOR =
     DirectX::XMLoadFloat3(&DirectX::XMFLOAT3{0.07f, 0.07f, 0.07f});
 
-// Camera::Camera() {
-//  m_cameraBuffer = getConstantBuffer(sizeof(ObjectBufferDef));
-//  m_constants = core::EngineConstants::get_instance();
-//
-//  m_perspValuesBuffer = getConstantBuffer(sizeof(PerspectiveBufferDef));
-//}
-//
-// Camera::~Camera() {
-//  if (m_cameraBuffer != nullptr) {
-//    m_cameraBuffer->Release();
-//  }
-//}
-
 DirectX::XMMATRIX Camera3dPivot::getMVP(DirectX::XMMATRIX modelM) {
 
   int screenW = Globals::SCREEN_WIDTH;
@@ -142,16 +129,24 @@ void Camera3dPivot::panCamera(float deltaX, float deltaY) {
 void Camera3dPivot::rotCamera(float deltaX, float deltaY) {
   deltaX *= MOUSE_ROT_SPEED_SCALAR;
   deltaY *= MOUSE_ROT_SPEED_SCALAR;
+
+  DirectX::XMFLOAT3 lookAtView;
+  DirectX::XMStoreFloat3(&lookAtView, lookAtPosV);
+  const auto offsetForXRot = DirectX::XMVectorSet(0.0f, lookAtView.y, 0.0f,0.0f);
+
+
   const auto rotXMatrix = DirectX::XMMatrixRotationAxis(upVector, -deltaX);
-  const auto tempXPos = DirectX::XMVector3TransformCoord(posV, rotXMatrix);
-  const auto upatedLook = DirectX::XMVectorSubtract(tempXPos, lookAtPosV);
+  auto tempXPos = DirectX::XMVector3TransformCoord(posV, rotXMatrix);
+
 
   // getting cross
   const auto cross = DirectX::XMVector3Cross(upVector, tempXPos);
   const auto crossNorm = DirectX::XMVector3Normalize(cross);
 
   const auto rotYMatrix = DirectX::XMMatrixRotationAxis(crossNorm, deltaY);
+  tempXPos = DirectX::XMVectorSubtract(tempXPos, lookAtPosV);
   posV = DirectX::XMVector3TransformCoord(tempXPos, rotYMatrix);
+  posV= DirectX::XMVectorAdd(posV, lookAtPosV);
 }
 
 void Camera3dPivot::zoomCamera(float deltaX) {

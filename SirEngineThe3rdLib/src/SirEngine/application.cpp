@@ -36,8 +36,8 @@ void Application::run() {
   }
 }
 void Application::onEvent(Event &e) {
-  SE_CORE_INFO("{0}", e);
   // close event dispatch
+	SE_CORE_INFO("{0}",e);
   EventDispatcher dispatcher(e);
   dispatcher.dispatch<WindowCloseEvent>(
       [this](WindowCloseEvent &e) -> bool { return (this->onCloseWindow(e)); });
