@@ -3,14 +3,12 @@
 //#include "SirEngine/events/applicationEvent.h"
 //#include "SirEngine/events/keyboardEvent.h"
 //#include "SirEngine/events/mouseEvent.h"
-#include "SirEngine/graphics/camera.h"
 #include "SirEngine/layer.h"
 #include "platform/windows/graphics/dx12/mesh.h"
 #include "platform/windows/graphics/dx12/shaderManager.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
 #include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/shaderLayout.h"
-#include "platform/windows/graphics/dx12/constantBuffer.h"
 #include "platform/windows/graphics/dx12/constantBufferManager.h"
 namespace SirEngine {
 
@@ -48,7 +46,6 @@ private:
   // bool OnKeyTypeEvent(KeyTypeEvent &e);
   //Camera3dPivot *m_camera;
   dx12::Dx12RaytracingMesh m_mesh;
-  dx12::ConstantBuffer m_camBuffer;
   dx12::CameraBuffer m_camBufferCPU;
   dx12::ShaderManager* m_shaderManager;
   dx12::RootSignatureManager* m_root;
