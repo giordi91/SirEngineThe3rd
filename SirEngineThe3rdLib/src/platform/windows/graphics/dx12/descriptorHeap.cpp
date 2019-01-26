@@ -28,7 +28,7 @@ bool DescriptorHeap::initialize(int size, D3D12_DESCRIPTOR_HEAP_TYPE type) {
       DX12Handles::device->GetDescriptorHandleIncrementSize(type);
   m_type = type;
 
-  //resize the freelist change
+  // resize the freelist change
   m_freeList.resize(size);
   return true;
 }
@@ -49,10 +49,10 @@ UINT DescriptorHeap::allocateDescriptor(
     // list
     if (m_freeListIdx != 0) {
       // get first idx
-      descriptorIndexToUse= m_freeList[0];
+      descriptorIndexToUse = m_freeList[0];
       // patch hole
-      m_freeList[0] = m_freeList[m_freeListIdx-1];
-      m_freeListIdx-=1;
+      m_freeList[0] = m_freeList[m_freeListIdx - 1];
+      m_freeListIdx -= 1;
     } else {
       descriptorIndexToUse = m_descriptorsAllocated++;
     }
@@ -61,7 +61,6 @@ UINT DescriptorHeap::allocateDescriptor(
       descriptorHeapCpuBase, descriptorIndexToUse, m_descriptorSize);
   return descriptorIndexToUse;
 }
-
 
 UINT DescriptorHeap::createBufferCBV(D3DBuffer *buffer, int totalSizeInByte) {
 
@@ -75,6 +74,7 @@ UINT DescriptorHeap::createBufferCBV(D3DBuffer *buffer, int totalSizeInByte) {
 
   buffer->gpuDescriptorHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(
       getGPUStart(), descriptorIndex, m_descriptorSize);
+  buffer->descriptorType = DescriptorType::CBV;
   return descriptorIndex;
 }
 

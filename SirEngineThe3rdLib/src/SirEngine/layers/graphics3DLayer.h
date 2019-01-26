@@ -11,6 +11,7 @@
 #include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/shaderLayout.h"
 #include "platform/windows/graphics/dx12/constantBuffer.h"
+#include "platform/windows/graphics/dx12/constantBufferManager.h"
 namespace SirEngine {
 
 namespace dx12 {
@@ -53,6 +54,8 @@ private:
   dx12::RootSignatureManager* m_root;
   dx12::ShadersLayoutRegistry* m_reg;
   temp::rendering::PSOManager* m_pso;
+  dx12::ConstantBufferHandle m_cameraHandle;
+  dx12::ConstantBufferManager m_constantBufferManager;
 
 
 };
