@@ -13,18 +13,18 @@ void Graphics3DLayer::onAttach() {
   Globals::mainCamera->setPosition(00, 125, 60);
   Globals::mainCamera->Render();
 
-  dx12::flushCommandQueue(dx12::DX12Handles::commandQueue);
-  auto *currentFc = &dx12::DX12Handles::currenFrameResource->fc;
+  dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
+  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
 
   if (!currentFc->isListOpen) {
     dx12::resetAllocatorAndList(currentFc);
   }
-  m_mesh.loadFromFile(dx12::DX12Handles::device,
+  m_mesh.loadFromFile(dx12::DEVICE,
                       "data/processed/meshes/armorChest.model",
-                      dx12::DX12Handles::globalCBVSRVUAVheap);
+                      dx12::GLOBAL_CBV_SRV_UAV_HEAP);
 
-  dx12::executeCommandList(dx12::DX12Handles::commandQueue, currentFc);
-  dx12::flushCommandQueue(dx12::DX12Handles::commandQueue);
+  dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE, currentFc);
+  dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
 
   m_shaderManager = new SirEngine::dx12::ShaderManager();
   m_shaderManager->init();
@@ -36,7 +36,7 @@ void Graphics3DLayer::onAttach() {
   m_reg = new dx12::ShadersLayoutRegistry();
 
   m_pso = new temp::rendering::PSOManager();
-  m_pso->init(dx12::DX12Handles::device, m_reg, m_root, m_shaderManager);
+  m_pso->init(dx12::DEVICE, m_reg, m_root, m_shaderManager);
   m_pso->loadPSOInFolder("data/pso");
 
   // ask for the camera buffer handle;
@@ -46,18 +46,18 @@ void Graphics3DLayer::onAttach() {
 void Graphics3DLayer::onDetach() {}
 void Graphics3DLayer::onUpdate() {
 
-  auto *currentFc = &dx12::DX12Handles::currenFrameResource->fc;
+  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   if (!currentFc->isListOpen) {
     dx12::resetAllocatorAndList(currentFc);
   }
 
   auto commandList = currentFc->commandList;
-  commandList->RSSetViewports(1, dx12::DX12Handles::swapChain->getViewport());
+  commandList->RSSetViewports(1, dx12::SWAP_CHAIN->getViewport());
   commandList->RSSetScissorRects(
-      1, dx12::DX12Handles::swapChain->getScissorRect());
-  dx12::DX12Handles::swapChain->clearDepth();
-  auto back = dx12::DX12Handles::swapChain->currentBackBufferView();
-  auto depth = dx12::DX12Handles::swapChain->getDepthCPUDescriptor();
+      1, dx12::SWAP_CHAIN->getScissorRect());
+  dx12::SWAP_CHAIN->clearDepth();
+  auto back = dx12::SWAP_CHAIN->currentBackBufferView();
+  auto depth = dx12::SWAP_CHAIN->getDepthCPUDescriptor();
 
   commandList->OMSetRenderTargets(1, &back, true, &depth);
   static float step = 0.0f;

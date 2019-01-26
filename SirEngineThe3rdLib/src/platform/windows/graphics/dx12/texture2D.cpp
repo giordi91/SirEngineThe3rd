@@ -17,15 +17,15 @@ inline void freeTextureDescriptor(D3DBuffer &buffer) {
   case (DescriptorType::CBV):
   case (DescriptorType::SRV):
   case (DescriptorType::UAV): {
-    dx12::DX12Handles::globalCBVSRVUAVheap->freeDescritpor(buffer);
+    dx12::GLOBAL_CBV_SRV_UAV_HEAP->freeDescritpor(buffer);
     break;
   }
   case (DescriptorType::RTV): {
-    dx12::DX12Handles::globalRTVheap->freeDescritpor(buffer);
+    dx12::GLOBAL_RTV_HEAP->freeDescritpor(buffer);
     break;
   }
   case (DescriptorType::DSV): {
-    dx12::DX12Handles::globalDSVheap->freeDescritpor(buffer);
+    dx12::GLOBAL_DSV_HEAP->freeDescritpor(buffer);
     break;
   }
   }
@@ -47,7 +47,7 @@ bool Texture2D::initializeEmpty(int width, int height, DXGI_FORMAT format) {
                                    D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 
   auto defaultHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-  HRESULT hr = DX12Handles::device->CreateCommittedResource(
+  HRESULT hr = DEVICE->CreateCommittedResource(
       &defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &uavDesc,
       D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr,
       IID_PPV_ARGS(&m_texture.resource));
@@ -56,8 +56,8 @@ bool Texture2D::initializeEmpty(int width, int height, DXGI_FORMAT format) {
   }
 
   // NAME_D3D12_OBJECT(m_texture.resource);
-  DX12Handles::globalCBVSRVUAVheap->createTexture2DUAV(&m_texture, format);
-  DX12Handles::globalCBVSRVUAVheap->createTexture2DSRV(&m_textureSRV, format);
+  GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DUAV(&m_texture, format);
+  GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DSRV(&m_textureSRV, format);
 
   return true;
 }
@@ -71,7 +71,7 @@ bool Texture2D::initializeEmptyRT(int width, int height, DXGI_FORMAT format) {
                                    D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
 
   auto defaultHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-  HRESULT hr = DX12Handles::device->CreateCommittedResource(
+  HRESULT hr = DEVICE->CreateCommittedResource(
       &defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &uavDesc,
       D3D12_RESOURCE_STATE_RENDER_TARGET, nullptr,
       IID_PPV_ARGS(&m_texture.resource));
@@ -79,7 +79,7 @@ bool Texture2D::initializeEmptyRT(int width, int height, DXGI_FORMAT format) {
     return false;
   }
 
-  createRTVSRV(DX12Handles::globalRTVheap, &m_texture);
+  createRTVSRV(GLOBAL_RTV_HEAP, &m_texture);
   m_currentState = D3D12_RESOURCE_STATE_RENDER_TARGET;
 
   return true;
@@ -92,14 +92,14 @@ bool Texture2D::initializeFromResource(ID3D12Resource *resource,
   auto desc = resource->GetDesc();
 
   // NAME_D3D12_OBJECT(m_texture.resource);
-  DX12Handles::globalCBVSRVUAVheap->createTexture2DUAV(&m_texture, format);
+  GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DUAV(&m_texture, format);
 
   return true;
 }
 bool Texture2D::initializeRTFromResource(ID3D12Resource *resource) {
 
   m_texture.resource = resource;
-  createRTVSRV(DX12Handles::globalRTVheap, &m_texture);
+  createRTVSRV(GLOBAL_RTV_HEAP, &m_texture);
   m_currentState = D3D12_RESOURCE_STATE_PRESENT;
 
   return true;

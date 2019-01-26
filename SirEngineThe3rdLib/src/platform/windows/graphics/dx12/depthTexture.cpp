@@ -5,7 +5,7 @@
 namespace SirEngine {
 namespace dx12 {
 DepthTexture::~DepthTexture() {
-	dx12::DX12Handles::globalDSVheap->freeDescritpor(m_texture);
+	dx12::GLOBAL_DSV_HEAP->freeDescritpor(m_texture);
 }
 bool DepthTexture::initialize(int width, int height) {
 
@@ -36,7 +36,7 @@ bool DepthTexture::initialize(int width, int height) {
   msQualityLevels.SampleCount = 4;
   msQualityLevels.Flags = D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE;
   msQualityLevels.NumQualityLevels = 0;
-  HRESULT result = DX12Handles::device->CheckFeatureSupport(
+  HRESULT result = DEVICE->CheckFeatureSupport(
       D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS, &msQualityLevels,
       sizeof(msQualityLevels));
   UINT m_msaaQuality = msQualityLevels.NumQualityLevels;
@@ -50,12 +50,12 @@ bool DepthTexture::initialize(int width, int height) {
   optClear.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
   optClear.DepthStencil.Depth = 1.0f;
   optClear.DepthStencil.Stencil = 0;
-  HRESULT res = DX12Handles::device->CreateCommittedResource(
+  HRESULT res = DEVICE->CreateCommittedResource(
       &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
       &depthStencilDesc, D3D12_RESOURCE_STATE_COMMON, &optClear,
       IID_PPV_ARGS(&m_texture.resource));
 
-  createDSV(DX12Handles::globalDSVheap, &m_texture);
+  createDSV(GLOBAL_DSV_HEAP, &m_texture);
 
   m_currentState = D3D12_RESOURCE_STATE_COMMON;
   return false;

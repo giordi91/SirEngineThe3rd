@@ -40,7 +40,7 @@ public:
     m_currentBackBuffer = (m_currentBackBuffer + 1) % m_swapChainBufferCount;
   }
   void clearDepth() const {
-    DX12Handles::currenFrameResource->fc.commandList->ClearDepthStencilView(
+    CURRENT_FRAME_RESOURCE->fc.commandList->ClearDepthStencilView(
         m_depth->getCPUDescriptor(),
         D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
   }

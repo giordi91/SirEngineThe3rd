@@ -29,7 +29,7 @@ bool SwapChain::initialize(HWND window, int width, int height) {
   msQualityLevels.SampleCount = 4;
   msQualityLevels.Flags = D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE;
   msQualityLevels.NumQualityLevels = 0;
-  HRESULT result = DX12Handles::device->CheckFeatureSupport(
+  HRESULT result = DEVICE->CheckFeatureSupport(
       D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS, &msQualityLevels,
       sizeof(msQualityLevels));
 
@@ -60,7 +60,7 @@ bool SwapChain::initialize(HWND window, int width, int height) {
   // the reason why we pass a queue is because when the swap chain flushes uses
   // the queue
 
-  result = DX12Handles::dxiFactory->CreateSwapChain(DX12Handles::commandQueue,
+  result = DXGI_FACTORY->CreateSwapChain(GLOBAL_COMMAND_QUEUE,
                                                     &swapDesc, &m_swapChain);
 
   if (FAILED(result)) {
@@ -73,7 +73,7 @@ bool SwapChain::resize(FrameCommand *command, int width, int height) {
 
   // Flush before changing any resources.
   // FlushCommandQueue();
-  flushCommandQueue(DX12Handles::commandQueue);
+  flushCommandQueue(GLOBAL_COMMAND_QUEUE);
   // HRESULT result = m_commandList->Reset(m_commandAllocator.Get(), nullptr);
   resetCommandList(command);
   if (m_swapChainBuffersResource != nullptr) {
@@ -102,7 +102,7 @@ bool SwapChain::resize(FrameCommand *command, int width, int height) {
   m_currentBackBuffer = 0;
 
   CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHeapHandle(
-      DX12Handles::globalRTVheap->getCPUStart());
+      GLOBAL_RTV_HEAP->getCPUStart());
 
   ID3D12Resource *resource;
   for (UINT i = 0; i < m_swapChainBufferCount; i++) {
@@ -120,10 +120,10 @@ bool SwapChain::resize(FrameCommand *command, int width, int height) {
              D3D12_RESOURCE_STATE_DEPTH_WRITE));
 
   // Execute the resize commands.
-  executeCommandList(DX12Handles::commandQueue, command);
+  executeCommandList(GLOBAL_COMMAND_QUEUE, command);
 
   // Wait until resize is complete.
-  flushCommandQueue(DX12Handles::commandQueue);
+  flushCommandQueue(GLOBAL_COMMAND_QUEUE);
 
   // Update the viewport transform to cover the client area.
   m_screenViewport.TopLeftX = 0;

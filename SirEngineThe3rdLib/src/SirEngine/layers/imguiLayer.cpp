@@ -14,10 +14,10 @@ void ImguiLayer::onAttach() {
   // need to initialize ImGui dx12
   assert(m_fontTextureDescriptor == nullptr);
   m_fontTextureDescriptor = new dx12::D3DBuffer();
-  m_descriptorIndex = dx12::DX12Handles::globalCBVSRVUAVheap->reserveDescriptor(
+  m_descriptorIndex = dx12::GLOBAL_CBV_SRV_UAV_HEAP->reserveDescriptor(
       m_fontTextureDescriptor);
 
-  ImGui_ImplDX12_Init(dx12::DX12Handles::device, 1, DXGI_FORMAT_R8G8B8A8_UNORM,
+  ImGui_ImplDX12_Init(dx12::DEVICE, 1, DXGI_FORMAT_R8G8B8A8_UNORM,
                       m_fontTextureDescriptor->cpuDescriptorHandle,
                       m_fontTextureDescriptor->gpuDescriptorHandle);
 
@@ -120,7 +120,7 @@ void ImguiLayer::onUpdate() {
   ImGui::Render();
   ImGui_ImplDX12_RenderDrawData(
       ImGui::GetDrawData(),
-      dx12::DX12Handles::currenFrameResource->fc.commandList);
+      dx12::CURRENT_FRAME_RESOURCE->fc.commandList);
 }
 
 void ImguiLayer::onEvent(Event &event) {

@@ -234,17 +234,17 @@ WindowsWindow::WindowsWindow(const WindowProps &props) {
   if (!result) {
     SE_CORE_ERROR("FATAL: could not initialize graphics");
   }
-  dx12::DX12Handles::swapChain = new dx12::SwapChain();
-  dx12::DX12Handles::swapChain->initialize(m_hwnd, m_data.width, m_data.height);
-  dx12::flushCommandQueue(dx12::DX12Handles::commandQueue);
-  dx12::DX12Handles::swapChain->resize(&dx12::DX12Handles::currenFrameResource->fc,
+  dx12::SWAP_CHAIN = new dx12::SwapChain();
+  dx12::SWAP_CHAIN->initialize(m_hwnd, m_data.width, m_data.height);
+  dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
+  dx12::SWAP_CHAIN->resize(&dx12::CURRENT_FRAME_RESOURCE->fc,
                                        m_data.width, m_data.height);
 
   dx12::D3DBuffer *m_fontTextureDescriptor = nullptr;
   int m_descriptorIndex;
   assert(m_fontTextureDescriptor == nullptr);
   m_fontTextureDescriptor = new dx12::D3DBuffer();
-  m_descriptorIndex = dx12::DX12Handles::globalCBVSRVUAVheap->reserveDescriptor(
+  m_descriptorIndex = dx12::GLOBAL_CBV_SRV_UAV_HEAP->reserveDescriptor(
       m_fontTextureDescriptor);
 }
 

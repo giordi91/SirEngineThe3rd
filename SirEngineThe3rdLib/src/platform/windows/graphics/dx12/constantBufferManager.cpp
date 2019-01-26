@@ -28,13 +28,13 @@ ConstantBufferManager::allocateDynamic(uint32_t sizeInBytes) {
     data.size = sizeInBytes;
     D3DBuffer buffer;
     // create the upload buffer
-    dx12::DX12Handles::device->CreateCommittedResource(
+    dx12::DEVICE->CreateCommittedResource(
         &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE,
         &CD3DX12_RESOURCE_DESC::Buffer(actualSize),
         D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
         IID_PPV_ARGS(&buffer.resource));
 
-    dx12::DX12Handles::globalCBVSRVUAVheap->createBufferCBV(&buffer,
+    dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferCBV(&buffer,
                                                             actualSize);
     // map the buffer
     mapConstantBuffer(data, buffer);
