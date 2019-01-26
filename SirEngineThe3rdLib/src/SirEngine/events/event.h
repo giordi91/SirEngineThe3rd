@@ -39,18 +39,19 @@ enum EventCategory {
   virtual int getCategoryFlags() const override { return category; }
 
 class SIR_ENGINE_API Event {
-  friend class EventDispatcher;
+	friend class EventDispatcher;
 
 public:
-  virtual EventType getEventType() const = 0;
-  virtual const char *getName() const = 0;
-  virtual int getCategoryFlags() const = 0;
-  virtual std::string toString() const { return getName(); }
+	virtual EventType getEventType() const = 0;
+	virtual const char *getName() const = 0;
+	virtual int getCategoryFlags() const = 0;
+	virtual std::string toString() const { return getName(); }
 
-  inline bool isInCategor(EventCategory category) {
-    return getCategoryFlags() & category;
-  }
-  inline bool handled() { return m_handled; };
+	inline bool isInCategory(EventCategory category) {
+		return getCategoryFlags() & category;
+	}
+	inline bool handled() { return m_handled; };
+	inline void setHandled(bool handled) { m_handled = handled; }
 
 protected:
   bool m_handled = false;

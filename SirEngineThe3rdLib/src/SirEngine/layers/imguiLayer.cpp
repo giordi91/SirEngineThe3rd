@@ -14,8 +14,8 @@ void ImguiLayer::onAttach() {
   // need to initialize ImGui dx12
   assert(m_fontTextureDescriptor == nullptr);
   m_fontTextureDescriptor = new dx12::D3DBuffer();
-  m_descriptorIndex = dx12::GLOBAL_CBV_SRV_UAV_HEAP->reserveDescriptor(
-      m_fontTextureDescriptor);
+  m_descriptorIndex =
+      dx12::GLOBAL_CBV_SRV_UAV_HEAP->reserveDescriptor(m_fontTextureDescriptor);
 
   ImGui_ImplDX12_Init(dx12::DEVICE, 1, DXGI_FORMAT_R8G8B8A8_UNORM,
                       m_fontTextureDescriptor->cpuDescriptorHandle,
@@ -67,7 +67,7 @@ void ImguiLayer::onUpdate() {
   INT64 current_time;
   ::QueryPerformanceCounter((LARGE_INTEGER *)&current_time);
   io.DeltaTime = (float)(current_time - g_Time) / g_TicksPerSecond;
-  SE_CORE_INFO("time {0}", io.DeltaTime);
+  // SE_CORE_INFO("time {0}", io.DeltaTime);
   g_Time = current_time;
 
   // Read keyboard modifiers inputs
@@ -118,9 +118,8 @@ void ImguiLayer::onUpdate() {
   ImGui::End();
 
   ImGui::Render();
-  ImGui_ImplDX12_RenderDrawData(
-      ImGui::GetDrawData(),
-      dx12::CURRENT_FRAME_RESOURCE->fc.commandList);
+  ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(),
+                                dx12::CURRENT_FRAME_RESOURCE->fc.commandList);
 }
 
 void ImguiLayer::onEvent(Event &event) {
@@ -146,7 +145,7 @@ void ImguiLayer::onEvent(Event &event) {
 bool ImguiLayer::OnMouseButtonPressEvent(MouseButtonPressEvent &e) {
   ImGuiIO &io = ImGui::GetIO();
   io.MouseDown[static_cast<int>(e.getMouseButton())] = true;
-  return false;
+  return io.WantCaptureMouse;
 }
 bool ImguiLayer::OnMouseButtonReleaseEvent(MouseButtonReleaseEvent &e) {
   ImGuiIO &io = ImGui::GetIO();
@@ -156,26 +155,26 @@ bool ImguiLayer::OnMouseButtonReleaseEvent(MouseButtonReleaseEvent &e) {
 bool ImguiLayer::OnMouseMoveEvent(MouseMoveEvent &e) {
   ImGuiIO &io = ImGui::GetIO();
   io.MousePos = ImVec2(e.getX(), e.getY());
-  return false;
+  return io.WantCaptureMouse;
 }
 bool ImguiLayer::OnMouseScrolledEvent(MouseScrollEvent &e) {
 
   ImGuiIO &io = ImGui::GetIO();
   io.MouseWheelH += e.getOffsetX();
   io.MouseWheel += e.getOffsetY();
-  return false;
+  return io.WantCaptureMouse;
 }
 
 bool ImguiLayer::OnKeyPressedEvent(KeyboardPressEvent &e) {
   ImGuiIO &io = ImGui::GetIO();
   int c = e.getKeyCode();
   io.KeysDown[c] = true;
-  return false;
+  return io.WantCaptureKeyboard;
 }
 bool ImguiLayer::OnKeyReleasedEvent(KeyboardReleaseEvent &e) {
   ImGuiIO &io = ImGui::GetIO();
   io.KeysDown[e.getKeyCode()] = false;
-  return false;
+  return io.WantCaptureKeyboard;
 }
 bool ImguiLayer::OnWindowResizeEvent(WindowResizeEvent &e) {
   ImGuiIO &io = ImGui::GetIO();
@@ -188,6 +187,6 @@ bool ImguiLayer::OnWindowResizeEvent(WindowResizeEvent &e) {
 bool ImguiLayer::OnKeyTypeEvent(KeyTypeEvent &e) {
   ImGuiIO &io = ImGui::GetIO();
   io.AddInputCharacter((unsigned short)e.getKeyCode());
-  return false;
+  return io.WantCaptureKeyboard;
 }
 } // namespace SirEngine
