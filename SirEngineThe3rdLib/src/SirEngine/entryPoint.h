@@ -4,9 +4,8 @@
 
 extern SirEngine::Application* SirEngine::createApplication();
 
-int main(int argc, char** argv)
+int main()
 {
-
 	SirEngine::Log::init();
 
 	SE_CORE_INFO("Hello from core logger");

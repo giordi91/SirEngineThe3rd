@@ -91,7 +91,6 @@ void dispatchFrame() {
                                           dx12::CURRENT_FENCE);
   // swap the back and front buffers
   dx12::SWAP_CHAIN->present();
-  dx12::TOTAL_CPU_FRAMES++;
 
   // Wait until frame commands are complete.  This waiting is inefficient and
   // is done for simplicity.  Later we will show how to organize our rendering

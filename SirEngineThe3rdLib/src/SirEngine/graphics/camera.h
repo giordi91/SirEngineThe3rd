@@ -45,8 +45,8 @@ public:
   }
   inline DirectX::XMFLOAT4 getProjParams() const {
     // preparing camera values for deferred
-    int screenW = Globals::SCREEN_WIDTH;
-    int screenH = Globals::SCREEN_HEIGHT;
+    int screenW = globals::SCREEN_WIDTH;
+    int screenH = globals::SCREEN_HEIGHT;
     auto proj = getProjCamera(screenW, screenH);
     DirectX::XMFLOAT4X4 projView;
     DirectX::XMStoreFloat4x4(&projView, proj);

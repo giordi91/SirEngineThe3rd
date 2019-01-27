@@ -95,7 +95,6 @@ extern ID3D12Device4 *DEVICE;
 extern ID3D12Debug *DEBUG_CONTROLLER;
 extern IDXGIFactory6 *DXGI_FACTORY;
 extern Adapter *ADAPTER;
-extern UINT64 TOTAL_CPU_FRAMES;
 extern UINT64 CURRENT_FENCE;
 extern UINT64 CURRENT_FRAME;
 extern DescriptorHeap *GLOBAL_CBV_SRV_UAV_HEAP;

@@ -49,7 +49,7 @@ void ImguiLayer::onAttach() {
   ::QueryPerformanceFrequency((LARGE_INTEGER *)&g_TicksPerSecond);
   ::QueryPerformanceCounter((LARGE_INTEGER *)&g_Time);
 
-  io.DisplaySize = ImVec2(Globals::SCREEN_WIDTH, Globals::SCREEN_HEIGHT);
+  io.DisplaySize = ImVec2(globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT);
 }
 
 void ImguiLayer::onDetach() {
@@ -59,6 +59,10 @@ void ImguiLayer::onDetach() {
 }
 
 void ImguiLayer::onUpdate() {
+
+  if (!m_shouldShow) {
+    return;
+  }
 
   // Read keyboard modifiers inputs
   ImGuiIO &io = ImGui::GetIO();
@@ -91,30 +95,8 @@ void ImguiLayer::onUpdate() {
   static float f = 0.0f;
   static int counter = 0;
 
-  ImGui::Begin("Hello, world!"); // Create a window called "Hello, world!" and
-                                 // append into it.
-
-  ImGui::Text("This is some useful text."); // Display some text (you can use
-                                            // a format strings too)
-  ImGui::Checkbox(
-      "Demo Window",
-      &show_demo_window); // Edit bools storing our window open/close state
-  ImGui::Checkbox("Another Window", &show_demo_window);
-
-  ImGui::SliderFloat("float", &f, 0.0f,
-                     1.0f); // Edit 1 float using a slider from 0.0f to 1.0f
-  ImGui::ColorEdit3(
-      "clear color",
-      (float *)&clear_color); // Edit 3 floats representing a color
-
-  if (ImGui::Button("Button")) // Buttons return true when clicked (most
-                               // widgets return true when edited/activated)
-    counter++;
-  ImGui::SameLine();
-  ImGui::Text("counter = %d", counter);
-
-  ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
-              1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+  ImGui::Begin("Performance");
+  m_frameTimings.render();
   ImGui::End();
 
   ImGui::Render();
@@ -142,47 +124,43 @@ void ImguiLayer::onEvent(Event &event) {
   dispatcher.dispatch<WindowResizeEvent>(
       SE_BIND_EVENT_FN(ImguiLayer::onWindowResizeEvent));
 }
-bool ImguiLayer::onMouseButtonPressEvent(const MouseButtonPressEvent &e) const
-{
+bool ImguiLayer::onMouseButtonPressEvent(const MouseButtonPressEvent &e) const {
   ImGuiIO &io = ImGui::GetIO();
   io.MouseDown[static_cast<int>(e.getMouseButton())] = true;
   return io.WantCaptureMouse;
 }
-bool ImguiLayer::onMouseButtonReleaseEvent(const MouseButtonReleaseEvent &e) const
-{
+bool ImguiLayer::onMouseButtonReleaseEvent(
+    const MouseButtonReleaseEvent &e) const {
   ImGuiIO &io = ImGui::GetIO();
   io.MouseDown[static_cast<int>(e.getMouseButton())] = false;
   return false;
 }
-bool ImguiLayer::onMouseMoveEvent(const MouseMoveEvent &e) const
-{
+bool ImguiLayer::onMouseMoveEvent(const MouseMoveEvent &e) const {
   ImGuiIO &io = ImGui::GetIO();
   io.MousePos = ImVec2(e.getX(), e.getY());
   return io.WantCaptureMouse;
 }
-bool ImguiLayer::onMouseScrolledEvent(const MouseScrollEvent &e) const
-{
+bool ImguiLayer::onMouseScrolledEvent(const MouseScrollEvent &e) const {
   ImGuiIO &io = ImGui::GetIO();
   io.MouseWheelH += e.getOffsetX();
   io.MouseWheel += e.getOffsetY();
   return io.WantCaptureMouse;
 }
-
-bool ImguiLayer::onKeyPressedEvent(const KeyboardPressEvent &e) const
-{
+bool ImguiLayer::onKeyPressedEvent(const KeyboardPressEvent &e) {
   ImGuiIO &io = ImGui::GetIO();
   int c = e.getKeyCode();
   io.KeysDown[c] = true;
+  if (c == TRIGGER_UI_BUTTON) {
+    m_shouldShow = !m_shouldShow;
+  }
   return io.WantCaptureKeyboard;
 }
-bool ImguiLayer::onKeyReleasedEvent(const KeyboardReleaseEvent &e) const
-{
+bool ImguiLayer::onKeyReleasedEvent(const KeyboardReleaseEvent &e) const {
   ImGuiIO &io = ImGui::GetIO();
   io.KeysDown[e.getKeyCode()] = false;
   return io.WantCaptureKeyboard;
 }
-bool ImguiLayer::onWindowResizeEvent(const WindowResizeEvent &e) const
-{
+bool ImguiLayer::onWindowResizeEvent(const WindowResizeEvent &e) const {
   ImGuiIO &io = ImGui::GetIO();
   io.DisplaySize = ImVec2(e.getWidth(), e.getHeight());
   io.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
@@ -190,8 +168,7 @@ bool ImguiLayer::onWindowResizeEvent(const WindowResizeEvent &e) const
 
   return false;
 }
-bool ImguiLayer::onKeyTypeEvent(const KeyTypeEvent &e) const
-{
+bool ImguiLayer::onKeyTypeEvent(const KeyTypeEvent &e) const {
   ImGuiIO &io = ImGui::GetIO();
   io.AddInputCharacter(static_cast<uint16_t>(e.getKeyCode()));
   return io.WantCaptureKeyboard;

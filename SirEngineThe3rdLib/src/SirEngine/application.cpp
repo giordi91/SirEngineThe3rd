@@ -23,6 +23,8 @@ Application::Application() {
 Application::~Application() { delete m_window; }
 void Application::run() {
   while (m_run) {
+    globals::LAST_FRAME_TIME_NS = globals::GAME_CLOCK.getDelta();
+	++globals::TOTAL_NUMBER_OF_FRAMES;
     m_window->onUpdate();
     graphics::newFrame();
 
@@ -34,7 +36,8 @@ void Application::run() {
 }
 void Application::onEvent(Event &e) {
   // close event dispatch
-  SE_CORE_INFO("{0}", e);
+  //SE_CORE_INFO("{0}", e);
+
   EventDispatcher dispatcher(e);
   dispatcher.dispatch<WindowCloseEvent>(
       [this](WindowCloseEvent &e) -> bool { return (this->onCloseWindow(e)); });
@@ -57,11 +60,11 @@ bool Application::onCloseWindow(WindowCloseEvent &e) {
   return true;
 }
 bool Application::onResizeWindow(WindowResizeEvent &e) {
-  Globals::SCREEN_WIDTH = e.getWidth();
-  Globals::SCREEN_HEIGHT = e.getHeight();
+  globals::SCREEN_WIDTH = e.getWidth();
+  globals::SCREEN_HEIGHT = e.getHeight();
 
-  m_window->onResize(Globals::SCREEN_WIDTH, Globals::SCREEN_HEIGHT);
-  graphics::onResize(Globals::SCREEN_WIDTH, Globals::SCREEN_HEIGHT);
+  m_window->onResize(globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT);
+  graphics::onResize(globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT);
   return true;
 }
 void Application::pushLayer(Layer *layer) { m_layerStack.pushLayer(layer); }
