@@ -11,7 +11,7 @@ namespace dx12 {
 class Texture2D {
 
 public:
-  Texture2D() = default;
+  Texture2D()=default;
   ~Texture2D();
   bool initializeEmpty(int width, int height, DXGI_FORMAT format);
 
