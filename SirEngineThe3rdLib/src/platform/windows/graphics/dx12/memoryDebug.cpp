@@ -2,28 +2,24 @@
 #include "SirEngine/log.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/adapter.h"
+#include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include <imgui/imgui.h>
 #include <iomanip>
 #include <sstream>
-#include "platform/windows/graphics/dx12/descriptorHeap.h"
 namespace SirEngine {
 namespace dx12 {
-uint32_t getTotalGpuMemoryMB() { 
+uint32_t getTotalGpuMemoryMB() {
   DXGI_ADAPTER_DESC desc;
   assert(SUCCEEDED(dx12::ADAPTER->getAdapter()->GetDesc(&desc)));
-  return desc.DedicatedVideoMemory*1e-6;
- }
+  return desc.DedicatedVideoMemory * 1e-6;
+}
 
-uint32_t getUsedGpuMemoryMB()
-{
-  // get gpu memory
+uint32_t getUsedGpuMemoryMB() {
+  // get GPU memory
   DXGI_QUERY_VIDEO_MEMORY_INFO info = {};
   dx12::ADAPTER->getAdapter()->QueryVideoMemoryInfo(
       0, DXGI_MEMORY_SEGMENT_GROUP_LOCAL, &info);
-
-  float usedGPUMemInGB = (float)info.CurrentUsage * 1e-6;
-  return usedGPUMemInGB;
-
+  return static_cast<uint32_t>(info.CurrentUsage * 1e-6);
 }
 
 void renderImGuiMemoryWidget() {
@@ -38,13 +34,13 @@ void renderImGuiMemoryWidget() {
   DXGI_ADAPTER_DESC desc;
   SUCCEEDED(dx12::ADAPTER->getAdapter()->GetDesc(&desc));
 
-  float totalGPUMemGB = (float)desc.DedicatedVideoMemory * 1e-9;
-  float usedGPUMemInGB = (float)info.CurrentUsage * 1e-9;
-  float totalGPUMemMB = (float)desc.DedicatedVideoMemory * 1e-6;
-  float usedGPUMemInMB = (float)info.CurrentUsage * 1e-6;
+  float totalGPUMemGB = static_cast<float>(desc.DedicatedVideoMemory) * 1e-9;
+  float usedGPUMemInGB = static_cast<float>(info.CurrentUsage) * 1e-9;
+  float totalGPUMemMB = static_cast<float>(desc.DedicatedVideoMemory) * 1e-6;
+  float usedGPUMemInMB = static_cast<float>(info.CurrentUsage) * 1e-6;
   float ratio = usedGPUMemInGB / totalGPUMemGB;
 
-  std::string overlay = std::to_string(ratio*100.0f) + "%";
+  std::string overlay = std::to_string(ratio * 100.0f) + "%";
 
   std::stringstream stream;
   stream << std::fixed << std::setprecision(2) << "GPU Memory: used "
@@ -61,54 +57,62 @@ void renderImGuiMemoryWidget() {
   if (!ImGui::CollapsingHeader("Global Heaps", ImGuiTreeNodeFlags_DefaultOpen))
     return;
 
-  //CBV heap
-  uint32_t heapSize =    static_cast<uint32_t>(dx12::GLOBAL_CBV_SRV_UAV_HEAP->getHeapSize());
-  uint32_t allocated =   static_cast<uint32_t>(dx12::GLOBAL_CBV_SRV_UAV_HEAP->getAllocatedDescriptorsCount());
-  uint32_t freeHandles = static_cast<uint32_t>(dx12::GLOBAL_CBV_SRV_UAV_HEAP->getFreeHandleCount());
+  // CBV heap
+  auto heapSize =
+      static_cast<uint32_t>(dx12::GLOBAL_CBV_SRV_UAV_HEAP->getHeapSize());
+  auto allocated = static_cast<uint32_t>(
+      dx12::GLOBAL_CBV_SRV_UAV_HEAP->getAllocatedDescriptorsCount());
+  auto freeHandles = static_cast<uint32_t>(
+      dx12::GLOBAL_CBV_SRV_UAV_HEAP->getFreeHandleCount());
 
-  float heapRatio = static_cast<float>(allocated) / static_cast<float>(heapSize);
+  float heapRatio =
+      static_cast<float>(allocated) / static_cast<float>(heapSize);
   stream.str("");
   stream.clear();
   stream << std::fixed << std::setprecision(2) << "CBV_SRV_UAV heap: used "
-	  << allocated << "/" << heapSize << " " << "free handles :" << freeHandles;
-  std::string heapLabel= stream.str();
+         << allocated << "/" << heapSize << " "
+         << "free handles :" << freeHandles;
+  std::string heapLabel = stream.str();
   ImGui::Text(heapLabel.c_str());
-  std::string overlayHeap = std::to_string(heapRatio*100.0f) + "%";
+  std::string overlayHeap = std::to_string(heapRatio * 100.0f) + "%";
   ImGui::ProgressBar(heapRatio, ImVec2(0.f, 0.f), overlayHeap.c_str());
 
-//DSV heap
+  // DSV heap
 
-  heapSize =    static_cast<uint32_t>(dx12::GLOBAL_DSV_HEAP->getHeapSize());
-  allocated =   static_cast<uint32_t>(dx12::GLOBAL_DSV_HEAP->getAllocatedDescriptorsCount());
-  freeHandles = static_cast<uint32_t>(dx12::GLOBAL_DSV_HEAP->getFreeHandleCount());
+  heapSize = static_cast<uint32_t>(dx12::GLOBAL_DSV_HEAP->getHeapSize());
+  allocated = static_cast<uint32_t>(
+      dx12::GLOBAL_DSV_HEAP->getAllocatedDescriptorsCount());
+  freeHandles =
+      static_cast<uint32_t>(dx12::GLOBAL_DSV_HEAP->getFreeHandleCount());
 
   heapRatio = static_cast<float>(allocated) / static_cast<float>(heapSize);
   stream.str("");
   stream.clear();
-  stream << std::fixed << std::setprecision(2) << "DSV heap: used "
-	  << allocated << "/" << heapSize << " " << "free handles :" << freeHandles;
-  heapLabel= stream.str();
+  stream << std::fixed << std::setprecision(2) << "DSV heap: used " << allocated
+         << "/" << heapSize << " "
+         << "free handles :" << freeHandles;
+  heapLabel = stream.str();
   ImGui::Text(heapLabel.c_str());
-  overlayHeap = std::to_string(heapRatio*100.0f) + "%";
+  overlayHeap = std::to_string(heapRatio * 100.0f) + "%";
   ImGui::ProgressBar(heapRatio, ImVec2(0.f, 0.f), overlayHeap.c_str());
 
-//RTV heap
-
-  heapSize =    static_cast<uint32_t>(dx12::GLOBAL_RTV_HEAP->getHeapSize());
-  allocated =   static_cast<uint32_t>(dx12::GLOBAL_RTV_HEAP->getAllocatedDescriptorsCount());
-  freeHandles = static_cast<uint32_t>(dx12::GLOBAL_RTV_HEAP->getFreeHandleCount());
+  // RTV heap
+  heapSize = static_cast<uint32_t>(dx12::GLOBAL_RTV_HEAP->getHeapSize());
+  allocated = static_cast<uint32_t>(
+      dx12::GLOBAL_RTV_HEAP->getAllocatedDescriptorsCount());
+  freeHandles =
+      static_cast<uint32_t>(dx12::GLOBAL_RTV_HEAP->getFreeHandleCount());
 
   heapRatio = static_cast<float>(allocated) / static_cast<float>(heapSize);
   stream.str("");
   stream.clear();
-  stream << std::fixed << std::setprecision(2) << "RTV heap: used "
-	  << allocated << "/" << heapSize << " " << "free handles :" << freeHandles;
-  heapLabel= stream.str();
+  stream << std::fixed << std::setprecision(2) << "RTV heap: used " << allocated
+         << "/" << heapSize << " "
+         << "free handles :" << freeHandles;
+  heapLabel = stream.str();
   ImGui::Text(heapLabel.c_str());
-  overlayHeap = std::to_string(heapRatio*100.0f) + "%";
+  overlayHeap = std::to_string(heapRatio * 100.0f) + "%";
   ImGui::ProgressBar(heapRatio, ImVec2(0.f, 0.f), overlayHeap.c_str());
-
-
 }
 } // namespace dx12
 } // namespace SirEngine
