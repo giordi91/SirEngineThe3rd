@@ -4,6 +4,7 @@
 #include "platform/windows/graphics/dx12/d3dx12.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include <d3d12.h>
+#include <iostream>
 
 namespace SirEngine {
 namespace dx12 {
@@ -29,9 +30,9 @@ bool SwapChain::initialize(HWND window, int width, int height) {
   msQualityLevels.SampleCount = 4;
   msQualityLevels.Flags = D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE;
   msQualityLevels.NumQualityLevels = 0;
-  HRESULT result = DEVICE->CheckFeatureSupport(
-      D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS, &msQualityLevels,
-      sizeof(msQualityLevels));
+  HRESULT result =
+      DEVICE->CheckFeatureSupport(D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS,
+                                  &msQualityLevels, sizeof(msQualityLevels));
 
   m_msaaQuality = msQualityLevels.NumQualityLevels;
   assert(m_msaaQuality > 0 && "Unexpected MSAA quality level.");
@@ -54,19 +55,14 @@ bool SwapChain::initialize(HWND window, int width, int height) {
   swapDesc.OutputWindow = window;
   swapDesc.Windowed = 1;
   swapDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-  swapDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH |
-                   DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
+  swapDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
   // the reason why we pass a queue is because when the swap chain flushes uses
   // the queue
+  result = DXGI_FACTORY->CreateSwapChain(GLOBAL_COMMAND_QUEUE, &swapDesc,
+                                         &m_swapChain);
 
-  result = DXGI_FACTORY->CreateSwapChain(GLOBAL_COMMAND_QUEUE,
-                                                    &swapDesc, &m_swapChain);
-
-  if (FAILED(result)) {
-    return false;
-  }
-  return true;
+  return FAILED(result);
 }
 
 bool SwapChain::resize(FrameCommand *command, int width, int height) {
@@ -76,48 +72,50 @@ bool SwapChain::resize(FrameCommand *command, int width, int height) {
   flushCommandQueue(GLOBAL_COMMAND_QUEUE);
   // HRESULT result = m_commandList->Reset(m_commandAllocator.Get(), nullptr);
   resetCommandList(command);
-  if (m_swapChainBuffersResource != nullptr) {
-    delete[] m_swapChainBuffersResource;
-    m_swapChainBuffersResource = nullptr;
-  }
+	  if (m_swapChainBuffersResource != nullptr) {
+		  for (int i = 0; i < m_swapChainBufferCount; ++i) {
+			  m_swapChainBuffersResource[i].clear();
+		  }
+		  delete[] m_swapChainBuffersResource;
+		  std::cout << "===============" << std::endl;
+		  m_swapChainBuffersResource = nullptr;
+	  }
 
-  m_swapChainBuffersResource = new Texture2D[m_swapChainBufferCount];
+	  m_swapChainBuffersResource = new Texture2D[m_swapChainBufferCount];
 
-  // freeing depth and re-creating it;
-  if (m_depth != nullptr) {
-    delete m_depth;
-    m_depth = nullptr;
-  }
-  m_depth = new DepthTexture();
-  m_depth->initialize(width, height);
 
-  // Resize the swap chain.
-  HRESULT result = m_swapChain->ResizeBuffers(
-      m_swapChainBufferCount, width, height, m_backBufferFormat,
-      DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH |
-          DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING);
-  assert(SUCCEEDED(result) && "failed to resize swap chain");
+	  // Resize the swap chain.
+	  HRESULT result = m_swapChain->ResizeBuffers(
+		  m_swapChainBufferCount, width, height, m_backBufferFormat,
+		  DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH);
+	  assert(SUCCEEDED(result) && "failed to resize swap chain");
 
-  // resetting the current back buffer
-  m_currentBackBuffer = 0;
+	  // resetting the current back buffer
+	  m_currentBackBuffer = 0;
 
-  CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHeapHandle(
-      GLOBAL_RTV_HEAP->getCPUStart());
+	  CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHeapHandle(GLOBAL_RTV_HEAP->getCPUStart());
 
-  ID3D12Resource *resource;
-  for (UINT i = 0; i < m_swapChainBufferCount; i++) {
-    HRESULT res = m_swapChain->GetBuffer(i, IID_PPV_ARGS(&resource));
+	  for (UINT i = 0; i < m_swapChainBufferCount; i++) {
+		  ID3D12Resource *resource;
+		  HRESULT res = m_swapChain->GetBuffer(i, IID_PPV_ARGS(&resource));
 
-    m_swapChainBuffersResource[i].initializeRTFromResource(resource);
-  }
+		  m_swapChainBuffersResource[i].initializeRTFromResource(resource);
+	  }
 
-  // Transition the resource from its initial state to be used as a depth
-  // buffer.
+	  // Transition the resource from its initial state to be used as a depth
+	  // buffer.
+	  // freeing depth and re-creating it;
+	  if (m_depth != nullptr) {
+		  delete m_depth;
+		  m_depth = nullptr;
+	  }
+	  m_depth = new DepthTexture();
+	  m_depth->initialize(width, height);
 
-  command->commandList->ResourceBarrier(
-      1, &CD3DX12_RESOURCE_BARRIER::Transition(
-             m_depth->getResource(), D3D12_RESOURCE_STATE_COMMON,
-             D3D12_RESOURCE_STATE_DEPTH_WRITE));
+	  command->commandList->ResourceBarrier(
+		  1, &CD3DX12_RESOURCE_BARRIER::Transition(
+			  m_depth->getResource(), D3D12_RESOURCE_STATE_COMMON,
+			  D3D12_RESOURCE_STATE_DEPTH_WRITE));
 
   // Execute the resize commands.
   executeCommandList(GLOBAL_COMMAND_QUEUE, command);

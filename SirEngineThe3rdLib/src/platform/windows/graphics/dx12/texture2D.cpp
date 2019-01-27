@@ -107,6 +107,7 @@ bool Texture2D::initializeRTFromResource(ID3D12Resource *resource) {
 void Texture2D::clear() {
   if (m_texture.resource != nullptr) {
     m_texture.resource->Release();
+	m_texture.resource = nullptr;
   }
 }
 } // namespace dx12

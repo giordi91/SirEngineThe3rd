@@ -1,11 +1,13 @@
 #include "platform/windows/graphics/dx12/depthTexture.h"
-#include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/d3dx12.h"
+#include "platform/windows/graphics/dx12/descriptorHeap.h"
+#include <iostream>
 
 namespace SirEngine {
 namespace dx12 {
 DepthTexture::~DepthTexture() {
-	dx12::GLOBAL_DSV_HEAP->freeDescritpor(m_texture);
+  clear();
+  dx12::GLOBAL_DSV_HEAP->freeDescritpor(m_texture);
 }
 bool DepthTexture::initialize(int width, int height) {
 
@@ -36,9 +38,9 @@ bool DepthTexture::initialize(int width, int height) {
   msQualityLevels.SampleCount = 4;
   msQualityLevels.Flags = D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE;
   msQualityLevels.NumQualityLevels = 0;
-  HRESULT result = DEVICE->CheckFeatureSupport(
-      D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS, &msQualityLevels,
-      sizeof(msQualityLevels));
+  HRESULT result =
+      DEVICE->CheckFeatureSupport(D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS,
+                                  &msQualityLevels, sizeof(msQualityLevels));
   UINT m_msaaQuality = msQualityLevels.NumQualityLevels;
 
   depthStencilDesc.SampleDesc.Count = m_4xMsaaState ? 4 : 1;
@@ -60,6 +62,11 @@ bool DepthTexture::initialize(int width, int height) {
   m_currentState = D3D12_RESOURCE_STATE_COMMON;
   return false;
 }
-void DepthTexture::clear() {}
+void DepthTexture::clear() {
+  if (m_texture.resource != nullptr) {
+    m_texture.resource->Release();
+    m_texture.resource = nullptr;
+  }
+}
 } // namespace dx12
 } // namespace SirEngine

@@ -46,8 +46,8 @@ void ImguiLayer::onAttach() {
   io.KeyMap[ImGuiKey_Y] = 'Y';
   io.KeyMap[ImGuiKey_Z] = 'Z';
 
-  ::QueryPerformanceFrequency((LARGE_INTEGER *)&g_TicksPerSecond);
-  ::QueryPerformanceCounter((LARGE_INTEGER *)&g_Time);
+  ::QueryPerformanceFrequency(reinterpret_cast<LARGE_INTEGER *>(&g_TicksPerSecond));
+  ::QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER *>(&g_Time));
 
   io.DisplaySize = ImVec2(globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT);
 }
@@ -55,7 +55,7 @@ void ImguiLayer::onAttach() {
 void ImguiLayer::onDetach() {
   ImGui_ImplDX12_Shutdown();
   delete m_fontTextureDescriptor;
-  m_fontTextureDescriptor == nullptr;
+  m_fontTextureDescriptor = nullptr;
 }
 
 void ImguiLayer::onUpdate() {
@@ -69,7 +69,7 @@ void ImguiLayer::onUpdate() {
 
   // Setup time step
   INT64 current_time;
-  ::QueryPerformanceCounter((LARGE_INTEGER *)&current_time);
+  ::QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER *>(&current_time));
   io.DeltaTime = (float)(current_time - g_Time) / g_TicksPerSecond;
   // SE_CORE_INFO("time {0}", io.DeltaTime);
   g_Time = current_time;
@@ -88,15 +88,12 @@ void ImguiLayer::onUpdate() {
             "ImGui_ImplOpenGL3_NewFrame().");
 
   bool show_demo_window = true;
-  bool show_another_window = false;
-  ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
   ImGui::NewFrame();
   ImGui::ShowDemoWindow(&show_demo_window);
-  static float f = 0.0f;
-  static int counter = 0;
 
   ImGui::Begin("Performance");
   m_frameTimings.render();
+  m_memoryUsage.render();
   ImGui::End();
 
   ImGui::Render();

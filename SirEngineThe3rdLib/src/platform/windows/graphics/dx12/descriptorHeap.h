@@ -28,11 +28,16 @@ public:
   inline D3D12_CPU_DESCRIPTOR_HANDLE getCPUStart() {
     return m_heap->GetCPUDescriptorHandleForHeapStart();
   }
+  inline size_t getHeapSize() const { return m_freeList.size(); }
+  inline size_t getAllocatedDescriptorsCount() const {
+    return m_descriptorsAllocated;
+  }
+  inline size_t getFreeHandleCount() const { return m_freeListIdx; }
   inline ID3D12DescriptorHeap **getAddressOff() { return &m_heap; }
   inline ID3D12DescriptorHeap *getResource() { return m_heap; }
   inline D3D12_DESCRIPTOR_HEAP_DESC getDesc() { return m_heap->GetDesc(); }
-  inline UINT getDescriptorSize() { return m_descriptorSize; }
-  inline D3D12_DESCRIPTOR_HEAP_TYPE getType() { return m_type; }
+  inline UINT getDescriptorSize() const { return m_descriptorSize; }
+  inline D3D12_DESCRIPTOR_HEAP_TYPE getType() const { return m_type; }
   inline void reset() {
     // setting the allocated descriptor back to zero, so we are free to
     // re-allocate memory, descriptors don't need to be freed, we can simply

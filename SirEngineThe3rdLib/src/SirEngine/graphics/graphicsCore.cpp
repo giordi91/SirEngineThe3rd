@@ -9,17 +9,14 @@ namespace SirEngine {
 namespace graphics {
 void onResize(unsigned int width, unsigned int height) {
 
-  dx12::SWAP_CHAIN->resize(
-      &dx12::CURRENT_FRAME_RESOURCE->fc, width, height);
+  dx12::SWAP_CHAIN->resize(&dx12::CURRENT_FRAME_RESOURCE->fc, width, height);
 }
 void newFrame() {
 
   // TODO clear here, there should be no specific dx12 stuff
   // here we need to check which frame resource we are going to use
-  dx12::CURRENT_FRAME =
-      (dx12::CURRENT_FRAME + 1) % FRAME_BUFFERS_COUNT;
-  dx12::CURRENT_FRAME_RESOURCE =
-      &dx12::FRAME_RESOURCES[dx12::CURRENT_FRAME];
+  dx12::CURRENT_FRAME = (dx12::CURRENT_FRAME + 1) % FRAME_BUFFERS_COUNT;
+  dx12::CURRENT_FRAME_RESOURCE = &dx12::FRAME_RESOURCES[dx12::CURRENT_FRAME];
 
   // check if the resource has finished rendering if not we have to wait
   if (dx12::CURRENT_FRAME_RESOURCE->fence != 0 &&
@@ -28,7 +25,7 @@ void newFrame() {
     HANDLE eventHandle = CreateEventEx(nullptr, false, false, EVENT_ALL_ACCESS);
     auto handleResult = dx12::GLOBAL_FENCE->SetEventOnCompletion(
         dx12::CURRENT_FRAME_RESOURCE->fence, eventHandle);
-	assert(SUCCEEDED(handleResult));
+    assert(SUCCEEDED(handleResult));
     WaitForSingleObject(eventHandle, INFINITE);
     CloseHandle(eventHandle);
   }
@@ -45,8 +42,8 @@ void newFrame() {
   D3D12_RESOURCE_BARRIER rtbarrier[1];
 
   int rtcounter = dx12::transitionTexture2DifNeeded(
-      dx12::SWAP_CHAIN->currentBackBuffer(),
-      D3D12_RESOURCE_STATE_RENDER_TARGET, rtbarrier, 0);
+      dx12::SWAP_CHAIN->currentBackBuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET,
+      rtbarrier, 0);
   if (rtcounter != 0) {
     commandList->ResourceBarrier(rtcounter, rtbarrier);
   }
@@ -54,12 +51,11 @@ void newFrame() {
   // Set the viewport and scissor rect.  This needs to be reset whenever the
   // command list is reset.
   commandList->RSSetViewports(1, dx12::SWAP_CHAIN->getViewport());
-  commandList->RSSetScissorRects(
-      1, dx12::SWAP_CHAIN->getScissorRect());
+  commandList->RSSetScissorRects(1, dx12::SWAP_CHAIN->getScissorRect());
 
   // Clear the back buffer and depth buffer.
-  commandList->ClearRenderTargetView(
-      dx12::SWAP_CHAIN->currentBackBufferView(), gray, 0, nullptr);
+  commandList->ClearRenderTargetView(dx12::SWAP_CHAIN->currentBackBufferView(),
+                                     gray, 0, nullptr);
 
   dx12::SWAP_CHAIN->clearDepth();
   dx12::SwapChain *swapChain = dx12::SWAP_CHAIN;
@@ -75,9 +71,9 @@ void dispatchFrame() {
 
   D3D12_RESOURCE_BARRIER rtbarrier[1];
   // finally transition the resource to be present
-  int rtcounter = dx12::transitionTexture2D(
-      dx12::SWAP_CHAIN->currentBackBuffer(),
-      D3D12_RESOURCE_STATE_PRESENT, rtbarrier, 0);
+  int rtcounter =
+      dx12::transitionTexture2D(dx12::SWAP_CHAIN->currentBackBuffer(),
+                                D3D12_RESOURCE_STATE_PRESENT, rtbarrier, 0);
   auto *commandList = dx12::CURRENT_FRAME_RESOURCE->fc.commandList;
   commandList->ResourceBarrier(rtcounter, rtbarrier);
 
@@ -85,16 +81,10 @@ void dispatchFrame() {
   dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE,
                            &dx12::CURRENT_FRAME_RESOURCE->fc);
 
-  dx12::CURRENT_FRAME_RESOURCE->fence =
-      ++dx12::CURRENT_FENCE;
-  dx12::GLOBAL_COMMAND_QUEUE->Signal(dx12::GLOBAL_FENCE,
-                                          dx12::CURRENT_FENCE);
+  dx12::CURRENT_FRAME_RESOURCE->fence = ++dx12::CURRENT_FENCE;
+  dx12::GLOBAL_COMMAND_QUEUE->Signal(dx12::GLOBAL_FENCE, dx12::CURRENT_FENCE);
   // swap the back and front buffers
   dx12::SWAP_CHAIN->present();
-
-  // Wait until frame commands are complete.  This waiting is inefficient and
-  // is done for simplicity.  Later we will show how to organize our rendering
-  // code so we do not have to wait per frame.
 }
 } // namespace graphics
 } // namespace SirEngine

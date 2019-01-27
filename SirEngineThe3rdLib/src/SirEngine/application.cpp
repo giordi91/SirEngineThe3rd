@@ -5,6 +5,7 @@
 #include "SirEngine/log.h"
 #include "layers/graphics3DLayer.h"
 #include "layers/imguiLayer.h"
+#include <random>
 
 namespace SirEngine {
 
@@ -32,6 +33,10 @@ void Application::run() {
       l->onUpdate();
     }
     graphics::dispatchFrame();
+	//std::this_thread::sleep_for(std::chrono::milliseconds{5});
+	 std::mt19937_64 eng{std::random_device{}()};  // or seed however you want
+    std::uniform_int_distribution<> dist{0, 20};
+    std::this_thread::sleep_for(std::chrono::milliseconds{dist(eng)});
   }
 }
 void Application::onEvent(Event &e) {

@@ -5,11 +5,9 @@
 #include "SirEngine/events/mouseEvent.h"
 #include "SirEngine/layer.h"
 #include "SirEngine/debugUiWidgets/frameTimingsWidget.h"
+#include "SirEngine/debugUiWidgets/memoryConsumptionWidget.h"
 
 namespace SirEngine {
-namespace debug {
-struct FrameTimingsWidget;
-}
 
 namespace dx12 {
 struct D3DBuffer;
@@ -42,6 +40,7 @@ private:
   INT64 g_Time = 0;
   INT64 g_TicksPerSecond = 0;
   debug::FrameTimingsWidget m_frameTimings;
+  debug::MemoryConsumptionWidget m_memoryUsage;
   bool m_shouldShow = false;
   //192 is the `
   static const uint32_t TRIGGER_UI_BUTTON = 192;

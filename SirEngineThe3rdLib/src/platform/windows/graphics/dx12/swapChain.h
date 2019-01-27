@@ -61,8 +61,8 @@ private:
 
   UINT m_currentBackBuffer = 0;
   // Hard-coded double buffering for the time being
-  //TODO this values should be a constant engine defined somewhere
-  static const UINT m_swapChainBufferCount = 2;
+  // TODO this values should be a constant engine defined somewhere
+  static const UINT m_swapChainBufferCount = FRAME_BUFFERS_COUNT;
 
   Texture2D *m_swapChainBuffersResource = nullptr;
   DepthTexture *m_depth = nullptr;

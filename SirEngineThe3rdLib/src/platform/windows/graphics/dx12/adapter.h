@@ -19,12 +19,12 @@ public:
   inline AdapterFeature getFeature() const { return m_feature; }
 
   bool findBestAdapter(IDXGIFactory4 *dxgiFactory, bool verbose = false);
-  inline IDXGIAdapter1 *getAdapter() const { return m_adapter; }
+  inline IDXGIAdapter3 *getAdapter() const { return m_adapter; }
 
 private:
   AdapterVendor m_vendor = AdapterVendor::NVIDIA;
   AdapterFeature m_feature = AdapterFeature::ANY;
-  IDXGIAdapter1 *m_adapter = nullptr;
+  IDXGIAdapter3 *m_adapter = nullptr;
 };
 } // namespace dx12
 } // namespace SirEngine

@@ -4,6 +4,7 @@
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/swapChain.h"
 #include <DirectXMath.h>
+#include "platform/windows/graphics/dx12/memoryDebug.h"
 
 namespace SirEngine {
 
@@ -44,7 +45,6 @@ void Graphics3DLayer::onAttach() {
 }
 void Graphics3DLayer::onDetach() {}
 void Graphics3DLayer::onUpdate() {
-
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   if (!currentFc->isListOpen) {
     dx12::resetAllocatorAndList(currentFc);
@@ -84,6 +84,9 @@ void Graphics3DLayer::onUpdate() {
              .gpuDescriptorHandle);
 
   commandList->DrawIndexedInstanced(m_mesh.getIndexCount(), 1, 0, 0, 0);
+
+  float m = dx12::getUsedGpuMemory();
+  //SE_CORE_INFO("used {0}", m);
 }
 void Graphics3DLayer::onEvent(Event &event) {
 
