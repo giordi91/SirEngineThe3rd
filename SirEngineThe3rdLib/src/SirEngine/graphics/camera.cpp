@@ -7,16 +7,16 @@ inline DirectX::XMVECTOR splatFloat(float value) {
   return XMLoadFloat4(&temp);
 }
 
-const DirectX::XMVECTOR Camera3dPivot::upVector =
-    DirectX::XMLoadFloat3(&DirectX::XMFLOAT3{0.0f, 1.0f, 0.0f});
-const float Camera3dPivot::MOUSE_ROT_SPEED_SCALAR = 0.012f;
-const float Camera3dPivot::MOUSE_PAN_SPEED_SCALAR = 0.007f;
-const DirectX::XMVECTOR Camera3dPivot::MOUSE_ROT_SPEED_VECTOR =
-    DirectX::XMLoadFloat3(&DirectX::XMFLOAT3{0.012f, 0.012f, 0.012f});
-const DirectX::XMVECTOR Camera3dPivot::MOUSE_PAN_SPEED_VECTOR =
-    DirectX::XMLoadFloat3(&DirectX::XMFLOAT3{0.07f, 0.07f, 0.07f});
+const DirectX::XMVECTOR Camera3DPivot::upVector =
+    DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0);
+const float Camera3DPivot::MOUSE_ROT_SPEED_SCALAR = 0.012f;
+const float Camera3DPivot::MOUSE_PAN_SPEED_SCALAR = 0.007f;
+const DirectX::XMVECTOR Camera3DPivot::MOUSE_ROT_SPEED_VECTOR =
+    DirectX::XMVectorSet(0.012f, 0.012f, 0.012f, 0.0f);
+const DirectX::XMVECTOR Camera3DPivot::MOUSE_PAN_SPEED_VECTOR =
+    DirectX::XMVectorSet(0.07f, 0.07f, 0.07f, 0.0f);
 
-DirectX::XMMATRIX Camera3dPivot::getMVP(DirectX::XMMATRIX modelM) {
+DirectX::XMMATRIX Camera3DPivot::getMVP(DirectX::XMMATRIX modelM) {
 
   int screenW = Globals::SCREEN_WIDTH;
   int screenH = Globals::SCREEN_HEIGHT;
@@ -24,7 +24,7 @@ DirectX::XMMATRIX Camera3dPivot::getMVP(DirectX::XMMATRIX modelM) {
                           getProjCamera(screenW, screenH));
 }
 
-DirectX::XMMATRIX Camera3dPivot::getMVPInverse(DirectX::XMMATRIX modelM) {
+DirectX::XMMATRIX Camera3DPivot::getMVPInverse(DirectX::XMMATRIX modelM) {
 
   int screenW = Globals::SCREEN_WIDTH;
   int screenH = Globals::SCREEN_HEIGHT;
@@ -33,7 +33,7 @@ DirectX::XMMATRIX Camera3dPivot::getMVPInverse(DirectX::XMMATRIX modelM) {
   auto det = DirectX::XMMatrixDeterminant(mat);
   return XMMatrixInverse(&det, mat);
 }
-DirectX::XMMATRIX Camera3dPivot::getViewInverse(DirectX::XMMATRIX modelM) {
+DirectX::XMMATRIX Camera3DPivot::getViewInverse(DirectX::XMMATRIX modelM) {
   auto mat = DirectX::XMMatrixMultiply(modelM, m_viewMatrix);
   auto det = DirectX::XMMatrixDeterminant(mat);
   return XMMatrixInverse(&det, mat);
@@ -106,7 +106,7 @@ DirectX::XMMATRIX Camera3dPivot::getViewInverse(DirectX::XMMATRIX modelM) {
 //  dev_context->VSSetConstantBuffers(bufferNumber, 1, &m_cameraBuffer);
 //}
 
-void Camera3dPivot::panCamera(float deltaX, float deltaY) {
+void Camera3DPivot::panCamera(float deltaX, float deltaY) {
 
   const auto updatedLookAtV = DirectX::XMVectorSubtract(lookAtPosV, posV);
   const auto cross = DirectX::XMVector3Cross(upVector, updatedLookAtV);
@@ -126,18 +126,17 @@ void Camera3dPivot::panCamera(float deltaX, float deltaY) {
   lookAtPosV = DirectX::XMVectorMultiplyAdd(newUpNorm, finalScaleY, lookAtPosV);
 }
 
-void Camera3dPivot::rotCamera(float deltaX, float deltaY) {
+void Camera3DPivot::rotCamera(float deltaX, float deltaY) {
   deltaX *= MOUSE_ROT_SPEED_SCALAR;
   deltaY *= MOUSE_ROT_SPEED_SCALAR;
 
   DirectX::XMFLOAT3 lookAtView;
   DirectX::XMStoreFloat3(&lookAtView, lookAtPosV);
-  const auto offsetForXRot = DirectX::XMVectorSet(0.0f, lookAtView.y, 0.0f,0.0f);
-
+  const auto offsetForXRot =
+      DirectX::XMVectorSet(0.0f, lookAtView.y, 0.0f, 0.0f);
 
   const auto rotXMatrix = DirectX::XMMatrixRotationAxis(upVector, -deltaX);
   auto tempXPos = DirectX::XMVector3TransformCoord(posV, rotXMatrix);
-
 
   // getting cross
   const auto cross = DirectX::XMVector3Cross(upVector, tempXPos);
@@ -146,10 +145,10 @@ void Camera3dPivot::rotCamera(float deltaX, float deltaY) {
   const auto rotYMatrix = DirectX::XMMatrixRotationAxis(crossNorm, deltaY);
   tempXPos = DirectX::XMVectorSubtract(tempXPos, lookAtPosV);
   posV = DirectX::XMVector3TransformCoord(tempXPos, rotYMatrix);
-  posV= DirectX::XMVectorAdd(posV, lookAtPosV);
+  posV = DirectX::XMVectorAdd(posV, lookAtPosV);
 }
 
-void Camera3dPivot::zoomCamera(float deltaX) {
+void Camera3DPivot::zoomCamera(float deltaX) {
   const auto updatedLookAtV = DirectX::XMVectorSubtract(lookAtPosV, posV);
   const auto updatedLookAtVNorm = DirectX::XMVector3Normalize(updatedLookAtV);
   const auto finalScaleX =

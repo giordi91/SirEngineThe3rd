@@ -26,8 +26,8 @@ public:
     return s.str();
   }
 
-  inline unsigned int getWidth() { return m_width; }
-  inline unsigned int getHeight() { return m_height; }
+  inline unsigned int getWidth() const { return m_width; }
+  inline unsigned int getHeight() const { return m_height; }
 
 private:
   unsigned int m_width;
