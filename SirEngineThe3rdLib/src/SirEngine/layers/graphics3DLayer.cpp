@@ -85,8 +85,6 @@ void Graphics3DLayer::onUpdate() {
 
   commandList->DrawIndexedInstanced(m_mesh.getIndexCount(), 1, 0, 0, 0);
 
-  float m = dx12::getUsedGpuMemory();
-  //SE_CORE_INFO("used {0}", m);
 }
 void Graphics3DLayer::onEvent(Event &event) {
 

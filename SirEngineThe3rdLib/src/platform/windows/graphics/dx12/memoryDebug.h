@@ -4,8 +4,8 @@
 namespace SirEngine {
 namespace dx12
 {
-	uint32_t getTotalGpuMemory();
-	uint32_t getUsedGpuMemory();
+	uint32_t getTotalGpuMemoryMB();
+	uint32_t getUsedGpuMemoryMB();
 
 	void renderImGuiMemoryWidget();
 

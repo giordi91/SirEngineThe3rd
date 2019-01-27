@@ -8,9 +8,13 @@
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 namespace SirEngine {
 namespace dx12 {
-uint32_t getTotalGpuMemory() { return 0; }
+uint32_t getTotalGpuMemoryMB() { 
+  DXGI_ADAPTER_DESC desc;
+  assert(SUCCEEDED(dx12::ADAPTER->getAdapter()->GetDesc(&desc)));
+  return desc.DedicatedVideoMemory*1e-6;
+ }
 
-uint32_t getUsedGpuMemory()
+uint32_t getUsedGpuMemoryMB()
 {
   // get gpu memory
   DXGI_QUERY_VIDEO_MEMORY_INFO info = {};
@@ -40,7 +44,7 @@ void renderImGuiMemoryWidget() {
   float usedGPUMemInMB = (float)info.CurrentUsage * 1e-6;
   float ratio = usedGPUMemInGB / totalGPUMemGB;
 
-  std::string overlay = std::to_string(ratio) + "%";
+  std::string overlay = std::to_string(ratio*100.0f) + "%";
 
   std::stringstream stream;
   stream << std::fixed << std::setprecision(2) << "GPU Memory: used "
@@ -69,7 +73,7 @@ void renderImGuiMemoryWidget() {
 	  << allocated << "/" << heapSize << " " << "free handles :" << freeHandles;
   std::string heapLabel= stream.str();
   ImGui::Text(heapLabel.c_str());
-  std::string overlayHeap = std::to_string(heapRatio) + "%";
+  std::string overlayHeap = std::to_string(heapRatio*100.0f) + "%";
   ImGui::ProgressBar(heapRatio, ImVec2(0.f, 0.f), overlayHeap.c_str());
 
 //DSV heap
@@ -85,7 +89,7 @@ void renderImGuiMemoryWidget() {
 	  << allocated << "/" << heapSize << " " << "free handles :" << freeHandles;
   heapLabel= stream.str();
   ImGui::Text(heapLabel.c_str());
-  overlayHeap = std::to_string(heapRatio) + "%";
+  overlayHeap = std::to_string(heapRatio*100.0f) + "%";
   ImGui::ProgressBar(heapRatio, ImVec2(0.f, 0.f), overlayHeap.c_str());
 
 //RTV heap
@@ -101,7 +105,7 @@ void renderImGuiMemoryWidget() {
 	  << allocated << "/" << heapSize << " " << "free handles :" << freeHandles;
   heapLabel= stream.str();
   ImGui::Text(heapLabel.c_str());
-  overlayHeap = std::to_string(heapRatio) + "%";
+  overlayHeap = std::to_string(heapRatio*100.0f) + "%";
   ImGui::ProgressBar(heapRatio, ImVec2(0.f, 0.f), overlayHeap.c_str());
 
 
