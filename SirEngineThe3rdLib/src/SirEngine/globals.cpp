@@ -1,9 +1,10 @@
 #include "SirEngine/globals.h"
+#include <cstdint>
 
 namespace SirEngine {
 namespace Globals {
-unsigned int SCREEN_WIDTH = 1280;
-unsigned int SCREEN_HEIGHT = 720;
-Camera3dPivot *mainCamera = nullptr;
+uint32_t SCREEN_WIDTH = 1280;
+uint32_t SCREEN_HEIGHT = 720;
+Camera3DPivot *MAIN_CAMERA = nullptr;
 } // namespace Globals
 } // namespace SirEngine

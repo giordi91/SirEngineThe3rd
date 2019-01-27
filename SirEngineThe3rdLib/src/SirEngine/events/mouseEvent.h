@@ -1,6 +1,7 @@
 #pragma once
 
 #include "SirEngine/events/event.h"
+#include <sstream> 
 
 namespace SirEngine {
 class SIR_ENGINE_API MouseMoveEvent : public Event {
@@ -15,8 +16,8 @@ public:
     s << "MouseMoveEvent: (" << m_posX << "," << m_posY << ")";
     return s.str();
   }
-  inline float getX() { return m_posX; }
-  inline float getY() { return m_posY; }
+  inline float getX() const { return m_posX; }
+  inline float getY() const { return m_posY; }
 
 private:
   float m_posX;
@@ -37,8 +38,8 @@ public:
     return s.str();
   }
 
-  inline float getOffsetX() { return m_offsetX; }
-  inline float getOffsetY() { return m_offsetY; }
+  inline float getOffsetX() const { return m_offsetX; }
+  inline float getOffsetY() const { return m_offsetY; }
 
 private:
   float m_offsetX;
@@ -74,7 +75,7 @@ public:
     }
     return s.str();
   }
-  inline MOUSE_BUTTONS_EVENT getMouseButton() { return m_button; };
+  inline MOUSE_BUTTONS_EVENT getMouseButton() const { return m_button; };
 
 private:
   MOUSE_BUTTONS_EVENT m_button;
@@ -107,7 +108,7 @@ public:
     }
     return s.str();
   }
-  inline MOUSE_BUTTONS_EVENT getMouseButton() { return m_button; };
+  inline MOUSE_BUTTONS_EVENT getMouseButton() const{ return m_button; };
 
 private:
   MOUSE_BUTTONS_EVENT m_button;

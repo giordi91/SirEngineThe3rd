@@ -16,7 +16,7 @@ public:
     s << "KeyboardPressEvent: " << m_button;
     return s.str();
   }
-  unsigned int getKeyCode() { return m_button; }
+  unsigned int getKeyCode() const { return m_button; }
 
 private:
   unsigned int m_button;
@@ -33,9 +33,9 @@ public:
     std::stringstream s;
     s << "KeyboardReleaseEvent: " << m_button;
     return s.str();
-  }
+}
 
-  unsigned int getKeyCode() { return m_button; }
+  unsigned int getKeyCode() const { return m_button; }
 
 private:
   unsigned int m_button;
@@ -54,7 +54,7 @@ public:
     s << "Keyboard typed char: " << m_button;
     return s.str();
   }
-  inline unsigned int getKeyCode() { return m_button; }
+  inline unsigned int getKeyCode() const { return m_button; }
 
 private:
   unsigned int m_button;

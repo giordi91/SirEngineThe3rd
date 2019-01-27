@@ -22,18 +22,18 @@ public:
 
 private:
   // event implementation for the layer
-  bool OnMouseButtonPressEvent(MouseButtonPressEvent &e);
-  bool OnMouseButtonReleaseEvent(MouseButtonReleaseEvent &e);
-  bool OnMouseMoveEvent(MouseMoveEvent &e);
-  bool OnMouseScrolledEvent(MouseScrollEvent &e);
-  bool OnKeyPressedEvent(KeyboardPressEvent &e);
-  bool OnKeyReleasedEvent(KeyboardReleaseEvent &e);
-  bool OnWindowResizeEvent(WindowResizeEvent &e);
-  bool OnKeyTypeEvent(KeyTypeEvent &e);
+  bool onMouseButtonPressEvent(const MouseButtonPressEvent &e) const;
+  bool onMouseButtonReleaseEvent(const MouseButtonReleaseEvent &e) const;
+  bool onMouseMoveEvent(const MouseMoveEvent &e) const;
+  bool onMouseScrolledEvent(const MouseScrollEvent &e) const;
+  bool onKeyPressedEvent(const KeyboardPressEvent &e) const;
+  bool onKeyReleasedEvent(const KeyboardReleaseEvent &e) const;
+  bool onWindowResizeEvent(const WindowResizeEvent &e) const;
+  bool onKeyTypeEvent(const KeyTypeEvent &e) const;
 
 private:
   dx12::D3DBuffer *m_fontTextureDescriptor = nullptr;
-  int m_descriptorIndex;
+  int m_descriptorIndex =-1;
 
   INT64 g_Time = 0;
   INT64 g_TicksPerSecond = 0;

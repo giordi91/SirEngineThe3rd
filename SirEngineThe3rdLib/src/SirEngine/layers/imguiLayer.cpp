@@ -126,57 +126,63 @@ void ImguiLayer::onEvent(Event &event) {
 
   EventDispatcher dispatcher(event);
   dispatcher.dispatch<KeyTypeEvent>(
-      SE_BIND_EVENT_FN(ImguiLayer::OnKeyTypeEvent));
+      SE_BIND_EVENT_FN(ImguiLayer::onKeyTypeEvent));
   dispatcher.dispatch<MouseButtonPressEvent>(
-      SE_BIND_EVENT_FN(ImguiLayer::OnMouseButtonPressEvent));
+      SE_BIND_EVENT_FN(ImguiLayer::onMouseButtonPressEvent));
   dispatcher.dispatch<MouseButtonReleaseEvent>(
-      SE_BIND_EVENT_FN(ImguiLayer::OnMouseButtonReleaseEvent));
+      SE_BIND_EVENT_FN(ImguiLayer::onMouseButtonReleaseEvent));
   dispatcher.dispatch<MouseMoveEvent>(
-      SE_BIND_EVENT_FN(ImguiLayer::OnMouseMoveEvent));
+      SE_BIND_EVENT_FN(ImguiLayer::onMouseMoveEvent));
   dispatcher.dispatch<MouseScrollEvent>(
-      SE_BIND_EVENT_FN(ImguiLayer::OnMouseScrolledEvent));
+      SE_BIND_EVENT_FN(ImguiLayer::onMouseScrolledEvent));
   dispatcher.dispatch<KeyboardPressEvent>(
-      SE_BIND_EVENT_FN(ImguiLayer::OnKeyPressedEvent));
+      SE_BIND_EVENT_FN(ImguiLayer::onKeyPressedEvent));
   dispatcher.dispatch<KeyboardReleaseEvent>(
-      SE_BIND_EVENT_FN(ImguiLayer::OnKeyReleasedEvent));
+      SE_BIND_EVENT_FN(ImguiLayer::onKeyReleasedEvent));
   dispatcher.dispatch<WindowResizeEvent>(
-      SE_BIND_EVENT_FN(ImguiLayer::OnWindowResizeEvent));
+      SE_BIND_EVENT_FN(ImguiLayer::onWindowResizeEvent));
 }
-bool ImguiLayer::OnMouseButtonPressEvent(MouseButtonPressEvent &e) {
+bool ImguiLayer::onMouseButtonPressEvent(const MouseButtonPressEvent &e) const
+{
   ImGuiIO &io = ImGui::GetIO();
   io.MouseDown[static_cast<int>(e.getMouseButton())] = true;
   return io.WantCaptureMouse;
 }
-bool ImguiLayer::OnMouseButtonReleaseEvent(MouseButtonReleaseEvent &e) {
+bool ImguiLayer::onMouseButtonReleaseEvent(const MouseButtonReleaseEvent &e) const
+{
   ImGuiIO &io = ImGui::GetIO();
   io.MouseDown[static_cast<int>(e.getMouseButton())] = false;
   return false;
 }
-bool ImguiLayer::OnMouseMoveEvent(MouseMoveEvent &e) {
+bool ImguiLayer::onMouseMoveEvent(const MouseMoveEvent &e) const
+{
   ImGuiIO &io = ImGui::GetIO();
   io.MousePos = ImVec2(e.getX(), e.getY());
   return io.WantCaptureMouse;
 }
-bool ImguiLayer::OnMouseScrolledEvent(MouseScrollEvent &e) {
-
+bool ImguiLayer::onMouseScrolledEvent(const MouseScrollEvent &e) const
+{
   ImGuiIO &io = ImGui::GetIO();
   io.MouseWheelH += e.getOffsetX();
   io.MouseWheel += e.getOffsetY();
   return io.WantCaptureMouse;
 }
 
-bool ImguiLayer::OnKeyPressedEvent(KeyboardPressEvent &e) {
+bool ImguiLayer::onKeyPressedEvent(const KeyboardPressEvent &e) const
+{
   ImGuiIO &io = ImGui::GetIO();
   int c = e.getKeyCode();
   io.KeysDown[c] = true;
   return io.WantCaptureKeyboard;
 }
-bool ImguiLayer::OnKeyReleasedEvent(KeyboardReleaseEvent &e) {
+bool ImguiLayer::onKeyReleasedEvent(const KeyboardReleaseEvent &e) const
+{
   ImGuiIO &io = ImGui::GetIO();
   io.KeysDown[e.getKeyCode()] = false;
   return io.WantCaptureKeyboard;
 }
-bool ImguiLayer::OnWindowResizeEvent(WindowResizeEvent &e) {
+bool ImguiLayer::onWindowResizeEvent(const WindowResizeEvent &e) const
+{
   ImGuiIO &io = ImGui::GetIO();
   io.DisplaySize = ImVec2(e.getWidth(), e.getHeight());
   io.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
@@ -184,9 +190,10 @@ bool ImguiLayer::OnWindowResizeEvent(WindowResizeEvent &e) {
 
   return false;
 }
-bool ImguiLayer::OnKeyTypeEvent(KeyTypeEvent &e) {
+bool ImguiLayer::onKeyTypeEvent(const KeyTypeEvent &e) const
+{
   ImGuiIO &io = ImGui::GetIO();
-  io.AddInputCharacter((unsigned short)e.getKeyCode());
+  io.AddInputCharacter(static_cast<uint16_t>(e.getKeyCode()));
   return io.WantCaptureKeyboard;
 }
 } // namespace SirEngine
