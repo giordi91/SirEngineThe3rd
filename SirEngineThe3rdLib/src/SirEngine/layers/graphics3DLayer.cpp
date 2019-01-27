@@ -8,10 +8,10 @@
 namespace SirEngine {
 
 void Graphics3DLayer::onAttach() {
-  Globals::MAIN_CAMERA = new Camera3DPivot();
-  Globals::MAIN_CAMERA->setLookAt(0, 125, 0);
-  Globals::MAIN_CAMERA->setPosition(00, 125, 60);
-  Globals::MAIN_CAMERA->updateCamera();
+  globals::MAIN_CAMERA = new Camera3DPivot();
+  globals::MAIN_CAMERA->setLookAt(0, 125, 0);
+  globals::MAIN_CAMERA->setPosition(00, 125, 60);
+  globals::MAIN_CAMERA->updateCamera();
 
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
@@ -59,12 +59,12 @@ void Graphics3DLayer::onUpdate() {
 
   commandList->OMSetRenderTargets(1, &back, true, &depth);
 
-  Globals::MAIN_CAMERA->updateCamera();
+  globals::MAIN_CAMERA->updateCamera();
   m_camBufferCPU.vFov = 60.0f;
-  m_camBufferCPU.screenWidth = static_cast<float>(Globals::SCREEN_WIDTH);
-  m_camBufferCPU.screenHeight = static_cast<float>(Globals::SCREEN_HEIGHT);
+  m_camBufferCPU.screenWidth = static_cast<float>(globals::SCREEN_WIDTH);
+  m_camBufferCPU.screenHeight = static_cast<float>(globals::SCREEN_HEIGHT);
   m_camBufferCPU.mvp = DirectX::XMMatrixTranspose(
-      Globals::MAIN_CAMERA->getMVP(DirectX::XMMatrixIdentity()));
+      globals::MAIN_CAMERA->getMVP(DirectX::XMMatrixIdentity()));
 
   m_constantBufferManager.updateConstantBuffer(m_cameraHandle, &m_camBufferCPU);
 
@@ -125,15 +125,14 @@ bool Graphics3DLayer::onMouseButtonReleaseEvent(MouseButtonReleaseEvent &e) {
 }
 
 bool Graphics3DLayer::onMouseMoveEvent(MouseMoveEvent &e) {
-  SE_CORE_INFO("{0} {1}, {2}, {3}", e.getX(), e.getY(), previousX, previousY);
   const float deltaX = previousX - e.getX();
   const float deltaY = previousY - e.getY();
   if (leftDown) {
-    Globals::MAIN_CAMERA->rotCamera(deltaX, deltaY);
+    globals::MAIN_CAMERA->rotCamera(deltaX, deltaY);
   } else if (middleDown) {
-    Globals::MAIN_CAMERA->panCamera(deltaX, deltaY);
+    globals::MAIN_CAMERA->panCamera(deltaX, deltaY);
   } else if (rightDown) {
-    Globals::MAIN_CAMERA->zoomCamera(deltaX);
+    globals::MAIN_CAMERA->zoomCamera(deltaX);
   }
 
   // storing old position
