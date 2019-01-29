@@ -14,7 +14,7 @@ void ModelManager::cleanup() {
   }
 }
 void ModelManager::loadMeshObj(const char *path, DescriptorHeap *heap) {
-  auto *mesh = new Dx12RaytracingMesh();
+  auto *mesh = new Mesh();
   mesh->loadFromFile(m_device, path, heap);
   const std::string name = getFileName(path);
   m_meshRegister[name] = mesh;

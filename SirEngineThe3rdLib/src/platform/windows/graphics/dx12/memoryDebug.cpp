@@ -26,6 +26,17 @@ void renderImGuiMemoryWidget() {
   if (!ImGui::CollapsingHeader("Memory", ImGuiTreeNodeFlags_DefaultOpen))
     return;
 
+  // CUSTOM WIDGET
+  // void ImDrawList::AddCircle(const ImVec2& centre, float radius, ImU32 col,
+  // int num_segments, float thickness)
+  //{
+  //    if ((col & IM_COL32_A_MASK) == 0)
+  //        return;
+  //
+  //    const float a_max = IM_PI*2.0f * ((float)num_segments - 1.0f) /
+  //    (float)num_segments; PathArcTo(centre, radius-0.5f, 0.0f, a_max,
+  //    num_segments); PathStroke(col, true, thickness);
+
   // get gpu memory
   DXGI_QUERY_VIDEO_MEMORY_INFO info = {};
   dx12::ADAPTER->getAdapter()->QueryVideoMemoryInfo(

@@ -16,6 +16,8 @@ void newFrame();
 // this will dispatch whatever is left, blit the final frame to the frame buffer
 // etc
 void dispatchFrame();
+
+	void shutdown();
 } // namespace graphics
 
 } // namespace SirEngine

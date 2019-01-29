@@ -13,7 +13,7 @@ struct ID3D12Resource;
 namespace SirEngine {
 namespace dx12 {
 class DescriptorHeap;
-struct Dx12RaytracingMesh;
+struct Mesh;
 
 class ModelManager {
 
@@ -27,7 +27,7 @@ public:
   void cleanup();
   void loadMeshObj(const char *path, DescriptorHeap *heap);
 
-  inline Dx12RaytracingMesh *getMeshFromName(const std::string &name) {
+  inline Mesh *getMeshFromName(const std::string &name) {
     auto found = m_meshRegister.find(name);
     if (found != m_meshRegister.end()) {
       return found->second;
@@ -38,7 +38,7 @@ public:
   inline int getMeshCount() const {
     return static_cast<int>(m_meshOrder.size());
   }
-  inline Dx12RaytracingMesh *getMeshFromindex(int idx) {
+  inline Mesh *getMeshFromindex(int idx) {
     assert(idx < m_meshOrder.size());
     return m_meshOrder[idx];
   }
@@ -47,8 +47,8 @@ public:
 
 private:
   ID3D12Device *m_device = nullptr;
-  std::unordered_map<std::string, Dx12RaytracingMesh *> m_meshRegister;
-  std::vector<Dx12RaytracingMesh *> m_meshOrder;
+  std::unordered_map<std::string, Mesh *> m_meshRegister;
+  std::vector<Mesh *> m_meshOrder;
 };
 } // namespace dx12
 } // namespace SirEngine
