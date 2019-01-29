@@ -22,6 +22,10 @@ public:
   bool initializeRTFromResource(ID3D12Resource *resource);
   void clear();
 
+  bool loadFromFile(const char* path);
+
+
+
   inline ID3D12Resource *getResource() { return m_texture.resource; };
   inline D3D12_GPU_DESCRIPTOR_HANDLE getGPUDescriptor() {
     return m_texture.gpuDescriptorHandle;

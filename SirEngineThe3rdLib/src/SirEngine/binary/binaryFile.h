@@ -61,9 +61,8 @@ bool SIR_ENGINE_API readAllBytes(const std::string &filename,
   X(MODEL)                                                                     \
   X(SHADER)                                                                    \
   X(RS)                                                                        \
-  X(PSO)
 
-enum BinaryFileType { NONE = 0, MODEL = 1, SHADER = 2, RS = 3, PSO = 4};
+enum BinaryFileType { NONE = 0, MODEL = 1, SHADER = 2, RS = 3};
 
 SIR_ENGINE_API
 extern const std::unordered_map<BinaryFileType, std::string>

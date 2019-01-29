@@ -13,5 +13,7 @@ file(COPY "json/include/nlohmann" DESTINATION "${CMAKE_SOURCE_DIR}/ResourceCompi
 file(COPY "json/include/nlohmann" DESTINATION "${CMAKE_SOURCE_DIR}/SirEngineThe3rdLib/vendors/includes" )
 
 
+
 add_subdirectory(imgui)
+add_subdirectory(DirectXTK12)
 
