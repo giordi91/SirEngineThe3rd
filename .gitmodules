@@ -19,3 +19,9 @@
 [submodule "vendors/Catch2"]
 	path = vendors/Catch2
 	url = https://github.com/giordi91/Catch2.git
+[submodule "vendors/DirectXTK12"]
+	path = vendors/DirectXTK12
+	url = https://github.com/giordi91/DirectXTK12.git
+[submodule "vendors/Compressonator"]
+	path = vendors/Compressonator
+	url = https://github.com/giordi91/Compressonator.git

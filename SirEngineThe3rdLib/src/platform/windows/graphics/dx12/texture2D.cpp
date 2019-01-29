@@ -5,6 +5,9 @@
 #include "platform/windows/graphics/dx12/d3dx12.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "platform/windows/graphics/dx12/stb_image.h"
+
 namespace SirEngine {
 namespace dx12 {
 
@@ -107,8 +110,27 @@ bool Texture2D::initializeRTFromResource(ID3D12Resource *resource) {
 void Texture2D::clear() {
   if (m_texture.resource != nullptr) {
     m_texture.resource->Release();
-	m_texture.resource = nullptr;
+    m_texture.resource = nullptr;
   }
+}
+
+inline unsigned char *getTextureDataFromFile(const std::string &path,
+                                             int *outWidth, int *outHeight) {
+  unsigned char *cpu_data =
+      stbi_load(path.c_str(), outWidth, outHeight, 0, STBI_rgb_alpha);
+  if (cpu_data == nullptr) {
+    SE_CORE_ERROR("Error loading texture: {0}", path);
+    return nullptr;
+  }
+  return cpu_data;
+}
+
+
+bool Texture2D::loadFromFile(const char *path) {
+
+  //bool res = createTextureResources(device, m_cpu_data, HDR, correctGamma);
+  //assert(res == true);
+  //return res;
 }
 } // namespace dx12
 } // namespace SirEngine
