@@ -11,9 +11,9 @@
 namespace SirEngine {
 
 namespace dx12 {
+class Texture2D;
 
-struct CameraBuffer final
-{
+struct CameraBuffer final {
   DirectX::XMMATRIX mvp;
   DirectX::XMMATRIX viewMatrix;
   float vFov;
@@ -39,10 +39,8 @@ private:
   bool onMouseButtonReleaseEvent(MouseButtonReleaseEvent &e);
   bool onMouseMoveEvent(MouseMoveEvent &e);
 
-
-
-  //member variable mostly temporary
-  dx12::Dx12RaytracingMesh m_mesh;
+  // member variable mostly temporary
+  dx12::Mesh m_mesh;
   dx12::CameraBuffer m_camBufferCPU{};
   dx12::ShaderManager *m_shaderManager{};
   dx12::RootSignatureManager *m_root{};
@@ -57,5 +55,7 @@ private:
   bool middleDown = false;
   float previousX = 0;
   float previousY = 0;
+
+  dx12::Texture2D *t;
 };
 } // namespace SirEngine

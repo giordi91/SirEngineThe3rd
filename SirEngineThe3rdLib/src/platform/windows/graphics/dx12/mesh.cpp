@@ -75,7 +75,16 @@ createDefaultBuffer(ID3D12Device *device, ID3D12GraphicsCommandList *cmdList,
   return defaultBuffer;
 }
 
-void Dx12RaytracingMesh::loadFromFile(ID3D12Device *device,
+Mesh::~Mesh()
+{
+
+	m_uploadIndex.Reset();
+	m_uploadVertex.Reset();
+	m_defaultIndex.Reset();
+	m_defaultVertex.Reset();
+}
+
+void Mesh::loadFromFile(ID3D12Device *device,
                                       const std::string &path,
                                       DescriptorHeap *heap) {
 
@@ -121,7 +130,7 @@ void Dx12RaytracingMesh::loadFromFile(ID3D12Device *device,
 }
 
 
-void Dx12RaytracingMesh::translate(float x, float y, float z) {
+void Mesh::translate(float x, float y, float z) {
   DirectX::XMFLOAT4X4 meshTView{};
   XMStoreFloat4x4(&meshTView, transform);
   meshTView._41 = x;

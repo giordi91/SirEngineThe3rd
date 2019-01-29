@@ -86,5 +86,10 @@ void dispatchFrame() {
   // swap the back and front buffers
   dx12::SWAP_CHAIN->present();
 }
+
+void shutdown()
+{
+	dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
+}
 } // namespace graphics
 } // namespace SirEngine

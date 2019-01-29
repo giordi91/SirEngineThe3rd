@@ -9,10 +9,11 @@
 namespace SirEngine {
 namespace dx12 {
 
-struct Dx12RaytracingMesh {
+struct Mesh {
 
 public:
-  Dx12RaytracingMesh() = default;
+  Mesh() = default;
+  ~Mesh();
 
   void loadFromFile(ID3D12Device *device, const std::string &path,
                     DescriptorHeap *heap);
@@ -45,8 +46,6 @@ public:
   inline const std::vector<float> &getCpuVertex() const { return m_vertexs; };
 
 public:
-  ID3D12Resource *idxdata;
-  ID3D12Resource *vsdata;
   D3DBuffer m_bufferIDX;
   D3DBuffer m_bufferVS;
 

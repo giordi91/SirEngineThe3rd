@@ -47,5 +47,5 @@ project(SirEngineThe3rdLib)
 
 	SET(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 
-	target_link_libraries(${PROJECT_NAME} d3dcompiler DXGI D3D12 imgui)
+	target_link_libraries(${PROJECT_NAME} d3dcompiler DXGI D3D12 imgui DXTK12)
 

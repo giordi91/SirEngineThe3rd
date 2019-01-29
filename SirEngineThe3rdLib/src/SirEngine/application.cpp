@@ -61,6 +61,7 @@ void Application::onEvent(Event &e) {
   }
 }
 bool Application::onCloseWindow(WindowCloseEvent &e) {
+  graphics::shutdown();
   m_run = false;
   return true;
 }

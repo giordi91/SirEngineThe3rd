@@ -1,12 +1,10 @@
 
 #include "platform/windows/graphics/dx12/texture2D.h"
+#include "DXTK12/DDSTextureLoader.h"
 #include "SirEngine/log.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/d3dx12.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
-
-#define STB_IMAGE_IMPLEMENTATION
-#include "platform/windows/graphics/dx12/stb_image.h"
 
 namespace SirEngine {
 namespace dx12 {
@@ -114,23 +112,23 @@ void Texture2D::clear() {
   }
 }
 
-inline unsigned char *getTextureDataFromFile(const std::string &path,
-                                             int *outWidth, int *outHeight) {
-  unsigned char *cpu_data =
-      stbi_load(path.c_str(), outWidth, outHeight, 0, STBI_rgb_alpha);
-  if (cpu_data == nullptr) {
-    SE_CORE_ERROR("Error loading texture: {0}", path);
-    return nullptr;
-  }
-  return cpu_data;
-}
-
-
 bool Texture2D::loadFromFile(const char *path) {
 
-  //bool res = createTextureResources(device, m_cpu_data, HDR, correctGamma);
-  //assert(res == true);
-  //return res;
+  ID3D12Resource *resource;
+  const std::string paths(path);
+  const std::wstring pathws(paths.begin(),paths.end());
+  std::unique_ptr<uint8_t[]> ddsData;
+  std::vector<D3D12_SUBRESOURCE_DATA> subresources;
+  DirectX::LoadDDSTextureFromFile(dx12::DEVICE, pathws.c_str(), &resource, ddsData,
+                                  subresources);
+  D3D12_RESOURCE_DESC d = resource->GetDesc();
+  m_texture.resource = resource;
+  //NAME_D3D12_OBJECT(m_texture.resource);
+  GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DSRV(&m_texture, d.Format);
+  return false;
+  // bool res = createTextureResources(device, m_cpu_data, HDR, correctGamma);
+  // assert(res == true);
+  // return res;
 }
 } // namespace dx12
 } // namespace SirEngine
