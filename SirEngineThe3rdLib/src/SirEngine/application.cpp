@@ -25,7 +25,7 @@ Application::~Application() { delete m_window; }
 void Application::run() {
   while (m_run) {
     globals::LAST_FRAME_TIME_NS = globals::GAME_CLOCK.getDelta();
-	++globals::TOTAL_NUMBER_OF_FRAMES;
+    ++globals::TOTAL_NUMBER_OF_FRAMES;
     m_window->onUpdate();
     graphics::newFrame();
 
@@ -33,15 +33,16 @@ void Application::run() {
       l->onUpdate();
     }
     graphics::dispatchFrame();
-	//std::this_thread::sleep_for(std::chrono::milliseconds{5});
-	 std::mt19937_64 eng{std::random_device{}()};  // or seed however you want
+    // std::this_thread::sleep_for(std::chrono::milliseconds{5});
+    std::mt19937_64 eng{std::random_device{}()}; // or seed however you want
     std::uniform_int_distribution<> dist{0, 20};
     std::this_thread::sleep_for(std::chrono::milliseconds{dist(eng)});
   }
+  graphics::shutdown();
 }
 void Application::onEvent(Event &e) {
   // close event dispatch
-  //SE_CORE_INFO("{0}", e);
+  // SE_CORE_INFO("{0}", e);
 
   EventDispatcher dispatcher(e);
   dispatcher.dispatch<WindowCloseEvent>(
@@ -61,7 +62,7 @@ void Application::onEvent(Event &e) {
   }
 }
 bool Application::onCloseWindow(WindowCloseEvent &e) {
-  graphics::shutdown();
+  //graphics::shutdown();
   m_run = false;
   return true;
 }

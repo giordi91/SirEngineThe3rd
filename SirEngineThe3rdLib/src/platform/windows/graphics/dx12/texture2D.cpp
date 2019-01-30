@@ -121,6 +121,7 @@ bool Texture2D::loadFromFile(const char *path) {
   std::vector<D3D12_SUBRESOURCE_DATA> subresources;
   DirectX::LoadDDSTextureFromFile(dx12::DEVICE, pathws.c_str(), &resource, ddsData,
                                   subresources);
+  //DirectX::CreateDDSTextureFromFile();
   D3D12_RESOURCE_DESC d = resource->GetDesc();
   m_texture.resource = resource;
   //NAME_D3D12_OBJECT(m_texture.resource);

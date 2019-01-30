@@ -6,13 +6,14 @@
 #include "DX12.h"
 #include "nlohmann/json_fwd.hpp"
 #include "platform/windows/graphics/dx12/d3dx12.h"
+#include <array>
 
 namespace SirEngine {
 namespace dx12 {
 class RootSignatureManager;
 class ShaderManager;
 class ShadersLayoutRegistry;
-}
+} // namespace dx12
 } // namespace SirEngine
 namespace temp {
 namespace rendering {
@@ -24,7 +25,8 @@ class PSOManager final {
 public:
   ~PSOManager() = default;
   void init(ID3D12Device4 *device, SirEngine::dx12::ShadersLayoutRegistry *,
-            SirEngine::dx12::RootSignatureManager *, SirEngine::dx12::ShaderManager *);
+            SirEngine::dx12::RootSignatureManager *,
+            SirEngine::dx12::ShaderManager *);
   void cleanup();
   void loadPSOInFolder(const char *directory);
 
