@@ -8,6 +8,8 @@
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
 #include "platform/windows/graphics/dx12/shaderLayout.h"
 #include "platform/windows/graphics/dx12/shaderManager.h"
+#include "platform/windows/graphics/dx12/textureManager.h"
+
 namespace SirEngine {
 
 namespace dx12 {
@@ -48,6 +50,7 @@ private:
   temp::rendering::PSOManager *m_pso{};
   dx12::ConstantBufferHandle m_cameraHandle{};
   dx12::ConstantBufferManager m_constantBufferManager;
+  dx12::TextureManager m_textureManager;
 
   // camera event control
   bool leftDown = false;
@@ -56,6 +59,8 @@ private:
   float previousX = 0;
   float previousY = 0;
 
-  dx12::Texture2D *t;
+  //dx12::Texture2D *t;
+  dx12::TextureHandle th;
+  dx12::DescriptorPair thSRV;
 };
 } // namespace SirEngine
