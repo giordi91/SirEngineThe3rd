@@ -71,9 +71,9 @@ void Graphics3DLayer::onUpdate() {
 
   m_constantBufferManager.updateConstantBuffer(m_cameraHandle, &m_camBufferCPU);
 
-  auto *pso = m_pso->getComputePSOByName("simpleMeshPSO");
+  auto *pso = m_pso->getComputePSOByName("simpleMeshPSOTex");
   commandList->SetPipelineState(pso);
-  auto *rs = m_root->getRootSignatureFromName("simpleMeshRS");
+  auto *rs = m_root->getRootSignatureFromName("simpleMeshRSTex");
   commandList->SetGraphicsRootSignature(rs);
   auto vview = m_mesh.getVertexBufferView();
   auto iview = m_mesh.getIndexBufferView();
@@ -85,6 +85,7 @@ void Graphics3DLayer::onUpdate() {
   commandList->SetGraphicsRootDescriptorTable(
       0, m_constantBufferManager.getConstantBufferDescriptor(m_cameraHandle)
              .gpuDescriptorHandle);
+  commandList->SetGraphicsRootDescriptorTable(1,t->getGPUDescriptor());
 
   commandList->DrawIndexedInstanced(m_mesh.getIndexCount(), 1, 0, 0, 0);
 

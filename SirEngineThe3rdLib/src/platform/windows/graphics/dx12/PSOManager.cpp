@@ -91,6 +91,9 @@ void assertInJson(const nlohmann::json &jobj, const std::string &key) {
   assert(found != jobj.end());
 }
 
+
+
+
 void PSOManager::init(ID3D12Device4 *device, SirEngine::dx12::ShadersLayoutRegistry *registry,
                       SirEngine::dx12::RootSignatureManager *root,
                       SirEngine::dx12::ShaderManager *shader) {

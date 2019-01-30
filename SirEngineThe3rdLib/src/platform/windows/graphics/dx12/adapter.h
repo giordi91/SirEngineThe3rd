@@ -1,5 +1,4 @@
 #pragma once
-#include <dxgi.h>
 #include <dxgi1_6.h>
 
 // forward

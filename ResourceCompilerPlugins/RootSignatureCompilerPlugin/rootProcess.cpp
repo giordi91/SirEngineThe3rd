@@ -22,8 +22,10 @@ const std::string ROOT_KEY_VISIBILITY = "visibility";
 const std::string ROOT_KEY_FLAGS = "flags";
 const std::string ROOT_KEY_FLAGS_LOCAL = "local";
 const std::string ROOT_EMPTY = "empty";
+const std::string ROOT_DEFAULT_STRING = "";
+const std::string ROOT_KEY_STATIC_SAMPLERS = "staticSamplers";
 
-const std::unordered_map<std::string, ROOT_TYPES> m_stringToRootType{
+const std::unordered_map<std::string, ROOT_TYPES> STRING_TO_ROOT_TYPE{
     {"constant", ROOT_TYPES::CONSTANT},
     {"descriptorTable", ROOT_TYPES::DESCRIPTOR_TABLE},
     {"UAV", ROOT_TYPES::UAV},
@@ -31,28 +33,108 @@ const std::unordered_map<std::string, ROOT_TYPES> m_stringToRootType{
     {"CBV", ROOT_TYPES::CBV}};
 
 const std::unordered_map<std::string, SirEngine::dx12::ROOT_FILE_TYPE>
-    m_stringToRootFileType{
+    STRING_TO_ROOT_FILE_TYPE{
         {"RASTER", SirEngine::dx12::ROOT_FILE_TYPE::RASTER},
         {"COMPUTE", SirEngine::dx12::ROOT_FILE_TYPE::COMPUTE},
         {"DXR", SirEngine::dx12::ROOT_FILE_TYPE::DXR},
     };
 
+const std::unordered_map<std::string, D3D12_SHADER_VISIBILITY>
+    STRING_TO_VISIBILITY_FLAG{{"ALL", D3D12_SHADER_VISIBILITY_ALL},
+                              {"VERTEX", D3D12_SHADER_VISIBILITY_VERTEX},
+                              {"HULL", D3D12_SHADER_VISIBILITY_HULL},
+                              {"DOMAIN", D3D12_SHADER_VISIBILITY_DOMAIN},
+                              {"GEOMETRY", D3D12_SHADER_VISIBILITY_GEOMETRY},
+                              {"PIXEL", D3D12_SHADER_VISIBILITY_PIXEL}};
+
 ROOT_TYPES
 getTypeEnum(const std::string &type) {
-  auto found = m_stringToRootType.find(type);
-  if (found != m_stringToRootType.end()) {
+  auto found = STRING_TO_ROOT_TYPE.find(type);
+  if (found != STRING_TO_ROOT_TYPE.end()) {
     return found->second;
   }
   assert(0 && "could not convert root type from string to enum");
   return ROOT_TYPES::NULL_TYPE;
 }
 SirEngine::dx12::ROOT_FILE_TYPE getFileTypeEnum(const std::string &type) {
-  auto found = m_stringToRootFileType.find(type);
-  if (found != m_stringToRootFileType.end()) {
+  auto found = STRING_TO_ROOT_FILE_TYPE.find(type);
+  if (found != STRING_TO_ROOT_FILE_TYPE.end()) {
     return found->second;
   }
   assert(0 && "could not convert root type from string to enum");
   return SirEngine::dx12::ROOT_FILE_TYPE::NULL_TYPE;
+}
+
+D3D12_SHADER_VISIBILITY getVisibility(const nlohmann::json &jobj) {
+  const std::string visString =
+      getValueIfInJson(jobj, ROOT_KEY_VISIBILITY, ROOT_DEFAULT_STRING);
+  D3D12_SHADER_VISIBILITY toReturn = D3D12_SHADER_VISIBILITY_ALL;
+  if (!visString.empty()) {
+    auto found = STRING_TO_VISIBILITY_FLAG.find(visString);
+    if (found != STRING_TO_VISIBILITY_FLAG.end()) {
+      toReturn = found->second;
+    } else {
+      SE_CORE_WARN("Cannot convert shader visibility from string, value not "
+                   "recognized: {0}",
+                   visString);
+      SE_CORE_WARN("D3D12_SHADER_VISIBILITY_ALL will be used");
+    }
+  }
+  return toReturn;
+}
+
+std::array<const CD3DX12_STATIC_SAMPLER_DESC, 6> getStaticSamplers() {
+  // Applications usually only need a handful of samplers.  So just define them
+  // all up front and keep them available as part of the root signature.
+
+  const CD3DX12_STATIC_SAMPLER_DESC pointWrap(
+      0,                                // shaderRegister
+      D3D12_FILTER_MIN_MAG_MIP_POINT,   // filter
+      D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressU
+      D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressV
+      D3D12_TEXTURE_ADDRESS_MODE_WRAP); // addressW
+
+  const CD3DX12_STATIC_SAMPLER_DESC pointClamp(
+      1,                                 // shaderRegister
+      D3D12_FILTER_MIN_MAG_MIP_POINT,    // filter
+      D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressU
+      D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressV
+      D3D12_TEXTURE_ADDRESS_MODE_CLAMP); // addressW
+
+  const CD3DX12_STATIC_SAMPLER_DESC linearWrap(
+      2,                                // shaderRegister
+      D3D12_FILTER_MIN_MAG_MIP_LINEAR,  // filter
+      D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressU
+      D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressV
+      D3D12_TEXTURE_ADDRESS_MODE_WRAP); // addressW
+
+  const CD3DX12_STATIC_SAMPLER_DESC linearClamp(
+      3,                                 // shaderRegister
+      D3D12_FILTER_MIN_MAG_MIP_LINEAR,   // filter
+      D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressU
+      D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressV
+      D3D12_TEXTURE_ADDRESS_MODE_CLAMP); // addressW
+
+  const CD3DX12_STATIC_SAMPLER_DESC anisotropicWrap(
+      4,                               // shaderRegister
+      D3D12_FILTER_ANISOTROPIC,        // filter
+      D3D12_TEXTURE_ADDRESS_MODE_WRAP, // addressU
+      D3D12_TEXTURE_ADDRESS_MODE_WRAP, // addressV
+      D3D12_TEXTURE_ADDRESS_MODE_WRAP, // addressW
+      0.0f,                            // mipLODBias
+      8);                              // maxAnisotropy
+
+  const CD3DX12_STATIC_SAMPLER_DESC anisotropicClamp(
+      5,                                // shaderRegister
+      D3D12_FILTER_ANISOTROPIC,         // filter
+      D3D12_TEXTURE_ADDRESS_MODE_CLAMP, // addressU
+      D3D12_TEXTURE_ADDRESS_MODE_CLAMP, // addressV
+      D3D12_TEXTURE_ADDRESS_MODE_CLAMP, // addressW
+      0.0f,                             // mipLODBias
+      8);                               // maxAnisotropy
+
+  return {pointWrap,   pointClamp,      linearWrap,
+          linearClamp, anisotropicWrap, anisotropicClamp};
 }
 
 void processSRV(nlohmann::json &jobj, CD3DX12_ROOT_PARAMETER &param) {
@@ -63,7 +145,7 @@ void processSRV(nlohmann::json &jobj, CD3DX12_ROOT_PARAMETER &param) {
   int startRegister =
       getValueIfInJson(jdata, ROOT_KEY_BASE_REGISTER, defaultInt);
   assert(startRegister != -1);
-  param.InitAsShaderResourceView(startRegister);
+  param.InitAsShaderResourceView(startRegister, 0, getVisibility(jobj));
 }
 void processCBV(nlohmann::json &jobj, CD3DX12_ROOT_PARAMETER &param) {
   int defaultInt = -1;
@@ -73,7 +155,7 @@ void processCBV(nlohmann::json &jobj, CD3DX12_ROOT_PARAMETER &param) {
   int startRegister =
       getValueIfInJson(jdata, ROOT_KEY_BASE_REGISTER, defaultInt);
   assert(startRegister != -1);
-  param.InitAsConstantBufferView(startRegister);
+  param.InitAsConstantBufferView(startRegister, 0, getVisibility(jobj));
 }
 
 void processConstant(nlohmann::json &jobj, CD3DX12_ROOT_PARAMETER &param) {
@@ -87,7 +169,7 @@ void processConstant(nlohmann::json &jobj, CD3DX12_ROOT_PARAMETER &param) {
   int startRegister =
       getValueIfInJson(jdata, ROOT_KEY_BASE_REGISTER, defaultInt);
   assert(startRegister != -1);
-  param.InitAsConstants(sizeIn32Bit, startRegister);
+  param.InitAsConstants(sizeIn32Bit, startRegister, 0, getVisibility(jobj));
 }
 
 void initDescriptorAsUAV(nlohmann::json &jobj,
@@ -125,7 +207,7 @@ void initDescriptorAsConstant(nlohmann::json &jobj,
 
 void processDescriptorTable(nlohmann::json &jobj,
                             CD3DX12_ROOT_PARAMETER &param) {
-  int size = jobj.size();
+  size_t size = jobj.size();
   assert(size != 0);
   assert(jobj.find(ROOT_KEY_DATA) != jobj.end());
   auto dataJ = jobj[ROOT_KEY_DATA];
@@ -160,18 +242,26 @@ void processDescriptorTable(nlohmann::json &jobj,
   param.InitAsDescriptorTable(counter, ranges);
 }
 ID3DBlob *
-serializeAndCreateRaytracingRootSignature(D3D12_ROOT_SIGNATURE_DESC &desc,
-                                          ID3D12RootSignature **rootSig) {
+serializeRootSignature(D3D12_ROOT_SIGNATURE_DESC &desc) {
   ID3DBlob *blob;
   ID3DBlob *error;
-  HRESULT res = D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1,
-                                            &blob, &error);
+  D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1, &blob,
+                              &error);
   if (error != nullptr) {
     SE_CORE_ERROR("Error serializing root signature :{0}",
                   static_cast<char *>(error->GetBufferPointer()));
     blob = nullptr;
   }
   return blob;
+}
+
+bool shouldBindSamplers(const nlohmann::json &jobj) {
+  bool toReturn = false;
+  auto found = jobj.find(ROOT_KEY_STATIC_SAMPLERS);
+  if (found != jobj.end()) {
+    toReturn = found.value().get<bool>();
+  }
+  return toReturn;
 }
 
 void processSignatureFile(const char *path, std::vector<ResultRoot> &blobs) {
@@ -224,9 +314,17 @@ void processSignatureFile(const char *path, std::vector<ResultRoot> &blobs) {
       ++counter;
     }
 
-    ID3D12RootSignature *rootSig;
-    CD3DX12_ROOT_SIGNATURE_DESC globalRootSignatureDesc(rootParams.size(),
-                                                        rootParams.data());
+    UINT numStaticSampers = 0;
+    D3D12_STATIC_SAMPLER_DESC const *staticSamplers = nullptr;
+    auto samplers = getStaticSamplers();
+
+    if (shouldBindSamplers(jvalue)) {
+      staticSamplers = &samplers[0];
+      numStaticSampers = static_cast<UINT>(samplers.size());
+    }
+
+    CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc(
+        static_cast<UINT>(rootParams.size()), rootParams.data(), numStaticSampers, staticSamplers);
 
     // process flags
     auto found = jvalue.find(ROOT_KEY_FLAGS);
@@ -234,22 +332,22 @@ void processSignatureFile(const char *path, std::vector<ResultRoot> &blobs) {
       auto &jflags = jvalue[ROOT_KEY_FLAGS];
       for (auto &subFlag : jflags) {
         if (subFlag.get<std::string>() == ROOT_KEY_FLAGS_LOCAL) {
-          globalRootSignatureDesc.Flags |=
+          rootSignatureDesc.Flags |=
               D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
         }
         // TODO not exactly pretty, can we get a way with an automatic
         // conversion? maybe an X macro?
         if (subFlag.get<std::string>() ==
             "D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT") {
-          globalRootSignatureDesc.Flags |=
+          rootSignatureDesc.Flags |=
               D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
         }
       }
     }
 
     SirEngine::dx12::ROOT_FILE_TYPE fileTypeEnum = getFileTypeEnum(fileType);
-    ID3DBlob *blob = serializeAndCreateRaytracingRootSignature(
-        globalRootSignatureDesc, &rootSig);
+    ID3DBlob *blob =
+        serializeRootSignature(rootSignatureDesc);
     blobs.emplace_back(ResultRoot{name, blob, fileTypeEnum});
   }
 }
