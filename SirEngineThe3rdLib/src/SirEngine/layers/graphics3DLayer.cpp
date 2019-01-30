@@ -4,7 +4,6 @@
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/swapChain.h"
 #include <DirectXMath.h>
-#include "platform/windows/graphics/dx12/memoryDebug.h"
 
 namespace SirEngine {
 
@@ -43,8 +42,11 @@ void Graphics3DLayer::onAttach() {
   m_cameraHandle =
       m_constantBufferManager.allocateDynamic(sizeof(dx12::CameraBuffer));
 
-  t = new dx12::Texture2D();
-  t->loadFromFile("data/processed/textures/uv.dds");
+  //t = new dx12::Texture2D();
+  //t->loadFromFile("data/processed/textures/uv.dds");
+
+  th = m_textureManager.loadTexture("data/processed/textures/uv.dds",false);
+  thSRV = m_textureManager.getSRV(th);
 }
 void Graphics3DLayer::onDetach() {}
 void Graphics3DLayer::onUpdate() {
@@ -85,7 +87,7 @@ void Graphics3DLayer::onUpdate() {
   commandList->SetGraphicsRootDescriptorTable(
       0, m_constantBufferManager.getConstantBufferDescriptor(m_cameraHandle)
              .gpuDescriptorHandle);
-  commandList->SetGraphicsRootDescriptorTable(1,t->getGPUDescriptor());
+  commandList->SetGraphicsRootDescriptorTable(1,thSRV.gpuHandle);
 
   commandList->DrawIndexedInstanced(m_mesh.getIndexCount(), 1, 0, 0, 0);
 
