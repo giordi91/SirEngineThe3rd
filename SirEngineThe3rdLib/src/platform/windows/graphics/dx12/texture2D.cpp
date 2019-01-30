@@ -32,6 +32,10 @@ inline void freeTextureDescriptor(D3DBuffer &buffer) {
   }
 }
 
+Texture2D::Texture2D():batch(dx12::DEVICE)
+{
+}
+
 Texture2D::~Texture2D() {
   clear();
 
@@ -111,20 +115,49 @@ void Texture2D::clear() {
     m_texture.resource = nullptr;
   }
 }
+inline void AllocateUploadBuffer(ID3D12Device *pDevice, void *pData,
+                                 UINT64 datasize, ID3D12Resource **ppResource,
+                                 const wchar_t *resourceName = nullptr) {
+  auto uploadHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+  auto bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(datasize);
+  pDevice->CreateCommittedResource(
+      &uploadHeapProperties, D3D12_HEAP_FLAG_NONE, &bufferDesc,
+      D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(ppResource));
+
+  if (resourceName) {
+    (*ppResource)->SetName(resourceName);
+  }
+  void *pMappedData;
+  (*ppResource)->Map(0, nullptr, &pMappedData);
+  memcpy(pMappedData, pData, datasize);
+  (*ppResource)->Unmap(0, nullptr);
+}
 
 bool Texture2D::loadFromFile(const char *path) {
 
   ID3D12Resource *resource;
   const std::string paths(path);
-  const std::wstring pathws(paths.begin(),paths.end());
+  const std::wstring pathws(paths.begin(), paths.end());
   std::unique_ptr<uint8_t[]> ddsData;
   std::vector<D3D12_SUBRESOURCE_DATA> subresources;
-  DirectX::LoadDDSTextureFromFile(dx12::DEVICE, pathws.c_str(), &resource, ddsData,
-                                  subresources);
-  //DirectX::CreateDDSTextureFromFile();
+  //DirectX::LoadDDSTextureFromFile(dx12::DEVICE, pathws.c_str(), &resource,
+  //                                ddsData, subresources);
+
+  batch.Begin();
+  DirectX::CreateDDSTextureFromFile(dx12::DEVICE, batch, pathws.c_str(),
+                                    &resource, false);
+  batch.End(dx12::GLOBAL_COMMAND_QUEUE);
+  // int x =subresources.size();
+  // D3D12_SUBRESOURCE_DATA& data = subresources[0];
+  // data.
+
+  //= createDefaultBuffer(
+  //    DEVICE, currentFC->commandList, vertexData,
+  //    sz * m_stride * sizeof(float), m_uploadVertex);
+  // DirectX::CreateDDSTextureFromFile();
   D3D12_RESOURCE_DESC d = resource->GetDesc();
   m_texture.resource = resource;
-  //NAME_D3D12_OBJECT(m_texture.resource);
+  // NAME_D3D12_OBJECT(m_texture.resource);
   GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DSRV(&m_texture, d.Format);
   return false;
   // bool res = createTextureResources(device, m_cpu_data, HDR, correctGamma);

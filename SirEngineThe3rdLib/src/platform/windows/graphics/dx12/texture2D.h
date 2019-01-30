@@ -2,6 +2,7 @@
 //#include "Illuminati/system/debug.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include <dxgiformat.h>
+#include "DXTK12/ResourceUploadBatch.h"
 
 struct ID3D12Resource;
 namespace SirEngine {
@@ -11,7 +12,7 @@ namespace dx12 {
 class Texture2D {
 
 public:
-  Texture2D()=default;
+  Texture2D();
   ~Texture2D();
   bool initializeEmpty(int width, int height, DXGI_FORMAT format);
 
@@ -49,6 +50,7 @@ private:
   D3DBuffer m_texture;
   D3DBuffer m_textureSRV;
   D3D12_RESOURCE_STATES m_currentState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+  DirectX::ResourceUploadBatch batch;
 		};
 
 } // namespace dx12
