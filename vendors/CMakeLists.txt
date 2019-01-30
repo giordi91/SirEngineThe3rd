@@ -16,4 +16,5 @@ file(COPY "json/include/nlohmann" DESTINATION "${CMAKE_SOURCE_DIR}/SirEngineThe3
 
 add_subdirectory(imgui)
 add_subdirectory(DirectXTK12)
+add_subdirectory(Compressonator)
 
