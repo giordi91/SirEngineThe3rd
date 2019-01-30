@@ -44,7 +44,7 @@ void Graphics3DLayer::onAttach() {
       m_constantBufferManager.allocateDynamic(sizeof(dx12::CameraBuffer));
 
   t = new dx12::Texture2D();
-  t->loadFromFile("data/processed/textures/uvbc1.DDS");
+  t->loadFromFile("data/processed/textures/uv.dds");
 }
 void Graphics3DLayer::onDetach() {}
 void Graphics3DLayer::onUpdate() {
