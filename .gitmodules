@@ -25,3 +25,6 @@
 [submodule "vendors/Compressonator"]
 	path = vendors/Compressonator
 	url = https://github.com/giordi91/Compressonator.git
+[submodule "vendors/stb"]
+	path = vendors/stb
+	url = https://github.com/nothings/stb.git

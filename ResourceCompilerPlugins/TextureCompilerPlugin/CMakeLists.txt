@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.13.0)
 
-project(TextureCompilerPlugin)   
+project(textureCompilerPlugin)   
 
 	set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
@@ -28,7 +28,7 @@ project(TextureCompilerPlugin)
     #adding the executable
     add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES} ${INCLUDES_FILES})
 
-	set_target_properties (TextureCompilerPlugin PROPERTIES
+	set_target_properties (${PROJECT_NAME} PROPERTIES
     FOLDER plugins
 )
 
@@ -40,9 +40,9 @@ project(TextureCompilerPlugin)
 	#after you build it. putting plug-ins in the wrong folder, might need to put this
 	#being a if(WIN32)
 	add_custom_command(
-    TARGET TextureCompilerPlugin 
+    TARGET ${PROJECT_NAME} 
     POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy
-        $<TARGET_FILE:TextureCompilerPlugin>
-        ${CMAKE_BINARY_DIR}/bin/$<CONFIGURATION>/plugins/$<TARGET_FILE_NAME:TextureCompilerPlugin>
+        $<TARGET_FILE:${PROJECT_NAME}>
+        ${CMAKE_BINARY_DIR}/bin/$<CONFIGURATION>/plugins/$<TARGET_FILE_NAME:${PROJECT_NAME}>
 	)

@@ -17,6 +17,7 @@ file(COPY "tinyobjloader/tiny_obj_loader.h" DESTINATION "${CMAKE_SOURCE_DIR}/Res
 file(COPY "json/include/nlohmann" DESTINATION "${CMAKE_SOURCE_DIR}/ResourceCompilerLib/vendors/includes" )
 file(COPY "json/include/nlohmann" DESTINATION "${CMAKE_SOURCE_DIR}/SirEngineThe3rdLib/vendors/includes" )
 
+file(COPY "stb/stb_image.h" DESTINATION "${CMAKE_SOURCE_DIR}/ResourceCompilerPlugins/TextureCompilerPlugin/vendors/includes/stb" )
 
 
 add_subdirectory(imgui)

@@ -13,104 +13,46 @@ const unsigned int VERSION_MAJOR = 0;
 const unsigned int VERSION_MINOR = 1;
 const unsigned int VERSION_PATCH = 0;
 
-void processArgs(const std::string args, std::string &tangentPath,
-                 std::string &skinPath) {
+void processArgs(const std::string args, std::string &format) {
   // lets get arguments like they were from commandline
   auto v = splitArgs(args);
   // lets build the options
-  cxxopts::Options options("Model compiler",
-                           "Converts a model in game ready binary blob");
-  options.add_options()("tangents", "Path to the tangent file",
-                        cxxopts::value<std::string>())(
-      "skin", "Path to the skin cluster", cxxopts::value<std::string>());
+  cxxopts::Options options("Texture compiler",
+                           "Converts a texture in DDS format");
+  options.add_options()("f,format", "output format for the texture",
+                        cxxopts::value<std::string>());
   char **argv = v.argv.get();
   auto result = options.parse(v.argc, argv);
 
-  if (result.count("tangents")) {
-    tangentPath = result["tangents"].as<std::string>();
-  }
-  if (result.count("skin") != 0) {
-    skinPath = result["skin"].as<std::string>();
+  if (result.count("format")) {
+    format = result["format"].as<std::string>();
   }
 }
 
 bool processTexture(const std::string &assetPath, const std::string &outputPath,
                     const std::string &args) {
 
-  /*
-// processing plugins args
-std::string tangentsPath = "";
-std::string skinPath = "";
-processArgs(args, tangentsPath, skinPath);
+  // processing plugins args
+  std::string format = "";
+  processArgs(args, format);
 
-// checking IO files exits
-bool exits = fileExists(assetPath);
-if (!exits) {
-SE_CORE_ERROR("[Model Compiler] : could not find path/file {0}", assetPath);
-}
+  // checking IO files exits
+  bool exits = fileExists(assetPath);
+  if (!exits) {
+    SE_CORE_ERROR("[Texture Compiler] : could not find path/file {0}",
+                  assetPath);
+  }
 
-exits = filePathExists(outputPath);
-if (!exits) {
-SE_CORE_ERROR("[Model Compiler] : could not find path/file {0}",
-            outputPath);
-}
+  exits = filePathExists(outputPath);
+  if (!exits) {
+    SE_CORE_ERROR("[Texture Compiler] : could not find path/file {0}",
+                  outputPath);
+  }
+  bool res = loadTextureFromFile(assetPath.c_str(), outputPath.c_str(), format);
 
-// loading the obj
-tinyobj::attrib_t attr;
-std::vector<tinyobj::shape_t> shapes;
-std::vector<tinyobj::material_t> materials;
-
-std::string warn;
-std::string err;
-bool ret = tinyobj::LoadObj(&attr, &shapes, &materials, &warn, &err,
-                        assetPath.c_str());
-if (!ret) {
-SE_CORE_ERROR("Error in parsing obj file {0}", assetPath);
-return false ;
-}
-
-// processing the model so that is ready for the GPU
-Model model;
-convertObj(attr, shapes[0], model, tangentsPath, skinPath);
-
-// writing binary file
-BinaryFileWriteRequest request;
-request.fileType = BinaryFileType::MODEL;
-request.version = ((VERSION_MAJOR << 16) | (VERSION_MINOR << 8) |
-VERSION_PATCH);
-
-std::experimental::filesystem::path inp(assetPath);
-const std::string fileName = inp.stem().string().c_str();
-const std::string outFilePath = outputPath;
-request.outPath = outFilePath.c_str();
-
-// need to merge indices and vertices
-std::vector<float> data;
-int floatVertexCount = model.vertexCount * 16;
-size_t indicesCount = model.indices.size();
-size_t totalSizeFloat = floatVertexCount + indicesCount;
-size_t totalSizeByte = totalSizeFloat * sizeof(float);
-
-data.resize(totalSizeFloat);
-memcpy(data.data(), model.vertices.data(), floatVertexCount * sizeof(float));
-// stride is in float being data a float ptr
-memcpy(data.data() + floatVertexCount, model.indices.data(),
-   indicesCount * sizeof(float));
-request.bulkData = data.data();
-request.bulkDataSizeInBtye = totalSizeByte;
-
-ModelMapperData mapperData;
-mapperData.indexDataSizeInByte =
-static_cast<unsigned int>(indicesCount * sizeof(float));
-mapperData.vertexDataSizeInByte = floatVertexCount * sizeof(float);
-mapperData.strideInByte = 16 * sizeof(float);
-request.mapperData = &mapperData;
-request.mapperDataSizeInByte = sizeof(ModelMapperData);
-
-writeBinaryFile(request);
-
-SE_CORE_INFO("Model successfully compiled ---> {0}", outputPath);
-*/
+  if (res) {
+    SE_CORE_INFO("Texture successfully compiled ---> {0}", outputPath);
+  }
   return true;
 }
 

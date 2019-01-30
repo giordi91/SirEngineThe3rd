@@ -9,7 +9,8 @@
       "-p data/shaders/rasterization/basicMeshVSTex.hlsl -o data/processed/shaders/rasterization/basicMeshVSTex.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t vs_6_2  -e VS -d \"",
 
       "-p data/rs/simpleMeshRS.json -o data/processed/rs/simpleMeshRS.root --pluginName rootSignatureCompilerPlugin",
-      "-p data/rs/simpleMeshRSTex.json -o data/processed/rs/simpleMeshRSTex.root --pluginName rootSignatureCompilerPlugin"
+      "-p data/rs/simpleMeshRSTex.json -o data/processed/rs/simpleMeshRSTex.root --pluginName rootSignatureCompilerPlugin",
         
+      "-p data/textures/uv.bmp -o data/processed/textures/uv.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1\""
     ]
 }
