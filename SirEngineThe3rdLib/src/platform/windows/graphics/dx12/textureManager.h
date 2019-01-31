@@ -76,17 +76,17 @@ private:
     uint32_t magicNumber : 16;
     ID3D12Resource *resource;
     DXGI_FORMAT format;
-    bool isRT : 1;
     bool isGamma : 1;
     bool isHDR : 1;
-    bool isStatic : 1;
-    uint32_t padding : 12;
+    uint32_t padding : 14;
   };
 
 private:
+  // if we have dynamic storage we are store descriptors upfront
   std::vector<TextureData> m_dynamicStorage[FRAME_BUFFERS_COUNT];
-  std::vector<TextureData> m_staticStorage;
   std::vector<DescriptorPair> m_descriptorStorage;
+
+  std::vector<TextureData> m_staticStorage;
   std::unordered_map<std::string, TextureHandle> m_nameToHandle;
   static const uint32_t INDEX_MASK = (1 << 16) - 1;
   static const uint32_t MAGIC_NUMBER_MASK = ~INDEX_MASK;

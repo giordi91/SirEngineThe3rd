@@ -29,14 +29,12 @@ TextureHandle TextureManager::loadTexture(const char *path, bool dynamic) {
   batch.End(dx12::GLOBAL_COMMAND_QUEUE);
 
   // data is now loaded need to create handle etc
-  TextureHandle handle;
-  handle.handle = (MAGIC_NUMBER_COUNTER << 16) | (m_staticStorage.size());
+  TextureHandle handle{(MAGIC_NUMBER_COUNTER << 16) |
+                       static_cast<uint32_t>(m_staticStorage.size())};
 
   data.magicNumber = MAGIC_NUMBER_COUNTER;
-  data.isStatic = true;
   data.isGamma = false;
   data.isHDR = false;
-  data.isRT = false;
   data.format = data.resource->GetDesc().Format;
   m_staticStorage.push_back(data);
 
