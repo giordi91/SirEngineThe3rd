@@ -22,7 +22,8 @@ void newFrame() {
   if (dx12::CURRENT_FRAME_RESOURCE->fence != 0 &&
       dx12::GLOBAL_FENCE->GetCompletedValue() <
           dx12::CURRENT_FRAME_RESOURCE->fence) {
-    HANDLE eventHandle = CreateEventEx(nullptr, false, false, EVENT_ALL_ACCESS);
+    HANDLE eventHandle = CreateEventEx(nullptr, false, false, 
+		EVENT_ALL_ACCESS);
     auto handleResult = dx12::GLOBAL_FENCE->SetEventOnCompletion(
         dx12::CURRENT_FRAME_RESOURCE->fence, eventHandle);
     assert(SUCCEEDED(handleResult));
@@ -87,9 +88,6 @@ void dispatchFrame() {
   dx12::SWAP_CHAIN->present();
 }
 
-void shutdown()
-{
-	dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
-}
+void shutdown() { dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE); }
 } // namespace graphics
 } // namespace SirEngine

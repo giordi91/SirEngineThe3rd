@@ -53,6 +53,23 @@ public:
     pair.gpuHandle = buffer.gpuDescriptorHandle;
     return pair;
   }
+  void freeSRV(TextureHandle handle, DescriptorPair pair) {
+    assertMagicNumber(handle);
+    uint32_t index = getIndexFromHandle(handle);
+    D3DBuffer buffer;
+    buffer.cpuDescriptorHandle = pair.cpuHandle;
+    buffer.gpuDescriptorHandle = pair.gpuHandle;
+    buffer.descriptorType = DescriptorType::SRV;
+    dx12::GLOBAL_CBV_SRV_UAV_HEAP->freeDescritpor(buffer);
+  }
+
+  inline TextureHandle getHandleFromName(const char *name) {
+    auto found = m_nameToHandle.find(name);
+    if (found != m_nameToHandle.end()) {
+      return found->second;
+    }
+    return TextureHandle{0};
+  }
 
 private:
   struct TextureData final {
@@ -70,14 +87,13 @@ private:
   std::vector<TextureData> m_dynamicStorage[FRAME_BUFFERS_COUNT];
   std::vector<TextureData> m_staticStorage;
   std::vector<DescriptorPair> m_descriptorStorage;
-  std::vector<DescriptorType> m_decriptorTypes;
   std::unordered_map<std::string, TextureHandle> m_nameToHandle;
   static const uint32_t INDEX_MASK = (1 << 16) - 1;
   static const uint32_t MAGIC_NUMBER_MASK = ~INDEX_MASK;
   static const uint32_t RESERVE_SIZE = 200;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
   DirectX::ResourceUploadBatch batch;
-};
+}; // namespace dx12
 
 } // namespace dx12
 } // namespace SirEngine

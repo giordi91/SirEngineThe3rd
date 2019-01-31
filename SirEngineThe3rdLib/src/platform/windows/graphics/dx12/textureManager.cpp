@@ -7,6 +7,10 @@ namespace SirEngine {
 namespace dx12 {
 TextureHandle TextureManager::loadTexture(const char *path, bool dynamic) {
   bool res = fileExists(path);
+
+  const std::string name = getFileName(path);
+  assert(m_nameToHandle.find(name) == m_nameToHandle.end());
+
   assert(res);
 
   if (dynamic) {
@@ -37,6 +41,8 @@ TextureHandle TextureManager::loadTexture(const char *path, bool dynamic) {
   m_staticStorage.push_back(data);
 
   ++MAGIC_NUMBER_COUNTER;
+
+  m_nameToHandle[name] = handle;
   return handle;
 }
 

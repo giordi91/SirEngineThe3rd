@@ -42,14 +42,12 @@ void Graphics3DLayer::onAttach() {
   m_cameraHandle =
       m_constantBufferManager.allocateDynamic(sizeof(dx12::CameraBuffer));
 
-  //t = new dx12::Texture2D();
-  //t->loadFromFile("data/processed/textures/uv.dds");
-
   th = m_textureManager.loadTexture("data/processed/textures/uv.dds",false);
   thSRV = m_textureManager.getSRV(th);
 }
 void Graphics3DLayer::onDetach() {}
 void Graphics3DLayer::onUpdate() {
+
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   if (!currentFc->isListOpen) {
     dx12::resetAllocatorAndList(currentFc);
