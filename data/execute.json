@@ -11,6 +11,6 @@
       "-p data/rs/simpleMeshRS.json -o data/processed/rs/simpleMeshRS.root --pluginName rootSignatureCompilerPlugin",
       "-p data/rs/simpleMeshRSTex.json -o data/processed/rs/simpleMeshRSTex.root --pluginName rootSignatureCompilerPlugin",
         
-      "-p data/textures/uv.bmp -o data/processed/textures/uv.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1\""
+      "-p data/textures/uv.bmp -o data/processed/textures/uv.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1 -g\""
     ]
 }
