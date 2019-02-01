@@ -67,7 +67,7 @@ void executeFromArgs(const cxxopts::ParseResult &result) {
   const std::string name = result["pluginName"].as<std::string>();
 
   size_t plugArgsCount = result.count("pluginArgs");
-  std::string args = "";
+  std::string args{""};
   if (plugArgsCount != 0) {
     args = getPluginsArgs(result);
   }

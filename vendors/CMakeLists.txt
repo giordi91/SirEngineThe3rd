@@ -23,4 +23,5 @@ file(COPY "stb/stb_image.h" DESTINATION "${CMAKE_SOURCE_DIR}/ResourceCompilerPlu
 add_subdirectory(imgui)
 add_subdirectory(DirectXTK12)
 add_subdirectory(Compressonator)
+add_subdirectory(DirectXTex)
 
