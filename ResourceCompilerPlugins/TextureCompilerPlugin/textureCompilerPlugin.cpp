@@ -3,10 +3,8 @@
 #include "SirEngine/log.h"
 #include "cxxopts/cxxopts.hpp"
 
-#include "SirEngine/binary/binaryFile.h"
 #include "processTexture.h"
 #include "resourceCompilerLib/argsUtils.h"
-#include <filesystem>
 
 const std::string PLUGIN_NAME = "textureCompilerPlugin";
 const unsigned int VERSION_MAJOR = 0;

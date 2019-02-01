@@ -28,3 +28,6 @@
 [submodule "vendors/stb"]
 	path = vendors/stb
 	url = https://github.com/nothings/stb.git
+[submodule "vendors/DirectXTex"]
+	path = vendors/DirectXTex
+	url = https://github.com/giordi91/DirectXTex.git

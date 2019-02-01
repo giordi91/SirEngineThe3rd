@@ -3,10 +3,13 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb/stb_image.h"
 
+#include "DirectXTex/DirectXTex.h"
+
 #include "Compressonator/Header/Compressonator.h"
 #include "DDS_Helpers.h"
 #include "SirEngine/log.h"
-#include "unordered_map";
+
+#include <unordered_map>
 
 const std::unordered_map<std::string, CMP_FORMAT> STRING_TO_FORMAT{
     {"DXT1", CMP_FORMAT_DXT1},
@@ -34,7 +37,7 @@ void getFormatFromString(const std::string &formatString,
 }
 
 bool loadTextureFromFile(const char *path, const char *outPath,
-                                const std::string &formatString) {
+                         const std::string &formatString) {
   int w;
   int h;
   unsigned char *data = getTextureDataFromFile(path, &w, &h);
@@ -49,7 +52,7 @@ bool loadTextureFromFile(const char *path, const char *outPath,
   srcTex.pData = data;
 
   CMP_FORMAT format = CMP_FORMAT_DXT1;
-  getFormatFromString(formatString,format);
+  getFormatFromString(formatString, format);
 
   //===================================
   // Initialize Compressed Destination
@@ -77,15 +80,43 @@ bool loadTextureFromFile(const char *path, const char *outPath,
   if (cmp_status != CMP_OK) {
     free(srcTex.pData);
     free(destTexture.pData);
-	SE_CORE_ERROR("Compression returned an error {0}",cmp_status);
-	return false;
+    SE_CORE_ERROR("Compression returned an error {0}", cmp_status);
+    return false;
   }
 
   //==========================
   // Save Compressed Testure
   //==========================
-  if (cmp_status == CMP_OK)
-    SaveDDSFile(outPath, destTexture);
-  return true;
 
+  if (cmp_status == CMP_OK) {
+    // SaveDDSFile(outPath, destTexture);
+
+    DirectX::Image img;
+    img.width = destTexture.dwWidth;
+    img.height = destTexture.dwHeight;
+
+    size_t rowPitch;
+    size_t slicePitch;
+    DirectX::ComputePitch(DXGI_FORMAT_BC1_UNORM_SRGB, img.width, img.height,
+                          rowPitch, slicePitch);
+    img.rowPitch = rowPitch;
+	img.slicePitch = slicePitch;
+    img.pixels = destTexture.pData;
+    img.format = DXGI_FORMAT_BC1_UNORM_SRGB;
+    DWORD flags = 0;
+    std::string outPathS{outPath};
+    std::wstring outPathW{outPathS.begin(), outPathS.end()};
+    HRESULT res = DirectX::SaveToDDSFile(img, flags, outPathW.c_str());
+
+    int x = 0;
+
+    //    size_t      width;
+    //    size_t      height;
+    //    DXGI_FORMAT format;
+    //    size_t      rowPitch;
+    //    size_t      slicePitch;
+    //    uint8_t*    pixels;
+    //  DirectX::SaveToDDSFile()
+  }
+  return true;
 }
