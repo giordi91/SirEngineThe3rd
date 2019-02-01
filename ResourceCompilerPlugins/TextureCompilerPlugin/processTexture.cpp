@@ -17,6 +17,16 @@ const std::unordered_map<std::string, CMP_FORMAT> STRING_TO_FORMAT{
     {"DXT5", CMP_FORMAT_DXT5},
     {"DXT7", CMP_FORMAT_BC7}};
 
+const std::unordered_map<std::string, DXGI_FORMAT> STRING_TO_DXGI_FORMAT{
+    {"DXT1", DXGI_FORMAT_BC1_UNORM},
+    {"DXT3", DXGI_FORMAT_BC3_UNORM},
+    {"DXT5", DXGI_FORMAT_BC5_UNORM},
+    {"DXT7", DXGI_FORMAT_BC7_UNORM}};
+const std::unordered_map<std::string, DXGI_FORMAT> STRING_TO_DXGI_FORMAT_GAMMA{
+    {"DXT1", DXGI_FORMAT_BC1_UNORM_SRGB},
+    {"DXT3", DXGI_FORMAT_BC3_UNORM_SRGB},
+    {"DXT7", DXGI_FORMAT_BC7_UNORM_SRGB}};
+
 inline unsigned char *getTextureDataFromFile(const char *path, int *outWidth,
                                              int *outHeight) {
   unsigned char *cpu_data =
@@ -36,8 +46,8 @@ void getFormatFromString(const std::string &formatString,
   }
 }
 
-bool loadTextureFromFile(const char *path, const char *outPath,
-                         const std::string &formatString) {
+bool processTextureFile(const char *path, const char *outPath,
+                         const std::string &formatString, bool gamma) {
   int w;
   int h;
   unsigned char *data = getTextureDataFromFile(path, &w, &h);
@@ -85,11 +95,46 @@ bool loadTextureFromFile(const char *path, const char *outPath,
   }
 
   //==========================
-  // Save Compressed Testure
+  // Save Compressed Texture
   //==========================
 
   if (cmp_status == CMP_OK) {
     // SaveDDSFile(outPath, destTexture);
+
+    // lets find the right format to use
+    if (gamma && formatString == "DXT5") {
+      free(srcTex.pData);
+      free(destTexture.pData);
+      SE_CORE_ERROR("Error in saving texture, cannot use DXT5 and gamma: {0}",
+                    path);
+      return false;
+    }
+
+    DXGI_FORMAT outFormat;
+
+    if (gamma) {
+      auto found = STRING_TO_DXGI_FORMAT_GAMMA.find(formatString);
+      if (found == STRING_TO_DXGI_FORMAT_GAMMA.end()) {
+        free(srcTex.pData);
+        free(destTexture.pData);
+        SE_CORE_ERROR(
+            "Error in saving texture, format not supported with gamma {0}",
+            formatString);
+        return false;
+      }
+      outFormat = found->second;
+
+    } else {
+      auto found = STRING_TO_DXGI_FORMAT.find(formatString);
+      if (found == STRING_TO_DXGI_FORMAT.end()) {
+        free(srcTex.pData);
+        free(destTexture.pData);
+        SE_CORE_ERROR("Error in saving texture, format not supported {0}",
+                      formatString);
+        return false;
+      }
+      outFormat = found->second;
+    }
 
     DirectX::Image img;
     img.width = destTexture.dwWidth;
@@ -97,12 +142,12 @@ bool loadTextureFromFile(const char *path, const char *outPath,
 
     size_t rowPitch;
     size_t slicePitch;
-    DirectX::ComputePitch(DXGI_FORMAT_BC1_UNORM_SRGB, img.width, img.height,
+    DirectX::ComputePitch(outFormat, img.width, img.height,
                           rowPitch, slicePitch);
     img.rowPitch = rowPitch;
-	img.slicePitch = slicePitch;
+    img.slicePitch = slicePitch;
     img.pixels = destTexture.pData;
-    img.format = DXGI_FORMAT_BC1_UNORM_SRGB;
+    img.format = outFormat;
     DWORD flags = 0;
     std::string outPathS{outPath};
     std::wstring outPathW{outPathS.begin(), outPathS.end()};
@@ -117,6 +162,8 @@ bool loadTextureFromFile(const char *path, const char *outPath,
     //    size_t      slicePitch;
     //    uint8_t*    pixels;
     //  DirectX::SaveToDDSFile()
+    free(srcTex.pData);
+    free(destTexture.pData);
   }
   return true;
 }
