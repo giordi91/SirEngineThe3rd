@@ -2,7 +2,6 @@
 
 #include "platform/windows/graphics/dx12/d3dx12.h"
 #include "platform/windows/graphics/dx12/depthTexture.h"
-#include "platform/windows/graphics/dx12/texture2D.h"
 namespace SirEngine {
 namespace dx12 {
 // generates a barrier for the given texture 2D resource only
@@ -10,6 +9,7 @@ namespace dx12 {
 // The provided counter is where in the array of barriers the
 // function should write to, the retunr counter would be the next
 // free slot in the array where other methods can write to.
+	/*
 inline int transitionTexture2DifNeeded(Texture2D *resource,
                                        D3D12_RESOURCE_STATES wantedState,
                                        D3D12_RESOURCE_BARRIER *barriers,
@@ -24,6 +24,7 @@ inline int transitionTexture2DifNeeded(Texture2D *resource,
   }
   return counter;
 }
+*/
 
 inline int transitionDepthTextureIfNeeded(DepthTexture *resource,
                                           D3D12_RESOURCE_STATES wantedState,
@@ -40,6 +41,7 @@ inline int transitionDepthTextureIfNeeded(DepthTexture *resource,
   return counter;
 }
 
+/*
 // performs a transition, with no checks whether or not the resource
 // needs it, only use this when you are 100% sure the resource needs
 // to be transitioned and you don't want to pay for the extra branch
@@ -54,6 +56,7 @@ inline int transitionTexture2D(Texture2D *resource,
   ++counter;
   return counter;
 }
+*/
 
 } // namespace dx12
 } // namespace SirEngine

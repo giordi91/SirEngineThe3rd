@@ -95,7 +95,7 @@ void dispatchFrame() {
   //    dx12::transitionTexture2D(dx12::SWAP_CHAIN->currentBackBuffer(),
   //                              D3D12_RESOURCE_STATE_PRESENT, rtbarrier, 0);
   //auto *commandList = dx12::CURRENT_FRAME_RESOURCE->fc.commandList;
-  commandList->ResourceBarrier(rtcounter, rtbarrier);
+  //commandList->ResourceBarrier(rtcounter, rtbarrier);
 
   // Done recording commands.
   dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE,

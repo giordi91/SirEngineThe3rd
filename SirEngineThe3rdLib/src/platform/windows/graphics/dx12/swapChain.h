@@ -1,7 +1,6 @@
 #pragma once
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/depthTexture.h"
-#include "platform/windows/graphics/dx12/texture2D.h"
 #include "platform/windows/graphics/dx12/textureManager.h"
 #include <dxgi1_4.h>
 
@@ -35,9 +34,6 @@ public:
     return m_swapChainBuffersHandles[m_currentBackBuffer];
   }
   inline DepthTexture *getCurrentDepth() const { return m_depth; }
-  //inline Texture2D *currentBackBuffer() const {
-  //  return &m_swapChainBuffersResource[m_currentBackBuffer];
-  //};
 
   inline D3D12_VIEWPORT *getViewport() { return &m_screenViewport; }
   inline D3D12_RECT *getScissorRect() { return &m_scissorRect; }
@@ -76,6 +72,7 @@ private:
 
   D3D12_VIEWPORT m_screenViewport;
   D3D12_RECT m_scissorRect;
+  bool m_isInit = false;
 };
 } // namespace dx12
 } // namespace SirEngine
