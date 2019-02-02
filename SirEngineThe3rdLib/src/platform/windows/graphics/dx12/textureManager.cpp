@@ -33,9 +33,8 @@ TextureHandle TextureManager::loadTexture(const char *path, bool dynamic) {
                        static_cast<uint32_t>(m_staticStorage.size())};
 
   data.magicNumber = MAGIC_NUMBER_COUNTER;
-  data.isGamma = false;
-  data.isHDR = false;
   data.format = data.resource->GetDesc().Format;
+  data.state = D3D12_RESOURCE_STATE_COMMON;
   m_staticStorage.push_back(data);
 
   ++MAGIC_NUMBER_COUNTER;
@@ -44,5 +43,24 @@ TextureHandle TextureManager::loadTexture(const char *path, bool dynamic) {
   return handle;
 }
 
+TextureHandle TextureManager::initializeFromResource(ID3D12Resource *resource,
+                                                     const char *name,  D3D12_RESOURCE_STATES state) {
+  // since we are passing one resource, by definition the resource is static
+  // data is now loaded need to create handle etc
+  TextureHandle handle{(MAGIC_NUMBER_COUNTER << 16) |
+                       static_cast<uint32_t>(m_staticStorage.size())};
+
+  TextureData data;
+  data.resource = resource;
+  data.magicNumber = MAGIC_NUMBER_COUNTER;
+  data.format = data.resource->GetDesc().Format;
+  data.state = state;
+  m_staticStorage.push_back(data);
+
+  ++MAGIC_NUMBER_COUNTER;
+
+  m_nameToHandle[name] = handle;
+  return handle;
+}
 } // namespace dx12
 } // namespace SirEngine

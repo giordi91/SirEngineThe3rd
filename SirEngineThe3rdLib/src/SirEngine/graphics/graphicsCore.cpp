@@ -3,6 +3,7 @@
 #include "platform/windows/graphics/dx12/barrierUtils.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/swapChain.h"
+#include "platform/windows/graphics/dx12/textureManager.h"
 #include <d3d12.h>
 
 namespace SirEngine {
@@ -22,8 +23,7 @@ void newFrame() {
   if (dx12::CURRENT_FRAME_RESOURCE->fence != 0 &&
       dx12::GLOBAL_FENCE->GetCompletedValue() <
           dx12::CURRENT_FRAME_RESOURCE->fence) {
-    HANDLE eventHandle = CreateEventEx(nullptr, false, false, 
-		EVENT_ALL_ACCESS);
+    HANDLE eventHandle = CreateEventEx(nullptr, false, false, EVENT_ALL_ACCESS);
     auto handleResult = dx12::GLOBAL_FENCE->SetEventOnCompletion(
         dx12::CURRENT_FRAME_RESOURCE->fence, eventHandle);
     assert(SUCCEEDED(handleResult));
@@ -42,9 +42,13 @@ void newFrame() {
   auto *commandList = dx12::CURRENT_FRAME_RESOURCE->fc.commandList;
   D3D12_RESOURCE_BARRIER rtbarrier[1];
 
-  int rtcounter = dx12::transitionTexture2DifNeeded(
-      dx12::SWAP_CHAIN->currentBackBuffer(), D3D12_RESOURCE_STATE_RENDER_TARGET,
-      rtbarrier, 0);
+  dx12::TextureHandle backBufferH =
+      dx12::SWAP_CHAIN->currentBackBufferTexture();
+  int rtcounter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
+      backBufferH, D3D12_RESOURCE_STATE_RENDER_TARGET, rtbarrier, 0);
+  // int rtcounter = dx12::transitionTexture2DifNeeded(
+  //    dx12::SWAP_CHAIN->currentBackBufferTexture(),
+  //    D3D12_RESOURCE_STATE_RENDER_TARGET, rtbarrier, 0);
   if (rtcounter != 0) {
     commandList->ResourceBarrier(rtcounter, rtbarrier);
   }
@@ -72,10 +76,25 @@ void dispatchFrame() {
 
   D3D12_RESOURCE_BARRIER rtbarrier[1];
   // finally transition the resource to be present
-  int rtcounter =
-      dx12::transitionTexture2D(dx12::SWAP_CHAIN->currentBackBuffer(),
-                                D3D12_RESOURCE_STATE_PRESENT, rtbarrier, 0);
   auto *commandList = dx12::CURRENT_FRAME_RESOURCE->fc.commandList;
+
+  dx12::TextureHandle backBufferH =
+      dx12::SWAP_CHAIN->currentBackBufferTexture();
+  int rtcounter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
+      backBufferH, D3D12_RESOURCE_STATE_PRESENT, rtbarrier, 0);
+  // int rtcounter = dx12::transitionTexture2DifNeeded(
+  //    dx12::SWAP_CHAIN->currentBackBufferTexture(),
+  //    D3D12_RESOURCE_STATE_RENDER_TARGET, rtbarrier, 0);
+  if (rtcounter != 0) {
+    commandList->ResourceBarrier(rtcounter, rtbarrier);
+  }
+
+
+
+  //int rtcounter =
+  //    dx12::transitionTexture2D(dx12::SWAP_CHAIN->currentBackBuffer(),
+  //                              D3D12_RESOURCE_STATE_PRESENT, rtbarrier, 0);
+  //auto *commandList = dx12::CURRENT_FRAME_RESOURCE->fc.commandList;
   commandList->ResourceBarrier(rtcounter, rtbarrier);
 
   // Done recording commands.

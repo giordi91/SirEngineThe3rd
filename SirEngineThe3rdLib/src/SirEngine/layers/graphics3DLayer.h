@@ -50,7 +50,6 @@ private:
   temp::rendering::PSOManager *m_pso{};
   dx12::ConstantBufferHandle m_cameraHandle{};
   dx12::ConstantBufferManager m_constantBufferManager;
-  dx12::TextureManager m_textureManager;
 
   // camera event control
   bool leftDown = false;

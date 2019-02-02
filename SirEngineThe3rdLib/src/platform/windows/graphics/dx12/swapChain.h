@@ -2,6 +2,7 @@
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/depthTexture.h"
 #include "platform/windows/graphics/dx12/texture2D.h"
+#include "platform/windows/graphics/dx12/textureManager.h"
 #include <dxgi1_4.h>
 
 struct ID3D12Resource;
@@ -23,21 +24,26 @@ public:
   bool resize(FrameCommand *command, int width, int height);
 
   inline D3D12_CPU_DESCRIPTOR_HANDLE currentBackBufferView() const {
-    return m_swapChainBuffersResource[m_currentBackBuffer].getCPUDescriptor();
+    // return
+    // m_swapChainBuffersResource[m_currentBackBuffer].getCPUDescriptor();
+    return m_swapChainBuffersDescriptors[m_currentBackBuffer].cpuHandle;
   }
-  inline Texture2D *currentBackBufferTexture() const {
-    return &m_swapChainBuffersResource[m_currentBackBuffer];
+  // inline Texture2D *currentBackBufferTexture() const {
+  //  return &m_swapChainBuffersResource[m_currentBackBuffer];
+  //}
+  inline TextureHandle currentBackBufferTexture() const {
+    return m_swapChainBuffersHandles[m_currentBackBuffer];
   }
   inline DepthTexture *getCurrentDepth() const { return m_depth; }
-  inline Texture2D *currentBackBuffer() const {
-    return &m_swapChainBuffersResource[m_currentBackBuffer];
-  };
+  //inline Texture2D *currentBackBuffer() const {
+  //  return &m_swapChainBuffersResource[m_currentBackBuffer];
+  //};
 
   inline D3D12_VIEWPORT *getViewport() { return &m_screenViewport; }
   inline D3D12_RECT *getScissorRect() { return &m_scissorRect; }
   inline void present() {
     m_swapChain->Present(0, 0);
-    m_currentBackBuffer = (m_currentBackBuffer + 1) % m_swapChainBufferCount;
+    m_currentBackBuffer = (m_currentBackBuffer + 1) % FRAME_BUFFERS_COUNT;
   }
   void clearDepth() const {
     CURRENT_FRAME_RESOURCE->fc.commandList->ClearDepthStencilView(
@@ -61,10 +67,11 @@ private:
 
   UINT m_currentBackBuffer = 0;
   // Hard-coded double buffering for the time being
-  // TODO this values should be a constant engine defined somewhere
-  static const UINT m_swapChainBufferCount = FRAME_BUFFERS_COUNT;
 
-  Texture2D *m_swapChainBuffersResource = nullptr;
+  //Texture2D *m_swapChainBuffersResource = nullptr;
+  TextureHandle m_swapChainBuffersHandles[FRAME_BUFFERS_COUNT];
+  DescriptorPair m_swapChainBuffersDescriptors[FRAME_BUFFERS_COUNT];
+
   DepthTexture *m_depth = nullptr;
 
   D3D12_VIEWPORT m_screenViewport;

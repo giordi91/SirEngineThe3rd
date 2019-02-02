@@ -4,6 +4,7 @@
 #include "SirEngine/globals.h"
 #include "SirEngine/log.h"
 #include "platform/windows/graphics/dx12/DX12.h"
+#include "platform/windows/graphics/dx12/d3dx12.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include <vector>
 
@@ -27,6 +28,8 @@ public:
   TextureManager &operator=(const TextureManager &) = delete;
   void loadTexturesInFolder(const char *path, const char *extension);
   TextureHandle loadTexture(const char *path, bool dynamic = false);
+  TextureHandle initializeFromResource(ID3D12Resource *resource,
+                                       const char *name, D3D12_RESOURCE_STATES state);
 
   inline void assertMagicNumber(TextureHandle handle) {
     uint32_t magic = getMagicFromHandle(handle);
@@ -44,6 +47,8 @@ public:
   DescriptorPair getSRV(TextureHandle handle) {
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
+    // TODO get rid of 3d buffer and start working on
+    // DescriptorPair only?
     D3DBuffer buffer;
     buffer.resource = m_staticStorage[index].resource;
     dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DSRV(
@@ -55,12 +60,24 @@ public:
   }
   void freeSRV(TextureHandle handle, DescriptorPair pair) {
     assertMagicNumber(handle);
-    uint32_t index = getIndexFromHandle(handle);
     D3DBuffer buffer;
     buffer.cpuDescriptorHandle = pair.cpuHandle;
     buffer.gpuDescriptorHandle = pair.gpuHandle;
     buffer.descriptorType = DescriptorType::SRV;
     dx12::GLOBAL_CBV_SRV_UAV_HEAP->freeDescritpor(buffer);
+  }
+  DescriptorPair getRTV(TextureHandle handle) {
+    assertMagicNumber(handle);
+    uint32_t index = getIndexFromHandle(handle);
+    // TODO get rid of 3d buffer and start working on
+    // DescriptorPair only?
+    D3DBuffer buffer;
+    buffer.resource = m_staticStorage[index].resource;
+    dx12::createRTVSRV(dx12::GLOBAL_RTV_HEAP, &buffer);
+    DescriptorPair pair;
+    pair.cpuHandle = buffer.cpuDescriptorHandle;
+    pair.gpuHandle = buffer.gpuDescriptorHandle;
+    return pair;
   }
 
   inline TextureHandle getHandleFromName(const char *name) {
@@ -71,20 +88,37 @@ public:
     return TextureHandle{0};
   }
 
+  inline int transitionTexture2DifNeeded(TextureHandle handle,
+                                         D3D12_RESOURCE_STATES wantedState,
+                                         D3D12_RESOURCE_BARRIER *barriers,
+                                         int counter) {
+
+    assertMagicNumber(handle);
+    uint32_t index = getIndexFromHandle(handle);
+    TextureData &data = m_staticStorage[index];
+
+    auto state = data.state;
+    if (state != wantedState) {
+      barriers[counter] = CD3DX12_RESOURCE_BARRIER::Transition(
+          data.resource, state, wantedState);
+      data.state = wantedState;
+      ++counter;
+    }
+    return counter;
+  }
+
 private:
   struct TextureData final {
-    uint32_t magicNumber : 16;
+    uint32_t magicNumber;
     ID3D12Resource *resource;
+    D3D12_RESOURCE_STATES state;
     DXGI_FORMAT format;
-    bool isGamma : 1;
-    bool isHDR : 1;
-    uint32_t padding : 14;
   };
 
 private:
   // if we have dynamic storage we are store descriptors upfront
-  std::vector<TextureData> m_dynamicStorage[FRAME_BUFFERS_COUNT];
-  std::vector<DescriptorPair> m_descriptorStorage;
+  // std::vector<TextureData> m_dynamicStorage[FRAME_BUFFERS_COUNT];
+  // std::vector<DescriptorPair> m_descriptorStorage;
 
   std::vector<TextureData> m_staticStorage;
   std::unordered_map<std::string, TextureHandle> m_nameToHandle;

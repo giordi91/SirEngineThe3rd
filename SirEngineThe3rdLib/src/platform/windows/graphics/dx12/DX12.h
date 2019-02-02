@@ -2,11 +2,12 @@
 #include <d3d12.h>
 #include <dxgi1_6.h>
 
-#include <cassert>
 #include "SirEngine/globals.h"
+#include <cassert>
 
 namespace SirEngine {
 namespace dx12 {
+class TextureManager;
 class Adapter;
 class DescriptorHeap;
 class SwapChain;
@@ -21,10 +22,9 @@ struct FrameCommand final {
   bool isListOpen = false;
 };
 
-struct FrameResource final
-{
-	FrameCommand fc;
-	UINT64 fence =0;
+struct FrameResource final {
+  FrameCommand fc;
+  UINT64 fence = 0;
 };
 
 enum class DescriptorType {
@@ -86,7 +86,7 @@ inline bool executeCommandList(ID3D12CommandQueue *queue,
   return succeded;
 }
 
-//global declarations
+// global declarations
 #if DXR_ENABLED
 extern ID3D12Device5 *DEVICE;
 #else
@@ -104,8 +104,8 @@ extern ID3D12CommandQueue *GLOBAL_COMMAND_QUEUE;
 extern ID3D12Fence *GLOBAL_FENCE;
 extern SwapChain *SWAP_CHAIN;
 extern FrameResource FRAME_RESOURCES[FRAME_BUFFERS_COUNT];
-extern FrameResource* CURRENT_FRAME_RESOURCE;
-
+extern FrameResource *CURRENT_FRAME_RESOURCE;
+extern TextureManager *TEXTURE_MANAGER;
 
 inline void flushCommandQueue(ID3D12CommandQueue *queue) {
   // Advance the fence value to mark commands up to this fence point.
@@ -123,8 +123,7 @@ inline void flushCommandQueue(ID3D12CommandQueue *queue) {
         CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
 
     // Fire event when GPU hits current fence.
-    res = GLOBAL_FENCE->SetEventOnCompletion(CURRENT_FENCE,
-                                                   eventHandle);
+    res = GLOBAL_FENCE->SetEventOnCompletion(CURRENT_FENCE, eventHandle);
     assert(SUCCEEDED(res));
 
     // Wait until the GPU hits current fence event is fired.
