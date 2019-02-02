@@ -42,8 +42,8 @@ void Graphics3DLayer::onAttach() {
   m_cameraHandle =
       m_constantBufferManager.allocateDynamic(sizeof(dx12::CameraBuffer));
 
-  th = m_textureManager.loadTexture("data/processed/textures/uv.dds",false);
-  thSRV = m_textureManager.getSRV(th);
+  th = dx12::TEXTURE_MANAGER->loadTexture("data/processed/textures/uv.dds",false);
+  thSRV = dx12::TEXTURE_MANAGER->getSRV(th);
 }
 void Graphics3DLayer::onDetach() {}
 void Graphics3DLayer::onUpdate() {

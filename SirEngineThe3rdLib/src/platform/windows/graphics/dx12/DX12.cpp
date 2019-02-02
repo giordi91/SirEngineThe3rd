@@ -3,6 +3,7 @@
 #include "platform/windows/graphics/dx12/adapter.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/swapChain.h"
+#include "platform/windows/graphics/dx12/textureManager.h"
 
 namespace SirEngine {
 namespace dx12 {
@@ -25,6 +26,7 @@ ID3D12Fence *GLOBAL_FENCE= nullptr;
 SwapChain *SWAP_CHAIN= nullptr;
 FrameResource FRAME_RESOURCES[FRAME_BUFFERS_COUNT];
 FrameResource *CURRENT_FRAME_RESOURCE= nullptr;
+TextureManager *TEXTURE_MANAGER =nullptr;
 
 
 bool createFrameCommand(FrameCommand *fc) {
@@ -161,6 +163,9 @@ bool initializeGraphics() {
   }
 
   CURRENT_FRAME_RESOURCE = &FRAME_RESOURCES[0];
+
+  TEXTURE_MANAGER = new TextureManager();
+
   return true;
 }
 } // namespace dx12
