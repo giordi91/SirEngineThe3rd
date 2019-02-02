@@ -15,10 +15,15 @@ const char *BACK_BUFFER_NAMES[3]{"backBuffer1", "backBuffer2", "backBuffer3"};
 }
 
 SwapChain::~SwapChain() {
-  //if (m_swapChainBuffersResource != nullptr) {
+  // if (m_swapChainBuffersResource != nullptr) {
   //  delete m_swapChainBuffersResource;
   //  m_swapChainBuffersResource = nullptr;
   //}
+  for (int i = 0; i < FRAME_BUFFERS_COUNT; ++i) {
+    dx12::TEXTURE_MANAGER->freeRTV(m_swapChainBuffersHandles[i],
+                                   m_swapChainBuffersDescriptors[i]);
+	dx12::TEXTURE_MANAGER->free(m_swapChainBuffersHandles[i]);
+  }
 
   // freeing depth and re-creating it;
   if (m_depth != nullptr) {
@@ -79,7 +84,16 @@ bool SwapChain::resize(FrameCommand *command, const int width,
   flushCommandQueue(GLOBAL_COMMAND_QUEUE);
   resetCommandList(command);
 
-  //if (m_swapChainBuffersResource != nullptr) {
+  if (m_isInit)
+  {
+	  for (int i = 0; i < FRAME_BUFFERS_COUNT; ++i) {
+		  dx12::TEXTURE_MANAGER->freeRTV(m_swapChainBuffersHandles[i],
+			  m_swapChainBuffersDescriptors[i]);
+		  dx12::TEXTURE_MANAGER->free(m_swapChainBuffersHandles[i]);
+	  }
+  }
+
+  // if (m_swapChainBuffersResource != nullptr) {
   //  for (int i = 0; i < FRAME_BUFFERS_COUNT; ++i) {
   //    m_swapChainBuffersResource[i].clear();
   //  }
@@ -87,7 +101,7 @@ bool SwapChain::resize(FrameCommand *command, const int width,
   //  m_swapChainBuffersResource = nullptr;
   //}
 
-  //m_swapChainBuffersResource = new Texture2D[FRAME_BUFFERS_COUNT];
+  // m_swapChainBuffersResource = new Texture2D[FRAME_BUFFERS_COUNT];
 
   // Resize the swap chain.
   HRESULT result = m_swapChain->ResizeBuffers(
@@ -104,11 +118,13 @@ bool SwapChain::resize(FrameCommand *command, const int width,
     ID3D12Resource *resource;
     HRESULT res = m_swapChain->GetBuffer(i, IID_PPV_ARGS(&resource));
 
-    //m_swapChainBuffersResource[i].initializeRTFromResource(resource);
+    // m_swapChainBuffersResource[i].initializeRTFromResource(resource);
     assert(i < 3 && "not enough back buffer names");
     m_swapChainBuffersHandles[i] = TEXTURE_MANAGER->initializeFromResource(
-        resource, SwapChainConstants::BACK_BUFFER_NAMES[i], D3D12_RESOURCE_STATE_PRESENT);
-	m_swapChainBuffersDescriptors[i] = dx12::TEXTURE_MANAGER->getRTV(m_swapChainBuffersHandles[i]);
+        resource, SwapChainConstants::BACK_BUFFER_NAMES[i],
+        D3D12_RESOURCE_STATE_PRESENT);
+    m_swapChainBuffersDescriptors[i] =
+        dx12::TEXTURE_MANAGER->getRTV(m_swapChainBuffersHandles[i]);
   }
 
   // Transition the resource from its initial state to be used as a depth
@@ -141,6 +157,7 @@ bool SwapChain::resize(FrameCommand *command, const int width,
   m_screenViewport.MaxDepth = 1.0f;
 
   m_scissorRect = {0, 0, width, height};
+  m_isInit = true;
   return true;
 }
 } // namespace dx12

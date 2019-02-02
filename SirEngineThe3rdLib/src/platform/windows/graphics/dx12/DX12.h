@@ -12,6 +12,11 @@ class Adapter;
 class DescriptorHeap;
 class SwapChain;
 
+struct DescriptorPair {
+  D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle;
+  D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle;
+};
+
 struct FrameCommand final {
   ID3D12CommandAllocator *commandAllocator = nullptr;
 #if DXR_ENABLED

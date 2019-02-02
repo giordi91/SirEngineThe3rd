@@ -15,27 +15,36 @@ struct TextureHandle final {
   uint32_t handle;
 };
 
-struct DescriptorPair {
-  D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle;
-  D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle;
-};
-
 class TextureManager final {
+private:
+  struct TextureData final {
+    uint32_t magicNumber;
+    ID3D12Resource *resource;
+    D3D12_RESOURCE_STATES state;
+    DXGI_FORMAT format;
+  };
+
 public:
-  TextureManager() : batch(dx12::DEVICE) {}
+  TextureManager() : batch(dx12::DEVICE) {
+    m_staticStorage.reserve(RESERVE_SIZE);
+    m_nameToHandle.reserve(RESERVE_SIZE);
+    m_freeSlots.resize(RESERVE_SIZE);
+  }
   ~TextureManager() = default;
   TextureManager(const TextureManager &) = delete;
   TextureManager &operator=(const TextureManager &) = delete;
-  void loadTexturesInFolder(const char *path, const char *extension);
   TextureHandle loadTexture(const char *path, bool dynamic = false);
   TextureHandle initializeFromResource(ID3D12Resource *resource,
-                                       const char *name, D3D12_RESOURCE_STATES state);
+                                       const char *name,
+                                       D3D12_RESOURCE_STATES state);
 
-  inline void assertMagicNumber(TextureHandle handle) {
+  inline void assertMagicNumber(TextureHandle handle) const {
+#ifdef _DEBUG
     uint32_t magic = getMagicFromHandle(handle);
     uint32_t idx = getIndexFromHandle(handle);
     assert(m_staticStorage[idx].magicNumber == magic &&
            "invalid magic handle for constant buffer");
+#endif
   }
   inline uint32_t getIndexFromHandle(TextureHandle h) const {
     return h.handle & INDEX_MASK;
@@ -44,18 +53,13 @@ public:
     return (h.handle & MAGIC_NUMBER_MASK) >> 16;
   }
 
+  // handles facilities
   DescriptorPair getSRV(TextureHandle handle) {
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
-    // TODO get rid of 3d buffer and start working on
-    // DescriptorPair only?
-    D3DBuffer buffer;
-    buffer.resource = m_staticStorage[index].resource;
-    dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DSRV(
-        &buffer, m_staticStorage[index].format);
     DescriptorPair pair;
-    pair.cpuHandle = buffer.cpuDescriptorHandle;
-    pair.gpuHandle = buffer.gpuDescriptorHandle;
+    dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DSRV(
+        pair, m_staticStorage[index].resource, m_staticStorage[index].format);
     return pair;
   }
   void freeSRV(TextureHandle handle, DescriptorPair pair) {
@@ -66,7 +70,7 @@ public:
     buffer.descriptorType = DescriptorType::SRV;
     dx12::GLOBAL_CBV_SRV_UAV_HEAP->freeDescritpor(buffer);
   }
-  DescriptorPair getRTV(TextureHandle handle) {
+  inline DescriptorPair getRTV(TextureHandle handle) const {
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
     // TODO get rid of 3d buffer and start working on
@@ -79,7 +83,11 @@ public:
     pair.gpuHandle = buffer.gpuDescriptorHandle;
     return pair;
   }
-
+  void freeRTV(const TextureHandle handle, const DescriptorPair pair) const {
+    assertMagicNumber(handle);
+    dx12::GLOBAL_RTV_HEAP->freeDescriptor(pair);
+    // TODO should I invalidate the descriptors here??
+  }
   inline TextureHandle getHandleFromName(const char *name) {
     auto found = m_nameToHandle.find(name);
     if (found != m_nameToHandle.end()) {
@@ -88,6 +96,7 @@ public:
     return TextureHandle{0};
   }
 
+  // barriers
   inline int transitionTexture2DifNeeded(TextureHandle handle,
                                          D3D12_RESOURCE_STATES wantedState,
                                          D3D12_RESOURCE_BARRIER *barriers,
@@ -107,13 +116,19 @@ public:
     return counter;
   }
 
-private:
-  struct TextureData final {
-    uint32_t magicNumber;
-    ID3D12Resource *resource;
-    D3D12_RESOURCE_STATES state;
-    DXGI_FORMAT format;
-  };
+  void free(const TextureHandle handle) {
+    assertMagicNumber(handle);
+    uint32_t index = getIndexFromHandle(handle);
+    TextureData &data = m_staticStorage[index];
+    // releasing the texture;
+    data.resource->Release();
+    // invalidating magic number
+    data.magicNumber = 0;
+    // adding the index to the free list
+    m_freeSlots[m_freeSlotIndex++] = index;
+  }
+
+  TextureData &TextureManager::getFreeTextureData(uint32_t &index);
 
 private:
   // if we have dynamic storage we are store descriptors upfront
@@ -127,6 +142,8 @@ private:
   static const uint32_t RESERVE_SIZE = 200;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
   DirectX::ResourceUploadBatch batch;
+  std::vector<uint32_t> m_freeSlots;
+  uint32_t m_freeSlotIndex = 0;
 }; // namespace dx12
 
 } // namespace dx12

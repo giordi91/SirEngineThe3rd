@@ -61,6 +61,13 @@ public:
     // then it will get overritten
     m_freeList[m_freeListIdx++] = idx;
   }
+  void freeDescriptor(const DescriptorPair &handles) {
+    assert(handles.cpuHandle.ptr != 0);
+    int idx = findCPUDescriptorIndexFromHandle(handles.cpuHandle);
+    // freeing is just a matter of freeing up the index
+    // then it will get overritten
+    m_freeList[m_freeListIdx++] = idx;
+  }
 
   UINT createBufferSRV(D3DBuffer *buffer, UINT numElements, UINT elementSize);
 
@@ -69,8 +76,9 @@ public:
   int reserveDescriptor(D3DBuffer *buffer);
 
   UINT createTexture2DUAV(D3DBuffer *buffer, DXGI_FORMAT format);
-  UINT createTexture2DSRV(D3DBuffer *buffer, DXGI_FORMAT format);
-  // UINT createDSV(system::D3DBuffer *buffer);
+  //UINT createTexture2DSRV(D3DBuffer *buffer, DXGI_FORMAT format);
+  UINT createTexture2DSRV(DescriptorPair& pair, ID3D12Resource *resource,
+                          DXGI_FORMAT format);
 
 private:
   UINT m_descriptorsAllocated = 0;

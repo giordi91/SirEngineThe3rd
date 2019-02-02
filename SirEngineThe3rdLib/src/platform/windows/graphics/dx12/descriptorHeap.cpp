@@ -92,8 +92,24 @@ UINT DescriptorHeap::createTexture2DUAV(D3DBuffer *buffer, DXGI_FORMAT format) {
   return descriptorIndex;
 }
 
-UINT DescriptorHeap::createTexture2DSRV(D3DBuffer *buffer, DXGI_FORMAT format) {
-  UINT descriptorIndex = allocateDescriptor(&buffer->cpuDescriptorHandle);
+//UINT DescriptorHeap::createTexture2DSRV(D3DBuffer *buffer, DXGI_FORMAT format) {
+//  UINT descriptorIndex = allocateDescriptor(&buffer->cpuDescriptorHandle);
+//
+//  D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+//  srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+//  srvDesc.Format = format;
+//  srvDesc.Texture2D.MipLevels = 1;
+//  srvDesc.Texture2D.MostDetailedMip = 0;
+//  srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+//  DEVICE->CreateShaderResourceView(buffer->resource, &srvDesc,
+//                                                buffer->cpuDescriptorHandle);
+//  buffer->gpuDescriptorHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(
+//      getGPUStart(), descriptorIndex, m_descriptorSize);
+//  buffer->descriptorType = DescriptorType::SRV;
+//  return descriptorIndex;
+//}
+UINT DescriptorHeap::createTexture2DSRV(DescriptorPair& pair, ID3D12Resource* resource, DXGI_FORMAT format) {
+  UINT descriptorIndex = allocateDescriptor(&pair.cpuHandle);
 
   D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
   srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
@@ -101,11 +117,10 @@ UINT DescriptorHeap::createTexture2DSRV(D3DBuffer *buffer, DXGI_FORMAT format) {
   srvDesc.Texture2D.MipLevels = 1;
   srvDesc.Texture2D.MostDetailedMip = 0;
   srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-  DEVICE->CreateShaderResourceView(buffer->resource, &srvDesc,
-                                                buffer->cpuDescriptorHandle);
-  buffer->gpuDescriptorHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(
+  DEVICE->CreateShaderResourceView(resource, &srvDesc,
+                                                pair.cpuHandle);
+  pair.gpuHandle= CD3DX12_GPU_DESCRIPTOR_HANDLE(
       getGPUStart(), descriptorIndex, m_descriptorSize);
-  buffer->descriptorType = DescriptorType::SRV;
   return descriptorIndex;
 }
 
