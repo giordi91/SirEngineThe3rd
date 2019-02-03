@@ -87,6 +87,18 @@ public:
   }
   inline uint32_t getAllocatedCount() const { return m_allocationCount; }
 
+  // subscript operator to access the pool directly, we are adults, we don't
+  // make mistakes, direct memory access is fine.
+  inline T &operator[](const uint32_t index) {
+    assert(index < m_allocationCount);
+    return m_memory[index];
+  }
+
+  inline const T &getConstRef(const uint32_t index) const {
+    assert(index < m_allocationCount);
+    return m_memory[index];
+  }
+
 private:
   T *m_memory = nullptr;
   uint32_t m_poolSize;
