@@ -19,8 +19,12 @@ void Graphics3DLayer::onAttach() {
   if (!currentFc->isListOpen) {
     dx12::resetAllocatorAndList(currentFc);
   }
-  m_mesh.loadFromFile(dx12::DEVICE, "data/processed/meshes/armorChest.model",
-                      dx12::GLOBAL_CBV_SRV_UAV_HEAP);
+
+  meshHandle = m_meshManager.loadMesh("data/processed/meshes/armorChest.model");
+  meshIndexCount = m_meshManager.getIndexCount(meshHandle);
+
+  //m_mesh.loadFromFile(dx12::DEVICE, "data/processed/meshes/armorChest.model",
+  //                    dx12::GLOBAL_CBV_SRV_UAV_HEAP);
 
   dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE, currentFc);
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
@@ -75,8 +79,8 @@ void Graphics3DLayer::onUpdate() {
   commandList->SetPipelineState(pso);
   auto *rs = m_root->getRootSignatureFromName("simpleMeshRSTex");
   commandList->SetGraphicsRootSignature(rs);
-  auto vview = m_mesh.getVertexBufferView();
-  auto iview = m_mesh.getIndexBufferView();
+  auto vview = m_meshManager.getVertexBufferView(meshHandle);
+  auto iview = m_meshManager.getIndexBufferView(meshHandle);
 
   commandList->IASetIndexBuffer(&iview);
   commandList->IASetVertexBuffers(0, 1, &vview);
@@ -87,7 +91,7 @@ void Graphics3DLayer::onUpdate() {
              .gpuHandle);
   commandList->SetGraphicsRootDescriptorTable(1,thSRV.gpuHandle);
 
-  commandList->DrawIndexedInstanced(m_mesh.getIndexCount(), 1, 0, 0, 0);
+  commandList->DrawIndexedInstanced(meshIndexCount, 1, 0, 0, 0);
 
 }
 void Graphics3DLayer::onEvent(Event &event) {

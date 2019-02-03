@@ -115,6 +115,21 @@ extern FrameResource FRAME_RESOURCES[FRAME_BUFFERS_COUNT];
 extern FrameResource *CURRENT_FRAME_RESOURCE;
 extern TextureManager *TEXTURE_MANAGER;
 
+inline UINT64 insertFenceToGlobalQueue()
+{
+	
+  // Advance the fence value to mark commands up to this fence point.
+  CURRENT_FENCE++;
+
+  // Add an instruction to the command queue to set a new fence point. Because
+  // we are on the GPU time line, the new fence point won't be set until the
+  // GPU finishes processing all the commands prior to this Signal().
+  HRESULT res = GLOBAL_COMMAND_QUEUE->Signal(GLOBAL_FENCE, CURRENT_FENCE);
+  assert(SUCCEEDED(res));
+  return CURRENT_FENCE;
+}
+
+
 inline void flushCommandQueue(ID3D12CommandQueue *queue) {
   // Advance the fence value to mark commands up to this fence point.
   CURRENT_FENCE++;
