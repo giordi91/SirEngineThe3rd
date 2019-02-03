@@ -75,38 +75,40 @@ UINT DescriptorHeap::createBufferCBV(D3DBuffer *buffer, int totalSizeInByte) {
   buffer->descriptorType = DescriptorType::CBV;
   return descriptorIndex;
 }
+UINT DescriptorHeap::createBufferCBV(DescriptorPair &pair,
+                                     ID3D12Resource *resource,
+                                     int totalSizeInByte) {
 
-UINT DescriptorHeap::createTexture2DUAV(D3DBuffer *buffer, DXGI_FORMAT format) {
-  UINT descriptorIndex = allocateDescriptor(&buffer->cpuDescriptorHandle);
+  D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
+  cbvDesc.BufferLocation = resource->GetGPUVirtualAddress();
+  cbvDesc.SizeInBytes = totalSizeInByte;
 
-  D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc = {};
-  UAVDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-  UAVDesc.Format = format;
-  DEVICE->CreateUnorderedAccessView(buffer->resource, nullptr, &UAVDesc,
-                                    buffer->cpuDescriptorHandle);
-  buffer->gpuDescriptorHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(
-      getGPUStart(), descriptorIndex, m_descriptorSize);
-  buffer->descriptorType = DescriptorType::UAV;
+  UINT descriptorIndex = allocateDescriptor(&pair.cpuHandle);
+  DEVICE->CreateConstantBufferView(&cbvDesc, pair.cpuHandle);
+
+  pair.gpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(getGPUStart(), descriptorIndex,
+                                                 m_descriptorSize);
+#if SE_DEBUG
+  pair.type = DescriptorType::CBV;
+#endif
   return descriptorIndex;
 }
 
-// UINT DescriptorHeap::createTexture2DSRV(D3DBuffer *buffer, DXGI_FORMAT
+// UINT DescriptorHeap::createTexture2DUAV(D3DBuffer *buffer, DXGI_FORMAT
 // format) {
 //  UINT descriptorIndex = allocateDescriptor(&buffer->cpuDescriptorHandle);
 //
-//  D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-//  srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-//  srvDesc.Format = format;
-//  srvDesc.Texture2D.MipLevels = 1;
-//  srvDesc.Texture2D.MostDetailedMip = 0;
-//  srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-//  DEVICE->CreateShaderResourceView(buffer->resource, &srvDesc,
-//                                                buffer->cpuDescriptorHandle);
+//  D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc = {};
+//  UAVDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+//  UAVDesc.Format = format;
+//  DEVICE->CreateUnorderedAccessView(buffer->resource, nullptr, &UAVDesc,
+//                                    buffer->cpuDescriptorHandle);
 //  buffer->gpuDescriptorHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(
 //      getGPUStart(), descriptorIndex, m_descriptorSize);
-//  buffer->descriptorType = DescriptorType::SRV;
+//  buffer->descriptorType = DescriptorType::UAV;
 //  return descriptorIndex;
 //}
+
 UINT DescriptorHeap::createTexture2DSRV(DescriptorPair &pair,
                                         ID3D12Resource *resource,
                                         DXGI_FORMAT format) {
@@ -124,29 +126,6 @@ UINT DescriptorHeap::createTexture2DSRV(DescriptorPair &pair,
 #if SE_DEBUG
   pair.type = DescriptorType::SRV;
 #endif
-  return descriptorIndex;
-}
-
-UINT createDSV(DescriptorHeap *heap, D3DBuffer *buffer) {
-
-  assert(heap->getType() == D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-  UINT descriptorIndex = heap->allocateDescriptor(&buffer->cpuDescriptorHandle);
-  // Hard-code depthstencil format
-  // Create descriptor to mip level 0 of entire resource using the format of the
-  // resource.
-
-  const DXGI_FORMAT m_depthStencilFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
-  D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc;
-  dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
-  dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-  dsvDesc.Format = m_depthStencilFormat;
-  dsvDesc.Texture2D.MipSlice = 0;
-  DEVICE->CreateDepthStencilView(buffer->resource, &dsvDesc,
-                                 buffer->cpuDescriptorHandle);
-
-  buffer->gpuDescriptorHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(
-      heap->getGPUStart(), descriptorIndex, heap->getDescriptorSize());
-  buffer->descriptorType = DescriptorType::DSV;
   return descriptorIndex;
 }
 

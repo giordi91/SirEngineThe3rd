@@ -55,7 +55,7 @@ public:
 
   UINT allocateDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE *cpuDescriptor,
                           UINT descriptorIndexToUse = UINT_MAX);
-  void freeDescritpor(D3DBuffer &handles) {
+  void freeDescriptor(D3DBuffer &handles) {
     assert(handles.cpuDescriptorHandle.ptr != 0);
     int idx = findCPUDescriptorIndexFromHandle(handles.cpuDescriptorHandle);
     // freeing is just a matter of freeing up the index
@@ -74,6 +74,9 @@ public:
   UINT createBufferSRV(D3DBuffer *buffer, UINT numElements, UINT elementSize);
 
   UINT createBufferCBV(D3DBuffer *buffer, int totalSizeInByte);
+  UINT createBufferCBV(DescriptorPair &pair,
+	  ID3D12Resource *resource,
+	  int totalSizeInByte);
 
   int reserveDescriptor(D3DBuffer *buffer);
 

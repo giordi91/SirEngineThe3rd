@@ -79,13 +79,9 @@ public:
     return pair;
   }
   void freeSRV(TextureHandle handle, DescriptorPair pair) const {
-    // TODO remove d3dbuffer
     assertMagicNumber(handle);
-    D3DBuffer buffer;
-    buffer.cpuDescriptorHandle = pair.cpuHandle;
-    buffer.gpuDescriptorHandle = pair.gpuHandle;
-    buffer.descriptorType = DescriptorType::SRV;
-    dx12::GLOBAL_CBV_SRV_UAV_HEAP->freeDescritpor(buffer);
+    assert(pair.type == DescriptorType::SRV);
+    dx12::GLOBAL_CBV_SRV_UAV_HEAP->freeDescriptor(pair);
   }
   inline DescriptorPair getRTV(TextureHandle handle) const {
     assertMagicNumber(handle);
