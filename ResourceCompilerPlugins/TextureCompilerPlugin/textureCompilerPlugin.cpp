@@ -53,7 +53,8 @@ bool processTexture(const std::string &assetPath, const std::string &outputPath,
     SE_CORE_ERROR("[Texture Compiler] : could not find path/file {0}",
                   outputPath);
   }
-  bool res = processTextureFile(assetPath.c_str(), outputPath.c_str(), format,isGamma);
+  bool res = processTextureFile(assetPath.c_str(), outputPath.c_str(), format,
+                                isGamma);
 
   if (res) {
     SE_CORE_INFO("Texture successfully compiled ---> {0}", outputPath);

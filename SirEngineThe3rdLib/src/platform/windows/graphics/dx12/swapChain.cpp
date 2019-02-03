@@ -22,14 +22,16 @@ SwapChain::~SwapChain() {
   for (int i = 0; i < FRAME_BUFFERS_COUNT; ++i) {
     dx12::TEXTURE_MANAGER->freeRTV(m_swapChainBuffersHandles[i],
                                    m_swapChainBuffersDescriptors[i]);
-	dx12::TEXTURE_MANAGER->free(m_swapChainBuffersHandles[i]);
+    dx12::TEXTURE_MANAGER->free(m_swapChainBuffersHandles[i]);
   }
 
-  // freeing depth and re-creating it;
-  if (m_depth != nullptr) {
-    delete m_depth;
-    m_depth = nullptr;
-  }
+  dx12::TEXTURE_MANAGER->freeDSV(m_swapChainDepth, m_swapChainDepthDescriptors);
+  dx12::TEXTURE_MANAGER->free(m_swapChainDepth);
+  //// freeing depth and re-creating it;
+  // if (m_depth != nullptr) {
+  //  delete m_depth;
+  //  m_depth = nullptr;
+  //}
 }
 bool SwapChain::initialize(const HWND window, const int width,
                            const int height) {
@@ -84,13 +86,12 @@ bool SwapChain::resize(FrameCommand *command, const int width,
   flushCommandQueue(GLOBAL_COMMAND_QUEUE);
   resetCommandList(command);
 
-  if (m_isInit)
-  {
-	  for (int i = 0; i < FRAME_BUFFERS_COUNT; ++i) {
-		  dx12::TEXTURE_MANAGER->freeRTV(m_swapChainBuffersHandles[i],
-			  m_swapChainBuffersDescriptors[i]);
-		  dx12::TEXTURE_MANAGER->free(m_swapChainBuffersHandles[i]);
-	  }
+  if (m_isInit) {
+    for (int i = 0; i < FRAME_BUFFERS_COUNT; ++i) {
+      dx12::TEXTURE_MANAGER->freeRTV(m_swapChainBuffersHandles[i],
+                                     m_swapChainBuffersDescriptors[i]);
+      dx12::TEXTURE_MANAGER->free(m_swapChainBuffersHandles[i]);
+    }
   }
 
   // if (m_swapChainBuffersResource != nullptr) {
@@ -127,20 +128,32 @@ bool SwapChain::resize(FrameCommand *command, const int width,
         dx12::TEXTURE_MANAGER->getRTV(m_swapChainBuffersHandles[i]);
   }
 
-  // Transition the resource from its initial state to be used as a depth
-  // buffer.
   // freeing depth and re-creating it;
-  if (m_depth != nullptr) {
-    delete m_depth;
-    m_depth = nullptr;
+  if (m_isInit) {
+    // if (m_depth != nullptr) {
+    //  delete m_depth;
+    //  m_depth = nullptr;
+    //}
+    dx12::TEXTURE_MANAGER->freeDSV(m_swapChainDepth,
+                                   m_swapChainDepthDescriptors);
+    dx12::TEXTURE_MANAGER->free(m_swapChainDepth);
   }
-  m_depth = new DepthTexture();
-  m_depth->initialize(width, height);
 
-  command->commandList->ResourceBarrier(
-      1, &CD3DX12_RESOURCE_BARRIER::Transition(
-             m_depth->getResource(), D3D12_RESOURCE_STATE_COMMON,
-             D3D12_RESOURCE_STATE_DEPTH_WRITE));
+  m_swapChainDepth =
+      TEXTURE_MANAGER->createDepthTexture("depthBuffer", width, height);
+  m_swapChainDepthDescriptors = TEXTURE_MANAGER->getDSV(m_swapChainDepth);
+
+  D3D12_RESOURCE_BARRIER barrier[1];
+  TEXTURE_MANAGER->transitionTexture2DifNeeded(
+      m_swapChainDepth, D3D12_RESOURCE_STATE_DEPTH_WRITE, barrier, 0);
+  command->commandList->ResourceBarrier(1, barrier);
+  //// m_depth = new DepthTexture();
+  //// m_depth->initialize(width, height);
+
+  // command->commandList->ResourceBarrier(
+  //    1, &CD3DX12_RESOURCE_BARRIER::Transition(
+  //           m_depth->getResource(), D3D12_RESOURCE_STATE_COMMON,
+  //           D3D12_RESOURCE_STATE_DEPTH_WRITE));
 
   // Execute the resize commands.
   executeCommandList(GLOBAL_COMMAND_QUEUE, command);

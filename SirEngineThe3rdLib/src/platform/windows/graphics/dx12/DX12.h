@@ -12,9 +12,21 @@ class Adapter;
 class DescriptorHeap;
 class SwapChain;
 
+enum class DescriptorType {
+  NONE = 0,
+  CBV = 1,
+  SRV = 2,
+  UAV = 4,
+  RTV = 8,
+  DSV = 16
+};
+
 struct DescriptorPair {
   D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle;
   D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle;
+#if SE_DEBUG
+  DescriptorType type;
+#endif
 };
 
 struct FrameCommand final {
@@ -30,15 +42,6 @@ struct FrameCommand final {
 struct FrameResource final {
   FrameCommand fc;
   UINT64 fence = 0;
-};
-
-enum class DescriptorType {
-  NONE = 0,
-  CBV = 1,
-  SRV = 2,
-  UAV = 4,
-  RTV = 8,
-  DSV = 16
 };
 
 struct D3DBuffer {
