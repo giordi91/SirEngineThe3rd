@@ -7,8 +7,7 @@
 
 namespace SirEngine {
 namespace graphics {
-void onResize(unsigned int width, unsigned int height) {
-
+void onResize(const uint32_t width, const uint32_t height) {
   dx12::SWAP_CHAIN->resize(&dx12::CURRENT_FRAME_RESOURCE->fc, width, height);
 }
 void newFrame() {
@@ -22,7 +21,7 @@ void newFrame() {
   if (dx12::CURRENT_FRAME_RESOURCE->fence != 0 &&
       dx12::GLOBAL_FENCE->GetCompletedValue() <
           dx12::CURRENT_FRAME_RESOURCE->fence) {
-    HANDLE eventHandle = CreateEventEx(nullptr, false, false, EVENT_ALL_ACCESS);
+    HANDLE eventHandle = CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
     auto handleResult = dx12::GLOBAL_FENCE->SetEventOnCompletion(
         dx12::CURRENT_FRAME_RESOURCE->fence, eventHandle);
     assert(SUCCEEDED(handleResult));
@@ -45,9 +44,6 @@ void newFrame() {
       dx12::SWAP_CHAIN->currentBackBufferTexture();
   int rtcounter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
       backBufferH, D3D12_RESOURCE_STATE_RENDER_TARGET, rtbarrier, 0);
-  // int rtcounter = dx12::transitionTexture2DifNeeded(
-  //    dx12::SWAP_CHAIN->currentBackBufferTexture(),
-  //    D3D12_RESOURCE_STATE_RENDER_TARGET, rtbarrier, 0);
   if (rtcounter != 0) {
     commandList->ResourceBarrier(rtcounter, rtbarrier);
   }
@@ -67,7 +63,6 @@ void newFrame() {
   auto back = swapChain->currentBackBufferView();
   auto depth = swapChain->getDepthCPUDescriptor();
   commandList->OMSetRenderTargets(1, &back, true, &depth);
-  //&m_depthStencilBufferResource.cpuDescriptorHandle);
   auto *heap = dx12::GLOBAL_CBV_SRV_UAV_HEAP->getResource();
   commandList->SetDescriptorHeaps(1, &heap);
 }
@@ -81,20 +76,9 @@ void dispatchFrame() {
       dx12::SWAP_CHAIN->currentBackBufferTexture();
   int rtcounter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
       backBufferH, D3D12_RESOURCE_STATE_PRESENT, rtbarrier, 0);
-  // int rtcounter = dx12::transitionTexture2DifNeeded(
-  //    dx12::SWAP_CHAIN->currentBackBufferTexture(),
-  //    D3D12_RESOURCE_STATE_RENDER_TARGET, rtbarrier, 0);
   if (rtcounter != 0) {
     commandList->ResourceBarrier(rtcounter, rtbarrier);
   }
-
-
-
-  //int rtcounter =
-  //    dx12::transitionTexture2D(dx12::SWAP_CHAIN->currentBackBuffer(),
-  //                              D3D12_RESOURCE_STATE_PRESENT, rtbarrier, 0);
-  //auto *commandList = dx12::CURRENT_FRAME_RESOURCE->fc.commandList;
-  //commandList->ResourceBarrier(rtcounter, rtbarrier);
 
   // Done recording commands.
   dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE,

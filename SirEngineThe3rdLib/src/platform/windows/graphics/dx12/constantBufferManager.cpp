@@ -13,13 +13,14 @@ ConstantBufferManager::ConstantBufferManager() {
 }
 
 ConstantBufferHandle
-ConstantBufferManager::allocateDynamic(uint32_t sizeInBytes) {
+ConstantBufferManager::allocateDynamic(const uint32_t sizeInBytes) {
   // must be at least 256 bytes
   uint32_t actualSize =
       sizeInBytes % 256 == 0 ? sizeInBytes : ((sizeInBytes / 256) + 1) * 256;
 
-  ConstantBufferHandle handle{(MAGIC_NUMBER_COUNTER << 16) |
-                              (m_dynamicStorage[0].size())};
+  ConstantBufferHandle handle{
+      (MAGIC_NUMBER_COUNTER << 16) |
+      (static_cast<uint32_t>(m_dynamicStorage[0].size()))};
 
   for (int i = 0; i < FRAME_BUFFERS_COUNT; ++i) {
     ConstantBufferData data;

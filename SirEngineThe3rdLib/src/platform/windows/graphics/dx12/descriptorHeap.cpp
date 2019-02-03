@@ -190,6 +190,39 @@ UINT DescriptorHeap::createBufferSRV(D3DBuffer *buffer, UINT numElements,
   return descriptorIndex;
 };
 
+UINT DescriptorHeap::createBufferSRV(DescriptorPair &pair,
+                                     ID3D12Resource *resource, UINT numElements,
+                                     UINT elementSize) {
+
+  // SRV
+  D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+  srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+  srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+  srvDesc.Buffer.NumElements = numElements;
+  if (elementSize == 0) {
+
+    srvDesc.Format = DXGI_FORMAT_R32_TYPELESS;
+    srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_RAW;
+    srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
+    srvDesc.Buffer.StructureByteStride = 0;
+
+  } else {
+    srvDesc.Format = DXGI_FORMAT_UNKNOWN;
+    srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
+    srvDesc.Buffer.StructureByteStride = elementSize;
+  }
+  UINT descriptorIndex = allocateDescriptor(&pair.cpuHandle);
+  DEVICE->CreateShaderResourceView(resource, &srvDesc,
+                                   pair.cpuHandle);
+  pair.gpuHandle= CD3DX12_GPU_DESCRIPTOR_HANDLE(
+      getGPUStart(), descriptorIndex, m_descriptorSize);
+
+#if SE_DEBUG
+  pair.type= DescriptorType::SRV;
+#endif
+  return descriptorIndex;
+};
+
 UINT createRTVSRV(DescriptorHeap *heap, D3DBuffer *buffer) {
 
   assert(heap->getType() == D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
