@@ -84,7 +84,7 @@ void Graphics3DLayer::onUpdate() {
 
   commandList->SetGraphicsRootDescriptorTable(
       0, m_constantBufferManager.getConstantBufferDescriptor(m_cameraHandle)
-             .gpuDescriptorHandle);
+             .gpuHandle);
   commandList->SetGraphicsRootDescriptorTable(1,thSRV.gpuHandle);
 
   commandList->DrawIndexedInstanced(m_mesh.getIndexCount(), 1, 0, 0, 0);
