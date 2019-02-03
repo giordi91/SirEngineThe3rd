@@ -55,13 +55,6 @@ public:
 
   UINT allocateDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE *cpuDescriptor,
                           UINT descriptorIndexToUse = UINT_MAX);
-  void freeDescriptor(D3DBuffer &handles) {
-    assert(handles.cpuDescriptorHandle.ptr != 0);
-    int idx = findCPUDescriptorIndexFromHandle(handles.cpuDescriptorHandle);
-    // freeing is just a matter of freeing up the index
-    // then it will get overritten
-    m_freeList[m_freeListIdx++] = idx;
-  }
   void freeDescriptor(const DescriptorPair &handles) {
 
     assert(handles.cpuHandle.ptr != 0);
@@ -71,19 +64,15 @@ public:
     m_freeList[m_freeListIdx++] = idx;
   }
 
-  UINT createBufferSRV(D3DBuffer *buffer, UINT numElements, UINT elementSize);
   UINT createBufferSRV(DescriptorPair &pair,
 	  ID3D12Resource *resource, UINT numElements,
 	  UINT elementSize);
 
-  UINT createBufferCBV(D3DBuffer *buffer, int totalSizeInByte);
   UINT createBufferCBV(DescriptorPair &pair,
 	  ID3D12Resource *resource,
 	  int totalSizeInByte);
 
-  int reserveDescriptor(D3DBuffer *buffer);
-
-  UINT createTexture2DUAV(D3DBuffer *buffer, DXGI_FORMAT format);
+  int reserveDescriptor(DescriptorPair& pair);
 
   UINT createTexture2DSRV(DescriptorPair &pair, ID3D12Resource *resource,
                           DXGI_FORMAT format);
@@ -101,8 +90,7 @@ private:
 
 // this function are kept externally because refer to a particular type of
 // of texture
-UINT createRTVSRV(DescriptorHeap *heap, D3DBuffer *buffer);
-UINT createDSV(DescriptorHeap *heap, D3DBuffer *buffer);
+UINT createRTVSRV(DescriptorHeap *heap, ID3D12Resource* resource, DescriptorPair& pair);
 UINT createDSV(DescriptorHeap *heap, ID3D12Resource *resource,
                DescriptorPair &pair, DXGI_FORMAT format);
 } // namespace dx12

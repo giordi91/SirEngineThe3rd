@@ -86,14 +86,8 @@ public:
   inline DescriptorPair getRTV(TextureHandle handle) const {
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
-    // TODO get rid of 3d buffer and start working on
-    // DescriptorPair only?
-    D3DBuffer buffer;
-    buffer.resource = m_staticStorage[index].resource;
-    dx12::createRTVSRV(dx12::GLOBAL_RTV_HEAP, &buffer);
     DescriptorPair pair;
-    pair.cpuHandle = buffer.cpuDescriptorHandle;
-    pair.gpuHandle = buffer.gpuDescriptorHandle;
+    dx12::createRTVSRV(dx12::GLOBAL_RTV_HEAP, m_staticStorage[index].resource,pair);
     return pair;
   }
   void freeRTV(const TextureHandle handle, const DescriptorPair pair) const {

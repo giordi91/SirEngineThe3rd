@@ -12,14 +12,11 @@
 namespace SirEngine {
 void ImguiLayer::onAttach() {
   // need to initialize ImGui dx12
-  assert(m_fontTextureDescriptor == nullptr);
-  m_fontTextureDescriptor = new dx12::D3DBuffer();
-  m_descriptorIndex =
-      dx12::GLOBAL_CBV_SRV_UAV_HEAP->reserveDescriptor(m_fontTextureDescriptor);
+  dx12::DescriptorPair pair;
+  dx12::GLOBAL_CBV_SRV_UAV_HEAP->reserveDescriptor(pair);
 
   ImGui_ImplDX12_Init(dx12::DEVICE, 1, DXGI_FORMAT_R8G8B8A8_UNORM,
-                      m_fontTextureDescriptor->cpuDescriptorHandle,
-                      m_fontTextureDescriptor->gpuDescriptorHandle);
+                      pair.cpuHandle, pair.gpuHandle);
 
   // Keyboard mapping. ImGui will use those indices to peek into the
   // io.KeysDown[] array that we will update during the application lifetime.
@@ -46,17 +43,14 @@ void ImguiLayer::onAttach() {
   io.KeyMap[ImGuiKey_Y] = 'Y';
   io.KeyMap[ImGuiKey_Z] = 'Z';
 
-  ::QueryPerformanceFrequency(reinterpret_cast<LARGE_INTEGER *>(&g_TicksPerSecond));
+  ::QueryPerformanceFrequency(
+      reinterpret_cast<LARGE_INTEGER *>(&g_TicksPerSecond));
   ::QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER *>(&g_Time));
 
   io.DisplaySize = ImVec2(globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT);
 }
 
-void ImguiLayer::onDetach() {
-  ImGui_ImplDX12_Shutdown();
-  delete m_fontTextureDescriptor;
-  m_fontTextureDescriptor = nullptr;
-}
+void ImguiLayer::onDetach() { ImGui_ImplDX12_Shutdown(); }
 
 void ImguiLayer::onUpdate() {
 

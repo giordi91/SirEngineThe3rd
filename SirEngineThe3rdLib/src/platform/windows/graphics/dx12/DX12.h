@@ -44,12 +44,6 @@ struct FrameResource final {
   UINT64 fence = 0;
 };
 
-struct D3DBuffer {
-  ID3D12Resource *resource;
-  D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptorHandle;
-  D3D12_GPU_DESCRIPTOR_HANDLE gpuDescriptorHandle;
-  DescriptorType descriptorType;
-};
 
 inline HRESULT resetCommandList(FrameCommand *command) {
 
@@ -115,9 +109,7 @@ extern FrameResource FRAME_RESOURCES[FRAME_BUFFERS_COUNT];
 extern FrameResource *CURRENT_FRAME_RESOURCE;
 extern TextureManager *TEXTURE_MANAGER;
 
-inline UINT64 insertFenceToGlobalQueue()
-{
-	
+inline UINT64 insertFenceToGlobalQueue() {
   // Advance the fence value to mark commands up to this fence point.
   CURRENT_FENCE++;
 
@@ -128,7 +120,6 @@ inline UINT64 insertFenceToGlobalQueue()
   assert(SUCCEEDED(res));
   return CURRENT_FENCE;
 }
-
 
 inline void flushCommandQueue(ID3D12CommandQueue *queue) {
   // Advance the fence value to mark commands up to this fence point.

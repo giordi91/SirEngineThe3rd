@@ -16,7 +16,7 @@ public:
 
   // window attributes
   virtual void setEventCallback(const EventCallbackFn &callback) override;
-  void setVSync(bool ennabled) override;
+  void setVSync(bool enabled) override;
   void isVSync() const override;
   inline EventCallbackFn getEventCallback() const { return m_callback; }
 
