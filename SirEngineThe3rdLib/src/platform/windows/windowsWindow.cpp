@@ -237,15 +237,8 @@ WindowsWindow::WindowsWindow(const WindowProps &props) {
   dx12::SWAP_CHAIN = new dx12::SwapChain();
   dx12::SWAP_CHAIN->initialize(m_hwnd, m_data.width, m_data.height);
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
-  dx12::SWAP_CHAIN->resize(&dx12::CURRENT_FRAME_RESOURCE->fc,
-                                       m_data.width, m_data.height);
-
-  dx12::D3DBuffer *m_fontTextureDescriptor = nullptr;
-  int m_descriptorIndex;
-  assert(m_fontTextureDescriptor == nullptr);
-  m_fontTextureDescriptor = new dx12::D3DBuffer();
-  m_descriptorIndex = dx12::GLOBAL_CBV_SRV_UAV_HEAP->reserveDescriptor(
-      m_fontTextureDescriptor);
+  dx12::SWAP_CHAIN->resize(&dx12::CURRENT_FRAME_RESOURCE->fc, m_data.width,
+                           m_data.height);
 }
 
 void WindowsWindow::render() {}
@@ -253,9 +246,6 @@ void WindowsWindow::render() {}
 void WindowsWindow::onUpdate() {
 
   MSG msg;
-  bool done = false;
-  bool result = true;
-
   // initialize the message structure.
   ZeroMemory(&msg, sizeof(MSG));
 
@@ -280,7 +270,7 @@ unsigned int WindowsWindow::getHeight() const { return m_data.height; }
 void WindowsWindow::setEventCallback(const EventCallbackFn &callback) {
   m_callback = callback;
 }
-void WindowsWindow::setVSync(bool ennabled) {
+void WindowsWindow::setVSync(bool enabled) {
   assert(0 && "not implemented yet");
 }
 void WindowsWindow::isVSync() const { assert(0 && "not implemented yet"); }
