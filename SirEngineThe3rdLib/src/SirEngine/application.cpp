@@ -33,7 +33,7 @@ void Application::run() {
       l->onUpdate();
     }
     graphics::dispatchFrame();
-    // std::this_thread::sleep_for(std::chrono::milliseconds{5});
+
     std::mt19937_64 eng{std::random_device{}()}; // or seed however you want
     std::uniform_int_distribution<> dist{0, 20};
     std::this_thread::sleep_for(std::chrono::milliseconds{dist(eng)});

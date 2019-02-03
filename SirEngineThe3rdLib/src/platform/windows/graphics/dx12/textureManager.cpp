@@ -6,23 +6,6 @@
 namespace SirEngine {
 namespace dx12 {
 
-TextureManager::TextureData &
-TextureManager::getFreeTextureData(uint32_t &index) {
-  // if there is not free index
-  if (m_freeSlotIndex == 0) {
-    m_staticStorage.emplace_back(TextureData{});
-    index = static_cast<uint32_t>(m_staticStorage.size() - 1);
-    return m_staticStorage[m_staticStorage.size() - 1];
-  } else {
-    // lets re-use the slot
-    TextureData &data = m_staticStorage[m_freeSlots[0]];
-    index = m_freeSlots[0];
-    // patch the hole
-    m_freeSlots[0] = m_freeSlots[m_freeSlotIndex - 1];
-    --m_freeSlotIndex;
-    return data;
-  }
-}
 
 TextureHandle TextureManager::loadTexture(const char *path, bool dynamic) {
   bool res = fileExists(path);
@@ -37,7 +20,7 @@ TextureHandle TextureManager::loadTexture(const char *path, bool dynamic) {
   }
 
   uint32_t index;
-  TextureData &data = getFreeTextureData(index);
+  TextureData &data = m_texturePool.getFreeMemoryData(index);
   const std::string paths(path);
   const std::wstring pathws(paths.begin(), paths.end());
   std::unique_ptr<uint8_t[]> ddsData;
@@ -67,7 +50,7 @@ TextureHandle TextureManager::initializeFromResource(
   // since we are passing one resource, by definition the resource is static
   // data is now loaded need to create handle etc
   uint32_t index;
-  TextureData &data = getFreeTextureData(index);
+  TextureData &data = m_texturePool.getFreeMemoryData(index);
   TextureHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
 
   data.resource = resource;
@@ -124,7 +107,7 @@ TextureHandle TextureManager::createDepthTexture(const char *name,
   depthStencilDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 
   uint32_t index;
-  TextureData &data = getFreeTextureData(index);
+  TextureData &data = m_texturePool.getFreeMemoryData(index);
   D3D12_CLEAR_VALUE optClear;
   optClear.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
   optClear.DepthStencil.Depth = 1.0f;

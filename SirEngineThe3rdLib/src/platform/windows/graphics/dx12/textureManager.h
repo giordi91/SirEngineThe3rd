@@ -2,6 +2,7 @@
 
 #include "DXTK12/ResourceUploadBatch.h"
 #include "SirEngine/log.h"
+#include "SirEngine/memory/SparseMemoryPool.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/d3dx12.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
@@ -27,10 +28,8 @@ private:
   };
 
 public:
-  TextureManager() : batch(dx12::DEVICE) {
-    m_staticStorage.reserve(RESERVE_SIZE);
+  TextureManager() : batch(dx12::DEVICE), m_texturePool(RESERVE_SIZE) {
     m_nameToHandle.reserve(RESERVE_SIZE);
-    m_freeSlots.resize(RESERVE_SIZE);
   }
   ~TextureManager() = default;
   TextureManager(const TextureManager &) = delete;
@@ -47,7 +46,7 @@ public:
 #ifdef SE_DEBUG
     uint32_t magic = getMagicFromHandle(handle);
     uint32_t idx = getIndexFromHandle(handle);
-    assert(m_staticStorage[idx].magicNumber == magic &&
+    assert(m_texturePool.getConstRef(idx).magicNumber == magic &&
            "invalid magic handle for constant buffer");
 #endif
   }
@@ -64,7 +63,7 @@ public:
     uint32_t index = getIndexFromHandle(handle);
     DescriptorPair pair;
     dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DSRV(
-        pair, m_staticStorage[index].resource, m_staticStorage[index].format);
+        pair, m_texturePool[index].resource, m_texturePool[index].format);
     return pair;
   }
   // A manual format is passed to the depth becauase we normally use a typess
@@ -74,7 +73,7 @@ public:
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
     DescriptorPair pair;
-    dx12::createDSV(dx12::GLOBAL_DSV_HEAP, m_staticStorage[index].resource,
+    dx12::createDSV(dx12::GLOBAL_DSV_HEAP, m_texturePool[index].resource,
                     pair, format);
     return pair;
   }
@@ -87,7 +86,8 @@ public:
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
     DescriptorPair pair;
-    dx12::createRTVSRV(dx12::GLOBAL_RTV_HEAP, m_staticStorage[index].resource,pair);
+    dx12::createRTVSRV(dx12::GLOBAL_RTV_HEAP, m_texturePool.getConstRef(index).resource,
+                       pair);
     return pair;
   }
   void freeRTV(const TextureHandle handle, const DescriptorPair pair) const {
@@ -116,7 +116,7 @@ public:
 
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
-    TextureData &data = m_staticStorage[index];
+    TextureData &data = m_texturePool[index];
 
     auto state = data.state;
     if (state != wantedState) {
@@ -131,13 +131,15 @@ public:
   void free(const TextureHandle handle) {
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
-    TextureData &data = m_staticStorage[index];
+    TextureData &data = m_texturePool[index];
     // releasing the texture;
     data.resource->Release();
     // invalidating magic number
     data.magicNumber = 0;
+
     // adding the index to the free list
-    m_freeSlots[m_freeSlotIndex++] = index;
+	m_texturePool.free(index);
+    //m_freeSlots[m_freeSlotIndex++] = index;
   }
 
   TextureData &TextureManager::getFreeTextureData(uint32_t &index);
@@ -147,15 +149,14 @@ private:
   // std::vector<TextureData> m_dynamicStorage[FRAME_BUFFERS_COUNT];
   // std::vector<DescriptorPair> m_descriptorStorage;
 
-  std::vector<TextureData> m_staticStorage;
+  // std::vector<TextureData> m_staticStorage;
   std::unordered_map<std::string, TextureHandle> m_nameToHandle;
   static const uint32_t INDEX_MASK = (1 << 16) - 1;
   static const uint32_t MAGIC_NUMBER_MASK = ~INDEX_MASK;
   static const uint32_t RESERVE_SIZE = 200;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
   DirectX::ResourceUploadBatch batch;
-  std::vector<uint32_t> m_freeSlots;
-  uint32_t m_freeSlotIndex = 0;
+  SparseMemoryPool<TextureData> m_texturePool;
 }; // namespace dx12
 
 } // namespace dx12
