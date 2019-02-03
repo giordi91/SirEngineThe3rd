@@ -36,6 +36,7 @@ public:
     m_staticStorage.reserve(RESERVE_SIZE);
     m_nameToHandle.reserve(RESERVE_SIZE);
     m_freeSlots.resize(RESERVE_SIZE);
+	m_uploadRequests.reserve(RESERVE_SIZE);
   }
   ~MeshManager() = default;
   inline uint32_t getIndexCount(const MeshHandle &handle) {
@@ -131,6 +132,8 @@ public:
     m_freeSlots[m_freeSlotIndex++] = index;
   }
 
+  void clearUploadRequests();
+
 private:
   MeshData &getFreeMeshData(uint32_t &index);
 
@@ -143,6 +146,7 @@ private:
   DirectX::ResourceUploadBatch batch;
   std::vector<uint32_t> m_freeSlots;
   uint32_t m_freeSlotIndex = 0;
+  std::vector<MeshUploadResource> m_uploadRequests;
 };
 
 } // namespace dx12
