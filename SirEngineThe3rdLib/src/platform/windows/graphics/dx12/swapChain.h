@@ -1,6 +1,5 @@
 #pragma once
 #include "platform/windows/graphics/dx12/DX12.h"
-#include "platform/windows/graphics/dx12/depthTexture.h"
 #include "platform/windows/graphics/dx12/textureManager.h"
 #include <dxgi1_4.h>
 
@@ -33,7 +32,7 @@ public:
   inline TextureHandle currentBackBufferTexture() const {
     return m_swapChainBuffersHandles[m_currentBackBuffer];
   }
-  inline DepthTexture *getCurrentDepth() const { return m_depth; }
+  //inline DepthTexture *getCurrentDepth() const { return m_depth; }
 
   inline D3D12_VIEWPORT *getViewport() { return &m_screenViewport; }
   inline D3D12_RECT *getScissorRect() { return &m_scissorRect; }
@@ -43,11 +42,14 @@ public:
   }
   void clearDepth() const {
     CURRENT_FRAME_RESOURCE->fc.commandList->ClearDepthStencilView(
-        m_depth->getCPUDescriptor(),
+        //m_depth->getCPUDescriptor(),
+        m_swapChainDepthDescriptors.cpuHandle,
         D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
   }
   inline D3D12_CPU_DESCRIPTOR_HANDLE getDepthCPUDescriptor() {
-    return m_depth->getCPUDescriptor();
+	  return m_swapChainDepthDescriptors.cpuHandle;
+//    return m_depth->getCPUDescriptor();
+
     // return m_depthStencilBufferResource.cpuDescriptorHandle;
   }
 
@@ -68,7 +70,10 @@ private:
   TextureHandle m_swapChainBuffersHandles[FRAME_BUFFERS_COUNT];
   DescriptorPair m_swapChainBuffersDescriptors[FRAME_BUFFERS_COUNT];
 
-  DepthTexture *m_depth = nullptr;
+  TextureHandle m_swapChainDepth;
+  DescriptorPair m_swapChainDepthDescriptors;
+
+  //DepthTexture *m_depth = nullptr;
 
   D3D12_VIEWPORT m_screenViewport;
   D3D12_RECT m_scissorRect;

@@ -17,6 +17,7 @@ project(SirEngineThe3rdLib)
 
 	#making sure to add the common cpp flags, that are defined in the main cpp file
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_CXX_FLAGS}")
+	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DSE_DEBUG")
 
 
 	MACRO(SOURCE_GROUP_BY_FOLDER target)

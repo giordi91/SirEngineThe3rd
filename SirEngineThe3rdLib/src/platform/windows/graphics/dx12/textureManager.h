@@ -1,7 +1,6 @@
 #pragma once
 
 #include "DXTK12/ResourceUploadBatch.h"
-#include "SirEngine/globals.h"
 #include "SirEngine/log.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/d3dx12.h"
@@ -15,6 +14,8 @@ struct TextureHandle final {
   uint32_t handle;
 };
 
+enum DebugTextureFlags { DEPTH = 1 };
+
 class TextureManager final {
 private:
   struct TextureData final {
@@ -22,6 +23,7 @@ private:
     ID3D12Resource *resource;
     D3D12_RESOURCE_STATES state;
     DXGI_FORMAT format;
+    DebugTextureFlags flags;
   };
 
 public:
@@ -37,9 +39,12 @@ public:
   TextureHandle initializeFromResource(ID3D12Resource *resource,
                                        const char *name,
                                        D3D12_RESOURCE_STATES state);
+  TextureHandle
+  createDepthTexture(const char *name, uint32_t width, uint32_t height,
+                     D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COMMON);
 
   inline void assertMagicNumber(TextureHandle handle) const {
-#ifdef _DEBUG
+#ifdef SE_DEBUG
     uint32_t magic = getMagicFromHandle(handle);
     uint32_t idx = getIndexFromHandle(handle);
     assert(m_staticStorage[idx].magicNumber == magic &&
@@ -62,7 +67,19 @@ public:
         pair, m_staticStorage[index].resource, m_staticStorage[index].format);
     return pair;
   }
-  void freeSRV(TextureHandle handle, DescriptorPair pair) {
+  // A manual format is passed to the depth becauase we normally use a typess
+  // type so we cannot rely on the format used during allocation.
+  DescriptorPair getDSV(TextureHandle handle,
+                        DXGI_FORMAT format = DXGI_FORMAT_D24_UNORM_S8_UINT) {
+    assertMagicNumber(handle);
+    uint32_t index = getIndexFromHandle(handle);
+    DescriptorPair pair;
+    dx12::createDSV(dx12::GLOBAL_DSV_HEAP, m_staticStorage[index].resource,
+                    pair, format);
+    return pair;
+  }
+  void freeSRV(TextureHandle handle, DescriptorPair pair) const {
+    // TODO remove d3dbuffer
     assertMagicNumber(handle);
     D3DBuffer buffer;
     buffer.cpuDescriptorHandle = pair.cpuHandle;
@@ -87,6 +104,11 @@ public:
     assertMagicNumber(handle);
     dx12::GLOBAL_RTV_HEAP->freeDescriptor(pair);
     // TODO should I invalidate the descriptors here??
+  }
+  void freeDSV(const TextureHandle handle, const DescriptorPair pair) const {
+    assertMagicNumber(handle);
+    dx12::GLOBAL_DSV_HEAP->freeDescriptor(pair);
+    assert(pair.type == DescriptorType::DSV);
   }
   inline TextureHandle getHandleFromName(const char *name) {
     auto found = m_nameToHandle.find(name);
