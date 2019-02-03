@@ -19,6 +19,7 @@ project(Tests)
 	if (WIN32)
 		add_compile_definitions(RC_PLATFORM_WINDOWS SE_PLATFORM_WINDOWS _UNICODE)
 	endif (WIN32)
+	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DSE_DEBUG")
 
 	#making sure to add the common cpp flags, that are defined in the main cpp file
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_CXX_FLAGS}")

@@ -5,6 +5,17 @@
 
 namespace SirEngine {
 namespace dx12 {
+void MeshManager::clearUploadRequests() {
+
+  // auto id = GLOBAL_FENCE->GetCompletedValue();
+  // uint32_t freed = 0;
+  // for(const auto& request : m_uploadRequests)
+  //{
+  //
+  //
+
+  //}
+}
 
 MeshManager::MeshData &MeshManager::getFreeMeshData(uint32_t &index) {
   // if there is not free index
@@ -24,9 +35,10 @@ MeshManager::MeshData &MeshManager::getFreeMeshData(uint32_t &index) {
 }
 
 static ID3D12Resource *createDefaultBuffer(ID3D12Device *device,
-                                    ID3D12GraphicsCommandList *cmdList,
-                                    const void *initData, const UINT64 byteSize,
-                                    ID3D12Resource **uploadBuffer) {
+                                           ID3D12GraphicsCommandList *cmdList,
+                                           const void *initData,
+                                           const UINT64 byteSize,
+                                           ID3D12Resource **uploadBuffer) {
   ID3D12Resource *defaultBuffer = nullptr;
 
   // Create the actual default buffer resource.
@@ -34,13 +46,15 @@ static ID3D12Resource *createDefaultBuffer(ID3D12Device *device,
       &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
       &CD3DX12_RESOURCE_DESC::Buffer(byteSize), D3D12_RESOURCE_STATE_COMMON,
       nullptr, IID_PPV_ARGS(&defaultBuffer));
+  assert(SUCCEEDED(res));
 
   // In order to copy CPU memory data into our default buffer, we need to create
   // an intermediate upload heap.
-  HRESULT res2 = device->CreateCommittedResource(
+  res = device->CreateCommittedResource(
       &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE,
       &CD3DX12_RESOURCE_DESC::Buffer(byteSize),
       D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(uploadBuffer));
+  assert(SUCCEEDED(res));
 
   // Describe the data we want to copy into the default buffer.
   D3D12_SUBRESOURCE_DATA subResourceData = {};
@@ -66,20 +80,19 @@ static ID3D12Resource *createDefaultBuffer(ID3D12Device *device,
   // because the command list has not been executed yet that performs the actual
   // copy. The caller can Release the uploadBuffer after it knows the copy has
   // been executed.
-
   return defaultBuffer;
 }
 
 MeshHandle MeshManager::loadMesh(const char *path) {
 
   bool res = fileExists(path);
+  assert(res);
 
   const std::string name = getFileName(path);
   assert(m_nameToHandle.find(name) == m_nameToHandle.end());
 
   std::vector<char> bindaryData;
   readAllBytes(path, bindaryData);
-  const BinaryFileHeader *h = getHeader(bindaryData.data());
 
   auto mapper = getMapperData<ModelMapperData>(bindaryData.data());
 
@@ -105,14 +118,15 @@ MeshHandle MeshManager::loadMesh(const char *path) {
 
   FrameCommand *currentFC = &CURRENT_FRAME_RESOURCE->fc;
   meshData.vertexBuffer = createDefaultBuffer(
-      DEVICE, currentFC->commandList, vertexData, vertexCount * stride * sizeof(float),
-      &upload.uploadVertexBuffer);
+      DEVICE, currentFC->commandList, vertexData,
+      vertexCount * stride * sizeof(float), &upload.uploadVertexBuffer);
   meshData.indexBuffer =
       createDefaultBuffer(DEVICE, currentFC->commandList, indexData,
                           indexCount * sizeof(int), &upload.uploadIndexBuffer);
 
   // set a signal for the resource.
   upload.fence = dx12::insertFenceToGlobalQueue();
+  m_uploadRequests.push_back(upload);
 
   // data is now loaded need to create handle etc
   MeshHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
