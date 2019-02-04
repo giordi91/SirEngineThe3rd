@@ -12,7 +12,7 @@ project(SirEngineThe3rdLib)
 
 	#lets add specific windows build definitions
 	if (WIN32)
-		add_compile_definitions(SE_PLATFORM_WINDOWS SE_BUILD_DLL _UNICODE QUIT_ESCAPE)
+		add_compile_definitions(SE_PLATFORM_WINDOWS SE_BUILD_DLL _UNICODE QUIT_ESCAPE GRAPHICS_API=DX12)
 	endif (WIN32)
 
 	#making sure to add the common cpp flags, that are defined in the main cpp file

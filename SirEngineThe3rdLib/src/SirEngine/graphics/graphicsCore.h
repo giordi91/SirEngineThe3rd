@@ -1,10 +1,13 @@
 #pragma once
+#include <cstdint>
 
 namespace SirEngine {
+class Window;
 namespace graphics {
 
+bool initializeGraphics(Window* wnd, uint32_t width, uint32_t height);
 // should be called from the application whenever there is a resize
-void onResize(unsigned int width, unsigned int height);
+void onResize(uint32_t width, uint32_t height);
 
 // This function should be called before the evaluation of the
 // layer stack, at this point, all the initialization that must have
@@ -17,7 +20,7 @@ void newFrame();
 // etc
 void dispatchFrame();
 
-	void shutdown();
+void shutdown();
 } // namespace graphics
 
 } // namespace SirEngine

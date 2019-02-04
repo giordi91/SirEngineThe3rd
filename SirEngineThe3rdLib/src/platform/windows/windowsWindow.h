@@ -19,6 +19,7 @@ public:
   void setVSync(bool enabled) override;
   void isVSync() const override;
   inline EventCallbackFn getEventCallback() const { return m_callback; }
+  void *getNativeWindow() const override { return m_hwnd; }
 
 private:
   struct WindowData {

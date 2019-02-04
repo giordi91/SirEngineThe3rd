@@ -11,6 +11,7 @@
 
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/swapChain.h"
+#include "SirEngine/graphics/graphicsCore.h"
 
 namespace SirEngine {
 
@@ -230,15 +231,10 @@ WindowsWindow::WindowsWindow(const WindowProps &props) {
   ShowCursor(true);
 
   // initialize dx12
-  bool result = dx12::initializeGraphics();
+  bool result = graphics::initializeGraphics(this, m_data.width,m_data.height);
   if (!result) {
     SE_CORE_ERROR("FATAL: could not initialize graphics");
   }
-  dx12::SWAP_CHAIN = new dx12::SwapChain();
-  dx12::SWAP_CHAIN->initialize(m_hwnd, m_data.width, m_data.height);
-  dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
-  dx12::SWAP_CHAIN->resize(&dx12::CURRENT_FRAME_RESOURCE->fc, m_data.width,
-                           m_data.height);
 }
 
 void WindowsWindow::render() {}

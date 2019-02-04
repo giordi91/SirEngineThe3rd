@@ -4,9 +4,17 @@
 #include "platform/windows/graphics/dx12/swapChain.h"
 #include "platform/windows/graphics/dx12/textureManager.h"
 #include <d3d12.h>
+#include "SirEngine/Window.h"
 
 namespace SirEngine {
 namespace graphics {
+
+bool initializeGraphics(Window* wnd, uint32_t width, uint32_t height) {
+#if GRAPHICS_API == DX12
+  return dx12::initializeGraphicsDx12(wnd,width,height);
+#endif
+}
+
 void onResize(const uint32_t width, const uint32_t height) {
   dx12::SWAP_CHAIN->resize(&dx12::CURRENT_FRAME_RESOURCE->fc, width, height);
 }
@@ -21,7 +29,8 @@ void newFrame() {
   if (dx12::CURRENT_FRAME_RESOURCE->fence != 0 &&
       dx12::GLOBAL_FENCE->GetCompletedValue() <
           dx12::CURRENT_FRAME_RESOURCE->fence) {
-    HANDLE eventHandle = CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
+    HANDLE eventHandle =
+        CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
     auto handleResult = dx12::GLOBAL_FENCE->SetEventOnCompletion(
         dx12::CURRENT_FRAME_RESOURCE->fence, eventHandle);
     assert(SUCCEEDED(handleResult));
