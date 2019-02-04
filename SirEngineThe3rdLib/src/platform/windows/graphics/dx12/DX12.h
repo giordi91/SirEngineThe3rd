@@ -6,7 +6,7 @@
 #include <cassert>
 
 namespace SirEngine {
-	class Window;
+class Window;
 namespace dx12 {
 class TextureManager;
 class Adapter;
@@ -44,7 +44,6 @@ struct FrameResource final {
   FrameCommand fc;
   UINT64 fence = 0;
 };
-
 
 inline HRESULT resetCommandList(FrameCommand *command) {
 
@@ -147,7 +146,8 @@ inline void flushCommandQueue(ID3D12CommandQueue *queue) {
   }
 }
 
-bool initializeGraphicsDx12(Window* wnd,uint32_t width,uint32_t height);
-
+bool initializeGraphicsDx12(Window *wnd, uint32_t width, uint32_t height);
+bool shutdownGraphicsDx12();
+bool stopGraphicsDx12();
 } // namespace dx12
 } // namespace SirEngine

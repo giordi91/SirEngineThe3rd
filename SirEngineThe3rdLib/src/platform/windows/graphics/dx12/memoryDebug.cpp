@@ -11,7 +11,7 @@ namespace dx12 {
 uint32_t getTotalGpuMemoryMB() {
   DXGI_ADAPTER_DESC desc;
   assert(SUCCEEDED(dx12::ADAPTER->getAdapter()->GetDesc(&desc)));
-  return desc.DedicatedVideoMemory * 1e-6;
+  return static_cast<uint32_t>(desc.DedicatedVideoMemory * 1e-6f);
 }
 
 uint32_t getUsedGpuMemoryMB() {
@@ -19,7 +19,7 @@ uint32_t getUsedGpuMemoryMB() {
   DXGI_QUERY_VIDEO_MEMORY_INFO info = {};
   dx12::ADAPTER->getAdapter()->QueryVideoMemoryInfo(
       0, DXGI_MEMORY_SEGMENT_GROUP_LOCAL, &info);
-  return static_cast<uint32_t>(info.CurrentUsage * 1e-6);
+  return static_cast<uint32_t>(info.CurrentUsage * 1e-6f);
 }
 
 void renderImGuiMemoryWidget() {
@@ -45,10 +45,10 @@ void renderImGuiMemoryWidget() {
   DXGI_ADAPTER_DESC desc;
   SUCCEEDED(dx12::ADAPTER->getAdapter()->GetDesc(&desc));
 
-  float totalGPUMemGB = static_cast<float>(desc.DedicatedVideoMemory) * 1e-9;
-  float usedGPUMemInGB = static_cast<float>(info.CurrentUsage) * 1e-9;
-  float totalGPUMemMB = static_cast<float>(desc.DedicatedVideoMemory) * 1e-6;
-  float usedGPUMemInMB = static_cast<float>(info.CurrentUsage) * 1e-6;
+  float totalGPUMemGB = static_cast<float>(desc.DedicatedVideoMemory) * 1e-9f;
+  float usedGPUMemInGB = static_cast<float>(info.CurrentUsage) * 1e-9f;
+  float totalGPUMemMB = static_cast<float>(desc.DedicatedVideoMemory) * 1e-6f;
+  float usedGPUMemInMB = static_cast<float>(info.CurrentUsage) * 1e-6f;
   float ratio = usedGPUMemInGB / totalGPUMemGB;
 
   std::string overlay = std::to_string(ratio * 100.0f) + "%";

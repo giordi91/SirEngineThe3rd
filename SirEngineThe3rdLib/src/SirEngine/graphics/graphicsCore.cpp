@@ -1,17 +1,17 @@
 #include "SirEngine/graphics/graphicsCore.h"
+#include "SirEngine/Window.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/swapChain.h"
 #include "platform/windows/graphics/dx12/textureManager.h"
 #include <d3d12.h>
-#include "SirEngine/Window.h"
 
 namespace SirEngine {
 namespace graphics {
 
-bool initializeGraphics(Window* wnd, uint32_t width, uint32_t height) {
+bool initializeGraphics(Window *wnd, uint32_t width, uint32_t height) {
 #if GRAPHICS_API == DX12
-  return dx12::initializeGraphicsDx12(wnd,width,height);
+  return dx12::initializeGraphicsDx12(wnd, width, height);
 #endif
 }
 
@@ -99,6 +99,17 @@ void dispatchFrame() {
   dx12::SWAP_CHAIN->present();
 }
 
-void shutdown() { dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE); }
+void stopGraphics()
+{
+#if GRAPHICS_API == DX12
+  dx12::stopGraphicsDx12();
+#endif
+}
+
+void shutdownGraphics() {
+#if GRAPHICS_API == DX12
+  dx12::shutdownGraphicsDx12();
+#endif
+}
 } // namespace graphics
 } // namespace SirEngine

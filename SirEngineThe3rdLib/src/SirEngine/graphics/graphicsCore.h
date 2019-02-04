@@ -20,7 +20,8 @@ void newFrame();
 // etc
 void dispatchFrame();
 
-void shutdown();
+void stopGraphics();
+void shutdownGraphics();
 } // namespace graphics
 
 } // namespace SirEngine

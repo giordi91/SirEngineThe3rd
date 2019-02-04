@@ -125,10 +125,10 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
 
   if (FAILED(hrCompilation)) {
 
-    IDxcBlobEncoding *pPrintBlob, *pPrintBlob16;
+    IDxcBlobEncoding *pPrintBlob;
     pResult->GetErrorBuffer(&pPrintBlob);
 
-    const std::string errorOut((char *)pPrintBlob->GetBufferPointer(),
+    const std::string errorOut(static_cast<char *>(pPrintBlob->GetBufferPointer()),
                                pPrintBlob->GetBufferSize());
     SE_CORE_ERROR("ERROR_LOG:\n {0}", errorOut);
     pPrintBlob->Release();

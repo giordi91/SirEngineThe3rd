@@ -23,7 +23,7 @@ void Graphics3DLayer::onAttach() {
   meshHandle = m_meshManager.loadMesh("data/processed/meshes/armorChest.model");
   meshIndexCount = m_meshManager.getIndexCount(meshHandle);
 
-  //m_mesh.loadFromFile(dx12::DEVICE, "data/processed/meshes/armorChest.model",
+  // m_mesh.loadFromFile(dx12::DEVICE, "data/processed/meshes/armorChest.model",
   //                    dx12::GLOBAL_CBV_SRV_UAV_HEAP);
 
   dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE, currentFc);
@@ -46,7 +46,8 @@ void Graphics3DLayer::onAttach() {
   m_cameraHandle =
       m_constantBufferManager.allocateDynamic(sizeof(dx12::CameraBuffer));
 
-  th = dx12::TEXTURE_MANAGER->loadTexture("data/processed/textures/uv.dds",false);
+  th = dx12::TEXTURE_MANAGER->loadTexture("data/processed/textures/uv.dds",
+                                          false);
   thSRV = dx12::TEXTURE_MANAGER->getSRV(th);
 }
 void Graphics3DLayer::onDetach() {}
@@ -89,10 +90,9 @@ void Graphics3DLayer::onUpdate() {
   commandList->SetGraphicsRootDescriptorTable(
       0, m_constantBufferManager.getConstantBufferDescriptor(m_cameraHandle)
              .gpuHandle);
-  commandList->SetGraphicsRootDescriptorTable(1,thSRV.gpuHandle);
+  commandList->SetGraphicsRootDescriptorTable(1, thSRV.gpuHandle);
 
   commandList->DrawIndexedInstanced(meshIndexCount, 1, 0, 0, 0);
-
 }
 void Graphics3DLayer::onEvent(Event &event) {
 
@@ -103,6 +103,12 @@ void Graphics3DLayer::onEvent(Event &event) {
       SE_BIND_EVENT_FN(Graphics3DLayer::onMouseButtonReleaseEvent));
   dispatcher.dispatch<MouseMoveEvent>(
       SE_BIND_EVENT_FN(Graphics3DLayer::onMouseMoveEvent));
+}
+
+void Graphics3DLayer::clear() {
+  // temporarerly release resources
+  dx12::TEXTURE_MANAGER->freeSRV(th, thSRV);
+  dx12::TEXTURE_MANAGER->free(th);
 }
 
 bool Graphics3DLayer::onMouseButtonPressEvent(MouseButtonPressEvent &e) {

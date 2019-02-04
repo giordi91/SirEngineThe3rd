@@ -15,6 +15,7 @@ public:
   virtual void onDetach() = 0;
   virtual void onUpdate() = 0;
   virtual void onEvent(Event& event) = 0;
+  virtual void clear() = 0;
 
   inline const std::string getName() { return m_debugName; }
 
