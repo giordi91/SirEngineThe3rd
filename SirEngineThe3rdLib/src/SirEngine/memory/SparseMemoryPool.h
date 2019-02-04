@@ -99,6 +99,17 @@ public:
     return m_memory[index];
   }
 
+#if SE_DEBUG
+  bool assertEverythingDealloc() {
+    bool toReturn = true;
+    for (unsigned i = 0; i < m_poolSize; ++i) {
+      bool current = m_freedMemory[i];
+      toReturn &= current;
+    }
+	return toReturn;
+  }
+#endif
+
 private:
   T *m_memory = nullptr;
   uint32_t m_poolSize;

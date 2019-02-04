@@ -1,4 +1,5 @@
 #include "platform/windows/graphics/dx12/DX12.h"
+#include "SirEngine/Window.h"
 #include "SirEngine/log.h"
 #include "platform/windows/graphics/dx12/adapter.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
@@ -13,21 +14,20 @@ ID3D12Device5 *DEVICE;
 #else
 ID3D12Device4 *DEVICE;
 #endif
-ID3D12Debug *DEBUG_CONTROLLER= nullptr;
-IDXGIFactory6 *DXGI_FACTORY= nullptr;
-Adapter *ADAPTER= nullptr;
-UINT64 CURRENT_FENCE= 0;
-UINT64 CURRENT_FRAME= 0;
-DescriptorHeap *GLOBAL_CBV_SRV_UAV_HEAP= nullptr;
-DescriptorHeap *GLOBAL_RTV_HEAP= nullptr;
-DescriptorHeap *GLOBAL_DSV_HEAP= nullptr;
-ID3D12CommandQueue *GLOBAL_COMMAND_QUEUE= nullptr;
-ID3D12Fence *GLOBAL_FENCE= nullptr;
-SwapChain *SWAP_CHAIN= nullptr;
+ID3D12Debug *DEBUG_CONTROLLER = nullptr;
+IDXGIFactory6 *DXGI_FACTORY = nullptr;
+Adapter *ADAPTER = nullptr;
+UINT64 CURRENT_FENCE = 0;
+UINT64 CURRENT_FRAME = 0;
+DescriptorHeap *GLOBAL_CBV_SRV_UAV_HEAP = nullptr;
+DescriptorHeap *GLOBAL_RTV_HEAP = nullptr;
+DescriptorHeap *GLOBAL_DSV_HEAP = nullptr;
+ID3D12CommandQueue *GLOBAL_COMMAND_QUEUE = nullptr;
+ID3D12Fence *GLOBAL_FENCE = nullptr;
+SwapChain *SWAP_CHAIN = nullptr;
 FrameResource FRAME_RESOURCES[FRAME_BUFFERS_COUNT];
-FrameResource *CURRENT_FRAME_RESOURCE= nullptr;
-TextureManager *TEXTURE_MANAGER =nullptr;
-
+FrameResource *CURRENT_FRAME_RESOURCE = nullptr;
+TextureManager *TEXTURE_MANAGER = nullptr;
 
 bool createFrameCommand(FrameCommand *fc) {
 
@@ -37,10 +37,9 @@ bool createFrameCommand(FrameCommand *fc) {
     return false;
   }
 
-  result = DEVICE->CreateCommandList(
-      0, D3D12_COMMAND_LIST_TYPE_DIRECT,
-      fc->commandAllocator, nullptr,
-      IID_PPV_ARGS(&fc->commandList));
+  result = DEVICE->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT,
+                                     fc->commandAllocator, nullptr,
+                                     IID_PPV_ARGS(&fc->commandList));
   if (FAILED(result)) {
     return false;
   }
@@ -49,13 +48,12 @@ bool createFrameCommand(FrameCommand *fc) {
   return true;
 }
 
-bool initializeGraphics() {
+bool initializeGraphicsDx12(Window *wnd, uint32_t width, uint32_t height) {
 
   // lets enable debug layer if needed
   //#if defined(DEBUG) || defined(_DEBUG)
   {
-    HRESULT result =
-        D3D12GetDebugInterface(IID_PPV_ARGS(&DEBUG_CONTROLLER));
+    HRESULT result = D3D12GetDebugInterface(IID_PPV_ARGS(&DEBUG_CONTROLLER));
     if (FAILED(result)) {
       return false;
     }
@@ -81,25 +79,25 @@ bool initializeGraphics() {
   ADAPTER->setVendor(AdapterVendor::ANY);
 #endif
   bool found = ADAPTER->findBestAdapter(DXGI_FACTORY);
+  assert(found && "could not find adapter matching features");
 
   // log the adapter used
   auto *adapter = ADAPTER->getAdapter();
   DXGI_ADAPTER_DESC desc;
   HRESULT adapterDescRes = SUCCEEDED(adapter->GetDesc(&desc));
+  assert(SUCCEEDED(adapterDescRes));
   char t[128];
   size_t converted = 0;
-  size_t res = wcstombs_s(&converted, t, desc.Description, 128);
+  wcstombs_s(&converted, t, desc.Description, 128);
   SE_CORE_INFO(t);
 
-  result = D3D12CreateDevice(ADAPTER->getAdapter(),
-                             D3D_FEATURE_LEVEL_12_1,
+  result = D3D12CreateDevice(ADAPTER->getAdapter(), D3D_FEATURE_LEVEL_12_1,
                              IID_PPV_ARGS(&DEVICE));
   if (FAILED(result)) {
     SE_CORE_ERROR("Could not create device with requested features");
     // falling back to WARP device
     IDXGIAdapter *warpAdapter;
-    result =
-        DXGI_FACTORY->EnumWarpAdapter(IID_PPV_ARGS(&warpAdapter));
+    result = DXGI_FACTORY->EnumWarpAdapter(IID_PPV_ARGS(&warpAdapter));
     if (FAILED(result)) {
       return false;
     }
@@ -120,6 +118,7 @@ bool initializeGraphics() {
   HRESULT r = DEVICE->CheckFeatureSupport(
       D3D12_FEATURE_FEATURE_LEVELS, &featureLevels, sizeof(featureLevels));
   assert(featureLevels.MaxSupportedFeatureLevel == D3D_FEATURE_LEVEL_12_1);
+  assert(SUCCEEDED(r));
 
 #if DXR_ENABLED
   if (ADAPTER->getFeature() == AdapterFeature::DXR) {
@@ -141,9 +140,8 @@ bool initializeGraphics() {
     return false;
   }
 
-
   result = DEVICE->CreateFence(0, D3D12_FENCE_FLAG_NONE,
-                                            IID_PPV_ARGS(&GLOBAL_FENCE));
+                               IID_PPV_ARGS(&GLOBAL_FENCE));
   if (FAILED(result)) {
     return false;
   }
@@ -165,6 +163,14 @@ bool initializeGraphics() {
   CURRENT_FRAME_RESOURCE = &FRAME_RESOURCES[0];
 
   TEXTURE_MANAGER = new TextureManager();
+
+  // init swap chain
+  auto *windowWnd = static_cast<HWND>(wnd->getNativeWindow());
+
+  dx12::SWAP_CHAIN = new dx12::SwapChain();
+  dx12::SWAP_CHAIN->initialize(windowWnd, width, height);
+  dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
+  dx12::SWAP_CHAIN->resize(&dx12::CURRENT_FRAME_RESOURCE->fc, width, height);
 
   return true;
 }

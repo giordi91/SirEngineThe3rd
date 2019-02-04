@@ -6,6 +6,7 @@
 #include <cassert>
 
 namespace SirEngine {
+	class Window;
 namespace dx12 {
 class TextureManager;
 class Adapter;
@@ -146,7 +147,7 @@ inline void flushCommandQueue(ID3D12CommandQueue *queue) {
   }
 }
 
-bool initializeGraphics();
+bool initializeGraphicsDx12(Window* wnd,uint32_t width,uint32_t height);
 
 } // namespace dx12
 } // namespace SirEngine
