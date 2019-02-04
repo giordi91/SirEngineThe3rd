@@ -38,12 +38,20 @@ void Application::run() {
     std::uniform_int_distribution<> dist{0, 20};
     std::this_thread::sleep_for(std::chrono::milliseconds{dist(eng)});
   }
-  graphics::shutdown();
+
+  //lets make sure any graphics operation are done
+  graphics::stopGraphics();
+
+  // lets clean up the layers, now is safe to free up resources
+  for (Layer *l : m_layerStack) {
+    l->clear();
+  }
+
+  //shutdown anything graphics related;
+  graphics::shutdownGraphics();
 }
 void Application::onEvent(Event &e) {
   // close event dispatch
-  // SE_CORE_INFO("{0}", e);
-
   EventDispatcher dispatcher(e);
   dispatcher.dispatch<WindowCloseEvent>(
       [this](WindowCloseEvent &e) -> bool { return (this->onCloseWindow(e)); });
@@ -62,7 +70,7 @@ void Application::onEvent(Event &e) {
   }
 }
 bool Application::onCloseWindow(WindowCloseEvent &e) {
-  //graphics::shutdown();
+  // graphics::shutdown();
   m_run = false;
   return true;
 }

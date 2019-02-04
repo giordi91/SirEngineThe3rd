@@ -72,8 +72,6 @@ public:
     return m_memory[index];
   }
   inline void free(const uint32_t index) {
-    assert(m_allocationCount < m_poolSize &&
-           "requested deallocation is outside pool range");
     assert(m_freedMemory[index] == 0 && "memory has been already deallocated");
     --m_allocationCount;
 
@@ -90,12 +88,12 @@ public:
   // subscript operator to access the pool directly, we are adults, we don't
   // make mistakes, direct memory access is fine.
   inline T &operator[](const uint32_t index) {
-    assert(index < m_allocationCount);
+    assert(index < m_poolSize);
     return m_memory[index];
   }
 
   inline const T &getConstRef(const uint32_t index) const {
-    assert(index < m_allocationCount);
+    assert(index < m_poolSize);
     return m_memory[index];
   }
 
@@ -104,6 +102,10 @@ public:
     bool toReturn = true;
     for (unsigned i = 0; i < m_poolSize; ++i) {
       bool current = m_freedMemory[i];
+	  if(current == false)
+	  {
+		  int x =0;
+	  }
       toReturn &= current;
     }
 	return toReturn;

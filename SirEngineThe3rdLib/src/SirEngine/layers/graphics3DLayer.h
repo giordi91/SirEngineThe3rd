@@ -24,7 +24,6 @@ struct CameraBuffer final {
   float screenHeight;
   float padding;
 };
-struct D3DBuffer;
 } // namespace dx12
 class SIR_ENGINE_API Graphics3DLayer final : public Layer {
 public:
@@ -35,6 +34,7 @@ public:
   void onDetach() override;
   void onUpdate() override;
   void onEvent(Event &event) override;
+  void clear() override;
 
 private:
   // event implementation for the layer
@@ -63,7 +63,6 @@ private:
   float previousX = 0;
   float previousY = 0;
 
-  //dx12::Texture2D *t;
   dx12::TextureHandle th;
   dx12::DescriptorPair thSRV;
 

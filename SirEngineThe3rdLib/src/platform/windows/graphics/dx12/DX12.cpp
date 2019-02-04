@@ -174,5 +174,23 @@ bool initializeGraphicsDx12(Window *wnd, uint32_t width, uint32_t height) {
 
   return true;
 }
+
+bool shutdownGraphicsDx12()
+{
+	flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
+
+	//free the swapchain
+	delete SWAP_CHAIN;
+
+	//deleting the managers
+	delete TEXTURE_MANAGER;
+	return true;
+}
+
+bool stopGraphicsDx12()
+{
+	flushCommandQueue(GLOBAL_COMMAND_QUEUE);
+	return true;
+}
 } // namespace dx12
 } // namespace SirEngine
