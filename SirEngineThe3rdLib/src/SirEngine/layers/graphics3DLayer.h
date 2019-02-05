@@ -51,7 +51,6 @@ private:
   temp::rendering::PSOManager *m_pso{};
   dx12::ConstantBufferHandle m_cameraHandle{};
   dx12::ConstantBufferManager m_constantBufferManager;
-  dx12::MeshManager m_meshManager;
 
 
   dx12::MeshHandle meshHandle;

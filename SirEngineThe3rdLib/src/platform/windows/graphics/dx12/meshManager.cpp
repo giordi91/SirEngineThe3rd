@@ -7,31 +7,25 @@ namespace SirEngine {
 namespace dx12 {
 void MeshManager::clearUploadRequests() {
 
-  // auto id = GLOBAL_FENCE->GetCompletedValue();
+  auto id = GLOBAL_FENCE->GetCompletedValue();
   // uint32_t freed = 0;
-  // for(const auto& request : m_uploadRequests)
-  //{
-  //
-  //
-
-  //}
-}
-
-MeshManager::MeshData &MeshManager::getFreeMeshData(uint32_t &index) {
-  // if there is not free index
-  if (m_freeSlotIndex == 0) {
-    m_staticStorage.emplace_back(MeshData{});
-    index = static_cast<uint32_t>(m_staticStorage.size() - 1);
-    return m_staticStorage[m_staticStorage.size() - 1];
-  } else {
-    // lets re-use the slot
-    MeshData &data = m_staticStorage[m_freeSlots[0]];
-    index = m_freeSlots[0];
-    // patch the hole
-    m_freeSlots[0] = m_freeSlots[m_freeSlotIndex - 1];
-    --m_freeSlotIndex;
-    return data;
+  int requestSize = m_uploadRequests.size()-1;
+  int stackTopIdx = requestSize;
+  for (int i = requestSize; i >= 0; --i) {
+    MeshUploadResource &upload = m_uploadRequests[i];
+    if (upload.fence < id) {
+      // we can free the memory
+      upload.uploadVertexBuffer->Release();
+      upload.uploadIndexBuffer->Release();
+      if (stackTopIdx != i) {
+        // lets copy
+        m_uploadRequests[i] = m_uploadRequests[stackTopIdx];
+      }
+      --stackTopIdx;
+    }
   }
+  // resizing the vector
+  m_uploadRequests.resize(stackTopIdx + 1);
 }
 
 static ID3D12Resource *createDefaultBuffer(ID3D12Device *device,
@@ -110,7 +104,7 @@ MeshHandle MeshManager::loadMesh(const char *path) {
 
   // upload the data on the GPU
   uint32_t index;
-  MeshData &meshData = getFreeMeshData(index);
+  MeshData &meshData = m_meshPool.getFreeMemoryData(index);
   meshData.indexCount = indexCount;
   meshData.vertexCount = vertexCount;
   meshData.stride = stride;

@@ -81,7 +81,6 @@ private:
 
 private:
   std::vector<ConstantBufferData> m_dynamicStorage[FRAME_BUFFERS_COUNT];
-  std::vector<ConstantBufferData> m_staticStorage;
   std::vector<DescriptorPair> m_descriptorStorage;
   static const uint32_t INDEX_MASK = (1 << 16) - 1;
   static const uint32_t MAGIC_NUMBER_MASK = ~INDEX_MASK;

@@ -8,7 +8,6 @@ ConstantBufferManager::ConstantBufferManager() {
   for (auto &i : m_dynamicStorage) {
     i.reserve(RESERVE_SIZE);
   }
-  m_staticStorage.reserve(RESERVE_SIZE);
   m_descriptorStorage.reserve(RESERVE_SIZE);
 }
 
