@@ -9,6 +9,7 @@ namespace SirEngine {
 class Window;
 namespace dx12 {
 class TextureManager;
+class MeshManager;
 class Adapter;
 class DescriptorHeap;
 class SwapChain;
@@ -107,7 +108,9 @@ extern ID3D12Fence *GLOBAL_FENCE;
 extern SwapChain *SWAP_CHAIN;
 extern FrameResource FRAME_RESOURCES[FRAME_BUFFERS_COUNT];
 extern FrameResource *CURRENT_FRAME_RESOURCE;
+//resource managers
 extern TextureManager *TEXTURE_MANAGER;
+extern MeshManager *MESH_MANAGER;
 
 inline UINT64 insertFenceToGlobalQueue() {
   // Advance the fence value to mark commands up to this fence point.

@@ -5,6 +5,7 @@
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/swapChain.h"
 #include "platform/windows/graphics/dx12/textureManager.h"
+#include "meshManager.h"
 
 namespace SirEngine {
 namespace dx12 {
@@ -28,6 +29,7 @@ SwapChain *SWAP_CHAIN = nullptr;
 FrameResource FRAME_RESOURCES[FRAME_BUFFERS_COUNT];
 FrameResource *CURRENT_FRAME_RESOURCE = nullptr;
 TextureManager *TEXTURE_MANAGER = nullptr;
+MeshManager *MESH_MANAGER= nullptr;
 
 bool createFrameCommand(FrameCommand *fc) {
 
@@ -162,7 +164,9 @@ bool initializeGraphicsDx12(Window *wnd, uint32_t width, uint32_t height) {
 
   CURRENT_FRAME_RESOURCE = &FRAME_RESOURCES[0];
 
+  //initialize the managers
   TEXTURE_MANAGER = new TextureManager();
+  MESH_MANAGER = new MeshManager();
 
   // init swap chain
   auto *windowWnd = static_cast<HWND>(wnd->getNativeWindow());
@@ -183,6 +187,7 @@ bool shutdownGraphicsDx12()
 	delete SWAP_CHAIN;
 
 	//deleting the managers
+	delete MESH_MANAGER;
 	delete TEXTURE_MANAGER;
 	return true;
 }

@@ -20,8 +20,8 @@ void Graphics3DLayer::onAttach() {
     dx12::resetAllocatorAndList(currentFc);
   }
 
-  meshHandle = m_meshManager.loadMesh("data/processed/meshes/armorChest.model");
-  meshIndexCount = m_meshManager.getIndexCount(meshHandle);
+  meshHandle = dx12::MESH_MANAGER->loadMesh("data/processed/meshes/armorChest.model");
+  meshIndexCount = dx12::MESH_MANAGER->getIndexCount(meshHandle);
 
   // m_mesh.loadFromFile(dx12::DEVICE, "data/processed/meshes/armorChest.model",
   //                    dx12::GLOBAL_CBV_SRV_UAV_HEAP);
@@ -80,8 +80,8 @@ void Graphics3DLayer::onUpdate() {
   commandList->SetPipelineState(pso);
   auto *rs = m_root->getRootSignatureFromName("simpleMeshRSTex");
   commandList->SetGraphicsRootSignature(rs);
-  auto vview = m_meshManager.getVertexBufferView(meshHandle);
-  auto iview = m_meshManager.getIndexBufferView(meshHandle);
+  auto vview = dx12::MESH_MANAGER->getVertexBufferView(meshHandle);
+  auto iview = dx12::MESH_MANAGER->getIndexBufferView(meshHandle);
 
   commandList->IASetIndexBuffer(&iview);
   commandList->IASetVertexBuffers(0, 1, &vview);
@@ -93,6 +93,9 @@ void Graphics3DLayer::onUpdate() {
   commandList->SetGraphicsRootDescriptorTable(1, thSRV.gpuHandle);
 
   commandList->DrawIndexedInstanced(meshIndexCount, 1, 0, 0, 0);
+
+  // lets clean up some of the geo if we have any
+  dx12::MESH_MANAGER->clearUploadRequests();
 }
 void Graphics3DLayer::onEvent(Event &event) {
 
@@ -107,6 +110,7 @@ void Graphics3DLayer::onEvent(Event &event) {
 
 void Graphics3DLayer::clear() {
   // temporarerly release resources
+  dx12::MESH_MANAGER->free(meshHandle);
   dx12::TEXTURE_MANAGER->freeSRV(th, thSRV);
   dx12::TEXTURE_MANAGER->free(th);
 }

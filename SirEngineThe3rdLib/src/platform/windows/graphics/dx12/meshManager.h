@@ -2,6 +2,7 @@
 
 #include "DXTK12/ResourceUploadBatch.h"
 #include "SirEngine/log.h"
+#include "SirEngine/memory/SparseMemoryPool.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/d3dx12.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
@@ -32,17 +33,16 @@ private:
   };
 
 public:
-  MeshManager() : batch(dx12::DEVICE) {
-    m_staticStorage.reserve(RESERVE_SIZE);
+  MeshManager() : m_meshPool(RESERVE_SIZE), batch(dx12::DEVICE) {
     m_nameToHandle.reserve(RESERVE_SIZE);
-    m_freeSlots.resize(RESERVE_SIZE);
-	m_uploadRequests.reserve(RESERVE_SIZE);
+    m_uploadRequests.reserve(RESERVE_SIZE);
   }
-  ~MeshManager() = default;
-  inline uint32_t getIndexCount(const MeshHandle &handle) {
+  ~MeshManager() { m_meshPool.assertEverythingDealloc(); }
+
+  inline uint32_t getIndexCount(const MeshHandle &handle) const {
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
-    const MeshData &data = m_staticStorage[index];
+    const MeshData &data = m_meshPool.getConstRef(index);
     return data.indexCount;
   }
   MeshManager(const MeshManager &) = delete;
@@ -53,7 +53,7 @@ public:
 #ifdef SE_DEBUG
     uint32_t magic = getMagicFromHandle(handle);
     uint32_t idx = getIndexFromHandle(handle);
-    assert(m_staticStorage[idx].magicNumber == magic &&
+    assert(m_meshPool.getConstRef(idx).magicNumber == magic &&
            "invalid magic handle for constant buffer");
 #endif
   }
@@ -64,19 +64,19 @@ public:
     return (h.handle & MAGIC_NUMBER_MASK) >> 16;
   }
 
-  DescriptorPair getSRVVertexBuffer(MeshHandle handle) {
+  DescriptorPair getSRVVertexBuffer(MeshHandle handle) const {
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
-    const MeshData &data = m_staticStorage[index];
+    const MeshData &data = m_meshPool.getConstRef(index);
     DescriptorPair pair;
     dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferSRV(
         pair, data.vertexBuffer, data.vertexCount, data.stride);
     return pair;
   }
-  DescriptorPair getSRVIndexBuffer(MeshHandle handle) {
+  DescriptorPair getSRVIndexBuffer(MeshHandle handle) const {
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
-    const MeshData &data = m_staticStorage[index];
+    const MeshData &data = m_meshPool.getConstRef(index);
     DescriptorPair pair;
     dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferSRV(
         pair, data.indexBuffer, data.indexCount, sizeof(int));
@@ -85,7 +85,7 @@ public:
   inline D3D12_VERTEX_BUFFER_VIEW getVertexBufferView(MeshHandle handle) const {
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
-    const MeshData &data = m_staticStorage[index];
+    const MeshData &data = m_meshPool.getConstRef(index);
 
     D3D12_VERTEX_BUFFER_VIEW vbv;
     vbv.BufferLocation = data.vertexBuffer->GetGPUVirtualAddress();
@@ -97,7 +97,7 @@ public:
   inline D3D12_INDEX_BUFFER_VIEW getIndexBufferView(MeshHandle handle) const {
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
-    const MeshData &data = m_staticStorage[index];
+    const MeshData &data = m_meshPool.getConstRef(index);
 
     D3D12_INDEX_BUFFER_VIEW ibv;
     ibv.BufferLocation = data.indexBuffer->GetGPUVirtualAddress();
@@ -122,14 +122,14 @@ public:
   void free(const MeshHandle handle) {
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
-    MeshData &data = m_staticStorage[index];
+    MeshData &data = m_meshPool[index];
     // releasing the texture;
     data.vertexBuffer->Release();
     data.indexBuffer->Release();
     // invalidating magic number
     data.magicNumber = 0;
     // adding the index to the free list
-    m_freeSlots[m_freeSlotIndex++] = index;
+    m_meshPool.free(index);
   }
 
   void clearUploadRequests();
@@ -137,15 +137,14 @@ public:
 private:
   MeshData &getFreeMeshData(uint32_t &index);
 
-  std::vector<MeshData> m_staticStorage;
+  SparseMemoryPool<MeshData> m_meshPool;
+
   std::unordered_map<std::string, MeshHandle> m_nameToHandle;
   static const uint32_t INDEX_MASK = (1 << 16) - 1;
   static const uint32_t MAGIC_NUMBER_MASK = ~INDEX_MASK;
   static const uint32_t RESERVE_SIZE = 200;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
   DirectX::ResourceUploadBatch batch;
-  std::vector<uint32_t> m_freeSlots;
-  uint32_t m_freeSlotIndex = 0;
   std::vector<MeshUploadResource> m_uploadRequests;
 };
 

@@ -98,17 +98,13 @@ public:
   }
 
 #if SE_DEBUG
-  bool assertEverythingDealloc() {
+  bool assertEverythingDealloc() const {
     bool toReturn = true;
     for (unsigned i = 0; i < m_poolSize; ++i) {
       bool current = m_freedMemory[i];
-	  if(current == false)
-	  {
-		  int x =0;
-	  }
       toReturn &= current;
     }
-	return toReturn;
+    return toReturn;
   }
 #endif
 
