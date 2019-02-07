@@ -1,24 +1,32 @@
 #pragma once
 
 #include "SirEngine/log.h"
-#include "SirEngine/memory/SparseMemoryPool.h"
-#include <vector>
+#include "SirEngine/memory/stackAllocator.h"
 
 namespace SirEngine {
 
+struct IdentityHandle {
+  uint32_t handle;
+};
+
 class IdentityManager final {
-private:
+
 public:
-  IdentityManager() : m_identityPool(RESERVE_SIZE) {}
-  ~IdentityManager();
+  IdentityManager() = default;
+  ~IdentityManager() = default;
   IdentityManager(const IdentityManager &) = delete;
   IdentityManager &operator=(const IdentityManager &) = delete;
 
+  void initialize();
+  IdentityHandle getHandleFromName(const char *name) const ;
+  IdentityHandle createHandleFromName(const char *name);
+  const char *getNameFromhandle(const IdentityHandle handle) const;
+
 private:
-  static const uint32_t INDEX_MASK = (1 << 16) - 1;
-  static const uint32_t MAGIC_NUMBER_MASK = ~INDEX_MASK;
-  static const uint32_t RESERVE_SIZE = 200;
-  SparseMemoryPool<const char *> m_identityPool;
+  // 4 mb data
+  static const uint32_t STACK_SIZE_IN_BYTES = static_cast<uint32_t>(4e6f);
+  std::unordered_map<uint32_t, const char *> m_hashToName;
+  StackAllocator m_stack;
 };
 
 } // namespace SirEngine

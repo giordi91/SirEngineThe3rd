@@ -19,6 +19,9 @@ file(COPY "json/include/nlohmann" DESTINATION "${CMAKE_SOURCE_DIR}/SirEngineThe3
 
 file(COPY "stb/stb_image.h" DESTINATION "${CMAKE_SOURCE_DIR}/ResourceCompilerPlugins/TextureCompilerPlugin/vendors/includes/stb" )
 
+file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/SirEngineThe3rdLib/vendors/includes/farmhash)
+file(COPY "farmhash/src/farmhash.h" DESTINATION "${CMAKE_SOURCE_DIR}/SirEngineThe3rdLib/vendors/includes/farmhash" )
+
 
 add_subdirectory(imgui)
 add_subdirectory(DirectXTK12)
