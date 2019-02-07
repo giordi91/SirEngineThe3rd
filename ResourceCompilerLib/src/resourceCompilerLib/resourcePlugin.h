@@ -25,7 +25,7 @@ public:
   }
   RC_API void loadPluginsInFolder(const std::string& path);
 
-  PluginRegistry();
+  PluginRegistry() =default;
 
 private:
   std::unordered_map<std::string, ResourceProcessFunction> m_registry;

@@ -20,6 +20,9 @@ IdentityHandle IdentityManager::createHandleFromName(const char *name) {
   uint32_t hashValue = util::Hash32(name, strlen(name));
   size_t sizeOfStr = strlen(name);
 
+  auto found = m_hashToName.find(hashValue);
+  if(found != m_hashToName.end())
+  {assert(0 && "hash already generated");}
   // internalize the string
   char *data = static_cast<char *>(m_stack.allocate(sizeOfStr));
   memcpy(data, name, sizeOfStr);

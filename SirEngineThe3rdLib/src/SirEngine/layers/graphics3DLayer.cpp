@@ -4,13 +4,17 @@
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/swapChain.h"
 #include <DirectXMath.h>
+#include "SirEngine/materialManager.h"
 
 namespace SirEngine {
 
-void Graphics3DLayer::onAttach() {
+	void Graphics3DLayer::onAttach() {
   globals::MAIN_CAMERA = new Camera3DPivot();
-  globals::MAIN_CAMERA->setLookAt(0, 125, 0);
-  globals::MAIN_CAMERA->setPosition(00, 125, 60);
+  // globals::MAIN_CAMERA->setLookAt(0, 125, 0);
+  // globals::MAIN_CAMERA->setPosition(00, 125, 60);
+
+  globals::MAIN_CAMERA->setLookAt(0, 0, 0);
+  globals::MAIN_CAMERA->setPosition(00, 0, 5);
   globals::MAIN_CAMERA->updateCamera();
 
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
@@ -20,11 +24,11 @@ void Graphics3DLayer::onAttach() {
     dx12::resetAllocatorAndList(currentFc);
   }
 
-  meshHandle = dx12::MESH_MANAGER->loadMesh("data/processed/meshes/armorChest.model");
+  // meshHandle =
+  // dx12::MESH_MANAGER->loadMesh("data/processed/meshes/armorChest.model");
+  meshHandle =
+      dx12::MESH_MANAGER->loadMesh("data/processed/meshes/pSphere1.model");
   meshIndexCount = dx12::MESH_MANAGER->getIndexCount(meshHandle);
-
-  // m_mesh.loadFromFile(dx12::DEVICE, "data/processed/meshes/armorChest.model",
-  //                    dx12::GLOBAL_CBV_SRV_UAV_HEAP);
 
   dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE, currentFc);
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
@@ -49,6 +53,11 @@ void Graphics3DLayer::onAttach() {
   th = dx12::TEXTURE_MANAGER->loadTexture("data/processed/textures/uv.dds",
                                           false);
   thSRV = dx12::TEXTURE_MANAGER->getSRV(th);
+
+  //temp ugly code
+  MaterialManager materials;
+  materials.loadMaterial("data/materials/sphereMaterial.json");
+
 }
 void Graphics3DLayer::onDetach() {}
 void Graphics3DLayer::onUpdate() {
