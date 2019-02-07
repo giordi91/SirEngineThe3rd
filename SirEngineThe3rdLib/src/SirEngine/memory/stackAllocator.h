@@ -1,12 +1,15 @@
 #pragma once
 #include <cassert>
 
-// no thread safe
+// not thread safe
 namespace SirEngine {
 
 class StackAllocator final {
 public:
   StackAllocator() = default;
+  ~StackAllocator() {
+	  delete[] m_start;
+  }
 
   // request n bytes of memory
   void *allocate(const size_t sizeInByte) {
@@ -20,7 +23,6 @@ public:
   // free bits from the top of the stack
   void *free(const size_t sizeByte) {
     assert(isAllocatorValid());
-    assert(sizeByte > 0);
     m_SP -= sizeByte;
     assert(isAllocatorValid());
     return m_SP;
