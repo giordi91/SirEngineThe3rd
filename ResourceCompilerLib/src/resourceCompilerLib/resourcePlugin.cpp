@@ -7,7 +7,6 @@
 const std::string SHARED_LIBRARY_EXTENSION = "dll";
 
 PluginRegistry *PluginRegistry::registryInst = nullptr;
-PluginRegistry::PluginRegistry() {}
 
 void PluginRegistry::loadPlugin(const std::string &dllPath) {
   auto ws = std::wstring(dllPath.begin(), dllPath.end());
@@ -29,7 +28,6 @@ void PluginRegistry::loadPlugin(const std::string &dllPath) {
     FreeLibrary(loadedDLL);
   } else {
     SE_CORE_ERROR("Could not load dll: {0}", dllPath);
-    DWORD error = GetLastError();
     // Get the error message, if any.
     DWORD errorMessageID = ::GetLastError();
     LPSTR messageBuffer = nullptr;

@@ -5,15 +5,19 @@
 
 namespace SirEngine {
 namespace dx12 {
-TextureManager::~TextureManager()
-{
-	assert(m_texturePool.assertEverythingDealloc());
+TextureManager::~TextureManager() {
+  assert(m_texturePool.assertEverythingDealloc());
 }
 
 TextureHandle TextureManager::loadTexture(const char *path, bool dynamic) {
   bool res = fileExists(path);
 
   const std::string name = getFileName(path);
+
+  // generate an identity handle
+  IdentityHandle idHandle =
+      dx12::IDENTITY_MANAGER->createHandleFromName(name.c_str());
+
   assert(m_nameToHandle.find(name) == m_nameToHandle.end());
 
   assert(res);
@@ -44,7 +48,10 @@ TextureHandle TextureManager::loadTexture(const char *path, bool dynamic) {
 
   ++MAGIC_NUMBER_COUNTER;
 
+  m_idToHandle[idHandle.handle] = handle;
+#if SE_DEBUG
   m_nameToHandle[name] = handle;
+#endif
   return handle;
 }
 

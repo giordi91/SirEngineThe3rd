@@ -1,12 +1,12 @@
 #pragma once
 
 #include "DXTK12/ResourceUploadBatch.h"
+#include "SirEngine/identityManager.h"
 #include "SirEngine/log.h"
 #include "SirEngine/memory/SparseMemoryPool.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/d3dx12.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
-#include <vector>
 
 namespace SirEngine {
 namespace dx12 {
@@ -73,8 +73,8 @@ public:
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
     DescriptorPair pair;
-    dx12::createDSV(dx12::GLOBAL_DSV_HEAP, m_texturePool[index].resource,
-                    pair, format);
+    dx12::createDSV(dx12::GLOBAL_DSV_HEAP, m_texturePool[index].resource, pair,
+                    format);
     return pair;
   }
   void freeSRV(TextureHandle handle, DescriptorPair pair) const {
@@ -86,8 +86,8 @@ public:
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
     DescriptorPair pair;
-    dx12::createRTVSRV(dx12::GLOBAL_RTV_HEAP, m_texturePool.getConstRef(index).resource,
-                       pair);
+    dx12::createRTVSRV(dx12::GLOBAL_RTV_HEAP,
+                       m_texturePool.getConstRef(index).resource, pair);
     return pair;
   }
   void freeRTV(const TextureHandle handle, const DescriptorPair pair) const {
@@ -99,13 +99,6 @@ public:
     assertMagicNumber(handle);
     dx12::GLOBAL_DSV_HEAP->freeDescriptor(pair);
     assert(pair.type == DescriptorType::DSV);
-  }
-  inline TextureHandle getHandleFromName(const char *name) {
-    auto found = m_nameToHandle.find(name);
-    if (found != m_nameToHandle.end()) {
-      return found->second;
-    }
-    return TextureHandle{0};
   }
 
   // barriers
@@ -138,18 +131,40 @@ public:
     data.magicNumber = 0;
 
     // adding the index to the free list
-	m_texturePool.free(index);
+    m_texturePool.free(index);
   }
 
+  inline TextureHandle getHandle(IdentityHandle handle) {
+    auto found = m_idToHandle.find(handle.handle);
+    if (found != m_idToHandle.end()) {
+      return found->second;
+    }
+    assert(0 && "could not find requested texture handle");
+    return TextureHandle{0};
+  }
+
+#if SE_DEBUG
+  inline TextureHandle getHandleFromName(const char *name) {
+    auto found = m_nameToHandle.find(name);
+    if (found != m_nameToHandle.end()) {
+      return found->second;
+    }
+    return TextureHandle{0};
+  }
+#endif
+
 private:
+#if SE_DEBUG
   std::unordered_map<std::string, TextureHandle> m_nameToHandle;
+#endif
+  std::unordered_map<uint32_t, TextureHandle> m_idToHandle;
   static const uint32_t INDEX_MASK = (1 << 16) - 1;
   static const uint32_t MAGIC_NUMBER_MASK = ~INDEX_MASK;
   static const uint32_t RESERVE_SIZE = 200;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
   DirectX::ResourceUploadBatch batch;
   SparseMemoryPool<TextureData> m_texturePool;
-}; 
+};
 
 } // namespace dx12
 } // namespace SirEngine
