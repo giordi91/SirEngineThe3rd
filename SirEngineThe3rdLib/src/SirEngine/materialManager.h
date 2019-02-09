@@ -24,6 +24,7 @@ struct Material final {
 };
 
 struct MaterialCPU final {
+  uint32_t magicNumber;
   dx12::ConstantBufferHandle cbHandle;
   dx12::TextureHandle albedo;
   dx12::TextureHandle normal;
@@ -41,7 +42,25 @@ public:
   MaterialManager &operator=(const MaterialManager &) = delete;
 
   void initialize();
+  inline uint32_t getIndexFromHandel(MaterialHandle h) const {
+    return h.handle & INDEX_MASK;
+  }
+  inline uint32_t getMagicFromHandel(MaterialHandle h) const {
+    return (h.handle & MAGIC_NUMBER_MASK) >> 16;
+  }
+
+  inline void assertMagicNumber(MaterialHandle handle) {
+    uint32_t magic = getMagicFromHandel(handle);
+    uint32_t idx = getIndexFromHandel(handle);
+    assert(m_materialsCPU[idx].magicNumber == magic &&
+           "invalid magic handle for constant buffer");
+  }
   MaterialHandle loadMaterial(const char *path);
+  const MaterialCPU &getMaterialCpu(const MaterialHandle handle) {
+    assertMagicNumber(handle);
+    uint32_t idx = getIndexFromHandel(handle);
+	return m_materialsCPU[idx];
+  }
 
 private:
   std::unordered_map<std::string, MaterialHandle> m_nameToHandle;

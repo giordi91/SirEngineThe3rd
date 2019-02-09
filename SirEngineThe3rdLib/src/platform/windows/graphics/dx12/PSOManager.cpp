@@ -122,7 +122,7 @@ void PSOManager::loadPSOInFolder(const char *directory) {
   }
 }
 void PSOManager::loadPSOFile(const char *path) {
-  auto jobj = get_json_obj(path);
+  auto jobj = getJsonObj(path);
   std::cout << "[Engine]: Loading PSO from: " << path << std::endl;
 
   const std::string psoTypeString =

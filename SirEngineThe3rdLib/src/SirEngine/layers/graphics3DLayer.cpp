@@ -1,4 +1,5 @@
 #include "SirEngine/layers/graphics3DLayer.h"
+#include "SirEngine/assetManager.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/graphics/camera.h"
 #include "SirEngine/materialManager.h"
@@ -26,12 +27,10 @@ void Graphics3DLayer::onAttach() {
 
   // meshHandle =
   // dx12::MESH_MANAGER->loadMesh("data/processed/meshes/armorChest.model");
-  meshHandle =
-      dx12::MESH_MANAGER->loadMesh("data/processed/meshes/pSphere1.model");
-  meshIndexCount = dx12::MESH_MANAGER->getIndexCount(meshHandle);
+  // meshHandle =
+  //    dx12::MESH_MANAGER->loadMesh("data/processed/meshes/pSphere1.model");
+  // meshIndexCount = dx12::MESH_MANAGER->getIndexCount(meshHandle);
 
-  dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE, currentFc);
-  dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
 
   m_shaderManager = new SirEngine::dx12::ShaderManager();
   m_shaderManager->init();
@@ -50,13 +49,13 @@ void Graphics3DLayer::onAttach() {
   m_cameraHandle = dx12::CONSTANT_BUFFER_MANAGER->allocateDynamic(
       sizeof(dx12::CameraBuffer));
 
-  th = dx12::TEXTURE_MANAGER->loadTexture("data/processed/textures/uv.dds",
-                                          false);
-  thSRV = dx12::TEXTURE_MANAGER->getSRV(th);
+  // th = dx12::TEXTURE_MANAGER->loadTexture("data/processed/textures/uv.dds",
+  //                                        false);
+  // thSRV = dx12::TEXTURE_MANAGER->getSRV(th);
 
-  // temp ugly code
-  MaterialHandle matHandle = dx12::MATERIAL_MANAGER->loadMaterial(
-      "data/materials/sphereMaterial.json");
+  sphereH = dx12::ASSET_MANAGER->loadAsset("data/assets/sphere.json");
+  dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE, currentFc);
+  dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
 }
 void Graphics3DLayer::onDetach() {}
 void Graphics3DLayer::onUpdate() {
@@ -85,27 +84,67 @@ void Graphics3DLayer::onUpdate() {
   dx12::CONSTANT_BUFFER_MANAGER->updateConstantBuffer(m_cameraHandle,
                                                       &m_camBufferCPU);
 
-  auto *pso = m_pso->getComputePSOByName("simpleMeshPSOTex");
-  commandList->SetPipelineState(pso);
-  auto *rs = m_root->getRootSignatureFromName("simpleMeshRSTex");
-  commandList->SetGraphicsRootSignature(rs);
-  auto vview = dx12::MESH_MANAGER->getVertexBufferView(meshHandle);
-  auto iview = dx12::MESH_MANAGER->getIndexBufferView(meshHandle);
+  uint32_t materialCount;
+  const MaterialHandle *materials =
+      dx12::ASSET_MANAGER->getMaterials(materialCount);
+  uint32_t meshCount;
+  const dx12::MeshHandle *meshes = dx12::ASSET_MANAGER->getMeshes(meshCount);
 
-  commandList->IASetIndexBuffer(&iview);
-  commandList->IASetVertexBuffers(0, 1, &vview);
-  commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+  for (int i = 0; i < meshCount; ++i) {
 
-  commandList->SetGraphicsRootDescriptorTable(
-      0,
-      dx12::CONSTANT_BUFFER_MANAGER->getConstantBufferDescriptor(m_cameraHandle)
-          .gpuHandle);
-  commandList->SetGraphicsRootDescriptorTable(1, thSRV.gpuHandle);
+    auto *pso = m_pso->getComputePSOByName("simpleMeshPSOTex");
+    commandList->SetPipelineState(pso);
+    auto *rs = m_root->getRootSignatureFromName("simpleMeshRSTex");
+    commandList->SetGraphicsRootSignature(rs);
+    auto vview = dx12::MESH_MANAGER->getVertexBufferView(meshes[i]);
+    auto iview = dx12::MESH_MANAGER->getIndexBufferView(meshes[i]);
+    uint32_t meshIndexCount = dx12::MESH_MANAGER->getIndexCount(meshes[i]);
 
-  commandList->DrawIndexedInstanced(meshIndexCount, 1, 0, 0, 0);
 
-  // lets clean up some of the geo if we have any
+	const MaterialCPU& currMat =  dx12::MATERIAL_MANAGER->getMaterialCpu(materials[i]);
+   auto thSRV = dx12::TEXTURE_MANAGER->getSRV(currMat.albedo);
+
+    commandList->IASetIndexBuffer(&iview);
+    commandList->IASetVertexBuffers(0, 1, &vview);
+    commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+    commandList->SetGraphicsRootDescriptorTable(
+        0, dx12::CONSTANT_BUFFER_MANAGER
+               ->getConstantBufferDescriptor(m_cameraHandle)
+               .gpuHandle);
+
+
+
+    commandList->SetGraphicsRootDescriptorTable(1, thSRV.gpuHandle);
+
+    commandList->DrawIndexedInstanced(meshIndexCount, 1, 0, 0, 0);
+
+	  dx12::TEXTURE_MANAGER->freeSRV(currMat.albedo,thSRV);
+  }
+
   dx12::MESH_MANAGER->clearUploadRequests();
+  return;
+  // auto *pso = m_pso->getComputePSOByName("simpleMeshPSOTex");
+  // commandList->SetPipelineState(pso);
+  // auto *rs = m_root->getRootSignatureFromName("simpleMeshRSTex");
+  // commandList->SetGraphicsRootSignature(rs);
+  // auto vview = dx12::MESH_MANAGER->getVertexBufferView(meshHandle);
+  // auto iview = dx12::MESH_MANAGER->getIndexBufferView(meshHandle);
+
+  // commandList->IASetIndexBuffer(&iview);
+  // commandList->IASetVertexBuffers(0, 1, &vview);
+  // commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+  // commandList->SetGraphicsRootDescriptorTable(
+  //    0,
+  //    dx12::CONSTANT_BUFFER_MANAGER->getConstantBufferDescriptor(m_cameraHandle)
+  //        .gpuHandle);
+  // commandList->SetGraphicsRootDescriptorTable(1, thSRV.gpuHandle);
+
+  // commandList->DrawIndexedInstanced(meshIndexCount, 1, 0, 0, 0);
+
+  //// lets clean up some of the geo if we have any
+  // dx12::MESH_MANAGER->clearUploadRequests();
 }
 void Graphics3DLayer::onEvent(Event &event) {
 
@@ -120,9 +159,9 @@ void Graphics3DLayer::onEvent(Event &event) {
 
 void Graphics3DLayer::clear() {
   // temporally release resources
-  dx12::MESH_MANAGER->free(meshHandle);
-  dx12::TEXTURE_MANAGER->freeSRV(th, thSRV);
-  dx12::TEXTURE_MANAGER->free(th);
+  // dx12::MESH_MANAGER->free(meshHandle);
+  // dx12::TEXTURE_MANAGER->freeSRV(th, thSRV);
+  // dx12::TEXTURE_MANAGER->free(th);
 }
 
 bool Graphics3DLayer::onMouseButtonPressEvent(MouseButtonPressEvent &e) {

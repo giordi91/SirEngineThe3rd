@@ -52,8 +52,8 @@ private:
   dx12::ConstantBufferHandle m_cameraHandle{};
 
 
-  dx12::MeshHandle meshHandle;
-  uint32_t meshIndexCount =0 ;
+  //dx12::MeshHandle meshHandle;
+  //uint32_t meshIndexCount =0 ;
   // camera event control
   bool leftDown = false;
   bool rightDown = false;
@@ -61,8 +61,9 @@ private:
   float previousX = 0;
   float previousY = 0;
 
-  dx12::TextureHandle th;
-  dx12::DescriptorPair thSRV;
+  //dx12::TextureHandle th;
+  //dx12::DescriptorPair thSRV;
+  IdentityHandle sphereH;
 
 };
 } // namespace SirEngine

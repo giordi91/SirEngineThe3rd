@@ -71,7 +71,7 @@ inline DirectX::XMFLOAT4 getValueIfInJson(const nlohmann::json &data, const std:
 }
 #endif
 
-inline nlohmann::json get_json_obj(std::string path) {
+inline nlohmann::json getJsonObj(std::string path) {
 
   bool res = fileExists(path);
   if (res) {

@@ -6,7 +6,7 @@
 namespace SirEngine {
 namespace dx12 {
 TextureManager::~TextureManager() {
-  assert(m_texturePool.assertEverythingDealloc());
+  //assert(m_texturePool.assertEverythingDealloc());
 }
 
 TextureHandle TextureManager::loadTexture(const char *path, bool dynamic) {

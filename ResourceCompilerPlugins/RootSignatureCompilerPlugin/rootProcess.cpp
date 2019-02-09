@@ -265,7 +265,7 @@ bool shouldBindSamplers(const nlohmann::json &jobj) {
 }
 
 void processSignatureFile(const char *path, std::vector<ResultRoot> &blobs) {
-  auto jobj = get_json_obj(path);
+  auto jobj = getJsonObj(path);
   // there might be multiple signatures in the files lets loop them
 
   const std::string defaultString;

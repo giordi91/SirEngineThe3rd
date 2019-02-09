@@ -1,0 +1,5 @@
+{
+  "mesh": "data/processed/meshes/pSphere1.model",
+  "albedoTex": "data/processed/textures/uv.dds",
+  "material": "data/materials/sphereMaterial.json"
+}
