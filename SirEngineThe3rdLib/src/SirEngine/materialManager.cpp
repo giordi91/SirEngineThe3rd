@@ -16,7 +16,7 @@ static const char *NORMAL = "normal";
 namespace SirEngine {
 MaterialHandle MaterialManager::loadMaterial(const char *path) {
 
-  auto jobj = get_json_obj(path);
+  auto jobj = getJsonObj(path);
   DirectX::XMFLOAT4 zero{0.0f, 0.0f, 0.0f, 0.0f};
   DirectX::XMFLOAT4 kd = getValueIfInJson(jobj, materialKeys::KD, zero);
   DirectX::XMFLOAT4 ka = getValueIfInJson(jobj, materialKeys::KA, zero);
@@ -68,11 +68,13 @@ MaterialHandle MaterialManager::loadMaterial(const char *path) {
   matCpu.cbHandle =
       dx12::CONSTANT_BUFFER_MANAGER->allocateDynamic(sizeof(Material));
 
+  matCpu.magicNumber = MAGIC_NUMBER_COUNTER;
 
   m_materialsCPU[index] = matCpu;
   m_materials[index] = mat;
 
   MaterialHandle handle{(MAGIC_NUMBER_COUNTER << 16) | (index)};
+  ++MAGIC_NUMBER_COUNTER;
 
   return handle;
 

@@ -83,7 +83,8 @@ MeshHandle MeshManager::loadMesh(const char *path) {
   assert(res);
 
   const std::string name = getFileName(path);
-  assert(m_nameToHandle.find(name) == m_nameToHandle.end());
+  //TODO re-enable once asset manager work
+  //assert(m_nameToHandle.find(name) == m_nameToHandle.end());
 
   std::vector<char> bindaryData;
   readAllBytes(path, bindaryData);

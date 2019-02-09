@@ -1,13 +1,11 @@
 #include "SirEngine/fileUtils.h"
 #include "cxxopts/cxxopts.hpp"
-#include "resourceCompilerLib/jsonUtils.h"
 
 #include "SirEngine/log.h"
 #include "resourceCompilerLib/argsUtils.h"
 #include "resourceCompilerLib/resourcePlugin.h"
 
 #include <filesystem>
-#include <iostream>
 
 
 inline cxxopts::Options getCxxOptions() {
@@ -30,8 +28,8 @@ const std::string getExecutablePath() {
   HMODULE hModule = GetModuleHandleW(NULL);
   WCHAR path[MAX_PATH];
   GetModuleFileName(hModule, path, MAX_PATH);
-  auto exp_path = std::experimental::filesystem::path(path);
-  return exp_path.parent_path().string();
+  auto expPath = std::experimental::filesystem::path(path);
+  return expPath.parent_path().string();
 }
 
 inline std::string getPluginsArgs(const cxxopts::ParseResult &result) {

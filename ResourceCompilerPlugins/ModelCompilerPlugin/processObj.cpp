@@ -3,7 +3,6 @@
 #include "processObj.h"
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
-#include "resourceCompilerLib/jsonUtils.h"
 #include <DirectXMath.h>
 #include <limits>
 #include <unordered_map>

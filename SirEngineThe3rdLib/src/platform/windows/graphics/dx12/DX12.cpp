@@ -1,14 +1,15 @@
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "SirEngine/Window.h"
+#include "SirEngine/assetManager.h"
+#include "SirEngine/identityManager.h"
 #include "SirEngine/log.h"
+#include "SirEngine/materialManager.h"
 #include "platform/windows/graphics/dx12/adapter.h"
+#include "platform/windows/graphics/dx12/constantBufferManager.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
+#include "platform/windows/graphics/dx12/meshManager.h"
 #include "platform/windows/graphics/dx12/swapChain.h"
 #include "platform/windows/graphics/dx12/textureManager.h"
-#include "platform/windows/graphics/dx12/meshManager.h"
-#include "SirEngine/identityManager.h"
-#include "platform/windows/graphics/dx12/constantBufferManager.h"
-#include "SirEngine/materialManager.h"
 
 namespace SirEngine {
 namespace dx12 {
@@ -32,10 +33,11 @@ SwapChain *SWAP_CHAIN = nullptr;
 FrameResource FRAME_RESOURCES[FRAME_BUFFERS_COUNT];
 FrameResource *CURRENT_FRAME_RESOURCE = nullptr;
 TextureManager *TEXTURE_MANAGER = nullptr;
-MeshManager *MESH_MANAGER= nullptr;
-IdentityManager * IDENTITY_MANAGER =nullptr;
-ConstantBufferManager* CONSTANT_BUFFER_MANAGER =nullptr;
-MaterialManager* MATERIAL_MANAGER =nullptr;
+MeshManager *MESH_MANAGER = nullptr;
+IdentityManager *IDENTITY_MANAGER = nullptr;
+ConstantBufferManager *CONSTANT_BUFFER_MANAGER = nullptr;
+MaterialManager *MATERIAL_MANAGER = nullptr;
+AssetManager *ASSET_MANAGER = nullptr;
 
 bool createFrameCommand(FrameCommand *fc) {
 
@@ -170,14 +172,16 @@ bool initializeGraphicsDx12(Window *wnd, uint32_t width, uint32_t height) {
 
   CURRENT_FRAME_RESOURCE = &FRAME_RESOURCES[0];
 
-  //initialize the managers
-  //TODO add initialize to all managers for consistency and symmetry
+  // initialize the managers
+  // TODO add initialize to all managers for consistency and symmetry
   IDENTITY_MANAGER = new IdentityManager();
   IDENTITY_MANAGER->initialize();
   CONSTANT_BUFFER_MANAGER = new ConstantBufferManager();
   TEXTURE_MANAGER = new TextureManager();
   MESH_MANAGER = new MeshManager();
   MATERIAL_MANAGER = new MaterialManager();
+  ASSET_MANAGER = new AssetManager();
+  ASSET_MANAGER->initialize();
 
   // init swap chain
   auto *windowWnd = static_cast<HWND>(wnd->getNativeWindow());
@@ -190,23 +194,21 @@ bool initializeGraphicsDx12(Window *wnd, uint32_t width, uint32_t height) {
   return true;
 }
 
-bool shutdownGraphicsDx12()
-{
-	flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
+bool shutdownGraphicsDx12() {
+  flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
 
-	//free the swapchain
-	delete SWAP_CHAIN;
+  // free the swapchain
+  delete SWAP_CHAIN;
 
-	//deleting the managers
-	delete MESH_MANAGER;
-	delete TEXTURE_MANAGER;
-	return true;
+  // deleting the managers
+  delete MESH_MANAGER;
+  delete TEXTURE_MANAGER;
+  return true;
 }
 
-bool stopGraphicsDx12()
-{
-	flushCommandQueue(GLOBAL_COMMAND_QUEUE);
-	return true;
+bool stopGraphicsDx12() {
+  flushCommandQueue(GLOBAL_COMMAND_QUEUE);
+  return true;
 }
 } // namespace dx12
 } // namespace SirEngine
