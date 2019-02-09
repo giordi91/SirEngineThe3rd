@@ -31,7 +31,6 @@ void Graphics3DLayer::onAttach() {
   //    dx12::MESH_MANAGER->loadMesh("data/processed/meshes/pSphere1.model");
   // meshIndexCount = dx12::MESH_MANAGER->getIndexCount(meshHandle);
 
-
   m_shaderManager = new SirEngine::dx12::ShaderManager();
   m_shaderManager->init();
   m_shaderManager->loadShadersInFolder("data/processed/shaders/rasterization");
@@ -90,61 +89,30 @@ void Graphics3DLayer::onUpdate() {
   uint32_t meshCount;
   const dx12::MeshHandle *meshes = dx12::ASSET_MANAGER->getMeshes(meshCount);
 
-  for (int i = 0; i < meshCount; ++i) {
+  auto *pso = m_pso->getComputePSOByName("simpleMeshPSOTex");
+  commandList->SetPipelineState(pso);
+  auto *rs = m_root->getRootSignatureFromName("simpleMeshRSTex");
+  commandList->SetGraphicsRootSignature(rs);
+  for (uint32_t i = 0; i < meshCount; ++i) {
 
-    auto *pso = m_pso->getComputePSOByName("simpleMeshPSOTex");
-    commandList->SetPipelineState(pso);
-    auto *rs = m_root->getRootSignatureFromName("simpleMeshRSTex");
-    commandList->SetGraphicsRootSignature(rs);
-    auto vview = dx12::MESH_MANAGER->getVertexBufferView(meshes[i]);
-    auto iview = dx12::MESH_MANAGER->getIndexBufferView(meshes[i]);
-    uint32_t meshIndexCount = dx12::MESH_MANAGER->getIndexCount(meshes[i]);
-
-
-	const MaterialCPU& currMat =  dx12::MATERIAL_MANAGER->getMaterialCpu(materials[i]);
-   auto thSRV = dx12::TEXTURE_MANAGER->getSRV(currMat.albedo);
-
-    commandList->IASetIndexBuffer(&iview);
-    commandList->IASetVertexBuffers(0, 1, &vview);
-    commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    const MaterialCPU &currMat =
+        dx12::MATERIAL_MANAGER->getMaterialCpu(materials[i]);
+    auto thSRV = dx12::TEXTURE_MANAGER->getSRV(currMat.albedo);
 
     commandList->SetGraphicsRootDescriptorTable(
         0, dx12::CONSTANT_BUFFER_MANAGER
                ->getConstantBufferDescriptor(m_cameraHandle)
                .gpuHandle);
 
-
-
     commandList->SetGraphicsRootDescriptorTable(1, thSRV.gpuHandle);
 
-    commandList->DrawIndexedInstanced(meshIndexCount, 1, 0, 0, 0);
+    dx12::MESH_MANAGER->bindMeshAndRender(meshes[i], currentFc);
 
-	  dx12::TEXTURE_MANAGER->freeSRV(currMat.albedo,thSRV);
+    dx12::TEXTURE_MANAGER->freeSRV(currMat.albedo, thSRV);
   }
 
+  // making any clean up for the mesh manager if we have to
   dx12::MESH_MANAGER->clearUploadRequests();
-  return;
-  // auto *pso = m_pso->getComputePSOByName("simpleMeshPSOTex");
-  // commandList->SetPipelineState(pso);
-  // auto *rs = m_root->getRootSignatureFromName("simpleMeshRSTex");
-  // commandList->SetGraphicsRootSignature(rs);
-  // auto vview = dx12::MESH_MANAGER->getVertexBufferView(meshHandle);
-  // auto iview = dx12::MESH_MANAGER->getIndexBufferView(meshHandle);
-
-  // commandList->IASetIndexBuffer(&iview);
-  // commandList->IASetVertexBuffers(0, 1, &vview);
-  // commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-  // commandList->SetGraphicsRootDescriptorTable(
-  //    0,
-  //    dx12::CONSTANT_BUFFER_MANAGER->getConstantBufferDescriptor(m_cameraHandle)
-  //        .gpuHandle);
-  // commandList->SetGraphicsRootDescriptorTable(1, thSRV.gpuHandle);
-
-  // commandList->DrawIndexedInstanced(meshIndexCount, 1, 0, 0, 0);
-
-  //// lets clean up some of the geo if we have any
-  // dx12::MESH_MANAGER->clearUploadRequests();
 }
 void Graphics3DLayer::onEvent(Event &event) {
 

@@ -132,6 +132,23 @@ public:
     m_meshPool.free(index);
   }
 
+  inline void bindMeshForRender(const MeshHandle handle,
+                                FrameCommand *fc) const {
+    auto vview = getVertexBufferView(handle);
+    auto iview = getIndexBufferView(handle);
+    fc->commandList->IASetIndexBuffer(&iview);
+    fc->commandList->IASetVertexBuffers(0, 1, &vview);
+    fc->commandList->IASetPrimitiveTopology(
+        D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+  }
+  inline void bindMeshAndRender(const MeshHandle handle,
+                                FrameCommand *fc) const {
+    bindMeshForRender(handle, fc);
+    uint32_t meshIndexCount = getIndexCount(handle);
+
+    fc->commandList->DrawIndexedInstanced(meshIndexCount, 1, 0, 0, 0);
+  }
+
   void clearUploadRequests();
 
 private:

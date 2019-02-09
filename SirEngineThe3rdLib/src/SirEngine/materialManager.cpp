@@ -3,6 +3,7 @@
 #include "SirEngine/fileUtils.h"
 #include "nlohmann/json.hpp"
 #include <DirectXMath.h>
+#include <unordered_map>
 
 namespace materialKeys {
 static const char *KD = "kd";
@@ -10,10 +11,37 @@ static const char *KS = "ks";
 static const char *KA = "ka";
 static const char *ALBEDO = "albedo";
 static const char *NORMAL = "normal";
+static const char *FLAGS = "flags";
+static const std::unordered_map<std::string, SirEngine::SHADER_PASS_FLAGS>
+    stringToShaderFlag{{"forward", SirEngine::SHADER_PASS_FLAGS::FORWARD}};
 
 } // namespace materialKeys
 
 namespace SirEngine {
+inline uint32_t stringToActualShaderFlag(const std::string &flag) {
+  auto found = materialKeys::stringToShaderFlag.find(flag);
+  if (found != materialKeys::stringToShaderFlag.end()) {
+    return found->second;
+  }
+  assert(0 && "could not map requested shader flag");
+  return 0;
+}
+
+uint32_t parseFlags(const nlohmann::json &jobj) {
+  if (jobj.find(materialKeys::FLAGS) == jobj.end()) {
+    assert(0 && "cannot find flags in material");
+    return 0;
+  }
+  const auto &fjobj = jobj[materialKeys::FLAGS];
+  uint32_t flags = 0;
+  for (const auto &flag : fjobj) {
+    const std::string sFlag = flag.get<std::string>();
+    uint32_t currentFlag = stringToActualShaderFlag(sFlag);
+    flags |= currentFlag;
+  }
+  return flags;
+}
+
 MaterialHandle MaterialManager::loadMaterial(const char *path) {
 
   auto jobj = getJsonObj(path);
@@ -47,6 +75,8 @@ MaterialHandle MaterialManager::loadMaterial(const char *path) {
     // TODO provide white texture as default;
   }
 
+  uint32_t flags = parseFlags(jobj);
+
   Material mat;
   mat.kDR = kd.x;
   mat.kDG = kd.y;
@@ -68,7 +98,8 @@ MaterialHandle MaterialManager::loadMaterial(const char *path) {
   matCpu.cbHandle =
       dx12::CONSTANT_BUFFER_MANAGER->allocateDynamic(sizeof(Material));
 
-  matCpu.magicNumber = MAGIC_NUMBER_COUNTER;
+  m_materialsMagic[index] = MAGIC_NUMBER_COUNTER;
+  matCpu.shaderFlags = flags;
 
   m_materialsCPU[index] = matCpu;
   m_materials[index] = mat;
