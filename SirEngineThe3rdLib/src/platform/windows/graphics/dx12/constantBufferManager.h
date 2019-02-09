@@ -3,13 +3,11 @@
 #include "SirEngine/log.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include <vector>
+#include "SirEngine/handle.h"
 
 namespace SirEngine {
 namespace dx12 {
 
-struct ConstantBufferHandle final {
-  uint32_t handle;
-};
 
 class ConstantBufferManager final {
 public:

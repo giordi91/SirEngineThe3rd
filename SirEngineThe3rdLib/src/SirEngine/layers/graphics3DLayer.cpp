@@ -2,7 +2,6 @@
 #include "SirEngine/assetManager.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/graphics/camera.h"
-#include "SirEngine/materialManager.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/swapChain.h"
 #include <DirectXMath.h>
@@ -84,8 +83,10 @@ void Graphics3DLayer::onUpdate() {
                                                       &m_camBufferCPU);
 
   uint32_t materialCount;
-  const MaterialHandle *materials =
-      dx12::ASSET_MANAGER->getMaterials(materialCount);
+  //const MaterialHandle *materials =
+  //    dx12::ASSET_MANAGER->getMaterials(materialCount);
+  const MaterialCPU* materials =
+      dx12::ASSET_MANAGER->getMaterialsCPU(materialCount);
   uint32_t meshCount;
   const dx12::MeshHandle *meshes = dx12::ASSET_MANAGER->getMeshes(meshCount);
 
@@ -95,9 +96,7 @@ void Graphics3DLayer::onUpdate() {
   commandList->SetGraphicsRootSignature(rs);
   for (uint32_t i = 0; i < meshCount; ++i) {
 
-    const MaterialCPU &currMat =
-        dx12::MATERIAL_MANAGER->getMaterialCpu(materials[i]);
-    auto thSRV = dx12::TEXTURE_MANAGER->getSRV(currMat.albedo);
+    auto thSRV = dx12::TEXTURE_MANAGER->getSRV(materials[i].albedo);
 
     commandList->SetGraphicsRootDescriptorTable(
         0, dx12::CONSTANT_BUFFER_MANAGER
@@ -108,7 +107,7 @@ void Graphics3DLayer::onUpdate() {
 
     dx12::MESH_MANAGER->bindMeshAndRender(meshes[i], currentFc);
 
-    dx12::TEXTURE_MANAGER->freeSRV(currMat.albedo, thSRV);
+    dx12::TEXTURE_MANAGER->freeSRV(materials[i].albedo, thSRV);
   }
 
   // making any clean up for the mesh manager if we have to
