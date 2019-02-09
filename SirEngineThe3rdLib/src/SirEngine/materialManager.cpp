@@ -14,17 +14,18 @@ static const char *NORMAL = "normal";
 } // namespace materialKeys
 
 namespace SirEngine {
-void MaterialManager::loadMaterial(const char *path) {
+MaterialHandle MaterialManager::loadMaterial(const char *path) {
+
   auto jobj = get_json_obj(path);
   DirectX::XMFLOAT4 zero{0.0f, 0.0f, 0.0f, 0.0f};
   DirectX::XMFLOAT4 kd = getValueIfInJson(jobj, materialKeys::KD, zero);
   DirectX::XMFLOAT4 ka = getValueIfInJson(jobj, materialKeys::KA, zero);
   DirectX::XMFLOAT4 ks = getValueIfInJson(jobj, materialKeys::KS, zero);
 
-  const std::string empty{""};
+  const std::string empty;
   const std::string albedoName =
       getValueIfInJson(jobj, materialKeys::ALBEDO, empty);
-  const std::string normalName=
+  const std::string normalName =
       getValueIfInJson(jobj, materialKeys::NORMAL, empty);
 
   dx12::TextureHandle albedoTex{0};
@@ -34,33 +35,48 @@ void MaterialManager::loadMaterial(const char *path) {
     IdentityHandle albedoH =
         dx12::IDENTITY_MANAGER->getHandleFromName(albedoName.c_str());
     albedoTex = dx12::TEXTURE_MANAGER->getHandle(albedoH);
-  }
-  else
-  {
-	  //TODO provide white texture as default;
+
+  } else {
+    // TODO provide white texture as default;
   }
   if (!normalName.empty()) {
-    IdentityHandle normalH=
+    IdentityHandle normalH =
         dx12::IDENTITY_MANAGER->getHandleFromName(albedoName.c_str());
-    normalTex= dx12::TEXTURE_MANAGER->getHandle(normalH);
-  }
-  else
-  {
-	  //TODO provide white texture as default;
+    normalTex = dx12::TEXTURE_MANAGER->getHandle(normalH);
+  } else {
+    // TODO provide white texture as default;
   }
 
+  Material mat;
+  mat.kDR = kd.x;
+  mat.kDG = kd.y;
+  mat.kDB = kd.z;
+  mat.kAR = ka.x;
+  mat.kAG = ka.y;
+  mat.kAB = ka.z;
+  mat.kSR = ks.x;
+  mat.kSG = ks.y;
+  mat.kSB = ks.z;
   MaterialCPU matCpu;
-  matCpu.mat.kDR = kd.x;
-  matCpu.mat.kDG = kd.y;
-  matCpu.mat.kDB = kd.z;
-  matCpu.mat.kAR = ka.x;
-  matCpu.mat.kAG = ka.y;
-  matCpu.mat.kAB = ka.z;
-  matCpu.mat.kSR = ks.x;
-  matCpu.mat.kSG = ks.y;
-  matCpu.mat.kSB = ks.z;
   matCpu.albedo = albedoTex;
   matCpu.normal = normalTex;
+
+  uint32_t index;
+  m_idxPool.getFreeMemoryData(index);
+
+  // we need to allocate  constant buffer
+  matCpu.cbHandle =
+      dx12::CONSTANT_BUFFER_MANAGER->allocateDynamic(sizeof(Material));
+
+
+  m_materialsCPU[index] = matCpu;
+  m_materials[index] = mat;
+
+  MaterialHandle handle{(MAGIC_NUMBER_COUNTER << 16) | (index)};
+
+  return handle;
+
+  // material handle
 }
 
 } // namespace SirEngine

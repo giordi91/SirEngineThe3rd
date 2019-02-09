@@ -50,7 +50,6 @@ private:
   dx12::ShadersLayoutRegistry *m_reg{};
   temp::rendering::PSOManager *m_pso{};
   dx12::ConstantBufferHandle m_cameraHandle{};
-  dx12::ConstantBufferManager m_constantBufferManager;
 
 
   dx12::MeshHandle meshHandle;

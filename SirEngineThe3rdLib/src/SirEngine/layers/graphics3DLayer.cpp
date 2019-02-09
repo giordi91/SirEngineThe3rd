@@ -1,14 +1,14 @@
 #include "SirEngine/layers/graphics3DLayer.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/graphics/camera.h"
+#include "SirEngine/materialManager.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/swapChain.h"
 #include <DirectXMath.h>
-#include "SirEngine/materialManager.h"
 
 namespace SirEngine {
 
-	void Graphics3DLayer::onAttach() {
+void Graphics3DLayer::onAttach() {
   globals::MAIN_CAMERA = new Camera3DPivot();
   // globals::MAIN_CAMERA->setLookAt(0, 125, 0);
   // globals::MAIN_CAMERA->setPosition(00, 125, 60);
@@ -47,17 +47,16 @@ namespace SirEngine {
   m_pso->loadPSOInFolder("data/pso");
 
   // ask for the camera buffer handle;
-  m_cameraHandle =
-      m_constantBufferManager.allocateDynamic(sizeof(dx12::CameraBuffer));
+  m_cameraHandle = dx12::CONSTANT_BUFFER_MANAGER->allocateDynamic(
+      sizeof(dx12::CameraBuffer));
 
   th = dx12::TEXTURE_MANAGER->loadTexture("data/processed/textures/uv.dds",
                                           false);
   thSRV = dx12::TEXTURE_MANAGER->getSRV(th);
 
-  //temp ugly code
-  MaterialManager materials;
-  materials.loadMaterial("data/materials/sphereMaterial.json");
-
+  // temp ugly code
+  MaterialHandle matHandle = dx12::MATERIAL_MANAGER->loadMaterial(
+      "data/materials/sphereMaterial.json");
 }
 void Graphics3DLayer::onDetach() {}
 void Graphics3DLayer::onUpdate() {
@@ -83,7 +82,8 @@ void Graphics3DLayer::onUpdate() {
   m_camBufferCPU.mvp = DirectX::XMMatrixTranspose(
       globals::MAIN_CAMERA->getMVP(DirectX::XMMatrixIdentity()));
 
-  m_constantBufferManager.updateConstantBuffer(m_cameraHandle, &m_camBufferCPU);
+  dx12::CONSTANT_BUFFER_MANAGER->updateConstantBuffer(m_cameraHandle,
+                                                      &m_camBufferCPU);
 
   auto *pso = m_pso->getComputePSOByName("simpleMeshPSOTex");
   commandList->SetPipelineState(pso);
@@ -97,8 +97,9 @@ void Graphics3DLayer::onUpdate() {
   commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
   commandList->SetGraphicsRootDescriptorTable(
-      0, m_constantBufferManager.getConstantBufferDescriptor(m_cameraHandle)
-             .gpuHandle);
+      0,
+      dx12::CONSTANT_BUFFER_MANAGER->getConstantBufferDescriptor(m_cameraHandle)
+          .gpuHandle);
   commandList->SetGraphicsRootDescriptorTable(1, thSRV.gpuHandle);
 
   commandList->DrawIndexedInstanced(meshIndexCount, 1, 0, 0, 0);
@@ -118,7 +119,7 @@ void Graphics3DLayer::onEvent(Event &event) {
 }
 
 void Graphics3DLayer::clear() {
-  // temporarerly release resources
+  // temporally release resources
   dx12::MESH_MANAGER->free(meshHandle);
   dx12::TEXTURE_MANAGER->freeSRV(th, thSRV);
   dx12::TEXTURE_MANAGER->free(th);

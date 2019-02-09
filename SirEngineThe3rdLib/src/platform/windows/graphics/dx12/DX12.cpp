@@ -7,6 +7,8 @@
 #include "platform/windows/graphics/dx12/textureManager.h"
 #include "platform/windows/graphics/dx12/meshManager.h"
 #include "SirEngine/identityManager.h"
+#include "platform/windows/graphics/dx12/constantBufferManager.h"
+#include "SirEngine/materialManager.h"
 
 namespace SirEngine {
 namespace dx12 {
@@ -32,6 +34,8 @@ FrameResource *CURRENT_FRAME_RESOURCE = nullptr;
 TextureManager *TEXTURE_MANAGER = nullptr;
 MeshManager *MESH_MANAGER= nullptr;
 IdentityManager * IDENTITY_MANAGER =nullptr;
+ConstantBufferManager* CONSTANT_BUFFER_MANAGER =nullptr;
+MaterialManager* MATERIAL_MANAGER =nullptr;
 
 bool createFrameCommand(FrameCommand *fc) {
 
@@ -167,10 +171,13 @@ bool initializeGraphicsDx12(Window *wnd, uint32_t width, uint32_t height) {
   CURRENT_FRAME_RESOURCE = &FRAME_RESOURCES[0];
 
   //initialize the managers
-  TEXTURE_MANAGER = new TextureManager();
-  MESH_MANAGER = new MeshManager();
+  //TODO add initialize to all managers for consistency and symmetry
   IDENTITY_MANAGER = new IdentityManager();
   IDENTITY_MANAGER->initialize();
+  CONSTANT_BUFFER_MANAGER = new ConstantBufferManager();
+  TEXTURE_MANAGER = new TextureManager();
+  MESH_MANAGER = new MeshManager();
+  MATERIAL_MANAGER = new MaterialManager();
 
   // init swap chain
   auto *windowWnd = static_cast<HWND>(wnd->getNativeWindow());

@@ -2,6 +2,7 @@
 
 #include "SirEngine/log.h"
 // TODO texture manager should not be a dx12 one
+#include "platform/windows/graphics/dx12/constantBufferManager.h"
 #include "platform/windows/graphics/dx12/textureManager.h"
 
 namespace SirEngine {
@@ -10,7 +11,7 @@ struct MaterialHandle final {
   uint32_t handle;
 };
 
-struct Material {
+struct Material final {
   float kDR;
   float kDG;
   float kDB;
@@ -22,8 +23,8 @@ struct Material {
   float kSB;
 };
 
-struct MaterialCPU {
-	//ConstantBufferHandle
+struct MaterialCPU final {
+  dx12::ConstantBufferHandle cbHandle;
   dx12::TextureHandle albedo;
   dx12::TextureHandle normal;
 };
@@ -31,13 +32,16 @@ struct MaterialCPU {
 class MaterialManager final {
 
 public:
-  MaterialManager() = default;
+  MaterialManager() : m_idxPool(RESERVE_SIZE) {
+    m_materialsCPU.resize(RESERVE_SIZE);
+    m_materials.resize(RESERVE_SIZE);
+  };
   ~MaterialManager() = default;
   MaterialManager(const MaterialManager &) = delete;
   MaterialManager &operator=(const MaterialManager &) = delete;
 
   void initialize();
-  void loadMaterial(const char *path);
+  MaterialHandle loadMaterial(const char *path);
 
 private:
   std::unordered_map<std::string, MaterialHandle> m_nameToHandle;
@@ -46,8 +50,9 @@ private:
   static const uint32_t RESERVE_SIZE = 200;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
 
-  SparseMemoryPool<MaterialCPU> m_materialCPU;
-  SparseMemoryPool<MaterialCPU> m_materialGPU;
+  SparseMemoryPool<uint32_t> m_idxPool;
+  std::vector<MaterialCPU> m_materialsCPU;
+  std::vector<Material> m_materials;
 };
 
 } // namespace SirEngine
