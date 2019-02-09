@@ -3,5 +3,6 @@
   "ks" : [1.0,1.0,1.0,1.0],
   "ka" : [0.1,0.1,0.1,1.0],
   "albedo" :  "uv",
-  "normal" :  ""
+  "normal" :  "",
+  "flags" :  ["forward"]
 }

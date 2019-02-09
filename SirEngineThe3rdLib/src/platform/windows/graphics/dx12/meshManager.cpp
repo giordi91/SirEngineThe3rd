@@ -105,6 +105,7 @@ MeshHandle MeshManager::loadMesh(const char *path) {
 
   // upload the data on the GPU
   uint32_t index;
+
   MeshData &meshData = m_meshPool.getFreeMemoryData(index);
   meshData.indexCount = indexCount;
   meshData.vertexCount = vertexCount;

@@ -23,11 +23,13 @@ struct Material final {
   float kSB;
 };
 
+enum SHADER_PASS_FLAGS { FORWARD = 1 };
+
 struct MaterialCPU final {
-  uint32_t magicNumber;
   dx12::ConstantBufferHandle cbHandle;
   dx12::TextureHandle albedo;
   dx12::TextureHandle normal;
+  uint32_t shaderFlags = 0;
 };
 
 class MaterialManager final {
@@ -35,7 +37,7 @@ class MaterialManager final {
 public:
   MaterialManager() : m_idxPool(RESERVE_SIZE) {
     m_materialsCPU.resize(RESERVE_SIZE);
-    m_materials.resize(RESERVE_SIZE);
+    m_materials.resize(RESERVE_SIZE), m_materialsMagic.resize(RESERVE_SIZE);
   };
   ~MaterialManager() = default;
   MaterialManager(const MaterialManager &) = delete;
@@ -45,21 +47,21 @@ public:
   inline uint32_t getIndexFromHandel(MaterialHandle h) const {
     return h.handle & INDEX_MASK;
   }
-  inline uint32_t getMagicFromHandel(MaterialHandle h) const {
-    return (h.handle & MAGIC_NUMBER_MASK) >> 16;
+  inline uint16_t getMagicFromHandel(MaterialHandle h) const {
+    return static_cast<uint16_t>((h.handle & MAGIC_NUMBER_MASK) >> 16);
   }
 
   inline void assertMagicNumber(MaterialHandle handle) {
-    uint32_t magic = getMagicFromHandel(handle);
+    uint16_t magic = getMagicFromHandel(handle);
     uint32_t idx = getIndexFromHandel(handle);
-    assert(m_materialsCPU[idx].magicNumber == magic &&
+    assert(m_materialsMagic[idx] == magic &&
            "invalid magic handle for constant buffer");
   }
   MaterialHandle loadMaterial(const char *path);
   const MaterialCPU &getMaterialCpu(const MaterialHandle handle) {
     assertMagicNumber(handle);
     uint32_t idx = getIndexFromHandel(handle);
-	return m_materialsCPU[idx];
+    return m_materialsCPU[idx];
   }
 
 private:
@@ -72,6 +74,7 @@ private:
   SparseMemoryPool<uint32_t> m_idxPool;
   std::vector<MaterialCPU> m_materialsCPU;
   std::vector<Material> m_materials;
+  std::vector<uint16_t> m_materialsMagic;
 };
 
 } // namespace SirEngine
