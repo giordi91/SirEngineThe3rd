@@ -1,16 +1,16 @@
 #pragma once
 
-#include "SirEngine/log.h"
-// TODO texture manager should not be a dx12 one
-#include "platform/windows/graphics/dx12/constantBufferManager.h"
-#include "platform/windows/graphics/dx12/textureManager.h"
+#include "SirEngine/handle.h"
+#include <vector>
 
 namespace SirEngine {
 
-struct MaterialHandle final {
-  uint32_t handle;
+struct MaterialCPU final {
+  ConstantBufferHandle cbHandle;
+  TextureHandle albedo;
+  TextureHandle normal;
+  uint32_t shaderFlags = 0;
 };
-
 struct Material final {
   float kDR;
   float kDG;
@@ -22,16 +22,22 @@ struct Material final {
   float kSG;
   float kSB;
 };
-
-enum SHADER_PASS_FLAGS { FORWARD = 1 };
-
-struct MaterialCPU final {
-  dx12::ConstantBufferHandle cbHandle;
-  dx12::TextureHandle albedo;
-  dx12::TextureHandle normal;
-  uint32_t shaderFlags = 0;
+namespace Materials {
+struct MaterialsMemory {
+  std::vector<MaterialHandle> *m_materialHandles;
+  std::vector<MaterialCPU> *m_materialsCPU;
+  std::vector<Material> *m_materials;
+  std::vector<uint16_t> *m_materialsMagic;
 };
 
+MaterialHandle loadMaterial(const char *path, uint32_t index,
+                            MaterialsMemory& memory);
+
+enum SHADER_PASS_FLAGS { FORWARD = 1 };
+} // namespace Materials
+
+
+/*
 class MaterialManager final {
 
 public:
@@ -76,5 +82,6 @@ private:
   std::vector<Material> m_materials;
   std::vector<uint16_t> m_materialsMagic;
 };
+*/
 
 } // namespace SirEngine

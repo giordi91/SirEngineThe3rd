@@ -7,13 +7,11 @@
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/d3dx12.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
+#include "SirEngine/handle.h"
 
 namespace SirEngine {
 namespace dx12 {
 
-struct TextureHandle final {
-  uint32_t handle;
-};
 
 enum DebugTextureFlags { DEPTH = 1 };
 

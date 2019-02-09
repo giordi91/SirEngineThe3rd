@@ -7,7 +7,6 @@
 
 namespace SirEngine {
 class IdentityManager;
-class MaterialManager;
 class Window;
 class AssetManager;
 namespace dx12 {
@@ -117,7 +116,6 @@ extern TextureManager *TEXTURE_MANAGER;
 extern MeshManager *MESH_MANAGER;
 extern IdentityManager *IDENTITY_MANAGER;
 extern ConstantBufferManager* CONSTANT_BUFFER_MANAGER;
-extern MaterialManager* MATERIAL_MANAGER;
 extern AssetManager* ASSET_MANAGER;
 
 inline UINT64 insertFenceToGlobalQueue() {

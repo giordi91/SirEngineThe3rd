@@ -49,7 +49,7 @@ void newFrame() {
   auto *commandList = dx12::CURRENT_FRAME_RESOURCE->fc.commandList;
   D3D12_RESOURCE_BARRIER rtbarrier[1];
 
-  dx12::TextureHandle backBufferH =
+  TextureHandle backBufferH =
       dx12::SWAP_CHAIN->currentBackBufferTexture();
   int rtcounter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
       backBufferH, D3D12_RESOURCE_STATE_RENDER_TARGET, rtbarrier, 0);
@@ -81,7 +81,7 @@ void dispatchFrame() {
   // finally transition the resource to be present
   auto *commandList = dx12::CURRENT_FRAME_RESOURCE->fc.commandList;
 
-  dx12::TextureHandle backBufferH =
+  TextureHandle backBufferH =
       dx12::SWAP_CHAIN->currentBackBufferTexture();
   int rtcounter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
       backBufferH, D3D12_RESOURCE_STATE_PRESENT, rtbarrier, 0);
