@@ -52,6 +52,7 @@ void Graphics3DLayer::onAttach() {
   // thSRV = dx12::TEXTURE_MANAGER->getSRV(th);
 
   sphereH = dx12::ASSET_MANAGER->loadAsset("data/assets/sphere.json");
+  dx12::ASSET_MANAGER->loadAsset("data/assets/sphere.json");
   dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE, currentFc);
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
 }

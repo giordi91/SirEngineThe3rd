@@ -10,6 +10,7 @@
 #include "platform/windows/graphics/dx12/textureManager.h"
 #include "platform/windows/graphics/dx12/meshManager.h"
 #include <directxmath.h>
+#include "SirEngine/identityManager.h"
 
 namespace SirEngine {
 

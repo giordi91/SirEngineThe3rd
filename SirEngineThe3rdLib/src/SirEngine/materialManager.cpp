@@ -15,10 +15,8 @@ static const char *KA = "ka";
 static const char *ALBEDO = "albedo";
 static const char *NORMAL = "normal";
 static const char *FLAGS = "flags";
-static const std::unordered_map<std::string,
-                                SirEngine::Materials::SHADER_PASS_FLAGS>
-    stringToShaderFlag{
-        {"forward", SirEngine::Materials::SHADER_PASS_FLAGS::FORWARD}};
+static const std::unordered_map<std::string, SirEngine::SHADER_PASS_FLAGS>
+    stringToShaderFlag{{"forward", SirEngine::SHADER_PASS_FLAGS::FORWARD}};
 
 } // namespace materialKeys
 
@@ -46,12 +44,18 @@ uint32_t parseFlags(const nlohmann::json &jobj) {
   }
   return flags;
 }
-namespace Materials {
 
-uint16_t MAGIC_NUMBER_COUNTER = 1;
+MaterialHandle MaterialManager::loadMaterial(const char *path,
+                                             uint32_t runtimeIndex,
+                                             MaterialRuntime *runtimeMemory) {
 
-MaterialHandle loadMaterial(const char *path, uint32_t index,
-                            MaterialsMemory &memory) {
+  // for materials we do not perform the check whether is loaded or not
+  // each object is going to get it s own material copy.
+  // if that starts to be an issue we will add extra logic to deal with this.
+
+  assert(fileExists(path));
+  const std::string name = getFileName(path);
+
   auto jobj = getJsonObj(path);
   DirectX::XMFLOAT4 zero{0.0f, 0.0f, 0.0f, 0.0f};
   DirectX::XMFLOAT4 kd = getValueIfInJson(jobj, materialKeys::KD, zero);
@@ -68,17 +72,12 @@ MaterialHandle loadMaterial(const char *path, uint32_t index,
   TextureHandle normalTex{0};
 
   if (!albedoName.empty()) {
-    IdentityHandle albedoH =
-        dx12::IDENTITY_MANAGER->getHandleFromName(albedoName.c_str());
-    albedoTex = dx12::TEXTURE_MANAGER->getHandle(albedoH);
-
+    albedoTex = dx12::TEXTURE_MANAGER->loadTexture(albedoName.c_str());
   } else {
     // TODO provide white texture as default;
   }
   if (!normalName.empty()) {
-    IdentityHandle normalH =
-        dx12::IDENTITY_MANAGER->getHandleFromName(normalName.c_str());
-    normalTex = dx12::TEXTURE_MANAGER->getHandle(normalH);
+    normalTex = dx12::TEXTURE_MANAGER->loadTexture(normalName.c_str());
   } else {
     // TODO provide white texture as default;
   }
@@ -95,6 +94,7 @@ MaterialHandle loadMaterial(const char *path, uint32_t index,
   mat.kSR = ks.x;
   mat.kSG = ks.y;
   mat.kSB = ks.z;
+
   MaterialRuntime matCpu;
   matCpu.albedo = albedoTex;
   matCpu.normal = normalTex;
@@ -102,18 +102,20 @@ MaterialHandle loadMaterial(const char *path, uint32_t index,
   // we need to allocate  constant buffer
   matCpu.cbHandle =
       dx12::CONSTANT_BUFFER_MANAGER->allocateDynamic(sizeof(Material));
-
-  (*memory.m_materialsMagic)[index] = MAGIC_NUMBER_COUNTER;
+  uint32_t index;
+  m_idxPool.getFreeMemoryData(index);
+  m_materialsMagic[index] = MAGIC_NUMBER_COUNTER;
   matCpu.shaderFlags = flags;
 
-  (*memory.m_materialsCPU)[index] = matCpu;
-  (*memory.m_materials)[index] = mat;
+  runtimeMemory[runtimeIndex] = matCpu;
+  m_materials[index] = mat;
 
   MaterialHandle handle{(MAGIC_NUMBER_COUNTER << 16) | (index)};
   ++MAGIC_NUMBER_COUNTER;
 
+  m_nameToHandle[name] = handle;
+
   return handle;
 }
-} // namespace Materials
 
 } // namespace SirEngine

@@ -6,53 +6,46 @@
 namespace SirEngine {
 namespace dx12 {
 TextureManager::~TextureManager() {
-  //assert(m_texturePool.assertEverythingDealloc());
+  // assert(m_texturePool.assertEverythingDealloc());
 }
 
-TextureHandle TextureManager::loadTexture(const char *path, bool dynamic) {
+TextureHandle TextureManager::loadTexture(const char *path) {
   bool res = fileExists(path);
+  assert(res);
 
   const std::string name = getFileName(path);
 
-  // generate an identity handle
-  IdentityHandle idHandle =
-      dx12::IDENTITY_MANAGER->createHandleFromName(name.c_str());
 
-  assert(m_nameToHandle.find(name) == m_nameToHandle.end());
+  auto found = m_nameToHandle.find(name);
+  if (found == m_nameToHandle.end()) {
 
-  assert(res);
 
-  if (dynamic) {
-    assert(0 && "dynamic textures are not yet implemented");
+    uint32_t index;
+    TextureData &data = m_texturePool.getFreeMemoryData(index);
+    const std::string paths(path);
+    const std::wstring pathws(paths.begin(), paths.end());
+    std::unique_ptr<uint8_t[]> ddsData;
+    std::vector<D3D12_SUBRESOURCE_DATA> subresources;
+
+    batch.Begin();
+    DirectX::CreateDDSTextureFromFile(dx12::DEVICE, batch, pathws.c_str(),
+                                      &data.resource, false);
+    batch.End(dx12::GLOBAL_COMMAND_QUEUE);
+
+    // data is now loaded need to create handle etc
+    TextureHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
+
+    data.magicNumber = MAGIC_NUMBER_COUNTER;
+    data.format = data.resource->GetDesc().Format;
+    data.state = D3D12_RESOURCE_STATE_COMMON;
+
+    ++MAGIC_NUMBER_COUNTER;
+
+    m_nameToHandle[name] = handle;
+    return handle;
   }
-
-  uint32_t index;
-  TextureData &data = m_texturePool.getFreeMemoryData(index);
-  const std::string paths(path);
-  const std::wstring pathws(paths.begin(), paths.end());
-  std::unique_ptr<uint8_t[]> ddsData;
-  std::vector<D3D12_SUBRESOURCE_DATA> subresources;
-
-  batch.Begin();
-  DirectX::CreateDDSTextureFromFile(dx12::DEVICE, batch, pathws.c_str(),
-                                    &data.resource, false);
-  batch.End(dx12::GLOBAL_COMMAND_QUEUE);
-
-  // data is now loaded need to create handle etc
-  TextureHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
-
-  data.magicNumber = MAGIC_NUMBER_COUNTER;
-  data.format = data.resource->GetDesc().Format;
-  data.state = D3D12_RESOURCE_STATE_COMMON;
-  // m_staticStorage.push_back(data);
-
-  ++MAGIC_NUMBER_COUNTER;
-
-  m_idToHandle[idHandle.handle] = handle;
-#if SE_DEBUG
-  m_nameToHandle[name] = handle;
-#endif
-  return handle;
+  SE_CORE_INFO("Texture already loaded, returning handle: {0}", name);
+  return found->second;
 }
 
 TextureHandle TextureManager::initializeFromResource(

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "DXTK12/ResourceUploadBatch.h"
-#include "SirEngine/identityManager.h"
 #include "SirEngine/log.h"
 #include "SirEngine/memory/SparseMemoryPool.h"
 #include "platform/windows/graphics/dx12/DX12.h"
@@ -32,7 +31,7 @@ public:
   ~TextureManager();
   TextureManager(const TextureManager &) = delete;
   TextureManager &operator=(const TextureManager &) = delete;
-  TextureHandle loadTexture(const char *path, bool dynamic = false);
+  TextureHandle loadTexture(const char *path);
   TextureHandle initializeFromResource(ID3D12Resource *resource,
                                        const char *name,
                                        D3D12_RESOURCE_STATES state);
@@ -132,15 +131,6 @@ public:
     m_texturePool.free(index);
   }
 
-  inline TextureHandle getHandle(IdentityHandle handle) {
-    auto found = m_idToHandle.find(handle.handle);
-    if (found != m_idToHandle.end()) {
-      return found->second;
-    }
-    assert(0 && "could not find requested texture handle");
-    return TextureHandle{0};
-  }
-
 #if SE_DEBUG
   inline TextureHandle getHandleFromName(const char *name) {
     auto found = m_nameToHandle.find(name);
@@ -152,10 +142,7 @@ public:
 #endif
 
 private:
-#if SE_DEBUG
   std::unordered_map<std::string, TextureHandle> m_nameToHandle;
-#endif
-  std::unordered_map<uint32_t, TextureHandle> m_idToHandle;
   static const uint32_t INDEX_MASK = (1 << 16) - 1;
   static const uint32_t MAGIC_NUMBER_MASK = ~INDEX_MASK;
   static const uint32_t RESERVE_SIZE = 200;

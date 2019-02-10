@@ -9,6 +9,7 @@ namespace SirEngine {
 class IdentityManager;
 class Window;
 class AssetManager;
+class MaterialManager;
 namespace dx12 {
 class TextureManager;
 class MeshManager;
@@ -117,6 +118,7 @@ extern MeshManager *MESH_MANAGER;
 extern IdentityManager *IDENTITY_MANAGER;
 extern ConstantBufferManager* CONSTANT_BUFFER_MANAGER;
 extern AssetManager* ASSET_MANAGER;
+extern MaterialManager* MATERIAL_MANAGER;
 
 inline UINT64 insertFenceToGlobalQueue() {
   // Advance the fence value to mark commands up to this fence point.

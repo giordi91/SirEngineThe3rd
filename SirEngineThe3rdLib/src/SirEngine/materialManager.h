@@ -1,6 +1,9 @@
 #pragma once
 
 #include "SirEngine/handle.h"
+#include "memory/SparseMemoryPool.h"
+#include <cassert>
+#include <unordered_map>
 #include <vector>
 
 namespace SirEngine {
@@ -22,33 +25,19 @@ struct Material final {
   float kSG;
   float kSB;
 };
-namespace Materials {
-struct MaterialsMemory {
-  std::vector<MaterialRuntime> *m_materialsCPU;
-  std::vector<Material> *m_materials;
-  std::vector<uint16_t> *m_materialsMagic;
-};
-
-MaterialHandle loadMaterial(const char *path, uint32_t index,
-                            MaterialsMemory& memory);
-
 enum SHADER_PASS_FLAGS { FORWARD = 1 };
-} // namespace Materials
 
-
-/*
 class MaterialManager final {
 
 public:
   MaterialManager() : m_idxPool(RESERVE_SIZE) {
-    m_materialsCPU.resize(RESERVE_SIZE);
     m_materials.resize(RESERVE_SIZE), m_materialsMagic.resize(RESERVE_SIZE);
   };
   ~MaterialManager() = default;
   MaterialManager(const MaterialManager &) = delete;
   MaterialManager &operator=(const MaterialManager &) = delete;
 
-  void initialize();
+  void initialize(){};
   inline uint32_t getIndexFromHandel(MaterialHandle h) const {
     return h.handle & INDEX_MASK;
   }
@@ -62,12 +51,8 @@ public:
     assert(m_materialsMagic[idx] == magic &&
            "invalid magic handle for constant buffer");
   }
-  MaterialHandle loadMaterial(const char *path);
-  const MaterialCPU &getMaterialCpu(const MaterialHandle handle) {
-    assertMagicNumber(handle);
-    uint32_t idx = getIndexFromHandel(handle);
-    return m_materialsCPU[idx];
-  }
+  MaterialHandle loadMaterial(const char *path, uint32_t runtimeIndex,
+                              MaterialRuntime *runtimeMemory);
 
 private:
   std::unordered_map<std::string, MaterialHandle> m_nameToHandle;
@@ -77,10 +62,8 @@ private:
   uint32_t MAGIC_NUMBER_COUNTER = 1;
 
   SparseMemoryPool<uint32_t> m_idxPool;
-  std::vector<MaterialCPU> m_materialsCPU;
   std::vector<Material> m_materials;
   std::vector<uint16_t> m_materialsMagic;
 };
-*/
 
 } // namespace SirEngine
