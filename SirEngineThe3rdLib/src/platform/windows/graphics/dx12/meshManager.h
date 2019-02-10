@@ -2,17 +2,21 @@
 
 #include "DXTK12/ResourceUploadBatch.h"
 #include "SirEngine/log.h"
-#include "SirEngine/memory/SparseMemoryPool.h"
+#include "SirEngine/memory/sparseMemoryPool.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/d3dx12.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include <vector>
+#include "SirEngine/handle.h"
 
 namespace SirEngine {
 namespace dx12 {
 
-struct MeshHandle final {
-  uint32_t handle;
+
+struct MeshRuntime final {
+  D3D12_VERTEX_BUFFER_VIEW vview;
+  D3D12_INDEX_BUFFER_VIEW iview;
+  uint32_t indexCount;
 };
 
 class MeshManager final {
@@ -47,7 +51,11 @@ public:
   }
   MeshManager(const MeshManager &) = delete;
   MeshManager &operator=(const MeshManager &) = delete;
-  MeshHandle loadMesh(const char *path);
+  // for now a bit overkill to pass both the index and the memory,
+  // I could just pass the pointer at right address but for the time
+  // being this will keep symmetry.
+  MeshHandle loadMesh(const char *path, uint32_t runtimeIndex,
+                      MeshRuntime *runtimeMemory);
 
   inline void assertMagicNumber(MeshHandle handle) const {
 #ifdef SE_DEBUG
@@ -141,6 +149,13 @@ public:
     fc->commandList->IASetPrimitiveTopology(
         D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
   }
+  inline void bindMeshRuntimeForRender(const MeshRuntime &runtime,
+                                       FrameCommand *fc) const {
+    fc->commandList->IASetIndexBuffer(&runtime.iview);
+    fc->commandList->IASetVertexBuffers(0, 1, &runtime.vview);
+    fc->commandList->IASetPrimitiveTopology(
+        D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+  }
   inline void bindMeshAndRender(const MeshHandle handle,
                                 FrameCommand *fc) const {
     bindMeshForRender(handle, fc);
@@ -148,12 +163,15 @@ public:
 
     fc->commandList->DrawIndexedInstanced(meshIndexCount, 1, 0, 0, 0);
   }
+  inline void bindMeshRuntimeAndRender(const MeshRuntime &runtime,
+                                       FrameCommand *fc) const {
+    bindMeshRuntimeForRender(runtime, fc);
+    fc->commandList->DrawIndexedInstanced(runtime.indexCount, 1, 0, 0, 0);
+  }
 
   void clearUploadRequests();
 
 private:
-  MeshData &getFreeMeshData(uint32_t &index);
-
   SparseMemoryPool<MeshData> m_meshPool;
 
   std::unordered_map<std::string, MeshHandle> m_nameToHandle;

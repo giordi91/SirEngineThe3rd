@@ -14,4 +14,12 @@ struct TextureHandle final {
 struct ConstantBufferHandle final {
   uint32_t handle;
 };
+struct MeshHandle final {
+  uint32_t handle;
+};
+
+struct AssetHandles {
+  MeshHandle meshH;
+  MaterialHandle materialH;
+};
 }

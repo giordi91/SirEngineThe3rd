@@ -5,7 +5,7 @@
 
 namespace SirEngine {
 
-struct MaterialCPU final {
+struct MaterialRuntime final {
   ConstantBufferHandle cbHandle;
   TextureHandle albedo;
   TextureHandle normal;
@@ -24,8 +24,7 @@ struct Material final {
 };
 namespace Materials {
 struct MaterialsMemory {
-  std::vector<MaterialHandle> *m_materialHandles;
-  std::vector<MaterialCPU> *m_materialsCPU;
+  std::vector<MaterialRuntime> *m_materialsCPU;
   std::vector<Material> *m_materials;
   std::vector<uint16_t> *m_materialsMagic;
 };

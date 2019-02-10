@@ -77,7 +77,8 @@ static ID3D12Resource *createDefaultBuffer(ID3D12Device *device,
   return defaultBuffer;
 }
 
-MeshHandle MeshManager::loadMesh(const char *path) {
+MeshHandle MeshManager::loadMesh(const char *path, uint32_t runtimeIndex,
+                      MeshRuntime *runtimeMemory) {
 
   bool res = fileExists(path);
   assert(res);
@@ -127,6 +128,13 @@ MeshHandle MeshManager::loadMesh(const char *path) {
   // data is now loaded need to create handle etc
   MeshHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
   meshData.magicNumber = MAGIC_NUMBER_COUNTER;
+
+
+  //build the runtime mesh
+  MeshRuntime& runM = runtimeMemory[runtimeIndex];
+  runM.indexCount = meshData.indexCount;
+  runM.vview = getVertexBufferView(handle); 
+  runM.iview = getIndexBufferView(handle); 
 
   ++MAGIC_NUMBER_COUNTER;
 

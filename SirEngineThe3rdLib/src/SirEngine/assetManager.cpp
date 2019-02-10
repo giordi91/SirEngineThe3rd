@@ -18,17 +18,17 @@ static const std::string DEFAULT_STRING = "";
 AssetManager::AssetManager() {}
 
 bool AssetManager::initialize() {
-  m_meshes.resize(DATA_SIZE_ALLOC);
-  m_materialHandles.resize(DATA_SIZE_ALLOC);
+  m_runtimeMeshes.resize(DATA_SIZE_ALLOC);
+
+  m_assetHandles.resize(DATA_SIZE_ALLOC);
   m_materialsCPU.resize(DATA_SIZE_ALLOC);
   m_materials.resize(DATA_SIZE_ALLOC);
   m_materialsMagic.resize(DATA_SIZE_ALLOC);
 
-  m_materialMemory = Materials::MaterialsMemory{&m_materialHandles, &m_materialsCPU,
-                                     &m_materials, &m_materialsMagic};
-
+  m_materialMemory = Materials::MaterialsMemory{&m_materialsCPU, &m_materials,
+                                                &m_materialsMagic};
   return true;
-} // namespace SirEngine
+}
 
 IdentityHandle AssetManager::loadAsset(const char *path) {
   auto jobj = getJsonObj(path);
@@ -55,17 +55,23 @@ IdentityHandle AssetManager::loadAsset(const char *path) {
       dx12::IDENTITY_MANAGER->createHandleFromName(fileName.c_str());
 
   // lets load the mesh
-  dx12::MeshHandle mHandle = dx12::MESH_MANAGER->loadMesh(meshString.c_str());
+  MeshHandle mHandle = dx12::MESH_MANAGER->loadMesh(
+      meshString.c_str(), currIdx, m_runtimeMeshes.data());
+
   TextureHandle tHandle =
       dx12::TEXTURE_MANAGER->loadTexture(albedoString.c_str(), false);
   MaterialHandle matHandle =
-      //dx12::MATERIAL_MANAGER->loadMaterial(materialString.c_str());
-      Materials::loadMaterial(materialString.c_str(),currIdx, m_materialMemory);
+      // dx12::MATERIAL_MANAGER->loadMaterial(materialString.c_str());
+      Materials::loadMaterial(materialString.c_str(), currIdx,
+                              m_materialMemory);
 
-  //
+  // bookkeeping
+  AssetHandles assetH;
+  assetH.materialH = matHandle;
+  assetH.meshH = mHandle;
+  m_assetHandles[currIdx] = assetH;
+
   m_identityToIndex[id.handle] = currIdx;
-  m_meshes[currIdx] = mHandle;
-  m_materialHandles[currIdx] = matHandle;
 
   return id;
 }
