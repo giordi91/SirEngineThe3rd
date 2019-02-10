@@ -48,7 +48,6 @@ IdentityHandle AssetManager::loadAsset(const char *path) {
       meshString.c_str(), currIdx, m_meshRuntime.data());
 
   MaterialHandle matHandle =
-      // dx12::MATERIAL_MANAGER->loadMaterial(materialString.c_str());
       dx12::MATERIAL_MANAGER->loadMaterial(materialString.c_str(), currIdx,
                              m_materialRuntime.data()); 
 
