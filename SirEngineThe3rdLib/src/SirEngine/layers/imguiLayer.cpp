@@ -8,6 +8,7 @@
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/imgui_impl_dx12.h"
+#include "node.cpp"
 
 namespace SirEngine {
 void ImguiLayer::onAttach() {
@@ -88,6 +89,8 @@ void ImguiLayer::onUpdate() {
   ImGui::Begin("Performance");
   m_frameTimings.render();
   m_memoryUsage.render();
+  //bool s =true;
+  //ShowExampleAppCustomNodeGraph(&s);
   ImGui::End();
 
   ImGui::Render();
