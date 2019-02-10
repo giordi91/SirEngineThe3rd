@@ -6,6 +6,8 @@
 #include "SirEngine/events/keyboardEvent.h"
 #include "SirEngine/events/mouseEvent.h"
 #include "SirEngine/layer.h"
+#include "SirEngine/graphics/nodeGraph.h"
+#include "SirEngine/debugUiWidgets/renderGraphWidget.h"
 
 namespace SirEngine {
 
@@ -36,8 +38,10 @@ private:
   INT64 g_TicksPerSecond = 0;
   debug::FrameTimingsWidget m_frameTimings;
   debug::MemoryConsumptionWidget m_memoryUsage;
+  debug::RenderGraphWidget m_renderGraph;
   bool m_shouldShow = false;
   // 192 is the `
   static const uint32_t TRIGGER_UI_BUTTON = 192;
+  Graph m_graph;
 };
 } // namespace SirEngine
