@@ -1,12 +1,12 @@
 #include "SirEngine/materialManager.h"
-#include "SirEngine/identityManager.h"
 #include "SirEngine/fileUtils.h"
+#include "SirEngine/identityManager.h"
 #include "nlohmann/json.hpp"
+#include "platform/windows/graphics/dx12/DX12.h"
+#include "platform/windows/graphics/dx12/constantBufferManager.h"
+#include "platform/windows/graphics/dx12/textureManager.h"
 #include <DirectXMath.h>
 #include <unordered_map>
-#include "platform/windows/graphics/dx12/DX12.h"
-#include "platform/windows/graphics/dx12/textureManager.h"
-#include "platform/windows/graphics/dx12/constantBufferManager.h"
 
 namespace materialKeys {
 static const char *KD = "kd";
@@ -15,8 +15,10 @@ static const char *KA = "ka";
 static const char *ALBEDO = "albedo";
 static const char *NORMAL = "normal";
 static const char *FLAGS = "flags";
-static const std::unordered_map<std::string, SirEngine::Materials::SHADER_PASS_FLAGS>
-    stringToShaderFlag{{"forward", SirEngine::Materials::SHADER_PASS_FLAGS::FORWARD}};
+static const std::unordered_map<std::string,
+                                SirEngine::Materials::SHADER_PASS_FLAGS>
+    stringToShaderFlag{
+        {"forward", SirEngine::Materials::SHADER_PASS_FLAGS::FORWARD}};
 
 } // namespace materialKeys
 
@@ -93,7 +95,7 @@ MaterialHandle loadMaterial(const char *path, uint32_t index,
   mat.kSR = ks.x;
   mat.kSG = ks.y;
   mat.kSB = ks.z;
-  MaterialCPU matCpu;
+  MaterialRuntime matCpu;
   matCpu.albedo = albedoTex;
   matCpu.normal = normalTex;
 

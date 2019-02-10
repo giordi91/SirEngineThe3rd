@@ -83,12 +83,10 @@ void Graphics3DLayer::onUpdate() {
                                                       &m_camBufferCPU);
 
   uint32_t materialCount;
-  //const MaterialHandle *materials =
-  //    dx12::ASSET_MANAGER->getMaterials(materialCount);
-  const MaterialCPU* materials =
+  const MaterialRuntime* materials =
       dx12::ASSET_MANAGER->getMaterialsCPU(materialCount);
   uint32_t meshCount;
-  const dx12::MeshHandle *meshes = dx12::ASSET_MANAGER->getMeshes(meshCount);
+  const dx12::MeshRuntime*meshes = dx12::ASSET_MANAGER->getMeshRuntimes(meshCount);
 
   auto *pso = m_pso->getComputePSOByName("simpleMeshPSOTex");
   commandList->SetPipelineState(pso);
@@ -105,7 +103,7 @@ void Graphics3DLayer::onUpdate() {
 
     commandList->SetGraphicsRootDescriptorTable(1, thSRV.gpuHandle);
 
-    dx12::MESH_MANAGER->bindMeshAndRender(meshes[i], currentFc);
+    dx12::MESH_MANAGER->bindMeshRuntimeAndRender(meshes[i], currentFc);
 
     dx12::TEXTURE_MANAGER->freeSRV(materials[i].albedo, thSRV);
   }
