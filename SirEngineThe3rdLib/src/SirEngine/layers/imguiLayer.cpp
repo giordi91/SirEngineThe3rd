@@ -118,7 +118,7 @@ void ImguiLayer::onUpdate() {
 
   bool show_demo_window = true;
   ImGui::NewFrame();
-  //ImGui::ShowDemoWindow(&show_demo_window);
+  ImGui::ShowDemoWindow(&show_demo_window);
 
   ImGui::Begin("Performance");
   m_frameTimings.render();

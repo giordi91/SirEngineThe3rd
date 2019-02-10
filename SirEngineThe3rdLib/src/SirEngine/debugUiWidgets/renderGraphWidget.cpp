@@ -36,12 +36,15 @@ struct Node {
 };
 struct NodeLink {
   int InputIdx, InputSlot, OutputIdx, OutputSlot;
+  const char *plugName;
 
-  NodeLink(int input_idx, int input_slot, int output_idx, int output_slot) {
+  NodeLink(int input_idx, int input_slot, int output_idx, int output_slot,
+           const char *inPlugName) {
     InputIdx = input_idx;
     InputSlot = input_slot;
     OutputIdx = output_idx;
     OutputSlot = output_slot;
+    plugName = inPlugName;
   }
 };
 
@@ -205,14 +208,32 @@ void renderImguiGraph() {
     draw_list->AddRectFilled(node_rect_min, node_rect_max, node_bg_color, 4.0f);
     draw_list->AddRect(node_rect_min, node_rect_max,
                        IM_COL32(100, 100, 100, 255), 4.0f);
-    for (int slot_idx = 0; slot_idx < node->InputsCount; slot_idx++)
-      draw_list->AddCircleFilled(offset + node->GetInputSlotPos(slot_idx),
+    ImVec2 mousePos = ImGui::GetMousePos();
+    for (int slot_idx = 0; slot_idx < node->InputsCount; slot_idx++) {
+
+      ImVec2 pos = offset + node->GetInputSlotPos(slot_idx);
+      draw_list->AddCircleFilled(pos,
                                  NODE_SLOT_RADIUS,
                                  IM_COL32(150, 150, 150, 150));
-    for (int slot_idx = 0; slot_idx < node->OutputsCount; slot_idx++)
-      draw_list->AddCircleFilled(offset + node->GetOutputSlotPos(slot_idx),
-                                 NODE_SLOT_RADIUS,
+
+      // check how fare we are
+      ImVec2 delta = mousePos - pos;
+      float dist = sqrtf(delta.x * delta.x + delta.y + delta.y);
+      if (dist < NODE_SLOT_RADIUS * 1.3f) {
+        ImGui::SetTooltip("in name");
+      }
+    }
+    for (int slot_idx = 0; slot_idx < node->OutputsCount; slot_idx++) {
+      ImVec2 pos = offset + node->GetOutputSlotPos(slot_idx);
+      draw_list->AddCircleFilled(pos, NODE_SLOT_RADIUS,
                                  IM_COL32(150, 150, 150, 150));
+      // check how fare we are
+      ImVec2 delta = mousePos - pos;
+      float dist = sqrtf(delta.x * delta.x + delta.y + delta.y);
+      if (dist < NODE_SLOT_RADIUS * 1.3f) {
+        ImGui::SetTooltip("out name");
+      }
+    }
 
     ImGui::PopID();
   }
@@ -290,7 +311,7 @@ void RenderGraphWidget::initialize(Graph *graph) {
   const GraphNode *finalNode = graph->getFinalNode();
 
   std::vector<NodePosition> nodesToAdd;
-  std::unordered_map<uint32_t,uint32_t> m_inputCountPerNode;
+  std::unordered_map<uint32_t, uint32_t> m_inputCountPerNode;
   nodesToAdd.reserve(40);
   std::queue<NodeQueue> queue1;
   std::queue<NodeQueue> queue2;
@@ -303,10 +324,10 @@ void RenderGraphWidget::initialize(Graph *graph) {
     uint32_t recCount = 0;
     while (!currentQueue->empty()) {
       const NodeQueue &curr = currentQueue->front();
-      nodesToAdd.emplace_back(NodePosition{curr.node, recursionLevel,
-                                           static_cast<float>(recCount),
-                                           static_cast<uint32_t>(curr.parentIdx)});
-	  m_inputCountPerNode[curr.node->getNodeIdx()] = curr.node->getInputCount();
+      nodesToAdd.emplace_back(
+          NodePosition{curr.node, recursionLevel, static_cast<float>(recCount),
+                       static_cast<uint32_t>(curr.parentIdx)});
+      m_inputCountPerNode[curr.node->getNodeIdx()] = curr.node->getInputCount();
       recCount++;
 
       // check if has any other connections in the inputs
@@ -318,7 +339,7 @@ void RenderGraphWidget::initialize(Graph *graph) {
           for (auto &conn : (*conns)) {
             status.links.push_back(NodeLink(conn->nodePtr->getNodeIdx(), i,
                                             curr.node->getNodeIdx(),
-                                            conn->index));
+                                            conn->index, ""));
             nextQueue->push(NodeQueue{
                 conn->nodePtr, static_cast<int>(curr.node->getNodeIdx())});
           }
@@ -344,11 +365,11 @@ void RenderGraphWidget::initialize(Graph *graph) {
     float yPos;
     if (nodesToAdd[i].parentIdx == -1) {
       xPos = xMid - (xStep * nodesToAdd[i].recursionLevel);
-      yPos = yStart; 
+      yPos = yStart;
     } else {
       ImVec2 cacheValue = posCache[nodesToAdd[i].parentIdx];
-      xPos = cacheValue.x - (xStep );
-		uint32_t parentIdx = nodesToAdd[i].parentIdx;
+      xPos = cacheValue.x - (xStep);
+      uint32_t parentIdx = nodesToAdd[i].parentIdx;
       float nodesAtRecursion =
           static_cast<float>(m_inputCountPerNode[parentIdx]);
       yPos = cacheValue.y - ((nodesAtRecursion - 1) * 0.5 * yStep) +
