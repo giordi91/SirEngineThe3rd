@@ -36,7 +36,7 @@ void Application::run() {
 
     std::mt19937_64 eng{std::random_device{}()}; // or seed however you want
     std::uniform_int_distribution<> dist{0, 20};
-    std::this_thread::sleep_for(std::chrono::milliseconds{dist(eng)});
+    //std::this_thread::sleep_for(std::chrono::milliseconds{dist(eng)});
   }
 
   //lets make sure any graphics operation are done
