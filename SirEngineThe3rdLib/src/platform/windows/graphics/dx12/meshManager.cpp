@@ -9,7 +9,7 @@ void MeshManager::clearUploadRequests() {
 
   auto id = GLOBAL_FENCE->GetCompletedValue();
   // uint32_t freed = 0;
-  int requestSize = m_uploadRequests.size()-1;
+  int requestSize = m_uploadRequests.size() - 1;
   int stackTopIdx = requestSize;
   for (int i = requestSize; i >= 0; --i) {
     MeshUploadResource &upload = m_uploadRequests[i];
@@ -78,67 +78,76 @@ static ID3D12Resource *createDefaultBuffer(ID3D12Device *device,
 }
 
 MeshHandle MeshManager::loadMesh(const char *path, uint32_t runtimeIndex,
-                      MeshRuntime *runtimeMemory) {
+                                 MeshRuntime *runtimeMemory) {
 
   bool res = fileExists(path);
   assert(res);
-
+  // lets check whether or not the mesh has been loaded already
   const std::string name = getFileName(path);
-  //TODO re-enable once asset manager work
-  //assert(m_nameToHandle.find(name) == m_nameToHandle.end());
+  MeshData *meshData = nullptr;
+  MeshHandle handle = {0};
+  auto found = m_nameToHandle.find(name);
+  if (found == m_nameToHandle.end()) {
+    std::vector<char> bindaryData;
+    readAllBytes(path, bindaryData);
 
-  std::vector<char> bindaryData;
-  readAllBytes(path, bindaryData);
+    auto mapper = getMapperData<ModelMapperData>(bindaryData.data());
 
-  auto mapper = getMapperData<ModelMapperData>(bindaryData.data());
+    uint32_t stride = mapper->strideInByte / sizeof(float);
+    // creating the buffers
+    int vertexCount = mapper->vertexDataSizeInByte / mapper->strideInByte;
+    uint32_t indexCount = mapper->indexDataSizeInByte / sizeof(int);
 
-  uint32_t stride = mapper->strideInByte / sizeof(float);
-  // creating the buffers
-  int vertexCount = mapper->vertexDataSizeInByte / mapper->strideInByte;
-  uint32_t indexCount = mapper->indexDataSizeInByte / sizeof(int);
+    // lets get the vertex data
+    auto *vertexData = reinterpret_cast<float *>(bindaryData.data() +
+                                                 sizeof(BinaryFileHeader));
+    auto *indexData =
+        reinterpret_cast<int *>(bindaryData.data() + sizeof(BinaryFileHeader) +
+                                mapper->vertexDataSizeInByte);
 
-  // lets get the vertex data
-  auto *vertexData =
-      reinterpret_cast<float *>(bindaryData.data() + sizeof(BinaryFileHeader));
-  auto *indexData =
-      reinterpret_cast<int *>(bindaryData.data() + sizeof(BinaryFileHeader) +
-                              mapper->vertexDataSizeInByte);
+    // upload the data on the GPU
+    uint32_t index;
 
-  // upload the data on the GPU
-  uint32_t index;
+    meshData = &m_meshPool.getFreeMemoryData(index);
+    meshData->indexCount = indexCount;
+    meshData->vertexCount = vertexCount;
+    meshData->stride = stride;
+    MeshUploadResource upload;
 
-  MeshData &meshData = m_meshPool.getFreeMemoryData(index);
-  meshData.indexCount = indexCount;
-  meshData.vertexCount = vertexCount;
-  meshData.stride = stride;
-  MeshUploadResource upload;
+    FrameCommand *currentFC = &CURRENT_FRAME_RESOURCE->fc;
+    meshData->vertexBuffer = createDefaultBuffer(
+        DEVICE, currentFC->commandList, vertexData,
+        vertexCount * stride * sizeof(float), &upload.uploadVertexBuffer);
+    meshData->indexBuffer = createDefaultBuffer(
+        DEVICE, currentFC->commandList, indexData, indexCount * sizeof(int),
+        &upload.uploadIndexBuffer);
 
-  FrameCommand *currentFC = &CURRENT_FRAME_RESOURCE->fc;
-  meshData.vertexBuffer = createDefaultBuffer(
-      DEVICE, currentFC->commandList, vertexData,
-      vertexCount * stride * sizeof(float), &upload.uploadVertexBuffer);
-  meshData.indexBuffer =
-      createDefaultBuffer(DEVICE, currentFC->commandList, indexData,
-                          indexCount * sizeof(int), &upload.uploadIndexBuffer);
+    // set a signal for the resource.
+    upload.fence = dx12::insertFenceToGlobalQueue();
+    m_uploadRequests.push_back(upload);
 
-  // set a signal for the resource.
-  upload.fence = dx12::insertFenceToGlobalQueue();
-  m_uploadRequests.push_back(upload);
+    // data is now loaded need to create handle etc
+    handle = MeshHandle{(MAGIC_NUMBER_COUNTER << 16) | index};
+    meshData->magicNumber = MAGIC_NUMBER_COUNTER;
 
-  // data is now loaded need to create handle etc
-  MeshHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
-  meshData.magicNumber = MAGIC_NUMBER_COUNTER;
+    // storing the handle and increasing the magic count
+    m_nameToHandle[name] = handle;
+    ++MAGIC_NUMBER_COUNTER;
+  } else {
 
+    SE_CORE_INFO("Mesh already loaded, returning handle:{0}", name);
+    // we already loaded the mesh so we can just get the handle and index data
+    uint32_t index = getIndexFromHandle(found->second);
+    meshData = &m_meshPool[index];
+    handle = found->second;
+  }
 
-  //build the runtime mesh
-  MeshRuntime& runM = runtimeMemory[runtimeIndex];
-  runM.indexCount = meshData.indexCount;
-  runM.vview = getVertexBufferView(handle); 
-  runM.iview = getIndexBufferView(handle); 
+  // build the runtime mesh
+  MeshRuntime &runM = runtimeMemory[runtimeIndex];
+  runM.indexCount = meshData->indexCount;
+  runM.vview = getVertexBufferView(handle);
+  runM.iview = getIndexBufferView(handle);
 
-  ++MAGIC_NUMBER_COUNTER;
-
-  m_nameToHandle[name] = handle;
   return handle;
 }
 

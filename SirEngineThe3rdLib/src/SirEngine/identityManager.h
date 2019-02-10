@@ -18,7 +18,7 @@ public:
   IdentityManager &operator=(const IdentityManager &) = delete;
 
   void initialize();
-  IdentityHandle getHandleFromName(const char *name) const ;
+  IdentityHandle getHandleFromName(const char *name);
   IdentityHandle createHandleFromName(const char *name);
   const char *getNameFromhandle(const IdentityHandle handle) const;
 

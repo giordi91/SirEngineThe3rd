@@ -18,7 +18,7 @@ public:
 
   inline const dx12::MeshRuntime *getMeshRuntimes(uint32_t &count) const {
     count = allocIndex;
-    return m_runtimeMeshes.data();
+    return m_meshRuntime.data();
   };
 
   // assets
@@ -36,7 +36,7 @@ public:
   const MaterialRuntime *getMaterialsCPU(uint32_t &index) const {
 
     index = allocIndex;
-    return m_materialsCPU.data();
+    return m_materialRuntime.data();
   }
 
 private:
@@ -49,13 +49,7 @@ private:
   std::unordered_map<uint32_t, uint32_t> m_identityToIndex;
   uint32_t allocIndex = 0;
 
-  // meshes
-  std::vector<dx12::MeshRuntime> m_runtimeMeshes;
-
-  // materials
-  Materials::MaterialsMemory m_materialMemory;
-  std::vector<MaterialRuntime> m_materialsCPU;
-  std::vector<Material> m_materials;
-  std::vector<uint16_t> m_materialsMagic;
+  std::vector<dx12::MeshRuntime> m_meshRuntime;
+  std::vector<MaterialRuntime> m_materialRuntime;
 };
 } // namespace SirEngine

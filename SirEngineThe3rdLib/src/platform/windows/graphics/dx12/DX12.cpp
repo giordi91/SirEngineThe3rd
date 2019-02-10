@@ -37,6 +37,7 @@ MeshManager *MESH_MANAGER = nullptr;
 IdentityManager *IDENTITY_MANAGER = nullptr;
 ConstantBufferManager *CONSTANT_BUFFER_MANAGER = nullptr;
 AssetManager *ASSET_MANAGER = nullptr;
+MaterialManager*MATERIAL_MANAGER= nullptr;
 
 bool createFrameCommand(FrameCommand *fc) {
 
@@ -178,6 +179,8 @@ bool initializeGraphicsDx12(Window *wnd, uint32_t width, uint32_t height) {
   CONSTANT_BUFFER_MANAGER = new ConstantBufferManager();
   TEXTURE_MANAGER = new TextureManager();
   MESH_MANAGER = new MeshManager();
+  MATERIAL_MANAGER = new MaterialManager();
+  MATERIAL_MANAGER->initialize();
   ASSET_MANAGER = new AssetManager();
   ASSET_MANAGER->initialize();
 
