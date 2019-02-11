@@ -63,6 +63,13 @@ Foo::Foo(const std::string& nodeName) : GraphNode(nodeName) {
   inPlug.name = "in";
   registerPlug(inPlug);
 
+  Plug inPlug2;
+  inPlug2.plugValue = 0;
+  inPlug2.flags = PlugFlags::INPUT | PlugFlags::TEXTURE;
+  inPlug2.nodePtr = this;
+  inPlug2.name = "inTex";
+  registerPlug(inPlug2);
+
   Plug outPlug;
   outPlug.plugValue = 0;
   outPlug.flags = PlugFlags::OUTPUT | PlugFlags::TEXTURE;
@@ -76,5 +83,12 @@ Foo::Foo(const std::string& nodeName) : GraphNode(nodeName) {
   outPlug2.nodePtr = this;
   outPlug2.name = "texOut2";
   registerPlug(outPlug2);
+}
+
+void Graph::connectNodes(GraphNode* source, const char* sourcePlugName, GraphNode* destination,
+	const char* destinationPlugName)
+{
+  destination->addConnection( destinationPlugName,source->getOutputPlug(sourcePlugName) );
+  source->addConnection( sourcePlugName,destination->getInputPlug(destinationPlugName) );
 }
 } // namespace SirEngine

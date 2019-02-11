@@ -28,19 +28,19 @@ public:
   virtual ~GraphNode() = default;
   void addConnection(const std::string &thisNodePlugName, Plug *otherPlug);
   inline Plug *getInputPlug(const std::string &name) {
-
     for (int i = 0; i < m_inputPlugs.size(); ++i) {
       if (m_inputPlugs[i].name == name) {
         return &m_inputPlugs[i];
       }
     }
-
     assert(0 && "plug not found");
     return nullptr;
   }
   inline const std::vector<Plug> &getInputPlugs() const { return m_inputPlugs; }
+  inline const std::vector<Plug> &getOutputPlugs() const {
+    return m_outputPlugs;
+  }
   inline Plug *getOutputPlug(const std::string &name) {
-
     for (int i = 0; i < m_outputPlugs.size(); ++i) {
       if (m_outputPlugs[i].name == name) {
         return &m_outputPlugs[i];
@@ -49,9 +49,14 @@ public:
     assert(0 && "plug not found");
     return nullptr;
   }
+
   inline const char *getNodeName() const { return nodeName.c_str(); }
-  inline uint32_t getInputCount() const { return m_inputPlugs.size(); }
-  inline uint32_t getOutputCount() const { return m_outputPlugs.size(); }
+  inline uint32_t getInputCount() const {
+    return static_cast<uint32_t>(m_inputPlugs.size());
+  }
+  inline uint32_t getOutputCount() const {
+    return static_cast<uint32_t>(m_outputPlugs.size());
+  }
   inline const std::vector<Plug *> *getPlugConnections(const Plug *plug) const {
     for (auto &conn : m_connections) {
       if (conn.first->name == plug->name) {
@@ -59,21 +64,16 @@ public:
       }
     }
     return nullptr;
-    // auto found = m_connections.find(plug);
-    // if(found != m_connections.end())
-    //{
-    //    return found->second;
-    //}
-    // assert(0 && "could not find plug");
-
-    // return m_connections[plug];
   }
-  inline void setNodeIndex(uint32_t idx) { nodeIdx = idx; }
-  inline uint32_t getNodeIdx() const{return nodeIdx;}
+  // node index is mostly used to give a unique id in the graph to the node
+  // useful for when we want to access a node by knwing the index or when
+  // we are building the graphics representation
+  inline void setNodeIndex(const uint32_t idx) { nodeIdx = idx; }
+  inline uint32_t getNodeIdx() const { return nodeIdx; }
 
 protected:
   void registerPlug(Plug plug);
-  inline bool isFlag(Plug plug, PlugFlags flag) const {
+  inline bool isFlag(const Plug &plug, const PlugFlags flag) const {
     return (plug.flags & flag) > 0;
   }
 
@@ -87,15 +87,16 @@ protected:
   uint32_t nodeIdx = 0;
 };
 
+// to delete
 class TestNode : public GraphNode {
 public:
-  TestNode(const std::string& nodeName);
+  TestNode(const std::string &nodeName);
   virtual ~TestNode() = default;
 };
 
 class Foo : public GraphNode {
 public:
-  Foo(const std::string& nodeName);
+  Foo(const std::string &nodeName);
   virtual ~Foo() = default;
 };
 
@@ -104,10 +105,14 @@ public:
   Graph() = default;
   ~Graph() = default;
 
-  void addNode( GraphNode *node) {
+  void addNode(GraphNode *node) {
     node->setNodeIndex(m_nodeCounter++);
     m_nodes[node->getNodeName()] = node;
   }
+
+  void connectNodes(GraphNode *source, const char *sourcePlugName,
+                    GraphNode *destination, const char *destinationPlugName);
+
   const GraphNode *getFinalNode() const { return finalNode; }
   inline void setFinalNode(GraphNode *node) { finalNode = node; }
 
