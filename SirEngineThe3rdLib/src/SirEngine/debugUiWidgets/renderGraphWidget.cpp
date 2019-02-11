@@ -209,30 +209,40 @@ void renderImguiGraph() {
     draw_list->AddRect(node_rect_min, node_rect_max,
                        IM_COL32(100, 100, 100, 255), 4.0f);
     ImVec2 mousePos = ImGui::GetMousePos();
+    // ImVec2 mousePos = ImGui::GetCursorPos();
     for (int slot_idx = 0; slot_idx < node->InputsCount; slot_idx++) {
 
       ImVec2 pos = offset + node->GetInputSlotPos(slot_idx);
-      draw_list->AddCircleFilled(pos,
-                                 NODE_SLOT_RADIUS,
-                                 IM_COL32(150, 150, 150, 150));
-
-      // check how fare we are
       ImVec2 delta = mousePos - pos;
-      float dist = sqrtf(delta.x * delta.x + delta.y + delta.y);
-      if (dist < NODE_SLOT_RADIUS * 1.3f) {
+      float dist = sqrtf((delta.x * delta.x) + (delta.y * delta.y));
+      if (dist < NODE_SLOT_RADIUS * 1.1f) {
+        draw_list->AddCircleFilled(pos, NODE_SLOT_RADIUS * 1.3f,
+                                   IM_COL32(250, 150, 150, 150));
+
+        // check how fare we are
         ImGui::SetTooltip("in name");
+      } else {
+        draw_list->AddCircleFilled(pos, NODE_SLOT_RADIUS,
+                                   IM_COL32(150, 150, 150, 150));
       }
     }
     for (int slot_idx = 0; slot_idx < node->OutputsCount; slot_idx++) {
       ImVec2 pos = offset + node->GetOutputSlotPos(slot_idx);
-      draw_list->AddCircleFilled(pos, NODE_SLOT_RADIUS,
-                                 IM_COL32(150, 150, 150, 150));
-      // check how fare we are
+
       ImVec2 delta = mousePos - pos;
-      float dist = sqrtf(delta.x * delta.x + delta.y + delta.y);
-      if (dist < NODE_SLOT_RADIUS * 1.3f) {
+      float dist = sqrtf((delta.x *delta.x) + (delta.y *delta.y));
+      if (dist < NODE_SLOT_RADIUS * 1.1f) {
+        draw_list->AddCircleFilled(pos, NODE_SLOT_RADIUS * 1.3f,
+                                   IM_COL32(250, 150, 150, 150));
+        // check how fare we are
         ImGui::SetTooltip("out name");
       }
+	  else
+	  {
+        draw_list->AddCircleFilled(pos, NODE_SLOT_RADIUS ,
+                                   IM_COL32(150, 150, 150, 150));
+		  
+	  }
     }
 
     ImGui::PopID();
