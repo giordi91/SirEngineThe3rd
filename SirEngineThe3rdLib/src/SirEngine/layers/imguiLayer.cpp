@@ -5,10 +5,13 @@
 #include "SirEngine/log.h"
 #include "imgui/imgui.h"
 #include "imguiLayer.h"
-#include "node.cpp"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/imgui_impl_dx12.h"
+
+#include "SirEngine/graphics/nodes/FinalBlitNode.h"
+#include "SirEngine/graphics/nodes/assetManagerNode.h"
+#include "SirEngine/graphics/nodes/simpleForward.h"
 
 namespace SirEngine {
 void ImguiLayer::onAttach() {
@@ -51,29 +54,20 @@ void ImguiLayer::onAttach() {
 
   io.DisplaySize = ImVec2(globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT);
 
-  // temp test build of graph
-  auto *node1 = new TestNode("test");
-  auto *node2 = new Foo("foo");
-  auto *node3 = new Foo("fush");
-  auto *node4 = new TestNode("skadus");
-  auto *node5 = new Foo("boo");
-  auto *node6 = new Foo("enough");
+  auto assetNode = new AssetManagerNode();
+  auto finalBlit = new FinalBlitNode();
+  auto simpleForward = new SimpleForward("simpleForward");
 
-  m_graph.connectNodes(node2, "texOut1", node1, "inputTest");
-  m_graph.connectNodes(node3, "texOut2", node1, "inputTest2");
-  m_graph.connectNodes(node4, "outTest", node3, "in");
-  m_graph.connectNodes(node5, "texOut1", node4, "inputTest");
-  m_graph.connectNodes(node6, "texOut2", node4, "inputTest2");
+  //temporary graph for testing
+  m_graph.addNode(assetNode);
+  m_graph.addNode(finalBlit);
+  m_graph.addNode(simpleForward);
+  m_graph.setFinalNode(finalBlit);
+  m_graph.connectNodes(assetNode, "matrices", simpleForward, "matrices");
+  m_graph.connectNodes(assetNode, "meshes", simpleForward, "meshes");
+  m_graph.connectNodes(assetNode, "materials", simpleForward, "materials");
+  m_graph.connectNodes(simpleForward, "outTexture", finalBlit, "inTexture");
 
-  m_graph.connectNodes(node4, "outTest", node2, "inTex");
-
-  m_graph.addNode(node1);
-  m_graph.addNode(node2);
-  m_graph.addNode(node3);
-  m_graph.addNode(node4);
-  m_graph.addNode(node5);
-  m_graph.addNode(node6);
-  m_graph.setFinalNode(node1);
   m_renderGraph.initialize(&m_graph);
 }
 
