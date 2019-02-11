@@ -5,8 +5,9 @@
 namespace SirEngine {
 class SimpleForward : public GraphNode {
 public:
-  SimpleForward(const char* name);
+  SimpleForward(const char *name);
   virtual ~SimpleForward() = default;
+  virtual void compute() override;
 };
 
 } // namespace SirEngine

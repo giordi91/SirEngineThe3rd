@@ -54,21 +54,8 @@ void ImguiLayer::onAttach() {
 
   io.DisplaySize = ImVec2(globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT);
 
-  auto assetNode = new AssetManagerNode();
-  auto finalBlit = new FinalBlitNode();
-  auto simpleForward = new SimpleForward("simpleForward");
 
-  //temporary graph for testing
-  m_graph.addNode(assetNode);
-  m_graph.addNode(finalBlit);
-  m_graph.addNode(simpleForward);
-  m_graph.setFinalNode(finalBlit);
-  m_graph.connectNodes(assetNode, "matrices", simpleForward, "matrices");
-  m_graph.connectNodes(assetNode, "meshes", simpleForward, "meshes");
-  m_graph.connectNodes(assetNode, "materials", simpleForward, "materials");
-  m_graph.connectNodes(simpleForward, "outTexture", finalBlit, "inTexture");
-
-  m_renderGraph.initialize(&m_graph);
+  m_renderGraph.initialize(dx12::RENDERING_GRAPH);
 }
 
 void ImguiLayer::onDetach() { ImGui_ImplDX12_Shutdown(); }

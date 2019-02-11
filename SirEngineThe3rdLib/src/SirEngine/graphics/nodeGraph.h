@@ -7,12 +7,12 @@
 namespace SirEngine {
 
 enum PlugFlags {
-  INPUT = 1,
-  OUTPUT = 2,
-  GPU_BUFFER = 4,
-  TEXTURE = 8,
-  CPU_BUFFER = 16,
-  MESHES=32 
+  PLUG_INPUT = 1,
+  PLUG_OUTPUT = 2,
+  PLUG_GPU_BUFFER = 4,
+  PLUG_TEXTURE = 8,
+  PLUG_CPU_BUFFER = 16,
+  PLUG_MESHES = 32
 };
 
 class GraphNode;
@@ -26,9 +26,13 @@ struct Plug final {
 
 class GraphNode {
 public:
+  // interface
   GraphNode(const std::string &name) : nodeName(name){};
   virtual ~GraphNode() = default;
   void addConnection(const std::string &thisNodePlugName, Plug *otherPlug);
+  virtual void compute(){};
+
+  // getters
   inline Plug *getInputPlug(const std::string &name) {
     for (int i = 0; i < m_inputPlugs.size(); ++i) {
       if (m_inputPlugs[i].name == name) {
@@ -89,19 +93,6 @@ protected:
   uint32_t nodeIdx = 0;
 };
 
-// to delete
-class TestNode : public GraphNode {
-public:
-  TestNode(const std::string &nodeName);
-  virtual ~TestNode() = default;
-};
-
-class Foo : public GraphNode {
-public:
-  Foo(const std::string &nodeName);
-  virtual ~Foo() = default;
-};
-
 class Graph final {
 public:
   Graph() = default;
@@ -117,11 +108,14 @@ public:
 
   const GraphNode *getFinalNode() const { return finalNode; }
   inline void setFinalNode(GraphNode *node) { finalNode = node; }
+  void finalizeGraph();
+  void compute();
 
 private:
   std::unordered_map<std::string, GraphNode *> m_nodes;
   GraphNode *finalNode = nullptr;
   uint32_t m_nodeCounter = 0;
+  std::vector<GraphNode*> m_linearizedGraph;
 };
 
 } // namespace SirEngine
