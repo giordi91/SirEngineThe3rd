@@ -5,10 +5,10 @@
 #include "SirEngine/log.h"
 #include "imgui/imgui.h"
 #include "imguiLayer.h"
+#include "node.cpp"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/imgui_impl_dx12.h"
-#include "node.cpp"
 
 namespace SirEngine {
 void ImguiLayer::onAttach() {
@@ -16,8 +16,9 @@ void ImguiLayer::onAttach() {
   dx12::DescriptorPair pair;
   dx12::GLOBAL_CBV_SRV_UAV_HEAP->reserveDescriptor(pair);
 
-  ImGui_ImplDX12_Init(dx12::DEVICE, FRAME_BUFFERS_COUNT, DXGI_FORMAT_R8G8B8A8_UNORM,
-                      pair.cpuHandle, pair.gpuHandle);
+  ImGui_ImplDX12_Init(dx12::DEVICE, FRAME_BUFFERS_COUNT,
+                      DXGI_FORMAT_R8G8B8A8_UNORM, pair.cpuHandle,
+                      pair.gpuHandle);
 
   // Keyboard mapping. ImGui will use those indices to peek into the
   // io.KeysDown[] array that we will update during the application lifetime.
@@ -50,39 +51,30 @@ void ImguiLayer::onAttach() {
 
   io.DisplaySize = ImVec2(globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT);
 
+  // temp test build of graph
+  auto *node1 = new TestNode("test");
+  auto *node2 = new Foo("foo");
+  auto *node3 = new Foo("fush");
+  auto *node4 = new TestNode("skadus");
+  auto *node5 = new Foo("boo");
+  auto *node6 = new Foo("enough");
 
-  //temp test build of graph
-  auto* node1 = new TestNode("test");
-  auto* node2 = new Foo("foo");
-  auto* node3 = new Foo("fush");
-  auto* node4 = new TestNode("skadus");
-  auto* node5 = new Foo("boo");
-  auto* node6 = new Foo("enough");
+  m_graph.connectNodes(node2, "texOut1", node1, "inputTest");
+  m_graph.connectNodes(node3, "texOut2", node1, "inputTest2");
+  m_graph.connectNodes(node4, "outTest", node3, "in");
+  m_graph.connectNodes(node5, "texOut1", node4, "inputTest");
+  m_graph.connectNodes(node6, "texOut2", node4, "inputTest2");
 
-  node1->addConnection("inputTest",node2->getOutputPlug("texOut1"));
-  node2->addConnection("texOut1", node1->getInputPlug("inputTest"));
+  m_graph.connectNodes(node4, "outTest", node2, "inTex");
 
-  node1->addConnection("inputTest2",node3->getOutputPlug("texOut2"));
-  node3->addConnection("texOut2", node1->getInputPlug("inputTest2"));
-
-  node3->addConnection("in",node4->getOutputPlug("outTest"));
-  node4->addConnection("outTest", node3->getInputPlug("in"));
-
-  node4->addConnection("inputTest",node5->getOutputPlug("texOut1"));
-  node5->addConnection("texOut1", node4->getInputPlug("inputTest"));
-
-  node4->addConnection("inputTest2",node6->getOutputPlug("texOut2"));
-  node6->addConnection("texOut2", node4->getInputPlug("inputTest2"));
-
-m_graph.addNode( node1);
-m_graph.addNode( node2);
-m_graph.addNode( node3);
-m_graph.addNode( node4);
-m_graph.addNode( node5);
-m_graph.addNode( node6);
-m_graph.setFinalNode(node1);
-m_renderGraph.initialize(&m_graph);
-
+  m_graph.addNode(node1);
+  m_graph.addNode(node2);
+  m_graph.addNode(node3);
+  m_graph.addNode(node4);
+  m_graph.addNode(node5);
+  m_graph.addNode(node6);
+  m_graph.setFinalNode(node1);
+  m_renderGraph.initialize(&m_graph);
 }
 
 void ImguiLayer::onDetach() { ImGui_ImplDX12_Shutdown(); }
@@ -124,10 +116,9 @@ void ImguiLayer::onUpdate() {
   m_frameTimings.render();
   m_memoryUsage.render();
   m_renderGraph.render();
-  //bool s =true;
-  //ShowExampleAppCustomNodeGraph(&s);
+  // bool s =true;
+  // ShowExampleAppCustomNodeGraph(&s);
   ImGui::End();
-
 
   ImGui::Render();
   ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(),
