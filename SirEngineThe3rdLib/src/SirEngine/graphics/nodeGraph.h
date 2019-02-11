@@ -11,6 +11,8 @@ enum PlugFlags {
   OUTPUT = 2,
   GPU_BUFFER = 4,
   TEXTURE = 8,
+  CPU_BUFFER = 16,
+  MESHES=32 
 };
 
 class GraphNode;

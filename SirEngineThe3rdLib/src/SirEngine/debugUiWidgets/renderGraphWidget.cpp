@@ -326,13 +326,13 @@ void RenderGraphWidget::initialize(Graph *graph) {
       // data for then being able to render the nodes.
 
       const NodeQueue &curr = currentQueue->front();
-	  //first we check whether or not the already processed the node
+      // first we check whether or not the already processed the node
       if (visitedNodes.find(curr.node->getNodeIdx()) == visitedNodes.end()) {
         nodesToAdd.emplace_back(
             NodePosition{curr.node, static_cast<float>(recCount),
                          static_cast<uint32_t>(curr.parentIdx)});
 
-		visitedNodes.insert(curr.node->getNodeIdx());
+        visitedNodes.insert(curr.node->getNodeIdx());
 
         // here we store each node the number of inputs it has, used for
         // automatic layout
@@ -352,9 +352,10 @@ void RenderGraphWidget::initialize(Graph *graph) {
           // other end side
           if (conns != nullptr) {
             for (auto &conn : (*conns)) {
-              status->links.push_back(NodeLink(conn->nodePtr->getNodeIdx(),conn->index ,
-                                               curr.node->getNodeIdx(),inPlugs[i].index 
-                                               ));
+
+              status->links.push_back(
+                  NodeLink(conn->nodePtr->getNodeIdx(), conn->index,
+                           curr.node->getNodeIdx(), inPlugs[i].index));
               nextQueue->push(NodeQueue{
                   conn->nodePtr, static_cast<int>(curr.node->getNodeIdx())});
             }
@@ -368,10 +369,11 @@ void RenderGraphWidget::initialize(Graph *graph) {
     std::swap(currentQueue, nextQueue);
   }
   float yStep = 100.0f;
-  float xStep = 100.0f;
+  float xStep = 150.0f;
 
   std::unordered_map<uint32_t, ImVec2> posCache;
 
+  status->nodes.resize(nodesToAdd.size());
   for (size_t i = 0; i < nodesToAdd.size(); ++i) {
 
     // compute x position
@@ -401,10 +403,10 @@ void RenderGraphWidget::initialize(Graph *graph) {
     posCache[nodesToAdd[i].node->getNodeIdx()] = ImVec2{xPos, yPos};
 
     // creating a node for the graph
-    status->nodes.push_back(
-        Node(i, nodesToAdd[i].node->getNodeName(), ImVec2(xPos, yPos),
-             nodesToAdd[i].node->getInputCount(),
-             nodesToAdd[i].node->getOutputCount(), nodesToAdd[i].node));
+    status->nodes[nodesToAdd[i].node->getNodeIdx()] = Node(
+        nodesToAdd[i].node->getNodeIdx(), nodesToAdd[i].node->getNodeName(),
+        ImVec2(xPos, yPos), nodesToAdd[i].node->getInputCount(),
+        nodesToAdd[i].node->getOutputCount(), nodesToAdd[i].node);
   }
 }
 
