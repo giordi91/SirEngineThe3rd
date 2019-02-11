@@ -42,41 +42,33 @@ void SimpleForward::compute() {
   Plug *sourceMeshs = meshConn[0];
   AssetDataHandle meshH;
   meshH.handle = sourceMeshs->plugValue;
-  uint32_t meshCount=0;
+  uint32_t meshCount = 0;
   const dx12::MeshRuntime *meshes =
       dx12::ASSET_MANAGER->getRuntimeMeshesFromHandle(meshH, meshCount);
 
-  //get materials
-
+  // get materials
   auto &matsConn = m_connections[&m_inputPlugs[2]];
   assert(matsConn.size() == 1 && "too many input connections");
-  Plug *sourceMats= matsConn[0];
+  Plug *sourceMats = matsConn[0];
   AssetDataHandle matsH;
   matsH.handle = sourceMats->plugValue;
-  uint32_t matsCount =0;
-  const MaterialRuntime *mats=
+  uint32_t matsCount = 0;
+  const MaterialRuntime *mats =
       dx12::ASSET_MANAGER->getRuntimeMaterialsFromHandle(matsH, matsCount);
 
   assert(matsCount == meshCount);
-  //uint32_t materialCount;
-  //const MaterialRuntime* materials =
-  //    dx12::ASSET_MANAGER->getMaterialsCPU(materialCount);
-  //uint32_t meshCount;
-  //const dx12::MeshRuntime*meshes = dx12::ASSET_MANAGER->getMeshRuntimes(meshCount);
 
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
   for (uint32_t i = 0; i < meshCount; ++i) {
 
+    // TODO need to fix this SRV issue
     auto thSRV = dx12::TEXTURE_MANAGER->getSRV(mats[i].albedo);
-
-
     commandList->SetGraphicsRootDescriptorTable(1, thSRV.gpuHandle);
 
     dx12::MESH_MANAGER->bindMeshRuntimeAndRender(meshes[i], currentFc);
 
     dx12::TEXTURE_MANAGER->freeSRV(mats[i].albedo, thSRV);
   }
-
 }
 } // namespace SirEngine
