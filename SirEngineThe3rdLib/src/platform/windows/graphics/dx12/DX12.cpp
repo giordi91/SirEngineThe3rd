@@ -38,6 +38,7 @@ IdentityManager *IDENTITY_MANAGER = nullptr;
 ConstantBufferManager *CONSTANT_BUFFER_MANAGER = nullptr;
 AssetManager *ASSET_MANAGER = nullptr;
 MaterialManager*MATERIAL_MANAGER= nullptr;
+Graph* RENDERING_GRAPH =nullptr;
 
 bool createFrameCommand(FrameCommand *fc) {
 

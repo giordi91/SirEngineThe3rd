@@ -1,5 +1,7 @@
 #include "SirEngine/graphics/nodeGraph.h"
 #include <cassert>
+#include <queue>
+#include <unordered_set>
 
 namespace SirEngine {
 void GraphNode::addConnection(const std::string &thisNodePlugName,
@@ -22,10 +24,10 @@ void GraphNode::addConnection(const std::string &thisNodePlugName,
 } // namespace SirEngine
 
 void GraphNode::registerPlug(Plug plug) {
-  if (isFlag(plug, PlugFlags::INPUT)) {
+  if (isFlag(plug, PlugFlags::PLUG_INPUT)) {
     plug.index = inCounter++;
     m_inputPlugs.push_back(plug);
-  } else if (isFlag(plug, PlugFlags::OUTPUT)) {
+  } else if (isFlag(plug, PlugFlags::PLUG_OUTPUT)) {
     plug.index = outCounter++;
     m_outputPlugs.push_back(plug);
   } else {
@@ -33,62 +35,73 @@ void GraphNode::registerPlug(Plug plug) {
   }
 }
 
-TestNode::TestNode(const std::string& nodeName) : GraphNode(nodeName) {
-  Plug inPlug;
-  inPlug.plugValue = 0;
-  inPlug.flags = PlugFlags::INPUT | PlugFlags::TEXTURE;
-  inPlug.nodePtr = this;
-  inPlug.name = "inputTest";
-  registerPlug(inPlug);
-  Plug inPlug2;
-  inPlug2.plugValue = 0;
-  inPlug2.flags = PlugFlags::INPUT | PlugFlags::TEXTURE;
-  inPlug2.nodePtr = this;
-  inPlug2.name = "inputTest2";
-  registerPlug(inPlug2);
-
-  Plug outPlug;
-  outPlug.plugValue = 0;
-  outPlug.flags = PlugFlags::OUTPUT | PlugFlags::TEXTURE;
-  outPlug.nodePtr = this;
-  outPlug.name = "outTest";
-  registerPlug(outPlug);
+void Graph::connectNodes(GraphNode *source, const char *sourcePlugName,
+                         GraphNode *destination,
+                         const char *destinationPlugName) {
+  destination->addConnection(destinationPlugName,
+                             source->getOutputPlug(sourcePlugName));
+  source->addConnection(sourcePlugName,
+                        destination->getInputPlug(destinationPlugName));
 }
+void Graph::finalizeGraph() {
+  // for the time being we will linearize the graph
+  m_linearizedGraph.reserve(m_nodeCounter);
 
-Foo::Foo(const std::string& nodeName) : GraphNode(nodeName) {
-  Plug inPlug;
-  inPlug.plugValue = 0;
-  inPlug.flags = PlugFlags::INPUT | PlugFlags::GPU_BUFFER;
-  inPlug.nodePtr = this;
-  inPlug.name = "in";
-  registerPlug(inPlug);
+  std::unordered_set<uint32_t> visitedNodes;
+  std::queue<GraphNode *> queue1;
+  std::queue<GraphNode *> queue2;
+  std::queue<GraphNode *> *currentQueue = &queue1;
+  std::queue<GraphNode *> *nextQueue = &queue2;
 
-  Plug inPlug2;
-  inPlug2.plugValue = 0;
-  inPlug2.flags = PlugFlags::INPUT | PlugFlags::TEXTURE;
-  inPlug2.nodePtr = this;
-  inPlug2.name = "inTex";
-  registerPlug(inPlug2);
+  currentQueue->push(finalNode);
+  bool go = true;
+  while (go) {
+    // this is the counter telling us for each recursion which node in the loop
+    // we are processing, used for auto-layout
+    while (!currentQueue->empty()) {
+      // here we get first the current node from the queue
+      // and build a node position, a structure with all the necessary
+      // data for then being able to render the nodes.
 
-  Plug outPlug;
-  outPlug.plugValue = 0;
-  outPlug.flags = PlugFlags::OUTPUT | PlugFlags::TEXTURE;
-  outPlug.nodePtr = this;
-  outPlug.name = "texOut1";
-  registerPlug(outPlug);
+      GraphNode *curr = currentQueue->front();
+      // first we check whether or not the already processed the node
+      if (visitedNodes.find(curr->getNodeIdx()) == visitedNodes.end()) {
+        visitedNodes.insert(curr->getNodeIdx());
+        m_linearizedGraph.push_back(curr);
+        // lets process all the inputs, by accessing the other plug and getting
+        // the parent node, the node will be added to the queue to be processed
+        // in the next round
 
-  Plug outPlug2;
-  outPlug2.plugValue = 0;
-  outPlug2.flags = PlugFlags::OUTPUT | PlugFlags::TEXTURE;
-  outPlug2.nodePtr = this;
-  outPlug2.name = "texOut2";
-  registerPlug(outPlug2);
+        const std::vector<Plug> &inPlugs = curr->getInputPlugs();
+        for (size_t i = 0; i < inPlugs.size(); ++i) {
+          // get the connections
+          const std::vector<Plug *> *conns =
+              curr->getPlugConnections(&inPlugs[i]);
+          // if not empty we iterate all of them and extract the node at the
+          // other end side
+          if (conns != nullptr) {
+            for (auto &conn : (*conns)) {
+              nextQueue->push(conn->nodePtr);
+            }
+          }
+        }
+      }
+      currentQueue->pop();
+    }
+
+    go = !nextQueue->empty();
+    std::swap(currentQueue, nextQueue);
+  }
+
+  // just need to flip the vector
+  std::reverse(m_linearizedGraph.begin(), m_linearizedGraph.end());
+
+  int x = 0;
 }
+void Graph::compute() {
 
-void Graph::connectNodes(GraphNode* source, const char* sourcePlugName, GraphNode* destination,
-	const char* destinationPlugName)
-{
-  destination->addConnection( destinationPlugName,source->getOutputPlug(sourcePlugName) );
-  source->addConnection( sourcePlugName,destination->getInputPlug(destinationPlugName) );
+  for (auto *node : m_linearizedGraph) {
+    node->compute();
+  }
 }
 } // namespace SirEngine

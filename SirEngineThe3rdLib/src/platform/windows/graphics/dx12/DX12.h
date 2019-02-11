@@ -10,6 +10,7 @@ class IdentityManager;
 class Window;
 class AssetManager;
 class MaterialManager;
+class Graph;
 namespace dx12 {
 class TextureManager;
 class MeshManager;
@@ -119,6 +120,7 @@ extern IdentityManager *IDENTITY_MANAGER;
 extern ConstantBufferManager* CONSTANT_BUFFER_MANAGER;
 extern AssetManager* ASSET_MANAGER;
 extern MaterialManager* MATERIAL_MANAGER;
+extern Graph* RENDERING_GRAPH;
 
 inline UINT64 insertFenceToGlobalQueue() {
   // Advance the fence value to mark commands up to this fence point.
