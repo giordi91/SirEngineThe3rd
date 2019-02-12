@@ -29,13 +29,13 @@ AssetManagerNode::AssetManagerNode() : GraphNode("AssetManagerNode") {
 void AssetManagerNode::compute() {
   // here we need to get handles to the data
   m_outputPlugs[0].plugValue =
-      dx12::ASSET_MANAGER->getStaticDataHandle(AssetDataType::MATRICES).handle;
+      globals::ASSET_MANAGER->getStaticDataHandle(AssetDataType::MATRICES).handle;
 
   m_outputPlugs[1].plugValue =
-      dx12::ASSET_MANAGER->getStaticDataHandle(AssetDataType::MESHES).handle;
+      globals::ASSET_MANAGER->getStaticDataHandle(AssetDataType::MESHES).handle;
 
   m_outputPlugs[2].plugValue =
-      dx12::ASSET_MANAGER->getStaticDataHandle(AssetDataType::MATERIALS)
+      globals::ASSET_MANAGER->getStaticDataHandle(AssetDataType::MATERIALS)
           .handle;
 }
 } // namespace SirEngine

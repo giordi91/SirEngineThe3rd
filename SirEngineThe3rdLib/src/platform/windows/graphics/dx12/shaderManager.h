@@ -3,7 +3,6 @@
 #include <d3dcommon.h>
 #include <string>
 #include <unordered_map>
-#include <vector>
 
 namespace SirEngine {
 namespace dx12 {

@@ -1,12 +1,16 @@
-#include "platform/windows/graphics/dx12/textureManagerDx12.h"
-
-#include "SirEngine/log.h"
-
+#include "platform/windows/graphics/dx12/TextureManagerDx12.h"
 #include "SirEngine/fileUtils.h"
+#include "SirEngine/log.h"
 #include <DXTK12/DDSTextureLoader.h>
+#include <platform/windows/graphics/dx12/swapChain.h>
 
 namespace SirEngine {
 namespace dx12 {
+
+static std::unordered_map<RenderTargetFormat, DXGI_FORMAT>
+    RENDER_TARGET_FORMAT_TO_DXGI{
+        {RenderTargetFormat::RGBA32, DXGI_FORMAT_R8G8B8A8_UNORM}};
+
 TextureManagerDx12::~TextureManagerDx12() {
   // assert(m_texturePool.assertEverythingDealloc());
 }
@@ -17,10 +21,8 @@ TextureHandle TextureManagerDx12::loadTexture(const char *path) {
 
   const std::string name = getFileName(path);
 
-
   auto found = m_nameToHandle.find(name);
   if (found == m_nameToHandle.end()) {
-
 
     uint32_t index;
     TextureData &data = m_texturePool.getFreeMemoryData(index);
@@ -50,7 +52,7 @@ TextureHandle TextureManagerDx12::loadTexture(const char *path) {
   return found->second;
 }
 
-TextureHandle TextureManagerDx12::initializeFromResource(
+TextureHandle TextureManagerDx12::initializeFromResourceDx12(
     ID3D12Resource *resource, const char *name, D3D12_RESOURCE_STATES state) {
   // since we are passing one resource, by definition the resource is static
   // data is now loaded need to create handle etc
@@ -69,10 +71,10 @@ TextureHandle TextureManagerDx12::initializeFromResource(
   return handle;
 }
 
-TextureHandle TextureManagerDx12::createDepthTexture(const char *name,
-                                                 uint32_t width,
-                                                 uint32_t height,
-                                                 D3D12_RESOURCE_STATES state) {
+TextureHandle
+TextureManagerDx12::createDepthTexture(const char *name, uint32_t width,
+                                       uint32_t height,
+                                       D3D12_RESOURCE_STATES state) {
   bool m_4xMsaaState = false;
 
   // Create the depth/stencil buffer and view.
@@ -122,7 +124,7 @@ TextureHandle TextureManagerDx12::createDepthTexture(const char *name,
       &depthStencilDesc, state, &optClear, IID_PPV_ARGS(&data.resource));
   assert(SUCCEEDED(res));
 
-  data.flags = DebugTextureFlags::DEPTH;
+  data.flags = TextureFlags::DEPTH;
   // we have the texture, we set the flag, we now need to create handle etc
   // data is now loaded need to create handle etc
   TextureHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
@@ -135,8 +137,84 @@ TextureHandle TextureManagerDx12::createDepthTexture(const char *name,
 
   m_nameToHandle[name] = handle;
   return handle;
+}
 
-  // createDSV(GLOBAL_DSV_HEAP, &m_texture);
+void TextureManagerDx12::free(const TextureHandle handle) {
+  assertMagicNumber(handle);
+  uint32_t index = getIndexFromHandle(handle);
+  TextureData &data = m_texturePool[index];
+  // releasing the texture;
+  data.resource->Release();
+  // invalidating magic number
+  data.magicNumber = 0;
+
+  // adding the index to the free list
+  m_texturePool.free(index);
+}
+
+inline DXGI_FORMAT convertToDXGIFormat(const RenderTargetFormat format) {
+  auto found = RENDER_TARGET_FORMAT_TO_DXGI.find(format);
+  if (found != RENDER_TARGET_FORMAT_TO_DXGI.end()) {
+    return found->second;
+  }
+  assert(0 && "Could not convert render target format to DXGI");
+  return DXGI_FORMAT_UNKNOWN;
+}
+
+TextureHandle
+TextureManagerDx12::allocateRenderTexture(uint32_t width, uint32_t height,
+                                          RenderTargetFormat format,
+                                          const char *name) {
+
+  // convert SirEngine format to dx12 format
+  DXGI_FORMAT actualFormat = convertToDXGIFormat(format);
+
+  uint32_t index;
+  TextureData &data = m_texturePool.getFreeMemoryData(index);
+  auto uavDesc =
+      CD3DX12_RESOURCE_DESC::Tex2D(actualFormat, width, height, 1, 1, 1, 0,
+                                   D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
+
+  auto defaultHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+  HRESULT hr = dx12::DEVICE->CreateCommittedResource(
+      &defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &uavDesc,
+      D3D12_RESOURCE_STATE_RENDER_TARGET, nullptr,
+      IID_PPV_ARGS(&data.resource));
+  assert(SUCCEEDED(hr));
+
+  data.magicNumber = MAGIC_NUMBER_COUNTER;
+  data.format = data.resource->GetDesc().Format;
+  data.state = D3D12_RESOURCE_STATE_RENDER_TARGET;
+  data.flags = TextureFlags::RT;
+
+  TextureHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
+
+  ++MAGIC_NUMBER_COUNTER;
+
+  createRTVSRV(dx12::GLOBAL_RTV_HEAP, data.resource, data.srv);
+
+  // convert to wstring
+  const std::string sname(name);
+  const std::wstring wname(sname.begin(), sname.end());
+  data.resource->SetName(wname.c_str());
+
+  m_nameToHandle[name] = handle;
+  return handle;
+}
+
+void TextureManagerDx12::bindRenderTarget(TextureHandle handle) {
+  assertMagicNumber(handle);
+  uint32_t index = getIndexFromHandle(handle);
+  const TextureData &data = m_texturePool.getConstRef(index);
+  assert((data.flags & TextureFlags::RT) > 0);
+
+  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
+  auto commandList = currentFc->commandList;
+
+  D3D12_CPU_DESCRIPTOR_HANDLE handles[1] = {data.srv.cpuHandle};
+  //TODO fix this, should not have a depth the swap chain??
+  auto depth = dx12::SWAP_CHAIN->getDepthCPUDescriptor();
+  commandList->OMSetRenderTargets(1, handles, true, &depth);
 }
 } // namespace dx12
 } // namespace SirEngine

@@ -34,7 +34,6 @@ FrameResource *CURRENT_FRAME_RESOURCE = nullptr;
 TextureManagerDx12 *TEXTURE_MANAGER = nullptr;
 MeshManager *MESH_MANAGER = nullptr;
 IdentityManager *IDENTITY_MANAGER = nullptr;
-AssetManager *ASSET_MANAGER = nullptr;
 MaterialManager*MATERIAL_MANAGER= nullptr;
 Graph* RENDERING_GRAPH =nullptr;
 ConstantBufferManagerDx12* CONSTANT_BUFFER_MANAGER =nullptr;
@@ -179,11 +178,12 @@ bool initializeGraphicsDx12(Window *wnd, uint32_t width, uint32_t height) {
   CONSTANT_BUFFER_MANAGER = new ConstantBufferManagerDx12();
   globals::CONSTANT_BUFFER_MANAGER = CONSTANT_BUFFER_MANAGER;
   TEXTURE_MANAGER = new TextureManagerDx12();
+  globals::TEXTURE_MANAGER = TEXTURE_MANAGER;
   MESH_MANAGER = new MeshManager();
   MATERIAL_MANAGER = new MaterialManager();
   MATERIAL_MANAGER->initialize();
-  ASSET_MANAGER = new AssetManager();
-  ASSET_MANAGER->initialize();
+  globals::ASSET_MANAGER = new AssetManager();
+  globals::ASSET_MANAGER->initialize();
 
   // init swap chain
   auto *windowWnd = static_cast<HWND>(wnd->getNativeWindow());

@@ -45,12 +45,9 @@ void Graphics3DLayer::onAttach() {
   m_cameraHandle = globals::CONSTANT_BUFFER_MANAGER->allocateDynamic(
       sizeof(dx12::CameraBuffer));
 
-  // th = dx12::TEXTURE_MANAGER->loadTexture("data/processed/textures/uv.dds",
-  //                                        false);
-  // thSRV = dx12::TEXTURE_MANAGER->getSRV(th);
 
-  sphereH = dx12::ASSET_MANAGER->loadAsset("data/assets/sphere.json");
-  dx12::ASSET_MANAGER->loadAsset("data/assets/sphere.json");
+  sphereH = globals::ASSET_MANAGER->loadAsset("data/assets/sphere.json");
+  globals::ASSET_MANAGER->loadAsset("data/assets/sphere.json");
   dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE, currentFc);
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
 
@@ -109,7 +106,8 @@ void Graphics3DLayer::onUpdate() {
 
   commandList->SetGraphicsRootDescriptorTable(
       0,
-      globals::CONSTANT_BUFFER_MANAGER->getConstantBufferDx12Handle(m_cameraHandle)
+	  //TODO remove this, wrap it into a context maybe and remove graphics core?
+      dx12::CONSTANT_BUFFER_MANAGER->getConstantBufferDx12Handle(m_cameraHandle)
           .gpuHandle);
 
   dx12::RENDERING_GRAPH->compute();

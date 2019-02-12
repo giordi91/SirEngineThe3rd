@@ -96,7 +96,10 @@ void Graph::finalizeGraph() {
   // just need to flip the vector
   std::reverse(m_linearizedGraph.begin(), m_linearizedGraph.end());
 
-  int x = 0;
+  for (auto *node : m_linearizedGraph) {
+    node->initialize();
+  }
+
 }
 void Graph::compute() {
 

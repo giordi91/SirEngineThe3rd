@@ -31,6 +31,7 @@ public:
   virtual ~GraphNode() = default;
   void addConnection(const std::string &thisNodePlugName, Plug *otherPlug);
   virtual void compute(){};
+  virtual void initialize(){};
 
   // getters
   inline Plug *getInputPlug(const std::string &name) {
