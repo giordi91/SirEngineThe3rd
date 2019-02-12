@@ -21,7 +21,9 @@ public:
   virtual TextureHandle allocateRenderTexture(uint32_t width, uint32_t height,
                                               RenderTargetFormat format,
                                               const char *name) = 0;
+  virtual void copyTexture(TextureHandle source, TextureHandle destination)=0;
   virtual void bindRenderTarget(TextureHandle handle) = 0;
+  virtual void bindBackBuffer() =0;
 
   inline TextureHandle getHandleFromName(const char *name) {
     auto found = m_nameToHandle.find(name);

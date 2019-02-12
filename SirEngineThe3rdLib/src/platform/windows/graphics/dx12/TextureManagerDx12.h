@@ -34,6 +34,8 @@ public:
   virtual TextureHandle allocateRenderTexture(uint32_t width, uint32_t height,
                                               RenderTargetFormat format, const char* name) override;
   virtual void bindRenderTarget(TextureHandle handle) override;
+  virtual void copyTexture(TextureHandle source, TextureHandle destination)override;
+  virtual void bindBackBuffer() override;
 
   // dx12 methods
   TextureHandle initializeFromResourceDx12(ID3D12Resource *resource,

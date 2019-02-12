@@ -211,10 +211,66 @@ void TextureManagerDx12::bindRenderTarget(TextureHandle handle) {
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
 
+  int counter = 0;
+  D3D12_RESOURCE_BARRIER barriers[1];
+  counter = transitionTexture2DifNeeded(handle, D3D12_RESOURCE_STATE_RENDER_TARGET,
+                              barriers, counter);
+  if (counter) {
+    commandList->ResourceBarrier(counter, barriers);
+  }
   D3D12_CPU_DESCRIPTOR_HANDLE handles[1] = {data.srv.cpuHandle};
-  //TODO fix this, should not have a depth the swap chain??
+  // TODO fix this, should not have a depth the swap chain??
   auto depth = dx12::SWAP_CHAIN->getDepthCPUDescriptor();
   commandList->OMSetRenderTargets(1, handles, true, &depth);
+}
+
+void TextureManagerDx12::copyTexture(TextureHandle source,
+                                     TextureHandle destination) {
+  assertMagicNumber(source);
+  assertMagicNumber(destination);
+
+  uint32_t sourceIdx = getIndexFromHandle(source);
+  uint32_t destIdx = getIndexFromHandle(destination);
+
+  TextureData &sourceData = m_texturePool[sourceIdx];
+  TextureData &destData = m_texturePool[destIdx];
+
+  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
+  auto commandList = currentFc->commandList;
+
+  // auto renderTarget = m_swapChain.currentBackBuffer();
+
+  // auto shadow = m_shadowPass.getOutputResource();
+  D3D12_RESOURCE_BARRIER barriers[2];
+
+  int counter = 0;
+
+  auto state = sourceData.state;
+  if (sourceData.state != D3D12_RESOURCE_STATE_COPY_SOURCE) {
+    barriers[counter] = CD3DX12_RESOURCE_BARRIER::Transition(
+        sourceData.resource, state, D3D12_RESOURCE_STATE_COPY_SOURCE);
+    sourceData.state = D3D12_RESOURCE_STATE_COPY_SOURCE;
+    ++counter;
+  }
+  state = destData.state;
+  if (destData.state != D3D12_RESOURCE_STATE_COPY_DEST) {
+    barriers[counter] = CD3DX12_RESOURCE_BARRIER::Transition(
+        destData.resource, state, D3D12_RESOURCE_STATE_COPY_DEST);
+    destData.state = D3D12_RESOURCE_STATE_COPY_DEST;
+    ++counter;
+  }
+  if (counter > 0) {
+    commandList->ResourceBarrier(counter, barriers);
+  }
+  commandList->CopyResource(destData.resource, sourceData.resource);
+}
+
+void TextureManagerDx12::bindBackBuffer() {
+
+  auto back = dx12::SWAP_CHAIN->currentBackBufferView();
+  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
+  auto commandList = currentFc->commandList;
+  commandList->OMSetRenderTargets(1, &back, true, nullptr);
 }
 } // namespace dx12
 } // namespace SirEngine
