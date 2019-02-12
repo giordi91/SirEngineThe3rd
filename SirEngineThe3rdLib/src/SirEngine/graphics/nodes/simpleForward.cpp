@@ -41,6 +41,10 @@ void SimpleForward::initialize() {
   m_renderTarget = globals::TEXTURE_MANAGER->allocateRenderTexture(
       globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT, RenderTargetFormat::RGBA32,
       "simpleForwardRT");
+
+  // to do move function to interface
+  m_depth = dx12::TEXTURE_MANAGER->createDepthTexture(
+      "simpleForwardRTDepth", globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT);
 }
 
 void SimpleForward::compute() {
@@ -69,7 +73,21 @@ void SimpleForward::compute() {
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
 
-  globals::TEXTURE_MANAGER->bindRenderTarget(m_renderTarget);
+  D3D12_RESOURCE_BARRIER barriers[2];
+  int counter = 0;
+  counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
+      m_depth, D3D12_RESOURCE_STATE_DEPTH_WRITE, barriers, counter);
+  counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
+      m_renderTarget, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, counter);
+
+  if (counter) {
+    commandList->ResourceBarrier(counter, barriers);
+  }
+
+  globals::TEXTURE_MANAGER->clearDepth(m_depth);
+  float color[4] = {0.0f,0.0f,0.0f,1.0f};
+  globals::TEXTURE_MANAGER->clearRT(m_renderTarget,color);
+  globals::TEXTURE_MANAGER->bindRenderTarget(m_renderTarget, m_depth);
 
   for (uint32_t i = 0; i < meshCount; ++i) {
 

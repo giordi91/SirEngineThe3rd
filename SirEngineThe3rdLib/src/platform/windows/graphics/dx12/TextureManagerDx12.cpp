@@ -64,8 +64,12 @@ TextureHandle TextureManagerDx12::initializeFromResourceDx12(
   data.magicNumber = MAGIC_NUMBER_COUNTER;
   data.format = data.resource->GetDesc().Format;
   data.state = state;
+  data.flags = TextureFlags::RT;
 
   ++MAGIC_NUMBER_COUNTER;
+
+  dx12::createRTVSRV(dx12::GLOBAL_RTV_HEAP,
+                     m_texturePool.getConstRef(index).resource, data.srv);
 
   m_nameToHandle[name] = handle;
   return handle;
@@ -133,6 +137,9 @@ TextureManagerDx12::createDepthTexture(const char *name, uint32_t width,
   data.format = data.resource->GetDesc().Format;
   data.state = state;
 
+  dx12::createDSV(dx12::GLOBAL_DSV_HEAP, m_texturePool[index].resource,
+                  data.srv, DXGI_FORMAT_D24_UNORM_S8_UINT);
+
   ++MAGIC_NUMBER_COUNTER;
 
   m_nameToHandle[name] = handle;
@@ -143,11 +150,35 @@ void TextureManagerDx12::free(const TextureHandle handle) {
   assertMagicNumber(handle);
   uint32_t index = getIndexFromHandle(handle);
   TextureData &data = m_texturePool[index];
+
+  // check type
+  if ((data.flags & TextureFlags::DEPTH) > 0) {
+    if (data.srv.cpuHandle.ptr != 0) {
+      dx12::GLOBAL_DSV_HEAP->freeDescriptor(data.srv);
+    }
+    if (data.uav.cpuHandle.ptr != 0) {
+      dx12::GLOBAL_DSV_HEAP->freeDescriptor(data.uav);
+    }
+  } else if ((data.flags & TextureFlags::RT) > 0) {
+    if (data.srv.cpuHandle.ptr != 0) {
+      dx12::GLOBAL_RTV_HEAP->freeDescriptor(data.srv);
+    }
+    if (data.uav.cpuHandle.ptr != 0) {
+      dx12::GLOBAL_RTV_HEAP->freeDescriptor(data.uav);
+    }
+  } else {
+    if (data.srv.cpuHandle.ptr != 0) {
+      dx12::GLOBAL_CBV_SRV_UAV_HEAP->freeDescriptor(data.srv);
+    }
+    if (data.uav.cpuHandle.ptr != 0) {
+      dx12::GLOBAL_CBV_SRV_UAV_HEAP->freeDescriptor(data.uav);
+    }
+  }
+
   // releasing the texture;
   data.resource->Release();
   // invalidating magic number
   data.magicNumber = 0;
-
   // adding the index to the free list
   m_texturePool.free(index);
 }
@@ -202,7 +233,8 @@ TextureManagerDx12::allocateRenderTexture(uint32_t width, uint32_t height,
   return handle;
 }
 
-void TextureManagerDx12::bindRenderTarget(TextureHandle handle) {
+void TextureManagerDx12::bindRenderTarget(TextureHandle handle,
+                                          TextureHandle depth) {
   assertMagicNumber(handle);
   uint32_t index = getIndexFromHandle(handle);
   const TextureData &data = m_texturePool.getConstRef(index);
@@ -211,17 +243,10 @@ void TextureManagerDx12::bindRenderTarget(TextureHandle handle) {
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
 
-  int counter = 0;
-  D3D12_RESOURCE_BARRIER barriers[1];
-  counter = transitionTexture2DifNeeded(handle, D3D12_RESOURCE_STATE_RENDER_TARGET,
-                              barriers, counter);
-  if (counter) {
-    commandList->ResourceBarrier(counter, barriers);
-  }
   D3D12_CPU_DESCRIPTOR_HANDLE handles[1] = {data.srv.cpuHandle};
   // TODO fix this, should not have a depth the swap chain??
-  auto depth = dx12::SWAP_CHAIN->getDepthCPUDescriptor();
-  commandList->OMSetRenderTargets(1, handles, true, &depth);
+  auto backDepth = dx12::SWAP_CHAIN->getDepthCPUDescriptor();
+  commandList->OMSetRenderTargets(1, handles, true, &backDepth);
 }
 
 void TextureManagerDx12::copyTexture(TextureHandle source,
@@ -265,12 +290,38 @@ void TextureManagerDx12::copyTexture(TextureHandle source,
   commandList->CopyResource(destData.resource, sourceData.resource);
 }
 
-void TextureManagerDx12::bindBackBuffer() {
+void TextureManagerDx12::bindBackBuffer(bool bindBackBufferDepth) {
 
   auto back = dx12::SWAP_CHAIN->currentBackBufferView();
+  auto depth = dx12::SWAP_CHAIN->getDepthCPUDescriptor();
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
-  commandList->OMSetRenderTargets(1, &back, true, nullptr);
+  commandList->OMSetRenderTargets(1, &back, true,
+                                  bindBackBufferDepth ? &depth : nullptr);
+  ;
+}
+
+void TextureManagerDx12::clearDepth(const TextureHandle depth) {
+
+  assertMagicNumber(depth);
+  uint32_t index = getIndexFromHandle(depth);
+  const TextureData &data = m_texturePool.getConstRef(index);
+  assert((data.flags & TextureFlags::DEPTH) > 0);
+
+  CURRENT_FRAME_RESOURCE->fc.commandList->ClearDepthStencilView(
+      data.srv.cpuHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL,
+      1.0f, 0, 0, nullptr);
+}
+
+void TextureManagerDx12::clearRT(const TextureHandle handle,
+                                 const float color[4]) {
+  assertMagicNumber(handle);
+  uint32_t index = getIndexFromHandle(handle);
+  const TextureData &data = m_texturePool.getConstRef(index);
+  assert((data.flags & TextureFlags::RT) > 0);
+  // Clear the back buffer and depth buffer.
+  CURRENT_FRAME_RESOURCE->fc.commandList->ClearRenderTargetView(
+      data.srv.cpuHandle, color, 0, nullptr);
 }
 } // namespace dx12
 } // namespace SirEngine

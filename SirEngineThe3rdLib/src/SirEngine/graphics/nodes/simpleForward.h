@@ -13,6 +13,7 @@ public:
   virtual void compute() override;
 private:
 	TextureHandle m_renderTarget;
+	TextureHandle m_depth;
 };
 
 } // namespace SirEngine

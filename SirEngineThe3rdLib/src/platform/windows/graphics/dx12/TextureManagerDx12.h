@@ -18,8 +18,8 @@ class TextureManagerDx12 final : public TextureManager {
     D3D12_RESOURCE_STATES state;
     DXGI_FORMAT format;
     TextureFlags flags;
-	DescriptorPair srv;
-	DescriptorPair uav;
+    DescriptorPair srv;
+    DescriptorPair uav;
   };
 
 public:
@@ -32,10 +32,15 @@ public:
   virtual TextureHandle loadTexture(const char *path) override;
   virtual void free(const TextureHandle handle) override;
   virtual TextureHandle allocateRenderTexture(uint32_t width, uint32_t height,
-                                              RenderTargetFormat format, const char* name) override;
-  virtual void bindRenderTarget(TextureHandle handle) override;
-  virtual void copyTexture(TextureHandle source, TextureHandle destination)override;
-  virtual void bindBackBuffer() override;
+                                              RenderTargetFormat format,
+                                              const char *name) override;
+  virtual void bindRenderTarget(TextureHandle handle,
+                                TextureHandle depth) override;
+  virtual void copyTexture(TextureHandle source,
+                           TextureHandle destination) override;
+  virtual void bindBackBuffer(bool bindBackBufferDepth) override;
+  virtual void clearDepth(const TextureHandle depth) override;
+  virtual void clearRT(const TextureHandle handle, const float color[4])override;
 
   // dx12 methods
   TextureHandle initializeFromResourceDx12(ID3D12Resource *resource,
@@ -61,10 +66,7 @@ public:
              const DXGI_FORMAT format = DXGI_FORMAT_D24_UNORM_S8_UINT) {
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
-    DescriptorPair pair;
-    dx12::createDSV(dx12::GLOBAL_DSV_HEAP, m_texturePool[index].resource, pair,
-                    format);
-    return pair;
+    return m_texturePool[index].srv;
   }
   void freeSRVDx12(const TextureHandle handle,
                    const DescriptorPair pair) const {
@@ -73,12 +75,10 @@ public:
     dx12::GLOBAL_CBV_SRV_UAV_HEAP->freeDescriptor(pair);
   }
   inline DescriptorPair getRTVDx12(const TextureHandle handle) const {
+
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
-    DescriptorPair pair;
-    dx12::createRTVSRV(dx12::GLOBAL_RTV_HEAP,
-                       m_texturePool.getConstRef(index).resource, pair);
-    return pair;
+    return m_texturePool.getConstRef(index).srv;
   }
   void freeRTVDx12(const TextureHandle handle,
                    const DescriptorPair pair) const {
@@ -125,7 +125,6 @@ private:
   std::unordered_map<std::string, TextureHandle> m_nameToHandle;
   DirectX::ResourceUploadBatch batch;
   SparseMemoryPool<TextureData> m_texturePool;
-
 };
 
 } // namespace dx12
