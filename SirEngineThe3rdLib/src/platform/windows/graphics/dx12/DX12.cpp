@@ -5,11 +5,11 @@
 #include "SirEngine/log.h"
 #include "SirEngine/materialManager.h"
 #include "platform/windows/graphics/dx12/adapter.h"
-#include "platform/windows/graphics/dx12/constantBufferManager.h"
+#include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/meshManager.h"
 #include "platform/windows/graphics/dx12/swapChain.h"
-#include "platform/windows/graphics/dx12/textureManager.h"
+#include "platform/windows/graphics/dx12/TextureManagerDx12.h"
 
 namespace SirEngine {
 namespace dx12 {
@@ -31,13 +31,13 @@ ID3D12Fence *GLOBAL_FENCE = nullptr;
 SwapChain *SWAP_CHAIN = nullptr;
 FrameResource FRAME_RESOURCES[FRAME_BUFFERS_COUNT];
 FrameResource *CURRENT_FRAME_RESOURCE = nullptr;
-TextureManager *TEXTURE_MANAGER = nullptr;
+TextureManagerDx12 *TEXTURE_MANAGER = nullptr;
 MeshManager *MESH_MANAGER = nullptr;
 IdentityManager *IDENTITY_MANAGER = nullptr;
-ConstantBufferManager *CONSTANT_BUFFER_MANAGER = nullptr;
 AssetManager *ASSET_MANAGER = nullptr;
 MaterialManager*MATERIAL_MANAGER= nullptr;
 Graph* RENDERING_GRAPH =nullptr;
+ConstantBufferManagerDx12* CONSTANT_BUFFER_MANAGER =nullptr;
 
 bool createFrameCommand(FrameCommand *fc) {
 
@@ -176,8 +176,9 @@ bool initializeGraphicsDx12(Window *wnd, uint32_t width, uint32_t height) {
   // TODO add initialize to all managers for consistency and symmetry
   IDENTITY_MANAGER = new IdentityManager();
   IDENTITY_MANAGER->initialize();
-  CONSTANT_BUFFER_MANAGER = new ConstantBufferManager();
-  TEXTURE_MANAGER = new TextureManager();
+  CONSTANT_BUFFER_MANAGER = new ConstantBufferManagerDx12();
+  globals::CONSTANT_BUFFER_MANAGER = CONSTANT_BUFFER_MANAGER;
+  TEXTURE_MANAGER = new TextureManagerDx12();
   MESH_MANAGER = new MeshManager();
   MATERIAL_MANAGER = new MaterialManager();
   MATERIAL_MANAGER->initialize();

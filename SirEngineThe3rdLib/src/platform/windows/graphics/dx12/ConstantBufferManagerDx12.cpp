@@ -1,10 +1,10 @@
-#include "platform/windows/graphics/dx12/constantBufferManager.h"
+#include "platform/windows/graphics/dx12/constantBufferManagerDx12.h"
 #include "d3dx12.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 
 namespace SirEngine {
 namespace dx12 {
-ConstantBufferManager::ConstantBufferManager() {
+ConstantBufferManagerDx12::ConstantBufferManagerDx12() {
   for (auto &i : m_dynamicStorage) {
     i.reserve(RESERVE_SIZE);
   }
@@ -12,7 +12,7 @@ ConstantBufferManager::ConstantBufferManager() {
 }
 
 ConstantBufferHandle
-ConstantBufferManager::allocateDynamic(const uint32_t sizeInBytes) {
+ConstantBufferManagerDx12::allocateDynamic(uint32_t sizeInBytes) {
   // must be at least 256 bytes
   uint32_t actualSize =
       sizeInBytes % 256 == 0 ? sizeInBytes : ((sizeInBytes / 256) + 1) * 256;
@@ -47,6 +47,17 @@ ConstantBufferManager::allocateDynamic(const uint32_t sizeInBytes) {
   }
   ++MAGIC_NUMBER_COUNTER;
   return handle;
+}
+
+void ConstantBufferManagerDx12::updateConstantBuffer(
+	const ConstantBufferHandle handle, void *dataToUpload) {
+  assertMagicNumber(handle);
+  uint32_t index = getIndexFromHandle(handle);
+  const ConstantBufferData &data =
+      m_dynamicStorage[globals::CURRENT_FRAME][index];
+
+  assert(data.mappedData != nullptr);
+  memcpy(data.mappedData, dataToUpload, data.size);
 }
 } // namespace dx12
 } // namespace SirEngine

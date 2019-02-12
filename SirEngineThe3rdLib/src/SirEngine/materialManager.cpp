@@ -2,8 +2,12 @@
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/identityManager.h"
 #include "nlohmann/json.hpp"
-#include "platform/windows/graphics/dx12/constantBufferManager.h"
-#include "platform/windows/graphics/dx12/textureManager.h"
+#include "platform/windows/graphics/dx12/TextureManagerDx12.h"
+
+
+#if GRAPHICS_API == DX12
+#include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
+#endif
 
 namespace materialKeys {
 static const char *KD = "kd";
@@ -13,14 +17,14 @@ static const char *ALBEDO = "albedo";
 static const char *NORMAL = "normal";
 static const char *FLAGS = "flags";
 static const std::unordered_map<std::string, SirEngine::SHADER_PASS_FLAGS>
-    stringToShaderFlag{{"forward", SirEngine::SHADER_PASS_FLAGS::FORWARD}};
+    STRING_TO_SHADER_FLAG{{"forward", SirEngine::SHADER_PASS_FLAGS::FORWARD}};
 
 } // namespace materialKeys
 
 namespace SirEngine {
 inline uint32_t stringToActualShaderFlag(const std::string &flag) {
-  auto found = materialKeys::stringToShaderFlag.find(flag);
-  if (found != materialKeys::stringToShaderFlag.end()) {
+  auto found = materialKeys::STRING_TO_SHADER_FLAG.find(flag);
+  if (found != materialKeys::STRING_TO_SHADER_FLAG.end()) {
     return found->second;
   }
   assert(0 && "could not map requested shader flag");
@@ -104,8 +108,9 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   matCpu.normal = texHandles.normalSrv.gpuHandle;
 
   // we need to allocate  constant buffer
+  //TODO should this be static? investigate 
   matCpu.cbHandle =
-      dx12::CONSTANT_BUFFER_MANAGER->allocateDynamic(sizeof(Material));
+      globals::CONSTANT_BUFFER_MANAGER->allocateDynamic(sizeof(Material));
   uint32_t index;
   m_idxPool.getFreeMemoryData(index);
   m_materialsMagic[index] = static_cast<uint16_t>(MAGIC_NUMBER_COUNTER);

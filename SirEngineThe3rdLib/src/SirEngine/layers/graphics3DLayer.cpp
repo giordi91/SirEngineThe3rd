@@ -42,7 +42,7 @@ void Graphics3DLayer::onAttach() {
   m_pso->loadPSOInFolder("data/pso");
 
   // ask for the camera buffer handle;
-  m_cameraHandle = dx12::CONSTANT_BUFFER_MANAGER->allocateDynamic(
+  m_cameraHandle = globals::CONSTANT_BUFFER_MANAGER->allocateDynamic(
       sizeof(dx12::CameraBuffer));
 
   // th = dx12::TEXTURE_MANAGER->loadTexture("data/processed/textures/uv.dds",
@@ -99,7 +99,7 @@ void Graphics3DLayer::onUpdate() {
   m_camBufferCPU.mvp = DirectX::XMMatrixTranspose(
       globals::MAIN_CAMERA->getMVP(DirectX::XMMatrixIdentity()));
 
-  dx12::CONSTANT_BUFFER_MANAGER->updateConstantBuffer(m_cameraHandle,
+  globals::CONSTANT_BUFFER_MANAGER->updateConstantBuffer(m_cameraHandle,
                                                       &m_camBufferCPU);
 
   auto *pso = m_pso->getComputePSOByName("simpleMeshPSOTex");
@@ -109,7 +109,7 @@ void Graphics3DLayer::onUpdate() {
 
   commandList->SetGraphicsRootDescriptorTable(
       0,
-      dx12::CONSTANT_BUFFER_MANAGER->getConstantBufferDescriptor(m_cameraHandle)
+      globals::CONSTANT_BUFFER_MANAGER->getConstantBufferDx12Handle(m_cameraHandle)
           .gpuHandle);
 
   dx12::RENDERING_GRAPH->compute();

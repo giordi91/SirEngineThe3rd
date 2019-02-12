@@ -1,6 +1,6 @@
 #pragma once
 #include "platform/windows/graphics/dx12/DX12.h"
-#include "platform/windows/graphics/dx12/textureManager.h"
+#include "platform/windows/graphics/dx12/TextureManagerDx12.h"
 #include <dxgi1_4.h>
 
 struct ID3D12Resource;

@@ -1,6 +1,6 @@
 #include "SirEngine/graphics/nodes/simpleForward.h"
 #include "SirEngine/assetManager.h"
-#include "platform/windows/graphics/dx12/textureManager.h"
+#include "platform/windows/graphics/dx12/textureManagerDx12.h"
 
 namespace SirEngine {
 SimpleForward::SimpleForward(const char *name) : GraphNode(name) {

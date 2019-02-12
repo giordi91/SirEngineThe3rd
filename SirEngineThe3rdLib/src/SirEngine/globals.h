@@ -2,6 +2,7 @@
 #include "clock.h"
 
 namespace SirEngine {
+class ConstantBufferManager;
 class Camera3DPivot;
 namespace globals {
 
@@ -14,6 +15,9 @@ extern uint32_t TOTAL_NUMBER_OF_FRAMES;
 extern uint64_t CURRENT_FRAME;
 #define FRAME_BUFFERS_COUNT 2
 
-} // namespace Globals
-typedef  unsigned char uchar;
+// managers
+extern ConstantBufferManager *CONSTANT_BUFFER_MANAGER;
+
+} // namespace globals
+typedef unsigned char uchar;
 } // namespace SirEngine

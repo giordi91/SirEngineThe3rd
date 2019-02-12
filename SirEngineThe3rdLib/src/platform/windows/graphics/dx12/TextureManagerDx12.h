@@ -2,7 +2,6 @@
 
 #include "DXTK12/ResourceUploadBatch.h"
 #include "SirEngine/handle.h"
-#include "SirEngine/log.h"
 #include "SirEngine/memory/SparseMemoryPool.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/d3dx12.h"
@@ -13,7 +12,7 @@ namespace dx12 {
 
 enum DebugTextureFlags { DEPTH = 1 };
 
-class TextureManager final {
+class TextureManagerDx12 final {
   struct TextureData final {
     uint32_t magicNumber;
     ID3D12Resource *resource;
@@ -23,12 +22,12 @@ class TextureManager final {
   };
 
 public:
-  TextureManager() : batch(dx12::DEVICE), m_texturePool(RESERVE_SIZE) {
+  TextureManagerDx12() : batch(dx12::DEVICE), m_texturePool(RESERVE_SIZE) {
     m_nameToHandle.reserve(RESERVE_SIZE);
   }
-  ~TextureManager();
-  TextureManager(const TextureManager &) = delete;
-  TextureManager &operator=(const TextureManager &) = delete;
+  ~TextureManagerDx12();
+  TextureManagerDx12(const TextureManagerDx12 &) = delete;
+  TextureManagerDx12 &operator=(const TextureManagerDx12 &) = delete;
   TextureHandle loadTexture(const char *path);
   TextureHandle initializeFromResource(ID3D12Resource *resource,
                                        const char *name,
