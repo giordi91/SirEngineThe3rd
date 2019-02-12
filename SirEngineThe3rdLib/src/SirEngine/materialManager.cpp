@@ -2,11 +2,8 @@
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/identityManager.h"
 #include "nlohmann/json.hpp"
-#include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/constantBufferManager.h"
 #include "platform/windows/graphics/dx12/textureManager.h"
-#include <DirectXMath.h>
-#include <unordered_map>
 
 namespace materialKeys {
 static const char *KD = "kd";
@@ -95,20 +92,28 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   mat.kSG = ks.y;
   mat.kSB = ks.z;
 
+  MaterialTexureHandles texHandles{albedoTex, normalTex};
+  if (albedoTex.handle != 0) {
+    texHandles.albedoSrv = dx12::TEXTURE_MANAGER->getSRV(albedoTex);
+  }
+  if (normalTex.handle != 0) {
+    texHandles.normalSrv = dx12::TEXTURE_MANAGER->getSRV(normalTex);
+  }
   MaterialRuntime matCpu;
-  matCpu.albedo = albedoTex;
-  matCpu.normal = normalTex;
+  matCpu.albedo = texHandles.albedoSrv.gpuHandle;
+  matCpu.normal = texHandles.normalSrv.gpuHandle;
 
   // we need to allocate  constant buffer
   matCpu.cbHandle =
       dx12::CONSTANT_BUFFER_MANAGER->allocateDynamic(sizeof(Material));
   uint32_t index;
   m_idxPool.getFreeMemoryData(index);
-  m_materialsMagic[index] = MAGIC_NUMBER_COUNTER;
+  m_materialsMagic[index] = static_cast<uint16_t>(MAGIC_NUMBER_COUNTER);
   matCpu.shaderFlags = flags;
 
   runtimeMemory[runtimeIndex] = matCpu;
   m_materials[index] = mat;
+  m_materialTextureHandles[index] = texHandles;
 
   MaterialHandle handle{(MAGIC_NUMBER_COUNTER << 16) | (index)};
   ++MAGIC_NUMBER_COUNTER;

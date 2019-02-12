@@ -2,6 +2,7 @@
 
 #include "SirEngine/binary/binaryFile.h"
 #include "SirEngine/fileUtils.h"
+#include "SirEngine/log.h"
 
 namespace SirEngine {
 namespace dx12 {
@@ -9,7 +10,7 @@ void MeshManager::clearUploadRequests() {
 
   auto id = GLOBAL_FENCE->GetCompletedValue();
   // uint32_t freed = 0;
-  int requestSize = m_uploadRequests.size() - 1;
+  int requestSize = static_cast<int>(m_uploadRequests.size()) - 1;
   int stackTopIdx = requestSize;
   for (int i = requestSize; i >= 0; --i) {
     MeshUploadResource &upload = m_uploadRequests[i];

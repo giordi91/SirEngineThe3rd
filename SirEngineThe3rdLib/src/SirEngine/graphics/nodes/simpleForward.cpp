@@ -62,13 +62,8 @@ void SimpleForward::compute() {
   auto commandList = currentFc->commandList;
   for (uint32_t i = 0; i < meshCount; ++i) {
 
-    // TODO need to fix this SRV issue
-    auto thSRV = dx12::TEXTURE_MANAGER->getSRV(mats[i].albedo);
-    commandList->SetGraphicsRootDescriptorTable(1, thSRV.gpuHandle);
-
+    commandList->SetGraphicsRootDescriptorTable(1, mats[i].albedo);
     dx12::MESH_MANAGER->bindMeshRuntimeAndRender(meshes[i], currentFc);
-
-    dx12::TEXTURE_MANAGER->freeSRV(mats[i].albedo, thSRV);
   }
 }
 } // namespace SirEngine

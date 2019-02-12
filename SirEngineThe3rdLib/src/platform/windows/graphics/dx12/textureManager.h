@@ -1,21 +1,19 @@
 #pragma once
 
 #include "DXTK12/ResourceUploadBatch.h"
+#include "SirEngine/handle.h"
 #include "SirEngine/log.h"
 #include "SirEngine/memory/SparseMemoryPool.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/d3dx12.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
-#include "SirEngine/handle.h"
 
 namespace SirEngine {
 namespace dx12 {
 
-
 enum DebugTextureFlags { DEPTH = 1 };
 
 class TextureManager final {
-private:
   struct TextureData final {
     uint32_t magicNumber;
     ID3D12Resource *resource;
@@ -39,21 +37,6 @@ public:
   createDepthTexture(const char *name, uint32_t width, uint32_t height,
                      D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COMMON);
 
-  inline void assertMagicNumber(const TextureHandle handle) const {
-#ifdef SE_DEBUG
-    uint32_t magic = getMagicFromHandle(handle);
-    uint32_t idx = getIndexFromHandle(handle);
-    assert(m_texturePool.getConstRef(idx).magicNumber == magic &&
-           "invalid magic handle for constant buffer");
-#endif
-  }
-  inline uint32_t getIndexFromHandle(const TextureHandle h) const {
-    return h.handle & INDEX_MASK;
-  }
-  inline uint32_t getMagicFromHandle(const TextureHandle h) const {
-    return (h.handle & MAGIC_NUMBER_MASK) >> 16;
-  }
-
   // handles facilities
   DescriptorPair getSRV(TextureHandle handle) {
     assertMagicNumber(handle);
@@ -74,7 +57,7 @@ public:
                     format);
     return pair;
   }
-  void freeSRV(TextureHandle handle, DescriptorPair pair) const {
+  void freeSRV(const TextureHandle handle, const DescriptorPair pair) const {
     assertMagicNumber(handle);
     assert(pair.type == DescriptorType::SRV);
     dx12::GLOBAL_CBV_SRV_UAV_HEAP->freeDescriptor(pair);
@@ -99,8 +82,8 @@ public:
   }
 
   // barriers
-  inline int transitionTexture2DifNeeded(TextureHandle handle,
-                                         D3D12_RESOURCE_STATES wantedState,
+  inline int transitionTexture2DifNeeded(const TextureHandle handle,
+                                         const D3D12_RESOURCE_STATES wantedState,
                                          D3D12_RESOURCE_BARRIER *barriers,
                                          int counter) {
 
@@ -131,7 +114,6 @@ public:
     m_texturePool.free(index);
   }
 
-#if SE_DEBUG
   inline TextureHandle getHandleFromName(const char *name) {
     auto found = m_nameToHandle.find(name);
     if (found != m_nameToHandle.end()) {
@@ -139,7 +121,22 @@ public:
     }
     return TextureHandle{0};
   }
+
+private:
+  inline void assertMagicNumber(const TextureHandle handle) const {
+#ifdef SE_DEBUG
+    uint32_t magic = getMagicFromHandle(handle);
+    uint32_t idx = getIndexFromHandle(handle);
+    assert(m_texturePool.getConstRef(idx).magicNumber == magic &&
+           "invalid magic handle for constant buffer");
 #endif
+  }
+  inline uint32_t getIndexFromHandle(const TextureHandle h) const {
+    return h.handle & INDEX_MASK;
+  }
+  inline uint32_t getMagicFromHandle(const TextureHandle h) const {
+    return (h.handle & MAGIC_NUMBER_MASK) >> 16;
+  }
 
 private:
   std::unordered_map<std::string, TextureHandle> m_nameToHandle;

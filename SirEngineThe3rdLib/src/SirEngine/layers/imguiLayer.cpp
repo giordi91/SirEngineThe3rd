@@ -52,8 +52,8 @@ void ImguiLayer::onAttach() {
       reinterpret_cast<LARGE_INTEGER *>(&g_TicksPerSecond));
   ::QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER *>(&g_Time));
 
-  io.DisplaySize = ImVec2(globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT);
-
+  io.DisplaySize = ImVec2(static_cast<float>(globals::SCREEN_WIDTH),
+                          static_cast<float>(globals::SCREEN_HEIGHT));
 
   m_renderGraph.initialize(dx12::RENDERING_GRAPH);
 }

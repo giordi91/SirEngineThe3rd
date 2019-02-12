@@ -6,13 +6,25 @@
 #include <unordered_map>
 #include <vector>
 
+#if GRAPHICS_API == DX12
+#include "platform/windows/graphics/dx12/descriptorHeap.h"
+#endif
+
 namespace SirEngine {
 
 struct MaterialRuntime final {
   ConstantBufferHandle cbHandle;
+#if GRAPHICS_API == DX12
+  D3D12_GPU_DESCRIPTOR_HANDLE albedo;
+  D3D12_GPU_DESCRIPTOR_HANDLE normal;
+#endif
+  uint32_t shaderFlags = 0;
+};
+struct MaterialTexureHandles {
   TextureHandle albedo;
   TextureHandle normal;
-  uint32_t shaderFlags = 0;
+  dx12::DescriptorPair albedoSrv;
+  dx12::DescriptorPair normalSrv;
 };
 struct Material final {
   float kDR;
@@ -31,7 +43,8 @@ class MaterialManager final {
 
 public:
   MaterialManager() : m_idxPool(RESERVE_SIZE) {
-    m_materials.resize(RESERVE_SIZE), m_materialsMagic.resize(RESERVE_SIZE);
+    m_materials.resize(RESERVE_SIZE), m_materialsMagic.resize(RESERVE_SIZE),
+        m_materialTextureHandles.resize(RESERVE_SIZE);
   };
   ~MaterialManager() = default;
   MaterialManager(const MaterialManager &) = delete;
@@ -64,6 +77,7 @@ private:
   SparseMemoryPool<uint32_t> m_idxPool;
   std::vector<Material> m_materials;
   std::vector<uint16_t> m_materialsMagic;
+  std::vector<MaterialTexureHandles> m_materialTextureHandles;
 };
 
 } // namespace SirEngine

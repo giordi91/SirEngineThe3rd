@@ -4,7 +4,6 @@
 #include "platform/windows/graphics/dx12/d3dx12.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include <d3d12.h>
-#include <iostream>
 
 namespace SirEngine {
 namespace dx12 {
