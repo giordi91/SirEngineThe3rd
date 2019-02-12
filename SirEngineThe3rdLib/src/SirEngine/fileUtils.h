@@ -91,7 +91,6 @@ inline nlohmann::json getJsonObj(std::string path) {
                 << path << std::endl;
       auto ex = std::current_exception();
       ex._RethrowException();
-      return nlohmann::json();
     }
   } else {
     assert(0);

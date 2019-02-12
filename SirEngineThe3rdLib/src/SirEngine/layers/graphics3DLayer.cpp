@@ -2,10 +2,10 @@
 #include "SirEngine/assetManager.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/graphics/camera.h"
+#include "SirEngine/graphics/nodeGraph.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/swapChain.h"
 #include <DirectXMath.h>
-#include "SirEngine/graphics/nodeGraph.h"
 
 #include "SirEngine/graphics/nodes/FinalBlitNode.h"
 #include "SirEngine/graphics/nodes/assetManagerNode.h"
@@ -27,12 +27,6 @@ void Graphics3DLayer::onAttach() {
   if (!currentFc->isListOpen) {
     dx12::resetAllocatorAndList(currentFc);
   }
-
-  // meshHandle =
-  // dx12::MESH_MANAGER->loadMesh("data/processed/meshes/armorChest.model");
-  // meshHandle =
-  //    dx12::MESH_MANAGER->loadMesh("data/processed/meshes/pSphere1.model");
-  // meshIndexCount = dx12::MESH_MANAGER->getIndexCount(meshHandle);
 
   m_shaderManager = new SirEngine::dx12::ShaderManager();
   m_shaderManager->init();
@@ -60,24 +54,26 @@ void Graphics3DLayer::onAttach() {
   dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE, currentFc);
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
 
-
   dx12::RENDERING_GRAPH = new Graph();
 
   auto assetNode = new AssetManagerNode();
   auto finalBlit = new FinalBlitNode();
   auto simpleForward = new SimpleForward("simpleForward");
 
-  //temporary graph for testing
+  // temporary graph for testing
   dx12::RENDERING_GRAPH->addNode(assetNode);
   dx12::RENDERING_GRAPH->addNode(finalBlit);
   dx12::RENDERING_GRAPH->addNode(simpleForward);
   dx12::RENDERING_GRAPH->setFinalNode(finalBlit);
-  dx12::RENDERING_GRAPH->connectNodes(assetNode, "matrices", simpleForward, "matrices");
-  dx12::RENDERING_GRAPH->connectNodes(assetNode, "meshes", simpleForward, "meshes");
-  dx12::RENDERING_GRAPH->connectNodes(assetNode, "materials", simpleForward, "materials");
-  dx12::RENDERING_GRAPH->connectNodes(simpleForward, "outTexture", finalBlit, "inTexture");
+  dx12::RENDERING_GRAPH->connectNodes(assetNode, "matrices", simpleForward,
+                                      "matrices");
+  dx12::RENDERING_GRAPH->connectNodes(assetNode, "meshes", simpleForward,
+                                      "meshes");
+  dx12::RENDERING_GRAPH->connectNodes(assetNode, "materials", simpleForward,
+                                      "materials");
+  dx12::RENDERING_GRAPH->connectNodes(simpleForward, "outTexture", finalBlit,
+                                      "inTexture");
   dx12::RENDERING_GRAPH->finalizeGraph();
-
 }
 void Graphics3DLayer::onDetach() {}
 void Graphics3DLayer::onUpdate() {
@@ -111,41 +107,12 @@ void Graphics3DLayer::onUpdate() {
   auto *rs = m_root->getRootSignatureFromName("simpleMeshRSTex");
   commandList->SetGraphicsRootSignature(rs);
 
-    commandList->SetGraphicsRootDescriptorTable(
-        0, dx12::CONSTANT_BUFFER_MANAGER
-               ->getConstantBufferDescriptor(m_cameraHandle)
-               .gpuHandle);
+  commandList->SetGraphicsRootDescriptorTable(
+      0,
+      dx12::CONSTANT_BUFFER_MANAGER->getConstantBufferDescriptor(m_cameraHandle)
+          .gpuHandle);
 
   dx12::RENDERING_GRAPH->compute();
-
-
-  /*
-  uint32_t materialCount;
-  const MaterialRuntime* materials =
-      dx12::ASSET_MANAGER->getMaterialsCPU(materialCount);
-  uint32_t meshCount;
-  const dx12::MeshRuntime*meshes = dx12::ASSET_MANAGER->getMeshRuntimes(meshCount);
-
-  auto *pso = m_pso->getComputePSOByName("simpleMeshPSOTex");
-  commandList->SetPipelineState(pso);
-  auto *rs = m_root->getRootSignatureFromName("simpleMeshRSTex");
-  commandList->SetGraphicsRootSignature(rs);
-  for (uint32_t i = 0; i < meshCount; ++i) {
-
-    auto thSRV = dx12::TEXTURE_MANAGER->getSRV(materials[i].albedo);
-
-    commandList->SetGraphicsRootDescriptorTable(
-        0, dx12::CONSTANT_BUFFER_MANAGER
-               ->getConstantBufferDescriptor(m_cameraHandle)
-               .gpuHandle);
-
-    commandList->SetGraphicsRootDescriptorTable(1, thSRV.gpuHandle);
-
-    dx12::MESH_MANAGER->bindMeshRuntimeAndRender(meshes[i], currentFc);
-
-    dx12::TEXTURE_MANAGER->freeSRV(materials[i].albedo, thSRV);
-  }
-  */
 
   // making any clean up for the mesh manager if we have to
   dx12::MESH_MANAGER->clearUploadRequests();
@@ -161,12 +128,7 @@ void Graphics3DLayer::onEvent(Event &event) {
       SE_BIND_EVENT_FN(Graphics3DLayer::onMouseMoveEvent));
 }
 
-void Graphics3DLayer::clear() {
-  // temporally release resources
-  // dx12::MESH_MANAGER->free(meshHandle);
-  // dx12::TEXTURE_MANAGER->freeSRV(th, thSRV);
-  // dx12::TEXTURE_MANAGER->free(th);
-}
+void Graphics3DLayer::clear() {}
 
 bool Graphics3DLayer::onMouseButtonPressEvent(MouseButtonPressEvent &e) {
   if (e.getMouseButton() == MOUSE_BUTTONS_EVENT::LEFT) {

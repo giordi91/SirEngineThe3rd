@@ -1,7 +1,6 @@
 #pragma once
 
 #include "DXTK12/ResourceUploadBatch.h"
-#include "SirEngine/log.h"
 #include "SirEngine/memory/sparseMemoryPool.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/d3dx12.h"
@@ -14,8 +13,10 @@ namespace dx12 {
 
 
 struct MeshRuntime final {
+#if GRAPHICS_API == DX12
   D3D12_VERTEX_BUFFER_VIEW vview;
   D3D12_INDEX_BUFFER_VIEW iview;
+#endif
   uint32_t indexCount;
 };
 

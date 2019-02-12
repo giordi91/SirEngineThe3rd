@@ -104,7 +104,6 @@ extern ID3D12Debug *DEBUG_CONTROLLER;
 extern IDXGIFactory6 *DXGI_FACTORY;
 extern Adapter *ADAPTER;
 extern UINT64 CURRENT_FENCE;
-extern UINT64 CURRENT_FRAME;
 extern DescriptorHeap *GLOBAL_CBV_SRV_UAV_HEAP;
 extern DescriptorHeap *GLOBAL_RTV_HEAP;
 extern DescriptorHeap *GLOBAL_DSV_HEAP;
@@ -162,5 +161,7 @@ inline void flushCommandQueue(ID3D12CommandQueue *queue) {
 bool initializeGraphicsDx12(Window *wnd, uint32_t width, uint32_t height);
 bool shutdownGraphicsDx12();
 bool stopGraphicsDx12();
+bool newFrameDx12();
+bool dispatchFrameDx12();
 } // namespace dx12
 } // namespace SirEngine
