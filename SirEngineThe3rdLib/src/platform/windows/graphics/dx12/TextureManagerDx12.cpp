@@ -1,15 +1,17 @@
-#include "platform/windows/graphics/dx12/textureManager.h"
+#include "platform/windows/graphics/dx12/textureManagerDx12.h"
+
+#include "SirEngine/log.h"
 
 #include "SirEngine/fileUtils.h"
 #include <DXTK12/DDSTextureLoader.h>
 
 namespace SirEngine {
 namespace dx12 {
-TextureManager::~TextureManager() {
+TextureManagerDx12::~TextureManagerDx12() {
   // assert(m_texturePool.assertEverythingDealloc());
 }
 
-TextureHandle TextureManager::loadTexture(const char *path) {
+TextureHandle TextureManagerDx12::loadTexture(const char *path) {
   bool res = fileExists(path);
   assert(res);
 
@@ -48,7 +50,7 @@ TextureHandle TextureManager::loadTexture(const char *path) {
   return found->second;
 }
 
-TextureHandle TextureManager::initializeFromResource(
+TextureHandle TextureManagerDx12::initializeFromResource(
     ID3D12Resource *resource, const char *name, D3D12_RESOURCE_STATES state) {
   // since we are passing one resource, by definition the resource is static
   // data is now loaded need to create handle etc
@@ -67,7 +69,7 @@ TextureHandle TextureManager::initializeFromResource(
   return handle;
 }
 
-TextureHandle TextureManager::createDepthTexture(const char *name,
+TextureHandle TextureManagerDx12::createDepthTexture(const char *name,
                                                  uint32_t width,
                                                  uint32_t height,
                                                  D3D12_RESOURCE_STATES state) {

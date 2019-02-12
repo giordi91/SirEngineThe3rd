@@ -1,52 +1,37 @@
 #pragma once
+#include "SirEngine/constantBufferManager.h"
 #include "SirEngine/globals.h"
+#include "SirEngine/handle.h"
 #include "SirEngine/log.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include <vector>
-#include "SirEngine/handle.h"
 
 namespace SirEngine {
 namespace dx12 {
 
-
-class ConstantBufferManager final {
+class ConstantBufferManagerDx12 final : public ConstantBufferManager {
 public:
-  ConstantBufferManager();
-  ~ConstantBufferManager() = default;
-  ConstantBufferManager(const ConstantBufferManager &) = delete;
-  ConstantBufferManager &operator=(const ConstantBufferManager &) = delete;
-
-  ConstantBufferHandle allocateDynamic(uint32_t sizeInBytes);
-
-  inline void assertMagicNumber(ConstantBufferHandle handle) {
-    uint32_t magic = getMagicFromHandel(handle);
-    uint32_t idx = getIndexFromHandel(handle);
-    assert(m_dynamicStorage[globals::CURRENT_FRAME][idx].magicNumber == magic &&
-           "invalid magic handle for constant buffer");
-  }
+  ConstantBufferManagerDx12();
+  virtual ~ConstantBufferManagerDx12() = default;
+  ConstantBufferManagerDx12(const ConstantBufferManagerDx12 &) = delete;
+  ConstantBufferManagerDx12 &
+  operator=(const ConstantBufferManagerDx12 &) = delete;
+  virtual ConstantBufferHandle allocateDynamic(uint32_t sizeInBytes) override;
 
   inline DescriptorPair
-  getConstantBufferDescriptor(ConstantBufferHandle handle) {
+  getConstantBufferDx12Handle(ConstantBufferHandle handle) {
 
     // making sure the resource has not been de-allocated
     assertMagicNumber(handle);
 
-    uint32_t index = getIndexFromHandel(handle);
+    uint32_t index = getIndexFromHandle(handle);
     uint32_t dIndex =
         m_dynamicStorage[globals::CURRENT_FRAME][index].descriptorIndex;
     return m_descriptorStorage[dIndex];
   }
 
-  inline void updateConstantBuffer(ConstantBufferHandle handle,
-                                   void *dataToUpload) {
-    assertMagicNumber(handle);
-    uint32_t index = getIndexFromHandel(handle);
-    const ConstantBufferData &data =
-        m_dynamicStorage[globals::CURRENT_FRAME][index];
-
-    assert(data.mappedData != nullptr);
-    memcpy(data.mappedData, dataToUpload, data.size);
-  }
+  virtual void updateConstantBuffer(const ConstantBufferHandle handle,
+                                    void* dataToUpload) override;
 
 private:
   struct ConstantBufferData final {
@@ -61,11 +46,11 @@ private:
   };
 
 private:
-  inline uint32_t getIndexFromHandel(ConstantBufferHandle h) const {
-    return h.handle & INDEX_MASK;
-  }
-  inline uint32_t getMagicFromHandel(ConstantBufferHandle h) const {
-    return (h.handle & MAGIC_NUMBER_MASK) >> 16;
+  inline void assertMagicNumber(ConstantBufferHandle handle) {
+    uint32_t magic = getMagicFromHandle(handle);
+    uint32_t idx = getIndexFromHandle(handle);
+    assert(m_dynamicStorage[globals::CURRENT_FRAME][idx].magicNumber == magic &&
+           "invalid magic handle for constant buffer");
   }
   inline void mapConstantBuffer(ConstantBufferData &data) const {
     if (!data.mapped) {

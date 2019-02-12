@@ -5,7 +5,7 @@
 #include "SirEngine/materialManager.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/meshManager.h"
-#include "platform/windows/graphics/dx12/textureManager.h"
+#include "platform/windows/graphics/dx12/TextureManagerDx12.h"
 
 namespace SirEngine {
 namespace AssetManagerKeys {

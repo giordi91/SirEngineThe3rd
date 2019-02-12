@@ -12,12 +12,12 @@ class AssetManager;
 class MaterialManager;
 class Graph;
 namespace dx12 {
-class TextureManager;
+class TextureManagerDx12;
 class MeshManager;
 class Adapter;
 class DescriptorHeap;
 class SwapChain;
-class ConstantBufferManager;
+class ConstantBufferManagerDx12;
 
 enum class DescriptorType {
   NONE = 0,
@@ -113,13 +113,13 @@ extern SwapChain *SWAP_CHAIN;
 extern FrameResource FRAME_RESOURCES[FRAME_BUFFERS_COUNT];
 extern FrameResource *CURRENT_FRAME_RESOURCE;
 // resource managers
-extern TextureManager *TEXTURE_MANAGER;
+extern TextureManagerDx12 *TEXTURE_MANAGER;
 extern MeshManager *MESH_MANAGER;
 extern IdentityManager *IDENTITY_MANAGER;
-extern ConstantBufferManager* CONSTANT_BUFFER_MANAGER;
 extern AssetManager* ASSET_MANAGER;
 extern MaterialManager* MATERIAL_MANAGER;
 extern Graph* RENDERING_GRAPH;
+extern ConstantBufferManagerDx12* CONSTANT_BUFFER_MANAGER;
 
 inline UINT64 insertFenceToGlobalQueue() {
   // Advance the fence value to mark commands up to this fence point.

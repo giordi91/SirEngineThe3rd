@@ -3,7 +3,7 @@
 #include "SirEngine/graphics/nodeGraph.h"
 
 namespace SirEngine {
-class FinalBlitNode : public GraphNode {
+class FinalBlitNode final : public GraphNode {
 public:
   FinalBlitNode();
   virtual ~FinalBlitNode() = default;

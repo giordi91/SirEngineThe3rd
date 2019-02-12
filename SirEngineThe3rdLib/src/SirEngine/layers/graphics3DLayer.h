@@ -3,11 +3,11 @@
 #include "SirEngine/events/mouseEvent.h"
 #include "SirEngine/layer.h"
 #include "platform/windows/graphics/dx12/PSOManager.h"
-#include "platform/windows/graphics/dx12/constantBufferManager.h"
+#include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
 #include "platform/windows/graphics/dx12/shaderLayout.h"
 #include "platform/windows/graphics/dx12/shaderManager.h"
-#include "platform/windows/graphics/dx12/textureManager.h"
+#include "platform/windows/graphics/dx12/TextureManagerDx12.h"
 #include "platform/windows/graphics/dx12/meshManager.h"
 #include <directxmath.h>
 #include "SirEngine/identityManager.h"

@@ -11,6 +11,10 @@ uint64_t LAST_FRAME_TIME_NS =0;
 uint32_t TOTAL_NUMBER_OF_FRAMES =0;
 uint64_t CURRENT_FRAME = 0;
 
+//api specific part
+#if GRAPHICS_API == DX12
+ConstantBufferManager* CONSTANT_BUFFER_MANAGER = nullptr; 
+#endif
 
 } // namespace Globals
 } // namespace SirEngine
