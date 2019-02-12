@@ -2,8 +2,11 @@
 #include "clock.h"
 
 namespace SirEngine {
-class ConstantBufferManager;
+	class AssetManager;
+	class ConstantBufferManager;
 class Camera3DPivot;
+class TextureManager;
+
 namespace globals {
 
 extern unsigned int SCREEN_WIDTH;
@@ -17,6 +20,8 @@ extern uint64_t CURRENT_FRAME;
 
 // managers
 extern ConstantBufferManager *CONSTANT_BUFFER_MANAGER;
+extern TextureManager* TEXTURE_MANAGER;
+extern AssetManager* ASSET_MANAGER;
 
 } // namespace globals
 typedef unsigned char uchar;

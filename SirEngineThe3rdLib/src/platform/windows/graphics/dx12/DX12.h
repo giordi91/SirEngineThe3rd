@@ -116,7 +116,6 @@ extern FrameResource *CURRENT_FRAME_RESOURCE;
 extern TextureManagerDx12 *TEXTURE_MANAGER;
 extern MeshManager *MESH_MANAGER;
 extern IdentityManager *IDENTITY_MANAGER;
-extern AssetManager* ASSET_MANAGER;
 extern MaterialManager* MATERIAL_MANAGER;
 extern Graph* RENDERING_GRAPH;
 extern ConstantBufferManagerDx12* CONSTANT_BUFFER_MANAGER;

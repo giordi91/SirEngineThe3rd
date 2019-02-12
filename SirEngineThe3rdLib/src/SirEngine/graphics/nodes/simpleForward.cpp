@@ -35,6 +35,14 @@ SimpleForward::SimpleForward(const char *name) : GraphNode(name) {
   registerPlug(materials);
 }
 
+void SimpleForward::initialize() {
+  // we need to allocate a render target that we can use for the forward
+  // dx12::TEXTURE_MANAGER->
+  m_renderTarget = globals::TEXTURE_MANAGER->allocateRenderTexture(
+      globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT, RenderTargetFormat::RGBA32,
+      "simpleForwardRT");
+}
+
 void SimpleForward::compute() {
   // meshes connections
   auto &meshConn = m_connections[&m_inputPlugs[1]];
@@ -44,7 +52,7 @@ void SimpleForward::compute() {
   meshH.handle = sourceMeshs->plugValue;
   uint32_t meshCount = 0;
   const dx12::MeshRuntime *meshes =
-      dx12::ASSET_MANAGER->getRuntimeMeshesFromHandle(meshH, meshCount);
+      globals::ASSET_MANAGER->getRuntimeMeshesFromHandle(meshH, meshCount);
 
   // get materials
   auto &matsConn = m_connections[&m_inputPlugs[2]];
@@ -54,16 +62,21 @@ void SimpleForward::compute() {
   matsH.handle = sourceMats->plugValue;
   uint32_t matsCount = 0;
   const MaterialRuntime *mats =
-      dx12::ASSET_MANAGER->getRuntimeMaterialsFromHandle(matsH, matsCount);
+      globals::ASSET_MANAGER->getRuntimeMaterialsFromHandle(matsH, matsCount);
 
   assert(matsCount == meshCount);
 
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
+
+  globals::TEXTURE_MANAGER->bindRenderTarget(m_renderTarget);
+
   for (uint32_t i = 0; i < meshCount; ++i) {
 
     commandList->SetGraphicsRootDescriptorTable(1, mats[i].albedo);
     dx12::MESH_MANAGER->bindMeshRuntimeAndRender(meshes[i], currentFc);
   }
+
+  m_outputPlugs[0].plugValue = m_renderTarget.handle;
 }
 } // namespace SirEngine

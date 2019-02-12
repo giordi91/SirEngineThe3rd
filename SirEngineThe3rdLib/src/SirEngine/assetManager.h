@@ -1,7 +1,6 @@
 #pragma once
 #include "identityManager.h"
 #include <vector>
-// TODO declare a handle file so we can use handles without
 #include "SirEngine/handle.h"
 #include "materialManager.h"
 #include "platform/windows/graphics/dx12/meshManager.h"

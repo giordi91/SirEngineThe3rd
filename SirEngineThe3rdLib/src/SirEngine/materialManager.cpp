@@ -98,10 +98,10 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
 
   MaterialTexureHandles texHandles{albedoTex, normalTex};
   if (albedoTex.handle != 0) {
-    texHandles.albedoSrv = dx12::TEXTURE_MANAGER->getSRV(albedoTex);
+    texHandles.albedoSrv = dx12::TEXTURE_MANAGER->getSRVDx12(albedoTex);
   }
   if (normalTex.handle != 0) {
-    texHandles.normalSrv = dx12::TEXTURE_MANAGER->getSRV(normalTex);
+    texHandles.normalSrv = dx12::TEXTURE_MANAGER->getSRVDx12(normalTex);
   }
   MaterialRuntime matCpu;
   matCpu.albedo = texHandles.albedoSrv.gpuHandle;

@@ -15,11 +15,11 @@ const char *BACK_BUFFER_NAMES[3]{"backBuffer1", "backBuffer2", "backBuffer3"};
 
 SwapChain::~SwapChain() {
   for (int i = 0; i < FRAME_BUFFERS_COUNT; ++i) {
-    dx12::TEXTURE_MANAGER->freeRTV(m_swapChainBuffersHandles[i],
+    dx12::TEXTURE_MANAGER->freeRTVDx12(m_swapChainBuffersHandles[i],
                                    m_swapChainBuffersDescriptors[i]);
     dx12::TEXTURE_MANAGER->free(m_swapChainBuffersHandles[i]);
   }
-  dx12::TEXTURE_MANAGER->freeDSV(m_swapChainDepth, m_swapChainDepthDescriptors);
+  dx12::TEXTURE_MANAGER->freeDSVDx12(m_swapChainDepth, m_swapChainDepthDescriptors);
   dx12::TEXTURE_MANAGER->free(m_swapChainDepth);
 }
 bool SwapChain::initialize(const HWND window, const int width,
@@ -77,7 +77,7 @@ bool SwapChain::resize(FrameCommand *command, const int width,
 
   if (m_isInit) {
     for (int i = 0; i < FRAME_BUFFERS_COUNT; ++i) {
-      dx12::TEXTURE_MANAGER->freeRTV(m_swapChainBuffersHandles[i],
+      dx12::TEXTURE_MANAGER->freeRTVDx12(m_swapChainBuffersHandles[i],
                                      m_swapChainBuffersDescriptors[i]);
       dx12::TEXTURE_MANAGER->free(m_swapChainBuffersHandles[i]);
     }
@@ -101,23 +101,23 @@ bool SwapChain::resize(FrameCommand *command, const int width,
 
     // m_swapChainBuffersResource[i].initializeRTFromResource(resource);
     assert(i < 3 && "not enough back buffer names");
-    m_swapChainBuffersHandles[i] = TEXTURE_MANAGER->initializeFromResource(
+    m_swapChainBuffersHandles[i] = TEXTURE_MANAGER->initializeFromResourceDx12(
         resource, SwapChainConstants::BACK_BUFFER_NAMES[i],
         D3D12_RESOURCE_STATE_PRESENT);
     m_swapChainBuffersDescriptors[i] =
-        dx12::TEXTURE_MANAGER->getRTV(m_swapChainBuffersHandles[i]);
+        dx12::TEXTURE_MANAGER->getRTVDx12(m_swapChainBuffersHandles[i]);
   }
 
   // freeing depth and re-creating it;
   if (m_isInit) {
-    dx12::TEXTURE_MANAGER->freeDSV(m_swapChainDepth,
+    dx12::TEXTURE_MANAGER->freeDSVDx12(m_swapChainDepth,
                                    m_swapChainDepthDescriptors);
     dx12::TEXTURE_MANAGER->free(m_swapChainDepth);
   }
 
   m_swapChainDepth =
       TEXTURE_MANAGER->createDepthTexture("depthBuffer", width, height);
-  m_swapChainDepthDescriptors = TEXTURE_MANAGER->getDSV(m_swapChainDepth);
+  m_swapChainDepthDescriptors = TEXTURE_MANAGER->getDSVDx12(m_swapChainDepth);
 
   D3D12_RESOURCE_BARRIER barrier[1];
   TEXTURE_MANAGER->transitionTexture2DifNeeded(

@@ -3,6 +3,7 @@
 #include "DXTK12/ResourceUploadBatch.h"
 #include "SirEngine/handle.h"
 #include "SirEngine/memory/SparseMemoryPool.h"
+#include "SirEngine/textureManager.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/d3dx12.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
@@ -10,15 +11,15 @@
 namespace SirEngine {
 namespace dx12 {
 
-enum DebugTextureFlags { DEPTH = 1 };
-
-class TextureManagerDx12 final {
+class TextureManagerDx12 final : public TextureManager {
   struct TextureData final {
     uint32_t magicNumber;
     ID3D12Resource *resource;
     D3D12_RESOURCE_STATES state;
     DXGI_FORMAT format;
-    DebugTextureFlags flags;
+    TextureFlags flags;
+	DescriptorPair srv;
+	DescriptorPair uav;
   };
 
 public:
@@ -28,16 +29,22 @@ public:
   ~TextureManagerDx12();
   TextureManagerDx12(const TextureManagerDx12 &) = delete;
   TextureManagerDx12 &operator=(const TextureManagerDx12 &) = delete;
-  TextureHandle loadTexture(const char *path);
-  TextureHandle initializeFromResource(ID3D12Resource *resource,
-                                       const char *name,
-                                       D3D12_RESOURCE_STATES state);
+  virtual TextureHandle loadTexture(const char *path) override;
+  virtual void free(const TextureHandle handle) override;
+  virtual TextureHandle allocateRenderTexture(uint32_t width, uint32_t height,
+                                              RenderTargetFormat format, const char* name) override;
+  virtual void bindRenderTarget(TextureHandle handle) override;
+
+  // dx12 methods
+  TextureHandle initializeFromResourceDx12(ID3D12Resource *resource,
+                                           const char *name,
+                                           D3D12_RESOURCE_STATES state);
   TextureHandle
   createDepthTexture(const char *name, uint32_t width, uint32_t height,
                      D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COMMON);
 
   // handles facilities
-  DescriptorPair getSRV(TextureHandle handle) {
+  DescriptorPair getSRVDx12(TextureHandle handle) {
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
     DescriptorPair pair;
@@ -47,8 +54,9 @@ public:
   }
   // A manual format is passed to the depth becauase we normally use a typess
   // type so we cannot rely on the format used during allocation.
-  DescriptorPair getDSV(const TextureHandle handle,
-                        DXGI_FORMAT format = DXGI_FORMAT_D24_UNORM_S8_UINT) {
+  DescriptorPair
+  getDSVDx12(const TextureHandle handle,
+             const DXGI_FORMAT format = DXGI_FORMAT_D24_UNORM_S8_UINT) {
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
     DescriptorPair pair;
@@ -56,12 +64,13 @@ public:
                     format);
     return pair;
   }
-  void freeSRV(const TextureHandle handle, const DescriptorPair pair) const {
+  void freeSRVDx12(const TextureHandle handle,
+                   const DescriptorPair pair) const {
     assertMagicNumber(handle);
     assert(pair.type == DescriptorType::SRV);
     dx12::GLOBAL_CBV_SRV_UAV_HEAP->freeDescriptor(pair);
   }
-  inline DescriptorPair getRTV(const TextureHandle handle) const {
+  inline DescriptorPair getRTVDx12(const TextureHandle handle) const {
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
     DescriptorPair pair;
@@ -69,22 +78,24 @@ public:
                        m_texturePool.getConstRef(index).resource, pair);
     return pair;
   }
-  void freeRTV(const TextureHandle handle, const DescriptorPair pair) const {
+  void freeRTVDx12(const TextureHandle handle,
+                   const DescriptorPair pair) const {
     assertMagicNumber(handle);
     dx12::GLOBAL_RTV_HEAP->freeDescriptor(pair);
     // TODO should I invalidate the descriptors here??
   }
-  void freeDSV(const TextureHandle handle, const DescriptorPair pair) const {
+  void freeDSVDx12(const TextureHandle handle,
+                   const DescriptorPair pair) const {
     assertMagicNumber(handle);
     dx12::GLOBAL_DSV_HEAP->freeDescriptor(pair);
     assert(pair.type == DescriptorType::DSV);
   }
 
   // barriers
-  inline int transitionTexture2DifNeeded(const TextureHandle handle,
-                                         const D3D12_RESOURCE_STATES wantedState,
-                                         D3D12_RESOURCE_BARRIER *barriers,
-                                         int counter) {
+  inline int
+  transitionTexture2DifNeeded(const TextureHandle handle,
+                              const D3D12_RESOURCE_STATES wantedState,
+                              D3D12_RESOURCE_BARRIER *barriers, int counter) {
 
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
@@ -100,51 +111,19 @@ public:
     return counter;
   }
 
-  void free(const TextureHandle handle) {
-    assertMagicNumber(handle);
-    uint32_t index = getIndexFromHandle(handle);
-    TextureData &data = m_texturePool[index];
-    // releasing the texture;
-    data.resource->Release();
-    // invalidating magic number
-    data.magicNumber = 0;
-
-    // adding the index to the free list
-    m_texturePool.free(index);
-  }
-
-  inline TextureHandle getHandleFromName(const char *name) {
-    auto found = m_nameToHandle.find(name);
-    if (found != m_nameToHandle.end()) {
-      return found->second;
-    }
-    return TextureHandle{0};
-  }
-
 private:
   inline void assertMagicNumber(const TextureHandle handle) const {
-#ifdef SE_DEBUG
     uint32_t magic = getMagicFromHandle(handle);
     uint32_t idx = getIndexFromHandle(handle);
     assert(m_texturePool.getConstRef(idx).magicNumber == magic &&
            "invalid magic handle for constant buffer");
-#endif
-  }
-  inline uint32_t getIndexFromHandle(const TextureHandle h) const {
-    return h.handle & INDEX_MASK;
-  }
-  inline uint32_t getMagicFromHandle(const TextureHandle h) const {
-    return (h.handle & MAGIC_NUMBER_MASK) >> 16;
   }
 
 private:
   std::unordered_map<std::string, TextureHandle> m_nameToHandle;
-  static const uint32_t INDEX_MASK = (1 << 16) - 1;
-  static const uint32_t MAGIC_NUMBER_MASK = ~INDEX_MASK;
-  static const uint32_t RESERVE_SIZE = 200;
-  uint32_t MAGIC_NUMBER_COUNTER = 1;
   DirectX::ResourceUploadBatch batch;
   SparseMemoryPool<TextureData> m_texturePool;
+
 };
 
 } // namespace dx12
