@@ -68,7 +68,7 @@ void ImguiLayer::onUpdate() {
     return;
   }
 
-  globals::TEXTURE_MANAGER->bindBackBuffer();
+  globals::TEXTURE_MANAGER->bindBackBuffer(false);
 
   // Read keyboard modifiers inputs
   ImGuiIO &io = ImGui::GetIO();
