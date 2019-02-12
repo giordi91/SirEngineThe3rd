@@ -12,6 +12,8 @@
 #include "SirEngine/graphics/nodes/FinalBlitNode.h"
 #include "SirEngine/graphics/nodes/assetManagerNode.h"
 #include "SirEngine/graphics/nodes/simpleForward.h"
+#include "platform/windows/graphics/dx12/DX12.h"	
+#include "platform/windows/graphics/dx12/swapChain.h"
 
 namespace SirEngine {
 void ImguiLayer::onAttach() {
@@ -65,6 +67,8 @@ void ImguiLayer::onUpdate() {
   if (!m_shouldShow) {
     return;
   }
+
+  globals::TEXTURE_MANAGER->bindBackBuffer();
 
   // Read keyboard modifiers inputs
   ImGuiIO &io = ImGui::GetIO();

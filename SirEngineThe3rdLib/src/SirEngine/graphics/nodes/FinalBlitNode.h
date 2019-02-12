@@ -7,6 +7,7 @@ class FinalBlitNode final : public GraphNode {
 public:
   FinalBlitNode();
   virtual ~FinalBlitNode() = default;
+  virtual void compute()override;
 };
 
 } // namespace SirEngine
