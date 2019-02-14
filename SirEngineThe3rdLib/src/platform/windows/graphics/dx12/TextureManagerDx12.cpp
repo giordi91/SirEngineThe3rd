@@ -46,6 +46,10 @@ TextureHandle TextureManagerDx12::loadTexture(const char *path) {
     ++MAGIC_NUMBER_COUNTER;
 
     m_nameToHandle[name] = handle;
+
+    dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DSRV(data.srv, data.resource,
+                                                      data.format);
+
     return handle;
   }
   SE_CORE_INFO("Texture already loaded, returning handle: {0}", name);
@@ -263,13 +267,9 @@ void TextureManagerDx12::copyTexture(TextureHandle source,
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
 
-  // auto renderTarget = m_swapChain.currentBackBuffer();
-
-  // auto shadow = m_shadowPass.getOutputResource();
   D3D12_RESOURCE_BARRIER barriers[2];
 
   int counter = 0;
-
   auto state = sourceData.state;
   if (sourceData.state != D3D12_RESOURCE_STATE_COPY_SOURCE) {
     barriers[counter] = CD3DX12_RESOURCE_BARRIER::Transition(
