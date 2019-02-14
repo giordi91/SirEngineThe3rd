@@ -94,7 +94,6 @@ bool SwapChain::resize(FrameCommand *command, const int width,
     HRESULT res = m_swapChain->GetBuffer(i, IID_PPV_ARGS(&resource));
     assert(SUCCEEDED(res));
 
-    // m_swapChainBuffersResource[i].initializeRTFromResource(resource);
     assert(i < 3 && "not enough back buffer names");
     m_swapChainBuffersHandles[i] = TEXTURE_MANAGER->initializeFromResourceDx12(
         resource, SwapChainConstants::BACK_BUFFER_NAMES[i],
@@ -105,8 +104,6 @@ bool SwapChain::resize(FrameCommand *command, const int width,
 
   // freeing depth and re-creating it;
   if (m_isInit) {
-    //dx12::TEXTURE_MANAGER->freeDSVDx12(m_swapChainDepth,
-    //                                   m_swapChainDepthDescriptors);
     dx12::TEXTURE_MANAGER->free(m_swapChainDepth);
   }
 

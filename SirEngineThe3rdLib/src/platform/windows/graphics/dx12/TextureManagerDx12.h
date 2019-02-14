@@ -51,13 +51,13 @@ public:
                      D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COMMON);
 
   // handles facilities
-  DescriptorPair getSRVDx12(TextureHandle handle) {
+  DescriptorPair getSRVDx12(const TextureHandle handle) {
+
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
-    DescriptorPair pair;
-    dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DSRV(
-        pair, m_texturePool[index].resource, m_texturePool[index].format);
-    return pair;
+	assert(m_texturePool.getConstRef(index).srv.cpuHandle.ptr != 0);
+	assert(m_texturePool.getConstRef(index).srv.type == DescriptorType::SRV);
+    return m_texturePool.getConstRef(index).srv;
   }
   // A manual format is passed to the depth becauase we normally use a typess
   // type so we cannot rely on the format used during allocation.
