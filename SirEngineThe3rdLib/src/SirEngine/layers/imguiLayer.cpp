@@ -8,16 +8,15 @@
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/imgui_impl_dx12.h"
-#include "SirEngine/textureManager.h"
 
-//#include "platform/windows/graphics/dx12/swapChain.h"
+#include "platform/windows/graphics/dx12/TextureManagerDx12.h"
+#include "platform/windows/graphics/dx12/swapChain.h"
 
-
-#include "SirEngine/events/event.h"
-#include "SirEngine/events/renderGraphEvent.h"
 #include "SirEngine/events/applicationEvent.h"
-#include "SirEngine/events/mouseEvent.h"
+#include "SirEngine/events/event.h"
 #include "SirEngine/events/keyboardEvent.h"
+#include "SirEngine/events/mouseEvent.h"
+#include "SirEngine/events/renderGraphEvent.h"
 
 namespace SirEngine {
 void ImguiLayer::onAttach() {
@@ -70,6 +69,15 @@ void ImguiLayer::onUpdate() {
 
   if (!m_shouldShow) {
     return;
+  }
+
+  TextureHandle destination = dx12::SWAP_CHAIN->currentBackBufferTexture();
+  D3D12_RESOURCE_BARRIER barriers[1];
+  int counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
+      destination, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, 0);
+  if (counter) {
+    dx12::CURRENT_FRAME_RESOURCE->fc.commandList->ResourceBarrier(counter,
+                                                                  barriers);
   }
 
   globals::TEXTURE_MANAGER->bindBackBuffer(false);
@@ -192,8 +200,7 @@ bool ImguiLayer::onKeyTypeEvent(const KeyTypeEvent &e) const {
   return io.WantCaptureKeyboard;
 }
 
-bool ImguiLayer::onRenderGraphEvent(const RenderGraphChanged& e) 
-{
+bool ImguiLayer::onRenderGraphEvent(const RenderGraphChanged &e) {
   m_renderGraph.initialize(dx12::RENDERING_GRAPH);
   m_renderGraph.showGraph(true);
   return true;
