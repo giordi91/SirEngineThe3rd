@@ -25,7 +25,6 @@ void FinalBlitNode::compute() {
   TextureHandle texH;
   texH.handle = source->plugValue;
 
-
   TextureHandle destination  = dx12::SWAP_CHAIN->currentBackBufferTexture();
   globals::TEXTURE_MANAGER->copyTexture(texH,destination);
 }
