@@ -13,6 +13,7 @@ uint64_t CURRENT_FRAME = 0;
 ConstantBufferManager* CONSTANT_BUFFER_MANAGER = nullptr; 
 TextureManager* TEXTURE_MANAGER = nullptr;
 AssetManager* ASSET_MANAGER = nullptr;
+Application* APPLICATION =nullptr;
 
 } // namespace Globals
 } // namespace SirEngine

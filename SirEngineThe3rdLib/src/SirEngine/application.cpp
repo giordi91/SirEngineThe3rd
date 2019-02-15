@@ -19,6 +19,7 @@ Application::Application() {
   m_layerStack.pushLayer(graphicsLayer);
   // m_layerStack.pushLayer(imGuiLayer);
   m_layerStack.pushOverlayLayer(imGuiLayer);
+  globals::APPLICATION = this;
 }
 
 Application::~Application() { delete m_window; }
@@ -52,6 +53,7 @@ void Application::run() {
 }
 void Application::onEvent(Event &e) {
   // close event dispatch
+	SE_CORE_INFO("{0}",e);
   EventDispatcher dispatcher(e);
   dispatcher.dispatch<WindowCloseEvent>(
       [this](WindowCloseEvent &e) -> bool { return (this->onCloseWindow(e)); });
