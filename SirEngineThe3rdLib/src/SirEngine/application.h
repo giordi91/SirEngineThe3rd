@@ -21,9 +21,16 @@ public:
 private:
   bool onCloseWindow(WindowCloseEvent &e);
   bool onResizeWindow(WindowResizeEvent &e);
+  inline void flipEndOfFrameQueue() {
+    m_queueEndOfFrameCounter = (m_queueEndOfFrameCounter + 1) % 2;
+    m_queuedEndOfFrameEventsCurrent =
+        &m_queuedEndOfFrameEvents[m_queueEndOfFrameCounter];
+  };
 
 private:
-  std::vector<Event*> m_queuedEndOfFrameEvents;
+  std::vector<std::vector<Event *>> m_queuedEndOfFrameEvents;
+  std::vector<Event *> *m_queuedEndOfFrameEventsCurrent;
+  uint32_t m_queueEndOfFrameCounter = 0;
   Window *m_window = nullptr;
   bool m_run = true;
   LayerStack m_layerStack;

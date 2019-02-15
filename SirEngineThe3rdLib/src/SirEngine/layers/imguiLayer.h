@@ -2,14 +2,21 @@
 
 #include "SirEngine/debugUiWidgets/frameTimingsWidget.h"
 #include "SirEngine/debugUiWidgets/memoryConsumptionWidget.h"
-#include "SirEngine/events/applicationEvent.h"
-#include "SirEngine/events/keyboardEvent.h"
-#include "SirEngine/events/mouseEvent.h"
-#include "SirEngine/layer.h"
-#include "SirEngine/graphics/nodeGraph.h"
 #include "SirEngine/debugUiWidgets/renderGraphWidget.h"
+#include "SirEngine/graphics/nodeGraph.h"
+#include "SirEngine/layer.h"
 
 namespace SirEngine {
+class Event;
+class MouseMoveEvent;
+class KeyTypeEvent;
+class KeyboardReleaseEvent;
+class WindowResizeEvent;
+class KeyboardPressEvent;
+class MouseScrollEvent;
+class MouseButtonReleaseEvent;
+class MouseButtonPressEvent;
+class RenderGraphChanged;
 
 class SIR_ENGINE_API ImguiLayer : public Layer {
 public:
@@ -32,6 +39,7 @@ private:
   bool onKeyReleasedEvent(const KeyboardReleaseEvent &e) const;
   bool onWindowResizeEvent(const WindowResizeEvent &e) const;
   bool onKeyTypeEvent(const KeyTypeEvent &e) const;
+  bool onRenderGraphEvent(const RenderGraphChanged &e);
 
 private:
   INT64 g_Time = 0;

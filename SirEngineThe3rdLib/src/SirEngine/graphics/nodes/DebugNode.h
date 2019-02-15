@@ -3,10 +3,10 @@
 #include "SirEngine/graphics/nodeGraph.h"
 
 namespace SirEngine {
-class BlackWhiteNode final : public GraphNode {
+class DebugNode final : public GraphNode {
 public:
-  BlackWhiteNode(const char* name);
-  virtual ~BlackWhiteNode() = default;
+  DebugNode(const char* name);
+  virtual ~DebugNode() = default;
   virtual void compute() override;
 };
 

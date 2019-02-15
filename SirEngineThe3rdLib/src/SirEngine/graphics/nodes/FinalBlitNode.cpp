@@ -6,7 +6,7 @@
 
 namespace SirEngine {
 
-FinalBlitNode::FinalBlitNode() : GraphNode("FinalBlit") {
+FinalBlitNode::FinalBlitNode() : GraphNode("FinalBlit", "FinalBlit") {
   // lets create the plugs
   Plug inTexture;
   inTexture.plugValue = 0;

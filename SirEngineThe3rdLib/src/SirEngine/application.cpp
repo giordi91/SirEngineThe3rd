@@ -13,7 +13,10 @@ Application::Application() {
 
   m_window = Window::create();
   m_window->setEventCallback([this](Event &e) -> void { this->onEvent(e); });
-  m_queuedEndOfFrameEvents.reserve(10);
+  m_queuedEndOfFrameEvents.resize(2);
+  m_queuedEndOfFrameEvents[0].reserve(10);
+  m_queuedEndOfFrameEvents[1].reserve(10);
+  m_queuedEndOfFrameEventsCurrent = &m_queuedEndOfFrameEvents[0];
 
   imGuiLayer = new ImguiLayer();
   graphicsLayer = new Graphics3DLayer();
@@ -35,11 +38,13 @@ void Application::run() {
     }
     graphics::dispatchFrame();
 
-    for (auto e : m_queuedEndOfFrameEvents) {
+	auto currentQueue = m_queuedEndOfFrameEventsCurrent;
+	flipEndOfFrameQueue();
+    for (auto e :(*currentQueue)) {
       onEvent(*e);
 	  delete e;
     }
-    m_queuedEndOfFrameEvents.clear();
+	currentQueue->clear();
   }
 
   // lets make sure any graphics operation are done
@@ -54,7 +59,7 @@ void Application::run() {
   graphics::shutdownGraphics();
 }
 void Application::queueEventForEndOfFrame(Event* e) {
-  m_queuedEndOfFrameEvents.push_back(e);
+  m_queuedEndOfFrameEventsCurrent->push_back(e);
 }
 void Application::onEvent(Event &e) {
   // close event dispatch
@@ -89,6 +94,8 @@ bool Application::onResizeWindow(WindowResizeEvent &e) {
   graphics::onResize(globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT);
   return true;
 }
+
+
 void Application::pushLayer(Layer *layer) { m_layerStack.pushLayer(layer); }
 void Application::pushOverlay(Layer *layer) {
   m_layerStack.pushOverlayLayer(layer);

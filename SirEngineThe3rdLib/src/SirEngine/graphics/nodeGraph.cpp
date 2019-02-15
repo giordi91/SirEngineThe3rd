@@ -20,8 +20,54 @@ void GraphNode::addConnection(const std::string &thisNodePlugName,
       return;
     }
   }
-  assert(thisPlug != nullptr);
+  assert(0);
 } // namespace SirEngine
+
+void GraphNode::removeConnection(const std::string &thisNodePlugName,
+                                 const Plug *otherPlug) {
+  for (int i = 0; i < m_inputPlugs.size(); ++i) {
+    if (m_inputPlugs[i].name == thisNodePlugName) {
+      auto found = m_connections.find(&m_inputPlugs[i]);
+      if (found == m_connections.end()) {
+        assert(0 && "cannot disconnect two plugs are not connected");
+        return;
+      }
+      size_t connectionCount = found->second.size();
+      for (size_t c = 0; c < connectionCount; ++c) {
+        if (found->second[c] == otherPlug) {
+          found->second.erase(found->second.begin() + c);
+          if (found->second.size() == 0) {
+            m_connections.erase(m_connections.find(&m_inputPlugs[i]));
+          }
+          return;
+        }
+        assert(0 && "could not find other node plug as a connection");
+      }
+      return;
+    }
+  }
+  for (int i = 0; i < m_outputPlugs.size(); ++i) {
+    if (m_outputPlugs[i].name == thisNodePlugName) {
+      auto found = m_connections.find(&m_outputPlugs[i]);
+      if (found == m_connections.end()) {
+        assert(0 && "cannot disconnect two plugs are not connected");
+        return;
+      }
+      size_t connectionCount = found->second.size();
+      for (size_t c = 0; c < connectionCount; ++c) {
+        if (found->second[c] == otherPlug) {
+          found->second.erase(found->second.begin() + c);
+          if (found->second.size() == 0) {
+            m_connections.erase(m_connections.find(&m_outputPlugs[i]));
+          }
+          return;
+        }
+        assert(0 && "could not find other node plug as a connection");
+      }
+      return;
+    }
+  }
+}
 
 void GraphNode::registerPlug(Plug plug) {
   if (isFlag(plug, PlugFlags::PLUG_INPUT)) {
@@ -45,7 +91,11 @@ void Graph::connectNodes(GraphNode *source, const char *sourcePlugName,
 }
 void Graph::finalizeGraph() {
   // for the time being we will linearize the graph
+  m_linearizedGraph.clear();
   m_linearizedGraph.reserve(m_nodeCounter);
+  for (auto &node : m_nodes) {
+    node.second->clear();
+  }
 
   std::unordered_set<uint32_t> visitedNodes;
   std::queue<GraphNode *> queue1;
@@ -99,7 +149,6 @@ void Graph::finalizeGraph() {
   for (auto *node : m_linearizedGraph) {
     node->initialize();
   }
-
 }
 void Graph::compute() {
 

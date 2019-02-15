@@ -1,17 +1,17 @@
 #include "SirEngine/debugUiWidgets/renderGraphWidget.h"
 #include "SirEngine/graphics/nodeGraph.h"
-#include "imgui/imgui.h"
-#include <queue>
-#define IMGUI_DEFINE_MATH_OPERATORS
-#include "SirEngine/log.h"
-#include "imgui/imgui_internal.h"
-#include <spdlog/fmt/bundled/core.h>
-#include <unordered_set>
-#include "SirEngine/layers/imguiLayer.h"
 
-#include "SirEngine/globals.h"
+#define IMGUI_DEFINE_MATH_OPERATORS
+#include "imgui/imgui.h"
+#include "imgui/imgui_internal.h"
+
+#include <queue>
+#include "SirEngine/log.h"
+#include <unordered_set>
+
 #include "SirEngine/application.h"
 #include "SirEngine/events/debugEvent.h"
+#include "SirEngine/globals.h"
 namespace SirEngine {
 namespace debug {
 
@@ -60,6 +60,8 @@ struct GraphStatus {
   bool show_grid = true;
   int node_selected = -1;
   bool opened = false;
+  float GRAPH_WIDTH = 500;
+  float GRAPH_HEIGHT = 300;
 };
 
 void inline plugToolTip(const char *name) {
@@ -71,7 +73,11 @@ void inline plugToolTip(const char *name) {
   ImGui::EndTooltip();
 }
 void renderImguiGraph(GraphStatus *status) {
-  ImGui::SetNextWindowSize(ImVec2(700, 600), ImGuiSetCond_FirstUseEver);
+  ImVec2 winPos{globals::SCREEN_WIDTH - status->GRAPH_WIDTH,
+                globals::SCREEN_HEIGHT - status->GRAPH_HEIGHT};
+  ImGui::SetNextWindowPos(winPos, ImGuiSetCond_FirstUseEver);
+  ImGui::SetNextWindowSize(ImVec2(status->GRAPH_WIDTH, status->GRAPH_HEIGHT),
+                           ImGuiSetCond_Always);
   if (!status->opened) {
     return;
   }
@@ -304,13 +310,16 @@ struct NodeQueue {
 
 RenderGraphWidget::~RenderGraphWidget() { delete status; }
 
-void RenderGraphWidget::initialize( Graph *graph) {
+void RenderGraphWidget::initialize(Graph *graph) {
 
+  if (status != nullptr) {
+    delete status;
+  }
   status = new GraphStatus{};
   status->opened = false;
 
-  float yStart = 250;
-  float xMid = 450;
+  float yStart = status->GRAPH_HEIGHT * 0.5f;
+  float xMid = status->GRAPH_WIDTH - 100;
   const GraphNode *finalNode = graph->getFinalNode();
 
   std::vector<NodePosition> nodesToAdd;
@@ -404,23 +413,25 @@ void RenderGraphWidget::initialize( Graph *graph) {
       // will be below
       auto parentPlugConnections =
           static_cast<float>(m_inputCountPerNode[parentIdx]);
-      yPos = cacheValue.y - ((parentPlugConnections - 1) * 0.5 * yStep) +
+      yPos = cacheValue.y - ((parentPlugConnections - 1) * 0.5f * yStep) +
              yStep * nodesToAdd[i].posAtRecursion;
     }
     // creating the new cache position
     posCache[nodesToAdd[i].node->getNodeIdx()] = ImVec2{xPos, yPos};
 
     // creating a node for the graph
-    status->nodes[nodesToAdd[i].node->getNodeIdx()] = Node(
-        nodesToAdd[i].node->getNodeIdx(), nodesToAdd[i].node->getNodeName(),
-        ImVec2(xPos, yPos), nodesToAdd[i].node->getInputCount(),
-        nodesToAdd[i].node->getOutputCount(), nodesToAdd[i].node);
+    status->nodes[nodesToAdd[i].node->getNodeIdx()] =
+        Node(nodesToAdd[i].node->getNodeIdx(),
+             nodesToAdd[i].node->getNodeName().c_str(), ImVec2(xPos, yPos),
+             nodesToAdd[i].node->getInputCount(),
+             nodesToAdd[i].node->getOutputCount(), nodesToAdd[i].node);
   }
 }
 
 void RenderGraphWidget::render() {
 
-  ImGui::Begin("Debug Rendering", &debugRendering);
+  if (!ImGui::CollapsingHeader("Debug Frame", ImGuiTreeNodeFlags_DefaultOpen))
+    return;
   const char *items[] = {"FullFrame", "BW"};
   bool debugLayerValueChanged =
       ImGui::Combo("combo", &currentDebugLayer, items, IM_ARRAYSIZE(items));
@@ -428,18 +439,25 @@ void RenderGraphWidget::render() {
   if (debugLayerValueChanged) {
     SE_CORE_INFO("value changed {0}", currentDebugLayer);
 
-	//TODO use a stack allocator for this?
-	DebugLayerChanged* event = new DebugLayerChanged(currentDebugLayer);
-	globals::APPLICATION->queueEventForEndOfFrame(event);
+    // TODO use a stack allocator for this?
+    auto *event = new DebugLayerChanged(currentDebugLayer);
+    globals::APPLICATION->queueEventForEndOfFrame(event);
   }
 
   bool pressed = ImGui::Button("show render graph");
   if (pressed) {
     status->opened = !status->opened;
   }
-  ImGui::End();
 
   renderImguiGraph(status);
+}
+
+void RenderGraphWidget::showGraph(bool value)
+{
+	if(status != nullptr)
+	{
+		status->opened = value;
+	}
 }
 } // namespace debug
 } // namespace SirEngine

@@ -27,11 +27,14 @@ struct Plug final {
 class GraphNode {
 public:
   // interface
-  GraphNode(const std::string &name) : nodeName(name){};
+  GraphNode(const std::string &name, const std::string &type)
+      : nodeName(name), m_nodeType(type){};
   virtual ~GraphNode() = default;
   void addConnection(const std::string &thisNodePlugName, Plug *otherPlug);
+  void removeConnection(const std::string &thisPlugNode, const Plug *otherPlug);
   virtual void compute(){};
   virtual void initialize(){};
+  virtual void clear() {};
 
   // getters
   inline Plug *getInputPlug(const std::string &name) {
@@ -57,7 +60,8 @@ public:
     return nullptr;
   }
 
-  inline const char *getNodeName() const { return nodeName.c_str(); }
+  inline const std::string &getNodeName() const { return nodeName; }
+  inline const std::string &getNodeType() const { return m_nodeType; }
   inline uint32_t getInputCount() const {
     return static_cast<uint32_t>(m_inputPlugs.size());
   }
@@ -89,6 +93,7 @@ protected:
   std::vector<Plug> m_inputPlugs;
   std::vector<Plug> m_outputPlugs;
   const std::string nodeName;
+  const std::string m_nodeType;
   uint32_t inCounter = 0;
   uint32_t outCounter = 0;
   uint32_t nodeIdx = 0;
@@ -103,6 +108,83 @@ public:
     node->setNodeIndex(m_nodeCounter++);
     m_nodes[node->getNodeName()] = node;
   }
+  inline GraphNode *findNodeOfType(const std::string &type) {
+
+    const size_t nodesCount = m_linearizedGraph.size();
+    for (size_t i = 0; i < nodesCount; ++i) {
+      if (m_linearizedGraph[i]->getNodeType() == type) {
+        return m_linearizedGraph[i];
+      }
+    }
+    return nullptr;
+  }
+  void removeDebugNode(GraphNode *debugNode) {
+    // disconnect input
+    assert(debugNode->getNodeType() == "DebugNode");
+    const std::vector<Plug> &inPlugs = debugNode->getInputPlugs();
+    assert(inPlugs.size() == 1);
+    const Plug &inPlug = inPlugs[0];
+    const std::vector<Plug *> *inConnections =
+        debugNode->getPlugConnections(&inPlug);
+    assert((*inConnections).size() == 1);
+    const Plug *inConnectionPlug = (*inConnections)[0];
+    debugNode->removeConnection(inPlug.name, inConnectionPlug);
+    inConnectionPlug->nodePtr->removeConnection(inConnectionPlug->name,
+                                                &inPlug);
+
+    // disconnect output
+    const std::vector<Plug> &outPlugs = debugNode->getOutputPlugs();
+    assert(outPlugs.size() == 1);
+    const Plug &outPlug = outPlugs[0];
+    const std::vector<Plug *> *outConnections =
+        debugNode->getPlugConnections(&outPlug);
+    assert((*outConnections).size() == 1);
+    const Plug *outConnectionPlug = (*outConnections)[0];
+    debugNode->removeConnection(outPlug.name, outConnectionPlug);
+    outConnectionPlug->nodePtr->removeConnection(outConnectionPlug->name,
+                                                 &outPlug);
+
+    // now lets connect the two sides
+    connectNodes(inConnectionPlug->nodePtr, inConnectionPlug->name.c_str(),
+                 outConnectionPlug->nodePtr, outConnectionPlug->name.c_str());
+
+    m_nodes.erase(m_nodes.find(debugNode->getNodeName()));
+    delete debugNode;
+  }
+  void addDebugNode(GraphNode *debugNode) {
+    assert(debugNode->getNodeType() == "DebugNode");
+    GraphNode *finalBlit = findNodeOfType("FinalBlit");
+    assert(finalNode != nullptr);
+
+    // disconnect input
+    const std::vector<Plug> &inPlugs = finalNode->getInputPlugs();
+    assert(inPlugs.size() == 1);
+    const Plug &inPlug = inPlugs[0];
+    const std::vector<Plug *> *inConnections =
+        finalNode->getPlugConnections(&inPlug);
+    assert((*inConnections).size() == 1);
+    const Plug *inConnectionPlug = (*inConnections)[0];
+    finalNode->removeConnection(inPlug.name, inConnectionPlug);
+    inConnectionPlug->nodePtr->removeConnection(inConnectionPlug->name,
+                                                &inPlug);
+
+    // no output to disconnect, final node has no output
+    // now lets connect the two sides
+    connectNodes(inConnectionPlug->nodePtr, inConnectionPlug->name.c_str(),
+                 debugNode, debugNode->getInputPlugs()[0].name.c_str());
+
+    connectNodes(debugNode, debugNode->getOutputPlugs()[0].name.c_str(),
+                 finalNode, inPlug.name.c_str());
+
+    // we need to re-compact the indices of the graph.
+    std::unordered_map<std::string, GraphNode *> tempNodes = m_nodes;
+    m_nodes.clear();
+    m_nodeCounter = 0;
+    for (auto node : tempNodes) {
+		addNode(node.second);
+    }
+    addNode(debugNode);
+  }
 
   void connectNodes(GraphNode *source, const char *sourcePlugName,
                     GraphNode *destination, const char *destinationPlugName);
@@ -116,7 +198,7 @@ private:
   std::unordered_map<std::string, GraphNode *> m_nodes;
   GraphNode *finalNode = nullptr;
   uint32_t m_nodeCounter = 0;
-  std::vector<GraphNode*> m_linearizedGraph;
+  std::vector<GraphNode *> m_linearizedGraph;
 };
 
 } // namespace SirEngine

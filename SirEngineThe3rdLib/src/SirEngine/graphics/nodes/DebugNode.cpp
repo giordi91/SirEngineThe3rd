@@ -1,11 +1,10 @@
-#include "SirEngine/graphics/nodes/blackWhiteNode.h"
+#include "SirEngine/graphics/nodes/DebugNode.h"
 #include "SirEngine/handle.h"
 #include "platform/windows/graphics/dx12/TextureManagerDx12.h"
-#include "platform/windows/graphics/dx12/swapChain.h"
 
 namespace SirEngine {
 
-BlackWhiteNode::BlackWhiteNode(const char* name) : GraphNode(name) {
+DebugNode::DebugNode(const char* name) : GraphNode(name, "DebugNode") {
   // lets create the plugs
   Plug inTexture;
   inTexture.plugValue = 0;
@@ -22,7 +21,7 @@ BlackWhiteNode::BlackWhiteNode(const char* name) : GraphNode(name) {
   registerPlug(outTexture);
 }
 
-void BlackWhiteNode::compute() {
+void DebugNode::compute() {
   // get the render texture
 
 auto &conn = m_connections[&m_inputPlugs[0]];
