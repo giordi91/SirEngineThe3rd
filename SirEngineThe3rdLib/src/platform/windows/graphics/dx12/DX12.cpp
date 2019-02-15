@@ -256,15 +256,14 @@ commandList->RSSetViewports(1, dx12::SWAP_CHAIN->getViewport());
 commandList->RSSetScissorRects(1, dx12::SWAP_CHAIN->getScissorRect());
 
 // Clear the back buffer and depth buffer.
-commandList->ClearRenderTargetView(dx12::SWAP_CHAIN->currentBackBufferView(),
-                                   gray, 0, nullptr);
-
-dx12::SWAP_CHAIN->clearDepth();
-dx12::SwapChain *swapChain = dx12::SWAP_CHAIN;
-// Specify the buffers we are going to render to.
-auto back = swapChain -> currentBackBufferView();
-auto depth = swapChain -> getDepthCPUDescriptor();
-commandList->OMSetRenderTargets(1, &back, true, &depth);
+//commandList->ClearRenderTargetView(dx12::SWAP_CHAIN->currentBackBufferView(),
+//                                   gray, 0, nullptr);
+//dx12::SWAP_CHAIN->clearDepth();
+//dx12::SwapChain *swapChain = dx12::SWAP_CHAIN;
+//// Specify the buffers we are going to render to.
+//auto back = swapChain -> currentBackBufferView();
+//auto depth = swapChain -> getDepthCPUDescriptor();
+//commandList->OMSetRenderTargets(1, &back, true, &depth);
 auto *heap = dx12::GLOBAL_CBV_SRV_UAV_HEAP -> getResource();
 commandList->SetDescriptorHeaps(1, &heap);
 	
