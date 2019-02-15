@@ -428,8 +428,9 @@ void RenderGraphWidget::render() {
   if (debugLayerValueChanged) {
     SE_CORE_INFO("value changed {0}", currentDebugLayer);
 
-	DebugLayerChanged event(currentDebugLayer);
-	globals::APPLICATION->onEvent(event);
+	//TODO use a stack allocator for this?
+	DebugLayerChanged* event = new DebugLayerChanged(currentDebugLayer);
+	globals::APPLICATION->queueEventForEndOfFrame(event);
   }
 
   bool pressed = ImGui::Button("show render graph");

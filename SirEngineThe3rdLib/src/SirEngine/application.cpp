@@ -13,11 +13,11 @@ Application::Application() {
 
   m_window = Window::create();
   m_window->setEventCallback([this](Event &e) -> void { this->onEvent(e); });
+  m_queuedEndOfFrameEvents.reserve(10);
 
   imGuiLayer = new ImguiLayer();
   graphicsLayer = new Graphics3DLayer();
   m_layerStack.pushLayer(graphicsLayer);
-  // m_layerStack.pushLayer(imGuiLayer);
   m_layerStack.pushOverlayLayer(imGuiLayer);
   globals::APPLICATION = this;
 }
@@ -35,12 +35,14 @@ void Application::run() {
     }
     graphics::dispatchFrame();
 
-    std::mt19937_64 eng{std::random_device{}()}; // or seed however you want
-    std::uniform_int_distribution<> dist{0, 20};
-    //std::this_thread::sleep_for(std::chrono::milliseconds{dist(eng)});
+    for (auto e : m_queuedEndOfFrameEvents) {
+      onEvent(*e);
+	  delete e;
+    }
+    m_queuedEndOfFrameEvents.clear();
   }
 
-  //lets make sure any graphics operation are done
+  // lets make sure any graphics operation are done
   graphics::stopGraphics();
 
   // lets clean up the layers, now is safe to free up resources
@@ -48,12 +50,15 @@ void Application::run() {
     l->clear();
   }
 
-  //shutdown anything graphics related;
+  // shutdown anything graphics related;
   graphics::shutdownGraphics();
+}
+void Application::queueEventForEndOfFrame(Event* e) {
+  m_queuedEndOfFrameEvents.push_back(e);
 }
 void Application::onEvent(Event &e) {
   // close event dispatch
-	SE_CORE_INFO("{0}",e);
+  SE_CORE_INFO("{0}", e);
   EventDispatcher dispatcher(e);
   dispatcher.dispatch<WindowCloseEvent>(
       [this](WindowCloseEvent &e) -> bool { return (this->onCloseWindow(e)); });
