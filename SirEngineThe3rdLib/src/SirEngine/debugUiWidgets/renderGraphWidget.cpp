@@ -7,7 +7,11 @@
 #include "imgui/imgui_internal.h"
 #include <spdlog/fmt/bundled/core.h>
 #include <unordered_set>
+#include "SirEngine/layers/imguiLayer.h"
 
+#include "SirEngine/globals.h"
+#include "SirEngine/application.h"
+#include "SirEngine/events/debugEvent.h"
 namespace SirEngine {
 namespace debug {
 
@@ -300,7 +304,7 @@ struct NodeQueue {
 
 RenderGraphWidget::~RenderGraphWidget() { delete status; }
 
-void RenderGraphWidget::initialize(Graph *graph) {
+void RenderGraphWidget::initialize( Graph *graph) {
 
   status = new GraphStatus{};
   status->opened = false;
@@ -421,10 +425,11 @@ void RenderGraphWidget::render() {
   bool debugLayerValueChanged =
       ImGui::Combo("combo", &currentDebugLayer, items, IM_ARRAYSIZE(items));
 
-  if(debugLayerValueChanged)
-  {
-	  SE_CORE_INFO("value changed {0}", currentDebugLayer);
+  if (debugLayerValueChanged) {
+    SE_CORE_INFO("value changed {0}", currentDebugLayer);
 
+	DebugLayerChanged event(currentDebugLayer);
+	globals::APPLICATION->onEvent(event);
   }
 
   bool pressed = ImGui::Button("show render graph");
