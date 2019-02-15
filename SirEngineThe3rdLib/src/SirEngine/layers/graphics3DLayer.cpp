@@ -10,6 +10,7 @@
 #include "SirEngine/graphics/nodes/FinalBlitNode.h"
 #include "SirEngine/graphics/nodes/assetManagerNode.h"
 #include "SirEngine/graphics/nodes/simpleForward.h"
+#include "SirEngine/graphics/nodes/blackWhiteNode.h"
 namespace SirEngine {
 
 void Graphics3DLayer::onAttach() {
@@ -56,11 +57,13 @@ void Graphics3DLayer::onAttach() {
   auto assetNode = new AssetManagerNode();
   auto finalBlit = new FinalBlitNode();
   auto simpleForward = new SimpleForward("simpleForward");
+  auto bw = new BlackWhiteNode("debugBW");
 
   // temporary graph for testing
   dx12::RENDERING_GRAPH->addNode(assetNode);
   dx12::RENDERING_GRAPH->addNode(finalBlit);
   dx12::RENDERING_GRAPH->addNode(simpleForward);
+  dx12::RENDERING_GRAPH->addNode(bw);
   dx12::RENDERING_GRAPH->setFinalNode(finalBlit);
   dx12::RENDERING_GRAPH->connectNodes(assetNode, "matrices", simpleForward,
                                       "matrices");
@@ -68,8 +71,13 @@ void Graphics3DLayer::onAttach() {
                                       "meshes");
   dx12::RENDERING_GRAPH->connectNodes(assetNode, "materials", simpleForward,
                                       "materials");
-  dx12::RENDERING_GRAPH->connectNodes(simpleForward, "outTexture", finalBlit,
-                                      "inTexture");
+  //dx12::RENDERING_GRAPH->connectNodes(simpleForward, "outTexture", finalBlit,
+  //                                    "inTexture");
+
+  dx12::RENDERING_GRAPH->connectNodes(simpleForward,"outTexture", bw,"inTexture");
+  dx12::RENDERING_GRAPH->connectNodes(bw,"outTexture", finalBlit,"inTexture");
+
+
   dx12::RENDERING_GRAPH->finalizeGraph();
 }
 void Graphics3DLayer::onDetach() {}
