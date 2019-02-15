@@ -1,18 +1,17 @@
 #pragma once
 
 #include "SirEngine/events/mouseEvent.h"
+#include "SirEngine/identityManager.h"
 #include "SirEngine/layer.h"
-#include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
+#include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
 #include "platform/windows/graphics/dx12/shaderLayout.h"
 #include "platform/windows/graphics/dx12/shaderManager.h"
-#include "platform/windows/graphics/dx12/TextureManagerDx12.h"
-#include "platform/windows/graphics/dx12/meshManager.h"
 #include <directxmath.h>
-#include "SirEngine/identityManager.h"
 
 namespace SirEngine {
+class DebugLayerChanged;
 
 namespace dx12 {
 class Texture2D;
@@ -42,9 +41,10 @@ private:
   bool onMouseButtonPressEvent(MouseButtonPressEvent &e);
   bool onMouseButtonReleaseEvent(MouseButtonReleaseEvent &e);
   bool onMouseMoveEvent(MouseMoveEvent &e);
+  bool onDebugLayerEvent(DebugLayerChanged &e);
 
   // member variable mostly temporary
-  //dx12::Mesh m_mesh;
+  // dx12::Mesh m_mesh;
   dx12::CameraBuffer m_camBufferCPU{};
   dx12::ShaderManager *m_shaderManager{};
   dx12::RootSignatureManager *m_root{};
@@ -52,9 +52,8 @@ private:
   temp::rendering::PSOManager *m_pso{};
   ConstantBufferHandle m_cameraHandle{};
 
-
-  //dx12::MeshHandle meshHandle;
-  //uint32_t meshIndexCount =0 ;
+  // dx12::MeshHandle meshHandle;
+  // uint32_t meshIndexCount =0 ;
   // camera event control
   bool leftDown = false;
   bool rightDown = false;
@@ -62,9 +61,8 @@ private:
   float previousX = 0;
   float previousY = 0;
 
-  //dx12::TextureHandle th;
-  //dx12::DescriptorPair thSRV;
+  // dx12::TextureHandle th;
+  // dx12::DescriptorPair thSRV;
   IdentityHandle sphereH;
-
 };
 } // namespace SirEngine

@@ -1,6 +1,7 @@
 #pragma once
 #include "SirEngine/core.h"
 #include <string>
+#include "SirEngine/events/event.h"
 
 namespace SirEngine {
 

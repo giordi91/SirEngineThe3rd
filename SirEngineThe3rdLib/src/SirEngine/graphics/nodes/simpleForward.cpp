@@ -3,7 +3,8 @@
 #include "platform/windows/graphics/dx12/textureManagerDx12.h"
 
 namespace SirEngine {
-SimpleForward::SimpleForward(const char *name) : GraphNode(name) {
+SimpleForward::SimpleForward(const char *name)
+    : GraphNode(name, "SimpleForward") {
   // lets create the plugs
   Plug outTexture;
   outTexture.plugValue = 0;
@@ -85,8 +86,8 @@ void SimpleForward::compute() {
   }
 
   globals::TEXTURE_MANAGER->clearDepth(m_depth);
-  float color[4] = {0.0f,0.0f,0.0f,1.0f};
-  globals::TEXTURE_MANAGER->clearRT(m_renderTarget,color);
+  float color[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+  globals::TEXTURE_MANAGER->clearRT(m_renderTarget, color);
   globals::TEXTURE_MANAGER->bindRenderTarget(m_renderTarget, m_depth);
 
   for (uint32_t i = 0; i < meshCount; ++i) {
@@ -96,5 +97,15 @@ void SimpleForward::compute() {
   }
 
   m_outputPlugs[0].plugValue = m_renderTarget.handle;
+}
+
+void SimpleForward::clear() {
+  if (m_renderTarget.isHandleValid()) {
+    dx12::TEXTURE_MANAGER->free(m_renderTarget);
+    m_renderTarget.handle = 0;
+  }
+  if (m_depth.isHandleValid()) {
+    dx12::TEXTURE_MANAGER->free(m_depth);
+  }
 }
 } // namespace SirEngine

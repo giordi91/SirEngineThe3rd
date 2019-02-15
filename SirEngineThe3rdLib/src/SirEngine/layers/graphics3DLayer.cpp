@@ -1,5 +1,7 @@
 #include "SirEngine/layers/graphics3DLayer.h"
+#include "SirEngine/application.h"
 #include "SirEngine/assetManager.h"
+#include "SirEngine/events/debugEvent.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/graphics/camera.h"
 #include "SirEngine/graphics/nodeGraph.h"
@@ -7,10 +9,12 @@
 #include "platform/windows/graphics/dx12/swapChain.h"
 #include <DirectXMath.h>
 
+#include "SirEngine/events/renderGraphEvent.h"
+#include "SirEngine/graphics/nodes/DebugNode.h"
 #include "SirEngine/graphics/nodes/FinalBlitNode.h"
 #include "SirEngine/graphics/nodes/assetManagerNode.h"
 #include "SirEngine/graphics/nodes/simpleForward.h"
-#include "SirEngine/graphics/nodes/blackWhiteNode.h"
+
 namespace SirEngine {
 
 void Graphics3DLayer::onAttach() {
@@ -46,7 +50,6 @@ void Graphics3DLayer::onAttach() {
   m_cameraHandle = globals::CONSTANT_BUFFER_MANAGER->allocateDynamic(
       sizeof(dx12::CameraBuffer));
 
-
   sphereH = globals::ASSET_MANAGER->loadAsset("data/assets/sphere.json");
   globals::ASSET_MANAGER->loadAsset("data/assets/sphere.json");
   dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE, currentFc);
@@ -57,13 +60,11 @@ void Graphics3DLayer::onAttach() {
   auto assetNode = new AssetManagerNode();
   auto finalBlit = new FinalBlitNode();
   auto simpleForward = new SimpleForward("simpleForward");
-  auto bw = new BlackWhiteNode("debugBW");
 
   // temporary graph for testing
   dx12::RENDERING_GRAPH->addNode(assetNode);
   dx12::RENDERING_GRAPH->addNode(finalBlit);
   dx12::RENDERING_GRAPH->addNode(simpleForward);
-  dx12::RENDERING_GRAPH->addNode(bw);
   dx12::RENDERING_GRAPH->setFinalNode(finalBlit);
   dx12::RENDERING_GRAPH->connectNodes(assetNode, "matrices", simpleForward,
                                       "matrices");
@@ -71,12 +72,16 @@ void Graphics3DLayer::onAttach() {
                                       "meshes");
   dx12::RENDERING_GRAPH->connectNodes(assetNode, "materials", simpleForward,
                                       "materials");
-  //dx12::RENDERING_GRAPH->connectNodes(simpleForward, "outTexture", finalBlit,
+
+  dx12::RENDERING_GRAPH->connectNodes(simpleForward, "outTexture", finalBlit,
+                                      "inTexture");
+
+  // auto bw = new DebugNode("debugBW");
+  // dx12::RENDERING_GRAPH->addNode(bw);
+  // dx12::RENDERING_GRAPH->connectNodes(simpleForward, "outTexture", bw,
   //                                    "inTexture");
-
-  dx12::RENDERING_GRAPH->connectNodes(simpleForward,"outTexture", bw,"inTexture");
-  dx12::RENDERING_GRAPH->connectNodes(bw,"outTexture", finalBlit,"inTexture");
-
+  // dx12::RENDERING_GRAPH->connectNodes(bw, "outTexture", finalBlit,
+  // "inTexture");
 
   dx12::RENDERING_GRAPH->finalizeGraph();
 }
@@ -105,7 +110,7 @@ void Graphics3DLayer::onUpdate() {
       globals::MAIN_CAMERA->getMVP(DirectX::XMMatrixIdentity()));
 
   globals::CONSTANT_BUFFER_MANAGER->updateConstantBuffer(m_cameraHandle,
-                                                      &m_camBufferCPU);
+                                                         &m_camBufferCPU);
 
   auto *pso = m_pso->getComputePSOByName("simpleMeshPSOTex");
   commandList->SetPipelineState(pso);
@@ -114,7 +119,8 @@ void Graphics3DLayer::onUpdate() {
 
   commandList->SetGraphicsRootDescriptorTable(
       0,
-	  //TODO remove this, wrap it into a context maybe and remove graphics core?
+      // TODO remove this, wrap it into a context maybe and remove graphics
+      // core?
       dx12::CONSTANT_BUFFER_MANAGER->getConstantBufferDx12Handle(m_cameraHandle)
           .gpuHandle);
 
@@ -132,6 +138,8 @@ void Graphics3DLayer::onEvent(Event &event) {
       SE_BIND_EVENT_FN(Graphics3DLayer::onMouseButtonReleaseEvent));
   dispatcher.dispatch<MouseMoveEvent>(
       SE_BIND_EVENT_FN(Graphics3DLayer::onMouseMoveEvent));
+  dispatcher.dispatch<DebugLayerChanged>(
+      SE_BIND_EVENT_FN(Graphics3DLayer::onDebugLayerEvent));
 }
 
 void Graphics3DLayer::clear() {}
@@ -181,4 +189,37 @@ bool Graphics3DLayer::onMouseMoveEvent(MouseMoveEvent &e) {
   return true;
 }
 
+bool Graphics3DLayer::onDebugLayerEvent(DebugLayerChanged &e) {
+  dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
+  switch (e.getLayer()) {
+  case (0): {
+    // if we have 0, we have no layer to debug so we can just check if there
+    // there is a debug node and remove it
+    GraphNode *debugNode = dx12::RENDERING_GRAPH->findNodeOfType("DebugNode");
+    if (debugNode == nullptr) { // no debug we are good
+      return true;
+    }
+    dx12::RENDERING_GRAPH->removeDebugNode(debugNode);
+    dx12::RENDERING_GRAPH->finalizeGraph();
+    RenderGraphChanged *graphE = new RenderGraphChanged();
+    globals::APPLICATION->queueEventForEndOfFrame(graphE);
+    return true;
+  }
+  case (1): {
+    // lets add debug black and white
+    GraphNode *debugNode = dx12::RENDERING_GRAPH->findNodeOfType("DebugNode");
+    // debug already there, maybe i just need to change configuration?
+    if (debugNode != nullptr) { // no debug we are good
+      return true;
+    }
+    // lest add a debug node
+    auto bw = new DebugNode("debugBW");
+    dx12::RENDERING_GRAPH->addDebugNode(bw);
+    dx12::RENDERING_GRAPH->finalizeGraph();
+    RenderGraphChanged *graphE = new RenderGraphChanged();
+    globals::APPLICATION->queueEventForEndOfFrame(graphE);
+  }
+  }
+  return false;
+}
 } // namespace SirEngine

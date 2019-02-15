@@ -8,12 +8,16 @@
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/imgui_impl_dx12.h"
+#include "SirEngine/textureManager.h"
 
-#include "SirEngine/graphics/nodes/FinalBlitNode.h"
-#include "SirEngine/graphics/nodes/assetManagerNode.h"
-#include "SirEngine/graphics/nodes/simpleForward.h"
-#include "platform/windows/graphics/dx12/DX12.h"
-#include "platform/windows/graphics/dx12/swapChain.h"
+//#include "platform/windows/graphics/dx12/swapChain.h"
+
+
+#include "SirEngine/events/event.h"
+#include "SirEngine/events/renderGraphEvent.h"
+#include "SirEngine/events/applicationEvent.h"
+#include "SirEngine/events/mouseEvent.h"
+#include "SirEngine/events/keyboardEvent.h"
 
 namespace SirEngine {
 void ImguiLayer::onAttach() {
@@ -94,13 +98,21 @@ void ImguiLayer::onUpdate() {
             "ImGui_ImplOpenGL3_NewFrame().");
 
   bool show_demo_window = true;
+
+  ImVec2 pos{0, 0};
   ImGui::NewFrame();
   ImGui::ShowDemoWindow(&show_demo_window);
 
-  ImGui::Begin("Performance");
-  m_frameTimings.render();
-  m_memoryUsage.render();
-  m_renderGraph.render();
+  ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
+  ImGui::Begin("Debug");
+
+  if (ImGui::CollapsingHeader("Performances", ImGuiTreeNodeFlags_DefaultOpen)) {
+    m_frameTimings.render();
+    m_memoryUsage.render();
+  }
+  if (ImGui::CollapsingHeader("Graphics", ImGuiTreeNodeFlags_DefaultOpen)) {
+    m_renderGraph.render();
+  }
   ImGui::End();
 
   ImGui::Render();
@@ -127,6 +139,8 @@ void ImguiLayer::onEvent(Event &event) {
       SE_BIND_EVENT_FN(ImguiLayer::onKeyReleasedEvent));
   dispatcher.dispatch<WindowResizeEvent>(
       SE_BIND_EVENT_FN(ImguiLayer::onWindowResizeEvent));
+  dispatcher.dispatch<RenderGraphChanged>(
+      SE_BIND_EVENT_FN(ImguiLayer::onRenderGraphEvent));
 }
 bool ImguiLayer::onMouseButtonPressEvent(const MouseButtonPressEvent &e) const {
   ImGuiIO &io = ImGui::GetIO();
@@ -176,5 +190,12 @@ bool ImguiLayer::onKeyTypeEvent(const KeyTypeEvent &e) const {
   ImGuiIO &io = ImGui::GetIO();
   io.AddInputCharacter(static_cast<uint16_t>(e.getKeyCode()));
   return io.WantCaptureKeyboard;
+}
+
+bool ImguiLayer::onRenderGraphEvent(const RenderGraphChanged& e) 
+{
+  m_renderGraph.initialize(dx12::RENDERING_GRAPH);
+  m_renderGraph.showGraph(true);
+  return true;
 }
 } // namespace SirEngine

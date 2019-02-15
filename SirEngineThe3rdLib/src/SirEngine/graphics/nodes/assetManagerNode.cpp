@@ -2,7 +2,8 @@
 #include "SirEngine/assetManager.h"
 
 namespace SirEngine {
-AssetManagerNode::AssetManagerNode() : GraphNode("AssetManagerNode") {
+AssetManagerNode::AssetManagerNode()
+    : GraphNode("AssetManagerNode", "AssetManagerNode") {
   // lets create the plugs
   Plug matrices;
   matrices.plugValue = 0;
@@ -29,7 +30,8 @@ AssetManagerNode::AssetManagerNode() : GraphNode("AssetManagerNode") {
 void AssetManagerNode::compute() {
   // here we need to get handles to the data
   m_outputPlugs[0].plugValue =
-      globals::ASSET_MANAGER->getStaticDataHandle(AssetDataType::MATRICES).handle;
+      globals::ASSET_MANAGER->getStaticDataHandle(AssetDataType::MATRICES)
+          .handle;
 
   m_outputPlugs[1].plugValue =
       globals::ASSET_MANAGER->getStaticDataHandle(AssetDataType::MESHES).handle;
