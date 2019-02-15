@@ -3,6 +3,7 @@
 #include "imgui/imgui.h"
 #include <queue>
 #define IMGUI_DEFINE_MATH_OPERATORS
+#include "SirEngine/log.h"
 #include "imgui/imgui_internal.h"
 #include <spdlog/fmt/bundled/core.h>
 #include <unordered_set>
@@ -54,7 +55,7 @@ struct GraphStatus {
   ImVec2 scrolling = ImVec2(0.0f, 0.0f);
   bool show_grid = true;
   int node_selected = -1;
-  bool opened = true;
+  bool opened = false;
 };
 
 void inline plugToolTip(const char *name) {
@@ -66,9 +67,11 @@ void inline plugToolTip(const char *name) {
   ImGui::EndTooltip();
 }
 void renderImguiGraph(GraphStatus *status) {
-  bool opened = true;
   ImGui::SetNextWindowSize(ImVec2(700, 600), ImGuiSetCond_FirstUseEver);
-  if (!ImGui::Begin("Example: Custom Node Graph", &opened)) {
+  if (!status->opened) {
+    return;
+  }
+  if (!ImGui::Begin("Render Graph", &status->opened)) {
     ImGui::End();
     return;
   }
@@ -300,6 +303,7 @@ RenderGraphWidget::~RenderGraphWidget() { delete status; }
 void RenderGraphWidget::initialize(Graph *graph) {
 
   status = new GraphStatus{};
+  status->opened = false;
 
   float yStart = 250;
   float xMid = 450;
@@ -410,6 +414,26 @@ void RenderGraphWidget::initialize(Graph *graph) {
   }
 }
 
-void RenderGraphWidget::render() { renderImguiGraph(status); }
+void RenderGraphWidget::render() {
+
+  ImGui::Begin("Debug Rendering", &debugRendering);
+  const char *items[] = {"FullFrame", "BW"};
+  bool debugLayerValueChanged =
+      ImGui::Combo("combo", &currentDebugLayer, items, IM_ARRAYSIZE(items));
+
+  if(debugLayerValueChanged)
+  {
+	  SE_CORE_INFO("value changed {0}", currentDebugLayer);
+
+  }
+
+  bool pressed = ImGui::Button("show render graph");
+  if (pressed) {
+    status->opened = !status->opened;
+  }
+  ImGui::End();
+
+  renderImguiGraph(status);
+}
 } // namespace debug
 } // namespace SirEngine

@@ -12,7 +12,7 @@
 #include "SirEngine/graphics/nodes/FinalBlitNode.h"
 #include "SirEngine/graphics/nodes/assetManagerNode.h"
 #include "SirEngine/graphics/nodes/simpleForward.h"
-#include "platform/windows/graphics/dx12/DX12.h"	
+#include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/swapChain.h"
 
 namespace SirEngine {
@@ -101,8 +101,6 @@ void ImguiLayer::onUpdate() {
   m_frameTimings.render();
   m_memoryUsage.render();
   m_renderGraph.render();
-  // bool s =true;
-  // ShowExampleAppCustomNodeGraph(&s);
   ImGui::End();
 
   ImGui::Render();
