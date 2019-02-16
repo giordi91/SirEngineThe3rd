@@ -74,6 +74,9 @@ void Application::onEvent(Event &e) {
     return (this->onResizeWindow(e));
   });
 
+  if (e.handled()) {
+    return;
+  }
   for (auto it = m_layerStack.end(); it != m_layerStack.begin();) {
     (*--it)->onEvent(e);
     if (e.handled()) {
@@ -92,6 +95,14 @@ bool Application::onResizeWindow(WindowResizeEvent &e) {
 
   m_window->onResize(globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT);
   graphics::onResize(globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT);
+
+  //push the resize event to everyone in case is needed
+  for (auto it = m_layerStack.end(); it != m_layerStack.begin();) {
+    (*--it)->onEvent(e);
+    if (e.handled()) {
+      break;
+    }
+  }
   return true;
 }
 

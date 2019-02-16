@@ -34,7 +34,8 @@ public:
   void removeConnection(const std::string &thisPlugNode, const Plug *otherPlug);
   virtual void compute(){};
   virtual void initialize(){};
-  virtual void clear() {};
+  virtual void clear(){};
+  virtual void resize(int screenWidth, int screenHeight){};
 
   // getters
   inline Plug *getInputPlug(const std::string &name) {
@@ -181,7 +182,7 @@ public:
     m_nodes.clear();
     m_nodeCounter = 0;
     for (auto node : tempNodes) {
-		addNode(node.second);
+      addNode(node.second);
     }
     addNode(debugNode);
   }
@@ -193,6 +194,11 @@ public:
   inline void setFinalNode(GraphNode *node) { finalNode = node; }
   void finalizeGraph();
   void compute();
+  void resize(int screenWidth, int screenHeight) {
+    for (auto node : m_linearizedGraph) {
+      node->resize(screenWidth, screenHeight);
+    }
+  };
 
 private:
   std::unordered_map<std::string, GraphNode *> m_nodes;
