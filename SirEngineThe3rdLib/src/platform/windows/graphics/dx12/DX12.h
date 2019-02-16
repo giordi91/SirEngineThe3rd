@@ -96,10 +96,11 @@ inline bool executeCommandList(ID3D12CommandQueue *queue,
 
 // global declarations
 #if DXR_ENABLED
-extern ID3D12Device5 *DEVICE;
+typedef ID3D12Device5 D3D12DeviceType;
 #else
-extern ID3D12Device4 *DEVICE;
+typedef ID3D12Device3 D3D12DeviceType;
 #endif
+extern D3D12DeviceType *DEVICE;
 extern ID3D12Debug *DEBUG_CONTROLLER;
 extern IDXGIFactory6 *DXGI_FACTORY;
 extern Adapter *ADAPTER;
