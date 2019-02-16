@@ -122,7 +122,7 @@ bool initializeGraphicsDx12(Window *wnd, uint32_t width, uint32_t height) {
 #if DXR_ENABLED
   if (ADAPTER->getFeature() == AdapterFeature::DXR) {
     D3D12_FEATURE_DATA_D3D12_OPTIONS5 opts5 = {};
-    DX12Handles::device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5,
+    dx12::DEVICE->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5,
                                              &opts5, sizeof(opts5));
     if (opts5.RaytracingTier == D3D12_RAYTRACING_TIER_NOT_SUPPORTED)
       assert(0);
