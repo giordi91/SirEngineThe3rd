@@ -41,7 +41,7 @@ struct FrameCommand final {
 #if DXR_ENABLED
   ID3D12GraphicsCommandList4 *commandList = nullptr;
 #else
-  ID3D12GraphicsCommandList3 *commandList = nullptr;
+  ID3D12GraphicsCommandList2 *commandList = nullptr;
 #endif
   bool isListOpen = false;
 };
