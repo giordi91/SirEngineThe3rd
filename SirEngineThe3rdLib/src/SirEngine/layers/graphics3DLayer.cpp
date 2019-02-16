@@ -2,6 +2,7 @@
 #include "SirEngine/application.h"
 #include "SirEngine/assetManager.h"
 #include "SirEngine/events/debugEvent.h"
+#include "SirEngine/events/mouseEvent.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/graphics/camera.h"
 #include "SirEngine/graphics/nodeGraph.h"
@@ -140,6 +141,8 @@ void Graphics3DLayer::onEvent(Event &event) {
       SE_BIND_EVENT_FN(Graphics3DLayer::onMouseMoveEvent));
   dispatcher.dispatch<DebugLayerChanged>(
       SE_BIND_EVENT_FN(Graphics3DLayer::onDebugLayerEvent));
+  dispatcher.dispatch<WindowResizeEvent>(
+      SE_BIND_EVENT_FN(Graphics3DLayer::onResizeEvent));
 }
 
 void Graphics3DLayer::clear() {}
@@ -221,5 +224,12 @@ bool Graphics3DLayer::onDebugLayerEvent(DebugLayerChanged &e) {
   }
   }
   return false;
+}
+
+bool Graphics3DLayer::onResizeEvent(WindowResizeEvent& e)
+{
+	//propagate the resize to every node of the graph
+	dx12::RENDERING_GRAPH->resize(e.getWidth(), e.getHeight());
+	return true;
 }
 } // namespace SirEngine

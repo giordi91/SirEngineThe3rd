@@ -108,4 +108,10 @@ void SimpleForward::clear() {
     dx12::TEXTURE_MANAGER->free(m_depth);
   }
 }
+
+void SimpleForward::resize(int screenWidth, int screenHeight)
+{
+	clear();
+	initialize();
+}
 } // namespace SirEngine

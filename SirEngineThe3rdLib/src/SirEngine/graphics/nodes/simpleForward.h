@@ -12,6 +12,7 @@ public:
   virtual void initialize() override;
   virtual void compute() override;
   virtual void clear() override;
+  virtual void resize(int screenWidth, int screenHeight) override;
 
 private:
   TextureHandle m_renderTarget{};

@@ -4,12 +4,12 @@
 #include "SirEngine/identityManager.h"
 #include "SirEngine/log.h"
 #include "SirEngine/materialManager.h"
-#include "platform/windows/graphics/dx12/adapter.h"
 #include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
+#include "platform/windows/graphics/dx12/TextureManagerDx12.h"
+#include "platform/windows/graphics/dx12/adapter.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/meshManager.h"
 #include "platform/windows/graphics/dx12/swapChain.h"
-#include "platform/windows/graphics/dx12/TextureManagerDx12.h"
 
 namespace SirEngine {
 namespace dx12 {
@@ -34,9 +34,9 @@ FrameResource *CURRENT_FRAME_RESOURCE = nullptr;
 TextureManagerDx12 *TEXTURE_MANAGER = nullptr;
 MeshManager *MESH_MANAGER = nullptr;
 IdentityManager *IDENTITY_MANAGER = nullptr;
-MaterialManager*MATERIAL_MANAGER= nullptr;
-Graph* RENDERING_GRAPH =nullptr;
-ConstantBufferManagerDx12* CONSTANT_BUFFER_MANAGER =nullptr;
+MaterialManager *MATERIAL_MANAGER = nullptr;
+Graph *RENDERING_GRAPH = nullptr;
+ConstantBufferManagerDx12 *CONSTANT_BUFFER_MANAGER = nullptr;
 
 bool createFrameCommand(FrameCommand *fc) {
 
@@ -59,20 +59,19 @@ bool createFrameCommand(FrameCommand *fc) {
 
 bool initializeGraphicsDx12(Window *wnd, uint32_t width, uint32_t height) {
 
-  // lets enable debug layer if needed
-  //#if defined(DEBUG) || defined(_DEBUG)
+// lets enable debug layer if needed
+#if defined(DEBUG) || defined(_DEBUG)
   {
     HRESULT result = D3D12GetDebugInterface(IID_PPV_ARGS(&DEBUG_CONTROLLER));
     if (FAILED(result)) {
       return false;
     }
     DEBUG_CONTROLLER->EnableDebugLayer();
-
-    //    ID3D12Debug1* debug1;
-    //    m_debugController->QueryInterface(IID_PPV_ARGS(&debug1));
-    //    debug1->SetEnableGPUBasedValidation(true);
+    // ID3D12Debug1 *debug1;
+    // DEBUG_CONTROLLER->QueryInterface(IID_PPV_ARGS(&debug1));
+    // debug1->SetEnableGPUBasedValidation(true);
   }
-  //#endif
+#endif
 
   HRESULT result = CreateDXGIFactory1(IID_PPV_ARGS(&DXGI_FACTORY));
   if (FAILED(result)) {
@@ -212,8 +211,7 @@ bool stopGraphicsDx12() {
   flushCommandQueue(GLOBAL_COMMAND_QUEUE);
   return true;
 }
-bool newFrameDx12()
-{
+bool newFrameDx12() {
   // TODO clear here, there should be no specific dx12 stuff
   // here we need to check which frame resource we are going to use
   dx12::CURRENT_FRAME_RESOURCE = &dx12::FRAME_RESOURCES[globals::CURRENT_FRAME];
@@ -229,49 +227,47 @@ bool newFrameDx12()
     assert(SUCCEEDED(handleResult));
     WaitForSingleObject(eventHandle, INFINITE);
 
-  CloseHandle(eventHandle);
+    CloseHandle(eventHandle);
+  }
+  // at this point we know we are ready to go
+
+  // Clear the back buffer and depth buffer.
+  float gray[4] = {0.5f, 0.9f, 0.5f, 1.0f};
+  // Reuse the memory associated with command recording.
+  // We can only reset when the associated command lists have finished
+  // execution on the GPU.
+  resetAllocatorAndList(&dx12::CURRENT_FRAME_RESOURCE->fc);
+  // Indicate a state transition on the resource usage.
+  auto *commandList = dx12::CURRENT_FRAME_RESOURCE->fc.commandList;
+  D3D12_RESOURCE_BARRIER rtbarrier[1];
+
+  TextureHandle backBufferH = dx12::SWAP_CHAIN->currentBackBufferTexture();
+  int rtcounter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
+      backBufferH, D3D12_RESOURCE_STATE_RENDER_TARGET, rtbarrier, 0);
+  if (rtcounter != 0) {
+    commandList->ResourceBarrier(rtcounter, rtbarrier);
+  }
+
+  // Set the viewport and scissor rect.  This needs to be reset whenever the
+  // command list is reset.
+  commandList->RSSetViewports(1, dx12::SWAP_CHAIN->getViewport());
+  commandList->RSSetScissorRects(1, dx12::SWAP_CHAIN->getScissorRect());
+
+  // Clear the back buffer and depth buffer.
+  // commandList->ClearRenderTargetView(dx12::SWAP_CHAIN->currentBackBufferView(),
+  //                                   gray, 0, nullptr);
+  // dx12::SWAP_CHAIN->clearDepth();
+  // dx12::SwapChain *swapChain = dx12::SWAP_CHAIN;
+  //// Specify the buffers we are going to render to.
+  // auto back = swapChain -> currentBackBufferView();
+  // auto depth = swapChain -> getDepthCPUDescriptor();
+  // commandList->OMSetRenderTargets(1, &back, true, &depth);
+  auto *heap = dx12::GLOBAL_CBV_SRV_UAV_HEAP->getResource();
+  commandList->SetDescriptorHeaps(1, &heap);
+
+  return true;
 }
-// at this point we know we are ready to go
-
-// Clear the back buffer and depth buffer.
-float gray[4] = {0.5f, 0.9f, 0.5f, 1.0f};
-// Reuse the memory associated with command recording.
-// We can only reset when the associated command lists have finished
-// execution on the GPU.
-resetAllocatorAndList(&dx12::CURRENT_FRAME_RESOURCE->fc);
-// Indicate a state transition on the resource usage.
-auto *commandList = dx12::CURRENT_FRAME_RESOURCE -> fc.commandList;
-D3D12_RESOURCE_BARRIER rtbarrier[1];
-
-TextureHandle backBufferH = dx12::SWAP_CHAIN->currentBackBufferTexture();
-int rtcounter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
-    backBufferH, D3D12_RESOURCE_STATE_RENDER_TARGET, rtbarrier, 0);
-if (rtcounter != 0) {
-  commandList->ResourceBarrier(rtcounter, rtbarrier);
-}
-
-// Set the viewport and scissor rect.  This needs to be reset whenever the
-// command list is reset.
-commandList->RSSetViewports(1, dx12::SWAP_CHAIN->getViewport());
-commandList->RSSetScissorRects(1, dx12::SWAP_CHAIN->getScissorRect());
-
-// Clear the back buffer and depth buffer.
-//commandList->ClearRenderTargetView(dx12::SWAP_CHAIN->currentBackBufferView(),
-//                                   gray, 0, nullptr);
-//dx12::SWAP_CHAIN->clearDepth();
-//dx12::SwapChain *swapChain = dx12::SWAP_CHAIN;
-//// Specify the buffers we are going to render to.
-//auto back = swapChain -> currentBackBufferView();
-//auto depth = swapChain -> getDepthCPUDescriptor();
-//commandList->OMSetRenderTargets(1, &back, true, &depth);
-auto *heap = dx12::GLOBAL_CBV_SRV_UAV_HEAP -> getResource();
-commandList->SetDescriptorHeaps(1, &heap);
-	
-return true;
-
-}
-bool dispatchFrameDx12()
-{
+bool dispatchFrameDx12() {
   D3D12_RESOURCE_BARRIER rtbarrier[1];
   // finally transition the resource to be present
   auto *commandList = dx12::CURRENT_FRAME_RESOURCE->fc.commandList;

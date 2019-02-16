@@ -1,6 +1,5 @@
 #pragma once
 
-#include "SirEngine/events/mouseEvent.h"
 #include "SirEngine/identityManager.h"
 #include "SirEngine/layer.h"
 #include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
@@ -11,7 +10,11 @@
 #include <directxmath.h>
 
 namespace SirEngine {
-class DebugLayerChanged;
+	class MouseButtonPressEvent;
+	class MouseButtonReleaseEvent;
+	class MouseMoveEvent;
+	class WindowResizeEvent;
+	class DebugLayerChanged;
 
 namespace dx12 {
 class Texture2D;
@@ -42,6 +45,7 @@ private:
   bool onMouseButtonReleaseEvent(MouseButtonReleaseEvent &e);
   bool onMouseMoveEvent(MouseMoveEvent &e);
   bool onDebugLayerEvent(DebugLayerChanged &e);
+  bool onResizeEvent(WindowResizeEvent&e);
 
   // member variable mostly temporary
   // dx12::Mesh m_mesh;
