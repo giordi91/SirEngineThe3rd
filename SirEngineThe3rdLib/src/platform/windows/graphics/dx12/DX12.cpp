@@ -34,23 +34,18 @@ MaterialManager *MATERIAL_MANAGER = nullptr;
 Graph *RENDERING_GRAPH = nullptr;
 ConstantBufferManagerDx12 *CONSTANT_BUFFER_MANAGER = nullptr;
 
-bool createFrameCommand(FrameCommand *fc) {
+void createFrameCommand(FrameCommand *fc) {
 
   auto result = DEVICE->CreateCommandAllocator(
       D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&fc->commandAllocator));
-  if (FAILED(result)) {
-    return false;
-  }
+  assert(SUCCEEDED(result));
 
   result = DEVICE->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT,
                                      fc->commandAllocator, nullptr,
                                      IID_PPV_ARGS(&fc->commandList));
-  if (FAILED(result)) {
-    return false;
-  }
+  assert(SUCCEEDED(result));
   fc->commandList->Close();
   fc->isListOpen = false;
-  return true;
 }
 
 bool initializeGraphicsDx12(Window *wnd, uint32_t width, uint32_t height) {
