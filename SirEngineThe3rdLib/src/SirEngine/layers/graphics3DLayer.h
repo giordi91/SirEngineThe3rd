@@ -53,7 +53,7 @@ private:
   dx12::ShaderManager *m_shaderManager{};
   dx12::RootSignatureManager *m_root{};
   dx12::ShadersLayoutRegistry *m_reg{};
-  temp::rendering::PSOManager *m_pso{};
+  dx12::PSOManager *m_pso{};
   ConstantBufferHandle m_cameraHandle{};
 
   // dx12::MeshHandle meshHandle;

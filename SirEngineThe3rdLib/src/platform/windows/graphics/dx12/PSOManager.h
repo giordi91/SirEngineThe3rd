@@ -13,10 +13,6 @@ namespace dx12 {
 class RootSignatureManager;
 class ShaderManager;
 class ShadersLayoutRegistry;
-} // namespace dx12
-} // namespace SirEngine
-namespace temp {
-namespace rendering {
 
 enum class PSOType { DXR = 0, RASTER, COMPUTE, INVALID };
 
@@ -24,7 +20,7 @@ class PSOManager final {
 
 public:
   ~PSOManager() = default;
-  void init(ID3D12Device4 *device, SirEngine::dx12::ShadersLayoutRegistry *,
+  void init(D3D12DeviceType*device , SirEngine::dx12::ShadersLayoutRegistry *,
             SirEngine::dx12::RootSignatureManager *,
             SirEngine::dx12::ShaderManager *);
   void cleanup();
@@ -52,7 +48,7 @@ private:
                              CD3DX12_STATE_OBJECT_DESC &pipe) const;
 
 private:
-  ID3D12Device4 *m_dxrDevice = nullptr;
+  D3D12DeviceType*m_dxrDevice = nullptr;
   std::unordered_map<std::string, ID3D12StateObject *> m_psoDXRRegister;
   std::unordered_map<std::string, ID3D12PipelineState *> m_psoRegister;
 
@@ -60,5 +56,5 @@ private:
   SirEngine::dx12::RootSignatureManager *rs_manager = nullptr;
   SirEngine::dx12::ShaderManager *shaderManager = nullptr;
 };
-} // namespace rendering
-} // namespace temp
+} // namespace dx12
+} // namespace SirEngine

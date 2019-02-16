@@ -14,11 +14,7 @@
 namespace SirEngine {
 namespace dx12 {
 
-#if DXR_ENABLED
-ID3D12Device5 *DEVICE;
-#else
-ID3D12Device4 *DEVICE;
-#endif
+D3D12DeviceType *DEVICE;
 ID3D12Debug *DEBUG_CONTROLLER = nullptr;
 IDXGIFactory6 *DXGI_FACTORY = nullptr;
 Adapter *ADAPTER = nullptr;

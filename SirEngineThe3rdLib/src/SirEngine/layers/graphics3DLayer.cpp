@@ -43,7 +43,7 @@ void Graphics3DLayer::onAttach() {
 
   m_reg = new dx12::ShadersLayoutRegistry();
 
-  m_pso = new temp::rendering::PSOManager();
+  m_pso = new dx12::PSOManager();
   m_pso->init(dx12::DEVICE, m_reg, m_root, m_shaderManager);
   m_pso->loadPSOInFolder("data/pso");
 
