@@ -39,7 +39,8 @@ public:
 
   // getters
   inline Plug *getInputPlug(const std::string &name) {
-    for (int i = 0; i < m_inputPlugs.size(); ++i) {
+    size_t plugCount = m_inputPlugs.size();
+    for (size_t i = 0; i < plugCount; ++i) {
       if (m_inputPlugs[i].name == name) {
         return &m_inputPlugs[i];
       }
