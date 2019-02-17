@@ -48,7 +48,9 @@ private:
   debug::FrameTimingsWidget m_frameTimings;
   debug::MemoryConsumptionWidget m_memoryUsage;
   debug::RenderGraphWidget m_renderGraph;
+#if BUILD_AMD
   debug::HWInfoWidget m_hwInfo;
+#endif
   bool m_shouldShow = false;
   // 192 is the `
   static const uint32_t TRIGGER_UI_BUTTON = 192;

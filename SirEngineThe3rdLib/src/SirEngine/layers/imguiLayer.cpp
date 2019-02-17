@@ -114,9 +114,11 @@ void ImguiLayer::onUpdate() {
   ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
   ImGui::Begin("Debug");
 
+#if BUILD_AMD
   if (ImGui::CollapsingHeader("HW info", ImGuiTreeNodeFlags_DefaultOpen)) {
 	  m_hwInfo.render();
   }
+#endif
 
 
   if (ImGui::CollapsingHeader("Performances", ImGuiTreeNodeFlags_DefaultOpen)) {
