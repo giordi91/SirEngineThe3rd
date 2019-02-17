@@ -34,13 +34,13 @@ endif()
 
 
 #options
-#option(BUILD_TESTS "Whether or not to build the tests" ON)
+option(BUILD_AMD "Wheter or not build on AMD hardware" OFF)
 #option(BUILD_JIT   "Whether or not to build the jit engine" ON)
 #option(BUILD_REPL  "Whether or not to build the interpreter" ON)
 
 #just an overal log of the passed options
-#MESSAGE( STATUS "Building with the following options")
-#MESSAGE( STATUS "BUILD JIT:                    " ${BUILD_JIT})
+MESSAGE( STATUS "Building with the following options")
+MESSAGE( STATUS "BUILD AMD:                    " ${BUILD_AMD})
 #MESSAGE( STATUS "BUILD REPL:                   " ${BUILD_REPL})
 #MESSAGE( STATUS "BUILD TESTS:                  " ${BUILD_TESTS})
 #adding core
