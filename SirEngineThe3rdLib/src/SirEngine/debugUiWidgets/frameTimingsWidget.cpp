@@ -8,6 +8,7 @@
 #include <string>
 #include <thread>
 
+
 namespace SirEngine {
 namespace debug {
 FrameTimingsWidget::FrameTimingsWidget() {
@@ -17,10 +18,10 @@ FrameTimingsWidget::FrameTimingsWidget() {
   for (int i = 0; i < NUMBER_OF_HISTOGRAMS_BUCKETS; ++i) {
     framesHistogram[i] = 0.0f;
   }
+
 }
 
 void FrameTimingsWidget::render() {
-  // update the timings
 
   std::string totalFrames{"Number of frames: "};
   totalFrames += std::to_string(globals::TOTAL_NUMBER_OF_FRAMES);
@@ -99,7 +100,7 @@ void FrameTimingsWidget::render() {
       tallestValue = framesHistogram[i];
     }
   }
-  //now that we have it we can normalize and populate the final histogram array
+  // now that we have it we can normalize and populate the final histogram array
   for (int i = 0; i < NUMBER_OF_HISTOGRAMS_BUCKETS; ++i) {
     finalHisto[i] = framesHistogram[i] / tallestValue;
   }

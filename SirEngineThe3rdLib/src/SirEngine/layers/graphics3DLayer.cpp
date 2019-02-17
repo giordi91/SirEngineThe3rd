@@ -17,6 +17,7 @@
 #include "SirEngine/graphics/nodes/simpleForward.h"
 #include "SirEngine/graphics/postProcess/postProcessStack.h"
 
+
 namespace SirEngine {
 
 void Graphics3DLayer::onAttach() {
@@ -62,7 +63,7 @@ void Graphics3DLayer::onAttach() {
   auto assetNode = new AssetManagerNode();
   auto finalBlit = new FinalBlitNode();
   auto simpleForward = new SimpleForward("simpleForward");
-  auto postProcess= new PostProcessStack();
+  auto postProcess = new PostProcessStack();
 
   // temporary graph for testing
   dx12::RENDERING_GRAPH->addNode(assetNode);
@@ -76,17 +77,22 @@ void Graphics3DLayer::onAttach() {
   dx12::RENDERING_GRAPH->connectNodes(assetNode, "materials", simpleForward,
                                       "materials");
 
-  //dx12::RENDERING_GRAPH->connectNodes(simpleForward, "outTexture", finalBlit,
+  // dx12::RENDERING_GRAPH->connectNodes(simpleForward, "outTexture", finalBlit,
   //                                    "inTexture");
 
   // auto bw = new DebugNode("debugBW");
-   dx12::RENDERING_GRAPH->addNode(postProcess);
-   dx12::RENDERING_GRAPH->connectNodes(simpleForward, "outTexture", postProcess,
+  dx12::RENDERING_GRAPH->addNode(postProcess);
+  dx12::RENDERING_GRAPH->connectNodes(simpleForward, "outTexture", postProcess,
                                       "inTexture");
-   dx12::RENDERING_GRAPH->connectNodes(postProcess, "outTexture", finalBlit,
-   "inTexture");
+  dx12::RENDERING_GRAPH->connectNodes(postProcess, "outTexture", finalBlit,
+                                      "inTexture");
 
   dx12::RENDERING_GRAPH->finalizeGraph();
+
+
+
+
+
 }
 void Graphics3DLayer::onDetach() {}
 void Graphics3DLayer::onUpdate() {
@@ -228,10 +234,9 @@ bool Graphics3DLayer::onDebugLayerEvent(DebugLayerChanged &e) {
   return false;
 }
 
-bool Graphics3DLayer::onResizeEvent(WindowResizeEvent& e)
-{
-	//propagate the resize to every node of the graph
-	dx12::RENDERING_GRAPH->resize(e.getWidth(), e.getHeight());
-	return true;
+bool Graphics3DLayer::onResizeEvent(WindowResizeEvent &e) {
+  // propagate the resize to every node of the graph
+  dx12::RENDERING_GRAPH->resize(e.getWidth(), e.getHeight());
+  return true;
 }
 } // namespace SirEngine
