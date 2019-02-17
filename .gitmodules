@@ -34,3 +34,6 @@
 [submodule "vendors/farmhash"]
 	path = vendors/farmhash
 	url = https://github.com/giordi91/farmhash.git
+[submodule "vendors/display-library"]
+	path = vendors/display-library
+	url = https://github.com/giordi91/display-library.git

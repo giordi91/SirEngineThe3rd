@@ -3,6 +3,7 @@
 #include "SirEngine/debugUiWidgets/frameTimingsWidget.h"
 #include "SirEngine/debugUiWidgets/memoryConsumptionWidget.h"
 #include "SirEngine/debugUiWidgets/renderGraphWidget.h"
+#include "SirEngine/debugUiWidgets/hardwareInfo.h"
 #include "SirEngine/graphics/nodeGraph.h"
 #include "SirEngine/layer.h"
 
@@ -47,6 +48,7 @@ private:
   debug::FrameTimingsWidget m_frameTimings;
   debug::MemoryConsumptionWidget m_memoryUsage;
   debug::RenderGraphWidget m_renderGraph;
+  debug::HWInfoWidget m_hwInfo;
   bool m_shouldShow = false;
   // 192 is the `
   static const uint32_t TRIGGER_UI_BUTTON = 192;

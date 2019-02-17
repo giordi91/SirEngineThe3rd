@@ -114,6 +114,11 @@ void ImguiLayer::onUpdate() {
   ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
   ImGui::Begin("Debug");
 
+  if (ImGui::CollapsingHeader("HW info", ImGuiTreeNodeFlags_DefaultOpen)) {
+	  m_hwInfo.render();
+  }
+
+
   if (ImGui::CollapsingHeader("Performances", ImGuiTreeNodeFlags_DefaultOpen)) {
     m_frameTimings.render();
     m_memoryUsage.render();

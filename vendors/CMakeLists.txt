@@ -16,6 +16,10 @@ file(COPY "Compressonator/Compressonator/Header" DESTINATION "${CMAKE_SOURCE_DIR
 file(COPY "tinyobjloader/tiny_obj_loader.h" DESTINATION "${CMAKE_SOURCE_DIR}/ResourceCompilerPlugins/ModelCompilerPlugin/vendors/includes/tinyobjloader" )
 file(COPY "json/include/nlohmann" DESTINATION "${CMAKE_SOURCE_DIR}/ResourceCompilerLib/vendors/includes" )
 file(COPY "json/include/nlohmann" DESTINATION "${CMAKE_SOURCE_DIR}/SirEngineThe3rdLib/vendors/includes" )
+file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/SirEngineThe3rdLib/vendors/includes/amd)
+file(COPY "display-library/include/adl_defines.h" DESTINATION "${CMAKE_SOURCE_DIR}/SirEngineThe3rdLib/vendors/includes/amd" )
+file(COPY "display-library/include/adl_sdk.h" DESTINATION "${CMAKE_SOURCE_DIR}/SirEngineThe3rdLib/vendors/includes/amd" )
+file(COPY "display-library/include/adl_structures.h" DESTINATION "${CMAKE_SOURCE_DIR}/SirEngineThe3rdLib/vendors/includes/amd" )
 
 file(COPY "stb/stb_image.h" DESTINATION "${CMAKE_SOURCE_DIR}/ResourceCompilerPlugins/TextureCompilerPlugin/vendors/includes/stb" )
 
