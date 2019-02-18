@@ -10,7 +10,6 @@ public:
   virtual void initialize() override;
   virtual void render(TextureHandle input, TextureHandle output) override;
   virtual void clear() override;
-
 };
 	
 

@@ -36,18 +36,9 @@ void Graphics3DLayer::onAttach() {
     dx12::resetAllocatorAndList(currentFc);
   }
 
-  m_shaderManager = new SirEngine::dx12::ShaderManager();
-  m_shaderManager->init();
-  m_shaderManager->loadShadersInFolder("data/processed/shaders/rasterization");
 
-  m_root = new dx12::RootSignatureManager();
-  m_root->loadSingaturesInFolder("data/processed/rs");
 
-  m_reg = new dx12::ShadersLayoutRegistry();
 
-  m_pso = new dx12::PSOManager();
-  m_pso->init(dx12::DEVICE, m_reg, m_root, m_shaderManager);
-  m_pso->loadPSOInFolder("data/pso");
 
   // ask for the camera buffer handle;
   m_cameraHandle = globals::CONSTANT_BUFFER_MANAGER->allocateDynamic(
@@ -121,9 +112,7 @@ void Graphics3DLayer::onUpdate() {
   globals::CONSTANT_BUFFER_MANAGER->updateConstantBuffer(m_cameraHandle,
                                                          &m_camBufferCPU);
 
-  auto *pso = m_pso->getComputePSOByName("simpleMeshPSOTex");
-  commandList->SetPipelineState(pso);
-  auto *rs = m_root->getRootSignatureFromName("simpleMeshRSTex");
+  auto *rs = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName("simpleMeshRSTex");
   commandList->SetGraphicsRootSignature(rs);
 
   commandList->SetGraphicsRootDescriptorTable(

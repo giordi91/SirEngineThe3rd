@@ -36,7 +36,10 @@ static const std::string PSO_KEY_SAMPLE_DESC_QUALITY = "sampleDescQuality";
 static const std::string PSO_KEY_DSV_FORMAT = "dsvFormat";
 static const std::string DEFAULT_STRING = "";
 static const std::string DEFAULT_STATE = "default";
+static const std::string CUSTOM_STATE = "custom";
+static const std::string DEPTH_ENABLED = "depthEnabled";
 static const int DEFAULT_INT = -1;
+static const bool DEFAULT_BOOL = false;
 static const std::unordered_map<std::string, PSOType> STRING_TO_PSOTYPE{
     {PSO_KEY_TYPE_DXR, PSOType::DXR},
     {PSO_KEY_TYPE_COMPUTE, PSOType::COMPUTE},
@@ -89,6 +92,53 @@ inline bool isStateDefault(const std::string &state) {
 void assertInJson(const nlohmann::json &jobj, const std::string &key) {
   auto found = jobj.find(key);
   assert(found != jobj.end());
+}
+inline D3D12_RASTERIZER_DESC getRasterState(const std::string &state) {
+  bool rasterDefault = isStateDefault(state);
+  if (rasterDefault) {
+    return CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+  }
+  assert(0 && "unsupported raster state");
+  return CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+}
+inline D3D12_BLEND_DESC getBlendState(const std::string &state) {
+  bool isDefault = isStateDefault(state);
+  if (isDefault) {
+    return CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+  }
+  assert(0 && "unsupported blend state");
+  return CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+}
+
+inline bool isStateCustom(const std::string &state) {
+  return state == CUSTOM_STATE;
+}
+
+inline D3D12_DEPTH_STENCIL_DESC getDSState(const std::string &state,
+                                           const nlohmann::json &jobj) {
+  bool isDefault = isStateDefault(state);
+  if (isDefault) {
+    return CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+  }
+  if (isStateCustom(state)) {
+
+    CD3DX12_DEPTH_STENCIL_DESC desc;
+    bool depthEnabled = getValueIfInJson(jobj, DEPTH_ENABLED, DEFAULT_BOOL);
+    desc.DepthEnable = depthEnabled;
+    desc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+    desc.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
+    desc.StencilEnable = FALSE;
+    desc.StencilReadMask = D3D12_DEFAULT_STENCIL_READ_MASK;
+    desc.StencilWriteMask = D3D12_DEFAULT_STENCIL_WRITE_MASK;
+    const D3D12_DEPTH_STENCILOP_DESC defaultStencilOp = {
+        D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_KEEP,
+        D3D12_COMPARISON_FUNC_ALWAYS};
+    desc.FrontFace = defaultStencilOp;
+    desc.BackFace = defaultStencilOp;
+    return desc;
+  }
+  assert(0 && "unsupported depth stencil state");
+  return CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
 }
 
 
@@ -183,30 +233,6 @@ void PSOManager::processComputePSO(nlohmann::json &jobj,
   m_psoRegister[name] = pipeStateObject;
 }
 
-inline D3D12_RASTERIZER_DESC getRasterState(const std::string &state) {
-  bool rasterDefault = isStateDefault(state);
-  if (rasterDefault) {
-    return CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-  }
-  assert(0 && "unsupported raster state");
-  return CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-}
-inline D3D12_BLEND_DESC getBlendState(const std::string &state) {
-  bool isDefault = isStateDefault(state);
-  if (isDefault) {
-    return CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-  }
-  assert(0 && "unsupported blend state");
-  return CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-}
-inline D3D12_DEPTH_STENCIL_DESC getDSState(const std::string &state) {
-  bool isDefault = isStateDefault(state);
-  if (isDefault) {
-    return CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-  }
-  assert(0 && "unsupported depth stencil state");
-  return CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-}
 
 void PSOManager::processRasterPSO(nlohmann::json &jobj,
                                   const std::string &path) {
@@ -241,7 +267,7 @@ void PSOManager::processRasterPSO(nlohmann::json &jobj,
 
   D3D12_RASTERIZER_DESC rasterState = getRasterState(rasterStateString);
   D3D12_BLEND_DESC blendState = getBlendState(blendStateString);
-  D3D12_DEPTH_STENCIL_DESC dsState = getDSState(depthStencilStateString);
+  D3D12_DEPTH_STENCIL_DESC dsState = getDSState(depthStencilStateString, jobj);
 
   const std::string sampleMaskString =
       getValueIfInJson(jobj, PSO_KEY_SAMPLEMASK, DEFAULT_STRING);

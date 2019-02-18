@@ -241,8 +241,7 @@ void processDescriptorTable(nlohmann::json &jobj,
   }
   param.InitAsDescriptorTable(counter, ranges);
 }
-ID3DBlob *
-serializeRootSignature(D3D12_ROOT_SIGNATURE_DESC &desc) {
+ID3DBlob *serializeRootSignature(D3D12_ROOT_SIGNATURE_DESC &desc) {
   ID3DBlob *blob;
   ID3DBlob *error;
   D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1, &blob,
@@ -324,7 +323,8 @@ void processSignatureFile(const char *path, std::vector<ResultRoot> &blobs) {
     }
 
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc(
-        static_cast<UINT>(rootParams.size()), rootParams.data(), numStaticSampers, staticSamplers);
+        static_cast<UINT>(rootParams.size()), rootParams.data(),
+        numStaticSampers, staticSamplers);
 
     // process flags
     auto found = jvalue.find(ROOT_KEY_FLAGS);
@@ -346,8 +346,7 @@ void processSignatureFile(const char *path, std::vector<ResultRoot> &blobs) {
     }
 
     SirEngine::dx12::ROOT_FILE_TYPE fileTypeEnum = getFileTypeEnum(fileType);
-    ID3DBlob *blob =
-        serializeRootSignature(rootSignatureDesc);
+    ID3DBlob *blob = serializeRootSignature(rootSignatureDesc);
     blobs.emplace_back(ResultRoot{name, blob, fileTypeEnum});
   }
 }
