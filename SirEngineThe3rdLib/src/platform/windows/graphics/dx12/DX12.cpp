@@ -5,11 +5,16 @@
 #include "SirEngine/log.h"
 #include "SirEngine/materialManager.h"
 #include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
+#include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/TextureManagerDx12.h"
 #include "platform/windows/graphics/dx12/adapter.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/meshManager.h"
+#include "platform/windows/graphics/dx12/rootSignatureManager.h"
+#include "platform/windows/graphics/dx12/shaderLayout.h"
+#include "platform/windows/graphics/dx12/shaderManager.h"
 #include "platform/windows/graphics/dx12/swapChain.h"
+#include "platform/windows/graphics/dx12/PSOManager.h"
 
 namespace SirEngine {
 namespace dx12 {
@@ -33,6 +38,10 @@ IdentityManager *IDENTITY_MANAGER = nullptr;
 MaterialManager *MATERIAL_MANAGER = nullptr;
 Graph *RENDERING_GRAPH = nullptr;
 ConstantBufferManagerDx12 *CONSTANT_BUFFER_MANAGER = nullptr;
+ShaderManager *SHADER_MANAGER = nullptr;
+PSOManager *PSO_MANAGER = nullptr;
+RootSignatureManager* ROOT_SIGNATURE_MANAGER = nullptr;
+ShadersLayoutRegistry* SHADER_LAYOUT_REGISTRY= nullptr;
 
 void createFrameCommand(FrameCommand *fc) {
 
@@ -122,8 +131,8 @@ bool initializeGraphicsDx12(Window *wnd, uint32_t width, uint32_t height) {
 #if DXR_ENABLED
   if (ADAPTER->getFeature() == AdapterFeature::DXR) {
     D3D12_FEATURE_DATA_D3D12_OPTIONS5 opts5 = {};
-    dx12::DEVICE->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5,
-                                             &opts5, sizeof(opts5));
+    dx12::DEVICE->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &opts5,
+                                      sizeof(opts5));
     if (opts5.RaytracingTier == D3D12_RAYTRACING_TIER_NOT_SUPPORTED)
       assert(0);
   }
@@ -174,6 +183,20 @@ bool initializeGraphicsDx12(Window *wnd, uint32_t width, uint32_t height) {
   MATERIAL_MANAGER->initialize();
   globals::ASSET_MANAGER = new AssetManager();
   globals::ASSET_MANAGER->initialize();
+
+  SHADER_MANAGER = new ShaderManager();
+  SHADER_MANAGER->init();
+  SHADER_MANAGER->loadShadersInFolder("data/processed/shaders/rasterization");
+
+  ROOT_SIGNATURE_MANAGER = new RootSignatureManager();
+  ROOT_SIGNATURE_MANAGER->loadSingaturesInFolder("data/processed/rs");
+
+  SHADER_LAYOUT_REGISTRY = new dx12::ShadersLayoutRegistry();
+
+  PSO_MANAGER = new PSOManager();
+  PSO_MANAGER->init(dx12::DEVICE, SHADER_LAYOUT_REGISTRY,
+                    ROOT_SIGNATURE_MANAGER, dx12::SHADER_MANAGER);
+  PSO_MANAGER->loadPSOInFolder("data/pso");
 
   // init swap chain
   auto *windowWnd = static_cast<HWND>(wnd->getNativeWindow());

@@ -10,7 +10,8 @@ const std::unordered_map<std::string, ShaderLayout> NAME_TO_SHADER_LAYOUT = {
     {"fullMesh", ShaderLayout::fullMesh},
     {"vertexUV", ShaderLayout::vertexUV},
     {"dxrMesh", ShaderLayout::dxrMesh},
-    {"positionOnly", ShaderLayout::positionOnly}};
+    {"positionOnly", ShaderLayout::positionOnly},
+    {"deferredNull", ShaderLayout::deferredNull}};
 
 ShadersLayoutRegistry::ShadersLayoutRegistry() { generateLayouts(); }
 
@@ -171,6 +172,8 @@ void ShadersLayoutRegistry::generateLayouts() {
 
   generatePositionFloat4(positionOnlyHandleHandle.layout);
   m_registry[ShaderLayout::positionOnly] = positionOnlyHandleHandle;
+
+  m_registry[ShaderLayout::deferredNull] = LayoutHandle{nullptr, 0};
 }
 } // namespace dx12
 } // namespace SirEngine

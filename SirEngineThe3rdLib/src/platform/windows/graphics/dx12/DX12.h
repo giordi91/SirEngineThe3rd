@@ -18,6 +18,10 @@ class Adapter;
 class DescriptorHeap;
 class SwapChain;
 class ConstantBufferManagerDx12;
+class ShaderManager;
+class RootSignatureManager;
+class ShadersLayoutRegistry;
+class PSOManager;
 
 enum class DescriptorType {
   NONE = 0,
@@ -120,6 +124,10 @@ extern IdentityManager *IDENTITY_MANAGER;
 extern MaterialManager* MATERIAL_MANAGER;
 extern Graph* RENDERING_GRAPH;
 extern ConstantBufferManagerDx12* CONSTANT_BUFFER_MANAGER;
+extern ShaderManager* SHADER_MANAGER;
+extern RootSignatureManager* ROOT_SIGNATURE_MANAGER;
+extern PSOManager* PSO_MANAGER;
+extern ShadersLayoutRegistry* SHADER_LAYOUT_REGISTRY;
 
 inline UINT64 insertFenceToGlobalQueue() {
   // Advance the fence value to mark commands up to this fence point.

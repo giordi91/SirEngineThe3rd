@@ -51,9 +51,6 @@ private:
   // dx12::Mesh m_mesh;
   dx12::CameraBuffer m_camBufferCPU{};
   dx12::ShaderManager *m_shaderManager{};
-  dx12::RootSignatureManager *m_root{};
-  dx12::ShadersLayoutRegistry *m_reg{};
-  dx12::PSOManager *m_pso{};
   ConstantBufferHandle m_cameraHandle{};
 
   // dx12::MeshHandle meshHandle;

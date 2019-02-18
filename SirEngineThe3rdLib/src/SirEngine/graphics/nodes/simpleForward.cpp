@@ -1,6 +1,9 @@
 #include "SirEngine/graphics/nodes/simpleForward.h"
 #include "SirEngine/assetManager.h"
 #include "platform/windows/graphics/dx12/textureManagerDx12.h"
+#include "platform/windows/graphics/dx12/DX12.h"
+#include "platform/windows/graphics/dx12/PSOManager.h"
+#include "platform/windows/graphics/dx12/rootSignatureManager.h"
 
 namespace SirEngine {
 SimpleForward::SimpleForward(const char *name)
@@ -73,6 +76,9 @@ void SimpleForward::compute() {
 
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
+
+  auto *pso = dx12::PSO_MANAGER->getComputePSOByName("simpleMeshPSOTex");
+  commandList->SetPipelineState(pso);
 
   D3D12_RESOURCE_BARRIER barriers[2];
   int counter = 0;
