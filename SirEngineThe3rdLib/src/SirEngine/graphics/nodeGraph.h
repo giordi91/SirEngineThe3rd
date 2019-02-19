@@ -155,7 +155,6 @@ public:
   }
   void addDebugNode(GraphNode *debugNode) {
     assert(debugNode->getNodeType() == "DebugNode");
-    GraphNode *finalBlit = findNodeOfType("FinalBlit");
     assert(finalNode != nullptr);
 
     // disconnect input

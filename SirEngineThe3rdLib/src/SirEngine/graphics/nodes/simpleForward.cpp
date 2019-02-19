@@ -4,6 +4,7 @@
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
+#include "SirEngine/graphics/renderingContext.h"
 
 namespace SirEngine {
 SimpleForward::SimpleForward(const char *name)
@@ -37,6 +38,9 @@ SimpleForward::SimpleForward(const char *name)
   materials.nodePtr = this;
   materials.name = "materials";
   registerPlug(materials);
+
+  //fetching root signature
+  rs = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName("simpleMeshRSTex");
 }
 
 void SimpleForward::initialize() {
@@ -96,6 +100,12 @@ void SimpleForward::compute() {
   globals::TEXTURE_MANAGER->clearRT(m_renderTarget, color);
   globals::TEXTURE_MANAGER->bindRenderTarget(m_renderTarget, m_depth);
 
+
+  //
+  commandList->SetGraphicsRootSignature(rs);
+  globals::RENDERING_CONTEX->bindCameraBuffer(0);
+
+
   for (uint32_t i = 0; i < meshCount; ++i) {
 
     commandList->SetGraphicsRootDescriptorTable(1, mats[i].albedo);
@@ -115,7 +125,7 @@ void SimpleForward::clear() {
   }
 }
 
-void SimpleForward::resize(int screenWidth, int screenHeight)
+void SimpleForward::resize(int , int )
 {
 	clear();
 	initialize();
