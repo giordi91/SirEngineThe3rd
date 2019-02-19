@@ -19,11 +19,6 @@
           "visibility": "ALL"
         },
         {
-          "type": "CBV",
-          "data": { "baseRegister": 1 },
-          "visibility": "ALL"
-        },
-        {
           "type": "descriptorTable",
           "data": {
             "numberDescriptor": "1",
@@ -31,7 +26,7 @@
             "ranges": [
               {
                 "type": "SRV",
-                "numDescriptors": 4,
+                "numDescriptors": 1,
                 "baseRegister":0 
               }
             ]

@@ -17,6 +17,7 @@
 #include "SirEngine/graphics/nodes/simpleForward.h"
 #include "SirEngine/graphics/postProcess/postProcessStack.h"
 #include "SirEngine/graphics/renderingContext.h"
+#include "SirEngine/graphics/postProcess/effects/blackAndWhiteEffect.h"
 
 namespace SirEngine {
 
@@ -47,6 +48,8 @@ void Graphics3DLayer::onAttach() {
   auto finalBlit = new FinalBlitNode();
   auto simpleForward = new SimpleForward("simpleForward");
   auto postProcess = new PostProcessStack();
+  auto bw  = postProcess->allocateRenderPass<BlackAndWhiteEffect>("BlackWhite");
+  postProcess->initalize();
 
   // temporary graph for testing
   dx12::RENDERING_GRAPH->addNode(assetNode);
