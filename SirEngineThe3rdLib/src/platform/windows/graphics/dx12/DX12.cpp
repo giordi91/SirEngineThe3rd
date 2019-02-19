@@ -15,6 +15,7 @@
 #include "platform/windows/graphics/dx12/shaderManager.h"
 #include "platform/windows/graphics/dx12/swapChain.h"
 #include "platform/windows/graphics/dx12/PSOManager.h"
+#include "SirEngine/graphics/renderingContext.h"
 
 namespace SirEngine {
 namespace dx12 {
@@ -183,6 +184,8 @@ bool initializeGraphicsDx12(Window *wnd, uint32_t width, uint32_t height) {
   MATERIAL_MANAGER->initialize();
   globals::ASSET_MANAGER = new AssetManager();
   globals::ASSET_MANAGER->initialize();
+  globals::RENDERING_CONTEX = new RenderingContext();
+  globals::RENDERING_CONTEX->initialize();
 
   SHADER_MANAGER = new ShaderManager();
   SHADER_MANAGER->init();

@@ -14,6 +14,7 @@ ConstantBufferManager* CONSTANT_BUFFER_MANAGER = nullptr;
 TextureManager* TEXTURE_MANAGER = nullptr;
 AssetManager* ASSET_MANAGER = nullptr;
 Application* APPLICATION =nullptr;
+RenderingContext* RENDERING_CONTEX =nullptr;
 
 } // namespace Globals
 } // namespace SirEngine

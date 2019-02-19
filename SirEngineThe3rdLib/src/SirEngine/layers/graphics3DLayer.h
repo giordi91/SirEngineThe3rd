@@ -19,14 +19,6 @@ namespace SirEngine {
 namespace dx12 {
 class Texture2D;
 
-struct CameraBuffer final {
-  DirectX::XMMATRIX mvp;
-  DirectX::XMMATRIX viewMatrix;
-  float vFov;
-  float screenWidth;
-  float screenHeight;
-  float padding;
-};
 } // namespace dx12
 class SIR_ENGINE_API Graphics3DLayer final : public Layer {
 public:
@@ -47,14 +39,6 @@ private:
   bool onDebugLayerEvent(DebugLayerChanged &e);
   bool onResizeEvent(WindowResizeEvent&e);
 
-  // member variable mostly temporary
-  // dx12::Mesh m_mesh;
-  dx12::CameraBuffer m_camBufferCPU{};
-  dx12::ShaderManager *m_shaderManager{};
-  ConstantBufferHandle m_cameraHandle{};
-
-  // dx12::MeshHandle meshHandle;
-  // uint32_t meshIndexCount =0 ;
   // camera event control
   bool leftDown = false;
   bool rightDown = false;
@@ -62,8 +46,6 @@ private:
   float previousX = 0;
   float previousY = 0;
 
-  // dx12::TextureHandle th;
-  // dx12::DescriptorPair thSRV;
   IdentityHandle sphereH;
 };
 } // namespace SirEngine

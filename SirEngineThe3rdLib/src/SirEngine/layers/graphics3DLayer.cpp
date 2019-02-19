@@ -16,7 +16,7 @@
 #include "SirEngine/graphics/nodes/assetManagerNode.h"
 #include "SirEngine/graphics/nodes/simpleForward.h"
 #include "SirEngine/graphics/postProcess/postProcessStack.h"
-
+#include "SirEngine/graphics/renderingContext.h"
 
 namespace SirEngine {
 
@@ -35,14 +35,6 @@ void Graphics3DLayer::onAttach() {
   if (!currentFc->isListOpen) {
     dx12::resetAllocatorAndList(currentFc);
   }
-
-
-
-
-
-  // ask for the camera buffer handle;
-  m_cameraHandle = globals::CONSTANT_BUFFER_MANAGER->allocateDynamic(
-      sizeof(dx12::CameraBuffer));
 
   sphereH = globals::ASSET_MANAGER->loadAsset("data/assets/sphere.json");
   globals::ASSET_MANAGER->loadAsset("data/assets/sphere.json");
@@ -79,49 +71,13 @@ void Graphics3DLayer::onAttach() {
                                       "inTexture");
 
   dx12::RENDERING_GRAPH->finalizeGraph();
-
-
-
-
-
 }
 void Graphics3DLayer::onDetach() {}
 void Graphics3DLayer::onUpdate() {
 
-  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
-  if (!currentFc->isListOpen) {
-    dx12::resetAllocatorAndList(currentFc);
-  }
-
-  auto commandList = currentFc->commandList;
-  commandList->RSSetViewports(1, dx12::SWAP_CHAIN->getViewport());
-  commandList->RSSetScissorRects(1, dx12::SWAP_CHAIN->getScissorRect());
-  dx12::SWAP_CHAIN->clearDepth();
-  auto back = dx12::SWAP_CHAIN->currentBackBufferView();
-  auto depth = dx12::SWAP_CHAIN->getDepthCPUDescriptor();
-
-  commandList->OMSetRenderTargets(1, &back, true, &depth);
-
-  globals::MAIN_CAMERA->updateCamera();
-  m_camBufferCPU.vFov = 60.0f;
-  m_camBufferCPU.screenWidth = static_cast<float>(globals::SCREEN_WIDTH);
-  m_camBufferCPU.screenHeight = static_cast<float>(globals::SCREEN_HEIGHT);
-  m_camBufferCPU.mvp = DirectX::XMMatrixTranspose(
-      globals::MAIN_CAMERA->getMVP(DirectX::XMMatrixIdentity()));
-
-  globals::CONSTANT_BUFFER_MANAGER->updateConstantBuffer(m_cameraHandle,
-                                                         &m_camBufferCPU);
-
-  auto *rs = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName("simpleMeshRSTex");
-  commandList->SetGraphicsRootSignature(rs);
-
-  commandList->SetGraphicsRootDescriptorTable(
-      0,
-      // TODO remove this, wrap it into a context maybe and remove graphics
-      // core?
-      dx12::CONSTANT_BUFFER_MANAGER->getConstantBufferDx12Handle(m_cameraHandle)
-          .gpuHandle);
-
+  // setting up camera for the frame
+  globals::RENDERING_CONTEX->setupCameraForFrame();
+  //evaluating rendering graph
   dx12::RENDERING_GRAPH->compute();
 
   // making any clean up for the mesh manager if we have to

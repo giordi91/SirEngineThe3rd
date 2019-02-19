@@ -2,6 +2,7 @@
 
 #include "SirEngine/graphics/nodeGraph.h"
 #include "SirEngine/handle.h"
+#include <d3d12.h>
 
 namespace SirEngine {
 
@@ -17,6 +18,7 @@ public:
 private:
   TextureHandle m_renderTarget{};
   TextureHandle m_depth{};
+  ID3D12RootSignature* rs =nullptr;
 };
 
 } // namespace SirEngine

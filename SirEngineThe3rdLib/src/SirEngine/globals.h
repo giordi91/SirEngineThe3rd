@@ -7,6 +7,7 @@ class ConstantBufferManager;
 class Application;
 class Camera3DPivot;
 class TextureManager;
+class RenderingContext;
 
 namespace globals {
 
@@ -24,6 +25,7 @@ extern ConstantBufferManager *CONSTANT_BUFFER_MANAGER;
 extern TextureManager *TEXTURE_MANAGER;
 extern AssetManager *ASSET_MANAGER;
 extern Application* APPLICATION;
+extern RenderingContext* RENDERING_CONTEX;
 
 } // namespace globals
 typedef unsigned char uchar;
