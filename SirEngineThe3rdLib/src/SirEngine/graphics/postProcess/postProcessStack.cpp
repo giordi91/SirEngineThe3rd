@@ -1,5 +1,7 @@
 #include "SirEngine/graphics/postProcess/postProcessStack.h"
+#include "SirEngine/globals.h"
 #include "SirEngine/handle.h"
+#include "SirEngine/textureManager.h"
 
 namespace SirEngine {
 
@@ -21,7 +23,24 @@ PostProcessStack::PostProcessStack()
   registerPlug(outTexture);
 }
 
-bool PostProcessStack::initalize() { return true; }
+bool PostProcessStack::initalize() {
+
+  // initialize all layers
+  size_t stackSize = m_stack.size();
+  for (size_t i = 0; i < stackSize; ++i) {
+    m_stack[i]->initialize();
+  }
+
+  // allocate ping pong textures
+  handles[0] = globals::TEXTURE_MANAGER->allocateRenderTexture(
+      globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT, RenderTargetFormat::RGBA32,
+      "postProcess1");
+  handles[1] = globals::TEXTURE_MANAGER->allocateRenderTexture(
+      globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT, RenderTargetFormat::RGBA32,
+      "postProcess2");
+
+  return true;
+}
 
 void PostProcessStack::compute() {
   auto &conn = m_connections[&m_inputPlugs[0]];
@@ -30,7 +49,17 @@ void PostProcessStack::compute() {
   TextureHandle texH;
   texH.handle = source->plugValue;
 
-  m_outputPlugs[0].plugValue = texH.handle;
+  m_internalCounter = 0;
+  size_t stackSize = m_stack.size();
+  m_stack[0]->render(texH, handles[0]);
+
+  for (size_t i = 1; i < stackSize; ++i) {
+    int previous = m_internalCounter;
+    m_internalCounter = (m_internalCounter + 1) % 2;
+    m_stack[i]->render(handles[previous], handles[m_internalCounter]);
+  }
+
+  m_outputPlugs[0].plugValue = handles[m_internalCounter].handle;
 }
 
 } // namespace SirEngine

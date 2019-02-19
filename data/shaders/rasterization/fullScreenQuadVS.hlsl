@@ -17,9 +17,10 @@ struct VertexOut {
   float2 uv : TEXCOORD1;
 };
 
-static const float4 arrBasePos[4] = {
-    float4(-1.0f, 1.0f, 0.0f, 0.0f), float4(1.0f, 1.0f, 1.0f, 0.0f),
-    float4(-1.0f, -1.0f, 0.0f, 1.0f), float4(1.0f, -1.0f, 1.0f, 1.0f)};
+static const float4 arrBasePos[6] = {
+    float4(-1.0f, 1.0f, 0.0f, 1.0f), float4(1.0f, 1.0f, 1.0f, 1.0f),
+    float4(-1.0f, -1.0f, 0.0f, 0.0f), float4(1.0f, -1.0f, 1.0f, 0.0f),
+	float4(-1.0f, -1.0f, 0.0f, 0.0f),float4(1.0f, 1.0f, 1.0f, 1.0f)};
 
 VertexOut VS( uint vid : SV_VertexID) {
   VertexOut vout;

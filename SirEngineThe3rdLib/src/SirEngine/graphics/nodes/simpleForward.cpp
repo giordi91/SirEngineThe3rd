@@ -41,6 +41,7 @@ SimpleForward::SimpleForward(const char *name)
 
   //fetching root signature
   rs = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName("simpleMeshRSTex");
+  pso = dx12::PSO_MANAGER->getComputePSOByName("simpleMeshPSOTex");
 }
 
 void SimpleForward::initialize() {
@@ -81,7 +82,6 @@ void SimpleForward::compute() {
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
 
-  auto *pso = dx12::PSO_MANAGER->getComputePSOByName("simpleMeshPSOTex");
   commandList->SetPipelineState(pso);
 
   D3D12_RESOURCE_BARRIER barriers[2];

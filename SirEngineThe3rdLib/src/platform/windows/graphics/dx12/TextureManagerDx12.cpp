@@ -142,7 +142,7 @@ TextureManagerDx12::createDepthTexture(const char *name, uint32_t width,
   data.state = state;
 
   dx12::createDSV(dx12::GLOBAL_DSV_HEAP, m_texturePool[index].resource,
-                  data.srv, DXGI_FORMAT_D24_UNORM_S8_UINT);
+                  data.rtsrv, DXGI_FORMAT_D24_UNORM_S8_UINT);
 
   ++MAGIC_NUMBER_COUNTER;
 
@@ -231,7 +231,9 @@ TextureManagerDx12::allocateRenderTexture(uint32_t width, uint32_t height,
 
   ++MAGIC_NUMBER_COUNTER;
 
-  createRTVSRV(dx12::GLOBAL_RTV_HEAP, data.resource, data.srv);
+  createRTVSRV(dx12::GLOBAL_RTV_HEAP, data.resource, data.rtsrv);
+  dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DSRV(data.srv, data.resource,
+                                                    data.format);
 
   // convert to wstring
   const std::string sname(name);
@@ -252,7 +254,7 @@ void TextureManagerDx12::bindRenderTarget(TextureHandle handle,
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
 
-  D3D12_CPU_DESCRIPTOR_HANDLE handles[1] = {data.srv.cpuHandle};
+  D3D12_CPU_DESCRIPTOR_HANDLE handles[1] = {data.rtsrv.cpuHandle};
   // TODO fix this, should not have a depth the swap chain??
   // auto backDepth = dx12::SWAP_CHAIN->getDepthCPUDescriptor();
   const D3D12_CPU_DESCRIPTOR_HANDLE *depthDesc = nullptr;
@@ -261,7 +263,7 @@ void TextureManagerDx12::bindRenderTarget(TextureHandle handle,
     uint32_t index = getIndexFromHandle(depth);
     const TextureData &data = m_texturePool.getConstRef(index);
     assert((data.flags & TextureFlags::DEPTH) > 0);
-    depthDesc = &(data.srv.cpuHandle);
+    depthDesc = &(data.rtsrv.cpuHandle);
   }
   commandList->OMSetRenderTargets(1, handles, true, depthDesc);
 }
@@ -322,7 +324,7 @@ void TextureManagerDx12::clearDepth(const TextureHandle depth) {
   assert((data.flags & TextureFlags::DEPTH) > 0);
 
   CURRENT_FRAME_RESOURCE->fc.commandList->ClearDepthStencilView(
-      data.srv.cpuHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL,
+      data.rtsrv.cpuHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL,
       1.0f, 0, 0, nullptr);
 }
 
@@ -334,7 +336,7 @@ void TextureManagerDx12::clearRT(const TextureHandle handle,
   assert((data.flags & TextureFlags::RT) > 0);
   // Clear the back buffer and depth buffer.
   CURRENT_FRAME_RESOURCE->fc.commandList->ClearRenderTargetView(
-      data.srv.cpuHandle, color, 0, nullptr);
+      data.rtsrv.cpuHandle, color, 0, nullptr);
 }
 } // namespace dx12
 } // namespace SirEngine

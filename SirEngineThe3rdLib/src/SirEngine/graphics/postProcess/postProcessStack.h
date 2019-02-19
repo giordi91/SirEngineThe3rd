@@ -30,7 +30,7 @@ public:
     m_stack.push_back(pass);
   };
   template <typename T> T *allocateRenderPass(const char *name) {
-    PostProcessEffect *pass = new T(name);
+    T *pass = new T(name);
     m_stack.push_back(pass);
 	return pass;
   }
@@ -38,6 +38,8 @@ public:
 private:
   std::vector<PostProcessEffect *> m_stack;
   std::vector<TextureHandle> m_buffers;
+  TextureHandle handles[2];
+  int m_internalCounter =0;
 };
 
 } // namespace SirEngine

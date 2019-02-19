@@ -19,6 +19,7 @@ class TextureManagerDx12 final : public TextureManager {
     DXGI_FORMAT format;
     TextureFlags flags;
     DescriptorPair srv;
+    DescriptorPair rtsrv;
     DescriptorPair uav;
   };
 
@@ -40,7 +41,8 @@ public:
                            TextureHandle destination) override;
   virtual void bindBackBuffer(bool bindBackBufferDepth) override;
   virtual void clearDepth(const TextureHandle depth) override;
-  virtual void clearRT(const TextureHandle handle, const float color[4])override;
+  virtual void clearRT(const TextureHandle handle,
+                       const float color[4]) override;
 
   // dx12 methods
   TextureHandle initializeFromResourceDx12(ID3D12Resource *resource,
@@ -55,8 +57,9 @@ public:
 
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
-	assert(m_texturePool.getConstRef(index).srv.cpuHandle.ptr != 0);
-	assert(m_texturePool.getConstRef(index).srv.type == DescriptorType::SRV);
+    const TextureData &data = m_texturePool.getConstRef(index);
+    assert(data.srv.cpuHandle.ptr != 0);
+    assert(data.srv.type == DescriptorType::SRV);
     return m_texturePool.getConstRef(index).srv;
   }
   // A manual format is passed to the depth becauase we normally use a typess
@@ -78,7 +81,7 @@ public:
 
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
-    return m_texturePool.getConstRef(index).srv;
+    return m_texturePool.getConstRef(index).rtsrv;
   }
   void freeRTVDx12(const TextureHandle handle,
                    const DescriptorPair pair) const {
