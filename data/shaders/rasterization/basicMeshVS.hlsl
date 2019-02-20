@@ -1,17 +1,6 @@
-struct CameraBuffer {
-  float4x4 MVP;
-  float4x4 ViewMatrix;
-  float vFov;
-  float screenWidth;
-  float screenHeight;
-  float padding;
-};
+#include "../common/camera.hlsl"
 
 ConstantBuffer<CameraBuffer> g_cameraBuffer : register(b0);
-//cbuffer cbPerObject : register(b0)
-//{
-//	float4x4 gWorldViewProj; 
-//};
 
 
 struct VertexIn
