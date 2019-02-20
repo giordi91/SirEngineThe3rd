@@ -38,7 +38,6 @@ void PostProcessStack::initialize() {
   handles[1] = globals::TEXTURE_MANAGER->allocateRenderTexture(
       globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT, RenderTargetFormat::RGBA32,
       "postProcess2");
-
 }
 
 void PostProcessStack::compute() {
@@ -48,6 +47,10 @@ void PostProcessStack::compute() {
   TextureHandle texH;
   texH.handle = source->plugValue;
 
+  if (m_stack.empty()) {
+    m_outputPlugs[0].plugValue = texH.handle;
+    return;
+  }
   m_internalCounter = 0;
   size_t stackSize = m_stack.size();
   m_stack[0]->render(texH, handles[0]);
@@ -61,21 +64,19 @@ void PostProcessStack::compute() {
   m_outputPlugs[0].plugValue = handles[m_internalCounter].handle;
 }
 
-void PostProcessStack::clear()
-{
+void PostProcessStack::clear() {
   if (handles[0].isHandleValid()) {
     globals::TEXTURE_MANAGER->free(handles[0]);
-	handles[0].handle =0 ;
+    handles[0].handle = 0;
   }
   if (handles[1].isHandleValid()) {
     globals::TEXTURE_MANAGER->free(handles[1]);
-	handles[1].handle =0 ;
+    handles[1].handle = 0;
   }
 }
 void PostProcessStack::resize(int screenWidth, int screenHeight) {
-	clear();
-	initialize();
-
+  clear();
+  initialize();
 }
 
 } // namespace SirEngine

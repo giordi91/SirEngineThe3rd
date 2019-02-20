@@ -48,7 +48,7 @@ void Graphics3DLayer::onAttach() {
   auto finalBlit = new FinalBlitNode();
   auto simpleForward = new SimpleForward("simpleForward");
   auto postProcess = new PostProcessStack();
-  auto bw  = postProcess->allocateRenderPass<BlackAndWhiteEffect>("BlackWhite");
+  //auto bw  = postProcess->allocateRenderPass<BlackAndWhiteEffect>("BlackWhite");
   postProcess->initialize();
 
   // temporary graph for testing
@@ -62,9 +62,6 @@ void Graphics3DLayer::onAttach() {
                                       "meshes");
   dx12::RENDERING_GRAPH->connectNodes(assetNode, "materials", simpleForward,
                                       "materials");
-
-  // dx12::RENDERING_GRAPH->connectNodes(simpleForward, "outTexture", finalBlit,
-  //                                    "inTexture");
 
   // auto bw = new DebugNode("debugBW");
   dx12::RENDERING_GRAPH->addNode(postProcess);
