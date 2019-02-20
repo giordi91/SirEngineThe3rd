@@ -49,7 +49,7 @@ void Graphics3DLayer::onAttach() {
   auto simpleForward = new SimpleForward("simpleForward");
   auto postProcess = new PostProcessStack();
   auto bw  = postProcess->allocateRenderPass<BlackAndWhiteEffect>("BlackWhite");
-  postProcess->initalize();
+  postProcess->initialize();
 
   // temporary graph for testing
   dx12::RENDERING_GRAPH->addNode(assetNode);

@@ -73,7 +73,7 @@ TextureHandle TextureManagerDx12::initializeFromResourceDx12(
   ++MAGIC_NUMBER_COUNTER;
 
   dx12::createRTVSRV(dx12::GLOBAL_RTV_HEAP,
-                     m_texturePool.getConstRef(index).resource, data.srv);
+                     m_texturePool.getConstRef(index).resource, data.rtsrv);
 
   m_nameToHandle[name] = handle;
   return handle;

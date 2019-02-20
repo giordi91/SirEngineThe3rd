@@ -23,7 +23,7 @@ PostProcessStack::PostProcessStack()
   registerPlug(outTexture);
 }
 
-bool PostProcessStack::initalize() {
+void PostProcessStack::initialize() {
 
   // initialize all layers
   size_t stackSize = m_stack.size();
@@ -39,7 +39,6 @@ bool PostProcessStack::initalize() {
       globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT, RenderTargetFormat::RGBA32,
       "postProcess2");
 
-  return true;
 }
 
 void PostProcessStack::compute() {
@@ -60,6 +59,23 @@ void PostProcessStack::compute() {
   }
 
   m_outputPlugs[0].plugValue = handles[m_internalCounter].handle;
+}
+
+void PostProcessStack::clear()
+{
+  if (handles[0].isHandleValid()) {
+    globals::TEXTURE_MANAGER->free(handles[0]);
+	handles[0].handle =0 ;
+  }
+  if (handles[1].isHandleValid()) {
+    globals::TEXTURE_MANAGER->free(handles[1]);
+	handles[1].handle =0 ;
+  }
+}
+void PostProcessStack::resize(int screenWidth, int screenHeight) {
+	clear();
+	initialize();
+
 }
 
 } // namespace SirEngine
