@@ -61,6 +61,8 @@ public:
     int idx = findCPUDescriptorIndexFromHandle(handles.cpuHandle);
     // freeing is just a matter of freeing up the index
     // then it will get overwritten
+	assert(idx < m_freeList.size());
+	assert(idx >= 0);
     m_freeList[m_freeListIdx++] = idx;
   }
 

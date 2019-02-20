@@ -81,7 +81,7 @@ public:
 
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
-    return m_texturePool.getConstRef(index).srv;
+    return m_texturePool.getConstRef(index).rtsrv;
   }
   void freeRTVDx12(const TextureHandle handle,
                    const DescriptorPair pair) const {

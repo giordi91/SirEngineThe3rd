@@ -24,8 +24,10 @@ protected:
 class PostProcessStack final : public GraphNode {
 public:
   PostProcessStack();
-  bool initalize();
+  virtual void initialize() override;
+  void clear() override;
   virtual void compute() override;
+  virtual void resize(int screenWidth, int screenHeight) override;
   inline void registerPassToStack(PostProcessEffect *pass) {
     m_stack.push_back(pass);
   };
