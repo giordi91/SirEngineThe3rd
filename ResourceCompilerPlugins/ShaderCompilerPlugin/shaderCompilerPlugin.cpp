@@ -27,6 +27,21 @@ inline std::wstring toWstring(const std::string &s) {
   return std::wstring(s.begin(), s.end());
 }
 
+
+//struct StandardIncludeHandle : public IDxcIncludeHandler {
+//	StandardIncludeHandle(const std::string& basePath): IDxcIncludeHandler(),m_base(basePath)
+//	{
+//	}
+//  virtual HRESULT STDMETHODCALLTYPE LoadSource(
+//    _In_ LPCWSTR pFilename,                                   // Candidate filename.
+//    _COM_Outptr_result_maybenull_ IDxcBlob **ppIncludeSource  // Resultant source object for included file, nullptr if not found.
+//  ) override{
+//  
+//  
+//  };
+//  const std::string& m_base;
+//};
+
 bool processArgs(const std::string args, ShaderArgs &returnArgs) {
   // lets get arguments like they were from commandline
   auto v = splitArgs(args);
@@ -108,6 +123,13 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
   int flagsCount = shaderArgs.debug ? _countof(COMPILATION_FLAGS_DEBUG)
                                     : _countof(COMPILATION_FLAGS);
 
+
+  //create a standard include
+  IDxcIncludeHandler* includeHandle =nullptr;
+  pLibrary->CreateIncludeHandler(&includeHandle);
+
+
+  
   // kick the compilation
   pCompiler->Compile(pSource,         // program text
                      wshader.c_str(), // file name, mostly for error messages
@@ -116,7 +138,7 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
                      flags,                         // compilation arguments
                      flagsCount, // number of compilation arguments
                      nullptr, 0, // name/value defines and their count
-                     nullptr,    // handler for #include directives
+                     includeHandle,    // handler for #include directives
                      &pResult);
 
   // checking whether or not compilation was successiful
