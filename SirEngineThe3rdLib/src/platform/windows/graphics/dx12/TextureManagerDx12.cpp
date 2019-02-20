@@ -165,9 +165,14 @@ void TextureManagerDx12::free(const TextureHandle handle) {
     }
   } else if ((data.flags & TextureFlags::RT) > 0) {
     if (data.srv.cpuHandle.ptr != 0) {
-      dx12::GLOBAL_RTV_HEAP->freeDescriptor(data.srv);
+      dx12::GLOBAL_CBV_SRV_UAV_HEAP->freeDescriptor(data.srv);
     }
+    if (data.rtsrv.cpuHandle.ptr != 0) {
+      dx12::GLOBAL_RTV_HEAP->freeDescriptor(data.rtsrv);
+    }
+
     if (data.uav.cpuHandle.ptr != 0) {
+      assert(0 && "not supported yet check if is correct");
       dx12::GLOBAL_RTV_HEAP->freeDescriptor(data.uav);
     }
   } else {
@@ -260,10 +265,10 @@ void TextureManagerDx12::bindRenderTarget(TextureHandle handle,
   const D3D12_CPU_DESCRIPTOR_HANDLE *depthDesc = nullptr;
   if (depth.isHandleValid()) {
     assertMagicNumber(depth);
-    uint32_t index = getIndexFromHandle(depth);
-    const TextureData &data = m_texturePool.getConstRef(index);
-    assert((data.flags & TextureFlags::DEPTH) > 0);
-    depthDesc = &(data.rtsrv.cpuHandle);
+    uint32_t depthIndex = getIndexFromHandle(depth);
+    const TextureData &depthData = m_texturePool.getConstRef(depthIndex);
+    assert((depthData.flags & TextureFlags::DEPTH) > 0);
+    depthDesc = &(depthData.rtsrv.cpuHandle);
   }
   commandList->OMSetRenderTargets(1, handles, true, depthDesc);
 }
