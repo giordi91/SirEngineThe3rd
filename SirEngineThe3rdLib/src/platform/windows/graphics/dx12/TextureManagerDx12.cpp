@@ -158,9 +158,13 @@ void TextureManagerDx12::free(const TextureHandle handle) {
   // check type
   if ((data.flags & TextureFlags::DEPTH) > 0) {
     if (data.srv.cpuHandle.ptr != 0) {
-      dx12::GLOBAL_DSV_HEAP->freeDescriptor(data.srv);
+      dx12::GLOBAL_CBV_SRV_UAV_HEAP->freeDescriptor(data.srv);
+    }
+    if (data.rtsrv.cpuHandle.ptr != 0) {
+      dx12::GLOBAL_DSV_HEAP->freeDescriptor(data.rtsrv);
     }
     if (data.uav.cpuHandle.ptr != 0) {
+      assert(0 && "not supported yet check if is correct");
       dx12::GLOBAL_DSV_HEAP->freeDescriptor(data.uav);
     }
   } else if ((data.flags & TextureFlags::RT) > 0) {
