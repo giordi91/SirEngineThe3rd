@@ -1,8 +1,8 @@
 {
  "type":  "RASTER",
  "inputLayout":  "dxrMesh",
- "globalRootSignature": "simpleMesh_RS",
-  "VS": "basicMeshVS",
+ "globalRootSignature": "simpleMesh_RSTex",
+  "VS": "basicMeshVSTex",
   "PS":  "basicMeshGBuffer",
   "rasterState":  "default",
   "blendState": "default",
