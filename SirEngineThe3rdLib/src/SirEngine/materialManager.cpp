@@ -4,7 +4,6 @@
 #include "nlohmann/json.hpp"
 #include "platform/windows/graphics/dx12/TextureManagerDx12.h"
 
-
 #if GRAPHICS_API == DX12
 #include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
 #endif
@@ -13,6 +12,7 @@ namespace materialKeys {
 static const char *KD = "kd";
 static const char *KS = "ks";
 static const char *KA = "ka";
+static const char *SHINESS = "shiness";
 static const char *ALBEDO = "albedo";
 static const char *NORMAL = "normal";
 static const char *FLAGS = "flags";
@@ -62,6 +62,8 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   DirectX::XMFLOAT4 kd = getValueIfInJson(jobj, materialKeys::KD, zero);
   DirectX::XMFLOAT4 ka = getValueIfInJson(jobj, materialKeys::KA, zero);
   DirectX::XMFLOAT4 ks = getValueIfInJson(jobj, materialKeys::KS, zero);
+  float zeroFloat = 0.0f;
+  float shiness = getValueIfInJson(jobj, materialKeys::SHINESS, zeroFloat);
 
   const std::string empty;
   const std::string albedoName =
@@ -95,8 +97,12 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   mat.kSR = ks.x;
   mat.kSG = ks.y;
   mat.kSB = ks.z;
+  mat.shiness = shiness;
 
-  MaterialTexureHandles texHandles{albedoTex, normalTex};
+  MaterialDataHandles texHandles;
+  texHandles.albedo = albedoTex;
+  texHandles.normal = normalTex;
+
   if (albedoTex.handle != 0) {
     texHandles.albedoSrv = dx12::TEXTURE_MANAGER->getSRVDx12(albedoTex);
   }
@@ -108,13 +114,17 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   matCpu.normal = texHandles.normalSrv.gpuHandle;
 
   // we need to allocate  constant buffer
-  //TODO should this be static? investigate 
-  matCpu.cbHandle =
-      globals::CONSTANT_BUFFER_MANAGER->allocateDynamic(sizeof(Material));
+  // TODO should this be static? investigate
+  texHandles.cbHandle =
+      globals::CONSTANT_BUFFER_MANAGER->allocateDynamic(sizeof(Material), &mat);
   uint32_t index;
   m_idxPool.getFreeMemoryData(index);
   m_materialsMagic[index] = static_cast<uint16_t>(MAGIC_NUMBER_COUNTER);
   matCpu.shaderFlags = flags;
+
+  // TODO what can i do about this dx12 call here??
+  matCpu.cbVirtualAddress =
+      dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(texHandles.cbHandle);
 
   runtimeMemory[runtimeIndex] = matCpu;
   m_materials[index] = mat;

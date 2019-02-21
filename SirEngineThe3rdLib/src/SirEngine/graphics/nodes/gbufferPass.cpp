@@ -1,6 +1,7 @@
 #include "SirEngine/graphics/nodes/gbufferPass.h"
 #include "SirEngine/assetManager.h"
 #include "SirEngine/graphics/renderingContext.h"
+#include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
@@ -60,9 +61,8 @@ GBufferPass::GBufferPass(const char *name) : GraphNode(name, "GBufferPass") {
   registerPlug(materials);
 
   // fetching root signature
-  rs =
-      dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName("simpleMeshRSTex");
-  pso = dx12::PSO_MANAGER->getComputePSOByName("simpleMeshPSOTex");
+  rs = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName("gbufferRS");
+  pso = dx12::PSO_MANAGER->getComputePSOByName("gbufferPSO");
 }
 
 void GBufferPass::initialize() {
@@ -75,8 +75,8 @@ void GBufferPass::initialize() {
       "geometryBuffer");
 
   m_normalBuffer = globals::TEXTURE_MANAGER->allocateRenderTexture(
-      globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT, RenderTargetFormat::RGBA32,
-      "normalBuffer");
+      globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT,
+      RenderTargetFormat::R11G11B10, "normalBuffer");
 
   m_specularBuffer = globals::TEXTURE_MANAGER->allocateRenderTexture(
       globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT, RenderTargetFormat::RGBA32,
@@ -111,13 +111,16 @@ void GBufferPass::compute() {
 
   commandList->SetPipelineState(pso);
 
-  /*
-  D3D12_RESOURCE_BARRIER barriers[2];
+  D3D12_RESOURCE_BARRIER barriers[4];
   int counter = 0;
   counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
       m_depth, D3D12_RESOURCE_STATE_DEPTH_WRITE, barriers, counter);
   counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
-      m_renderTarget, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, counter);
+      m_geometryBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, counter);
+  counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
+      m_normalBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, counter);
+  counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
+      m_specularBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, counter);
 
   if (counter) {
     commandList->ResourceBarrier(counter, barriers);
@@ -125,33 +128,46 @@ void GBufferPass::compute() {
 
   globals::TEXTURE_MANAGER->clearDepth(m_depth);
   float color[4] = {0.0f, 0.0f, 0.0f, 1.0f};
-  globals::TEXTURE_MANAGER->clearRT(m_renderTarget, color);
-  globals::TEXTURE_MANAGER->bindRenderTarget(m_renderTarget, m_depth);
+  globals::TEXTURE_MANAGER->clearRT(m_geometryBuffer, color);
+  globals::TEXTURE_MANAGER->clearRT(m_normalBuffer, color);
+  globals::TEXTURE_MANAGER->clearRT(m_specularBuffer, color);
 
+  D3D12_CPU_DESCRIPTOR_HANDLE handles[3] = {
+      dx12::TEXTURE_MANAGER->getRTVDx12(m_geometryBuffer).cpuHandle,
+      dx12::TEXTURE_MANAGER->getRTVDx12(m_normalBuffer).cpuHandle,
+      dx12::TEXTURE_MANAGER->getRTVDx12(m_specularBuffer).cpuHandle};
+
+  auto depthDescriptor = dx12::TEXTURE_MANAGER->getRTVDx12(m_depth).cpuHandle;
+  commandList->OMSetRenderTargets(3, handles, true, &depthDescriptor);
   //
   commandList->SetGraphicsRootSignature(rs);
   globals::RENDERING_CONTEX->bindCameraBuffer(0);
 
   for (uint32_t i = 0; i < meshCount; ++i) {
 
-    commandList->SetGraphicsRootDescriptorTable(1, mats[i].albedo);
+    // commandList->SetGraphicsRootDescriptorTable(1, mats[i].albedo);
+    // commandList->SetGraphicsRootDescriptorTable(1, mats[i].albedo);
+    commandList->SetGraphicsRootConstantBufferView(1, mats[i].cbVirtualAddress);
     dx12::MESH_MANAGER->bindMeshRuntimeAndRender(meshes[i], currentFc);
   }
 
-  m_outputPlugs[0].plugValue = m_renderTarget.handle;
-  */
+  m_outputPlugs[0].plugValue = m_geometryBuffer.handle;
+  m_outputPlugs[1].plugValue = m_geometryBuffer.handle;
+  m_outputPlugs[2].plugValue = m_specularBuffer.handle;
+  m_outputPlugs[3].plugValue = m_depth.handle;
 }
 
-#define FREE_TEXTURE_IF_VALID(h)                                          \
-  if (h.isHandleValid()) {                                                \
-    dx12::TEXTURE_MANAGER->free(h);                                       \
-    h.handle = 0; } 
+#define FREE_TEXTURE_IF_VALID(h)                                               \
+  if (h.isHandleValid()) {                                                     \
+    dx12::TEXTURE_MANAGER->free(h);                                            \
+    h.handle = 0;                                                              \
+  }
 
 void GBufferPass::clear() {
-	FREE_TEXTURE_IF_VALID(m_depth)
-	FREE_TEXTURE_IF_VALID(m_geometryBuffer)
-	FREE_TEXTURE_IF_VALID(m_normalBuffer)
-	FREE_TEXTURE_IF_VALID(m_specularBuffer)
+  FREE_TEXTURE_IF_VALID(m_depth)
+  FREE_TEXTURE_IF_VALID(m_geometryBuffer)
+  FREE_TEXTURE_IF_VALID(m_normalBuffer)
+  FREE_TEXTURE_IF_VALID(m_specularBuffer)
 }
 
 void GBufferPass::resize(int, int) {

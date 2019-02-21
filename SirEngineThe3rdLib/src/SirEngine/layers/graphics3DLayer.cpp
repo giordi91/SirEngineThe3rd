@@ -18,6 +18,7 @@
 #include "SirEngine/graphics/postProcess/postProcessStack.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/graphics/postProcess/effects/blackAndWhiteEffect.h"
+#include "SirEngine/graphics/nodes/gbufferPass.h"
 
 namespace SirEngine {
 
@@ -46,26 +47,39 @@ void Graphics3DLayer::onAttach() {
 
   auto assetNode = new AssetManagerNode();
   auto finalBlit = new FinalBlitNode();
-  auto simpleForward = new SimpleForward("simpleForward");
+  //auto simpleForward = new SimpleForward("simpleForward");
   auto postProcess = new PostProcessStack();
+  auto gbufferPass = new GBufferPass("GBufferPass");
   //auto bw  = postProcess->allocateRenderPass<BlackAndWhiteEffect>("BlackWhite");
   postProcess->initialize();
 
   // temporary graph for testing
   dx12::RENDERING_GRAPH->addNode(assetNode);
   dx12::RENDERING_GRAPH->addNode(finalBlit);
-  dx12::RENDERING_GRAPH->addNode(simpleForward);
+  //dx12::RENDERING_GRAPH->addNode(simpleForward);
+  dx12::RENDERING_GRAPH->addNode(gbufferPass);
   dx12::RENDERING_GRAPH->setFinalNode(finalBlit);
-  dx12::RENDERING_GRAPH->connectNodes(assetNode, "matrices", simpleForward,
+
+  //dx12::RENDERING_GRAPH->connectNodes(assetNode, "matrices", simpleForward,
+  //                                    "matrices");
+  //dx12::RENDERING_GRAPH->connectNodes(assetNode, "meshes", simpleForward,
+  //                                    "meshes");
+  //dx12::RENDERING_GRAPH->connectNodes(assetNode, "materials", simpleForward,
+  //                                    "materials");
+
+  dx12::RENDERING_GRAPH->connectNodes(assetNode, "matrices", gbufferPass,
                                       "matrices");
-  dx12::RENDERING_GRAPH->connectNodes(assetNode, "meshes", simpleForward,
+  dx12::RENDERING_GRAPH->connectNodes(assetNode, "meshes", gbufferPass,
                                       "meshes");
-  dx12::RENDERING_GRAPH->connectNodes(assetNode, "materials", simpleForward,
+  dx12::RENDERING_GRAPH->connectNodes(assetNode, "materials", gbufferPass,
                                       "materials");
 
   // auto bw = new DebugNode("debugBW");
   dx12::RENDERING_GRAPH->addNode(postProcess);
-  dx12::RENDERING_GRAPH->connectNodes(simpleForward, "outTexture", postProcess,
+  //dx12::RENDERING_GRAPH->connectNodes(simpleForward, "outTexture", postProcess,
+  //                                    "inTexture");
+
+  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, "geometry", postProcess,
                                       "inTexture");
   dx12::RENDERING_GRAPH->connectNodes(postProcess, "outTexture", finalBlit,
                                       "inTexture");
