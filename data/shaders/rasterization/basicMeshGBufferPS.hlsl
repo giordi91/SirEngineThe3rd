@@ -1,3 +1,4 @@
+#include "../common/material.hlsl"
 
 ConstantBuffer<PhongMaterial> g_material : register(b1);
 
@@ -14,8 +15,6 @@ struct PS_GBUFFER_OUT {
   float4 SpecPow : SV_TARGET2;
 };
 
-// StructuredBuffer<PhongMaterial> materials  : register (t0);
-
 PS_GBUFFER_OUT PackGBuffer(float3 BaseColor, float3 Normal, float SpecIntensity,
                            float SpecPower) {
   PS_GBUFFER_OUT Out;
@@ -26,8 +25,7 @@ PS_GBUFFER_OUT PackGBuffer(float3 BaseColor, float3 Normal, float SpecIntensity,
 
   // Pack all the data into the GBuffer structure
   Out.ColorSpecInt = float4(BaseColor.rgb, SpecIntensity);
-  // Out.Normal = float4(float3(1, 1, 1) * 0.5 + 0.5, 1.0);
-  Out.Normal = float4(Normal * 0.5 + 0.5, 1.0);
+  Out.Normal = float4(Normal * 0.5f + 0.5f, 1.0f);
   Out.SpecPow = float4(SpecPowerNorm, 0.0f, 0.0f, 1.0f);
 
   return Out;
