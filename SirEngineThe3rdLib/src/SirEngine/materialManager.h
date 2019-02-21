@@ -13,29 +13,37 @@
 namespace SirEngine {
 
 struct MaterialRuntime final {
-  ConstantBufferHandle cbHandle;
+  D3D12_GPU_VIRTUAL_ADDRESS cbVirtualAddress;
 #if GRAPHICS_API == DX12
   D3D12_GPU_DESCRIPTOR_HANDLE albedo;
   D3D12_GPU_DESCRIPTOR_HANDLE normal;
 #endif
   uint32_t shaderFlags = 0;
 };
-struct MaterialTexureHandles {
+struct MaterialDataHandles {
   TextureHandle albedo;
   TextureHandle normal;
   dx12::DescriptorPair albedoSrv;
   dx12::DescriptorPair normalSrv;
+  ConstantBufferHandle cbHandle;
 };
 struct Material final {
   float kDR;
   float kDG;
   float kDB;
+  float dPadding;
   float kAR;
   float kAG;
   float kAB;
+  float aPadding;
   float kSR;
   float kSG;
   float kSB;
+  float sPadding;
+  float shiness;
+  float reflective;
+  float padding;
+  float padding2;
 };
 enum SHADER_PASS_FLAGS { FORWARD = 1 };
 
@@ -77,7 +85,7 @@ private:
   SparseMemoryPool<uint32_t> m_idxPool;
   std::vector<Material> m_materials;
   std::vector<uint16_t> m_materialsMagic;
-  std::vector<MaterialTexureHandles> m_materialTextureHandles;
+  std::vector<MaterialDataHandles> m_materialTextureHandles;
 };
 
 } // namespace SirEngine

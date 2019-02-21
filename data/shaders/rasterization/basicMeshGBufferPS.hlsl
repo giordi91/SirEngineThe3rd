@@ -1,11 +1,7 @@
 #include "../common/material.hlsl"
+#include "../common/vertexDefinitions.hlsl"
 
 ConstantBuffer<PhongMaterial> g_material : register(b1);
-
-struct VertexOut {
-  float4 PosH : SV_POSITION;
-  float4 Normal : NORMAL;
-};
 
 static const float2 g_SpecPowerRange = {10.0, 250.0};
 
@@ -30,7 +26,7 @@ PS_GBUFFER_OUT PackGBuffer(float3 BaseColor, float3 Normal, float SpecIntensity,
 
   return Out;
 }
-PS_GBUFFER_OUT PS(VertexOut input) {
+PS_GBUFFER_OUT PS(FullMeshVertexOut input) {
 
   // Lookup mesh texture and modulate it with diffuse
   float3 DiffuseColor = g_material.kd.xyz;

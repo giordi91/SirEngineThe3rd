@@ -1,10 +1,4 @@
-struct VertexOut
-{
-	float4 PosH  : SV_POSITION;
-    float4 Normal: NORMAL;
-	float2 uv :TEXCOORD;
-};
-
+#include "../common/vertexDefinitions.hlsl"
 
 Texture2D albedoTex : register(t0);
 
@@ -15,7 +9,7 @@ SamplerState gsamLinearClamp      : register(s3);
 SamplerState gsamAnisotropicWrap  : register(s4);
 SamplerState gsamAnisotropicClamp : register(s5);
 
-float4 PS(VertexOut pin) : SV_Target
+float4 PS(FullMeshVertexOut pin) : SV_Target
 {
     float4 diffuseAlbedo = albedoTex.Sample(gsamAnisotropicWrap, pin.uv);
 	return diffuseAlbedo;

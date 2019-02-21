@@ -7,7 +7,7 @@ namespace SirEngine {
 
 enum TextureFlags { DEPTH = 1, RT = 2 };
 
-enum class RenderTargetFormat { RGBA32 };
+enum class RenderTargetFormat { RGBA32, R11G11B10 };
 
 class TextureManager {
 public:
@@ -21,11 +21,11 @@ public:
   virtual TextureHandle allocateRenderTexture(uint32_t width, uint32_t height,
                                               RenderTargetFormat format,
                                               const char *name) = 0;
-  virtual void copyTexture(TextureHandle source, TextureHandle destination)=0;
+  virtual void copyTexture(TextureHandle source, TextureHandle destination) = 0;
   virtual void bindRenderTarget(TextureHandle handle, TextureHandle depth) = 0;
-  virtual void bindBackBuffer(bool bindBackBufferDepth) =0;
-  virtual void clearDepth(const TextureHandle depth)=0;
-  virtual void clearRT(const TextureHandle handle ,const float color[4])=0;
+  virtual void bindBackBuffer(bool bindBackBufferDepth) = 0;
+  virtual void clearDepth(const TextureHandle depth) = 0;
+  virtual void clearRT(const TextureHandle handle, const float color[4]) = 0;
 
   inline TextureHandle getHandleFromName(const char *name) {
     auto found = m_nameToHandle.find(name);

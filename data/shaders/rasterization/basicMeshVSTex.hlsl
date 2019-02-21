@@ -1,25 +1,12 @@
 #include "../common/camera.hlsl"
+#include "../common/vertexDefinitions.hlsl"
 
 ConstantBuffer<CameraBuffer> g_cameraBuffer : register(b0);
 
-struct VertexIn
-{
-	float3 PosL  : POSITION;
-    float3 Normal : NORMAL;
-    float2 uvs: TEXCOORD;
-    float4 tangents: TANGENTS;
-};
 
-struct VertexOut
+FullMeshVertexOut VS(TexturedVertexIn12 vin)
 {
-	float4 PosH  : SV_POSITION;
-    float4 Normal: NORMAL;
-	float2 uv :TEXCOORD;
-};
-
-VertexOut VS(VertexIn vin)
-{
-	VertexOut vout;
+	FullMeshVertexOut vout;
 	
 	// Transform to homogeneous clip space.
 	vout.PosH = mul(float4(vin.PosL,1.0f), g_cameraBuffer.MVP);

@@ -16,7 +16,7 @@ public:
   ConstantBufferManagerDx12(const ConstantBufferManagerDx12 &) = delete;
   ConstantBufferManagerDx12 &
   operator=(const ConstantBufferManagerDx12 &) = delete;
-  virtual ConstantBufferHandle allocateDynamic(uint32_t sizeInBytes) override;
+  virtual ConstantBufferHandle allocateDynamic(uint32_t sizeInBytes, void* data = nullptr) override;
 
   inline DescriptorPair
   getConstantBufferDx12Handle(ConstantBufferHandle handle) {
@@ -30,8 +30,16 @@ public:
     return m_descriptorStorage[dIndex];
   }
 
+  inline D3D12_GPU_VIRTUAL_ADDRESS
+  getVirtualAddress(ConstantBufferHandle handle) {
+    assertMagicNumber(handle);
+    uint32_t index = getIndexFromHandle(handle);
+    return m_dynamicStorage[globals::CURRENT_FRAME][index]
+        .resource->GetGPUVirtualAddress();
+  }
+
   virtual void updateConstantBuffer(const ConstantBufferHandle handle,
-                                    void* dataToUpload) override;
+                                    void *dataToUpload) override;
 
 private:
   struct ConstantBufferData final {

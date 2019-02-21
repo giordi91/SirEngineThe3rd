@@ -12,7 +12,8 @@ ConstantBufferManagerDx12::ConstantBufferManagerDx12() {
 }
 
 ConstantBufferHandle
-ConstantBufferManagerDx12::allocateDynamic(uint32_t sizeInBytes) {
+ConstantBufferManagerDx12::allocateDynamic(uint32_t sizeInBytes,
+                                           void *inputData) {
   // must be at least 256 bytes
   uint32_t actualSize =
       sizeInBytes % 256 == 0 ? sizeInBytes : ((sizeInBytes / 256) + 1) * 256;
@@ -38,6 +39,9 @@ ConstantBufferManagerDx12::allocateDynamic(uint32_t sizeInBytes) {
                                                    actualSize);
     // map the buffer
     mapConstantBuffer(data);
+    if (inputData != nullptr) {
+      memcpy(data.mappedData, inputData, sizeInBytes);
+    }
 
     data.descriptorIndex = m_descriptorStorage.size();
     data.magicNumber = MAGIC_NUMBER_COUNTER;
@@ -50,7 +54,7 @@ ConstantBufferManagerDx12::allocateDynamic(uint32_t sizeInBytes) {
 }
 
 void ConstantBufferManagerDx12::updateConstantBuffer(
-	const ConstantBufferHandle handle, void *dataToUpload) {
+    const ConstantBufferHandle handle, void *dataToUpload) {
   assertMagicNumber(handle);
   uint32_t index = getIndexFromHandle(handle);
   const ConstantBufferData &data =
