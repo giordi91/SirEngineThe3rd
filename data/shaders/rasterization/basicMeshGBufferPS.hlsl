@@ -30,7 +30,7 @@ PS_GBUFFER_OUT PackGBuffer(float3 BaseColor, float3 Normal, float SpecIntensity,
 
   return Out;
 }
-PS_GBUFFER_OUT renderSceneDeferredPS(VertexOut input) {
+PS_GBUFFER_OUT PS(VertexOut input) {
 
   // Lookup mesh texture and modulate it with diffuse
   float3 DiffuseColor = g_material.kd.xyz;

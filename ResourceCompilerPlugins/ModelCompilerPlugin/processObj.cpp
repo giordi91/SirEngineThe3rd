@@ -11,12 +11,8 @@
 static const float VERTEX_DELTA = 0.00001f;
 struct VertexCompare {
   DirectX::XMFLOAT3 p{};
-  float pad1 = 1.0f;
   DirectX::XMFLOAT3 n{};
-  float pad2 = 0.0f;
   DirectX::XMFLOAT2 uv{};
-  float pad3 = 0.0f;
-  float pad4 = 0.0f;
   DirectX::XMFLOAT3 t{};
   float pad5 = 0.0f;
 };
@@ -159,15 +155,16 @@ void convertObjNoTangents(const tinyobj::attrib_t &attr,
   // model is loaded, lets copy data to output struct
   size_t indicesCount = indices.size();
   size_t vertexCompareCount = vertexData.size();
+  uint32_t stride = 12;
 
   model.indices.resize(indicesCount);
-  model.vertices.resize(vertexCompareCount * 16);
+  model.vertices.resize(vertexCompareCount * stride);
   model.vertexCount = static_cast<int>(vertexCompareCount);
-  model.strideInByte = sizeof(float) * 16;
+  model.strideInByte = sizeof(float) * stride;
   model.triangleCount = static_cast<int>(shape.mesh.num_face_vertices.size());
 
   memcpy(model.vertices.data(), vertexData.data(),
-         vertexCompareCount * 16 * sizeof(float));
+         vertexCompareCount * stride * sizeof(float));
   memcpy(model.indices.data(), indices.data(), indicesCount * sizeof(float));
 }
 
@@ -237,14 +234,15 @@ void convertObj(const tinyobj::attrib_t &attr, const tinyobj::shape_t &shape,
   // model is loaded, lets copy data to output struct
   size_t indicesCount = indices.size();
   size_t vertexCompareCount = vertexData.size();
+  uint32_t stride = 12;
 
   model.indices.resize(indicesCount);
-  model.vertices.resize(vertexCompareCount * 16);
+  model.vertices.resize(vertexCompareCount * stride);
   model.vertexCount = static_cast<int>(vertexCompareCount);
-  model.strideInByte = sizeof(float) * 16;
+  model.strideInByte = sizeof(float) * stride;
   model.triangleCount = static_cast<int>(shape.mesh.num_face_vertices.size());
 
   memcpy(model.vertices.data(), vertexData.data(),
-         vertexCompareCount * 16 * sizeof(float));
+         vertexCompareCount * stride * sizeof(float));
   memcpy(model.indices.data(), indices.data(), indicesCount * sizeof(float));
 }

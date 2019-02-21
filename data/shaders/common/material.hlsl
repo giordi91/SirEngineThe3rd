@@ -1,6 +1,3 @@
-
-#pragma once
-
 // material buffer
 struct PhongMaterial {
   float4 ka;

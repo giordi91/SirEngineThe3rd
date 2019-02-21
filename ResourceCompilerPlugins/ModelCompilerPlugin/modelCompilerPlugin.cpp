@@ -84,7 +84,8 @@ bool processModel(const std::string &assetPath, const std::string &outputPath,
 
   // need to merge indices and vertices
   std::vector<float> data;
-  int floatVertexCount = model.vertexCount * 16;
+  uint32_t stride = 12;
+  int floatVertexCount = model.vertexCount * stride;
   size_t indicesCount = model.indices.size();
   size_t totalSizeFloat = floatVertexCount + indicesCount;
   size_t totalSizeByte = totalSizeFloat * sizeof(float);
@@ -101,7 +102,7 @@ bool processModel(const std::string &assetPath, const std::string &outputPath,
   mapperData.indexDataSizeInByte =
       static_cast<unsigned int>(indicesCount * sizeof(float));
   mapperData.vertexDataSizeInByte = floatVertexCount * sizeof(float);
-  mapperData.strideInByte = 16 * sizeof(float);
+  mapperData.strideInByte = stride * sizeof(float);
   request.mapperData = &mapperData;
   request.mapperDataSizeInByte = sizeof(ModelMapperData);
 

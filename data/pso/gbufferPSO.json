@@ -1,9 +1,9 @@
 {
  "type":  "RASTER",
- "inputLayout":  "dxrMesh",
- "globalRootSignature": "simpleMesh_RSTex",
+ "inputLayout":  "fullMesh",
+ "globalRootSignature": "gbufferRS",
   "VS": "basicMeshVSTex",
-  "PS":  "basicMeshGBuffer",
+  "PS":  "basicMeshGBufferPS",
   "rasterState":  "default",
   "blendState": "default",
   "depthStencilState": "default",

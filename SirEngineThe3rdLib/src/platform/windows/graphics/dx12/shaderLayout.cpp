@@ -71,6 +71,16 @@ inline void generateNormalsFloat4(D3D12_INPUT_ELEMENT_DESC *ptr,
   ptr->InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA;
   ptr->InstanceDataStepRate = 0;
 }
+inline void generateNormalsFloat3(D3D12_INPUT_ELEMENT_DESC *ptr,
+                                  unsigned int offset = 12) {
+  ptr->SemanticName = "NORMAL";
+  ptr->SemanticIndex = 0;
+  ptr->Format = DXGI_FORMAT_R32G32B32_FLOAT;
+  ptr->InputSlot = 0;
+  ptr->AlignedByteOffset = offset;
+  ptr->InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA;
+  ptr->InstanceDataStepRate = 0;
+}
 
 inline void generateTangentsFloat4(D3D12_INPUT_ELEMENT_DESC *ptr,
                                    unsigned int offset = 32) {
@@ -149,10 +159,10 @@ void ShadersLayoutRegistry::generateLayouts() {
   // full mesh layout
   LayoutHandle fullMeshHandle{new D3D12_INPUT_ELEMENT_DESC[4], 4};
   zeroOutLayouts(fullMeshHandle);
-  generatePositionFloat4(fullMeshHandle.layout);
-  generateNormalsFloat4(fullMeshHandle.layout + 1, 16);
-  generateUVsFloat4(fullMeshHandle.layout + 2, 32);
-  generateTangentsFloat4(fullMeshHandle.layout + 3, 48);
+  generatePositionFloat3(fullMeshHandle.layout);
+  generateNormalsFloat3(fullMeshHandle.layout + 1, 12);
+  generateUVsFloat2(fullMeshHandle.layout + 2, 24);
+  generateTangentsFloat4(fullMeshHandle.layout + 3, 32);
 
   m_registry[ShaderLayout::fullMesh] = fullMeshHandle;
 
