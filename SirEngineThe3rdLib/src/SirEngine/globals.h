@@ -1,4 +1,5 @@
 #pragma once
+#include "SirEngine/handle.h"
 #include "clock.h"
 
 namespace SirEngine {
@@ -10,6 +11,13 @@ class TextureManager;
 class RenderingContext;
 
 namespace globals {
+
+struct DebugFrameData {
+  TextureHandle geometryBuffer;
+  TextureHandle normalBuffer;
+  TextureHandle specularBuffer;
+  TextureHandle gbufferDepth;
+};
 
 extern unsigned int SCREEN_WIDTH;
 extern unsigned int SCREEN_HEIGHT;
@@ -24,8 +32,9 @@ extern uint64_t CURRENT_FRAME;
 extern ConstantBufferManager *CONSTANT_BUFFER_MANAGER;
 extern TextureManager *TEXTURE_MANAGER;
 extern AssetManager *ASSET_MANAGER;
-extern Application* APPLICATION;
-extern RenderingContext* RENDERING_CONTEX;
+extern Application *APPLICATION;
+extern RenderingContext *RENDERING_CONTEX;
+extern DebugFrameData* DEBUG_FRAME_DATA;
 
 } // namespace globals
 typedef unsigned char uchar;

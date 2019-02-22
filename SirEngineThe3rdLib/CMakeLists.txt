@@ -47,8 +47,38 @@ project(SirEngineThe3rdLib)
 
 	SOURCE_GROUP_BY_FOLDER(SirEngineThe3rdLib)
 
+
+	#finding the shaders stuff
+    #looking for  files
+    file(GLOB_RECURSE ASSETS_FILES "../data/assets/*.json" )
+	SOURCE_GROUP("data/assets" FILES ${ASSETS_FILES})
+    file(GLOB_RECURSE MATERIAL_FILES "../data/materials/*.json" )
+	SOURCE_GROUP("data/materials" FILES ${MATERIAL_FILES})
+    file(GLOB_RECURSE PSO_FILES "../data/pso/*.json" )
+	SOURCE_GROUP("data/pso" FILES ${PSO_FILES})
+    file(GLOB_RECURSE RS_FILES "../data/rs/*.json" )
+	SOURCE_GROUP("data/rs" FILES ${RS_FILES})
+    file(GLOB_RECURSE SHADERS_COMMON_FILES "../data/shaders/common/*.hlsl" )
+	SOURCE_GROUP("data/shaders/common" FILES ${SHADERS_COMMON_FILES})
+    file(GLOB_RECURSE SHADERS_RASTERIZATION_FILES "../data/shaders/rasterization/*.hlsl" )
+	SOURCE_GROUP("data/shaders/rasterization" FILES ${SHADERS_RASTERIZATION_FILES})
+
+	set_source_files_properties(
+            ${SHADERS_RASTERIZATION_FILES}
+            PROPERTIES HEADER_FILE_ONLY TRUE
+         )
+	set_source_files_properties(
+            ${SHADERS_COMMON_FILES}
+            PROPERTIES HEADER_FILE_ONLY TRUE
+         )
     #adding the executable
-    add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES} ${INCLUDES_FILES})
+    add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES} ${INCLUDES_FILES} ${ASSETS_FILES}
+	${MATERIAL_FILES}
+	${PSO_FILES}
+	${RS_FILES}
+	${SHADERS_COMMON_FILES}
+	${SHADERS_RASTERIZATION_FILES}
+	)
 
 	SET(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 

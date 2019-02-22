@@ -65,8 +65,7 @@ public:
   // A manual format is passed to the depth becauase we normally use a typess
   // type so we cannot rely on the format used during allocation.
   DescriptorPair
-  getDSVDx12(const TextureHandle handle,
-             const DXGI_FORMAT format = DXGI_FORMAT_D24_UNORM_S8_UINT) {
+  getDSVDx12(const TextureHandle handle) {
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
     return m_texturePool[index].srv;

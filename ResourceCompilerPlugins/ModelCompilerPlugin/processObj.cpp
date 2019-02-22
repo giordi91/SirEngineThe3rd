@@ -18,14 +18,14 @@ struct VertexCompare {
 };
 
 inline int float2Compare(const DirectX::XMFLOAT2 a, const DirectX::XMFLOAT2 b) {
-  //TODO fix fabs, for faster solution, if is an up/down cast to double
+  // TODO fix fabs, for faster solution, if is an up/down cast to double
   bool xSame = std::fabsf(a.x - b.x) < VERTEX_DELTA;
   bool ySame = std::fabsf(a.y - b.y) < VERTEX_DELTA;
   return (xSame & ySame) ? 1 : 0;
 }
 
 inline int float3Compare(const DirectX::XMFLOAT3 a, const DirectX::XMFLOAT3 b) {
-  //TODO fix fabs, for faster solution, if is an up/down cast to double
+  // TODO fix fabs, for faster solution, if is an up/down cast to double
   bool xSame = std::fabsf(a.x - b.x) < VERTEX_DELTA;
   bool ySame = std::fabsf(a.y - b.y) < VERTEX_DELTA;
   bool zSame = std::fabsf(a.z - b.z) < VERTEX_DELTA;
@@ -56,8 +56,7 @@ template <> struct hash<DirectX::XMFLOAT2> {
   }
 };
 
-template <> struct hash<DirectX::XMFLOAT3>final
-{
+template <> struct hash<DirectX::XMFLOAT3> final {
   size_t operator()(DirectX::XMFLOAT3 const &v) const noexcept {
     auto h1 = std::hash<float>{}(v.x);
     auto h2 = std::hash<float>{}(v.y);
@@ -68,8 +67,7 @@ template <> struct hash<DirectX::XMFLOAT3>final
 };
 } // namespace std
 
-struct HashFunc final
-{
+struct HashFunc final {
   size_t operator()(const VertexCompare &k) const {
     return std::hash<DirectX::XMFLOAT3>()(k.p) ^
            (std::hash<DirectX::XMFLOAT3>()(k.n) << 1) ^
@@ -78,21 +76,20 @@ struct HashFunc final
   }
 };
 
-struct EqualsFunc final
-{
+struct EqualsFunc final {
   bool operator()(const VertexCompare &lhs, const VertexCompare &rhs) const {
     return lhs == rhs;
   }
 };
 
-std::vector<float> loadTangents(const std::string& tanPath) {
+std::vector<float> loadTangents(const std::string &tanPath) {
   assert(fileExists(tanPath));
   nlohmann::json jObj = getJsonObj(tanPath);
   size_t sz = jObj.size();
   std::vector<float> tempT;
   tempT.resize(sz);
   size_t counter = 0;
-  for (const auto& t : jObj) {
+  for (const auto &t : jObj) {
     tempT[counter] = t.get<float>();
     assert(counter < sz);
     ++counter;
@@ -226,9 +223,6 @@ void convertObj(const tinyobj::attrib_t &attr, const tinyobj::shape_t &shape,
       indices.push_back(uniqueVertices[c]);
     }
     index_offset += fv;
-
-    // per-face material
-    // shapes[s].mesh.material_ids[f];
   }
 
   // model is loaded, lets copy data to output struct

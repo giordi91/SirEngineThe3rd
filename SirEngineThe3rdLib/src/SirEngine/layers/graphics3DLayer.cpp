@@ -14,11 +14,11 @@
 #include "SirEngine/graphics/nodes/DebugNode.h"
 #include "SirEngine/graphics/nodes/FinalBlitNode.h"
 #include "SirEngine/graphics/nodes/assetManagerNode.h"
+#include "SirEngine/graphics/nodes/gbufferPass.h"
 #include "SirEngine/graphics/nodes/simpleForward.h"
+#include "SirEngine/graphics/postProcess/effects/blackAndWhiteEffect.h"
 #include "SirEngine/graphics/postProcess/postProcessStack.h"
 #include "SirEngine/graphics/renderingContext.h"
-#include "SirEngine/graphics/postProcess/effects/blackAndWhiteEffect.h"
-#include "SirEngine/graphics/nodes/gbufferPass.h"
 
 namespace SirEngine {
 
@@ -47,24 +47,25 @@ void Graphics3DLayer::onAttach() {
 
   auto assetNode = new AssetManagerNode();
   auto finalBlit = new FinalBlitNode();
-  //auto simpleForward = new SimpleForward("simpleForward");
+  // auto simpleForward = new SimpleForward("simpleForward");
   auto postProcess = new PostProcessStack();
   auto gbufferPass = new GBufferPass("GBufferPass");
-  //auto bw  = postProcess->allocateRenderPass<BlackAndWhiteEffect>("BlackWhite");
+  // auto bw  =
+  // postProcess->allocateRenderPass<BlackAndWhiteEffect>("BlackWhite");
   postProcess->initialize();
 
   // temporary graph for testing
   dx12::RENDERING_GRAPH->addNode(assetNode);
   dx12::RENDERING_GRAPH->addNode(finalBlit);
-  //dx12::RENDERING_GRAPH->addNode(simpleForward);
+  // dx12::RENDERING_GRAPH->addNode(simpleForward);
   dx12::RENDERING_GRAPH->addNode(gbufferPass);
   dx12::RENDERING_GRAPH->setFinalNode(finalBlit);
 
-  //dx12::RENDERING_GRAPH->connectNodes(assetNode, "matrices", simpleForward,
+  // dx12::RENDERING_GRAPH->connectNodes(assetNode, "matrices", simpleForward,
   //                                    "matrices");
-  //dx12::RENDERING_GRAPH->connectNodes(assetNode, "meshes", simpleForward,
+  // dx12::RENDERING_GRAPH->connectNodes(assetNode, "meshes", simpleForward,
   //                                    "meshes");
-  //dx12::RENDERING_GRAPH->connectNodes(assetNode, "materials", simpleForward,
+  // dx12::RENDERING_GRAPH->connectNodes(assetNode, "materials", simpleForward,
   //                                    "materials");
 
   dx12::RENDERING_GRAPH->connectNodes(assetNode, "matrices", gbufferPass,
@@ -76,7 +77,8 @@ void Graphics3DLayer::onAttach() {
 
   // auto bw = new DebugNode("debugBW");
   dx12::RENDERING_GRAPH->addNode(postProcess);
-  //dx12::RENDERING_GRAPH->connectNodes(simpleForward, "outTexture", postProcess,
+  // dx12::RENDERING_GRAPH->connectNodes(simpleForward, "outTexture",
+  // postProcess,
   //                                    "inTexture");
 
   dx12::RENDERING_GRAPH->connectNodes(gbufferPass, "geometry", postProcess,
@@ -91,7 +93,7 @@ void Graphics3DLayer::onUpdate() {
 
   // setting up camera for the frame
   globals::RENDERING_CONTEX->setupCameraForFrame();
-  //evaluating rendering graph
+  // evaluating rendering graph
   dx12::RENDERING_GRAPH->compute();
 
   // making any clean up for the mesh manager if we have to
@@ -175,19 +177,25 @@ bool Graphics3DLayer::onDebugLayerEvent(DebugLayerChanged &e) {
     globals::APPLICATION->queueEventForEndOfFrame(graphE);
     return true;
   }
-  case (1): {
+  case (1):
+  case (2):
+  case (3): 
+  case (4): {
     // lets add debug black and white
     GraphNode *debugNode = dx12::RENDERING_GRAPH->findNodeOfType("DebugNode");
     // debug already there, maybe i just need to change configuration?
     if (debugNode != nullptr) { // no debug we are good
+		((DebugNode*)debugNode)->setDebugIndex(e.getLayer());
       return true;
     }
     // lest add a debug node
-    auto bw = new DebugNode("debugBW");
-    dx12::RENDERING_GRAPH->addDebugNode(bw);
+    auto debug = new DebugNode("DebugNode");
+	debug->setDebugIndex(e.getLayer());
+    dx12::RENDERING_GRAPH->addDebugNode(debug);
     dx12::RENDERING_GRAPH->finalizeGraph();
     RenderGraphChanged *graphE = new RenderGraphChanged();
     globals::APPLICATION->queueEventForEndOfFrame(graphE);
+    return true;
   }
   }
   return false;

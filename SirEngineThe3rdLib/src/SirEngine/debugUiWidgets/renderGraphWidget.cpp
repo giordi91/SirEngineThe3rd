@@ -432,7 +432,7 @@ void RenderGraphWidget::render() {
 
   if (!ImGui::CollapsingHeader("Debug Frame", ImGuiTreeNodeFlags_DefaultOpen))
     return;
-  const char *items[] = {"FullFrame", "BW"};
+  const char *items[] = {"fullFrame", "gbuffer","normalsBuffer","specularBuffer","depth"};
   bool debugLayerValueChanged =
       ImGui::Combo("combo", &currentDebugLayer, items, IM_ARRAYSIZE(items));
 
