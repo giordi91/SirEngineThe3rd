@@ -1,6 +1,7 @@
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "SirEngine/Window.h"
 #include "SirEngine/assetManager.h"
+#include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/identityManager.h"
 #include "SirEngine/log.h"
 #include "SirEngine/materialManager.h"
@@ -14,8 +15,6 @@
 #include "platform/windows/graphics/dx12/shaderLayout.h"
 #include "platform/windows/graphics/dx12/shaderManager.h"
 #include "platform/windows/graphics/dx12/swapChain.h"
-#include "platform/windows/graphics/dx12/PSOManager.h"
-#include "SirEngine/graphics/renderingContext.h"
 
 namespace SirEngine {
 namespace dx12 {
@@ -41,8 +40,8 @@ Graph *RENDERING_GRAPH = nullptr;
 ConstantBufferManagerDx12 *CONSTANT_BUFFER_MANAGER = nullptr;
 ShaderManager *SHADER_MANAGER = nullptr;
 PSOManager *PSO_MANAGER = nullptr;
-RootSignatureManager* ROOT_SIGNATURE_MANAGER = nullptr;
-ShadersLayoutRegistry* SHADER_LAYOUT_REGISTRY= nullptr;
+RootSignatureManager *ROOT_SIGNATURE_MANAGER = nullptr;
+ShadersLayoutRegistry *SHADER_LAYOUT_REGISTRY = nullptr;
 
 void createFrameCommand(FrameCommand *fc) {
 
@@ -200,6 +199,8 @@ bool initializeGraphicsDx12(Window *wnd, uint32_t width, uint32_t height) {
   PSO_MANAGER->init(dx12::DEVICE, SHADER_LAYOUT_REGISTRY,
                     ROOT_SIGNATURE_MANAGER, dx12::SHADER_MANAGER);
   PSO_MANAGER->loadPSOInFolder("data/pso");
+
+  globals::DEBUG_FRAME_DATA = new globals::DebugFrameData();
 
   // init swap chain
   auto *windowWnd = static_cast<HWND>(wnd->getNativeWindow());

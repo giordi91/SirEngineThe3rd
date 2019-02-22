@@ -155,6 +155,13 @@ void GBufferPass::compute() {
   m_outputPlugs[1].plugValue = m_geometryBuffer.handle;
   m_outputPlugs[2].plugValue = m_specularBuffer.handle;
   m_outputPlugs[3].plugValue = m_depth.handle;
+
+#if SE_DEBUG
+  globals::DEBUG_FRAME_DATA->geometryBuffer = m_geometryBuffer;
+  globals::DEBUG_FRAME_DATA->normalBuffer = m_geometryBuffer;
+  globals::DEBUG_FRAME_DATA->specularBuffer = m_specularBuffer;
+  globals::DEBUG_FRAME_DATA->gbufferDepth = m_depth;
+#endif
 }
 
 #define FREE_TEXTURE_IF_VALID(h)                                               \
