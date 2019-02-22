@@ -138,9 +138,9 @@ void GBufferPass::compute() {
       dx12::TEXTURE_MANAGER->getRTVDx12(m_specularBuffer).cpuHandle};
 
   auto depthDescriptor = dx12::TEXTURE_MANAGER->getRTVDx12(m_depth).cpuHandle;
+  commandList->SetGraphicsRootSignature(rs);
   commandList->OMSetRenderTargets(3, handles, true, &depthDescriptor);
   //
-  commandList->SetGraphicsRootSignature(rs);
   globals::RENDERING_CONTEX->bindCameraBuffer(0);
 
   for (uint32_t i = 0; i < meshCount; ++i) {
@@ -152,13 +152,13 @@ void GBufferPass::compute() {
   }
 
   m_outputPlugs[0].plugValue = m_geometryBuffer.handle;
-  m_outputPlugs[1].plugValue = m_geometryBuffer.handle;
+  m_outputPlugs[1].plugValue = m_normalBuffer.handle;
   m_outputPlugs[2].plugValue = m_specularBuffer.handle;
   m_outputPlugs[3].plugValue = m_depth.handle;
 
 #if SE_DEBUG
   globals::DEBUG_FRAME_DATA->geometryBuffer = m_geometryBuffer;
-  globals::DEBUG_FRAME_DATA->normalBuffer = m_geometryBuffer;
+  globals::DEBUG_FRAME_DATA->normalBuffer = m_normalBuffer;
   globals::DEBUG_FRAME_DATA->specularBuffer = m_specularBuffer;
   globals::DEBUG_FRAME_DATA->gbufferDepth = m_depth;
 #endif

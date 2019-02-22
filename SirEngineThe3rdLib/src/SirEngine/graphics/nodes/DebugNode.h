@@ -13,7 +13,7 @@ public:
 
 private:
   enum DebugIndex {
-    GBUFFER,
+    GBUFFER = 1,
     NORMAL_BUFFER,
     SPECULAR_BUFFER,
     GBUFFER_DEPTH,
