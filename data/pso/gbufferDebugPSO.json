@@ -1,9 +1,9 @@
 {
  "type":  "RASTER",
  "inputLayout":  "deferredNull",
- "globalRootSignature": "blackAndWhiteEffect_RS",
+ "globalRootSignature": "genericFullScreenBlit_RS",
   "VS": "fullScreenQuadVS",
-  "PS":  "blackAndWhiteEffectPS",
+  "PS":  "gbufferDebugPS",
   "rasterState":  "default",
   "blendState": "default",
   "depthStencilState": "custom",

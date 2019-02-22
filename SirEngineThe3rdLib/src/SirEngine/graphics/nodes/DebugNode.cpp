@@ -29,7 +29,30 @@ void blitGBuffeer(const TextureHandle handleToWriteOn) {
       dx12::PSO_MANAGER->getComputePSOByName("gbufferDebugPSO");
   ID3D12RootSignature *rs =
       dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(
-          ("fullScreenPassRS"));
+          ("genericFullScreenBlit_RS"));
+
+  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
+  auto commandList = currentFc->commandList;
+
+  TextureHandle input = globals::DEBUG_FRAME_DATA->geometryBuffer;
+  assert(input.isHandleValid());
+
+  D3D12_RESOURCE_BARRIER barriers[2];
+  int counter = 0;
+  counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
+      input, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, barriers, counter);
+  counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
+      handleToWriteOn, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, counter);
+  commandList->ResourceBarrier(counter, barriers);
+
+  globals::TEXTURE_MANAGER->bindRenderTarget(handleToWriteOn, TextureHandle{});
+  dx12::DescriptorPair pair = dx12::TEXTURE_MANAGER->getSRVDx12(input);
+
+  commandList->SetPipelineState(pso);
+  commandList->SetGraphicsRootSignature(rs);
+  commandList->SetGraphicsRootDescriptorTable(1, pair.gpuHandle);
+  commandList->DrawInstanced(6, 1, 0, 0);
+
 }
 
 void DebugNode::blitDebugFrame(const TextureHandle handleToWriteOn) {
@@ -49,10 +72,12 @@ void DebugNode::compute() {
   TextureHandle texH;
   texH.handle = source->plugValue;
 
-#if SE_DEBUG
-  blitDebugFrame(texH);
-#else
+//#if SE_DEBUG
+//  blitDebugFrame(texH);
+//  m_outputPlugs[0].plugValue = texH.handle;
+//#else
+//  m_outputPlugs[0].plugValue = texH.handle;
+//#endif
   m_outputPlugs[0].plugValue = texH.handle;
-#endif
 }
 } // namespace SirEngine
