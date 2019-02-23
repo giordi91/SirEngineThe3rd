@@ -53,7 +53,8 @@ public:
     return m_outputPlugs;
   }
   inline Plug *getOutputPlug(const std::string &name) {
-    for (int i = 0; i < m_outputPlugs.size(); ++i) {
+	  size_t outPlugsSize = m_outputPlugs.size();
+    for (size_t i = 0; i < outPlugsSize; ++i) {
       if (m_outputPlugs[i].name == name) {
         return &m_outputPlugs[i];
       }

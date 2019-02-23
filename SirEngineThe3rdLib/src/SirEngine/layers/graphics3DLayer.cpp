@@ -181,11 +181,11 @@ bool Graphics3DLayer::onDebugLayerEvent(DebugLayerChanged &e) {
   case (2):
   case (3): 
   case (4): {
-    // lets add debug black and white
+    // lets add debug 
     GraphNode *debugNode = dx12::RENDERING_GRAPH->findNodeOfType("DebugNode");
     // debug already there, maybe i just need to change configuration?
     if (debugNode != nullptr) { // no debug we are good
-		((DebugNode*)debugNode)->setDebugIndex(e.getLayer());
+		static_cast<DebugNode*>(debugNode)->setDebugIndex(e.getLayer());
       return true;
     }
     // lest add a debug node

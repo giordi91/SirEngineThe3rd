@@ -62,11 +62,11 @@ bool initializeGraphicsDx12(Window *wnd, uint32_t width, uint32_t height) {
 // lets enable debug layer if needed
 #if defined(DEBUG) || defined(_DEBUG)
   {
-    HRESULT result = D3D12GetDebugInterface(IID_PPV_ARGS(&DEBUG_CONTROLLER));
-    if (FAILED(result)) {
-      return false;
-    }
-    DEBUG_CONTROLLER->EnableDebugLayer();
+    //HRESULT result = D3D12GetDebugInterface(IID_PPV_ARGS(&DEBUG_CONTROLLER));
+    //if (FAILED(result)) {
+    //  return false;
+    //}
+    //DEBUG_CONTROLLER->EnableDebugLayer();
     // ID3D12Debug1 *debug1;
     // DEBUG_CONTROLLER->QueryInterface(IID_PPV_ARGS(&debug1));
     // debug1->SetEnableGPUBasedValidation(true);
