@@ -19,7 +19,6 @@ float4 PS(FullScreenVertexOut pin) : SV_Target
     float depth = sourceTexture.Sample(gsamPointClamp, pin.uv).x;
 	//remapping depth
 	depth = saturate(abs(depth - DepthMinRange) / (DepthMaxRange - DepthMinRange));
-
 	return float4(depth, 0, 0, 1);
 }
 
