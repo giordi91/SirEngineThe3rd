@@ -116,10 +116,9 @@ void ImguiLayer::onUpdate() {
 
 #if BUILD_AMD
   if (ImGui::CollapsingHeader("HW info", ImGuiTreeNodeFlags_DefaultOpen)) {
-	  m_hwInfo.render();
+    m_hwInfo.render();
   }
 #endif
-
 
   if (ImGui::CollapsingHeader("Performances", ImGuiTreeNodeFlags_DefaultOpen)) {
     m_frameTimings.render();
@@ -195,7 +194,8 @@ bool ImguiLayer::onKeyReleasedEvent(const KeyboardReleaseEvent &e) const {
 }
 bool ImguiLayer::onWindowResizeEvent(const WindowResizeEvent &e) const {
   ImGuiIO &io = ImGui::GetIO();
-  io.DisplaySize = ImVec2(e.getWidth(), e.getHeight());
+  io.DisplaySize = ImVec2(static_cast<float>(e.getWidth()),
+                          static_cast<float>(e.getHeight()));
   io.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
   ImGui_ImplDX12_InvalidateDeviceObjects();
 

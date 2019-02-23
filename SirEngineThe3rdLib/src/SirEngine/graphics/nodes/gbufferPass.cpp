@@ -139,7 +139,7 @@ void GBufferPass::compute() {
 
   auto depthDescriptor = dx12::TEXTURE_MANAGER->getRTVDx12(m_depth).cpuHandle;
   commandList->SetGraphicsRootSignature(rs);
-  commandList->OMSetRenderTargets(3, handles, true, &depthDescriptor);
+  commandList->OMSetRenderTargets(3, handles, false, &depthDescriptor);
   //
   globals::RENDERING_CONTEX->bindCameraBuffer(0);
 
