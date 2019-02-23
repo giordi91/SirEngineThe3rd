@@ -22,20 +22,11 @@ DebugNode::DebugNode(const char *name) : GraphNode(name, "DebugNode") {
   outTexture.name = "outTexture";
   registerPlug(outTexture);
 }
-
-void blitGBuffeer(const TextureHandle handleToWriteOn) {
-  // we need the shader to extract the information of the gbuffer
-  ID3D12PipelineState *pso =
-      dx12::PSO_MANAGER->getComputePSOByName("gbufferDebugPSO");
-  ID3D12RootSignature *rs =
-      dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(
-          ("genericFullScreenBlit_RS"));
-
+void blitBuffer(const TextureHandle input, const TextureHandle handleToWriteOn, ID3D12PipelineState *pso,
+                ID3D12RootSignature *rs) {
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
 
-  TextureHandle input = globals::DEBUG_FRAME_DATA->geometryBuffer;
-  assert(input.isHandleValid());
 
   D3D12_RESOURCE_BARRIER barriers[2];
   int counter = 0;
@@ -52,13 +43,75 @@ void blitGBuffeer(const TextureHandle handleToWriteOn) {
   commandList->SetGraphicsRootSignature(rs);
   commandList->SetGraphicsRootDescriptorTable(1, pair.gpuHandle);
   commandList->DrawInstanced(6, 1, 0, 0);
+}
 
+void blitGBuffeer(const TextureHandle handleToWriteOn) {
+  // we need the shader to extract the information of the gbuffer
+  ID3D12PipelineState *pso =
+      dx12::PSO_MANAGER->getComputePSOByName("gbufferDebugPSO");
+  ID3D12RootSignature *rs =
+      dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(
+          ("genericFullScreenBlit_RS"));
+
+  TextureHandle input = globals::DEBUG_FRAME_DATA->geometryBuffer;
+  assert(input.isHandleValid());
+  assert(input.handle != handleToWriteOn.handle);
+  blitBuffer(input, handleToWriteOn, pso, rs);
+}
+void blitNormalBuffer(const TextureHandle handleToWriteOn) {
+  // we need the shader to extract the information of the gbuffer
+  ID3D12PipelineState *pso =
+      dx12::PSO_MANAGER->getComputePSOByName("normalBufferDebugPSO");
+  ID3D12RootSignature *rs =
+      dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(
+          ("genericFullScreenBlit_RS"));
+  TextureHandle input = globals::DEBUG_FRAME_DATA->normalBuffer;
+  assert(input.isHandleValid());
+  assert(input.handle != handleToWriteOn.handle);
+  blitBuffer(input, handleToWriteOn, pso, rs);
+}
+void blitSpecularBuffer(const TextureHandle handleToWriteOn) {
+  // we need the shader to extract the information of the gbuffer
+  ID3D12PipelineState *pso =
+      dx12::PSO_MANAGER->getComputePSOByName("specularBufferDebugPSO");
+  ID3D12RootSignature *rs =
+      dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(
+          ("genericFullScreenBlit_RS"));
+  TextureHandle input = globals::DEBUG_FRAME_DATA->specularBuffer;
+  assert(input.isHandleValid());
+  assert(input.handle != handleToWriteOn.handle);
+  blitBuffer(input, handleToWriteOn, pso, rs);
+}
+void blitDepthBuffer(const TextureHandle handleToWriteOn) {
+  // we need the shader to extract the information of the gbuffer
+  ID3D12PipelineState *pso =
+      dx12::PSO_MANAGER->getComputePSOByName("depthBufferDebugPSO");
+  ID3D12RootSignature *rs =
+      dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(
+          ("genericFullScreenBlit_RS"));
+  TextureHandle input = globals::DEBUG_FRAME_DATA->gbufferDepth;
+  assert(input.isHandleValid());
+  assert(input.handle != handleToWriteOn.handle);
+  blitBuffer(input, handleToWriteOn, pso, rs);
 }
 
 void DebugNode::blitDebugFrame(const TextureHandle handleToWriteOn) {
   switch (m_index) {
   case (DebugIndex::GBUFFER): {
     blitGBuffeer(handleToWriteOn);
+	break;
+  }
+  case (DebugIndex::NORMAL_BUFFER): {
+    blitNormalBuffer(handleToWriteOn);
+	break;
+  }
+  case (DebugIndex::SPECULAR_BUFFER): {
+    blitSpecularBuffer(handleToWriteOn);
+	break;
+  }
+  case (DebugIndex::GBUFFER_DEPTH): {
+    blitDepthBuffer(handleToWriteOn);
+	break;
   }
   }
 }
@@ -72,12 +125,11 @@ void DebugNode::compute() {
   TextureHandle texH;
   texH.handle = source->plugValue;
 
-//#if SE_DEBUG
-//  blitDebugFrame(texH);
-//  m_outputPlugs[0].plugValue = texH.handle;
-//#else
-//  m_outputPlugs[0].plugValue = texH.handle;
-//#endif
+#if SE_DEBUG
+  blitDebugFrame(texH);
   m_outputPlugs[0].plugValue = texH.handle;
+#else
+  m_outputPlugs[0].plugValue = texH.handle;
+#endif
 }
 } // namespace SirEngine

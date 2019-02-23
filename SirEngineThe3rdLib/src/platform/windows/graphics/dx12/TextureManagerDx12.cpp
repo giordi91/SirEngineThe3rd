@@ -145,6 +145,7 @@ TextureManagerDx12::createDepthTexture(const char *name, uint32_t width,
   dx12::createDSV(dx12::GLOBAL_DSV_HEAP, m_texturePool[index].resource,
                   data.rtsrv, DXGI_FORMAT_D24_UNORM_S8_UINT);
 
+  dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DSRV(data.srv, data.resource, DXGI_FORMAT_R24_UNORM_X8_TYPELESS);
   ++MAGIC_NUMBER_COUNTER;
 
   m_nameToHandle[name] = handle;

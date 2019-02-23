@@ -1,9 +1,4 @@
-struct VertexOut {
-  float4 pos : SV_POSITION;
-  float2 clipPos : TEXCOORD0;
-  float2 uv : TEXCOORD1;
-};
-
+#include "../common/vertexDefinitions.hlsl"
 Texture2D sourceTexture: register(t0);
 
 SamplerState gsamPointWrap        : register(s0);
@@ -13,11 +8,12 @@ SamplerState gsamLinearClamp      : register(s3);
 SamplerState gsamAnisotropicWrap  : register(s4);
 SamplerState gsamAnisotropicClamp : register(s5);
 
-float4 PS(VertexOut pin) : SV_Target
+float4 PS(FullScreenVertexOut pin) : SV_Target
 {
 
     float4 color = float4(sourceTexture.Sample(gsamLinearClamp, pin.uv).xyz,1.0f);
-	color = float4(1,1,1,1);
+	color = (color*2.0f) - 1.0f;
+	color.w = 1.0f;
 	return color;
 }
 

@@ -31,5 +31,10 @@ struct FullMeshVertexOut
     float4 tangent: TANGENTS;
 };
 
+struct FullScreenVertexOut {
+  float4 pos : SV_POSITION;
+  float2 clipPos : TEXCOORD0;
+  float2 uv : TEXCOORD1;
+};
 
 #endif
