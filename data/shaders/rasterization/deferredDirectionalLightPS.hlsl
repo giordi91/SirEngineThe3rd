@@ -1,4 +1,5 @@
-#include "../RaytracingHlslCompat.h"
+#include "../common/structures.hlsl"
+
 ConstantBuffer<CameraBuffer> g_cameraBuffer : register(b0);
 ConstantBuffer<DirectionalLightData> g_dirLight : register(b1);
 
@@ -7,8 +8,6 @@ Texture2D depthTexture : register(t0);
 Texture2D colorSpecIntTexture : register(t1);
 Texture2D normalTexture : register(t2);
 Texture2D specPowTexture : register(t3);
-Texture2D reflectionTexture : register(t4);
-Texture2D reflectionTextureStencil : register(t5);
 
 
 SamplerState gsamPointWrap : register(s0);
@@ -73,13 +72,6 @@ float4 PS(VertexOut input) : SV_TARGET {
 
   float3 ldir = normalize(-g_dirLight.lightDir.xyz);
   float4 finalColor = float4(gbd.color, 0.0f);
-
-  float isReflective =
-      reflectionTextureStencil.Sample(gsamPointClamp, input.uv);
-  if (isReflective) {
-    finalColor = reflectionTexture.Sample(gsamPointClamp, input.uv);
-    finalColor.w = 1.0f;
-  }
 
   if (gbd.depth <= MAX_DEPTH) {
     finalColor = finalColor * saturate(dot(ldir, gbd.normal));

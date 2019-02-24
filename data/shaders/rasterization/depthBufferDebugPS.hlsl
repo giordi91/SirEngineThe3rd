@@ -21,5 +21,3 @@ float4 PS(FullScreenVertexOut pin) : SV_Target
 	depth = saturate(abs(depth - DepthMinRange) / (DepthMaxRange - DepthMinRange));
 	return float4(depth, 0, 0, 1);
 }
-
-

@@ -19,6 +19,7 @@
 #include "SirEngine/graphics/postProcess/effects/blackAndWhiteEffect.h"
 #include "SirEngine/graphics/postProcess/postProcessStack.h"
 #include "SirEngine/graphics/renderingContext.h"
+#include "SirEngine/graphics/nodes/deferredLighting.h"
 
 namespace SirEngine {
 
@@ -50,6 +51,7 @@ void Graphics3DLayer::onAttach() {
   // auto simpleForward = new SimpleForward("simpleForward");
   auto postProcess = new PostProcessStack();
   auto gbufferPass = new GBufferPass("GBufferPass");
+  auto lighting = new DeferredLightingPass("Deferred lighting");
   // auto bw  =
   // postProcess->allocateRenderPass<BlackAndWhiteEffect>("BlackWhite");
   postProcess->initialize();
@@ -59,14 +61,9 @@ void Graphics3DLayer::onAttach() {
   dx12::RENDERING_GRAPH->addNode(finalBlit);
   // dx12::RENDERING_GRAPH->addNode(simpleForward);
   dx12::RENDERING_GRAPH->addNode(gbufferPass);
+  dx12::RENDERING_GRAPH->addNode(lighting);
   dx12::RENDERING_GRAPH->setFinalNode(finalBlit);
 
-  // dx12::RENDERING_GRAPH->connectNodes(assetNode, "matrices", simpleForward,
-  //                                    "matrices");
-  // dx12::RENDERING_GRAPH->connectNodes(assetNode, "meshes", simpleForward,
-  //                                    "meshes");
-  // dx12::RENDERING_GRAPH->connectNodes(assetNode, "materials", simpleForward,
-  //                                    "materials");
 
   dx12::RENDERING_GRAPH->connectNodes(assetNode, "matrices", gbufferPass,
                                       "matrices");
@@ -81,8 +78,18 @@ void Graphics3DLayer::onAttach() {
   // postProcess,
   //                                    "inTexture");
 
-  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, "geometry", postProcess,
+  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, "geometry", lighting,
+                                      "geometry");
+  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, "normal", lighting,
+                                      "normal");
+  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, "specular", lighting,
+                                      "specular");
+  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, "depth", lighting,
+                                      "depth");
+
+  dx12::RENDERING_GRAPH->connectNodes(lighting, "lighting", postProcess,
                                       "inTexture");
+
   dx12::RENDERING_GRAPH->connectNodes(postProcess, "outTexture", finalBlit,
                                       "inTexture");
 
