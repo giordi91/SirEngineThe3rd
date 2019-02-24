@@ -1,5 +1,5 @@
 #include "../common/vertexDefinitions.hlsl"
-#include "../common/camera.hlsl"
+#include "../common/structures.hlsl"
 
 ConstantBuffer<CameraBuffer> g_cameraBuffer : register(b0);
 
