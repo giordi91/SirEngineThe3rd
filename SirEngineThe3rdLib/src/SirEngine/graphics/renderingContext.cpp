@@ -17,6 +17,11 @@ void RenderingContext::setupCameraForFrame() {
   m_camBufferCPU.screenHeight = static_cast<float>(globals::SCREEN_HEIGHT);
   m_camBufferCPU.MVP = DirectX::XMMatrixTranspose(
       globals::MAIN_CAMERA->getMVP(DirectX::XMMatrixIdentity()));
+  m_camBufferCPU.ViewMatrix = DirectX::XMMatrixTranspose(
+      globals::MAIN_CAMERA->getViewInverse(DirectX::XMMatrixIdentity()));
+   m_camBufferCPU.perspectiveValues = globals::MAIN_CAMERA->getProjParams();
+   DirectX::XMFLOAT3 camPos = globals::MAIN_CAMERA->getPosition();
+  m_camBufferCPU.position = DirectX::XMFLOAT4{camPos.x, camPos.y, camPos.z, 1.0f};
 
   globals::CONSTANT_BUFFER_MANAGER->updateConstantBuffer(m_cameraHandle,
                                                          &m_camBufferCPU);

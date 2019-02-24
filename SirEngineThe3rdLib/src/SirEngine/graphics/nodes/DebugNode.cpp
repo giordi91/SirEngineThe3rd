@@ -22,11 +22,10 @@ DebugNode::DebugNode(const char *name) : GraphNode(name, "DebugNode") {
   outTexture.name = "outTexture";
   registerPlug(outTexture);
 }
-void blitBuffer(const TextureHandle input, const TextureHandle handleToWriteOn, ID3D12PipelineState *pso,
-                ID3D12RootSignature *rs) {
+void blitBuffer(const TextureHandle input, const TextureHandle handleToWriteOn,
+                ID3D12PipelineState *pso, ID3D12RootSignature *rs) {
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
-
 
   D3D12_RESOURCE_BARRIER barriers[2];
   int counter = 0;
@@ -34,7 +33,9 @@ void blitBuffer(const TextureHandle input, const TextureHandle handleToWriteOn, 
       input, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, barriers, counter);
   counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
       handleToWriteOn, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, counter);
-  commandList->ResourceBarrier(counter, barriers);
+  if (counter) {
+    commandList->ResourceBarrier(counter, barriers);
+  }
 
   globals::TEXTURE_MANAGER->bindRenderTarget(handleToWriteOn, TextureHandle{});
   dx12::DescriptorPair pair = dx12::TEXTURE_MANAGER->getSRVDx12(input);
@@ -99,19 +100,19 @@ void DebugNode::blitDebugFrame(const TextureHandle handleToWriteOn) {
   switch (m_index) {
   case (DebugIndex::GBUFFER): {
     blitGBuffeer(handleToWriteOn);
-	break;
+    break;
   }
   case (DebugIndex::NORMAL_BUFFER): {
     blitNormalBuffer(handleToWriteOn);
-	break;
+    break;
   }
   case (DebugIndex::SPECULAR_BUFFER): {
     blitSpecularBuffer(handleToWriteOn);
-	break;
+    break;
   }
   case (DebugIndex::GBUFFER_DEPTH): {
     blitDepthBuffer(handleToWriteOn);
-	break;
+    break;
   }
   }
 }
