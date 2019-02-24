@@ -1,4 +1,4 @@
-#include "../common/material.hlsl"
+#include "../common/structures.hlsl"
 #include "../common/vertexDefinitions.hlsl"
 
 ConstantBuffer<PhongMaterial> g_material : register(b1);

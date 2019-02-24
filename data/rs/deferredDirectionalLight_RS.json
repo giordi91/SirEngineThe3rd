@@ -6,8 +6,6 @@
         {
           "type": "descriptorTable",
           "data": {
-            "numberDescriptor": "1",
-            "baseRegister": 0,
             "ranges": [
               {
                 "type": "CBV",
@@ -19,6 +17,7 @@
           "visibility": "ALL"
         },
         {
+          "comment": "light buffer",
           "type": "CBV",
           "data": { "baseRegister": 1 },
           "visibility": "ALL"
@@ -26,27 +25,24 @@
         {
           "type": "descriptorTable",
           "data": {
-            "numberDescriptor": "1",
-            "baseRegister": 0,
             "ranges": [
               {
                 "type": "SRV",
-                "numDescriptors": 4,
+                "numDescriptors": 1,
                 "baseRegister":0 
               }
             ]
           }
         },
         {
+          "comment": "four buffers, depth, geo, normal, spec",
           "type": "descriptorTable",
           "data": {
-            "numberDescriptor": "1",
-            "baseRegister": 4,
             "ranges": [
               {
                 "type": "SRV",
                 "numDescriptors": 1,
-                "baseRegister":4 
+                "baseRegister":1 
               }
             ]
           }
@@ -54,13 +50,23 @@
         {
           "type": "descriptorTable",
           "data": {
-            "numberDescriptor": "1",
-            "baseRegister": 5,
             "ranges": [
               {
                 "type": "SRV",
                 "numDescriptors": 1,
-                "baseRegister":5 
+                "baseRegister":2 
+              }
+            ]
+          }
+        },
+        {
+          "type": "descriptorTable",
+          "data": {
+            "ranges": [
+              {
+                "type": "SRV",
+                "numDescriptors": 1,
+                "baseRegister":3 
               }
             ]
           }
