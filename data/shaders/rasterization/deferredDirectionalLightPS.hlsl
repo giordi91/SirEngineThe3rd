@@ -9,7 +9,6 @@ Texture2D colorSpecIntTexture : register(t1);
 Texture2D normalTexture : register(t2);
 Texture2D specPowTexture : register(t3);
 
-
 SamplerState gsamPointWrap : register(s0);
 SamplerState gsamPointClamp : register(s1);
 SamplerState gsamLinearWrap : register(s2);
@@ -101,6 +100,5 @@ float4 PS(VertexOut input) : SV_TARGET {
         (finalColor.xyz * shadowAttenuation) + (ambient * gbd.color);
     finalColor.w = 1.0f;
   }
-
   return finalColor;
 }

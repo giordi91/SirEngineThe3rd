@@ -96,7 +96,7 @@ void DeferredLightingPass::compute() {
 
   commandList->SetPipelineState(pso);
 
-  D3D12_RESOURCE_BARRIER barriers[4];
+  D3D12_RESOURCE_BARRIER barriers[5];
   int counter = 0;
   counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
       depthHandle, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, barriers,
@@ -109,6 +109,9 @@ void DeferredLightingPass::compute() {
       counter);
   counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
       specularBufferHandle, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+      barriers, counter);
+  counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
+      m_lightBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET,
       barriers, counter);
 
   if (counter) {

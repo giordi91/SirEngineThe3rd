@@ -24,7 +24,10 @@ void BlackAndWhiteEffect::render(TextureHandle input, TextureHandle output) {
       input, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, barriers, counter);
   counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
       output, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, counter);
-  commandList->ResourceBarrier(counter, barriers);
+  if (counter)
+  {
+	  commandList->ResourceBarrier(counter, barriers);
+  }
 
   globals::TEXTURE_MANAGER->bindRenderTarget(output, TextureHandle{});
   dx12::DescriptorPair pair = dx12::TEXTURE_MANAGER->getSRVDx12(input);
