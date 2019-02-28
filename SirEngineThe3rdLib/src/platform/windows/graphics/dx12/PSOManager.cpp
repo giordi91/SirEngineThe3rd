@@ -11,8 +11,8 @@
 
 #include <iostream>
 
-namespace SirEngine{
-namespace dx12{
+namespace SirEngine {
+namespace dx12 {
 
 static const std::string PSO_KEY_GLOBAL_ROOT = "globalRootSignature";
 static const std::string PSO_KEY_MAX_RECURSION = "maxRecursionDepth";
@@ -34,10 +34,12 @@ static const std::string PSO_KEY_RTV_FORMATS = "rtvFormats";
 static const std::string PSO_KEY_SAMPLE_DESC_COUNT = "sampleDescCount";
 static const std::string PSO_KEY_SAMPLE_DESC_QUALITY = "sampleDescQuality";
 static const std::string PSO_KEY_DSV_FORMAT = "dsvFormat";
+static const std::string PSO_KEY_DEPTH_STENCIL_CONFIG = "depthStencilStateConfig";
 static const std::string DEFAULT_STRING = "";
 static const std::string DEFAULT_STATE = "default";
-static const std::string CUSTOM_STATE = "custom";
-static const std::string DEPTH_ENABLED = "depthEnabled";
+static const std::string PSO_KEY_CUSTOM_STATE = "custom";
+static const std::string PSO_KEY_DEPTH_ENABLED = "depthEnabled";
+static const std::string PSO_KEY_COMPARISON_FUNCTION = "comparisonFunc";
 static const int DEFAULT_INT = -1;
 static const bool DEFAULT_BOOL = false;
 static const std::unordered_map<std::string, PSOType> STRING_TO_PSOTYPE{
@@ -45,6 +47,11 @@ static const std::unordered_map<std::string, PSOType> STRING_TO_PSOTYPE{
     {PSO_KEY_TYPE_COMPUTE, PSOType::COMPUTE},
     {PSO_KEY_TYPE_RASTER, PSOType::RASTER},
 };
+
+static const std::unordered_map<std::string, D3D12_COMPARISON_FUNC>
+    STRING_TO_DEPTH_COMPARISON_FUNCTION{
+        {"LESS", D3D12_COMPARISON_FUNC_LESS},
+        {"GREATER", D3D12_COMPARISON_FUNC_GREATER}};
 
 // NOTE: the #name means that the macro argument will need to be used as a
 // string
@@ -111,7 +118,18 @@ inline D3D12_BLEND_DESC getBlendState(const std::string &state) {
 }
 
 inline bool isStateCustom(const std::string &state) {
-  return state == CUSTOM_STATE;
+  return state == PSO_KEY_CUSTOM_STATE;
+}
+
+D3D12_COMPARISON_FUNC getDepthFunction(const nlohmann::json &jobj) {
+  std::string funcDefault = "LESS";
+  const std::string func =
+      getValueIfInJson(jobj, PSO_KEY_COMPARISON_FUNCTION, funcDefault);
+  auto found = STRING_TO_DEPTH_COMPARISON_FUNCTION.find(func);
+  if (found != STRING_TO_DEPTH_COMPARISON_FUNCTION.end()) {
+    return found->second;
+  }
+  return D3D12_COMPARISON_FUNC_LESS;
 }
 
 inline D3D12_DEPTH_STENCIL_DESC getDSState(const std::string &state,
@@ -123,10 +141,12 @@ inline D3D12_DEPTH_STENCIL_DESC getDSState(const std::string &state,
   if (isStateCustom(state)) {
 
     CD3DX12_DEPTH_STENCIL_DESC desc;
-    bool depthEnabled = getValueIfInJson(jobj, DEPTH_ENABLED, DEFAULT_BOOL);
+	assert(jobj.find(PSO_KEY_DEPTH_STENCIL_CONFIG) != jobj.end());
+    bool depthEnabled = getValueIfInJson(jobj[PSO_KEY_DEPTH_STENCIL_CONFIG], PSO_KEY_DEPTH_ENABLED, DEFAULT_BOOL);
     desc.DepthEnable = depthEnabled;
     desc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
-    desc.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
+    desc.DepthFunc = getDepthFunction(jobj[PSO_KEY_DEPTH_STENCIL_CONFIG]);
+    //desc.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
     desc.StencilEnable = FALSE;
     desc.StencilReadMask = D3D12_DEFAULT_STENCIL_READ_MASK;
     desc.StencilWriteMask = D3D12_DEFAULT_STENCIL_WRITE_MASK;
@@ -141,10 +161,8 @@ inline D3D12_DEPTH_STENCIL_DESC getDSState(const std::string &state,
   return CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
 }
 
-
-
-
-void PSOManager::init(D3D12DeviceType*device, SirEngine::dx12::ShadersLayoutRegistry *registry,
+void PSOManager::init(D3D12DeviceType *device,
+                      SirEngine::dx12::ShadersLayoutRegistry *registry,
                       SirEngine::dx12::RootSignatureManager *root,
                       SirEngine::dx12::ShaderManager *shader) {
   m_dxrDevice = device;
@@ -232,7 +250,6 @@ void PSOManager::processComputePSO(nlohmann::json &jobj,
   std::string name = getFileName(path);
   m_psoRegister[name] = pipeStateObject;
 }
-
 
 void PSOManager::processRasterPSO(nlohmann::json &jobj,
                                   const std::string &path) {
@@ -331,9 +348,8 @@ void PSOManager::processRasterPSO(nlohmann::json &jobj,
   m_psoRegister[name] = pso;
 }
 
-void PSOManager::processGlobalRootSignature(nlohmann::json &jobj,
-                                            CD3DX12_STATE_OBJECT_DESC &pipe) const
-{
+void PSOManager::processGlobalRootSignature(
+    nlohmann::json &jobj, CD3DX12_STATE_OBJECT_DESC &pipe) const {
   const std::string globalRootSignatureName =
       getValueIfInJson(jobj, PSO_KEY_GLOBAL_ROOT, DEFAULT_STRING);
   assert(!globalRootSignatureName.empty());
@@ -345,8 +361,7 @@ void PSOManager::processGlobalRootSignature(nlohmann::json &jobj,
   globalRootSignature->SetRootSignature(globalS);
 }
 void PSOManager::processPipelineConfig(nlohmann::json &jobj,
-                                       CD3DX12_STATE_OBJECT_DESC &pipe) const
-{
+                                       CD3DX12_STATE_OBJECT_DESC &pipe) const {
 
   int defaultInt = -1;
   int maxRecursionDepth =
@@ -499,5 +514,5 @@ void PSOManager::printStateObjectDesc(const D3D12_STATE_OBJECT_DESC *desc) {
   wstr << L"\n";
   std::wcout << wstr.str() << std::endl;
 }
-} // namespace rendering
-} // namespace temp
+} // namespace dx12
+} // namespace SirEngine

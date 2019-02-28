@@ -27,8 +27,8 @@ struct FullMeshVertexOut
 {
 	float4 PosH  : SV_POSITION;
 	float2 uv :TEXCOORD;
-    float4 Normal: NORMAL;
-    float4 tangent: TANGENTS;
+    float3 Normal: NORMAL;
+    float3 tangent: TANGENTS;
 };
 
 struct FullScreenVertexOut {

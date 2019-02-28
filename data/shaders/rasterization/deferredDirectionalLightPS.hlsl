@@ -1,4 +1,5 @@
 #include "../common/structures.hlsl"
+#include "../common/deferred.hlsl"
 
 ConstantBuffer<CameraBuffer> g_cameraBuffer : register(b0);
 ConstantBuffer<DirectionalLightData> g_dirLight : register(b1);
@@ -50,6 +51,7 @@ inline SURFACE_DATA UnpackGBuffer(float2 UV) {
   Out.specIntensity = baseColorSpecInt.w;
   Out.normal = normalTexture.Sample(gsamPointClamp, UV.xy).xyz;
   Out.normal = normalize(Out.normal * 2.0 - 1.0);
+  //Out.normal = DecodeOctNormal(normalTexture.Sample(gsamPointClamp, UV.xy).xy);
   Out.specPow = specPowTexture.Sample(gsamPointClamp, UV.xy).x;
 
   return Out;
@@ -83,6 +85,7 @@ float4 PS(VertexOut input) : SV_TARGET {
     float3 halfWay = normalize(toEyeDir + ldir);
     float specularValue = saturate(dot(halfWay, gbd.normal));
     float specP = gbd.specPow * (250.0f - 10.0f) + 10.0f;
+    //float specP = 0.5f * (250.0f - 10.0f) + 10.0f;
     float3 finalSpecular =
         (g_dirLight.lightColor * pow(specularValue, specP) * gbd.specIntensity)
             .xyz;

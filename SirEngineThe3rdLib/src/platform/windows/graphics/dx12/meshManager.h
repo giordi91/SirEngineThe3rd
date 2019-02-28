@@ -42,7 +42,7 @@ public:
     m_nameToHandle.reserve(RESERVE_SIZE);
     m_uploadRequests.reserve(RESERVE_SIZE);
   }
-  ~MeshManager() { m_meshPool.assertEverythingDealloc(); }
+  ~MeshManager() { assert(m_meshPool.assertEverythingDealloc()); }
 
   inline uint32_t getIndexCount(const MeshHandle &handle) const {
     assertMagicNumber(handle);

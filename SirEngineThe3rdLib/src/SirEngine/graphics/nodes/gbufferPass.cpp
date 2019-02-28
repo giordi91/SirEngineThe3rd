@@ -76,7 +76,7 @@ void GBufferPass::initialize() {
 
   m_normalBuffer = globals::TEXTURE_MANAGER->allocateRenderTexture(
       globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT,
-      RenderTargetFormat::R11G11B10, "normalBuffer");
+      RenderTargetFormat::R11G11B10_UNORM, "normalBuffer");
 
   m_specularBuffer = globals::TEXTURE_MANAGER->allocateRenderTexture(
       globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT, RenderTargetFormat::RGBA32,
