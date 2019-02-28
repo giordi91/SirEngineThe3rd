@@ -102,13 +102,13 @@ TextureManagerDx12::createDepthTexture(const char *name, uint32_t width,
   //   1. SRV format: DXGI_FORMAT_R24_UNORM_X8_TYPELESS
   //   2. DSV Format: DXGI_FORMAT_D24_UNORM_S8_UINT
   // we need to create the depth buffer resource with a typeless format.
-  depthStencilDesc.Format = DXGI_FORMAT_R24G8_TYPELESS;
+  depthStencilDesc.Format = DXGI_FORMAT_D32_FLOAT;
 
   // Check 4X MSAA quality support for our back buffer format.
   // All Direct3D 11 capable devices support 4X MSAA for all render
   // target formats, so we only need to check quality support.
   D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS msQualityLevels;
-  msQualityLevels.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+  msQualityLevels.Format = DXGI_FORMAT_D32_FLOAT;
   msQualityLevels.SampleCount = 4;
   msQualityLevels.Flags = D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE;
   msQualityLevels.NumQualityLevels = 0;
@@ -126,8 +126,8 @@ TextureManagerDx12::createDepthTexture(const char *name, uint32_t width,
   uint32_t index;
   TextureData &data = m_texturePool.getFreeMemoryData(index);
   D3D12_CLEAR_VALUE optClear;
-  optClear.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-  optClear.DepthStencil.Depth = 1.0f;
+  optClear.Format = DXGI_FORMAT_D32_FLOAT;
+  optClear.DepthStencil.Depth = 0.0f;
   optClear.DepthStencil.Stencil = 0;
   res = DEVICE->CreateCommittedResource(
       &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
@@ -144,10 +144,10 @@ TextureManagerDx12::createDepthTexture(const char *name, uint32_t width,
   data.state = state;
 
   dx12::createDSV(dx12::GLOBAL_DSV_HEAP, m_texturePool[index].resource,
-                  data.rtsrv, DXGI_FORMAT_D24_UNORM_S8_UINT);
+                  data.rtsrv, DXGI_FORMAT_D32_FLOAT);
 
   dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DSRV(
-      data.srv, data.resource, DXGI_FORMAT_R24_UNORM_X8_TYPELESS);
+      data.srv, data.resource, DXGI_FORMAT_R32_FLOAT);
   ++MAGIC_NUMBER_COUNTER;
 
   m_nameToHandle[name] = handle;
