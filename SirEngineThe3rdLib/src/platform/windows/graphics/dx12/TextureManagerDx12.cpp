@@ -146,7 +146,8 @@ TextureManagerDx12::createDepthTexture(const char *name, uint32_t width,
   dx12::createDSV(dx12::GLOBAL_DSV_HEAP, m_texturePool[index].resource,
                   data.rtsrv, DXGI_FORMAT_D24_UNORM_S8_UINT);
 
-  dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DSRV(data.srv, data.resource, DXGI_FORMAT_R24_UNORM_X8_TYPELESS);
+  dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DSRV(
+      data.srv, data.resource, DXGI_FORMAT_R24_UNORM_X8_TYPELESS);
   ++MAGIC_NUMBER_COUNTER;
 
   m_nameToHandle[name] = handle;
@@ -328,7 +329,7 @@ void TextureManagerDx12::bindBackBuffer(bool bindBackBufferDepth) {
   ;
 }
 
-void TextureManagerDx12::clearDepth(const TextureHandle depth) {
+void TextureManagerDx12::clearDepth(const TextureHandle depth, float value) {
 
   assertMagicNumber(depth);
   uint32_t index = getIndexFromHandle(depth);
@@ -337,7 +338,7 @@ void TextureManagerDx12::clearDepth(const TextureHandle depth) {
 
   CURRENT_FRAME_RESOURCE->fc.commandList->ClearDepthStencilView(
       data.rtsrv.cpuHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL,
-      1.0f, 0, 0, nullptr);
+      value, 0, 0, nullptr);
 }
 
 void TextureManagerDx12::clearRT(const TextureHandle handle,

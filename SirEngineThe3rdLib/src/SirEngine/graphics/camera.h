@@ -29,8 +29,12 @@ public:
     float screenAspect =
         static_cast<float>(screenWidth) / static_cast<float>(screenHeight);
 
-    return DirectX::XMMatrixPerspectiveFovLH(fieldOfView, screenAspect, 0.001f,
-                                             100.0f);
+	//TODO fix hardcoded near far
+    //return DirectX::XMMatrixPerspectiveFovLH(fieldOfView, screenAspect, 0.001f,
+    //                                         100.0f);
+
+    return DirectX::XMMatrixPerspectiveFovLH(fieldOfView, screenAspect, 100.00f,
+                                             0.001f);
   };
 
   inline DirectX::XMFLOAT3 getPosition() const {

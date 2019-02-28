@@ -40,7 +40,7 @@ public:
   virtual void copyTexture(TextureHandle source,
                            TextureHandle destination) override;
   virtual void bindBackBuffer(bool bindBackBufferDepth) override;
-  virtual void clearDepth(const TextureHandle depth) override;
+  virtual void clearDepth(const TextureHandle depth, float value = 1.0f) override;
   virtual void clearRT(const TextureHandle handle,
                        const float color[4]) override;
 
