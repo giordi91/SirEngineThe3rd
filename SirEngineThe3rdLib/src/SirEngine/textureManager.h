@@ -24,7 +24,7 @@ public:
   virtual void copyTexture(TextureHandle source, TextureHandle destination) = 0;
   virtual void bindRenderTarget(TextureHandle handle, TextureHandle depth) = 0;
   virtual void bindBackBuffer(bool bindBackBufferDepth) = 0;
-  virtual void clearDepth(const TextureHandle depth) = 0;
+  virtual void clearDepth(const TextureHandle depth, float value = 1.0f) = 0;
   virtual void clearRT(const TextureHandle handle, const float color[4]) = 0;
 
   inline TextureHandle getHandleFromName(const char *name) {

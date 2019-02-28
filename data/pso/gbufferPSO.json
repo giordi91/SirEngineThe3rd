@@ -7,7 +7,7 @@
   "rasterState":  "default",
   "blendState": "default",
   "depthStencilState": "custom",
-  "depthStencilStateConfig": {"depthEnabled" :  true, "comparisonFunc" : "LESS"},
+  "depthStencilStateConfig": {"depthEnabled" :  true, "comparisonFunc" : "GREATER"},
   "sampleMask":  "max",
   "topologyType": "triangle",
   "renderTargets": 3,

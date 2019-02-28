@@ -126,7 +126,7 @@ void GBufferPass::compute() {
     commandList->ResourceBarrier(counter, barriers);
   }
 
-  globals::TEXTURE_MANAGER->clearDepth(m_depth);
+  globals::TEXTURE_MANAGER->clearDepth(m_depth,0.0f);
   float color[4] = {0.0f, 0.0f, 0.0f, 1.0f};
   globals::TEXTURE_MANAGER->clearRT(m_geometryBuffer, color);
   globals::TEXTURE_MANAGER->clearRT(m_normalBuffer, color);
