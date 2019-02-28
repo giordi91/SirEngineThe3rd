@@ -10,7 +10,8 @@ namespace dx12 {
 static std::unordered_map<RenderTargetFormat, DXGI_FORMAT>
     RENDER_TARGET_FORMAT_TO_DXGI{
         {RenderTargetFormat::RGBA32, DXGI_FORMAT_R8G8B8A8_UNORM},
-        {RenderTargetFormat::R11G11B10, DXGI_FORMAT_R11G11B10_FLOAT}};
+        {RenderTargetFormat::R11G11B10_FLOAT, DXGI_FORMAT_R11G11B10_FLOAT},
+        {RenderTargetFormat::R11G11B10_UNORM, DXGI_FORMAT_R10G10B10A2_UNORM}};
 
 TextureManagerDx12::~TextureManagerDx12() {
   // assert(m_texturePool.assertEverythingDealloc());

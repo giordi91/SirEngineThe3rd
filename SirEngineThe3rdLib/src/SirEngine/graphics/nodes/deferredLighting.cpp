@@ -143,10 +143,7 @@ void DeferredLightingPass::compute() {
   }
 
 void DeferredLightingPass::clear() {
-  // FREE_TEXTURE_IF_VALID(m_depth)
-  // FREE_TEXTURE_IF_VALID(m_geometryBuffer)
-  // FREE_TEXTURE_IF_VALID(m_normalBuffer)
-  // FREE_TEXTURE_IF_VALID(m_specularBuffer)
+  FREE_TEXTURE_IF_VALID(m_lightBuffer)
 }
 
 void DeferredLightingPass::resize(int, int) {

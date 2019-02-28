@@ -81,6 +81,7 @@ static ID3D12Resource *createDefaultBuffer(ID3D12Device *device,
 MeshHandle MeshManager::loadMesh(const char *path, uint32_t runtimeIndex,
                                  MeshRuntime *runtimeMemory) {
 
+  SE_CORE_INFO("Loading mesh {0}", path);
   bool res = fileExists(path);
   assert(res);
   // lets check whether or not the mesh has been loaded already

@@ -1,0 +1,9 @@
+{
+  "kd" : [0.8,0.8,0.8,1.0],
+  "ks" : [1.0,1.0,1.0,1.0],
+  "ka" : [0.1,0.1,0.1,1.0],
+  "shiness":200.0,
+  "albedo" :  "data/processed/textures/uv.dds",
+  "normal" :  "",
+  "flags" :  ["forward"]
+}

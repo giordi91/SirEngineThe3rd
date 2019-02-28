@@ -1,5 +1,6 @@
 #include "../common/structures.hlsl"
 #include "../common/vertexDefinitions.hlsl"
+#include "../common/deferred.hlsl"
 
 ConstantBuffer<PhongMaterial> g_material : register(b1);
 
@@ -22,6 +23,8 @@ PS_GBUFFER_OUT PackGBuffer(float3 BaseColor, float3 Normal, float SpecIntensity,
   // Pack all the data into the GBuffer structure
   Out.ColorSpecInt = float4(BaseColor.rgb, SpecIntensity);
   Out.Normal = float4(Normal * 0.5f + 0.5f, 1.0f);
+  //Out.Normal.xy = EncodeOctNormal(Normal);
+  //Out.Normal.zw = 0.0f;
   Out.SpecPow = float4(SpecPowerNorm, 0.0f, 0.0f, 1.0f);
 
   return Out;
