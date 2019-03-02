@@ -7,7 +7,6 @@
 #include "SirEngine/graphics/camera.h"
 #include "SirEngine/graphics/nodeGraph.h"
 #include "platform/windows/graphics/dx12/DX12.h"
-#include "platform/windows/graphics/dx12/swapChain.h"
 #include <DirectXMath.h>
 
 #include "SirEngine/events/renderGraphEvent.h"
@@ -15,11 +14,10 @@
 #include "SirEngine/graphics/nodes/FinalBlitNode.h"
 #include "SirEngine/graphics/nodes/assetManagerNode.h"
 #include "SirEngine/graphics/nodes/gbufferPass.h"
-#include "SirEngine/graphics/nodes/simpleForward.h"
-#include "SirEngine/graphics/postProcess/effects/blackAndWhiteEffect.h"
 #include "SirEngine/graphics/postProcess/postProcessStack.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/graphics/nodes/deferredLighting.h"
+#include "SirEngine/graphics/nodes/proceduralSkybox.h"
 
 namespace SirEngine {
 
@@ -40,7 +38,7 @@ void Graphics3DLayer::onAttach() {
   }
 
   sphereH = globals::ASSET_MANAGER->loadAsset("data/assets/sphere.json");
-  globals::ASSET_MANAGER->loadAsset("data/assets/plane.json");
+  //globals::ASSET_MANAGER->loadAsset("data/assets/plane.json");
   dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE, currentFc);
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
 
@@ -52,6 +50,7 @@ void Graphics3DLayer::onAttach() {
   auto postProcess = new PostProcessStack();
   auto gbufferPass = new GBufferPass("GBufferPass");
   auto lighting = new DeferredLightingPass("Deferred lighting");
+  auto sky= new ProceduralSkyBoxPass("Procedural Sky");
   // auto bw  =
   // postProcess->allocateRenderPass<BlackAndWhiteEffect>("BlackWhite");
   postProcess->initialize();
@@ -62,6 +61,7 @@ void Graphics3DLayer::onAttach() {
   // dx12::RENDERING_GRAPH->addNode(simpleForward);
   dx12::RENDERING_GRAPH->addNode(gbufferPass);
   dx12::RENDERING_GRAPH->addNode(lighting);
+  dx12::RENDERING_GRAPH->addNode(sky);
   dx12::RENDERING_GRAPH->setFinalNode(finalBlit);
 
 
@@ -87,7 +87,12 @@ void Graphics3DLayer::onAttach() {
   dx12::RENDERING_GRAPH->connectNodes(gbufferPass, "depth", lighting,
                                       "depth");
 
-  dx12::RENDERING_GRAPH->connectNodes(lighting, "lighting", postProcess,
+  dx12::RENDERING_GRAPH->connectNodes(lighting, "lighting", sky,
+                                      "fullscreenPass");
+  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, "depth", sky,
+                                      "depth");
+
+  dx12::RENDERING_GRAPH->connectNodes(sky, "buffer", postProcess,
                                       "inTexture");
 
   dx12::RENDERING_GRAPH->connectNodes(postProcess, "outTexture", finalBlit,

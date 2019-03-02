@@ -13,7 +13,7 @@ FullScreenVertexOut VS( uint vid : SV_VertexID) {
   float4 p = arrBasePos[vid];
 
   vout.pos.xy = p.xy;
-  vout.pos.z = 0.0f;
+  vout.pos.z = 0.00001f;
   vout.pos.w = 1.0f;
   vout.clipPos = p.xy; 
   vout.uv = p.zw;
