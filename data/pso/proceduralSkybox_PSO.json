@@ -1,0 +1,20 @@
+{
+ "type":  "RASTER",
+ "inputLayout":  "deferredNull",
+ "globalRootSignature": "proceduralSkybox_RS",
+  "VS": "fullScreenQuadVS",
+  "PS":  "proceduralSkyboxPS",
+  "rasterState":  "default",
+  "blendState": "default",
+  "depthStencilState": "custom",
+  "depthStencilStateConfig": {"depthEnabled" :  true, "comparisonFunc" : "GREATER"},
+  "sampleMask":  "max",
+  "topologyType": "triangle",
+  "renderTargets": 1,
+  "rtvFormats": [ "DXGI_FORMAT_R8G8B8A8_UNORM" ],
+  "sampleDescCount": 1,
+  "sampleDescQuality":  0,
+  "dsvFormat": "DXGI_FORMAT_D32_FLOAT"
+}
+
+    

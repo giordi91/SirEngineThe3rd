@@ -1,0 +1,25 @@
+{
+    "proceduralSkybox_RS": {
+      "type": "RASTER",
+      "staticSamplers" : false,
+      "config": [
+        {
+          "comment":  "camera buffer", 
+          "type": "descriptorTable",
+          "data": {
+            "numberDescriptor": "1",
+            "baseRegister": 0,
+            "ranges": [
+              {
+                "type": "CBV",
+                "numDescriptors": 1,
+                "baseRegister": 0
+              }
+            ]
+          },
+          "visibility": "ALL"
+        }
+      ],
+      "flags": []
+    }
+}

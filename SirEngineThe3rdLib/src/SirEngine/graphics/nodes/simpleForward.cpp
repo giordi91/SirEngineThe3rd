@@ -1,6 +1,6 @@
 #include "SirEngine/graphics/nodes/simpleForward.h"
 #include "SirEngine/assetManager.h"
-#include "platform/windows/graphics/dx12/textureManagerDx12.h"
+#include "platform/windows/graphics/dx12/TextureManagerDx12.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
@@ -61,7 +61,7 @@ void SimpleForward::compute() {
   auto &meshConn = m_connections[&m_inputPlugs[1]];
   assert(meshConn.size() == 1 && "too many input connections");
   Plug *sourceMeshs = meshConn[0];
-  AssetDataHandle meshH;
+  AssetDataHandle meshH{};
   meshH.handle = sourceMeshs->plugValue;
   uint32_t meshCount = 0;
   const dx12::MeshRuntime *meshes =

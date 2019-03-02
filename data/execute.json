@@ -16,6 +16,7 @@
       "-p data/shaders/rasterization/specularBufferDebugPS.hlsl -o data/processed/shaders/rasterization/specularBufferDebugPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
       "-p data/shaders/rasterization/depthBufferDebugPS.hlsl -o data/processed/shaders/rasterization/depthBufferDebugPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
       "-p data/shaders/rasterization/deferredDirectionalLightPS.hlsl -o data/processed/shaders/rasterization/deferredDirectionalLightPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
+      "-p data/shaders/rasterization/proceduralSkyboxPS.hlsl -o data/processed/shaders/rasterization/proceduralSkyboxPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
 
       "-p data/rs/simpleMeshRS.json -o data/processed/rs/simpleMeshRS.root --pluginName rootSignatureCompilerPlugin",
       "-p data/rs/simpleMeshRSTex.json -o data/processed/rs/simpleMeshRSTex.root --pluginName rootSignatureCompilerPlugin",
@@ -23,6 +24,7 @@
       "-p data/rs/gbufferRS.json -o data/processed/rs/gbufferRS.root --pluginName rootSignatureCompilerPlugin",
       "-p data/rs/genericFullScreenBlit_RS.json -o data/processed/rs/genericFullScreenBlit_RS.root --pluginName rootSignatureCompilerPlugin",
       "-p data/rs/deferredDirectionalLight_RS.json -o data/processed/rs/deferredDirectionalLight_RS.root --pluginName rootSignatureCompilerPlugin",
+      "-p data/rs/proceduralSkybox_RS.json -o data/processed/rs/proceduralSkybox_RS.root --pluginName rootSignatureCompilerPlugin",
         
       "-p data/textures/uv.bmp -o data/processed/textures/uv.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1 -g\""
     ]
