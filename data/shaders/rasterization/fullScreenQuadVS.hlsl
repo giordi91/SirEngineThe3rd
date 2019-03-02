@@ -13,6 +13,8 @@ FullScreenVertexOut VS( uint vid : SV_VertexID) {
   float4 p = arrBasePos[vid];
 
   vout.pos.xy = p.xy;
+  //vertex positioned slightly before the end plane, could be perfectly zero if we used a 
+  //greater equal depth function
   vout.pos.z = 0.00001f;
   vout.pos.w = 1.0f;
   vout.clipPos = p.xy; 

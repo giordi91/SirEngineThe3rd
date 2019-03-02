@@ -4,6 +4,7 @@
 struct CameraBuffer {
   float4x4 MVP;
   float4x4 ViewMatrix;
+  float4x4 VPinverse;
   float4 perspectiveValues;
   float4 position;
   float vFov;
