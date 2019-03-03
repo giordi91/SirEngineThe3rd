@@ -7,7 +7,10 @@ ConstantBuffer<CameraBuffer> g_cameraBuffer : register(b0);
 
 float4 PS(FullScreenVertexOut pin) : SV_Target
 {
-    float4 worldDir = normalize(mul(float4(pin.clipPos, 0.0f, 1.0f), g_cameraBuffer.VPinverse));
+    //float4 worldDir = normalize(mul(float4(pin.clipPos, 0.0f, 1.0f), g_cameraBuffer.VPinverse));
+    float worldDir = dot(float4(pin.clipPos, 0.0f, 1.0f), transpose(g_cameraBuffer.VPinverse)[1]);
+    //float worldDir = dot(float3(pin.clipPos, 0.0f), float3(g_cameraBuffer.VPinverse[0].y,
+    //g_cameraBuffer.VPinverse[1].y, g_cameraBuffer.VPinverse[2].y) );
 
     float3 ground = float3(0.412f, 0.380, 0.357);
     float3 skyTop = float3(0.357f, 0.451f, 0.6f);
@@ -15,12 +18,12 @@ float4 PS(FullScreenVertexOut pin) : SV_Target
 
     float bottomGradientDiffusion = 15.0f;
     float topGradientDiffiusion= 2.0f;
-    float verticalGradient = worldDir.y;
+    float verticalGradient = worldDir;
     float topLerpFactor = saturate(verticalGradient*topGradientDiffiusion);
     float bottomLerpFactor = saturate(-verticalGradient*bottomGradientDiffusion);
 
     //sky
-    if(worldDir.y > 0)
+    if(worldDir > 0)
     {
         float4 color = float4(lerp(skybottom, skyTop, topLerpFactor), 1.0f);
         return color;
