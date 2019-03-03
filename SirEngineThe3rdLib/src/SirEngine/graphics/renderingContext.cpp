@@ -25,7 +25,7 @@ void RenderingContext::setupCameraForFrame() {
    DirectX::XMFLOAT3 camPos = globals::MAIN_CAMERA->getPosition();
   m_camBufferCPU.position = DirectX::XMFLOAT4{camPos.x, camPos.y, camPos.z, 1.0f};
 
-  globals::CONSTANT_BUFFER_MANAGER->updateConstantBuffer(m_cameraHandle,
+  globals::CONSTANT_BUFFER_MANAGER->updateConstantBufferNotBuffered(m_cameraHandle,
                                                          &m_camBufferCPU);
 }
 void RenderingContext::bindCameraBuffer(const int index) const {

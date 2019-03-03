@@ -16,7 +16,8 @@ public:
   ConstantBufferManagerDx12(const ConstantBufferManagerDx12 &) = delete;
   ConstantBufferManagerDx12 &
   operator=(const ConstantBufferManagerDx12 &) = delete;
-  virtual ConstantBufferHandle allocateDynamic(uint32_t sizeInBytes, void* data = nullptr) override;
+  virtual ConstantBufferHandle allocateDynamic(uint32_t sizeInBytes,
+                                               void *data = nullptr) override;
 
   inline DescriptorPair
   getConstantBufferDx12Handle(ConstantBufferHandle handle) {
@@ -38,10 +39,19 @@ public:
         .resource->GetGPUVirtualAddress();
   }
 
-  virtual void updateConstantBuffer(const ConstantBufferHandle handle,
-                                    void *dataToUpload) override;
+  virtual void
+  updateConstantBufferNotBuffered(const ConstantBufferHandle handle,
+                                  void *dataToUpload) override;
+
+  virtual void updateConstantBufferBuffered(const ConstantBufferHandle handle,
+                                            void *dataToUpload) override;
 
 private:
+  struct ConstatBufferedData {
+    ConstantBufferHandle handle;
+    void *data;
+  };
+
   struct ConstantBufferData final {
     // we are using one byte for the mapped flag and 31 bytes for the
     // the actual data size, we can't have buffers that big anyway
@@ -54,7 +64,7 @@ private:
   };
 
 private:
-  inline void assertMagicNumber(ConstantBufferHandle handle) {
+  inline void assertMagicNumber(const ConstantBufferHandle handle) {
     uint32_t magic = getMagicFromHandle(handle);
     uint32_t idx = getIndexFromHandle(handle);
     assert(m_dynamicStorage[globals::CURRENT_FRAME][idx].magicNumber == magic &&

@@ -12,7 +12,10 @@ public:
   operator=(const ConstantBufferManager&) = delete;
 
   virtual ConstantBufferHandle allocateDynamic(uint32_t sizeInBytes, void* data = nullptr) =0;
-  virtual void updateConstantBuffer(const ConstantBufferHandle handle,
+  virtual void updateConstantBufferNotBuffered(const ConstantBufferHandle handle,
+                                    void* dataToUpload) =0;
+
+  virtual void updateConstantBufferBuffered(const ConstantBufferHandle handle,
                                     void* dataToUpload) =0;
 
 protected:

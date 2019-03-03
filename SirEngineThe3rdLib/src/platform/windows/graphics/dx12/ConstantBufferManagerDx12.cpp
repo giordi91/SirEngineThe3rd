@@ -53,7 +53,7 @@ ConstantBufferManagerDx12::allocateDynamic(uint32_t sizeInBytes,
   return handle;
 }
 
-void ConstantBufferManagerDx12::updateConstantBuffer(
+void ConstantBufferManagerDx12::updateConstantBufferNotBuffered(
     const ConstantBufferHandle handle, void *dataToUpload) {
   assertMagicNumber(handle);
   uint32_t index = getIndexFromHandle(handle);
@@ -62,6 +62,13 @@ void ConstantBufferManagerDx12::updateConstantBuffer(
 
   assert(data.mappedData != nullptr);
   memcpy(data.mappedData, dataToUpload, data.size);
+}
+
+void ConstantBufferManagerDx12::updateConstantBufferBuffered(
+    const ConstantBufferHandle handle, void *dataToUpload)
+{
+	
+
 }
 } // namespace dx12
 } // namespace SirEngine

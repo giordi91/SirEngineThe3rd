@@ -31,7 +31,8 @@ public:
       : nodeName(name), m_nodeType(type){};
   virtual ~GraphNode() = default;
   void addConnection(const std::string &thisNodePlugName, Plug *otherPlug);
-  void removeConnection(const std::string &thisPlugNode, const Plug *otherPlug);
+  void removeConnection(const std::string &thisNodePlugName,
+                        const Plug *otherPlug);
   virtual void compute(){};
   virtual void initialize(){};
   virtual void clear(){};
@@ -53,7 +54,7 @@ public:
     return m_outputPlugs;
   }
   inline Plug *getOutputPlug(const std::string &name) {
-	  size_t outPlugsSize = m_outputPlugs.size();
+    size_t outPlugsSize = m_outputPlugs.size();
     for (size_t i = 0; i < outPlugsSize; ++i) {
       if (m_outputPlugs[i].name == name) {
         return &m_outputPlugs[i];
