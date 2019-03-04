@@ -312,6 +312,9 @@ RenderGraphWidget::~RenderGraphWidget() { delete status; }
 
 void RenderGraphWidget::initialize(Graph *graph) {
 
+  m_debugConfig.depthMin = 1.0f;
+  m_debugConfig.depthMax = 0.0f;
+
   if (status != nullptr) {
     delete status;
   }
@@ -430,6 +433,7 @@ void RenderGraphWidget::initialize(Graph *graph) {
 
 void RenderGraphWidget::render() {
 
+  bool generateDebugEvent = false;
   if (!ImGui::CollapsingHeader("Debug Frame", ImGuiTreeNodeFlags_DefaultOpen))
     return;
   const char *items[] = {"fullFrame", "gbuffer", "normalsBuffer",
@@ -440,14 +444,17 @@ void RenderGraphWidget::render() {
   switch (currentDebugLayer) {
     // depth
   case (4): {
+    ImGui::InputFloat("depthMinStart", &depthMinStart,0,0,"%0.5f");
+    ImGui::InputFloat("depthMinEnd", &depthMinEnd,0,0,"%0.5f");
+
+    ImGui::InputFloat("depthMaxStart", &depthMaxStart,0,0,"%0.5f");
+    ImGui::InputFloat("depthMaxEnd", &depthMaxEnd,0,0,"%0.5f");
     // we want to display a range for remapping the color
-    bool minChanged = ImGui::SliderFloat("min depth", &minDepth, 1.0f, 0.0f);
-    bool maxChanged = ImGui::SliderFloat("max depth", &maxDepth, 1.0f, 0.0f);
-    if (minChanged | maxChanged) {
-      // generate the depth debug event
-      auto *event = new DebugDepthChanged(minDepth,maxDepth);
-      globals::APPLICATION->queueEventForEndOfFrame(event);
-    }
+    bool minChanged = ImGui::SliderFloat("min depth", &m_debugConfig.depthMin,
+                                         depthMinStart, depthMinEnd, "%.5f");
+    bool maxChanged = ImGui::SliderFloat("max depth", &m_debugConfig.depthMax,
+                                         depthMaxStart, depthMaxEnd, "%.5f");
+    generateDebugEvent |= (minChanged | maxChanged);
     break;
   }
   default: {
@@ -469,6 +476,11 @@ void RenderGraphWidget::render() {
   }
 
   renderImguiGraph(status);
+
+  if (generateDebugEvent) {
+    auto *event = new DebugRenderConfigChanged(m_debugConfig);
+    globals::APPLICATION->queueEventForEndOfFrame(event);
+  }
 }
 
 void RenderGraphWidget::showGraph(bool value) {

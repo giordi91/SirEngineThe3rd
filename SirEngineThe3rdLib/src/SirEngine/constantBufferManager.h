@@ -18,6 +18,7 @@ public:
   virtual void updateConstantBufferBuffered(const ConstantBufferHandle handle,
                                     void* dataToUpload) =0;
 
+  virtual void processBufferedData() =0;
 protected:
   inline uint32_t getIndexFromHandle(const ConstantBufferHandle h) const {
     return h.handle & INDEX_MASK;

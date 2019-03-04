@@ -10,11 +10,12 @@
 #include <directxmath.h>
 
 namespace SirEngine {
-	class MouseButtonPressEvent;
-	class MouseButtonReleaseEvent;
-	class MouseMoveEvent;
-	class WindowResizeEvent;
-	class DebugLayerChanged;
+class DebugRenderConfigChanged;
+class MouseButtonPressEvent;
+class MouseButtonReleaseEvent;
+class MouseMoveEvent;
+class WindowResizeEvent;
+class DebugLayerChanged;
 
 namespace dx12 {
 class Texture2D;
@@ -37,7 +38,8 @@ private:
   bool onMouseButtonReleaseEvent(MouseButtonReleaseEvent &e);
   bool onMouseMoveEvent(MouseMoveEvent &e);
   bool onDebugLayerEvent(DebugLayerChanged &e);
-  bool onResizeEvent(WindowResizeEvent&e);
+  bool onResizeEvent(WindowResizeEvent &e);
+  bool onDebugDepthChanged(DebugRenderConfigChanged &e);
 
   // camera event control
   bool leftDown = false;

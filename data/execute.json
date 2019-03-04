@@ -25,6 +25,7 @@
       "-p data/rs/genericFullScreenBlit_RS.json -o data/processed/rs/genericFullScreenBlit_RS.root --pluginName rootSignatureCompilerPlugin",
       "-p data/rs/deferredDirectionalLight_RS.json -o data/processed/rs/deferredDirectionalLight_RS.root --pluginName rootSignatureCompilerPlugin",
       "-p data/rs/proceduralSkybox_RS.json -o data/processed/rs/proceduralSkybox_RS.root --pluginName rootSignatureCompilerPlugin",
+      "-p data/rs/debugFullScreenBlit_RS.json -o data/processed/rs/debugFullScreenBlit_RS.root --pluginName rootSignatureCompilerPlugin",
         
       "-p data/textures/uv.bmp -o data/processed/textures/uv.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1 -g\""
     ]

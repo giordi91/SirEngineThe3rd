@@ -31,4 +31,10 @@ struct PhongMaterial {
   float padding2;
   float padding3;
 };
+
+struct DebugLayerConfig 
+{
+	float depthMin;
+	float depthMax;
+};
 #endif

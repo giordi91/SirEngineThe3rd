@@ -1,8 +1,10 @@
 #include "../common/vertexDefinitions.hlsl"
+#include "../common/structures.hlsl"
 
 
 
 Texture2D sourceTexture: register(t0);
+ConstantBuffer<DebugLayerConfig> g_debugConfig: register(b1);
 
 SamplerState gsamPointWrap        : register(s0);
 SamplerState gsamPointClamp       : register(s1);
@@ -14,8 +16,8 @@ SamplerState gsamAnisotropicClamp : register(s5);
 float4 PS(FullScreenVertexOut pin) : SV_Target
 {
 
-	float DepthMaxRange = 0.00015f;
-	float DepthMinRange = 0.00022f;
+	float DepthMaxRange = g_debugConfig.depthMax;
+	float DepthMinRange = g_debugConfig.depthMin;
     float depth = sourceTexture.Sample(gsamPointClamp, pin.uv).x;
 	//remapping depth
 	float range = DepthMaxRange - DepthMinRange;

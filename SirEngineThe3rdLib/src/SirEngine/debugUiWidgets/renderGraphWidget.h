@@ -1,4 +1,5 @@
 #pragma once
+#include "SirEngine/graphics/cpuGraphicsStructures.h"
 
 namespace SirEngine {
 class Graph;
@@ -17,11 +18,12 @@ struct RenderGraphWidget final {
   bool debugRendering = true;
   int currentDebugLayer = 0;
 
-
-	//debug specific data:
-  float minDepth = 1.0f;
-  float maxDepth = 0.0f;
-
+  // debug specific data:
+  DebugLayerConfig m_debugConfig;
+  float depthMinStart = 1.0f;
+  float depthMinEnd= 0.0f;
+  float depthMaxStart = 1.0f;
+  float depthMaxEnd=0.0f;
 };
 
 } // namespace debug
