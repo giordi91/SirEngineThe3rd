@@ -69,10 +69,10 @@ void ProceduralSkyBoxPass::compute() {
   D3D12_RESOURCE_BARRIER barriers[5];
   int counter = 0;
   counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
-      depthHandle, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, barriers,
+      depthHandle, D3D12_RESOURCE_STATE_DEPTH_WRITE, barriers,
       counter);
   counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
-      bufferHandle, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, barriers,
+      bufferHandle, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers,
       counter);
 
   if (counter) {

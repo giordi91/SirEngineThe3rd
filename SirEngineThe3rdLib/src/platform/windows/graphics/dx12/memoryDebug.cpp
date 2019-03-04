@@ -26,6 +26,7 @@ void renderImGuiMemoryWidget() {
   if (!ImGui::CollapsingHeader("Memory", ImGuiTreeNodeFlags_DefaultOpen))
     return;
 
+  ImGui::PushItemWidth(-1);
   // CUSTOM WIDGET
   // void ImDrawList::AddCircle(const ImVec2& centre, float radius, ImU32 col,
   // int num_segments, float thickness)
@@ -124,6 +125,7 @@ void renderImGuiMemoryWidget() {
   ImGui::Text(heapLabel.c_str());
   overlayHeap = std::to_string(heapRatio * 100.0f) + "%";
   ImGui::ProgressBar(heapRatio, ImVec2(0.f, 0.f), overlayHeap.c_str());
+  ImGui::PopItemWidth();
 }
 } // namespace dx12
 } // namespace SirEngine

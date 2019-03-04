@@ -109,6 +109,7 @@ void FrameTimingsWidget::render() {
   ImGui::Text(histoLabel.c_str());
   ImGui::PlotHistogram("", finalHisto, IM_ARRAYSIZE(finalHisto), 0, NULL, 0.0f,
                        1.0f, ImVec2(0, 80));
+  ImGui::PopItemWidth();
 }
 } // namespace debug
 } // namespace SirEngine

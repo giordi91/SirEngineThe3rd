@@ -20,6 +20,7 @@ enum class EventType {
   MouseMoved,
   MouseScrolled,
   DebugLayerChanged,
+  DebugDepthChanged,
   RenderGraphChanged
 };
 
