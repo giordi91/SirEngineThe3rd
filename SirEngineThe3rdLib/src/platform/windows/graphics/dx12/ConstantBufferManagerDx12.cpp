@@ -11,6 +11,10 @@ ConstantBufferManagerDx12::ConstantBufferManagerDx12() {
   m_descriptorStorage.reserve(RESERVE_SIZE);
 }
 
+void ConstantBufferManagerDx12::initialize() {
+  m_randomAlloc.initialize(4096, 20);
+}
+
 ConstantBufferHandle
 ConstantBufferManagerDx12::allocateDynamic(uint32_t sizeInBytes,
                                            void *inputData) {
@@ -65,10 +69,32 @@ void ConstantBufferManagerDx12::updateConstantBufferNotBuffered(
 }
 
 void ConstantBufferManagerDx12::updateConstantBufferBuffered(
-    const ConstantBufferHandle handle, void *dataToUpload)
-{
-	
+    const ConstantBufferHandle handle, void *dataToUpload) {
 
+  // check if we have any other request for this buffer if so we clear it
+  auto found = m_bufferedRequests.find(handle.handle);
+  if (found != m_bufferedRequests.end()) {
+    // lets clear up the allocation
+    m_randomAlloc.freeAllocation(found->second.dataAllocHandle);
+  }
+
+  // lets create a new request
+  ConstantBufferedData buffRequest;
+  assertMagicNumber(handle);
+  uint32_t index = getIndexFromHandle(handle);
+  ConstantBufferData data = m_dynamicStorage[globals::CURRENT_FRAME][index];
+
+  // setting data on the buffer request
+  buffRequest.dataAllocHandle = m_randomAlloc.allocate(data.size);
+  buffRequest.handle = handle;
+
+  // perform current update, that is why we use frame buffer count -1
+  buffRequest.counter = FRAME_BUFFERS_COUNT - 1;
+  updateConstantBufferNotBuffered(handle, dataToUpload);
+  // copying data in storage so we can keep track of it
+  memcpy(m_randomAlloc.getPointer(buffRequest.dataAllocHandle), dataToUpload,
+         data.size);
+  m_bufferedRequests[handle.handle] = buffRequest;
 }
 } // namespace dx12
 } // namespace SirEngine

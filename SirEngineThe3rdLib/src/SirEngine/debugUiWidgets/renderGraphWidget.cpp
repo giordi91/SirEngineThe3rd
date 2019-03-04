@@ -5,8 +5,8 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui_internal.h"
 
-#include <queue>
 #include "SirEngine/log.h"
+#include <queue>
 #include <unordered_set>
 
 #include "SirEngine/application.h"
@@ -432,9 +432,28 @@ void RenderGraphWidget::render() {
 
   if (!ImGui::CollapsingHeader("Debug Frame", ImGuiTreeNodeFlags_DefaultOpen))
     return;
-  const char *items[] = {"fullFrame", "gbuffer","normalsBuffer","specularBuffer","depth"};
+  const char *items[] = {"fullFrame", "gbuffer", "normalsBuffer",
+                         "specularBuffer", "depth"};
   bool debugLayerValueChanged =
-      ImGui::Combo("combo", &currentDebugLayer, items, IM_ARRAYSIZE(items));
+      ImGui::Combo("Pass", &currentDebugLayer, items, IM_ARRAYSIZE(items));
+  // check if we need to render any extra stuff based on specific buffer
+  switch (currentDebugLayer) {
+    // depth
+  case (4): {
+    // we want to display a range for remapping the color
+    bool minChanged = ImGui::SliderFloat("min depth", &minDepth, 1.0f, 0.0f);
+    bool maxChanged = ImGui::SliderFloat("max depth", &maxDepth, 1.0f, 0.0f);
+    if (minChanged | maxChanged) {
+      // generate the depth debug event
+      auto *event = new DebugDepthChanged(minDepth,maxDepth);
+      globals::APPLICATION->queueEventForEndOfFrame(event);
+    }
+    break;
+  }
+  default: {
+    break;
+  }
+  }
 
   if (debugLayerValueChanged) {
     SE_CORE_INFO("value changed {0}", currentDebugLayer);
@@ -452,12 +471,10 @@ void RenderGraphWidget::render() {
   renderImguiGraph(status);
 }
 
-void RenderGraphWidget::showGraph(bool value)
-{
-	if(status != nullptr)
-	{
-		status->opened = value;
-	}
+void RenderGraphWidget::showGraph(bool value) {
+  if (status != nullptr) {
+    status->opened = value;
+  }
 }
 } // namespace debug
 } // namespace SirEngine

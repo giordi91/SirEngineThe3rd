@@ -175,6 +175,7 @@ bool initializeGraphicsDx12(Window *wnd, uint32_t width, uint32_t height) {
   IDENTITY_MANAGER = new IdentityManager();
   IDENTITY_MANAGER->initialize();
   CONSTANT_BUFFER_MANAGER = new ConstantBufferManagerDx12();
+  CONSTANT_BUFFER_MANAGER->initialize();
   globals::CONSTANT_BUFFER_MANAGER = CONSTANT_BUFFER_MANAGER;
   TEXTURE_MANAGER = new TextureManagerDx12();
   globals::TEXTURE_MANAGER = TEXTURE_MANAGER;

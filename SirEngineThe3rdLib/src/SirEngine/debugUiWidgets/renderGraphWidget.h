@@ -17,6 +17,11 @@ struct RenderGraphWidget final {
   bool debugRendering = true;
   int currentDebugLayer = 0;
 
+
+	//debug specific data:
+  float minDepth = 1.0f;
+  float maxDepth = 0.0f;
+
 };
 
 } // namespace debug

@@ -3,6 +3,7 @@
 #include "SirEngine/globals.h"
 #include "SirEngine/handle.h"
 #include "SirEngine/log.h"
+#include "SirEngine/memory/randomSizeAllocator.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include <vector>
 
@@ -13,6 +14,7 @@ class ConstantBufferManagerDx12 final : public ConstantBufferManager {
 public:
   ConstantBufferManagerDx12();
   virtual ~ConstantBufferManagerDx12() = default;
+  void initialize();
   ConstantBufferManagerDx12(const ConstantBufferManagerDx12 &) = delete;
   ConstantBufferManagerDx12 &
   operator=(const ConstantBufferManagerDx12 &) = delete;
@@ -47,9 +49,10 @@ public:
                                             void *dataToUpload) override;
 
 private:
-  struct ConstatBufferedData {
+  struct ConstantBufferedData {
     ConstantBufferHandle handle;
-    void *data;
+    RandomSizeAllocationHandle dataAllocHandle;
+    int counter = 0;
   };
 
   struct ConstantBufferData final {
@@ -87,6 +90,8 @@ private:
   static const uint32_t MAGIC_NUMBER_MASK = ~INDEX_MASK;
   static const uint32_t RESERVE_SIZE = 200;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
+  RandomSizeAllocator m_randomAlloc;
+  std::unordered_map<uint32_t, ConstantBufferedData> m_bufferedRequests;
 };
 
 } // namespace dx12
