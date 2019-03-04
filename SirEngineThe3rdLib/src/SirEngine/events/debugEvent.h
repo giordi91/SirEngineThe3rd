@@ -1,6 +1,7 @@
 #pragma once
 
 #include "SirEngine/events/event.h"
+#include "SirEngine/graphics/cpuGraphicsStructures.h"
 #include <sstream>
 
 namespace SirEngine {
@@ -21,24 +22,22 @@ private:
   int m_newLayerToShow = 0;
 };
 
-class SIR_ENGINE_API DebugDepthChanged : public Event {
+class SIR_ENGINE_API DebugRenderConfigChanged : public Event {
 public:
-  DebugDepthChanged(const float minValue, const float maxValue)
-      : m_minValue(minValue), m_maxValue(maxValue) {}
+  DebugRenderConfigChanged(DebugLayerConfig config)
+	  : m_config{config}{}
 
-  EVENT_CLASS_TYPE(DebugDepthChanged)
+  EVENT_CLASS_TYPE(DebugRenderChanged)
   EVENT_CLASS_CATEGORY(EventCategory::EventCategoryDebug);
   std::string toString() const override {
     std::stringstream s;
-    s << "DebugDepth changed: " << m_minValue << " " << m_maxValue;
+    s << "DebugDepth changed: ";
     return s.str();
   }
-  inline int getMin() const { return m_minValue; }
-  inline int getMax() const { return m_maxValue; }
+  inline DebugLayerConfig getConfig() const { return m_config; }
 
 private:
-  const float m_minValue;
-  const float m_maxValue;
+  const DebugLayerConfig m_config;
 };
 
 } // namespace SirEngine

@@ -13,11 +13,11 @@
 #include "SirEngine/graphics/nodes/DebugNode.h"
 #include "SirEngine/graphics/nodes/FinalBlitNode.h"
 #include "SirEngine/graphics/nodes/assetManagerNode.h"
+#include "SirEngine/graphics/nodes/deferredLighting.h"
 #include "SirEngine/graphics/nodes/gbufferPass.h"
+#include "SirEngine/graphics/nodes/proceduralSkybox.h"
 #include "SirEngine/graphics/postProcess/postProcessStack.h"
 #include "SirEngine/graphics/renderingContext.h"
-#include "SirEngine/graphics/nodes/deferredLighting.h"
-#include "SirEngine/graphics/nodes/proceduralSkybox.h"
 
 namespace SirEngine {
 
@@ -38,7 +38,7 @@ void Graphics3DLayer::onAttach() {
   }
 
   sphereH = globals::ASSET_MANAGER->loadAsset("data/assets/sphere.json");
-  //globals::ASSET_MANAGER->loadAsset("data/assets/plane.json");
+  globals::ASSET_MANAGER->loadAsset("data/assets/plane.json");
   dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE, currentFc);
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
 
@@ -50,7 +50,7 @@ void Graphics3DLayer::onAttach() {
   auto postProcess = new PostProcessStack();
   auto gbufferPass = new GBufferPass("GBufferPass");
   auto lighting = new DeferredLightingPass("Deferred lighting");
-  auto sky= new ProceduralSkyBoxPass("Procedural Sky");
+  auto sky = new ProceduralSkyBoxPass("Procedural Sky");
   // auto bw  =
   // postProcess->allocateRenderPass<BlackAndWhiteEffect>("BlackWhite");
   postProcess->initialize();
@@ -63,7 +63,6 @@ void Graphics3DLayer::onAttach() {
   dx12::RENDERING_GRAPH->addNode(lighting);
   dx12::RENDERING_GRAPH->addNode(sky);
   dx12::RENDERING_GRAPH->setFinalNode(finalBlit);
-
 
   dx12::RENDERING_GRAPH->connectNodes(assetNode, "matrices", gbufferPass,
                                       "matrices");
@@ -84,16 +83,13 @@ void Graphics3DLayer::onAttach() {
                                       "normal");
   dx12::RENDERING_GRAPH->connectNodes(gbufferPass, "specular", lighting,
                                       "specular");
-  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, "depth", lighting,
-                                      "depth");
+  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, "depth", lighting, "depth");
 
   dx12::RENDERING_GRAPH->connectNodes(lighting, "lighting", sky,
                                       "fullscreenPass");
-  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, "depth", sky,
-                                      "depth");
+  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, "depth", sky, "depth");
 
-  dx12::RENDERING_GRAPH->connectNodes(sky, "buffer", postProcess,
-                                      "inTexture");
+  dx12::RENDERING_GRAPH->connectNodes(sky, "buffer", postProcess, "inTexture");
 
   dx12::RENDERING_GRAPH->connectNodes(postProcess, "outTexture", finalBlit,
                                       "inTexture");
@@ -104,6 +100,7 @@ void Graphics3DLayer::onDetach() {}
 void Graphics3DLayer::onUpdate() {
 
   // setting up camera for the frame
+  globals::CONSTANT_BUFFER_MANAGER->processBufferedData();
   globals::RENDERING_CONTEX->setupCameraForFrame();
   // evaluating rendering graph
   dx12::RENDERING_GRAPH->compute();
@@ -124,6 +121,8 @@ void Graphics3DLayer::onEvent(Event &event) {
       SE_BIND_EVENT_FN(Graphics3DLayer::onDebugLayerEvent));
   dispatcher.dispatch<WindowResizeEvent>(
       SE_BIND_EVENT_FN(Graphics3DLayer::onResizeEvent));
+  dispatcher.dispatch<DebugRenderConfigChanged>(
+      SE_BIND_EVENT_FN(Graphics3DLayer::onDebugDepthChanged));
 }
 
 void Graphics3DLayer::clear() {}
@@ -191,18 +190,18 @@ bool Graphics3DLayer::onDebugLayerEvent(DebugLayerChanged &e) {
   }
   case (1):
   case (2):
-  case (3): 
+  case (3):
   case (4): {
-    // lets add debug 
+    // lets add debug
     GraphNode *debugNode = dx12::RENDERING_GRAPH->findNodeOfType("DebugNode");
     // debug already there, maybe i just need to change configuration?
     if (debugNode != nullptr) { // no debug we are good
-		static_cast<DebugNode*>(debugNode)->setDebugIndex(e.getLayer());
+      static_cast<DebugNode *>(debugNode)->setDebugIndex(e.getLayer());
       return true;
     }
     // lest add a debug node
     auto debug = new DebugNode("DebugNode");
-	debug->setDebugIndex(e.getLayer());
+    debug->setDebugIndex(e.getLayer());
     dx12::RENDERING_GRAPH->addDebugNode(debug);
     dx12::RENDERING_GRAPH->finalizeGraph();
     RenderGraphChanged *graphE = new RenderGraphChanged();
@@ -216,6 +215,15 @@ bool Graphics3DLayer::onDebugLayerEvent(DebugLayerChanged &e) {
 bool Graphics3DLayer::onResizeEvent(WindowResizeEvent &e) {
   // propagate the resize to every node of the graph
   dx12::RENDERING_GRAPH->resize(e.getWidth(), e.getHeight());
+  return true;
+}
+
+bool Graphics3DLayer::onDebugDepthChanged(DebugRenderConfigChanged &e) {
+  GraphNode *debugNode = dx12::RENDERING_GRAPH->findNodeOfType("DebugNode");
+  if (debugNode) {
+    auto *debugNodeTyped = (DebugNode *)debugNode;
+    debugNodeTyped->setConfig(e.getConfig());
+  }
   return true;
 }
 } // namespace SirEngine

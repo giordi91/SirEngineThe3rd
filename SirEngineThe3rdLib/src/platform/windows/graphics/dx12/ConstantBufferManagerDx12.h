@@ -48,6 +48,10 @@ public:
   virtual void updateConstantBufferBuffered(const ConstantBufferHandle handle,
                                             void *dataToUpload) override;
 
+  // this function should be called at the beginning of the frame, if there is
+  // any buffered constant buffer will be dealt with
+  virtual void processBufferedData() override;
+
 private:
   struct ConstantBufferedData {
     ConstantBufferHandle handle;

@@ -96,5 +96,29 @@ void ConstantBufferManagerDx12::updateConstantBufferBuffered(
          data.size);
   m_bufferedRequests[handle.handle] = buffRequest;
 }
+
+void ConstantBufferManagerDx12::processBufferedData() {
+  std::vector<int> processedIdxs;
+  int bufferedRequests = m_bufferedRequests.size();
+  processedIdxs.reserve(bufferedRequests);
+
+  for (auto &handle : m_bufferedRequests) {
+    uchar *ptr = m_randomAlloc.getPointer(handle.second.dataAllocHandle);
+    updateConstantBufferNotBuffered(handle.second.handle, ptr);
+    handle.second.counter -= 1;
+    if (handle.second.counter == 0) {
+      processedIdxs.push_back(handle.first);
+    }
+  }
+
+  //cleanup
+  int toDeleteCount =processedIdxs.size();
+  for(int i =0; i < toDeleteCount;++i)
+  {
+	  const ConstantBufferedData& data = m_bufferedRequests[processedIdxs[i]];
+	  m_randomAlloc.freeAllocation(data.dataAllocHandle);
+	  m_bufferedRequests.erase(m_bufferedRequests.find(processedIdxs[i]));
+  }
+}
 } // namespace dx12
 } // namespace SirEngine
