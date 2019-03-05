@@ -132,6 +132,7 @@ void DeferredLightingPass::compute() {
   commandList->SetGraphicsRootDescriptorTable(
       5, dx12::TEXTURE_MANAGER->getSRVDx12(specularBufferHandle).gpuHandle);
 
+  // the newer ID3DUserDefinedAnnotation API is also supported
   commandList->DrawInstanced(6, 1, 0, 0);
   m_outputPlugs[0].plugValue = m_lightBuffer.handle;
 }

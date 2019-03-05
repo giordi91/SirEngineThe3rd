@@ -26,6 +26,9 @@ file(COPY "stb/stb_image.h" DESTINATION "${CMAKE_SOURCE_DIR}/ResourceCompilerPlu
 file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/SirEngineThe3rdLib/vendors/includes/farmhash)
 file(COPY "farmhash/src/farmhash.h" DESTINATION "${CMAKE_SOURCE_DIR}/SirEngineThe3rdLib/vendors/includes/farmhash" )
 
+#pix event, might want to do this only on windows
+file(COPY "PixEvent/Include/WinPixEventRuntime" DESTINATION "${CMAKE_SOURCE_DIR}/SirEngineThe3rdLib/vendors/includes/WinPixEventRuntime")
+
 
 add_subdirectory(imgui)
 add_subdirectory(DirectXTK12)
