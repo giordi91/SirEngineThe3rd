@@ -7,8 +7,7 @@ namespace SirEngine {
 
 enum TextureFlags { DEPTH = 1, RT = 2 };
 
-enum class RenderTargetFormat { RGBA32, R11G11B10_FLOAT,R11G11B10_UNORM, };
-
+enum class RenderTargetFormat { RGBA32, R11G11B10_FLOAT,R11G11B10_UNORM,R16G16B16A16_FLOAT };
 class TextureManager {
 public:
   TextureManager() { m_nameToHandle.reserve(RESERVE_SIZE); }

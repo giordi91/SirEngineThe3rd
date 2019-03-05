@@ -3,6 +3,9 @@
 #include "SirEngine/handle.h"
 #include "platform/windows/graphics/dx12/TextureManagerDx12.h"
 #include "platform/windows/graphics/dx12/swapChain.h"
+#include "platform/windows/graphics/dx12/DX12.h"
+#include "platform/windows/graphics/dx12/rootSignatureManager.h"
+#include "platform/windows/graphics/dx12/PSOManager.h"
 
 namespace SirEngine {
 
@@ -14,6 +17,7 @@ FinalBlitNode::FinalBlitNode() : GraphNode("FinalBlit", "FinalBlit") {
   inTexture.nodePtr = this;
   inTexture.name = "inTexture";
   registerPlug(inTexture);
+
 }
 
 void FinalBlitNode::compute() {
@@ -26,6 +30,35 @@ void FinalBlitNode::compute() {
   texH.handle = source->plugValue;
 
   TextureHandle destination  = dx12::SWAP_CHAIN->currentBackBufferTexture();
-  globals::TEXTURE_MANAGER->copyTexture(texH,destination);
+  //globals::TEXTURE_MANAGER->copyTexture(texH,destination);
+
+  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
+  auto commandList = currentFc->commandList;
+
+  D3D12_RESOURCE_BARRIER barriers[2];
+  int counter = 0;
+  counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
+      texH, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, barriers, counter);
+  counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
+      destination, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, counter);
+  if (counter)
+  {
+	  commandList->ResourceBarrier(counter, barriers);
+  }
+
+  globals::TEXTURE_MANAGER->bindRenderTarget(destination, TextureHandle{});
+  dx12::DescriptorPair pair = dx12::TEXTURE_MANAGER->getSRVDx12(texH);
+
+  commandList->SetPipelineState(pso);
+  commandList->SetGraphicsRootSignature(rs);
+  commandList->SetGraphicsRootDescriptorTable(1, pair.gpuHandle);
+  commandList->DrawInstanced(6, 1, 0, 0);
+}
+
+void FinalBlitNode::initialize()
+{
+  rs = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(
+      "standardPostProcessEffect_RS");
+  pso = dx12::PSO_MANAGER->getComputePSOByName("HDRtoSDREffect_PSO");
 }
 } // namespace SirEngine

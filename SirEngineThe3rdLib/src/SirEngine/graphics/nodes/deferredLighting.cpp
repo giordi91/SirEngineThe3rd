@@ -54,9 +54,10 @@ DeferredLightingPass::DeferredLightingPass(const char *name)
 
 void DeferredLightingPass::initialize() {
 
+  // HDR Buffer
   m_lightBuffer = globals::TEXTURE_MANAGER->allocateRenderTexture(
-      globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT, RenderTargetFormat::RGBA32,
-      "lightBuffer");
+      globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT,
+      RenderTargetFormat::R16G16B16A16_FLOAT, "lightBuffer");
 
   m_light.lightColor = {1.0f, 1.0f, 1.0f, 1.0f};
   m_light.lightDir = {-1.0f, -1.0f, -1.0f, 1.0f};
@@ -111,8 +112,7 @@ void DeferredLightingPass::compute() {
       specularBufferHandle, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
       barriers, counter);
   counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
-      m_lightBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET,
-      barriers, counter);
+      m_lightBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, counter);
 
   if (counter) {
     commandList->ResourceBarrier(counter, barriers);
@@ -142,9 +142,7 @@ void DeferredLightingPass::compute() {
     h.handle = 0;                                                              \
   }
 
-void DeferredLightingPass::clear() {
-  FREE_TEXTURE_IF_VALID(m_lightBuffer)
-}
+void DeferredLightingPass::clear() { FREE_TEXTURE_IF_VALID(m_lightBuffer) }
 
 void DeferredLightingPass::resize(int, int) {
   clear();
