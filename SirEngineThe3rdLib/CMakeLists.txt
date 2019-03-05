@@ -84,5 +84,37 @@ project(SirEngineThe3rdLib)
 
 	SET(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 
+	#file(COPY "PixEvent/bin/WinPixEventRuntime.dll" DESTINATION "${CMAKE_BINARY_DIR}/bin")
+
 	target_link_libraries(${PROJECT_NAME} d3dcompiler DXGI D3D12 imgui DXTK12 farmhash)
+
+	#need to copy pix event
+	add_custom_command(
+    TARGET ${PROJECT_NAME} 
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+       ${CMAKE_SOURCE_DIR}/vendors/PixEvent/bin/WinPixEventRuntime.dll  
+        ${CMAKE_BINARY_DIR}/bin/$<CONFIGURATION>/WinPixEventRuntime.dll
+	)
+	add_custom_command(
+    TARGET ${PROJECT_NAME} 
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+       ${CMAKE_SOURCE_DIR}/vendors/PixEvent/bin/WinPixEventRuntime.lib
+        ${CMAKE_BINARY_DIR}/bin/$<CONFIGURATION>/WinPixEventRuntime.lib
+	)
+	add_custom_command(
+    TARGET ${PROJECT_NAME} 
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+       ${CMAKE_SOURCE_DIR}/vendors/PixEvent/bin/WinPixEventRuntime_UAP.lib
+        ${CMAKE_BINARY_DIR}/bin/$<CONFIGURATION>/WinPixEventRuntime_UAP.lib
+	)
+	add_custom_command(
+    TARGET ${PROJECT_NAME} 
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+       ${CMAKE_SOURCE_DIR}/vendors/PixEvent/bin/WinPixEventRuntime_UAP.dll
+        ${CMAKE_BINARY_DIR}/bin/$<CONFIGURATION>/WinPixEventRuntime_UAP.dll
+	)
 
