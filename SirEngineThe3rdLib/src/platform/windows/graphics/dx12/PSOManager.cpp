@@ -140,6 +140,7 @@ inline D3D12_DEPTH_STENCIL_DESC getDSState(const std::string &state,
   }
   if (isStateCustom(state)) {
 
+	  
     CD3DX12_DEPTH_STENCIL_DESC desc;
 	assert(jobj.find(PSO_KEY_DEPTH_STENCIL_CONFIG) != jobj.end());
     bool depthEnabled = getValueIfInJson(jobj[PSO_KEY_DEPTH_STENCIL_CONFIG], PSO_KEY_DEPTH_ENABLED, DEFAULT_BOOL);

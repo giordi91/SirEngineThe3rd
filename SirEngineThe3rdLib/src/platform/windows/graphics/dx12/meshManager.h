@@ -1,16 +1,15 @@
 #pragma once
 
 #include "DXTK12/ResourceUploadBatch.h"
+#include "SirEngine/handle.h"
 #include "SirEngine/memory/sparseMemoryPool.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/d3dx12.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include <vector>
-#include "SirEngine/handle.h"
 
 namespace SirEngine {
 namespace dx12 {
-
 
 struct MeshRuntime final {
 #if GRAPHICS_API == DX12
@@ -42,7 +41,8 @@ public:
     m_nameToHandle.reserve(RESERVE_SIZE);
     m_uploadRequests.reserve(RESERVE_SIZE);
   }
-  ~MeshManager() { assert(m_meshPool.assertEverythingDealloc()); }
+  ~MeshManager() { // assert(m_meshPool.assertEverythingDealloc());
+  }
 
   inline uint32_t getIndexCount(const MeshHandle &handle) const {
     assertMagicNumber(handle);

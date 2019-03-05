@@ -38,7 +38,7 @@ void Graphics3DLayer::onAttach() {
   }
 
   sphereH = globals::ASSET_MANAGER->loadAsset("data/assets/sphere.json");
-  globals::ASSET_MANAGER->loadAsset("data/assets/plane.json");
+  //globals::ASSET_MANAGER->loadAsset("data/assets/plane.json");
   dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE, currentFc);
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
 
