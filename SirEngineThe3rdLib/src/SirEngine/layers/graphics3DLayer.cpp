@@ -16,6 +16,7 @@
 #include "SirEngine/graphics/nodes/deferredLighting.h"
 #include "SirEngine/graphics/nodes/gbufferPass.h"
 #include "SirEngine/graphics/nodes/proceduralSkybox.h"
+#include "SirEngine/graphics/postProcess/effects/gammaAndToneMappingEffect.h"
 #include "SirEngine/graphics/postProcess/postProcessStack.h"
 #include "SirEngine/graphics/renderingContext.h"
 
@@ -38,7 +39,7 @@ void Graphics3DLayer::onAttach() {
   }
 
   sphereH = globals::ASSET_MANAGER->loadAsset("data/assets/sphere.json");
-  //globals::ASSET_MANAGER->loadAsset("data/assets/plane.json");
+  // globals::ASSET_MANAGER->loadAsset("data/assets/plane.json");
   dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE, currentFc);
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
 
@@ -52,7 +53,8 @@ void Graphics3DLayer::onAttach() {
   auto lighting = new DeferredLightingPass("Deferred lighting");
   auto sky = new ProceduralSkyBoxPass("Procedural Sky");
   // auto bw  =
-  // postProcess->allocateRenderPass<BlackAndWhiteEffect>("BlackWhite");
+  auto gamma = postProcess->allocateRenderPass<GammaAndToneMappingEffect>(
+      "GammaToneMapping");
   postProcess->initialize();
 
   // temporary graph for testing

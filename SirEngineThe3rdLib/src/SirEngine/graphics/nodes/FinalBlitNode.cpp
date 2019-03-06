@@ -1,11 +1,12 @@
 
 #include "SirEngine/graphics/nodes/FinalBlitNode.h"
 #include "SirEngine/handle.h"
-#include "platform/windows/graphics/dx12/TextureManagerDx12.h"
-#include "platform/windows/graphics/dx12/swapChain.h"
+#include "WinPixEventRuntime/WinPixEventRuntime/pix3.h"
 #include "platform/windows/graphics/dx12/DX12.h"
-#include "platform/windows/graphics/dx12/rootSignatureManager.h"
 #include "platform/windows/graphics/dx12/PSOManager.h"
+#include "platform/windows/graphics/dx12/TextureManagerDx12.h"
+#include "platform/windows/graphics/dx12/rootSignatureManager.h"
+#include "platform/windows/graphics/dx12/swapChain.h"
 
 namespace SirEngine {
 
@@ -17,7 +18,6 @@ FinalBlitNode::FinalBlitNode() : GraphNode("FinalBlit", "FinalBlit") {
   inTexture.nodePtr = this;
   inTexture.name = "inTexture";
   registerPlug(inTexture);
-
 }
 
 void FinalBlitNode::compute() {
@@ -29,8 +29,8 @@ void FinalBlitNode::compute() {
   TextureHandle texH;
   texH.handle = source->plugValue;
 
-  TextureHandle destination  = dx12::SWAP_CHAIN->currentBackBufferTexture();
-  //globals::TEXTURE_MANAGER->copyTexture(texH,destination);
+  TextureHandle destination = dx12::SWAP_CHAIN->currentBackBufferTexture();
+  // globals::TEXTURE_MANAGER->copyTexture(texH,destination);
 
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
@@ -41,9 +41,8 @@ void FinalBlitNode::compute() {
       texH, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, barriers, counter);
   counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
       destination, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, counter);
-  if (counter)
-  {
-	  commandList->ResourceBarrier(counter, barriers);
+  if (counter) {
+    commandList->ResourceBarrier(counter, barriers);
   }
 
   globals::TEXTURE_MANAGER->bindRenderTarget(destination, TextureHandle{});
@@ -52,11 +51,13 @@ void FinalBlitNode::compute() {
   commandList->SetPipelineState(pso);
   commandList->SetGraphicsRootSignature(rs);
   commandList->SetGraphicsRootDescriptorTable(1, pair.gpuHandle);
+  // PIXBeginEvent(0, "EndOfFrameBlit");
+  PIXBeginEvent(commandList, 0, "EndOfFrameBlit");
   commandList->DrawInstanced(6, 1, 0, 0);
+  PIXEndEvent(commandList);
 }
 
-void FinalBlitNode::initialize()
-{
+void FinalBlitNode::initialize() {
   rs = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(
       "standardPostProcessEffect_RS");
   pso = dx12::PSO_MANAGER->getComputePSOByName("HDRtoSDREffect_PSO");

@@ -72,6 +72,8 @@ project(SirEngineThe3rdLib)
             ${SHADERS_COMMON_FILES}
             PROPERTIES HEADER_FILE_ONLY TRUE
          )
+
+	link_directories(${CMAKE_BINARY_DIR}/bin/$<CONFIGURATION>)
     #adding the executable
     add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES} ${INCLUDES_FILES} ${ASSETS_FILES}
 	${MATERIAL_FILES}
@@ -86,7 +88,7 @@ project(SirEngineThe3rdLib)
 
 	#file(COPY "PixEvent/bin/WinPixEventRuntime.dll" DESTINATION "${CMAKE_BINARY_DIR}/bin")
 
-	target_link_libraries(${PROJECT_NAME} d3dcompiler DXGI D3D12 imgui DXTK12 farmhash)
+	target_link_libraries(${PROJECT_NAME} d3dcompiler DXGI D3D12 imgui DXTK12 farmhash WinPixEventRuntime)
 
 	#need to copy pix event
 	add_custom_command(

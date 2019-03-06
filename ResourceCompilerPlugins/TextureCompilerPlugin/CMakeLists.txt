@@ -24,6 +24,7 @@ project(textureCompilerPlugin)
 	#making sure to add the common cpp flags, that are defined in the main cpp file
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_CXX_FLAGS}")
 
+	link_directories(${CMAKE_BINARY_DIR}/bin/$<CONFIGURATION>)
 
     #adding the executable
     add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES} ${INCLUDES_FILES})

@@ -25,6 +25,7 @@ project(Tests)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_CXX_FLAGS}")
 
 
+	link_directories(${CMAKE_BINARY_DIR}/bin/$<CONFIGURATION>)
     #adding the executable
     add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 	SET(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)

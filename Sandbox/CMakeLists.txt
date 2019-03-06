@@ -24,10 +24,11 @@ project(Sandbox)
 
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_CXX_FLAGS}")
 
+	link_directories(${CMAKE_BINARY_DIR}/bin/$<CONFIGURATION>)
     #adding the executable
 	add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${INCLUDES_FILES})
 	SET(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 
 
-	target_link_libraries(${PROJECT_NAME} d3dcompiler DXGI D3D12 SirEngineThe3rdLib)
+	target_link_libraries(${PROJECT_NAME} d3dcompiler DXGI D3D12 SirEngineThe3rdLib WinPixEventRuntime)
 	#d3dcompiler.lib;DXGI.lib;D3D12.lib;
