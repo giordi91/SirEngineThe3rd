@@ -1,13 +1,13 @@
 #pragma once
 #include "SirEngine/graphics/nodeGraph.h"
-#include <vector>
 #include "SirEngine/handle.h"
+#include <vector>
 
 namespace SirEngine {
 
 class PostProcessEffect {
 public:
-  PostProcessEffect(const char *name) : m_name(name) {}
+  PostProcessEffect(const char *name, const char* type) : m_name(name), m_type(type) {}
   virtual ~PostProcessEffect() = default;
   virtual void initialize() = 0;
   virtual void render(TextureHandle input, TextureHandle output) = 0;
@@ -15,10 +15,12 @@ public:
   inline const char *getName() const { return m_name; }
   inline void setEnable(const bool enabled) { m_enabled = enabled; }
   inline bool isEnabled() const { return m_enabled; }
+  inline const char* getType() const {return m_type;}
 
 protected:
   const char *m_name;
-  bool m_enabled= true;
+  const char* m_type;
+  bool m_enabled = true;
 };
 
 class PostProcessStack final : public GraphNode {
@@ -34,14 +36,15 @@ public:
   template <typename T> T *allocateRenderPass(const char *name) {
     T *pass = new T(name);
     m_stack.push_back(pass);
-	return pass;
+    return pass;
   }
+  const std::vector<PostProcessEffect *> &getEffects() const { return m_stack; }
 
 private:
   std::vector<PostProcessEffect *> m_stack;
   std::vector<TextureHandle> m_buffers;
   TextureHandle handles[2];
-  int m_internalCounter =0;
+  int m_internalCounter = 0;
 };
 
 } // namespace SirEngine
