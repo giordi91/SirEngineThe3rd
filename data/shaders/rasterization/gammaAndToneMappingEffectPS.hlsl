@@ -16,11 +16,10 @@ float4 PS(FullScreenVertexOut pin) : SV_Target
 {
     float3 color = sourceTexture.Sample(gsamLinearClamp, pin.uv).xyz;
 	//exposure tone mapping
-	float3 mapped = float3(1.0f,1.0f,1.0f) - exp(-color* g_config.exposure);
+	float3 mapped = float3(1.0f,1.0f,1.0f) -exp(-color* g_config.exposure);
 	//gamma
 	mapped = pow(mapped, g_config.gammaInverse);
 	return float4(mapped,1.0f);
-	//return float4(color,1.0f);
 }
 
 

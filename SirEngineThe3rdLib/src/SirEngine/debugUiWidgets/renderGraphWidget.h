@@ -15,6 +15,7 @@ struct RenderGraphWidget final {
   // this is a pointer mostly so we can have the forward declaration
   // without need to leak the graph include and all the imgui stuff
   GraphStatus *status = nullptr;
+  Graph* m_graph;
   bool debugRendering = true;
   int currentDebugLayer = 0;
 

@@ -12,8 +12,25 @@
 #include "SirEngine/application.h"
 #include "SirEngine/events/debugEvent.h"
 #include "SirEngine/globals.h"
+#include "SirEngine/graphics/postProcess/effects/gammaAndToneMappingEffect.h"
+#include "SirEngine/graphics/postProcess/postProcessStack.h"
+
 namespace SirEngine {
 namespace debug {
+
+enum class PostProcessTypeDebug { NONE, GAMMA_TONE_MAPPING };
+
+const std::unordered_map<std::string, PostProcessTypeDebug>
+    POST_PROCESS_TYPE_TO_ENUM{{"GammaAndToneMappingEffect",
+                               PostProcessTypeDebug::GAMMA_TONE_MAPPING}};
+
+PostProcessTypeDebug getPostProcessDebugType(const std::string &name) {
+  auto found = POST_PROCESS_TYPE_TO_ENUM.find(name);
+  if (found != POST_PROCESS_TYPE_TO_ENUM.end()) {
+    return found->second;
+  }
+  return PostProcessTypeDebug::NONE;
+}
 
 struct Node {
   int ID;
@@ -311,6 +328,7 @@ struct NodeQueue {
 RenderGraphWidget::~RenderGraphWidget() { delete status; }
 
 void RenderGraphWidget::initialize(Graph *graph) {
+  m_graph = graph;
 
   m_debugConfig.depthMin = 1.0f;
   m_debugConfig.depthMax = 0.0f;
@@ -444,11 +462,11 @@ void RenderGraphWidget::render() {
   switch (currentDebugLayer) {
     // depth
   case (4): {
-    ImGui::InputFloat("depthMinStart", &depthMinStart,0,0,"%0.5f");
-    ImGui::InputFloat("depthMinEnd", &depthMinEnd,0,0,"%0.5f");
+    ImGui::InputFloat("depthMinStart", &depthMinStart, 0, 0, "%0.5f");
+    ImGui::InputFloat("depthMinEnd", &depthMinEnd, 0, 0, "%0.5f");
 
-    ImGui::InputFloat("depthMaxStart", &depthMaxStart,0,0,"%0.5f");
-    ImGui::InputFloat("depthMaxEnd", &depthMaxEnd,0,0,"%0.5f");
+    ImGui::InputFloat("depthMaxStart", &depthMaxStart, 0, 0, "%0.5f");
+    ImGui::InputFloat("depthMaxEnd", &depthMaxEnd, 0, 0, "%0.5f");
     // we want to display a range for remapping the color
     bool minChanged = ImGui::SliderFloat("min depth", &m_debugConfig.depthMin,
                                          depthMinStart, depthMinEnd, "%.5f");
@@ -462,9 +480,42 @@ void RenderGraphWidget::render() {
   }
   }
 
-  if (debugLayerValueChanged) {
-    SE_CORE_INFO("value changed {0}", currentDebugLayer);
+  // lets render post process stack configuration
+  if (ImGui::CollapsingHeader("Post process stack")) {
+    PostProcessStack *stack = dynamic_cast<PostProcessStack *>(
+        m_graph->findNodeOfType("PostProcessStack"));
+    if (stack != nullptr) {
+      const std::vector<PostProcessEffect *> &effects = stack->getEffects();
+      for (const auto &effect : effects) {
 
+        PostProcessTypeDebug type = getPostProcessDebugType(effect->getType());
+        SE_CORE_INFO("Type {0}", (int)type);
+        if (type == PostProcessTypeDebug::NONE) {
+          continue;
+        }
+        if (ImGui::CollapsingHeader(effect->getName())) {
+          switch (type) {
+          case (PostProcessTypeDebug::GAMMA_TONE_MAPPING): {
+            auto *typedEffect = (GammaAndToneMappingEffect *)(effect);
+            GammaToneMappingConfig& config = typedEffect->getConfig();
+            bool exposure =
+                ImGui::SliderFloat("exposure", &config.exposure, 0.0f, 10.0f);
+            bool gamma =
+                ImGui::SliderFloat("gamma", &config.gamma, 0.0f, 10.0f);
+            if (exposure | gamma) {
+              typedEffect->setConfigDirty();
+            }
+
+            break;
+          }
+          default:;
+          }
+        }
+      }
+    }
+  }
+
+  if (debugLayerValueChanged) {
     // TODO use a stack allocator for this?
     auto *event = new DebugLayerChanged(currentDebugLayer);
     globals::APPLICATION->queueEventForEndOfFrame(event);
@@ -474,7 +525,6 @@ void RenderGraphWidget::render() {
   if (pressed) {
     status->opened = !status->opened;
   }
-
   renderImguiGraph(status);
 
   if (generateDebugEvent) {
