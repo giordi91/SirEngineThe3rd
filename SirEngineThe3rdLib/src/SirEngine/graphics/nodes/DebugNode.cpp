@@ -1,6 +1,6 @@
 #include "SirEngine/graphics/nodes/DebugNode.h"
-#include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
 #include "SirEngine/handle.h"
+#include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
 #include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/TextureManagerDx12.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
@@ -24,7 +24,8 @@ DebugNode::DebugNode(const char *name) : GraphNode(name, "DebugNode") {
   registerPlug(outTexture);
 }
 void blitBuffer(const TextureHandle input, const TextureHandle handleToWriteOn,
-                ID3D12PipelineState *pso, ID3D12RootSignature *rs, const ConstantBufferHandle configHandle) {
+                ID3D12PipelineState *pso, ID3D12RootSignature *rs,
+                const ConstantBufferHandle configHandle) {
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
 
@@ -50,11 +51,11 @@ void blitBuffer(const TextureHandle input, const TextureHandle handleToWriteOn,
       dx12::CONSTANT_BUFFER_MANAGER->getConstantBufferDx12Handle(configHandle)
           .gpuHandle);
 
-
   commandList->DrawInstanced(6, 1, 0, 0);
 }
 
-void blitGBuffeer(const TextureHandle handleToWriteOn, const ConstantBufferHandle configHandle) {
+void blitGBuffeer(const TextureHandle handleToWriteOn,
+                  const ConstantBufferHandle configHandle) {
   // we need the shader to extract the information of the gbuffer
   ID3D12PipelineState *pso =
       dx12::PSO_MANAGER->getComputePSOByName("gbufferDebugPSO");
@@ -67,7 +68,8 @@ void blitGBuffeer(const TextureHandle handleToWriteOn, const ConstantBufferHandl
   assert(input.handle != handleToWriteOn.handle);
   blitBuffer(input, handleToWriteOn, pso, rs, configHandle);
 }
-void blitNormalBuffer(const TextureHandle handleToWriteOn, const ConstantBufferHandle configHandle) {
+void blitNormalBuffer(const TextureHandle handleToWriteOn,
+                      const ConstantBufferHandle configHandle) {
   // we need the shader to extract the information of the gbuffer
   ID3D12PipelineState *pso =
       dx12::PSO_MANAGER->getComputePSOByName("normalBufferDebugPSO");
@@ -79,7 +81,8 @@ void blitNormalBuffer(const TextureHandle handleToWriteOn, const ConstantBufferH
   assert(input.handle != handleToWriteOn.handle);
   blitBuffer(input, handleToWriteOn, pso, rs, configHandle);
 }
-void blitSpecularBuffer(const TextureHandle handleToWriteOn, const ConstantBufferHandle configHandle) {
+void blitSpecularBuffer(const TextureHandle handleToWriteOn,
+                        const ConstantBufferHandle configHandle) {
   // we need the shader to extract the information of the gbuffer
   ID3D12PipelineState *pso =
       dx12::PSO_MANAGER->getComputePSOByName("specularBufferDebugPSO");
@@ -89,9 +92,10 @@ void blitSpecularBuffer(const TextureHandle handleToWriteOn, const ConstantBuffe
   TextureHandle input = globals::DEBUG_FRAME_DATA->specularBuffer;
   assert(input.isHandleValid());
   assert(input.handle != handleToWriteOn.handle);
-  blitBuffer(input, handleToWriteOn, pso, rs,configHandle);
+  blitBuffer(input, handleToWriteOn, pso, rs, configHandle);
 }
-void blitDepthBuffer(const TextureHandle handleToWriteOn,const ConstantBufferHandle configHandle) {
+void blitDepthBuffer(const TextureHandle handleToWriteOn,
+                     const ConstantBufferHandle configHandle) {
   // we need the shader to extract the information of the gbuffer
   ID3D12PipelineState *pso =
       dx12::PSO_MANAGER->getComputePSOByName("depthBufferDebugPSO");
@@ -101,25 +105,25 @@ void blitDepthBuffer(const TextureHandle handleToWriteOn,const ConstantBufferHan
   TextureHandle input = globals::DEBUG_FRAME_DATA->gbufferDepth;
   assert(input.isHandleValid());
   assert(input.handle != handleToWriteOn.handle);
-  blitBuffer(input, handleToWriteOn, pso, rs,configHandle);
+  blitBuffer(input, handleToWriteOn, pso, rs, configHandle);
 }
 
 void DebugNode::blitDebugFrame(const TextureHandle handleToWriteOn) {
   switch (m_index) {
   case (DebugIndex::GBUFFER): {
-    blitGBuffeer(handleToWriteOn,m_constBufferHandle);
+    blitGBuffeer(handleToWriteOn, m_constBufferHandle);
     break;
   }
   case (DebugIndex::NORMAL_BUFFER): {
-    blitNormalBuffer(handleToWriteOn,m_constBufferHandle);
+    blitNormalBuffer(handleToWriteOn, m_constBufferHandle);
     break;
   }
   case (DebugIndex::SPECULAR_BUFFER): {
-    blitSpecularBuffer(handleToWriteOn,m_constBufferHandle);
+    blitSpecularBuffer(handleToWriteOn, m_constBufferHandle);
     break;
   }
   case (DebugIndex::GBUFFER_DEPTH): {
-    blitDepthBuffer(handleToWriteOn,m_constBufferHandle);
+    blitDepthBuffer(handleToWriteOn, m_constBufferHandle);
     break;
   }
   }

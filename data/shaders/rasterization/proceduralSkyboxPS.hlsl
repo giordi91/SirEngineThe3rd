@@ -12,9 +12,15 @@ float4 PS(FullScreenVertexOut pin) : SV_Target
     //float worldDir = dot(float3(pin.clipPos, 0.0f), float3(g_cameraBuffer.VPinverse[0].y,
     //g_cameraBuffer.VPinverse[1].y, g_cameraBuffer.VPinverse[2].y) );
 
-    float3 ground = float3(0.412f, 0.380, 0.357);
-    float3 skyTop = float3(0.357f, 0.451f, 0.6f);
-    float3 skybottom = float3(0.906f, 1.0f, 1.0f);
+	//old
+    //float3 ground = float3(0.412f, 0.380, 0.357);
+    //float3 skyTop = float3(0.357f, 0.451f, 0.6f);
+    //float3 skybottom = float3(0.906f, 1.0f, 1.0f);
+
+	//degammad color
+    float3 ground = float3(0.142f, 0.119, 0.103);
+    float3 skyTop = float3(0.103f, 0.173f, 0.325f);
+    float3 skybottom = float3(0.804f, 1.0f, 1.0f);
 
     float bottomGradientDiffusion = 15.0f;
     float topGradientDiffiusion= 2.0f;

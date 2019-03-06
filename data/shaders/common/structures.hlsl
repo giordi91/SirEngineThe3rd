@@ -1,4 +1,4 @@
-#ifndef STRUCTURES_HLSL 
+#ifndef STRUCTURES_HLSL
 #define STRUCTURES_HLSL
 
 struct CameraBuffer {
@@ -32,9 +32,15 @@ struct PhongMaterial {
   float padding3;
 };
 
-struct DebugLayerConfig 
-{
-	float depthMin;
-	float depthMax;
+struct DebugLayerConfig {
+  float depthMin;
+  float depthMax;
+};
+
+struct GammaToneMappingConfig {
+  float exposure;
+  float gamma;
+  float gammaInverse;
+  float padding;
 };
 #endif
