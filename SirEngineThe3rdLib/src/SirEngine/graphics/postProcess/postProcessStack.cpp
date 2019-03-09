@@ -7,6 +7,7 @@ namespace SirEngine {
 
 PostProcessStack::PostProcessStack()
     : GraphNode("PostProcessStack", "PostProcessStack") {
+
   // lets create the plugs
   Plug inTexture;
   inTexture.plugValue = 0;

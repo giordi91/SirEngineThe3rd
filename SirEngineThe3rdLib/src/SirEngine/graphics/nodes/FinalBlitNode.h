@@ -11,8 +11,8 @@ public:
   virtual void compute()override;
   virtual void initialize() override;
 private:
-	ID3D12RootSignature* rs = nullptr;
-	ID3D12PipelineState* pso = nullptr;
+	ID3D12RootSignature* m_rs = nullptr;
+	ID3D12PipelineState* m_pso = nullptr;
 };
 
 } // namespace SirEngine

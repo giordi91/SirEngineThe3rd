@@ -43,7 +43,7 @@ public:
 private:
   std::vector<PostProcessEffect *> m_stack;
   std::vector<TextureHandle> m_buffers;
-  TextureHandle handles[2];
+  TextureHandle handles[2]{};
   int m_internalCounter = 0;
 };
 
