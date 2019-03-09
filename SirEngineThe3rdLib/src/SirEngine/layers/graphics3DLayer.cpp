@@ -52,8 +52,8 @@ void Graphics3DLayer::onAttach() {
   auto gbufferPass = new GBufferPass("GBufferPass");
   auto lighting = new DeferredLightingPass("Deferred lighting");
   auto sky = new ProceduralSkyBoxPass("Procedural Sky");
-  // auto bw  =
-  auto gamma = postProcess->allocateRenderPass<GammaAndToneMappingEffect>(
+
+  postProcess->allocateRenderPass<GammaAndToneMappingEffect>(
       "GammaToneMapping");
   postProcess->initialize();
 

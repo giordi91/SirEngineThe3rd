@@ -1,5 +1,6 @@
 
 #include "SirEngine/graphics/nodes/FinalBlitNode.h"
+#include "SirEngine/graphics/debugAnnotations.h"
 #include "SirEngine/handle.h"
 #include "WinPixEventRuntime/WinPixEventRuntime/pix3.h"
 #include "platform/windows/graphics/dx12/DX12.h"
@@ -22,6 +23,7 @@ FinalBlitNode::FinalBlitNode() : GraphNode("FinalBlit", "FinalBlit") {
 
 void FinalBlitNode::compute() {
   // get the render texture
+  annotateGraphicsBegin("EndOfFrameBlit");
 
   auto &conn = m_connections[&m_inputPlugs[0]];
   assert(conn.size() == 1 && "too many input connections");
@@ -48,18 +50,18 @@ void FinalBlitNode::compute() {
   globals::TEXTURE_MANAGER->bindRenderTarget(destination, TextureHandle{});
   dx12::DescriptorPair pair = dx12::TEXTURE_MANAGER->getSRVDx12(texH);
 
-  commandList->SetPipelineState(pso);
-  commandList->SetGraphicsRootSignature(rs);
+  commandList->SetPipelineState(m_pso);
+  commandList->SetGraphicsRootSignature(m_rs);
   commandList->SetGraphicsRootDescriptorTable(1, pair.gpuHandle);
-  // PIXBeginEvent(0, "EndOfFrameBlit");
-  PIXBeginEvent(commandList, 0, "EndOfFrameBlit");
+
+
   commandList->DrawInstanced(6, 1, 0, 0);
-  PIXEndEvent(commandList);
+  annotateGraphicsEnd();
 }
 
 void FinalBlitNode::initialize() {
-  rs = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(
+  m_rs = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(
       "standardPostProcessEffect_RS");
-  pso = dx12::PSO_MANAGER->getComputePSOByName("HDRtoSDREffect_PSO");
+  m_pso = dx12::PSO_MANAGER->getComputePSOByName("HDRtoSDREffect_PSO");
 }
 } // namespace SirEngine

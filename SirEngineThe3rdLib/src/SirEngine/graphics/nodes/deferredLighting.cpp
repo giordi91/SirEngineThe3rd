@@ -6,6 +6,7 @@
 #include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
 #include "platform/windows/graphics/dx12/textureManagerDx12.h"
+#include "SirEngine/graphics/debugAnnotations.h"
 
 namespace SirEngine {
 DeferredLightingPass::DeferredLightingPass(const char *name)
@@ -83,6 +84,8 @@ getInputConnection(std::unordered_map<const Plug *, std::vector<Plug *>> &conns,
 
 void DeferredLightingPass::compute() {
 
+  annotateGraphicsBegin("DeferredLightingPass");
+
   TextureHandle gbufferHandle =
       getInputConnection(m_connections, &m_inputPlugs[0]);
   TextureHandle normalBufferHandle =
@@ -135,6 +138,7 @@ void DeferredLightingPass::compute() {
   // the newer ID3DUserDefinedAnnotation API is also supported
   commandList->DrawInstanced(6, 1, 0, 0);
   m_outputPlugs[0].plugValue = m_lightBuffer.handle;
+  annotateGraphicsEnd();
 }
 
 #define FREE_TEXTURE_IF_VALID(h)                                               \

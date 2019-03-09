@@ -1,5 +1,6 @@
 #include "SirEngine/graphics/nodes/gbufferPass.h"
 #include "SirEngine/assetManager.h"
+#include "SirEngine/graphics/debugAnnotations.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
 #include "platform/windows/graphics/dx12/DX12.h"
@@ -84,6 +85,9 @@ void GBufferPass::initialize() {
 }
 
 void GBufferPass::compute() {
+
+  annotateGraphicsBegin("GBufferPass");
+
   // meshes connections
   auto &meshConn = m_connections[&m_inputPlugs[1]];
   assert(meshConn.size() == 1 && "too many input connections");
@@ -126,7 +130,7 @@ void GBufferPass::compute() {
     commandList->ResourceBarrier(counter, barriers);
   }
 
-  globals::TEXTURE_MANAGER->clearDepth(m_depth,0.0f);
+  globals::TEXTURE_MANAGER->clearDepth(m_depth, 0.0f);
   float color[4] = {0.0f, 0.0f, 0.0f, 1.0f};
   globals::TEXTURE_MANAGER->clearRT(m_geometryBuffer, color);
   globals::TEXTURE_MANAGER->clearRT(m_normalBuffer, color);
@@ -162,6 +166,7 @@ void GBufferPass::compute() {
   globals::DEBUG_FRAME_DATA->specularBuffer = m_specularBuffer;
   globals::DEBUG_FRAME_DATA->gbufferDepth = m_depth;
 #endif
+  annotateGraphicsEnd();
 }
 
 #define FREE_TEXTURE_IF_VALID(h)                                               \
