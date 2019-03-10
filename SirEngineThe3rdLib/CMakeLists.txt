@@ -93,28 +93,28 @@ project(SirEngineThe3rdLib)
 	#need to copy pix event
 	add_custom_command(
     TARGET ${PROJECT_NAME} 
-    POST_BUILD
+    PRE_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy
        ${CMAKE_SOURCE_DIR}/vendors/PixEvent/bin/WinPixEventRuntime.dll  
         ${CMAKE_BINARY_DIR}/bin/$<CONFIGURATION>/WinPixEventRuntime.dll
 	)
 	add_custom_command(
     TARGET ${PROJECT_NAME} 
-    POST_BUILD
+    PRE_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy
        ${CMAKE_SOURCE_DIR}/vendors/PixEvent/bin/WinPixEventRuntime.lib
         ${CMAKE_BINARY_DIR}/bin/$<CONFIGURATION>/WinPixEventRuntime.lib
 	)
 	add_custom_command(
     TARGET ${PROJECT_NAME} 
-    POST_BUILD
+    PRE_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy
        ${CMAKE_SOURCE_DIR}/vendors/PixEvent/bin/WinPixEventRuntime_UAP.lib
         ${CMAKE_BINARY_DIR}/bin/$<CONFIGURATION>/WinPixEventRuntime_UAP.lib
 	)
 	add_custom_command(
     TARGET ${PROJECT_NAME} 
-    POST_BUILD
+    PRE_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy
        ${CMAKE_SOURCE_DIR}/vendors/PixEvent/bin/WinPixEventRuntime_UAP.dll
         ${CMAKE_BINARY_DIR}/bin/$<CONFIGURATION>/WinPixEventRuntime_UAP.dll
