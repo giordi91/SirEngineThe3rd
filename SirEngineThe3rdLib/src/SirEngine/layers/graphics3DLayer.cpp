@@ -19,6 +19,7 @@
 #include "SirEngine/graphics/postProcess/effects/gammaAndToneMappingEffect.h"
 #include "SirEngine/graphics/postProcess/postProcessStack.h"
 #include "SirEngine/graphics/renderingContext.h"
+#include "SirEngine/graphics/nodes/gbufferPassPBR.h"
 
 namespace SirEngine {
 
@@ -50,7 +51,8 @@ void Graphics3DLayer::onAttach() {
   auto finalBlit = new FinalBlitNode();
   // auto simpleForward = new SimpleForward("simpleForward");
   auto postProcess = new PostProcessStack();
-  auto gbufferPass = new GBufferPass("GBufferPass");
+  //auto gbufferPass = new GBufferPass("GBufferPass");
+  auto gbufferPass = new GBufferPassPBR("GBufferPassPBR");
   auto lighting = new DeferredLightingPass("Deferred lighting");
   auto sky = new ProceduralSkyBoxPass("Procedural Sky");
 
