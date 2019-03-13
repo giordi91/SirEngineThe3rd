@@ -17,14 +17,20 @@ struct MaterialRuntime final {
 #if GRAPHICS_API == DX12
   D3D12_GPU_DESCRIPTOR_HANDLE albedo;
   D3D12_GPU_DESCRIPTOR_HANDLE normal;
+  D3D12_GPU_DESCRIPTOR_HANDLE metallic;
+  D3D12_GPU_DESCRIPTOR_HANDLE roughness;
 #endif
   uint32_t shaderFlags = 0;
 };
 struct MaterialDataHandles {
   TextureHandle albedo;
   TextureHandle normal;
+  TextureHandle metallic;
+  TextureHandle roughness;
   dx12::DescriptorPair albedoSrv;
   dx12::DescriptorPair normalSrv;
+  dx12::DescriptorPair metallicSrv;
+  dx12::DescriptorPair roughnessSrv;
   ConstantBufferHandle cbHandle;
 };
 struct Material final {
@@ -45,7 +51,7 @@ struct Material final {
   float padding;
   float padding2;
 };
-enum SHADER_PASS_FLAGS { FORWARD = 1 };
+enum SHADER_PASS_FLAGS { FORWARD = 1 << 0, DEFERRED = 1 << 1, PBR = 1 << 2 };
 
 class MaterialManager final {
 

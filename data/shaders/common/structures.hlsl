@@ -25,7 +25,7 @@ struct PhongMaterial {
   float4 kd;
   float4 ka;
   float4 ks;
-  // todo padd shiness into ka.w
+  //TODO pad shiness into ka.w
   float shiness;
   float reflective;
   float padding2;

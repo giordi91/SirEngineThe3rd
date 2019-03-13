@@ -12,12 +12,19 @@ namespace materialKeys {
 static const char *KD = "kd";
 static const char *KS = "ks";
 static const char *KA = "ka";
+static const char *PBR = "pbr";
 static const char *SHINESS = "shiness";
 static const char *ALBEDO = "albedo";
 static const char *NORMAL = "normal";
+static const char *METALLIC = "metallic";
+static const char *ROUGHNESS = "roughness";
 static const char *FLAGS = "flags";
 static const std::unordered_map<std::string, SirEngine::SHADER_PASS_FLAGS>
-    STRING_TO_SHADER_FLAG{{"forward", SirEngine::SHADER_PASS_FLAGS::FORWARD}};
+    STRING_TO_SHADER_FLAG{
+        {"forward", SirEngine::SHADER_PASS_FLAGS::FORWARD},
+        {"deferred", SirEngine::SHADER_PASS_FLAGS::DEFERRED},
+        {"pbr", SirEngine::SHADER_PASS_FLAGS::PBR},
+    };
 
 } // namespace materialKeys
 
@@ -62,6 +69,7 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   DirectX::XMFLOAT4 kd = getValueIfInJson(jobj, materialKeys::KD, zero);
   DirectX::XMFLOAT4 ka = getValueIfInJson(jobj, materialKeys::KA, zero);
   DirectX::XMFLOAT4 ks = getValueIfInJson(jobj, materialKeys::KS, zero);
+  DirectX::XMFLOAT4 pbr = getValueIfInJson(jobj, materialKeys::PBR, zero);
   float zeroFloat = 0.0f;
   float shiness = getValueIfInJson(jobj, materialKeys::SHINESS, zeroFloat);
 
@@ -70,9 +78,15 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
       getValueIfInJson(jobj, materialKeys::ALBEDO, empty);
   const std::string normalName =
       getValueIfInJson(jobj, materialKeys::NORMAL, empty);
+  const std::string metallicName =
+      getValueIfInJson(jobj, materialKeys::METALLIC, empty);
+  const std::string roughnessName =
+      getValueIfInJson(jobj, materialKeys::ROUGHNESS, empty);
 
   TextureHandle albedoTex{0};
   TextureHandle normalTex{0};
+  TextureHandle metallicTex{0};
+  TextureHandle roughnessTex{0};
 
   if (!albedoName.empty()) {
     albedoTex = dx12::TEXTURE_MANAGER->loadTexture(albedoName.c_str());
@@ -81,6 +95,16 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   }
   if (!normalName.empty()) {
     normalTex = dx12::TEXTURE_MANAGER->loadTexture(normalName.c_str());
+  } else {
+    // TODO provide white texture as default;
+  }
+  if (!metallicName.empty()) {
+    metallicTex = dx12::TEXTURE_MANAGER->loadTexture(metallicName.c_str());
+  } else {
+    // TODO provide white texture as default;
+  }
+  if (!roughnessName.empty()) {
+    roughnessTex = dx12::TEXTURE_MANAGER->loadTexture(roughnessName.c_str());
   } else {
     // TODO provide white texture as default;
   }
@@ -102,6 +126,8 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   MaterialDataHandles texHandles;
   texHandles.albedo = albedoTex;
   texHandles.normal = normalTex;
+  texHandles.metallic = metallicTex;
+  texHandles.roughness = roughnessTex;
 
   if (albedoTex.handle != 0) {
     texHandles.albedoSrv = dx12::TEXTURE_MANAGER->getSRVDx12(albedoTex);
@@ -109,12 +135,20 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   if (normalTex.handle != 0) {
     texHandles.normalSrv = dx12::TEXTURE_MANAGER->getSRVDx12(normalTex);
   }
+  if (metallicTex.handle != 0) {
+    texHandles.metallicSrv = dx12::TEXTURE_MANAGER->getSRVDx12(metallicTex);
+  }
+  if (roughnessTex.handle != 0) {
+    texHandles.roughnessSrv = dx12::TEXTURE_MANAGER->getSRVDx12(roughnessTex);
+  }
   MaterialRuntime matCpu;
   matCpu.albedo = texHandles.albedoSrv.gpuHandle;
   matCpu.normal = texHandles.normalSrv.gpuHandle;
+  matCpu.metallic= texHandles.metallicSrv.gpuHandle;
+  matCpu.roughness= texHandles.roughnessSrv.gpuHandle;
 
   // we need to allocate  constant buffer
-  // TODO should this be static? investigate
+  // TODO should this be static constant buffer? investigate
   texHandles.cbHandle =
       globals::CONSTANT_BUFFER_MANAGER->allocateDynamic(sizeof(Material), &mat);
   uint32_t index;

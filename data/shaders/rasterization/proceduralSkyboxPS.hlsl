@@ -7,8 +7,8 @@ ConstantBuffer<CameraBuffer> g_cameraBuffer : register(b0);
 
 float4 PS(FullScreenVertexOut pin) : SV_Target
 {
-    //float4 worldDir = normalize(mul(float4(pin.clipPos, 0.0f, 1.0f), g_cameraBuffer.VPinverse));
-    float worldDir = dot(float4(pin.clipPos, 0.0f, 1.0f), transpose(g_cameraBuffer.VPinverse)[1]);
+    float worldDir = mul(float4(pin.clipPos, 0.0f, 1.0f), g_cameraBuffer.VPinverse).y;
+    //float worldDir = dot(float4(pin.clipPos, 0.0f, 1.0f), transpose(g_cameraBuffer.VPinverse)[1]);
     //float worldDir = dot(float3(pin.clipPos, 0.0f), float3(g_cameraBuffer.VPinverse[0].y,
     //g_cameraBuffer.VPinverse[1].y, g_cameraBuffer.VPinverse[2].y) );
 
