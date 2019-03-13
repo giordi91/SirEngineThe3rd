@@ -62,8 +62,8 @@ GBufferPassPBR::GBufferPassPBR(const char *name) : GraphNode(name, "GBufferPassP
   registerPlug(materials);
 
   // fetching root signature
-  rs = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName("gbufferRS");
-  pso = dx12::PSO_MANAGER->getComputePSOByName("gbufferPSO");
+  rs = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName("gbufferPBRRS");
+  pso = dx12::PSO_MANAGER->getComputePSOByName("gbufferPBRPSO");
 }
 
 void GBufferPassPBR::initialize() {
@@ -150,8 +150,8 @@ void GBufferPassPBR::compute() {
   for (uint32_t i = 0; i < meshCount; ++i) {
 
     // commandList->SetGraphicsRootDescriptorTable(1, mats[i].albedo);
-    // commandList->SetGraphicsRootDescriptorTable(1, mats[i].albedo);
     commandList->SetGraphicsRootConstantBufferView(1, mats[i].cbVirtualAddress);
+    commandList->SetGraphicsRootDescriptorTable(2, mats[i].albedo);
     dx12::MESH_MANAGER->bindMeshRuntimeAndRender(meshes[i], currentFc);
   }
 
