@@ -28,8 +28,8 @@ void Graphics3DLayer::onAttach() {
   // globals::MAIN_CAMERA->setLookAt(0, 125, 0);
   // globals::MAIN_CAMERA->setPosition(00, 125, 60);
 
-  globals::MAIN_CAMERA->setLookAt(0, 0, 0);
-  globals::MAIN_CAMERA->setPosition(00, 0, 5);
+  globals::MAIN_CAMERA->setLookAt(0, 15, 0);
+  globals::MAIN_CAMERA->setPosition(00, 15, 10);
   globals::MAIN_CAMERA->updateCamera();
 
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
@@ -40,7 +40,9 @@ void Graphics3DLayer::onAttach() {
   }
 
   //sphereH = globals::ASSET_MANAGER->loadAsset("data/assets/sphere.json");
-  sphereH = globals::ASSET_MANAGER->loadAsset("data/assets/sphereRust.json");
+  //sphereH = globals::ASSET_MANAGER->loadAsset("data/assets/sphereRust.json");
+  //sphereH = globals::ASSET_MANAGER->loadAsset("data/assets/leftShoulder.json");
+  sphereH = globals::ASSET_MANAGER->loadAsset("data/assets/warriorChestFront.json");
   // globals::ASSET_MANAGER->loadAsset("data/assets/plane.json");
   dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE, currentFc);
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);

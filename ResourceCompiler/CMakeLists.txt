@@ -22,6 +22,9 @@ project(ResourceCompiler)
 		#not with folders
 		file(COPY "../data" DESTINATION "${CMAKE_BINARY_DIR}/bin/Debug" )
 		file(COPY "../data" DESTINATION "${CMAKE_BINARY_DIR}/bin/Release" )
+		file(COPY "../external" DESTINATION "${CMAKE_BINARY_DIR}/bin/Debug/data" )
+		file(COPY "../external" DESTINATION "${CMAKE_BINARY_DIR}/bin/Release/data" )
+
 		add_compile_definitions(RC_PLATFORM_WINDOWS SE_PLATFORM_WINDOWS _UNICODE)
 	else(WIN32)
 		file(COPY "../data" DESTINATION "${CMAKE_BINARY_DIR}/bin" )

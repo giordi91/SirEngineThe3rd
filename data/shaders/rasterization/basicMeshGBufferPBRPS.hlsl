@@ -5,6 +5,8 @@
 ConstantBuffer<PhongMaterial> g_material : register(b1);
 Texture2D albedoTex : register(t0);
 Texture2D tangentTex: register(t1);
+Texture2D metallicTex: register(t2);
+Texture2D roughnessTex : register(t3);
 
 static const float2 g_SpecPowerRange = {10.0, 250.0};
 
@@ -22,7 +24,7 @@ struct PS_GBUFFER_OUT {
 };
 
 PS_GBUFFER_OUT PackGBuffer(float3 BaseColor, float3 Normal, float SpecIntensity,
-                           float SpecPower) {
+	float metallic, float roughness, float SpecPower) {
   PS_GBUFFER_OUT Out;
 
   // Normalize the specular power
@@ -34,29 +36,34 @@ PS_GBUFFER_OUT PackGBuffer(float3 BaseColor, float3 Normal, float SpecIntensity,
   Out.Normal = float4(Normal * 0.5f + 0.5f, 1.0f);
   // Out.Normal.xy = EncodeOctNormal(Normal);
   // Out.Normal.zw = 0.0f;
-  Out.SpecPow = float4(SpecPowerNorm, 0.0f, 0.0f, 1.0f);
+  Out.SpecPow = float4(SpecPowerNorm, metallic, roughness, 1.0f);
 
   return Out;
 }
 PS_GBUFFER_OUT PS(FullMeshVertexOut input) {
 
   // Lookup mesh texture and modulate it with diffuse
+	float2 uv = float2(input.uv.x , 1.0f- input.uv.y);
   float3 DiffuseColor =
-      albedoTex.Sample(gsamLinearClamp, input.uv).xyz * g_material.kd.xyz;
+      albedoTex.Sample(gsamLinearClamp, uv).xyz * g_material.kd.xyz;
 
   float4 tanN =
-      normalize(tangentTex.Sample(gsamLinearClamp, input.uv.xy) * 2.0f - 1.0f);
+      normalize(tangentTex.Sample(gsamLinearClamp, uv) * 2.0f - 1.0f);
   // compute NTB
   float3 N = normalize(input.Normal.xyz);
   float3 T = normalize(input.tangent.xyz);
   float3 B = normalize(cross(N, T));
   float3x3 NTB;
   float3 normal = normalize(float3(tanN.x * T) + (tanN.y*B) + (tanN.z*N));
-  //normal = tanN.xyz;
-  //normal = float3(0,1,0);
-  //normal = input.tangent.xyz;
-//float3 normal = normalize(input.Normal).xyz,
+  //normal = input.Normal.xyz;
 
-  return PackGBuffer(DiffuseColor, normal, g_material.ks.x,
+  //sampling PBR textures
+  float metallic = 
+      metallicTex.Sample(gsamLinearClamp, uv).xyz;
+  float roughness= 
+      roughnessTex.Sample(gsamLinearClamp, uv).xyz;
+
+
+  return PackGBuffer(DiffuseColor, normal, g_material.ks.x,metallic,roughness,
                      g_material.shiness);
 }

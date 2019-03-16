@@ -1,5 +1,6 @@
-#include "../common/structures.hlsl"
 #include "../common/deferred.hlsl"
+#include "../common/structures.hlsl"
+#include "../common/vertexDefinitions.hlsl"
 
 ConstantBuffer<CameraBuffer> g_cameraBuffer : register(b0);
 ConstantBuffer<DirectionalLightData> g_dirLight : register(b1);
@@ -17,11 +18,7 @@ SamplerState gsamLinearClamp : register(s3);
 SamplerState gsamAnisotropicWrap : register(s4);
 SamplerState gsamAnisotropicClamp : register(s5);
 
-struct VertexOut {
-  float4 pos : SV_POSITION;
-  float2 clipPos : TEXCOORD0;
-  float2 uv : TEXCOORD1;
-};
+static float PI = 3.14159265359f;
 
 // data returned from the gbuffer
 struct SURFACE_DATA {
@@ -31,6 +28,16 @@ struct SURFACE_DATA {
   float specIntensity;
   float specPow;
   float depth;
+};
+struct SURFACE_DATA_PBR {
+  float linearDepth;
+  float3 color;
+  float3 normal;
+  float specIntensity;
+  float specPow;
+  float depth;
+  float metallic;
+  float roughness;
 };
 
 inline float ConvertZToLinearDepth(float depth) {
@@ -51,8 +58,31 @@ inline SURFACE_DATA UnpackGBuffer(float2 UV) {
   Out.specIntensity = baseColorSpecInt.w;
   Out.normal = normalTexture.Sample(gsamPointClamp, UV.xy).xyz;
   Out.normal = normalize(Out.normal * 2.0 - 1.0);
-  //Out.normal = DecodeOctNormal(normalTexture.Sample(gsamPointClamp, UV.xy).xy);
+  // Out.normal = DecodeOctNormal(normalTexture.Sample(gsamPointClamp,
+  // UV.xy).xy);
   Out.specPow = specPowTexture.Sample(gsamPointClamp, UV.xy).x;
+
+  return Out;
+}
+
+inline SURFACE_DATA_PBR UnpackGBufferPBR(float2 UV) {
+  SURFACE_DATA_PBR Out;
+
+  float depth = depthTexture.Sample(gsamPointClamp, UV.xy).x;
+  Out.linearDepth = ConvertZToLinearDepth(depth);
+  Out.depth = depth;
+
+  float4 baseColorSpecInt = colorSpecIntTexture.Sample(gsamPointClamp, UV.xy);
+  Out.color = baseColorSpecInt.xyz;
+  Out.specIntensity = baseColorSpecInt.w;
+  Out.normal = normalTexture.Sample(gsamPointClamp, UV.xy).xyz;
+  Out.normal = normalize(Out.normal * 2.0 - 1.0);
+  // Out.normal = DecodeOctNormal(normalTexture.Sample(gsamPointClamp,
+  // UV.xy).xy);
+  float3 spec = specPowTexture.Sample(gsamPointClamp, UV.xy).xyz;
+  Out.specPow = spec.x;
+  Out.metallic = spec.y;
+  Out.roughness = spec.z;
 
   return Out;
 }
@@ -68,7 +98,7 @@ float3 CalcWorldPos(float2 csPos, float depth) {
 
 #define MAX_DEPTH 0.999999f
 
-float4 PS(VertexOut input) : SV_TARGET {
+float4 phongLighting(FullScreenVertexOut input) {
   SURFACE_DATA gbd = UnpackGBuffer(input.uv);
 
   float3 ldir = normalize(-g_dirLight.lightDir.xyz);
@@ -85,7 +115,7 @@ float4 PS(VertexOut input) : SV_TARGET {
     float3 halfWay = normalize(toEyeDir + ldir);
     float specularValue = saturate(dot(halfWay, gbd.normal));
     float specP = gbd.specPow * (250.0f - 10.0f) + 10.0f;
-    //float specP = 0.5f * (250.0f - 10.0f) + 10.0f;
+    // float specP = 0.5f * (250.0f - 10.0f) + 10.0f;
     float3 finalSpecular =
         (g_dirLight.lightColor * pow(specularValue, specP) * gbd.specIntensity)
             .xyz;
@@ -104,4 +134,87 @@ float4 PS(VertexOut input) : SV_TARGET {
     finalColor.w = 1.0f;
   }
   return finalColor;
+}
+//==============================================
+// PBR
+//==============================================
+
+float3 fresnelSchlick(float cosTheta, float3 F0) {
+  return F0 + (1.0f - F0) * pow(1.0f - cosTheta, 5.0f);
+}
+
+float DistributionGGX(float3 N, float3 H, float roughness) {
+  float a = roughness * roughness;
+  float a2 = a * a;
+  float NdotH = max(dot(N, H), 0.0);
+  float NdotH2 = NdotH * NdotH;
+  float nom = a2;
+  float denom = (NdotH2 * (a2 - 1.0) + 1.0);
+  denom = PI * denom * denom;
+  return nom / denom;
+}
+float GeometrySchlickGGX(float NdotV, float roughness) {
+  float r = (roughness + 1.0);
+  float k = (r * r) / 8.0;
+  float nom = NdotV;
+  float denom = NdotV * (1.0 - k) + k;
+  return nom / denom;
+}
+float GeometrySmith(float3 N, float3 V, float3 L, float roughness) {
+  float NdotV = max(dot(N, V), 0.0);
+  float NdotL = max(dot(N, L), 0.0);
+  float ggx2 = GeometrySchlickGGX(NdotV, roughness);
+  float ggx1 = GeometrySchlickGGX(NdotL, roughness);
+  return ggx1 * ggx2;
+}
+
+float4 PBRLighting(FullScreenVertexOut input) {
+  SURFACE_DATA_PBR gbd = UnpackGBufferPBR(input.uv);
+  float4 finalColor = 0.0f;
+  float3 ldir = normalize(-g_dirLight.lightDir.xyz);
+
+  if (gbd.depth <= MAX_DEPTH) {
+    float3 worldPos = CalcWorldPos(input.clipPos, gbd.linearDepth);
+    // camera vector
+    float3 toEyeDir = normalize(g_cameraBuffer.position.xyz - worldPos);
+    float3 halfWay = normalize(toEyeDir + ldir);
+
+    // fresnel slick, ratio between specular and diffuse, it is tintend on
+    // metal, so we lerp toward albedo based on metallic, so only specular will
+    // be tinted by the albedo.
+    float3 F0 = 0.04f;
+    F0 = lerp(F0, gbd.color, gbd.metallic);
+    float3 F = fresnelSchlick(max(dot(halfWay, toEyeDir), 0.0f), F0);
+    float NDF = DistributionGGX(gbd.normal, halfWay, gbd.roughness);
+    float G = GeometrySmith(gbd.normal, toEyeDir, ldir, gbd.roughness);
+
+    // compute cook torrance
+    float3 nominator = NDF * G * F;
+    float denominator =
+        4.0f * max(dot(gbd.normal, toEyeDir), 0.0f) * max(dot(gbd.normal, ldir), 0.0f) + 0.001f;
+    float3 specular = nominator / denominator;
+
+    // compute specular
+    float3 kS = F;
+    float3 kD = 1.0f - kS;
+    kD *= 1.0f - gbd.metallic;
+
+    // reflectance value
+    // single light for now
+    float3 Lo = 0.0f;
+    float3 radiance = g_dirLight.lightColor.xyz;
+    float NdotL = max(dot(gbd.normal, ldir), 0.0f);
+    Lo += (kD * gbd.color/ PI + specular) * radiance * NdotL;
+
+    float3 ambient = 0.03f * gbd.color;
+    float3 color = ambient + Lo;
+
+    return float4(color, 1.0f);
+  }
+  return finalColor;
+}
+
+float4 PS(FullScreenVertexOut input) : SV_TARGET {
+  // return phongLighting(input);
+  return PBRLighting(input);
 }

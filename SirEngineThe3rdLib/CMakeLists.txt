@@ -64,6 +64,8 @@ project(SirEngineThe3rdLib)
 	SOURCE_GROUP("data/shaders/rasterization" FILES ${SHADERS_RASTERIZATION_FILES})
 	SOURCE_GROUP("data" FILES "../data/execute.json")
 
+	SOURCE_GROUP("data" FILES "../data/executeFullDebug.json")
+
 	set_source_files_properties(
             ${SHADERS_RASTERIZATION_FILES}
             PROPERTIES HEADER_FILE_ONLY TRUE
@@ -82,6 +84,7 @@ project(SirEngineThe3rdLib)
 	${SHADERS_COMMON_FILES}
 	${SHADERS_RASTERIZATION_FILES}
 	"../data/execute.json"
+	"../data/executeFullDebug.json"
 	)
 
 	SET(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
