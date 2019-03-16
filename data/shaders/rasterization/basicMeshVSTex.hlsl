@@ -14,5 +14,6 @@ FullMeshVertexOut VS(TexturedVertexIn12 vin)
 	// Just pass vertex color into the pixel shader.
     vout.Normal= float4(vin.Normal,0.0f);
 	vout.uv = vin.uvs.xy;
+	vout.tangent = vin.tangents;
     return vout;
 }
