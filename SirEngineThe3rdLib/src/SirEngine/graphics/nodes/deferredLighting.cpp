@@ -60,8 +60,9 @@ void DeferredLightingPass::initialize() {
       globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT,
       RenderTargetFormat::R16G16B16A16_FLOAT, "lightBuffer");
 
-  m_light.lightColor = {1.0f, 1.0f, 1.0f, 1.0f};
-  m_light.lightDir = {-1.0f, -1.0f, -1.0f, 1.0f};
+  float intensity = 4.0f;
+  m_light.lightColor = {intensity,intensity,intensity,1.0f};
+  m_light.lightDir = {-1.0f, -1.0f, 0.0f, 1.0f};
   m_light.lightPosition = {10.0f, 10.0f, 10.0f, 10.0f};
 
   // allocate the constant buffer

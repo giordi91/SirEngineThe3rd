@@ -207,8 +207,11 @@ void convertObj(const tinyobj::attrib_t &attr, const tinyobj::shape_t &shape,
       c.n.x = attr.normals[3 * idx.normal_index + 0];
       c.n.y = attr.normals[3 * idx.normal_index + 1];
       c.n.z = attr.normals[3 * idx.normal_index + 2];
-      c.uv.x = attr.texcoords[2 * idx.texcoord_index + 0];
-      c.uv.y = attr.texcoords[2 * idx.texcoord_index + 1];
+	  float texU = attr.texcoords[2 * idx.texcoord_index + 0];
+	  float texV = attr.texcoords[2 * idx.texcoord_index + 1];
+	  float mod =1.0f;
+      c.uv.x = std::modf(texU, &mod);
+      c.uv.y = std::modf(texV,&mod);
       c.t.x = tangents[3 * idx.vertex_index + 0];
       c.t.y = tangents[3 * idx.vertex_index + 1];
       c.t.z = tangents[3 * idx.vertex_index + 2];
