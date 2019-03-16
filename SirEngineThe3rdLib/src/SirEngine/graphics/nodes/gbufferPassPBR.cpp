@@ -152,6 +152,7 @@ void GBufferPassPBR::compute() {
     // commandList->SetGraphicsRootDescriptorTable(1, mats[i].albedo);
     commandList->SetGraphicsRootConstantBufferView(1, mats[i].cbVirtualAddress);
     commandList->SetGraphicsRootDescriptorTable(2, mats[i].albedo);
+    commandList->SetGraphicsRootDescriptorTable(3, mats[i].normal);
     dx12::MESH_MANAGER->bindMeshRuntimeAndRender(meshes[i], currentFc);
   }
 
