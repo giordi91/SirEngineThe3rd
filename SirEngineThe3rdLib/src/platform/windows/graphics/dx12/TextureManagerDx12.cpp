@@ -18,6 +18,13 @@ TextureManagerDx12::~TextureManagerDx12() {
   // assert(m_texturePool.assertEverythingDealloc());
 }
 
+void TextureManagerDx12::loadLegacy(const std::string& path)
+{
+    uint32_t index;
+    TextureData &data = m_texturePool.getFreeMemoryData(index);
+	assert(0 && "legacy not yet supported");
+}
+
 TextureHandle TextureManagerDx12::loadTexture(const char *path) {
   bool res = fileExists(path);
   assert(res);
@@ -26,6 +33,14 @@ TextureHandle TextureManagerDx12::loadTexture(const char *path) {
 
   auto found = m_nameToHandle.find(name);
   if (found == m_nameToHandle.end()) {
+
+	  const std::string extension = getFileExtension(path);
+	  if(extension != ".dds")
+	  {
+		  loadLegacy(path);
+	  }
+
+
 
     uint32_t index;
     TextureData &data = m_texturePool.getFreeMemoryData(index);

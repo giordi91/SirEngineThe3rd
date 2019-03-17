@@ -34,6 +34,10 @@ inline std::string getFileName(const std::string &path) {
   auto exp_path = std::experimental::filesystem::path(path);
   return exp_path.stem().string();
 }
+inline std::string getFileExtension(const std::string &path) {
+  auto exp_path = std::experimental::filesystem::path(path);
+  return exp_path.extension().string();
+}
 
 inline std::string getPathName(const std::string &path) {
   auto exp_path = std::experimental::filesystem::path(path);

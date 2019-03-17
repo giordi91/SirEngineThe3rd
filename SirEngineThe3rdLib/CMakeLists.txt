@@ -63,8 +63,8 @@ project(SirEngineThe3rdLib)
     file(GLOB_RECURSE SHADERS_RASTERIZATION_FILES "../data/shaders/rasterization/*.hlsl" )
 	SOURCE_GROUP("data/shaders/rasterization" FILES ${SHADERS_RASTERIZATION_FILES})
 	SOURCE_GROUP("data" FILES "../data/execute.json")
-
 	SOURCE_GROUP("data" FILES "../data/executeFullDebug.json")
+	SOURCE_GROUP("data" FILES "../data/executeTexture.json")
 
 	set_source_files_properties(
             ${SHADERS_RASTERIZATION_FILES}
@@ -85,6 +85,7 @@ project(SirEngineThe3rdLib)
 	${SHADERS_RASTERIZATION_FILES}
 	"../data/execute.json"
 	"../data/executeFullDebug.json"
+	"../data/executeTexture.json"
 	)
 
 	SET(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
