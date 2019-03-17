@@ -1,0 +1,6 @@
+{
+  "commands": 
+    [
+      "-p data/external/textures/warrior/warriorChestFrontNormal.bmp -o data/processed/textures/warriorChestFrontNormal.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5 \""
+    ]
+}

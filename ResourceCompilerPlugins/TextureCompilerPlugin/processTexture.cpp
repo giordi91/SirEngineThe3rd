@@ -20,7 +20,7 @@ const std::unordered_map<std::string, CMP_FORMAT> STRING_TO_FORMAT{
 const std::unordered_map<std::string, DXGI_FORMAT> STRING_TO_DXGI_FORMAT{
     {"DXT1", DXGI_FORMAT_BC1_UNORM},
     {"DXT3", DXGI_FORMAT_BC3_UNORM},
-    {"DXT5", DXGI_FORMAT_BC5_UNORM},
+    {"DXT5", DXGI_FORMAT_BC3_UNORM},
     {"DXT7", DXGI_FORMAT_BC7_UNORM}};
 const std::unordered_map<std::string, DXGI_FORMAT> STRING_TO_DXGI_FORMAT_GAMMA{
     {"DXT1", DXGI_FORMAT_BC1_UNORM_SRGB},
