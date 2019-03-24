@@ -62,11 +62,19 @@ bool processRoot(const std::string &assetPath, const std::string &outputPath,
     writeBinaryFile(request);
 
     SE_CORE_INFO("Root signature successfully compiled ---> {0}", outputPath);
+
+    // write clean RS for debugging, mostly Intel static analysis
+    const std::string outFilePathClean =
+        getPathName(outputPath) + "/" + subBlobl.name + ".bin";
+
+    std::ofstream myFile(outFilePathClean, std::ios::out | std::ios::binary);
+    myFile.write(static_cast<const char *>(request.bulkData), request.bulkDataSizeInBtye);
+    myFile.close();
   }
   return true;
 }
 
-bool pluginRegisterFunction(PluginRegistry *registry) {
-  registry->registerFunction(PLUGIN_NAME, &processRoot);
-  return true;
-}
+  bool pluginRegisterFunction(PluginRegistry * registry) {
+    registry->registerFunction(PLUGIN_NAME, &processRoot);
+    return true;
+  }
