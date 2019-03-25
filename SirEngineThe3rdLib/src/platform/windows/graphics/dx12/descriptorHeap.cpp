@@ -85,11 +85,33 @@ UINT DescriptorHeap::createTexture2DSRV(DescriptorPair &pair,
                                         DXGI_FORMAT format) {
   UINT descriptorIndex = allocateDescriptor(&pair.cpuHandle);
 
+  D3D12_RESOURCE_DESC desc = resource->GetDesc();
   D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
   srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
   srvDesc.Format = format;
-  srvDesc.Texture2D.MipLevels = 1;
+  srvDesc.Texture2D.MipLevels = desc.MipLevels;
   srvDesc.Texture2D.MostDetailedMip = 0;
+  srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+  DEVICE->CreateShaderResourceView(resource, &srvDesc, pair.cpuHandle);
+  pair.gpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(getGPUStart(), descriptorIndex,
+                                                 m_descriptorSize);
+#if SE_DEBUG
+  pair.type = DescriptorType::SRV;
+#endif
+  return descriptorIndex;
+}
+UINT DescriptorHeap::createTextureCubeSRV(DescriptorPair &pair,
+                                        ID3D12Resource *resource,
+                                        DXGI_FORMAT format) {
+  UINT descriptorIndex = allocateDescriptor(&pair.cpuHandle);
+
+  D3D12_RESOURCE_DESC desc = resource->GetDesc();
+  D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+  srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+  srvDesc.Format = format;
+  srvDesc.TextureCube.MipLevels = desc.MipLevels;
+  srvDesc.TextureCube.MostDetailedMip = 0;
+  srvDesc.TextureCube.ResourceMinLODClamp = 0.0f;
   srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
   DEVICE->CreateShaderResourceView(resource, &srvDesc, pair.cpuHandle);
   pair.gpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(getGPUStart(), descriptorIndex,

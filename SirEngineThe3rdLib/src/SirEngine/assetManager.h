@@ -36,6 +36,7 @@ public:
 
   // assets
   IdentityHandle loadAsset(const char *path);
+  void loadScene(const char *path);
   AssetHandles getAssetHandle(const IdentityHandle handle) const {
     auto found = m_identityToIndex.find(handle.handle);
     if (found != m_identityToIndex.end()) {

@@ -25,7 +25,7 @@ void TextureManagerDx12::loadLegacy(const std::string& path)
 	assert(0 && "legacy not yet supported");
 }
 
-TextureHandle TextureManagerDx12::loadTexture(const char *path) {
+TextureHandle TextureManagerDx12::loadTexture(const char *path, bool cubeMap) {
   bool res = fileExists(path);
   assert(res);
 
@@ -65,8 +65,17 @@ TextureHandle TextureManagerDx12::loadTexture(const char *path) {
 
     m_nameToHandle[name] = handle;
 
-    dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DSRV(data.srv, data.resource,
-                                                      data.format);
+	if(!cubeMap)
+	{
+		dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DSRV(data.srv, data.resource,
+														  data.format);
+	}
+	else
+	{
+		dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTextureCubeSRV(data.srv, data.resource,
+														  data.format);
+		
+	}
 
     return handle;
   }

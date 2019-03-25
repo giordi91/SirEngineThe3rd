@@ -15,7 +15,7 @@ public:
   virtual ~TextureManager() = default;
   TextureManager(const TextureManager &) = delete;
   TextureManager &operator=(const TextureManager &) = delete;
-  virtual TextureHandle loadTexture(const char *path) = 0;
+  virtual TextureHandle loadTexture(const char *path, bool cubeMap = false) = 0;
   virtual void free(const TextureHandle handle) = 0;
   virtual TextureHandle allocateRenderTexture(uint32_t width, uint32_t height,
                                               RenderTargetFormat format,

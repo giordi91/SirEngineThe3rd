@@ -31,7 +31,7 @@ public:
   TextureManagerDx12(const TextureManagerDx12 &) = delete;
   TextureManagerDx12 &operator=(const TextureManagerDx12 &) = delete;
   void loadLegacy(const std::string& path);
-  virtual TextureHandle loadTexture(const char *path) override;
+  virtual TextureHandle loadTexture(const char *path,  bool cubeMap= false) override;
   virtual void free(const TextureHandle handle) override;
   virtual TextureHandle allocateRenderTexture(uint32_t width, uint32_t height,
                                               RenderTargetFormat format,
