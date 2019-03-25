@@ -78,6 +78,8 @@ public:
 
   UINT createTexture2DSRV(DescriptorPair &pair, ID3D12Resource *resource,
                           DXGI_FORMAT format);
+  UINT createTextureCubeSRV(DescriptorPair &pair, ID3D12Resource *resource,
+                          DXGI_FORMAT format);
 
 private:
   UINT m_descriptorsAllocated = 0;

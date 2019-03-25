@@ -1,0 +1,21 @@
+{
+ "type":  "RASTER",
+ "inputLayout":  "fullMesh",
+ "globalRootSignature": "skybox_RS",
+  "VS": "meshPositionOnlyVS",
+  "PS":  "skyboxPS",
+  "blendState": "default",
+  "depthStencilState": "custom",
+  "depthStencilStateConfig": {"depthEnabled" :  true, "comparisonFunc" : "GREATER"},
+  "rasterState": "custom",
+  "rasterStateConfig": {"cullMode" :  "NONE"},
+  "sampleMask":  "max",
+  "topologyType": "triangle",
+  "renderTargets": 1,
+  "rtvFormats": [ "DXGI_FORMAT_R16G16B16A16_FLOAT" ],
+  "sampleDescCount": 1,
+  "sampleDescQuality":  0,
+  "dsvFormat": "DXGI_FORMAT_D32_FLOAT"
+}
+
+    

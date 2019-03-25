@@ -34,12 +34,15 @@ static const std::string PSO_KEY_RTV_FORMATS = "rtvFormats";
 static const std::string PSO_KEY_SAMPLE_DESC_COUNT = "sampleDescCount";
 static const std::string PSO_KEY_SAMPLE_DESC_QUALITY = "sampleDescQuality";
 static const std::string PSO_KEY_DSV_FORMAT = "dsvFormat";
-static const std::string PSO_KEY_DEPTH_STENCIL_CONFIG = "depthStencilStateConfig";
+static const std::string PSO_KEY_DEPTH_STENCIL_CONFIG =
+    "depthStencilStateConfig";
 static const std::string DEFAULT_STRING = "";
 static const std::string DEFAULT_STATE = "default";
 static const std::string PSO_KEY_CUSTOM_STATE = "custom";
 static const std::string PSO_KEY_DEPTH_ENABLED = "depthEnabled";
 static const std::string PSO_KEY_COMPARISON_FUNCTION = "comparisonFunc";
+static const std::string PSO_KEY_RASTER_CONFIG = "rasterStateConfig";
+static const std::string PSO_KEY_RASTER_CULL_MODE = "cullMode";
 static const int DEFAULT_INT = -1;
 static const bool DEFAULT_BOOL = false;
 static const std::unordered_map<std::string, PSOType> STRING_TO_PSOTYPE{
@@ -52,6 +55,10 @@ static const std::unordered_map<std::string, D3D12_COMPARISON_FUNC>
     STRING_TO_DEPTH_COMPARISON_FUNCTION{
         {"LESS", D3D12_COMPARISON_FUNC_LESS},
         {"GREATER", D3D12_COMPARISON_FUNC_GREATER}};
+
+static const std::unordered_map<std::string, D3D12_CULL_MODE>
+    STRING_TO_CULL_MODE_FUNCTION{{"NONE", D3D12_CULL_MODE_NONE},
+                                 {"BACK", D3D12_CULL_MODE_BACK}};
 
 // NOTE: the #name means that the macro argument will need to be used as a
 // string
@@ -100,13 +107,29 @@ void assertInJson(const nlohmann::json &jobj, const std::string &key) {
   auto found = jobj.find(key);
   assert(found != jobj.end());
 }
-inline D3D12_RASTERIZER_DESC getRasterState(const std::string &state) {
+D3D12_CULL_MODE getCullMode(const nlohmann::json &jobj) {
+  std::string funcDefault = "BACK";
+  const std::string func =
+      getValueIfInJson(jobj, PSO_KEY_RASTER_CULL_MODE, funcDefault);
+  auto found = STRING_TO_CULL_MODE_FUNCTION.find(func);
+  if (found != STRING_TO_CULL_MODE_FUNCTION.end()) {
+    return found->second;
+  }
+  return D3D12_CULL_MODE_BACK;
+}
+inline D3D12_RASTERIZER_DESC getRasterState(const std::string &state,
+                                            const nlohmann::json &jobj) {
   bool rasterDefault = isStateDefault(state);
   if (rasterDefault) {
     return CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
   }
-  assert(0 && "unsupported raster state");
-  return CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+  assert(jobj.find(PSO_KEY_RASTER_CONFIG) != jobj.end());
+  auto config = jobj[PSO_KEY_RASTER_CONFIG];
+  auto desc = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+
+  D3D12_CULL_MODE cullMode = getCullMode(config);
+  desc.CullMode = cullMode;
+  return desc;
 }
 inline D3D12_BLEND_DESC getBlendState(const std::string &state) {
   bool isDefault = isStateDefault(state);
@@ -120,6 +143,7 @@ inline D3D12_BLEND_DESC getBlendState(const std::string &state) {
 inline bool isStateCustom(const std::string &state) {
   return state == PSO_KEY_CUSTOM_STATE;
 }
+
 
 D3D12_COMPARISON_FUNC getDepthFunction(const nlohmann::json &jobj) {
   std::string funcDefault = "LESS";
@@ -140,14 +164,14 @@ inline D3D12_DEPTH_STENCIL_DESC getDSState(const std::string &state,
   }
   if (isStateCustom(state)) {
 
-	  
     CD3DX12_DEPTH_STENCIL_DESC desc;
-	assert(jobj.find(PSO_KEY_DEPTH_STENCIL_CONFIG) != jobj.end());
-    bool depthEnabled = getValueIfInJson(jobj[PSO_KEY_DEPTH_STENCIL_CONFIG], PSO_KEY_DEPTH_ENABLED, DEFAULT_BOOL);
+    assert(jobj.find(PSO_KEY_DEPTH_STENCIL_CONFIG) != jobj.end());
+    bool depthEnabled = getValueIfInJson(jobj[PSO_KEY_DEPTH_STENCIL_CONFIG],
+                                         PSO_KEY_DEPTH_ENABLED, DEFAULT_BOOL);
     desc.DepthEnable = depthEnabled;
     desc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
     desc.DepthFunc = getDepthFunction(jobj[PSO_KEY_DEPTH_STENCIL_CONFIG]);
-    //desc.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
+    // desc.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
     desc.StencilEnable = FALSE;
     desc.StencilReadMask = D3D12_DEFAULT_STENCIL_READ_MASK;
     desc.StencilWriteMask = D3D12_DEFAULT_STENCIL_WRITE_MASK;
@@ -283,7 +307,7 @@ void PSOManager::processRasterPSO(nlohmann::json &jobj,
   const std::string depthStencilStateString =
       getValueIfInJson(jobj, PSO_KEY_DEPTH_STENCIL_STATE, DEFAULT_STRING);
 
-  D3D12_RASTERIZER_DESC rasterState = getRasterState(rasterStateString);
+  D3D12_RASTERIZER_DESC rasterState = getRasterState(rasterStateString, jobj);
   D3D12_BLEND_DESC blendState = getBlendState(blendStateString);
   D3D12_DEPTH_STENCIL_DESC dsState = getDSState(depthStencilStateString, jobj);
 

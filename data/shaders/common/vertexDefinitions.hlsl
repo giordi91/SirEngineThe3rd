@@ -37,4 +37,9 @@ struct FullScreenVertexOut {
   float2 uv : TEXCOORD1;
 };
 
+struct PositionOnly{
+  float4 pos : SV_POSITION;
+  float4 worldPos: POSITION;
+};
+
 #endif

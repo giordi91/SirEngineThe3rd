@@ -20,6 +20,7 @@
 #include "SirEngine/graphics/postProcess/postProcessStack.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/graphics/nodes/gbufferPassPBR.h"
+#include "SirEngine/graphics/nodes/skybox.h"
 
 namespace SirEngine {
 
@@ -40,7 +41,8 @@ void Graphics3DLayer::onAttach() {
   }
 
   //sphereH = globals::ASSET_MANAGER->loadAsset("data/assets/sphere.json");
-  sphereH = globals::ASSET_MANAGER->loadAsset("data/assets/sphereRust.json");
+  //sphereH = globals::ASSET_MANAGER->loadAsset("data/assets/sphereRust.json");
+  globals::ASSET_MANAGER->loadScene("data/scenes/rustScene.json");
   //sphereH = globals::ASSET_MANAGER->loadAsset("data/assets/leftShoulder.json");
   //sphereH = globals::ASSET_MANAGER->loadAsset("data/assets/warriorChestFront.json");
   // globals::ASSET_MANAGER->loadAsset("data/assets/plane.json");
@@ -56,7 +58,8 @@ void Graphics3DLayer::onAttach() {
   //auto gbufferPass = new GBufferPass("GBufferPass");
   auto gbufferPass = new GBufferPassPBR("GBufferPassPBR");
   auto lighting = new DeferredLightingPass("Deferred lighting");
-  auto sky = new ProceduralSkyBoxPass("Procedural Sky");
+  //auto sky = new ProceduralSkyBoxPass("Procedural Sky");
+  auto sky = new SkyBoxPass("Skybox");
 
   postProcess->allocateRenderPass<GammaAndToneMappingEffect>(
       "GammaToneMapping");

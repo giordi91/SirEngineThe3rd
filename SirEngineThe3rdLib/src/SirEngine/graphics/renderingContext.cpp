@@ -19,14 +19,15 @@ void RenderingContext::setupCameraForFrame() {
       globals::MAIN_CAMERA->getMVP(DirectX::XMMatrixIdentity()));
   m_camBufferCPU.ViewMatrix = DirectX::XMMatrixTranspose(
       globals::MAIN_CAMERA->getViewInverse(DirectX::XMMatrixIdentity()));
-  m_camBufferCPU.VPinverse= DirectX::XMMatrixTranspose(
+  m_camBufferCPU.VPinverse = DirectX::XMMatrixTranspose(
       globals::MAIN_CAMERA->getMVPInverse(DirectX::XMMatrixIdentity()));
-   m_camBufferCPU.perspectiveValues = globals::MAIN_CAMERA->getProjParams();
-   DirectX::XMFLOAT3 camPos = globals::MAIN_CAMERA->getPosition();
-  m_camBufferCPU.position = DirectX::XMFLOAT4{camPos.x, camPos.y, camPos.z, 1.0f};
+  m_camBufferCPU.perspectiveValues = globals::MAIN_CAMERA->getProjParams();
+  DirectX::XMFLOAT3 camPos = globals::MAIN_CAMERA->getPosition();
+  m_camBufferCPU.position =
+      DirectX::XMFLOAT4{camPos.x, camPos.y, camPos.z, 1.0f};
 
-  globals::CONSTANT_BUFFER_MANAGER->updateConstantBufferNotBuffered(m_cameraHandle,
-                                                         &m_camBufferCPU);
+  globals::CONSTANT_BUFFER_MANAGER->updateConstantBufferNotBuffered(
+      m_cameraHandle, &m_camBufferCPU);
 }
 void RenderingContext::bindCameraBuffer(const int index) const {
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;

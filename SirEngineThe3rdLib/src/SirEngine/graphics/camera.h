@@ -33,7 +33,7 @@ public:
     //return DirectX::XMMatrixPerspectiveFovLH(fieldOfView, screenAspect, 0.001f,
     //                                         100.0f);
 
-    return DirectX::XMMatrixPerspectiveFovLH(fieldOfView, screenAspect, 100.00f,
+    return DirectX::XMMatrixPerspectiveFovLH(fieldOfView, screenAspect, 1000.00f,
                                              0.001f);
   };
 
