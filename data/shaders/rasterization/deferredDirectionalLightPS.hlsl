@@ -10,6 +10,7 @@ Texture2D depthTexture : register(t0);
 Texture2D colorSpecIntTexture : register(t1);
 Texture2D normalTexture : register(t2);
 Texture2D specPowTexture : register(t3);
+TextureCube skyboxIrradianceTexture: register(t4);
 
 SamplerState gsamPointWrap : register(s0);
 SamplerState gsamPointClamp : register(s1);
@@ -126,7 +127,7 @@ float4 phongLighting(FullScreenVertexOut input) {
     finalColor.z += finalSpecular.z;
 
     // TODO(fix hardcoded ambient)
-    float3 ambient = 0.25f;
+    float3 ambient = 0.03f;
     // float ao = AOTexture.Sample(gsamLinearClamp, input.uv);
     float shadowAttenuation = 1.0f;
     finalColor.xyz =
@@ -139,8 +140,10 @@ float4 phongLighting(FullScreenVertexOut input) {
 // PBR
 //==============================================
 
-float3 fresnelSchlick(float cosTheta, float3 F0) {
-  return F0 + (1.0f - F0) * pow(1.0f - cosTheta, 5.0f);
+float3 fresnelSchlick(float cosTheta, float3 F0,float roughness) {
+  //return F0 + (1.0f - F0) * pow(1.0f - cosTheta, 5.0f);
+  float3 oneMinusRoughness =1.0 - roughness;  
+  return F0 + (max(oneMinusRoughness, F0) - F0) * pow(1.0 - cosTheta, 5.0);
 }
 
 float DistributionGGX(float3 N, float3 H, float roughness) {
@@ -183,10 +186,19 @@ float4 PBRLighting(FullScreenVertexOut input) {
     // metal, so we lerp toward albedo based on metallic, so only specular will
     // be tinted by the albedo.
     float3 F0 = 0.04f;
-    F0 = lerp(F0, gbd.color, gbd.metallic);
-    float3 F = fresnelSchlick(max(dot(halfWay, toEyeDir), 0.0f), F0);
-    float NDF = DistributionGGX(gbd.normal, halfWay, gbd.roughness);
-    float G = GeometrySmith(gbd.normal, toEyeDir, ldir, gbd.roughness);
+
+	float3 albedo =gbd.color; 
+	float metallic = gbd.metallic;
+	float roughness = gbd.roughness;
+
+	//float3 albedo =float3(0.8f,0.0f,0.0f); 
+	//float metallic = 0.0f;
+	//float roughness = 1.0f;
+
+    F0 = lerp(F0, albedo, metallic);
+    float3 F = fresnelSchlick(max(dot(halfWay, toEyeDir), 0.0f), F0, roughness);
+    float NDF = DistributionGGX(gbd.normal, halfWay, roughness);
+    float G = GeometrySmith(gbd.normal, toEyeDir, ldir, roughness);
 
     // compute cook torrance
     float3 nominator = NDF * G * F;
@@ -197,17 +209,25 @@ float4 PBRLighting(FullScreenVertexOut input) {
     // compute specular
     float3 kS = F;
     float3 kD = 1.0f - kS;
-    kD *= 1.0f - gbd.metallic;
+    kD *= 1.0f - metallic;
 
     // reflectance value
-    // single light for now
     float3 Lo = 0.0f;
+    // single light for now
     float3 radiance = g_dirLight.lightColor.xyz;
     float NdotL = max(dot(gbd.normal, ldir), 0.0f);
-    Lo += (kD * gbd.color/ PI + specular) * radiance * NdotL;
+    Lo += (kD * albedo/ PI + specular) * radiance * NdotL;
 
-    float3 ambient = 0.03f * gbd.color;
+    //float3 ambient = 0.03f * gbd.color;
+
+	//using irradiance map
+	float3 irradiance = skyboxIrradianceTexture.Sample(gsamLinearClamp,gbd.normal);
+	float3 diffuse      = irradiance* albedo;
+	float3 ambient = kD * diffuse;
+
     float3 color = ambient + Lo;
+    //float3 color = irradiance*kD;
+
 
     return float4(color, 1.0f);
   }
@@ -215,6 +235,6 @@ float4 PBRLighting(FullScreenVertexOut input) {
 }
 
 float4 PS(FullScreenVertexOut input) : SV_TARGET {
-  // return phongLighting(input);
+  //return phongLighting(input);
   return PBRLighting(input);
 }
