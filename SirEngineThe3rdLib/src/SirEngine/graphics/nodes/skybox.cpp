@@ -86,6 +86,7 @@ void SkyBoxPass::compute() {
   commandList->SetGraphicsRootSignature(rs);
 
   TextureHandle skyHandle = globals::RENDERING_CONTEX->getEnviromentMapHandle();
+  //TextureHandle skyHandle = globals::RENDERING_CONTEX->getEnviromentMapIrradianceHandle();
   globals::RENDERING_CONTEX->bindCameraBuffer(0);
   // commandList->SetGraphicsRootConstantBufferView(1, m_lightAddress);
   commandList->SetGraphicsRootDescriptorTable(

@@ -62,7 +62,7 @@ void DeferredLightingPass::initialize() {
 
   float intensity = 4.0f;
   m_light.lightColor = {intensity,intensity,intensity,1.0f};
-  m_light.lightDir = {-.0f, -1.0f, 0.0f, 1.0f};
+  m_light.lightDir = {0.6f, -0.6f, 1.0f, 1.0f};
   m_light.lightPosition = {10.0f, 10.0f, 10.0f, 10.0f};
 
   // allocate the constant buffer
@@ -74,7 +74,7 @@ void DeferredLightingPass::initialize() {
 inline TextureHandle
 getInputConnection(std::unordered_map<const Plug *, std::vector<Plug *>> &conns,
                    Plug *plug) {
-  // TODO not super save to do this, might be worth improving this
+  // TODO not super safe to do this, might be worth improving this
   auto &inConns = conns[plug];
   assert(inConns.size() == 1 && "too many input connections");
   Plug *source = inConns[0];
@@ -135,6 +135,9 @@ void DeferredLightingPass::compute() {
       4, dx12::TEXTURE_MANAGER->getSRVDx12(normalBufferHandle).gpuHandle);
   commandList->SetGraphicsRootDescriptorTable(
       5, dx12::TEXTURE_MANAGER->getSRVDx12(specularBufferHandle).gpuHandle);
+  TextureHandle skyHandle = globals::RENDERING_CONTEX->getEnviromentMapIrradianceHandle();
+  commandList->SetGraphicsRootDescriptorTable(
+      6, dx12::TEXTURE_MANAGER->getSRVDx12(skyHandle).gpuHandle);
 
   // the newer ID3DUserDefinedAnnotation API is also supported
   commandList->DrawInstanced(6, 1, 0, 0);

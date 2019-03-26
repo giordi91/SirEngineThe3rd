@@ -23,6 +23,7 @@
           "visibility": "ALL"
         },
         {
+          "comment": "four buffers, depth, geo, normal, spec",
           "type": "descriptorTable",
           "data": {
             "ranges": [
@@ -35,7 +36,7 @@
           }
         },
         {
-          "comment": "four buffers, depth, geo, normal, spec",
+          "comment": "color buffer",
           "type": "descriptorTable",
           "data": {
             "ranges": [
@@ -48,6 +49,7 @@
           }
         },
         {
+          "comment": "normal buffer",
           "type": "descriptorTable",
           "data": {
             "ranges": [
@@ -60,6 +62,7 @@
           }
         },
         {
+          "comment": "spec buffer",
           "type": "descriptorTable",
           "data": {
             "ranges": [
@@ -67,6 +70,19 @@
                 "type": "SRV",
                 "numDescriptors": 1,
                 "baseRegister":3 
+              }
+            ]
+          }
+        },
+        {
+          "comment": "irradiance map",
+          "type": "descriptorTable",
+          "data": {
+            "ranges": [
+              {
+                "type": "SRV",
+                "numDescriptors": 1,
+                "baseRegister":4 
               }
             ]
           }
