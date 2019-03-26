@@ -58,7 +58,7 @@ bool processTextureFile(const char *path, const char *outPath,
   srcTex.dwHeight = h;
   srcTex.dwPitch = w * 4;
   srcTex.dwDataSize = w * h * sizeof(unsigned char) * 4;
-  srcTex.format = CMP_FORMAT_ARGB_8888;
+  srcTex.format = CMP_FORMAT_RGBA_8888;
   srcTex.pData = data;
 
   CMP_FORMAT format = CMP_FORMAT_DXT1;
@@ -72,7 +72,6 @@ bool processTextureFile(const char *path, const char *outPath,
   destTexture.dwWidth = srcTex.dwWidth;
   destTexture.dwHeight = srcTex.dwHeight;
   destTexture.dwPitch = 0;
-  // destTexture.format     = destFormat;
   destTexture.format = format;
   destTexture.dwDataSize = CMP_CalculateBufferSize(&destTexture);
   destTexture.pData = (CMP_BYTE *)malloc(destTexture.dwDataSize);
