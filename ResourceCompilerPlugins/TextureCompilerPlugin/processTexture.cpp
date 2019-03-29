@@ -58,16 +58,16 @@ bool processTextureFile(const char *path, const char *outPath,
   srcTex.dwHeight = h;
   srcTex.dwPitch = w * 4;
   srcTex.dwDataSize = w * h * sizeof(unsigned char) * 4;
-  srcTex.format = CMP_FORMAT_ARGB_8888;
+  srcTex.format = CMP_FORMAT_RGBA_8888;
   srcTex.pData = data;
 
-  CMP_FORMAT format = CMP_FORMAT_DXT1;
+  CMP_FORMAT format = CMP_FORMAT_BC3;
   getFormatFromString(formatString, format);
 
   //===================================
   // Initialize Compressed Destination
   //===================================
-  CMP_Texture destTexture;
+  CMP_Texture destTexture{};
   destTexture.dwSize = sizeof(destTexture);
   destTexture.dwWidth = srcTex.dwWidth;
   destTexture.dwHeight = srcTex.dwHeight;
