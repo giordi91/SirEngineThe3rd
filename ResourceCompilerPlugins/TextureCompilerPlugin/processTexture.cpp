@@ -72,7 +72,6 @@ bool processTextureFile(const char *path, const char *outPath,
   destTexture.dwWidth = srcTex.dwWidth;
   destTexture.dwHeight = srcTex.dwHeight;
   destTexture.dwPitch = 0;
-  // destTexture.format     = destFormat;
   destTexture.format = format;
   destTexture.dwDataSize = CMP_CalculateBufferSize(&destTexture);
   destTexture.pData = (CMP_BYTE *)malloc(destTexture.dwDataSize);

@@ -1,0 +1,5 @@
+{
+"assets": [ "data/assets/sphereRust.json" ],
+"enviromentMap" :"data/external/textures/snowForest.dds",
+"enviromentMapIrradiance" :"data/external/textures/snowForestIrradiance.dds"
+}
