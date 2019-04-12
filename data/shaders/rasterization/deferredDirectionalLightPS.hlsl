@@ -19,7 +19,7 @@ SamplerState gsamLinearClamp : register(s3);
 SamplerState gsamAnisotropicWrap : register(s4);
 SamplerState gsamAnisotropicClamp : register(s5);
 
-static float PI = 3.14159265359f;
+static const float PI = 3.14159265359f;
 
 // data returned from the gbuffer
 struct SURFACE_DATA {
