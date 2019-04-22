@@ -11,6 +11,8 @@ Texture2D colorSpecIntTexture : register(t1);
 Texture2D normalTexture : register(t2);
 Texture2D specPowTexture : register(t3);
 TextureCube skyboxIrradianceTexture: register(t4);
+TextureCube skyboxRadianceTexture: register(t5);
+Texture2D brdfTexture: register(t6);
 
 SamplerState gsamPointWrap : register(s0);
 SamplerState gsamPointClamp : register(s1);
@@ -181,6 +183,9 @@ float4 PBRLighting(FullScreenVertexOut input) {
     // camera vector
     float3 toEyeDir = normalize(g_cameraBuffer.position.xyz - worldPos);
     float3 halfWay = normalize(toEyeDir + ldir);
+    float3 reflected = reflect(-toEyeDir, gbd.normal);
+    //reflected = gbd.normal;
+
 
     // fresnel slick, ratio between specular and diffuse, it is tintend on
     // metal, so we lerp toward albedo based on metallic, so only specular will
@@ -191,6 +196,12 @@ float4 PBRLighting(FullScreenVertexOut input) {
 	float metallic = gbd.metallic;
 	float roughness = gbd.roughness;
 
+
+    float MAX_REFLECTION_LOD = 6.0f;
+	float3 prefilteredColor = skyboxRadianceTexture.SampleLevel(gsamLinearClamp,reflected, roughness * MAX_REFLECTION_LOD).rgb;
+	//float3 prefilteredColor = skyboxRadianceTexture.SampleLevel(gsamLinearClamp,reflected, 0).rgb;
+
+
 	//float3 albedo =float3(0.8f,0.0f,0.0f); 
 	//float metallic = 0.0f;
 	//float roughness = 1.0f;
@@ -199,6 +210,9 @@ float4 PBRLighting(FullScreenVertexOut input) {
     float3 F = fresnelSchlick(max(dot(halfWay, toEyeDir), 0.0f), F0, roughness);
     float NDF = DistributionGGX(gbd.normal, halfWay, roughness);
     float G = GeometrySmith(gbd.normal, toEyeDir, ldir, roughness);
+
+    float2 envBRDF = brdfTexture.Sample(gsamLinearClamp, float2(max(dot(gbd.normal, toEyeDir), 0.0), roughness)).rg;
+    float3 specularDiff = prefilteredColor * (F * envBRDF.x + envBRDF.y);
 
     // compute cook torrance
     float3 nominator = NDF * G * F;
@@ -218,17 +232,19 @@ float4 PBRLighting(FullScreenVertexOut input) {
     float NdotL = max(dot(gbd.normal, ldir), 0.0f);
     Lo += (kD * albedo/ PI + specular) * radiance * NdotL;
 
-    //float3 ambient = 0.03f * gbd.color;
 
 	//using irradiance map
 	float3 irradiance = skyboxIrradianceTexture.Sample(gsamLinearClamp,gbd.normal);
 	float3 diffuse      = irradiance* albedo;
-	float3 ambient = kD * diffuse;
+	float3 ambient = kD * diffuse + specularDiff;
 
     float3 color = ambient + Lo;
     //float3 color = irradiance*kD;
 
 
+
+        //return float4(prefilteredColor, 1.0f);
+    //return float4(envBRDF,0.0f, 1.0f);
     return float4(color, 1.0f);
   }
   return finalColor;

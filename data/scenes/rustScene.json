@@ -1,7 +1,8 @@
 {
 "assets": [ "data/assets/sphereRust.json" ],
 "enviromentMap" :"data/external/textures/newportCube.dds",
-"enviromentMapIrradiance" :"data/external/textures/newportCubeIrradiance.dds"
+"enviromentMapIrradiance" :"data/external/textures/newportCubeIrradiance.dds",
+"enviromentMapRadiance" :"data/external/textures/newportCubeRadiance.dds"
 }
 
 

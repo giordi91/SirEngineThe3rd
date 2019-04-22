@@ -18,6 +18,7 @@ public:
 
 private:
   TextureHandle m_lightBuffer{};
+  TextureHandle m_brdfHandle{};
   ID3D12RootSignature* rs =nullptr;
   ID3D12PipelineState* pso = nullptr;
   DirectionalLightData m_light;

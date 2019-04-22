@@ -19,11 +19,18 @@ public:
       const TextureHandle enviromentMapIrradianceHandle) {
     m_enviromentMapIrradianceHandle = enviromentMapIrradianceHandle;
   };
+  inline void setEnviromentMapRadiance(
+      const TextureHandle enviromentMapRadianceHandle) {
+    m_enviromentMapRadianceHandle = enviromentMapRadianceHandle;
+  };
   inline TextureHandle getEnviromentMapHandle() const {
     return m_enviromentMapHandle;
   }
   inline TextureHandle getEnviromentMapIrradianceHandle() const {
     return m_enviromentMapIrradianceHandle;
+  }
+  inline TextureHandle getEnviromentMapRadianceHandle() const {
+    return m_enviromentMapRadianceHandle;
   }
 
 private:
@@ -32,6 +39,7 @@ private:
   ConstantBufferHandle m_cameraHandle{};
   TextureHandle m_enviromentMapHandle;
   TextureHandle m_enviromentMapIrradianceHandle;
+  TextureHandle m_enviromentMapRadianceHandle;
 };
 
 } // namespace SirEngine
