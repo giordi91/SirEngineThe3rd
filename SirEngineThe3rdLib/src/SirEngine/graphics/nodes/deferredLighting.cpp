@@ -69,6 +69,12 @@ void DeferredLightingPass::initialize() {
   m_lightCB = globals::CONSTANT_BUFFER_MANAGER->allocateDynamic(
       sizeof(DirectionalLightData), &m_light);
   m_lightAddress = dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(m_lightCB);
+
+
+
+  m_brdfHandle=
+      globals::TEXTURE_MANAGER->loadTexture(
+          "data/processed/textures/brdf.dds");
 }
 
 inline TextureHandle
@@ -138,6 +144,12 @@ void DeferredLightingPass::compute() {
   TextureHandle skyHandle = globals::RENDERING_CONTEX->getEnviromentMapIrradianceHandle();
   commandList->SetGraphicsRootDescriptorTable(
       6, dx12::TEXTURE_MANAGER->getSRVDx12(skyHandle).gpuHandle);
+
+  TextureHandle skyRadianceHandle = globals::RENDERING_CONTEX->getEnviromentMapRadianceHandle();
+  commandList->SetGraphicsRootDescriptorTable(
+      7, dx12::TEXTURE_MANAGER->getSRVDx12(skyRadianceHandle).gpuHandle);
+  commandList->SetGraphicsRootDescriptorTable(
+      8, dx12::TEXTURE_MANAGER->getSRVDx12(m_brdfHandle).gpuHandle);
 
   // the newer ID3DUserDefinedAnnotation API is also supported
   commandList->DrawInstanced(6, 1, 0, 0);

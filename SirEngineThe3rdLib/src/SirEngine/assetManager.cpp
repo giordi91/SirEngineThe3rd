@@ -1,9 +1,9 @@
 #include "SirEngine/assetManager.h"
 #include "fileUtils.h"
 // TODO remove dx12 calls from here
+#include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/identityManager.h"
 #include "SirEngine/materialManager.h"
-#include "SirEngine/graphics/renderingContext.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/TextureManagerDx12.h"
 #include "platform/windows/graphics/dx12/meshManager.h"
@@ -15,6 +15,7 @@ static const char *MATERIAL_KEY = "material";
 static const char *ASSETS_KEY = "assets";
 static const char *ENVIROMENT_MAP_KEY = "enviromentMap";
 static const char *ENVIROMENT_MAP_IRRADIANCE_KEY = "enviromentMapIrradiance";
+static const char *ENVIROMENT_MAP_RADIANCE_KEY = "enviromentMapRadiance";
 static const std::string DEFAULT_STRING = "";
 } // namespace AssetManagerKeys
 
@@ -85,15 +86,27 @@ void AssetManager::loadScene(const char *path) {
   TextureHandle enviromentMapHandle =
       globals::TEXTURE_MANAGER->loadTexture(enviromentMapString.c_str(), true);
 
-  // load the env map irradiance
+  // load the env map irradiance and radiance
   const std::string enviromentMapIrradianceString =
       getValueIfInJson(jobj, AssetManagerKeys::ENVIROMENT_MAP_IRRADIANCE_KEY,
                        AssetManagerKeys::DEFAULT_STRING);
   assert(!enviromentMapIrradianceString.empty());
   TextureHandle enviromentMapIrradianceHandle =
-      globals::TEXTURE_MANAGER->loadTexture(enviromentMapIrradianceString.c_str(),true);
+      globals::TEXTURE_MANAGER->loadTexture(
+          enviromentMapIrradianceString.c_str(), true);
 
-	globals::RENDERING_CONTEX->setEnviromentMap(enviromentMapHandle);
-	globals::RENDERING_CONTEX->setEnviromentMapIrradiance(enviromentMapIrradianceHandle);
+  const std::string enviromentMapRadianceString =
+      getValueIfInJson(jobj, AssetManagerKeys::ENVIROMENT_MAP_RADIANCE_KEY,
+                       AssetManagerKeys::DEFAULT_STRING);
+  assert(!enviromentMapIrradianceString.empty());
+  TextureHandle enviromentMapRadianceHandle =
+      globals::TEXTURE_MANAGER->loadTexture(
+          enviromentMapRadianceString.c_str(), true);
+
+  globals::RENDERING_CONTEX->setEnviromentMap(enviromentMapHandle);
+  globals::RENDERING_CONTEX->setEnviromentMapIrradiance(
+      enviromentMapIrradianceHandle);
+  globals::RENDERING_CONTEX->setEnviromentMapRadiance(
+      enviromentMapRadianceHandle);
 }
 } // namespace SirEngine
