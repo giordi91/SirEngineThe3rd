@@ -3,6 +3,7 @@
 #include "SirEngine/log.h"
 #include "cxxopts/cxxopts.hpp"
 
+#include "SirEngine/headlessClient.h"
 #include "processTexture.h"
 #include "resourceCompilerLib/argsUtils.h"
 
@@ -36,20 +37,23 @@ void processArgs(const std::string args, std::string &format, bool &isGamma) {
 bool processTexture(const std::string &assetPath, const std::string &outputPath,
                     const std::string &args) {
 
+  // test
+  SirEngine::HeadlessClient client;
+
   // processing plugins args
-  std::string format{""};
+  std::string format;
   bool isGamma;
   processArgs(args, format, isGamma);
 
   // checking IO files exits
-  bool exits = fileExists(assetPath);
-  if (!exits) {
+  bool exists = fileExists(assetPath);
+  if (!exists) {
     SE_CORE_ERROR("[Texture Compiler] : could not find path/file {0}",
                   assetPath);
   }
 
-  exits = filePathExists(outputPath);
-  if (!exits) {
+  exists = filePathExists(outputPath);
+  if (!exists) {
     SE_CORE_ERROR("[Texture Compiler] : could not find path/file {0}",
                   outputPath);
   }

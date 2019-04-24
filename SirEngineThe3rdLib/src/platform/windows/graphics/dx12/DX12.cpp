@@ -203,13 +203,19 @@ bool initializeGraphicsDx12(Window *wnd, uint32_t width, uint32_t height) {
 
   globals::DEBUG_FRAME_DATA = new globals::DebugFrameData();
 
-  // init swap chain
-  auto *windowWnd = static_cast<HWND>(wnd->getNativeWindow());
+  bool isHeadless = (wnd == nullptr) | (width == 0) | (height == 0);
 
-  dx12::SWAP_CHAIN = new dx12::SwapChain();
-  dx12::SWAP_CHAIN->initialize(windowWnd, width, height);
-  dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
-  dx12::SWAP_CHAIN->resize(&dx12::CURRENT_FRAME_RESOURCE->fc, width, height);
+  if (!isHeadless) {
+    // init swap chain
+    auto *windowWnd = static_cast<HWND>(wnd->getNativeWindow());
+
+    dx12::SWAP_CHAIN = new dx12::SwapChain();
+    dx12::SWAP_CHAIN->initialize(windowWnd, width, height);
+    dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
+    dx12::SWAP_CHAIN->resize(&dx12::CURRENT_FRAME_RESOURCE->fc, width, height);
+  } else {
+    SE_CORE_INFO("Requested HEADLESS client, no swapchain is initialized");
+  }
 
   return true;
 }
