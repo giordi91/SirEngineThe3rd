@@ -10,6 +10,10 @@ project(SirEngineThe3rdLib)
 						${CMAKE_CURRENT_SOURCE_DIR}/src
 	)
 
+	if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+		add_compile_options(/w4251)
+	endif()
+
 	#lets add specific windows build definitions
 	if (WIN32)
 		if(${BUILD_AMD})
