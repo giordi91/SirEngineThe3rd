@@ -2,6 +2,15 @@
 #include "SirEngine/core.h"
 
 namespace SirEngine {
+namespace dx12 {
+class RootSignatureManager;
+class PSOManager;
+struct FrameResource;
+class TextureManagerDx12;
+} // namespace dx12
+
+
+
 // the main idea of this class is to be used for tooling where you might want
 // to run graphics and or compute without spawning a window and maybe without
 // the whole game editor event but a much simpler one off code execution. An
@@ -18,8 +27,14 @@ public:
   // multiple times same as it is safe in the normal render loop.
   void endWork();
 
-  //makes sure all the work is done.
+  // makes sure all the work is done.
   void flushAllOperation();
+
+  // temporary DX12 calls
+  dx12::RootSignatureManager *getRootSignatureManager();
+  dx12::PSOManager* getPSOManager();
+  dx12::TextureManagerDx12* getTextureManager();
+  dx12::FrameResource* getFrameResource();
 
 };
 } // namespace SirEngine

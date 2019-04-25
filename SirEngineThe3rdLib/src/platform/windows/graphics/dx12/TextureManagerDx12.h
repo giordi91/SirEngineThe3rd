@@ -1,5 +1,6 @@
 #pragma once
 
+#include "SirEngine/core.h"
 #include "DXTK12/ResourceUploadBatch.h"
 #include "SirEngine/handle.h"
 #include "SirEngine/memory/SparseMemoryPool.h"
@@ -8,10 +9,11 @@
 #include "platform/windows/graphics/dx12/d3dx12.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 
+
 namespace SirEngine {
 namespace dx12 {
 
-class TextureManagerDx12 final : public TextureManager {
+class SIR_ENGINE_API TextureManagerDx12 final : public TextureManager {
   struct TextureData final {
     uint32_t magicNumber;
     ID3D12Resource *resource;
@@ -35,7 +37,7 @@ public:
   virtual void free(const TextureHandle handle) override;
   virtual TextureHandle allocateRenderTexture(uint32_t width, uint32_t height,
                                               RenderTargetFormat format,
-                                              const char *name) override;
+                                              const char *name, bool allowWrite =false) override;
   virtual void bindRenderTarget(TextureHandle handle,
                                 TextureHandle depth) override;
   virtual void copyTexture(TextureHandle source,
@@ -63,6 +65,17 @@ public:
     assert(data.srv.type == DescriptorType::SRV);
     return m_texturePool.getConstRef(index).srv;
   }
+
+  DescriptorPair getUAVDx12(const TextureHandle handle) {
+
+    assertMagicNumber(handle);
+    uint32_t index = getIndexFromHandle(handle);
+    const TextureData &data = m_texturePool.getConstRef(index);
+    assert(data.uav.cpuHandle.ptr != 0);
+    assert(data.uav.type == DescriptorType::UAV);
+    return m_texturePool.getConstRef(index).uav;
+  }
+
   // A manual format is passed to the depth becauase we normally use a typess
   // type so we cannot rely on the format used during allocation.
   DescriptorPair

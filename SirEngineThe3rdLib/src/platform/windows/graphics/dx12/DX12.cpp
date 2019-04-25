@@ -190,6 +190,7 @@ bool initializeGraphicsDx12(Window *wnd, uint32_t width, uint32_t height) {
   SHADER_MANAGER = new ShaderManager();
   SHADER_MANAGER->init();
   SHADER_MANAGER->loadShadersInFolder("data/processed/shaders/rasterization");
+  SHADER_MANAGER->loadShadersInFolder("data/processed/shaders/compute");
 
   ROOT_SIGNATURE_MANAGER = new RootSignatureManager();
   ROOT_SIGNATURE_MANAGER->loadSingaturesInFolder("data/processed/rs");
@@ -219,6 +220,52 @@ bool initializeGraphicsDx12(Window *wnd, uint32_t width, uint32_t height) {
 
   return true;
 }
+void flushDx12() { flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE); }
+
+bool beginHeadlessWorkDx12()
+{
+  // here we need to check which frame resource we are going to use
+  dx12::CURRENT_FRAME_RESOURCE = &dx12::FRAME_RESOURCES[globals::CURRENT_FRAME];
+
+  // check if the resource has finished rendering if not we have to wait
+  if (dx12::CURRENT_FRAME_RESOURCE->fence != 0 &&
+      dx12::GLOBAL_FENCE->GetCompletedValue() <
+          dx12::CURRENT_FRAME_RESOURCE->fence) {
+    HANDLE eventHandle =
+        CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
+    auto handleResult = dx12::GLOBAL_FENCE->SetEventOnCompletion(
+        dx12::CURRENT_FRAME_RESOURCE->fence, eventHandle);
+    assert(SUCCEEDED(handleResult));
+    WaitForSingleObject(eventHandle, INFINITE);
+
+    CloseHandle(eventHandle);
+  }
+  // at this point we know we are ready to go
+  resetAllocatorAndList(&dx12::CURRENT_FRAME_RESOURCE->fc);
+  // Indicate a state transition on the resource usage.
+  auto *commandList = dx12::CURRENT_FRAME_RESOURCE->fc.commandList;
+
+  auto *heap = dx12::GLOBAL_CBV_SRV_UAV_HEAP->getResource();
+  commandList->SetDescriptorHeaps(1, &heap);
+
+  return true;
+}
+
+bool endHeadlessWorkDx12()
+{
+  // finally transition the resource to be present
+  auto *commandList = dx12::CURRENT_FRAME_RESOURCE->fc.commandList;
+
+  // Done recording commands.
+  dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE,
+                           &dx12::CURRENT_FRAME_RESOURCE->fc);
+
+  dx12::CURRENT_FRAME_RESOURCE->fence = ++dx12::CURRENT_FENCE;
+  dx12::GLOBAL_COMMAND_QUEUE->Signal(dx12::GLOBAL_FENCE, dx12::CURRENT_FENCE);
+  // bump the frame
+  globals::CURRENT_FRAME = (globals::CURRENT_FRAME + 1) % FRAME_BUFFERS_COUNT;
+  return true;
+}
 
 bool shutdownGraphicsDx12() {
   flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
@@ -237,7 +284,6 @@ bool stopGraphicsDx12() {
   return true;
 }
 bool newFrameDx12() {
-  // TODO clear here, there should be no specific dx12 stuff
   // here we need to check which frame resource we are going to use
   dx12::CURRENT_FRAME_RESOURCE = &dx12::FRAME_RESOURCES[globals::CURRENT_FRAME];
 

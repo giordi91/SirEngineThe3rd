@@ -100,6 +100,27 @@ UINT DescriptorHeap::createTexture2DSRV(DescriptorPair &pair,
 #endif
   return descriptorIndex;
 }
+
+UINT DescriptorHeap::createTexture2DUAV(DescriptorPair &pair,
+                                        ID3D12Resource *resource,
+                                        DXGI_FORMAT format) {
+  UINT descriptorIndex = allocateDescriptor(&pair.cpuHandle);
+
+  D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc = {};
+  UAVDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+  UAVDesc.Format = format;
+  DEVICE->CreateUnorderedAccessView(resource, nullptr, &UAVDesc,
+                                      pair.cpuHandle);
+  pair.gpuHandle= CD3DX12_GPU_DESCRIPTOR_HANDLE(
+      getGPUStart(), descriptorIndex, m_descriptorSize);
+#if SE_DEBUG
+  pair.type = DescriptorType::UAV;
+#endif
+  return descriptorIndex;
+}
+
+
+
 UINT DescriptorHeap::createTextureCubeSRV(DescriptorPair &pair,
                                         ID3D12Resource *resource,
                                         DXGI_FORMAT format) {

@@ -122,13 +122,13 @@ extern FrameResource *CURRENT_FRAME_RESOURCE;
 extern TextureManagerDx12 *TEXTURE_MANAGER;
 extern MeshManager *MESH_MANAGER;
 extern IdentityManager *IDENTITY_MANAGER;
-extern MaterialManager* MATERIAL_MANAGER;
-extern Graph* RENDERING_GRAPH;
-extern ConstantBufferManagerDx12* CONSTANT_BUFFER_MANAGER;
-extern ShaderManager* SHADER_MANAGER;
-extern RootSignatureManager* ROOT_SIGNATURE_MANAGER;
-extern PSOManager* PSO_MANAGER;
-extern ShadersLayoutRegistry* SHADER_LAYOUT_REGISTRY;
+extern MaterialManager *MATERIAL_MANAGER;
+extern Graph *RENDERING_GRAPH;
+extern ConstantBufferManagerDx12 *CONSTANT_BUFFER_MANAGER;
+extern ShaderManager *SHADER_MANAGER;
+extern RootSignatureManager *ROOT_SIGNATURE_MANAGER;
+extern PSOManager *PSO_MANAGER;
+extern ShadersLayoutRegistry *SHADER_LAYOUT_REGISTRY;
 
 inline UINT64 insertFenceToGlobalQueue() {
   // Advance the fence value to mark commands up to this fence point.
@@ -172,5 +172,11 @@ bool shutdownGraphicsDx12();
 bool stopGraphicsDx12();
 bool newFrameDx12();
 bool dispatchFrameDx12();
+void flushDx12();
+
+// headless client functions
+bool beginHeadlessWorkDx12();
+bool endHeadlessWorkDx12();
+
 } // namespace dx12
 } // namespace SirEngine

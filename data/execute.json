@@ -23,6 +23,7 @@
       "-p data/shaders/rasterization/HDRtoSDREffectPS.hlsl -o data/processed/shaders/rasterization/HDRtoSDREffectPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
       "-p data/shaders/rasterization/gammaAndToneMappingEffectPS.hlsl -o data/processed/shaders/rasterization/gammaAndToneMappingEffectPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
       "-p data/shaders/rasterization/skyboxPS.hlsl -o data/processed/shaders/rasterization/skyboxPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
+      "-p data/shaders/compute/textureMIPS.hlsl -o data/processed/shaders/compute/textureMIPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t cs_6_2  -e CS -d \"",
 
       "-p data/rs/simpleMeshRS.json -o data/processed/rs/simpleMeshRS.root --pluginName rootSignatureCompilerPlugin",
       "-p data/rs/simpleMeshRSTex.json -o data/processed/rs/simpleMeshRSTex.root --pluginName rootSignatureCompilerPlugin",
@@ -34,6 +35,7 @@
       "-p data/rs/proceduralSkybox_RS.json -o data/processed/rs/proceduralSkybox_RS.root --pluginName rootSignatureCompilerPlugin",
       "-p data/rs/debugFullScreenBlit_RS.json -o data/processed/rs/debugFullScreenBlit_RS.root --pluginName rootSignatureCompilerPlugin",
       "-p data/rs/standardPostProcessEffect_RS.json -o data/processed/rs/standardPostProcessEffect_RS.root --pluginName rootSignatureCompilerPlugin",
-      "-p data/rs/skybox_RS.json -o data/processed/rs/skybox_RS.root --pluginName rootSignatureCompilerPlugin"
+      "-p data/rs/skybox_RS.json -o data/processed/rs/skybox_RS.root --pluginName rootSignatureCompilerPlugin",
+      "-p data/rs/textureMIPS_RS.json -o data/processed/rs/textureMIPS_RS.root --pluginName rootSignatureCompilerPlugin"
     ]
 }

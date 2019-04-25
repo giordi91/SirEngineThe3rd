@@ -2,6 +2,7 @@
 #include <cassert>
 #include <string>
 #include <unordered_map>
+#include "SirEngine/core.h"
 
 // forward declares
 struct ID3D12RootSignature;
@@ -11,7 +12,7 @@ namespace dx12{
 
 enum class ROOT_FILE_TYPE { RASTER = 0, COMPUTE = 1, DXR = 2, NULL_TYPE };
 
-class RootSignatureManager final
+class SIR_ENGINE_API RootSignatureManager final
 {
 
 public:

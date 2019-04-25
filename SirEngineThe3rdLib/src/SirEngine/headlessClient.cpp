@@ -1,32 +1,30 @@
 #include "SirEngine/headlessClient.h"
 #include "SirEngine/graphics/graphicsCore.h"
+#include "platform/windows/graphics/dx12/DX12.h"
 #include <cassert>
 
-
-namespace SirEngine
-{
-	HeadlessClient::HeadlessClient()
-	{
-		graphics::initializeGraphics(nullptr,0,0);
-	}
-
-	HeadlessClient::~HeadlessClient()
-	{
-		graphics::shutdownGraphics();
-	}
-
-	void HeadlessClient::beginWork()
-	{
-		assert(0);
-	}
-
-	void HeadlessClient::endWork()
-	{
-		assert(0);
-	}
-
-	void HeadlessClient::flushAllOperation()
-	{
-		assert(0);
-	}
+namespace SirEngine {
+HeadlessClient::HeadlessClient() {
+  graphics::initializeGraphics(nullptr, 0, 0);
 }
+
+HeadlessClient::~HeadlessClient() { graphics::shutdownGraphics(); }
+
+void HeadlessClient::beginWork() { graphics::beginHeadlessWork(); }
+void HeadlessClient::endWork() { graphics::endHeadlessWork(); }
+void HeadlessClient::flushAllOperation() { graphics::flush(); }
+
+dx12::RootSignatureManager *HeadlessClient::getRootSignatureManager() {
+  return dx12::ROOT_SIGNATURE_MANAGER;
+}
+
+dx12::PSOManager *HeadlessClient::getPSOManager() { return dx12::PSO_MANAGER; }
+
+dx12::TextureManagerDx12 *HeadlessClient::getTextureManager() {
+  return dx12::TEXTURE_MANAGER;
+}
+
+dx12::FrameResource *HeadlessClient::getFrameResource() {
+  return dx12::CURRENT_FRAME_RESOURCE;
+}
+} // namespace SirEngine
