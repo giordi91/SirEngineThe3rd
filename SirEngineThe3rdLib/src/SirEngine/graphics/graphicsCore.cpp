@@ -1,11 +1,11 @@
 #include "SirEngine/graphics/graphicsCore.h"
 #include "SirEngine/Window.h"
 
-//DX12 implementation
+// DX12 implementation
 #if GRAPHICS_API == DX12
-#include "platform/windows/graphics/dx12/swapChain.h"
 #include "platform/windows/graphics/dx12/DX12.h"
-#endif 
+#include "platform/windows/graphics/dx12/swapChain.h"
+#endif
 namespace SirEngine {
 namespace graphics {
 
@@ -19,10 +19,13 @@ void onResize(const uint32_t width, const uint32_t height) {
 }
 void newFrame() { dx12::newFrameDx12(); }
 void dispatchFrame() { dx12::dispatchFrameDx12(); }
-
 void stopGraphics() { dx12::stopGraphicsDx12(); }
-
 void shutdownGraphics() { dx12::shutdownGraphicsDx12(); }
+
+void beginHeadlessWork() { dx12::beginHeadlessWorkDx12(); }
+void endHeadlessWork() { dx12::endHeadlessWorkDx12(); }
+
+void flush() { dx12::flushDx12(); }
 #endif
 } // namespace graphics
 } // namespace SirEngine

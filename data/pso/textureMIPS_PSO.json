@@ -1,0 +1,5 @@
+{
+ "type":  "COMPUTE",
+ "globalRootSignature": "textureMIPS_RS",
+ "shaderName" : "textureMIPS"
+}

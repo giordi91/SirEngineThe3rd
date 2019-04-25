@@ -12,17 +12,17 @@ static std::unordered_map<RenderTargetFormat, DXGI_FORMAT>
         {RenderTargetFormat::RGBA32, DXGI_FORMAT_R8G8B8A8_UNORM},
         {RenderTargetFormat::R11G11B10_FLOAT, DXGI_FORMAT_R11G11B10_FLOAT},
         {RenderTargetFormat::R11G11B10_UNORM, DXGI_FORMAT_R10G10B10A2_UNORM},
-        {RenderTargetFormat::R16G16B16A16_FLOAT, DXGI_FORMAT_R16G16B16A16_FLOAT}};
+        {RenderTargetFormat::R16G16B16A16_FLOAT,
+         DXGI_FORMAT_R16G16B16A16_FLOAT}};
 
 TextureManagerDx12::~TextureManagerDx12() {
   // assert(m_texturePool.assertEverythingDealloc());
 }
 
-void TextureManagerDx12::loadLegacy(const std::string& path)
-{
-    uint32_t index;
-    TextureData &data = m_texturePool.getFreeMemoryData(index);
-	assert(0 && "legacy not yet supported");
+void TextureManagerDx12::loadLegacy(const std::string &path) {
+  uint32_t index;
+  TextureData &data = m_texturePool.getFreeMemoryData(index);
+  assert(0 && "legacy not yet supported");
 }
 
 TextureHandle TextureManagerDx12::loadTexture(const char *path, bool cubeMap) {
@@ -34,13 +34,10 @@ TextureHandle TextureManagerDx12::loadTexture(const char *path, bool cubeMap) {
   auto found = m_nameToHandle.find(name);
   if (found == m_nameToHandle.end()) {
 
-	  const std::string extension = getFileExtension(path);
-	  if(extension != ".dds")
-	  {
-		  loadLegacy(path);
-	  }
-
-
+    const std::string extension = getFileExtension(path);
+    if (extension != ".dds") {
+      loadLegacy(path);
+    }
 
     uint32_t index;
     TextureData &data = m_texturePool.getFreeMemoryData(index);
@@ -65,17 +62,13 @@ TextureHandle TextureManagerDx12::loadTexture(const char *path, bool cubeMap) {
 
     m_nameToHandle[name] = handle;
 
-	if(!cubeMap)
-	{
-		dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DSRV(data.srv, data.resource,
-														  data.format);
-	}
-	else
-	{
-		dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTextureCubeSRV(data.srv, data.resource,
-														  data.format);
-		
-	}
+    if (!cubeMap) {
+      dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DSRV(data.srv, data.resource,
+                                                        data.format);
+    } else {
+      dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTextureCubeSRV(
+          data.srv, data.resource, data.format);
+    }
 
     return handle;
   }
@@ -171,8 +164,8 @@ TextureManagerDx12::createDepthTexture(const char *name, uint32_t width,
   dx12::createDSV(dx12::GLOBAL_DSV_HEAP, m_texturePool[index].resource,
                   data.rtsrv, DXGI_FORMAT_D32_FLOAT);
 
-  dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DSRV(
-      data.srv, data.resource, DXGI_FORMAT_R32_FLOAT);
+  dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DSRV(data.srv, data.resource,
+                                                    DXGI_FORMAT_R32_FLOAT);
   ++MAGIC_NUMBER_COUNTER;
 
   m_nameToHandle[name] = handle;
@@ -237,16 +230,19 @@ inline DXGI_FORMAT convertToDXGIFormat(const RenderTargetFormat format) {
 TextureHandle
 TextureManagerDx12::allocateRenderTexture(uint32_t width, uint32_t height,
                                           RenderTargetFormat format,
-                                          const char *name) {
+                                          const char *name, bool allowWrite) {
 
   // convert SirEngine format to dx12 format
   DXGI_FORMAT actualFormat = convertToDXGIFormat(format);
 
   uint32_t index;
   TextureData &data = m_texturePool.getFreeMemoryData(index);
-  auto uavDesc =
-      CD3DX12_RESOURCE_DESC::Tex2D(actualFormat, width, height, 1, 1, 1, 0,
-                                   D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
+  D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+  if (allowWrite) {
+    flags = flags | (D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+  }
+  auto uavDesc = CD3DX12_RESOURCE_DESC::Tex2D(actualFormat, width, height, 1, 1,
+                                              1, 0, flags);
 
   D3D12_CLEAR_VALUE clear;
   clear.Color[0] = 0.0f;
@@ -272,6 +268,10 @@ TextureManagerDx12::allocateRenderTexture(uint32_t width, uint32_t height,
   createRTVSRV(dx12::GLOBAL_RTV_HEAP, data.resource, data.rtsrv);
   dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DSRV(data.srv, data.resource,
                                                     data.format);
+  if (allowWrite) {
+    dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DUAV(data.uav, data.resource,
+                                                      data.format);
+  }
 
   // convert to wstring
   const std::string sname(name);

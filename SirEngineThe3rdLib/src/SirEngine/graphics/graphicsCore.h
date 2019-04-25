@@ -25,6 +25,12 @@ void dispatchFrame();
 // when convenient
 void stopGraphics();
 void shutdownGraphics();
+
+//functions for headless client
+void beginHeadlessWork();
+void endHeadlessWork();
+
+void flush();
 } // namespace graphics
 
 } // namespace SirEngine

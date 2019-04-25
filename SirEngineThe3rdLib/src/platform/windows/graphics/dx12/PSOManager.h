@@ -2,11 +2,11 @@
 #include <cassert>
 #include <string>
 #include <unordered_map>
+#include "SirEngine/core.h"
 
 #include "DX12.h"
 #include "nlohmann/json_fwd.hpp"
 #include "platform/windows/graphics/dx12/d3dx12.h"
-#include <array>
 
 namespace SirEngine {
 namespace dx12 {
@@ -16,7 +16,7 @@ class ShadersLayoutRegistry;
 
 enum class PSOType { DXR = 0, RASTER, COMPUTE, INVALID };
 
-class PSOManager final {
+class SIR_ENGINE_API PSOManager final {
 
 public:
   ~PSOManager() = default;

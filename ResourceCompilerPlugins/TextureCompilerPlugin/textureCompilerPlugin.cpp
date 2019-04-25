@@ -7,6 +7,16 @@
 #include "processTexture.h"
 #include "resourceCompilerLib/argsUtils.h"
 
+// engine includes
+#include "SirEngine/textureManager.h"
+#include "platform/windows/graphics/dx12/DX12.h"
+#include "platform/windows/graphics/dx12/PSOManager.h"
+#include "platform/windows/graphics/dx12/rootSignatureManager.h"
+#include "platform/windows/graphics/dx12/TextureManagerDx12.h"
+
+// debug capture
+#include <DXProgrammableCapture.h>
+
 const std::string PLUGIN_NAME = "textureCompilerPlugin";
 const unsigned int VERSION_MAJOR = 0;
 const unsigned int VERSION_MINOR = 1;
@@ -39,8 +49,43 @@ bool processTexture(const std::string &assetPath, const std::string &outputPath,
 
   // test
   SirEngine::HeadlessClient client;
+  SirEngine::dx12::RootSignatureManager *rootM =
+      client.getRootSignatureManager();
+  SirEngine::dx12::PSOManager *psoM = client.getPSOManager();
+  SirEngine::dx12::TextureManagerDx12 *textureManager = client.getTextureManager();
 
-  // processing plugins args
+  ID3D12RootSignature *rs = rootM->getRootSignatureFromName("textureMIPS_RS");
+  ID3D12PipelineState *pso = psoM->getComputePSOByName("textureMIPS_PSO");
+
+  auto textureHandle = textureManager->allocateRenderTexture(
+      1024, 1024, SirEngine::RenderTargetFormat::RGBA32, "dummy",true);
+
+  Microsoft::WRL::ComPtr<IDXGraphicsAnalysis> ga;
+  HRESULT hr = DXGIGetDebugInterface1(0, IID_PPV_ARGS(&ga));
+  assert(SUCCEEDED(hr));
+
+  ga->BeginCapture();
+  client.beginWork();
+  SirEngine::dx12::FrameResource* frameRes = client.getFrameResource();
+  auto commandList = frameRes->fc.commandList;
+  commandList->SetPipelineState(pso);
+  commandList->SetComputeRootSignature(rs);
+
+  D3D12_RESOURCE_BARRIER barriers[5];
+  int counter = 0;
+  counter = textureManager->transitionTexture2DifNeeded(
+      textureHandle, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, barriers,
+      counter);
+
+  commandList->SetComputeRootDescriptorTable(2,
+	textureManager->getUAVDx12(textureHandle).gpuHandle);
+  commandList->Dispatch(128,128,1);
+
+  client.endWork();
+  client.flushAllOperation();
+  ga->EndCapture();
+
+  // processing plug-ins args
   std::string format;
   bool isGamma;
   processArgs(args, format, isGamma);

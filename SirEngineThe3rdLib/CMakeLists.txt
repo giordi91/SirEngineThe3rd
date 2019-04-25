@@ -11,7 +11,7 @@ project(SirEngineThe3rdLib)
 	)
 
 	if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-		add_compile_options(/w4251)
+		add_compile_options("/wd4251")
 	endif()
 
 	#lets add specific windows build definitions
@@ -66,6 +66,8 @@ project(SirEngineThe3rdLib)
 	SOURCE_GROUP("data/shaders/common" FILES ${SHADERS_COMMON_FILES})
     file(GLOB_RECURSE SHADERS_RASTERIZATION_FILES "../data/shaders/rasterization/*.hlsl" )
 	SOURCE_GROUP("data/shaders/rasterization" FILES ${SHADERS_RASTERIZATION_FILES})
+    file(GLOB_RECURSE SHADERS_COMPUTE_FILES "../data/shaders/compute/*.hlsl" )
+	SOURCE_GROUP("data/shaders/compute" FILES ${SHADERS_COMPUTE_FILES})
     file(GLOB_RECURSE SCENE_FILES "../data/scenes/*.json" )
 	SOURCE_GROUP("data/scenes" FILES ${SCENE_FILES})
 	SOURCE_GROUP("data" FILES "../data/execute.json")
@@ -73,8 +75,13 @@ project(SirEngineThe3rdLib)
 	SOURCE_GROUP("data" FILES "../data/executeTexture.json")
 
 
+
 	set_source_files_properties(
             ${SHADERS_RASTERIZATION_FILES}
+            PROPERTIES HEADER_FILE_ONLY TRUE
+         )
+	set_source_files_properties(
+            ${SHADERS_COMPUTE_FILES}
             PROPERTIES HEADER_FILE_ONLY TRUE
          )
 	set_source_files_properties(
@@ -90,6 +97,7 @@ project(SirEngineThe3rdLib)
 	${RS_FILES}
 	${SHADERS_COMMON_FILES}
 	${SHADERS_RASTERIZATION_FILES}
+	${SHADERS_COMPUTE_FILES}
 	"../data/execute.json"
 	"../data/executeFullDebug.json"
 	"../data/executeTexture.json"
