@@ -40,3 +40,6 @@
 [submodule "vendors/PixEvent"]
 	path = vendors/PixEvent
 	url = https://github.com/giordi91/PixEvent.git
+[submodule "vendors/crunch"]
+	path = vendors/crunch
+	url = https://github.com/giordi91/crunch
