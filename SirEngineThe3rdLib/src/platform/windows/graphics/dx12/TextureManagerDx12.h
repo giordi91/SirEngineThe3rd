@@ -38,6 +38,9 @@ public:
   virtual TextureHandle allocateRenderTexture(uint32_t width, uint32_t height,
                                               RenderTargetFormat format,
                                               const char *name, bool allowWrite =false) override;
+  virtual TextureHandle allocateTexture(uint32_t width, uint32_t height,
+                                              RenderTargetFormat format,
+                                              const char *name, bool mips, bool allowWrite =false) override;
   virtual void bindRenderTarget(TextureHandle handle,
                                 TextureHandle depth) override;
   virtual void copyTexture(TextureHandle source,
@@ -74,6 +77,13 @@ public:
     assert(data.uav.cpuHandle.ptr != 0);
     assert(data.uav.type == DescriptorType::UAV);
     return m_texturePool.getConstRef(index).uav;
+  }
+  ID3D12Resource* getRawTexture(const TextureHandle handle) const
+  {
+    assertMagicNumber(handle);
+    uint32_t index = getIndexFromHandle(handle);
+    const TextureData &data = m_texturePool.getConstRef(index);
+	return data.resource;
   }
 
   // A manual format is passed to the depth becauase we normally use a typess

@@ -5,13 +5,15 @@
 
 namespace SirEngine {
 
+// TODO can this be a enum class?
 enum TextureFlags { DEPTH = 1, RT = 2 };
 
 enum class RenderTargetFormat {
   RGBA32,
   R11G11B10_FLOAT,
   R11G11B10_UNORM,
-  R16G16B16A16_FLOAT
+  R16G16B16A16_FLOAT,
+  BC1_UNORM
 };
 class TextureManager {
 public:
@@ -26,6 +28,12 @@ public:
                                               RenderTargetFormat format,
                                               const char *name,
                                               bool allowWrite = false) = 0;
+  virtual TextureHandle allocateTexture(const uint32_t width,
+                                        const uint32_t height,
+                                        RenderTargetFormat format,
+                                        const char *name, bool mips,
+                                        const bool allowWrite = false) = 0;
+
   virtual void copyTexture(TextureHandle source, TextureHandle destination) = 0;
   virtual void bindRenderTarget(TextureHandle handle, TextureHandle depth) = 0;
   virtual void bindBackBuffer(bool bindBackBufferDepth) = 0;
