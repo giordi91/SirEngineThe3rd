@@ -27,4 +27,14 @@ dx12::TextureManagerDx12 *HeadlessClient::getTextureManager() {
 dx12::FrameResource *HeadlessClient::getFrameResource() {
   return dx12::CURRENT_FRAME_RESOURCE;
 }
+
+dx12::DescriptorHeap *HeadlessClient::getCbvSrvUavHeap() {
+  return dx12::GLOBAL_CBV_SRV_UAV_HEAP;
+}
+
+ID3D12Device *HeadlessClient::getDevice() { return dx12::DEVICE; }
+
+ID3D12CommandQueue *HeadlessClient::getQueue() {
+  return dx12::GLOBAL_COMMAND_QUEUE;
+}
 } // namespace SirEngine

@@ -82,7 +82,7 @@ UINT DescriptorHeap::createBufferCBV(DescriptorPair &pair,
 
 UINT DescriptorHeap::createTexture2DSRV(DescriptorPair &pair,
                                         ID3D12Resource *resource,
-                                        DXGI_FORMAT format) {
+                                        DXGI_FORMAT format, UINT mipLevel) {
   UINT descriptorIndex = allocateDescriptor(&pair.cpuHandle);
 
   D3D12_RESOURCE_DESC desc = resource->GetDesc();
@@ -90,7 +90,7 @@ UINT DescriptorHeap::createTexture2DSRV(DescriptorPair &pair,
   srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
   srvDesc.Format = format;
   srvDesc.Texture2D.MipLevels = desc.MipLevels;
-  srvDesc.Texture2D.MostDetailedMip = 0;
+  srvDesc.Texture2D.MostDetailedMip = mipLevel;
   srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
   DEVICE->CreateShaderResourceView(resource, &srvDesc, pair.cpuHandle);
   pair.gpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(getGPUStart(), descriptorIndex,
@@ -103,12 +103,13 @@ UINT DescriptorHeap::createTexture2DSRV(DescriptorPair &pair,
 
 UINT DescriptorHeap::createTexture2DUAV(DescriptorPair &pair,
                                         ID3D12Resource *resource,
-                                        DXGI_FORMAT format) {
+                                        DXGI_FORMAT format, UINT mipLevel) {
   UINT descriptorIndex = allocateDescriptor(&pair.cpuHandle);
 
   D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc = {};
   UAVDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
   UAVDesc.Format = format;
+  UAVDesc.Texture2D.MipSlice = mipLevel;
   DEVICE->CreateUnorderedAccessView(resource, nullptr, &UAVDesc,
                                       pair.cpuHandle);
   pair.gpuHandle= CD3DX12_GPU_DESCRIPTOR_HANDLE(

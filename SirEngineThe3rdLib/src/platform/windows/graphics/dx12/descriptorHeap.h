@@ -1,11 +1,12 @@
 #pragma once
+#include "SirEngine/core.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include <vector>
 
 namespace SirEngine {
 namespace dx12 {
 
-class DescriptorHeap {
+class SIR_ENGINE_API DescriptorHeap {
 
 public:
   DescriptorHeap() = default;
@@ -77,28 +78,28 @@ public:
   int reserveDescriptor(DescriptorPair &pair);
 
   UINT createTexture2DSRV(DescriptorPair &pair, ID3D12Resource *resource,
-                          DXGI_FORMAT format);
+                          DXGI_FORMAT format, UINT mipLevel = 0);
   UINT createTextureCubeSRV(DescriptorPair &pair, ID3D12Resource *resource,
                             DXGI_FORMAT format);
   UINT createTexture2DUAV(DescriptorPair &pair, ID3D12Resource *resource,
-                          DXGI_FORMAT format); 
+                          DXGI_FORMAT format, UINT mipLevel = 0);
 
-  private:
-    UINT m_descriptorsAllocated = 0;
-    ID3D12DescriptorHeap *m_heap = nullptr;
-    UINT m_descriptorSize = 0;
-    D3D12_DESCRIPTOR_HEAP_TYPE m_type;
+private:
+  UINT m_descriptorsAllocated = 0;
+  ID3D12DescriptorHeap *m_heap = nullptr;
+  UINT m_descriptorSize = 0;
+  D3D12_DESCRIPTOR_HEAP_TYPE m_type;
 
-    //
-    std::vector<unsigned int> m_freeList;
-    unsigned int m_freeListIdx = 0;
-  };
+  //
+  std::vector<unsigned int> m_freeList;
+  unsigned int m_freeListIdx = 0;
+};
 
-  // this function are kept externally because refer to a particular type of
-  // of texture
-  UINT createRTVSRV(DescriptorHeap *heap, ID3D12Resource *resource,
-                    DescriptorPair &pair);
-  UINT createDSV(DescriptorHeap *heap, ID3D12Resource *resource,
-                 DescriptorPair &pair, DXGI_FORMAT format);
+// this function are kept externally because refer to a particular type of
+// of texture
+UINT createRTVSRV(DescriptorHeap *heap, ID3D12Resource *resource,
+                  DescriptorPair &pair);
+UINT createDSV(DescriptorHeap *heap, ID3D12Resource *resource,
+               DescriptorPair &pair, DXGI_FORMAT format);
 } // namespace dx12
-} // namespace dx12
+} // namespace SirEngine

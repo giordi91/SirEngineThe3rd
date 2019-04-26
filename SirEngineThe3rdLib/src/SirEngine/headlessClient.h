@@ -1,5 +1,6 @@
 #pragma once
 #include "SirEngine/core.h"
+#include <d3d12.h>
 
 namespace SirEngine {
 namespace dx12 {
@@ -7,14 +8,13 @@ class RootSignatureManager;
 class PSOManager;
 struct FrameResource;
 class TextureManagerDx12;
+class DescriptorHeap;
 } // namespace dx12
-
-
 
 // the main idea of this class is to be used for tooling where you might want
 // to run graphics and or compute without spawning a window and maybe without
 // the whole game editor event but a much simpler one off code execution. An
-// example might be generation of mips or convolution of irradiance maps.
+// example might be generation of MIPS or convolution of irradiance maps.
 class SIR_ENGINE_API HeadlessClient {
 public:
   HeadlessClient();
@@ -32,9 +32,11 @@ public:
 
   // temporary DX12 calls
   dx12::RootSignatureManager *getRootSignatureManager();
-  dx12::PSOManager* getPSOManager();
-  dx12::TextureManagerDx12* getTextureManager();
-  dx12::FrameResource* getFrameResource();
-
+  dx12::PSOManager *getPSOManager();
+  dx12::TextureManagerDx12 *getTextureManager();
+  dx12::FrameResource *getFrameResource();
+  dx12::DescriptorHeap *getCbvSrvUavHeap();
+  ID3D12Device *getDevice();
+  ID3D12CommandQueue* getQueue();
 };
 } // namespace SirEngine
