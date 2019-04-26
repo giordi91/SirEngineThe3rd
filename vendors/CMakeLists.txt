@@ -29,6 +29,10 @@ file(COPY "farmhash/src/farmhash.h" DESTINATION "${CMAKE_SOURCE_DIR}/SirEngineTh
 #pix event, might want to do this only on windows
 file(COPY "PixEvent/Include/WinPixEventRuntime" DESTINATION "${CMAKE_SOURCE_DIR}/SirEngineThe3rdLib/vendors/includes/WinPixEventRuntime")
 
+#copying binomial compressor
+file(COPY "crunch/bin/crunch_x64.exe" DESTINATION "${CMAKE_BINARY_DIR}/bin/Debug")
+file(COPY "crunch/bin/crunch_x64.exe" DESTINATION "${CMAKE_BINARY_DIR}/bin/Release")
+
 
 add_subdirectory(imgui)
 add_subdirectory(DirectXTK12)

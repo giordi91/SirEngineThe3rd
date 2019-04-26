@@ -42,3 +42,7 @@ link-coming-soon
 
 ![alt text](./images/02_basicEngineArch.jpg "test")
 
+
+
+*** Credits ***
+Copyright (c) 2010-2016 Richard Geldreich, Jr., Tenacious Software, and Binomial LLC
