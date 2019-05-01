@@ -39,4 +39,5 @@ add_subdirectory(DirectXTK12)
 add_subdirectory(Compressonator)
 add_subdirectory(DirectXTex)
 add_subdirectory(farmhash)
+add_subdirectory(crunch)
 

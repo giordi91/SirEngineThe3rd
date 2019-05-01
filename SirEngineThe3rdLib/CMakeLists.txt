@@ -11,7 +11,7 @@ project(SirEngineThe3rdLib)
 	)
 
 	if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-		add_compile_options("/wd4251")
+		add_compile_options(/wd4251 /wd4275)
 	endif()
 
 	#lets add specific windows build definitions
