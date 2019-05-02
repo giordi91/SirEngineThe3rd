@@ -19,6 +19,7 @@ public:
   void pushOverlay(Layer *layer);
 
 private:
+  void parseConfigFile();
   bool onCloseWindow(WindowCloseEvent &e);
   bool onResizeWindow(WindowResizeEvent &e);
   inline void flipEndOfFrameQueue() {

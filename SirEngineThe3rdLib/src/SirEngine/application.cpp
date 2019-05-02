@@ -3,13 +3,34 @@
 #include "SirEngine/graphics/graphicsCore.h"
 #include "SirEngine/layer.h"
 #include "SirEngine/log.h"
+#include "fileUtils.h"
 #include "layers/graphics3DLayer.h"
 #include "layers/imguiLayer.h"
 #include <random>
 
 namespace SirEngine {
 
+static const std::string CONFIG_PATH =
+    "C:/Users/marco/Desktop/WORK_IN_PROGRESS/SirEngineThe3rd/build/bin/Debug/"
+    "engineConfig.json";
+static const std::string CONFIG_DATA_SOURCE_KEY = "dataSource";
+static const std::string CONFIG_STARTING_SCENE_KEY = "startingScene";
+static const std::string DEFAULT_STRING = "";
+
+void Application::parseConfigFile() {
+  // try to read the configuration file
+  nlohmann::json jobj = getJsonObj(CONFIG_PATH);
+  globals::DATA_SOURCE_PATH =
+      getValueIfInJson(jobj, CONFIG_DATA_SOURCE_KEY, DEFAULT_STRING);
+  assert(!globals::DATA_SOURCE_PATH.empty());
+  globals::START_SCENE_PATH=
+      getValueIfInJson(jobj, CONFIG_STARTING_SCENE_KEY, DEFAULT_STRING);
+  assert(!globals::START_SCENE_PATH.empty());
+}
+
 Application::Application() {
+
+  parseConfigFile();
 
   m_window = Window::create();
   m_window->setEventCallback([this](Event &e) -> void { this->onEvent(e); });
@@ -23,6 +44,7 @@ Application::Application() {
   m_layerStack.pushLayer(graphicsLayer);
   m_layerStack.pushOverlayLayer(imGuiLayer);
   globals::APPLICATION = this;
+
 }
 
 Application::~Application() { delete m_window; }
@@ -38,13 +60,13 @@ void Application::run() {
     }
     graphics::dispatchFrame();
 
-	auto currentQueue = m_queuedEndOfFrameEventsCurrent;
-	flipEndOfFrameQueue();
-    for (auto e :(*currentQueue)) {
+    auto currentQueue = m_queuedEndOfFrameEventsCurrent;
+    flipEndOfFrameQueue();
+    for (auto e : (*currentQueue)) {
       onEvent(*e);
-	  delete e;
+      delete e;
     }
-	currentQueue->clear();
+    currentQueue->clear();
   }
 
   // lets make sure any graphics operation are done
@@ -58,7 +80,7 @@ void Application::run() {
   // shutdown anything graphics related;
   graphics::shutdownGraphics();
 }
-void Application::queueEventForEndOfFrame(Event* e) {
+void Application::queueEventForEndOfFrame(Event *e) {
   m_queuedEndOfFrameEventsCurrent->push_back(e);
 }
 void Application::onEvent(Event &e) {
@@ -96,7 +118,7 @@ bool Application::onResizeWindow(WindowResizeEvent &e) {
   m_window->onResize(globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT);
   graphics::onResize(globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT);
 
-  //push the resize event to everyone in case is needed
+  // push the resize event to everyone in case is needed
   for (auto it = m_layerStack.end(); it != m_layerStack.begin();) {
     (*--it)->onEvent(e);
     if (e.handled()) {
@@ -105,7 +127,6 @@ bool Application::onResizeWindow(WindowResizeEvent &e) {
   }
   return true;
 }
-
 
 void Application::pushLayer(Layer *layer) { m_layerStack.pushLayer(layer); }
 void Application::pushOverlay(Layer *layer) {

@@ -40,7 +40,7 @@ void SkyBoxPass::initialize() {
 
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
   dx12::resetAllocatorAndList(&dx12::CURRENT_FRAME_RESOURCE->fc);
-  dx12::MESH_MANAGER->loadMesh("data/processed/meshes/skybox.model", 0,
+  dx12::MESH_MANAGER->loadMesh("../data/processed/meshes/skybox.model", 0,
                                &m_meshRuntime);
   dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE,
                            &dx12::CURRENT_FRAME_RESOURCE->fc);

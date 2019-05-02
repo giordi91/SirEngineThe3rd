@@ -1,4 +1,4 @@
 {
-  "mesh": "data/processed/meshes/pSphere1.model",
-  "material": "data/materials/rustMaterial.json"
+  "mesh": "../data/processed/meshes/pSphere1.model",
+  "material": "../data/materials/rustMaterial.json"
 }

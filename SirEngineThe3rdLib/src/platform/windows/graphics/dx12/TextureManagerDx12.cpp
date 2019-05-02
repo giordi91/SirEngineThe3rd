@@ -4,8 +4,16 @@
 #include <DXTK12/DDSTextureLoader.h>
 #include <platform/windows/graphics/dx12/swapChain.h>
 
-namespace SirEngine {
-namespace dx12 {
+namespace SirEngine::dx12 {
+
+static const std::string TEXTURE_CUBE_KEY = "cube";
+static const std::string TEXTURE_FORMAT_KEY = "format";
+static const std::string TEXTURE_GAMMA_KEY = "gamma";
+static const std::string TEXTURE_HAS_MIPS_KEY = "hasMips";
+static const std::string TEXTURE_PATH_KEY = "path";
+static const std::string DEFAULT_STRING = "";
+static const int DEFAULT_INT = 0;
+static const bool DEFAULT_BOOL = false;
 
 static std::unordered_map<RenderTargetFormat, DXGI_FORMAT>
     RENDER_TARGET_FORMAT_TO_DXGI{
@@ -30,27 +38,45 @@ TextureHandle TextureManagerDx12::loadTexture(const char *path, bool cubeMap) {
   bool res = fileExists(path);
   assert(res);
 
-  const std::string name = getFileName(path);
+  auto jobj = getJsonObj(path);
+  const bool isCube = getValueIfInJson(jobj, TEXTURE_CUBE_KEY, DEFAULT_BOOL);
+  const bool isGamma = getValueIfInJson(jobj, TEXTURE_GAMMA_KEY, DEFAULT_BOOL);
+  const bool hasMips =
+      getValueIfInJson(jobj, TEXTURE_HAS_MIPS_KEY, DEFAULT_BOOL);
+  const std::string texturePath =
+      getValueIfInJson(jobj, TEXTURE_PATH_KEY, DEFAULT_STRING);
+  const int formatInt = getValueIfInJson(jobj, TEXTURE_FORMAT_KEY, DEFAULT_INT);
+
+  const std::string name = getFileName(texturePath);
 
   auto found = m_nameToHandle.find(name);
   if (found == m_nameToHandle.end()) {
 
-    const std::string extension = getFileExtension(path);
+    const std::string extension = getFileExtension(texturePath);
     if (extension != ".dds") {
       loadLegacy(path);
+      // not supported
+      assert(0);
     }
 
     uint32_t index;
     TextureData &data = m_texturePool.getFreeMemoryData(index);
-    const std::string paths(path);
+    const std::string paths(texturePath);
     const std::wstring pathws(paths.begin(), paths.end());
     std::unique_ptr<uint8_t[]> ddsData;
     std::vector<D3D12_SUBRESOURCE_DATA> subresources;
 
     batch.Begin();
-    DirectX::CreateDDSTextureFromFile(dx12::DEVICE, batch, pathws.c_str(),
-                                      &data.resource, false);
+    // DirectX::CreateDDSTextureFromFile(dx12::DEVICE, batch, pathws.c_str(),
+    //                                  &data.resource, false);
+    DirectX::DDS_LOADER_FLAGS loadF =
+        isGamma ? DirectX::DDS_LOADER_FORCE_SRGB : DirectX::DDS_LOADER_DEFAULT;
+
+    DirectX::CreateDDSTextureFromFileEx(dx12::DEVICE, batch, pathws.c_str(), 0,
+                                        D3D12_RESOURCE_FLAG_NONE, loadF,
+                                        &data.resource);
     batch.End(dx12::GLOBAL_COMMAND_QUEUE);
+
 
     // data is now loaded need to create handle etc
     TextureHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
@@ -428,5 +454,4 @@ void TextureManagerDx12::clearRT(const TextureHandle handle,
   CURRENT_FRAME_RESOURCE->fc.commandList->ClearRenderTargetView(
       data.rtsrv.cpuHandle, color, 0, nullptr);
 }
-} // namespace dx12
-} // namespace SirEngine
+} // namespace SirEngine::dx12

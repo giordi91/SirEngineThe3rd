@@ -1,8 +1,8 @@
 #include "SirEngine/globals.h"
 #include <cstdint>
 
-namespace SirEngine {
-namespace globals {
+namespace SirEngine::globals
+{
 uint32_t SCREEN_WIDTH = 1280;
 uint32_t SCREEN_HEIGHT = 720;
 Camera3DPivot *MAIN_CAMERA = nullptr;
@@ -16,6 +16,6 @@ AssetManager *ASSET_MANAGER = nullptr;
 Application *APPLICATION = nullptr;
 RenderingContext *RENDERING_CONTEX = nullptr;
 DebugFrameData *DEBUG_FRAME_DATA = nullptr;
-
-} // namespace globals
+std::string DATA_SOURCE_PATH;
+std::string START_SCENE_PATH;
 } // namespace SirEngine

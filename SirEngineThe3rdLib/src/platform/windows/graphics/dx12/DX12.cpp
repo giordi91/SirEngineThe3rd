@@ -189,18 +189,18 @@ bool initializeGraphicsDx12(Window *wnd, uint32_t width, uint32_t height) {
 
   SHADER_MANAGER = new ShaderManager();
   SHADER_MANAGER->init();
-  SHADER_MANAGER->loadShadersInFolder("data/processed/shaders/rasterization");
-  SHADER_MANAGER->loadShadersInFolder("data/processed/shaders/compute");
+  SHADER_MANAGER->loadShadersInFolder( (globals::DATA_SOURCE_PATH+"/processed/shaders/rasterization").c_str());
+  SHADER_MANAGER->loadShadersInFolder( (globals::DATA_SOURCE_PATH+"/processed/shaders/compute").c_str());
 
   ROOT_SIGNATURE_MANAGER = new RootSignatureManager();
-  ROOT_SIGNATURE_MANAGER->loadSingaturesInFolder("data/processed/rs");
+  ROOT_SIGNATURE_MANAGER->loadSingaturesInFolder((globals::DATA_SOURCE_PATH+"/processed/rs").c_str());
 
   SHADER_LAYOUT_REGISTRY = new dx12::ShadersLayoutRegistry();
 
   PSO_MANAGER = new PSOManager();
   PSO_MANAGER->init(dx12::DEVICE, SHADER_LAYOUT_REGISTRY,
                     ROOT_SIGNATURE_MANAGER, dx12::SHADER_MANAGER);
-  PSO_MANAGER->loadPSOInFolder("data/pso");
+  PSO_MANAGER->loadPSOInFolder((globals::DATA_SOURCE_PATH+"/pso").c_str());
 
   globals::DEBUG_FRAME_DATA = new globals::DebugFrameData();
 

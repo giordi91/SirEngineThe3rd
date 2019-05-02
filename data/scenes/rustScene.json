@@ -1,8 +1,8 @@
 {
-"assets": [ "data/assets/sphereRust.json" ],
-"enviromentMap" :"data/external/textures/newportCube.dds",
-"enviromentMapIrradiance" :"data/external/textures/newportCubeIrradiance.dds",
-"enviromentMapRadiance" :"data/external/textures/newportCubeRadiance.dds"
+"assets": [ "../data/assets/sphereRust.json" ],
+"enviromentMap" :"../data/external/textures/newportCube.texture",
+"enviromentMapIrradiance" :"../data/external/textures/newportCubeIrradiance.texture",
+"enviromentMapRadiance" :"../data/external/textures/newportCubeRadiance.texture"
 }
 
 

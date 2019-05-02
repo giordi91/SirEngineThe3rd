@@ -20,10 +20,12 @@ project(ResourceCompiler)
 		#if on windows brute force copying data in both release and debug, i am done
 		#struggling with this. Using a custom command seems to work with a specific file
 		#not with folders
-		file(COPY "../data" DESTINATION "${CMAKE_BINARY_DIR}/bin/Debug" )
-		file(COPY "../data" DESTINATION "${CMAKE_BINARY_DIR}/bin/Release" )
-		file(COPY "../external" DESTINATION "${CMAKE_BINARY_DIR}/bin/Debug/data" )
-		file(COPY "../external" DESTINATION "${CMAKE_BINARY_DIR}/bin/Release/data" )
+		file(COPY "../data" DESTINATION "${CMAKE_BINARY_DIR}/bin" )
+		file(COPY "../data" DESTINATION "${CMAKE_BINARY_DIR}/bin" )
+		file(COPY "../data/engineConfig.json" DESTINATION "${CMAKE_BINARY_DIR}/bin/Debug" )
+		file(COPY "../data/engineConfig.json" DESTINATION "${CMAKE_BINARY_DIR}/bin/Release" )
+		file(COPY "../external" DESTINATION "${CMAKE_BINARY_DIR}/bin/data" )
+		file(COPY "../external" DESTINATION "${CMAKE_BINARY_DIR}/bin/data" )
 
 		add_compile_definitions(RC_PLATFORM_WINDOWS SE_PLATFORM_WINDOWS _UNICODE)
 	else(WIN32)

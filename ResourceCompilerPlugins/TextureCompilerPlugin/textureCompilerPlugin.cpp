@@ -12,7 +12,7 @@ const unsigned int VERSION_MAJOR = 0;
 const unsigned int VERSION_MINOR = 1;
 const unsigned int VERSION_PATCH = 0;
 
-void processArgs(const std::string args, std::string &format, bool &isGamma) {
+void processArgs(const std::string args, std::string &format, bool &isGamma, bool &mips) {
   // lets get arguments like they were from commandline
   auto v = splitArgs(args);
   // lets build the options
@@ -21,6 +21,8 @@ void processArgs(const std::string args, std::string &format, bool &isGamma) {
   options.add_options()("f,format", "output format for the texture",
                         cxxopts::value<std::string>())(
       "g,gamma", "whether the texture is to considered gamma corrected or not",
+      cxxopts::value<std::string>()->implicit_value("1"))
+	  ( "m,mips", "generate mips",
       cxxopts::value<std::string>()->implicit_value("1"));
   char **argv = v.argv.get();
   auto result = options.parse(v.argc, argv);
@@ -32,6 +34,10 @@ void processArgs(const std::string args, std::string &format, bool &isGamma) {
   if (result.count("gamma")) {
     isGamma = true;
   }
+  mips = false;
+  if (result.count("mips")) {
+    mips= true;
+  }
 }
 
 bool processTexture(const std::string &assetPath, const std::string &outputPath,
@@ -41,7 +47,8 @@ bool processTexture(const std::string &assetPath, const std::string &outputPath,
   // processing plug-ins args
   std::string format;
   bool isGamma;
-  processArgs(args, format, isGamma);
+  bool mips;
+  processArgs(args, format, isGamma, mips);
 
   // checking IO files exits
   bool exists = fileExists(assetPath);
@@ -56,7 +63,8 @@ bool processTexture(const std::string &assetPath, const std::string &outputPath,
                   outputPath);
   }
   bool res = processTextureFile(assetPath.c_str(), outputPath.c_str(), format,
-                                isGamma);
+                                isGamma, mips);
+
 
   if (res) {
     SE_CORE_INFO("Texture successfully compiled ---> {0}", outputPath);

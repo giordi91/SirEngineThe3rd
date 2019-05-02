@@ -74,7 +74,7 @@ void DeferredLightingPass::initialize() {
 
   m_brdfHandle=
       globals::TEXTURE_MANAGER->loadTexture(
-          "data/processed/textures/brdf.dds");
+          "../data/processed/textures/brdf.texture");
 }
 
 inline TextureHandle
