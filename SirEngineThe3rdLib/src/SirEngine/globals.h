@@ -1,6 +1,7 @@
 #pragma once
 #include "SirEngine/handle.h"
 #include "clock.h"
+#include <string>
 
 namespace SirEngine {
 class AssetManager;
@@ -34,7 +35,11 @@ extern TextureManager *TEXTURE_MANAGER;
 extern AssetManager *ASSET_MANAGER;
 extern Application *APPLICATION;
 extern RenderingContext *RENDERING_CONTEX;
-extern DebugFrameData* DEBUG_FRAME_DATA;
+extern DebugFrameData *DEBUG_FRAME_DATA;
+
+// config
+extern std::string DATA_SOURCE_PATH;
+extern std::string START_SCENE_PATH;
 
 } // namespace globals
 typedef unsigned char uchar;

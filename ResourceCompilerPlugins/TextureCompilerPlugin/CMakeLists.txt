@@ -36,7 +36,7 @@ project(textureCompilerPlugin)
 )
 
     #message (STATUS  ${CMAKE_RUNTIME_OUTPUT_DIRECTORY} SHIT)
-	target_link_libraries(${PROJECT_NAME} Compressonator SirEngineThe3rdLib ResourceCompilerLib DirectXTex)
+	target_link_libraries(${PROJECT_NAME} Compressonator SirEngineThe3rdLib ResourceCompilerLib DirectXTex crunch)
 
 	#This madness is needed because in order to have a plug-in folder inside the 
 	#output dir, I have to do a post copy, by default on windows it adds a Debug/Release 

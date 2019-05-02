@@ -40,17 +40,11 @@ void Graphics3DLayer::onAttach() {
     dx12::resetAllocatorAndList(currentFc);
   }
 
-  //sphereH = globals::ASSET_MANAGER->loadAsset("data/assets/sphere.json");
-  //sphereH = globals::ASSET_MANAGER->loadAsset("data/assets/sphereRust.json");
-  globals::ASSET_MANAGER->loadScene("data/scenes/rustScene.json");
-  //sphereH = globals::ASSET_MANAGER->loadAsset("data/assets/leftShoulder.json");
-  //sphereH = globals::ASSET_MANAGER->loadAsset("data/assets/warriorChestFront.json");
-  // globals::ASSET_MANAGER->loadAsset("data/assets/plane.json");
+  globals::ASSET_MANAGER->loadScene(globals::START_SCENE_PATH.c_str());
   dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE, currentFc);
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
 
   dx12::RENDERING_GRAPH = new Graph();
-
   auto assetNode = new AssetManagerNode();
   auto finalBlit = new FinalBlitNode();
   // auto simpleForward = new SimpleForward("simpleForward");

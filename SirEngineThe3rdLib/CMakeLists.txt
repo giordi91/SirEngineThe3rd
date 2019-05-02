@@ -73,6 +73,7 @@ project(SirEngineThe3rdLib)
 	SOURCE_GROUP("data" FILES "../data/execute.json")
 	SOURCE_GROUP("data" FILES "../data/executeFullDebug.json")
 	SOURCE_GROUP("data" FILES "../data/executeTexture.json")
+	SOURCE_GROUP("data" FILES "../data/engineConfig.json")
 
 
 
@@ -101,6 +102,7 @@ project(SirEngineThe3rdLib)
 	"../data/execute.json"
 	"../data/executeFullDebug.json"
 	"../data/executeTexture.json"
+	"../data/engineConfig.json"
 	${SCENE_FILES}
 	)
 
