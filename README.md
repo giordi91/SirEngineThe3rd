@@ -13,6 +13,7 @@ Here a I will keep a chronological list of the progress:
 ##### Table of Contents  
 [0.1.0: basic window](#v010)  
 [0.2.0: basic engine arch](#v020)  
+[0.3.0: PBR shader](#v020)  
 
 ## 0.1.0 <a name="v010"/>
 This version is the most basic version of the engine, but starts to put togheter the foundation of the engine:
@@ -42,7 +43,15 @@ link-coming-soon
 
 ![alt text](./images/02_basicEngineArch.jpg "test")
 
+## 0.3.0 <a name="v030"/>
+This main goal of this version was to give a first good crack at the graphics: features:
+* PBR shader
+* basic workflow for the needed textures in a PBR shader
+* Added mip map generation of textures in the compiler to reduce aliasing
+* Basic rendering graph
+* AMD work to fetch data out of the card like core freq etc
 
+![alt text](./images/03_PBR.png "test")
 
 *** Credits ***
 Copyright (c) 2010-2016 Richard Geldreich, Jr., Tenacious Software, and Binomial LLC
