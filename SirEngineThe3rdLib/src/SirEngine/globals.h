@@ -3,6 +3,7 @@
 #include "clock.h"
 #include <string>
 
+struct D3D12_VIEWPORT;
 namespace SirEngine {
 class AssetManager;
 class ConstantBufferManager;
@@ -27,6 +28,8 @@ extern GameClock GAME_CLOCK;
 extern uint64_t LAST_FRAME_TIME_NS;
 extern uint32_t TOTAL_NUMBER_OF_FRAMES;
 extern uint64_t CURRENT_FRAME;
+extern float MIN_DEPTH;
+extern float MIN_DEPTH;
 #define FRAME_BUFFERS_COUNT 2
 
 // managers
@@ -40,6 +43,7 @@ extern DebugFrameData *DEBUG_FRAME_DATA;
 // config
 extern std::string DATA_SOURCE_PATH;
 extern std::string START_SCENE_PATH;
+extern D3D12_VIEWPORT  CURRENT_VIEWPORT;
 
 } // namespace globals
 typedef unsigned char uchar;

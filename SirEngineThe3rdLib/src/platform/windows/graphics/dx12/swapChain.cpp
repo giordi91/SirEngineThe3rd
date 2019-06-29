@@ -132,6 +132,9 @@ bool SwapChain::resize(FrameCommand *command, const int width,
 
   m_scissorRect = {0, 0, width, height};
   m_isInit = true;
+
+
+
   return true;
 }
 } // namespace dx12

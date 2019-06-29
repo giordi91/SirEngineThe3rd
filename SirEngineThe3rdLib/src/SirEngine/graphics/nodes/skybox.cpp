@@ -4,9 +4,10 @@
 #include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/PSOManager.h"
+#include "platform/windows/graphics/dx12/TextureManagerDx12.h"
 #include "platform/windows/graphics/dx12/meshManager.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
-#include "platform/windows/graphics/dx12/textureManagerDx12.h"
+#include "platform/windows/graphics/dx12/swapChain.h"
 
 namespace SirEngine {
 SkyBoxPass::SkyBoxPass(const char *name) : GraphNode(name, "SkyBoxPass") {
@@ -69,6 +70,16 @@ void SkyBoxPass::compute() {
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
 
+  D3D12_VIEWPORT* currViewport = dx12::SWAP_CHAIN->getViewport();
+  D3D12_VIEWPORT viewport;
+  viewport.MaxDepth = 0.000000000f;
+  viewport.MinDepth = 0.000000000f;
+  viewport.Height = currViewport->Height;
+  viewport.Width= currViewport->Width;
+  viewport.TopLeftX= currViewport->TopLeftX;
+  viewport.TopLeftY= currViewport->TopLeftY;
+  currentFc->commandList->RSSetViewports(1, &viewport);
+
   commandList->SetPipelineState(pso);
 
   D3D12_RESOURCE_BARRIER barriers[5];
@@ -86,7 +97,8 @@ void SkyBoxPass::compute() {
   commandList->SetGraphicsRootSignature(rs);
 
   TextureHandle skyHandle = globals::RENDERING_CONTEX->getEnviromentMapHandle();
-  //TextureHandle skyHandle = globals::RENDERING_CONTEX->getEnviromentMapIrradianceHandle();
+  // TextureHandle skyHandle =
+  // globals::RENDERING_CONTEX->getEnviromentMapIrradianceHandle();
   globals::RENDERING_CONTEX->bindCameraBuffer(0);
   // commandList->SetGraphicsRootConstantBufferView(1, m_lightAddress);
   commandList->SetGraphicsRootDescriptorTable(
@@ -95,6 +107,9 @@ void SkyBoxPass::compute() {
   // commandList->DrawInstanced(6, 1, 0, 0);
   dx12::MESH_MANAGER->bindMeshRuntimeAndRender(m_meshRuntime, currentFc);
   m_outputPlugs[0].plugValue = bufferHandle.handle;
+
+  // reset normal viewport
+  commandList->RSSetViewports(1,currViewport );
 }
 
 void SkyBoxPass::clear() {}

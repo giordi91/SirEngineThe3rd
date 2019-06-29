@@ -54,7 +54,8 @@ static const std::unordered_map<std::string, PSOType> STRING_TO_PSOTYPE{
 static const std::unordered_map<std::string, D3D12_COMPARISON_FUNC>
     STRING_TO_DEPTH_COMPARISON_FUNCTION{
         {"LESS", D3D12_COMPARISON_FUNC_LESS},
-        {"GREATER", D3D12_COMPARISON_FUNC_GREATER}};
+        {"GREATER", D3D12_COMPARISON_FUNC_GREATER},
+        {"GREATER_EQUAL", D3D12_COMPARISON_FUNC_GREATER_EQUAL}};
 
 static const std::unordered_map<std::string, D3D12_CULL_MODE>
     STRING_TO_CULL_MODE_FUNCTION{{"NONE", D3D12_CULL_MODE_NONE},
