@@ -1,4 +1,5 @@
 #pragma once
+#include "SirEngine/core.h"
 #include <cassert>
 #include <cstdint>
 #include <string>
@@ -24,7 +25,7 @@ struct Plug final {
   uint32_t index = 0;
 };
 
-class GraphNode {
+class SIR_ENGINE_API GraphNode {
 public:
   // interface
   GraphNode(const std::string &name, const std::string &type)
@@ -103,7 +104,7 @@ protected:
   uint32_t nodeIdx = 0;
 };
 
-class Graph final {
+class SIR_ENGINE_API Graph final {
 public:
   Graph() = default;
   ~Graph() = default;
@@ -113,7 +114,6 @@ public:
     m_nodes[node->getNodeName()] = node;
   }
   inline GraphNode *findNodeOfType(const std::string &type) {
-
     const size_t nodesCount = m_linearizedGraph.size();
     for (size_t i = 0; i < nodesCount; ++i) {
       if (m_linearizedGraph[i]->getNodeType() == type) {
@@ -191,6 +191,10 @@ public:
 
   void connectNodes(GraphNode *source, const char *sourcePlugName,
                     GraphNode *destination, const char *destinationPlugName);
+
+  inline const std::vector<GraphNode *> &getLinearizedGraph() const {
+    return m_linearizedGraph;
+  };
 
   const GraphNode *getFinalNode() const { return finalNode; }
   inline void setFinalNode(GraphNode *node) { finalNode = node; }

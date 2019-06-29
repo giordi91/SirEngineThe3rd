@@ -1,4 +1,4 @@
-#include "SirEngine/graphics/nodes/assetmanagerNode.h"
+#include "SirEngine/graphics/nodes/assetManagerNode.h"
 #include "SirEngine/assetManager.h"
 
 namespace SirEngine {

@@ -89,6 +89,32 @@ void Graph::connectNodes(GraphNode *source, const char *sourcePlugName,
   source->addConnection(sourcePlugName,
                         destination->getInputPlug(destinationPlugName));
 }
+
+void recurseNode(GraphNode *currentNode, std::vector<GraphNode *> &queue,
+                 std::unordered_set<uint32_t> &visitedNodes) {
+
+  // first we check whether or not the already processed the node
+  if (visitedNodes.find(currentNode->getNodeIdx()) == visitedNodes.end()) {
+    visitedNodes.insert(currentNode->getNodeIdx());
+
+	queue.push_back(currentNode);
+    // let us now recurse depth first
+    const std::vector<Plug> &inPlugs = currentNode->getInputPlugs();
+    for (size_t i = 0; i < inPlugs.size(); ++i) {
+      // get the connections
+      const std::vector<Plug *> *conns =
+          currentNode->getPlugConnections(&inPlugs[i]);
+      // if not empty we iterate all of them and extract the node at the
+      // other end side
+      if (conns != nullptr) {
+        for (auto &conn : (*conns)) {
+          recurseNode(conn->nodePtr, queue, visitedNodes);
+        }
+      }
+    }
+  }
+}
+
 void Graph::finalizeGraph() {
   // for the time being we will linearize the graph
   m_linearizedGraph.clear();
@@ -98,50 +124,9 @@ void Graph::finalizeGraph() {
   }
 
   std::unordered_set<uint32_t> visitedNodes;
-  std::queue<GraphNode *> queue1;
-  std::queue<GraphNode *> queue2;
-  std::queue<GraphNode *> *currentQueue = &queue1;
-  std::queue<GraphNode *> *nextQueue = &queue2;
-
-  currentQueue->push(finalNode);
-  bool go = true;
-  while (go) {
-    // this is the counter telling us for each recursion which node in the loop
-    // we are processing, used for auto-layout
-    while (!currentQueue->empty()) {
-      // here we get first the current node from the queue
-      // and build a node position, a structure with all the necessary
-      // data for then being able to render the nodes.
-
-      GraphNode *curr = currentQueue->front();
-      // first we check whether or not the already processed the node
-      if (visitedNodes.find(curr->getNodeIdx()) == visitedNodes.end()) {
-        visitedNodes.insert(curr->getNodeIdx());
-        m_linearizedGraph.push_back(curr);
-        // lets process all the inputs, by accessing the other plug and getting
-        // the parent node, the node will be added to the queue to be processed
-        // in the next round
-
-        const std::vector<Plug> &inPlugs = curr->getInputPlugs();
-        for (size_t i = 0; i < inPlugs.size(); ++i) {
-          // get the connections
-          const std::vector<Plug *> *conns =
-              curr->getPlugConnections(&inPlugs[i]);
-          // if not empty we iterate all of them and extract the node at the
-          // other end side
-          if (conns != nullptr) {
-            for (auto &conn : (*conns)) {
-              nextQueue->push(conn->nodePtr);
-            }
-          }
-        }
-      }
-      currentQueue->pop();
-    }
-
-    go = !nextQueue->empty();
-    std::swap(currentQueue, nextQueue);
-  }
+  //using recursion, graph should be small, and we check against cycles
+  //should not be any risk of overflow.
+  recurseNode(finalNode,m_linearizedGraph,visitedNodes);
 
   // just need to flip the vector
   std::reverse(m_linearizedGraph.begin(), m_linearizedGraph.end());
