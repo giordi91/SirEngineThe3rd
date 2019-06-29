@@ -1,0 +1,4 @@
+{
+  "mesh": "../data/processed/meshes/knightB/jacket.model",
+  "material": "../data/materials/knightBJacket.json"
+}
