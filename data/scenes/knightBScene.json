@@ -1,0 +1,8 @@
+{
+"assets": [ "../data/assets/knightB.json" ],
+"enviromentMap" :"../data/external/textures/newportCube.texture",
+"enviromentMapIrradiance" :"../data/external/textures/newportCubeIrradiance.texture",
+"enviromentMapRadiance" :"../data/external/textures/newportCubeRadiance.texture"
+}
+
+

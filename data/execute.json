@@ -1,41 +1,9 @@
 {
   "commands": 
     [
-      "-p ../data/meshes/pSphere1.obj -o ../data/processed/meshes/pSphere1.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/meshes/pSphere1.tangents\"",
-      "-p ../data/meshes/skybox.obj -o ../data/processed/meshes/skybox.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/meshes/skybox.tangents\"",
-      "-p ../data/external/meshes/cerberus.obj -o ../data/processed/meshes/cerberus.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/meshes/cerberus.tangents\"",
-
-      "-p ../data/shaders/rasterization/basicMeshVS.hlsl -o ../data/processed/shaders/rasterization/basicMeshVS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t vs_6_2  -e VS -d \"",
-      "-p ../data/shaders/rasterization/meshPositionOnlyVS.hlsl -o ../data/processed/shaders/rasterization/meshPositionOnlyVS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t vs_6_2  -e VS -d \"",
-      "-p ../data/shaders/rasterization/basicMeshPS.hlsl -o ../data/processed/shaders/rasterization/basicMeshPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
-      "-p ../data/shaders/rasterization/basicMeshPSTex.hlsl -o ../data/processed/shaders/rasterization/basicMeshPSTex.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
-      "-p ../data/shaders/rasterization/basicMeshVSTex.hlsl -o ../data/processed/shaders/rasterization/basicMeshVSTex.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t vs_6_2  -e VS -d \"",
-      "-p ../data/shaders/rasterization/fullScreenQuadVS.hlsl -o ../data/processed/shaders/rasterization/fullScreenQuadVS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t vs_6_2  -e VS -d \"",
-      "-p ../data/shaders/rasterization/blackAndWhiteEffectPS.hlsl -o ../data/processed/shaders/rasterization/blackAndWhiteEffectPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
-      "-p ../data/shaders/rasterization/basicMeshGBufferPS.hlsl -o ../data/processed/shaders/rasterization/basicMeshGBufferPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
-      "-p ../data/shaders/rasterization/basicMeshGBufferPBRPS.hlsl -o ../data/processed/shaders/rasterization/basicMeshGBufferPBRPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
-      "-p ../data/shaders/rasterization/gbufferDebugPS.hlsl -o ../data/processed/shaders/rasterization/gbufferDebugPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
-      "-p ../data/shaders/rasterization/normalBufferDebugPS.hlsl -o ../data/processed/shaders/rasterization/normalBufferDebugPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
-      "-p ../data/shaders/rasterization/specularBufferDebugPS.hlsl -o ../data/processed/shaders/rasterization/specularBufferDebugPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
-      "-p ../data/shaders/rasterization/depthBufferDebugPS.hlsl -o ../data/processed/shaders/rasterization/depthBufferDebugPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
-      "-p ../data/shaders/rasterization/deferredDirectionalLightPS.hlsl -o ../data/processed/shaders/rasterization/deferredDirectionalLightPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
-      "-p ../data/shaders/rasterization/proceduralSkyboxPS.hlsl -o ../data/processed/shaders/rasterization/proceduralSkyboxPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
-      "-p ../data/shaders/rasterization/HDRtoSDREffectPS.hlsl -o ../data/processed/shaders/rasterization/HDRtoSDREffectPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
-      "-p ../data/shaders/rasterization/gammaAndToneMappingEffectPS.hlsl -o ../data/processed/shaders/rasterization/gammaAndToneMappingEffectPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
-      "-p ../data/shaders/rasterization/skyboxPS.hlsl -o ../data/processed/shaders/rasterization/skyboxPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
-      "-p ../data/shaders/compute/textureMIPS.hlsl -o ../data/processed/shaders/compute/textureMIPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t cs_6_2  -e CS -d \"",
-
-      "-p ../data/rs/simpleMeshRS.json -o ../data/processed/rs/simpleMeshRS.root --pluginName rootSignatureCompilerPlugin",
-      "-p ../data/rs/simpleMeshRSTex.json -o ../data/processed/rs/simpleMeshRSTex.root --pluginName rootSignatureCompilerPlugin",
-      "-p ../data/rs/blackAndWhiteEffect_RS.json -o ../data/processed/rs/blackAndWhiteEffect_RS.root --pluginName rootSignatureCompilerPlugin",
-      "-p ../data/rs/gbufferRS.json -o ../data/processed/rs/gbufferRS.root --pluginName rootSignatureCompilerPlugin",
-      "-p ../data/rs/gbufferPBRRS.json -o ../data/processed/rs/gbufferPBRRS.root --pluginName rootSignatureCompilerPlugin",
-      "-p ../data/rs/genericFullScreenBlit_RS.json -o ../data/processed/rs/genericFullScreenBlit_RS.root --pluginName rootSignatureCompilerPlugin",
-      "-p ../data/rs/deferredDirectionalLight_RS.json -o ../data/processed/rs/deferredDirectionalLight_RS.root --pluginName rootSignatureCompilerPlugin",
-      "-p ../data/rs/proceduralSkybox_RS.json -o ../data/processed/rs/proceduralSkybox_RS.root --pluginName rootSignatureCompilerPlugin",
-      "-p ../data/rs/debugFullScreenBlit_RS.json -o ../data/processed/rs/debugFullScreenBlit_RS.root --pluginName rootSignatureCompilerPlugin",
-      "-p ../data/rs/standardPostProcessEffect_RS.json -o ../data/processed/rs/standardPostProcessEffect_RS.root --pluginName rootSignatureCompilerPlugin",
-      "-p ../data/rs/skybox_RS.json -o ../data/processed/rs/skybox_RS.root --pluginName rootSignatureCompilerPlugin",
-      "-p ../data/rs/textureMIPS_RS.json -o ../data/processed/rs/textureMIPS_RS.root --pluginName rootSignatureCompilerPlugin"
+      "-p ../data/external/textures/knightB/jacket_A.png -o ../data/processed/textures/knightB/jacket_A.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1 -g -m\"",
+      "-p ../data/external/textures/knightB/jacket_N.png -o ../data/processed/textures/knightB/jacket_N.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\"",
+      "-p ../data/external/textures/knightB/jacket_M.png -o ../data/processed/textures/knightB/jacket_M.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\"",
+      "-p ../data/external/textures/knightB/jacket_R.png -o ../data/processed/textures/knightB/jacket_R.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\""
     ]
 }

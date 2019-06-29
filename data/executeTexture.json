@@ -5,6 +5,11 @@
       "-p ../data/external/textures/cerberus/Cerberus_N.tga -o ../data/processed/textures/cerberus/Cerberus_N.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\"",
       "-p ../data/external/textures/cerberus/Cerberus_M.tga -o ../data/processed/textures/cerberus/Cerberus_M.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\"",
       "-p ../data/external/textures/cerberus/Cerberus_R.tga -o ../data/processed/textures/cerberus/Cerberus_R.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\"",
+    
+      "-p ../data/external/textures/knightB/jacket_A.png -o ../data/processed/textures/knightB/jacket_A.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1 -g -m\"",
+      "-p ../data/external/textures/knightB/jacket_N.png -o ../data/processed/textures/knightB/jacket_N.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\"",
+      "-p ../data/external/textures/knightB/jacket_M.png -o ../data/processed/textures/knightB/jacket_M.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\"",
+      "-p ../data/external/textures/knightB/jacket_R.png -o ../data/processed/textures/knightB/jacket_R.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\"",
 
       "-p ../data/external/textures/brdf.bmp -o ../data/processed/textures/brdf.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1 \"",
       "-p ../data/textures/rust.bmp -o ../data/processed/textures/rust.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1 -g -m\"",
