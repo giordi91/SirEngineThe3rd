@@ -23,6 +23,11 @@
     {
       "mesh": "../data/processed/meshes/knightB/cape.model",
       "material": "../data/materials/knightBCape.json"
+    },
+    {
+      "mesh": "../data/processed/meshes/flatGround/flatGround.model",
+      "material": "../data/materials/flatGround.json"
     }
+
   ]
 }

@@ -1,0 +1,9 @@
+{
+"assets": [ "../data/assets/knightB.json" ],
+"enviromentMap" :"../data/external/textures/outdoorEnv1/qwantaniSkybox.texture",
+"enviromentMapIrradiance" :"../data/external/textures/outdoorEnv1/qwantaniIrradiance.texture",
+"enviromentMapRadiance" :"../data/external/textures/outdoorEnv1/qwantaniRadiance.texture"
+}
+
+
+
