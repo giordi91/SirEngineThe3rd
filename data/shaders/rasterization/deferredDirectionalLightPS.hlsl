@@ -195,10 +195,11 @@ float4 PBRLighting(FullScreenVertexOut input) {
 	float3 albedo =gbd.color; 
 	float metallic = gbd.metallic;
 	float roughness = gbd.roughness;
+    //float3 albedo = float3(0.8f, 0.0f, 0.0f);
+	//float metallic = 0.8f;
+	//float roughness = 0.1f;
 
 
-    float MAX_REFLECTION_LOD = 6.0f;
-	float3 prefilteredColor = skyboxRadianceTexture.SampleLevel(gsamLinearClamp,reflected, roughness * MAX_REFLECTION_LOD).rgb;
 	//float3 prefilteredColor = skyboxRadianceTexture.SampleLevel(gsamLinearClamp,reflected, 0).rgb;
 
 
@@ -207,12 +208,10 @@ float4 PBRLighting(FullScreenVertexOut input) {
 	//float roughness = 1.0f;
 
     F0 = lerp(F0, albedo, metallic);
-    float3 F = fresnelSchlick(max(dot(halfWay, toEyeDir), 0.0f), F0, roughness);
+    float3 F = fresnelSchlick(max(dot(gbd.normal, toEyeDir), 0.0f), F0, roughness);
     float NDF = DistributionGGX(gbd.normal, halfWay, roughness);
     float G = GeometrySmith(gbd.normal, toEyeDir, ldir, roughness);
 
-    float2 envBRDF = brdfTexture.Sample(gsamLinearClamp, float2(max(dot(gbd.normal, toEyeDir), 0.0), roughness)).rg;
-    float3 specularDiff = prefilteredColor * (F * envBRDF.x + envBRDF.y);
 
     // compute cook torrance
     float3 nominator = NDF * G * F;
@@ -230,21 +229,36 @@ float4 PBRLighting(FullScreenVertexOut input) {
     // single light for now
     float3 radiance = g_dirLight.lightColor.xyz;
     float NdotL = max(dot(gbd.normal, ldir), 0.0f);
-    Lo += (kD * albedo/ PI + specular) * radiance * NdotL;
+        Lo += (kD * (albedo / PI) + specular) * radiance * NdotL;
 
 
 	//using irradiance map
 	float3 irradiance = skyboxIrradianceTexture.Sample(gsamLinearClamp,gbd.normal);
 	float3 diffuse      = irradiance* albedo;
+
+    float MAX_REFLECTION_LOD = 6.0f;
+	float3 prefilteredColor = skyboxRadianceTexture.SampleLevel(gsamLinearClamp,reflected, roughness* MAX_REFLECTION_LOD).rgb;
+        float2 envBRDF = brdfTexture.Sample(gsamLinearClamp, float2(max(dot(normalize(gbd.normal), normalize(toEyeDir)), 0.0), roughness)).rg;
+    float3 specularDiff = prefilteredColor * (F * envBRDF.x + envBRDF.y);
+
+
+
+
 	float3 ambient = kD * diffuse + specularDiff;
 
     float3 color = ambient + Lo;
     //float3 color = irradiance*kD;
-
-
-
-        //return float4(prefilteredColor, 1.0f);
+    //return float4(prefilteredColor, 1.0f);
+    //return float4(F, 1.0f);
+    //return float4(F, 1.0f);
     //return float4(envBRDF,0.0f, 1.0f);
+    //return float4(dot(gbd.normal,toEyeDir    ), 0.0f, 0.0f, 1.0f);
+    //return float4(F0, 1.0f);
+    //return float(max(dot(gbd.normal, ldir), 0.0f),0.0)
+    //return float4(.x,0.0f,0.0f, 1.0f);
+    
+    //return float4(Lo,1.0f);
+    //return float4(ambient, 1.0f);
     return float4(color, 1.0f);
   }
   return finalColor;

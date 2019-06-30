@@ -13,6 +13,7 @@ namespace AssetManagerKeys {
 static const char *MESH_KEY = "mesh";
 static const char *MATERIAL_KEY = "material";
 static const char *ASSETS_KEY = "assets";
+static const char *SUB_ASSETS_KEY = "subAssets";
 static const char *ENVIROMENT_MAP_KEY = "enviromentMap";
 static const char *ENVIROMENT_MAP_IRRADIANCE_KEY = "enviromentMapIrradiance";
 static const char *ENVIROMENT_MAP_RADIANCE_KEY = "enviromentMapRadiance";
@@ -31,37 +32,50 @@ bool AssetManager::initialize() {
 IdentityHandle AssetManager::loadAsset(const char *path) {
   auto jobj = getJsonObj(path);
 
-  // get the mesh
-  const std::string meshString = getValueIfInJson(
-      jobj, AssetManagerKeys::MESH_KEY, AssetManagerKeys::DEFAULT_STRING);
-  assert(!meshString.empty());
+  // now that we have the asset we can check that the sub asset is present
 
-  // get material
-  const std::string materialString = getValueIfInJson(
-      jobj, AssetManagerKeys::MATERIAL_KEY, AssetManagerKeys::DEFAULT_STRING);
-  assert(!materialString.empty());
+  assert(jobj.find(AssetManagerKeys::SUB_ASSETS_KEY) != jobj.end());
+  auto subAssetsJ = jobj[AssetManagerKeys::SUB_ASSETS_KEY];
 
-  uint32_t currIdx = allocIndex++;
-  // first of all generate an identity handle for the asset
-  const std::string &fileName = getFileName(path);
-  IdentityHandle id =
-      dx12::IDENTITY_MANAGER->getHandleFromName(fileName.c_str());
+  for (auto &subAsset : subAssetsJ) {
 
-  // lets load the mesh
-  MeshHandle mHandle = dx12::MESH_MANAGER->loadMesh(meshString.c_str(), currIdx,
-                                                    m_meshRuntime.data());
+    // get the mesh
+    const std::string meshString = getValueIfInJson(
+        subAsset, AssetManagerKeys::MESH_KEY, AssetManagerKeys::DEFAULT_STRING);
+    assert(!meshString.empty());
 
-  MaterialHandle matHandle = dx12::MATERIAL_MANAGER->loadMaterial(
-      materialString.c_str(), currIdx, m_materialRuntime.data());
+    // get material
+    const std::string materialString = getValueIfInJson(
+        subAsset, AssetManagerKeys::MATERIAL_KEY, AssetManagerKeys::DEFAULT_STRING);
+    assert(!materialString.empty());
 
-  // bookkeeping
-  AssetHandles assetH;
-  assetH.materialH = matHandle;
-  assetH.meshH = mHandle;
-  m_assetHandles[currIdx] = assetH;
+    uint32_t currIdx = allocIndex++;
+    // first of all generate an identity handle for the asset
+    const std::string &fileName = getFileName(path);
+    IdentityHandle id =
+        dx12::IDENTITY_MANAGER->getHandleFromName(fileName.c_str());
 
-  m_identityToIndex[id.handle] = currIdx;
+    // lets load the mesh
+    MeshHandle mHandle = dx12::MESH_MANAGER->loadMesh(
+        meshString.c_str(), currIdx, m_meshRuntime.data());
 
+    MaterialHandle matHandle = dx12::MATERIAL_MANAGER->loadMaterial(
+        materialString.c_str(), currIdx, m_materialRuntime.data());
+
+    // TODO Old bookkeeping code, keeping this around because we will need it
+    // when we refactor the identity handle stuff
+    //// bookkeeping
+    // AssetHandles assetH;
+    // assetH.materialH = matHandle;
+    // assetH.meshH = mHandle;
+    // m_assetHandles[currIdx] = assetH;
+
+    // m_identityToIndex[id.handle] = currIdx;
+  }
+
+  // TODO identity handle concept is not used and is completely broken since we
+  // introduced the sub assets, needs to be fixed or removed
+  IdentityHandle id = dx12::IDENTITY_MANAGER->getHandleFromName(path);
   return id;
 }
 
@@ -100,8 +114,8 @@ void AssetManager::loadScene(const char *path) {
                        AssetManagerKeys::DEFAULT_STRING);
   assert(!enviromentMapIrradianceString.empty());
   TextureHandle enviromentMapRadianceHandle =
-      globals::TEXTURE_MANAGER->loadTexture(
-          enviromentMapRadianceString.c_str(), true);
+      globals::TEXTURE_MANAGER->loadTexture(enviromentMapRadianceString.c_str(),
+                                            true);
 
   globals::RENDERING_CONTEX->setEnviromentMap(enviromentMapHandle);
   globals::RENDERING_CONTEX->setEnviromentMapIrradiance(

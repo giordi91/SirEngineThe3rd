@@ -14,8 +14,6 @@
 #include "SirEngine/graphics/nodes/FinalBlitNode.h"
 #include "SirEngine/graphics/nodes/assetManagerNode.h"
 #include "SirEngine/graphics/nodes/deferredLighting.h"
-#include "SirEngine/graphics/nodes/gbufferPass.h"
-#include "SirEngine/graphics/nodes/proceduralSkybox.h"
 #include "SirEngine/graphics/postProcess/effects/gammaAndToneMappingEffect.h"
 #include "SirEngine/graphics/postProcess/postProcessStack.h"
 #include "SirEngine/graphics/renderingContext.h"
@@ -29,8 +27,8 @@ void Graphics3DLayer::onAttach() {
   // globals::MAIN_CAMERA->setLookAt(0, 125, 0);
   // globals::MAIN_CAMERA->setPosition(00, 125, 60);
 
-  globals::MAIN_CAMERA->setLookAt(0, 0 ,0);
-  globals::MAIN_CAMERA->setPosition(00, 0, 10);
+  globals::MAIN_CAMERA->setLookAt(0, 14 ,0);
+  globals::MAIN_CAMERA->setPosition(00, 14, -10);
   globals::MAIN_CAMERA->updateCamera();
 
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
