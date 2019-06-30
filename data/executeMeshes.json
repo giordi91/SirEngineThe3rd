@@ -9,6 +9,8 @@
       "-p ../data/external/meshes/knightB/belts.obj -o ../data/processed/meshes/knightB/belts.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/belts.tangents\"",
       "-p ../data/external/meshes/knightB/cape.obj -o ../data/processed/meshes/knightB/cape.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/cape.tangents\"",
       "-p ../data/external/meshes/knightB/plates.obj -o ../data/processed/meshes/knightB/plates.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/plates.tangents\"",
-      "-p ../data/external/meshes/knightB/sword.obj -o ../data/processed/meshes/knightB/sword.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/sword.tangents\""
+      "-p ../data/external/meshes/knightB/sword.obj -o ../data/processed/meshes/knightB/sword.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/sword.tangents\"",
+
+      "-p ../data/external/meshes/flatGround/flatGround.obj -o ../data/processed/meshes/flatGround/flatGround.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/flatGround/flatGround.tangents\""
     ]
 }

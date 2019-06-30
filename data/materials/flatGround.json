@@ -1,0 +1,12 @@
+{
+  "kd" : [1.0,1.0,1.0,1.0],
+  "ks" : [1.0,1.0,1.0,1.0],
+  "ka" : [0.1,0.1,0.1,1.0],
+  "pbr" : [1.0,1.0,0.1,1.0],
+  "shiness":200.0,
+  "albedo" :  "../data/processed/textures/flatGround/stone_A.texture",
+  "normal" :  "../data/processed/textures/flatGround/stone_N.texture",
+  "roughness" :  "../data/processed/textures/flatGround/stone_R.texture",
+  "metallic" :  "../data/processed/textures/flatGround/stone_M.texture",
+  "flags" :  ["deferred", "pbr"]
+}
