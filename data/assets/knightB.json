@@ -1,4 +1,28 @@
 {
-  "mesh": "../data/processed/meshes/knightB/jacket.model",
-  "material": "../data/materials/knightBJacket.json"
+  "subAssets" : [
+    {
+      "mesh": "../data/processed/meshes/knightB/jacket.model",
+      "material": "../data/materials/knightBJacket.json"
+    },
+    {
+      "mesh": "../data/processed/meshes/knightB/pants.model",
+      "material": "../data/materials/knightBPants.json"
+    },
+    {
+      "mesh": "../data/processed/meshes/knightB/plates.model",
+      "material": "../data/materials/knightBPlates.json"
+    },
+    {
+      "mesh": "../data/processed/meshes/knightB/belt.model",
+      "material": "../data/materials/knightBBelt.json"
+    },
+    {
+      "mesh": "../data/processed/meshes/knightB/sword.model",
+      "material": "../data/materials/knightBSword.json"
+    },
+    {
+      "mesh": "../data/processed/meshes/knightB/cape.model",
+      "material": "../data/materials/knightBCape.json"
+    }
+  ]
 }

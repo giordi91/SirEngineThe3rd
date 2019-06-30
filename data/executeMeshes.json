@@ -4,6 +4,11 @@
       "-p ../data/meshes/pSphere1.obj -o ../data/processed/meshes/pSphere1.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/meshes/pSphere1.tangents\"",
       "-p ../data/meshes/skybox.obj -o ../data/processed/meshes/skybox.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/meshes/skybox.tangents\"",
       "-p ../data/external/meshes/cerberus.obj -o ../data/processed/meshes/cerberus.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/meshes/cerberus.tangents\"",
-      "-p ../data/external/meshes/knightB/jacket.obj -o ../data/processed/meshes/knightB/jacket.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/jacket.tangents\""
+      "-p ../data/external/meshes/knightB/jacket.obj -o ../data/processed/meshes/knightB/jacket.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/jacket.tangents\"",
+      "-p ../data/external/meshes/knightB/pants.obj -o ../data/processed/meshes/knightB/pants.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/pants.tangents\"",
+      "-p ../data/external/meshes/knightB/belts.obj -o ../data/processed/meshes/knightB/belts.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/belts.tangents\"",
+      "-p ../data/external/meshes/knightB/cape.obj -o ../data/processed/meshes/knightB/cape.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/cape.tangents\"",
+      "-p ../data/external/meshes/knightB/plates.obj -o ../data/processed/meshes/knightB/plates.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/plates.tangents\"",
+      "-p ../data/external/meshes/knightB/sword.obj -o ../data/processed/meshes/knightB/sword.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/sword.tangents\""
     ]
 }

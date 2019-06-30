@@ -48,6 +48,5 @@ private:
   float previousX = 0;
   float previousY = 0;
 
-  IdentityHandle sphereH;
 };
 } // namespace SirEngine
