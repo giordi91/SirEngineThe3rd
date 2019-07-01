@@ -38,11 +38,14 @@
       "-p ../data/rs/simpleMeshRSTex.json -o ../data/processed/rs/simpleMeshRSTex.root --pluginName rootSignatureCompilerPlugin",
       "-p ../data/rs/blackAndWhiteEffect_RS.json -o ../data/processed/rs/blackAndWhiteEffect_RS.root --pluginName rootSignatureCompilerPlugin",
       "-p ../data/rs/gbufferRS.json -o ../data/processed/rs/gbufferRS.root --pluginName rootSignatureCompilerPlugin",
+      "-p ../data/rs/gbufferPBRRS.json -o ../data/processed/rs/gbufferPBRRS.root --pluginName rootSignatureCompilerPlugin",
       "-p ../data/rs/genericFullScreenBlit_RS.json -o ../data/processed/rs/genericFullScreenBlit_RS.root --pluginName rootSignatureCompilerPlugin",
       "-p ../data/rs/deferredDirectionalLight_RS.json -o ../data/processed/rs/deferredDirectionalLight_RS.root --pluginName rootSignatureCompilerPlugin",
       "-p ../data/rs/proceduralSkybox_RS.json -o ../data/processed/rs/proceduralSkybox_RS.root --pluginName rootSignatureCompilerPlugin",
       "-p ../data/rs/debugFullScreenBlit_RS.json -o ../data/processed/rs/debugFullScreenBlit_RS.root --pluginName rootSignatureCompilerPlugin",
       "-p ../data/rs/standardPostProcessEffect_RS.json -o ../data/processed/rs/standardPostProcessEffect_RS.root --pluginName rootSignatureCompilerPlugin",
+      "-p ../data/rs/skybox_RS.json -o ../data/processed/rs/skybox_RS.root --pluginName rootSignatureCompilerPlugin",
+      "-p ../data/rs/textureMIPS_RS.json -o ../data/processed/rs/textureMIPS_RS.root --pluginName rootSignatureCompilerPlugin",
         
 
       "-p ../data/external/textures/cerberus/Cerberus_A.tga -o ../data/processed/textures/cerberus/Cerberus_A.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1 -g -m\"",
