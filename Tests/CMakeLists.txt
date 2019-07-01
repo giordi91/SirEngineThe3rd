@@ -30,3 +30,8 @@ project(Tests)
     add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 	SET(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 	target_link_libraries(${PROJECT_NAME} SirEngineThe3rdLib)
+
+	#setting working directory
+	set_target_properties(
+    ${PROJECT_NAME} PROPERTIES
+    VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin/$<CONFIGURATION>)
