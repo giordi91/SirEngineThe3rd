@@ -46,3 +46,36 @@ project(ShaderCompilerPlugin)
         $<TARGET_FILE:${PROJECT_NAME}>
         ${CMAKE_BINARY_DIR}/bin/$<CONFIGURATION>/plugins/$<TARGET_FILE_NAME:${PROJECT_NAME}>
 	)
+
+	#lets try to find and copy the dll we need
+	set(VS_TOOLKIT_PATH "C:/Program Files (x86)/Windows Kits/10/bin/")
+
+	#C:\Program Files (x86)\Windows Kits\10\bin\10.0.17763.0\x64
+	MESSAGE(STATUS "---------------------------------------------> ${VS_TOOLKIT_PATH}${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}/x64")
+
+	SET(DXIL_DLL_PATH "${VS_TOOLKIT_PATH}${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}/x64/dxil.dll")
+	SET(DXC_DLL_PATH "${VS_TOOLKIT_PATH}${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}/x64/dxcompiler.dll")
+
+	if(EXISTS ${DXIL_DLL_PATH})
+		add_custom_command(
+		TARGET ${PROJECT_NAME} 
+		PRE_BUILD
+		COMMAND ${CMAKE_COMMAND} -E copy
+		   ${DXIL_DLL_PATH}
+		   ${CMAKE_BINARY_DIR}/bin/$<CONFIGURATION>/dxil.dll
+		)
+	else()
+		MESSAGE(WARNING "Could not find dxil.dll, tried to copy from: ${DXIL_DLL_PATH}")
+	endif()
+
+	if(EXISTS ${DXC_DLL_PATH})
+		add_custom_command(
+		TARGET ${PROJECT_NAME} 
+		PRE_BUILD
+		COMMAND ${CMAKE_COMMAND} -E copy
+		   ${DXC_DLL_PATH}
+		   ${CMAKE_BINARY_DIR}/bin/$<CONFIGURATION>/dxcompiler.dll
+		)
+	else()
+		MESSAGE(WARNING "Could not find dxcompiler.dll, tried to copy from: ${DXC_DLL_PATH}")
+	endif()

@@ -21,13 +21,28 @@ project(ResourceCompiler)
 		#struggling with this. Using a custom command seems to work with a specific file
 		#not with folders
 		file(COPY "../data" DESTINATION "${CMAKE_BINARY_DIR}/bin" )
-		file(COPY "../data" DESTINATION "${CMAKE_BINARY_DIR}/bin" )
 		file(COPY "../data/engineConfig.json" DESTINATION "${CMAKE_BINARY_DIR}/bin/Debug" )
 		file(COPY "../data/engineConfig.json" DESTINATION "${CMAKE_BINARY_DIR}/bin/Release" )
 		file(COPY "../external" DESTINATION "${CMAKE_BINARY_DIR}/bin/data" )
 		file(COPY "../external" DESTINATION "${CMAKE_BINARY_DIR}/bin/data" )
 
 		add_compile_definitions(RC_PLATFORM_WINDOWS SE_PLATFORM_WINDOWS _UNICODE)
+
+		#making sure right folders are created
+		file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin/data/processed)
+		file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin/data/processed/meshes)
+		file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin/data/processed/meshes/flatGround)
+		file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin/data/processed/meshes/knightB)
+
+		file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin/data/processed/rs)
+		file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin/data/processed/shaders)
+		file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin/data/processed/shaders/compute)
+		file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin/data/processed/shaders/rasterization)
+		file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin/data/processed/textures)
+		file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin/data/processed/textures/cerberus)
+		file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin/data/processed/textures/flatGround)
+		file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin/data/processed/textures/knightB)
+
 	else(WIN32)
 		file(COPY "../data" DESTINATION "${CMAKE_BINARY_DIR}/bin" )
 	endif (WIN32)
