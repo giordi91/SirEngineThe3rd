@@ -31,4 +31,8 @@ project(Sandbox)
 
 
 	target_link_libraries(${PROJECT_NAME} d3dcompiler DXGI D3D12 SirEngineThe3rdLib WinPixEventRuntime)
-	#d3dcompiler.lib;DXGI.lib;D3D12.lib;
+
+	#setting working directory
+	set_target_properties(
+    ${PROJECT_NAME} PROPERTIES
+    VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin/$<CONFIGURATION>)

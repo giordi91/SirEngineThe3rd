@@ -207,8 +207,9 @@ void convertObj(const tinyobj::attrib_t &attr, const tinyobj::shape_t &shape,
       c.n.x = attr.normals[3 * idx.normal_index + 0];
       c.n.y = attr.normals[3 * idx.normal_index + 1];
       c.n.z = attr.normals[3 * idx.normal_index + 2];
-	  float texU = attr.texcoords[2 * idx.texcoord_index + 0];
-	  float texV = attr.texcoords[2 * idx.texcoord_index + 1];
+	  //we had cases where the UV index was -1!! so let us check against that
+	  float texU = idx.texcoord_index < 0 ? 0.0f: attr.texcoords[2 * idx.texcoord_index + 0];
+	  float texV = idx.texcoord_index < 0 ? 0.0f: attr.texcoords[2 * idx.texcoord_index + 1];
 	  float mod =1.0f;
       c.uv.x = std::modf(texU, &mod);
       c.uv.y = std::modf(texV,&mod);
