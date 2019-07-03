@@ -4,13 +4,13 @@
 #include "SirEngine/fileUtils.h"
 #include <d3dcompiler.h>
 
-namespace SirEngine{
-namespace dx12{
+namespace SirEngine {
+namespace dx12 {
 
 void ShaderManager::cleanup() {
   // we need to de-allocate everything
   for (auto s : m_stringToShader) {
-    s.second->Release();
+    s.second.shader->Release();
   }
   m_stringToShader.clear();
 }
@@ -37,41 +37,78 @@ void ShaderManager::loadShaderFile(const char *path) {
   std::string name = exp_path.stem().string();
   if (m_stringToShader.find(name) == m_stringToShader.end()) {
     ID3DBlob *blob = loadCompiledShader(path);
-	int size = blob->GetBufferSize();
-	auto* ptr = blob->GetBufferPointer();
-    m_stringToShader[name] = blob;
+    m_stringToShader[name].shader = blob;
   }
 }
+
+ShaderMetadata *extractShaderMetadata(StackAllocator &alloc,
+                                      ShaderMapperData *mapper,
+                                      void *startOfData) {
+
+  // extract metadata
+  wchar_t *typeW =
+      (wchar_t *)((char *)(startOfData) + mapper->shaderSizeInBtye);
+  wchar_t *entryW = (wchar_t *)((char *)(typeW) + mapper->typeSizeInByte);
+
+  // allocate the metadata
+  auto *metadata = reinterpret_cast<ShaderMetadata *>(
+      alloc.allocate(sizeof(ShaderMetadata)));
+  // now that we have the metadata we can allocate enough memory for
+  // the data and copy it over
+  metadata->type =
+      reinterpret_cast<wchar_t *>(alloc.allocate(mapper->typeSizeInByte));
+  metadata->entryPoint =
+      reinterpret_cast<wchar_t *>(alloc.allocate(mapper->entryPointInByte));
+
+  // lets copy the data now
+  memcpy(metadata->type, typeW, mapper->typeSizeInByte);
+  memcpy(metadata->entryPoint, entryW, mapper->entryPointInByte);
+
+  // only thing left is to extract the shader flags
+  metadata->shaderFlags = mapper->shaderFlags;
+
+  return metadata;
+}
+
 void ShaderManager::loadShaderBinaryFile(const char *path) {
 
   auto exp_path = std::experimental::filesystem::path(path);
   std::string name = exp_path.stem().string();
   if (m_stringToShader.find(name) == m_stringToShader.end()) {
-    // ID3DBlob *blob = loadCompiledShader(path);
 
+    // TODO just use scrap memory for this instead of a heap alloc
     std::vector<char> data;
     readAllBytes(path, data);
 
-    const BinaryFileHeader *h = getHeader(data.data());
     auto mapper = getMapperData<ShaderMapperData>(data.data());
-	void* shaderPointer = data.data() + sizeof(BinaryFileHeader);
-	ID3DBlob* blob;
-	HRESULT hr = D3DCreateBlob(mapper->shaderSizeInBtye, &blob);
-	memcpy(blob->GetBufferPointer(), shaderPointer, blob->GetBufferSize());
-    m_stringToShader[name] = blob;
+    void *shaderPointer = data.data() + sizeof(BinaryFileHeader);
+    ID3DBlob *blob;
+    HRESULT hr = D3DCreateBlob(mapper->shaderSizeInBtye, &blob);
+    assert(SUCCEEDED(hr) && "could not create shader blob");
+    memcpy(blob->GetBufferPointer(), shaderPointer, blob->GetBufferSize());
+
+    ShaderMetadata *metadata =
+        extractShaderMetadata(m_metadataAllocator, mapper, shaderPointer);
+
+    m_stringToShader[name] = ShaderBlob{blob, metadata};
   }
 }
+
+void ShaderManager::init() {
+  m_metadataAllocator.initialize(METADATA_STACK_SIZE);
+}
+
 
 void ShaderManager::loadShadersInFolder(const char *directory) {
   std::vector<std::string> paths;
 
-  //lets look first for shader from our resource compiler
+  // lets look first for shader from our resource compiler
   listFilesInFolder(directory, paths, "shader");
   for (const auto &p : paths) {
     loadShaderBinaryFile(p.c_str());
   }
 
-  //lets look for normally compiled shaders from visual studio
+  // lets look for normally compiled shaders from visual studio
   paths.clear();
   listFilesInFolder(directory, paths, "cso");
   for (const auto &p : paths) {
@@ -79,5 +116,5 @@ void ShaderManager::loadShadersInFolder(const char *directory) {
   }
 }
 
-} // namespace rendering
-} // namespace temp
+} // namespace dx12
+} // namespace SirEngine

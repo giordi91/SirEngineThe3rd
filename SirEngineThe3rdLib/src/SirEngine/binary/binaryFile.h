@@ -83,8 +83,10 @@ struct ModelMapperData final {
 };
 
 struct ShaderMapperData final {
-  unsigned int shaderType = 0;
+  unsigned int shaderFlags =0;
   unsigned int shaderSizeInBtye = 0;
+  unsigned int typeSizeInByte = 0;
+  unsigned int entryPointInByte = 0;
 };
 
 struct RootSignatureMappedData final {
