@@ -8,7 +8,7 @@ struct GraphStatus;
 struct ShaderCompileConsole;
 
 struct ShaderCompilerWidget final {
-  ShaderCompilerWidget() : shaderName(""){};
+  ShaderCompilerWidget() : shaderName(""),offsetDevelopPath("../../"){};
   ~ShaderCompilerWidget();
   void initialize();
   void render();
@@ -18,10 +18,12 @@ struct ShaderCompilerWidget final {
   float width = 600;
   float height = 300;
   char shaderName[200];
+  char offsetDevelopPath[200];
   std::vector<const char *> elementsToRender;
   int currentSelectedItem = 1;
   ShaderCompileConsole* console = nullptr;
   bool shouldRenderConsole = true;
+  bool useDevelopPath = true;
   
 };
 

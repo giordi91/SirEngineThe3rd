@@ -15,7 +15,7 @@ float4 PS(FullScreenVertexOut pin) : SV_Target
 {
 
     float4 color = float4(sourceTexture.Sample(gsamLinearClamp, pin.uv).xyz,1.0f);
-	return color;
+    return color;
 }
 
 

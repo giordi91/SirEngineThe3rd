@@ -48,7 +48,7 @@ public:
   ShaderManager &operator=(const ShaderManager &) = delete;
   void loadShaderFile(const char *path);
   void loadShaderBinaryFile(const char *path);
-  void recompileShader(const char *path, std::string* log);
+  void recompileShader(const char *path, const char* offsetPath, std::string* log);
 
 private:
   // 2 mb of data for the stack

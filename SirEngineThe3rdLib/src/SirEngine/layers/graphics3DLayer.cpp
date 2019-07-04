@@ -234,8 +234,7 @@ bool Graphics3DLayer::onDebugDepthChanged(DebugRenderConfigChanged &e) {
 bool Graphics3DLayer::onShaderCompileEvent(ShaderCompileEvent &e) {
 
   SE_CORE_INFO("Reading to compile shader");
-  dx12::PSO_MANAGER->recompileShader(e.getShader());
-
-  return false;
+  dx12::PSO_MANAGER->recompileShader(e.getShader(), e.getOffsetPath());
+  return true;
 }
 } // namespace SirEngine
