@@ -11,6 +11,7 @@ namespace dx12 {
 struct ShaderMetadata {
   wchar_t *type;
   wchar_t *entryPoint;
+  char *shaderPath;
   unsigned int shaderFlags;
 };
 struct ShaderBlob {
@@ -43,8 +44,8 @@ public:
   void loadShaderBinaryFile(const char *path);
 
 private:
-  // 64kib for the stack should be enough fro 800 shaders
-  const int METADATA_STACK_SIZE = 65536;
+  // 2 mb of data for the stack 
+  const int METADATA_STACK_SIZE = 1<<21;
   // data caching
   std::unordered_map<std::string, ShaderBlob> m_stringToShader;
   StackAllocator m_metadataAllocator;

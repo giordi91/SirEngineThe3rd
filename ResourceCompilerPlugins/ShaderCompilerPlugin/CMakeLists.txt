@@ -33,7 +33,7 @@ project(ShaderCompilerPlugin)
     FOLDER plugins)
 
     #message (STATUS  ${CMAKE_RUNTIME_OUTPUT_DIRECTORY} SHIT)
-	target_link_libraries(${PROJECT_NAME} SirEngineThe3rdLib ResourceCompilerLib dxcompiler.lib  DXGI.lib D3D12.lib)
+	target_link_libraries(${PROJECT_NAME} SirEngineThe3rdLib ResourceCompilerLib d3dcompiler.lib dxcompiler.lib  DXGI.lib D3D12.lib)
 
 	#This madness is needed because in order to have a plugin folder inside the 
 	#output dir, I have to do a post copy, by default on windows it adds a Debug/Release 
