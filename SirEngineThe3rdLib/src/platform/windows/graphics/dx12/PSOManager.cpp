@@ -11,6 +11,10 @@
 
 #include <iostream>
 
+#include "SirEngine/application.h"
+#include "SirEngine/events/shaderCompileEvent.h"
+#include "SirEngine/globals.h"
+
 namespace SirEngine {
 namespace dx12 {
 
@@ -145,7 +149,6 @@ inline bool isStateCustom(const std::string &state) {
   return state == PSO_KEY_CUSTOM_STATE;
 }
 
-
 D3D12_COMPARISON_FUNC getDepthFunction(const nlohmann::json &jobj) {
   std::string funcDefault = "LESS";
   const std::string func =
@@ -215,6 +218,89 @@ void PSOManager::loadPSOInFolder(const char *directory) {
     loadPSOFile(p.c_str());
   }
 }
+
+std::string getComputeShaderNameFromPSO(const nlohmann::json &jobj) {
+
+  const std::string shaderName =
+      getValueIfInJson(jobj, PSO_KEY_SHADER_NAME, DEFAULT_STRING);
+  assert(!shaderName.empty());
+  return shaderName;
+}
+
+void getRasterShaderNameFromPSO(const nlohmann::json &jobj, std::string &vs,
+                                std::string &ps) {
+
+  vs = getValueIfInJson(jobj, PSO_KEY_VS_SHADER, DEFAULT_STRING);
+  assert(!vs.empty());
+  ps = getValueIfInJson(jobj, PSO_KEY_PS_SHADER, DEFAULT_STRING);
+  assert(!ps.empty());
+}
+
+void PSOManager::recompileShader(const char *shaderName) {
+
+  // clearing the log
+  compileLog = "";
+
+  std::string shaderNameString = shaderName;
+  auto found = m_shaderToPSOFile.find(shaderNameString);
+  if (found == m_shaderToPSOFile.end()) {
+    assert(0);
+    return;
+  }
+  const std::vector<std::string> &psoToRecompile = found->second;
+  std::cout << "Found " << psoToRecompile.size() << " to recompile"
+            << std::endl;
+  // now we need to extract the data out of the pso to figure out which shaders
+  // to recompile
+  std::vector<std::string> shadersToRecompile;
+  shadersToRecompile.reserve(10);
+  std::string vs;
+  std::string ps;
+  for (auto &pso : psoToRecompile) {
+    auto jobj = getJsonObj(pso);
+    std::cout << "[Engine]: Loading PSO from: " << pso << std::endl;
+
+    const std::string psoTypeString =
+        getValueIfInJson(jobj, PSO_KEY_TYPE, DEFAULT_STRING);
+    PSOType psoType = convertStringPSOTypeToEnum(psoTypeString);
+    switch (psoType) {
+    case (PSOType::COMPUTE): {
+      shadersToRecompile.push_back(getComputeShaderNameFromPSO(jobj));
+      break;
+    }
+    // case (PSOType::DXR): {
+    //  processDXRPSO(jobj, path);
+    //  break;
+    //}
+    case (PSOType::RASTER): {
+      getRasterShaderNameFromPSO(jobj, vs, ps);
+      shadersToRecompile.push_back(vs);
+      shadersToRecompile.push_back(ps);
+      break;
+    }
+    }
+  }
+
+  // recompile all the shaders involved
+  for (auto &shader : shadersToRecompile) {
+    shaderManager->recompileShader(shader.c_str(), &compileLog);
+  }
+
+  // now that all shaders are recompiled we can recompile the pso
+  // before doing that we do need to flush to make sure none of the PSO are used
+  dx12::flushDx12();
+
+  for (auto &pso : psoToRecompile) {
+    //loadPSOFile(pso.c_str());
+  }
+
+  // all the shader have been recompiled, we should be able to
+  // recompile the PSO now
+  SirEngine::ShaderCompileResultEvent *e =
+      new ShaderCompileResultEvent(compileLog.c_str());
+  globals::APPLICATION->queueEventForEndOfFrame(e);
+}
+
 void PSOManager::loadPSOFile(const char *path) {
   auto jobj = getJsonObj(path);
   std::cout << "[Engine]: Loading PSO from: " << path << std::endl;
@@ -236,9 +322,7 @@ void PSOManager::loadPSOFile(const char *path) {
     processRasterPSO(jobj, path);
     break;
   }
-  default: {
-    assert(0 && "PSO Type not supported");
-  }
+  default: { assert(0 && "PSO Type not supported"); }
   }
 }
 
@@ -258,8 +342,8 @@ void PSOManager::processComputePSO(nlohmann::json &jobj,
       rs_manager->getRootSignatureFromName(globalRootSignatureName.c_str());
 
   // fetching the shader from the shader manager, the shader manager contains
-  // both rasterization and compute shaders, the DXIL for raytracer are handled
-  // by the DXIL manager
+  // both rasterization and compute shaders, the DXIL for raytracer are
+  // handled by the DXIL manager
   auto *computeShader = shaderManager->getShaderFromName(shaderName);
 
   D3D12_SHADER_BYTECODE computeShaderByteCode{computeShader->GetBufferPointer(),
@@ -275,6 +359,7 @@ void PSOManager::processComputePSO(nlohmann::json &jobj,
 
   std::string name = getFileName(path);
   m_psoRegister[name] = pipeStateObject;
+  m_shaderToPSOFile[shaderName].push_back(path);
 }
 
 void PSOManager::processRasterPSO(nlohmann::json &jobj,
@@ -372,6 +457,9 @@ void PSOManager::processRasterPSO(nlohmann::json &jobj,
   const std::string name = getFileName(path);
   // assert(m_psoRegister.find(name) == m_psoRegister.end());
   m_psoRegister[name] = pso;
+
+  m_shaderToPSOFile[VSname].push_back(path);
+  m_shaderToPSOFile[PSname].push_back(path);
 }
 
 void PSOManager::processGlobalRootSignature(
@@ -405,7 +493,8 @@ void PSOManager::processPipelineConfig(nlohmann::json &jobj,
 void PSOManager::printStateObjectDesc(const D3D12_STATE_OBJECT_DESC *desc) {
   std::wstringstream wstr;
   wstr << L"\n";
-  wstr << L"-------------------------------------------------------------------"
+  wstr << L"-----------------------------------------------------------------"
+          L"--"
           L"-\n";
   wstr << L"| D3D12 State Object 0x" << static_cast<const void *>(desc)
        << L": ";
@@ -534,7 +623,8 @@ void PSOManager::printStateObjectDesc(const D3D12_STATE_OBJECT_DESC *desc) {
     }
     default:;
     }
-    wstr << L"|----------------------------------------------------------------"
+    wstr << L"|--------------------------------------------------------------"
+            L"--"
             L"----\n";
   }
   wstr << L"\n";

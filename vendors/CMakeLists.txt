@@ -34,6 +34,10 @@ file(COPY "crunch/bin/crunch_x64.exe" DESTINATION "${CMAKE_BINARY_DIR}/bin/Debug
 file(COPY "crunch/bin/crunch_x64.exe" DESTINATION "${CMAKE_BINARY_DIR}/bin/Release")
 
 
+#fuzzy match
+file(COPY "lib_fts/code/fts_fuzzy_match.h" DESTINATION "${CMAKE_SOURCE_DIR}/SirEngineThe3rdLib/vendors/includes/lib_fts/" )
+
+
 add_subdirectory(imgui)
 add_subdirectory(DirectXTK12)
 add_subdirectory(Compressonator)

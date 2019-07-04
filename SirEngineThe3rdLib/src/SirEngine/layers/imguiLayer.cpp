@@ -16,6 +16,7 @@
 #include "SirEngine/events/event.h"
 #include "SirEngine/events/keyboardEvent.h"
 #include "SirEngine/events/mouseEvent.h"
+#include "SirEngine/events/shaderCompileEvent.h"
 #include "SirEngine/events/renderGraphEvent.h"
 
 namespace SirEngine {
@@ -61,6 +62,7 @@ void ImguiLayer::onAttach() {
                           static_cast<float>(globals::SCREEN_HEIGHT));
 
   m_renderGraph.initialize(dx12::RENDERING_GRAPH);
+  m_shaderWidget.initialize();
 }
 
 void ImguiLayer::onDetach() { ImGui_ImplDX12_Shutdown(); }
@@ -109,10 +111,20 @@ void ImguiLayer::onUpdate() {
 
   ImVec2 pos{0, 0};
   ImGui::NewFrame();
-  ImGui::ShowDemoWindow(&show_demo_window);
+  // ImGui::ShowDemoWindow(&show_demo_window);
 
   ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
-  ImGui::Begin("Debug");
+  ImGui::Begin("Debug", &show_demo_window, ImGuiWindowFlags_MenuBar);
+  if (ImGui::BeginMenuBar()) {
+    if (ImGui::BeginMenu("Tools")) {
+      if (ImGui::MenuItem("Shader compiler", nullptr)) {
+        m_renderShaderCompiler = !m_renderShaderCompiler;
+      }
+      ImGui::Separator();
+      ImGui::EndMenu();
+    }
+    ImGui::EndMenuBar();
+  }
 
 #if BUILD_AMD
   if (ImGui::CollapsingHeader("HW info", ImGuiTreeNodeFlags_DefaultOpen)) {
@@ -127,6 +139,10 @@ void ImguiLayer::onUpdate() {
   if (ImGui::CollapsingHeader("Graphics", ImGuiTreeNodeFlags_DefaultOpen)) {
     m_renderGraph.render();
   }
+  if (m_renderShaderCompiler) {
+	  m_shaderWidget.render();
+  }
+
   ImGui::End();
 
   ImGui::Render();
@@ -155,6 +171,9 @@ void ImguiLayer::onEvent(Event &event) {
       SE_BIND_EVENT_FN(ImguiLayer::onWindowResizeEvent));
   dispatcher.dispatch<RenderGraphChanged>(
       SE_BIND_EVENT_FN(ImguiLayer::onRenderGraphEvent));
+  dispatcher.dispatch<ShaderCompileResultEvent>(
+      SE_BIND_EVENT_FN(ImguiLayer::onCompileResultEvent));
+
 }
 bool ImguiLayer::onMouseButtonPressEvent(const MouseButtonPressEvent &e) const {
   ImGuiIO &io = ImGui::GetIO();
@@ -211,5 +230,9 @@ bool ImguiLayer::onRenderGraphEvent(const RenderGraphChanged &e) {
   m_renderGraph.initialize(dx12::RENDERING_GRAPH);
   m_renderGraph.showGraph(true);
   return true;
+}
+bool ImguiLayer::onCompileResultEvent(const ShaderCompileResultEvent &e) {
+	m_shaderWidget.log(e.getLog());
+  return false;
 }
 } // namespace SirEngine
