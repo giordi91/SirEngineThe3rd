@@ -101,8 +101,8 @@ void ShaderManager::loadShaderBinaryFile(const char *path) {
   }
 }
 
-void ShaderManager::recompileShader(const char *path, std::string *log) {
-
+void ShaderManager::recompileShader(const char *path, const char *offsetPath,
+                                    std::string *log) {
   // first thing first we need to get the shader metadata
   auto found = m_stringToShader.find(path);
   if (found == m_stringToShader.end()) {
@@ -120,8 +120,11 @@ void ShaderManager::recompileShader(const char *path, std::string *log) {
   args.entryPoint = meta->entryPoint;
   args.type = meta->type;
 
+  std::string fullShaderPath(offsetPath);
+  fullShaderPath+= blob.metadata->shaderPath;
+
   ID3DBlob *compiledShader =
-      m_compiler->compilerShader(blob.metadata->shaderPath, args, log);
+      m_compiler->compilerShader(fullShaderPath, args, log);
   if (compiledShader != nullptr) {
     auto exp_path = std::experimental::filesystem::path(path);
     std::string name = exp_path.stem().string();

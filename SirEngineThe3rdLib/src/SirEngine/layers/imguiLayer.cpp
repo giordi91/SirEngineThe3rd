@@ -233,6 +233,6 @@ bool ImguiLayer::onRenderGraphEvent(const RenderGraphChanged &e) {
 }
 bool ImguiLayer::onCompileResultEvent(const ShaderCompileResultEvent &e) {
 	m_shaderWidget.log(e.getLog());
-  return false;
+  return true;
 }
 } // namespace SirEngine

@@ -45,7 +45,7 @@ public:
     return nullptr;
   }
 
-  void recompileShader(const char *shaderName);
+  void recompileShader(const char *shaderName, const char* getOffsetPath);
   inline void bindPSO(PSOHandle handle,
                       ID3D12GraphicsCommandList2 *commandList) const {
 

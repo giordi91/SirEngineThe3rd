@@ -214,10 +214,15 @@ void ShaderCompilerWidget::render() {
                  elementsToRender.size());
 
   ImGui::PushItemWidth(-1.0f);
+  ImGui::Checkbox("Use develop path offset", &useDevelopPath);
+  ImGui::SameLine();
+  ImGui::InputText("", offsetDevelopPath, IM_ARRAYSIZE(offsetDevelopPath));
   if (ImGui::Button("COMPILE SELECTED",
                     ImVec2{ImGui::GetContentRegionAvailWidth(), 30})) {
     // let s generate a compile request
-    auto *event = new ShaderCompileEvent(elementsToRender[currentSelectedItem]);
+    auto *event =
+        new ShaderCompileEvent(elementsToRender[currentSelectedItem],
+                               useDevelopPath ? offsetDevelopPath : "");
     globals::APPLICATION->queueEventForEndOfFrame(event);
   }
 
