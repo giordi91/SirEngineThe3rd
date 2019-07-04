@@ -292,9 +292,9 @@ void PSOManager::recompileShader(const char *shaderName) {
 
   for (auto &pso : psoToRecompile) {
     loadPSOFile(pso.c_str(),true);
-    // compileLog << "Compiled PSO: ";
-    // compileLog << pso;
-    // compileLog << "\n";
+    compileLog += "Compiled PSO: ";
+    compileLog += pso;
+    compileLog += "\n";
   }
 
   // all the shader have been recompiled, we should be able to
@@ -382,6 +382,8 @@ void PSOManager::processComputePSO(nlohmann::json &jobj,
     PSOHandle handle = m_psoRegisterHandle[name];
     uint32_t index = getIndexFromHandle(handle);
     PSOData &data = m_psoPool[index];
+	//releasing old PSO
+	data.pso->Release();
     data.pso = pipeStateObject;
   }
 }
