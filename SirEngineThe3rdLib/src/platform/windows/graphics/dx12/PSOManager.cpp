@@ -291,10 +291,10 @@ void PSOManager::recompileShader(const char *shaderName) {
   dx12::flushDx12();
 
   for (auto &pso : psoToRecompile) {
-    loadPSOFile(pso.c_str());
-	//compileLog << "Compiled PSO: ";
-	//compileLog << pso;
-	//compileLog << "\n";
+    loadPSOFile(pso.c_str(),true);
+    // compileLog << "Compiled PSO: ";
+    // compileLog << pso;
+    // compileLog << "\n";
   }
 
   // all the shader have been recompiled, we should be able to
@@ -304,7 +304,7 @@ void PSOManager::recompileShader(const char *shaderName) {
   globals::APPLICATION->queueEventForEndOfFrame(e);
 }
 
-void PSOManager::loadPSOFile(const char *path) {
+void PSOManager::loadPSOFile(const char *path, bool reload) {
   auto jobj = getJsonObj(path);
   std::cout << "[Engine]: Loading PSO from: " << path << std::endl;
 
@@ -314,7 +314,7 @@ void PSOManager::loadPSOFile(const char *path) {
   PSOType psoType = convertStringPSOTypeToEnum(psoTypeString);
   switch (psoType) {
   case (PSOType::COMPUTE): {
-    processComputePSO(jobj, path);
+    processComputePSO(jobj, path, reload);
     break;
   }
   // case (PSOType::DXR): {
@@ -322,7 +322,7 @@ void PSOManager::loadPSOFile(const char *path) {
   //  break;
   //}
   case (PSOType::RASTER): {
-    processRasterPSO(jobj, path);
+    processRasterPSO(jobj, path, reload);
     break;
   }
   default: { assert(0 && "PSO Type not supported"); }
@@ -330,7 +330,7 @@ void PSOManager::loadPSOFile(const char *path) {
 }
 
 void PSOManager::processComputePSO(nlohmann::json &jobj,
-                                   const std::string &path) {
+                                   const std::string &path, bool reload) {
 
   // lets process the PSO for a compute shader which is quite simple
   const std::string globalRootSignatureName =
@@ -362,22 +362,32 @@ void PSOManager::processComputePSO(nlohmann::json &jobj,
 
   std::string name = getFileName(path);
 
-  // generating and storing the handle
-  uint32_t index;
-  PSOData &data = m_psoPool.getFreeMemoryData(index);
-  data.pso = pipeStateObject;
-  PSOHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
-  data.magicNumber = MAGIC_NUMBER_COUNTER;
-  m_psoRegisterHandle[name] = handle;
-  ++MAGIC_NUMBER_COUNTER;
+  // if we are not realoading it means there is not a pso record so we just go
+  // in and add one
+  if (!reload) {
+    // generating and storing the handle
+    uint32_t index;
+    PSOData &data = m_psoPool.getFreeMemoryData(index);
+    data.pso = pipeStateObject;
+    PSOHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
+    data.magicNumber = MAGIC_NUMBER_COUNTER;
+    m_psoRegisterHandle[name] = handle;
+    ++MAGIC_NUMBER_COUNTER;
 
-  m_psoRegister[name] = pipeStateObject;
-  m_shaderToPSOFile[shaderName].push_back(path);
-
+    m_psoRegister[name] = pipeStateObject;
+    m_shaderToPSOFile[shaderName].push_back(path);
+  } else {
+    // if we are reloading the pso already exists we just need to update data
+    assert(m_psoRegisterHandle.find(name) != m_psoRegisterHandle.end());
+    PSOHandle handle = m_psoRegisterHandle[name];
+    uint32_t index = getIndexFromHandle(handle);
+    PSOData &data = m_psoPool[index];
+    data.pso = pipeStateObject;
+  }
 }
 
-void PSOManager::processRasterPSO(nlohmann::json &jobj,
-                                  const std::string &path) {
+void PSOManager::processRasterPSO(nlohmann::json &jobj, const std::string &path,
+                                  bool reload) {
 
   // find the input layout
   const std::string layoutString =
@@ -472,17 +482,26 @@ void PSOManager::processRasterPSO(nlohmann::json &jobj,
   // assert(m_psoRegister.find(name) == m_psoRegister.end());
   m_psoRegister[name] = pso;
 
-  m_shaderToPSOFile[VSname].push_back(path);
-  m_shaderToPSOFile[PSname].push_back(path);
+  if (!reload) {
+    m_shaderToPSOFile[VSname].push_back(path);
+    m_shaderToPSOFile[PSname].push_back(path);
 
-  // generating and storing the handle
-  uint32_t index;
-  PSOData &data = m_psoPool.getFreeMemoryData(index);
-  data.pso = pso;
-  PSOHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
-  data.magicNumber = MAGIC_NUMBER_COUNTER;
-  m_psoRegisterHandle[name] = handle;
-  ++MAGIC_NUMBER_COUNTER;
+    // generating and storing the handle
+    uint32_t index;
+    PSOData &data = m_psoPool.getFreeMemoryData(index);
+    data.pso = pso;
+    PSOHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
+    data.magicNumber = MAGIC_NUMBER_COUNTER;
+    m_psoRegisterHandle[name] = handle;
+    ++MAGIC_NUMBER_COUNTER;
+  } else {
+    // if we are reloading the pso already exists we just need to update data
+    assert(m_psoRegisterHandle.find(name) != m_psoRegisterHandle.end());
+    PSOHandle handle = m_psoRegisterHandle[name];
+    uint32_t index = getIndexFromHandle(handle);
+    PSOData &data = m_psoPool[index];
+    data.pso = pso;
+  }
 }
 
 void PSOManager::processGlobalRootSignature(

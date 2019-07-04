@@ -65,9 +65,9 @@ public:
   }
 
 private:
-  void loadPSOFile(const char *path);
-  void processComputePSO(nlohmann::json &jobj, const std::string &path);
-  void processRasterPSO(nlohmann::json &jobj, const std::string &path);
+  void loadPSOFile(const char *path, bool reload = false);
+  void processComputePSO(nlohmann::json &jobj, const std::string &path, bool reload);
+  void processRasterPSO(nlohmann::json &jobj, const std::string &path, bool reload);
   void processGlobalRootSignature(nlohmann::json &jobj,
                                   CD3DX12_STATE_OBJECT_DESC &pipe) const;
   void processPipelineConfig(nlohmann::json &jobj,
