@@ -21,7 +21,9 @@ enum class EventType {
   MouseScrolled,
   DebugLayerChanged,
   DebugRenderChanged,
-  RenderGraphChanged
+  RenderGraphChanged,
+  ShaderCompile,
+  ShaderCompileResult
 };
 
 enum EventCategory {
@@ -32,7 +34,8 @@ enum EventCategory {
   EventCategoryMouse = SET_BIT(3),
   EventCategoryMouseButton = SET_BIT(4),
   EventCategoryDebug = SET_BIT(5),
-  EventCategoryRendering = SET_BIT(6)
+  EventCategoryRendering = SET_BIT(6),
+  EventCategoryShaderCompile= SET_BIT(7)
 };
 
 #define EVENT_CLASS_TYPE(type)                                                 \

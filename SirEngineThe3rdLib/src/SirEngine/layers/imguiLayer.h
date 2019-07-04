@@ -3,6 +3,7 @@
 #include "SirEngine/debugUiWidgets/frameTimingsWidget.h"
 #include "SirEngine/debugUiWidgets/memoryConsumptionWidget.h"
 #include "SirEngine/debugUiWidgets/renderGraphWidget.h"
+#include "SirEngine/debugUiWidgets/shaderRecompileWidget.h"
 #include "SirEngine/debugUiWidgets/hardwareInfo.h"
 #include "SirEngine/graphics/nodeGraph.h"
 #include "SirEngine/layer.h"
@@ -18,6 +19,7 @@ class MouseScrollEvent;
 class MouseButtonReleaseEvent;
 class MouseButtonPressEvent;
 class RenderGraphChanged;
+class ShaderCompileResultEvent;
 
 class SIR_ENGINE_API ImguiLayer : public Layer {
 public:
@@ -41,6 +43,7 @@ private:
   bool onWindowResizeEvent(const WindowResizeEvent &e) const;
   bool onKeyTypeEvent(const KeyTypeEvent &e) const;
   bool onRenderGraphEvent(const RenderGraphChanged &e);
+  bool onCompileResultEvent(const ShaderCompileResultEvent &e);
 
 private:
   INT64 g_Time = 0;
@@ -48,10 +51,13 @@ private:
   debug::FrameTimingsWidget m_frameTimings;
   debug::MemoryConsumptionWidget m_memoryUsage;
   debug::RenderGraphWidget m_renderGraph;
+  debug::ShaderCompilerWidget m_shaderWidget;
+
 #if BUILD_AMD
   debug::HWInfoWidget m_hwInfo;
 #endif
   bool m_shouldShow = false;
+  bool m_renderShaderCompiler = true;
   // 192 is the `
   static const uint32_t TRIGGER_UI_BUTTON = 192;
   Graph m_graph;

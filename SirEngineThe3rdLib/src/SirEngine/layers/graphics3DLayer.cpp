@@ -10,15 +10,16 @@
 #include <DirectXMath.h>
 
 #include "SirEngine/events/renderGraphEvent.h"
+#include "SirEngine/events/shaderCompileEvent.h"
 #include "SirEngine/graphics/nodes/DebugNode.h"
 #include "SirEngine/graphics/nodes/FinalBlitNode.h"
 #include "SirEngine/graphics/nodes/assetManagerNode.h"
 #include "SirEngine/graphics/nodes/deferredLighting.h"
+#include "SirEngine/graphics/nodes/gbufferPassPBR.h"
+#include "SirEngine/graphics/nodes/skybox.h"
 #include "SirEngine/graphics/postProcess/effects/gammaAndToneMappingEffect.h"
 #include "SirEngine/graphics/postProcess/postProcessStack.h"
 #include "SirEngine/graphics/renderingContext.h"
-#include "SirEngine/graphics/nodes/gbufferPassPBR.h"
-#include "SirEngine/graphics/nodes/skybox.h"
 
 namespace SirEngine {
 
@@ -27,7 +28,7 @@ void Graphics3DLayer::onAttach() {
   // globals::MAIN_CAMERA->setLookAt(0, 125, 0);
   // globals::MAIN_CAMERA->setPosition(00, 125, 60);
 
-  globals::MAIN_CAMERA->setLookAt(0, 14 ,0);
+  globals::MAIN_CAMERA->setLookAt(0, 14, 0);
   globals::MAIN_CAMERA->setPosition(00, 14, 10);
   globals::MAIN_CAMERA->updateCamera();
 
@@ -47,10 +48,10 @@ void Graphics3DLayer::onAttach() {
   auto finalBlit = new FinalBlitNode();
   // auto simpleForward = new SimpleForward("simpleForward");
   auto postProcess = new PostProcessStack();
-  //auto gbufferPass = new GBufferPass("GBufferPass");
+  // auto gbufferPass = new GBufferPass("GBufferPass");
   auto gbufferPass = new GBufferPassPBR("GBufferPassPBR");
   auto lighting = new DeferredLightingPass("Deferred lighting");
-  //auto sky = new ProceduralSkyBoxPass("Procedural Sky");
+  // auto sky = new ProceduralSkyBoxPass("Procedural Sky");
   auto sky = new SkyBoxPass("Skybox");
 
   postProcess->allocateRenderPass<GammaAndToneMappingEffect>(
@@ -125,6 +126,8 @@ void Graphics3DLayer::onEvent(Event &event) {
       SE_BIND_EVENT_FN(Graphics3DLayer::onResizeEvent));
   dispatcher.dispatch<DebugRenderConfigChanged>(
       SE_BIND_EVENT_FN(Graphics3DLayer::onDebugDepthChanged));
+  dispatcher.dispatch<ShaderCompileEvent>(
+      SE_BIND_EVENT_FN(Graphics3DLayer::onShaderCompileEvent));
 }
 
 void Graphics3DLayer::clear() {}
@@ -227,5 +230,12 @@ bool Graphics3DLayer::onDebugDepthChanged(DebugRenderConfigChanged &e) {
     debugNodeTyped->setConfig(e.getConfig());
   }
   return true;
+}
+bool Graphics3DLayer::onShaderCompileEvent(ShaderCompileEvent &e) {
+
+  SE_CORE_INFO("Reading to compile shader");
+  dx12::PSO_MANAGER->recompileShader(e.getShader());
+
+  return false;
 }
 } // namespace SirEngine

@@ -16,6 +16,7 @@ class MouseButtonReleaseEvent;
 class MouseMoveEvent;
 class WindowResizeEvent;
 class DebugLayerChanged;
+class ShaderCompileEvent;
 
 namespace dx12 {
 class Texture2D;
@@ -40,6 +41,7 @@ private:
   bool onDebugLayerEvent(DebugLayerChanged &e);
   bool onResizeEvent(WindowResizeEvent &e);
   bool onDebugDepthChanged(DebugRenderConfigChanged &e);
+  bool onShaderCompileEvent(ShaderCompileEvent&e);
 
   // camera event control
   bool leftDown = false;

@@ -43,3 +43,9 @@
 [submodule "vendors/crunch"]
 	path = vendors/crunch
 	url = https://github.com/giordi91/crunch
+[submodule "lib_fts"]
+	path = lib_fts
+	url = https://github.com/giordi91/lib_fts.git
+[submodule "vendors/lib_fts"]
+	path = vendors/lib_fts
+	url = https://github.com/giordi91/lib_fts.git

@@ -15,8 +15,6 @@ namespace dx12 {
 LPCWSTR COMPILATION_FLAGS_DEBUG[] = {L"/Zi", L"/Od"};
 LPCWSTR COMPILATION_FLAGS[] = {L"/O3"};
 
-enum SHADER_FLAGS { DEBUG = 1, AMD_INSTRINSICS = 2, NVIDIA_INSTRINSICS = 4 };
-
 DXCShaderCompiler::DXCShaderCompiler() {
   // lets create an instance of the compiler
   DxcCreateInstance(CLSID_DxcCompiler, __uuidof(IDxcCompiler),
@@ -38,7 +36,8 @@ DXCShaderCompiler::~DXCShaderCompiler() {
 }
 
 ID3DBlob *DXCShaderCompiler::compilerShader(const std::string &shaderPath,
-                                            const ShaderArgs &shaderArgs) {
+                                            const ShaderArgs &shaderArgs,
+                                            std::string *log) {
 
   // creating a blob of data with the content of the shader
   std::wstring wshader{shaderPath.begin(), shaderPath.end()};
@@ -89,13 +88,20 @@ ID3DBlob *DXCShaderCompiler::compilerShader(const std::string &shaderPath,
         static_cast<char *>(pPrintBlob->GetBufferPointer()),
         pPrintBlob->GetBufferSize());
     SE_CORE_ERROR("ERROR_LOG:\n {0}", errorOut);
+    if (log != nullptr) {
+      (*log) += errorOut;
+      (*log) += "\n";
+    }
     pPrintBlob->Release();
+	return nullptr;
   }
 
   // extract compiled blob of data
   IDxcBlob *pResultBlob;
   pResult->GetResult(&pResultBlob);
 
+  // here we just copy to a regular blob so we dont have to leak out the IDXC
+  // interface
   ID3DBlob *blob;
   HRESULT hr = D3DCreateBlob(pResultBlob->GetBufferSize(), &blob);
   assert(SUCCEEDED(hr) && "could not create shader blob");
@@ -106,6 +112,15 @@ ID3DBlob *DXCShaderCompiler::compilerShader(const std::string &shaderPath,
   pResultBlob->Release();
 
   return blob;
+}
+unsigned int DXCShaderCompiler::getShaderFlags(const ShaderArgs &shaderArgs) {
+
+  unsigned int flags = 0;
+  flags |= (shaderArgs.debug ? SHADER_FLAGS::DEBUG : 0);
+  flags |= (shaderArgs.isAMD ? SHADER_FLAGS::AMD_INSTRINSICS : 0);
+  flags |= (shaderArgs.isNVidia ? SHADER_FLAGS::NVIDIA_INSTRINSICS : 0);
+
+  return flags;
 }
 } // namespace dx12
 } // namespace SirEngine
