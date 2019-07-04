@@ -7,6 +7,12 @@
 
 namespace SirEngine {
 
+static const std::string &GBUFFER_DEBUG_PSO_NAME = "gbufferDebugPSO";
+static const std::string &NORMAL_DEBUG_PSO_NAME = "normalBufferDebugPSO";
+static const std::string &SPECULAR_DEBUG_PSO_NAME = "specularBufferDebugPSO";
+static const std::string &DEPTH_DEBUG_PSO_NAME= "depthBufferDebugPSO";
+static const std::string &DEBUG_FULL_SCREEN_RS= "debugFullScreenBlit_RS";
+
 DebugNode::DebugNode(const char *name) : GraphNode(name, "DebugNode") {
   // lets create the plugs
   Plug inTexture;
@@ -58,10 +64,10 @@ void blitGBuffeer(const TextureHandle handleToWriteOn,
                   const ConstantBufferHandle configHandle) {
   // we need the shader to extract the information of the gbuffer
   ID3D12PipelineState *pso =
-      dx12::PSO_MANAGER->getComputePSOByName("gbufferDebugPSO");
+      dx12::PSO_MANAGER->getComputePSOByName(GBUFFER_DEBUG_PSO_NAME);
   ID3D12RootSignature *rs =
       dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(
-          ("debugFullScreenBlit_RS"));
+          (DEBUG_FULL_SCREEN_RS.c_str()));
 
   TextureHandle input = globals::DEBUG_FRAME_DATA->geometryBuffer;
   assert(input.isHandleValid());
@@ -72,10 +78,10 @@ void blitNormalBuffer(const TextureHandle handleToWriteOn,
                       const ConstantBufferHandle configHandle) {
   // we need the shader to extract the information of the gbuffer
   ID3D12PipelineState *pso =
-      dx12::PSO_MANAGER->getComputePSOByName("normalBufferDebugPSO");
+      dx12::PSO_MANAGER->getComputePSOByName(NORMAL_DEBUG_PSO_NAME);
   ID3D12RootSignature *rs =
       dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(
-          ("debugFullScreenBlit_RS"));
+          DEBUG_FULL_SCREEN_RS.c_str());
   TextureHandle input = globals::DEBUG_FRAME_DATA->normalBuffer;
   assert(input.isHandleValid());
   assert(input.handle != handleToWriteOn.handle);
@@ -84,11 +90,10 @@ void blitNormalBuffer(const TextureHandle handleToWriteOn,
 void blitSpecularBuffer(const TextureHandle handleToWriteOn,
                         const ConstantBufferHandle configHandle) {
   // we need the shader to extract the information of the gbuffer
-  ID3D12PipelineState *pso =
-      dx12::PSO_MANAGER->getComputePSOByName("specularBufferDebugPSO");
+  ID3D12PipelineState *pso = dx12::PSO_MANAGER->getComputePSOByName(SPECULAR_DEBUG_PSO_NAME);
   ID3D12RootSignature *rs =
       dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(
-          ("debugFullScreenBlit_RS"));
+          DEBUG_FULL_SCREEN_RS.c_str());
   TextureHandle input = globals::DEBUG_FRAME_DATA->specularBuffer;
   assert(input.isHandleValid());
   assert(input.handle != handleToWriteOn.handle);
@@ -98,10 +103,10 @@ void blitDepthBuffer(const TextureHandle handleToWriteOn,
                      const ConstantBufferHandle configHandle) {
   // we need the shader to extract the information of the gbuffer
   ID3D12PipelineState *pso =
-      dx12::PSO_MANAGER->getComputePSOByName("depthBufferDebugPSO");
+      dx12::PSO_MANAGER->getComputePSOByName(DEPTH_DEBUG_PSO_NAME);
   ID3D12RootSignature *rs =
       dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(
-          ("debugFullScreenBlit_RS"));
+          DEBUG_FULL_SCREEN_RS.c_str());
   TextureHandle input = globals::DEBUG_FRAME_DATA->gbufferDepth;
   assert(input.isHandleValid());
   assert(input.handle != handleToWriteOn.handle);
@@ -157,9 +162,7 @@ void DebugNode::compute() {
 
 #if SE_DEBUG
   blitDebugFrame(texH);
-  m_outputPlugs[0].plugValue = texH.handle;
-#else
-  m_outputPlugs[0].plugValue = texH.handle;
 #endif
+  m_outputPlugs[0].plugValue = texH.handle;
 }
 } // namespace SirEngine
