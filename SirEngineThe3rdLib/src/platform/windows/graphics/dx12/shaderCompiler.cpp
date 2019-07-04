@@ -1,0 +1,111 @@
+#include "platform/windows/graphics/dx12/shaderCompiler.h"
+#include "SirEngine/fileUtils.h"
+#include "SirEngine/log.h"
+
+// NOTE to work, dxcapi needs to happen after windows.h
+#include <windows.h>
+
+#include <dxcapi.h>
+
+#include <d3dcompiler.h>
+
+namespace SirEngine {
+namespace dx12 {
+
+LPCWSTR COMPILATION_FLAGS_DEBUG[] = {L"/Zi", L"/Od"};
+LPCWSTR COMPILATION_FLAGS[] = {L"/O3"};
+
+enum SHADER_FLAGS { DEBUG = 1, AMD_INSTRINSICS = 2, NVIDIA_INSTRINSICS = 4 };
+
+DXCShaderCompiler::DXCShaderCompiler() {
+  // lets create an instance of the compiler
+  DxcCreateInstance(CLSID_DxcCompiler, __uuidof(IDxcCompiler),
+                    (void **)&pCompiler);
+
+  // allocating the library for utility functions
+  DxcCreateInstance(CLSID_DxcLibrary, __uuidof(IDxcLibrary),
+                    (void **)&pLibrary);
+
+  // create a standard include handle, that resolves files using reltive path
+  // to the file being compiled
+  pLibrary->CreateIncludeHandler(&includeHandle);
+}
+
+DXCShaderCompiler::~DXCShaderCompiler() {
+  pCompiler->Release();
+  pLibrary->Release();
+  includeHandle->Release();
+}
+
+ID3DBlob *DXCShaderCompiler::compilerShader(const std::string &shaderPath,
+                                            const ShaderArgs &shaderArgs) {
+
+  // creating a blob of data with the content of the shader
+  std::wstring wshader{shaderPath.begin(), shaderPath.end()};
+  IDxcOperationResult *pResult;
+  // loading shader into straem
+  std::ifstream shaderStream(shaderPath);
+  std::string shaderContent((std::istreambuf_iterator<char>(shaderStream)),
+                            std::istreambuf_iterator<char>());
+  const char *Program = shaderContent.c_str();
+  IDxcBlobEncoding *pSource;
+  DxcCreateInstance(CLSID_DxcLibrary, __uuidof(IDxcLibrary),
+                    (void **)&pLibrary);
+  pLibrary->CreateBlobWithEncodingFromPinned(Program, shaderContent.size(),
+                                             CP_UTF8, &pSource);
+
+  // lets build compiler flags, for now they are simple so we can just switch
+  // between two sets based on debug or not
+  LPCWSTR *flags =
+      shaderArgs.debug ? COMPILATION_FLAGS_DEBUG : COMPILATION_FLAGS;
+  int flagsCount = shaderArgs.debug ? _countof(COMPILATION_FLAGS_DEBUG)
+                                    : _countof(COMPILATION_FLAGS);
+
+  // create a standard include
+  IDxcIncludeHandler *includeHandle = nullptr;
+  pLibrary->CreateIncludeHandler(&includeHandle);
+
+  // kick the compilation
+  pCompiler->Compile(pSource,         // program text
+                     wshader.c_str(), // file name, mostly for error messages
+                     shaderArgs.entryPoint.c_str(), // entry point function
+                     shaderArgs.type.c_str(),       // target profile
+                     flags,                         // compilation arguments
+                     flagsCount,    // number of compilation arguments
+                     nullptr, 0,    // name/value defines and their count
+                     includeHandle, // handler for #include directives
+                     &pResult);
+
+  // checking whether or not compilation was successiful
+  HRESULT hrCompilation;
+  pResult->GetStatus(&hrCompilation);
+
+  if (FAILED(hrCompilation)) {
+
+    IDxcBlobEncoding *pPrintBlob;
+    pResult->GetErrorBuffer(&pPrintBlob);
+
+    const std::string errorOut(
+        static_cast<char *>(pPrintBlob->GetBufferPointer()),
+        pPrintBlob->GetBufferSize());
+    SE_CORE_ERROR("ERROR_LOG:\n {0}", errorOut);
+    pPrintBlob->Release();
+  }
+
+  // extract compiled blob of data
+  IDxcBlob *pResultBlob;
+  pResult->GetResult(&pResultBlob);
+
+  ID3DBlob *blob;
+  HRESULT hr = D3DCreateBlob(pResultBlob->GetBufferSize(), &blob);
+  assert(SUCCEEDED(hr) && "could not create shader blob");
+  memcpy(blob->GetBufferPointer(), pResultBlob->GetBufferPointer(),
+         pResultBlob->GetBufferSize());
+
+  pResult->Release();
+  pResultBlob->Release();
+
+  return blob;
+}
+} // namespace dx12
+} // namespace SirEngine

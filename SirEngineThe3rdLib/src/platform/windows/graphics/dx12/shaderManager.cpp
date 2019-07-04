@@ -49,6 +49,7 @@ ShaderMetadata *extractShaderMetadata(StackAllocator &alloc,
   wchar_t *typeW =
       (wchar_t *)((char *)(startOfData) + mapper->shaderSizeInBtye);
   wchar_t *entryW = (wchar_t *)((char *)(typeW) + mapper->typeSizeInByte);
+  wchar_t *shaderPath= (wchar_t *)((char *)(entryW) + mapper->entryPointInByte);
 
   // allocate the metadata
   auto *metadata = reinterpret_cast<ShaderMetadata *>(
@@ -59,10 +60,13 @@ ShaderMetadata *extractShaderMetadata(StackAllocator &alloc,
       reinterpret_cast<wchar_t *>(alloc.allocate(mapper->typeSizeInByte));
   metadata->entryPoint =
       reinterpret_cast<wchar_t *>(alloc.allocate(mapper->entryPointInByte));
+  metadata->shaderPath=
+      reinterpret_cast<char*>(alloc.allocate(mapper->pathSizeInBtype));
 
   // lets copy the data now
   memcpy(metadata->type, typeW, mapper->typeSizeInByte);
   memcpy(metadata->entryPoint, entryW, mapper->entryPointInByte);
+  memcpy(metadata->shaderPath, shaderPath, mapper->pathSizeInBtype);
 
   // only thing left is to extract the shader flags
   metadata->shaderFlags = mapper->shaderFlags;

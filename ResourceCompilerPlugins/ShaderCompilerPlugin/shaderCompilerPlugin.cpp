@@ -4,10 +4,13 @@
 #include "cxxopts/cxxopts.hpp"
 
 #include "SirEngine/binary/binaryFile.h"
+#include "platform/windows/graphics/dx12/shaderCompiler.h"
 #include "resourceCompilerLib/argsUtils.h"
 
 #include <dxcapi.h>
 #include <filesystem>
+
+#include <d3dcompiler.h>
 
 const std::string PLUGIN_NAME = "shaderCompilerPlugin";
 const unsigned int VERSION_MAJOR = 0;
@@ -19,36 +22,12 @@ LPCWSTR COMPILATION_FLAGS[] = {L"/O3"};
 
 enum SHADER_FLAGS { DEBUG = 1, AMD_INSTRINSICS = 2, NVIDIA_INSTRINSICS = 4 };
 
-struct ShaderArgs {
-  bool debug = false;
-  bool isAMD = false;
-  bool isNVidia = false;
-
-  std::wstring entryPoint;
-  std::wstring type;
-};
-
 inline std::wstring toWstring(const std::string &s) {
   return std::wstring(s.begin(), s.end());
 }
 
-// struct StandardIncludeHandle : public IDxcIncludeHandler {
-//	StandardIncludeHandle(const std::string& basePath):
-// IDxcIncludeHandler(),m_base(basePath)
-//	{
-//	}
-//  virtual HRESULT STDMETHODCALLTYPE LoadSource(
-//    _In_ LPCWSTR pFilename,                                   // Candidate
-//    filename. _COM_Outptr_result_maybenull_ IDxcBlob **ppIncludeSource  //
-//    Resultant source object for included file, nullptr if not found.
-//  ) override{
-//
-//
-//  };
-//  const std::string& m_base;
-//};
-
-bool processArgs(const std::string args, ShaderArgs &returnArgs) {
+bool processArgs(const std::string args,
+                 SirEngine::dx12::ShaderArgs &returnArgs) {
   // lets get arguments like they were from commandline
   auto v = splitArgs(args);
   // lets build the options
@@ -78,11 +57,11 @@ bool processArgs(const std::string args, ShaderArgs &returnArgs) {
   return true;
 }
 
-unsigned int getShaderFlags(const ShaderArgs &args) {
+unsigned int getShaderFlags(const SirEngine::dx12::ShaderArgs &args) {
   unsigned int flags = 0;
-  flags |= (args.debug ? SHADER_FLAGS::DEBUG :0);
-  flags |= (args.isAMD ? SHADER_FLAGS::AMD_INSTRINSICS :0);
-  flags |= (args.isNVidia ? SHADER_FLAGS::NVIDIA_INSTRINSICS:0);
+  flags |= (args.debug ? SHADER_FLAGS::DEBUG : 0);
+  flags |= (args.isAMD ? SHADER_FLAGS::AMD_INSTRINSICS : 0);
+  flags |= (args.isNVidia ? SHADER_FLAGS::NVIDIA_INSTRINSICS : 0);
 
   return flags;
 }
@@ -93,7 +72,7 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
   // processing plugins args
   std::string tangentsPath = "";
   std::string skinPath = "";
-  ShaderArgs shaderArgs;
+  SirEngine::dx12::ShaderArgs shaderArgs;
   bool result = processArgs(args, shaderArgs);
   if (!result) {
     return false;
@@ -110,6 +89,13 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
     SE_CORE_ERROR("{0} : could not find path/file {1}", PLUGIN_NAME,
                   outputPath);
   }
+
+
+  SirEngine::dx12::DXCShaderCompiler compiler;
+
+  ID3DBlob* blob = compiler.compilerShader(assetPath,shaderArgs);
+
+  /*
 
   // lets create an instance of the compiler
   IDxcCompiler *pCompiler;
@@ -173,6 +159,12 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
   IDxcBlob *pResultBlob;
   pResult->GetResult(&pResultBlob);
 
+  ID3DBlob *blob;
+  HRESULT hr = D3DCreateBlob(pResultBlob->GetBufferSize(), &blob);
+  assert(SUCCEEDED(hr) && "could not create shader blob");
+  memcpy(blob->GetBufferPointer(),pResultBlob->GetBufferPointer(),pResultBlob->GetBufferSize());
+  */
+
   // save the file by building a binary request
   BinaryFileWriteRequest request;
   request.fileType = BinaryFileType::SHADER;
@@ -183,21 +175,22 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
   mapperData.shaderFlags = getShaderFlags(shaderArgs);
 
   // what we want to do is to store the data in this way
-  //| shader | shader type | shader entry point | mapper |
+  //| shader | shader type | shader entry point | shader path | mapper |
   // we need to store enough data for everything
-  int totalBulkDataInBytes = pResultBlob->GetBufferSize();
+  int totalBulkDataInBytes = blob->GetBufferSize();
   //+1 is to take into account the termination value
   totalBulkDataInBytes += (shaderArgs.type.size() + 1) * sizeof(wchar_t);
   totalBulkDataInBytes += (shaderArgs.entryPoint.size() + 1) * sizeof(wchar_t);
+  totalBulkDataInBytes += (assetPath.size() + 1);
 
   // layout the data
   std::vector<char> bulkData(totalBulkDataInBytes);
   char *bulkDataPtr = bulkData.data();
 
   // write down the shader in the buffer
-  int dataToWriteSizeInByte = pResultBlob->GetBufferSize();
+  int dataToWriteSizeInByte = blob->GetBufferSize();
   mapperData.shaderSizeInBtye = dataToWriteSizeInByte;
-  memcpy(bulkDataPtr, pResultBlob->GetBufferPointer(), dataToWriteSizeInByte);
+  memcpy(bulkDataPtr, blob->GetBufferPointer(), dataToWriteSizeInByte);
   bulkDataPtr += dataToWriteSizeInByte;
 
   // write down the type
@@ -210,6 +203,12 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
   dataToWriteSizeInByte = (shaderArgs.entryPoint.size() + 1) * sizeof(wchar_t);
   mapperData.entryPointInByte = dataToWriteSizeInByte;
   memcpy(bulkDataPtr, shaderArgs.entryPoint.c_str(), dataToWriteSizeInByte);
+  bulkDataPtr += dataToWriteSizeInByte;
+
+  // write down the shader path
+  dataToWriteSizeInByte = (assetPath.size() + 1);
+  mapperData.pathSizeInBtype = dataToWriteSizeInByte;
+  memcpy(bulkDataPtr, assetPath.c_str(), dataToWriteSizeInByte);
 
   // preparing the binary file write request
   std::experimental::filesystem::path inp(assetPath);
@@ -220,15 +219,16 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
   request.bulkData = bulkData.data();
   request.bulkDataSizeInBtye = bulkData.size();
 
-  mapperData.shaderSizeInBtye = pResultBlob->GetBufferSize();
+  mapperData.shaderSizeInBtye = blob->GetBufferSize();
   request.mapperData = &mapperData;
   request.mapperDataSizeInByte = sizeof(ShaderMapperData);
 
   writeBinaryFile(request);
 
   // release compiler data
-  pResult->Release();
-  pResultBlob->Release();
+  //pResult->Release();
+  //pResultBlob->Release();
+  blob->Release();
 
   SE_CORE_INFO("Shader successfully compiled ---> {0}", outputPath);
   return true;
