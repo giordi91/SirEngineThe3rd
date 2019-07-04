@@ -125,16 +125,19 @@ void ShaderManager::recompileShader(const char *path, std::string *log) {
   if (compiledShader != nullptr) {
     auto exp_path = std::experimental::filesystem::path(path);
     std::string name = exp_path.stem().string();
-	//release old shader
-	blob.shader->Release();
-	//assign new one
-	blob.shader = compiledShader;
+    // release old shader
+    blob.shader->Release();
+    // assign new one
+    blob.shader = compiledShader;
     m_stringToShader[name] = blob;
 
-	//update log
-	//(*log)+= "Successifully compiled shader: ";
-	//(*log)+= name;
-	//(*log)+= "\n";
+    // update log
+    if (log != nullptr) {
+      std::string &logRef = *log;
+      logRef += "Successifully compiled shader: ";
+      logRef += name;
+      logRef += "\n";
+    }
   }
 }
 
