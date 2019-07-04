@@ -57,7 +57,7 @@ private:
   debug::HWInfoWidget m_hwInfo;
 #endif
   bool m_shouldShow = false;
-  bool m_renderShaderCompiler = true;
+  bool m_renderShaderCompiler = false;
   // 192 is the `
   static const uint32_t TRIGGER_UI_BUTTON = 192;
   Graph m_graph;

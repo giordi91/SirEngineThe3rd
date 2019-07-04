@@ -14,7 +14,7 @@ struct ShaderCompilerWidget final {
   void render();
   void log(const char* logValue);
 
-  bool opened = 0;
+  bool opened = false;
   float width = 600;
   float height = 300;
   char shaderName[200];
