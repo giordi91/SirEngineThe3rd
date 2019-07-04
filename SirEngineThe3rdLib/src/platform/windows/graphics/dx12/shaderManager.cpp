@@ -132,9 +132,9 @@ void ShaderManager::recompileShader(const char *path, std::string *log) {
     m_stringToShader[name] = blob;
 
 	//update log
-	(*log)+= "Successifully compiled shader: ";
-	(*log)+= name;
-	(*log)+= "\n";
+	//(*log)+= "Successifully compiled shader: ";
+	//(*log)+= name;
+	//(*log)+= "\n";
   }
 }
 

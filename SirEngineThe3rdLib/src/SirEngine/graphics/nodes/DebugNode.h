@@ -4,6 +4,7 @@
 #include "SirEngine/graphics/nodeGraph.h"
 #include "SirEngine/handle.h"
 
+struct ID3D12RootSignature;
 namespace SirEngine {
 class DebugNode final : public GraphNode {
 public:
@@ -34,6 +35,12 @@ private:
   DebugLayerConfig m_config;
   ConstantBufferHandle m_constBufferHandle;
   bool updateConfig = false;
+
+  PSOHandle gbufferPSOHandle;
+  PSOHandle normalPSOHandle;
+  PSOHandle specularPSOHandle;
+  PSOHandle depthPSOHandle;
+  ID3D12RootSignature *rs =nullptr;
 };
 
 } // namespace SirEngine

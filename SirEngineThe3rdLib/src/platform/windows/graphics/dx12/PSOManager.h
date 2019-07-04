@@ -5,6 +5,7 @@
 #include <unordered_map>
 
 #include "DX12.h"
+#include "SirEngine/memory/SparseMemoryPool.h"
 #include "nlohmann/json_fwd.hpp"
 #include "platform/windows/graphics/dx12/d3dx12.h"
 
@@ -18,7 +19,13 @@ enum class PSOType { DXR = 0, RASTER, COMPUTE, INVALID };
 
 class SIR_ENGINE_API PSOManager final {
 
+  struct PSOData {
+    ID3D12PipelineState *pso;
+	int magicNumber;
+  };
+
 public:
+  PSOManager() : m_psoPool(RESERVE_SIZE){};
   ~PSOManager() = default;
   void init(D3D12DeviceType *device, SirEngine::dx12::ShadersLayoutRegistry *,
             SirEngine::dx12::RootSignatureManager *,
@@ -39,6 +46,23 @@ public:
   }
 
   void recompileShader(const char *shaderName);
+  inline void bindPSO(PSOHandle handle,
+                      ID3D12GraphicsCommandList2 *commandList) const {
+
+    assertMagicNumber(handle);
+    uint32_t index = getIndexFromHandle(handle);
+    const PSOData &data = m_psoPool.getConstRef(index);
+    commandList->SetPipelineState(data.pso);
+  }
+
+  inline PSOHandle getHandleFromName(const std::string &name) const {
+    auto found = m_psoRegisterHandle.find(name);
+    if (found != m_psoRegisterHandle.end()) {
+      return found->second;
+    }
+    assert(0 && "could not find PSO from name");
+    return PSOHandle{};
+  }
 
 private:
   void loadPSOFile(const char *path);
@@ -49,21 +73,43 @@ private:
   void processPipelineConfig(nlohmann::json &jobj,
                              CD3DX12_STATE_OBJECT_DESC &pipe) const;
 
+
+private:
+  inline uint32_t getIndexFromHandle(const PSOHandle h) const {
+    return h.handle & INDEX_MASK;
+  }
+  inline uint32_t getMagicFromHandle(const PSOHandle h) const {
+    return (h.handle & MAGIC_NUMBER_MASK) >> 16;
+  }
+  inline void assertMagicNumber(const PSOHandle handle) const {
+    uint32_t magic = getMagicFromHandle(handle);
+    uint32_t idx = getIndexFromHandle(handle);
+    assert(m_psoPool.getConstRef(idx).magicNumber == magic &&
+           "invalid magic handle for constant buffer");
+  }
+
 private:
   D3D12DeviceType *m_dxrDevice = nullptr;
   std::unordered_map<std::string, ID3D12StateObject *> m_psoDXRRegister;
   std::unordered_map<std::string, ID3D12PipelineState *> m_psoRegister;
+  std::unordered_map<std::string, PSOHandle> m_psoRegisterHandle;
 
-  //TODO temporary horrible nested data struct will need to thinkk about thi
+  // TODO temporary horrible nested data struct will need to thinkk about thi
   std::unordered_map<std::string, std::vector<std::string>> m_shaderToPSOFile;
 
   SirEngine::dx12::ShadersLayoutRegistry *layoutManger = nullptr;
   SirEngine::dx12::RootSignatureManager *rs_manager = nullptr;
   SirEngine::dx12::ShaderManager *shaderManager = nullptr;
 
-  //this is only used for the hot recompilation
+  // this is only used for the hot recompilation
   std::string compileLog;
 
+  // handles
+  SparseMemoryPool<PSOData> m_psoPool;
+  uint32_t MAGIC_NUMBER_COUNTER = 1;
+  static const uint32_t RESERVE_SIZE = 400;
+  static const uint32_t INDEX_MASK = (1 << 16) - 1;
+  static const uint32_t MAGIC_NUMBER_MASK = ~INDEX_MASK;
 };
 } // namespace dx12
 } // namespace SirEngine

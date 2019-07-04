@@ -291,7 +291,10 @@ void PSOManager::recompileShader(const char *shaderName) {
   dx12::flushDx12();
 
   for (auto &pso : psoToRecompile) {
-    //loadPSOFile(pso.c_str());
+    loadPSOFile(pso.c_str());
+	//compileLog << "Compiled PSO: ";
+	//compileLog << pso;
+	//compileLog << "\n";
   }
 
   // all the shader have been recompiled, we should be able to
@@ -358,8 +361,19 @@ void PSOManager::processComputePSO(nlohmann::json &jobj,
                                           IID_PPV_ARGS(&pipeStateObject));
 
   std::string name = getFileName(path);
+
+  // generating and storing the handle
+  uint32_t index;
+  PSOData &data = m_psoPool.getFreeMemoryData(index);
+  data.pso = pipeStateObject;
+  PSOHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
+  data.magicNumber = MAGIC_NUMBER_COUNTER;
+  m_psoRegisterHandle[name] = handle;
+  ++MAGIC_NUMBER_COUNTER;
+
   m_psoRegister[name] = pipeStateObject;
   m_shaderToPSOFile[shaderName].push_back(path);
+
 }
 
 void PSOManager::processRasterPSO(nlohmann::json &jobj,
@@ -460,6 +474,15 @@ void PSOManager::processRasterPSO(nlohmann::json &jobj,
 
   m_shaderToPSOFile[VSname].push_back(path);
   m_shaderToPSOFile[PSname].push_back(path);
+
+  // generating and storing the handle
+  uint32_t index;
+  PSOData &data = m_psoPool.getFreeMemoryData(index);
+  data.pso = pso;
+  PSOHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
+  data.magicNumber = MAGIC_NUMBER_COUNTER;
+  m_psoRegisterHandle[name] = handle;
+  ++MAGIC_NUMBER_COUNTER;
 }
 
 void PSOManager::processGlobalRootSignature(
