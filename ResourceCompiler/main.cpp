@@ -6,6 +6,7 @@
 #include "resourceCompilerLib/resourcePlugin.h"
 
 #include <filesystem>
+#include <chrono>
 
 
 inline cxxopts::Options getCxxOptions() {
@@ -120,11 +121,16 @@ int main(int argc, char *argv[]) {
 
   size_t executeCount = result.count("execute");
 
+  auto start = std::chrono::high_resolution_clock::now();
   if (executeCount) {
     executeFile(result);
   } else {
     executeFromArgs(result);
   }
+  auto end = std::chrono::high_resolution_clock::now();
+  auto seconds = std::chrono::duration_cast<std::chrono::seconds>(end - start).count();
+  SE_CORE_INFO("------------------------------------------------");
+  SE_CORE_INFO("Compilation time taken: {0}",seconds);
 
   return 0;
 }
