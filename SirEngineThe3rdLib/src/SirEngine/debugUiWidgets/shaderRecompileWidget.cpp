@@ -220,10 +220,12 @@ void ShaderCompilerWidget::render() {
   if (ImGui::Button("COMPILE SELECTED",
                     ImVec2{ImGui::GetContentRegionAvailWidth(), 30})) {
     // let s generate a compile request
-    auto *event =
-        new ShaderCompileEvent(elementsToRender[currentSelectedItem],
-                               useDevelopPath ? offsetDevelopPath : "");
-    globals::APPLICATION->queueEventForEndOfFrame(event);
+    if (currentSelectedItem != -1) {
+      auto *event =
+          new ShaderCompileEvent(elementsToRender[currentSelectedItem],
+                                 useDevelopPath ? offsetDevelopPath : "");
+      globals::APPLICATION->queueEventForEndOfFrame(event);
+    }
   }
 
   if (ImGui::CollapsingHeader("Console Output")) {

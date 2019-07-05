@@ -8,6 +8,10 @@
 #include "platform/windows/graphics/dx12/textureManagerDx12.h"
 
 namespace SirEngine {
+
+static const char *SKYBOX_RS = "proceduralSkybox_RS";
+static const char *SKYBOX_PSO = "proceduralSkybox_PSO";
+
 ProceduralSkyBoxPass::ProceduralSkyBoxPass(const char *name)
     : GraphNode(name, "ProceduralSkyBoxPass") {
   // lets create the plugs
@@ -31,14 +35,12 @@ ProceduralSkyBoxPass::ProceduralSkyBoxPass(const char *name)
   buffer.nodePtr = this;
   buffer.name = "buffer";
   registerPlug(buffer);
-
 }
 
 void ProceduralSkyBoxPass::initialize() {
   // fetching root signature
-  rs = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(
-      "proceduralSkybox_RS");
-  pso = dx12::PSO_MANAGER->getComputePSOByName("proceduralSkybox_PSO");
+  rs = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(SKYBOX_RS);
+  pso = dx12::PSO_MANAGER->getHandleFromName(SKYBOX_PSO);
 }
 
 inline TextureHandle
@@ -55,7 +57,6 @@ getInputConnection(std::unordered_map<const Plug *, std::vector<Plug *>> &conns,
 
 void ProceduralSkyBoxPass::compute() {
 
-
   TextureHandle bufferHandle =
       getInputConnection(m_connections, &m_inputPlugs[0]);
   TextureHandle depthHandle =
@@ -64,16 +65,14 @@ void ProceduralSkyBoxPass::compute() {
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
 
-  commandList->SetPipelineState(pso);
+  dx12::PSO_MANAGER->bindPSO(pso, commandList);
 
   D3D12_RESOURCE_BARRIER barriers[5];
   int counter = 0;
   counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
-      depthHandle, D3D12_RESOURCE_STATE_DEPTH_WRITE, barriers,
-      counter);
+      depthHandle, D3D12_RESOURCE_STATE_DEPTH_WRITE, barriers, counter);
   counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
-      bufferHandle, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers,
-      counter);
+      bufferHandle, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, counter);
 
   if (counter) {
     commandList->ResourceBarrier(counter, barriers);
@@ -83,23 +82,21 @@ void ProceduralSkyBoxPass::compute() {
   commandList->SetGraphicsRootSignature(rs);
 
   globals::RENDERING_CONTEX->bindCameraBuffer(0);
-  //commandList->SetGraphicsRootConstantBufferView(1, m_lightAddress);
-  //commandList->SetGraphicsRootDescriptorTable(
+  // commandList->SetGraphicsRootConstantBufferView(1, m_lightAddress);
+  // commandList->SetGraphicsRootDescriptorTable(
   //    2, dx12::TEXTURE_MANAGER->getSRVDx12(depthHandle).gpuHandle);
-  //commandList->SetGraphicsRootDescriptorTable(
+  // commandList->SetGraphicsRootDescriptorTable(
   //    3, dx12::TEXTURE_MANAGER->getSRVDx12(gbufferHandle).gpuHandle);
-  //commandList->SetGraphicsRootDescriptorTable(
+  // commandList->SetGraphicsRootDescriptorTable(
   //    4, dx12::TEXTURE_MANAGER->getSRVDx12(normalBufferHandle).gpuHandle);
-  //commandList->SetGraphicsRootDescriptorTable(
+  // commandList->SetGraphicsRootDescriptorTable(
   //    5, dx12::TEXTURE_MANAGER->getSRVDx12(specularBufferHandle).gpuHandle);
 
   commandList->DrawInstanced(6, 1, 0, 0);
   m_outputPlugs[0].plugValue = bufferHandle.handle;
 }
 
-
-void ProceduralSkyBoxPass::clear() {
-}
+void ProceduralSkyBoxPass::clear() {}
 
 void ProceduralSkyBoxPass::resize(int, int) {
   clear();

@@ -21,7 +21,7 @@ private:
   TextureHandle m_specularBuffer{};
   TextureHandle m_depth{};
   ID3D12RootSignature* rs =nullptr;
-  ID3D12PipelineState* pso = nullptr;
+  PSOHandle pso;
 };
 
 } // namespace SirEngine

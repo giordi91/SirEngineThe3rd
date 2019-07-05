@@ -1,5 +1,6 @@
 #pragma once
 #include "SirEngine/graphics/postProcess/postProcessStack.h"
+#include "SirEngine/handle.h"
 #include <d3d12.h>
 
 namespace SirEngine {
@@ -14,7 +15,7 @@ public:
 
 private:
   ID3D12RootSignature *rs;
-  ID3D12PipelineState *pso;
+  PSOHandle pso;
 };
 
 } // namespace SirEngine

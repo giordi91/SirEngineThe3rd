@@ -236,7 +236,7 @@ void getRasterShaderNameFromPSO(const nlohmann::json &jobj, std::string &vs,
   assert(!ps.empty());
 }
 
-void PSOManager::recompileShader(const char *shaderName, const char* offsetPath) {
+void PSOManager::recompilePSOFromShader(const char *shaderName, const char* offsetPath) {
 
   // clearing the log
   compileLog = "";

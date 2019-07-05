@@ -10,6 +10,9 @@
 #include "platform/windows/graphics/dx12/swapChain.h"
 
 namespace SirEngine {
+static const char *SKYBOX_RS = "skybox_RS";
+static const char *SKYBOX_PSO = "skyboxPSO";
+
 SkyBoxPass::SkyBoxPass(const char *name) : GraphNode(name, "SkyBoxPass") {
   // lets create the plugs
   Plug fullscreenPass;
@@ -36,8 +39,8 @@ SkyBoxPass::SkyBoxPass(const char *name) : GraphNode(name, "SkyBoxPass") {
 
 void SkyBoxPass::initialize() {
   // fetching root signature
-  rs = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName("skybox_RS");
-  pso = dx12::PSO_MANAGER->getComputePSOByName("skyboxPSO");
+  rs = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(SKYBOX_RS);
+  pso = dx12::PSO_MANAGER->getHandleFromName(SKYBOX_PSO);
 
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
   dx12::resetAllocatorAndList(&dx12::CURRENT_FRAME_RESOURCE->fc);
@@ -70,17 +73,17 @@ void SkyBoxPass::compute() {
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
 
-  D3D12_VIEWPORT* currViewport = dx12::SWAP_CHAIN->getViewport();
+  D3D12_VIEWPORT *currViewport = dx12::SWAP_CHAIN->getViewport();
   D3D12_VIEWPORT viewport;
   viewport.MaxDepth = 0.000000000f;
   viewport.MinDepth = 0.000000000f;
   viewport.Height = currViewport->Height;
-  viewport.Width= currViewport->Width;
-  viewport.TopLeftX= currViewport->TopLeftX;
-  viewport.TopLeftY= currViewport->TopLeftY;
+  viewport.Width = currViewport->Width;
+  viewport.TopLeftX = currViewport->TopLeftX;
+  viewport.TopLeftY = currViewport->TopLeftY;
   currentFc->commandList->RSSetViewports(1, &viewport);
 
-  commandList->SetPipelineState(pso);
+  dx12::PSO_MANAGER->bindPSO(pso, commandList);
 
   D3D12_RESOURCE_BARRIER barriers[5];
   int counter = 0;
@@ -109,7 +112,7 @@ void SkyBoxPass::compute() {
   m_outputPlugs[0].plugValue = bufferHandle.handle;
 
   // reset normal viewport
-  commandList->RSSetViewports(1,currViewport );
+  commandList->RSSetViewports(1, currViewport);
 }
 
 void SkyBoxPass::clear() {}

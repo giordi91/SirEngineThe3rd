@@ -8,10 +8,11 @@
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
 
 namespace SirEngine {
+	static const char* GAMMA_TONE_PSO ="gammaAndToneMappingEffect_PSO";
 void GammaAndToneMappingEffect::initialize() {
   rs = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(
       "standardPostProcessEffect_RS");
-  pso = dx12::PSO_MANAGER->getComputePSOByName("gammaAndToneMappingEffect_PSO");
+  pso = dx12::PSO_MANAGER->getHandleFromName(GAMMA_TONE_PSO);
 
   m_config.exposure = 1.0f;
   m_config.gamma = 2.2f;
@@ -45,7 +46,7 @@ void GammaAndToneMappingEffect::render(TextureHandle input,
   dx12::DescriptorPair pair = dx12::TEXTURE_MANAGER->getSRVDx12(input);
 
 
-  commandList->SetPipelineState(pso);
+  dx12::PSO_MANAGER->bindPSO(pso,commandList);
   commandList->SetGraphicsRootSignature(rs);
   commandList->SetGraphicsRootDescriptorTable(1, pair.gpuHandle);
   commandList->SetGraphicsRootDescriptorTable(

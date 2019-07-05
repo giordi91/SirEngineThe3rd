@@ -20,7 +20,7 @@ struct ShaderCompilerWidget final {
   char shaderName[200];
   char offsetDevelopPath[200];
   std::vector<const char *> elementsToRender;
-  int currentSelectedItem = 1;
+  int currentSelectedItem = -1;
   ShaderCompileConsole* console = nullptr;
   bool shouldRenderConsole = true;
   bool useDevelopPath = true;
