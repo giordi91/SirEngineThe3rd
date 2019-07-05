@@ -29,7 +29,7 @@ public:
   virtual void initialize() override;
   void clear() override;
   virtual void compute() override;
-  virtual void resize(int screenWidth, int screenHeight) override;
+  virtual void onResizeEvent(int screenWidth, int screenHeight) override;
   inline void registerPassToStack(PostProcessEffect *pass) {
     m_stack.push_back(pass);
   };

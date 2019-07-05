@@ -37,7 +37,9 @@ public:
   virtual void compute(){};
   virtual void initialize(){};
   virtual void clear(){};
-  virtual void resize(int screenWidth, int screenHeight){};
+  //un-named parameters are screenWidth and screenHeight
+  //removing the names just to avoid huge spam;
+  virtual void onResizeEvent(int , int ){};
 
   // getters
   inline Plug *getInputPlug(const std::string &name) {
@@ -200,9 +202,9 @@ public:
   inline void setFinalNode(GraphNode *node) { finalNode = node; }
   void finalizeGraph();
   void compute();
-  void resize(int screenWidth, int screenHeight) {
+  void onResizeEvent (int screenWidth, int screenHeight) {
     for (auto node : m_linearizedGraph) {
-      node->resize(screenWidth, screenHeight);
+      node->onResizeEvent(screenWidth, screenHeight);
     }
   };
 

@@ -169,7 +169,7 @@ void DeferredLightingPass::compute() {
 
 void DeferredLightingPass::clear() { FREE_TEXTURE_IF_VALID(m_lightBuffer) }
 
-void DeferredLightingPass::resize(int, int) {
+void DeferredLightingPass::onResizeEvent(int, int) {
   clear();
   initialize();
 }

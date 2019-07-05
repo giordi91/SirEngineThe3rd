@@ -117,7 +117,7 @@ void SkyBoxPass::compute() {
 
 void SkyBoxPass::clear() {}
 
-void SkyBoxPass::resize(int, int) {
+void SkyBoxPass::onResizeEvent(int, int) {
   clear();
   initialize();
 }
