@@ -188,7 +188,7 @@ void GBufferPassPBR::clear() {
   FREE_TEXTURE_IF_VALID(m_specularBuffer)
 }
 
-void GBufferPassPBR::resize(int, int) {
+void GBufferPassPBR::onResizeEvent(int, int) {
   clear();
   initialize();
 }

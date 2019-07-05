@@ -98,7 +98,7 @@ void ProceduralSkyBoxPass::compute() {
 
 void ProceduralSkyBoxPass::clear() {}
 
-void ProceduralSkyBoxPass::resize(int, int) {
+void ProceduralSkyBoxPass::onResizeEvent(int, int) {
   clear();
   initialize();
 }

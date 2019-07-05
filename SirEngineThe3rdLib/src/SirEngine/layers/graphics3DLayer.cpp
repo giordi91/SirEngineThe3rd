@@ -219,7 +219,7 @@ bool Graphics3DLayer::onDebugLayerEvent(DebugLayerChanged &e) {
 
 bool Graphics3DLayer::onResizeEvent(WindowResizeEvent &e) {
   // propagate the resize to every node of the graph
-  dx12::RENDERING_GRAPH->resize(e.getWidth(), e.getHeight());
+  dx12::RENDERING_GRAPH->onResizeEvent(e.getWidth(), e.getHeight());
   return true;
 }
 

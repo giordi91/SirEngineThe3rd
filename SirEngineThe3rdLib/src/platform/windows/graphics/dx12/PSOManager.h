@@ -21,7 +21,7 @@ class SIR_ENGINE_API PSOManager final {
 
   struct PSOData {
     ID3D12PipelineState *pso;
-	int magicNumber;
+    int magicNumber;
   };
 
 public:
@@ -37,15 +37,15 @@ public:
   // state object
   static void printStateObjectDesc(const D3D12_STATE_OBJECT_DESC *desc);
   inline ID3D12PipelineState *getComputePSOByName(const std::string &name) {
-    auto found = m_psoRegister.find(name);
-    if (found != m_psoRegister.end()) {
-      return found->second;
-    }
-    assert(0 && "could not find Compute PSO in the registry");
-    return nullptr;
+    PSOHandle handle = getHandleFromName(name);
+    assertMagicNumber(handle);
+    uint32_t index = getIndexFromHandle(handle);
+    const PSOData &data = m_psoPool.getConstRef(index);
+    return data.pso;
   }
 
-  void recompilePSOFromShader(const char *shaderName, const char* getOffsetPath);
+  void recompilePSOFromShader(const char *shaderName,
+                              const char *getOffsetPath);
   inline void bindPSO(PSOHandle handle,
                       ID3D12GraphicsCommandList2 *commandList) const {
 
@@ -66,13 +66,14 @@ public:
 
 private:
   void loadPSOFile(const char *path, bool reload = false);
-  void processComputePSO(nlohmann::json &jobj, const std::string &path, bool reload);
-  void processRasterPSO(nlohmann::json &jobj, const std::string &path, bool reload);
+  void processComputePSO(nlohmann::json &jobj, const std::string &path,
+                         bool reload);
+  void processRasterPSO(nlohmann::json &jobj, const std::string &path,
+                        bool reload);
   void processGlobalRootSignature(nlohmann::json &jobj,
                                   CD3DX12_STATE_OBJECT_DESC &pipe) const;
   void processPipelineConfig(nlohmann::json &jobj,
                              CD3DX12_STATE_OBJECT_DESC &pipe) const;
-
 
 private:
   inline uint32_t getIndexFromHandle(const PSOHandle h) const {
@@ -84,7 +85,8 @@ private:
   inline void assertMagicNumber(const PSOHandle handle) const {
     uint32_t magic = getMagicFromHandle(handle);
     uint32_t idx = getIndexFromHandle(handle);
-    assert(static_cast<uint32_t>(m_psoPool.getConstRef(idx).magicNumber) == magic &&
+    assert(static_cast<uint32_t>(m_psoPool.getConstRef(idx).magicNumber) ==
+               magic &&
            "invalid magic handle for constant buffer");
   }
 

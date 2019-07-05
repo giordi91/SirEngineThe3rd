@@ -128,7 +128,7 @@ void SimpleForward::clear() {
   }
 }
 
-void SimpleForward::resize(int, int) {
+void SimpleForward::onResizeEvent(int, int) {
   clear();
   initialize();
 }
