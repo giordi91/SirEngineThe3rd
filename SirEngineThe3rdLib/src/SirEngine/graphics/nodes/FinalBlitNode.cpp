@@ -11,6 +11,8 @@
 
 namespace SirEngine {
 
+static const char *FINAL_BLIT_PSO = "HDRtoSDREffect_PSO";
+static const char *FINAL_BLIT_RS = "standardPostProcessEffect_RS";
 FinalBlitNode::FinalBlitNode() : GraphNode("FinalBlit", "FinalBlit") {
   // lets create the plugs
   Plug inTexture;
@@ -50,18 +52,16 @@ void FinalBlitNode::compute() {
   globals::TEXTURE_MANAGER->bindRenderTarget(destination, TextureHandle{});
   dx12::DescriptorPair pair = dx12::TEXTURE_MANAGER->getSRVDx12(texH);
 
-  commandList->SetPipelineState(m_pso);
+  dx12::PSO_MANAGER->bindPSO(m_pso,commandList);
   commandList->SetGraphicsRootSignature(m_rs);
   commandList->SetGraphicsRootDescriptorTable(1, pair.gpuHandle);
-
 
   commandList->DrawInstanced(6, 1, 0, 0);
   annotateGraphicsEnd();
 }
 
 void FinalBlitNode::initialize() {
-  m_rs = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(
-      "standardPostProcessEffect_RS");
-  m_pso = dx12::PSO_MANAGER->getComputePSOByName("HDRtoSDREffect_PSO");
+  m_rs = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(FINAL_BLIT_RS);
+  m_pso = dx12::PSO_MANAGER->getHandleFromName(FINAL_BLIT_PSO);
 }
 } // namespace SirEngine

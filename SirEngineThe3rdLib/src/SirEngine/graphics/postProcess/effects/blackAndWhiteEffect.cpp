@@ -7,10 +7,11 @@
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
 
 namespace SirEngine {
+static const char *BW_RS = "blackAndWhiteEffect_RS";
+static const char *BW_PSO = "blackAndWhiteEffect_PSO";
 void BlackAndWhiteEffect::initialize() {
-  rs = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(
-      "blackAndWhiteEffect_RS");
-  pso = dx12::PSO_MANAGER->getComputePSOByName("blackAndWhiteEffect_PSO");
+  rs = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(BW_RS);
+  pso = dx12::PSO_MANAGER->getHandleFromName(BW_PSO);
 }
 
 void BlackAndWhiteEffect::render(TextureHandle input, TextureHandle output) {
@@ -24,15 +25,14 @@ void BlackAndWhiteEffect::render(TextureHandle input, TextureHandle output) {
       input, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, barriers, counter);
   counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
       output, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, counter);
-  if (counter)
-  {
-	  commandList->ResourceBarrier(counter, barriers);
+  if (counter) {
+    commandList->ResourceBarrier(counter, barriers);
   }
 
   globals::TEXTURE_MANAGER->bindRenderTarget(output, TextureHandle{});
   dx12::DescriptorPair pair = dx12::TEXTURE_MANAGER->getSRVDx12(input);
 
-  commandList->SetPipelineState(pso);
+  dx12::PSO_MANAGER->bindPSO(pso,commandList);
   commandList->SetGraphicsRootSignature(rs);
   commandList->SetGraphicsRootDescriptorTable(1, pair.gpuHandle);
   commandList->DrawInstanced(6, 1, 0, 0);

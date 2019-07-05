@@ -9,6 +9,9 @@
 #include "platform/windows/graphics/dx12/textureManagerDx12.h"
 
 namespace SirEngine {
+static const char *GBUFFER_RS = "gbufferRS";
+static const char *GBUFFER_PSO = "gbufferPSO";
+
 GBufferPass::GBufferPass(const char *name) : GraphNode(name, "GBufferPass") {
   // lets create the plugs
   Plug geometryBuffer;
@@ -62,8 +65,8 @@ GBufferPass::GBufferPass(const char *name) : GraphNode(name, "GBufferPass") {
   registerPlug(materials);
 
   // fetching root signature
-  rs = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName("gbufferRS");
-  pso = dx12::PSO_MANAGER->getComputePSOByName("gbufferPSO");
+  rs = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(GBUFFER_RS);
+  pso = dx12::PSO_MANAGER->getHandleFromName(GBUFFER_PSO);
 }
 
 void GBufferPass::initialize() {
@@ -113,7 +116,7 @@ void GBufferPass::compute() {
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
 
-  commandList->SetPipelineState(pso);
+  dx12::PSO_MANAGER->bindPSO(pso, commandList);
 
   D3D12_RESOURCE_BARRIER barriers[4];
   int counter = 0;

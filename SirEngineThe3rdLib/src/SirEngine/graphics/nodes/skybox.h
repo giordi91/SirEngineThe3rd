@@ -17,7 +17,7 @@ public:
 
 private:
   ID3D12RootSignature* rs =nullptr;
-  ID3D12PipelineState* pso = nullptr;
+  PSOHandle pso;
   dx12::MeshRuntime m_meshRuntime;
 };
 

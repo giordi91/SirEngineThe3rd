@@ -19,7 +19,7 @@ public:
 private:
   TextureHandle m_skyboxBuffer{};
   ID3D12RootSignature* rs =nullptr;
-  ID3D12PipelineState* pso = nullptr;
+  PSOHandle pso;
 };
 
 } // namespace SirEngine

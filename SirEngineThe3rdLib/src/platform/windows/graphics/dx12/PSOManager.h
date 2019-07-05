@@ -45,7 +45,7 @@ public:
     return nullptr;
   }
 
-  void recompileShader(const char *shaderName, const char* getOffsetPath);
+  void recompilePSOFromShader(const char *shaderName, const char* getOffsetPath);
   inline void bindPSO(PSOHandle handle,
                       ID3D12GraphicsCommandList2 *commandList) const {
 
@@ -84,7 +84,7 @@ private:
   inline void assertMagicNumber(const PSOHandle handle) const {
     uint32_t magic = getMagicFromHandle(handle);
     uint32_t idx = getIndexFromHandle(handle);
-    assert(m_psoPool.getConstRef(idx).magicNumber == magic &&
+    assert(static_cast<uint32_t>(m_psoPool.getConstRef(idx).magicNumber) == magic &&
            "invalid magic handle for constant buffer");
   }
 

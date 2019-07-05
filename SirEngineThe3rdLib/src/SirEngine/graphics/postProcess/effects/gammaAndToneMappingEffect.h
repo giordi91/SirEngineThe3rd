@@ -2,6 +2,7 @@
 #include "SirEngine/graphics/cpuGraphicsStructures.h"
 #include "SirEngine/graphics/postProcess/postProcessStack.h"
 #include <d3d12.h>
+#include "SirEngine/handle.h"
 
 namespace SirEngine {
 class GammaAndToneMappingEffect : public PostProcessEffect {
@@ -23,7 +24,7 @@ private:
 
 private:
   ID3D12RootSignature *rs;
-  ID3D12PipelineState *pso;
+  PSOHandle pso;
   ConstantBufferHandle m_constantBufferHandle;
   bool updateConfig = false;
   GammaToneMappingConfig m_config;

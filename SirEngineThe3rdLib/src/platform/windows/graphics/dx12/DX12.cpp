@@ -253,9 +253,6 @@ bool beginHeadlessWorkDx12()
 
 bool endHeadlessWorkDx12()
 {
-  // finally transition the resource to be present
-  auto *commandList = dx12::CURRENT_FRAME_RESOURCE->fc.commandList;
-
   // Done recording commands.
   dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE,
                            &dx12::CURRENT_FRAME_RESOURCE->fc);

@@ -1,14 +1,18 @@
 #include "SirEngine/graphics/nodes/deferredLighting.h"
 #include "SirEngine/assetManager.h"
+#include "SirEngine/graphics/debugAnnotations.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
 #include "platform/windows/graphics/dx12/textureManagerDx12.h"
-#include "SirEngine/graphics/debugAnnotations.h"
 
 namespace SirEngine {
+
+static const char *DEFERRED_LIGHTING_PSO = "deferredDirectionalLight_PSO";
+static const char *DEFERRED_LIGHTING_RS = "deferredDirectionalLight_RS";
+
 DeferredLightingPass::DeferredLightingPass(const char *name)
     : GraphNode(name, "DeferredLightingPass") {
   // lets create the plugs
@@ -49,8 +53,8 @@ DeferredLightingPass::DeferredLightingPass(const char *name)
 
   // fetching root signature
   rs = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(
-      "deferredDirectionalLight_RS");
-  pso = dx12::PSO_MANAGER->getComputePSOByName("deferredDirectionalLight_PSO");
+      DEFERRED_LIGHTING_RS);
+  pso = dx12::PSO_MANAGER->getHandleFromName(DEFERRED_LIGHTING_PSO);
 }
 
 void DeferredLightingPass::initialize() {
@@ -61,7 +65,7 @@ void DeferredLightingPass::initialize() {
       RenderTargetFormat::R16G16B16A16_FLOAT, "lightBuffer");
 
   float intensity = 4.0f;
-  m_light.lightColor = {intensity,intensity,intensity,1.0f};
+  m_light.lightColor = {intensity, intensity, intensity, 1.0f};
   m_light.lightDir = {-1.0f, -0.6f, -1.0f, 1.0f};
   m_light.lightPosition = {10.0f, 10.0f, 10.0f, 10.0f};
 
@@ -70,11 +74,8 @@ void DeferredLightingPass::initialize() {
       sizeof(DirectionalLightData), &m_light);
   m_lightAddress = dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(m_lightCB);
 
-
-
-  m_brdfHandle=
-      globals::TEXTURE_MANAGER->loadTexture(
-          "../data/processed/textures/brdf.texture");
+  m_brdfHandle = globals::TEXTURE_MANAGER->loadTexture(
+      "../data/processed/textures/brdf.texture");
 }
 
 inline TextureHandle
@@ -105,7 +106,8 @@ void DeferredLightingPass::compute() {
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
 
-  commandList->SetPipelineState(pso);
+  // commandList->SetPipelineState(pso);
+  dx12::PSO_MANAGER->bindPSO(pso, commandList);
 
   D3D12_RESOURCE_BARRIER barriers[5];
   int counter = 0;
@@ -141,11 +143,13 @@ void DeferredLightingPass::compute() {
       4, dx12::TEXTURE_MANAGER->getSRVDx12(normalBufferHandle).gpuHandle);
   commandList->SetGraphicsRootDescriptorTable(
       5, dx12::TEXTURE_MANAGER->getSRVDx12(specularBufferHandle).gpuHandle);
-  TextureHandle skyHandle = globals::RENDERING_CONTEX->getEnviromentMapIrradianceHandle();
+  TextureHandle skyHandle =
+      globals::RENDERING_CONTEX->getEnviromentMapIrradianceHandle();
   commandList->SetGraphicsRootDescriptorTable(
       6, dx12::TEXTURE_MANAGER->getSRVDx12(skyHandle).gpuHandle);
 
-  TextureHandle skyRadianceHandle = globals::RENDERING_CONTEX->getEnviromentMapRadianceHandle();
+  TextureHandle skyRadianceHandle =
+      globals::RENDERING_CONTEX->getEnviromentMapRadianceHandle();
   commandList->SetGraphicsRootDescriptorTable(
       7, dx12::TEXTURE_MANAGER->getSRVDx12(skyRadianceHandle).gpuHandle);
   commandList->SetGraphicsRootDescriptorTable(

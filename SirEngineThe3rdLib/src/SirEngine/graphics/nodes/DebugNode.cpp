@@ -101,60 +101,6 @@ void blitBuffer(const TextureHandle input, const TextureHandle handleToWriteOn,
   commandList->DrawInstanced(6, 1, 0, 0);
 }
 
-void blitGBuffeer(const TextureHandle handleToWriteOn,
-                  const ConstantBufferHandle configHandle,
-                  PSOHandle psoHandle) {
-  // we need the shader to extract the information of the gbuffer
-  ID3D12RootSignature *rs =
-      dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(
-          (DEBUG_FULL_SCREEN_RS.c_str()));
-
-  TextureHandle input = globals::DEBUG_FRAME_DATA->geometryBuffer;
-  assert(input.isHandleValid());
-  assert(input.handle != handleToWriteOn.handle);
-  // blitBuffer(input, handleToWriteOn, pso, rs, configHandle);
-  blitBuffer(input, handleToWriteOn, psoHandle, rs, configHandle);
-}
-void blitNormalBuffer(const TextureHandle handleToWriteOn,
-                      const ConstantBufferHandle configHandle) {
-  // we need the shader to extract the information of the gbuffer
-  ID3D12PipelineState *pso =
-      dx12::PSO_MANAGER->getComputePSOByName(NORMAL_DEBUG_PSO_NAME);
-  ID3D12RootSignature *rs =
-      dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(
-          DEBUG_FULL_SCREEN_RS.c_str());
-  TextureHandle input = globals::DEBUG_FRAME_DATA->normalBuffer;
-  assert(input.isHandleValid());
-  assert(input.handle != handleToWriteOn.handle);
-  blitBuffer(input, handleToWriteOn, pso, rs, configHandle);
-}
-void blitSpecularBuffer(const TextureHandle handleToWriteOn,
-                        const ConstantBufferHandle configHandle) {
-  // we need the shader to extract the information of the gbuffer
-  ID3D12PipelineState *pso =
-      dx12::PSO_MANAGER->getComputePSOByName(SPECULAR_DEBUG_PSO_NAME);
-  ID3D12RootSignature *rs =
-      dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(
-          DEBUG_FULL_SCREEN_RS.c_str());
-  TextureHandle input = globals::DEBUG_FRAME_DATA->specularBuffer;
-  assert(input.isHandleValid());
-  assert(input.handle != handleToWriteOn.handle);
-  blitBuffer(input, handleToWriteOn, pso, rs, configHandle);
-}
-void blitDepthBuffer(const TextureHandle handleToWriteOn,
-                     const ConstantBufferHandle configHandle) {
-  // we need the shader to extract the information of the gbuffer
-  ID3D12PipelineState *pso =
-      dx12::PSO_MANAGER->getComputePSOByName(DEPTH_DEBUG_PSO_NAME);
-  ID3D12RootSignature *rs =
-      dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(
-          DEBUG_FULL_SCREEN_RS.c_str());
-  TextureHandle input = globals::DEBUG_FRAME_DATA->gbufferDepth;
-  assert(input.isHandleValid());
-  assert(input.handle != handleToWriteOn.handle);
-  blitBuffer(input, handleToWriteOn, pso, rs, configHandle);
-}
-
 inline void checkHandle(TextureHandle input, TextureHandle handleToWriteOn) {
     assert(input.isHandleValid());
     assert(input.handle != handleToWriteOn.handle);
