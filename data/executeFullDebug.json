@@ -46,6 +46,7 @@
       "-p ../data/rs/standardPostProcessEffect_RS.json -o ../data/processed/rs/standardPostProcessEffect_RS.root --pluginName rootSignatureCompilerPlugin",
       "-p ../data/rs/skybox_RS.json -o ../data/processed/rs/skybox_RS.root --pluginName rootSignatureCompilerPlugin",
       "-p ../data/rs/textureMIPS_RS.json -o ../data/processed/rs/textureMIPS_RS.root --pluginName rootSignatureCompilerPlugin",
+      "-p ../data/shaders/compute/depthMinMaxReduce.hlsl -o ../data/processed/shaders/compute/depthMinMaxReduce.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t cs_6_2  -e CS -d \"",
         
 
       "-p ../data/external/textures/cerberus/Cerberus_A.tga -o ../data/processed/textures/cerberus/Cerberus_A.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1 -g -m\"",
