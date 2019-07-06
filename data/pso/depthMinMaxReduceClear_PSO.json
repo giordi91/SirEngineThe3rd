@@ -1,0 +1,5 @@
+{
+ "type":  "COMPUTE",
+ "globalRootSignature": "depthMinMaxReduce_RS",
+ "shaderName" : "depthMinMaxReduceClear"
+}

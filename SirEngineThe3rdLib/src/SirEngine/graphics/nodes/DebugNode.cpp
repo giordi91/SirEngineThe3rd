@@ -15,6 +15,8 @@ static const std::string &DEPTH_DEBUG_PSO_NAME = "depthBufferDebugPSO";
 static const std::string &DEBUG_FULL_SCREEN_RS_NAME = "debugFullScreenBlit_RS";
 static const std::string &DEBUG_REDUCE_DEPTH_RS_NANE = "depthMinMaxReduce_RS";
 static const std::string &DEBUG_REDUCE_DEPTH_PSO_NAME = "depthMinMaxReduce_PSO";
+static const std::string &DEBUG_REDUCE_DEPTH_CLEAR_PSO_NAME =
+    "depthMinMaxReduceClear_PSO";
 
 DebugNode::DebugNode(const char *name) : GraphNode(name, "DebugNode") {
   // lets create the plugs
@@ -40,6 +42,8 @@ DebugNode::DebugNode(const char *name) : GraphNode(name, "DebugNode") {
   depthPSOHandle = dx12::PSO_MANAGER->getHandleFromName(DEPTH_DEBUG_PSO_NAME);
   depthReducePSOHandle =
       dx12::PSO_MANAGER->getHandleFromName(DEBUG_REDUCE_DEPTH_PSO_NAME);
+  depthReduceClearPSOHandle =
+      dx12::PSO_MANAGER->getHandleFromName(DEBUG_REDUCE_DEPTH_CLEAR_PSO_NAME);
 
   rs = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(
       (DEBUG_FULL_SCREEN_RS_NAME.c_str()));
@@ -77,8 +81,46 @@ void blitBuffer(const TextureHandle input, const TextureHandle handleToWriteOn,
 
   commandList->DrawInstanced(6, 1, 0, 0);
 }
+void blitDepthDebug(const TextureHandle input,
+                    const TextureHandle handleToWriteOn, BufferHandle buffer,
+                    const PSOHandle psoHandle, ID3D12RootSignature *rs,
+                    const ConstantBufferHandle configHandle,
+                    const BufferHandle reduceHandle) {
+  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
+  auto commandList = currentFc->commandList;
 
-inline void checkHandle(TextureHandle input, TextureHandle handleToWriteOn) {
+  D3D12_RESOURCE_BARRIER barriers[3];
+  int counter = 0;
+  counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
+      input, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, barriers, counter);
+  counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
+      handleToWriteOn, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, counter);
+  counter = dx12::BUFFER_MANAGER->transitionBufferIfNeeded(
+      buffer, D3D12_RESOURCE_STATE_GENERIC_READ, barriers, counter);
+  if (counter) {
+    commandList->ResourceBarrier(counter, barriers);
+  }
+
+  globals::TEXTURE_MANAGER->bindRenderTarget(handleToWriteOn, TextureHandle{});
+  dx12::DescriptorPair pair = dx12::TEXTURE_MANAGER->getSRVDx12(input);
+
+  commandList->SetGraphicsRootSignature(rs);
+
+  // let us bind the reduce buffer
+  dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(reduceHandle, 3, commandList);
+
+  commandList->SetGraphicsRootDescriptorTable(1, pair.gpuHandle);
+  commandList->SetGraphicsRootDescriptorTable(
+      2,
+      dx12::CONSTANT_BUFFER_MANAGER->getConstantBufferDx12Handle(configHandle)
+          .gpuHandle);
+
+  dx12::PSO_MANAGER->bindPSO(psoHandle, commandList);
+  commandList->DrawInstanced(6, 1, 0, 0);
+}
+
+inline void checkHandle(const TextureHandle input,
+                        const TextureHandle handleToWriteOn) {
   assert(input.isHandleValid());
   assert(input.handle != handleToWriteOn.handle);
 }
@@ -110,7 +152,8 @@ void DebugNode::blitDebugFrame(const TextureHandle handleToWriteOn) {
     TextureHandle input = globals::DEBUG_FRAME_DATA->gbufferDepth;
     checkHandle(input, handleToWriteOn);
     reduceDepth(globals::DEBUG_FRAME_DATA->gbufferDepth);
-    blitBuffer(input, handleToWriteOn, depthPSOHandle, rs, m_constBufferHandle);
+    blitDepthDebug(input, handleToWriteOn, m_reduceBufferHandle, depthPSOHandle,
+                   rs, m_constBufferHandle, m_reduceBufferHandle);
     break;
   }
   default:
@@ -137,9 +180,10 @@ void DebugNode::reduceDepth(const TextureHandle source) {
     commandList->ResourceBarrier(counter, barriers);
   }
 
-  // lets kick the compute shader
+  // lets kick the compute shaders
   commandList->SetComputeRootSignature(reduceRs);
 
+  // binding the resources
   dx12::DescriptorPair pair = dx12::TEXTURE_MANAGER->getSRVDx12(source);
   // bind the source
   commandList->SetComputeRootDescriptorTable(1, pair.gpuHandle);
@@ -149,6 +193,18 @@ void DebugNode::reduceDepth(const TextureHandle source) {
              ->getConstantBufferDx12Handle(m_textureConfigHandle)
              .gpuHandle);
   dx12::BUFFER_MANAGER->bindBuffer(m_reduceBufferHandle, 0, commandList);
+  // first we kick the clear
+  dx12::PSO_MANAGER->bindPSO(depthReduceClearPSOHandle, commandList);
+  commandList->Dispatch(1, 1, 1);
+
+  // we need to issue a barrier here, both shaders write to the reduce buffer
+  counter = 0;
+  counter = dx12::BUFFER_MANAGER->bufferUAVTransition(m_reduceBufferHandle,
+                                                      barriers, counter);
+  if (counter) {
+    commandList->ResourceBarrier(counter, barriers);
+  }
+
   dx12::PSO_MANAGER->bindPSO(depthReducePSOHandle, commandList);
 
   uint32_t width = globals::SCREEN_WIDTH;
