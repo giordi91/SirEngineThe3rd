@@ -29,7 +29,7 @@ private:
 private:
   void blitDebugFrame(TextureHandle handleToWriteOn);
   void updateConstantBuffer();
-  void reduceDepth(TextureHandle handleToWriteOn);
+  void reduceDepth(TextureHandle source);
 
 private:
   DebugIndex m_index;
@@ -45,6 +45,7 @@ private:
   PSOHandle specularPSOHandle;
   PSOHandle depthPSOHandle;
   PSOHandle depthReducePSOHandle;
+  PSOHandle depthReduceClearPSOHandle;
   ID3D12RootSignature *rs = nullptr;
   ID3D12RootSignature *reduceRs= nullptr;
 };

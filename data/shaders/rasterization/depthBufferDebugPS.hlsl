@@ -5,6 +5,7 @@
 
 Texture2D sourceTexture: register(t0);
 ConstantBuffer<DebugLayerConfig> g_debugConfig: register(b1);
+StructuredBuffer<ReducedDepth> reducedDepth : register(t1);
 
 SamplerState gsamPointWrap        : register(s0);
 SamplerState gsamPointClamp       : register(s1);
@@ -16,8 +17,12 @@ SamplerState gsamAnisotropicClamp : register(s5);
 float4 PS(FullScreenVertexOut pin) : SV_Target
 {
 
-	float DepthMaxRange = g_debugConfig.depthMax;
-	float DepthMinRange = g_debugConfig.depthMin;
+	//float DepthMaxRange = g_debugConfig.depthMax;
+	//float DepthMinRange = g_debugConfig.depthMin;
+
+	float DepthMaxRange = reducedDepth[0].maxDepth;
+	float DepthMinRange = reducedDepth[0].minDepth;
+
     float depth = sourceTexture.Sample(gsamPointClamp, pin.uv).x;
 	//remapping depth
 	float range = DepthMaxRange - DepthMinRange;

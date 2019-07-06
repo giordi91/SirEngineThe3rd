@@ -56,4 +56,16 @@ void BufferManagerDx12::bindBuffer(
   commandList->SetComputeRootUnorderedAccessView(
       slot, data.data->GetGPUVirtualAddress());
 }
+void BufferManagerDx12::bindBufferAsSRVGraphics(BufferHandle handle, int slot,
+                     ID3D12GraphicsCommandList2 *commandList)const 
+{
+  assertMagicNumber(handle);
+  uint32_t index = getIndexFromHandle(handle);
+  const BufferData &data = m_bufferPool.getConstRef(index);
+
+  commandList->SetGraphicsRootShaderResourceView(
+      slot, data.data->GetGPUVirtualAddress());
+	
+
+}
 } // namespace SirEngine::dx12

@@ -41,7 +41,14 @@
             ]
           },
           "visibility": "ALL"
+        },
+        {
+          "comment":  "reduction buffer", 
+          "type": "SRV",
+          "data": { "baseRegister": 1 },
+          "visibility": "ALL"
         }
+
       ],
       "flags": []
     }

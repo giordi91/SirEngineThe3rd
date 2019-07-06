@@ -7,15 +7,18 @@ RWStructuredBuffer<ReducedDepth> reducedDepth : register(u0);
 [numthreads( 32, 4, 1 )]
 void CS( uint3 id : SV_DispatchThreadID)
 {
-    float depth = Input[id.xy] + g_textureConfig.height / 4;
-    float minDepth = WaveActiveMin(depth);
-    //float maxDepth = WaveAllMax(depth);
 
-    uint minDepthInt = asuint(minDepth);
-    //uint minDepthInt = asuint(minDepth);
-    if(id.x == 0)
+    //if (id.x < g_textureConfig.width && id.y < g_textureConfig.height)
+    if (id.x < 1200 && id.y < 600)
     {
-        reducedDepth[0].minDepth = minDepth;
+        float depth = Input[id.xy] + g_textureConfig.height / 4;
+        float minDepth = WaveActiveMin(depth);
+        float maxDepth = WaveActiveMax(depth);
+
+        uint minDepthInt = asuint(minDepth);
+        uint maxDepthInt = asuint(maxDepth);
+
+        InterlockedMin(reducedDepth[0].minDepth, minDepthInt);
+        InterlockedMax(reducedDepth[0].maxDepth, maxDepthInt);
     }
-	//Output[id.xy] = Input[id.xy];
 }
