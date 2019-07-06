@@ -4,6 +4,19 @@
       "staticSamplers" : true,
       "config": [
         {
+          "comment": "source texture",
+          "type": "descriptorTable",
+          "data": {
+            "ranges": [
+              {
+                "type": "SRV",
+                "numDescriptors": 1,
+                "baseRegister": 0
+              }
+            ]
+          }
+        },
+        {
           "comment": "configuration of the kernel",
           "type": "descriptorTable",
           "data": {
@@ -18,30 +31,19 @@
           "visibility": "ALL"
         },
         {
-          "comment":"source texture", 
+          "comment":  "reduction buffer", 
           "type": "descriptorTable",
           "data": {
-            "ranges": [
-              {
-                "type": "SRV",
-                "numDescriptors": 1,
-                "baseRegister":0 
-              }
-            ]
-          }
-        },
-        {
-          "comment":"destination texture", 
-          "type": "descriptorTable",
-          "data": {
+            "numberDescriptor": "1",
             "ranges": [
               {
                 "type": "UAV",
                 "numDescriptors": 1,
-                "baseRegister":0 
+                "baseRegister": 0
               }
             ]
-          }
+          },
+          "visibility": "ALL"
         }
       ],
       "flags": []

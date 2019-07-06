@@ -4,8 +4,8 @@
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
 
-namespace SirEngine {
-namespace dx12 {
+namespace SirEngine::dx12
+{
 void MeshManager::clearUploadRequests() {
 
   auto id = GLOBAL_FENCE->GetCompletedValue();
@@ -78,7 +78,7 @@ static ID3D12Resource *createDefaultBuffer(ID3D12Device *device,
   return defaultBuffer;
 }
 
-MeshHandle MeshManager::loadMesh(const char *path, uint32_t runtimeIndex,
+MeshHandle MeshManager::loadMesh(const char *path, const uint32_t runtimeIndex,
                                  MeshRuntime *runtimeMemory) {
 
   SE_CORE_INFO("Loading mesh {0}", path);
@@ -116,12 +116,12 @@ MeshHandle MeshManager::loadMesh(const char *path, uint32_t runtimeIndex,
     meshData->stride = stride;
     MeshUploadResource upload;
 
-    FrameCommand *currentFC = &CURRENT_FRAME_RESOURCE->fc;
+    FrameCommand *currentFc = &CURRENT_FRAME_RESOURCE->fc;
     meshData->vertexBuffer = createDefaultBuffer(
-        DEVICE, currentFC->commandList, vertexData,
+        DEVICE, currentFc->commandList, vertexData,
         vertexCount * stride * sizeof(float), &upload.uploadVertexBuffer);
     meshData->indexBuffer = createDefaultBuffer(
-        DEVICE, currentFC->commandList, indexData, indexCount * sizeof(int),
+        DEVICE, currentFc->commandList, indexData, indexCount * sizeof(int),
         &upload.uploadIndexBuffer);
 
     // set a signal for the resource.
@@ -152,6 +152,4 @@ MeshHandle MeshManager::loadMesh(const char *path, uint32_t runtimeIndex,
 
   return handle;
 }
-
-} // namespace dx12
 } // namespace SirEngine

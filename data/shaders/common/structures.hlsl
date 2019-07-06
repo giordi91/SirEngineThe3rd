@@ -43,4 +43,15 @@ struct GammaToneMappingConfig {
   float gammaInverse;
   float padding;
 };
+
+struct TextureConfig 
+{
+    int width;
+    int height;
+};
+struct ReducedDepth
+{
+    float minDepth;
+    float maxDepth;
+};
 #endif

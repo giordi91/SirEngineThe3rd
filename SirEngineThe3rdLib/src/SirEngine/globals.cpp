@@ -13,6 +13,7 @@ uint64_t CURRENT_FRAME = 0;
 extern float MIN_DEPTH = 1.0f;
 extern float MAX_DEPTH = 0.0f;
 ConstantBufferManager *CONSTANT_BUFFER_MANAGER = nullptr;
+BufferManager *BUFFER_MANAGER = nullptr;
 TextureManager *TEXTURE_MANAGER = nullptr;
 AssetManager *ASSET_MANAGER = nullptr;
 Application *APPLICATION = nullptr;

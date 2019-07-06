@@ -1,15 +1,18 @@
-Texture2D<float4> Input : register( t0 );
-RWTexture2D<float4> Output : register( u0 );
+#include "../common/structures.hlsl"
 
+Texture2D<float> Input : register( t0 );
+ConstantBuffer<TextureConfig> g_textureConfig: register(b0);
+RWStructuredBuffer<ReducedDepth> reducedDepth : register(u0);
 
-[numthreads( 8, 8, 1 )]
+[numthreads( 32, 4, 1 )]
 void CS( uint3 id : SV_DispatchThreadID)
 {
-	Output[id.xy] = Input[id.xy];
+    float depth = Input[id.xy];
+    float minDepth = WaveActiveMin(depth);
+    //float maxDepth = WaveAllMax(depth);
 
-	int x2 = id.x * 2;
-	int y2 = id.y * 2;
-	float4 v = Input[float2(x2, y2)] + Input[float2(x2 + 1, y2)]+
-	+ Input[float2(x2, y2 + 1)]+  Input[float2(x2 + 1, y2 + 1)];
-	Output[id.xy] = v*0.25;
+    uint minDepthInt = asuint(minDepth);
+    //uint minDepthInt = asuint(minDepth);
+    reducedDepth[0].minDepth = minDepth;
+	//Output[id.xy] = Input[id.xy];
 }

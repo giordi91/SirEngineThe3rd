@@ -104,7 +104,7 @@ void Application::onEvent(Event &e) {
     }
   }
 }
-bool Application::onCloseWindow(WindowCloseEvent &e) {
+bool Application::onCloseWindow(WindowCloseEvent&) {
   // graphics::shutdown();
   m_run = false;
   return true;

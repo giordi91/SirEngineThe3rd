@@ -25,6 +25,10 @@ struct MeshHandle final {
   uint32_t handle;
   bool isHandleValid() const { return handle != 0; }
 };
+struct BufferHandle final {
+  uint32_t handle;
+  bool isHandleValid() const { return handle != 0; }
+};
 
 struct AssetHandles {
   MeshHandle meshH;

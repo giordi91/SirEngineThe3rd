@@ -11,6 +11,7 @@ class Application;
 class Camera3DPivot;
 class TextureManager;
 class RenderingContext;
+class BufferManager;
 
 namespace globals {
 
@@ -34,6 +35,7 @@ extern float MIN_DEPTH;
 
 // managers
 extern ConstantBufferManager *CONSTANT_BUFFER_MANAGER;
+extern BufferManager *BUFFER_MANAGER;
 extern TextureManager *TEXTURE_MANAGER;
 extern AssetManager *ASSET_MANAGER;
 extern Application *APPLICATION;
