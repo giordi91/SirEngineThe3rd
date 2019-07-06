@@ -207,6 +207,28 @@ UINT DescriptorHeap::createBufferSRV(DescriptorPair &pair,
   return descriptorIndex;
 };
 
+UINT DescriptorHeap::createBufferUAV(DescriptorPair &pair,
+                                     ID3D12Resource *resource, UINT numElements,
+                                     UINT elementSize) {
+
+  // SRV
+  D3D12_UNORDERED_ACCESS_VIEW_DESC srvDesc = {};
+  srvDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+  srvDesc.Buffer.FirstElement =0;
+  srvDesc.Buffer.NumElements = numElements;
+  srvDesc.Buffer.StructureByteStride= elementSize;
+
+  UINT descriptorIndex = allocateDescriptor(&pair.cpuHandle);
+  DEVICE->CreateUnorderedAccessView(resource,nullptr, &srvDesc, pair.cpuHandle);
+  pair.gpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(getGPUStart(), descriptorIndex,
+                                                 m_descriptorSize);
+
+#if SE_DEBUG
+  pair.type = DescriptorType::UAV;
+#endif
+  return descriptorIndex;
+};
+
 UINT createRTVSRV(DescriptorHeap *heap, ID3D12Resource *resource,
                   DescriptorPair &pair) {
   assert(heap->getType() == D3D12_DESCRIPTOR_HEAP_TYPE_RTV);

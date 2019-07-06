@@ -9,6 +9,7 @@
 #include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/TextureManagerDx12.h"
 #include "platform/windows/graphics/dx12/adapter.h"
+#include "platform/windows/graphics/dx12/bufferManagerDx12.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/meshManager.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
@@ -16,8 +17,7 @@
 #include "platform/windows/graphics/dx12/shaderManager.h"
 #include "platform/windows/graphics/dx12/swapChain.h"
 
-namespace SirEngine {
-namespace dx12 {
+namespace SirEngine::dx12 {
 
 D3D12DeviceType *DEVICE;
 ID3D12Debug *DEBUG_CONTROLLER = nullptr;
@@ -42,6 +42,7 @@ ShaderManager *SHADER_MANAGER = nullptr;
 PSOManager *PSO_MANAGER = nullptr;
 RootSignatureManager *ROOT_SIGNATURE_MANAGER = nullptr;
 ShadersLayoutRegistry *SHADER_LAYOUT_REGISTRY = nullptr;
+BufferManagerDx12 *BUFFER_MANAGER = nullptr;
 
 void createFrameCommand(FrameCommand *fc) {
 
@@ -176,7 +177,12 @@ bool initializeGraphicsDx12(Window *wnd, uint32_t width, uint32_t height) {
   IDENTITY_MANAGER->initialize();
   CONSTANT_BUFFER_MANAGER = new ConstantBufferManagerDx12();
   CONSTANT_BUFFER_MANAGER->initialize();
+
+  BUFFER_MANAGER = new BufferManagerDx12();
+  BUFFER_MANAGER->initialize();
+
   globals::CONSTANT_BUFFER_MANAGER = CONSTANT_BUFFER_MANAGER;
+  globals::BUFFER_MANAGER = BUFFER_MANAGER;
   TEXTURE_MANAGER = new TextureManagerDx12();
   globals::TEXTURE_MANAGER = TEXTURE_MANAGER;
   MESH_MANAGER = new MeshManager();
@@ -189,18 +195,21 @@ bool initializeGraphicsDx12(Window *wnd, uint32_t width, uint32_t height) {
 
   SHADER_MANAGER = new ShaderManager();
   SHADER_MANAGER->init();
-  SHADER_MANAGER->loadShadersInFolder( (globals::DATA_SOURCE_PATH+"/processed/shaders/rasterization").c_str());
-  SHADER_MANAGER->loadShadersInFolder( (globals::DATA_SOURCE_PATH+"/processed/shaders/compute").c_str());
+  SHADER_MANAGER->loadShadersInFolder(
+      (globals::DATA_SOURCE_PATH + "/processed/shaders/rasterization").c_str());
+  SHADER_MANAGER->loadShadersInFolder(
+      (globals::DATA_SOURCE_PATH + "/processed/shaders/compute").c_str());
 
   ROOT_SIGNATURE_MANAGER = new RootSignatureManager();
-  ROOT_SIGNATURE_MANAGER->loadSingaturesInFolder((globals::DATA_SOURCE_PATH+"/processed/rs").c_str());
+  ROOT_SIGNATURE_MANAGER->loadSingaturesInFolder(
+      (globals::DATA_SOURCE_PATH + "/processed/rs").c_str());
 
   SHADER_LAYOUT_REGISTRY = new dx12::ShadersLayoutRegistry();
 
   PSO_MANAGER = new PSOManager();
   PSO_MANAGER->init(dx12::DEVICE, SHADER_LAYOUT_REGISTRY,
                     ROOT_SIGNATURE_MANAGER, dx12::SHADER_MANAGER);
-  PSO_MANAGER->loadPSOInFolder((globals::DATA_SOURCE_PATH+"/pso").c_str());
+  PSO_MANAGER->loadPSOInFolder((globals::DATA_SOURCE_PATH + "/pso").c_str());
 
   globals::DEBUG_FRAME_DATA = new globals::DebugFrameData();
 
@@ -222,8 +231,7 @@ bool initializeGraphicsDx12(Window *wnd, uint32_t width, uint32_t height) {
 }
 void flushDx12() { flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE); }
 
-bool beginHeadlessWorkDx12()
-{
+bool beginHeadlessWorkDx12() {
   // here we need to check which frame resource we are going to use
   dx12::CURRENT_FRAME_RESOURCE = &dx12::FRAME_RESOURCES[globals::CURRENT_FRAME];
 
@@ -251,8 +259,7 @@ bool beginHeadlessWorkDx12()
   return true;
 }
 
-bool endHeadlessWorkDx12()
-{
+bool endHeadlessWorkDx12() {
   // Done recording commands.
   dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE,
                            &dx12::CURRENT_FRAME_RESOURCE->fc);
@@ -359,6 +366,4 @@ bool dispatchFrameDx12() {
   globals::CURRENT_FRAME = (globals::CURRENT_FRAME + 1) % FRAME_BUFFERS_COUNT;
   return true;
 }
-
-} // namespace dx12
-} // namespace SirEngine
+} // namespace SirEngine::dx12

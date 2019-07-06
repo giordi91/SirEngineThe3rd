@@ -3,6 +3,7 @@
 #include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
 #include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/TextureManagerDx12.h"
+#include "platform/windows/graphics/dx12/bufferManagerDx12.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
 
 namespace SirEngine {
@@ -11,7 +12,9 @@ static const std::string &GBUFFER_DEBUG_PSO_NAME = "gbufferDebugPSO";
 static const std::string &NORMAL_DEBUG_PSO_NAME = "normalBufferDebugPSO";
 static const std::string &SPECULAR_DEBUG_PSO_NAME = "specularBufferDebugPSO";
 static const std::string &DEPTH_DEBUG_PSO_NAME = "depthBufferDebugPSO";
-static const std::string &DEBUG_FULL_SCREEN_RS = "debugFullScreenBlit_RS";
+static const std::string &DEBUG_FULL_SCREEN_RS_NAME = "debugFullScreenBlit_RS";
+static const std::string &DEBUG_REDUCE_DEPTH_RS_NANE = "depthMinMaxReduce_RS";
+static const std::string &DEBUG_REDUCE_DEPTH_PSO_NAME = "depthMinMaxReduce_PSO";
 
 DebugNode::DebugNode(const char *name) : GraphNode(name, "DebugNode") {
   // lets create the plugs
@@ -35,12 +38,16 @@ DebugNode::DebugNode(const char *name) : GraphNode(name, "DebugNode") {
   specularPSOHandle =
       dx12::PSO_MANAGER->getHandleFromName(SPECULAR_DEBUG_PSO_NAME);
   depthPSOHandle = dx12::PSO_MANAGER->getHandleFromName(DEPTH_DEBUG_PSO_NAME);
+  depthReducePSOHandle =
+      dx12::PSO_MANAGER->getHandleFromName(DEBUG_REDUCE_DEPTH_PSO_NAME);
 
   rs = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(
-      (DEBUG_FULL_SCREEN_RS.c_str()));
+      (DEBUG_FULL_SCREEN_RS_NAME.c_str()));
+  reduceRs = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(
+      (DEBUG_REDUCE_DEPTH_RS_NANE.c_str()));
 }
 void blitBuffer(const TextureHandle input, const TextureHandle handleToWriteOn,
-                PSOHandle psoHandle, ID3D12RootSignature *rs,
+                const PSOHandle psoHandle, ID3D12RootSignature *rs,
                 const ConstantBufferHandle configHandle) {
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
@@ -70,81 +77,100 @@ void blitBuffer(const TextureHandle input, const TextureHandle handleToWriteOn,
 
   commandList->DrawInstanced(6, 1, 0, 0);
 }
-void blitBuffer(const TextureHandle input, const TextureHandle handleToWriteOn,
-                ID3D12PipelineState *pso, ID3D12RootSignature *rs,
-                const ConstantBufferHandle configHandle) {
-  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
-  auto commandList = currentFc->commandList;
-
-  D3D12_RESOURCE_BARRIER barriers[2];
-  int counter = 0;
-  counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
-      input, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, barriers, counter);
-  counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
-      handleToWriteOn, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, counter);
-  if (counter) {
-    commandList->ResourceBarrier(counter, barriers);
-  }
-
-  globals::TEXTURE_MANAGER->bindRenderTarget(handleToWriteOn, TextureHandle{});
-  dx12::DescriptorPair pair = dx12::TEXTURE_MANAGER->getSRVDx12(input);
-
-  commandList->SetPipelineState(pso);
-  commandList->SetGraphicsRootSignature(rs);
-  commandList->SetGraphicsRootDescriptorTable(1, pair.gpuHandle);
-
-  commandList->SetGraphicsRootDescriptorTable(
-      2,
-      dx12::CONSTANT_BUFFER_MANAGER->getConstantBufferDx12Handle(configHandle)
-          .gpuHandle);
-
-  commandList->DrawInstanced(6, 1, 0, 0);
-}
 
 inline void checkHandle(TextureHandle input, TextureHandle handleToWriteOn) {
-    assert(input.isHandleValid());
-    assert(input.handle != handleToWriteOn.handle);
+  assert(input.isHandleValid());
+  assert(input.handle != handleToWriteOn.handle);
 }
 
 void DebugNode::blitDebugFrame(const TextureHandle handleToWriteOn) {
   switch (m_index) {
   case (DebugIndex::GBUFFER): {
     TextureHandle input = globals::DEBUG_FRAME_DATA->geometryBuffer;
-	checkHandle(input, handleToWriteOn);
-    blitBuffer(input, handleToWriteOn, gbufferPSOHandle, rs, m_constBufferHandle);
+    checkHandle(input, handleToWriteOn);
+    blitBuffer(input, handleToWriteOn, gbufferPSOHandle, rs,
+               m_constBufferHandle);
     break;
   }
   case (DebugIndex::NORMAL_BUFFER): {
     TextureHandle input = globals::DEBUG_FRAME_DATA->normalBuffer;
-	checkHandle(input, handleToWriteOn);
-    blitBuffer(input, handleToWriteOn, normalPSOHandle, rs, m_constBufferHandle);
+    checkHandle(input, handleToWriteOn);
+    blitBuffer(input, handleToWriteOn, normalPSOHandle, rs,
+               m_constBufferHandle);
     break;
   }
   case (DebugIndex::SPECULAR_BUFFER): {
     TextureHandle input = globals::DEBUG_FRAME_DATA->specularBuffer;
-	checkHandle(input, handleToWriteOn);
-    blitBuffer(input, handleToWriteOn, specularPSOHandle, rs, m_constBufferHandle);
+    checkHandle(input, handleToWriteOn);
+    blitBuffer(input, handleToWriteOn, specularPSOHandle, rs,
+               m_constBufferHandle);
     break;
   }
   case (DebugIndex::GBUFFER_DEPTH): {
     TextureHandle input = globals::DEBUG_FRAME_DATA->gbufferDepth;
-	checkHandle(input, handleToWriteOn);
+    checkHandle(input, handleToWriteOn);
+    reduceDepth(globals::DEBUG_FRAME_DATA->gbufferDepth);
     blitBuffer(input, handleToWriteOn, depthPSOHandle, rs, m_constBufferHandle);
     break;
   }
+  default:
+    assert(0 && "no valid pass to debug");
   }
 }
 
 void DebugNode::updateConstantBuffer() {
-
   globals::CONSTANT_BUFFER_MANAGER->updateConstantBufferBuffered(
       m_constBufferHandle, &m_config);
   updateConfig = false;
 }
 
+void DebugNode::reduceDepth(const TextureHandle source) {
+  // we need to kick the compute shader
+  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
+  auto commandList = currentFc->commandList;
+
+  D3D12_RESOURCE_BARRIER barriers[2];
+  int counter = 0;
+  counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
+      source, D3D12_RESOURCE_STATE_GENERIC_READ, barriers, counter);
+  if (counter) {
+    commandList->ResourceBarrier(counter, barriers);
+  }
+
+  // lets kick the compute shader
+  commandList->SetComputeRootSignature(reduceRs);
+
+  dx12::DescriptorPair pair = dx12::TEXTURE_MANAGER->getSRVDx12(source);
+  // bind the source
+  commandList->SetComputeRootDescriptorTable(0, pair.gpuHandle);
+  // setup the
+  commandList->SetComputeRootDescriptorTable(
+      1, dx12::CONSTANT_BUFFER_MANAGER
+             ->getConstantBufferDx12Handle(m_textureConfigHandle)
+             .gpuHandle);
+  dx12::BUFFER_MANAGER->bindBuffer(m_reduceBufferHandle, 2, commandList);
+  dx12::PSO_MANAGER->bindPSO(depthReducePSOHandle, commandList);
+
+  uint32_t width = globals::SCREEN_WIDTH;
+  uint32_t height = globals::SCREEN_HEIGHT;
+  uint32_t blockWidth = 32;
+  uint32_t blockHeight = 4;
+  uint32_t gx =
+      width / blockWidth == 0 ? width / blockWidth : (width / blockWidth) + 1;
+  uint32_t gy = height / blockHeight == 0 ? height / blockHeight
+                                          : height / blockHeight + 1;
+  commandList->Dispatch(gx, gy, 1);
+}
+
 void DebugNode::initialize() {
   m_constBufferHandle = globals::CONSTANT_BUFFER_MANAGER->allocateDynamic(
       sizeof(DebugLayerConfig), &m_config);
+  m_textureConfigHandle = globals::CONSTANT_BUFFER_MANAGER->allocateDynamic(
+      sizeof(TextureConfig), &m_textureConfig);
+
+  m_reduceBufferHandle = globals::BUFFER_MANAGER->allocate(
+      sizeof(ReducedDepth), nullptr, "depthDebugReduce", 16, sizeof(float),
+      true);
 }
 
 void DebugNode::compute() {
@@ -153,8 +179,7 @@ void DebugNode::compute() {
   auto &conn = m_connections[&m_inputPlugs[0]];
   assert(conn.size() == 1 && "too many input connections");
   Plug *source = conn[0];
-  TextureHandle texH;
-  texH.handle = source->plugValue;
+  TextureHandle texH{source->plugValue};
 
   // check if we need to update the constant buffer
   if (updateConfig) {

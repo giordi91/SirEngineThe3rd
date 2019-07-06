@@ -36,7 +36,8 @@ public:
   // debugging function to be able to print to console the composition of a
   // state object
   static void printStateObjectDesc(const D3D12_STATE_OBJECT_DESC *desc);
-  inline ID3D12PipelineState *getComputePSOByName(const std::string &name) {
+  inline ID3D12PipelineState *getComputePSOByName(const std::string &name) const
+  {
     PSOHandle handle = getHandleFromName(name);
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
@@ -46,7 +47,7 @@ public:
 
   void recompilePSOFromShader(const char *shaderName,
                               const char *getOffsetPath);
-  inline void bindPSO(PSOHandle handle,
+  inline void bindPSO(const PSOHandle handle,
                       ID3D12GraphicsCommandList2 *commandList) const {
 
     assertMagicNumber(handle);

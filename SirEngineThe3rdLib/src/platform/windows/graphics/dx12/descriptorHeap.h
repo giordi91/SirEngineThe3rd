@@ -71,6 +71,8 @@ public:
 
   UINT createBufferSRV(DescriptorPair &pair, ID3D12Resource *resource,
                        UINT numElements, UINT elementSize);
+  UINT createBufferUAV(DescriptorPair &pair, ID3D12Resource *resource,
+                       UINT numElements, UINT elementSize);
 
   UINT createBufferCBV(DescriptorPair &pair, ID3D12Resource *resource,
                        int totalSizeInByte);
