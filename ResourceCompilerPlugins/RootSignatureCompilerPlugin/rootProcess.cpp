@@ -157,6 +157,16 @@ void processCBV(nlohmann::json &jobj, CD3DX12_ROOT_PARAMETER &param) {
   assert(startRegister != -1);
   param.InitAsConstantBufferView(startRegister, 0, getVisibility(jobj));
 }
+void processUAV(nlohmann::json &jobj, CD3DX12_ROOT_PARAMETER &param) {
+  int defaultInt = -1;
+  assert(jobj.find(ROOT_KEY_DATA) != jobj.end());
+  auto &jdata = jobj[ROOT_KEY_DATA];
+
+  int startRegister =
+      getValueIfInJson(jdata, ROOT_KEY_BASE_REGISTER, defaultInt);
+  assert(startRegister != -1);
+  param.InitAsUnorderedAccessView(startRegister, 0, getVisibility(jobj));
+}
 
 void processConstant(nlohmann::json &jobj, CD3DX12_ROOT_PARAMETER &param) {
   int defaultInt = -1;
@@ -304,6 +314,10 @@ void processSignatureFile(const char *path, std::vector<ResultRoot> &blobs) {
       }
       case (ROOT_TYPES::CBV): {
         processCBV(subConfig, rootParams[counter]);
+        break;
+      }
+      case (ROOT_TYPES::UAV): {
+        processUAV(subConfig, rootParams[counter]);
         break;
       }
       default: {

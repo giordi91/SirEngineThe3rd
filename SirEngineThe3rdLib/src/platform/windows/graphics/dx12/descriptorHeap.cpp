@@ -218,6 +218,8 @@ UINT DescriptorHeap::createBufferUAV(DescriptorPair &pair,
   srvDesc.Buffer.NumElements = numElements;
   srvDesc.Buffer.StructureByteStride= elementSize;
 
+  //srvDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_RAW;
+
   UINT descriptorIndex = allocateDescriptor(&pair.cpuHandle);
   DEVICE->CreateUnorderedAccessView(resource,nullptr, &srvDesc, pair.cpuHandle);
   pair.gpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(getGPUStart(), descriptorIndex,

@@ -11,11 +11,15 @@ BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInByte,
                                          bool isUAV) {
   ID3D12Resource *buffer = nullptr;
 
+  // must be at least 256 bytes
+  uint32_t actualSize =
+      sizeInByte % 256 == 0 ? sizeInByte : ((sizeInByte / 256) + 1) * 256;
+
   // Create the actual default buffer resource.
   HRESULT res = dx12::DEVICE->CreateCommittedResource(
       &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
       &CD3DX12_RESOURCE_DESC::Buffer(
-          sizeInByte, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS),
+          actualSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS),
       D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&buffer));
   assert(SUCCEEDED(res));
   assert(initData == nullptr);
@@ -46,8 +50,10 @@ void BufferManagerDx12::bindBuffer(
   uint32_t index = getIndexFromHandle(handle);
   const BufferData &data = m_bufferPool.getConstRef(index);
 
-  commandList->SetComputeRootDescriptorTable(slot, data.type == BufferType::UAV
-                                                       ? data.uav.gpuHandle
-                                                       : data.srv.gpuHandle);
+  D3D12_GPU_DESCRIPTOR_HANDLE toBind =
+      data.type == BufferType::UAV ? data.uav.gpuHandle : data.srv.gpuHandle;
+  // commandList->SetComputeRootDescriptorTable(slot, toBind);
+  commandList->SetComputeRootUnorderedAccessView(
+      slot, data.data->GetGPUVirtualAddress());
 }
 } // namespace SirEngine::dx12
