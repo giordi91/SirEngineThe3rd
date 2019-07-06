@@ -142,13 +142,13 @@ void DebugNode::reduceDepth(const TextureHandle source) {
 
   dx12::DescriptorPair pair = dx12::TEXTURE_MANAGER->getSRVDx12(source);
   // bind the source
-  commandList->SetComputeRootDescriptorTable(0, pair.gpuHandle);
+  commandList->SetComputeRootDescriptorTable(1, pair.gpuHandle);
   // setup the
   commandList->SetComputeRootDescriptorTable(
-      1, dx12::CONSTANT_BUFFER_MANAGER
+      2, dx12::CONSTANT_BUFFER_MANAGER
              ->getConstantBufferDx12Handle(m_textureConfigHandle)
              .gpuHandle);
-  dx12::BUFFER_MANAGER->bindBuffer(m_reduceBufferHandle, 2, commandList);
+  dx12::BUFFER_MANAGER->bindBuffer(m_reduceBufferHandle, 0, commandList);
   dx12::PSO_MANAGER->bindPSO(depthReducePSOHandle, commandList);
 
   uint32_t width = globals::SCREEN_WIDTH;
@@ -169,8 +169,8 @@ void DebugNode::initialize() {
       sizeof(TextureConfig), &m_textureConfig);
 
   m_reduceBufferHandle = globals::BUFFER_MANAGER->allocate(
-      sizeof(ReducedDepth), nullptr, "depthDebugReduce", 16, sizeof(float),
-      true);
+      sizeof(ReducedDepth), nullptr, "depthDebugReduce", 1,
+      sizeof(ReducedDepth), true);
 }
 
 void DebugNode::compute() {
