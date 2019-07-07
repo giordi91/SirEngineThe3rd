@@ -8,6 +8,7 @@
 #include "platform/windows/graphics/dx12/meshManager.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
 #include "platform/windows/graphics/dx12/swapChain.h"
+#include "SirEngine/graphics/debugAnnotations.h"
 
 namespace SirEngine {
 static const char *SKYBOX_RS = "skybox_RS";
@@ -65,6 +66,7 @@ getInputConnection(std::unordered_map<const Plug *, std::vector<Plug *>> &conns,
 
 void SkyBoxPass::compute() {
 
+  annotateGraphicsBegin("Skybox");
   TextureHandle bufferHandle =
       getInputConnection(m_connections, &m_inputPlugs[0]);
   TextureHandle depthHandle =
@@ -113,6 +115,7 @@ void SkyBoxPass::compute() {
 
   // reset normal viewport
   commandList->RSSetViewports(1, currViewport);
+  annotateGraphicsEnd();
 }
 
 void SkyBoxPass::clear() {}

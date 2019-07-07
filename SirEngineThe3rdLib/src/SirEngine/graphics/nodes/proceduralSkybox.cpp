@@ -6,6 +6,7 @@
 #include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
 #include "platform/windows/graphics/dx12/textureManagerDx12.h"
+#include "SirEngine/graphics/debugAnnotations.h"
 
 namespace SirEngine {
 
@@ -57,6 +58,7 @@ getInputConnection(std::unordered_map<const Plug *, std::vector<Plug *>> &conns,
 
 void ProceduralSkyBoxPass::compute() {
 
+  annotateGraphicsBegin("Procedural Skybox");
   TextureHandle bufferHandle =
       getInputConnection(m_connections, &m_inputPlugs[0]);
   TextureHandle depthHandle =
@@ -94,6 +96,7 @@ void ProceduralSkyBoxPass::compute() {
 
   commandList->DrawInstanced(6, 1, 0, 0);
   m_outputPlugs[0].plugValue = bufferHandle.handle;
+  annotateGraphicsEnd();
 }
 
 void ProceduralSkyBoxPass::clear() {}

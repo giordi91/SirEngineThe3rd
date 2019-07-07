@@ -5,6 +5,7 @@
 #include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/TextureManagerDx12.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
+#include "SirEngine/graphics/debugAnnotations.h"
 
 namespace SirEngine {
 
@@ -62,6 +63,7 @@ void SimpleForward::initialize() {
 }
 
 void SimpleForward::compute() {
+  annotateGraphicsBegin("Simple Forward");
   // meshes connections
   auto &meshConn = m_connections[&m_inputPlugs[1]];
   assert(meshConn.size() == 1 && "too many input connections");
@@ -116,6 +118,7 @@ void SimpleForward::compute() {
   }
 
   m_outputPlugs[0].plugValue = m_renderTarget.handle;
+  annotateGraphicsEnd();
 }
 
 void SimpleForward::clear() {

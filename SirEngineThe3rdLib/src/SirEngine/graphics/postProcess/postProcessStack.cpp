@@ -3,6 +3,8 @@
 #include "SirEngine/handle.h"
 #include "SirEngine/textureManager.h"
 
+#include "SirEngine/graphics/debugAnnotations.h"
+
 namespace SirEngine {
 
 PostProcessStack::PostProcessStack()
@@ -42,11 +44,11 @@ void PostProcessStack::initialize() {
 }
 
 void PostProcessStack::compute() {
+  annotateGraphicsBegin("Post processing");
   auto &conn = m_connections[&m_inputPlugs[0]];
   assert(conn.size() == 1 && "too many input connections");
   Plug *source = conn[0];
-  TextureHandle texH;
-  texH.handle = source->plugValue;
+  TextureHandle texH{texH.handle = source->plugValue};
 
   if (m_stack.empty()) {
     m_outputPlugs[0].plugValue = texH.handle;
@@ -63,6 +65,7 @@ void PostProcessStack::compute() {
   }
 
   m_outputPlugs[0].plugValue = handles[m_internalCounter].handle;
+  annotateGraphicsEnd();
 }
 
 void PostProcessStack::clear() {
