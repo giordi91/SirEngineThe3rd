@@ -127,37 +127,38 @@ inline void checkHandle(const TextureHandle input,
 
 void DebugNode::blitDebugFrame(const TextureHandle handleToWriteOn) {
   switch (m_index) {
-  case (DebugIndex::GBUFFER): {
-    TextureHandle input = globals::DEBUG_FRAME_DATA->geometryBuffer;
-    checkHandle(input, handleToWriteOn);
-    blitBuffer(input, handleToWriteOn, gbufferPSOHandle, rs,
-               m_constBufferHandle);
-    break;
-  }
-  case (DebugIndex::NORMAL_BUFFER): {
-    TextureHandle input = globals::DEBUG_FRAME_DATA->normalBuffer;
-    checkHandle(input, handleToWriteOn);
-    blitBuffer(input, handleToWriteOn, normalPSOHandle, rs,
-               m_constBufferHandle);
-    break;
-  }
-  case (DebugIndex::SPECULAR_BUFFER): {
-    TextureHandle input = globals::DEBUG_FRAME_DATA->specularBuffer;
-    checkHandle(input, handleToWriteOn);
-    blitBuffer(input, handleToWriteOn, specularPSOHandle, rs,
-               m_constBufferHandle);
-    break;
-  }
-  case (DebugIndex::GBUFFER_DEPTH): {
-    TextureHandle input = globals::DEBUG_FRAME_DATA->gbufferDepth;
-    checkHandle(input, handleToWriteOn);
-    reduceDepth(globals::DEBUG_FRAME_DATA->gbufferDepth);
-    blitDepthDebug(input, handleToWriteOn, m_reduceBufferHandle, depthPSOHandle,
-                   rs, m_constBufferHandle, m_reduceBufferHandle);
-    break;
-  }
-  default:
-    assert(0 && "no valid pass to debug");
+    case (DebugIndex::GBUFFER): {
+      TextureHandle input = globals::DEBUG_FRAME_DATA->geometryBuffer;
+      checkHandle(input, handleToWriteOn);
+      blitBuffer(input, handleToWriteOn, gbufferPSOHandle, rs,
+                 m_constBufferHandle);
+      break;
+    }
+    case (DebugIndex::NORMAL_BUFFER): {
+      TextureHandle input = globals::DEBUG_FRAME_DATA->normalBuffer;
+      checkHandle(input, handleToWriteOn);
+      blitBuffer(input, handleToWriteOn, normalPSOHandle, rs,
+                 m_constBufferHandle);
+      break;
+    }
+    case (DebugIndex::SPECULAR_BUFFER): {
+      TextureHandle input = globals::DEBUG_FRAME_DATA->specularBuffer;
+      checkHandle(input, handleToWriteOn);
+      blitBuffer(input, handleToWriteOn, specularPSOHandle, rs,
+                 m_constBufferHandle);
+      break;
+    }
+    case (DebugIndex::GBUFFER_DEPTH): {
+      TextureHandle input = globals::DEBUG_FRAME_DATA->gbufferDepth;
+      checkHandle(input, handleToWriteOn);
+      reduceDepth(globals::DEBUG_FRAME_DATA->gbufferDepth);
+      blitDepthDebug(input, handleToWriteOn, m_reduceBufferHandle,
+                     depthPSOHandle, rs, m_constBufferHandle,
+                     m_reduceBufferHandle);
+      break;
+    }
+    default:
+      assert(0 && "no valid pass to debug");
   }
 }
 
@@ -176,6 +177,10 @@ void DebugNode::reduceDepth(const TextureHandle source) {
   int counter = 0;
   counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
       source, D3D12_RESOURCE_STATE_GENERIC_READ, barriers, counter);
+  counter = dx12::BUFFER_MANAGER->transitionBufferIfNeeded(
+      m_reduceBufferHandle, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, barriers,
+      counter);
+
   if (counter) {
     commandList->ResourceBarrier(counter, barriers);
   }
@@ -209,7 +214,7 @@ void DebugNode::reduceDepth(const TextureHandle source) {
 
   uint32_t width = globals::SCREEN_WIDTH;
   uint32_t height = globals::SCREEN_HEIGHT;
-  uint32_t blockWidth = 32;
+  uint32_t blockWidth = 64;
   uint32_t blockHeight = 4;
   uint32_t gx =
       width / blockWidth == 0 ? width / blockWidth : (width / blockWidth) + 1;
@@ -247,4 +252,4 @@ void DebugNode::compute() {
 #endif
   m_outputPlugs[0].plugValue = texH.handle;
 }
-} // namespace SirEngine
+}  // namespace SirEngine

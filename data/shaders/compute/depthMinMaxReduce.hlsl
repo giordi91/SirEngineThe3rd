@@ -4,16 +4,19 @@ Texture2D<float> Input : register( t0 );
 ConstantBuffer<TextureConfig> g_textureConfig: register(b0);
 RWStructuredBuffer<ReducedDepth> reducedDepth : register(u0);
 
-[numthreads( 32, 4, 1 )]
+[numthreads( 64, 4, 1 )]
 void CS( uint3 id : SV_DispatchThreadID)
 {
 
     //if (id.x < g_textureConfig.width && id.y < g_textureConfig.height)
-    if (id.x < 1200 && id.y < 600)
+    if (id.x < 1280 && id.y < 720)
     {
-        float depth = Input[id.xy] + g_textureConfig.height / 4;
+        float depth = Input[id.xy];
         float minDepth = WaveActiveMin(depth);
         float maxDepth = WaveActiveMax(depth);
+
+        //float minDepth = 0.0f;
+        //float maxDepth = 0.00014f;
 
         uint minDepthInt = asuint(minDepth);
         uint maxDepthInt = asuint(maxDepth);
