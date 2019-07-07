@@ -5,6 +5,7 @@
 #include "platform/windows/graphics/dx12/TextureManagerDx12.h"
 #include "platform/windows/graphics/dx12/bufferManagerDx12.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
+#include "SirEngine/graphics/debugAnnotations.h"
 
 namespace SirEngine {
 
@@ -236,6 +237,7 @@ void DebugNode::initialize() {
 
 void DebugNode::compute() {
   // get the render texture
+  annotateGraphicsBegin("DebugPass");
 
   auto &conn = m_connections[&m_inputPlugs[0]];
   assert(conn.size() == 1 && "too many input connections");
@@ -251,5 +253,6 @@ void DebugNode::compute() {
   blitDebugFrame(texH);
 #endif
   m_outputPlugs[0].plugValue = texH.handle;
+  annotateGraphicsEnd();
 }
 }  // namespace SirEngine

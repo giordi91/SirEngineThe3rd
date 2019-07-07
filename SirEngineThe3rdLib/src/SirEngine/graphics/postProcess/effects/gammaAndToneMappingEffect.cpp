@@ -7,8 +7,10 @@
 #include "platform/windows/graphics/dx12/TextureManagerDx12.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
 
+#include "SirEngine/graphics/debugAnnotations.h"
+
 namespace SirEngine {
-	static const char* GAMMA_TONE_PSO ="gammaAndToneMappingEffect_PSO";
+static const char *GAMMA_TONE_PSO = "gammaAndToneMappingEffect_PSO";
 void GammaAndToneMappingEffect::initialize() {
   rs = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(
       "standardPostProcessEffect_RS");
@@ -24,6 +26,7 @@ void GammaAndToneMappingEffect::initialize() {
 void GammaAndToneMappingEffect::render(TextureHandle input,
                                        TextureHandle output) {
 
+  annotateGraphicsBegin("Gamma & Tone-mapping");
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
 
@@ -45,16 +48,16 @@ void GammaAndToneMappingEffect::render(TextureHandle input,
   globals::TEXTURE_MANAGER->bindRenderTarget(output, TextureHandle{});
   dx12::DescriptorPair pair = dx12::TEXTURE_MANAGER->getSRVDx12(input);
 
-
-  dx12::PSO_MANAGER->bindPSO(pso,commandList);
+  dx12::PSO_MANAGER->bindPSO(pso, commandList);
   commandList->SetGraphicsRootSignature(rs);
   commandList->SetGraphicsRootDescriptorTable(1, pair.gpuHandle);
   commandList->SetGraphicsRootDescriptorTable(
-      2,
-      dx12::CONSTANT_BUFFER_MANAGER->getConstantBufferDx12Handle(m_constantBufferHandle)
-          .gpuHandle);
+      2, dx12::CONSTANT_BUFFER_MANAGER
+             ->getConstantBufferDx12Handle(m_constantBufferHandle)
+             .gpuHandle);
 
   commandList->DrawInstanced(6, 1, 0, 0);
+  annotateGraphicsEnd();
 }
 void GammaAndToneMappingEffect::updateConstantBuffer() {
   globals::CONSTANT_BUFFER_MANAGER->updateConstantBufferBuffered(

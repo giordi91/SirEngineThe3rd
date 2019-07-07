@@ -18,6 +18,7 @@
 #include "SirEngine/events/mouseEvent.h"
 #include "SirEngine/events/shaderCompileEvent.h"
 #include "SirEngine/events/renderGraphEvent.h"
+#include "SirEngine/graphics/debugAnnotations.h"
 
 namespace SirEngine {
 void ImguiLayer::onAttach() {
@@ -73,6 +74,7 @@ void ImguiLayer::onUpdate() {
     return;
   }
 
+  annotateGraphicsBegin("UI Draw");
   TextureHandle destination = dx12::SWAP_CHAIN->currentBackBufferTexture();
   D3D12_RESOURCE_BARRIER barriers[1];
   int counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
@@ -148,6 +150,7 @@ void ImguiLayer::onUpdate() {
   ImGui::Render();
   ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(),
                                 dx12::CURRENT_FRAME_RESOURCE->fc.commandList);
+  annotateGraphicsEnd();
 }
 
 void ImguiLayer::onEvent(Event &event) {
@@ -226,7 +229,7 @@ bool ImguiLayer::onKeyTypeEvent(const KeyTypeEvent &e) const {
   return io.WantCaptureKeyboard;
 }
 
-bool ImguiLayer::onRenderGraphEvent(const RenderGraphChanged &e) {
+bool ImguiLayer::onRenderGraphEvent(const RenderGraphChanged &) {
   m_renderGraph.initialize(dx12::RENDERING_GRAPH);
   m_renderGraph.showGraph(true);
   return true;

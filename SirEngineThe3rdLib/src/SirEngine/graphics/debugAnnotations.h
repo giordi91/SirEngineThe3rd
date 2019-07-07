@@ -1,7 +1,9 @@
 #pragma once
 #if GRAPHICS_API == DX12
-#include "WinPixEventRuntime/WinPixEventRuntime/pix3.h"
+//NOTE DX12.h needs to appear before pix3.h!!!
 #include "platform/windows/graphics/dx12/DX12.h"
+
+#include "WinPixEventRuntime/WinPixEventRuntime/pix3.h"
 #endif
 
 namespace SirEngine {

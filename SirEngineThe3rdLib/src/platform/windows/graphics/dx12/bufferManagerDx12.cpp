@@ -56,7 +56,7 @@ void BufferManagerDx12::bindBuffer(
   commandList->SetComputeRootUnorderedAccessView(
       slot, data.data->GetGPUVirtualAddress());
 }
-void BufferManagerDx12::bindBufferAsSRVGraphics(BufferHandle handle, int slot,
+void BufferManagerDx12::bindBufferAsSRVGraphics(const BufferHandle handle, const int slot,
                      ID3D12GraphicsCommandList2 *commandList)const 
 {
   assertMagicNumber(handle);
