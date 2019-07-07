@@ -2,8 +2,8 @@
   "commands": 
     [
       "-p ../data/shaders/rasterization/depthBufferDebugPS.hlsl -o ../data/processed/shaders/rasterization/depthBufferDebugPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
-      "-p ../data/shaders/compute/depthMinMaxReduce.hlsl -o ../data/processed/shaders/compute/depthMinMaxReduce.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t cs_6_2  -e CS -d \"",
-      "-p ../data/shaders/compute/depthMinMaxReduceClear.hlsl -o ../data/processed/shaders/compute/depthMinMaxReduceClear.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t cs_6_2  -e CS -d \"",
+      "-p ../data/shaders/compute/depthMinMaxReduce.hlsl -o ../data/processed/shaders/compute/depthMinMaxReduce.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t cs_6_2  -e CS  \"",
+      "-p ../data/shaders/compute/depthMinMaxReduceClear.hlsl -o ../data/processed/shaders/compute/depthMinMaxReduceClear.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t cs_6_2  -e CS  \"",
       "-p ../data/rs/depthMinMaxReduce_RS.json -o ../data/processed/rs/depthMinMaxReduce_RS.root --pluginName rootSignatureCompilerPlugin",
       "-p ../data/rs/debugFullScreenBlit_RS.json -o ../data/processed/rs/debugFullScreenBlit_RS.root --pluginName rootSignatureCompilerPlugin"
     ]
