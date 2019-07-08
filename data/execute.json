@@ -1,10 +1,13 @@
 {
   "commands": 
     [
-      "-p ../data/shaders/rasterization/depthBufferDebugPS.hlsl -o ../data/processed/shaders/rasterization/depthBufferDebugPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
-      "-p ../data/shaders/compute/depthMinMaxReduce.hlsl -o ../data/processed/shaders/compute/depthMinMaxReduce.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t cs_6_2  -e CS  \"",
-      "-p ../data/shaders/compute/depthMinMaxReduceClear.hlsl -o ../data/processed/shaders/compute/depthMinMaxReduceClear.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t cs_6_2  -e CS  \"",
-      "-p ../data/rs/depthMinMaxReduce_RS.json -o ../data/processed/rs/depthMinMaxReduce_RS.root --pluginName rootSignatureCompilerPlugin",
-      "-p ../data/rs/debugFullScreenBlit_RS.json -o ../data/processed/rs/debugFullScreenBlit_RS.root --pluginName rootSignatureCompilerPlugin"
+      "-p ../data/external/meshes/knightB/face.obj -o ../data/processed/meshes/knightB/face.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/face.tangents\"",
+
+      "-p ../data/textures/black.png -o ../data/processed/textures/black.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1 -g -m\"",
+      "-p ../data/textures/white.png -o ../data/processed/textures/white.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1 -g -m\"",
+      "-p ../data/external/textures/knightB/face_A.png -o ../data/processed/textures/knightB/face_A.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1 -g -m\"",
+      "-p ../data/external/textures/knightB/face_N.png -o ../data/processed/textures/knightB/face_N.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\"",
+      "-p ../data/external/textures/knightB/face_SCATTER.png -o ../data/processed/textures/knightB/face_SCATTER.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\"",
+      "-p ../data/external/textures/knightB/face_R.png -o ../data/processed/textures/knightB/face_R.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\""
     ]
 }

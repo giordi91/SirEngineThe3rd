@@ -24,6 +24,7 @@ static const std::unordered_map<std::string, SirEngine::SHADER_PASS_FLAGS>
         {"forward", SirEngine::SHADER_PASS_FLAGS::FORWARD},
         {"deferred", SirEngine::SHADER_PASS_FLAGS::DEFERRED},
         {"pbr", SirEngine::SHADER_PASS_FLAGS::PBR},
+        {"skin", SirEngine::SHADER_PASS_FLAGS::SKIN},
     };
 
 } // namespace materialKeys
