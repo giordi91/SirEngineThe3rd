@@ -37,4 +37,12 @@ void RenderingContext::bindCameraBuffer(const int index) const {
       dx12::CONSTANT_BUFFER_MANAGER->getConstantBufferDx12Handle(m_cameraHandle)
           .gpuHandle);
 }
+void RenderingContext::bindCameraBufferCompute(const int index) const {
+  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
+  auto commandList = currentFc->commandList;
+  commandList->SetComputeRootDescriptorTable(
+      index,
+      dx12::CONSTANT_BUFFER_MANAGER->getConstantBufferDx12Handle(m_cameraHandle)
+          .gpuHandle);
+}
 } // namespace SirEngine

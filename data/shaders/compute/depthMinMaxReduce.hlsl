@@ -1,15 +1,14 @@
 #include "../common/structures.hlsl"
 
 Texture2D<float> Input : register( t0 );
-ConstantBuffer<TextureConfig> g_textureConfig: register(b0);
+ConstantBuffer<CameraBuffer> g_camera: register(b0);
 RWStructuredBuffer<ReducedDepth> reducedDepth : register(u0);
 
 [numthreads( 64, 4, 1 )]
 void CS( uint3 id : SV_DispatchThreadID)
 {
 
-    //if (id.x < g_textureConfig.width && id.y < g_textureConfig.height)
-    if (id.x < 1280 && id.y < 720)
+    if (id.x < g_camera.screenWidth && id.y < g_camera.screenHeight  )
     {
         float depth = Input[id.xy];
         float minDepth = WaveActiveMin(depth);

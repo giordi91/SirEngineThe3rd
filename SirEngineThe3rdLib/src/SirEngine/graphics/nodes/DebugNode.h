@@ -29,7 +29,7 @@ private:
 private:
   void blitDebugFrame(TextureHandle handleToWriteOn);
   void updateConstantBuffer();
-  void reduceDepth(TextureHandle source);
+  void reduceDepth(TextureHandle source) const;
 
 private:
   DebugIndex m_index;

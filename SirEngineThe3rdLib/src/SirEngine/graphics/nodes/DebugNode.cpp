@@ -1,11 +1,12 @@
 #include "SirEngine/graphics/nodes/DebugNode.h"
+#include "SirEngine/graphics/debugAnnotations.h"
 #include "SirEngine/handle.h"
 #include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
 #include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/TextureManagerDx12.h"
 #include "platform/windows/graphics/dx12/bufferManagerDx12.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
-#include "SirEngine/graphics/debugAnnotations.h"
+#include "SirEngine/graphics/renderingContext.h"
 
 namespace SirEngine {
 
@@ -83,8 +84,9 @@ void blitBuffer(const TextureHandle input, const TextureHandle handleToWriteOn,
   commandList->DrawInstanced(6, 1, 0, 0);
 }
 void blitDepthDebug(const TextureHandle input,
-                    const TextureHandle handleToWriteOn, BufferHandle buffer,
-                    const PSOHandle psoHandle, ID3D12RootSignature *rs,
+                    const TextureHandle handleToWriteOn,
+                    const BufferHandle buffer, const PSOHandle psoHandle,
+                    ID3D12RootSignature *rs,
                     const ConstantBufferHandle configHandle,
                     const BufferHandle reduceHandle) {
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
@@ -128,38 +130,37 @@ inline void checkHandle(const TextureHandle input,
 
 void DebugNode::blitDebugFrame(const TextureHandle handleToWriteOn) {
   switch (m_index) {
-    case (DebugIndex::GBUFFER): {
-      TextureHandle input = globals::DEBUG_FRAME_DATA->geometryBuffer;
-      checkHandle(input, handleToWriteOn);
-      blitBuffer(input, handleToWriteOn, gbufferPSOHandle, rs,
-                 m_constBufferHandle);
-      break;
-    }
-    case (DebugIndex::NORMAL_BUFFER): {
-      TextureHandle input = globals::DEBUG_FRAME_DATA->normalBuffer;
-      checkHandle(input, handleToWriteOn);
-      blitBuffer(input, handleToWriteOn, normalPSOHandle, rs,
-                 m_constBufferHandle);
-      break;
-    }
-    case (DebugIndex::SPECULAR_BUFFER): {
-      TextureHandle input = globals::DEBUG_FRAME_DATA->specularBuffer;
-      checkHandle(input, handleToWriteOn);
-      blitBuffer(input, handleToWriteOn, specularPSOHandle, rs,
-                 m_constBufferHandle);
-      break;
-    }
-    case (DebugIndex::GBUFFER_DEPTH): {
-      TextureHandle input = globals::DEBUG_FRAME_DATA->gbufferDepth;
-      checkHandle(input, handleToWriteOn);
-      reduceDepth(globals::DEBUG_FRAME_DATA->gbufferDepth);
-      blitDepthDebug(input, handleToWriteOn, m_reduceBufferHandle,
-                     depthPSOHandle, rs, m_constBufferHandle,
-                     m_reduceBufferHandle);
-      break;
-    }
-    default:
-      assert(0 && "no valid pass to debug");
+  case (DebugIndex::GBUFFER): {
+    TextureHandle input = globals::DEBUG_FRAME_DATA->geometryBuffer;
+    checkHandle(input, handleToWriteOn);
+    blitBuffer(input, handleToWriteOn, gbufferPSOHandle, rs,
+               m_constBufferHandle);
+    break;
+  }
+  case (DebugIndex::NORMAL_BUFFER): {
+    TextureHandle input = globals::DEBUG_FRAME_DATA->normalBuffer;
+    checkHandle(input, handleToWriteOn);
+    blitBuffer(input, handleToWriteOn, normalPSOHandle, rs,
+               m_constBufferHandle);
+    break;
+  }
+  case (DebugIndex::SPECULAR_BUFFER): {
+    TextureHandle input = globals::DEBUG_FRAME_DATA->specularBuffer;
+    checkHandle(input, handleToWriteOn);
+    blitBuffer(input, handleToWriteOn, specularPSOHandle, rs,
+               m_constBufferHandle);
+    break;
+  }
+  case (DebugIndex::GBUFFER_DEPTH): {
+    TextureHandle input = globals::DEBUG_FRAME_DATA->gbufferDepth;
+    checkHandle(input, handleToWriteOn);
+    reduceDepth(globals::DEBUG_FRAME_DATA->gbufferDepth);
+    blitDepthDebug(input, handleToWriteOn, m_reduceBufferHandle, depthPSOHandle,
+                   rs, m_constBufferHandle, m_reduceBufferHandle);
+    break;
+  }
+  default:
+    assert(0 && "no valid pass to debug");
   }
 }
 
@@ -169,7 +170,7 @@ void DebugNode::updateConstantBuffer() {
   updateConfig = false;
 }
 
-void DebugNode::reduceDepth(const TextureHandle source) {
+void DebugNode::reduceDepth(const TextureHandle source) const {
   // we need to kick the compute shader
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
@@ -194,10 +195,12 @@ void DebugNode::reduceDepth(const TextureHandle source) {
   // bind the source
   commandList->SetComputeRootDescriptorTable(1, pair.gpuHandle);
   // setup the
-  commandList->SetComputeRootDescriptorTable(
-      2, dx12::CONSTANT_BUFFER_MANAGER
-             ->getConstantBufferDx12Handle(m_textureConfigHandle)
-             .gpuHandle);
+  // commandList->SetComputeRootDescriptorTable(
+  //    2, dx12::CONSTANT_BUFFER_MANAGER
+  //           ->getConstantBufferDx12Handle(m_textureConfigHandle)
+  //           .gpuHandle);
+
+  globals::RENDERING_CONTEX->bindCameraBufferCompute(2);
   dx12::BUFFER_MANAGER->bindBuffer(m_reduceBufferHandle, 0, commandList);
   // first we kick the clear
   dx12::PSO_MANAGER->bindPSO(depthReduceClearPSOHandle, commandList);
@@ -255,4 +258,4 @@ void DebugNode::compute() {
   m_outputPlugs[0].plugValue = texH.handle;
   annotateGraphicsEnd();
 }
-}  // namespace SirEngine
+} // namespace SirEngine
