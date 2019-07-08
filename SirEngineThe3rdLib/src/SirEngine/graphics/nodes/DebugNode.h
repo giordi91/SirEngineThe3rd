@@ -36,7 +36,6 @@ private:
   DebugLayerConfig m_config;
   TextureConfig m_textureConfig{0,0};
   ConstantBufferHandle m_constBufferHandle;
-  ConstantBufferHandle m_textureConfigHandle;
   BufferHandle m_reduceBufferHandle;
   bool updateConfig = false;
 
