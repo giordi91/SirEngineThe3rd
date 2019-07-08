@@ -14,9 +14,6 @@ void CS( uint3 id : SV_DispatchThreadID)
         float minDepth = WaveActiveMin(depth);
         float maxDepth = WaveActiveMax(depth);
 
-        //float minDepth = 0.0f;
-        //float maxDepth = 0.00014f;
-
         uint minDepthInt = asuint(minDepth);
         uint maxDepthInt = asuint(maxDepth);
 

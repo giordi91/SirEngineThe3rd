@@ -15,7 +15,7 @@ public:
   void setDebugIndex(int index) { m_index = static_cast<DebugIndex>(index); }
   void setConfig(const DebugLayerConfig config) {
     m_config = config;
-    updateConfig = true;
+    m_updateConfig = true;
   }
 
 private:
@@ -27,7 +27,7 @@ private:
   };
 
 private:
-  void blitDebugFrame(TextureHandle handleToWriteOn);
+  void blitDebugFrame(TextureHandle handleToWriteOn) const;
   void updateConstantBuffer();
   void reduceDepth(TextureHandle source) const;
 
@@ -37,16 +37,16 @@ private:
   TextureConfig m_textureConfig{0,0};
   ConstantBufferHandle m_constBufferHandle;
   BufferHandle m_reduceBufferHandle;
-  bool updateConfig = false;
+  bool m_updateConfig = false;
 
-  PSOHandle gbufferPSOHandle;
-  PSOHandle normalPSOHandle;
-  PSOHandle specularPSOHandle;
-  PSOHandle depthPSOHandle;
-  PSOHandle depthReducePSOHandle;
-  PSOHandle depthReduceClearPSOHandle;
-  ID3D12RootSignature *rs = nullptr;
-  ID3D12RootSignature *reduceRs= nullptr;
+  PSOHandle m_gbufferPSOHandle;
+  PSOHandle m_normalPSOHandle;
+  PSOHandle m_specularPSOHandle;
+  PSOHandle m_depthPSOHandle;
+  PSOHandle m_depthReducePSOHandle;
+  PSOHandle m_depthReduceClearPSOHandle;
+  ID3D12RootSignature *m_rs = nullptr;
+  ID3D12RootSignature *m_reduceRs= nullptr;
 };
 
 } // namespace SirEngine
