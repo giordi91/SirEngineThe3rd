@@ -25,9 +25,12 @@
       "material": "../data/materials/knightBCape.json"
     },
     {
+      "mesh": "../data/processed/meshes/knightB/face.model",
+      "material": "../data/materials/knightBFace.json"
+    },
+    {
       "mesh": "../data/processed/meshes/flatGround/flatGround.model",
       "material": "../data/materials/flatGround.json"
     }
-
   ]
 }

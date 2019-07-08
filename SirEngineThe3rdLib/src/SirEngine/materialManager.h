@@ -51,7 +51,12 @@ struct Material final {
   float padding;
   float padding2;
 };
-enum SHADER_PASS_FLAGS { FORWARD = 1 << 0, DEFERRED = 1 << 1, PBR = 1 << 2 };
+enum SHADER_PASS_FLAGS {
+  FORWARD = 1 << 0,
+  DEFERRED = 1 << 1,
+  PBR = 1 << 2,
+  SKIN = 1 << 3
+};
 
 class MaterialManager final {
 
@@ -65,6 +70,10 @@ public:
   MaterialManager &operator=(const MaterialManager &) = delete;
 
   void initialize(){};
+  MaterialHandle loadMaterial(const char *path, uint32_t runtimeIndex,
+                              MaterialRuntime *runtimeMemory);
+
+private:
   inline uint32_t getIndexFromHandel(MaterialHandle h) const {
     return h.handle & INDEX_MASK;
   }
@@ -78,10 +87,7 @@ public:
     assert(m_materialsMagic[idx] == magic &&
            "invalid magic handle for constant buffer");
   }
-  MaterialHandle loadMaterial(const char *path, uint32_t runtimeIndex,
-                              MaterialRuntime *runtimeMemory);
 
-private:
   std::unordered_map<std::string, MaterialHandle> m_nameToHandle;
   static const uint32_t INDEX_MASK = (1 << 16) - 1;
   static const uint32_t MAGIC_NUMBER_MASK = ~INDEX_MASK;
