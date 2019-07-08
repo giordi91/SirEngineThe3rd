@@ -216,13 +216,13 @@ void DebugNode::reduceDepth(const TextureHandle source) const {
 
   dx12::PSO_MANAGER->bindPSO(depthReducePSOHandle, commandList);
 
-  uint32_t width = globals::SCREEN_WIDTH;
-  uint32_t height = globals::SCREEN_HEIGHT;
-  uint32_t blockWidth = 64;
-  uint32_t blockHeight = 4;
-  uint32_t gx =
+  const uint32_t width = globals::SCREEN_WIDTH;
+  const uint32_t height = globals::SCREEN_HEIGHT;
+  const uint32_t blockWidth = 64;
+  const uint32_t blockHeight = 4;
+  const uint32_t gx =
       width / blockWidth == 0 ? width / blockWidth : (width / blockWidth) + 1;
-  uint32_t gy = height / blockHeight == 0 ? height / blockHeight
+  const uint32_t gy = height / blockHeight == 0 ? height / blockHeight
                                           : height / blockHeight + 1;
   commandList->Dispatch(gx, gy, 1);
 }
@@ -230,8 +230,6 @@ void DebugNode::reduceDepth(const TextureHandle source) const {
 void DebugNode::initialize() {
   m_constBufferHandle = globals::CONSTANT_BUFFER_MANAGER->allocateDynamic(
       sizeof(DebugLayerConfig), &m_config);
-  m_textureConfigHandle = globals::CONSTANT_BUFFER_MANAGER->allocateDynamic(
-      sizeof(TextureConfig), &m_textureConfig);
 
   m_reduceBufferHandle = globals::BUFFER_MANAGER->allocate(
       sizeof(ReducedDepth), nullptr, "depthDebugReduce", 1,
