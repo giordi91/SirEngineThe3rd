@@ -12,6 +12,7 @@ public:
   void initialize();
   void setupCameraForFrame();
   void bindCameraBuffer(int index) const;
+  void bindCameraBufferCompute(int index) const;
   inline void setEnviromentMap(const TextureHandle enviromentMapHandle) {
     m_enviromentMapHandle = enviromentMapHandle;
   };
