@@ -8,5 +8,7 @@
   "normal" :  "../data/processed/textures/knightB/sword_N.texture",
   "roughness" :  "../data/processed/textures/knightB/sword_R.texture",
   "metallic" :  "../data/processed/textures/knightB/sword_M.texture",
-  "flags" :  ["deferred", "pbr"]
+  "flags" :  ["deferred", "pbr"],
+  "queue" :  ["deferred"],
+  "type" : "pbr" 
 }

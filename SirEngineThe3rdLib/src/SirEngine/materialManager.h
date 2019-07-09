@@ -21,6 +21,7 @@ struct MaterialRuntime final {
   D3D12_GPU_DESCRIPTOR_HANDLE roughness;
 #endif
   uint32_t shaderFlags = 0;
+  uint32_t shaderQueueTypeFlags = 0;
 };
 struct MaterialDataHandles {
   TextureHandle albedo;
@@ -51,13 +52,21 @@ struct Material final {
   float padding;
   float padding2;
 };
-enum SHADER_PASS_FLAGS {
+enum class SHADER_PASS_FLAGS {
   FORWARD = 1 << 0,
   DEFERRED = 1 << 1,
   PBR = 1 << 2,
   SKIN = 1 << 3,
   SHADOW = 1 << 4
 };
+
+enum class SHADER_QUEUE_FLAGS {
+  FORWARD = 1 << 0,
+  DEFERRED = 1 << 1,
+  SHADOW = 1 << 2
+};
+
+enum class SHADER_TYPE_FLAGS { UNKNOWN=0, PBR = 1, SKIN = 2 };
 
 class MaterialManager final {
 
@@ -73,6 +82,34 @@ public:
   void initialize(){};
   MaterialHandle loadMaterial(const char *path, uint32_t runtimeIndex,
                               MaterialRuntime *runtimeMemory);
+
+  inline SHADER_TYPE_FLAGS getTypeFlags(const uint32_t flags) {
+    // here we are creating a mask for the fist 16 bits, then we flip it
+    // such that we are going to mask the upper 16 bits
+    constexpr uint32_t mask = static_cast<uint32_t>(~((1 << 16) - 1));
+    const uint32_t typeFlags = (flags & mask) >> 16;
+    return static_cast<SHADER_TYPE_FLAGS>(typeFlags);
+  }
+
+  inline bool isShaderOfType(const uint32_t flags,
+                             const SHADER_TYPE_FLAGS type) {
+    const SHADER_TYPE_FLAGS typeFlags = getTypeFlags(flags);
+    return typeFlags == type;
+  }
+
+  inline uint32_t getQueueFlags(const uint32_t flags) {
+    constexpr uint32_t mask = (1 << 16) - 1;
+    const uint32_t queueFlags = flags & mask;
+    return queueFlags;
+  }
+
+  inline bool isQueueType(const uint32_t flags,
+                          const SHADER_QUEUE_FLAGS queue) {
+    const uint32_t queueFlags = getQueueFlags(flags);
+    return (queueFlags & static_cast<uint32_t>(queue)) > 0;
+  }
+
+  const std::string& getStringFromShaderTypeFlag(SHADER_TYPE_FLAGS type);
 
 private:
   inline uint32_t getIndexFromHandel(const MaterialHandle h) const {

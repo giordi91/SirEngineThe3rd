@@ -6,9 +6,9 @@
 
 namespace SirEngine {
 
-class GBufferPassPBR : public GraphNode {
+class GBufferPassPBR final : public GraphNode {
 public:
-  GBufferPassPBR(const char *name);
+	explicit GBufferPassPBR(const char *name);
   virtual ~GBufferPassPBR() { clear(); };
   virtual void initialize() override;
   virtual void compute() override;

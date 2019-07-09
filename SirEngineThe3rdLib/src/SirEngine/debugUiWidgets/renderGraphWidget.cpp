@@ -456,29 +456,8 @@ void RenderGraphWidget::render() {
     return;
   const char *items[] = {"fullFrame", "gbuffer", "normalsBuffer",
                          "specularBuffer", "depth"};
-  bool debugLayerValueChanged =
+  const bool debugLayerValueChanged =
       ImGui::Combo("Pass", &currentDebugLayer, items, IM_ARRAYSIZE(items));
-  // check if we need to render any extra stuff based on specific buffer
-  switch (currentDebugLayer) {
-    // depth
-  case (4): {
-    ImGui::InputFloat("depthMinStart", &depthMinStart, 0, 0, "%0.5f");
-    ImGui::InputFloat("depthMinEnd", &depthMinEnd, 0, 0, "%0.5f");
-
-    ImGui::InputFloat("depthMaxStart", &depthMaxStart, 0, 0, "%0.5f");
-    ImGui::InputFloat("depthMaxEnd", &depthMaxEnd, 0, 0, "%0.5f");
-    // we want to display a range for remapping the color
-    bool minChanged = ImGui::SliderFloat("min depth", &m_debugConfig.depthMin,
-                                         depthMinStart, depthMinEnd, "%.5f");
-    bool maxChanged = ImGui::SliderFloat("max depth", &m_debugConfig.depthMax,
-                                         depthMaxStart, depthMaxEnd, "%.5f");
-    generateDebugEvent |= (minChanged | maxChanged);
-    break;
-  }
-  default: {
-    break;
-  }
-  }
 
   // lets render post process stack configuration
   if (ImGui::CollapsingHeader("Post process stack")) {
@@ -497,10 +476,10 @@ void RenderGraphWidget::render() {
           switch (type) {
           case (PostProcessTypeDebug::GAMMA_TONE_MAPPING): {
             auto *typedEffect = (GammaAndToneMappingEffect *)(effect);
-            GammaToneMappingConfig& config = typedEffect->getConfig();
-            bool exposure =
+            GammaToneMappingConfig &config = typedEffect->getConfig();
+            const bool exposure =
                 ImGui::SliderFloat("exposure", &config.exposure, 0.0f, 10.0f);
-            bool gamma =
+            const bool gamma =
                 ImGui::SliderFloat("gamma", &config.gamma, 0.0f, 10.0f);
             if (exposure | gamma) {
               typedEffect->setConfigDirty();
@@ -521,7 +500,7 @@ void RenderGraphWidget::render() {
     globals::APPLICATION->queueEventForEndOfFrame(event);
   }
 
-  bool pressed = ImGui::Button("show render graph");
+  const bool pressed = ImGui::Button("show render graph");
   if (pressed) {
     status->opened = !status->opened;
   }

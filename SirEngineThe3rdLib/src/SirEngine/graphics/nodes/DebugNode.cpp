@@ -100,7 +100,7 @@ void blitDepthDebug(const TextureHandle input,
   counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
       handleToWriteOn, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, counter);
   counter = dx12::BUFFER_MANAGER->transitionBufferIfNeeded(
-      buffer, D3D12_RESOURCE_STATE_RESOLVE_DEST, barriers, counter);
+      buffer, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, barriers, counter);
   if (counter) {
     commandList->ResourceBarrier(counter, barriers);
   }
