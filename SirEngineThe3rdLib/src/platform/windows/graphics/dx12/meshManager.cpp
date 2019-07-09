@@ -4,8 +4,7 @@
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
 
-namespace SirEngine::dx12
-{
+namespace SirEngine::dx12 {
 void MeshManager::clearUploadRequests() {
 
   auto id = GLOBAL_FENCE->GetCompletedValue();
@@ -37,17 +36,19 @@ static ID3D12Resource *createDefaultBuffer(ID3D12Device *device,
   ID3D12Resource *defaultBuffer = nullptr;
 
   // Create the actual default buffer resource.
+  auto defaultHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+  auto defaultBufferDesc = CD3DX12_RESOURCE_DESC::Buffer(byteSize);
   HRESULT res = device->CreateCommittedResource(
-      &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
-      &CD3DX12_RESOURCE_DESC::Buffer(byteSize), D3D12_RESOURCE_STATE_COMMON,
-      nullptr, IID_PPV_ARGS(&defaultBuffer));
+      &defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &defaultBufferDesc,
+      D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&defaultBuffer));
   assert(SUCCEEDED(res));
 
   // In order to copy CPU memory data into our default buffer, we need to create
   // an intermediate upload heap.
+  auto uploadHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+  auto uploadBufferDesc = CD3DX12_RESOURCE_DESC::Buffer(byteSize);
   res = device->CreateCommittedResource(
-      &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE,
-      &CD3DX12_RESOURCE_DESC::Buffer(byteSize),
+      &uploadHeapProperties, D3D12_HEAP_FLAG_NONE, &uploadBufferDesc,
       D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(uploadBuffer));
   assert(SUCCEEDED(res));
 
@@ -62,14 +63,16 @@ static ID3D12Resource *createDefaultBuffer(ID3D12Device *device,
   // intermediate upload heap.  Then, using
   // ID3D12CommandList::CopySubresourceRegion, the intermediate upload heap data
   // will be copied to mBuffer.
-  cmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
-                                  defaultBuffer, D3D12_RESOURCE_STATE_COMMON,
-                                  D3D12_RESOURCE_STATE_COPY_DEST));
+  auto preTransition = CD3DX12_RESOURCE_BARRIER::Transition(
+      defaultBuffer, D3D12_RESOURCE_STATE_COMMON,
+      D3D12_RESOURCE_STATE_COPY_DEST);
+  cmdList->ResourceBarrier(1, &preTransition);
   UpdateSubresources<1>(cmdList, defaultBuffer, *uploadBuffer, 0, 0, 1,
                         &subResourceData);
-  cmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
-                                  defaultBuffer, D3D12_RESOURCE_STATE_COPY_DEST,
-                                  D3D12_RESOURCE_STATE_GENERIC_READ));
+  auto postTransition = CD3DX12_RESOURCE_BARRIER::Transition(
+      defaultBuffer, D3D12_RESOURCE_STATE_COPY_DEST,
+      D3D12_RESOURCE_STATE_GENERIC_READ);
+  cmdList->ResourceBarrier(1, &postTransition);
 
   // Note: uploadBuffer has to be kept alive after the above function calls
   // because the command list has not been executed yet that performs the actual
@@ -78,27 +81,26 @@ static ID3D12Resource *createDefaultBuffer(ID3D12Device *device,
   return defaultBuffer;
 }
 
-MeshHandle MeshManager::loadMesh(const char *path, const uint32_t runtimeIndex,
-                                 MeshRuntime *runtimeMemory) {
+MeshHandle MeshManager::loadMesh(const char *path, MeshRuntime *meshRuntime) {
 
   SE_CORE_INFO("Loading mesh {0}", path);
-  bool res = fileExists(path);
+  const bool res = fileExists(path);
   assert(res);
   // lets check whether or not the mesh has been loaded already
   const std::string name = getFileName(path);
-  MeshData *meshData = nullptr;
-  MeshHandle handle = {0};
-  auto found = m_nameToHandle.find(name);
+  MeshData *meshData;
+  MeshHandle handle;
+  const auto found = m_nameToHandle.find(name);
   if (found == m_nameToHandle.end()) {
     std::vector<char> bindaryData;
     readAllBytes(path, bindaryData);
 
-    auto mapper = getMapperData<ModelMapperData>(bindaryData.data());
+    const auto mapper = getMapperData<ModelMapperData>(bindaryData.data());
 
-    uint32_t stride = mapper->strideInByte / sizeof(float);
+    const uint32_t stride = mapper->strideInByte / sizeof(float);
     // creating the buffers
-    int vertexCount = mapper->vertexDataSizeInByte / mapper->strideInByte;
-    uint32_t indexCount = mapper->indexDataSizeInByte / sizeof(int);
+    const uint32_t vertexCount = mapper->vertexDataSizeInByte / mapper->strideInByte;
+    const uint32_t indexCount = mapper->indexDataSizeInByte / sizeof(int);
 
     // lets get the vertex data
     auto *vertexData = reinterpret_cast<float *>(bindaryData.data() +
@@ -136,7 +138,6 @@ MeshHandle MeshManager::loadMesh(const char *path, const uint32_t runtimeIndex,
     m_nameToHandle[name] = handle;
     ++MAGIC_NUMBER_COUNTER;
   } else {
-
     SE_CORE_INFO("Mesh already loaded, returning handle:{0}", name);
     // we already loaded the mesh so we can just get the handle and index data
     uint32_t index = getIndexFromHandle(found->second);
@@ -145,11 +146,11 @@ MeshHandle MeshManager::loadMesh(const char *path, const uint32_t runtimeIndex,
   }
 
   // build the runtime mesh
-  MeshRuntime &runM = runtimeMemory[runtimeIndex];
-  runM.indexCount = meshData->indexCount;
-  runM.vview = getVertexBufferView(handle);
-  runM.iview = getIndexBufferView(handle);
+  // MeshRuntime &runM = runtimeMemory[runtimeIndex];
+  meshRuntime->indexCount = meshData->indexCount;
+  meshRuntime->vview = getVertexBufferView(handle);
+  meshRuntime->iview = getIndexBufferView(handle);
 
   return handle;
 }
-} // namespace SirEngine
+} // namespace SirEngine::dx12

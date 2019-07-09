@@ -1,5 +1,6 @@
 #include "SirEngine/graphics/nodes/skybox.h"
 #include "SirEngine/assetManager.h"
+#include "SirEngine/graphics/debugAnnotations.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
 #include "platform/windows/graphics/dx12/DX12.h"
@@ -8,7 +9,6 @@
 #include "platform/windows/graphics/dx12/meshManager.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
 #include "platform/windows/graphics/dx12/swapChain.h"
-#include "SirEngine/graphics/debugAnnotations.h"
 
 namespace SirEngine {
 static const char *SKYBOX_RS = "skybox_RS";
@@ -45,7 +45,7 @@ void SkyBoxPass::initialize() {
 
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
   dx12::resetAllocatorAndList(&dx12::CURRENT_FRAME_RESOURCE->fc);
-  dx12::MESH_MANAGER->loadMesh("../data/processed/meshes/skybox.model", 0,
+  dx12::MESH_MANAGER->loadMesh("../data/processed/meshes/skybox.model",
                                &m_meshRuntime);
   dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE,
                            &dx12::CURRENT_FRAME_RESOURCE->fc);
