@@ -44,26 +44,12 @@ GBufferPassPBR::GBufferPassPBR(const char *name)
   registerPlug(depthBuffer);
 
   // lets create the plugs
-  Plug matrices;
-  matrices.plugValue = 0;
-  matrices.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_CPU_BUFFER;
-  matrices.nodePtr = this;
-  matrices.name = "matrices";
-  registerPlug(matrices);
-
-  Plug meshes;
-  meshes.plugValue = 0;
-  meshes.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_MESHES;
-  meshes.nodePtr = this;
-  meshes.name = "meshes";
-  registerPlug(meshes);
-
-  Plug materials;
-  materials.plugValue = 0;
-  materials.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_CPU_BUFFER;
-  materials.nodePtr = this;
-  materials.name = "materials";
-  registerPlug(materials);
+  Plug stream;
+  stream.plugValue = 0;
+  stream.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_CPU_BUFFER;
+  stream.nodePtr = this;
+  stream.name = "assetStream";
+  registerPlug(stream);
 
   // fetching root signature
   rs = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(GBUFFER_RS);
@@ -130,12 +116,13 @@ void GBufferPassPBR::compute() {
   globals::RENDERING_CONTEX->bindCameraBuffer(0);
 
   const std::unordered_map<uint32_t, std::vector<Renderable>> &renderables =
-      globals::ASSET_MANAGER->getRenderables();
+      globals::ASSET_MANAGER->getRenderables(
+          StreamHandle{m_inputPlugs[0].plugValue});
 
   for (const auto &renderableList : renderables) {
     if (dx12::MATERIAL_MANAGER->isQueueType(renderableList.first,
                                             SHADER_QUEUE_FLAGS::DEFERRED)) {
-	    const SHADER_TYPE_FLAGS type =
+      const SHADER_TYPE_FLAGS type =
           dx12::MATERIAL_MANAGER->getTypeFlags(renderableList.first);
       const std::string &typeName =
           dx12::MATERIAL_MANAGER->getStringFromShaderTypeFlag(type);

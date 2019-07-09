@@ -22,9 +22,11 @@ static const std::string DEFAULT_STRING = "";
 AssetManager::AssetManager() {}
 
 bool AssetManager::initialize() {
-  //m_meshRuntime.resize(DATA_SIZE_ALLOC);
-  m_assetHandles.resize(DATA_SIZE_ALLOC);
-  //m_materialRuntime.resize(DATA_SIZE_ALLOC);
+
+  // allocate master handle
+  m_masterHandle = StreamHandle{(MAGIC_NUMBER_COUNTER << 16)};
+  m_renderables = &m_streamMapper[m_masterHandle.handle];
+
   return true;
 }
 
@@ -52,13 +54,13 @@ IdentityHandle AssetManager::loadAsset(const char *path) {
 
     // lets load the mesh
     MeshHandle mHandle = dx12::MESH_MANAGER->loadMesh(
-        meshString.c_str(),&renderable.m_meshRuntime);
+        meshString.c_str(), &renderable.m_meshRuntime);
 
     MaterialHandle matHandle = dx12::MATERIAL_MANAGER->loadMaterial(
         materialString.c_str(), &renderable.m_materialRuntime);
 
     // store the renderable
-    m_renderables[renderable.m_materialRuntime.shaderQueueTypeFlags].push_back(
+    (*m_renderables)[renderable.m_materialRuntime.shaderQueueTypeFlags].push_back(
         renderable);
   }
 

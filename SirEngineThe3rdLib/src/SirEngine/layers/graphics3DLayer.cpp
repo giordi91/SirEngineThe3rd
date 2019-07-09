@@ -67,12 +67,8 @@ void Graphics3DLayer::onAttach() {
   dx12::RENDERING_GRAPH->addNode(sky);
   dx12::RENDERING_GRAPH->setFinalNode(finalBlit);
 
-  dx12::RENDERING_GRAPH->connectNodes(assetNode, "matrices", gbufferPass,
-                                      "matrices");
-  dx12::RENDERING_GRAPH->connectNodes(assetNode, "meshes", gbufferPass,
-                                      "meshes");
-  dx12::RENDERING_GRAPH->connectNodes(assetNode, "materials", gbufferPass,
-                                      "materials");
+  dx12::RENDERING_GRAPH->connectNodes(assetNode, "assetStream", gbufferPass,
+                                      "assetStream");
 
   // auto bw = new DebugNode("debugBW");
   dx12::RENDERING_GRAPH->addNode(postProcess);

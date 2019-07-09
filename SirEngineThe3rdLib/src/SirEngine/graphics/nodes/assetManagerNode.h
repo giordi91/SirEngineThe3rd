@@ -3,12 +3,12 @@
 #include "SirEngine/graphics/nodeGraph.h"
 
 namespace SirEngine {
-class AssetManagerNode : public GraphNode
+class AssetManagerNode final : public GraphNode
 {
 public:
 	AssetManagerNode();
 	virtual ~AssetManagerNode()=default;
-	virtual void compute() override;
+	void compute() override;
 };
 
 } // namespace SirEngine

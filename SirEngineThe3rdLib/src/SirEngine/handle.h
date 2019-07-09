@@ -30,8 +30,8 @@ struct BufferHandle final {
   bool isHandleValid() const { return handle != 0; }
 };
 
-struct AssetHandles {
-  MeshHandle meshH;
-  MaterialHandle materialH;
+struct StreamHandle { 
+  uint32_t handle;
+  bool isHandleValid() const { return handle != 0; }
 };
 } // namespace SirEngine
