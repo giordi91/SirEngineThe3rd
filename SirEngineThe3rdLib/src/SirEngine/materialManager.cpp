@@ -1,6 +1,5 @@
 #include "SirEngine/materialManager.h"
 #include "SirEngine/fileUtils.h"
-#include "SirEngine/identityManager.h"
 #include "nlohmann/json.hpp"
 #include "platform/windows/graphics/dx12/TextureManagerDx12.h"
 
@@ -25,13 +24,14 @@ static const std::unordered_map<std::string, SirEngine::SHADER_PASS_FLAGS>
         {"deferred", SirEngine::SHADER_PASS_FLAGS::DEFERRED},
         {"pbr", SirEngine::SHADER_PASS_FLAGS::PBR},
         {"skin", SirEngine::SHADER_PASS_FLAGS::SKIN},
+        {"shadow", SirEngine::SHADER_PASS_FLAGS::SHADOW},
     };
 
 } // namespace materialKeys
 
 namespace SirEngine {
 inline uint32_t stringToActualShaderFlag(const std::string &flag) {
-  auto found = materialKeys::STRING_TO_SHADER_FLAG.find(flag);
+  const auto found = materialKeys::STRING_TO_SHADER_FLAG.find(flag);
   if (found != materialKeys::STRING_TO_SHADER_FLAG.end()) {
     return found->second;
   }
@@ -48,7 +48,7 @@ uint32_t parseFlags(const nlohmann::json &jobj) {
   uint32_t flags = 0;
   for (const auto &flag : fjobj) {
     const std::string sFlag = flag.get<std::string>();
-    uint32_t currentFlag = stringToActualShaderFlag(sFlag);
+    const uint32_t currentFlag = stringToActualShaderFlag(sFlag);
     flags |= currentFlag;
   }
   return flags;
@@ -70,9 +70,8 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   DirectX::XMFLOAT4 kd = getValueIfInJson(jobj, materialKeys::KD, zero);
   DirectX::XMFLOAT4 ka = getValueIfInJson(jobj, materialKeys::KA, zero);
   DirectX::XMFLOAT4 ks = getValueIfInJson(jobj, materialKeys::KS, zero);
-  DirectX::XMFLOAT4 pbr = getValueIfInJson(jobj, materialKeys::PBR, zero);
   float zeroFloat = 0.0f;
-  float shiness = getValueIfInJson(jobj, materialKeys::SHINESS, zeroFloat);
+  float shininess = getValueIfInJson(jobj, materialKeys::SHINESS, zeroFloat);
 
   const std::string empty;
   const std::string albedoName =
@@ -122,7 +121,7 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   mat.kSR = ks.x;
   mat.kSG = ks.y;
   mat.kSB = ks.z;
-  mat.shiness = shiness;
+  mat.shiness = shininess;
 
   MaterialDataHandles texHandles;
   texHandles.albedo = albedoTex;
@@ -145,8 +144,8 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   MaterialRuntime matCpu;
   matCpu.albedo = texHandles.albedoSrv.gpuHandle;
   matCpu.normal = texHandles.normalSrv.gpuHandle;
-  matCpu.metallic= texHandles.metallicSrv.gpuHandle;
-  matCpu.roughness= texHandles.roughnessSrv.gpuHandle;
+  matCpu.metallic = texHandles.metallicSrv.gpuHandle;
+  matCpu.roughness = texHandles.roughnessSrv.gpuHandle;
 
   // we need to allocate  constant buffer
   // TODO should this be static constant buffer? investigate

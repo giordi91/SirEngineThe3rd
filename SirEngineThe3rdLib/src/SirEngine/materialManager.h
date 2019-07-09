@@ -55,7 +55,8 @@ enum SHADER_PASS_FLAGS {
   FORWARD = 1 << 0,
   DEFERRED = 1 << 1,
   PBR = 1 << 2,
-  SKIN = 1 << 3
+  SKIN = 1 << 3,
+  SHADOW = 1 << 4
 };
 
 class MaterialManager final {
@@ -74,16 +75,16 @@ public:
                               MaterialRuntime *runtimeMemory);
 
 private:
-  inline uint32_t getIndexFromHandel(MaterialHandle h) const {
+  inline uint32_t getIndexFromHandel(const MaterialHandle h) const {
     return h.handle & INDEX_MASK;
   }
-  inline uint16_t getMagicFromHandel(MaterialHandle h) const {
+  inline uint16_t getMagicFromHandel(const MaterialHandle h) const {
     return static_cast<uint16_t>((h.handle & MAGIC_NUMBER_MASK) >> 16);
   }
 
-  inline void assertMagicNumber(MaterialHandle handle) {
-    uint16_t magic = getMagicFromHandel(handle);
-    uint32_t idx = getIndexFromHandel(handle);
+  inline void assertMagicNumber(const MaterialHandle handle) {
+    const uint16_t magic = getMagicFromHandel(handle);
+    const uint32_t idx = getIndexFromHandel(handle);
     assert(m_materialsMagic[idx] == magic &&
            "invalid magic handle for constant buffer");
   }
