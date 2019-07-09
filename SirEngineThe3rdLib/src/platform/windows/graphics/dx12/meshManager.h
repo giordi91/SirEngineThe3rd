@@ -55,10 +55,9 @@ public:
   // for now a bit overkill to pass both the index and the memory,
   // I could just pass the pointer at right address but for the time
   // being this will keep symmetry.
-  MeshHandle loadMesh(const char *path, uint32_t runtimeIndex,
-                      MeshRuntime *runtimeMemory);
+  MeshHandle loadMesh(const char *path, MeshRuntime *meshRuntime);
 
-  inline void assertMagicNumber(MeshHandle handle) const {
+  inline void assertMagicNumber(const MeshHandle handle) const {
 #ifdef SE_DEBUG
     uint32_t magic = getMagicFromHandle(handle);
     uint32_t idx = getIndexFromHandle(handle);

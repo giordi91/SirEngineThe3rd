@@ -119,8 +119,7 @@ uint32_t parseQueueTypeFlags(const nlohmann::json &jobj) {
 }
 
 MaterialHandle MaterialManager::loadMaterial(const char *path,
-                                             uint32_t runtimeIndex,
-                                             MaterialRuntime *runtimeMemory) {
+                                             MaterialRuntime *materialRuntime) {
 
   // for materials we do not perform the check whether is loaded or not
   // each object is going to get it s own material copy.
@@ -226,7 +225,7 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   matCpu.cbVirtualAddress =
       dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(texHandles.cbHandle);
 
-  runtimeMemory[runtimeIndex] = matCpu;
+  (*materialRuntime) = matCpu;
   m_materials[index] = mat;
   m_materialTextureHandles[index] = texHandles;
 

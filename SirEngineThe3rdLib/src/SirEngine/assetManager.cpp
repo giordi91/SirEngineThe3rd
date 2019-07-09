@@ -22,9 +22,9 @@ static const std::string DEFAULT_STRING = "";
 AssetManager::AssetManager() {}
 
 bool AssetManager::initialize() {
-  m_meshRuntime.resize(DATA_SIZE_ALLOC);
+  //m_meshRuntime.resize(DATA_SIZE_ALLOC);
   m_assetHandles.resize(DATA_SIZE_ALLOC);
-  m_materialRuntime.resize(DATA_SIZE_ALLOC);
+  //m_materialRuntime.resize(DATA_SIZE_ALLOC);
   return true;
 }
 
@@ -50,44 +50,25 @@ IdentityHandle AssetManager::loadAsset(const char *path) {
                          AssetManagerKeys::DEFAULT_STRING);
     assert(!materialString.empty());
 
-    uint32_t currIdx = allocIndex++;
-    // first of all generate an identity handle for the asset
-    const std::string &fileName = getFileName(path);
-    IdentityHandle id =
-        dx12::IDENTITY_MANAGER->getHandleFromName(fileName.c_str());
-
     // lets load the mesh
     MeshHandle mHandle = dx12::MESH_MANAGER->loadMesh(
-        meshString.c_str(), currIdx, m_meshRuntime.data());
-    renderable.m_meshRuntime = m_meshRuntime[currIdx];
+        meshString.c_str(),&renderable.m_meshRuntime);
 
     MaterialHandle matHandle = dx12::MATERIAL_MANAGER->loadMaterial(
-        materialString.c_str(), currIdx, m_materialRuntime.data());
-    renderable.m_materialRuntime = m_materialRuntime[currIdx];
+        materialString.c_str(), &renderable.m_materialRuntime);
 
     // store the renderable
     m_renderables[renderable.m_materialRuntime.shaderQueueTypeFlags].push_back(
         renderable);
-
-    // TODO Old bookkeeping code, keeping this around because we will need it
-    // when we refactor the identity handle stuff
-    //// bookkeeping
-    // AssetHandles assetH;
-    // assetH.materialH = matHandle;
-    // assetH.meshH = mHandle;
-    // m_assetHandles[currIdx] = assetH;
-
-    // m_identityToIndex[id.handle] = currIdx;
   }
 
   // TODO identity handle concept is not used and is completely broken since we
   // introduced the sub assets, needs to be fixed or removed
-  IdentityHandle id = dx12::IDENTITY_MANAGER->getHandleFromName(path);
-  return id;
+  return IdentityHandle{};
 }
 
 void AssetManager::loadScene(const char *path) {
-  auto jobj = getJsonObj(path);
+  const auto jobj = getJsonObj(path);
   assert(jobj.find(AssetManagerKeys::ASSETS_KEY) != jobj.end());
 
   // load all the assets

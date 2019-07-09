@@ -1,11 +1,11 @@
 #include "SirEngine/graphics/nodes/simpleForward.h"
 #include "SirEngine/assetManager.h"
+#include "SirEngine/graphics/debugAnnotations.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/TextureManagerDx12.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
-#include "SirEngine/graphics/debugAnnotations.h"
 
 namespace SirEngine {
 
@@ -63,6 +63,9 @@ void SimpleForward::initialize() {
 }
 
 void SimpleForward::compute() {
+
+  assert(0 && "need to re-implement properly");
+  return;
   annotateGraphicsBegin("Simple Forward");
   // meshes connections
   auto &meshConn = m_connections[&m_inputPlugs[1]];
@@ -71,8 +74,8 @@ void SimpleForward::compute() {
   AssetDataHandle meshH{};
   meshH.handle = sourceMeshs->plugValue;
   uint32_t meshCount = 0;
-  const dx12::MeshRuntime *meshes =
-      globals::ASSET_MANAGER->getRuntimeMeshesFromHandle(meshH, meshCount);
+  // const dx12::MeshRuntime *meshes =
+  //    globals::ASSET_MANAGER->getRuntimeMeshesFromHandle(meshH, meshCount);
 
   // get materials
   auto &matsConn = m_connections[&m_inputPlugs[2]];
@@ -81,15 +84,15 @@ void SimpleForward::compute() {
   AssetDataHandle matsH;
   matsH.handle = sourceMats->plugValue;
   uint32_t matsCount = 0;
-  const MaterialRuntime *mats =
-      globals::ASSET_MANAGER->getRuntimeMaterialsFromHandle(matsH, matsCount);
+  // const MaterialRuntime *mats =
+  //    globals::ASSET_MANAGER->getRuntimeMaterialsFromHandle(matsH, matsCount);
 
   assert(matsCount == meshCount);
 
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
 
-  dx12::PSO_MANAGER->bindPSO(pso,commandList);
+  dx12::PSO_MANAGER->bindPSO(pso, commandList);
 
   D3D12_RESOURCE_BARRIER barriers[2];
   int counter = 0;
@@ -111,11 +114,13 @@ void SimpleForward::compute() {
   commandList->SetGraphicsRootSignature(rs);
   globals::RENDERING_CONTEX->bindCameraBuffer(0);
 
+  /*
   for (uint32_t i = 0; i < meshCount; ++i) {
 
     commandList->SetGraphicsRootDescriptorTable(1, mats[i].albedo);
     dx12::MESH_MANAGER->bindMeshRuntimeAndRender(meshes[i], currentFc);
   }
+  */
 
   m_outputPlugs[0].plugValue = m_renderTarget.handle;
   annotateGraphicsEnd();

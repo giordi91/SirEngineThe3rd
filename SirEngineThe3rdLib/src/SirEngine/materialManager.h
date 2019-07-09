@@ -66,7 +66,7 @@ enum class SHADER_QUEUE_FLAGS {
   SHADOW = 1 << 2
 };
 
-enum class SHADER_TYPE_FLAGS { UNKNOWN=0, PBR = 1, SKIN = 2 };
+enum class SHADER_TYPE_FLAGS { UNKNOWN = 0, PBR = 1, SKIN = 2 };
 
 class MaterialManager final {
 
@@ -80,8 +80,7 @@ public:
   MaterialManager &operator=(const MaterialManager &) = delete;
 
   void initialize(){};
-  MaterialHandle loadMaterial(const char *path, uint32_t runtimeIndex,
-                              MaterialRuntime *runtimeMemory);
+  MaterialHandle loadMaterial(const char *path, MaterialRuntime *materialRuntime);
 
   inline SHADER_TYPE_FLAGS getTypeFlags(const uint32_t flags) {
     // here we are creating a mask for the fist 16 bits, then we flip it
@@ -109,7 +108,7 @@ public:
     return (queueFlags & static_cast<uint32_t>(queue)) > 0;
   }
 
-  const std::string& getStringFromShaderTypeFlag(SHADER_TYPE_FLAGS type);
+  const std::string &getStringFromShaderTypeFlag(SHADER_TYPE_FLAGS type);
 
 private:
   inline uint32_t getIndexFromHandel(const MaterialHandle h) const {
