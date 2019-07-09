@@ -74,6 +74,18 @@ void GBufferPassPBR::initialize() {
       "specularBuffer");
 }
 
+inline StreamHandle
+getInputConnection(std::unordered_map<const Plug *, std::vector<Plug *>> &conns,
+                   Plug *plug) {
+  // TODO not super safe to do this, might be worth improving this
+  auto &inConns = conns[plug];
+  assert(inConns.size() == 1 && "too many input connections");
+  Plug *source = inConns[0];
+  auto h = StreamHandle{source->plugValue};
+  assert(h.isHandleValid());
+  return h;
+}
+
 void GBufferPassPBR::compute() {
 
   annotateGraphicsBegin("GBufferPassPBR");
@@ -115,9 +127,9 @@ void GBufferPassPBR::compute() {
 
   globals::RENDERING_CONTEX->bindCameraBuffer(0);
 
+  StreamHandle streamH = getInputConnection(m_connections, &m_inputPlugs[0]);
   const std::unordered_map<uint32_t, std::vector<Renderable>> &renderables =
-      globals::ASSET_MANAGER->getRenderables(
-          StreamHandle{m_inputPlugs[0].plugValue});
+      globals::ASSET_MANAGER->getRenderables(streamH);
 
   for (const auto &renderableList : renderables) {
     if (dx12::MATERIAL_MANAGER->isQueueType(renderableList.first,
