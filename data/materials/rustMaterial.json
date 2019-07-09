@@ -8,5 +8,7 @@
   "normal" :  "../data/processed/textures/normal.texture",
   "roughness" :  "../data/processed/textures/roughness.texture",
   "metallic" :  "../data/processed/textures/metallic.texture",
-  "flags" :  ["deferred", "pbr"]
+  "flags" :  ["deferred", "pbr"],
+  "queue" :  ["deferred"],
+  "type" : "pbr" 
 }

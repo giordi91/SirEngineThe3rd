@@ -1,9 +1,8 @@
 #include "SirEngine/assetManager.h"
-#include "fileUtils.h"
-// TODO remove dx12 calls from here
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/identityManager.h"
 #include "SirEngine/materialManager.h"
+#include "fileUtils.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/TextureManagerDx12.h"
 #include "platform/windows/graphics/dx12/meshManager.h"
@@ -39,14 +38,16 @@ IdentityHandle AssetManager::loadAsset(const char *path) {
 
   for (auto &subAsset : subAssetsJ) {
 
+    Renderable renderable;
     // get the mesh
     const std::string meshString = getValueIfInJson(
         subAsset, AssetManagerKeys::MESH_KEY, AssetManagerKeys::DEFAULT_STRING);
     assert(!meshString.empty());
 
     // get material
-    const std::string materialString = getValueIfInJson(
-        subAsset, AssetManagerKeys::MATERIAL_KEY, AssetManagerKeys::DEFAULT_STRING);
+    const std::string materialString =
+        getValueIfInJson(subAsset, AssetManagerKeys::MATERIAL_KEY,
+                         AssetManagerKeys::DEFAULT_STRING);
     assert(!materialString.empty());
 
     uint32_t currIdx = allocIndex++;
@@ -58,9 +59,15 @@ IdentityHandle AssetManager::loadAsset(const char *path) {
     // lets load the mesh
     MeshHandle mHandle = dx12::MESH_MANAGER->loadMesh(
         meshString.c_str(), currIdx, m_meshRuntime.data());
+    renderable.m_meshRuntime = m_meshRuntime[currIdx];
 
     MaterialHandle matHandle = dx12::MATERIAL_MANAGER->loadMaterial(
         materialString.c_str(), currIdx, m_materialRuntime.data());
+    renderable.m_materialRuntime = m_materialRuntime[currIdx];
+
+    // store the renderable
+    m_renderables[renderable.m_materialRuntime.shaderQueueTypeFlags].push_back(
+        renderable);
 
     // TODO Old bookkeeping code, keeping this around because we will need it
     // when we refactor the identity handle stuff
@@ -88,8 +95,8 @@ void AssetManager::loadScene(const char *path) {
   for (const auto &asset : assetsJ) {
     // should I keep track of the assets?
     // I suppose I should but for now there is not the use case
-    const std::string path = asset.get<std::string>();
-    loadAsset(path.c_str());
+    const auto assetPath = asset.get<std::string>();
+    loadAsset(assetPath.c_str());
   }
 
   // load the env map

@@ -1,10 +1,10 @@
 #pragma once
-#include "identityManager.h"
-#include <vector>
 #include "SirEngine/handle.h"
+#include "identityManager.h"
 #include "materialManager.h"
 #include "platform/windows/graphics/dx12/meshManager.h"
 #include <DirectXMath.h>
+#include <vector>
 
 namespace SirEngine {
 
@@ -12,6 +12,12 @@ struct AssetDataHandle {
   union {
     uint32_t handle;
   };
+};
+
+struct Renderable {
+  DirectX::XMMATRIX m_matrixRuntime;
+  dx12::MeshRuntime m_meshRuntime;
+  MaterialRuntime m_materialRuntime;
 };
 
 enum AssetDataType { MATRICES = 1, MESHES = 2, MATERIALS = 3 };
@@ -29,7 +35,7 @@ public:
   AssetManager(const AssetManager &) = delete;
   AssetManager &operator=(const AssetManager &) = delete;
 
-  inline const dx12::MeshRuntime *getMeshRuntimes(uint32_t &count) const {
+  inline const dx12::MeshRuntime *getMeshRuntime(uint32_t &count) const {
     count = allocIndex;
     return m_meshRuntime.data();
   };
@@ -38,12 +44,17 @@ public:
   IdentityHandle loadAsset(const char *path);
   void loadScene(const char *path);
   AssetHandles getAssetHandle(const IdentityHandle handle) const {
-    auto found = m_identityToIndex.find(handle.handle);
+    const auto found = m_identityToIndex.find(handle.handle);
     if (found != m_identityToIndex.end()) {
       return m_assetHandles[found->second];
     }
     assert(0 && "could not find requested asset handle from identity handle");
     return AssetHandles{};
+  }
+
+  inline const std::unordered_map<uint32_t, std::vector<Renderable>> &
+  getRenderables() const {
+    return m_renderables;
   }
 
   // materials
@@ -55,26 +66,22 @@ public:
 
   // handles
   inline AssetDataHandle getStaticDataHandle(const AssetDataType type) const {
-    AssetDataHandle h;
-	h.handle = 1 << 31 | type;
-    return h;
+    AssetDataHandle h{};
+    h.handle = (1 << 31) | type;
+	return h;
   }
-  inline uint32_t getEntryPointFromHandle(const AssetDataHandle h)
-  {
-	  return h.handle & (~(1<<31));
+  inline uint32_t getEntryPointFromHandle(const AssetDataHandle h) {
+    return h.handle & (~(1 << 31));
   }
-  inline uint32_t getStaticDataFromHandle(const AssetDataHandle h)
-  {
-	  return ((h.handle >>31)& 1u);
+  inline uint32_t getStaticDataFromHandle(const AssetDataHandle h) {
+    return ((h.handle >> 31) & 1u);
   }
 
   inline const dx12::MeshRuntime *
-  getRuntimeMeshesFromHandle(const AssetDataHandle h, uint32_t& count) {
-
-
-	  uint32_t entryPoint = getEntryPointFromHandle(h);
+  getRuntimeMeshesFromHandle(const AssetDataHandle h, uint32_t &count) {
+    const uint32_t entryPoint = getEntryPointFromHandle(h);
     assert(entryPoint == AssetDataType::MESHES);
-	uint32_t staticData = getStaticDataFromHandle(h);
+    const uint32_t staticData = getStaticDataFromHandle(h);
     if (staticData) {
       count = allocIndex;
       return m_meshRuntime.data();
@@ -83,12 +90,11 @@ public:
       return nullptr;
     }
   }
-  inline const MaterialRuntime*
-  getRuntimeMaterialsFromHandle(const AssetDataHandle h, uint32_t& count) {
-
-	  uint32_t entryPoint = getEntryPointFromHandle(h);
+  inline const MaterialRuntime *
+  getRuntimeMaterialsFromHandle(const AssetDataHandle h, uint32_t &count) {
+    const uint32_t entryPoint = getEntryPointFromHandle(h);
     assert(entryPoint == AssetDataType::MATERIALS);
-	uint32_t staticData = getStaticDataFromHandle(h);
+    const uint32_t staticData = getStaticDataFromHandle(h);
     if (staticData) {
       count = allocIndex;
       return m_materialRuntime.data();
@@ -128,12 +134,15 @@ private:
   std::vector<AssetHandles> m_assetHandles;
   std::vector<IdentityHandle> m_idHandles;
   std::unordered_map<uint32_t, uint32_t> m_identityToIndex;
-  //TODO alloc index is not a stable index in case of deletion of an asset need
-  //to fix
+  // TODO alloc index is not a stable index in case of deletion of an asset need
+  // to fix
   uint32_t allocIndex = 0;
 
   std::vector<DirectX::XMMATRIX> m_matrixRuntime;
   std::vector<dx12::MeshRuntime> m_meshRuntime;
   std::vector<MaterialRuntime> m_materialRuntime;
+
+  // new method
+  std::unordered_map<uint32_t, std::vector<Renderable>> m_renderables;
 }; // namespace SirEngine
 } // namespace SirEngine

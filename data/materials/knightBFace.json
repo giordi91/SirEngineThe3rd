@@ -8,5 +8,8 @@
   "normal" :  "../data/processed/textures/knightB/face_N.texture",
   "roughness" :  "../data/processed/textures/knightB/face_R.texture",
   "metallic" :  "../data/processed/textures/black.texture",
-  "flags" :  ["deferred", "pbr","skin"]
+  "flags" :  ["deferred", "pbr","skin"],
+  "queue" :  ["deferred"],
+  "type" : "skin" 
+
 }

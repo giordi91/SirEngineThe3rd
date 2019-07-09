@@ -12,7 +12,8 @@ namespace SirEngine {
 static const char *GBUFFER_RS = "gbufferPBRRS";
 static const char *GBUFFER_PSO = "gbufferPBRPSO";
 
-GBufferPassPBR::GBufferPassPBR(const char *name) : GraphNode(name, "GBufferPassPBR") {
+GBufferPassPBR::GBufferPassPBR(const char *name)
+    : GraphNode(name, "GBufferPassPBR") {
   // lets create the plugs
   Plug geometryBuffer;
   geometryBuffer.plugValue = 0;
@@ -91,32 +92,10 @@ void GBufferPassPBR::compute() {
 
   annotateGraphicsBegin("GBufferPassPBR");
 
-  // meshes connections
-  auto &meshConn = m_connections[&m_inputPlugs[1]];
-  assert(meshConn.size() == 1 && "too many input connections");
-  Plug *sourceMeshs = meshConn[0];
-  AssetDataHandle meshH;
-  meshH.handle = sourceMeshs->plugValue;
-  uint32_t meshCount = 0;
-  const dx12::MeshRuntime *meshes =
-      globals::ASSET_MANAGER->getRuntimeMeshesFromHandle(meshH, meshCount);
-
-  // get materials
-  auto &matsConn = m_connections[&m_inputPlugs[2]];
-  assert(matsConn.size() == 1 && "too many input connections");
-  Plug *sourceMats = matsConn[0];
-  AssetDataHandle matsH;
-  matsH.handle = sourceMats->plugValue;
-  uint32_t matsCount = 0;
-  const MaterialRuntime *mats =
-      globals::ASSET_MANAGER->getRuntimeMaterialsFromHandle(matsH, matsCount);
-
-  assert(matsCount == meshCount);
-
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
 
-  dx12::PSO_MANAGER->bindPSO(pso,commandList);
+  dx12::PSO_MANAGER->bindPSO(pso, commandList);
 
   D3D12_RESOURCE_BARRIER barriers[4];
   int counter = 0;
@@ -147,18 +126,40 @@ void GBufferPassPBR::compute() {
   auto depthDescriptor = dx12::TEXTURE_MANAGER->getRTVDx12(m_depth).cpuHandle;
   commandList->SetGraphicsRootSignature(rs);
   commandList->OMSetRenderTargets(3, handles, false, &depthDescriptor);
-  //
+
   globals::RENDERING_CONTEX->bindCameraBuffer(0);
 
-  for (uint32_t i = 0; i < meshCount; ++i) {
+  const std::unordered_map<uint32_t, std::vector<Renderable>> &renderables =
+      globals::ASSET_MANAGER->getRenderables();
 
-    // commandList->SetGraphicsRootDescriptorTable(1, mats[i].albedo);
-    commandList->SetGraphicsRootConstantBufferView(1, mats[i].cbVirtualAddress);
-    commandList->SetGraphicsRootDescriptorTable(2, mats[i].albedo);
-    commandList->SetGraphicsRootDescriptorTable(3, mats[i].normal);
-    commandList->SetGraphicsRootDescriptorTable(4, mats[i].metallic);
-    commandList->SetGraphicsRootDescriptorTable(5, mats[i].roughness);
-    dx12::MESH_MANAGER->bindMeshRuntimeAndRender(meshes[i], currentFc);
+  for (const auto &renderableList : renderables) {
+    if (dx12::MATERIAL_MANAGER->isQueueType(renderableList.first,
+                                            SHADER_QUEUE_FLAGS::DEFERRED)) {
+	    const SHADER_TYPE_FLAGS type =
+          dx12::MATERIAL_MANAGER->getTypeFlags(renderableList.first);
+      const std::string &typeName =
+          dx12::MATERIAL_MANAGER->getStringFromShaderTypeFlag(type);
+      annotateGraphicsBegin(typeName.c_str());
+
+      const size_t count = renderableList.second.size();
+      const Renderable *currRenderables = renderableList.second.data();
+      for (int i = 0; i < count; ++i) {
+        const Renderable &renderable = currRenderables[i];
+        commandList->SetGraphicsRootConstantBufferView(
+            1, renderable.m_materialRuntime.cbVirtualAddress);
+        commandList->SetGraphicsRootDescriptorTable(
+            2, renderable.m_materialRuntime.albedo);
+        commandList->SetGraphicsRootDescriptorTable(
+            3, renderable.m_materialRuntime.normal);
+        commandList->SetGraphicsRootDescriptorTable(
+            4, renderable.m_materialRuntime.metallic);
+        commandList->SetGraphicsRootDescriptorTable(
+            5, renderable.m_materialRuntime.roughness);
+        dx12::MESH_MANAGER->bindMeshRuntimeAndRender(renderable.m_meshRuntime,
+                                                     currentFc);
+      }
+      annotateGraphicsEnd();
+    }
   }
 
   m_outputPlugs[0].plugValue = m_geometryBuffer.handle;
@@ -176,9 +177,9 @@ void GBufferPassPBR::compute() {
 }
 
 #define FREE_TEXTURE_IF_VALID(h)                                               \
-  if (h.isHandleValid()) {                                                     \
+  if ((h).isHandleValid()) {                                                   \
     dx12::TEXTURE_MANAGER->free(h);                                            \
-    h.handle = 0;                                                              \
+    (h).handle = 0;                                                            \
   }
 
 void GBufferPassPBR::clear() {

@@ -18,6 +18,9 @@ static const char *NORMAL = "normal";
 static const char *METALLIC = "metallic";
 static const char *ROUGHNESS = "roughness";
 static const char *FLAGS = "flags";
+static const char *QUEUE = "queue";
+static const char *TYPE = "type";
+
 static const std::unordered_map<std::string, SirEngine::SHADER_PASS_FLAGS>
     STRING_TO_SHADER_FLAG{
         {"forward", SirEngine::SHADER_PASS_FLAGS::FORWARD},
@@ -26,6 +29,22 @@ static const std::unordered_map<std::string, SirEngine::SHADER_PASS_FLAGS>
         {"skin", SirEngine::SHADER_PASS_FLAGS::SKIN},
         {"shadow", SirEngine::SHADER_PASS_FLAGS::SHADOW},
     };
+static const std::unordered_map<std::string, SirEngine::SHADER_QUEUE_FLAGS>
+    STRING_TO_QUEUE_FLAG{
+        {"forward", SirEngine::SHADER_QUEUE_FLAGS::FORWARD},
+        {"deferred", SirEngine::SHADER_QUEUE_FLAGS::DEFERRED},
+        {"shadow", SirEngine::SHADER_QUEUE_FLAGS::SHADOW},
+    };
+static const std::unordered_map<std::string, SirEngine::SHADER_TYPE_FLAGS>
+    STRING_TO_TYPE_FLAGS{
+        {"pbr", SirEngine::SHADER_TYPE_FLAGS::PBR},
+        {"skin", SirEngine::SHADER_TYPE_FLAGS::SKIN},
+    };
+static const std::unordered_map<SirEngine::SHADER_TYPE_FLAGS, std::string>
+    TYPE_FLAGS_TO_STRING{
+        {SirEngine::SHADER_TYPE_FLAGS::PBR, "pbr"},
+        {SirEngine::SHADER_TYPE_FLAGS::SKIN, "skin"},
+    };
 
 } // namespace materialKeys
 
@@ -33,9 +52,25 @@ namespace SirEngine {
 inline uint32_t stringToActualShaderFlag(const std::string &flag) {
   const auto found = materialKeys::STRING_TO_SHADER_FLAG.find(flag);
   if (found != materialKeys::STRING_TO_SHADER_FLAG.end()) {
-    return found->second;
+    return static_cast<uint32_t>(found->second);
   }
   assert(0 && "could not map requested shader flag");
+  return 0;
+}
+inline uint32_t stringToActualQueueFlag(const std::string &flag) {
+  const auto found = materialKeys::STRING_TO_QUEUE_FLAG.find(flag);
+  if (found != materialKeys::STRING_TO_QUEUE_FLAG.end()) {
+    return static_cast<uint32_t>(found->second);
+  }
+  assert(0 && "could not map requested queue flag");
+  return 0;
+}
+inline uint16_t stringToActualTypeFlag(const std::string &flag) {
+  const auto found = materialKeys::STRING_TO_TYPE_FLAGS.find(flag);
+  if (found != materialKeys::STRING_TO_TYPE_FLAGS.end()) {
+    return static_cast<uint16_t>(found->second);
+  }
+  assert(0 && "could not map requested type flag");
   return 0;
 }
 
@@ -47,10 +82,39 @@ uint32_t parseFlags(const nlohmann::json &jobj) {
   const auto &fjobj = jobj[materialKeys::FLAGS];
   uint32_t flags = 0;
   for (const auto &flag : fjobj) {
-    const std::string sFlag = flag.get<std::string>();
+    const auto sFlag = flag.get<std::string>();
     const uint32_t currentFlag = stringToActualShaderFlag(sFlag);
     flags |= currentFlag;
   }
+  return flags;
+}
+uint32_t parseQueueTypeFlags(const nlohmann::json &jobj) {
+  if (jobj.find(materialKeys::QUEUE) == jobj.end()) {
+    assert(0 && "cannot find queue flags in material");
+    return 0;
+  }
+  if (jobj.find(materialKeys::TYPE) == jobj.end()) {
+    assert(0 && "cannot find type flags in material");
+    return 0;
+  }
+
+  // extract the queue flags, that flag is a bit field for an
+  // uint16, which is merged with the material type which
+  // is a normal increasing uint16
+  const auto &qjobj = jobj[materialKeys::QUEUE];
+  uint32_t flags = 0;
+  for (const auto &flag : qjobj) {
+    const auto stringFlag = flag.get<std::string>();
+    const uint32_t currentFlag = stringToActualQueueFlag(stringFlag);
+    flags |= currentFlag;
+  }
+
+  // extract the type flag
+  const auto &tjobj = jobj[materialKeys::TYPE];
+  const auto stringType = tjobj.get<std::string>();
+  const uint16_t typeFlag = stringToActualTypeFlag(stringType);
+
+  flags = typeFlag << 16 | flags;
   return flags;
 }
 
@@ -110,6 +174,7 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   }
 
   uint32_t flags = parseFlags(jobj);
+  uint32_t queueTypeFlags = parseQueueTypeFlags(jobj);
 
   Material mat;
   mat.kDR = kd.x;
@@ -123,7 +188,7 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   mat.kSB = ks.z;
   mat.shiness = shininess;
 
-  MaterialDataHandles texHandles;
+  MaterialDataHandles texHandles{};
   texHandles.albedo = albedoTex;
   texHandles.normal = normalTex;
   texHandles.metallic = metallicTex;
@@ -141,7 +206,7 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   if (roughnessTex.handle != 0) {
     texHandles.roughnessSrv = dx12::TEXTURE_MANAGER->getSRVDx12(roughnessTex);
   }
-  MaterialRuntime matCpu;
+  MaterialRuntime matCpu{};
   matCpu.albedo = texHandles.albedoSrv.gpuHandle;
   matCpu.normal = texHandles.normalSrv.gpuHandle;
   matCpu.metallic = texHandles.metallicSrv.gpuHandle;
@@ -155,6 +220,7 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   m_idxPool.getFreeMemoryData(index);
   m_materialsMagic[index] = static_cast<uint16_t>(MAGIC_NUMBER_COUNTER);
   matCpu.shaderFlags = flags;
+  matCpu.shaderQueueTypeFlags = queueTypeFlags;
 
   // TODO what can i do about this dx12 call here??
   matCpu.cbVirtualAddress =
@@ -170,6 +236,18 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   m_nameToHandle[name] = handle;
 
   return handle;
+}
+
+const std::string &
+MaterialManager::getStringFromShaderTypeFlag(const SHADER_TYPE_FLAGS type) {
+  const auto found = materialKeys::TYPE_FLAGS_TO_STRING.find(type);
+  if (found != materialKeys::TYPE_FLAGS_TO_STRING.end()) {
+    return found->second;
+  }
+
+  assert(0 && "Could not find flag");
+  const auto unknown = materialKeys::TYPE_FLAGS_TO_STRING.find(SHADER_TYPE_FLAGS::UNKNOWN);
+  return unknown->second;
 }
 
 } // namespace SirEngine
