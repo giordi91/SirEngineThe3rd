@@ -17,5 +17,6 @@ void AssetManagerNode::compute() {
   // here we need to get handles to the data
   m_outputPlugs[0].plugValue =
       globals::ASSET_MANAGER->getMainStreamHandle().handle;
+  int x;
 }
 } // namespace SirEngine
