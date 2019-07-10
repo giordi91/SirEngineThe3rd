@@ -88,7 +88,7 @@ bool initializeGraphicsDx12(Window *wnd, uint32_t width, uint32_t height) {
   ADAPTER->setFeture(AdapterFeature::ANY);
   ADAPTER->setVendor(AdapterVendor::ANY);
 #endif
-  bool found = ADAPTER->findBestAdapter(DXGI_FACTORY);
+  const bool found = ADAPTER->findBestAdapter(DXGI_FACTORY);
   assert(found && "could not find adapter matching features");
 
   // log the adapter used
@@ -188,8 +188,6 @@ bool initializeGraphicsDx12(Window *wnd, uint32_t width, uint32_t height) {
   TEXTURE_MANAGER->initialize();
   globals::TEXTURE_MANAGER = TEXTURE_MANAGER;
   MESH_MANAGER = new MeshManager();
-  MATERIAL_MANAGER = new MaterialManager();
-  MATERIAL_MANAGER->initialize();
   globals::ASSET_MANAGER = new AssetManager();
   globals::ASSET_MANAGER->initialize();
   globals::RENDERING_CONTEX = new RenderingContext();
@@ -212,6 +210,14 @@ bool initializeGraphicsDx12(Window *wnd, uint32_t width, uint32_t height) {
   PSO_MANAGER->init(dx12::DEVICE, SHADER_LAYOUT_REGISTRY,
                     ROOT_SIGNATURE_MANAGER, dx12::SHADER_MANAGER);
   PSO_MANAGER->loadPSOInFolder((globals::DATA_SOURCE_PATH + "/pso").c_str());
+
+  // mesh manager needs to load after pso and RS since it initialize material
+  // types
+  MATERIAL_MANAGER = new MaterialManager();
+
+  MATERIAL_MANAGER->init();
+  MATERIAL_MANAGER->loadTypesInFolder(
+      (globals::DATA_SOURCE_PATH + "/materials/types").c_str());
 
   globals::DEBUG_FRAME_DATA = new globals::DebugFrameData();
 

@@ -7,9 +7,6 @@
 #include <string>
 #include <unordered_map>
 
-// forward declares
-struct ID3D12RootSignature;
-
 namespace SirEngine {
 namespace dx12 {
 
@@ -25,9 +22,10 @@ public:
   void cleanup();
   void loadSingaturesInFolder(const char *directory);
   void loadSignatureBinaryFile(const char *file);
+
   inline ID3D12RootSignature *getRootSignatureFromName(const char *name) const {
 
-    RSHandle handle = getHandleFromName(name);
+    const RSHandle handle = getHandleFromName(name);
     assertMagicNumber(handle);
     const uint32_t index = getIndexFromHandle(handle);
     const RSData &data = m_rsPool.getConstRef(index);

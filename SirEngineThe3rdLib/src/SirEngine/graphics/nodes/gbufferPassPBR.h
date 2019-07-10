@@ -20,7 +20,6 @@ private:
   TextureHandle m_normalBuffer{};
   TextureHandle m_specularBuffer{};
   TextureHandle m_depth{};
-  //ID3D12RootSignature* rs =nullptr;
   PSOHandle pso;
   RSHandle rs;
 };

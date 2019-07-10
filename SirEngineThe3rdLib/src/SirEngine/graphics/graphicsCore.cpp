@@ -6,8 +6,7 @@
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/swapChain.h"
 #endif
-namespace SirEngine {
-namespace graphics {
+namespace SirEngine::graphics {
 
 #if GRAPHICS_API == DX12
 bool initializeGraphics(Window *wnd, uint32_t width, uint32_t height) {
@@ -27,5 +26,4 @@ void endHeadlessWork() { dx12::endHeadlessWorkDx12(); }
 
 void flush() { dx12::flushDx12(); }
 #endif
-} // namespace graphics
-} // namespace SirEngine
+} // namespace SirEngine::graphics

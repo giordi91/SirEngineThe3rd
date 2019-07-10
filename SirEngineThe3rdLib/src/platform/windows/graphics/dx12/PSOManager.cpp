@@ -14,6 +14,7 @@
 #include "SirEngine/application.h"
 #include "SirEngine/events/shaderCompileEvent.h"
 #include "SirEngine/globals.h"
+#include "SirEngine/log.h"
 
 namespace SirEngine {
 namespace dx12 {
@@ -306,12 +307,12 @@ void PSOManager::recompilePSOFromShader(const char *shaderName, const char* offs
 
 void PSOManager::loadPSOFile(const char *path, bool reload) {
   auto jobj = getJsonObj(path);
-  std::cout << "[Engine]: Loading PSO from: " << path << std::endl;
+  SE_CORE_INFO("[Engine]: Loading PSO from: {0}" , path) ;
 
   const std::string psoTypeString =
       getValueIfInJson(jobj, PSO_KEY_TYPE, DEFAULT_STRING);
   assert(!psoTypeString.empty());
-  PSOType psoType = convertStringPSOTypeToEnum(psoTypeString);
+  const PSOType psoType = convertStringPSOTypeToEnum(psoTypeString);
   switch (psoType) {
   case (PSOType::COMPUTE): {
     processComputePSO(jobj, path, reload);
@@ -360,7 +361,7 @@ void PSOManager::processComputePSO(nlohmann::json &jobj,
   m_dxrDevice->CreateComputePipelineState(&cdesc,
                                           IID_PPV_ARGS(&pipeStateObject));
 
-  std::string name = getFileName(path);
+  const std::string name = getFileName(path);
 
   // if we are not realoading it means there is not a pso record so we just go
   // in and add one
@@ -369,7 +370,7 @@ void PSOManager::processComputePSO(nlohmann::json &jobj,
     uint32_t index;
     PSOData &data = m_psoPool.getFreeMemoryData(index);
     data.pso = pipeStateObject;
-    PSOHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
+    const PSOHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
     data.magicNumber = MAGIC_NUMBER_COUNTER;
     m_psoRegisterHandle[name] = handle;
     ++MAGIC_NUMBER_COUNTER;

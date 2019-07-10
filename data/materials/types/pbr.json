@@ -1,4 +1,5 @@
 {
   "pso" :  "gbufferPBRPSO", 
-  "rs"  :  "gbufferPBRRS"
+  "rs"  :  "gbufferPBRRS",
+  "type" : "pbr"
 }

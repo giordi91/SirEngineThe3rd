@@ -1,7 +1,9 @@
 #include "SirEngine/materialManager.h"
 #include "SirEngine/fileUtils.h"
 #include "nlohmann/json.hpp"
+#include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/TextureManagerDx12.h"
+#include "platform/windows/graphics/dx12/rootSignatureManager.h"
 
 #if GRAPHICS_API == DX12
 #include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
@@ -20,6 +22,9 @@ static const char *ROUGHNESS = "roughness";
 static const char *THICKNESS = "thickness";
 static const char *QUEUE = "queue";
 static const char *TYPE = "type";
+static const std::string DEFAULT_STRING = "";
+static const char *RS_KEY = "rs";
+static const char *PSO_KEY = "pso";
 
 static const std::unordered_map<std::string, SirEngine::SHADER_QUEUE_FLAGS>
     STRING_TO_QUEUE_FLAG{
@@ -58,13 +63,21 @@ inline uint16_t stringToActualTypeFlag(const std::string &flag) {
   return 0;
 }
 
+uint16_t parseTypeFlags(const nlohmann::json &jobj) {
+  if (jobj.find(materialKeys::TYPE) == jobj.end()) {
+    assert(0 && "cannot find type flags in material");
+    return 0;
+  }
+  // extract the type flag
+  const auto &tJobj = jobj[materialKeys::TYPE];
+  const auto stringType = tJobj.get<std::string>();
+  const uint16_t typeFlag = stringToActualTypeFlag(stringType);
+  return typeFlag;
+}
+
 uint32_t parseQueueTypeFlags(const nlohmann::json &jobj) {
   if (jobj.find(materialKeys::QUEUE) == jobj.end()) {
     assert(0 && "cannot find queue flags in material");
-    return 0;
-  }
-  if (jobj.find(materialKeys::TYPE) == jobj.end()) {
-    assert(0 && "cannot find type flags in material");
     return 0;
   }
 
@@ -79,11 +92,7 @@ uint32_t parseQueueTypeFlags(const nlohmann::json &jobj) {
     flags |= currentFlag;
   }
 
-  // extract the type flag
-  const auto &tjobj = jobj[materialKeys::TYPE];
-  const auto stringType = tjobj.get<std::string>();
-  const uint16_t typeFlag = stringToActualTypeFlag(stringType);
-
+  const uint32_t typeFlag = parseTypeFlags(jobj);
   flags = typeFlag << 16 | flags;
   return flags;
 }
@@ -126,6 +135,53 @@ void MaterialManager::bindMaterial(const MaterialRuntime &materialRuntime,
   }
 }
 
+void MaterialManager::loadTypesInFolder(const char *folder) {
+  std::vector<std::string> paths;
+  listFilesInFolder(folder, paths, "json");
+
+  for (const auto &p : paths) {
+    loadTypeFile(p.c_str());
+  }
+}
+
+void MaterialManager::bindRSandPSO(const uint32_t shaderFlags,
+                                   ID3D12GraphicsCommandList2 *commandList) {
+  // get type flags as int
+  constexpr auto mask = static_cast<uint32_t>(~((1 << 16) - 1));
+  const auto typeFlags = static_cast<uint16_t>((shaderFlags & mask) >> 16);
+
+  const auto found = m_shderTypeToShaderBind.find(typeFlags);
+  if (found != m_shderTypeToShaderBind.end()) {
+    dx12::PSO_MANAGER->bindPSO(found->second.pso, commandList);
+    dx12::ROOT_SIGNATURE_MANAGER->bindGraphicsRS(found->second.rs, commandList);
+    return;
+  }
+  assert(0 && "Could not find requested shader type for PSO /RS bind");
+}
+
+void MaterialManager::loadTypeFile(const char *path) {
+  const auto jObj = getJsonObj(path);
+  SE_CORE_INFO("[Engine]: Loading Material Type from: {0}", path);
+
+  const std::string rsString = getValueIfInJson(jObj, materialKeys::RS_KEY,
+                                                materialKeys::DEFAULT_STRING);
+  const std::string psoString = getValueIfInJson(jObj, materialKeys::PSO_KEY,
+                                                 materialKeys::DEFAULT_STRING);
+
+  assert(!rsString.empty() && "root signature is emtpy in material type");
+  assert(!psoString.empty() && "root signature is emtpy in material type");
+
+  // get the handles
+  const PSOHandle psoHandle =
+      dx12::PSO_MANAGER->getHandleFromName(psoString);
+  const RSHandle rsHandle =
+      dx12::ROOT_SIGNATURE_MANAGER->getHandleFromName(rsString.c_str());
+
+  std::string name = getFileName(path);
+
+  const uint16_t flags = parseTypeFlags(jObj);
+  m_shderTypeToShaderBind[flags] = ShaderBind{rsHandle, psoHandle};
+}
 MaterialHandle MaterialManager::loadMaterial(const char *path,
                                              MaterialRuntime *materialRuntime) {
 
@@ -222,14 +278,14 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
     texHandles.roughnessSrv = dx12::TEXTURE_MANAGER->getSRVDx12(roughnessTex);
   }
   if (thicknessTex.handle != 0) {
-    texHandles.thicknessSrv= dx12::TEXTURE_MANAGER->getSRVDx12(thicknessTex);
+    texHandles.thicknessSrv = dx12::TEXTURE_MANAGER->getSRVDx12(thicknessTex);
   }
   MaterialRuntime matCpu{};
   matCpu.albedo = texHandles.albedoSrv.gpuHandle;
   matCpu.normal = texHandles.normalSrv.gpuHandle;
   matCpu.metallic = texHandles.metallicSrv.gpuHandle;
   matCpu.roughness = texHandles.roughnessSrv.gpuHandle;
-  matCpu.thickness= texHandles.thicknessSrv.gpuHandle;
+  matCpu.thickness = texHandles.thicknessSrv.gpuHandle;
 
   // we need to allocate  constant buffer
   // TODO should this be static constant buffer? investigate
