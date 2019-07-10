@@ -9,7 +9,5 @@
   "roughness" :  "../data/processed/textures/cerberus/Cerberus_R.texture",
   "metallic" :  "../data/processed/textures/cerberus/Cerberus_M.texture",
   "queue" :  ["deferred"],
-  "type" : "pbr" ,
-  "pso" :  "gbufferPBRPSO", 
-  "rs"  :  "gbufferPBRRS"
+  "type" : "pbr"
 }

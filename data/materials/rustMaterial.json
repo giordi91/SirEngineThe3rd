@@ -9,7 +9,5 @@
   "roughness" :  "../data/processed/textures/roughness.texture",
   "metallic" :  "../data/processed/textures/metallic.texture",
   "queue" :  ["deferred"],
-  "type" : "pbr",
-  "pso" :  "gbufferPBRPSO", 
-  "rs"  :  "gbufferPBRRS" 
+  "type" : "pbr"
 }

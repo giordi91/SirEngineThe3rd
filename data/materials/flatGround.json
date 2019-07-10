@@ -9,8 +9,6 @@
   "roughness" :  "../data/processed/textures/flatGround/stone_R.texture",
   "metallic" :  "../data/processed/textures/flatGround/stone_M.texture",
   "queue" :  ["deferred"],
-  "type" : "pbr" ,
-  "pso" :  "gbufferPBRPSO", 
-  "rs"  :  "gbufferPBRRS"
+  "type" : "pbr" 
 
 }

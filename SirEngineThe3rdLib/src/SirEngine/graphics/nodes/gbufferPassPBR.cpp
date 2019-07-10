@@ -52,7 +52,7 @@ GBufferPassPBR::GBufferPassPBR(const char *name)
   registerPlug(stream);
 
   // fetching root signature
-  rs = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(GBUFFER_RS);
+  rs = dx12::ROOT_SIGNATURE_MANAGER->getHandleFromName(GBUFFER_RS);
   pso = dx12::PSO_MANAGER->getHandleFromName(GBUFFER_PSO);
 }
 
@@ -122,12 +122,12 @@ void GBufferPassPBR::compute() {
       dx12::TEXTURE_MANAGER->getRTVDx12(m_specularBuffer).cpuHandle};
 
   auto depthDescriptor = dx12::TEXTURE_MANAGER->getRTVDx12(m_depth).cpuHandle;
-  commandList->SetGraphicsRootSignature(rs);
+  dx12::ROOT_SIGNATURE_MANAGER->bindGraphicsRS(rs,commandList);
   commandList->OMSetRenderTargets(3, handles, false, &depthDescriptor);
 
   globals::RENDERING_CONTEX->bindCameraBuffer(0);
 
-  StreamHandle streamH = getInputConnection(m_connections, &m_inputPlugs[0]);
+  const StreamHandle streamH = getInputConnection(m_connections, &m_inputPlugs[0]);
   const std::unordered_map<uint32_t, std::vector<Renderable>> &renderables =
       globals::ASSET_MANAGER->getRenderables(streamH);
 

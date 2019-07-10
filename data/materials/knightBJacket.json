@@ -9,8 +9,5 @@
   "roughness" :  "../data/processed/textures/knightB/jacket_R.texture",
   "metallic" :  "../data/processed/textures/knightB/jacket_M.texture",
   "queue" :  ["deferred"],
-  "type" : "pbr" ,
-  "pso" :  "gbufferPBRPSO", 
-  "rs"  :  "gbufferPBRRS"
-
+  "type" : "pbr" 
 }
