@@ -1,14 +1,13 @@
 #pragma once
 
-#include "SirEngine/core.h"
 #include "DXTK12/ResourceUploadBatch.h"
+#include "SirEngine/core.h"
 #include "SirEngine/handle.h"
 #include "SirEngine/memory/SparseMemoryPool.h"
 #include "SirEngine/textureManager.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/d3dx12.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
-
 
 namespace SirEngine {
 namespace dx12 {
@@ -32,24 +31,30 @@ public:
   ~TextureManagerDx12();
   TextureManagerDx12(const TextureManagerDx12 &) = delete;
   TextureManagerDx12 &operator=(const TextureManagerDx12 &) = delete;
-  void loadLegacy(const std::string& path);
-  virtual TextureHandle loadTexture(const char *path,  bool cubeMap= false) override;
+  void loadLegacy(const std::string &path);
+  virtual TextureHandle loadTexture(const char *path,
+                                    bool cubeMap = false) override;
   virtual void free(const TextureHandle handle) override;
   virtual TextureHandle allocateRenderTexture(uint32_t width, uint32_t height,
                                               RenderTargetFormat format,
-                                              const char *name, bool allowWrite =false) override;
+                                              const char *name,
+                                              bool allowWrite = false) override;
   virtual TextureHandle allocateTexture(uint32_t width, uint32_t height,
-                                              RenderTargetFormat format,
-                                              const char *name, bool mips, bool allowWrite =false) override;
+                                        RenderTargetFormat format,
+                                        const char *name, bool mips,
+                                        bool allowWrite = false) override;
   virtual void bindRenderTarget(TextureHandle handle,
                                 TextureHandle depth) override;
   virtual void copyTexture(TextureHandle source,
                            TextureHandle destination) override;
   virtual void bindBackBuffer(bool bindBackBufferDepth) override;
-  virtual void clearDepth(const TextureHandle depth, float value = 1.0f) override;
+  virtual void clearDepth(const TextureHandle depth,
+                          float value = 1.0f) override;
   virtual void clearRT(const TextureHandle handle,
                        const float color[4]) override;
 
+  void initialize();
+  inline TextureHandle getWhiteTexture() const { return m_whiteTexture; }
   // dx12 methods
   TextureHandle initializeFromResourceDx12(ID3D12Resource *resource,
                                            const char *name,
@@ -78,18 +83,16 @@ public:
     assert(data.uav.type == DescriptorType::UAV);
     return m_texturePool.getConstRef(index).uav;
   }
-  ID3D12Resource* getRawTexture(const TextureHandle handle) const
-  {
+  ID3D12Resource *getRawTexture(const TextureHandle handle) const {
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
     const TextureData &data = m_texturePool.getConstRef(index);
-	return data.resource;
+    return data.resource;
   }
 
   // A manual format is passed to the depth becauase we normally use a typess
   // type so we cannot rely on the format used during allocation.
-  DescriptorPair
-  getDSVDx12(const TextureHandle handle) {
+  DescriptorPair getDSVDx12(const TextureHandle handle) {
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
     return m_texturePool[index].srv;
@@ -151,6 +154,9 @@ private:
   std::unordered_map<std::string, TextureHandle> m_nameToHandle;
   DirectX::ResourceUploadBatch batch;
   SparseMemoryPool<TextureData> m_texturePool;
+
+  // default texture
+  TextureHandle m_whiteTexture;
 };
 
 } // namespace dx12

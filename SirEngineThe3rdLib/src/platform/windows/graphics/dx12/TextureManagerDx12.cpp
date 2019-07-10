@@ -14,6 +14,8 @@ static const std::string TEXTURE_PATH_KEY = "path";
 static const std::string DEFAULT_STRING = "";
 static const int DEFAULT_INT = 0;
 static const bool DEFAULT_BOOL = false;
+static const char* WHITE_TEXTURE_PATH = "../data/processed/textures/white.texture"; 
+
 
 static std::unordered_map<RenderTargetFormat, DXGI_FORMAT>
     RENDER_TARGET_FORMAT_TO_DXGI{
@@ -455,5 +457,10 @@ void TextureManagerDx12::clearRT(const TextureHandle handle,
   // Clear the back buffer and depth buffer.
   CURRENT_FRAME_RESOURCE->fc.commandList->ClearRenderTargetView(
       data.rtsrv.cpuHandle, color, 0, nullptr);
+}
+
+void TextureManagerDx12::initialize()
+{
+	m_whiteTexture = loadTexture(WHITE_TEXTURE_PATH,false);
 }
 } // namespace SirEngine::dx12
