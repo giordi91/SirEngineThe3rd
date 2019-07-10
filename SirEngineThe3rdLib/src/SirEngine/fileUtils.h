@@ -16,50 +16,51 @@ inline void listFilesInFolder(const char *folderPath,
   bool shouldFilter = extension != "NONE";
   std::string _extension = "." + extension;
   auto program_p = std::experimental::filesystem::path(folderPath);
-  auto dir_it = std::experimental::filesystem::directory_iterator(program_p);
-  for (auto p : dir_it) {
-    bool is_dir = std::experimental::filesystem::is_directory(p);
-    if (!is_dir) {
+  auto dirIt = std::experimental::filesystem::directory_iterator(program_p);
+  for (auto p : dirIt) {
+    bool isDir = std::experimental::filesystem::is_directory(p);
+    if (!isDir) {
       auto path = std::experimental::filesystem::path(p);
 
       if (shouldFilter && !(path.extension() == _extension)) {
         continue;
       }
-      auto f_path = std::string(path.native().begin(), path.native().end());
-      filePaths.push_back(f_path);
+
+      //auto fPath = std::string(path.native().begin(), path.native().end());
+      filePaths.push_back(path.u8string());
     }
   }
 }
 inline std::string getFileName(const std::string &path) {
-  auto exp_path = std::experimental::filesystem::path(path);
-  return exp_path.stem().string();
+	const auto expPath = std::experimental::filesystem::path(path);
+  return expPath.stem().string();
 }
 inline std::string getFileExtension(const std::string &path) {
-  auto exp_path = std::experimental::filesystem::path(path);
-  return exp_path.extension().string();
+	const auto expPath = std::experimental::filesystem::path(path);
+  return expPath.extension().string();
 }
 
 inline std::string getPathName(const std::string &path) {
-  auto exp_path = std::experimental::filesystem::path(path);
-  return exp_path.parent_path().string();
+	const auto expPath = std::experimental::filesystem::path(path);
+  return expPath.parent_path().string();
 }
 
 inline bool fileExists(const std::string &name) {
   return std::experimental::filesystem::exists(name);
 }
 inline bool filePathExists(const std::string &name) {
-  std::experimental::filesystem::path path(name);
-  std::experimental::filesystem::path parent = path.parent_path();
+	const std::experimental::filesystem::path path(name);
+	const std::experimental::filesystem::path parent = path.parent_path();
   return std::experimental::filesystem::exists(parent);
 }
 
 template <typename T>
 inline T getValueIfInJson(const nlohmann::json &data, const std::string &key,
-                   const T &default_value) {
+                   const T &defaultValue) {
   if (data.find(key) != data.end()) {
     return data[key].get<T>();
   }
-  return default_value;
+  return defaultValue;
 }
 
 #if GRAPHICS_API == DX12

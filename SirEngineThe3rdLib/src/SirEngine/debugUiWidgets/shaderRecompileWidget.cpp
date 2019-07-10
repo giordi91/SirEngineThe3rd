@@ -83,7 +83,7 @@ struct ShaderCompileConsole {
     ScrollToBottom = true;
   }
 
-  void Draw(const char *title, bool *p_open) {
+  void Draw(bool *p_open) {
     // ImGui::SetNextWindowSize(ImVec2(520, 600), ImGuiCond_FirstUseEver);
     // if (!ImGui::Begin(title, p_open)) {
     //  ImGui::End();
@@ -211,7 +211,7 @@ void ShaderCompilerWidget::render() {
   }
 
   ImGui::ListBox("", &currentSelectedItem, elementsToRender.data(),
-                 elementsToRender.size());
+                 static_cast<int>(elementsToRender.size()));
 
   ImGui::PushItemWidth(-1.0f);
   ImGui::Checkbox("Use develop path offset", &useDevelopPath);
@@ -230,7 +230,7 @@ void ShaderCompilerWidget::render() {
 
   if (ImGui::CollapsingHeader("Console Output")) {
     shouldRenderConsole = true;
-    console->Draw("Console", &shouldRenderConsole);
+    console->Draw( &shouldRenderConsole);
   } else {
     shouldRenderConsole = false;
   }

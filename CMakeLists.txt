@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.13.0)
 
+project(SirEngineThe3rd)
 # Set global property (all targets are impacted)
 set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CMAKE_COMMAND} -E time")
 #preventing in source build
