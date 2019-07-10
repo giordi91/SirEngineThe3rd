@@ -207,6 +207,7 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   texHandles.normal = normalTex;
   texHandles.metallic = metallicTex;
   texHandles.roughness = roughnessTex;
+  texHandles.thickness = thicknessTex;
 
   if (albedoTex.handle != 0) {
     texHandles.albedoSrv = dx12::TEXTURE_MANAGER->getSRVDx12(albedoTex);
@@ -220,11 +221,15 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   if (roughnessTex.handle != 0) {
     texHandles.roughnessSrv = dx12::TEXTURE_MANAGER->getSRVDx12(roughnessTex);
   }
+  if (thicknessTex.handle != 0) {
+    texHandles.thicknessSrv= dx12::TEXTURE_MANAGER->getSRVDx12(thicknessTex);
+  }
   MaterialRuntime matCpu{};
   matCpu.albedo = texHandles.albedoSrv.gpuHandle;
   matCpu.normal = texHandles.normalSrv.gpuHandle;
   matCpu.metallic = texHandles.metallicSrv.gpuHandle;
   matCpu.roughness = texHandles.roughnessSrv.gpuHandle;
+  matCpu.thickness= texHandles.thicknessSrv.gpuHandle;
 
   // we need to allocate  constant buffer
   // TODO should this be static constant buffer? investigate

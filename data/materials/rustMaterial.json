@@ -8,7 +8,8 @@
   "normal" :  "../data/processed/textures/normal.texture",
   "roughness" :  "../data/processed/textures/roughness.texture",
   "metallic" :  "../data/processed/textures/metallic.texture",
-  "flags" :  ["deferred", "pbr"],
   "queue" :  ["deferred"],
-  "type" : "pbr" 
+  "type" : "pbr",
+  "pso" :  "gbufferPBRPSO", 
+  "rs"  :  "gbufferPBRRS" 
 }

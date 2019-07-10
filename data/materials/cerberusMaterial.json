@@ -8,5 +8,8 @@
   "normal" :  "../data/processed/textures/cerberus/Cerberus_N.texture",
   "roughness" :  "../data/processed/textures/cerberus/Cerberus_R.texture",
   "metallic" :  "../data/processed/textures/cerberus/Cerberus_M.texture",
-  "flags" :  ["deferred", "pbr"]
+  "queue" :  ["deferred"],
+  "type" : "pbr" ,
+  "pso" :  "gbufferPBRPSO", 
+  "rs"  :  "gbufferPBRRS"
 }
