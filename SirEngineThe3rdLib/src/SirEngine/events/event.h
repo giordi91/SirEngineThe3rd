@@ -2,7 +2,7 @@
 #include "SirEngine/core.h"
 #include <functional>
 #include <string>
-
+#include <ostream>
 namespace SirEngine {
 
 enum class EventType {

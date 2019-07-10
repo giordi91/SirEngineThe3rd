@@ -266,7 +266,7 @@ unsigned int WindowsWindow::getHeight() const { return m_data.height; }
 void WindowsWindow::setEventCallback(const EventCallbackFn &callback) {
   m_callback = callback;
 }
-void WindowsWindow::setVSync(bool enabled) {
+void WindowsWindow::setVSync(bool ) {
   assert(0 && "not implemented yet");
 }
 void WindowsWindow::isVSync() const { assert(0 && "not implemented yet"); }

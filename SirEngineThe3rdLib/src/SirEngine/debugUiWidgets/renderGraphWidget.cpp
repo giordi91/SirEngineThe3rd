@@ -411,7 +411,7 @@ void RenderGraphWidget::initialize(Graph *graph) {
 
   std::unordered_map<uint32_t, ImVec2> posCache;
 
-  status->nodes.resize(nodesToAdd.size());
+  status->nodes.resize(static_cast<int>(nodesToAdd.size()));
   for (size_t i = 0; i < nodesToAdd.size(); ++i) {
 
     // compute x position

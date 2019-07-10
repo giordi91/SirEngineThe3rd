@@ -50,7 +50,7 @@ ID3DBlob *DXCShaderCompiler::compilerShader(const std::string &shaderPath,
   IDxcBlobEncoding *pSource;
   DxcCreateInstance(CLSID_DxcLibrary, __uuidof(IDxcLibrary),
                     (void **)&pLibrary);
-  pLibrary->CreateBlobWithEncodingFromPinned(Program, shaderContent.size(),
+  pLibrary->CreateBlobWithEncodingFromPinned(Program, static_cast<uint32_t>(shaderContent.size()),
                                              CP_UTF8, &pSource);
 
   // lets build compiler flags, for now they are simple so we can just switch
@@ -59,10 +59,6 @@ ID3DBlob *DXCShaderCompiler::compilerShader(const std::string &shaderPath,
       shaderArgs.debug ? COMPILATION_FLAGS_DEBUG : COMPILATION_FLAGS;
   int flagsCount = shaderArgs.debug ? _countof(COMPILATION_FLAGS_DEBUG)
                                     : _countof(COMPILATION_FLAGS);
-
-  // create a standard include
-  IDxcIncludeHandler *includeHandle = nullptr;
-  pLibrary->CreateIncludeHandler(&includeHandle);
 
   // kick the compilation
   pCompiler->Compile(pSource,         // program text
