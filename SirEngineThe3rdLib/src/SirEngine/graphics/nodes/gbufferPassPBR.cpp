@@ -81,7 +81,7 @@ getInputConnection(std::unordered_map<const Plug *, std::vector<Plug *>> &conns,
   auto &inConns = conns[plug];
   assert(inConns.size() == 1 && "too many input connections");
   Plug *source = inConns[0];
-  auto h = StreamHandle{source->plugValue};
+  const auto h = StreamHandle{source->plugValue};
   assert(h.isHandleValid());
   return h;
 }
@@ -144,16 +144,8 @@ void GBufferPassPBR::compute() {
       const Renderable *currRenderables = renderableList.second.data();
       for (int i = 0; i < count; ++i) {
         const Renderable &renderable = currRenderables[i];
-        commandList->SetGraphicsRootConstantBufferView(
-            1, renderable.m_materialRuntime.cbVirtualAddress);
-        commandList->SetGraphicsRootDescriptorTable(
-            2, renderable.m_materialRuntime.albedo);
-        commandList->SetGraphicsRootDescriptorTable(
-            3, renderable.m_materialRuntime.normal);
-        commandList->SetGraphicsRootDescriptorTable(
-            4, renderable.m_materialRuntime.metallic);
-        commandList->SetGraphicsRootDescriptorTable(
-            5, renderable.m_materialRuntime.roughness);
+		dx12::MATERIAL_MANAGER->bindMaterial(renderable.m_materialRuntime,commandList);
+
         dx12::MESH_MANAGER->bindMeshRuntimeAndRender(renderable.m_meshRuntime,
                                                      currentFc);
       }

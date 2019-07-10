@@ -19,8 +19,8 @@ struct MaterialRuntime final {
   D3D12_GPU_DESCRIPTOR_HANDLE normal;
   D3D12_GPU_DESCRIPTOR_HANDLE metallic;
   D3D12_GPU_DESCRIPTOR_HANDLE roughness;
+  D3D12_GPU_DESCRIPTOR_HANDLE thickness;
 #endif
-  uint32_t shaderFlags = 0;
   uint32_t shaderQueueTypeFlags = 0;
 };
 struct MaterialDataHandles {
@@ -52,13 +52,6 @@ struct Material final {
   float padding;
   float padding2;
 };
-enum class SHADER_PASS_FLAGS {
-  FORWARD = 1 << 0,
-  DEFERRED = 1 << 1,
-  PBR = 1 << 2,
-  SKIN = 1 << 3,
-  SHADOW = 1 << 4
-};
 
 enum class SHADER_QUEUE_FLAGS {
   FORWARD = 1 << 0,
@@ -76,11 +69,14 @@ public:
         m_materialTextureHandles.resize(RESERVE_SIZE);
   };
   ~MaterialManager() = default;
+  void bindMaterial(const MaterialRuntime &materialRuntime,
+                    ID3D12GraphicsCommandList2 *commandList);
   MaterialManager(const MaterialManager &) = delete;
   MaterialManager &operator=(const MaterialManager &) = delete;
 
   void initialize(){};
-  MaterialHandle loadMaterial(const char *path, MaterialRuntime *materialRuntime);
+  MaterialHandle loadMaterial(const char *path,
+                              MaterialRuntime *materialRuntime);
 
   inline SHADER_TYPE_FLAGS getTypeFlags(const uint32_t flags) {
     // here we are creating a mask for the fist 16 bits, then we flip it
@@ -135,6 +131,7 @@ private:
   std::vector<Material> m_materials;
   std::vector<uint16_t> m_materialsMagic;
   std::vector<MaterialDataHandles> m_materialTextureHandles;
+
 };
 
 } // namespace SirEngine

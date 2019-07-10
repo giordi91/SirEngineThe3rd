@@ -185,6 +185,7 @@ bool initializeGraphicsDx12(Window *wnd, uint32_t width, uint32_t height) {
   globals::CONSTANT_BUFFER_MANAGER = CONSTANT_BUFFER_MANAGER;
   globals::BUFFER_MANAGER = BUFFER_MANAGER;
   TEXTURE_MANAGER = new TextureManagerDx12();
+  TEXTURE_MANAGER->initialize();
   globals::TEXTURE_MANAGER = TEXTURE_MANAGER;
   MESH_MANAGER = new MeshManager();
   MATERIAL_MANAGER = new MaterialManager();
