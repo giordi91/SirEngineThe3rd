@@ -57,7 +57,7 @@ public:
   }
 
   inline PSOHandle getHandleFromName(const std::string &name) const {
-    auto found = m_psoRegisterHandle.find(name);
+    const auto found = m_psoRegisterHandle.find(name);
     if (found != m_psoRegisterHandle.end()) {
       return found->second;
     }

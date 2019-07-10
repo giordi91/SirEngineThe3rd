@@ -12,6 +12,11 @@
 
 namespace SirEngine {
 
+struct ShaderBind {
+  RSHandle rs;
+  PSOHandle pso;
+};
+
 struct MaterialRuntime final {
   D3D12_GPU_VIRTUAL_ADDRESS cbVirtualAddress;
 #if GRAPHICS_API == DX12
@@ -73,10 +78,13 @@ public:
   ~MaterialManager() = default;
   void bindMaterial(const MaterialRuntime &materialRuntime,
                     ID3D12GraphicsCommandList2 *commandList);
+  void loadTypesInFolder(const char *folder);
+  void bindRSandPSO(uint32_t shaderFlags,
+                    ID3D12GraphicsCommandList2* commandList);;
   MaterialManager(const MaterialManager &) = delete;
   MaterialManager &operator=(const MaterialManager &) = delete;
 
-  void initialize(){};
+  void init(){};
   MaterialHandle loadMaterial(const char *path,
                               MaterialRuntime *materialRuntime);
 
@@ -122,7 +130,10 @@ private:
     assert(m_materialsMagic[idx] == magic &&
            "invalid magic handle for constant buffer");
   }
+  void loadTypeFile(const char *path);
 
+private:
+  std::unordered_map<uint16_t, ShaderBind> m_shderTypeToShaderBind;
   std::unordered_map<std::string, MaterialHandle> m_nameToHandle;
   static const uint32_t INDEX_MASK = (1 << 16) - 1;
   static const uint32_t MAGIC_NUMBER_MASK = ~INDEX_MASK;
