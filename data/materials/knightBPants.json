@@ -8,8 +8,9 @@
   "normal" :  "../data/processed/textures/knightB/pants_N.texture",
   "roughness" :  "../data/processed/textures/knightB/pants_R.texture",
   "metallic" :  "../data/processed/textures/knightB/pants_M.texture",
-  "flags" :  ["deferred", "pbr"],
   "queue" :  ["deferred"],
-  "type" : "pbr" 
+  "type" : "pbr",
+  "pso" :  "gbufferPBRPSO", 
+  "rs"  :  "gbufferPBRRS" 
 
 }

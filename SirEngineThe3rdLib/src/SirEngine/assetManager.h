@@ -18,6 +18,7 @@ struct Renderable {
   DirectX::XMMATRIX m_matrixRuntime;
   dx12::MeshRuntime m_meshRuntime;
   MaterialRuntime m_materialRuntime;
+
 };
 
 enum AssetDataType { MATRICES = 1, MESHES = 2, MATERIALS = 3 };

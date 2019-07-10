@@ -144,8 +144,8 @@ void GBufferPassPBR::compute() {
       const Renderable *currRenderables = renderableList.second.data();
       for (int i = 0; i < count; ++i) {
         const Renderable &renderable = currRenderables[i];
-		dx12::MATERIAL_MANAGER->bindMaterial(renderable.m_materialRuntime,commandList);
 
+		dx12::MATERIAL_MANAGER->bindMaterial(renderable.m_materialRuntime,commandList);
         dx12::MESH_MANAGER->bindMeshRuntimeAndRender(renderable.m_meshRuntime,
                                                      currentFc);
       }

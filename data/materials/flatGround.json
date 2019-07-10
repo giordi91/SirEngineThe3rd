@@ -8,8 +8,9 @@
   "normal" :  "../data/processed/textures/flatGround/stone_N.texture",
   "roughness" :  "../data/processed/textures/flatGround/stone_R.texture",
   "metallic" :  "../data/processed/textures/flatGround/stone_M.texture",
-  "flags" :  ["deferred", "pbr"],
   "queue" :  ["deferred"],
-  "type" : "pbr" 
+  "type" : "pbr" ,
+  "pso" :  "gbufferPBRPSO", 
+  "rs"  :  "gbufferPBRRS"
 
 }

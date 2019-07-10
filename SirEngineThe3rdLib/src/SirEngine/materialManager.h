@@ -28,10 +28,12 @@ struct MaterialDataHandles {
   TextureHandle normal;
   TextureHandle metallic;
   TextureHandle roughness;
+  TextureHandle thickness;
   dx12::DescriptorPair albedoSrv;
   dx12::DescriptorPair normalSrv;
   dx12::DescriptorPair metallicSrv;
   dx12::DescriptorPair roughnessSrv;
+  dx12::DescriptorPair thicknessSrv;
   ConstantBufferHandle cbHandle;
 };
 struct Material final {
@@ -131,7 +133,6 @@ private:
   std::vector<Material> m_materials;
   std::vector<uint16_t> m_materialsMagic;
   std::vector<MaterialDataHandles> m_materialTextureHandles;
-
 };
 
 } // namespace SirEngine
