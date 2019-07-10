@@ -9,7 +9,5 @@
   "roughness" :  "../data/processed/textures/knightB/sword_R.texture",
   "metallic" :  "../data/processed/textures/knightB/sword_M.texture",
   "queue" :  ["deferred"],
-  "type" : "pbr" ,
-  "pso" :  "gbufferPBRPSO", 
-  "rs"  :  "gbufferPBRRS"
+  "type" : "pbr"
 }

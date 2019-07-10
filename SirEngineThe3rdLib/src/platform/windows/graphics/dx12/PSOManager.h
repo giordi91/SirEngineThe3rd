@@ -21,7 +21,7 @@ class SIR_ENGINE_API PSOManager final {
 
   struct PSOData {
     ID3D12PipelineState *pso;
-    int magicNumber;
+    uint32_t magicNumber;
   };
 
 public:
@@ -36,11 +36,11 @@ public:
   // debugging function to be able to print to console the composition of a
   // state object
   static void printStateObjectDesc(const D3D12_STATE_OBJECT_DESC *desc);
-  inline ID3D12PipelineState *getComputePSOByName(const std::string &name) const
-  {
-    PSOHandle handle = getHandleFromName(name);
+  inline ID3D12PipelineState *
+  getComputePSOByName(const std::string &name) const {
+    const PSOHandle handle = getHandleFromName(name);
     assertMagicNumber(handle);
-    uint32_t index = getIndexFromHandle(handle);
+    const uint32_t index = getIndexFromHandle(handle);
     const PSOData &data = m_psoPool.getConstRef(index);
     return data.pso;
   }
@@ -51,7 +51,7 @@ public:
                       ID3D12GraphicsCommandList2 *commandList) const {
 
     assertMagicNumber(handle);
-    uint32_t index = getIndexFromHandle(handle);
+    const uint32_t index = getIndexFromHandle(handle);
     const PSOData &data = m_psoPool.getConstRef(index);
     commandList->SetPipelineState(data.pso);
   }

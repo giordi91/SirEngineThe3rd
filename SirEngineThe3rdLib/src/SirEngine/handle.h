@@ -16,6 +16,10 @@ struct PSOHandle final {
   uint32_t handle;
   bool isHandleValid() const { return handle != 0; }
 };
+struct RSHandle final {
+  uint32_t handle;
+  bool isHandleValid() const { return handle != 0; }
+};
 
 struct ConstantBufferHandle final {
   uint32_t handle;
