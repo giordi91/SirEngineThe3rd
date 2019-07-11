@@ -13,7 +13,6 @@ namespace materialKeys {
 static const char *KD = "kd";
 static const char *KS = "ks";
 static const char *KA = "ka";
-static const char *PBR = "pbr";
 static const char *SHINESS = "shiness";
 static const char *ALBEDO = "albedo";
 static const char *NORMAL = "normal";
@@ -113,6 +112,7 @@ void bindSkin(const MaterialRuntime &materialRuntime,
   commandList->SetGraphicsRootDescriptorTable(3, materialRuntime.normal);
   commandList->SetGraphicsRootDescriptorTable(4, materialRuntime.metallic);
   commandList->SetGraphicsRootDescriptorTable(5, materialRuntime.roughness);
+  commandList->SetGraphicsRootDescriptorTable(6, materialRuntime.thickness);
   // bind extra thinkess map
 }
 
@@ -152,8 +152,8 @@ void MaterialManager::bindRSandPSO(const uint32_t shaderFlags,
 
   const auto found = m_shderTypeToShaderBind.find(typeFlags);
   if (found != m_shderTypeToShaderBind.end()) {
-    dx12::PSO_MANAGER->bindPSO(found->second.pso, commandList);
     dx12::ROOT_SIGNATURE_MANAGER->bindGraphicsRS(found->second.rs, commandList);
+    dx12::PSO_MANAGER->bindPSO(found->second.pso, commandList);
     return;
   }
   assert(0 && "Could not find requested shader type for PSO /RS bind");
@@ -169,13 +169,13 @@ void MaterialManager::loadTypeFile(const char *path) {
                                                  materialKeys::DEFAULT_STRING);
 
   assert(!rsString.empty() && "root signature is emtpy in material type");
-  assert(!psoString.empty() && "root signature is emtpy in material type");
+  assert(!psoString.empty() && "pso  is emtpy in material type");
 
   // get the handles
   const PSOHandle psoHandle =
       dx12::PSO_MANAGER->getHandleFromName(psoString);
   const RSHandle rsHandle =
-      dx12::ROOT_SIGNATURE_MANAGER->getHandleFromName(rsString.c_str());
+      dx12::ROOT_SIGNATURE_MANAGER->getHandleFromName(rsString);
 
   std::string name = getFileName(path);
 
@@ -246,7 +246,7 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
 
   uint32_t queueTypeFlags = parseQueueTypeFlags(jobj);
 
-  Material mat;
+  Material mat{};
   mat.kDR = kd.x;
   mat.kDG = kd.y;
   mat.kDB = kd.z;

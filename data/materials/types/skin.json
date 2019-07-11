@@ -1,5 +1,5 @@
 {
-  "pso" :  "gbufferPBRPSO", 
-  "rs"  :  "gbufferPBRRS",
+  "pso" :  "gbufferPBRSkinPSO", 
+  "rs"  :  "gbufferPBRSkinRS",
   "type" : "skin"
 }

@@ -9,9 +9,6 @@
 #include "platform/windows/graphics/dx12/textureManagerDx12.h"
 
 namespace SirEngine {
-static const char *GBUFFER_RS = "gbufferPBRRS";
-static const char *GBUFFER_PSO = "gbufferPBRPSO";
-
 GBufferPassPBR::GBufferPassPBR(const char *name)
     : GraphNode(name, "GBufferPassPBR") {
   // lets create the plugs
@@ -51,9 +48,6 @@ GBufferPassPBR::GBufferPassPBR(const char *name)
   stream.name = "assetStream";
   registerPlug(stream);
 
-  // fetching root signature
-  rs = dx12::ROOT_SIGNATURE_MANAGER->getHandleFromName(GBUFFER_RS);
-  pso = dx12::PSO_MANAGER->getHandleFromName(GBUFFER_PSO);
 }
 
 void GBufferPassPBR::initialize() {

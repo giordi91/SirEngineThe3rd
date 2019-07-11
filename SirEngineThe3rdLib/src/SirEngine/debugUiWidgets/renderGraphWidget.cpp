@@ -455,7 +455,7 @@ void RenderGraphWidget::render() {
   if (!ImGui::CollapsingHeader("Debug Frame", ImGuiTreeNodeFlags_DefaultOpen))
     return;
   const char *items[] = {"fullFrame", "gbuffer", "normalsBuffer",
-                         "specularBuffer", "depth"};
+                         "metallic","roughness","thickness","depth"};
   const bool debugLayerValueChanged =
       ImGui::Combo("Pass", &currentDebugLayer, items, IM_ARRAYSIZE(items));
 
