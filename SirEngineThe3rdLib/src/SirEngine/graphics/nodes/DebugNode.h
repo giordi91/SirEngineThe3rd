@@ -19,10 +19,12 @@ public:
   }
 
 private:
-  enum DebugIndex {
+  enum class DebugIndex {
     GBUFFER = 1,
     NORMAL_BUFFER,
-    SPECULAR_BUFFER,
+    METALLIC_BUFFER,
+    ROUGHNESS_BUFFER,
+    THICKNESS_BUFFER,
     GBUFFER_DEPTH,
   };
 
@@ -41,7 +43,9 @@ private:
 
   PSOHandle m_gbufferPSOHandle;
   PSOHandle m_normalPSOHandle;
-  PSOHandle m_specularPSOHandle;
+  PSOHandle m_roughnessPSOHandle;
+  PSOHandle m_metallicPSOHandle;
+  PSOHandle m_thicknessPSOHandle;
   PSOHandle m_depthPSOHandle;
   PSOHandle m_depthReducePSOHandle;
   PSOHandle m_depthReduceClearPSOHandle;

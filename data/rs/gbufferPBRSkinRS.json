@@ -1,0 +1,95 @@
+{
+    "gbufferPBRSkinRS": {
+      "type": "RASTER",
+      "staticSamplers" : true,
+      "config": [
+        {
+          "type": "descriptorTable",
+          "data": {
+            "numberDescriptor": "1",
+            "baseRegister": 0,
+            "ranges": [
+              {
+                "type": "CBV",
+                "numDescriptors": 1,
+                "baseRegister": 0
+              }
+            ]
+          },
+          "visibility": "ALL"
+        },
+        {
+          "type": "CBV",
+          "data": { "baseRegister": 1 },
+          "visibility": "ALL"
+        },
+        {
+          "comment":  "albedo tex",
+          "type": "descriptorTable",
+          "data": {
+            "ranges": [
+              {
+                "type": "SRV",
+                "numDescriptors": 1,
+                "baseRegister":0 
+              }
+            ]
+          }
+        },
+        {
+          "comment":  "normal tex",
+          "type": "descriptorTable",
+          "data": {
+            "ranges": [
+              {
+                "type": "SRV",
+                "numDescriptors": 1,
+                "baseRegister":1 
+              }
+            ]
+          }
+        },
+        {
+          "comment":  "metallic tex",
+          "type": "descriptorTable",
+          "data": {
+            "ranges": [
+              {
+                "type": "SRV",
+                "numDescriptors": 1,
+                "baseRegister":2 
+              }
+            ]
+          }
+        } ,
+        {
+          "comment":  "roughness tex",
+          "type": "descriptorTable",
+          "data": {
+            "ranges": [
+              {
+                "type": "SRV",
+                "numDescriptors": 1,
+                "baseRegister":3 
+              }
+            ]
+          }
+        },
+        {
+          "comment":  "thickness tex",
+          "type": "descriptorTable",
+          "data": {
+            "ranges": [
+              {
+                "type": "SRV",
+                "numDescriptors": 1,
+                "baseRegister":4 
+              }
+            ]
+          }
+        }
+
+      ],
+      "flags": ["D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT"]
+    }
+}

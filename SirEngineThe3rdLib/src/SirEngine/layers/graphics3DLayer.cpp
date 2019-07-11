@@ -192,7 +192,9 @@ bool Graphics3DLayer::onDebugLayerEvent(DebugLayerChanged &e) {
   case (1):
   case (2):
   case (3):
-  case (4): {
+  case (4): 
+  case (5): 
+  case (6): {
     // lets add debug
     GraphNode *debugNode = dx12::RENDERING_GRAPH->findNodeOfType("DebugNode");
     // debug already there, maybe i just need to change configuration?

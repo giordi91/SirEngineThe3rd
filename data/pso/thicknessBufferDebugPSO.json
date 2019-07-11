@@ -3,7 +3,7 @@
  "inputLayout":  "deferredNull",
  "globalRootSignature": "debugFullScreenBlit_RS",
   "VS": "fullScreenQuadVS",
-  "PS":  "specularBufferDebugPS",
+  "PS":  "thicknessBufferDebugPS",
   "rasterState":  "default",
   "blendState": "default",
   "depthStencilState": "custom",

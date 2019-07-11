@@ -12,7 +12,9 @@ namespace SirEngine {
 
 static const std::string &GBUFFER_DEBUG_PSO_NAME = "gbufferDebugPSO";
 static const std::string &NORMAL_DEBUG_PSO_NAME = "normalBufferDebugPSO";
-static const std::string &SPECULAR_DEBUG_PSO_NAME = "specularBufferDebugPSO";
+static const std::string &METALLIC_DEBUG_PSO_NAME = "metallicBufferDebugPSO";
+static const std::string &ROUGHNESS_DEBUG_PSO_NAME = "roughnessBufferDebugPSO";
+static const std::string &THICKNESS_DEBUG_PSO_NAME = "thicknessBufferDebugPSO";
 static const std::string &DEPTH_DEBUG_PSO_NAME = "depthBufferDebugPSO";
 static const std::string &DEBUG_FULL_SCREEN_RS_NAME = "debugFullScreenBlit_RS";
 static const std::string &DEBUG_REDUCE_DEPTH_RS_NANE = "depthMinMaxReduce_RS";
@@ -40,8 +42,12 @@ DebugNode::DebugNode(const char *name) : GraphNode(name, "DebugNode") {
       dx12::PSO_MANAGER->getHandleFromName(GBUFFER_DEBUG_PSO_NAME);
   m_normalPSOHandle =
       dx12::PSO_MANAGER->getHandleFromName(NORMAL_DEBUG_PSO_NAME);
-  m_specularPSOHandle =
-      dx12::PSO_MANAGER->getHandleFromName(SPECULAR_DEBUG_PSO_NAME);
+  m_metallicPSOHandle =
+      dx12::PSO_MANAGER->getHandleFromName(METALLIC_DEBUG_PSO_NAME);
+  m_roughnessPSOHandle =
+      dx12::PSO_MANAGER->getHandleFromName(ROUGHNESS_DEBUG_PSO_NAME);
+  m_thicknessPSOHandle =
+      dx12::PSO_MANAGER->getHandleFromName(THICKNESS_DEBUG_PSO_NAME);
   m_depthPSOHandle = dx12::PSO_MANAGER->getHandleFromName(DEPTH_DEBUG_PSO_NAME);
   m_depthReducePSOHandle =
       dx12::PSO_MANAGER->getHandleFromName(DEBUG_REDUCE_DEPTH_PSO_NAME);
@@ -139,21 +145,35 @@ void DebugNode::blitDebugFrame(const TextureHandle handleToWriteOn) const {
     break;
   }
   case (DebugIndex::NORMAL_BUFFER): {
-    TextureHandle input = globals::DEBUG_FRAME_DATA->normalBuffer;
+    const TextureHandle input = globals::DEBUG_FRAME_DATA->normalBuffer;
     checkHandle(input, handleToWriteOn);
     blitBuffer(input, handleToWriteOn, m_normalPSOHandle, m_rs,
                m_constBufferHandle);
     break;
   }
-  case (DebugIndex::SPECULAR_BUFFER): {
-    TextureHandle input = globals::DEBUG_FRAME_DATA->specularBuffer;
+  case (DebugIndex::METALLIC_BUFFER): {
+    const TextureHandle input = globals::DEBUG_FRAME_DATA->specularBuffer;
     checkHandle(input, handleToWriteOn);
-    blitBuffer(input, handleToWriteOn, m_specularPSOHandle, m_rs,
+    blitBuffer(input, handleToWriteOn, m_metallicPSOHandle, m_rs,
+               m_constBufferHandle);
+    break;
+  }
+  case (DebugIndex::ROUGHNESS_BUFFER): {
+    const TextureHandle input = globals::DEBUG_FRAME_DATA->specularBuffer;
+    checkHandle(input, handleToWriteOn);
+    blitBuffer(input, handleToWriteOn, m_roughnessPSOHandle, m_rs,
+               m_constBufferHandle);
+    break;
+  }
+  case (DebugIndex::THICKNESS_BUFFER): {
+    const TextureHandle input = globals::DEBUG_FRAME_DATA->specularBuffer;
+    checkHandle(input, handleToWriteOn);
+    blitBuffer(input, handleToWriteOn, m_thicknessPSOHandle, m_rs,
                m_constBufferHandle);
     break;
   }
   case (DebugIndex::GBUFFER_DEPTH): {
-    TextureHandle input = globals::DEBUG_FRAME_DATA->gbufferDepth;
+    const TextureHandle input = globals::DEBUG_FRAME_DATA->gbufferDepth;
     checkHandle(input, handleToWriteOn);
     reduceDepth(globals::DEBUG_FRAME_DATA->gbufferDepth);
     blitDepthDebug(input, handleToWriteOn, m_reduceBufferHandle,

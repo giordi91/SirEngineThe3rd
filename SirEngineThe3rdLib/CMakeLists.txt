@@ -56,8 +56,10 @@ project(SirEngineThe3rdLib)
     #looking for  files
     file(GLOB_RECURSE ASSETS_FILES "../data/assets/*.json" )
 	SOURCE_GROUP("data/assets" FILES ${ASSETS_FILES})
-    file(GLOB_RECURSE MATERIAL_FILES "../data/materials/*.json" )
+    file(GLOB MATERIAL_FILES "../data/materials/*.json" )
+    file(GLOB MATERIAL_TYPES_FILES "../data/materials/types/*.json" )
 	SOURCE_GROUP("data/materials" FILES ${MATERIAL_FILES})
+	SOURCE_GROUP("data/materials/types" FILES ${MATERIAL_TYPES_FILES})
     file(GLOB_RECURSE PSO_FILES "../data/pso/*.json" )
 	SOURCE_GROUP("data/pso" FILES ${PSO_FILES})
     file(GLOB_RECURSE RS_FILES "../data/rs/*.json" )
@@ -96,6 +98,7 @@ project(SirEngineThe3rdLib)
     #adding the executable
     add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES} ${INCLUDES_FILES} ${ASSETS_FILES}
 	${MATERIAL_FILES}
+	${MATERIAL_TYPES_FILES}
 	${PSO_FILES}
 	${RS_FILES}
 	${SHADERS_COMMON_FILES}
