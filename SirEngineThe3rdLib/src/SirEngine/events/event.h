@@ -23,6 +23,7 @@ enum class EventType {
   DebugRenderChanged,
   RenderGraphChanged,
   ShaderCompile,
+  RequestShaderCompile,
   ShaderCompileResult
 };
 

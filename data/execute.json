@@ -3,6 +3,7 @@
     [
       "-p ../data/external/meshes/knightB/face.obj -o ../data/processed/meshes/knightB/face.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/face.tangents\"",
       "-p ../data/shaders/rasterization/basicMeshGBufferPBRSkinPS.hlsl -o ../data/processed/shaders/rasterization/basicMeshGBufferPBRSkinPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
+      "-p ../data/shaders/rasterization/basicMeshGBufferPBRPS.hlsl -o ../data/processed/shaders/rasterization/basicMeshGBufferPBRPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
       "-p ../data/rs/gbufferPBRSkinRS.json -o ../data/processed/rs/gbufferPBRSkinRS.root --pluginName rootSignatureCompilerPlugin",
       "-p ../data/shaders/rasterization/metallicBufferDebugPS.hlsl -o ../data/processed/shaders/rasterization/metallicBufferDebugPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
       "-p ../data/shaders/rasterization/roughnessBufferDebugPS.hlsl -o ../data/processed/shaders/rasterization/roughnessBufferDebugPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",

@@ -221,6 +221,7 @@ void ShaderCompilerWidget::render() {
                     ImVec2{ImGui::GetContentRegionAvailWidth(), 30})) {
     // let s generate a compile request
     if (currentSelectedItem != -1) {
+      m_currentSelectedShader = elementsToRender[currentSelectedItem];
       auto *event =
           new ShaderCompileEvent(elementsToRender[currentSelectedItem],
                                  useDevelopPath ? offsetDevelopPath : "");
@@ -230,7 +231,7 @@ void ShaderCompilerWidget::render() {
 
   if (ImGui::CollapsingHeader("Console Output")) {
     shouldRenderConsole = true;
-    console->Draw( &shouldRenderConsole);
+    console->Draw(&shouldRenderConsole);
   } else {
     shouldRenderConsole = false;
   }
@@ -240,6 +241,15 @@ void ShaderCompilerWidget::render() {
 }
 void ShaderCompilerWidget::log(const char *logValue) {
   console->AddLog(logValue);
+}
+
+void ShaderCompilerWidget::requestCompile() {
+  if (!m_currentSelectedShader.empty()) {
+    auto *event =
+        new ShaderCompileEvent(m_currentSelectedShader.c_str(),
+                               useDevelopPath ? offsetDevelopPath : "");
+    globals::APPLICATION->queueEventForEndOfFrame(event);
+  }
 }
 } // namespace debug
 } // namespace SirEngine

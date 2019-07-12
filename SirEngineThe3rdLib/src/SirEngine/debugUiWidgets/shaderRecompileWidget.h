@@ -1,6 +1,7 @@
 #pragma once
 #include "SirEngine/graphics/cpuGraphicsStructures.h"
 #include <vector>
+#include <string>
 
 namespace SirEngine {
 namespace debug {
@@ -13,6 +14,7 @@ struct ShaderCompilerWidget final {
   void initialize();
   void render();
   void log(const char* logValue);
+  void requestCompile();
 
   bool opened = false;
   float width = 600;
@@ -24,6 +26,9 @@ struct ShaderCompilerWidget final {
   ShaderCompileConsole* console = nullptr;
   bool shouldRenderConsole = true;
   bool useDevelopPath = true;
+
+  std::string m_currentSelectedShader;
+
   
 };
 

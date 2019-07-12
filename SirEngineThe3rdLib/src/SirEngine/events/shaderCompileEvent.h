@@ -26,6 +26,18 @@ private:
   const std::string m_shaderToCompile;
   const std::string m_offsetPath;
 };
+class SIR_ENGINE_API RequestShaderCompileEvent : public Event {
+public:
+  RequestShaderCompileEvent()=default;
+
+  EVENT_CLASS_TYPE(RequestShaderCompile)
+  EVENT_CLASS_CATEGORY(EventCategory::EventCategoryShaderCompile);
+  std::string toString() const override {
+    std::stringstream s;
+    s << "Requested shader compilation event \n";
+    return s.str();
+  }
+};
 
 class SIR_ENGINE_API ShaderCompileResultEvent : public Event {
 public:

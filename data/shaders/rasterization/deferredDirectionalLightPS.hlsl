@@ -41,6 +41,7 @@ struct SURFACE_DATA_PBR {
   float depth;
   float metallic;
   float roughness;
+  float thickness;
 };
 
 inline float ConvertZToLinearDepth(float depth) {
@@ -82,10 +83,11 @@ inline SURFACE_DATA_PBR UnpackGBufferPBR(float2 UV) {
   Out.normal = normalize(Out.normal * 2.0 - 1.0);
   // Out.normal = DecodeOctNormal(normalTexture.Sample(gsamPointClamp,
   // UV.xy).xy);
-  float3 spec = specPowTexture.Sample(gsamPointClamp, UV.xy).xyz;
+  float4 spec = specPowTexture.Sample(gsamPointClamp, UV.xy);
   Out.specPow = spec.x;
   Out.metallic = spec.y;
   Out.roughness = spec.z;
+  Out.thickness = spec.w;
 
   return Out;
 }
@@ -180,6 +182,7 @@ float4 PBRLighting(FullScreenVertexOut input) {
 
   if (gbd.depth <= MAX_DEPTH) {
     float3 worldPos = CalcWorldPos(input.clipPos, gbd.linearDepth);
+
     // camera vector
     float3 toEyeDir = normalize(g_cameraBuffer.position.xyz - worldPos);
     float3 halfWay = normalize(toEyeDir + ldir);
@@ -247,6 +250,26 @@ float4 PBRLighting(FullScreenVertexOut input) {
 	float3 ambient = kD * diffuse + specularDiff;
 
     float3 color = ambient + Lo;
+
+	//translucency
+	float distortion = 1.0f;
+	float translucencyPower = 2.0f;
+	float translucencyScale = 0.3f;
+	float tAttenuation = 1.0f;
+	float tAmbient = 0.00f;
+	float3 light = g_dirLight.lightDir + gbd.normal*distortion;
+	float tdot = pow(saturate(dot(toEyeDir, light)), translucencyPower) * translucencyScale;
+	float t = gbd.thickness;
+	float b = -2.0f;
+	float thickness = 1 / ( 1 + pow(t/(1-t),b));
+	float translucency =   (tdot + tAmbient )*thickness ;
+
+	float3 lightScatterColor = g_dirLight.lightColor;
+	lightScatterColor = float3(0.8f,0.4f,0.4f);
+	color += (translucency*gbd.color* lightScatterColor);
+
+
+
     //float3 color = irradiance*kD;
     //return float4(prefilteredColor, 1.0f);
     //return float4(F, 1.0f);
@@ -259,6 +282,7 @@ float4 PBRLighting(FullScreenVertexOut input) {
     
     //return float4(Lo,1.0f);
     //return float4(ambient, 1.0f);
+	return float4(translucency,0.0f,0.0f,1.0f);
     return float4(color, 1.0f);
   }
   return finalColor;

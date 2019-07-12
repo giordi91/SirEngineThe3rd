@@ -207,7 +207,7 @@ bool Graphics3DLayer::onDebugLayerEvent(DebugLayerChanged &e) {
     debug->setDebugIndex(e.getLayer());
     dx12::RENDERING_GRAPH->addDebugNode(debug);
     dx12::RENDERING_GRAPH->finalizeGraph();
-    RenderGraphChanged *graphE = new RenderGraphChanged();
+    auto*graphE = new RenderGraphChanged();
     globals::APPLICATION->queueEventForEndOfFrame(graphE);
     return true;
   }

@@ -36,7 +36,8 @@ PS_GBUFFER_OUT PackGBuffer(float3 BaseColor, float3 Normal, float SpecIntensity,
   Out.Normal = float4(Normal * 0.5f + 0.5f, 1.0f);
   // Out.Normal.xy = EncodeOctNormal(Normal);
   // Out.Normal.zw = 0.0f;
-  Out.SpecPow = float4(SpecPowerNorm, metallic, roughness, 1.0f);
+  //w is 0.0f for the thickness
+  Out.SpecPow = float4(SpecPowerNorm, metallic, roughness, 0.0f);
 
   return Out;
 }
