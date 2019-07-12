@@ -9,9 +9,10 @@
 
 #include <windowsx.h>
 
+#include "SirEngine/events/shaderCompileEvent.h"
+#include "SirEngine/graphics/graphicsCore.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/swapChain.h"
-#include "SirEngine/graphics/graphicsCore.h"
 
 namespace SirEngine {
 
@@ -42,6 +43,15 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT umessage, WPARAM wparam,
   case WM_CHAR: {
     // You can also use ToAscii()+GetKeyboardState() to retrieve characters.
     if (wparam > 0 && wparam < 0x10000) {
+
+      // basic shortcut handling
+      // 114 is r, we want to reload/recompile shader
+      auto code = static_cast<unsigned int>(wparam);
+      if (code == 114) {
+        RequestShaderCompileEvent e;
+        ASSERT_CALLBACK_AND_DISPATCH(e);
+        return 0;
+      }
       KeyTypeEvent e{static_cast<unsigned int>(wparam)};
       ASSERT_CALLBACK_AND_DISPATCH(e);
     }
@@ -66,7 +76,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT umessage, WPARAM wparam,
     // if I wanted to do that seems like bit 30 of lparam is the one
     // giving you if the first press or a repeat, not sure how to get the
     //"lag" in before sending repeats.
-    KeyboardPressEvent e{static_cast<unsigned int>(wparam)};
+
+    auto code = static_cast<unsigned int>(wparam);
+    KeyboardPressEvent e{code};
     ASSERT_CALLBACK_AND_DISPATCH(e);
 
     return 0;
@@ -231,7 +243,7 @@ WindowsWindow::WindowsWindow(const WindowProps &props) {
   ShowCursor(true);
 
   // initialize dx12
-  bool result = graphics::initializeGraphics(this, m_data.width,m_data.height);
+  bool result = graphics::initializeGraphics(this, m_data.width, m_data.height);
   if (!result) {
     SE_CORE_ERROR("FATAL: could not initialize graphics");
   }
@@ -266,9 +278,7 @@ unsigned int WindowsWindow::getHeight() const { return m_data.height; }
 void WindowsWindow::setEventCallback(const EventCallbackFn &callback) {
   m_callback = callback;
 }
-void WindowsWindow::setVSync(bool ) {
-  assert(0 && "not implemented yet");
-}
+void WindowsWindow::setVSync(bool) { assert(0 && "not implemented yet"); }
 void WindowsWindow::isVSync() const { assert(0 && "not implemented yet"); }
 
 } // namespace SirEngine

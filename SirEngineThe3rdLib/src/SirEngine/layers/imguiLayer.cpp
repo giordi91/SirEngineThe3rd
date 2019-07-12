@@ -16,8 +16,8 @@
 #include "SirEngine/events/event.h"
 #include "SirEngine/events/keyboardEvent.h"
 #include "SirEngine/events/mouseEvent.h"
-#include "SirEngine/events/shaderCompileEvent.h"
 #include "SirEngine/events/renderGraphEvent.h"
+#include "SirEngine/events/shaderCompileEvent.h"
 #include "SirEngine/graphics/debugAnnotations.h"
 
 namespace SirEngine {
@@ -142,7 +142,7 @@ void ImguiLayer::onUpdate() {
     m_renderGraph.render();
   }
   if (m_renderShaderCompiler) {
-	  m_shaderWidget.render();
+    m_shaderWidget.render();
   }
 
   ImGui::End();
@@ -176,7 +176,8 @@ void ImguiLayer::onEvent(Event &event) {
       SE_BIND_EVENT_FN(ImguiLayer::onRenderGraphEvent));
   dispatcher.dispatch<ShaderCompileResultEvent>(
       SE_BIND_EVENT_FN(ImguiLayer::onCompileResultEvent));
-
+  dispatcher.dispatch<RequestShaderCompileEvent>(
+      SE_BIND_EVENT_FN(ImguiLayer::onRequestCompileEvent));
 }
 bool ImguiLayer::onMouseButtonPressEvent(const MouseButtonPressEvent &e) const {
   ImGuiIO &io = ImGui::GetIO();
@@ -235,7 +236,12 @@ bool ImguiLayer::onRenderGraphEvent(const RenderGraphChanged &) {
   return true;
 }
 bool ImguiLayer::onCompileResultEvent(const ShaderCompileResultEvent &e) {
-	m_shaderWidget.log(e.getLog());
+  m_shaderWidget.log(e.getLog());
+  return true;
+}
+
+bool ImguiLayer::onRequestCompileEvent(const RequestShaderCompileEvent &e) {
+  m_shaderWidget.requestCompile();
   return true;
 }
 } // namespace SirEngine

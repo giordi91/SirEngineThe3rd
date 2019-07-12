@@ -1,10 +1,10 @@
 #pragma once
 
 #include "SirEngine/debugUiWidgets/frameTimingsWidget.h"
+#include "SirEngine/debugUiWidgets/hardwareInfo.h"
 #include "SirEngine/debugUiWidgets/memoryConsumptionWidget.h"
 #include "SirEngine/debugUiWidgets/renderGraphWidget.h"
 #include "SirEngine/debugUiWidgets/shaderRecompileWidget.h"
-#include "SirEngine/debugUiWidgets/hardwareInfo.h"
 #include "SirEngine/graphics/nodeGraph.h"
 #include "SirEngine/layer.h"
 
@@ -20,6 +20,7 @@ class MouseButtonReleaseEvent;
 class MouseButtonPressEvent;
 class RenderGraphChanged;
 class ShaderCompileResultEvent;
+class RequestShaderCompileEvent;
 
 class SIR_ENGINE_API ImguiLayer : public Layer {
 public:
@@ -44,6 +45,7 @@ private:
   bool onKeyTypeEvent(const KeyTypeEvent &e) const;
   bool onRenderGraphEvent(const RenderGraphChanged &e);
   bool onCompileResultEvent(const ShaderCompileResultEvent &e);
+  bool onRequestCompileEvent(const RequestShaderCompileEvent &e);
 
 private:
   INT64 g_Time = 0;
