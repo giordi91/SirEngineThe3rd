@@ -282,7 +282,7 @@ float4 PBRLighting(FullScreenVertexOut input) {
     
     //return float4(Lo,1.0f);
     //return float4(ambient, 1.0f);
-	return float4(translucency,0.0f,0.0f,1.0f);
+	//return float4(translucency,0.0f,0.0f,1.0f);
     return float4(color, 1.0f);
   }
   return finalColor;

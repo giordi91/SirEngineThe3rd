@@ -7,6 +7,13 @@
       "-p ../data/rs/gbufferPBRSkinRS.json -o ../data/processed/rs/gbufferPBRSkinRS.root --pluginName rootSignatureCompilerPlugin",
       "-p ../data/shaders/rasterization/metallicBufferDebugPS.hlsl -o ../data/processed/shaders/rasterization/metallicBufferDebugPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
       "-p ../data/shaders/rasterization/roughnessBufferDebugPS.hlsl -o ../data/processed/shaders/rasterization/roughnessBufferDebugPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
-      "-p ../data/shaders/rasterization/thicknessBufferDebugPS.hlsl -o ../data/processed/shaders/rasterization/thicknessBufferDebugPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \""
+      "-p ../data/shaders/rasterization/thicknessBufferDebugPS.hlsl -o ../data/processed/shaders/rasterization/thicknessBufferDebugPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
+      "-p ../data/textures/white.png -o ../data/processed/textures/white.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1  -m\"",
+      "-p ../data/textures/black.png -o ../data/processed/textures/black.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1  -m\"",
+      "-p ../data/external/textures/knightB/face_A.png -o ../data/processed/textures/knightB/face_A.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1 -g -m\"",
+      "-p ../data/external/textures/knightB/face_N.png -o ../data/processed/textures/knightB/face_N.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\"",
+      "-p ../data/external/textures/knightB/face_R.png -o ../data/processed/textures/knightB/face_R.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\"",
+      "-p ../data/external/textures/knightB/face_SCATTER.png -o ../data/processed/textures/knightB/face_SCATTER.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\""
+
     ]
 }
