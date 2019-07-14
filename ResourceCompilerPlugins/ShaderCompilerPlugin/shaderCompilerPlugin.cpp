@@ -31,7 +31,9 @@ bool processArgs(const std::string args,
       "e,entry", "name of the function to compile",
       cxxopts::value<std::string>())(
       "d,debug", "whether to compile debug or release",
-      cxxopts::value<std::string>()->implicit_value("1"));
+      cxxopts::value<std::string>()->implicit_value("1"))(
+      "c,compilerArgs", "arguments passed directly to the compiler",
+      cxxopts::value<std::string>());
   char **argv = v.argv.get();
   auto result = options.parse(v.argc, argv);
   if (result.count("type") == 0) {
@@ -46,13 +48,24 @@ bool processArgs(const std::string args,
   returnArgs.debug = result.count("debug");
   returnArgs.entryPoint = toWstring(result["entry"].as<std::string>());
   returnArgs.type = toWstring(result["type"].as<std::string>());
+  if (result.count("compilerArgs")) {
+    std::string cargs = result["compilerArgs"].as<std::string>();
+	std::string strippedCargs = cargs.substr(1, cargs.length()-2);
+	char t = strippedCargs[2];
+    returnArgs.compilerArgs =
+        toWstring(strippedCargs);
+    splitCompilerArgs(strippedCargs, returnArgs.splitCompilerArgs,
+                      returnArgs.splitCompilerArgsPointers);
+
+  } else {
+    returnArgs.compilerArgs = L"";
+  }
 
   return true;
 }
 
 bool processShader(const std::string &assetPath, const std::string &outputPath,
                    const std::string &args) {
-
   // processing plugins args
   SirEngine::dx12::ShaderArgs shaderArgs;
   bool result = processArgs(args, shaderArgs);
@@ -73,7 +86,7 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
   }
 
   SirEngine::dx12::DXCShaderCompiler compiler;
-  ID3DBlob *blob = compiler.compilerShader(assetPath, shaderArgs);
+  ID3DBlob *blob = compiler.compileShader(assetPath, shaderArgs);
 
   // save the file by building a binary request
   BinaryFileWriteRequest request;

@@ -1,5 +1,5 @@
-#define CATCH_CONFIG_MAIN // This tells Catch to provide a main() - only do this
-                          // in one cpp file
+#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do
+                           // this in one cpp file
 #include "catch/catch.hpp"
 #include "resourceCompilerLib/argsUtils.h"
 
@@ -86,4 +86,55 @@ TEST_CASE("Split shader compile plugins args", "[argsSplit]") {
   for (int i = 1; i < args.argc; ++i) {
     REQUIRE((*args.storage)[i - 1].c_str() == args.argv[i]);
   }
+}
+
+TEST_CASE("Split shader compile plugins args with dedicated compiler args",
+          "[argsSplit]") {
+  // pluging args are passed removed of the extra quotes
+  // here is to test if the cargs are parsed properly
+  const std::string inargs = "-t cs_6_2  -e CS  -c \"/D AMD\"";
+  SplitArgs args = splitArgs(inargs);
+
+  REQUIRE(args.argc == 7);
+  REQUIRE((*args.storage)[0] == "-t");
+  REQUIRE((*args.storage)[1] == "cs_6_2");
+  REQUIRE((*args.storage)[2] == "-e");
+  REQUIRE((*args.storage)[3] == "CS");
+  REQUIRE((*args.storage)[4] == "-c");
+  REQUIRE((*args.storage)[5] == "\"/D AMD\"");
+
+  // checking the values have the right pointer in argv
+  for (int i = 1; i < args.argc; ++i) {
+    REQUIRE((*args.storage)[i - 1].c_str() == args.argv[i]);
+  }
+}
+
+TEST_CASE("Split compiler args", "[argsSplit]") {
+  // pluging args are passed removed of the extra quotes
+  // here is to test if the cargs are parsed properly
+  const std::string inargs = "/D AMD";
+  SplitArgs args = splitArgs(inargs);
+
+  REQUIRE(args.argc == 3);
+  REQUIRE((*args.storage)[0] == "/D");
+  REQUIRE((*args.storage)[1] == "AMD");
+
+  // checking the values have the right pointer in argv
+  for (int i = 1; i < args.argc; ++i) {
+    REQUIRE((*args.storage)[i - 1].c_str() == args.argv[i]);
+  }
+}
+TEST_CASE("get ready compiler args", "[argsSplit]") {
+  // pluging args are passed removed of the extra quotes
+  // here is to test if the cargs are parsed properly
+  const std::string inargs = "/D AMD";
+  std::vector<std::wstring> splitCompilerArgsList;
+  std::vector<wchar_t *> splitCompilerArgsListPointers;
+  splitCompilerArgs(inargs, splitCompilerArgsList,
+                    splitCompilerArgsListPointers);
+
+  // look silly, after all this work we get out to the same value BUT
+  // this will work for multiple arguments/defines, which should give
+  // us room in the future for shader variants if we ever want them
+  REQUIRE(splitCompilerArgsList[0] == std::wstring(L"/D AMD"));
 }

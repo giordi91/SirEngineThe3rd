@@ -35,10 +35,9 @@ DXCShaderCompiler::~DXCShaderCompiler() {
   includeHandle->Release();
 }
 
-ID3DBlob *DXCShaderCompiler::compilerShader(const std::string &shaderPath,
-                                            const ShaderArgs &shaderArgs,
-                                            std::string *log) {
-
+ID3DBlob *DXCShaderCompiler::compileShader(const std::string &shaderPath,
+                                           const ShaderArgs &shaderArgs,
+                                           std::string *log) {
   // creating a blob of data with the content of the shader
   std::wstring wshader{shaderPath.begin(), shaderPath.end()};
   IDxcOperationResult *pResult;
@@ -50,8 +49,8 @@ ID3DBlob *DXCShaderCompiler::compilerShader(const std::string &shaderPath,
   IDxcBlobEncoding *pSource;
   DxcCreateInstance(CLSID_DxcLibrary, __uuidof(IDxcLibrary),
                     (void **)&pLibrary);
-  pLibrary->CreateBlobWithEncodingFromPinned(Program, static_cast<uint32_t>(shaderContent.size()),
-                                             CP_UTF8, &pSource);
+  pLibrary->CreateBlobWithEncodingFromPinned(
+      Program, static_cast<uint32_t>(shaderContent.size()), CP_UTF8, &pSource);
 
   // lets build compiler flags, for now they are simple so we can just switch
   // between two sets based on debug or not
@@ -60,15 +59,26 @@ ID3DBlob *DXCShaderCompiler::compilerShader(const std::string &shaderPath,
   int flagsCount = shaderArgs.debug ? _countof(COMPILATION_FLAGS_DEBUG)
                                     : _countof(COMPILATION_FLAGS);
 
+  // making a copy of the args vector
+  auto finalFlags = shaderArgs.splitCompilerArgsPointers;
+  // adding the needed pointers to the list
+  for (int i = 0; i < flagsCount; ++i) {
+    auto ptr = flags[i];
+    finalFlags.push_back((wchar_t *)ptr);
+  }
+  flagsCount += shaderArgs.splitCompilerArgsPointers.size();
+  //std::wstring test = L"/D AMD";
+  //finalFlags[0] = (wchar_t*)test.c_str();
+
   // kick the compilation
-  pCompiler->Compile(pSource,         // program text
-                     wshader.c_str(), // file name, mostly for error messages
-                     shaderArgs.entryPoint.c_str(), // entry point function
-                     shaderArgs.type.c_str(),       // target profile
-                     flags,                         // compilation arguments
-                     flagsCount,    // number of compilation arguments
-                     nullptr, 0,    // name/value defines and their count
-                     includeHandle, // handler for #include directives
+  pCompiler->Compile(pSource,          // program text
+                     wshader.c_str(),  // file name, mostly for error messages
+                     shaderArgs.entryPoint.c_str(),  // entry point function
+                     shaderArgs.type.c_str(),        // target profile
+                     (LPCWSTR*)finalFlags.data(),              // compilation arguments
+                     flagsCount,     // number of compilation arguments
+                     nullptr, 0,     // name/value defines and their count
+                     includeHandle,  // handler for #include directives
                      &pResult);
 
   // checking whether or not compilation was successiful
@@ -76,7 +86,6 @@ ID3DBlob *DXCShaderCompiler::compilerShader(const std::string &shaderPath,
   pResult->GetStatus(&hrCompilation);
 
   if (FAILED(hrCompilation)) {
-
     IDxcBlobEncoding *pPrintBlob;
     pResult->GetErrorBuffer(&pPrintBlob);
 
@@ -89,7 +98,7 @@ ID3DBlob *DXCShaderCompiler::compilerShader(const std::string &shaderPath,
       (*log) += "\n";
     }
     pPrintBlob->Release();
-	return nullptr;
+    return nullptr;
   }
 
   // extract compiled blob of data
@@ -110,13 +119,10 @@ ID3DBlob *DXCShaderCompiler::compilerShader(const std::string &shaderPath,
   return blob;
 }
 unsigned int DXCShaderCompiler::getShaderFlags(const ShaderArgs &shaderArgs) {
-
   unsigned int flags = 0;
   flags |= (shaderArgs.debug ? SHADER_FLAGS::DEBUG : 0);
-  flags |= (shaderArgs.isAMD ? SHADER_FLAGS::AMD_INSTRINSICS : 0);
-  flags |= (shaderArgs.isNVidia ? SHADER_FLAGS::NVIDIA_INSTRINSICS : 0);
 
   return flags;
 }
-} // namespace dx12
-} // namespace SirEngine
+}  // namespace dx12
+}  // namespace SirEngine
