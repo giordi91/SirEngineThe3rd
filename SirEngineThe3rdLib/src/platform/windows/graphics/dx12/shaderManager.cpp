@@ -113,10 +113,6 @@ void ShaderManager::recompileShader(const char *path, const char *offsetPath,
   ShaderMetadata *meta = blob.metadata;
   ShaderArgs args;
   args.debug = meta->shaderFlags & SHADER_FLAGS::DEBUG;
-  // TODO am I going to support instrinsics? SM6 supports most of the
-  // instruction I wanted
-  args.isAMD = 0;
-  args.isNVidia = 0;
   args.entryPoint = meta->entryPoint;
   args.type = meta->type;
 
@@ -124,7 +120,7 @@ void ShaderManager::recompileShader(const char *path, const char *offsetPath,
   fullShaderPath+= blob.metadata->shaderPath;
 
   ID3DBlob *compiledShader =
-      m_compiler->compilerShader(fullShaderPath, args, log);
+      m_compiler->compileShader(fullShaderPath, args, log);
   if (compiledShader != nullptr) {
     auto exp_path = std::experimental::filesystem::path(path);
     std::string name = exp_path.stem().string();
