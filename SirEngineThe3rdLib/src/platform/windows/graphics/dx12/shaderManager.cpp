@@ -2,6 +2,7 @@
 
 #include "platform/windows/graphics/dx12/shaderCompiler.h"
 
+#include "SirEngine/argsUtils.h"
 #include "SirEngine/binary/binaryFile.h"
 #include "SirEngine/fileUtils.h"
 #include <d3dcompiler.h>
@@ -74,7 +75,7 @@ ShaderMetadata *extractShaderMetadata(StackAllocator &alloc,
   if (compilerArgs != nullptr) {
 
     metadata->compilerArgs =
-        reinterpret_cast<char *>(alloc.allocate(mapper->compilerArgsInByte));
+        reinterpret_cast<wchar_t *>(alloc.allocate(mapper->compilerArgsInByte));
   }
 
   // lets copy the data now
@@ -82,6 +83,9 @@ ShaderMetadata *extractShaderMetadata(StackAllocator &alloc,
   memcpy(metadata->entryPoint, entryW, mapper->entryPointInByte);
   memcpy(metadata->shaderPath, shaderPath, mapper->pathSizeInByte);
   if (compilerArgs != nullptr) {
+    if (mapper->compilerArgsInByte != 2) {
+      int x = 0;
+    }
     memcpy(metadata->compilerArgs, compilerArgs, mapper->compilerArgsInByte);
   }
 
@@ -92,19 +96,18 @@ ShaderMetadata *extractShaderMetadata(StackAllocator &alloc,
 }
 
 void ShaderManager::loadShaderBinaryFile(const char *path) {
-
-  auto exp_path = std::experimental::filesystem::path(path);
-  std::string name = exp_path.stem().string();
+  const auto expPath = std::experimental::filesystem::path(path);
+  const std::string name = expPath.stem().string();
   if (m_stringToShader.find(name) == m_stringToShader.end()) {
 
     // TODO just use scrap memory for this instead of a heap alloc
     std::vector<char> data;
     readAllBytes(path, data);
 
-    auto mapper = getMapperData<ShaderMapperData>(data.data());
+    const auto mapper = getMapperData<ShaderMapperData>(data.data());
     void *shaderPointer = data.data() + sizeof(BinaryFileHeader);
     ID3DBlob *blob;
-    HRESULT hr = D3DCreateBlob(mapper->shaderSizeInByte, &blob);
+    const HRESULT hr = D3DCreateBlob(mapper->shaderSizeInByte, &blob);
     assert(SUCCEEDED(hr) && "could not create shader blob");
     memcpy(blob->GetBufferPointer(), shaderPointer, blob->GetBufferSize());
 
@@ -129,11 +132,12 @@ void ShaderManager::recompileShader(const char *path, const char *offsetPath,
   args.debug = meta->shaderFlags & SHADER_FLAGS::DEBUG;
   args.entryPoint = meta->entryPoint;
   args.type = meta->type;
-  std::string compilerArgs = meta->compilerArgs;
-  args.compilerArgs = std::wstring(compilerArgs.begin(), compilerArgs.end());
+  std::wstring wcompilerArgs = meta->compilerArgs;
+  args.compilerArgs = wcompilerArgs;
+  std::string compilerArgs(wcompilerArgs.begin(), wcompilerArgs.end());
 
-  splitCompilerArgs(strippedCargs, returnArgs.splitCompilerArgs,
-                    returnArgs.splitCompilerArgsPointers);
+  splitCompilerArgs(compilerArgs, args.splitCompilerArgs,
+                    args.splitCompilerArgsPointers);
 
   std::string fullShaderPath(offsetPath);
   fullShaderPath += blob.metadata->shaderPath;

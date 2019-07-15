@@ -5,7 +5,7 @@
 
 #include "SirEngine/binary/binaryFile.h"
 #include "processObj.h"
-#include "resourceCompilerLib/argsUtils.h"
+#include "SirEngine/argsUtils.h"
 #include "tinyobjloader/tiny_obj_loader.h"
 #include <filesystem>
 const std::string PLUGIN_NAME = "modelCompilerPlugin";
@@ -13,7 +13,7 @@ const unsigned int VERSION_MAJOR = 0;
 const unsigned int VERSION_MINOR = 1;
 const unsigned int VERSION_PATCH = 0;
 
-void processArgs(const std::string args, std::string &tangentPath,
+void processArgs(const std::string& args, std::string &tangentPath,
                  std::string &skinPath) {
   // lets get arguments like they were from commandline
   auto v = splitArgs(args);
@@ -24,7 +24,7 @@ void processArgs(const std::string args, std::string &tangentPath,
                         cxxopts::value<std::string>())(
       "skin", "Path to the skin cluster", cxxopts::value<std::string>());
   char **argv = v.argv.get();
-  auto result = options.parse(v.argc, argv);
+  const auto result = options.parse(v.argc, argv);
 
   if (result.count("tangents")) {
     tangentPath = result["tangents"].as<std::string>();
@@ -38,8 +38,8 @@ bool processModel(const std::string &assetPath, const std::string &outputPath,
                   const std::string &args) {
 
   // processing plugins args
-  std::string tangentsPath = "";
-  std::string skinPath = "";
+  std::string tangentsPath;
+  std::string skinPath;
   processArgs(args, tangentsPath, skinPath);
 
   // checking IO files exits
@@ -78,14 +78,13 @@ bool processModel(const std::string &assetPath, const std::string &outputPath,
   request.version = ((VERSION_MAJOR << 16) | (VERSION_MINOR << 8) | VERSION_PATCH);
 
   std::experimental::filesystem::path inp(assetPath);
-  const std::string fileName = inp.stem().string().c_str();
-  const std::string outFilePath = outputPath;
-  request.outPath = outFilePath.c_str();
+  const std::string fileName = inp.stem().string();
+  request.outPath = outputPath.c_str();
 
   // need to merge indices and vertices
   std::vector<float> data;
   uint32_t stride = 12;
-  int floatVertexCount = model.vertexCount * stride;
+  uint32_t floatVertexCount = static_cast<uint32_t>(model.vertexCount) * stride;
   size_t indicesCount = model.indices.size();
   size_t totalSizeFloat = floatVertexCount + indicesCount;
   size_t totalSizeByte = totalSizeFloat * sizeof(float);

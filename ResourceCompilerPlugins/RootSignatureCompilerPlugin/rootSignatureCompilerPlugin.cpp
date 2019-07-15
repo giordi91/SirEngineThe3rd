@@ -5,7 +5,7 @@
 #include "rootProcess.h"
 
 #include "SirEngine/binary/binaryFile.h"
-#include "resourceCompilerLib/argsUtils.h"
+#include "SirEngine/argsUtils.h"
 
 const std::string PLUGIN_NAME = "rootSignatureCompilerPlugin";
 const unsigned int VERSION_MAJOR = 0;

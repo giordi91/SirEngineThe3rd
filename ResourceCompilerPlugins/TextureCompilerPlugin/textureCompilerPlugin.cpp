@@ -4,7 +4,7 @@
 #include "cxxopts/cxxopts.hpp"
 
 #include "processTexture.h"
-#include "resourceCompilerLib/argsUtils.h"
+#include "SirEngine/argsUtils.h"
 
 
 const std::string PLUGIN_NAME = "textureCompilerPlugin";
