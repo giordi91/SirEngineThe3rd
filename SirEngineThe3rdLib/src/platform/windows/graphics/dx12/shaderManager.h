@@ -15,7 +15,7 @@ struct ShaderMetadata {
   wchar_t *entryPoint;
   char *shaderPath;
   unsigned int shaderFlags;
-  char *compilerArgs;
+  wchar_t *compilerArgs;
 };
 struct ShaderBlob {
   ID3DBlob *shader;

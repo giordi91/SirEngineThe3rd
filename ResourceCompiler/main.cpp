@@ -2,7 +2,7 @@
 #include "cxxopts/cxxopts.hpp"
 
 #include "SirEngine/log.h"
-#include "resourceCompilerLib/argsUtils.h"
+#include "SirEngine/argsUtils.h"
 #include "resourceCompilerLib/resourcePlugin.h"
 
 #include <filesystem>

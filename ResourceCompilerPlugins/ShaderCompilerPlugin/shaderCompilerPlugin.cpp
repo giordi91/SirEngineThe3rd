@@ -5,7 +5,7 @@
 
 #include "SirEngine/binary/binaryFile.h"
 #include "platform/windows/graphics/dx12/shaderCompiler.h"
-#include "resourceCompilerLib/argsUtils.h"
+#include "SirEngine/argsUtils.h"
 
 #include <d3dcommon.h>
 #include <filesystem>
@@ -106,7 +106,7 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
   totalBulkDataInBytes +=
       static_cast<int>((shaderArgs.entryPoint.size() + 1) * sizeof(wchar_t));
   totalBulkDataInBytes += static_cast<int>(assetPath.size() + 1);
-  totalBulkDataInBytes += static_cast<int>(shaderArgs.compilerArgs.size() + 1);
+  totalBulkDataInBytes += static_cast<int>((shaderArgs.compilerArgs.size() + 1)*sizeof(wchar_t));
 
   // layout the data
   std::vector<char> bulkData(totalBulkDataInBytes);
@@ -139,7 +139,7 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
   bulkDataPtr += dataToWriteSizeInByte;
 
   // write down the compiler args
-  dataToWriteSizeInByte = static_cast<int>(shaderArgs.compilerArgs.size() + 1);
+  dataToWriteSizeInByte = static_cast<int>((shaderArgs.compilerArgs.size() + 1)* sizeof(wchar_t));
   mapperData.compilerArgsInByte = dataToWriteSizeInByte;
   memcpy(bulkDataPtr, shaderArgs.compilerArgs.c_str(), dataToWriteSizeInByte);
 
