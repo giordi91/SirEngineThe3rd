@@ -237,20 +237,20 @@ void getRasterShaderNameFromPSO(const nlohmann::json &jobj, std::string &vs,
   assert(!ps.empty());
 }
 
-void PSOManager::recompilePSOFromShader(const char *shaderName, const char* offsetPath) {
+void PSOManager::recompilePSOFromShader(const char *shaderName,
+                                        const char *offsetPath) {
 
   // clearing the log
   compileLog = "";
 
-  std::string shaderNameString = shaderName;
-  auto found = m_shaderToPSOFile.find(shaderNameString);
+  const std::string shaderNameString = shaderName;
+  const auto found = m_shaderToPSOFile.find(shaderNameString);
   if (found == m_shaderToPSOFile.end()) {
     assert(0);
     return;
   }
   const std::vector<std::string> &psoToRecompile = found->second;
-  std::cout << "Found " << psoToRecompile.size() << " to recompile"
-            << std::endl;
+
   // now we need to extract the data out of the pso to figure out which shaders
   // to recompile
   std::vector<std::string> shadersToRecompile;
@@ -258,12 +258,12 @@ void PSOManager::recompilePSOFromShader(const char *shaderName, const char* offs
   std::string vs;
   std::string ps;
   for (auto &pso : psoToRecompile) {
-    auto jobj = getJsonObj(pso);
+    const auto jobj = getJsonObj(pso);
     std::cout << "[Engine]: Loading PSO from: " << pso << std::endl;
 
     const std::string psoTypeString =
         getValueIfInJson(jobj, PSO_KEY_TYPE, DEFAULT_STRING);
-    PSOType psoType = convertStringPSOTypeToEnum(psoTypeString);
+    const PSOType psoType = convertStringPSOTypeToEnum(psoTypeString);
     switch (psoType) {
     case (PSOType::COMPUTE): {
       shadersToRecompile.push_back(getComputeShaderNameFromPSO(jobj));
@@ -279,6 +279,9 @@ void PSOManager::recompilePSOFromShader(const char *shaderName, const char* offs
       shadersToRecompile.push_back(ps);
       break;
     }
+    default: {
+      assert(0 && "PSO type not supported");
+    }
     }
   }
 
@@ -292,7 +295,7 @@ void PSOManager::recompilePSOFromShader(const char *shaderName, const char* offs
   dx12::flushDx12();
 
   for (auto &pso : psoToRecompile) {
-    loadPSOFile(pso.c_str(),true);
+    loadPSOFile(pso.c_str(), true);
     compileLog += "Compiled PSO: ";
     compileLog += pso;
     compileLog += "\n";
@@ -307,7 +310,7 @@ void PSOManager::recompilePSOFromShader(const char *shaderName, const char* offs
 
 void PSOManager::loadPSOFile(const char *path, bool reload) {
   auto jobj = getJsonObj(path);
-  SE_CORE_INFO("[Engine]: Loading PSO from: {0}" , path) ;
+  SE_CORE_INFO("[Engine]: Loading PSO from: {0}", path);
 
   const std::string psoTypeString =
       getValueIfInJson(jobj, PSO_KEY_TYPE, DEFAULT_STRING);
@@ -326,7 +329,9 @@ void PSOManager::loadPSOFile(const char *path, bool reload) {
     processRasterPSO(jobj, path, reload);
     break;
   }
-  default: { assert(0 && "PSO Type not supported"); }
+  default: {
+    assert(0 && "PSO Type not supported");
+  }
   }
 }
 
@@ -383,8 +388,8 @@ void PSOManager::processComputePSO(nlohmann::json &jobj,
     PSOHandle handle = m_psoRegisterHandle[name];
     uint32_t index = getIndexFromHandle(handle);
     PSOData &data = m_psoPool[index];
-	//releasing old PSO
-	data.pso->Release();
+    // releasing old PSO
+    data.pso->Release();
     data.pso = pipeStateObject;
   }
 }

@@ -15,6 +15,7 @@ struct ShaderMetadata {
   wchar_t *entryPoint;
   char *shaderPath;
   unsigned int shaderFlags;
+  char *compilerArgs;
 };
 struct ShaderBlob {
   ID3DBlob *shader;
@@ -48,7 +49,8 @@ public:
   ShaderManager &operator=(const ShaderManager &) = delete;
   void loadShaderFile(const char *path);
   void loadShaderBinaryFile(const char *path);
-  void recompileShader(const char *path, const char* offsetPath, std::string* log);
+  void recompileShader(const char *path, const char *offsetPath,
+                       std::string *log);
 
 private:
   // 2 mb of data for the stack
@@ -57,7 +59,6 @@ private:
   std::unordered_map<std::string, ShaderBlob> m_stringToShader;
   StackAllocator m_metadataAllocator;
   DXCShaderCompiler *m_compiler;
-
 };
 } // namespace dx12
 } // namespace SirEngine

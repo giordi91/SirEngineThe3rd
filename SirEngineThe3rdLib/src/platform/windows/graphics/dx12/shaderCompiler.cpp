@@ -66,7 +66,7 @@ ID3DBlob *DXCShaderCompiler::compileShader(const std::string &shaderPath,
     auto ptr = flags[i];
     finalFlags.push_back((wchar_t *)ptr);
   }
-  flagsCount += shaderArgs.splitCompilerArgsPointers.size();
+  flagsCount += static_cast<int>(shaderArgs.splitCompilerArgsPointers.size());
   //std::wstring test = L"/D AMD";
   //finalFlags[0] = (wchar_t*)test.c_str();
 

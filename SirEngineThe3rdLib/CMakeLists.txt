@@ -74,6 +74,7 @@ project(SirEngineThe3rdLib)
 	SOURCE_GROUP("data/scenes" FILES ${SCENE_FILES})
 	SOURCE_GROUP("data" FILES "../data/execute.json")
 	SOURCE_GROUP("data" FILES "../data/executeFullDebug.json")
+	SOURCE_GROUP("data" FILES "../data/executeFullDebugAMD.json")
 	SOURCE_GROUP("data" FILES "../data/executeShaderDebug.json")
 	SOURCE_GROUP("data" FILES "../data/executeTexture.json")
 	SOURCE_GROUP("data" FILES "../data/engineConfig.json")
@@ -105,7 +106,8 @@ project(SirEngineThe3rdLib)
 	${SHADERS_RASTERIZATION_FILES}
 	${SHADERS_COMPUTE_FILES}
 	"../data/execute.json"
-	"../data/executeFullDebug.json"
+	"../data/executeFullDebugAMD.json"
+	"../data/executeShaderDebug.json"
 	"../data/executeShaderDebug.json"
 	"../data/executeTexture.json"
 	"../data/engineConfig.json"

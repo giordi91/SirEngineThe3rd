@@ -35,7 +35,7 @@ bool processArgs(const std::string args,
       "c,compilerArgs", "arguments passed directly to the compiler",
       cxxopts::value<std::string>());
   char **argv = v.argv.get();
-  auto result = options.parse(v.argc, argv);
+  const auto result = options.parse(v.argc, argv);
   if (result.count("type") == 0) {
     SE_CORE_ERROR("{0} : argument type not provided", PLUGIN_NAME);
     return false;
@@ -49,11 +49,10 @@ bool processArgs(const std::string args,
   returnArgs.entryPoint = toWstring(result["entry"].as<std::string>());
   returnArgs.type = toWstring(result["type"].as<std::string>());
   if (result.count("compilerArgs")) {
-    std::string cargs = result["compilerArgs"].as<std::string>();
-	std::string strippedCargs = cargs.substr(1, cargs.length()-2);
-	char t = strippedCargs[2];
-    returnArgs.compilerArgs =
-        toWstring(strippedCargs);
+	  const std::string cargs = result["compilerArgs"].as<std::string>();
+    std::string strippedCargs = cargs.substr(1, cargs.length() - 2);
+    char t = strippedCargs[2];
+    returnArgs.compilerArgs = toWstring(strippedCargs);
     splitCompilerArgs(strippedCargs, returnArgs.splitCompilerArgs,
                       returnArgs.splitCompilerArgsPointers);
 
@@ -102,9 +101,12 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
   // we need to store enough data for everything
   int totalBulkDataInBytes = blob->GetBufferSize();
   //+1 is to take into account the termination value
-  totalBulkDataInBytes += (shaderArgs.type.size() + 1) * sizeof(wchar_t);
-  totalBulkDataInBytes += (shaderArgs.entryPoint.size() + 1) * sizeof(wchar_t);
-  totalBulkDataInBytes += (assetPath.size() + 1);
+  totalBulkDataInBytes +=
+      static_cast<int>((shaderArgs.type.size() + 1) * sizeof(wchar_t));
+  totalBulkDataInBytes +=
+      static_cast<int>((shaderArgs.entryPoint.size() + 1) * sizeof(wchar_t));
+  totalBulkDataInBytes += static_cast<int>(assetPath.size() + 1);
+  totalBulkDataInBytes += static_cast<int>(shaderArgs.compilerArgs.size() + 1);
 
   // layout the data
   std::vector<char> bulkData(totalBulkDataInBytes);
@@ -112,37 +114,45 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
 
   // write down the shader in the buffer
   int dataToWriteSizeInByte = blob->GetBufferSize();
-  mapperData.shaderSizeInBtye = dataToWriteSizeInByte;
+  mapperData.shaderSizeInByte = dataToWriteSizeInByte;
   memcpy(bulkDataPtr, blob->GetBufferPointer(), dataToWriteSizeInByte);
   bulkDataPtr += dataToWriteSizeInByte;
 
   // write down the type
-  dataToWriteSizeInByte = (shaderArgs.type.size() + 1) * sizeof(wchar_t);
+  dataToWriteSizeInByte =
+      static_cast<int>((shaderArgs.type.size() + 1) * sizeof(wchar_t));
   mapperData.typeSizeInByte = dataToWriteSizeInByte;
   memcpy(bulkDataPtr, shaderArgs.type.c_str(), dataToWriteSizeInByte);
   bulkDataPtr += dataToWriteSizeInByte;
 
   // write down the entry point
-  dataToWriteSizeInByte = (shaderArgs.entryPoint.size() + 1) * sizeof(wchar_t);
+  dataToWriteSizeInByte =
+      static_cast<int>((shaderArgs.entryPoint.size() + 1) * sizeof(wchar_t));
   mapperData.entryPointInByte = dataToWriteSizeInByte;
   memcpy(bulkDataPtr, shaderArgs.entryPoint.c_str(), dataToWriteSizeInByte);
   bulkDataPtr += dataToWriteSizeInByte;
 
   // write down the shader path
-  dataToWriteSizeInByte = (assetPath.size() + 1);
-  mapperData.pathSizeInBtype = dataToWriteSizeInByte;
+  dataToWriteSizeInByte = static_cast<int>(assetPath.size() + 1);
+  mapperData.pathSizeInByte = dataToWriteSizeInByte;
   memcpy(bulkDataPtr, assetPath.c_str(), dataToWriteSizeInByte);
+  bulkDataPtr += dataToWriteSizeInByte;
+
+  // write down the compiler args
+  dataToWriteSizeInByte = static_cast<int>(shaderArgs.compilerArgs.size() + 1);
+  mapperData.compilerArgsInByte = dataToWriteSizeInByte;
+  memcpy(bulkDataPtr, shaderArgs.compilerArgs.c_str(), dataToWriteSizeInByte);
 
   // preparing the binary file write request
   std::experimental::filesystem::path inp(assetPath);
-  const std::string fileName = inp.stem().string().c_str();
-  const std::string outFilePath = outputPath;
-  request.outPath = outFilePath.c_str();
+  const std::string fileName = inp.stem().string();
+  request.outPath = outputPath.c_str();
+
 
   request.bulkData = bulkData.data();
-  request.bulkDataSizeInBtye = bulkData.size();
+  request.bulkDataSizeInByte = bulkData.size();
 
-  mapperData.shaderSizeInBtye = blob->GetBufferSize();
+  mapperData.shaderSizeInByte = blob->GetBufferSize();
   request.mapperData = &mapperData;
   request.mapperDataSizeInByte = sizeof(ShaderMapperData);
 

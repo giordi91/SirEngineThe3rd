@@ -48,11 +48,15 @@ ShaderMetadata *extractShaderMetadata(StackAllocator &alloc,
                                       void *startOfData) {
 
   // extract metadata
-  wchar_t *typeW =
-      (wchar_t *)((char *)(startOfData) + mapper->shaderSizeInBtye);
-  wchar_t *entryW = (wchar_t *)((char *)(typeW) + mapper->typeSizeInByte);
-  wchar_t *shaderPath =
-      (wchar_t *)((char *)(entryW) + mapper->entryPointInByte);
+  // I know, this aint pretty
+  const wchar_t *typeW =
+      (wchar_t *)((char *)(startOfData) + mapper->shaderSizeInByte);
+  const wchar_t *entryW = (wchar_t *)((char *)(typeW) + mapper->typeSizeInByte);
+  const char *shaderPath = (char *)(entryW) + mapper->entryPointInByte;
+  const char *compilerArgs =
+      mapper->compilerArgsInByte == 0
+          ? nullptr
+          : (char *)(shaderPath) + mapper->pathSizeInByte;
 
   // allocate the metadata
   auto *metadata = reinterpret_cast<ShaderMetadata *>(
@@ -64,12 +68,22 @@ ShaderMetadata *extractShaderMetadata(StackAllocator &alloc,
   metadata->entryPoint =
       reinterpret_cast<wchar_t *>(alloc.allocate(mapper->entryPointInByte));
   metadata->shaderPath =
-      reinterpret_cast<char *>(alloc.allocate(mapper->pathSizeInBtype));
+      reinterpret_cast<char *>(alloc.allocate(mapper->pathSizeInByte));
+
+  metadata->compilerArgs = nullptr;
+  if (compilerArgs != nullptr) {
+
+    metadata->compilerArgs =
+        reinterpret_cast<char *>(alloc.allocate(mapper->compilerArgsInByte));
+  }
 
   // lets copy the data now
   memcpy(metadata->type, typeW, mapper->typeSizeInByte);
   memcpy(metadata->entryPoint, entryW, mapper->entryPointInByte);
-  memcpy(metadata->shaderPath, shaderPath, mapper->pathSizeInBtype);
+  memcpy(metadata->shaderPath, shaderPath, mapper->pathSizeInByte);
+  if (compilerArgs != nullptr) {
+    memcpy(metadata->compilerArgs, compilerArgs, mapper->compilerArgsInByte);
+  }
 
   // only thing left is to extract the shader flags
   metadata->shaderFlags = mapper->shaderFlags;
@@ -90,7 +104,7 @@ void ShaderManager::loadShaderBinaryFile(const char *path) {
     auto mapper = getMapperData<ShaderMapperData>(data.data());
     void *shaderPointer = data.data() + sizeof(BinaryFileHeader);
     ID3DBlob *blob;
-    HRESULT hr = D3DCreateBlob(mapper->shaderSizeInBtye, &blob);
+    HRESULT hr = D3DCreateBlob(mapper->shaderSizeInByte, &blob);
     assert(SUCCEEDED(hr) && "could not create shader blob");
     memcpy(blob->GetBufferPointer(), shaderPointer, blob->GetBufferSize());
 
@@ -115,9 +129,14 @@ void ShaderManager::recompileShader(const char *path, const char *offsetPath,
   args.debug = meta->shaderFlags & SHADER_FLAGS::DEBUG;
   args.entryPoint = meta->entryPoint;
   args.type = meta->type;
+  std::string compilerArgs = meta->compilerArgs;
+  args.compilerArgs = std::wstring(compilerArgs.begin(), compilerArgs.end());
+
+  splitCompilerArgs(strippedCargs, returnArgs.splitCompilerArgs,
+                    returnArgs.splitCompilerArgsPointers);
 
   std::string fullShaderPath(offsetPath);
-  fullShaderPath+= blob.metadata->shaderPath;
+  fullShaderPath += blob.metadata->shaderPath;
 
   ID3DBlob *compiledShader =
       m_compiler->compileShader(fullShaderPath, args, log);

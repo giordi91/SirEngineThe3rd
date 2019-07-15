@@ -14,9 +14,9 @@ The binary file format is composed of 3 parts
 - bulk of data
 - mapper data
 
-The header contains some basic informations and an offset to the mapper data,
+The header contains some basic information and an offset to the mapper data,
 where headerPtr + mapperDataOffset = startOfMapperData.
-The header can be used to figure out quickly some basic informations on the
+The header can be used to figure out quickly some basic information on the
 file.
 
 Mapper data is a user defined blob of data that is used to make sense
@@ -43,7 +43,7 @@ struct BinaryFileWriteRequest {
   unsigned int fileType = 0;
   unsigned int version = 0;
   const void *bulkData = nullptr;
-  size_t bulkDataSizeInBtye = 0;
+  size_t bulkDataSizeInByte = 0;
   const void *mapperData = nullptr;
   size_t mapperDataSizeInByte = 0;
 };
@@ -68,8 +68,8 @@ SIR_ENGINE_API
 extern const std::unordered_map<BinaryFileType, std::string>
     m_binaryFileTypeToString;
 
-inline std::string getBinaryFileTypeName(BinaryFileType type) {
-  auto found = m_binaryFileTypeToString.find(type);
+inline std::string getBinaryFileTypeName(const BinaryFileType type) {
+	const auto found = m_binaryFileTypeToString.find(type);
   if (found != m_binaryFileTypeToString.end()) {
     return found->second;
   }
@@ -84,10 +84,11 @@ struct ModelMapperData final {
 
 struct ShaderMapperData final {
   unsigned int shaderFlags =0;
-  unsigned int shaderSizeInBtye = 0;
+  unsigned int shaderSizeInByte = 0;
   unsigned int typeSizeInByte = 0;
   unsigned int entryPointInByte = 0;
-  unsigned int pathSizeInBtype= 0;
+  unsigned int pathSizeInByte= 0;
+  unsigned int compilerArgsInByte =0;
 };
 
 struct RootSignatureMappedData final {
