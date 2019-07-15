@@ -96,7 +96,7 @@ bool processModel(const std::string &assetPath, const std::string &outputPath,
   memcpy(data.data() + floatVertexCount, model.indices.data(),
          indicesCount * sizeof(float));
   request.bulkData = data.data();
-  request.bulkDataSizeInBtye = totalSizeByte;
+  request.bulkDataSizeInByte = totalSizeByte;
 
   ModelMapperData mapperData;
   mapperData.indexDataSizeInByte =

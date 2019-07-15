@@ -51,7 +51,7 @@ bool processRoot(const std::string &assetPath, const std::string &outputPath,
     request.outPath = outFilePath.c_str();
 
     request.bulkData = subBlobl.blob->GetBufferPointer();
-    request.bulkDataSizeInBtye = subBlobl.blob->GetBufferSize();
+    request.bulkDataSizeInByte = subBlobl.blob->GetBufferSize();
 
     RootSignatureMappedData mapperData;
     mapperData.type = static_cast<int>(subBlobl.type);
@@ -68,7 +68,7 @@ bool processRoot(const std::string &assetPath, const std::string &outputPath,
         getPathName(outputPath) + "/" + subBlobl.name + ".bin";
 
     std::ofstream myFile(outFilePathClean, std::ios::out | std::ios::binary);
-    myFile.write(static_cast<const char *>(request.bulkData), request.bulkDataSizeInBtye);
+    myFile.write(static_cast<const char *>(request.bulkData), request.bulkDataSizeInByte);
     myFile.close();
   }
   return true;

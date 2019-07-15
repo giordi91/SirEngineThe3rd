@@ -30,10 +30,10 @@ writeBinaryFile(const BinaryFileWriteRequest &request) {
   header.fileType = request.fileType;
   header.version = request.version;
   header.mapperDataOffsetInByte =
-      sizeof(BinaryFileHeader) + request.bulkDataSizeInBtye;
+      sizeof(BinaryFileHeader) + request.bulkDataSizeInByte;
   // lets write the header
   myFile.write((const char *)&header, sizeof(header));
-  myFile.write((const char *)request.bulkData, request.bulkDataSizeInBtye);
+  myFile.write((const char *)request.bulkData, request.bulkDataSizeInByte);
   myFile.write((const char *)request.mapperData, request.mapperDataSizeInByte);
   myFile.close();
   return WriteBinaryFileStatus::SUCCESS;
