@@ -58,7 +58,7 @@ void createFrameCommand(FrameCommand *fc) {
   fc->isListOpen = false;
 }
 
-bool initializeGraphicsDx12(Window *wnd, uint32_t width, uint32_t height) {
+bool initializeGraphicsDx12(Window *wnd, const uint32_t width, const uint32_t height) {
 
 // lets enable debug layer if needed
 #if defined(DEBUG) || defined(_DEBUG)

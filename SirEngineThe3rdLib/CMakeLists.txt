@@ -107,6 +107,7 @@ project(SirEngineThe3rdLib)
 	${SHADERS_COMPUTE_FILES}
 	"../data/execute.json"
 	"../data/executeFullDebugAMD.json"
+	"../data/executeFullDebug.json"
 	"../data/executeShaderDebug.json"
 	"../data/executeShaderDebug.json"
 	"../data/executeTexture.json"

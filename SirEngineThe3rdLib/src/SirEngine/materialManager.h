@@ -1,10 +1,10 @@
 #pragma once
 
-#include "SirEngine/handle.h"
-#include "memory/SparseMemoryPool.h"
 #include <cassert>
 #include <unordered_map>
 #include <vector>
+#include "SirEngine/handle.h"
+#include "memory/SparseMemoryPool.h"
 
 #if GRAPHICS_API == DX12
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
@@ -16,6 +16,8 @@ struct ShaderBind {
   RSHandle rs;
   PSOHandle pso;
 };
+
+enum class STENCIL_REF { SSSSS = 1 };
 
 struct MaterialRuntime final {
   D3D12_GPU_VIRTUAL_ADDRESS cbVirtualAddress;
@@ -69,8 +71,7 @@ enum class SHADER_QUEUE_FLAGS {
 enum class SHADER_TYPE_FLAGS { UNKNOWN = 0, PBR = 1, SKIN = 2 };
 
 class MaterialManager final {
-
-public:
+ public:
   MaterialManager() : m_idxPool(RESERVE_SIZE) {
     m_materials.resize(RESERVE_SIZE), m_materialsMagic.resize(RESERVE_SIZE),
         m_materialTextureHandles.resize(RESERVE_SIZE);
@@ -80,7 +81,8 @@ public:
                     ID3D12GraphicsCommandList2 *commandList);
   void loadTypesInFolder(const char *folder);
   void bindRSandPSO(uint32_t shaderFlags,
-                    ID3D12GraphicsCommandList2* commandList);;
+                    ID3D12GraphicsCommandList2 *commandList);
+  ;
   MaterialManager(const MaterialManager &) = delete;
   MaterialManager &operator=(const MaterialManager &) = delete;
 
@@ -116,7 +118,7 @@ public:
 
   const std::string &getStringFromShaderTypeFlag(SHADER_TYPE_FLAGS type);
 
-private:
+ private:
   inline uint32_t getIndexFromHandel(const MaterialHandle h) const {
     return h.handle & INDEX_MASK;
   }
@@ -132,7 +134,7 @@ private:
   }
   void loadTypeFile(const char *path);
 
-private:
+ private:
   std::unordered_map<uint16_t, ShaderBind> m_shderTypeToShaderBind;
   std::unordered_map<std::string, MaterialHandle> m_nameToHandle;
   static const uint32_t INDEX_MASK = (1 << 16) - 1;
@@ -146,4 +148,4 @@ private:
   std::vector<MaterialDataHandles> m_materialTextureHandles;
 };
 
-} // namespace SirEngine
+}  // namespace SirEngine

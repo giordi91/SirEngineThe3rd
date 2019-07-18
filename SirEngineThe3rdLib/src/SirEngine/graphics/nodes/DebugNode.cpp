@@ -15,9 +15,10 @@ static const std::string &NORMAL_DEBUG_PSO_NAME = "normalBufferDebugPSO";
 static const std::string &METALLIC_DEBUG_PSO_NAME = "metallicBufferDebugPSO";
 static const std::string &ROUGHNESS_DEBUG_PSO_NAME = "roughnessBufferDebugPSO";
 static const std::string &THICKNESS_DEBUG_PSO_NAME = "thicknessBufferDebugPSO";
+static const std::string &STENCIL_DEBUG_PSO_NAME = "stencilDebugPSO";
 static const std::string &DEPTH_DEBUG_PSO_NAME = "depthBufferDebugPSO";
 static const std::string &DEBUG_FULL_SCREEN_RS_NAME = "debugFullScreenBlit_RS";
-static const std::string &DEBUG_REDUCE_DEPTH_RS_NANE = "depthMinMaxReduce_RS";
+static const std::string &DEBUG_REDUCE_DEPTH_RS_NAME = "depthMinMaxReduce_RS";
 static const std::string &DEBUG_REDUCE_DEPTH_PSO_NAME = "depthMinMaxReduce_PSO";
 static const std::string &DEBUG_REDUCE_DEPTH_CLEAR_PSO_NAME =
     "depthMinMaxReduceClear_PSO";
@@ -48,6 +49,8 @@ DebugNode::DebugNode(const char *name) : GraphNode(name, "DebugNode") {
       dx12::PSO_MANAGER->getHandleFromName(ROUGHNESS_DEBUG_PSO_NAME);
   m_thicknessPSOHandle =
       dx12::PSO_MANAGER->getHandleFromName(THICKNESS_DEBUG_PSO_NAME);
+  m_stencilPSOHandle =
+      dx12::PSO_MANAGER->getHandleFromName(STENCIL_DEBUG_PSO_NAME);
   m_depthPSOHandle = dx12::PSO_MANAGER->getHandleFromName(DEPTH_DEBUG_PSO_NAME);
   m_depthReducePSOHandle =
       dx12::PSO_MANAGER->getHandleFromName(DEBUG_REDUCE_DEPTH_PSO_NAME);
@@ -57,7 +60,7 @@ DebugNode::DebugNode(const char *name) : GraphNode(name, "DebugNode") {
   m_rs = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(
       (DEBUG_FULL_SCREEN_RS_NAME.c_str()));
   m_reduceRs = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(
-      (DEBUG_REDUCE_DEPTH_RS_NANE.c_str()));
+      (DEBUG_REDUCE_DEPTH_RS_NAME.c_str()));
 }
 void blitBuffer(const TextureHandle input, const TextureHandle handleToWriteOn,
                 const PSOHandle psoHandle, ID3D12RootSignature *rs,
@@ -90,6 +93,36 @@ void blitBuffer(const TextureHandle input, const TextureHandle handleToWriteOn,
 
   commandList->DrawInstanced(6, 1, 0, 0);
 }
+void blitStencilDebug(const TextureHandle input,
+                      const TextureHandle handleToWriteOn,
+                      const PSOHandle psoHandle, ID3D12RootSignature *rs,
+                      const DebugLayerConfig &cpuConfig) {
+  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
+  auto commandList = currentFc->commandList;
+
+  TextureHandle depth = globals::DEBUG_FRAME_DATA->gbufferDepth;
+  D3D12_RESOURCE_BARRIER barriers[2];
+  int counter = 0;
+  float black[4] ={0.0f,0.0f,0.0f,1.0f};
+  globals::TEXTURE_MANAGER->clearRT(handleToWriteOn,black);
+
+  counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
+      depth, D3D12_RESOURCE_STATE_DEPTH_WRITE, barriers, counter);
+  counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
+      handleToWriteOn, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, counter);
+  if (counter) {
+    commandList->ResourceBarrier(counter, barriers);
+  }
+
+  globals::TEXTURE_MANAGER->bindRenderTarget(handleToWriteOn, depth);
+
+  // commandList->SetPipelineState(pso);
+  dx12::PSO_MANAGER->bindPSO(psoHandle, commandList);
+  commandList->SetGraphicsRootSignature(rs);
+  commandList->OMSetStencilRef(cpuConfig.stencilValue);
+  commandList->DrawInstanced(6, 1, 0, 0);
+}
+
 void blitDepthDebug(const TextureHandle input,
                     const TextureHandle handleToWriteOn,
                     const BufferHandle buffer, const PSOHandle psoHandle,
@@ -137,52 +170,58 @@ inline void checkHandle(const TextureHandle input,
 
 void DebugNode::blitDebugFrame(const TextureHandle handleToWriteOn) const {
   switch (m_index) {
-  case (DebugIndex::GBUFFER): {
-    const TextureHandle input = globals::DEBUG_FRAME_DATA->geometryBuffer;
-    checkHandle(input, handleToWriteOn);
-    blitBuffer(input, handleToWriteOn, m_gbufferPSOHandle, m_rs,
-               m_constBufferHandle);
-    break;
-  }
-  case (DebugIndex::NORMAL_BUFFER): {
-    const TextureHandle input = globals::DEBUG_FRAME_DATA->normalBuffer;
-    checkHandle(input, handleToWriteOn);
-    blitBuffer(input, handleToWriteOn, m_normalPSOHandle, m_rs,
-               m_constBufferHandle);
-    break;
-  }
-  case (DebugIndex::METALLIC_BUFFER): {
-    const TextureHandle input = globals::DEBUG_FRAME_DATA->specularBuffer;
-    checkHandle(input, handleToWriteOn);
-    blitBuffer(input, handleToWriteOn, m_metallicPSOHandle, m_rs,
-               m_constBufferHandle);
-    break;
-  }
-  case (DebugIndex::ROUGHNESS_BUFFER): {
-    const TextureHandle input = globals::DEBUG_FRAME_DATA->specularBuffer;
-    checkHandle(input, handleToWriteOn);
-    blitBuffer(input, handleToWriteOn, m_roughnessPSOHandle, m_rs,
-               m_constBufferHandle);
-    break;
-  }
-  case (DebugIndex::THICKNESS_BUFFER): {
-    const TextureHandle input = globals::DEBUG_FRAME_DATA->specularBuffer;
-    checkHandle(input, handleToWriteOn);
-    blitBuffer(input, handleToWriteOn, m_thicknessPSOHandle, m_rs,
-               m_constBufferHandle);
-    break;
-  }
-  case (DebugIndex::GBUFFER_DEPTH): {
-    const TextureHandle input = globals::DEBUG_FRAME_DATA->gbufferDepth;
-    checkHandle(input, handleToWriteOn);
-    reduceDepth(globals::DEBUG_FRAME_DATA->gbufferDepth);
-    blitDepthDebug(input, handleToWriteOn, m_reduceBufferHandle,
-                   m_depthPSOHandle, m_rs, m_constBufferHandle,
-                   m_reduceBufferHandle);
-    break;
-  }
-  default:
-    assert(0 && "no valid pass to debug");
+    case (DebugIndex::GBUFFER): {
+      const TextureHandle input = globals::DEBUG_FRAME_DATA->geometryBuffer;
+      checkHandle(input, handleToWriteOn);
+      blitBuffer(input, handleToWriteOn, m_gbufferPSOHandle, m_rs,
+                 m_constBufferHandle);
+      break;
+    }
+    case (DebugIndex::NORMAL_BUFFER): {
+      const TextureHandle input = globals::DEBUG_FRAME_DATA->normalBuffer;
+      checkHandle(input, handleToWriteOn);
+      blitBuffer(input, handleToWriteOn, m_normalPSOHandle, m_rs,
+                 m_constBufferHandle);
+      break;
+    }
+    case (DebugIndex::METALLIC_BUFFER): {
+      const TextureHandle input = globals::DEBUG_FRAME_DATA->specularBuffer;
+      checkHandle(input, handleToWriteOn);
+      blitBuffer(input, handleToWriteOn, m_metallicPSOHandle, m_rs,
+                 m_constBufferHandle);
+      break;
+    }
+    case (DebugIndex::ROUGHNESS_BUFFER): {
+      const TextureHandle input = globals::DEBUG_FRAME_DATA->specularBuffer;
+      checkHandle(input, handleToWriteOn);
+      blitBuffer(input, handleToWriteOn, m_roughnessPSOHandle, m_rs,
+                 m_constBufferHandle);
+      break;
+    }
+    case (DebugIndex::THICKNESS_BUFFER): {
+      const TextureHandle input = globals::DEBUG_FRAME_DATA->specularBuffer;
+      checkHandle(input, handleToWriteOn);
+      blitBuffer(input, handleToWriteOn, m_thicknessPSOHandle, m_rs,
+                 m_constBufferHandle);
+      break;
+    }
+    case (DebugIndex::GBUFFER_DEPTH): {
+      const TextureHandle input = globals::DEBUG_FRAME_DATA->gbufferDepth;
+      checkHandle(input, handleToWriteOn);
+      reduceDepth(globals::DEBUG_FRAME_DATA->gbufferDepth);
+      blitDepthDebug(input, handleToWriteOn, m_reduceBufferHandle,
+                     m_depthPSOHandle, m_rs, m_constBufferHandle,
+                     m_reduceBufferHandle);
+      break;
+    }
+    case (DebugIndex::GBUFFER_STENCIL): {
+      const TextureHandle input = globals::DEBUG_FRAME_DATA->gbufferDepth;
+      blitStencilDebug(input, handleToWriteOn, m_stencilPSOHandle, m_rs,
+                       m_config);
+      break;
+    }
+    default:
+      assert(0 && "no valid pass to debug");
   }
 }
 
@@ -256,6 +295,7 @@ void DebugNode::initialize() {
   m_reduceBufferHandle = globals::BUFFER_MANAGER->allocate(
       sizeof(ReducedDepth), nullptr, "depthDebugReduce", 1,
       sizeof(ReducedDepth), true);
+  m_config.stencilValue =1;
 }
 
 void DebugNode::compute() {
@@ -278,4 +318,4 @@ void DebugNode::compute() {
   m_outputPlugs[0].plugValue = texH.handle;
   annotateGraphicsEnd();
 }
-} // namespace SirEngine
+}  // namespace SirEngine

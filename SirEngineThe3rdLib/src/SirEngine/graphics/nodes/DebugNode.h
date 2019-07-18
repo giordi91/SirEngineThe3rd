@@ -26,6 +26,7 @@ private:
     ROUGHNESS_BUFFER,
     THICKNESS_BUFFER,
     GBUFFER_DEPTH,
+    GBUFFER_STENCIL
   };
 
 private:
@@ -46,6 +47,7 @@ private:
   PSOHandle m_roughnessPSOHandle;
   PSOHandle m_metallicPSOHandle;
   PSOHandle m_thicknessPSOHandle;
+  PSOHandle m_stencilPSOHandle;
   PSOHandle m_depthPSOHandle;
   PSOHandle m_depthReducePSOHandle;
   PSOHandle m_depthReduceClearPSOHandle;

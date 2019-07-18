@@ -3,11 +3,20 @@
  "inputLayout":  "deferredNull",
  "globalRootSignature": "debugFullScreenBlit_RS",
   "VS": "fullScreenQuadVS",
-  "PS":  "thicknessBufferDebugPS",
+  "PS":  "stencilDebugPS",
   "rasterState":  "default",
   "blendState": "default",
   "depthStencilState": "custom",
-  "depthStencilStateConfig": {"depthEnabled" :  false},
+  "depthStencilStateConfig": {
+    "depthEnabled" :  false,
+    "depthFunc": "GREATER",
+    "stencilEnabled": true,
+    "stencilFailOp" :  "KEEP",
+    "stencilDepthFailOp" :  "KEEP",
+    "stencilPassOp": "KEEP",
+    "stencilFunc" : "EQUAL" 
+  },
+
   "sampleMask":  "max",
   "topologyType": "triangle",
   "renderTargets": 1,

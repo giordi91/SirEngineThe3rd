@@ -121,7 +121,7 @@ void Graphics3DLayer::onEvent(Event &event) {
   dispatcher.dispatch<WindowResizeEvent>(
       SE_BIND_EVENT_FN(Graphics3DLayer::onResizeEvent));
   dispatcher.dispatch<DebugRenderConfigChanged>(
-      SE_BIND_EVENT_FN(Graphics3DLayer::onDebugDepthChanged));
+      SE_BIND_EVENT_FN(Graphics3DLayer::onDebugConfigChanged));
   dispatcher.dispatch<ShaderCompileEvent>(
       SE_BIND_EVENT_FN(Graphics3DLayer::onShaderCompileEvent));
 }
@@ -194,7 +194,8 @@ bool Graphics3DLayer::onDebugLayerEvent(DebugLayerChanged &e) {
   case (3):
   case (4): 
   case (5): 
-  case (6): {
+  case (6): 
+  case (7): {
     // lets add debug
     GraphNode *debugNode = dx12::RENDERING_GRAPH->findNodeOfType("DebugNode");
     // debug already there, maybe i just need to change configuration?
@@ -221,7 +222,7 @@ bool Graphics3DLayer::onResizeEvent(WindowResizeEvent &e) {
   return true;
 }
 
-bool Graphics3DLayer::onDebugDepthChanged(DebugRenderConfigChanged &e) {
+bool Graphics3DLayer::onDebugConfigChanged(DebugRenderConfigChanged &e) {
   GraphNode *debugNode = dx12::RENDERING_GRAPH->findNodeOfType("DebugNode");
   if (debugNode) {
     auto *debugNodeTyped = (DebugNode *)debugNode;

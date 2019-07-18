@@ -33,8 +33,7 @@ struct PhongMaterial {
 };
 
 struct DebugLayerConfig {
-  float depthMin;
-  float depthMax;
+  int stencilValue;
 };
 
 struct GammaToneMappingConfig {

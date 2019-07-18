@@ -24,7 +24,10 @@ class RequestShaderCompileEvent;
 
 class SIR_ENGINE_API ImguiLayer : public Layer {
 public:
-  ImguiLayer() : Layer("ImGuiLayer") {}
+  ImguiLayer() : Layer("ImGuiLayer"), m_renderGraph()
+  {
+  }
+
   ~ImguiLayer() override = default;
 
   void onAttach() override;

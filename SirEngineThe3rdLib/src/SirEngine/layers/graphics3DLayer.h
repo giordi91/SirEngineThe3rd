@@ -40,7 +40,7 @@ private:
   bool onMouseMoveEvent(MouseMoveEvent &e);
   bool onDebugLayerEvent(DebugLayerChanged &e);
   bool onResizeEvent(WindowResizeEvent &e);
-  bool onDebugDepthChanged(DebugRenderConfigChanged &e);
+  bool onDebugConfigChanged(DebugRenderConfigChanged &e);
   bool onShaderCompileEvent(ShaderCompileEvent&e);
 
   // camera event control
