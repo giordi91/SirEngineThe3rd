@@ -2,10 +2,10 @@
 
 #include "platform/windows/graphics/dx12/shaderCompiler.h"
 
+#include <d3dcompiler.h>
 #include "SirEngine/argsUtils.h"
 #include "SirEngine/binary/binaryFile.h"
 #include "SirEngine/fileUtils.h"
-#include <d3dcompiler.h>
 
 namespace SirEngine {
 namespace dx12 {
@@ -35,7 +35,6 @@ ID3DBlob *loadCompiledShader(const std::string &filename) {
 }
 
 void ShaderManager::loadShaderFile(const char *path) {
-
   auto exp_path = std::experimental::filesystem::path(path);
   std::string name = exp_path.stem().string();
   if (m_stringToShader.find(name) == m_stringToShader.end()) {
@@ -47,7 +46,6 @@ void ShaderManager::loadShaderFile(const char *path) {
 ShaderMetadata *extractShaderMetadata(StackAllocator &alloc,
                                       ShaderMapperData *mapper,
                                       void *startOfData) {
-
   // extract metadata
   // I know, this aint pretty
   const wchar_t *typeW =
@@ -73,7 +71,6 @@ ShaderMetadata *extractShaderMetadata(StackAllocator &alloc,
 
   metadata->compilerArgs = nullptr;
   if (compilerArgs != nullptr) {
-
     metadata->compilerArgs =
         reinterpret_cast<wchar_t *>(alloc.allocate(mapper->compilerArgsInByte));
   }
@@ -82,10 +79,10 @@ ShaderMetadata *extractShaderMetadata(StackAllocator &alloc,
   memcpy(metadata->type, typeW, mapper->typeSizeInByte);
   memcpy(metadata->entryPoint, entryW, mapper->entryPointInByte);
   memcpy(metadata->shaderPath, shaderPath, mapper->pathSizeInByte);
+
+  // TODO this is always true due to the fact that we get an empty string
+  // might want to clean up
   if (compilerArgs != nullptr) {
-    if (mapper->compilerArgsInByte != 2) {
-      int x = 0;
-    }
     memcpy(metadata->compilerArgs, compilerArgs, mapper->compilerArgsInByte);
   }
 
@@ -99,7 +96,6 @@ void ShaderManager::loadShaderBinaryFile(const char *path) {
   const auto expPath = std::experimental::filesystem::path(path);
   const std::string name = expPath.stem().string();
   if (m_stringToShader.find(name) == m_stringToShader.end()) {
-
     // TODO just use scrap memory for this instead of a heap alloc
     std::vector<char> data;
     readAllBytes(path, data);
@@ -156,7 +152,7 @@ void ShaderManager::recompileShader(const char *path, const char *offsetPath,
     // update log
     if (log != nullptr) {
       std::string &logRef = *log;
-      logRef += "Successifully compiled shader: ";
+      logRef += "Successfully compiled shader: ";
       logRef += name;
       logRef += "\n";
     }
@@ -187,5 +183,5 @@ void ShaderManager::loadShadersInFolder(const char *directory) {
   }
 }
 
-} // namespace dx12
-} // namespace SirEngine
+}  // namespace dx12
+}  // namespace SirEngine

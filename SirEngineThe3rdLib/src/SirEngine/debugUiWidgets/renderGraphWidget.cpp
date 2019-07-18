@@ -5,9 +5,9 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui_internal.h"
 
-#include "SirEngine/log.h"
 #include <queue>
 #include <unordered_set>
+#include "SirEngine/log.h"
 
 #include "SirEngine/application.h"
 #include "SirEngine/events/debugEvent.h"
@@ -25,7 +25,7 @@ const std::unordered_map<std::string, PostProcessTypeDebug>
                                PostProcessTypeDebug::GAMMA_TONE_MAPPING}};
 
 PostProcessTypeDebug getPostProcessDebugType(const std::string &name) {
-  auto found = POST_PROCESS_TYPE_TO_ENUM.find(name);
+  const auto found = POST_PROCESS_TYPE_TO_ENUM.find(name);
   if (found != POST_PROCESS_TYPE_TO_ENUM.end()) {
     return found->second;
   }
@@ -161,7 +161,7 @@ void renderImguiGraph(GraphStatus *status) {
 
   // Display links
   draw_list->ChannelsSplit(2);
-  draw_list->ChannelsSetCurrent(0); // Background
+  draw_list->ChannelsSetCurrent(0);  // Background
   for (int link_idx = 0; link_idx < status->links.Size; link_idx++) {
     NodeLink *link = &status->links[link_idx];
     Node *node_inp = &status->nodes[link->InputIdx];
@@ -179,10 +179,10 @@ void renderImguiGraph(GraphStatus *status) {
     ImVec2 node_rect_min = offset + node->Pos;
 
     // Display node contents first
-    draw_list->ChannelsSetCurrent(1); // Foreground
+    draw_list->ChannelsSetCurrent(1);  // Foreground
     bool old_any_active = ImGui::IsAnyItemActive();
     ImGui::SetCursorScreenPos(node_rect_min + NODE_WINDOW_PADDING);
-    ImGui::BeginGroup(); // Lock horizontal position
+    ImGui::BeginGroup();  // Lock horizontal position
     ImGui::Text("%s", node->Name);
     // if you want any kind of content for the node you can add it here
     // ADD WIDGETS HERe
@@ -196,7 +196,7 @@ void renderImguiGraph(GraphStatus *status) {
     ImVec2 node_rect_max = node_rect_min + node->Size;
 
     // Display node box
-    draw_list->ChannelsSetCurrent(0); // Background
+    draw_list->ChannelsSetCurrent(0);  // Background
     ImGui::SetCursorScreenPos(node_rect_min);
     ImGui::InvisibleButton("node", node->Size);
     if (ImGui::IsItemHovered()) {
@@ -220,7 +220,6 @@ void renderImguiGraph(GraphStatus *status) {
                        IM_COL32(100, 100, 100, 255), 4.0f);
     ImVec2 mousePos = ImGui::GetMousePos();
     for (int slot_idx = 0; slot_idx < node->InputsCount; slot_idx++) {
-
       ImVec2 pos = offset + node->GetInputSlotPos(slot_idx);
       ImVec2 delta = mousePos - pos;
       float dist = sqrtf((delta.x * delta.x) + (delta.y * delta.y));
@@ -330,12 +329,10 @@ RenderGraphWidget::~RenderGraphWidget() { delete status; }
 void RenderGraphWidget::initialize(Graph *graph) {
   m_graph = graph;
 
-  m_debugConfig.depthMin = 1.0f;
-  m_debugConfig.depthMax = 0.0f;
+  m_debugConfig.stencilValue = 1;
 
-  if (status != nullptr) {
-    delete status;
-  }
+  delete status;
+
   status = new GraphStatus{};
   status->opened = false;
 
@@ -390,7 +387,6 @@ void RenderGraphWidget::initialize(Graph *graph) {
           // other end side
           if (conns != nullptr) {
             for (auto &conn : (*conns)) {
-
               status->links.push_back(
                   NodeLink(conn->nodePtr->getNodeIdx(), conn->index,
                            curr.node->getNodeIdx(), inPlugs[i].index));
@@ -413,7 +409,6 @@ void RenderGraphWidget::initialize(Graph *graph) {
 
   status->nodes.resize(static_cast<int>(nodesToAdd.size()));
   for (size_t i = 0; i < nodesToAdd.size(); ++i) {
-
     // compute x position
     float xPos;
     float yPos;
@@ -450,14 +445,22 @@ void RenderGraphWidget::initialize(Graph *graph) {
 }
 
 void RenderGraphWidget::render() {
-
-  bool generateDebugEvent = false;
   if (!ImGui::CollapsingHeader("Debug Frame", ImGuiTreeNodeFlags_DefaultOpen))
     return;
-  const char *items[] = {"fullFrame", "gbuffer", "normalsBuffer",
-                         "metallic","roughness","thickness","depth"};
+  const char *items[] = {"fullFrame", "gbuffer",   "normalsBuffer", "metallic",
+                         "roughness", "thickness", "depth",         "stencil"};
   const bool debugLayerValueChanged =
       ImGui::Combo("Pass", &currentDebugLayer, items, IM_ARRAYSIZE(items));
+
+  bool generateDebugEvent = false;
+  if (currentDebugLayer == 7) {
+    generateDebugEvent =
+        ImGui::InputInt("stencilValue", &m_debugConfig.stencilValue);
+	if(generateDebugEvent) {
+    
+	SE_CORE_INFO(generateDebugEvent);
+        }
+  }
 
   // lets render post process stack configuration
   if (ImGui::CollapsingHeader("Post process stack")) {
@@ -466,28 +469,27 @@ void RenderGraphWidget::render() {
     if (stack != nullptr) {
       const std::vector<PostProcessEffect *> &effects = stack->getEffects();
       for (const auto &effect : effects) {
-
         PostProcessTypeDebug type = getPostProcessDebugType(effect->getType());
-        SE_CORE_INFO("Type {0}", (int)type);
+        SE_CORE_INFO("Type {0}", static_cast<int>(type));
         if (type == PostProcessTypeDebug::NONE) {
           continue;
         }
         if (ImGui::CollapsingHeader(effect->getName())) {
           switch (type) {
-          case (PostProcessTypeDebug::GAMMA_TONE_MAPPING): {
-            auto *typedEffect = (GammaAndToneMappingEffect *)(effect);
-            GammaToneMappingConfig &config = typedEffect->getConfig();
-            const bool exposure =
-                ImGui::SliderFloat("exposure", &config.exposure, 0.0f, 10.0f);
-            const bool gamma =
-                ImGui::SliderFloat("gamma", &config.gamma, 0.0f, 10.0f);
-            if (exposure | gamma) {
-              typedEffect->setConfigDirty();
-            }
+            case (PostProcessTypeDebug::GAMMA_TONE_MAPPING): {
+              auto *typedEffect = (GammaAndToneMappingEffect *)(effect);
+              GammaToneMappingConfig &config = typedEffect->getConfig();
+              const bool exposure =
+                  ImGui::SliderFloat("exposure", &config.exposure, 0.0f, 10.0f);
+              const bool gamma =
+                  ImGui::SliderFloat("gamma", &config.gamma, 0.0f, 10.0f);
+              if (exposure | gamma) {
+                typedEffect->setConfigDirty();
+              }
 
-            break;
-          }
-          default:;
+              break;
+            }
+            default:;
           }
         }
       }
@@ -517,5 +519,5 @@ void RenderGraphWidget::showGraph(bool value) {
     status->opened = value;
   }
 }
-} // namespace debug
-} // namespace SirEngine
+}  // namespace debug
+}  // namespace SirEngine

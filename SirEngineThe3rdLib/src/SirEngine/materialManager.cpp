@@ -42,7 +42,7 @@ static const std::unordered_map<SirEngine::SHADER_TYPE_FLAGS, std::string>
         {SirEngine::SHADER_TYPE_FLAGS::SKIN, "skin"},
     };
 
-} // namespace materialKeys
+}  // namespace materialKeys
 
 namespace SirEngine {
 inline uint32_t stringToActualQueueFlag(const std::string &flag) {
@@ -112,8 +112,11 @@ void bindSkin(const MaterialRuntime &materialRuntime,
   commandList->SetGraphicsRootDescriptorTable(3, materialRuntime.normal);
   commandList->SetGraphicsRootDescriptorTable(4, materialRuntime.metallic);
   commandList->SetGraphicsRootDescriptorTable(5, materialRuntime.roughness);
+  // bind extra thickness map
   commandList->SetGraphicsRootDescriptorTable(6, materialRuntime.thickness);
-  // bind extra thinkess map
+
+  // HARDCODED stencil value might have to think of a nice way to handle this
+  commandList->OMSetStencilRef(static_cast<uint32_t>(STENCIL_REF::SSSSS));
 }
 
 void MaterialManager::bindMaterial(const MaterialRuntime &materialRuntime,
@@ -121,17 +124,17 @@ void MaterialManager::bindMaterial(const MaterialRuntime &materialRuntime,
   const SHADER_TYPE_FLAGS type =
       getTypeFlags(materialRuntime.shaderQueueTypeFlags);
   switch (type) {
-  case (SHADER_TYPE_FLAGS::PBR): {
-    bindPBR(materialRuntime, commandList);
-    break;
-  }
-  case (SHADER_TYPE_FLAGS::SKIN): {
-    bindSkin(materialRuntime, commandList);
-    break;
-  }
-  default: {
-    assert(0 && "could not find material type");
-  }
+    case (SHADER_TYPE_FLAGS::PBR): {
+      bindPBR(materialRuntime, commandList);
+      break;
+    }
+    case (SHADER_TYPE_FLAGS::SKIN): {
+      bindSkin(materialRuntime, commandList);
+      break;
+    }
+    default: {
+      assert(0 && "could not find material type");
+    }
   }
 }
 
@@ -172,8 +175,7 @@ void MaterialManager::loadTypeFile(const char *path) {
   assert(!psoString.empty() && "pso  is emtpy in material type");
 
   // get the handles
-  const PSOHandle psoHandle =
-      dx12::PSO_MANAGER->getHandleFromName(psoString);
+  const PSOHandle psoHandle = dx12::PSO_MANAGER->getHandleFromName(psoString);
   const RSHandle rsHandle =
       dx12::ROOT_SIGNATURE_MANAGER->getHandleFromName(rsString);
 
@@ -184,7 +186,6 @@ void MaterialManager::loadTypeFile(const char *path) {
 }
 MaterialHandle MaterialManager::loadMaterial(const char *path,
                                              MaterialRuntime *materialRuntime) {
-
   // for materials we do not perform the check whether is loaded or not
   // each object is going to get it s own material copy.
   // if that starts to be an issue we will add extra logic to deal with this.
@@ -311,8 +312,8 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   return handle;
 }
 
-const std::string &
-MaterialManager::getStringFromShaderTypeFlag(const SHADER_TYPE_FLAGS type) {
+const std::string &MaterialManager::getStringFromShaderTypeFlag(
+    const SHADER_TYPE_FLAGS type) {
   const auto found = materialKeys::TYPE_FLAGS_TO_STRING.find(type);
   if (found != materialKeys::TYPE_FLAGS_TO_STRING.end()) {
     return found->second;
@@ -324,4 +325,4 @@ MaterialManager::getStringFromShaderTypeFlag(const SHADER_TYPE_FLAGS type) {
   return unknown->second;
 }
 
-} // namespace SirEngine
+}  // namespace SirEngine

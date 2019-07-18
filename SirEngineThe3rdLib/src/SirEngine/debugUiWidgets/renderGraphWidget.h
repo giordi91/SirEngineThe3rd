@@ -21,10 +21,6 @@ struct RenderGraphWidget final {
 
   // debug specific data:
   DebugLayerConfig m_debugConfig;
-  float depthMinStart = 1.0f;
-  float depthMinEnd= 0.0f;
-  float depthMaxStart = 1.0f;
-  float depthMaxEnd=0.0f;
 };
 
 } // namespace debug

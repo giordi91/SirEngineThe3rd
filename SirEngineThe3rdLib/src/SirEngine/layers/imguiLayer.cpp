@@ -111,7 +111,7 @@ void ImguiLayer::onUpdate() {
 
   bool show_demo_window = true;
 
-  ImVec2 pos{0, 0};
+  const ImVec2 pos{0, 0};
   ImGui::NewFrame();
   // ImGui::ShowDemoWindow(&show_demo_window);
 
