@@ -57,11 +57,51 @@ class ThreeSizesPool final {
     char *bytePtr = reinterpret_cast<char *>(memoryPtr);
     assert(allocationInPool(bytePtr));
 
-    AllocHeader *header =
+    const AllocHeader *header =
         reinterpret_cast<AllocHeader *>(bytePtr - sizeof(AllocHeader));
     assert(header->isNode == 0);
     return header->size;
   }
+
+  void free(void *memoryPtr) {
+    char *bytePtr = reinterpret_cast<char *>(memoryPtr);
+    assert(allocationInPool(bytePtr));
+
+    AllocHeader *header =
+        reinterpret_cast<AllocHeader *>(bytePtr - sizeof(AllocHeader));
+
+    const uint32_t allocSize = header->size;
+    assert(header->isNode == 0);
+
+#if SE_DEBUG
+    // tagging the memory as freed
+    memset(memoryPtr, 0xff, allocSize - sizeof(AllocHeader));
+#endif
+
+    int allocType =
+        getAllocationTypeFromSize(header->size - sizeof(AllocHeader));
+    // lets create the node to dealloc
+    NextAlloc alloc;
+    alloc.size = header->size;
+    alloc.isNode = 1;
+    alloc.allocType = 1 << allocType;
+    alloc.nextOffset = 0;
+    alloc.offset = reinterpret_cast<char *>(header) - m_memory;
+
+
+    // reducing alloc count
+    --m_allocCount[allocType];
+
+    // lets add to the linked list
+    if (m_nextAlloc[allocType] != nullptr) {
+      alloc.nextOffset = m_nextAlloc[allocType]->offset;
+    }
+
+	//now that the whole header is setup we commit it to memory
+    memcpy(header, &alloc, sizeof(NextAlloc));
+
+    m_nextAlloc[allocType] = reinterpret_cast<NextAlloc *>(header);
+  };
 
   static uint32_t getMinAllocSize() { return MIN_ALLOC_SIZE; }
 
@@ -78,7 +118,8 @@ class ThreeSizesPool final {
 
   void *allocateNew(const uint32_t sizeInByte) {
     uint32_t totalAllocSize = sizeInByte + sizeof(AllocHeader);
-	totalAllocSize  = totalAllocSize < MIN_ALLOC_SIZE? MIN_ALLOC_SIZE : totalAllocSize;
+    totalAllocSize =
+        totalAllocSize < MIN_ALLOC_SIZE ? MIN_ALLOC_SIZE : totalAllocSize;
 
     auto *header =
         reinterpret_cast<AllocHeader *>(m_memory + m_stackPointerOffset);
@@ -102,9 +143,29 @@ class ThreeSizesPool final {
       NextAlloc *parent = nullptr;
       NextAlloc *found =
           findNextFreeAllocForSize(next, totalAllocSize, &parent);
+      assert(found->isNode == true);
+
       if (found == nullptr) {
         return allocateNew(sizeInByte);
       }
+
+      // if there is a next child we need to get the pointer and patch it
+      if (found->nextOffset != 0) {
+        m_nextAlloc[allocType] =
+            reinterpret_cast<NextAlloc *>(m_memory + found->nextOffset);
+      } else {
+        m_nextAlloc[allocType] =nullptr;
+      }
+	  ++m_allocCount[allocType];
+
+      // lets now build the header
+      AllocHeader header;
+      header.size = totalAllocSize;
+      header.isNode = false;
+      header.type = allocType;
+      memcpy(next, &header, sizeof(header));
+
+      return reinterpret_cast<char*>(found) + sizeof(AllocHeader);
     }
 
     // no hit in the cache, we need to allocate from the pool
@@ -126,7 +187,6 @@ class ThreeSizesPool final {
     return nullptr;
   }
 
-
   uint32_t getSmallAllocCount() const { return m_allocCount[0]; }
   uint32_t getMediumAllocCount() const { return m_allocCount[1]; }
   uint32_t getLargeAllocCount() const { return m_allocCount[2]; }
@@ -140,9 +200,6 @@ class ThreeSizesPool final {
   NextAlloc *m_nextAlloc[3];
   uint32_t m_allocCount[3]{};
 
-#if SE_DEBUG
-  char *m_freedMemory = nullptr;
-#endif
 };
 
 }  // namespace SirEngine
