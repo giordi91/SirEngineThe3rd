@@ -41,7 +41,7 @@ public:
   RandomSizeAllocationHandle allocate(uint16_t sizeInByte) {
     // first inspect if we have any free allocation blocks
     RandomSizeAllocationHandle toReturnHandle;
-    int allocCount = static_cast<int>(m_allocations.size());
+    const int allocCount = static_cast<int>(m_allocations.size());
     const RandomSizeAllocationHandle *allocs = m_allocations.data();
     int foundIndex = -1;
     for (int i = 0; i < allocCount; ++i) {
