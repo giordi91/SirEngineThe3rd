@@ -11,7 +11,7 @@ public:
       : PostProcessEffect(name, "GammaAndToneMappingEffect") {}
   virtual ~GammaAndToneMappingEffect() = default;
   virtual void initialize() override;
-  virtual void render(TextureHandle input, TextureHandle output) override;
+  virtual void render(const TextureHandle input, const TextureHandle output, const PostProcessResources& resources) override;
   virtual void clear() override;
   GammaToneMappingConfig &getConfig() { return m_config; };
   void setConfigDirty() {
