@@ -48,8 +48,8 @@ TEST_CASE("Tree sizes pool min alloc size", "[memory]") {
   uint32_t allocSize = alloc.getAllocSize(mem);
   uint32_t rawAllocSize = alloc.getRawAllocSize(mem);
   // -4 due to the fact the header is 4 bytes
-  REQUIRE(allocSize == (minAllocSize -4));
-  REQUIRE(rawAllocSize== minAllocSize);
+  REQUIRE(allocSize == (minAllocSize - 4));
+  REQUIRE(rawAllocSize == minAllocSize);
 }
 
 TEST_CASE("Tree sizes pool delete alloc 1", "[memory]") {
@@ -60,14 +60,102 @@ TEST_CASE("Tree sizes pool delete alloc 1", "[memory]") {
   void *mem4 = alloc.allocate(128);
   void *mem5 = alloc.allocate(128);
   void *mem6 = alloc.allocate(128);
+  memset(mem, 1, 16);
+  memset(mem2, 2, 128);
+  memset(mem3, 3, 300);
+  memset(mem4, 4, 128);
+  memset(mem5, 5, 128);
+  memset(mem6, 6, 128);
   REQUIRE(mem != nullptr);
   REQUIRE(mem2 != nullptr);
   REQUIRE(mem3 != nullptr);
   REQUIRE(mem4 != nullptr);
   REQUIRE(mem5 != nullptr);
   REQUIRE(mem6 != nullptr);
+  REQUIRE(alloc.getMediumAllocCount() == 4);
+  REQUIRE(alloc.getSmallAllocCount() == 1);
+  REQUIRE(alloc.getLargeAllocCount() == 1);
 
-  //now lets delete some stuff
+  // now lets delete some stuff
+  alloc.free(mem4);
+  REQUIRE(alloc.getMediumAllocCount() == 3);
 
+  void *mem7 = alloc.allocate(120);
+  REQUIRE(alloc.getMediumAllocCount() == 4);
+  REQUIRE(mem7 == mem4);
+  uint32_t memSizeInBtye = alloc.getAllocSize(mem7);
+  REQUIRE(memSizeInBtye == 120);
+  memset(mem7, 7, memSizeInBtye);
+
+  unsigned char *bytePtr = reinterpret_cast<unsigned char *>(mem7);
+  for (int i = 0; i < memSizeInBtye; ++i) {
+    REQUIRE(bytePtr[i] == 7);
+  }
+
+#if SE_DEBUG
+  for (int i = memSizeInBtye; i < 128; ++i) {
+    REQUIRE(bytePtr[i] == 0xff);
+  }
+#endif
 }
 
+TEST_CASE("Tree sizes pool delete alloc 2", "[memory]") {
+  SirEngine::ThreeSizesPool<64, 256> alloc(2 << 16);
+  void *mem1 = alloc.allocate(128);
+  void *mem2 = alloc.allocate(128);
+  void *mem3 = alloc.allocate(128);
+  void *mem4 = alloc.allocate(128);
+  memset(mem1, 1, 128);
+  memset(mem2, 2, 128);
+  memset(mem3, 3, 128);
+  memset(mem4, 4, 128);
+  REQUIRE(mem1 != nullptr);
+  REQUIRE(mem2 != nullptr);
+  REQUIRE(mem3 != nullptr);
+  REQUIRE(mem4 != nullptr);
+  REQUIRE(alloc.getMediumAllocCount() == 4);
+
+  // now lets delete some stuff
+  alloc.free(mem3);
+  REQUIRE(alloc.getMediumAllocCount() == 3);
+  alloc.free(mem2);
+  REQUIRE(alloc.getMediumAllocCount() == 2);
+
+  void *mem5 = alloc.allocate(120);
+  REQUIRE(alloc.getMediumAllocCount() == 3);
+  REQUIRE(mem5 == mem2);
+  // checking memory is properly written and not overrun
+  uint32_t memSizeInBtye = alloc.getAllocSize(mem5);
+  memset(mem5, 5, memSizeInBtye);
+  unsigned char *bytePtr = reinterpret_cast<unsigned char *>(mem5);
+  for (int i = 0; i < memSizeInBtye; ++i) {
+    REQUIRE(bytePtr[i] == 5);
+  }
+
+#if SE_DEBUG
+  for (int i = memSizeInBtye; i < 128; ++i) {
+    REQUIRE(bytePtr[i] == 0xff);
+  }
+#endif
+
+  void *mem6 = alloc.allocate(70);
+  REQUIRE(alloc.getMediumAllocCount() == 4);
+  REQUIRE(mem6 == mem3);
+  // checking memory is properly written and not overrun
+  memSizeInBtye = alloc.getAllocSize(mem6);
+  memset(mem6, 6, memSizeInBtye);
+  bytePtr = reinterpret_cast<unsigned char *>(mem6);
+  for (int i = 0; i < memSizeInBtye; ++i) {
+    REQUIRE(bytePtr[i] == 6);
+  }
+
+#if SE_DEBUG
+  for (int i = memSizeInBtye; i < 128; ++i) {
+    REQUIRE(bytePtr[i] == 0xff);
+  }
+#endif
+
+  void *mem7 = alloc.allocate(200);
+  REQUIRE(alloc.getMediumAllocCount() == 5);
+
+}
