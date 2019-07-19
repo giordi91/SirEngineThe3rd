@@ -9,7 +9,6 @@ namespace SirEngine {
 
 PostProcessStack::PostProcessStack()
     : GraphNode("PostProcessStack", "PostProcessStack") {
-
   // lets create the plugs
   Plug inTexture;
   inTexture.plugValue = 0;
@@ -17,6 +16,13 @@ PostProcessStack::PostProcessStack()
   inTexture.nodePtr = this;
   inTexture.name = "inTexture";
   registerPlug(inTexture);
+
+  Plug depthTexture;
+  depthTexture.plugValue = 0;
+  depthTexture.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
+  depthTexture.nodePtr = this;
+  depthTexture.name = "depthTexture";
+  registerPlug(depthTexture);
 
   Plug outTexture;
   outTexture.plugValue = 0;
@@ -27,9 +33,8 @@ PostProcessStack::PostProcessStack()
 }
 
 void PostProcessStack::initialize() {
-
   // initialize all layers
-  size_t stackSize = m_stack.size();
+  const size_t stackSize = m_stack.size();
   for (size_t i = 0; i < stackSize; ++i) {
     m_stack[i]->initialize();
   }
@@ -43,6 +48,7 @@ void PostProcessStack::initialize() {
       "postProcess2");
 }
 
+
 void PostProcessStack::compute() {
   annotateGraphicsBegin("Post processing");
   auto &conn = m_connections[&m_inputPlugs[0]];
@@ -55,13 +61,16 @@ void PostProcessStack::compute() {
     return;
   }
   m_internalCounter = 0;
-  size_t stackSize = m_stack.size();
-  m_stack[0]->render(texH, handles[0]);
+  const size_t stackSize = m_stack.size();
+  auto &connDepth = m_connections[&m_inputPlugs[1]];
+  const PostProcessResources resources{connDepth[0]->plugValue};
+  m_stack[0]->render(texH, handles[0], resources);
 
   for (size_t i = 1; i < stackSize; ++i) {
-    int previous = m_internalCounter;
+    const int previous = m_internalCounter;
     m_internalCounter = (m_internalCounter + 1) % 2;
-    m_stack[i]->render(handles[previous], handles[m_internalCounter]);
+    m_stack[i]->render(handles[previous], handles[m_internalCounter],
+                       resources);
   }
 
   m_outputPlugs[0].plugValue = handles[m_internalCounter].handle;
@@ -83,4 +92,4 @@ void PostProcessStack::onResizeEvent(int screenWidth, int screenHeight) {
   initialize();
 }
 
-} // namespace SirEngine
+}  // namespace SirEngine

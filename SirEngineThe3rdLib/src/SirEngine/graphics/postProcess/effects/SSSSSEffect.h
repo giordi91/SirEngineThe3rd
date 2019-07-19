@@ -4,10 +4,10 @@
 #include "SirEngine/handle.h"
 
 namespace SirEngine {
-class BlackAndWhiteEffect final : public PostProcessEffect {
+class SSSSSEffect final : public PostProcessEffect {
  public:
-  explicit BlackAndWhiteEffect(const char *name);
-  virtual ~BlackAndWhiteEffect() = default;
+  explicit SSSSSEffect(const char *name);
+  virtual ~SSSSSEffect()=default;
   void initialize() override;
   void render(const TextureHandle input, const TextureHandle output,
               const PostProcessResources &resources) override;

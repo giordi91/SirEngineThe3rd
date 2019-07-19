@@ -1,4 +1,5 @@
 #include "SirEngine/layers/graphics3DLayer.h"
+#include <DirectXMath.h>
 #include "SirEngine/application.h"
 #include "SirEngine/assetManager.h"
 #include "SirEngine/events/debugEvent.h"
@@ -7,7 +8,6 @@
 #include "SirEngine/graphics/camera.h"
 #include "SirEngine/graphics/nodeGraph.h"
 #include "platform/windows/graphics/dx12/DX12.h"
-#include <DirectXMath.h>
 
 #include "SirEngine/events/renderGraphEvent.h"
 #include "SirEngine/events/shaderCompileEvent.h"
@@ -20,6 +20,7 @@
 #include "SirEngine/graphics/postProcess/effects/gammaAndToneMappingEffect.h"
 #include "SirEngine/graphics/postProcess/postProcessStack.h"
 #include "SirEngine/graphics/renderingContext.h"
+#include "SirEngine/graphics/postProcess/effects/SSSSSEffect.h"
 
 namespace SirEngine {
 
@@ -44,16 +45,18 @@ void Graphics3DLayer::onAttach() {
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
 
   dx12::RENDERING_GRAPH = new Graph();
-  auto assetNode = new AssetManagerNode();
-  auto finalBlit = new FinalBlitNode();
+  const auto assetNode = new AssetManagerNode();
+  const auto finalBlit = new FinalBlitNode();
   // auto simpleForward = new SimpleForward("simpleForward");
   auto postProcess = new PostProcessStack();
   // auto gbufferPass = new GBufferPass("GBufferPass");
-  auto gbufferPass = new GBufferPassPBR("GBufferPassPBR");
-  auto lighting = new DeferredLightingPass("Deferred lighting");
+  const auto gbufferPass = new GBufferPassPBR("GBufferPassPBR");
+  const auto lighting = new DeferredLightingPass("Deferred lighting");
   // auto sky = new ProceduralSkyBoxPass("Procedural Sky");
-  auto sky = new SkyBoxPass("Skybox");
+  const auto sky = new SkyBoxPass("Skybox");
 
+  postProcess->allocateRenderPass<SSSSSEffect>(
+      "SSSSS");
   postProcess->allocateRenderPass<GammaAndToneMappingEffect>(
       "GammaToneMapping");
   postProcess->initialize();
@@ -89,6 +92,8 @@ void Graphics3DLayer::onAttach() {
   dx12::RENDERING_GRAPH->connectNodes(gbufferPass, "depth", sky, "depth");
 
   dx12::RENDERING_GRAPH->connectNodes(sky, "buffer", postProcess, "inTexture");
+  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, "depth", postProcess,
+                                      "depthTexture");
 
   dx12::RENDERING_GRAPH->connectNodes(postProcess, "outTexture", finalBlit,
                                       "inTexture");
@@ -97,7 +102,6 @@ void Graphics3DLayer::onAttach() {
 }
 void Graphics3DLayer::onDetach() {}
 void Graphics3DLayer::onUpdate() {
-
   // setting up camera for the frame
   globals::CONSTANT_BUFFER_MANAGER->processBufferedData();
   globals::RENDERING_CONTEX->setupCameraForFrame();
@@ -108,7 +112,6 @@ void Graphics3DLayer::onUpdate() {
   dx12::MESH_MANAGER->clearUploadRequests();
 }
 void Graphics3DLayer::onEvent(Event &event) {
-
   EventDispatcher dispatcher(event);
   dispatcher.dispatch<MouseButtonPressEvent>(
       SE_BIND_EVENT_FN(Graphics3DLayer::onMouseButtonPressEvent));
@@ -176,42 +179,42 @@ bool Graphics3DLayer::onMouseMoveEvent(MouseMoveEvent &e) {
 bool Graphics3DLayer::onDebugLayerEvent(DebugLayerChanged &e) {
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
   switch (e.getLayer()) {
-  case (0): {
-    // if we have 0, we have no layer to debug so we can just check if there
-    // there is a debug node and remove it
-    GraphNode *debugNode = dx12::RENDERING_GRAPH->findNodeOfType("DebugNode");
-    if (debugNode == nullptr) { // no debug we are good
+    case (0): {
+      // if we have 0, we have no layer to debug so we can just check if there
+      // there is a debug node and remove it
+      GraphNode *debugNode = dx12::RENDERING_GRAPH->findNodeOfType("DebugNode");
+      if (debugNode == nullptr) {  // no debug we are good
+        return true;
+      }
+      dx12::RENDERING_GRAPH->removeDebugNode(debugNode);
+      dx12::RENDERING_GRAPH->finalizeGraph();
+      RenderGraphChanged *graphE = new RenderGraphChanged();
+      globals::APPLICATION->queueEventForEndOfFrame(graphE);
       return true;
     }
-    dx12::RENDERING_GRAPH->removeDebugNode(debugNode);
-    dx12::RENDERING_GRAPH->finalizeGraph();
-    RenderGraphChanged *graphE = new RenderGraphChanged();
-    globals::APPLICATION->queueEventForEndOfFrame(graphE);
-    return true;
-  }
-  case (1):
-  case (2):
-  case (3):
-  case (4): 
-  case (5): 
-  case (6): 
-  case (7): {
-    // lets add debug
-    GraphNode *debugNode = dx12::RENDERING_GRAPH->findNodeOfType("DebugNode");
-    // debug already there, maybe i just need to change configuration?
-    if (debugNode != nullptr) { // no debug we are good
-      static_cast<DebugNode *>(debugNode)->setDebugIndex(e.getLayer());
+    case (1):
+    case (2):
+    case (3):
+    case (4):
+    case (5):
+    case (6):
+    case (7): {
+      // lets add debug
+      GraphNode *debugNode = dx12::RENDERING_GRAPH->findNodeOfType("DebugNode");
+      // debug already there, maybe i just need to change configuration?
+      if (debugNode != nullptr) {  // no debug we are good
+        static_cast<DebugNode *>(debugNode)->setDebugIndex(e.getLayer());
+        return true;
+      }
+      // lest add a debug node
+      auto debug = new DebugNode("DebugNode");
+      debug->setDebugIndex(e.getLayer());
+      dx12::RENDERING_GRAPH->addDebugNode(debug);
+      dx12::RENDERING_GRAPH->finalizeGraph();
+      auto *graphE = new RenderGraphChanged();
+      globals::APPLICATION->queueEventForEndOfFrame(graphE);
       return true;
     }
-    // lest add a debug node
-    auto debug = new DebugNode("DebugNode");
-    debug->setDebugIndex(e.getLayer());
-    dx12::RENDERING_GRAPH->addDebugNode(debug);
-    dx12::RENDERING_GRAPH->finalizeGraph();
-    auto*graphE = new RenderGraphChanged();
-    globals::APPLICATION->queueEventForEndOfFrame(graphE);
-    return true;
-  }
   }
   return false;
 }
@@ -231,9 +234,8 @@ bool Graphics3DLayer::onDebugConfigChanged(DebugRenderConfigChanged &e) {
   return true;
 }
 bool Graphics3DLayer::onShaderCompileEvent(ShaderCompileEvent &e) {
-
   SE_CORE_INFO("Reading to compile shader");
   dx12::PSO_MANAGER->recompilePSOFromShader(e.getShader(), e.getOffsetPath());
   return true;
 }
-} // namespace SirEngine
+}  // namespace SirEngine
