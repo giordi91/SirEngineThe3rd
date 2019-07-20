@@ -5,11 +5,9 @@
 namespace SirEngine {
 
 class StackAllocator final {
-public:
+ public:
   StackAllocator() = default;
-  ~StackAllocator() {
-	  delete[] m_start;
-  }
+  ~StackAllocator() { delete[] m_start; }
 
   // request n bytes of memory
   void *allocate(const size_t sizeInByte) {
@@ -18,7 +16,9 @@ public:
     m_SP += sizeInByte;
     assert(isAllocatorValid());
     return basePtr;
-  };
+  }
+
+  inline void reset() { m_SP = m_start; };
 
   // free bits from the top of the stack
   void *free(const size_t sizeByte) {
@@ -67,7 +67,7 @@ public:
   StackAllocator(StackAllocator const &) = delete;
   StackAllocator &operator=(StackAllocator const &) = delete;
 
-private:
+ private:
   bool isAllocatorValid() const {
     assert(m_start != nullptr);
     assert(m_end != nullptr);
@@ -78,11 +78,11 @@ private:
     return true;
   }
 
-private:
+ private:
   // member pointers
   char *m_SP{nullptr};
   char *m_start{nullptr};
   char *m_end{nullptr};
-}; // namespace SirEngine
+};  // namespace SirEngine
 
-} // namespace SirEngine
+}  // namespace SirEngine
