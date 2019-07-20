@@ -36,7 +36,7 @@ class ThreeSizesPool final {
 
   // helpers
   int allocationInPool(const char *ptr) const {
-    const int delta = ptr - m_memory;
+    const int64_t delta = ptr - m_memory;
     return (delta > 0) & (delta < m_poolSizeInByte);
   }
 
@@ -140,7 +140,7 @@ class ThreeSizesPool final {
     char *bytePtr = reinterpret_cast<char *>(memoryPtr);
     assert(allocationInPool(bytePtr));
 
-    auto*header =
+    auto *header =
         reinterpret_cast<AllocHeader *>(bytePtr - sizeof(AllocHeader));
 
     const uint32_t allocSize = header->size;
@@ -176,6 +176,7 @@ class ThreeSizesPool final {
   };
 
   void *allocate(const uint32_t sizeInByte, uint8_t flags = 0) {
+    assert(sizeInByte < m_poolSizeInByte);
     // first lets find out what kind of allocation has been requested
     uint32_t allocType = getAllocationTypeFromSize(sizeInByte);
 
