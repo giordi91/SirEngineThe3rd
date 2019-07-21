@@ -1,10 +1,12 @@
 #pragma once
+#include "SirEngine/core.h"
+
 #include "SirEngine/memory/stackAllocator.h"
 #include "SirEngine/memory/threeSizesPool.h"
 
 namespace SirEngine {
 
-class StringPool final {
+class SIR_ENGINE_API StringPool final {
  public:
   enum class STRING_TYPE { CHAR = 1, WIDECHAR = 2 };
 
