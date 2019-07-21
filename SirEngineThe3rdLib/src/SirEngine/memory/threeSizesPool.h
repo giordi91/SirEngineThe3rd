@@ -187,7 +187,6 @@ class ThreeSizesPool final {
       // enough
       const uint32_t totalAllocSize = sizeInByte + sizeof(AllocHeader);
       NextAlloc *found = findNextFreeAllocForSize(next, totalAllocSize);
-      assert(found->isNode == true);
 
       // if an allocation big enough in the bucket is not found we
       // perform a new allocation
@@ -195,6 +194,7 @@ class ThreeSizesPool final {
         return allocateNew(sizeInByte, flags);
       }
 
+      assert(found->isNode == true);
       // if there is a next child in the linked list we need to get the pointer
       // and patch it
       // next offset of zero means no child
