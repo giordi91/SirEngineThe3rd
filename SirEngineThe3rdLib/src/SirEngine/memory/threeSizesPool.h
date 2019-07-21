@@ -35,11 +35,6 @@ class ThreeSizesPool final {
   };
 
   // helpers
-  int allocationInPool(const char *ptr) const {
-    const int64_t delta = ptr - m_memory;
-    return (delta > 0) & (delta < m_poolSizeInByte);
-  }
-
   static uint32_t getAllocationTypeFromSize(const uint32_t sizeInByte) {
     const int isInMediumRange =
         (sizeInByte < MEDIUM_SIZE) & (sizeInByte >= SMALL_SIZE);
@@ -111,6 +106,13 @@ class ThreeSizesPool final {
   ~ThreeSizesPool() { delete m_memory; }
 
   // public interface
+
+  //helpers
+  int allocationInPool(const char *ptr) const {
+    const int64_t delta = ptr - m_memory;
+    return (delta > 0) & (delta < m_poolSizeInByte);
+  }
+
   // getters
 
   // returns the size of the "user" allocation ,meaning without the AllocHeader
@@ -121,11 +123,11 @@ class ThreeSizesPool final {
   // returns the full raw allocation size, meaning user size + AllocHeader
   uint32_t getRawAllocSize(void *memoryPtr) const {
     char *bytePtr = reinterpret_cast<char *>(memoryPtr);
-    assert(allocationInPool(bytePtr));
+    assert(allocationInPool(bytePtr) && "allocation not in pool");
 
     const AllocHeader *header =
         reinterpret_cast<AllocHeader *>(bytePtr - sizeof(AllocHeader));
-    assert(header->isNode == 0);
+    assert(header->isNode == 0 && "allocation is a linked list node not an allocation");
     return header->size;
   }
 
