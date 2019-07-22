@@ -139,7 +139,7 @@ void ShaderManager::recompileShader(const char *path, const char *offsetPath,
   fullShaderPath += blob.metadata->shaderPath;
 
   ID3DBlob *compiledShader =
-      m_compiler->compileShader(fullShaderPath, args, log);
+      m_compiler->compileShader(fullShaderPath.c_str(), args, log);
   if (compiledShader != nullptr) {
     auto exp_path = std::experimental::filesystem::path(path);
     std::string name = exp_path.stem().string();

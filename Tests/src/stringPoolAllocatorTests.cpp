@@ -389,7 +389,6 @@ TEST_CASE("String pool basic convertion 2", "[memory]") {
   REQUIRE(strcmp(originalAlloc, original) != 0);
 }
 
-
 TEST_CASE("String pool basic convertion 3", "[memory]") {
   SirEngine::StringPool alloc(2 << 16);
   const char *hello = "hello";
@@ -402,35 +401,35 @@ TEST_CASE("String pool basic convertion 3", "[memory]") {
   const wchar_t *joiner1W = L" ";
   const wchar_t *resultW = L"hello world";
 
-  //c c c
+  // c c c
   const char *res1 = alloc.concatenatePersistent(hello, world, joiner1);
   REQUIRE(strcmp(result, res1) == 0);
 
-  //w c c
+  // w c c
   const char *res2 = alloc.concatenatePersistent(helloW, world, joiner1);
   REQUIRE(strcmp(result, res2) == 0);
 
-  //c w c
+  // c w c
   const char *res3 = alloc.concatenatePersistent(hello, worldW, joiner1);
   REQUIRE(strcmp(result, res3) == 0);
 
-  //c c w 
+  // c c w
   const char *res4 = alloc.concatenatePersistent(hello, world, joiner1W);
   REQUIRE(strcmp(result, res4) == 0);
 
-  //w w c 
+  // w w c
   const char *res5 = alloc.concatenatePersistent(helloW, worldW, joiner1);
   REQUIRE(strcmp(result, res5) == 0);
 
-  //c w w 
+  // c w w
   const char *res6 = alloc.concatenatePersistent(hello, worldW, joiner1W);
   REQUIRE(strcmp(result, res6) == 0);
 
-  //w c w 
+  // w c w
   const char *res7 = alloc.concatenatePersistent(helloW, world, joiner1W);
   REQUIRE(strcmp(result, res7) == 0);
 
-  //w w w 
+  // w w w
   const char *res8 = alloc.concatenatePersistent(helloW, worldW, joiner1W);
   REQUIRE(strcmp(result, res8) == 0);
 }
@@ -447,36 +446,40 @@ TEST_CASE("String pool basic convertion 4", "[memory]") {
   const wchar_t *joiner1W = L" ";
   const wchar_t *resultW = L"hello world";
 
-  //c c c
+  // c c c
   const wchar_t *res1 = alloc.concatenatePersistentWide(hello, world, joiner1);
   REQUIRE(wcscmp(resultW, res1) == 0);
 
-  //w c c
+  // w c c
   const wchar_t *res2 = alloc.concatenatePersistentWide(helloW, world, joiner1);
   REQUIRE(wcscmp(resultW, res2) == 0);
 
-  //c w c
+  // c w c
   const wchar_t *res3 = alloc.concatenatePersistentWide(hello, worldW, joiner1);
   REQUIRE(wcscmp(resultW, res3) == 0);
 
-  //c c w 
+  // c c w
   const wchar_t *res4 = alloc.concatenatePersistentWide(hello, world, joiner1W);
   REQUIRE(wcscmp(resultW, res4) == 0);
 
-  //w w c 
-  const wchar_t *res5 = alloc.concatenatePersistentWide(helloW, worldW, joiner1);
+  // w w c
+  const wchar_t *res5 =
+      alloc.concatenatePersistentWide(helloW, worldW, joiner1);
   REQUIRE(wcscmp(resultW, res5) == 0);
 
-  //c w w 
-  const wchar_t *res6 = alloc.concatenatePersistentWide(hello, worldW, joiner1W);
+  // c w w
+  const wchar_t *res6 =
+      alloc.concatenatePersistentWide(hello, worldW, joiner1W);
   REQUIRE(wcscmp(resultW, res6) == 0);
 
-  //w c w 
-  const wchar_t *res7 = alloc.concatenatePersistentWide(helloW, world, joiner1W);
+  // w c w
+  const wchar_t *res7 =
+      alloc.concatenatePersistentWide(helloW, world, joiner1W);
   REQUIRE(wcscmp(resultW, res7) == 0);
 
-  //w w w 
-  const wchar_t *res8 = alloc.concatenatePersistentWide(helloW, worldW, joiner1W);
+  // w w w
+  const wchar_t *res8 =
+      alloc.concatenatePersistentWide(helloW, worldW, joiner1W);
   REQUIRE(wcscmp(resultW, res8) == 0);
 }
 
@@ -500,8 +503,7 @@ TEST_CASE("String pool frame convertion 1", "[memory]") {
   // lets do it now with allocation and release flag
   // testing with joiner all non in pool
   auto *originalAlloc = alloc.allocatePersistent(compareWide);
-  const char *res3 = alloc.convertFrame(
-      originalAlloc);
+  const char *res3 = alloc.convertFrame(originalAlloc);
   REQUIRE(strcmp(res3, compareFull) == 0);
 }
 
@@ -517,8 +519,7 @@ TEST_CASE("String pool frame convertion 2", "[memory]") {
   // lets do it now with allocation and release flag
   // testing with joiner all non in pool
   auto *originalAlloc = alloc.allocatePersistent(original);
-  const wchar_t *res2 = alloc.convertFrameWide(
-      originalAlloc);
+  const wchar_t *res2 = alloc.convertFrameWide(originalAlloc);
   REQUIRE(wcscmp(res2, compareWide) == 0);
 }
 
@@ -534,35 +535,35 @@ TEST_CASE("String pool frame convertion 3", "[memory]") {
   const wchar_t *joiner1W = L" ";
   const wchar_t *resultW = L"hello world";
 
-  //c c c
+  // c c c
   const char *res1 = alloc.concatenateFrame(hello, world, joiner1);
   REQUIRE(strcmp(result, res1) == 0);
 
-  //w c c
+  // w c c
   const char *res2 = alloc.concatenateFrame(helloW, world, joiner1);
   REQUIRE(strcmp(result, res2) == 0);
 
-  //c w c
+  // c w c
   const char *res3 = alloc.concatenateFrame(hello, worldW, joiner1);
   REQUIRE(strcmp(result, res3) == 0);
 
-  //c c w 
+  // c c w
   const char *res4 = alloc.concatenateFrame(hello, world, joiner1W);
   REQUIRE(strcmp(result, res4) == 0);
 
-  //w w c 
+  // w w c
   const char *res5 = alloc.concatenateFrame(helloW, worldW, joiner1);
   REQUIRE(strcmp(result, res5) == 0);
 
-  //c w w 
+  // c w w
   const char *res6 = alloc.concatenateFrame(hello, worldW, joiner1W);
   REQUIRE(strcmp(result, res6) == 0);
 
-  //w c w 
+  // w c w
   const char *res7 = alloc.concatenateFrame(helloW, world, joiner1W);
   REQUIRE(strcmp(result, res7) == 0);
 
-  //w w w 
+  // w w w
   const char *res8 = alloc.concatenateFrame(helloW, worldW, joiner1W);
   REQUIRE(strcmp(result, res8) == 0);
 }
@@ -579,35 +580,44 @@ TEST_CASE("String pool frame convertion 4", "[memory]") {
   const wchar_t *joiner1W = L" ";
   const wchar_t *resultW = L"hello world";
 
-  //c c c
+  // c c c
   const wchar_t *res1 = alloc.concatenateFrameWide(hello, world, joiner1);
   REQUIRE(wcscmp(resultW, res1) == 0);
 
-  //w c c
+  // w c c
   const wchar_t *res2 = alloc.concatenateFrameWide(helloW, world, joiner1);
   REQUIRE(wcscmp(resultW, res2) == 0);
 
-  //c w c
+  // c w c
   const wchar_t *res3 = alloc.concatenateFrameWide(hello, worldW, joiner1);
   REQUIRE(wcscmp(resultW, res3) == 0);
 
-  //c c w 
+  // c c w
   const wchar_t *res4 = alloc.concatenateFrameWide(hello, world, joiner1W);
   REQUIRE(wcscmp(resultW, res4) == 0);
 
-  //w w c 
+  // w w c
   const wchar_t *res5 = alloc.concatenateFrameWide(helloW, worldW, joiner1);
   REQUIRE(wcscmp(resultW, res5) == 0);
 
-  //c w w 
+  // c w w
   const wchar_t *res6 = alloc.concatenateFrameWide(hello, worldW, joiner1W);
   REQUIRE(wcscmp(resultW, res6) == 0);
 
-  //w c w 
+  // w c w
   const wchar_t *res7 = alloc.concatenateFrameWide(helloW, world, joiner1W);
   REQUIRE(wcscmp(resultW, res7) == 0);
 
-  //w w w 
+  // w w w
   const wchar_t *res8 = alloc.concatenateFrameWide(helloW, worldW, joiner1W);
   REQUIRE(wcscmp(resultW, res8) == 0);
+}
+
+TEST_CASE("String pool file load", "[memory]") {
+  SirEngine::StringPool alloc(2 << 16);
+  const char *fileContent = "just testing the switches of yours.";
+  const char *path = "../testData/fileLoad1.txt";
+
+  const char *load = alloc.loadFilePersistent(path);
+  REQUIRE(strcmp(fileContent, load) == 0);
 }

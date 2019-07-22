@@ -20,7 +20,7 @@ public:
   RootSignatureManager &operator=(const RootSignatureManager &) = delete;
   ~RootSignatureManager() = default;
   void cleanup();
-  void loadSingaturesInFolder(const char *directory);
+  void loadSignaturesInFolder(const char *directory);
   void loadSignatureBinaryFile(const char *file);
 
   inline ID3D12RootSignature *getRootSignatureFromName(const char *name) const {

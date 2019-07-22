@@ -19,7 +19,7 @@ static const std::string DEFAULT_STRING = "";
 
 void Application::parseConfigFile() {
   // try to read the configuration file
-  nlohmann::json jobj = getJsonObj(CONFIG_PATH);
+  const nlohmann::json jobj = getJsonObj(CONFIG_PATH);
   globals::DATA_SOURCE_PATH = persistentString(
       getValueIfInJson(jobj, CONFIG_DATA_SOURCE_KEY, DEFAULT_STRING).c_str());
   assert(globals::DATA_SOURCE_PATH[0]!= '\0');

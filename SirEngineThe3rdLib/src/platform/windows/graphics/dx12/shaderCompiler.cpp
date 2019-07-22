@@ -8,6 +8,7 @@
 #include <dxcapi.h>
 
 #include <d3dcompiler.h>
+#include "SirEngine/runtimeString.h"
 
 namespace SirEngine {
 namespace dx12 {
@@ -35,22 +36,24 @@ DXCShaderCompiler::~DXCShaderCompiler() {
   includeHandle->Release();
 }
 
-ID3DBlob *DXCShaderCompiler::compileShader(const std::string &shaderPath,
+ID3DBlob *DXCShaderCompiler::compileShader(const char *shaderPath,
                                            const ShaderArgs &shaderArgs,
                                            std::string *log) {
   // creating a blob of data with the content of the shader
-  std::wstring wshader{shaderPath.begin(), shaderPath.end()};
+
+  // std::wstring wshader{shaderPath.begin(), shaderPath.end()};
+  const wchar_t *wshader = frameConvertWide(shaderPath);
   IDxcOperationResult *pResult;
   // loading shader into straem
   std::ifstream shaderStream(shaderPath);
   std::string shaderContent((std::istreambuf_iterator<char>(shaderStream)),
                             std::istreambuf_iterator<char>());
-  const char *Program = shaderContent.c_str();
+  const char *program = shaderContent.c_str();
   IDxcBlobEncoding *pSource;
   DxcCreateInstance(CLSID_DxcLibrary, __uuidof(IDxcLibrary),
                     (void **)&pLibrary);
   pLibrary->CreateBlobWithEncodingFromPinned(
-      Program, static_cast<uint32_t>(shaderContent.size()), CP_UTF8, &pSource);
+      program, static_cast<uint32_t>(shaderContent.size()), CP_UTF8, &pSource);
 
   // lets build compiler flags, for now they are simple so we can just switch
   // between two sets based on debug or not
@@ -67,15 +70,15 @@ ID3DBlob *DXCShaderCompiler::compileShader(const std::string &shaderPath,
     finalFlags.push_back((wchar_t *)ptr);
   }
   flagsCount += static_cast<int>(shaderArgs.splitCompilerArgsPointers.size());
-  //std::wstring test = L"/D AMD";
-  //finalFlags[0] = (wchar_t*)test.c_str();
+  // std::wstring test = L"/D AMD";
+  // finalFlags[0] = (wchar_t*)test.c_str();
 
   // kick the compilation
-  pCompiler->Compile(pSource,          // program text
-                     wshader.c_str(),  // file name, mostly for error messages
+  pCompiler->Compile(pSource,  // program text
+                     wshader,  // file name, mostly for error messages
                      shaderArgs.entryPoint.c_str(),  // entry point function
                      shaderArgs.type.c_str(),        // target profile
-                     (LPCWSTR*)finalFlags.data(),              // compilation arguments
+                     (LPCWSTR *)finalFlags.data(),   // compilation arguments
                      flagsCount,     // number of compilation arguments
                      nullptr, 0,     // name/value defines and their count
                      includeHandle,  // handler for #include directives

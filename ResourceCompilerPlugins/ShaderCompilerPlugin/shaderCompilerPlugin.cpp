@@ -85,7 +85,7 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
   }
 
   SirEngine::dx12::DXCShaderCompiler compiler;
-  ID3DBlob *blob = compiler.compileShader(assetPath, shaderArgs);
+  ID3DBlob *blob = compiler.compileShader(assetPath.c_str(), shaderArgs);
 
   // save the file by building a binary request
   BinaryFileWriteRequest request;
