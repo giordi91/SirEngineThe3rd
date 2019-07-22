@@ -163,8 +163,49 @@ class SIR_ENGINE_API StringPool final {
       joinerFix = joiner;
     }
 
-    return concatenateFrame(firstFix, secondFix, joinerFix, newFlags);
+    return concatenateFrame(firstFix, secondFix, joinerFix);
   }
+  template <typename FIRST, typename SECOND, typename JOINER>
+  const wchar_t* concatenateFrameWide(const FIRST* first,
+                                           const SECOND* second,
+                                           const JOINER* joiner = nullptr
+                                           ) {
+    static_assert(std::is_same<wchar_t, FIRST>::value ||
+                  std::is_same<char, FIRST>::value);
+    static_assert(std::is_same<wchar_t, SECOND>::value ||
+                  std::is_same<char, SECOND>::value);
+    static_assert(std::is_same<wchar_t, JOINER>::value ||
+                  std::is_same<char, JOINER>::value);
+
+    const wchar_t* firstFix;
+    const wchar_t* secondFix;
+    const wchar_t* joinerFix;
+    // convert first type if needed
+    if constexpr (std::is_same<FIRST, char>::value) {
+      firstFix = convertFrameWide(first);
+    } else {
+      firstFix = first;
+    }
+
+    // convert second type if needed
+    if constexpr (std::is_same<SECOND, char>::value) {
+      secondFix = convertFrameWide(second);
+    } else {
+      secondFix = second;
+    }
+    // convert joiner type if needed
+    if constexpr (std::is_same<JOINER, char>::value) {
+      joinerFix = convertFrameWide(joiner );
+    } else {
+      joinerFix = joiner;
+    }
+
+    return concatenateFrameWide(firstFix, secondFix, joinerFix);
+  }
+  const wchar_t* concatenateFrameWide(const wchar_t* first,
+                                           const wchar_t* second,
+                                           const wchar_t* joiner = nullptr
+                                           ); 
 
   const char* convert(const wchar_t* string, const uint8_t flags = 0);
   const char* convertFrame(const wchar_t* string);
