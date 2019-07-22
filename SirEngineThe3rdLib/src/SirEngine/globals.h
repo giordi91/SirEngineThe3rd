@@ -1,7 +1,7 @@
 #pragma once
+#include <string>
 #include "SirEngine/handle.h"
 #include "clock.h"
-#include <string>
 
 struct D3D12_VIEWPORT;
 namespace SirEngine {
@@ -12,6 +12,9 @@ class Camera3DPivot;
 class TextureManager;
 class RenderingContext;
 class BufferManager;
+
+class StringPool;
+class StackAllocator;
 
 namespace globals {
 
@@ -39,14 +42,18 @@ extern BufferManager *BUFFER_MANAGER;
 extern TextureManager *TEXTURE_MANAGER;
 extern AssetManager *ASSET_MANAGER;
 extern Application *APPLICATION;
-extern RenderingContext *RENDERING_CONTEX;
+extern RenderingContext *RENDERING_CONTEXT;
 extern DebugFrameData *DEBUG_FRAME_DATA;
+
+// generic allocators
+extern StringPool *STRING_POOL;
+extern StackAllocator *FRAME_ALLOCATOR;
 
 // config
 extern std::string DATA_SOURCE_PATH;
 extern std::string START_SCENE_PATH;
-extern D3D12_VIEWPORT  CURRENT_VIEWPORT;
+extern D3D12_VIEWPORT CURRENT_VIEWPORT;
 
-} // namespace globals
+}  // namespace globals
 typedef unsigned char uchar;
-} // namespace SirEngine
+}  // namespace SirEngine

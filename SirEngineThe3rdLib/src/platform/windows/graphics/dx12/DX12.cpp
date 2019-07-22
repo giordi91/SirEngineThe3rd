@@ -16,6 +16,7 @@
 #include "platform/windows/graphics/dx12/shaderLayout.h"
 #include "platform/windows/graphics/dx12/shaderManager.h"
 #include "platform/windows/graphics/dx12/swapChain.h"
+#include "SirEngine/memory/stringPool.h"
 
 namespace SirEngine::dx12 {
 
@@ -45,7 +46,6 @@ ShadersLayoutRegistry *SHADER_LAYOUT_REGISTRY = nullptr;
 BufferManagerDx12 *BUFFER_MANAGER = nullptr;
 
 void createFrameCommand(FrameCommand *fc) {
-
   auto result = DEVICE->CreateCommandAllocator(
       D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&fc->commandAllocator));
   assert(SUCCEEDED(result));
@@ -58,8 +58,8 @@ void createFrameCommand(FrameCommand *fc) {
   fc->isListOpen = false;
 }
 
-bool initializeGraphicsDx12(Window *wnd, const uint32_t width, const uint32_t height) {
-
+bool initializeGraphicsDx12(Window *wnd, const uint32_t width,
+                            const uint32_t height) {
 // lets enable debug layer if needed
 #if defined(DEBUG) || defined(_DEBUG)
   {
@@ -135,8 +135,7 @@ bool initializeGraphicsDx12(Window *wnd, const uint32_t width, const uint32_t he
     D3D12_FEATURE_DATA_D3D12_OPTIONS5 opts5 = {};
     dx12::DEVICE->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &opts5,
                                       sizeof(opts5));
-    if (opts5.RaytracingTier == D3D12_RAYTRACING_TIER_NOT_SUPPORTED)
-      assert(0);
+    if (opts5.RaytracingTier == D3D12_RAYTRACING_TIER_NOT_SUPPORTED) assert(0);
   }
 #endif
 
@@ -190,8 +189,8 @@ bool initializeGraphicsDx12(Window *wnd, const uint32_t width, const uint32_t he
   MESH_MANAGER = new MeshManager();
   globals::ASSET_MANAGER = new AssetManager();
   globals::ASSET_MANAGER->initialize();
-  globals::RENDERING_CONTEX = new RenderingContext();
-  globals::RENDERING_CONTEX->initialize();
+  globals::RENDERING_CONTEXT = new RenderingContext();
+  globals::RENDERING_CONTEXT->initialize();
 
   SHADER_MANAGER = new ShaderManager();
   SHADER_MANAGER->init();
@@ -221,7 +220,7 @@ bool initializeGraphicsDx12(Window *wnd, const uint32_t width, const uint32_t he
 
   globals::DEBUG_FRAME_DATA = new globals::DebugFrameData();
 
-  bool isHeadless = (wnd == nullptr) | (width == 0) | (height == 0);
+  const bool isHeadless = (wnd == nullptr) | (width == 0) | (height == 0);
 
   if (!isHeadless) {
     // init swap chain
@@ -234,6 +233,10 @@ bool initializeGraphicsDx12(Window *wnd, const uint32_t width, const uint32_t he
   } else {
     SE_CORE_INFO("Requested HEADLESS client, no swapchain is initialized");
   }
+  //defining allocators
+  globals::STRING_POOL =  new StringPool(2<<22); //4 megabyte allocation
+  globals::FRAME_ALLOCATOR = new StackAllocator();
+  globals::FRAME_ALLOCATOR->initialize(2<<22);
 
   return true;
 }
@@ -374,4 +377,4 @@ bool dispatchFrameDx12() {
   globals::CURRENT_FRAME = (globals::CURRENT_FRAME + 1) % FRAME_BUFFERS_COUNT;
   return true;
 }
-} // namespace SirEngine::dx12
+}  // namespace SirEngine::dx12

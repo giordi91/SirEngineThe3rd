@@ -107,10 +107,10 @@ void AssetManager::loadScene(const char *path) {
       globals::TEXTURE_MANAGER->loadTexture(enviromentMapRadianceString.c_str(),
                                             true);
 
-  globals::RENDERING_CONTEX->setEnviromentMap(enviromentMapHandle);
-  globals::RENDERING_CONTEX->setEnviromentMapIrradiance(
+  globals::RENDERING_CONTEXT->setEnviromentMap(enviromentMapHandle);
+  globals::RENDERING_CONTEXT->setEnviromentMapIrradiance(
       enviromentMapIrradianceHandle);
-  globals::RENDERING_CONTEX->setEnviromentMapRadiance(
+  globals::RENDERING_CONTEXT->setEnviromentMapRadiance(
       enviromentMapRadianceHandle);
 }
 } // namespace SirEngine
