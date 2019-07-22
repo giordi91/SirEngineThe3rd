@@ -521,3 +521,93 @@ TEST_CASE("String pool frame convertion 2", "[memory]") {
       originalAlloc);
   REQUIRE(wcscmp(res2, compareWide) == 0);
 }
+
+TEST_CASE("String pool frame convertion 3", "[memory]") {
+  SirEngine::StringPool alloc(2 << 16);
+  const char *hello = "hello";
+  const char *world = "world";
+  const char *joiner1 = " ";
+  const char *result = "hello world";
+
+  const wchar_t *helloW = L"hello";
+  const wchar_t *worldW = L"world";
+  const wchar_t *joiner1W = L" ";
+  const wchar_t *resultW = L"hello world";
+
+  //c c c
+  const char *res1 = alloc.concatenateFrame(hello, world, joiner1);
+  REQUIRE(strcmp(result, res1) == 0);
+
+  //w c c
+  const char *res2 = alloc.concatenateFrame(helloW, world, joiner1);
+  REQUIRE(strcmp(result, res2) == 0);
+
+  //c w c
+  const char *res3 = alloc.concatenateFrame(hello, worldW, joiner1);
+  REQUIRE(strcmp(result, res3) == 0);
+
+  //c c w 
+  const char *res4 = alloc.concatenateFrame(hello, world, joiner1W);
+  REQUIRE(strcmp(result, res4) == 0);
+
+  //w w c 
+  const char *res5 = alloc.concatenateFrame(helloW, worldW, joiner1);
+  REQUIRE(strcmp(result, res5) == 0);
+
+  //c w w 
+  const char *res6 = alloc.concatenateFrame(hello, worldW, joiner1W);
+  REQUIRE(strcmp(result, res6) == 0);
+
+  //w c w 
+  const char *res7 = alloc.concatenateFrame(helloW, world, joiner1W);
+  REQUIRE(strcmp(result, res7) == 0);
+
+  //w w w 
+  const char *res8 = alloc.concatenateFrame(helloW, worldW, joiner1W);
+  REQUIRE(strcmp(result, res8) == 0);
+}
+
+TEST_CASE("String pool frame convertion 4", "[memory]") {
+  SirEngine::StringPool alloc(2 << 16);
+  const char *hello = "hello";
+  const char *world = "world";
+  const char *joiner1 = " ";
+  const char *result = "hello world";
+
+  const wchar_t *helloW = L"hello";
+  const wchar_t *worldW = L"world";
+  const wchar_t *joiner1W = L" ";
+  const wchar_t *resultW = L"hello world";
+
+  //c c c
+  const wchar_t *res1 = alloc.concatenateFrameWide(hello, world, joiner1);
+  REQUIRE(wcscmp(resultW, res1) == 0);
+
+  //w c c
+  const wchar_t *res2 = alloc.concatenateFrameWide(helloW, world, joiner1);
+  REQUIRE(wcscmp(resultW, res2) == 0);
+
+  //c w c
+  const wchar_t *res3 = alloc.concatenateFrameWide(hello, worldW, joiner1);
+  REQUIRE(wcscmp(resultW, res3) == 0);
+
+  //c c w 
+  const wchar_t *res4 = alloc.concatenateFrameWide(hello, world, joiner1W);
+  REQUIRE(wcscmp(resultW, res4) == 0);
+
+  //w w c 
+  const wchar_t *res5 = alloc.concatenateFrameWide(helloW, worldW, joiner1);
+  REQUIRE(wcscmp(resultW, res5) == 0);
+
+  //c w w 
+  const wchar_t *res6 = alloc.concatenateFrameWide(hello, worldW, joiner1W);
+  REQUIRE(wcscmp(resultW, res6) == 0);
+
+  //w c w 
+  const wchar_t *res7 = alloc.concatenateFrameWide(helloW, world, joiner1W);
+  REQUIRE(wcscmp(resultW, res7) == 0);
+
+  //w w w 
+  const wchar_t *res8 = alloc.concatenateFrameWide(helloW, worldW, joiner1W);
+  REQUIRE(wcscmp(resultW, res8) == 0);
+}

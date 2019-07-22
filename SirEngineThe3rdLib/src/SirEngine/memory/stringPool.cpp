@@ -167,6 +167,33 @@ const char* StringPool::concatenateFrame(const char* first, const char* second, 
   return newChar;
 }
 
+const wchar_t* StringPool::concatenateFrameWide(const wchar_t* first, const wchar_t* second, const wchar_t* joiner)
+{
+  // this length are without the extra null terminator
+  const auto firstLen = static_cast<uint32_t>(wcslen(first));
+  const auto secondLen = static_cast<uint32_t>(wcslen(second));
+  const uint32_t joinerLen =
+      joiner != nullptr ? static_cast<uint32_t>(wcslen(joiner)) : 0;
+
+  // plus one for null terminator
+  const uint32_t totalLen =
+      (firstLen + secondLen + joinerLen + 1) * sizeof(wchar_t);
+
+  // make the allocation
+  auto* newChar =
+      reinterpret_cast<wchar_t*>(m_stackAllocator.allocate(totalLen));
+  // do the memcpy
+  memcpy(newChar, first, firstLen * sizeof(wchar_t));
+  if (joinerLen != 0) {
+    memcpy(newChar + firstLen, joiner, joinerLen * sizeof(wchar_t));
+  }
+  // here we copy an extra byte for the termination string
+  memcpy(newChar + firstLen + joinerLen, second,
+         (secondLen + 1) * sizeof(wchar_t));
+
+  return newChar;
+}
+
 const char* StringPool::convert(const wchar_t* string, uint8_t flags) {
   const int inPool = m_pool.allocationInPool(string);
 
@@ -212,7 +239,7 @@ const wchar_t* StringPool::convertWide(const char* string, uint8_t flags) {
 
   // make the allocation
   auto* newChar =
-      reinterpret_cast<wchar_t*>(m_pool.allocate(len + 1, allocFlags));
+      reinterpret_cast<wchar_t*>(m_pool.allocate(sizeof(wchar_t)*(len + 1), allocFlags));
   // do the conversion
   size_t converted;
   mbstowcs_s(&converted, newChar, (len + 1 * 2), string, len);
@@ -234,7 +261,7 @@ const wchar_t* StringPool::convertFrameWide(const char* string)
 
   // make the allocation
   auto* newChar =
-      reinterpret_cast<wchar_t*>(m_stackAllocator.allocate(len + 1));
+      reinterpret_cast<wchar_t*>(m_stackAllocator.allocate(sizeof(wchar_t)*(len + 1)));
   // do the conversion
   size_t converted;
   mbstowcs_s(&converted, newChar, (len + 1 * 2), string, len);
