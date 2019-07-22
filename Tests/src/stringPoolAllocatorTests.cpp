@@ -212,8 +212,6 @@ TEST_CASE("String pool basic concatenation 1", "[memory]") {
   // now testing with some mixed in pool allocations
   const char *mem1 = alloc.allocateStatic(original);
   const char *mem2 = alloc.allocateStatic(original2);
-  int mem1Len = strlen(mem1);
-  int mem2Len = strlen(mem2);
   const char *res3 = alloc.concatenateStatic(mem1, mem2, joiner1);
   REQUIRE(strcmp(res3, compare) == 0);
 
@@ -247,23 +245,23 @@ TEST_CASE("String pool basic concatenation 1", "[memory]") {
   const char *res6 = alloc.concatenateStatic(
       mem1, mem2, joiner1,
       SirEngine::STRING_MANIPULATION_FLAGS::FREE_FIRST_AFTER_OPERATION |
-          SirEngine::STRING_MANIPULATION_FLAGS::FREE_SECOND_AFTER_OPERATION|
+          SirEngine::STRING_MANIPULATION_FLAGS::FREE_SECOND_AFTER_OPERATION |
           SirEngine::STRING_MANIPULATION_FLAGS::FREE_JOINER_AFTER_OPERATION);
-  //nothing should happen since the joiner is not in the pool
+  // nothing should happen since the joiner is not in the pool
   REQUIRE(strcmp(res6, compare) == 0);
   REQUIRE(strcmp(mem1, original) != 0);
   REQUIRE(strcmp(mem2, original2) != 0);
 
-  // alloc and free everything 
+  // alloc and free everything
   mem1 = alloc.allocateStatic(original);
   mem2 = alloc.allocateStatic(original2);
-  const char* joiner2= alloc.allocateStatic(joiner1);
+  const char *joiner2 = alloc.allocateStatic(joiner1);
   const char *res7 = alloc.concatenateStatic(
       mem1, mem2, joiner2,
       SirEngine::STRING_MANIPULATION_FLAGS::FREE_FIRST_AFTER_OPERATION |
-          SirEngine::STRING_MANIPULATION_FLAGS::FREE_SECOND_AFTER_OPERATION|
+          SirEngine::STRING_MANIPULATION_FLAGS::FREE_SECOND_AFTER_OPERATION |
           SirEngine::STRING_MANIPULATION_FLAGS::FREE_JOINER_AFTER_OPERATION);
-  //nothing should happen since the joiner is not in the pool
+  // nothing should happen since the joiner is not in the pool
   REQUIRE(strcmp(res7, compare) == 0);
   REQUIRE(strcmp(mem1, original) != 0);
   REQUIRE(strcmp(mem2, original2) != 0);
@@ -279,21 +277,19 @@ TEST_CASE("String pool basic concatenation 2", "[memory]") {
   const wchar_t *joiner1 = L" ";
   const wchar_t *compare = L"hello world";
 
-  /*
   // testing with joiner all non in pool
-  const wchar_t *res1 = alloc.concatenateStatic(original, original2, joiner1);
+  const wchar_t *res1 =
+      alloc.concatenateStaticWide(original, original2, joiner1);
   REQUIRE(wcscmp(res1, compare) == 0);
 
   // tesing without joiner all non in pool
-  const wchar_t *res2 = alloc.concatenateStatic(original3, original4);
+  const wchar_t *res2 = alloc.concatenateStaticWide(original3, original4);
   REQUIRE(wcscmp(res2, compare) == 0);
 
   // now testing with some mixed in pool allocations
   const wchar_t *mem1 = alloc.allocateStatic(original);
   const wchar_t *mem2 = alloc.allocateStatic(original2);
-  int mem1Len = strlen(mem1);
-  int mem2Len = strlen(mem2);
-  const wchar_t *res3 = alloc.concatenateStatic(mem1, mem2, joiner1);
+  const wchar_t *res3 = alloc.concatenateStaticWide(mem1, mem2, joiner1);
   REQUIRE(wcscmp(res3, compare) == 0);
 
 #if SE_DEBUG
@@ -302,7 +298,7 @@ TEST_CASE("String pool basic concatenation 2", "[memory]") {
 #endif
 
   // testing same as before but request deallocation of first
-  const wchar_t *res4 = alloc.concatenateStatic(
+  const wchar_t *res4 = alloc.concatenateStaticWide(
       mem1, mem2, joiner1,
       SirEngine::STRING_MANIPULATION_FLAGS::FREE_FIRST_AFTER_OPERATION);
   REQUIRE(wcscmp(res4, compare) == 0);
@@ -312,7 +308,7 @@ TEST_CASE("String pool basic concatenation 2", "[memory]") {
   mem1 = alloc.allocateStatic(original);
 
   // freeing both first and second
-  const wchar_t *res5 = alloc.concatenateStatic(
+  const wchar_t *res5 = alloc.concatenateStaticWide(
       mem1, mem2, joiner1,
       SirEngine::STRING_MANIPULATION_FLAGS::FREE_FIRST_AFTER_OPERATION |
           SirEngine::STRING_MANIPULATION_FLAGS::FREE_SECOND_AFTER_OPERATION);
@@ -323,31 +319,74 @@ TEST_CASE("String pool basic concatenation 2", "[memory]") {
   // realloc mem1 and mem2
   mem1 = alloc.allocateStatic(original);
   mem2 = alloc.allocateStatic(original2);
-  const wchar_t *res6 = alloc.concatenateStatic(
+  const wchar_t *res6 = alloc.concatenateStaticWide(
       mem1, mem2, joiner1,
       SirEngine::STRING_MANIPULATION_FLAGS::FREE_FIRST_AFTER_OPERATION |
-          SirEngine::STRING_MANIPULATION_FLAGS::FREE_SECOND_AFTER_OPERATION|
+          SirEngine::STRING_MANIPULATION_FLAGS::FREE_SECOND_AFTER_OPERATION |
           SirEngine::STRING_MANIPULATION_FLAGS::FREE_JOINER_AFTER_OPERATION);
-  //nothing should happen since the joiner is not in the pool
+  // nothing should happen since the joiner is not in the pool
   REQUIRE(wcscmp(res6, compare) == 0);
   REQUIRE(wcscmp(mem1, original) != 0);
   REQUIRE(wcscmp(mem2, original2) != 0);
 
-  // alloc and free everything 
+  // alloc and free everything
   mem1 = alloc.allocateStatic(original);
   mem2 = alloc.allocateStatic(original2);
-  const wchar_t* joiner2= alloc.allocateStatic(joiner1);
-  const wchar_t *res7 = alloc.concatenateStatic(
+  const wchar_t *joiner2 = alloc.allocateStatic(joiner1);
+  const wchar_t *res7 = alloc.concatenateStaticWide(
       mem1, mem2, joiner2,
       SirEngine::STRING_MANIPULATION_FLAGS::FREE_FIRST_AFTER_OPERATION |
-          SirEngine::STRING_MANIPULATION_FLAGS::FREE_SECOND_AFTER_OPERATION|
+          SirEngine::STRING_MANIPULATION_FLAGS::FREE_SECOND_AFTER_OPERATION |
           SirEngine::STRING_MANIPULATION_FLAGS::FREE_JOINER_AFTER_OPERATION);
-  //nothing should happen since the joiner is not in the pool
+  // nothing should happen since the joiner is not in the pool
   REQUIRE(wcscmp(res7, compare) == 0);
   REQUIRE(wcscmp(mem1, original) != 0);
   REQUIRE(wcscmp(mem2, original2) != 0);
   REQUIRE(wcscmp(joiner2, joiner1) != 0);
-  */
+}
+
+TEST_CASE("String pool basic convertion 1", "[memory]") {
+  SirEngine::StringPool alloc(2 << 16);
+  const wchar_t *original = L"hello";
+  const wchar_t *compareWide = L"hello world";
+  const char *compareFull = "hello world";
+  const char *compare1 = "hello";
+
+  // testing with joiner all non in pool
+  const char *res1 = alloc.convert(original);
+  REQUIRE(strcmp(res1, compare1) == 0);
+
+  // testing with joiner all non in pool
+  const char *res2 = alloc.convert(compareWide);
+  REQUIRE(strcmp(res2, compareFull) == 0);
+
+  // lets do it now with allocation and release flag
+  // testing with joiner all non in pool
+  auto *originalAlloc = alloc.allocateStatic(compareWide);
+  const char *res3 = alloc.convert(
+      originalAlloc,
+      SirEngine::STRING_MANIPULATION_FLAGS::FREE_FIRST_AFTER_OPERATION);
+  REQUIRE(strcmp(res3, compareFull) == 0);
+  REQUIRE(wcscmp(originalAlloc, compareWide) != 0);
+}
+
+TEST_CASE("String pool basic convertion 2", "[memory]") {
+  SirEngine::StringPool alloc(2 << 16);
+  const char *original = "shall we convert this to a wide char";
+  const wchar_t *compareWide = L"shall we convert this to a wide char";
+
+  // testing with joiner all non in pool
+  const wchar_t *res1 = alloc.convertWide(original);
+  REQUIRE(wcscmp(res1, compareWide) == 0);
+
+  // lets do it now with allocation and release flag
+  // testing with joiner all non in pool
+  auto *originalAlloc = alloc.allocateStatic(original);
+  const wchar_t *res2 = alloc.convertWide(
+      originalAlloc,
+      SirEngine::STRING_MANIPULATION_FLAGS::FREE_FIRST_AFTER_OPERATION);
+  REQUIRE(wcscmp(res2, compareWide) == 0);
+  REQUIRE(strcmp(originalAlloc, original) != 0);
 }
 
 // test allocation in pool but greater that min size allocation

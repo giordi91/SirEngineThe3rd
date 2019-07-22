@@ -107,9 +107,9 @@ class ThreeSizesPool final {
 
   // public interface
 
-  //helpers
-  int allocationInPool(const char *ptr) const {
-    const int64_t delta = ptr - m_memory;
+  // helpers
+  int allocationInPool(const void *ptr) const {
+    const int64_t delta = reinterpret_cast<const char*>(ptr) - m_memory;
     return (delta > 0) & (delta < m_poolSizeInByte);
   }
 
@@ -127,7 +127,8 @@ class ThreeSizesPool final {
 
     const AllocHeader *header =
         reinterpret_cast<AllocHeader *>(bytePtr - sizeof(AllocHeader));
-    assert(header->isNode == 0 && "allocation is a linked list node not an allocation");
+    assert(header->isNode == 0 &&
+           "allocation is a linked list node not an allocation");
     return header->size;
   }
 
