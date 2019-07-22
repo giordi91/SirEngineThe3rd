@@ -89,15 +89,6 @@ const char* StringPool::concatenatePersistent(const char* first,
   return newChar;
 }
 
-// const char* StringPool::concatenatePersistent(const wchar_t* first,
-//                                          const char* second,
-//                                          const char* joiner,
-//                                          const uint8_t flags) {
-//  const char* firstConvert = convert(first, flags);
-//  const uint8_t newFlags =
-//      flags | STRING_MANIPULATION_FLAGS::FREE_FIRST_AFTER_OPERATION;
-//  return concatenatePersistent(firstConvert, second, joiner, newFlags);
-//}
 
 const wchar_t* StringPool::concatenatePersistentWide(const wchar_t* first,
                                                      const wchar_t* second,
@@ -111,7 +102,8 @@ const wchar_t* StringPool::concatenatePersistentWide(const wchar_t* first,
   // this length are without the extra null terminator
   const auto firstLen = static_cast<uint32_t>(wcslen(first));
   const auto secondLen = static_cast<uint32_t>(wcslen(second));
-  const uint32_t joinerLen = joiner != nullptr ? static_cast<uint32_t>(wcslen(joiner)) : 0;
+  const uint32_t joinerLen =
+      joiner != nullptr ? static_cast<uint32_t>(wcslen(joiner)) : 0;
 
   // plus one for null terminator
   const auto allocFlags = static_cast<uint8_t>(STRING_TYPE::CHAR);
@@ -150,11 +142,36 @@ const wchar_t* StringPool::concatenatePersistentWide(const wchar_t* first,
   return newChar;
 }
 
+const char* StringPool::concatenateFrame(const char* first, const char* second, const char* joiner)
+{
+  // this length are without the extra null terminator
+  const auto firstLen = static_cast<uint32_t>(strlen(first));
+  const auto secondLen = static_cast<uint32_t>(strlen(second));
+  const uint32_t joinerLen =
+      joiner != nullptr ? static_cast<uint32_t>(strlen(joiner)) : 0u;
+
+  // plus one for null terminator
+  const auto allocFlags = static_cast<uint8_t>(STRING_TYPE::CHAR);
+  const uint32_t totalLen = firstLen + secondLen + joinerLen + 1;
+
+  // make the allocation
+  char* newChar =
+      reinterpret_cast<char*>(m_pool.allocate(totalLen, allocFlags));
+  // do the memcpy
+  memcpy(newChar, first, firstLen);
+  if (joinerLen != 0) {
+    memcpy(newChar + firstLen, joiner, joinerLen);
+  }
+  // here we copy an extra byte for the termination string
+  memcpy(newChar + firstLen + joinerLen, second, secondLen + 1);
+  return newChar;
+}
+
 const char* StringPool::convert(const wchar_t* string, uint8_t flags) {
   const int inPool = m_pool.allocationInPool(string);
 
   // this length are without the extra null terminator
-  const uint32_t len = static_cast<uint32_t>(wcslen(string));
+  const auto len = static_cast<uint32_t>(wcslen(string));
 
   // plus one for null terminator
   const auto allocFlags = static_cast<uint8_t>(STRING_TYPE::CHAR);
@@ -171,6 +188,18 @@ const char* StringPool::convert(const wchar_t* string, uint8_t flags) {
   if (shouldFreeFirst) {
     m_pool.free((void*)string);
   }
+  return newChar;
+}
+
+const char* StringPool::convertFrame(const wchar_t* string) {
+  // this length are without the extra null terminator
+  const auto len = static_cast<uint32_t>(wcslen(string));
+  auto* newChar = reinterpret_cast<char*>(m_stackAllocator.allocate(len + 1));
+
+  // do the conversion
+  size_t converted;
+  wcstombs_s(&converted, newChar, len + 1, string, len * 2);
+
   return newChar;
 }
 
@@ -195,6 +224,20 @@ const wchar_t* StringPool::convertWide(const char* string, uint8_t flags) {
   if (shouldFreeFirst) {
     m_pool.free((void*)string);
   }
+  return newChar;
+}
+
+const wchar_t* StringPool::convertFrameWide(const char* string)
+{
+  // this length are without the extra null terminator
+  const auto len = static_cast<uint32_t>(strlen(string));
+
+  // make the allocation
+  auto* newChar =
+      reinterpret_cast<wchar_t*>(m_stackAllocator.allocate(len + 1));
+  // do the conversion
+  size_t converted;
+  mbstowcs_s(&converted, newChar, (len + 1 * 2), string, len);
   return newChar;
 }
 }  // namespace SirEngine

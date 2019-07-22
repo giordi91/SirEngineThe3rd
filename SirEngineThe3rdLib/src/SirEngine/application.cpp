@@ -1,4 +1,5 @@
 #include "SirEngine/application.h"
+#include <random>
 #include "SirEngine/globals.h"
 #include "SirEngine/graphics/graphicsCore.h"
 #include "SirEngine/layer.h"
@@ -6,7 +7,8 @@
 #include "fileUtils.h"
 #include "layers/graphics3DLayer.h"
 #include "layers/imguiLayer.h"
-#include <random>
+
+#include "SirEngine/runtimeString.h"
 
 namespace SirEngine {
 
@@ -18,15 +20,20 @@ static const std::string DEFAULT_STRING = "";
 void Application::parseConfigFile() {
   // try to read the configuration file
   nlohmann::json jobj = getJsonObj(CONFIG_PATH);
-  globals::DATA_SOURCE_PATH =
-      getValueIfInJson(jobj, CONFIG_DATA_SOURCE_KEY, DEFAULT_STRING);
-  assert(!globals::DATA_SOURCE_PATH.empty());
-  globals::START_SCENE_PATH=
-      getValueIfInJson(jobj, CONFIG_STARTING_SCENE_KEY, DEFAULT_STRING);
-  assert(!globals::START_SCENE_PATH.empty());
+  globals::DATA_SOURCE_PATH = persistentString(
+      getValueIfInJson(jobj, CONFIG_DATA_SOURCE_KEY, DEFAULT_STRING).c_str());
+  assert(globals::DATA_SOURCE_PATH[0]!= '\0');
+  globals::START_SCENE_PATH = persistentString(
+      getValueIfInJson(jobj, CONFIG_STARTING_SCENE_KEY, DEFAULT_STRING)
+          .c_str());
+  assert(globals::START_SCENE_PATH[0] != '\0');
 }
 
 Application::Application() {
+  // initializing allocators as first thing so everything else can use it 
+  globals::STRING_POOL = new StringPool(2 << 22);  // 4 megabyte allocation
+  globals::FRAME_ALLOCATOR = new StackAllocator();
+  globals::FRAME_ALLOCATOR->initialize(2 << 22);
 
   parseConfigFile();
 
@@ -42,7 +49,6 @@ Application::Application() {
   m_layerStack.pushLayer(graphicsLayer);
   m_layerStack.pushOverlayLayer(imGuiLayer);
   globals::APPLICATION = this;
-
 }
 
 Application::~Application() { delete m_window; }
@@ -104,7 +110,7 @@ void Application::onEvent(Event &e) {
     }
   }
 }
-bool Application::onCloseWindow(WindowCloseEvent&) {
+bool Application::onCloseWindow(WindowCloseEvent &) {
   // graphics::shutdown();
   m_run = false;
   return true;
@@ -130,4 +136,4 @@ void Application::pushLayer(Layer *layer) { m_layerStack.pushLayer(layer); }
 void Application::pushOverlay(Layer *layer) {
   m_layerStack.pushOverlayLayer(layer);
 }
-} // namespace SirEngine
+}  // namespace SirEngine

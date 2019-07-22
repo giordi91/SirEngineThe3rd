@@ -482,3 +482,42 @@ TEST_CASE("String pool basic convertion 4", "[memory]") {
 
 // test allocation in pool but greater that min size allocation
 
+TEST_CASE("String pool frame convertion 1", "[memory]") {
+  SirEngine::StringPool alloc(2 << 16);
+  const wchar_t *original = L"hello";
+  const wchar_t *compareWide = L"hello world";
+  const char *compareFull = "hello world";
+  const char *compare1 = "hello";
+
+  // testing with joiner all non in pool
+  const char *res1 = alloc.convertFrame(original);
+  REQUIRE(strcmp(res1, compare1) == 0);
+
+  // testing with joiner all non in pool
+  const char *res2 = alloc.convertFrame(compareWide);
+  REQUIRE(strcmp(res2, compareFull) == 0);
+
+  // lets do it now with allocation and release flag
+  // testing with joiner all non in pool
+  auto *originalAlloc = alloc.allocatePersistent(compareWide);
+  const char *res3 = alloc.convertFrame(
+      originalAlloc);
+  REQUIRE(strcmp(res3, compareFull) == 0);
+}
+
+TEST_CASE("String pool frame convertion 2", "[memory]") {
+  SirEngine::StringPool alloc(2 << 16);
+  const char *original = "shall we convert this to a wide char";
+  const wchar_t *compareWide = L"shall we convert this to a wide char";
+
+  // testing with joiner all non in pool
+  const wchar_t *res1 = alloc.convertFrameWide(original);
+  REQUIRE(wcscmp(res1, compareWide) == 0);
+
+  // lets do it now with allocation and release flag
+  // testing with joiner all non in pool
+  auto *originalAlloc = alloc.allocatePersistent(original);
+  const wchar_t *res2 = alloc.convertFrameWide(
+      originalAlloc);
+  REQUIRE(wcscmp(res2, compareWide) == 0);
+}

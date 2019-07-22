@@ -50,8 +50,8 @@ extern StringPool *STRING_POOL;
 extern StackAllocator *FRAME_ALLOCATOR;
 
 // config
-extern std::string DATA_SOURCE_PATH;
-extern std::string START_SCENE_PATH;
+extern const char* DATA_SOURCE_PATH;
+extern const char* START_SCENE_PATH;
 extern D3D12_VIEWPORT CURRENT_VIEWPORT;
 
 }  // namespace globals
