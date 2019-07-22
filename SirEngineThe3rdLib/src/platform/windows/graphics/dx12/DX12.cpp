@@ -201,7 +201,7 @@ bool initializeGraphicsDx12(Window *wnd, const uint32_t width,
       globals::DATA_SOURCE_PATH, "/processed/shaders/compute"));
 
   ROOT_SIGNATURE_MANAGER = new RootSignatureManager();
-  ROOT_SIGNATURE_MANAGER->loadSingaturesInFolder(
+  ROOT_SIGNATURE_MANAGER->loadSignaturesInFolder(
       frameConcatenation(globals::DATA_SOURCE_PATH , "/processed/rs"));
 
   SHADER_LAYOUT_REGISTRY = new dx12::ShadersLayoutRegistry();
@@ -296,6 +296,8 @@ bool stopGraphicsDx12() {
   return true;
 }
 bool newFrameDx12() {
+  globals::STRING_POOL->resetFrameMemory();
+  globals::FRAME_ALLOCATOR->reset();
   // here we need to check which frame resource we are going to use
   dx12::CURRENT_FRAME_RESOURCE = &dx12::FRAME_RESOURCES[globals::CURRENT_FRAME];
 
@@ -303,9 +305,9 @@ bool newFrameDx12() {
   if (dx12::CURRENT_FRAME_RESOURCE->fence != 0 &&
       dx12::GLOBAL_FENCE->GetCompletedValue() <
           dx12::CURRENT_FRAME_RESOURCE->fence) {
-    HANDLE eventHandle =
+	  const HANDLE eventHandle =
         CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
-    auto handleResult = dx12::GLOBAL_FENCE->SetEventOnCompletion(
+	  const auto handleResult = dx12::GLOBAL_FENCE->SetEventOnCompletion(
         dx12::CURRENT_FRAME_RESOURCE->fence, eventHandle);
     assert(SUCCEEDED(handleResult));
     WaitForSingleObject(eventHandle, INFINITE);
@@ -324,7 +326,7 @@ bool newFrameDx12() {
   auto *commandList = dx12::CURRENT_FRAME_RESOURCE->fc.commandList;
   D3D12_RESOURCE_BARRIER rtbarrier[1];
 
-  TextureHandle backBufferH = dx12::SWAP_CHAIN->currentBackBufferTexture();
+  const TextureHandle backBufferH = dx12::SWAP_CHAIN->currentBackBufferTexture();
   int rtcounter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
       backBufferH, D3D12_RESOURCE_STATE_RENDER_TARGET, rtbarrier, 0);
   if (rtcounter != 0) {
@@ -336,15 +338,6 @@ bool newFrameDx12() {
   commandList->RSSetViewports(1, dx12::SWAP_CHAIN->getViewport());
   commandList->RSSetScissorRects(1, dx12::SWAP_CHAIN->getScissorRect());
 
-  // Clear the back buffer and depth buffer.
-  // commandList->ClearRenderTargetView(dx12::SWAP_CHAIN->currentBackBufferView(),
-  //                                   gray, 0, nullptr);
-  // dx12::SWAP_CHAIN->clearDepth();
-  // dx12::SwapChain *swapChain = dx12::SWAP_CHAIN;
-  //// Specify the buffers we are going to render to.
-  // auto back = swapChain -> currentBackBufferView();
-  // auto depth = swapChain -> getDepthCPUDescriptor();
-  // commandList->OMSetRenderTargets(1, &back, true, &depth);
   auto *heap = dx12::GLOBAL_CBV_SRV_UAV_HEAP->getResource();
   commandList->SetDescriptorHeaps(1, &heap);
 

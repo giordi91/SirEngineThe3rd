@@ -31,8 +31,12 @@ class SIR_ENGINE_API StringPool final {
   const wchar_t* allocateFrame(const wchar_t* string);
 
   inline void free(const char* string) { m_pool.free((void*)string); }
-  inline void free(const wchar_t* string) { m_pool.free((void*)string); };
+  inline void free(const wchar_t* string) { m_pool.free((void*)string); }
   inline void resetFrameMemory() { m_stackAllocator.reset(); }
+
+  //file loading
+  const char* loadFilePersistent(const char* path);
+  const char* loadFileFrame(const char* path);
 
   // string manipulation
   const char* concatenatePersistent(const char* first, const char* second,

@@ -12,7 +12,7 @@ namespace dx12 {
 
 void RootSignatureManager::cleanup() {
   // cleanup the allocated root signatures
-  for (auto it : m_rootRegister) {
+  for (const auto& it : m_rootRegister) {
 	  getRootSignatureFromHandle(it.second)->Release();
   }
   m_rootRegister.clear();
@@ -60,7 +60,7 @@ void RootSignatureManager::loadSignatureBinaryFile(const char *file) {
     uint32_t index;
     RSData &rsdata= m_rsPool.getFreeMemoryData(index);
     rsdata.rs= rootSig;
-    RSHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
+    const RSHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
     rsdata.magicNumber = MAGIC_NUMBER_COUNTER;
     m_rootRegister[name] = handle;
     ++MAGIC_NUMBER_COUNTER;
@@ -69,14 +69,12 @@ void RootSignatureManager::loadSignatureBinaryFile(const char *file) {
   }
 }
 
-void RootSignatureManager::loadSingaturesInFolder(const char *directory) {
+void RootSignatureManager::loadSignaturesInFolder(const char *directory) {
 
   std::vector<std::string> paths;
-  // listFilesInFolder(directory, paths, "json");
   listFilesInFolder(directory, paths, "root");
 
   for (const auto &p : paths) {
-    // loadSignatureFile(p.c_str());
     loadSignatureBinaryFile(p.c_str());
   }
 }
