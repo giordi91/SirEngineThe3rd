@@ -36,13 +36,13 @@ class SIR_ENGINE_API StringPool final {
 
   // string manipulation
   const char* concatenatePersistent(const char* first, const char* second,
-                                const char* joiner = nullptr,
-                                const uint8_t flags = 0);
+                                    const char* joiner = nullptr,
+                                    const uint8_t flags = 0);
   // overloads with conversions
   template <typename FIRST, typename SECOND, typename JOINER>
   const char* concatenatePersistent(const FIRST* first, const SECOND* second,
-                                const JOINER* joiner = nullptr,
-                                const uint8_t flags = 0) {
+                                    const JOINER* joiner = nullptr,
+                                    const uint8_t flags = 0) {
     static_assert(std::is_same<wchar_t, FIRST>::value ||
                   std::is_same<char, FIRST>::value);
     static_assert(std::is_same<wchar_t, SECOND>::value ||
@@ -81,9 +81,10 @@ class SIR_ENGINE_API StringPool final {
   }
 
   template <typename FIRST, typename SECOND, typename JOINER>
-  const wchar_t* concatenatePersistentWide(const FIRST* first, const SECOND* second,
-                                const JOINER* joiner = nullptr,
-                                const uint8_t flags = 0) {
+  const wchar_t* concatenatePersistentWide(const FIRST* first,
+                                           const SECOND* second,
+                                           const JOINER* joiner = nullptr,
+                                           const uint8_t flags = 0) {
     static_assert(std::is_same<wchar_t, FIRST>::value ||
                   std::is_same<char, FIRST>::value);
     static_assert(std::is_same<wchar_t, SECOND>::value ||
@@ -122,12 +123,53 @@ class SIR_ENGINE_API StringPool final {
   }
 
   const wchar_t* concatenatePersistentWide(const wchar_t* first,
-                                       const wchar_t* second,
-                                       const wchar_t* joiner = nullptr,
-                                       const uint8_t flags = 0);
+                                           const wchar_t* second,
+                                           const wchar_t* joiner = nullptr,
+                                           const uint8_t flags = 0);
+
+  const char* concatenateFrame(const char* first, const char* second,
+                               const char* joiner = nullptr);
+
+  template <typename FIRST, typename SECOND, typename JOINER>
+  const char* concatenateFrame(const FIRST* first, const SECOND* second,
+                               const JOINER* joiner = nullptr) {
+    static_assert(std::is_same<wchar_t, FIRST>::value ||
+                  std::is_same<char, FIRST>::value);
+    static_assert(std::is_same<wchar_t, SECOND>::value ||
+                  std::is_same<char, SECOND>::value);
+    static_assert(std::is_same<wchar_t, JOINER>::value ||
+                  std::is_same<char, JOINER>::value);
+
+    const char* firstFix;
+    const char* secondFix;
+    const char* joinerFix;
+    // convert first type if needed
+    if constexpr (std::is_same<FIRST, wchar_t>::value) {
+      firstFix = convertFrame(first);
+    } else {
+      firstFix = first;
+    }
+
+    // convert second type if needed
+    if constexpr (std::is_same<SECOND, wchar_t>::value) {
+      secondFix = convertFrame(second);
+    } else {
+      secondFix = second;
+    }
+    // convert joiner type if needed
+    if constexpr (std::is_same<JOINER, wchar_t>::value) {
+      joinerFix = convertFrame(joiner);
+    } else {
+      joinerFix = joiner;
+    }
+
+    return concatenateFrame(firstFix, secondFix, joinerFix, newFlags);
+  }
 
   const char* convert(const wchar_t* string, const uint8_t flags = 0);
+  const char* convertFrame(const wchar_t* string);
   const wchar_t* convertWide(const char* string, const uint8_t flags = 0);
+  const wchar_t* convertFrameWide(const char* string);
 
  private:
   enum class STRING_TYPE { CHAR = 1, WCHAR = 2 };

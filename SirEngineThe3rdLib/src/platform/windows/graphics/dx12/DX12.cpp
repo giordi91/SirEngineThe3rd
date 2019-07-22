@@ -5,6 +5,8 @@
 #include "SirEngine/identityManager.h"
 #include "SirEngine/log.h"
 #include "SirEngine/materialManager.h"
+#include "SirEngine/memory/stringPool.h"
+#include "SirEngine/runtimeString.h"
 #include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
 #include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/TextureManagerDx12.h"
@@ -16,7 +18,6 @@
 #include "platform/windows/graphics/dx12/shaderLayout.h"
 #include "platform/windows/graphics/dx12/shaderManager.h"
 #include "platform/windows/graphics/dx12/swapChain.h"
-#include "SirEngine/memory/stringPool.h"
 
 namespace SirEngine::dx12 {
 
@@ -194,21 +195,21 @@ bool initializeGraphicsDx12(Window *wnd, const uint32_t width,
 
   SHADER_MANAGER = new ShaderManager();
   SHADER_MANAGER->init();
-  SHADER_MANAGER->loadShadersInFolder(
-      (globals::DATA_SOURCE_PATH + "/processed/shaders/rasterization").c_str());
-  SHADER_MANAGER->loadShadersInFolder(
-      (globals::DATA_SOURCE_PATH + "/processed/shaders/compute").c_str());
+  SHADER_MANAGER->loadShadersInFolder(frameConcatenation(
+      globals::DATA_SOURCE_PATH, "/processed/shaders/rasterization"));
+  SHADER_MANAGER->loadShadersInFolder(frameConcatenation(
+      globals::DATA_SOURCE_PATH, "/processed/shaders/compute"));
 
   ROOT_SIGNATURE_MANAGER = new RootSignatureManager();
   ROOT_SIGNATURE_MANAGER->loadSingaturesInFolder(
-      (globals::DATA_SOURCE_PATH + "/processed/rs").c_str());
+      frameConcatenation(globals::DATA_SOURCE_PATH , "/processed/rs"));
 
   SHADER_LAYOUT_REGISTRY = new dx12::ShadersLayoutRegistry();
 
   PSO_MANAGER = new PSOManager();
   PSO_MANAGER->init(dx12::DEVICE, SHADER_LAYOUT_REGISTRY,
                     ROOT_SIGNATURE_MANAGER, dx12::SHADER_MANAGER);
-  PSO_MANAGER->loadPSOInFolder((globals::DATA_SOURCE_PATH + "/pso").c_str());
+  PSO_MANAGER->loadPSOInFolder(frameConcatenation(globals::DATA_SOURCE_PATH , "/pso"));
 
   // mesh manager needs to load after pso and RS since it initialize material
   // types
@@ -216,7 +217,7 @@ bool initializeGraphicsDx12(Window *wnd, const uint32_t width,
 
   MATERIAL_MANAGER->init();
   MATERIAL_MANAGER->loadTypesInFolder(
-      (globals::DATA_SOURCE_PATH + "/materials/types").c_str());
+      frameConcatenation(globals::DATA_SOURCE_PATH , "/materials/types"));
 
   globals::DEBUG_FRAME_DATA = new globals::DebugFrameData();
 
@@ -233,10 +234,6 @@ bool initializeGraphicsDx12(Window *wnd, const uint32_t width,
   } else {
     SE_CORE_INFO("Requested HEADLESS client, no swapchain is initialized");
   }
-  //defining allocators
-  globals::STRING_POOL =  new StringPool(2<<22); //4 megabyte allocation
-  globals::FRAME_ALLOCATOR = new StackAllocator();
-  globals::FRAME_ALLOCATOR->initialize(2<<22);
 
   return true;
 }
