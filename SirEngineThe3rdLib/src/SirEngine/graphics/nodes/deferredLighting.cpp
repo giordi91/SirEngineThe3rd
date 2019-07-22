@@ -133,7 +133,7 @@ void DeferredLightingPass::compute() {
   globals::TEXTURE_MANAGER->bindRenderTarget(m_lightBuffer, TextureHandle{});
   commandList->SetGraphicsRootSignature(rs);
 
-  globals::RENDERING_CONTEX->bindCameraBuffer(0);
+  globals::RENDERING_CONTEXT->bindCameraBuffer(0);
   commandList->SetGraphicsRootConstantBufferView(1, m_lightAddress);
   commandList->SetGraphicsRootDescriptorTable(
       2, dx12::TEXTURE_MANAGER->getSRVDx12(depthHandle).gpuHandle);
@@ -144,12 +144,12 @@ void DeferredLightingPass::compute() {
   commandList->SetGraphicsRootDescriptorTable(
       5, dx12::TEXTURE_MANAGER->getSRVDx12(specularBufferHandle).gpuHandle);
   TextureHandle skyHandle =
-      globals::RENDERING_CONTEX->getEnviromentMapIrradianceHandle();
+      globals::RENDERING_CONTEXT->getEnviromentMapIrradianceHandle();
   commandList->SetGraphicsRootDescriptorTable(
       6, dx12::TEXTURE_MANAGER->getSRVDx12(skyHandle).gpuHandle);
 
   TextureHandle skyRadianceHandle =
-      globals::RENDERING_CONTEX->getEnviromentMapRadianceHandle();
+      globals::RENDERING_CONTEXT->getEnviromentMapRadianceHandle();
   commandList->SetGraphicsRootDescriptorTable(
       7, dx12::TEXTURE_MANAGER->getSRVDx12(skyRadianceHandle).gpuHandle);
   commandList->SetGraphicsRootDescriptorTable(
