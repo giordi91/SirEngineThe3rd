@@ -3,33 +3,33 @@
 
 namespace SirEngine {
 
-const char* StringPool::allocateStatic(const char* string) {
-  auto length = static_cast<uint32_t>(strlen(string) + 1);
-  auto flags = static_cast<uint8_t>(STRING_TYPE::CHAR);
+const char* StringPool::allocatePersistent(const char* string) {
+  const auto length = static_cast<uint32_t>(strlen(string) + 1);
+  const auto flags = static_cast<uint8_t>(STRING_TYPE::CHAR);
   void* memory = m_pool.allocate(length, flags);
   memcpy(memory, string, length);
   return reinterpret_cast<char*>(memory);
 }
 
-const wchar_t* StringPool::allocateStatic(const wchar_t* string) {
-  uint64_t length = wcslen(string) + 1;
-  auto flags = static_cast<uint8_t>(STRING_TYPE::WIDECHAR);
-  auto actualSize = static_cast<uint32_t>(length * sizeof(wchar_t));
+const wchar_t* StringPool::allocatePersistent(const wchar_t* string) {
+  const uint64_t length = wcslen(string) + 1;
+  const auto flags = static_cast<uint8_t>(STRING_TYPE::WCHAR);
+  const auto actualSize = static_cast<uint32_t>(length * sizeof(wchar_t));
   void* memory = m_pool.allocate(actualSize, flags);
   memcpy(memory, string, actualSize);
   return reinterpret_cast<wchar_t*>(memory);
 }
 
 const char* StringPool::allocateFrame(const char* string) {
-  auto length = static_cast<uint32_t>(strlen(string) + 1);
+  const auto length = static_cast<uint32_t>(strlen(string) + 1);
   void* memory = m_stackAllocator.allocate(length);
   memcpy(memory, string, length);
   return reinterpret_cast<const char*>(memory);
 }
 
 const wchar_t* StringPool::allocateFrame(const wchar_t* string) {
-  uint64_t length = wcslen(string) + 1;
-  auto actualSize = static_cast<uint32_t>(length * sizeof(wchar_t));
+  const uint64_t length = wcslen(string) + 1;
+  const auto actualSize = static_cast<uint32_t>(length * sizeof(wchar_t));
   void* memory = m_stackAllocator.allocate(actualSize);
   memcpy(memory, string, actualSize);
   return reinterpret_cast<wchar_t*>(memory);
@@ -39,19 +39,20 @@ inline int isFlagSet(const uint8_t flags,
   return (flags & flagToCheck) > 0 ? 1 : 0;
 }
 
-const char* StringPool::concatenateStatic(const char* first, const char* second,
-                                          const char* joiner,
-                                          const uint8_t flags) {
+const char* StringPool::concatenatePersistent(const char* first,
+                                              const char* second,
+                                              const char* joiner,
+                                              const uint8_t flags) {
   const int firstInPool = m_pool.allocationInPool(first);
   const int secondInPool = m_pool.allocationInPool(second);
   const int joinerInPool =
       joiner != nullptr ? m_pool.allocationInPool(joiner) : false;
 
   // this length are without the extra null terminator
-  const uint32_t firstLen = getStaticLength(first, firstInPool);
-  const uint32_t secondLen = getStaticLength(second, secondInPool);
+  const auto firstLen = static_cast<uint32_t>(strlen(first));
+  const auto secondLen = static_cast<uint32_t>(strlen(second));
   const uint32_t joinerLen =
-      joiner != nullptr ? getStaticLength(joiner, joinerInPool) : 0;
+      joiner != nullptr ? static_cast<uint32_t>(strlen(joiner)) : 0u;
 
   // plus one for null terminator
   const auto allocFlags = static_cast<uint8_t>(STRING_TYPE::CHAR);
@@ -88,20 +89,29 @@ const char* StringPool::concatenateStatic(const char* first, const char* second,
   return newChar;
 }
 
-const wchar_t* StringPool::concatenateStaticWide(const wchar_t* first,
-                                                 const wchar_t* second,
-                                                 const wchar_t* joiner,
-                                                 const uint8_t flags) {
+// const char* StringPool::concatenatePersistent(const wchar_t* first,
+//                                          const char* second,
+//                                          const char* joiner,
+//                                          const uint8_t flags) {
+//  const char* firstConvert = convert(first, flags);
+//  const uint8_t newFlags =
+//      flags | STRING_MANIPULATION_FLAGS::FREE_FIRST_AFTER_OPERATION;
+//  return concatenatePersistent(firstConvert, second, joiner, newFlags);
+//}
+
+const wchar_t* StringPool::concatenatePersistentWide(const wchar_t* first,
+                                                     const wchar_t* second,
+                                                     const wchar_t* joiner,
+                                                     const uint8_t flags) {
   const int firstInPool = m_pool.allocationInPool(first);
   const int secondInPool = m_pool.allocationInPool(second);
   const int joinerInPool =
       joiner != nullptr ? m_pool.allocationInPool(joiner) : false;
 
   // this length are without the extra null terminator
-  const uint32_t firstLen = getStaticLength(first, firstInPool);
-  const uint32_t secondLen = getStaticLength(second, secondInPool);
-  const uint32_t joinerLen =
-      joiner != nullptr ? getStaticLength(joiner, joinerInPool) : 0;
+  const auto firstLen = static_cast<uint32_t>(wcslen(first));
+  const auto secondLen = static_cast<uint32_t>(wcslen(second));
+  const uint32_t joinerLen = joiner != nullptr ? static_cast<uint32_t>(wcslen(joiner)) : 0;
 
   // plus one for null terminator
   const auto allocFlags = static_cast<uint8_t>(STRING_TYPE::CHAR);
@@ -144,7 +154,7 @@ const char* StringPool::convert(const wchar_t* string, uint8_t flags) {
   const int inPool = m_pool.allocationInPool(string);
 
   // this length are without the extra null terminator
-  const uint32_t len = getStaticLength(string, inPool);
+  const uint32_t len = static_cast<uint32_t>(wcslen(string));
 
   // plus one for null terminator
   const auto allocFlags = static_cast<uint8_t>(STRING_TYPE::CHAR);
@@ -165,13 +175,11 @@ const char* StringPool::convert(const wchar_t* string, uint8_t flags) {
 }
 
 const wchar_t* StringPool::convertWide(const char* string, uint8_t flags) {
-  const int inPool = m_pool.allocationInPool(string);
-
   // this length are without the extra null terminator
-  const uint32_t len = getStaticLength(string, inPool);
+  const auto len = static_cast<uint32_t>(strlen(string));
 
   // plus one for null terminator
-  const auto allocFlags = static_cast<uint8_t>(STRING_TYPE::WIDECHAR);
+  const auto allocFlags = static_cast<uint8_t>(STRING_TYPE::WCHAR);
 
   // make the allocation
   auto* newChar =
@@ -181,50 +189,12 @@ const wchar_t* StringPool::convertWide(const char* string, uint8_t flags) {
   mbstowcs_s(&converted, newChar, (len + 1 * 2), string, len);
 
   // now we have some clean up to do based on flags
+  const int inPool = m_pool.allocationInPool(string);
   const int firstSet = isFlagSet(flags, FREE_FIRST_AFTER_OPERATION);
   const int shouldFreeFirst = firstSet & inPool;
   if (shouldFreeFirst) {
     m_pool.free((void*)string);
   }
   return newChar;
-}
-
-uint32_t StringPool::getStaticLength(const char* string,
-                                     const bool isInPool) const {
-  if (isInPool) {
-    // we are subtracing one because the pool does not know is a string,
-    // so returns the allocation size which is with the null terminator
-    const int minAllocSize = ThreeSizesPool<64, 256>::getMinAllocSize();
-    const int allocSize = m_pool.getAllocSize((void*)string);
-    const int headerSize = 4;
-    if ((minAllocSize - headerSize) == allocSize) {
-      // if this is the case probably the string was shorter then then the
-      // minimum allocation size we must use regular string len
-      return static_cast<uint32_t>(strlen(string));
-    } else {
-      return allocSize - 1;
-    }
-  } else {
-    return static_cast<uint32_t>(strlen(string));
-  }
-}
-uint32_t StringPool::getStaticLength(const wchar_t* string,
-                                     const bool isInPool) const {
-  if (isInPool) {
-    // we are subtracing one because the pool does not know is a string,
-    // so returns the allocation size which is with the null terminator
-    const int minAllocSize = ThreeSizesPool<64, 256>::getMinAllocSize();
-    const int allocSize = m_pool.getAllocSize((void*)string);
-    const int headerSize = 4;
-    if ((minAllocSize - headerSize) == allocSize) {
-      // if this is the case probably the string was shorter then then the
-      // minimum allocation size we must use regular string len
-      return static_cast<uint32_t>(wcslen(string));
-    } else {
-      return (allocSize / 2) - 1;
-    }
-  } else {
-    return static_cast<uint32_t>(wcslen(string));
-  }
 }
 }  // namespace SirEngine
