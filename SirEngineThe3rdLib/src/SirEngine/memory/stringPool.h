@@ -36,13 +36,21 @@ class SIR_ENGINE_API StringPool final {
   // string manipulation
   const char* concatenateStatic(const char* first, const char* second,
                                 const char* joiner = nullptr,
-                                uint8_t flags = 0);
+                                const uint8_t flags = 0);
+  const wchar_t* concatenateStaticWide(const wchar_t* first,
+                                       const wchar_t* second,
+                                       const wchar_t* joiner = nullptr,
+                                       const uint8_t flags = 0);
+
+  const char* convert(const wchar_t* string, const uint8_t flags = 0);
+  const wchar_t* convertWide(const char* string, const uint8_t flags = 0);
 
  private:
   enum class STRING_TYPE { CHAR = 1, WIDECHAR = 2 };
 
  private:
-  uint32_t getStaticLength(const char* string, bool isInPool) const;
+  uint32_t getStaticLength(const char* string, const bool isInPool) const;
+  uint32_t getStaticLength(const wchar_t* string, const bool isInPool) const;
 
  private:
   ThreeSizesPool<64, 256> m_pool;
