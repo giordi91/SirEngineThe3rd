@@ -27,7 +27,8 @@ class ThreeSizesPool final {
   struct NextAlloc {
     uint32_t offset : 32;  // offset from the start of the pool in byte
     uint32_t nextOffset;   // offset from the start of the pool in byte for the
-                           // next node in the linked list, 0 if null
+    uint32_t previousOffset;  // offset from the start of the pool in byte for
+                              // the previous node in the linked list, 0 if null
     bool isNode : 1;     // a bit flag setting whether the data here refers to a
                          // node or an alloc, mostly debugging purpose
     uint32_t size : 28;  // size of the allocation in byte
@@ -109,7 +110,7 @@ class ThreeSizesPool final {
 
   // helpers
   int allocationInPool(const void *ptr) const {
-    const int64_t delta = reinterpret_cast<const char*>(ptr) - m_memory;
+    const int64_t delta = reinterpret_cast<const char *>(ptr) - m_memory;
     return (delta > 0) & (delta < m_poolSizeInByte);
   }
 
@@ -162,6 +163,7 @@ class ThreeSizesPool final {
     alloc.isNode = 1;
     alloc.allocType = 1 << allocType;
     alloc.nextOffset = 0;
+    alloc.previousOffset = 0;
     alloc.offset = reinterpret_cast<char *>(header) - m_memory;
 
     // reducing alloc count
@@ -169,7 +171,10 @@ class ThreeSizesPool final {
 
     // lets add to the linked list
     if (m_nextAlloc[allocType] != nullptr) {
+      // patching offset of the next, and for the next patching offset
+      // of this to keep a doubled linked list
       alloc.nextOffset = m_nextAlloc[allocType]->offset;
+      m_nextAlloc[allocType]->previousOffset = alloc.offset;
     }
 
     // now that the whole header is setup we commit it to memory
@@ -184,12 +189,13 @@ class ThreeSizesPool final {
     uint32_t allocType = getAllocationTypeFromSize(sizeInByte);
 
     // next we check if we have any allocation we can recycle
-    NextAlloc *next = m_nextAlloc[allocType];
-    if (next != nullptr) {
+    NextAlloc *currentLinkedListTip = m_nextAlloc[allocType];
+    if (currentLinkedListTip != nullptr) {
       // ok we have something in the cache let us try see if one slot is big
       // enough
       const uint32_t totalAllocSize = sizeInByte + sizeof(AllocHeader);
-      NextAlloc *found = findNextFreeAllocForSize(next, totalAllocSize);
+      NextAlloc *found =
+          findNextFreeAllocForSize(currentLinkedListTip, totalAllocSize);
 
       // if an allocation big enough in the bucket is not found we
       // perform a new allocation
@@ -198,26 +204,42 @@ class ThreeSizesPool final {
       }
 
       assert(found->isNode == true);
-      // if there is a next child in the linked list we need to get the pointer
-      // and patch it
-      // next offset of zero means no child
-      if (found->nextOffset != 0) {
-        m_nextAlloc[allocType] =
-            reinterpret_cast<NextAlloc *>(m_memory + found->nextOffset);
-      } else {
-        // if no allocation if no next allocation is available we clear the
-        // pointer
-        m_nextAlloc[allocType] = nullptr;
+
+      // patching linked list
+      NextAlloc *nextInList =
+          found->nextOffset != 0
+              ? reinterpret_cast<NextAlloc *>(m_memory + found->nextOffset)
+              : nullptr;
+      NextAlloc *previousInList =
+          found->previousOffset != 0
+              ? reinterpret_cast<NextAlloc *>(m_memory + found->previousOffset)
+              : nullptr;
+
+      if (previousInList != nullptr) {
+        // if we have a previous node we need to update the offsets
+        previousInList->nextOffset =
+            nextInList != nullptr ? nextInList->offset : 0;
       }
+
+      if (nextInList != nullptr) {
+        nextInList->previousOffset =
+            previousInList != nullptr ? previousInList->offset : 0;
+      }
+
+      // finally we set the head of the linked list
+      if (m_nextAlloc[allocType] == found) {
+        m_nextAlloc[allocType] = nextInList;
+      }
+
       ++m_allocCount[allocType];
 
       // lets now build the header
       AllocHeader header;
-      header.size = totalAllocSize;
+      header.size = found->size;
       header.isNode = false;
       header.type = allocType;
       header.allocFlags = flags;
-      memcpy(next, &header, sizeof(header));
+      memcpy(found, &header, sizeof(header));
 
       return reinterpret_cast<char *>(found) + sizeof(AllocHeader);
     }

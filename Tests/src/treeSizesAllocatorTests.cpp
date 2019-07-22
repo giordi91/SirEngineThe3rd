@@ -84,16 +84,18 @@ TEST_CASE("Tree sizes pool delete alloc 1", "[memory]") {
   REQUIRE(alloc.getMediumAllocCount() == 4);
   REQUIRE(mem7 == mem4);
   uint32_t memSizeInBtye = alloc.getAllocSize(mem7);
-  REQUIRE(memSizeInBtye == 120);
-  memset(mem7, 7, memSizeInBtye);
+  // allocation should still be 128 since we track the actual
+  // original tile allocation
+  REQUIRE(memSizeInBtye == 128);
+  memset(mem7, 7, 120);
 
-  auto*bytePtr = reinterpret_cast<unsigned char *>(mem7);
-  for (uint32_t i = 0; i < memSizeInBtye; ++i) {
+  auto *bytePtr = reinterpret_cast<unsigned char *>(mem7);
+  for (uint32_t i = 0; i < 120; ++i) {
     REQUIRE(bytePtr[i] == 7);
   }
 
 #if SE_DEBUG
-  for (int i = memSizeInBtye; i < 128; ++i) {
+  for (int i = 120; i < 128; ++i) {
     REQUIRE(bytePtr[i] == 0xff);
   }
 #endif
@@ -127,7 +129,7 @@ TEST_CASE("Tree sizes pool delete alloc 2", "[memory]") {
   // checking memory is properly written and not overrun
   uint32_t memSizeInBtye = alloc.getAllocSize(mem5);
   memset(mem5, 5, memSizeInBtye);
-  auto*bytePtr = reinterpret_cast<unsigned char *>(mem5);
+  auto *bytePtr = reinterpret_cast<unsigned char *>(mem5);
   for (uint32_t i = 0; i < memSizeInBtye; ++i) {
     REQUIRE(bytePtr[i] == 5);
   }
@@ -157,5 +159,4 @@ TEST_CASE("Tree sizes pool delete alloc 2", "[memory]") {
 
   alloc.allocate(200);
   REQUIRE(alloc.getMediumAllocCount() == 5);
-
 }
