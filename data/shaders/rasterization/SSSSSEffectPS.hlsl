@@ -5,6 +5,7 @@ struct VertexOut {
 };
 
 Texture2D sourceTexture: register(t0);
+Texture2D depth: register(t1);
 
 SamplerState gsamPointWrap        : register(s0);
 SamplerState gsamPointClamp       : register(s1);

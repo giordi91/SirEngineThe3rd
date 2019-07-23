@@ -30,7 +30,22 @@
               }
             ]
           }
+        },
+        {
+          "comment": "depth texture",
+          "type": "descriptorTable",
+          "data": {
+            "numberDescriptor": "1",
+            "ranges": [
+              {
+                "type": "SRV",
+                "numDescriptors": 1,
+                "baseRegister": 1
+              }
+            ]
+          }
         }
+
       ],
       "flags": []
     }

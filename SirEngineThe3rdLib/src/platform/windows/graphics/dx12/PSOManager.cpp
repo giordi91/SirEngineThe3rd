@@ -515,6 +515,8 @@ void PSOManager::processRasterPSO(nlohmann::json &jobj, const std::string &path,
   // assert(m_psoRegister.find(name) == m_psoRegister.end());
   m_psoRegister[name] = pso;
 
+	
+
   if (!reload) {
     m_shaderToPSOFile[VSname].push_back(path);
     m_shaderToPSOFile[PSname].push_back(path);

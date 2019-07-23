@@ -145,7 +145,7 @@ UINT DescriptorHeap::createTextureCubeSRV(DescriptorPair &pair,
 }
 
 UINT createDSV(DescriptorHeap *heap, ID3D12Resource *resource,
-               DescriptorPair &pair, DXGI_FORMAT format) {
+               DescriptorPair &pair, const DXGI_FORMAT format, const D3D12_DSV_FLAGS flags) {
 
   assert(heap->getType() == D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
   UINT descriptorIndex = heap->allocateDescriptor(&pair.cpuHandle);
@@ -153,7 +153,7 @@ UINT createDSV(DescriptorHeap *heap, ID3D12Resource *resource,
   // Create descriptor to mip level 0 of entire resource using the format of the
   // resource.
   D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc;
-  dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
+  dsvDesc.Flags = flags;
   dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
   dsvDesc.Format = format;
   dsvDesc.Texture2D.MipSlice = 0;
