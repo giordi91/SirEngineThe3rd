@@ -33,7 +33,7 @@ public:
                                  D3D12_RESOURCE_BARRIER *barriers,
                                  int counter) const {
     assertMagicNumber(handle);
-    uint32_t index = getIndexFromHandle(handle);
+    const uint32_t index = getIndexFromHandle(handle);
     const BufferData &data = m_bufferPool.getConstRef(index);
     barriers[counter].UAV.pResource = data.data;
     barriers[counter].Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
