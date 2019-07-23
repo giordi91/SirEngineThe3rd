@@ -191,12 +191,33 @@ TextureHandle TextureManagerDx12::createDepthTexture(
   dx12::createDSV(dx12::GLOBAL_DSV_HEAP, m_texturePool[index].resource,
                   data.rtsrv, DXGI_FORMAT_D32_FLOAT_S8X24_UINT);
 
+  dx12::createDSV(dx12::GLOBAL_DSV_HEAP, m_texturePool[index].resource,
+                  data.srvStencil, DXGI_FORMAT_D32_FLOAT_S8X24_UINT ,(D3D12_DSV_FLAG_READ_ONLY_DEPTH | D3D12_DSV_FLAG_READ_ONLY_STENCIL));
+
   dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DSRV(
       data.srv, data.resource, DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS);
   ++MAGIC_NUMBER_COUNTER;
 
   m_nameToHandle[name] = handle;
   return handle;
+}
+
+DescriptorPair TextureManagerDx12::getSrvStencilDx12(
+    const TextureHandle handle) {
+  {
+    assertMagicNumber(handle);
+    uint32_t index = getIndexFromHandle(handle);
+    TextureData &data = m_texturePool[index];
+    if (data.srv.cpuHandle.ptr == 0) {
+      dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DSRV(
+          data.srvStencil, data.resource, DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS);
+
+      dx12::createDSV(dx12::GLOBAL_DSV_HEAP, m_texturePool[index].resource,
+                      data.srvStencil, DXGI_FORMAT_X32_TYPELESS_G8X24_UINT);
+    }
+    assert(data.srv.type == DescriptorType::SRV);
+    return m_texturePool.getConstRef(index).srv;
+  }
 }
 
 void TextureManagerDx12::free(const TextureHandle handle) {
@@ -380,6 +401,30 @@ void TextureManagerDx12::bindRenderTarget(const TextureHandle handle,
     const TextureData &depthData = m_texturePool.getConstRef(depthIndex);
     assert((depthData.flags & TextureFlags::DEPTH) > 0);
     depthDesc = &(depthData.rtsrv.cpuHandle);
+  }
+  commandList->OMSetRenderTargets(1, handles, true, depthDesc);
+}
+
+void TextureManagerDx12::bindRenderTargetStencil(TextureHandle handle,
+                                                 TextureHandle depth) {
+  assertMagicNumber(handle);
+  const uint32_t index = getIndexFromHandle(handle);
+  const TextureData &data = m_texturePool.getConstRef(index);
+  assert((data.flags & TextureFlags::RT) > 0);
+
+  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
+  auto commandList = currentFc->commandList;
+
+  D3D12_CPU_DESCRIPTOR_HANDLE handles[1] = {data.rtsrv.cpuHandle};
+  // TODO fix this, should not have a depth the swap chain??
+  // auto backDepth = dx12::SWAP_CHAIN->getDepthCPUDescriptor();
+  const D3D12_CPU_DESCRIPTOR_HANDLE *depthDesc = nullptr;
+  if (depth.isHandleValid()) {
+    assertMagicNumber(depth);
+    const uint32_t depthIndex = getIndexFromHandle(depth);
+    const TextureData &depthData = m_texturePool.getConstRef(depthIndex);
+    assert((depthData.flags & TextureFlags::DEPTH) > 0);
+    depthDesc = &(depthData.srvStencil.cpuHandle);
   }
   commandList->OMSetRenderTargets(1, handles, true, depthDesc);
 }

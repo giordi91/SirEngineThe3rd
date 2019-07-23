@@ -102,6 +102,6 @@ private:
 UINT createRTVSRV(DescriptorHeap *heap, ID3D12Resource *resource,
                   DescriptorPair &pair);
 UINT createDSV(DescriptorHeap *heap, ID3D12Resource *resource,
-               DescriptorPair &pair, DXGI_FORMAT format);
+               DescriptorPair &pair, DXGI_FORMAT format, const D3D12_DSV_FLAGS flags = D3D12_DSV_FLAG_NONE);
 } // namespace dx12
 } // namespace SirEngine

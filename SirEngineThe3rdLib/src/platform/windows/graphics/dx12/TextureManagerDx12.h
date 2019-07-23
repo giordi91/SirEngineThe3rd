@@ -22,6 +22,7 @@ class SIR_ENGINE_API TextureManagerDx12 final : public TextureManager {
     DescriptorPair srv;
     DescriptorPair rtsrv;
     DescriptorPair uav;
+    DescriptorPair srvStencil;
   };
 
 public:
@@ -45,6 +46,9 @@ public:
                                         bool allowWrite = false) override;
   virtual void bindRenderTarget(TextureHandle handle,
                                 TextureHandle depth) override;
+  virtual void bindRenderTargetStencil(TextureHandle handle,
+                                TextureHandle depth);
+
   virtual void copyTexture(TextureHandle source,
                            TextureHandle destination) override;
   virtual void bindBackBuffer(bool bindBackBufferDepth) override;
@@ -73,7 +77,8 @@ public:
     assert(data.srv.type == DescriptorType::SRV);
     return m_texturePool.getConstRef(index).srv;
   }
-
+  // handles facilities
+  DescriptorPair getSrvStencilDx12(const TextureHandle handle); 
   DescriptorPair getUAVDx12(const TextureHandle handle) {
 
     assertMagicNumber(handle);

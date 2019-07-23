@@ -29,18 +29,24 @@ void SSSSSEffect::render(const TextureHandle input, const TextureHandle output,
   counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
       output, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, counter);
   counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
-      resources.depth, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, barriers,
-      counter);
+      resources.depth,
+      D3D12_RESOURCE_STATE_DEPTH_READ |
+          D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+      barriers, counter);
   if (counter) {
     commandList->ResourceBarrier(counter, barriers);
   }
 
-  globals::TEXTURE_MANAGER->bindRenderTarget(output, resources.depth);
+  dx12::TEXTURE_MANAGER->bindRenderTargetStencil(output, resources.depth);
+  // globals::TEXTURE_MANAGER->bindRenderTarget(output, TextureHandle{});
   const dx12::DescriptorPair pair = dx12::TEXTURE_MANAGER->getSRVDx12(input);
+  const dx12::DescriptorPair depthPair =
+      dx12::TEXTURE_MANAGER->getSRVDx12(resources.depth);
 
   dx12::PSO_MANAGER->bindPSO(pso, commandList);
   commandList->SetGraphicsRootSignature(rs);
   commandList->SetGraphicsRootDescriptorTable(1, pair.gpuHandle);
+  commandList->SetGraphicsRootDescriptorTable(2, depthPair.gpuHandle);
   commandList->DrawInstanced(6, 1, 0, 0);
 }
 
