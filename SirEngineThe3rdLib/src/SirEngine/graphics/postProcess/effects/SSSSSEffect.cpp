@@ -8,6 +8,8 @@
 namespace SirEngine {
 static const char *SSSSS_RS = "SSSSSEffect_RS";
 static const char *SSSSS_PSO = "SSSSSEffect_PSO";
+static const char *COPY_RS = "debugFullScreenBlit_RS";
+static const char *COPY_PSO = "fragmentCopyPSO";
 
 SSSSSEffect::SSSSSEffect(const char *name)
     : PostProcessEffect(name, "SSSSSEffect") {}
@@ -15,6 +17,9 @@ SSSSSEffect::SSSSSEffect(const char *name)
 void SSSSSEffect::initialize() {
   rs = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(SSSSS_RS);
   pso = dx12::PSO_MANAGER->getHandleFromName(SSSSS_PSO);
+
+  copyRs = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(COPY_RS);
+  copyPso = dx12::PSO_MANAGER->getHandleFromName(COPY_PSO);
 }
 
 void SSSSSEffect::render(const TextureHandle input, const TextureHandle output,
@@ -22,8 +27,11 @@ void SSSSSEffect::render(const TextureHandle input, const TextureHandle output,
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
 
+  const dx12::DescriptorPair pair = dx12::TEXTURE_MANAGER->getSRVDx12(input);
+
   D3D12_RESOURCE_BARRIER barriers[3];
   int counter = 0;
+  //need to perform a copy of the texture
   counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
       input, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, barriers, counter);
   counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
@@ -37,9 +45,32 @@ void SSSSSEffect::render(const TextureHandle input, const TextureHandle output,
     commandList->ResourceBarrier(counter, barriers);
   }
 
+  dx12::TEXTURE_MANAGER->bindRenderTarget(output,TextureHandle{});
+  dx12::PSO_MANAGER->bindPSO(copyPso, commandList);
+  commandList->SetGraphicsRootSignature(copyRs);
+  commandList->SetGraphicsRootDescriptorTable(1, pair.gpuHandle);
+  commandList->DrawInstanced(6, 1, 0, 0);
+
+
+  /*
+  counter =0;
+  counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
+      input, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, barriers, counter);
+  counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
+      output, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, counter);
+  counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
+      resources.depth,
+      D3D12_RESOURCE_STATE_DEPTH_READ |
+          D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+      barriers, counter);
+  if (counter) {
+    commandList->ResourceBarrier(counter, barriers);
+  }
+  */
+
+
   dx12::TEXTURE_MANAGER->bindRenderTargetStencil(output, resources.depth);
   // globals::TEXTURE_MANAGER->bindRenderTarget(output, TextureHandle{});
-  const dx12::DescriptorPair pair = dx12::TEXTURE_MANAGER->getSRVDx12(input);
   const dx12::DescriptorPair depthPair =
       dx12::TEXTURE_MANAGER->getSRVDx12(resources.depth);
 

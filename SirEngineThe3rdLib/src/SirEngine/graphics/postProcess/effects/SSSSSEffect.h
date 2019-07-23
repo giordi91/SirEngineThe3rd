@@ -16,6 +16,8 @@ class SSSSSEffect final : public PostProcessEffect {
  private:
   ID3D12RootSignature *rs = nullptr;
   PSOHandle pso = {};
+  ID3D12RootSignature *copyRs = nullptr;
+  PSOHandle copyPso = {};
 };
 
 }  // namespace SirEngine

@@ -20,6 +20,7 @@
       "-p ../data/shaders/rasterization/basicMeshVSTex.hlsl -o ../data/processed/shaders/rasterization/basicMeshVSTex.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t vs_6_2  -e VS -d \"",
       "-p ../data/shaders/rasterization/fullScreenQuadVS.hlsl -o ../data/processed/shaders/rasterization/fullScreenQuadVS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t vs_6_2  -e VS -d \"",
       "-p ../data/shaders/rasterization/blackAndWhiteEffectPS.hlsl -o ../data/processed/shaders/rasterization/blackAndWhiteEffectPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
+      "-p ../data/shaders/rasterization/fragmentCopyPS.hlsl -o ../data/processed/shaders/rasterization/fragmentCopyPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
       "-p ../data/shaders/rasterization/SSSSSEffectPS.hlsl -o ../data/processed/shaders/rasterization/SSSSSEffectPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
       "-p ../data/shaders/rasterization/basicMeshGBufferPS.hlsl -o ../data/processed/shaders/rasterization/basicMeshGBufferPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
       "-p ../data/shaders/rasterization/basicMeshGBufferPBRPS.hlsl -o ../data/processed/shaders/rasterization/basicMeshGBufferPBRPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
