@@ -25,7 +25,7 @@ struct PhongMaterial {
   float4 kd;
   float4 ka;
   float4 ks;
-  //TODO pad shiness into ka.w
+  // TODO pad shiness into ka.w
   float shiness;
   float reflective;
   float padding2;
@@ -43,14 +43,15 @@ struct GammaToneMappingConfig {
   float padding;
 };
 
-struct TextureConfig 
-{
-    int width;
-    int height;
+struct TextureConfig {
+  int width;
+  int height;
 };
-struct ReducedDepth
-{
-    float minDepth;
-    float maxDepth;
+struct ReducedDepth {
+  float minDepth;
+  float maxDepth;
+};
+
+struct SSSSSConfig {
 };
 #endif
