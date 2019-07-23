@@ -14,7 +14,7 @@ public:
 
 private:
   ID3D12RootSignature *m_rs = nullptr;
-  PSOHandle m_pso;
+  PSOHandle m_pso{};
 };
 
 } // namespace SirEngine

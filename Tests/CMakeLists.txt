@@ -24,6 +24,8 @@ project(Tests)
 	#making sure to add the common cpp flags, that are defined in the main cpp file
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_CXX_FLAGS}")
 
+	file(COPY "testData" DESTINATION "${CMAKE_BINARY_DIR}/bin" )
+
 
 	link_directories(${CMAKE_BINARY_DIR}/bin/$<CONFIGURATION>)
     #adding the executable
@@ -35,3 +37,4 @@ project(Tests)
 	set_target_properties(
     ${PROJECT_NAME} PROPERTIES
     VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin/$<CONFIGURATION>)
+
