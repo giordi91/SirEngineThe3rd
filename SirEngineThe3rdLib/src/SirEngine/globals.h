@@ -2,6 +2,7 @@
 #include <string>
 #include "SirEngine/handle.h"
 #include "clock.h"
+#include "core.h"
 
 struct D3D12_VIEWPORT;
 namespace SirEngine {
@@ -46,8 +47,8 @@ extern RenderingContext *RENDERING_CONTEXT;
 extern DebugFrameData *DEBUG_FRAME_DATA;
 
 // generic allocators
-extern StringPool *STRING_POOL;
-extern StackAllocator *FRAME_ALLOCATOR;
+extern SIR_ENGINE_API StringPool *STRING_POOL;
+extern SIR_ENGINE_API StackAllocator *FRAME_ALLOCATOR;
 
 // config
 extern const char* DATA_SOURCE_PATH;

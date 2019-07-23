@@ -40,7 +40,8 @@ inline int isFlagSet(const uint8_t flags,
   return (flags & flagToCheck) > 0 ? 1 : 0;
 }
 
-const char* StringPool::loadFilePersistent(const char* path) {
+const char* StringPool::loadFilePersistent(const char* path,
+                                           uint32_t& readFileSize) {
   FILE* fp = nullptr;
 
   const errno_t error = fopen_s(&fp, path, "rb");
@@ -49,13 +50,38 @@ const char* StringPool::loadFilePersistent(const char* path) {
   fseek(fp, 0L, SEEK_END);
   const long fileSize = ftell(fp);
   rewind(fp);
+  readFileSize = fileSize + 1;
 
   // allocating memory
   char* buffer = reinterpret_cast<char*>(m_pool.allocate(fileSize + 1));
 
   const uint64_t count = fread(buffer, fileSize, 1, fp);
   assert(count == 1 && "error reading actual memory from file");
-  //need tos et the final value
+  // need tos et the final value
+  buffer[fileSize] = '\0';
+
+  fclose(fp);
+  return buffer;
+}
+
+const char* StringPool::loadFileFrame(const char* path, uint32_t& readFileSize)
+{
+  FILE* fp = nullptr;
+
+  const errno_t error = fopen_s(&fp, path, "rb");
+  assert((error == 0) && "could not open file");
+
+  fseek(fp, 0L, SEEK_END);
+  const long fileSize = ftell(fp);
+  rewind(fp);
+  readFileSize = fileSize + 1;
+
+  // allocating memory
+  char* buffer = reinterpret_cast<char*>(m_stackAllocator.allocate(fileSize + 1));
+
+  const uint64_t count = fread(buffer, fileSize, 1, fp);
+  assert(count == 1 && "error reading actual memory from file");
+  // need tos et the final value
   buffer[fileSize] = '\0';
 
   fclose(fp);

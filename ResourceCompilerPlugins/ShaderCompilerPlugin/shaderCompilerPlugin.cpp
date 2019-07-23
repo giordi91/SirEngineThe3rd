@@ -3,12 +3,14 @@
 #include "SirEngine/log.h"
 #include "cxxopts/cxxopts.hpp"
 
+#include "SirEngine/argsUtils.h"
 #include "SirEngine/binary/binaryFile.h"
 #include "platform/windows/graphics/dx12/shaderCompiler.h"
-#include "SirEngine/argsUtils.h"
 
 #include <d3dcommon.h>
 #include <filesystem>
+#include "SirEngine/memory/stringPool.h"
+#include "platform/windows/graphics/dx12/PSOManager.h"
 
 const std::string PLUGIN_NAME = "shaderCompilerPlugin";
 const unsigned int VERSION_MAJOR = 0;
@@ -49,7 +51,7 @@ bool processArgs(const std::string args,
   returnArgs.entryPoint = toWstring(result["entry"].as<std::string>());
   returnArgs.type = toWstring(result["type"].as<std::string>());
   if (result.count("compilerArgs")) {
-	  const std::string cargs = result["compilerArgs"].as<std::string>();
+    const std::string cargs = result["compilerArgs"].as<std::string>();
     std::string strippedCargs = cargs.substr(1, cargs.length() - 2);
     char t = strippedCargs[2];
     returnArgs.compilerArgs = toWstring(strippedCargs);
@@ -84,6 +86,12 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
                   outputPath);
   }
 
+  // initialize memory pool used by the compiler
+  SirEngine::globals::STRING_POOL =
+      new SirEngine::StringPool(2 << 22);  // 4 megabyte allocation
+  SirEngine::globals::FRAME_ALLOCATOR = new SirEngine::StackAllocator();
+  SirEngine::globals::FRAME_ALLOCATOR->initialize(2 << 22);
+
   SirEngine::dx12::DXCShaderCompiler compiler;
   ID3DBlob *blob = compiler.compileShader(assetPath.c_str(), shaderArgs);
 
@@ -106,11 +114,14 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
   totalBulkDataInBytes +=
       static_cast<int>((shaderArgs.entryPoint.size() + 1) * sizeof(wchar_t));
   totalBulkDataInBytes += static_cast<int>(assetPath.size() + 1);
-  totalBulkDataInBytes += static_cast<int>((shaderArgs.compilerArgs.size() + 1)*sizeof(wchar_t));
+  totalBulkDataInBytes +=
+      static_cast<int>((shaderArgs.compilerArgs.size() + 1) * sizeof(wchar_t));
 
   // layout the data
-  std::vector<char> bulkData(totalBulkDataInBytes);
-  char *bulkDataPtr = bulkData.data();
+
+  char *dataPtr = reinterpret_cast<char *>(
+      SirEngine::globals::FRAME_ALLOCATOR->allocate(totalBulkDataInBytes));
+  char *bulkDataPtr = dataPtr;
 
   // write down the shader in the buffer
   int dataToWriteSizeInByte = blob->GetBufferSize();
@@ -139,7 +150,8 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
   bulkDataPtr += dataToWriteSizeInByte;
 
   // write down the compiler args
-  dataToWriteSizeInByte = static_cast<int>((shaderArgs.compilerArgs.size() + 1)* sizeof(wchar_t));
+  dataToWriteSizeInByte =
+      static_cast<int>((shaderArgs.compilerArgs.size() + 1) * sizeof(wchar_t));
   mapperData.compilerArgsInByte = dataToWriteSizeInByte;
   memcpy(bulkDataPtr, shaderArgs.compilerArgs.c_str(), dataToWriteSizeInByte);
 
@@ -148,9 +160,8 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
   const std::string fileName = inp.stem().string();
   request.outPath = outputPath.c_str();
 
-
-  request.bulkData = bulkData.data();
-  request.bulkDataSizeInByte = bulkData.size();
+  request.bulkData = dataPtr;
+  request.bulkDataSizeInByte = totalBulkDataInBytes;
 
   mapperData.shaderSizeInByte = blob->GetBufferSize();
   request.mapperData = &mapperData;
@@ -160,6 +171,10 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
 
   // release compiler data
   blob->Release();
+
+  // release memory
+  delete SirEngine::globals::STRING_POOL;
+  delete SirEngine::globals::FRAME_ALLOCATOR;
 
   SE_CORE_INFO("Shader successfully compiled ---> {0}", outputPath);
   return true;
