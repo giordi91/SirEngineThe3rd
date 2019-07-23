@@ -35,8 +35,8 @@ class SIR_ENGINE_API StringPool final {
   inline void resetFrameMemory() { m_stackAllocator.reset(); }
 
   //file loading
-  const char* loadFilePersistent(const char* path);
-  const char* loadFileFrame(const char* path);
+  const char* loadFilePersistent(const char* path, uint32_t& readFileSize);
+  const char* loadFileFrame(const char* path, uint32_t& readFileSize);
 
   // string manipulation
   const char* concatenatePersistent(const char* first, const char* second,

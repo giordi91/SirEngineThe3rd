@@ -199,7 +199,6 @@ TEST_CASE("String pool basic concatenation 1", "[memory]") {
   const char *original4 = "o world";
   const char *joiner1 = " ";
   const char *compare = "hello world";
-  auto t = strlen(compare);
 
   // testing with joiner all non in pool
   const char *res1 = alloc.concatenatePersistent(original, original2, joiner1);
@@ -399,7 +398,6 @@ TEST_CASE("String pool basic convertion 3", "[memory]") {
   const wchar_t *helloW = L"hello";
   const wchar_t *worldW = L"world";
   const wchar_t *joiner1W = L" ";
-  const wchar_t *resultW = L"hello world";
 
   // c c c
   const char *res1 = alloc.concatenatePersistent(hello, world, joiner1);
@@ -439,7 +437,6 @@ TEST_CASE("String pool basic convertion 4", "[memory]") {
   const char *hello = "hello";
   const char *world = "world";
   const char *joiner1 = " ";
-  const char *result = "hello world";
 
   const wchar_t *helloW = L"hello";
   const wchar_t *worldW = L"world";
@@ -533,7 +530,6 @@ TEST_CASE("String pool frame convertion 3", "[memory]") {
   const wchar_t *helloW = L"hello";
   const wchar_t *worldW = L"world";
   const wchar_t *joiner1W = L" ";
-  const wchar_t *resultW = L"hello world";
 
   // c c c
   const char *res1 = alloc.concatenateFrame(hello, world, joiner1);
@@ -573,7 +569,6 @@ TEST_CASE("String pool frame convertion 4", "[memory]") {
   const char *hello = "hello";
   const char *world = "world";
   const char *joiner1 = " ";
-  const char *result = "hello world";
 
   const wchar_t *helloW = L"hello";
   const wchar_t *worldW = L"world";
@@ -618,6 +613,17 @@ TEST_CASE("String pool file load", "[memory]") {
   const char *fileContent = "just testing the switches of yours.";
   const char *path = "../testData/fileLoad1.txt";
 
-  const char *load = alloc.loadFilePersistent(path);
+  uint32_t fileSize;
+  const char *load = alloc.loadFilePersistent(path,fileSize);
+  REQUIRE(strcmp(fileContent, load) == 0);
+}
+
+TEST_CASE("String pool file load frame", "[memory]") {
+  SirEngine::StringPool alloc(2 << 16);
+  const char *fileContent = "just testing the switches of yours.";
+  const char *path = "../testData/fileLoad1.txt";
+
+  uint32_t fileSize;
+  const char *load = alloc.loadFileFrame(path,fileSize);
   REQUIRE(strcmp(fileContent, load) == 0);
 }

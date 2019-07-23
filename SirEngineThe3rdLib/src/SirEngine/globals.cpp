@@ -20,8 +20,8 @@ AssetManager *ASSET_MANAGER = nullptr;
 Application *APPLICATION = nullptr;
 RenderingContext *RENDERING_CONTEXT = nullptr;
 DebugFrameData *DEBUG_FRAME_DATA = nullptr;
-const char* DATA_SOURCE_PATH = nullptr;
-const char* START_SCENE_PATH = nullptr;
+const char *DATA_SOURCE_PATH = nullptr;
+const char *START_SCENE_PATH = nullptr;
 
 // generic allocators
 StringPool *STRING_POOL = nullptr;
