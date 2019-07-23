@@ -83,7 +83,7 @@ void ProceduralSkyBoxPass::compute() {
   globals::TEXTURE_MANAGER->bindRenderTarget(bufferHandle, depthHandle);
   commandList->SetGraphicsRootSignature(rs);
 
-  globals::RENDERING_CONTEX->bindCameraBuffer(0);
+  globals::RENDERING_CONTEXT->bindCameraBuffer(0);
   // commandList->SetGraphicsRootConstantBufferView(1, m_lightAddress);
   // commandList->SetGraphicsRootDescriptorTable(
   //    2, dx12::TEXTURE_MANAGER->getSRVDx12(depthHandle).gpuHandle);

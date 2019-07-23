@@ -5,6 +5,8 @@
 #include "SirEngine/identityManager.h"
 #include "SirEngine/log.h"
 #include "SirEngine/materialManager.h"
+#include "SirEngine/memory/stringPool.h"
+#include "SirEngine/runtimeString.h"
 #include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
 #include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/TextureManagerDx12.h"
@@ -45,7 +47,6 @@ ShadersLayoutRegistry *SHADER_LAYOUT_REGISTRY = nullptr;
 BufferManagerDx12 *BUFFER_MANAGER = nullptr;
 
 void createFrameCommand(FrameCommand *fc) {
-
   auto result = DEVICE->CreateCommandAllocator(
       D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&fc->commandAllocator));
   assert(SUCCEEDED(result));
@@ -58,8 +59,8 @@ void createFrameCommand(FrameCommand *fc) {
   fc->isListOpen = false;
 }
 
-bool initializeGraphicsDx12(Window *wnd, const uint32_t width, const uint32_t height) {
-
+bool initializeGraphicsDx12(Window *wnd, const uint32_t width,
+                            const uint32_t height) {
 // lets enable debug layer if needed
 #if defined(DEBUG) || defined(_DEBUG)
   {
@@ -135,8 +136,7 @@ bool initializeGraphicsDx12(Window *wnd, const uint32_t width, const uint32_t he
     D3D12_FEATURE_DATA_D3D12_OPTIONS5 opts5 = {};
     dx12::DEVICE->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &opts5,
                                       sizeof(opts5));
-    if (opts5.RaytracingTier == D3D12_RAYTRACING_TIER_NOT_SUPPORTED)
-      assert(0);
+    if (opts5.RaytracingTier == D3D12_RAYTRACING_TIER_NOT_SUPPORTED) assert(0);
   }
 #endif
 
@@ -190,26 +190,26 @@ bool initializeGraphicsDx12(Window *wnd, const uint32_t width, const uint32_t he
   MESH_MANAGER = new MeshManager();
   globals::ASSET_MANAGER = new AssetManager();
   globals::ASSET_MANAGER->initialize();
-  globals::RENDERING_CONTEX = new RenderingContext();
-  globals::RENDERING_CONTEX->initialize();
+  globals::RENDERING_CONTEXT = new RenderingContext();
+  globals::RENDERING_CONTEXT->initialize();
 
   SHADER_MANAGER = new ShaderManager();
   SHADER_MANAGER->init();
-  SHADER_MANAGER->loadShadersInFolder(
-      (globals::DATA_SOURCE_PATH + "/processed/shaders/rasterization").c_str());
-  SHADER_MANAGER->loadShadersInFolder(
-      (globals::DATA_SOURCE_PATH + "/processed/shaders/compute").c_str());
+  SHADER_MANAGER->loadShadersInFolder(frameConcatenation(
+      globals::DATA_SOURCE_PATH, "/processed/shaders/rasterization"));
+  SHADER_MANAGER->loadShadersInFolder(frameConcatenation(
+      globals::DATA_SOURCE_PATH, "/processed/shaders/compute"));
 
   ROOT_SIGNATURE_MANAGER = new RootSignatureManager();
-  ROOT_SIGNATURE_MANAGER->loadSingaturesInFolder(
-      (globals::DATA_SOURCE_PATH + "/processed/rs").c_str());
+  ROOT_SIGNATURE_MANAGER->loadSignaturesInFolder(
+      frameConcatenation(globals::DATA_SOURCE_PATH , "/processed/rs"));
 
   SHADER_LAYOUT_REGISTRY = new dx12::ShadersLayoutRegistry();
 
   PSO_MANAGER = new PSOManager();
   PSO_MANAGER->init(dx12::DEVICE, SHADER_LAYOUT_REGISTRY,
                     ROOT_SIGNATURE_MANAGER, dx12::SHADER_MANAGER);
-  PSO_MANAGER->loadPSOInFolder((globals::DATA_SOURCE_PATH + "/pso").c_str());
+  PSO_MANAGER->loadPSOInFolder(frameConcatenation(globals::DATA_SOURCE_PATH , "/pso"));
 
   // mesh manager needs to load after pso and RS since it initialize material
   // types
@@ -217,11 +217,11 @@ bool initializeGraphicsDx12(Window *wnd, const uint32_t width, const uint32_t he
 
   MATERIAL_MANAGER->init();
   MATERIAL_MANAGER->loadTypesInFolder(
-      (globals::DATA_SOURCE_PATH + "/materials/types").c_str());
+      frameConcatenation(globals::DATA_SOURCE_PATH , "/materials/types"));
 
   globals::DEBUG_FRAME_DATA = new globals::DebugFrameData();
 
-  bool isHeadless = (wnd == nullptr) | (width == 0) | (height == 0);
+  const bool isHeadless = (wnd == nullptr) | (width == 0) | (height == 0);
 
   if (!isHeadless) {
     // init swap chain
@@ -296,6 +296,8 @@ bool stopGraphicsDx12() {
   return true;
 }
 bool newFrameDx12() {
+  globals::STRING_POOL->resetFrameMemory();
+  globals::FRAME_ALLOCATOR->reset();
   // here we need to check which frame resource we are going to use
   dx12::CURRENT_FRAME_RESOURCE = &dx12::FRAME_RESOURCES[globals::CURRENT_FRAME];
 
@@ -303,9 +305,9 @@ bool newFrameDx12() {
   if (dx12::CURRENT_FRAME_RESOURCE->fence != 0 &&
       dx12::GLOBAL_FENCE->GetCompletedValue() <
           dx12::CURRENT_FRAME_RESOURCE->fence) {
-    HANDLE eventHandle =
+	  const HANDLE eventHandle =
         CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
-    auto handleResult = dx12::GLOBAL_FENCE->SetEventOnCompletion(
+	  const auto handleResult = dx12::GLOBAL_FENCE->SetEventOnCompletion(
         dx12::CURRENT_FRAME_RESOURCE->fence, eventHandle);
     assert(SUCCEEDED(handleResult));
     WaitForSingleObject(eventHandle, INFINITE);
@@ -324,7 +326,7 @@ bool newFrameDx12() {
   auto *commandList = dx12::CURRENT_FRAME_RESOURCE->fc.commandList;
   D3D12_RESOURCE_BARRIER rtbarrier[1];
 
-  TextureHandle backBufferH = dx12::SWAP_CHAIN->currentBackBufferTexture();
+  const TextureHandle backBufferH = dx12::SWAP_CHAIN->currentBackBufferTexture();
   int rtcounter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
       backBufferH, D3D12_RESOURCE_STATE_RENDER_TARGET, rtbarrier, 0);
   if (rtcounter != 0) {
@@ -336,15 +338,6 @@ bool newFrameDx12() {
   commandList->RSSetViewports(1, dx12::SWAP_CHAIN->getViewport());
   commandList->RSSetScissorRects(1, dx12::SWAP_CHAIN->getScissorRect());
 
-  // Clear the back buffer and depth buffer.
-  // commandList->ClearRenderTargetView(dx12::SWAP_CHAIN->currentBackBufferView(),
-  //                                   gray, 0, nullptr);
-  // dx12::SWAP_CHAIN->clearDepth();
-  // dx12::SwapChain *swapChain = dx12::SWAP_CHAIN;
-  //// Specify the buffers we are going to render to.
-  // auto back = swapChain -> currentBackBufferView();
-  // auto depth = swapChain -> getDepthCPUDescriptor();
-  // commandList->OMSetRenderTargets(1, &back, true, &depth);
   auto *heap = dx12::GLOBAL_CBV_SRV_UAV_HEAP->getResource();
   commandList->SetDescriptorHeaps(1, &heap);
 
@@ -374,4 +367,4 @@ bool dispatchFrameDx12() {
   globals::CURRENT_FRAME = (globals::CURRENT_FRAME + 1) % FRAME_BUFFERS_COUNT;
   return true;
 }
-} // namespace SirEngine::dx12
+}  // namespace SirEngine::dx12

@@ -40,7 +40,7 @@ void Graphics3DLayer::onAttach() {
     dx12::resetAllocatorAndList(currentFc);
   }
 
-  globals::ASSET_MANAGER->loadScene(globals::START_SCENE_PATH.c_str());
+  globals::ASSET_MANAGER->loadScene(globals::START_SCENE_PATH);
   dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE, currentFc);
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
 
@@ -104,7 +104,7 @@ void Graphics3DLayer::onDetach() {}
 void Graphics3DLayer::onUpdate() {
   // setting up camera for the frame
   globals::CONSTANT_BUFFER_MANAGER->processBufferedData();
-  globals::RENDERING_CONTEX->setupCameraForFrame();
+  globals::RENDERING_CONTEXT->setupCameraForFrame();
   // evaluating rendering graph
   dx12::RENDERING_GRAPH->compute();
 

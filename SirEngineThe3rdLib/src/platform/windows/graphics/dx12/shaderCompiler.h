@@ -30,7 +30,7 @@ class SIR_ENGINE_API DXCShaderCompiler {
 public:
   DXCShaderCompiler();
   ~DXCShaderCompiler();
-  ID3DBlob *compileShader(const std::string &shaderPath,
+  ID3DBlob *compileShader(const char* shaderPath,
                            const ShaderArgs &shaderArgs,
                            std::string *log = nullptr);
   unsigned int getShaderFlags(const ShaderArgs &shaderArgs);

@@ -112,7 +112,7 @@ void SimpleForward::compute() {
 
   //
   commandList->SetGraphicsRootSignature(rs);
-  globals::RENDERING_CONTEX->bindCameraBuffer(0);
+  globals::RENDERING_CONTEXT->bindCameraBuffer(0);
 
   /*
   for (uint32_t i = 0; i < meshCount; ++i) {
