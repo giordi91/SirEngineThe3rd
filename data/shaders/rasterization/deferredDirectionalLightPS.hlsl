@@ -261,7 +261,8 @@ float4 PBRLighting(FullScreenVertexOut input) {
 	float tdot = pow(saturate(dot(toEyeDir, light)), translucencyPower) * translucencyScale;
 	float t = gbd.thickness;
 	float b = -2.0f;
-	float thickness = 1 / ( 1 + pow(t/(1-t),b));
+	//float thickness = 1 / ( 1 + pow(t/(1-t),b));
+	float thickness = t;
 	float translucency =   (tdot + tAmbient )*thickness ;
 
 	float3 lightScatterColor = g_dirLight.lightColor;
