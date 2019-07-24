@@ -22,7 +22,7 @@ class SIR_ENGINE_API TextureManagerDx12 final : public TextureManager {
     DescriptorPair srv;
     DescriptorPair rtsrv;
     DescriptorPair uav;
-    DescriptorPair srvStencil;
+    DescriptorPair dsvStencil;
   };
 
 public:
@@ -71,7 +71,7 @@ public:
   DescriptorPair getSRVDx12(const TextureHandle handle) {
 
     assertMagicNumber(handle);
-    uint32_t index = getIndexFromHandle(handle);
+    const uint32_t index = getIndexFromHandle(handle);
     const TextureData &data = m_texturePool.getConstRef(index);
     assert(data.srv.cpuHandle.ptr != 0);
     assert(data.srv.type == DescriptorType::SRV);
@@ -82,7 +82,7 @@ public:
   DescriptorPair getUAVDx12(const TextureHandle handle) {
 
     assertMagicNumber(handle);
-    uint32_t index = getIndexFromHandle(handle);
+    const uint32_t index = getIndexFromHandle(handle);
     const TextureData &data = m_texturePool.getConstRef(index);
     assert(data.uav.cpuHandle.ptr != 0);
     assert(data.uav.type == DescriptorType::UAV);
@@ -99,7 +99,7 @@ public:
   // type so we cannot rely on the format used during allocation.
   DescriptorPair getDSVDx12(const TextureHandle handle) {
     assertMagicNumber(handle);
-    uint32_t index = getIndexFromHandle(handle);
+    const uint32_t index = getIndexFromHandle(handle);
     return m_texturePool[index].srv;
   }
   void freeSRVDx12(const TextureHandle handle,
@@ -111,7 +111,7 @@ public:
   inline DescriptorPair getRTVDx12(const TextureHandle handle) const {
 
     assertMagicNumber(handle);
-    uint32_t index = getIndexFromHandle(handle);
+    const uint32_t index = getIndexFromHandle(handle);
     return m_texturePool.getConstRef(index).rtsrv;
   }
   void freeRTVDx12(const TextureHandle handle,
@@ -134,13 +134,12 @@ public:
                               D3D12_RESOURCE_BARRIER *barriers, int counter) {
 
     assertMagicNumber(handle);
-    uint32_t index = getIndexFromHandle(handle);
+    const uint32_t index = getIndexFromHandle(handle);
     TextureData &data = m_texturePool[index];
 
-    auto state = data.state;
-    if (state != wantedState) {
+    if (data.state!= wantedState) {
       barriers[counter] = CD3DX12_RESOURCE_BARRIER::Transition(
-          data.resource, state, wantedState);
+          data.resource, data.state, wantedState);
       data.state = wantedState;
       ++counter;
     }
@@ -149,8 +148,8 @@ public:
 
 private:
   inline void assertMagicNumber(const TextureHandle handle) const {
-    uint32_t magic = getMagicFromHandle(handle);
-    uint32_t idx = getIndexFromHandle(handle);
+	  const uint32_t magic = getMagicFromHandle(handle);
+	  const uint32_t idx = getIndexFromHandle(handle);
     assert(m_texturePool.getConstRef(idx).magicNumber == magic &&
            "invalid magic handle for constant buffer");
   }

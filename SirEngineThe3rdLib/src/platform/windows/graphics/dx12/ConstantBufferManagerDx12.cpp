@@ -60,7 +60,7 @@ ConstantBufferManagerDx12::allocateDynamic(uint32_t sizeInBytes,
 void ConstantBufferManagerDx12::updateConstantBufferNotBuffered(
     const ConstantBufferHandle handle, void *dataToUpload) {
   assertMagicNumber(handle);
-  uint32_t index = getIndexFromHandle(handle);
+  const uint32_t index = getIndexFromHandle(handle);
   const ConstantBufferData &data =
       m_dynamicStorage[globals::CURRENT_FRAME][index];
 
@@ -72,7 +72,7 @@ void ConstantBufferManagerDx12::updateConstantBufferBuffered(
     const ConstantBufferHandle handle, void *dataToUpload) {
 
   // check if we have any other request for this buffer if so we clear it
-  auto found = m_bufferedRequests.find(handle.handle);
+  const auto found = m_bufferedRequests.find(handle.handle);
   if (found != m_bufferedRequests.end()) {
     // lets clear up the allocation
     m_randomAlloc.freeAllocation(found->second.dataAllocHandle);
@@ -81,8 +81,8 @@ void ConstantBufferManagerDx12::updateConstantBufferBuffered(
   // lets create a new request
   ConstantBufferedData buffRequest;
   assertMagicNumber(handle);
-  uint32_t index = getIndexFromHandle(handle);
-  ConstantBufferData data = m_dynamicStorage[globals::CURRENT_FRAME][index];
+  const uint32_t index = getIndexFromHandle(handle);
+  const ConstantBufferData data = m_dynamicStorage[globals::CURRENT_FRAME][index];
 
   // setting data on the buffer request
   buffRequest.dataAllocHandle = m_randomAlloc.allocate(data.size);

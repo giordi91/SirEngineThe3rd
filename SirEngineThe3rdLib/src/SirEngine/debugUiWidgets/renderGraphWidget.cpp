@@ -12,17 +12,19 @@
 #include "SirEngine/application.h"
 #include "SirEngine/events/debugEvent.h"
 #include "SirEngine/globals.h"
+#include "SirEngine/graphics/postProcess/effects/SSSSSEffect.h"
 #include "SirEngine/graphics/postProcess/effects/gammaAndToneMappingEffect.h"
 #include "SirEngine/graphics/postProcess/postProcessStack.h"
 
 namespace SirEngine {
 namespace debug {
 
-enum class PostProcessTypeDebug { NONE, GAMMA_TONE_MAPPING };
+enum class PostProcessTypeDebug { NONE, GAMMA_TONE_MAPPING, SSSSS };
 
 const std::unordered_map<std::string, PostProcessTypeDebug>
-    POST_PROCESS_TYPE_TO_ENUM{{"GammaAndToneMappingEffect",
-                               PostProcessTypeDebug::GAMMA_TONE_MAPPING}};
+    POST_PROCESS_TYPE_TO_ENUM{
+        {"GammaAndToneMappingEffect", PostProcessTypeDebug::GAMMA_TONE_MAPPING},
+        {"SSSSS", PostProcessTypeDebug::SSSSS}};
 
 PostProcessTypeDebug getPostProcessDebugType(const std::string &name) {
   const auto found = POST_PROCESS_TYPE_TO_ENUM.find(name);
@@ -456,10 +458,9 @@ void RenderGraphWidget::render() {
   if (currentDebugLayer == 7) {
     generateDebugEvent =
         ImGui::InputInt("stencilValue", &m_debugConfig.stencilValue);
-	if(generateDebugEvent) {
-    
-	SE_CORE_INFO(generateDebugEvent);
-        }
+    if (generateDebugEvent) {
+      SE_CORE_INFO(generateDebugEvent);
+    }
   }
 
   // lets render post process stack configuration
@@ -487,6 +488,22 @@ void RenderGraphWidget::render() {
                 typedEffect->setConfigDirty();
               }
 
+              break;
+            }
+            case (PostProcessTypeDebug::SSSSS): {
+              auto *typedEffect = (SSSSSEffect *)(effect);
+              SSSSSConfig &config = typedEffect->getConfig();
+              const bool sssLevel =
+                  ImGui::SliderFloat("sssLevel", &config.sssLevel, 0.0f, 60.0f);
+              const bool maxdd =
+                  ImGui::SliderFloat("maxdd", &config.maxdd, 0.0f, 1.0f);
+              const bool correction = ImGui::SliderFloat(
+                  "correction", &config.correction, 0.0f, 2000.0f);
+              const bool width =
+                  ImGui::SliderFloat("width", &config.width, 0.0f, 10.0f);
+              if (sssLevel | maxdd | correction | width) {
+                typedEffect->setConfigDirty();
+              }
               break;
             }
             default:;
