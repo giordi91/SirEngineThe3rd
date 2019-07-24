@@ -100,11 +100,13 @@ void blitStencilDebug(const TextureHandle input,
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
 
+  // TODO the input should be the depth, there should be
+  // no need for us to get it directly
   TextureHandle depth = globals::DEBUG_FRAME_DATA->gbufferDepth;
   D3D12_RESOURCE_BARRIER barriers[2];
   int counter = 0;
-  float black[4] ={0.0f,0.0f,0.0f,1.0f};
-  globals::TEXTURE_MANAGER->clearRT(handleToWriteOn,black);
+  float black[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+  globals::TEXTURE_MANAGER->clearRT(handleToWriteOn, black);
 
   counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
       depth, D3D12_RESOURCE_STATE_DEPTH_WRITE, barriers, counter);
@@ -295,7 +297,7 @@ void DebugNode::initialize() {
   m_reduceBufferHandle = globals::BUFFER_MANAGER->allocate(
       sizeof(ReducedDepth), nullptr, "depthDebugReduce", 1,
       sizeof(ReducedDepth), true);
-  m_config.stencilValue =1;
+  m_config.stencilValue = 1;
 }
 
 void DebugNode::compute() {

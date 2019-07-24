@@ -53,5 +53,10 @@ struct ReducedDepth {
 };
 
 struct SSSSSConfig {
+	float sssLevel;
+	float correction;
+	float maxdd;
+	float width;
+	float2 direction;
 };
 #endif

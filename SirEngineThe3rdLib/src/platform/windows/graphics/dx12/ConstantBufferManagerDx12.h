@@ -22,7 +22,7 @@ public:
                                                void *data = nullptr) override;
 
   inline DescriptorPair
-  getConstantBufferDx12Handle(ConstantBufferHandle handle) {
+  getConstantBufferDx12Handle(const ConstantBufferHandle handle) {
 
     // making sure the resource has not been de-allocated
     assertMagicNumber(handle);
@@ -34,7 +34,7 @@ public:
   }
 
   inline D3D12_GPU_VIRTUAL_ADDRESS
-  getVirtualAddress(ConstantBufferHandle handle) {
+  getVirtualAddress(const ConstantBufferHandle handle) {
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
     return m_dynamicStorage[globals::CURRENT_FRAME][index]

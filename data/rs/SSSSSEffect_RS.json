@@ -1,52 +1,67 @@
 {
-    "SSSSSEffect_RS": {
-      "type": "RASTER",
-      "staticSamplers" : true,
-      "config": [
-        {
-          "type": "descriptorTable",
-          "data": {
-            "numberDescriptor": "1",
-            "ranges": [
-              {
-                "type": "CBV",
-                "numDescriptors": 1,
-                "baseRegister": 0
-              }
-            ]
-          },
-          "visibility": "ALL"
+  "SSSSSEffect_RS": {
+    "type": "RASTER",
+    "staticSamplers": true,
+    "config": [
+      {
+        "type": "descriptorTable",
+        "data": {
+          "numberDescriptor": "1",
+          "ranges": [
+            {
+              "type": "CBV",
+              "numDescriptors": 1,
+              "baseRegister": 0
+            }
+          ]
         },
-        {
-          "comment": "input texture",
-          "type": "descriptorTable",
-          "data": {
-            "numberDescriptor": "1",
-            "ranges": [
-              {
-                "type": "SRV",
-                "numDescriptors": 1,
-                "baseRegister": 0
-              }
-            ]
-          }
-        },
-        {
-          "comment": "depth texture",
-          "type": "descriptorTable",
-          "data": {
-            "numberDescriptor": "1",
-            "ranges": [
-              {
-                "type": "SRV",
-                "numDescriptors": 1,
-                "baseRegister": 1
-              }
-            ]
-          }
+        "visibility": "ALL"
+      },
+      {
+        "comment": "input texture",
+        "type": "descriptorTable",
+        "data": {
+          "numberDescriptor": "1",
+          "ranges": [
+            {
+              "type": "SRV",
+              "numDescriptors": 1,
+              "baseRegister": 0
+            }
+          ]
         }
+      },
+      {
+        "comment": "depth texture",
+        "type": "descriptorTable",
+        "data": {
+          "numberDescriptor": "1",
+          "ranges": [
+            {
+              "type": "SRV",
+              "numDescriptors": 1,
+              "baseRegister": 1
+            }
+          ]
+        }
+      },
+      {
+        "comment": "configuration",
+        "type": "descriptorTable",
+        "data": {
+          "numberDescriptor": "1",
+          "ranges": [
+            {
+              "type": "CBV",
+              "numDescriptors": 1,
+              "baseRegister": 1
+            }
+          ]
+        },
+        "visibility": "ALL"
+      }
 
-      ],
-      "flags": []
-    }
+    ],
+    "flags": []
+  }
 }
