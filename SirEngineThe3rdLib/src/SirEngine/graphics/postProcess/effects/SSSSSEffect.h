@@ -44,9 +44,9 @@ class SSSSSEffect final : public PostProcessEffect {
   SSSSSConfig m_config{};
   SSSSSConfig m_configW{};
   SSSSSConfig m_configH{};
-  bool m_updateConfig;
-  ConstantBufferHandle m_constantBufferHandleW;
-  ConstantBufferHandle m_constantBufferHandleH;
+  bool m_updateConfig =false;
+  ConstantBufferHandle m_constantBufferHandleW{};
+  ConstantBufferHandle m_constantBufferHandleH{};
 };
 
 }  // namespace SirEngine
