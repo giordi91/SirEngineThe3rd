@@ -33,8 +33,8 @@
       "material": "../data/materials/flatGround.json"
     },
     {
-      "mesh": "../data/processed/meshes/knightB/eyeBalls.model",
-      "material": "../data/materials/knightBEyeBalls.json"
+      "mesh": "../data/processed/meshes/knightB/eyeNew.model",
+      "material": "../data/materials/eyeMaterial.json"
     }
   ]
 }
