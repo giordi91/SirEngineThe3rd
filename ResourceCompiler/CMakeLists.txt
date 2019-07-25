@@ -26,6 +26,7 @@ project(ResourceCompiler)
 	file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin/data/processed/meshes)
 	file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin/data/processed/meshes/flatGround)
 	file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin/data/processed/meshes/knightB)
+	file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin/data/processed/meshes/eye)
 
 	file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin/data/processed/rs)
 	file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin/data/processed/shaders)
@@ -35,6 +36,7 @@ project(ResourceCompiler)
 	file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin/data/processed/textures/cerberus)
 	file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin/data/processed/textures/flatGround)
 	file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin/data/processed/textures/knightB)
+	file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin/data/processed/textures/eye)
 
 	#making sure to add the common cpp flags, that are defined in the main cpp file
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_CXX_FLAGS}")

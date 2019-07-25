@@ -1,6 +1,15 @@
 {
   "commands": 
     [
-      "-p ../data/shaders/compute/depthMinMaxReduce.hlsl -o ../data/processed/shaders/compute/depthMinMaxReduce.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t cs_6_2  -e CS -d -c \"/D AMD\" \""
+      "-p ../data/shaders/rasterization/deferredDirectionalLightPS.hlsl -o ../data/processed/shaders/rasterization/deferredDirectionalLightPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
+      "-p ../data/textures/empty_N.png -o ../data/processed/textures/empty_N.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\"",
+      "-p ../data/textures/zeroDotOne.png -o ../data/processed/textures/zeroDotOne.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1  -m\"",
+      "-p ../data/external/textures/knightB/face_SCATTER.png -o ../data/processed/textures/knightB/face_SCATTER.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\"",
+      "-p ../data/external/textures/knightB/eye_A.png -o ../data/processed/textures/knightB/eye_A.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1  -g -m\"",
+      "-p ../data/external/textures/eye/eye_A.png -o ../data/processed/textures/eye/eye_A.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1  -g -m\"",
+      "-p ../data/external/textures/eye/eye_N.png -o ../data/processed/textures/eye/eye_N.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5   -m\"",
+      "-p ../data/external/meshes/knightB/eyeBalls.obj -o ../data/processed/meshes/knightB/eyeBalls.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/eyeBalls.tangents\"",
+      "-p ../data/external/meshes/knightB/eyeCornea.obj -o ../data/processed/meshes/knightB/eyeCornea.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/eyeCornea.tangents\"",
+      "-p ../data/external/meshes/eye/eye.obj -o ../data/processed/meshes/eye/eye.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/eye/eye.tangents\""
     ]
 }

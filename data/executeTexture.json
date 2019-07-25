@@ -30,6 +30,8 @@
       "-p ../data/external/textures/knightB/sword_N.png -o ../data/processed/textures/knightB/sword_N.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\"",
       "-p ../data/external/textures/knightB/sword_M.png -o ../data/processed/textures/knightB/sword_M.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\"",
       "-p ../data/external/textures/knightB/sword_R.png -o ../data/processed/textures/knightB/sword_R.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\"",
+      "-p ../data/external/textures/knightB/face_SCATTER.png -o ../data/processed/textures/knightB/face_SCATTER.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\"",
+      "-p ../data/external/textures/knightB/eye_A.png -o ../data/processed/textures/knightB/eye_A.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1  -m\"",
 
       "-p ../data/external/textures/flatGround/stone_A.png -o ../data/processed/textures/flatGround/stone_A.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1 -g -m\"",
       "-p ../data/external/textures/flatGround/stone_N.png -o ../data/processed/textures/flatGround/stone_N.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\"",
@@ -40,6 +42,9 @@
       "-p ../data/textures/rust.bmp -o ../data/processed/textures/rust.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1 -g -m\"",
       "-p ../data/textures/normal.bmp -o ../data/processed/textures/normal.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\"",
       "-p ../data/textures/metallic.bmp -o ../data/processed/textures/metallic.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1  -m\"",
-      "-p ../data/textures/roughness.bmp -o ../data/processed/textures/roughness.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1  -m\""
+      "-p ../data/textures/roughness.bmp -o ../data/processed/textures/roughness.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1  -m\"",
+      "-p ../data/textures/empty_N.png -o ../data/processed/textures/empty_N.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1  -m\"",
+      "-p ../data/textures/white.png -o ../data/processed/textures/white.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1  -m\"",
+      "-p ../data/textures/black.png -o ../data/processed/textures/black.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1  -m\""
     ]
 }

@@ -31,6 +31,10 @@
     {
       "mesh": "../data/processed/meshes/flatGround/flatGround.model",
       "material": "../data/materials/flatGround.json"
+    },
+    {
+      "mesh": "../data/processed/meshes/knightB/eyeBalls.model",
+      "material": "../data/materials/knightBEyeBalls.json"
     }
   ]
 }

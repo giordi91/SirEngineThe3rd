@@ -1,4 +1,4 @@
 {
   "dataSource" :  "../data",
-  "startingScene":  "../data/scenes/knightBOutdoorScene.json" 
+  "startingScene":  "../data/scenes/eyeOutdoorScene.json" 
 }

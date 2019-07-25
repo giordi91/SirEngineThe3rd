@@ -196,8 +196,10 @@ float4 PBRLighting(FullScreenVertexOut input) {
     float3 F0 = 0.04f;
 
 	float3 albedo =gbd.color; 
-	float metallic = gbd.metallic;
+	float metallic = gbd.metallic ;
 	float roughness = gbd.roughness;
+	metallic = 0.0f;
+	roughness = 0.05f;
     //float3 albedo = float3(0.8f, 0.0f, 0.0f);
 	//float metallic = 0.8f;
 	//float roughness = 0.1f;
@@ -242,12 +244,13 @@ float4 PBRLighting(FullScreenVertexOut input) {
     float MAX_REFLECTION_LOD = 6.0f;
 	float3 prefilteredColor = skyboxRadianceTexture.SampleLevel(gsamLinearClamp,reflected, roughness* MAX_REFLECTION_LOD).rgb;
         float2 envBRDF = brdfTexture.Sample(gsamLinearClamp, float2(max(dot(normalize(gbd.normal), normalize(toEyeDir)), 0.0), roughness)).rg;
-    float3 specularDiff = prefilteredColor * (F * envBRDF.x + envBRDF.y);
+    float3 specularDiff = prefilteredColor * (F* envBRDF.x + envBRDF.y);
 
 
 
 
-	float3 ambient = kD * diffuse + specularDiff;
+	float3 ambient = (kD * diffuse) + specularDiff;
+	//float3 ambient = 0.0f;
 
     float3 color = ambient + Lo;
 
@@ -272,7 +275,7 @@ float4 PBRLighting(FullScreenVertexOut input) {
 
 
     //float3 color = irradiance*kD;
-    //return float4(prefilteredColor, 1.0f);
+    //return float4(, 1.0f);
     //return float4(F, 1.0f);
     //return float4(F, 1.0f);
     //return float4(envBRDF,0.0f, 1.0f);

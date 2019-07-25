@@ -111,7 +111,8 @@ void SSSSSEffect::render(const TextureHandle input, const TextureHandle output,
     commandList->ResourceBarrier(counter, barriers);
   }
 
-  dx12::TEXTURE_MANAGER->bindRenderTarget(input, resources.depth);
+  dx12::TEXTURE_MANAGER->bindRenderTargetStencil(input, resources.depth);
+  //dx12::TEXTURE_MANAGER->bindRenderTarget(input, resources.depth);
   dx12::PSO_MANAGER->bindPSO(pso, commandList);
   commandList->SetGraphicsRootSignature(rs);
   globals::RENDERING_CONTEXT->bindCameraBuffer(0);
