@@ -10,6 +10,7 @@
       "-p ../data/external/textures/eye/eye_N.png -o ../data/processed/textures/eye/eye_N.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5   -m\"",
       "-p ../data/external/meshes/knightB/eyeBalls.obj -o ../data/processed/meshes/knightB/eyeBalls.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/eyeBalls.tangents\"",
       "-p ../data/external/meshes/knightB/eyeCornea.obj -o ../data/processed/meshes/knightB/eyeCornea.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/eyeCornea.tangents\"",
-      "-p ../data/external/meshes/eye/eye.obj -o ../data/processed/meshes/eye/eye.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/eye/eye.tangents\""
+      "-p ../data/external/meshes/eye/eye.obj -o ../data/processed/meshes/eye/eye.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/eye/eye.tangents\"",
+      "-p ../data/external/meshes/knightB/eyeNew.obj -o ../data/processed/meshes/knightB/eyeNew.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/eyeNew.tangents\""
     ]
 }

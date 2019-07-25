@@ -25,7 +25,7 @@ inline float ConvertZToLinearDepth(float depth) {
 float4 PS(VertexOut pin) : SV_Target {
   float w[7] = {0.006, 0.061, 0.242, 0.382, 0.242, 0.061, 0.006};
 
-  float2 pixelSize = float2(1.0f, 1.0f) / float2(1280.0f, 720.0f);
+  float2 pixelSize = float2(1.0f, 1.0f) / float2(g_camera.screenWidth, g_camera.screenHeight);
 
   float depth = ( depthTex.Sample(gsamPointClamp, pin.uv).r);
   depth = ConvertZToLinearDepth(depth); 
