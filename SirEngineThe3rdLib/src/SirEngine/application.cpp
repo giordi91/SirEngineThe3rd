@@ -12,7 +12,7 @@
 
 namespace SirEngine {
 
-static const std::string CONFIG_PATH = "engineConfig.json";
+static const std::string CONFIG_PATH = "../data/engineConfig.json";
 static const std::string CONFIG_DATA_SOURCE_KEY = "dataSource";
 static const std::string CONFIG_STARTING_SCENE_KEY = "startingScene";
 static const std::string DEFAULT_STRING = "";

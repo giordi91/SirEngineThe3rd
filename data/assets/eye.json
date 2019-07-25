@@ -1,0 +1,9 @@
+{
+  "subAssets" : [
+    {
+      "mesh": "../data/processed/meshes/eye/eye.model",
+      "material": "../data/materials/eyeMaterial.json"
+    }
+
+  ]
+}
