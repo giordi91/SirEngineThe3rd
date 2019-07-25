@@ -38,13 +38,13 @@ float4 PS(VertexOut pin) : SV_Target {
   float4 color = float4(0.0f, 0.0f, 0.0f, 1.0f);
   for (int i = 0; i < 7; ++i) {
     float3 tap = sourceTexture.Sample(gsamLinearClamp, offset).rgb;
-    //color.rgb += w[i] * tap;
-    color.rgb += (1.0f/7.0f) * tap;
+    color.rgb += w[i] * tap;
+    //color.rgb += (1.0f/7.0f) * tap;
     offset += finalWidth / 3.0f;
   }
 
-  float3 red = float3(1,0,0);
-  float3 green = float3(0,1,0);
+  //float3 red = float3(1,0,0);
+  //float3 green = float3(0,1,0);
   //color.rgb = s_x.y > 20.0f ? red : green;
   //color.rgb = float3(finalWidth,0)*20.0f;
   //color.rgb = sourceTexture.Sample(gsamLinearClamp, pin.uv).rgb;

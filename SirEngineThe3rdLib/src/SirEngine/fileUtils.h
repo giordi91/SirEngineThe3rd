@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <exception>
 
 #if GRAPHICS_API == DX12
 #include <DirectXMath.h>
@@ -88,14 +89,14 @@ inline nlohmann::json getJsonObj(std::string path) {
 
     try {
       // try to parse
-      nlohmann::json j_obj = nlohmann::json::parse(sBuffStr);
-      return j_obj;
+      nlohmann::json jObj = nlohmann::json::parse(sBuffStr);
+      return jObj;
     } catch (...) {
       // if not lets throw an error
       std::cout << "ERROR, in parsing json file at path: \n"
                 << path << std::endl;
       auto ex = std::current_exception();
-      ex._RethrowException();
+	  std::rethrow_exception(ex);
     }
   } else {
     assert(0);
