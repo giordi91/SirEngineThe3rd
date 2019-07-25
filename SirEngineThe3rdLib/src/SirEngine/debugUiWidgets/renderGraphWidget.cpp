@@ -478,7 +478,8 @@ void RenderGraphWidget::render() {
         if (ImGui::CollapsingHeader(effect->getName())) {
           switch (type) {
             case (PostProcessTypeDebug::GAMMA_TONE_MAPPING): {
-              auto *typedEffect = (GammaAndToneMappingEffect *)(effect);
+              auto *typedEffect =
+	              dynamic_cast<GammaAndToneMappingEffect *>(effect);
               GammaToneMappingConfig &config = typedEffect->getConfig();
               const bool exposure =
                   ImGui::SliderFloat("exposure", &config.exposure, 0.0f, 10.0f);
@@ -491,7 +492,7 @@ void RenderGraphWidget::render() {
               break;
             }
             case (PostProcessTypeDebug::SSSSS): {
-              auto *typedEffect = (SSSSSEffect *)(effect);
+              auto *typedEffect = dynamic_cast<SSSSSEffect *>(effect);
               SSSSSConfig &config = typedEffect->getConfig();
               const bool sssLevel =
                   ImGui::SliderFloat("sssLevel", &config.sssLevel, 0.0f, 60.0f);
