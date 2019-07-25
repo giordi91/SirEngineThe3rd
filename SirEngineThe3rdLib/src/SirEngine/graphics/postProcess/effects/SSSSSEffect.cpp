@@ -18,7 +18,7 @@ SSSSSEffect::SSSSSEffect(const char *name) : PostProcessEffect(name, "SSSSS") {
   m_config.correction = 800.0f;
   m_config.maxdd = 0.001f;
   m_config.sssLevel = 31.5f;
-  m_config.width = 0.1f;
+  m_config.width = 0.25f;
 
   m_configW.direction.x = 1.0f;
   m_configW.direction.y = 0.0f;
