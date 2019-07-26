@@ -92,10 +92,10 @@ MeshHandle MeshManager::loadMesh(const char *path, MeshRuntime *meshRuntime) {
   MeshHandle handle;
   const auto found = m_nameToHandle.find(name);
   if (found == m_nameToHandle.end()) {
-    std::vector<char> bindaryData;
-    readAllBytes(path, bindaryData);
+    std::vector<char> binaryData;
+    readAllBytes(path, binaryData);
 
-    const auto mapper = getMapperData<ModelMapperData>(bindaryData.data());
+    const auto mapper = getMapperData<ModelMapperData>(binaryData.data());
 
     const uint32_t stride = mapper->strideInByte / sizeof(float);
     // creating the buffers
@@ -103,10 +103,10 @@ MeshHandle MeshManager::loadMesh(const char *path, MeshRuntime *meshRuntime) {
     const uint32_t indexCount = mapper->indexDataSizeInByte / sizeof(int);
 
     // lets get the vertex data
-    auto *vertexData = reinterpret_cast<float *>(bindaryData.data() +
+    auto *vertexData = reinterpret_cast<float *>(binaryData.data() +
                                                  sizeof(BinaryFileHeader));
     auto *indexData =
-        reinterpret_cast<int *>(bindaryData.data() + sizeof(BinaryFileHeader) +
+        reinterpret_cast<int *>(binaryData.data() + sizeof(BinaryFileHeader) +
                                 mapper->vertexDataSizeInByte);
 
     // upload the data on the GPU

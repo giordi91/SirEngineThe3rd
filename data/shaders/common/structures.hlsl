@@ -28,8 +28,8 @@ struct PhongMaterial {
   // TODO pad shiness into ka.w
   float shiness;
   float reflective;
-  float padding2;
-  float padding3;
+  float roughnessMult;
+  float metallicMult;
 };
 
 struct DebugLayerConfig {
