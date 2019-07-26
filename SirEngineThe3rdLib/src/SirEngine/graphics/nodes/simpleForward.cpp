@@ -15,6 +15,13 @@ static const char *SIMPLE_FORWARD_PSO = "simpleMeshPSOTex";
 SimpleForward::SimpleForward(const char *name)
     : GraphNode(name, "SimpleForward") {
   // lets create the plugs
+  Plug inTexture;
+  inTexture.plugValue = 0;
+  inTexture.flags = PlugFlags::PLUG_INPUT| PlugFlags::PLUG_TEXTURE;
+  inTexture.nodePtr = this;
+  inTexture.name = "inTexture";
+  registerPlug(inTexture);
+
   Plug outTexture;
   outTexture.plugValue = 0;
   outTexture.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
@@ -22,27 +29,21 @@ SimpleForward::SimpleForward(const char *name)
   outTexture.name = "outTexture";
   registerPlug(outTexture);
 
+  Plug depthBuffer;
+  depthBuffer.plugValue = 0;
+  depthBuffer.flags = PlugFlags::PLUG_INPUT| PlugFlags::PLUG_TEXTURE;
+  depthBuffer.nodePtr = this;
+  depthBuffer.name = "depthTexture";
+  registerPlug(depthBuffer);
+
   // lets create the plugs
-  Plug matrices;
-  matrices.plugValue = 0;
-  matrices.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_CPU_BUFFER;
-  matrices.nodePtr = this;
-  matrices.name = "matrices";
-  registerPlug(matrices);
+  Plug stream;
+  stream.plugValue = 0;
+  stream.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_CPU_BUFFER;
+  stream.nodePtr = this;
+  stream.name = "assetStream";
+  registerPlug(stream);
 
-  Plug meshes;
-  meshes.plugValue = 0;
-  meshes.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_MESHES;
-  meshes.nodePtr = this;
-  meshes.name = "meshes";
-  registerPlug(meshes);
-
-  Plug materials;
-  materials.plugValue = 0;
-  materials.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_CPU_BUFFER;
-  materials.nodePtr = this;
-  materials.name = "materials";
-  registerPlug(materials);
 
   // fetching root signature
   rs =
@@ -51,89 +52,98 @@ SimpleForward::SimpleForward(const char *name)
 }
 
 void SimpleForward::initialize() {
-  // we need to allocate a render target that we can use for the forward
-  // dx12::TEXTURE_MANAGER->
-  m_renderTarget = globals::TEXTURE_MANAGER->allocateRenderTexture(
-      globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT, RenderTargetFormat::RGBA32,
-      "simpleForwardRT");
 
-  // to do move function to interface
-  m_depth = dx12::TEXTURE_MANAGER->createDepthTexture(
-      "simpleForwardRTDepth", globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT);
+}
+inline StreamHandle
+getInputConnection(std::unordered_map<const Plug *, std::vector<Plug *>> &conns,
+                   Plug *plug) {
+  // TODO not super safe to do this, might be worth improving this
+  auto &inConns = conns[plug];
+  assert(inConns.size() == 1 && "too many input connections");
+  Plug *source = inConns[0];
+  const auto h = StreamHandle{source->plugValue};
+  assert(h.isHandleValid());
+  return h;
 }
 
 void SimpleForward::compute() {
 
-  assert(0 && "need to re-implement properly");
-  return;
   annotateGraphicsBegin("Simple Forward");
-  // meshes connections
-  auto &meshConn = m_connections[&m_inputPlugs[1]];
-  assert(meshConn.size() == 1 && "too many input connections");
-  Plug *sourceMeshs = meshConn[0];
-  AssetDataHandle meshH{};
-  meshH.handle = sourceMeshs->plugValue;
-  uint32_t meshCount = 0;
-  // const dx12::MeshRuntime *meshes =
-  //    globals::ASSET_MANAGER->getRuntimeMeshesFromHandle(meshH, meshCount);
 
-  // get materials
-  auto &matsConn = m_connections[&m_inputPlugs[2]];
-  assert(matsConn.size() == 1 && "too many input connections");
-  Plug *sourceMats = matsConn[0];
-  AssetDataHandle matsH;
-  matsH.handle = sourceMats->plugValue;
-  uint32_t matsCount = 0;
-  // const MaterialRuntime *mats =
-  //    globals::ASSET_MANAGER->getRuntimeMaterialsFromHandle(matsH, matsCount);
+  //get input color texture
+  auto &conn = m_connections[&m_inputPlugs[0]];
+  assert(conn.size() == 1 && "too many input connections");
+  Plug *source = conn[0];
+  const TextureHandle renderTarget{source->plugValue};
 
-  assert(matsCount == meshCount);
+  auto &connDepth = m_connections[&m_inputPlugs[1]];
+  assert(connDepth.size() == 1 && "too many input connections");
+  Plug *sourceDepth = connDepth[0];
+  const TextureHandle depth{sourceDepth->plugValue};
+
+  // we can now start to render our geometries, the way it works is you first
+  // access the renderable stream coming in from the node input
+  const StreamHandle streamH =
+      getInputConnection(m_connections, &m_inputPlugs[2]);
+  const std::unordered_map<uint32_t, std::vector<Renderable>> &renderables =
+      globals::ASSET_MANAGER->getRenderables(streamH);
 
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
 
-  dx12::PSO_MANAGER->bindPSO(pso, commandList);
-
-  D3D12_RESOURCE_BARRIER barriers[2];
+  D3D12_RESOURCE_BARRIER barriers[1];
   int counter = 0;
   counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
-      m_depth, D3D12_RESOURCE_STATE_DEPTH_WRITE, barriers, counter);
-  counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
-      m_renderTarget, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, counter);
+      renderTarget, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers,
+      counter);
 
   if (counter) {
     commandList->ResourceBarrier(counter, barriers);
   }
 
-  globals::TEXTURE_MANAGER->clearDepth(m_depth);
-  float color[4] = {0.0f, 0.0f, 0.0f, 1.0f};
-  globals::TEXTURE_MANAGER->clearRT(m_renderTarget, color);
-  globals::TEXTURE_MANAGER->bindRenderTarget(m_renderTarget, m_depth);
+  globals::TEXTURE_MANAGER->bindRenderTarget(renderTarget, depth);
+  //globals::TEXTURE_MANAGER->bindRenderTarget(renderTarget, TextureHandle{});
 
-  //
-  commandList->SetGraphicsRootSignature(rs);
-  globals::RENDERING_CONTEXT->bindCameraBuffer(0);
+  for (const auto &renderableList : renderables) {
+    if (dx12::MATERIAL_MANAGER->isQueueType(renderableList.first,
+                                            SHADER_QUEUE_FLAGS::FORWARD)) {
 
-  /*
-  for (uint32_t i = 0; i < meshCount; ++i) {
+      // now that we know the material goes in the the deferred queue we can
+      // start rendering it
 
-    commandList->SetGraphicsRootDescriptorTable(1, mats[i].albedo);
-    dx12::MESH_MANAGER->bindMeshRuntimeAndRender(meshes[i], currentFc);
+      // bind the corresponding RS and PSO
+      dx12::MATERIAL_MANAGER->bindRSandPSO(renderableList.first, commandList);
+      globals::RENDERING_CONTEXT->bindCameraBuffer(0);
+
+      // this is most for debug, it will boil down to nothing in release
+      const SHADER_TYPE_FLAGS type =
+          dx12::MATERIAL_MANAGER->getTypeFlags(renderableList.first);
+      const std::string &typeName =
+          dx12::MATERIAL_MANAGER->getStringFromShaderTypeFlag(type);
+      annotateGraphicsBegin(typeName.c_str());
+
+      // looping each of the object
+      const size_t count = renderableList.second.size();
+      const Renderable *currRenderables = renderableList.second.data();
+      for (int i = 0; i < count; ++i) {
+        const Renderable &renderable = currRenderables[i];
+
+        // bind material data like textures etc, then render
+        dx12::MATERIAL_MANAGER->bindMaterial(renderable.m_materialRuntime,
+                                             commandList);
+        dx12::MESH_MANAGER->bindMeshRuntimeAndRender(renderable.m_meshRuntime,
+                                                     currentFc);
+      }
+      annotateGraphicsEnd();
+
+    }
   }
-  */
 
-  m_outputPlugs[0].plugValue = m_renderTarget.handle;
+  m_outputPlugs[0].plugValue = renderTarget.handle;
   annotateGraphicsEnd();
 }
 
 void SimpleForward::clear() {
-  if (m_renderTarget.isHandleValid()) {
-    dx12::TEXTURE_MANAGER->free(m_renderTarget);
-    m_renderTarget.handle = 0;
-  }
-  if (m_depth.isHandleValid()) {
-    dx12::TEXTURE_MANAGER->free(m_depth);
-  }
 }
 
 void SimpleForward::onResizeEvent(int, int) {

@@ -21,6 +21,7 @@
 #include "SirEngine/graphics/postProcess/postProcessStack.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/graphics/postProcess/effects/SSSSSEffect.h"
+#include "SirEngine/graphics/nodes/simpleForward.h"
 
 namespace SirEngine {
 
@@ -47,7 +48,7 @@ void Graphics3DLayer::onAttach() {
   dx12::RENDERING_GRAPH = new Graph();
   const auto assetNode = new AssetManagerNode();
   const auto finalBlit = new FinalBlitNode();
-  // auto simpleForward = new SimpleForward("simpleForward");
+  const auto simpleForward = new SimpleForward("simpleForward");
   auto postProcess = new PostProcessStack();
   // auto gbufferPass = new GBufferPass("GBufferPass");
   const auto gbufferPass = new GBufferPassPBR("GBufferPassPBR");
@@ -64,9 +65,9 @@ void Graphics3DLayer::onAttach() {
   // temporary graph for testing
   dx12::RENDERING_GRAPH->addNode(assetNode);
   dx12::RENDERING_GRAPH->addNode(finalBlit);
-  // dx12::RENDERING_GRAPH->addNode(simpleForward);
   dx12::RENDERING_GRAPH->addNode(gbufferPass);
   dx12::RENDERING_GRAPH->addNode(lighting);
+  dx12::RENDERING_GRAPH->addNode(simpleForward);
   dx12::RENDERING_GRAPH->addNode(sky);
   dx12::RENDERING_GRAPH->setFinalNode(finalBlit);
 
@@ -89,9 +90,20 @@ void Graphics3DLayer::onAttach() {
 
   dx12::RENDERING_GRAPH->connectNodes(lighting, "lighting", sky,
                                       "fullscreenPass");
+
   dx12::RENDERING_GRAPH->connectNodes(gbufferPass, "depth", sky, "depth");
 
-  dx12::RENDERING_GRAPH->connectNodes(sky, "buffer", postProcess, "inTexture");
+  //connecting forward
+  dx12::RENDERING_GRAPH->connectNodes(sky, "buffer", simpleForward, "inTexture");
+  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, "depth", simpleForward,
+                                      "depthTexture");
+
+  dx12::RENDERING_GRAPH->connectNodes(simpleForward, "outTexture", postProcess, "inTexture");
+  dx12::RENDERING_GRAPH->connectNodes(assetNode, "assetStream", simpleForward,
+                                      "assetStream");
+
+
+
   dx12::RENDERING_GRAPH->connectNodes(gbufferPass, "depth", postProcess,
                                       "depthTexture");
 

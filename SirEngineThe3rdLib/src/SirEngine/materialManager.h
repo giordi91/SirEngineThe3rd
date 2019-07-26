@@ -68,7 +68,7 @@ enum class SHADER_QUEUE_FLAGS {
   SHADOW = 1 << 2
 };
 
-enum class SHADER_TYPE_FLAGS { UNKNOWN = 0, PBR = 1, SKIN = 2 };
+enum class SHADER_TYPE_FLAGS { UNKNOWN = 0, PBR = 1, SKIN = 2, FORWARD_PBR=3 };
 
 class MaterialManager final {
  public:
@@ -82,7 +82,6 @@ class MaterialManager final {
   void loadTypesInFolder(const char *folder);
   void bindRSandPSO(uint32_t shaderFlags,
                     ID3D12GraphicsCommandList2 *commandList);
-  ;
   MaterialManager(const MaterialManager &) = delete;
   MaterialManager &operator=(const MaterialManager &) = delete;
 
