@@ -13,6 +13,7 @@
       "-p ../data/shaders/rasterization/basicMeshGBufferPS.hlsl -o ../data/processed/shaders/rasterization/basicMeshGBufferPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
       "-p ../data/shaders/rasterization/basicMeshGBufferPBRPS.hlsl -o ../data/processed/shaders/rasterization/basicMeshGBufferPBRPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
       "-p ../data/shaders/rasterization/basicMeshGBufferPBRSkinPS.hlsl -o ../data/processed/shaders/rasterization/basicMeshGBufferPBRSkinPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
+      "-p ../data/shaders/rasterization/basicMeshForwardPBRPS.hlsl -o ../data/processed/shaders/rasterization/basicMeshForwardPBRPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
       "-p ../data/shaders/rasterization/gbufferDebugPS.hlsl -o ../data/processed/shaders/rasterization/gbufferDebugPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
       "-p ../data/shaders/rasterization/stencilDebugPS.hlsl -o ../data/processed/shaders/rasterization/stencilDebugPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
       "-p ../data/shaders/rasterization/normalBufferDebugPS.hlsl -o ../data/processed/shaders/rasterization/normalBufferDebugPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",

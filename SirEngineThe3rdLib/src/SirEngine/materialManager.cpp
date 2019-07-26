@@ -4,6 +4,7 @@
 #include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/TextureManagerDx12.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
+#include "graphics/renderingContext.h"
 
 #if GRAPHICS_API == DX12
 #include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
@@ -124,12 +125,18 @@ void bindSkin(const MaterialRuntime &materialRuntime,
 }
 void bindForwardPBR(const MaterialRuntime &materialRuntime,
              ID3D12GraphicsCommandList2 *commandList) {
+
+  const ConstantBufferHandle lightCB= globals::RENDERING_CONTEXT->getLightCB();
+  const auto address = dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(lightCB);
+
   commandList->SetGraphicsRootConstantBufferView(
-      1, materialRuntime.cbVirtualAddress);
-  commandList->SetGraphicsRootDescriptorTable(2, materialRuntime.albedo);
-  commandList->SetGraphicsRootDescriptorTable(3, materialRuntime.normal);
-  commandList->SetGraphicsRootDescriptorTable(4, materialRuntime.metallic);
-  commandList->SetGraphicsRootDescriptorTable(5, materialRuntime.roughness);
+      1, address);
+  commandList->SetGraphicsRootConstantBufferView(
+      2, materialRuntime.cbVirtualAddress);
+  commandList->SetGraphicsRootDescriptorTable(3, materialRuntime.albedo);
+  commandList->SetGraphicsRootDescriptorTable(4, materialRuntime.normal);
+  commandList->SetGraphicsRootDescriptorTable(5, materialRuntime.metallic);
+  commandList->SetGraphicsRootDescriptorTable(6, materialRuntime.roughness);
 }
 
 void MaterialManager::bindMaterial(const MaterialRuntime &materialRuntime,

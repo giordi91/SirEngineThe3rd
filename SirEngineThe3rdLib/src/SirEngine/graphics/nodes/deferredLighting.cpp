@@ -64,14 +64,7 @@ void DeferredLightingPass::initialize() {
       globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT,
       RenderTargetFormat::R16G16B16A16_FLOAT, "lightBuffer");
 
-  float intensity = 4.0f;
-  m_light.lightColor = {intensity, intensity, intensity, 1.0f};
-  m_light.lightDir = {-1.0f, -0.6f, -1.0f, 1.0f};
-  m_light.lightPosition = {10.0f, 10.0f, 10.0f, 10.0f};
-
-  // allocate the constant buffer
-  m_lightCB = globals::CONSTANT_BUFFER_MANAGER->allocateDynamic(
-      sizeof(DirectionalLightData), &m_light);
+  m_lightCB = globals::RENDERING_CONTEXT->getLightCB();
   m_lightAddress = dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(m_lightCB);
 
   m_brdfHandle = globals::TEXTURE_MANAGER->loadTexture(

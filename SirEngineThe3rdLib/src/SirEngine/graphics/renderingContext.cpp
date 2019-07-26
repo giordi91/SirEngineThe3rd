@@ -9,6 +9,15 @@ void RenderingContext::initialize() {
   // ask for the camera buffer handle;
   m_cameraHandle =
       globals::CONSTANT_BUFFER_MANAGER->allocateDynamic(sizeof(CameraBuffer));
+
+  float intensity = 4.0f;
+  m_light.lightColor = {intensity, intensity, intensity, 1.0f};
+  m_light.lightDir = {-1.0f, -0.6f, -1.0f, 1.0f};
+  m_light.lightPosition = {10.0f, 10.0f, 10.0f, 10.0f};
+
+  // allocate the constant buffer
+  m_lightCB = globals::CONSTANT_BUFFER_MANAGER->allocateDynamic(
+      sizeof(DirectionalLightData), &m_light);
 }
 void RenderingContext::setupCameraForFrame() {
   globals::MAIN_CAMERA->updateCamera();

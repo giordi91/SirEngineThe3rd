@@ -31,6 +31,7 @@
       "-p ../data/shaders/rasterization/basicMeshGBufferPS.hlsl -o ../data/processed/shaders/rasterization/basicMeshGBufferPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
       "-p ../data/shaders/rasterization/basicMeshGBufferPBRPS.hlsl -o ../data/processed/shaders/rasterization/basicMeshGBufferPBRPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
       "-p ../data/shaders/rasterization/basicMeshGBufferPBRSkinPS.hlsl -o ../data/processed/shaders/rasterization/basicMeshGBufferPBRSkinPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
+      "-p ../data/shaders/rasterization/basicMeshForwardPBRPS.hlsl -o ../data/processed/shaders/rasterization/basicMeshForwardPBRPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
       "-p ../data/shaders/rasterization/gbufferDebugPS.hlsl -o ../data/processed/shaders/rasterization/gbufferDebugPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
       "-p ../data/shaders/rasterization/stencilDebugPS.hlsl -o ../data/processed/shaders/rasterization/stencilDebugPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
       "-p ../data/shaders/rasterization/normalBufferDebugPS.hlsl -o ../data/processed/shaders/rasterization/normalBufferDebugPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
@@ -64,6 +65,7 @@
       "-p ../data/rs/textureMIPS_RS.json -o ../data/processed/rs/textureMIPS_RS.root --pluginName rootSignatureCompilerPlugin",
       "-p ../data/rs/depthMinMaxReduce_RS.json -o ../data/processed/rs/depthMinMaxReduce_RS.root --pluginName rootSignatureCompilerPlugin",
       "-p ../data/rs/debugFullScreenBlit_RS.json -o ../data/processed/rs/debugFullScreenBlit_RS.root --pluginName rootSignatureCompilerPlugin",
+      "-p ../data/rs/forwardPBRRS.json -o ../data/processed/rs/forwardPBRRS.root --pluginName rootSignatureCompilerPlugin",
         
 
       "-p ../data/external/textures/cerberus/Cerberus_A.tga -o ../data/processed/textures/cerberus/Cerberus_A.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1 -g -m\"",
