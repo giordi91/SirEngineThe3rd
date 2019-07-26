@@ -5,8 +5,7 @@
 namespace SirEngine {
 
 class RenderingContext {
-
-public:
+ public:
   RenderingContext() = default;
   ~RenderingContext() = default;
   void initialize();
@@ -34,13 +33,18 @@ public:
     return m_enviromentMapRadianceHandle;
   }
 
-private:
+  inline ConstantBufferHandle getLightCB() const { return m_lightCB; }
+
+ private:
   // member variable mostly temporary
   CameraBuffer m_camBufferCPU{};
   ConstantBufferHandle m_cameraHandle{};
+  ConstantBufferHandle m_lightBuffer{};
+  ConstantBufferHandle m_lightCB{};
+  DirectionalLightData m_light;
   TextureHandle m_enviromentMapHandle;
   TextureHandle m_enviromentMapIrradianceHandle;
   TextureHandle m_enviromentMapRadianceHandle;
 };
 
-} // namespace SirEngine
+}  // namespace SirEngine

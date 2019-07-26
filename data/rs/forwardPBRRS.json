@@ -20,9 +20,15 @@
           "visibility": "ALL"
         },
         {
-          "comment":  "material buffer", 
+          "comment":  "directionalLight", 
           "type": "CBV",
           "data": { "baseRegister": 1 },
+          "visibility": "ALL"
+        },
+        {
+          "comment":  "material buffer", 
+          "type": "CBV",
+          "data": { "baseRegister": 2 },
           "visibility": "ALL"
         },
         {

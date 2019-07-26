@@ -21,7 +21,6 @@ private:
   TextureHandle m_brdfHandle{};
   ID3D12RootSignature* rs =nullptr;
   PSOHandle pso;
-  DirectionalLightData m_light;
   ConstantBufferHandle m_lightCB;
   D3D12_GPU_VIRTUAL_ADDRESS m_lightAddress;
 };
