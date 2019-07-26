@@ -36,11 +36,13 @@ static const std::unordered_map<std::string, SirEngine::SHADER_QUEUE_FLAGS>
 static const std::unordered_map<std::string, SirEngine::SHADER_TYPE_FLAGS>
     STRING_TO_TYPE_FLAGS{
         {"pbr", SirEngine::SHADER_TYPE_FLAGS::PBR},
+        {"forwardPbr", SirEngine::SHADER_TYPE_FLAGS::FORWARD_PBR},
         {"skin", SirEngine::SHADER_TYPE_FLAGS::SKIN},
     };
 static const std::unordered_map<SirEngine::SHADER_TYPE_FLAGS, std::string>
     TYPE_FLAGS_TO_STRING{
         {SirEngine::SHADER_TYPE_FLAGS::PBR, "pbr"},
+        {SirEngine::SHADER_TYPE_FLAGS::FORWARD_PBR, "forwardPbr"},
         {SirEngine::SHADER_TYPE_FLAGS::SKIN, "skin"},
     };
 
@@ -120,6 +122,15 @@ void bindSkin(const MaterialRuntime &materialRuntime,
   // HARDCODED stencil value might have to think of a nice way to handle this
   commandList->OMSetStencilRef(static_cast<uint32_t>(STENCIL_REF::SSSSS));
 }
+void bindForwardPBR(const MaterialRuntime &materialRuntime,
+             ID3D12GraphicsCommandList2 *commandList) {
+  commandList->SetGraphicsRootConstantBufferView(
+      1, materialRuntime.cbVirtualAddress);
+  commandList->SetGraphicsRootDescriptorTable(2, materialRuntime.albedo);
+  commandList->SetGraphicsRootDescriptorTable(3, materialRuntime.normal);
+  commandList->SetGraphicsRootDescriptorTable(4, materialRuntime.metallic);
+  commandList->SetGraphicsRootDescriptorTable(5, materialRuntime.roughness);
+}
 
 void MaterialManager::bindMaterial(const MaterialRuntime &materialRuntime,
                                    ID3D12GraphicsCommandList2 *commandList) {
@@ -132,6 +143,10 @@ void MaterialManager::bindMaterial(const MaterialRuntime &materialRuntime,
     }
     case (SHADER_TYPE_FLAGS::SKIN): {
       bindSkin(materialRuntime, commandList);
+      break;
+    }
+    case (SHADER_TYPE_FLAGS::FORWARD_PBR): {
+      bindForwardPBR(materialRuntime, commandList);
       break;
     }
     default: {

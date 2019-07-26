@@ -1,0 +1,13 @@
+{
+  "kd" : [1.0,1.0,1.0,1.0],
+  "ks" : [1.0,1.0,1.0,1.0],
+  "ka" : [0.1,0.1,0.1,1.0],
+  "pbr" : [1.0,1.0,0.1,1.0],
+  "shiness":200.0,
+  "albedo" :  "../data/processed/textures/rust.texture",
+  "normal" :  "../data/processed/textures/normal.texture",
+  "roughness" :  "../data/processed/textures/roughness.texture",
+  "metallic" :  "../data/processed/textures/metallic.texture",
+  "queue" :  ["forward"],
+  "type" : "forwardPbr"
+}
