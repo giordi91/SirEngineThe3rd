@@ -198,8 +198,8 @@ float4 PBRLighting(FullScreenVertexOut input) {
 	float3 albedo =gbd.color; 
 	float metallic = gbd.metallic ;
 	float roughness = gbd.roughness;
-	metallic = 0.0f;
-	roughness = 0.05f;
+	//metallic = 0.0f;
+	//roughness = 0.05f;
     //float3 albedo = float3(0.8f, 0.0f, 0.0f);
 	//float metallic = 0.8f;
 	//float roughness = 0.1f;

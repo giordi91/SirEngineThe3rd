@@ -18,6 +18,8 @@ static const char *ALBEDO = "albedo";
 static const char *NORMAL = "normal";
 static const char *METALLIC = "metallic";
 static const char *ROUGHNESS = "roughness";
+static const char *ROUGHNESS_MULT = "roughnessMult";
+static const char *METALLIC_MULT= "metallicMult";
 static const char *THICKNESS = "thickness";
 static const char *QUEUE = "queue";
 static const char *TYPE = "type";
@@ -199,7 +201,10 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   DirectX::XMFLOAT4 ka = getValueIfInJson(jobj, materialKeys::KA, zero);
   DirectX::XMFLOAT4 ks = getValueIfInJson(jobj, materialKeys::KS, zero);
   float zeroFloat = 0.0f;
+  float oneFloat = 1.0f;
   float shininess = getValueIfInJson(jobj, materialKeys::SHINESS, zeroFloat);
+  float roughnessMult= getValueIfInJson(jobj, materialKeys::ROUGHNESS_MULT, oneFloat);
+  float metallicMult= getValueIfInJson(jobj, materialKeys::METALLIC_MULT, oneFloat);
 
   const std::string empty;
   const std::string albedoName =
@@ -258,6 +263,8 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   mat.kSG = ks.y;
   mat.kSB = ks.z;
   mat.shiness = shininess;
+  mat.roughnessMult = roughnessMult;
+  mat.metallicMult= metallicMult;
 
   MaterialDataHandles texHandles{};
   texHandles.albedo = albedoTex;

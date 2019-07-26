@@ -58,8 +58,8 @@ struct Material final {
   float sPadding;
   float shiness;
   float reflective;
-  float padding;
-  float padding2;
+  float roughnessMult;
+  float metallicMult;
 };
 
 enum class SHADER_QUEUE_FLAGS {
