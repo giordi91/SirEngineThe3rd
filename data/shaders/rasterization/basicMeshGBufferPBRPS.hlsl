@@ -58,9 +58,9 @@ PS_GBUFFER_OUT PS(FullMeshVertexOut input) {
 
   // sampling PBR textures
   float metallic =
-      metallicTex.Sample(gsamLinearClamp, uv).xyz * g_material.metallicMult;
+      metallicTex.Sample(gsamLinearClamp, uv).x* g_material.metallicMult;
   float roughness =
-      roughnessTex.Sample(gsamLinearClamp, uv).xyz * g_material.roughnessMult;
+      roughnessTex.Sample(gsamLinearClamp, uv).x* g_material.roughnessMult;
 
   return PackGBuffer(DiffuseColor, normal, g_material.ks.x, metallic, roughness,
                      g_material.shiness);

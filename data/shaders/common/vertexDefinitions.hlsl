@@ -26,6 +26,7 @@ struct PosNormalVertexOut
 struct FullMeshVertexOut
 {
 	float4 PosH  : SV_POSITION;
+	float4 worldPos: POSITION;
 	float2 uv :TEXCOORD;
     float3 Normal: NORMAL;
     float3 tangent: TANGENTS;

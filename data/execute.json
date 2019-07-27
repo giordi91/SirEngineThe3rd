@@ -2,6 +2,7 @@
   "commands": 
     [
       "-p ../data/shaders/rasterization/basicMeshForwardPBRPS.hlsl -o ../data/processed/shaders/rasterization/basicMeshForwardPBRPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
+      "-p ../data/shaders/rasterization/deferredDirectionalLightPS.hlsl -o ../data/processed/shaders/rasterization/deferredDirectionalLightPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
       "-p ../data/rs/forwardPBRRS.json -o ../data/processed/rs/forwardPBRRS.root --pluginName rootSignatureCompilerPlugin"
     ]
 }
