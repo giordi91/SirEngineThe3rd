@@ -21,7 +21,6 @@ SamplerState gsamLinearClamp : register(s3);
 SamplerState gsamAnisotropicWrap : register(s4);
 SamplerState gsamAnisotropicClamp : register(s5);
 
-static const float PI = 3.14159265359f;
 
 // data returned from the gbuffer
 struct SURFACE_DATA {
@@ -144,36 +143,6 @@ float4 phongLighting(FullScreenVertexOut input) {
 // PBR
 //==============================================
 
-float3 fresnelSchlick(float cosTheta, float3 F0,float roughness) {
-  //return F0 + (1.0f - F0) * pow(1.0f - cosTheta, 5.0f);
-  float3 oneMinusRoughness =1.0 - roughness;  
-  return F0 + (max(oneMinusRoughness, F0) - F0) * pow(1.0 - cosTheta, 5.0);
-}
-
-float DistributionGGX(float3 N, float3 H, float roughness) {
-  float a = roughness * roughness;
-  float a2 = a * a;
-  float NdotH = max(dot(N, H), 0.0);
-  float NdotH2 = NdotH * NdotH;
-  float nom = a2;
-  float denom = (NdotH2 * (a2 - 1.0) + 1.0);
-  denom = PI * denom * denom;
-  return nom / denom;
-}
-float GeometrySchlickGGX(float NdotV, float roughness) {
-  float r = (roughness + 1.0);
-  float k = (r * r) / 8.0;
-  float nom = NdotV;
-  float denom = NdotV * (1.0 - k) + k;
-  return nom / denom;
-}
-float GeometrySmith(float3 N, float3 V, float3 L, float roughness) {
-  float NdotV = max(dot(N, V), 0.0);
-  float NdotL = max(dot(N, L), 0.0);
-  float ggx2 = GeometrySchlickGGX(NdotV, roughness);
-  float ggx1 = GeometrySchlickGGX(NdotL, roughness);
-  return ggx1 * ggx2;
-}
 
 float4 PBRLighting(FullScreenVertexOut input) {
   SURFACE_DATA_PBR gbd = UnpackGBufferPBR(input.uv);
@@ -238,7 +207,7 @@ float4 PBRLighting(FullScreenVertexOut input) {
 
 
 	//using irradiance map
-	float3 irradiance = skyboxIrradianceTexture.Sample(gsamLinearClamp,gbd.normal);
+	float3 irradiance = skyboxIrradianceTexture.Sample(gsamLinearClamp,gbd.normal).xyz;
 	float3 diffuse      = irradiance* albedo;
 
     float MAX_REFLECTION_LOD = 6.0f;
@@ -250,7 +219,6 @@ float4 PBRLighting(FullScreenVertexOut input) {
 
 
 	float3 ambient = (kD * diffuse) + specularDiff;
-	//float3 ambient = 0.0f;
 
     float3 color = ambient + Lo;
 
@@ -260,7 +228,7 @@ float4 PBRLighting(FullScreenVertexOut input) {
 	float translucencyScale = 0.3f;
 	float tAttenuation = 1.0f;
 	float tAmbient = 0.00f;
-	float3 light = g_dirLight.lightDir + gbd.normal*distortion;
+	float3 light = g_dirLight.lightDir.xyz + gbd.normal*distortion;
 	float tdot = pow(saturate(dot(toEyeDir, light)), translucencyPower) * translucencyScale;
 	float t = gbd.thickness;
 	float b = -2.0f;
@@ -268,7 +236,7 @@ float4 PBRLighting(FullScreenVertexOut input) {
 	float thickness = t;
 	float translucency =   (tdot + tAmbient )*thickness ;
 
-	float3 lightScatterColor = g_dirLight.lightColor;
+	float3 lightScatterColor = g_dirLight.lightColor.xyz;
 	lightScatterColor = float3(0.8f,0.4f,0.4f);
 	color += (translucency*gbd.color* lightScatterColor);
 

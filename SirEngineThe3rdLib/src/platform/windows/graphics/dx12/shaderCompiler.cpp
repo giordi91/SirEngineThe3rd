@@ -38,7 +38,6 @@ DXCShaderCompiler::~DXCShaderCompiler() {
 ID3DBlob *DXCShaderCompiler::compileShader(const char *shaderPath,
                                            const ShaderArgs &shaderArgs,
                                            std::string *log) {
-
   // creating a blob of data with the content of the shader
   const wchar_t *wshader = frameConvertWide(shaderPath);
   IDxcOperationResult *pResult;
@@ -50,7 +49,9 @@ ID3DBlob *DXCShaderCompiler::compileShader(const char *shaderPath,
   DxcCreateInstance(CLSID_DxcLibrary, __uuidof(IDxcLibrary),
                     reinterpret_cast<void **>(&pLibrary));
   pLibrary->CreateBlobWithEncodingFromPinned(
-      program, static_cast<uint32_t>(fileSize), CP_UTF8, &pSource);
+	  //TODO should we return the null limiter in the size?
+	  //here we remove one from the file size since we include the null terminator
+      program, static_cast<uint32_t>(fileSize-1), CP_UTF8, &pSource);
 
   // lets build compiler flags, for now they are simple so we can just switch
   // between two sets based on debug or not
@@ -68,34 +69,40 @@ ID3DBlob *DXCShaderCompiler::compileShader(const char *shaderPath,
   flagsCount += static_cast<int>(shaderArgs.splitCompilerArgsPointers.size());
 
   // kick the compilation
-  pCompiler->Compile(pSource,  // program text
-                     wshader,  // file name, mostly for error messages
-                     shaderArgs.entryPoint.c_str(),  // entry point function
-                     shaderArgs.type.c_str(),        // target profile
-                     const_cast<LPCWSTR *>(finalFlags.data()),   // compilation arguments
-                     flagsCount,     // number of compilation arguments
-                     nullptr, 0,     // name/value defines and their count
-                     includeHandle,  // handler for #include directives
-                     &pResult);
+  pCompiler->Compile(
+      pSource,                        // program text
+      wshader,                        // file name, mostly for error messages
+      shaderArgs.entryPoint.c_str(),  // entry point function
+      shaderArgs.type.c_str(),        // target profile
+      const_cast<LPCWSTR *>(finalFlags.data()),  // compilation arguments
+      flagsCount,     // number of compilation arguments
+      nullptr, 0,     // name/value defines and their count
+      includeHandle,  // handler for #include directives
+      &pResult);
 
   // checking whether or not compilation was successful
   HRESULT hrCompilation;
   pResult->GetStatus(&hrCompilation);
 
-  if (FAILED(hrCompilation)) {
-    IDxcBlobEncoding *pPrintBlob;
-    pResult->GetErrorBuffer(&pPrintBlob);
+  IDxcBlobEncoding *pPrintBlob;
+  pResult->GetErrorBuffer(&pPrintBlob);
 
-    const std::string errorOut(
-        static_cast<char *>(pPrintBlob->GetBufferPointer()),
-        pPrintBlob->GetBufferSize());
+  const std::string errorOut(
+      static_cast<char *>(pPrintBlob->GetBufferPointer()),
+      pPrintBlob->GetBufferSize());
+  if (log != nullptr) {
+    (*log) += errorOut;
+    (*log) += "\n";
+  }
+
+  if (FAILED(hrCompilation)) {
     SE_CORE_ERROR("ERROR_LOG:\n {0}", errorOut);
-    if (log != nullptr) {
-      (*log) += errorOut;
-      (*log) += "\n";
-    }
     pPrintBlob->Release();
     return nullptr;
+  } 
+	
+  if(!errorOut.empty()) {
+    SE_CORE_WARN("COMPILER LOG:\n {0}", errorOut);
   }
 
   // extract compiled blob of data

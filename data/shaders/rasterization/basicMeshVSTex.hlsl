@@ -12,8 +12,9 @@ FullMeshVertexOut VS(TexturedVertexIn12 vin)
 	vout.PosH = mul(float4(vin.PosL,1.0f), g_cameraBuffer.MVP);
 	
 	// Just pass vertex color into the pixel shader.
-    vout.Normal= float4(vin.Normal,0.0f);
+    vout.Normal= vin.Normal;
 	vout.uv = vin.uvs.xy;
-	vout.tangent = vin.tangents;
+	vout.tangent = vin.tangents.xyz;
+	vout.worldPos = float4(vin.PosL,1.0f);
     return vout;
 }
