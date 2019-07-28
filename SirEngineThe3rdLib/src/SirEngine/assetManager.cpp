@@ -112,5 +112,9 @@ void AssetManager::loadScene(const char *path) {
       enviromentMapIrradianceHandle);
   globals::RENDERING_CONTEXT->setEnviromentMapRadiance(
       enviromentMapRadianceHandle);
+
+  TextureHandle brdfHandle = globals::TEXTURE_MANAGER->loadTexture(
+      "../data/processed/textures/brdf.texture");
+  globals::RENDERING_CONTEXT->setBrdfHandle(brdfHandle);
 }
 } // namespace SirEngine

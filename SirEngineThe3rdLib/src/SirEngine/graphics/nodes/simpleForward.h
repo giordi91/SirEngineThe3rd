@@ -18,6 +18,7 @@ class SimpleForward : public GraphNode {
  private:
   ID3D12RootSignature* rs = nullptr;
   PSOHandle pso;
+  TextureHandle m_brdfHandle;
 };
 
 }  // namespace SirEngine

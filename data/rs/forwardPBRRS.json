@@ -82,6 +82,45 @@
               }
             ]
           }
+        },
+        {
+          "comment": "irradiance map",
+          "type": "descriptorTable",
+          "data": {
+            "ranges": [
+              {
+                "type": "SRV",
+                "numDescriptors": 1,
+                "baseRegister":4 
+              }
+            ]
+          }
+        },
+        {
+          "comment": "radiance map",
+          "type": "descriptorTable",
+          "data": {
+            "ranges": [
+              {
+                "type": "SRV",
+                "numDescriptors": 1,
+                "baseRegister":5 
+              }
+            ]
+          }
+        },
+        {
+          "comment": "brdf map",
+          "type": "descriptorTable",
+          "data": {
+            "ranges": [
+              {
+                "type": "SRV",
+                "numDescriptors": 1,
+                "baseRegister":6 
+              }
+            ]
+          }
         }
       ],
       "flags": ["D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT"]
