@@ -159,10 +159,6 @@ float4 PBRLighting(FullScreenVertexOut input) {
     //reflected = gbd.normal;
 
 
-    // fresnel slick, ratio between specular and diffuse, it is tintend on
-    // metal, so we lerp toward albedo based on metallic, so only specular will
-    // be tinted by the albedo.
-    float3 F0 = 0.04f;
 
 	float3 albedo =gbd.color; 
 	float metallic = gbd.metallic ;
@@ -181,6 +177,10 @@ float4 PBRLighting(FullScreenVertexOut input) {
 	//float metallic = 0.0f;
 	//float roughness = 1.0f;
 
+    // fresnel slick, ratio between specular and diffuse, it is tintend on
+    // metal, so we lerp toward albedo based on metallic, so only specular will
+    // be tinted by the albedo.
+    float3 F0 = 0.04f;
     F0 = lerp(F0, albedo, metallic);
     float3 F = fresnelSchlick(max(dot(gbd.normal, toEyeDir), 0.0f), F0, roughness);
     float NDF = DistributionGGX(gbd.normal, halfWay, roughness);

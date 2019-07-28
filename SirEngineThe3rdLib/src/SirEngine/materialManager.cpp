@@ -1,10 +1,10 @@
 #include "SirEngine/materialManager.h"
 #include "SirEngine/fileUtils.h"
+#include "graphics/renderingContext.h"
 #include "nlohmann/json.hpp"
 #include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/TextureManagerDx12.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
-#include "graphics/renderingContext.h"
 
 #if GRAPHICS_API == DX12
 #include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
@@ -20,7 +20,7 @@ static const char *NORMAL = "normal";
 static const char *METALLIC = "metallic";
 static const char *ROUGHNESS = "roughness";
 static const char *ROUGHNESS_MULT = "roughnessMult";
-static const char *METALLIC_MULT= "metallicMult";
+static const char *METALLIC_MULT = "metallicMult";
 static const char *THICKNESS = "thickness";
 static const char *QUEUE = "queue";
 static const char *TYPE = "type";
@@ -124,19 +124,32 @@ void bindSkin(const MaterialRuntime &materialRuntime,
   commandList->OMSetStencilRef(static_cast<uint32_t>(STENCIL_REF::SSSSS));
 }
 void bindForwardPBR(const MaterialRuntime &materialRuntime,
-             ID3D12GraphicsCommandList2 *commandList) {
+                    ID3D12GraphicsCommandList2 *commandList) {
+  const ConstantBufferHandle lightCB = globals::RENDERING_CONTEXT->getLightCB();
+  const auto address =
+      dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(lightCB);
 
-  const ConstantBufferHandle lightCB= globals::RENDERING_CONTEXT->getLightCB();
-  const auto address = dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(lightCB);
-
-  commandList->SetGraphicsRootConstantBufferView(
-      1, address);
+  commandList->SetGraphicsRootConstantBufferView(1, address);
   commandList->SetGraphicsRootConstantBufferView(
       2, materialRuntime.cbVirtualAddress);
   commandList->SetGraphicsRootDescriptorTable(3, materialRuntime.albedo);
   commandList->SetGraphicsRootDescriptorTable(4, materialRuntime.normal);
   commandList->SetGraphicsRootDescriptorTable(5, materialRuntime.metallic);
   commandList->SetGraphicsRootDescriptorTable(6, materialRuntime.roughness);
+
+  TextureHandle skyHandle =
+      globals::RENDERING_CONTEXT->getEnviromentMapIrradianceHandle();
+  commandList->SetGraphicsRootDescriptorTable(
+      7, dx12::TEXTURE_MANAGER->getSRVDx12(skyHandle).gpuHandle);
+
+  TextureHandle skyRadianceHandle =
+      globals::RENDERING_CONTEXT->getEnviromentMapRadianceHandle();
+  commandList->SetGraphicsRootDescriptorTable(
+      8, dx12::TEXTURE_MANAGER->getSRVDx12(skyRadianceHandle).gpuHandle);
+
+  TextureHandle brdfHandle = globals::RENDERING_CONTEXT->getBrdfHandle();
+  commandList->SetGraphicsRootDescriptorTable(
+      9, dx12::TEXTURE_MANAGER->getSRVDx12(brdfHandle).gpuHandle);
 }
 
 void MaterialManager::bindMaterial(const MaterialRuntime &materialRuntime,
@@ -225,8 +238,10 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   float zeroFloat = 0.0f;
   float oneFloat = 1.0f;
   float shininess = getValueIfInJson(jobj, materialKeys::SHINESS, zeroFloat);
-  float roughnessMult= getValueIfInJson(jobj, materialKeys::ROUGHNESS_MULT, oneFloat);
-  float metallicMult= getValueIfInJson(jobj, materialKeys::METALLIC_MULT, oneFloat);
+  float roughnessMult =
+      getValueIfInJson(jobj, materialKeys::ROUGHNESS_MULT, oneFloat);
+  float metallicMult =
+      getValueIfInJson(jobj, materialKeys::METALLIC_MULT, oneFloat);
 
   const std::string empty;
   const std::string albedoName =
@@ -286,7 +301,7 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   mat.kSB = ks.z;
   mat.shiness = shininess;
   mat.roughnessMult = roughnessMult;
-  mat.metallicMult= metallicMult;
+  mat.metallicMult = metallicMult;
 
   MaterialDataHandles texHandles{};
   texHandles.albedo = albedoTex;

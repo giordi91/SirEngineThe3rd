@@ -66,9 +66,8 @@ void DeferredLightingPass::initialize() {
 
   m_lightCB = globals::RENDERING_CONTEXT->getLightCB();
   m_lightAddress = dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(m_lightCB);
+  m_brdfHandle = globals::RENDERING_CONTEXT->getBrdfHandle();
 
-  m_brdfHandle = globals::TEXTURE_MANAGER->loadTexture(
-      "../data/processed/textures/brdf.texture");
 }
 
 inline TextureHandle

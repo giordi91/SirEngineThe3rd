@@ -52,6 +52,9 @@ SimpleForward::SimpleForward(const char *name)
 }
 
 void SimpleForward::initialize() {
+  m_brdfHandle = globals::TEXTURE_MANAGER->loadTexture(
+      "../data/processed/textures/brdf.texture");
+
 
 }
 inline StreamHandle

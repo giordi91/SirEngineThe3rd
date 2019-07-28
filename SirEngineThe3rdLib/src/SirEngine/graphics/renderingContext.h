@@ -32,6 +32,8 @@ class RenderingContext {
   inline TextureHandle getEnviromentMapRadianceHandle() const {
     return m_enviromentMapRadianceHandle;
   }
+  inline void setBrdfHandle(const TextureHandle handle) { m_brdfHandle = handle; }
+  inline TextureHandle getBrdfHandle() const {return m_brdfHandle;}
 
   inline ConstantBufferHandle getLightCB() const { return m_lightCB; }
 
@@ -45,6 +47,7 @@ class RenderingContext {
   TextureHandle m_enviromentMapHandle;
   TextureHandle m_enviromentMapIrradianceHandle;
   TextureHandle m_enviromentMapRadianceHandle;
+  TextureHandle m_brdfHandle;
 };
 
 }  // namespace SirEngine
