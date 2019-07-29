@@ -1,7 +1,5 @@
-#include "../common/deferred.hlsl"
 #include "../common/structures.hlsl"
 #include "../common/vertexDefinitions.hlsl"
-
 
 // deferred buffer bindings
 TextureCube skyboxTexture: register(t0);

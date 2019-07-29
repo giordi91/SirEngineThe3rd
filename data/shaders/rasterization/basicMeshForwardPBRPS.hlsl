@@ -1,4 +1,4 @@
-#include "../common/deferred.hlsl"
+#include "../common/pbr.hlsl"
 #include "../common/normals.hlsl"
 #include "../common/structures.hlsl"
 #include "../common/vertexDefinitions.hlsl"
@@ -11,7 +11,6 @@ Texture2D tangentTex : register(t1);
 Texture2D metallicTex : register(t2);
 Texture2D roughnessTex : register(t3);
 
-static const float2 g_SpecPowerRange = {10.0, 250.0};
 
 SamplerState gsamPointWrap : register(s0);
 SamplerState gsamPointClamp : register(s1);
@@ -75,7 +74,6 @@ float4 PS(FullMeshVertexOut input) : SV_Target {
   float3 radiance = g_dirLight.lightColor.xyz;
   float NdotL = max(dot(N, ldir), 0.0f);
   	Lo += (kD * (albedo / PI) + specular) * radiance * NdotL;
-  
   
   //using irradiance map
   float3 irradiance = skyboxIrradianceTexture.Sample(gsamLinearClamp,N).xyz;
