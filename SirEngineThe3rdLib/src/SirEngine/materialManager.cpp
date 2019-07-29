@@ -38,12 +38,14 @@ static const std::unordered_map<std::string, SirEngine::SHADER_TYPE_FLAGS>
     STRING_TO_TYPE_FLAGS{
         {"pbr", SirEngine::SHADER_TYPE_FLAGS::PBR},
         {"forwardPbr", SirEngine::SHADER_TYPE_FLAGS::FORWARD_PBR},
+        {"forwardPhongAlphaCutout", SirEngine::SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT},
         {"skin", SirEngine::SHADER_TYPE_FLAGS::SKIN},
     };
 static const std::unordered_map<SirEngine::SHADER_TYPE_FLAGS, std::string>
     TYPE_FLAGS_TO_STRING{
         {SirEngine::SHADER_TYPE_FLAGS::PBR, "pbr"},
         {SirEngine::SHADER_TYPE_FLAGS::FORWARD_PBR, "forwardPbr"},
+        {SirEngine::SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT, "forwardPhongAlphaCutout"},
         {SirEngine::SHADER_TYPE_FLAGS::SKIN, "skin"},
     };
 
@@ -151,6 +153,19 @@ void bindForwardPBR(const MaterialRuntime &materialRuntime,
   commandList->SetGraphicsRootDescriptorTable(
       9, dx12::TEXTURE_MANAGER->getSRVDx12(brdfHandle).gpuHandle);
 }
+void bindForwardPhongAlphaCutout(const MaterialRuntime &materialRuntime,
+                    ID3D12GraphicsCommandList2 *commandList) {
+  const ConstantBufferHandle lightCB = globals::RENDERING_CONTEXT->getLightCB();
+  const auto address =
+      dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(lightCB);
+
+  commandList->SetGraphicsRootConstantBufferView(1, address);
+  commandList->SetGraphicsRootConstantBufferView(
+      2, materialRuntime.cbVirtualAddress);
+  commandList->SetGraphicsRootDescriptorTable(3, materialRuntime.albedo);
+  commandList->SetGraphicsRootDescriptorTable(4, materialRuntime.normal);
+}
+
 
 void MaterialManager::bindMaterial(const MaterialRuntime &materialRuntime,
                                    ID3D12GraphicsCommandList2 *commandList) {
@@ -166,6 +181,10 @@ void MaterialManager::bindMaterial(const MaterialRuntime &materialRuntime,
       break;
     }
     case (SHADER_TYPE_FLAGS::FORWARD_PBR): {
+      bindForwardPBR(materialRuntime, commandList);
+      break;
+    }
+    case (SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT): {
       bindForwardPBR(materialRuntime, commandList);
       break;
     }

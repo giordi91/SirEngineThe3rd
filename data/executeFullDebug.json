@@ -14,6 +14,7 @@
       "-p ../data/external/meshes/knightB/eyeBalls.obj -o ../data/processed/meshes/knightB/eyeBalls.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/eyeBalls.tangents\"",
       "-p ../data/external/meshes/knightB/eyeCornea.obj -o ../data/processed/meshes/knightB/eyeCornea.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/eyeCornea.tangents\"",
       "-p ../data/external/meshes/knightB/eyeNew.obj -o ../data/processed/meshes/knightB/eyeNew.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/eyeNew.tangents\"",
+      "-p ../data/external/meshes/knightB/eyeLashes.obj -o ../data/processed/meshes/knightB/eyeLashes.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/eyeLashes.tangents\"",
 
       "-p ../data/external/meshes/eye/eye.obj -o ../data/processed/meshes/eye/eye.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/eye/eye.tangents\"",
 
@@ -48,6 +49,7 @@
       "-p ../data/shaders/compute/textureMIPS.hlsl -o ../data/processed/shaders/compute/textureMIPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t cs_6_2  -e CS -d \"",
       "-p ../data/shaders/compute/depthMinMaxReduce.hlsl -o ../data/processed/shaders/compute/depthMinMaxReduce.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t cs_6_2  -e CS -d \"",
       "-p ../data/shaders/compute/depthMinMaxReduceClear.hlsl -o ../data/processed/shaders/compute/depthMinMaxReduceClear.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t cs_6_2  -e CS -d \"",
+      "-p ../data/shaders/rasterization/forwardPhongAlphaCutoutPS.hlsl -o ../data/processed/shaders/rasterization/forwardPhongAlphaCutoutPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
 
       "-p ../data/rs/simpleMeshRS.json -o ../data/processed/rs/simpleMeshRS.root --pluginName rootSignatureCompilerPlugin",
       "-p ../data/rs/simpleMeshRSTex.json -o ../data/processed/rs/simpleMeshRSTex.root --pluginName rootSignatureCompilerPlugin",
@@ -66,6 +68,7 @@
       "-p ../data/rs/depthMinMaxReduce_RS.json -o ../data/processed/rs/depthMinMaxReduce_RS.root --pluginName rootSignatureCompilerPlugin",
       "-p ../data/rs/debugFullScreenBlit_RS.json -o ../data/processed/rs/debugFullScreenBlit_RS.root --pluginName rootSignatureCompilerPlugin",
       "-p ../data/rs/forwardPBRRS.json -o ../data/processed/rs/forwardPBRRS.root --pluginName rootSignatureCompilerPlugin",
+      "-p ../data/rs/forwardPhongAlphaCutoutRS.json -o ../data/processed/rs/forwardPhongAlphaCutoutRS.root --pluginName rootSignatureCompilerPlugin",
         
 
       "-p ../data/external/textures/cerberus/Cerberus_A.tga -o ../data/processed/textures/cerberus/Cerberus_A.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1 -g -m\"",
@@ -102,6 +105,7 @@
       "-p ../data/external/textures/knightB/face_R.png -o ../data/processed/textures/knightB/face_R.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\"",
       "-p ../data/external/textures/knightB/face_SCATTER.png -o ../data/processed/textures/knightB/face_SCATTER.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\"",
       "-p ../data/external/textures/knightB/eye_A.png -o ../data/processed/textures/knightB/eye_A.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1  -m\"",
+      "-p ../data/external/textures/knightB/eyelash_Alpha.png -o ../data/processed/textures/knightB/eyelash_Alpha.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1  -m\"",
       "-p ../data/external/textures/eye/eye_A.png -o ../data/processed/textures/eye/eye_A.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1  -g -m\"",
       "-p ../data/external/textures/eye/eye_N.png -o ../data/processed/textures/eye/eye_N.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5   -m\"",
 

@@ -3,6 +3,11 @@
     [
       "-p ../data/shaders/rasterization/basicMeshForwardPBRPS.hlsl -o ../data/processed/shaders/rasterization/basicMeshForwardPBRPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
       "-p ../data/shaders/rasterization/deferredDirectionalLightPS.hlsl -o ../data/processed/shaders/rasterization/deferredDirectionalLightPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
-      "-p ../data/rs/forwardPBRRS.json -o ../data/processed/rs/forwardPBRRS.root --pluginName rootSignatureCompilerPlugin"
+      "-p ../data/rs/forwardPBRRS.json -o ../data/processed/rs/forwardPBRRS.root --pluginName rootSignatureCompilerPlugin",
+      "-p ../data/rs/forwardPhongAlphaCutoutRS.json -o ../data/processed/rs/forwardPhongAlphaCutoutRS.root --pluginName rootSignatureCompilerPlugin",
+      "-p ../data/external/meshes/knightB/eyeLashes.obj -o ../data/processed/meshes/knightB/eyeLashes.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/eyeLashes.tangents\"",
+      "-p ../data/shaders/rasterization/forwardPhongAlphaCutoutPS.hlsl -o ../data/processed/shaders/rasterization/forwardPhongAlphaCutoutPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
+      "-p ../data/external/textures/knightB/eyelash_Alpha.png -o ../data/processed/textures/knightB/eyelash_Alpha.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1  -m\""
+
     ]
 }
