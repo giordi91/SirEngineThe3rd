@@ -1,16 +1,11 @@
 #include "../common/structures.hlsl"
 #include "../common/vertexDefinitions.hlsl"
-#include "../common/deferred.hlsl"
+
+#include "../common/deferredPacking.hlsl"
+
 
 ConstantBuffer<PhongMaterial> g_material : register(b1);
 
-static const float2 g_SpecPowerRange = {10.0, 250.0};
-
-struct PS_GBUFFER_OUT {
-  float4 ColorSpecInt : SV_TARGET0;
-  float4 Normal : SV_TARGET1;
-  float4 SpecPow : SV_TARGET2;
-};
 
 PS_GBUFFER_OUT PackGBuffer(float3 BaseColor, float3 Normal, float SpecIntensity,
                            float SpecPower) {
@@ -33,5 +28,6 @@ PS_GBUFFER_OUT PS(FullMeshVertexOut input) {
 
   // Lookup mesh texture and modulate it with diffuse
   float3 DiffuseColor = g_material.kd.xyz;
-  return PackGBuffer(DiffuseColor, normalize(input.Normal).xyz, g_material.ks.x, g_material.shiness);
+  return PackGBuffer(DiffuseColor, normalize(input.Normal).xyz, 
+	  g_material.ks.x, 0.0f, 0.0f,g_material.shiness,0.0f);
 }

@@ -1,9 +1,9 @@
-#include "../common/deferred.hlsl"
 #include "../common/structures.hlsl"
 #include "../common/vertexDefinitions.hlsl"
 
 ConstantBuffer<CameraBuffer> g_cameraBuffer : register(b0);
 ConstantBuffer<DirectionalLightData> g_dirLight : register(b1);
+
 
 // deferred buffer bindings
 Texture2D depthTexture : register(t0);
@@ -22,74 +22,10 @@ SamplerState gsamAnisotropicWrap : register(s4);
 SamplerState gsamAnisotropicClamp : register(s5);
 
 
-// data returned from the gbuffer
-struct SURFACE_DATA {
-  float linearDepth;
-  float3 color;
-  float3 normal;
-  float specIntensity;
-  float specPow;
-  float depth;
-};
-struct SURFACE_DATA_PBR {
-  float linearDepth;
-  float3 color;
-  float3 normal;
-  float specIntensity;
-  float specPow;
-  float depth;
-  float metallic;
-  float roughness;
-  float thickness;
-};
+#include "../common/deferredUnpacking.hlsl"
+#include "../common/pbr.hlsl"
 
-inline float ConvertZToLinearDepth(float depth) {
-  float linearDepth = g_cameraBuffer.perspectiveValues.z /
-                      (depth + g_cameraBuffer.perspectiveValues.w);
-  return linearDepth;
-}
 
-inline SURFACE_DATA UnpackGBuffer(float2 UV) {
-  SURFACE_DATA Out;
-
-  float depth = depthTexture.Sample(gsamPointClamp, UV.xy).x;
-  Out.linearDepth = ConvertZToLinearDepth(depth);
-  Out.depth = depth;
-
-  float4 baseColorSpecInt = colorSpecIntTexture.Sample(gsamPointClamp, UV.xy);
-  Out.color = baseColorSpecInt.xyz;
-  Out.specIntensity = baseColorSpecInt.w;
-  Out.normal = normalTexture.Sample(gsamPointClamp, UV.xy).xyz;
-  Out.normal = normalize(Out.normal * 2.0 - 1.0);
-  // Out.normal = DecodeOctNormal(normalTexture.Sample(gsamPointClamp,
-  // UV.xy).xy);
-  Out.specPow = specPowTexture.Sample(gsamPointClamp, UV.xy).x;
-
-  return Out;
-}
-
-inline SURFACE_DATA_PBR UnpackGBufferPBR(float2 UV) {
-  SURFACE_DATA_PBR Out;
-
-  float depth = depthTexture.Sample(gsamPointClamp, UV.xy).x;
-  Out.linearDepth = ConvertZToLinearDepth(depth);
-  Out.depth = depth;
-
-  float4 baseColorSpecInt = colorSpecIntTexture.Sample(gsamPointClamp, UV.xy);
-  Out.color = baseColorSpecInt.xyz;
-  Out.specIntensity = baseColorSpecInt.w;
-  Out.normal = normalTexture.Sample(gsamPointClamp, UV.xy).xyz;
-  Out.normal = normalize(Out.normal * 2.0 - 1.0);
-  // Out.normal = DecodeOctNormal(normalTexture.Sample(gsamPointClamp,
-  // UV.xy).xy);
-  float4 spec = specPowTexture.Sample(gsamPointClamp, UV.xy);
-  Out.specPow = spec.x;
-  Out.metallic = spec.y;
-  Out.roughness = spec.z;
-  Out.thickness = spec.w;
-
-  return Out;
-}
 float3 CalcWorldPos(float2 csPos, float depth) {
   float4 position;
 
@@ -102,43 +38,6 @@ float3 CalcWorldPos(float2 csPos, float depth) {
 
 #define MAX_DEPTH 0.999999f
 
-float4 phongLighting(FullScreenVertexOut input) {
-  SURFACE_DATA gbd = UnpackGBuffer(input.uv);
-
-  float3 ldir = normalize(-g_dirLight.lightDir.xyz);
-  float4 finalColor = float4(gbd.color, 0.0f);
-
-  if (gbd.depth <= MAX_DEPTH) {
-    finalColor = finalColor * saturate(dot(ldir, gbd.normal));
-
-    float3 worldPos = CalcWorldPos(input.clipPos, gbd.linearDepth);
-    // float shadowAttenuation = SpotShadowPCF(worldPos, g_dirLight.lightVP);
-
-    // compute specular
-    float3 toEyeDir = normalize(g_cameraBuffer.position.xyz - worldPos);
-    float3 halfWay = normalize(toEyeDir + ldir);
-    float specularValue = saturate(dot(halfWay, gbd.normal));
-    float specP = gbd.specPow * (250.0f - 10.0f) + 10.0f;
-    // float specP = 0.5f * (250.0f - 10.0f) + 10.0f;
-    float3 finalSpecular =
-        (g_dirLight.lightColor * pow(specularValue, specP) * gbd.specIntensity)
-            .xyz;
-
-    // final color
-    finalColor.x += finalSpecular.x;
-    finalColor.y += finalSpecular.y;
-    finalColor.z += finalSpecular.z;
-
-    // TODO(fix hardcoded ambient)
-    float3 ambient = 0.03f;
-    // float ao = AOTexture.Sample(gsamLinearClamp, input.uv);
-    float shadowAttenuation = 1.0f;
-    finalColor.xyz =
-        (finalColor.xyz * shadowAttenuation) + (ambient * gbd.color);
-    finalColor.w = 1.0f;
-  }
-  return finalColor;
-}
 //==============================================
 // PBR
 //==============================================

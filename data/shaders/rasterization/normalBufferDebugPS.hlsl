@@ -1,5 +1,5 @@
 #include "../common/vertexDefinitions.hlsl"
-#include "../common/deferred.hlsl"
+
 Texture2D sourceTexture: register(t0);
 
 SamplerState gsamPointWrap        : register(s0);
