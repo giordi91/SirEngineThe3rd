@@ -68,7 +68,7 @@ enum class SHADER_QUEUE_FLAGS {
   SHADOW = 1 << 2
 };
 
-enum class SHADER_TYPE_FLAGS { UNKNOWN = 0, PBR = 1, SKIN = 2, FORWARD_PBR=3 };
+enum class SHADER_TYPE_FLAGS { UNKNOWN = 0, PBR = 1, SKIN = 2, FORWARD_PBR=3, FORWARD_PHONG_ALPHA_CUTOUT=4 };
 
 class MaterialManager final {
  public:

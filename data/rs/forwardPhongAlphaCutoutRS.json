@@ -1,0 +1,63 @@
+{
+    "forwardPhongAlphaCutoutRS": {
+      "type": "RASTER",
+      "staticSamplers" : true,
+      "config": [
+        {
+          "comment": "camera",
+          "type": "descriptorTable",
+          "data": {
+            "numberDescriptor": "1",
+            "baseRegister": 0,
+            "ranges": [
+              {
+                "type": "CBV",
+                "numDescriptors": 1,
+                "baseRegister": 0
+              }
+            ]
+          },
+          "visibility": "ALL"
+        },
+        {
+          "comment": "directionalLight",
+          "type": "CBV",
+          "data": { "baseRegister": 1 },
+          "visibility": "ALL"
+        },
+        {
+          "comment": "material buffer",
+          "type": "CBV",
+          "data": { "baseRegister": 2 },
+          "visibility": "ALL"
+        },
+        {
+          "comment": "albedo tex",
+          "type": "descriptorTable",
+          "data": {
+            "ranges": [
+              {
+                "type": "SRV",
+                "numDescriptors": 1,
+                "baseRegister": 0
+              }
+            ]
+          }
+        },
+        {
+          "comment": "normal tex",
+          "type": "descriptorTable",
+          "data": {
+            "ranges": [
+              {
+                "type": "SRV",
+                "numDescriptors": 1,
+                "baseRegister": 1
+              }
+            ]
+          }
+        }
+      ],
+      "flags": ["D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT"]
+    }
+}
