@@ -7,6 +7,7 @@
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/graphics/debugAnnotations.h"
+#include "SirEngine/materialManager.h"
 
 namespace SirEngine {
 static const char *SSSSS_RS = "SSSSSEffect_RS";
@@ -97,6 +98,7 @@ void SSSSSEffect::render(const TextureHandle input, const TextureHandle output,
       3, dx12::CONSTANT_BUFFER_MANAGER
              ->getConstantBufferDx12Handle(m_constantBufferHandleW)
              .gpuHandle);
+  commandList->OMSetStencilRef(static_cast<uint32_t>(STENCIL_REF::SSSSS));
   commandList->DrawInstanced(6, 1, 0, 0);
 
   //vertical pass 
@@ -122,6 +124,8 @@ void SSSSSEffect::render(const TextureHandle input, const TextureHandle output,
       3, dx12::CONSTANT_BUFFER_MANAGER
              ->getConstantBufferDx12Handle(m_constantBufferHandleH)
              .gpuHandle);
+
+  commandList->OMSetStencilRef(static_cast<uint32_t>(STENCIL_REF::SSSSS));
   commandList->DrawInstanced(6, 1, 0, 0);
 
   //need to do another copy

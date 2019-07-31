@@ -17,7 +17,7 @@ struct ShaderBind {
   PSOHandle pso;
 };
 
-enum class STENCIL_REF { SSSSS = 1 };
+enum class STENCIL_REF { CLEAR = 0,SSSSS = 1 };
 
 struct MaterialRuntime final {
   D3D12_GPU_VIRTUAL_ADDRESS cbVirtualAddress;
@@ -27,6 +27,7 @@ struct MaterialRuntime final {
   D3D12_GPU_DESCRIPTOR_HANDLE metallic;
   D3D12_GPU_DESCRIPTOR_HANDLE roughness;
   D3D12_GPU_DESCRIPTOR_HANDLE thickness;
+  D3D12_GPU_DESCRIPTOR_HANDLE separateAlpha;
 #endif
   uint32_t shaderQueueTypeFlags = 0;
 };
@@ -36,11 +37,13 @@ struct MaterialDataHandles {
   TextureHandle metallic;
   TextureHandle roughness;
   TextureHandle thickness;
+  TextureHandle separateAlpha;
   dx12::DescriptorPair albedoSrv;
   dx12::DescriptorPair normalSrv;
   dx12::DescriptorPair metallicSrv;
   dx12::DescriptorPair roughnessSrv;
   dx12::DescriptorPair thicknessSrv;
+  dx12::DescriptorPair separateAlphaSrv;
   ConstantBufferHandle cbHandle;
 };
 struct Material final {

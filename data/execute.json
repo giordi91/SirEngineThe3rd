@@ -7,7 +7,7 @@
       "-p ../data/rs/forwardPhongAlphaCutoutRS.json -o ../data/processed/rs/forwardPhongAlphaCutoutRS.root --pluginName rootSignatureCompilerPlugin",
       "-p ../data/external/meshes/knightB/eyeLashes.obj -o ../data/processed/meshes/knightB/eyeLashes.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/eyeLashes.tangents\"",
       "-p ../data/shaders/rasterization/forwardPhongAlphaCutoutPS.hlsl -o ../data/processed/shaders/rasterization/forwardPhongAlphaCutoutPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
-      "-p ../data/external/textures/knightB/eyelash_Alpha.png -o ../data/processed/textures/knightB/eyelash_Alpha.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1  -m\""
+      "-p ../data/external/textures/knightB/eyelash_ALPHA.png -o ../data/processed/textures/knightB/eyelash_ALPHA.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1  -m\""
 
     ]
 }

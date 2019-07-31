@@ -19,6 +19,7 @@ static const char *ALBEDO = "albedo";
 static const char *NORMAL = "normal";
 static const char *METALLIC = "metallic";
 static const char *ROUGHNESS = "roughness";
+static const char *SEPARATE_ALPHA= "separateAlpha";
 static const char *ROUGHNESS_MULT = "roughnessMult";
 static const char *METALLIC_MULT = "metallicMult";
 static const char *THICKNESS = "thickness";
@@ -164,6 +165,9 @@ void bindForwardPhongAlphaCutout(const MaterialRuntime &materialRuntime,
       2, materialRuntime.cbVirtualAddress);
   commandList->SetGraphicsRootDescriptorTable(3, materialRuntime.albedo);
   commandList->SetGraphicsRootDescriptorTable(4, materialRuntime.normal);
+  commandList->SetGraphicsRootDescriptorTable(5, materialRuntime.separateAlpha);
+  // HARDCODED stencil value might have to think of a nice way to handle this
+  commandList->OMSetStencilRef(static_cast<uint32_t>(STENCIL_REF::CLEAR));
 }
 
 
@@ -185,7 +189,7 @@ void MaterialManager::bindMaterial(const MaterialRuntime &materialRuntime,
       break;
     }
     case (SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT): {
-      bindForwardPBR(materialRuntime, commandList);
+      bindForwardPhongAlphaCutout(materialRuntime, commandList);
       break;
     }
     default: {
@@ -273,12 +277,15 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
       getValueIfInJson(jobj, materialKeys::ROUGHNESS, empty);
   const std::string thicknessName =
       getValueIfInJson(jobj, materialKeys::THICKNESS, empty);
+  const std::string separateAlphaName=
+      getValueIfInJson(jobj, materialKeys::SEPARATE_ALPHA, empty);
 
   TextureHandle albedoTex{0};
   TextureHandle normalTex{0};
   TextureHandle metallicTex{0};
   TextureHandle roughnessTex{0};
   TextureHandle thicknessTex{0};
+  TextureHandle separateAlphaTex{0};
 
   if (!albedoName.empty()) {
     albedoTex = dx12::TEXTURE_MANAGER->loadTexture(albedoName.c_str());
@@ -305,6 +312,11 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   } else {
     thicknessTex = dx12::TEXTURE_MANAGER->getWhiteTexture();
   }
+  if (!separateAlphaName.empty()) {
+    separateAlphaTex = dx12::TEXTURE_MANAGER->loadTexture(separateAlphaName.c_str());
+  } else {
+    separateAlphaTex = dx12::TEXTURE_MANAGER->getWhiteTexture();
+  }
 
   uint32_t queueTypeFlags = parseQueueTypeFlags(jobj);
 
@@ -328,6 +340,7 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   texHandles.metallic = metallicTex;
   texHandles.roughness = roughnessTex;
   texHandles.thickness = thicknessTex;
+  texHandles.separateAlpha= thicknessTex;
 
   if (albedoTex.handle != 0) {
     texHandles.albedoSrv = dx12::TEXTURE_MANAGER->getSRVDx12(albedoTex);
@@ -344,12 +357,16 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   if (thicknessTex.handle != 0) {
     texHandles.thicknessSrv = dx12::TEXTURE_MANAGER->getSRVDx12(thicknessTex);
   }
+  if (separateAlphaTex.handle != 0) {
+    texHandles.separateAlphaSrv= dx12::TEXTURE_MANAGER->getSRVDx12(separateAlphaTex);
+  }
   MaterialRuntime matCpu{};
   matCpu.albedo = texHandles.albedoSrv.gpuHandle;
   matCpu.normal = texHandles.normalSrv.gpuHandle;
   matCpu.metallic = texHandles.metallicSrv.gpuHandle;
   matCpu.roughness = texHandles.roughnessSrv.gpuHandle;
   matCpu.thickness = texHandles.thicknessSrv.gpuHandle;
+  matCpu.separateAlpha= texHandles.separateAlphaSrv.gpuHandle;
 
   // we need to allocate  constant buffer
   // TODO should this be static constant buffer? investigate
