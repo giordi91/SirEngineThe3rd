@@ -37,6 +37,10 @@
       "material": "../data/materials/eyeMaterial.json"
     },
     {
+      "mesh": "../data/processed/meshes/knightB/eyeLashes.model",
+      "material": "../data/materials/knightBEyeLashesMaterial.json"
+    },
+    {
       "mesh": "../data/processed/meshes/pSphere1.model",
       "material": "../data/materials/sphereForwardMaterial.json"
     }
