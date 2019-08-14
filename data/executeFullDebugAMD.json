@@ -49,6 +49,7 @@
       "-p ../data/shaders/compute/depthMinMaxReduce.hlsl -o ../data/processed/shaders/compute/depthMinMaxReduce.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t cs_6_2  -e CS -d -c \"/D AMD\" \"",
       "-p ../data/shaders/compute/depthMinMaxReduceClear.hlsl -o ../data/processed/shaders/compute/depthMinMaxReduceClear.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t cs_6_2  -e CS -d \"",
       "-p ../data/shaders/rasterization/forwardPhongAlphaCutoutPS.hlsl -o ../data/processed/shaders/rasterization/forwardPhongAlphaCutoutPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
+      "-p ../data/shaders/rasterization/hairPS.hlsl -o ../data/processed/shaders/rasterization/hairPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
 
       "-p ../data/rs/simpleMeshRS.json -o ../data/processed/rs/simpleMeshRS.root --pluginName rootSignatureCompilerPlugin",
       "-p ../data/rs/simpleMeshRSTex.json -o ../data/processed/rs/simpleMeshRSTex.root --pluginName rootSignatureCompilerPlugin",
@@ -68,6 +69,7 @@
       "-p ../data/rs/debugFullScreenBlit_RS.json -o ../data/processed/rs/debugFullScreenBlit_RS.root --pluginName rootSignatureCompilerPlugin",
       "-p ../data/rs/forwardPBRRS.json -o ../data/processed/rs/forwardPBRRS.root --pluginName rootSignatureCompilerPlugin",
       "-p ../data/rs/forwardPhongAlphaCutoutRS.json -o ../data/processed/rs/forwardPhongAlphaCutoutRS.root --pluginName rootSignatureCompilerPlugin",
+      "-p ../data/rs/hairRS.json -o ../data/processed/rs/hairRS.root --pluginName rootSignatureCompilerPlugin",
         
 
       "-p ../data/external/textures/cerberus/Cerberus_A.tga -o ../data/processed/textures/cerberus/Cerberus_A.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1 -g -m\"",
@@ -107,6 +109,9 @@
       "-p ../data/external/textures/eye/eye_A.png -o ../data/processed/textures/eye/eye_A.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1  -g -m\"",
       "-p ../data/external/textures/eye/eye_N.png -o ../data/processed/textures/eye/eye_N.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5   -m\"",
       "-p ../data/external/textures/knightB/eyelash_ALPHA.png -o ../data/processed/textures/knightB/eyelash_ALPHA.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1  -m\"",
+      "-p ../data/external/textures/knightB/hair_ALPHA.png -o ../data/processed/textures/knightB/hair_ALPHA.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1  -m\"",
+      "-p ../data/external/textures/knightB/hair_A.png -o ../data/processed/textures/knightB/hair_A.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1  -m\"",
+      "-p ../data/external/textures/knightB/hair_N.png -o ../data/processed/textures/knightB/hair_N.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1  -m\"",
 
       "-p ../data/external/textures/flatGround/stone_A.png -o ../data/processed/textures/flatGround/stone_A.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1 -g -m\"",
       "-p ../data/external/textures/flatGround/stone_N.png -o ../data/processed/textures/flatGround/stone_N.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\"",

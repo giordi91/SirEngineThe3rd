@@ -43,7 +43,10 @@
     {
       "mesh": "../data/processed/meshes/pSphere1.model",
       "material": "../data/materials/sphereForwardMaterial.json"
+    },
+    {
+      "mesh": "../data/processed/meshes/knightB/hair.model",
+      "material": "../data/materials/knightBHairMaterial.json"
     }
-
   ]
 }
