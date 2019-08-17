@@ -8,11 +8,13 @@
       "-p ../data/rs/forwardPhongAlphaCutoutRS.json -o ../data/processed/rs/forwardPhongAlphaCutoutRS.root --pluginName rootSignatureCompilerPlugin",
       "-p ../data/rs/hairRS.json -o ../data/processed/rs/hairRS.root --pluginName rootSignatureCompilerPlugin",
       "-p ../data/external/meshes/knightB/eyeLashes.obj -o ../data/processed/meshes/knightB/eyeLashes.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/eyeLashes.tangents\"",
+      "-p ../data/external/meshes/knightB/hair.obj -o ../data/processed/meshes/knightB/hair.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/hair.tangents\"",
       "-p ../data/shaders/rasterization/forwardPhongAlphaCutoutPS.hlsl -o ../data/processed/shaders/rasterization/forwardPhongAlphaCutoutPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
       "-p ../data/external/textures/knightB/eyelash_ALPHA.png -o ../data/processed/textures/knightB/eyelash_ALPHA.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1  -m\"",
       "-p ../data/external/textures/knightB/hair_ALPHA.png -o ../data/processed/textures/knightB/hair_ALPHA.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1  -m\"",
-      "-p ../data/external/textures/knightB/hair_A.png -o ../data/processed/textures/knightB/hair_A.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1  -m\"",
-      "-p ../data/external/textures/knightB/hair_N.png -o ../data/processed/textures/knightB/hair_N.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\""
+      "-p ../data/external/textures/knightB/hair_A.png -o ../data/processed/textures/knightB/hair_A.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1 -g -m\"",
+      "-p ../data/external/textures/knightB/hair_N.png -o ../data/processed/textures/knightB/hair_N.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\"",
+      "-p ../data/external/textures/knightB/hair_AO.png -o ../data/processed/textures/knightB/hair_AO.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\""
 
     ]
 }

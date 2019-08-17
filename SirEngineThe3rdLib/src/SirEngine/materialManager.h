@@ -28,6 +28,7 @@ struct MaterialRuntime final {
   D3D12_GPU_DESCRIPTOR_HANDLE roughness;
   D3D12_GPU_DESCRIPTOR_HANDLE thickness;
   D3D12_GPU_DESCRIPTOR_HANDLE separateAlpha;
+  D3D12_GPU_DESCRIPTOR_HANDLE ao;
 #endif
   uint32_t shaderQueueTypeFlags = 0;
 };
@@ -38,12 +39,14 @@ struct MaterialDataHandles {
   TextureHandle roughness;
   TextureHandle thickness;
   TextureHandle separateAlpha;
+  TextureHandle ao;
   dx12::DescriptorPair albedoSrv;
   dx12::DescriptorPair normalSrv;
   dx12::DescriptorPair metallicSrv;
   dx12::DescriptorPair roughnessSrv;
   dx12::DescriptorPair thicknessSrv;
   dx12::DescriptorPair separateAlphaSrv;
+  dx12::DescriptorPair aoSrv;
   ConstantBufferHandle cbHandle;
 };
 struct Material final {
@@ -71,7 +74,7 @@ enum class SHADER_QUEUE_FLAGS {
   SHADOW = 1 << 2
 };
 
-enum class SHADER_TYPE_FLAGS { UNKNOWN = 0, PBR = 1, SKIN = 2, FORWARD_PBR=3, FORWARD_PHONG_ALPHA_CUTOUT=4 };
+enum class SHADER_TYPE_FLAGS { UNKNOWN = 0, PBR = 1, SKIN = 2, FORWARD_PBR=3, FORWARD_PHONG_ALPHA_CUTOUT=4 ,HAIR=5};
 
 class MaterialManager final {
  public:

@@ -19,7 +19,8 @@ static const char *ALBEDO = "albedo";
 static const char *NORMAL = "normal";
 static const char *METALLIC = "metallic";
 static const char *ROUGHNESS = "roughness";
-static const char *SEPARATE_ALPHA= "separateAlpha";
+static const char *AO= "ao";
+static const char *SEPARATE_ALPHA = "separateAlpha";
 static const char *ROUGHNESS_MULT = "roughnessMult";
 static const char *METALLIC_MULT = "metallicMult";
 static const char *THICKNESS = "thickness";
@@ -39,18 +40,22 @@ static const std::unordered_map<std::string, SirEngine::SHADER_TYPE_FLAGS>
     STRING_TO_TYPE_FLAGS{
         {"pbr", SirEngine::SHADER_TYPE_FLAGS::PBR},
         {"forwardPbr", SirEngine::SHADER_TYPE_FLAGS::FORWARD_PBR},
-        {"forwardPhongAlphaCutout", SirEngine::SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT},
+        {"forwardPhongAlphaCutout",
+         SirEngine::SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT},
         {"skin", SirEngine::SHADER_TYPE_FLAGS::SKIN},
+        {"hair", SirEngine::SHADER_TYPE_FLAGS::HAIR},
     };
 static const std::unordered_map<SirEngine::SHADER_TYPE_FLAGS, std::string>
     TYPE_FLAGS_TO_STRING{
         {SirEngine::SHADER_TYPE_FLAGS::PBR, "pbr"},
         {SirEngine::SHADER_TYPE_FLAGS::FORWARD_PBR, "forwardPbr"},
-        {SirEngine::SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT, "forwardPhongAlphaCutout"},
+        {SirEngine::SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT,
+         "forwardPhongAlphaCutout"},
         {SirEngine::SHADER_TYPE_FLAGS::SKIN, "skin"},
+        {SirEngine::SHADER_TYPE_FLAGS::HAIR, "hair"},
     };
 
-}  // namespace materialKeys
+} // namespace materialKeys
 
 namespace SirEngine {
 inline uint32_t stringToActualQueueFlag(const std::string &flag) {
@@ -155,7 +160,7 @@ void bindForwardPBR(const MaterialRuntime &materialRuntime,
       9, dx12::TEXTURE_MANAGER->getSRVDx12(brdfHandle).gpuHandle);
 }
 void bindForwardPhongAlphaCutout(const MaterialRuntime &materialRuntime,
-                    ID3D12GraphicsCommandList2 *commandList) {
+                                 ID3D12GraphicsCommandList2 *commandList) {
   const ConstantBufferHandle lightCB = globals::RENDERING_CONTEXT->getLightCB();
   const auto address =
       dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(lightCB);
@@ -169,32 +174,51 @@ void bindForwardPhongAlphaCutout(const MaterialRuntime &materialRuntime,
   // HARDCODED stencil value might have to think of a nice way to handle this
   commandList->OMSetStencilRef(static_cast<uint32_t>(STENCIL_REF::CLEAR));
 }
+void bindHair(const MaterialRuntime &materialRuntime,
+              ID3D12GraphicsCommandList2 *commandList) {
+  const ConstantBufferHandle lightCB = globals::RENDERING_CONTEXT->getLightCB();
+  const auto address =
+      dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(lightCB);
 
+  commandList->SetGraphicsRootConstantBufferView(1, address);
+  commandList->SetGraphicsRootConstantBufferView(
+      2, materialRuntime.cbVirtualAddress);
+  commandList->SetGraphicsRootDescriptorTable(3, materialRuntime.albedo);
+  commandList->SetGraphicsRootDescriptorTable(4, materialRuntime.normal);
+  commandList->SetGraphicsRootDescriptorTable(5, materialRuntime.separateAlpha);
+  commandList->SetGraphicsRootDescriptorTable(6, materialRuntime.ao);
+  // HARDCODED stencil value might have to think of a nice way to handle this
+  commandList->OMSetStencilRef(static_cast<uint32_t>(STENCIL_REF::CLEAR));
+}
 
 void MaterialManager::bindMaterial(const MaterialRuntime &materialRuntime,
                                    ID3D12GraphicsCommandList2 *commandList) {
   const SHADER_TYPE_FLAGS type =
       getTypeFlags(materialRuntime.shaderQueueTypeFlags);
   switch (type) {
-    case (SHADER_TYPE_FLAGS::PBR): {
-      bindPBR(materialRuntime, commandList);
-      break;
-    }
-    case (SHADER_TYPE_FLAGS::SKIN): {
-      bindSkin(materialRuntime, commandList);
-      break;
-    }
-    case (SHADER_TYPE_FLAGS::FORWARD_PBR): {
-      bindForwardPBR(materialRuntime, commandList);
-      break;
-    }
-    case (SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT): {
-      bindForwardPhongAlphaCutout(materialRuntime, commandList);
-      break;
-    }
-    default: {
-      assert(0 && "could not find material type");
-    }
+  case (SHADER_TYPE_FLAGS::PBR): {
+    bindPBR(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::SKIN): {
+    bindSkin(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::FORWARD_PBR): {
+    bindForwardPBR(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT): {
+    bindForwardPhongAlphaCutout(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::HAIR): {
+    bindHair(materialRuntime, commandList);
+    break;
+  }
+  default: {
+    assert(0 && "could not find material type");
+  }
   }
 }
 
@@ -277,8 +301,10 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
       getValueIfInJson(jobj, materialKeys::ROUGHNESS, empty);
   const std::string thicknessName =
       getValueIfInJson(jobj, materialKeys::THICKNESS, empty);
-  const std::string separateAlphaName=
+  const std::string separateAlphaName =
       getValueIfInJson(jobj, materialKeys::SEPARATE_ALPHA, empty);
+  const std::string aoName=
+      getValueIfInJson(jobj, materialKeys::AO, empty);
 
   TextureHandle albedoTex{0};
   TextureHandle normalTex{0};
@@ -286,6 +312,7 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   TextureHandle roughnessTex{0};
   TextureHandle thicknessTex{0};
   TextureHandle separateAlphaTex{0};
+  TextureHandle aoTex{0};
 
   if (!albedoName.empty()) {
     albedoTex = dx12::TEXTURE_MANAGER->loadTexture(albedoName.c_str());
@@ -313,9 +340,16 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
     thicknessTex = dx12::TEXTURE_MANAGER->getWhiteTexture();
   }
   if (!separateAlphaName.empty()) {
-    separateAlphaTex = dx12::TEXTURE_MANAGER->loadTexture(separateAlphaName.c_str());
+    separateAlphaTex =
+        dx12::TEXTURE_MANAGER->loadTexture(separateAlphaName.c_str());
   } else {
     separateAlphaTex = dx12::TEXTURE_MANAGER->getWhiteTexture();
+  }
+  if (!aoName.empty()) {
+    aoTex=
+        dx12::TEXTURE_MANAGER->loadTexture(aoName.c_str());
+  } else {
+    aoTex= dx12::TEXTURE_MANAGER->getWhiteTexture();
   }
 
   uint32_t queueTypeFlags = parseQueueTypeFlags(jobj);
@@ -340,7 +374,8 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   texHandles.metallic = metallicTex;
   texHandles.roughness = roughnessTex;
   texHandles.thickness = thicknessTex;
-  texHandles.separateAlpha= thicknessTex;
+  texHandles.separateAlpha = separateAlphaTex;
+  texHandles.ao= aoTex;
 
   if (albedoTex.handle != 0) {
     texHandles.albedoSrv = dx12::TEXTURE_MANAGER->getSRVDx12(albedoTex);
@@ -358,7 +393,12 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
     texHandles.thicknessSrv = dx12::TEXTURE_MANAGER->getSRVDx12(thicknessTex);
   }
   if (separateAlphaTex.handle != 0) {
-    texHandles.separateAlphaSrv= dx12::TEXTURE_MANAGER->getSRVDx12(separateAlphaTex);
+    texHandles.separateAlphaSrv =
+        dx12::TEXTURE_MANAGER->getSRVDx12(separateAlphaTex);
+  }
+  if (aoTex.handle != 0) {
+    texHandles.aoSrv=
+        dx12::TEXTURE_MANAGER->getSRVDx12(aoTex);
   }
   MaterialRuntime matCpu{};
   matCpu.albedo = texHandles.albedoSrv.gpuHandle;
@@ -366,7 +406,8 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   matCpu.metallic = texHandles.metallicSrv.gpuHandle;
   matCpu.roughness = texHandles.roughnessSrv.gpuHandle;
   matCpu.thickness = texHandles.thicknessSrv.gpuHandle;
-  matCpu.separateAlpha= texHandles.separateAlphaSrv.gpuHandle;
+  matCpu.separateAlpha = texHandles.separateAlphaSrv.gpuHandle;
+  matCpu.ao= texHandles.aoSrv.gpuHandle;
 
   // we need to allocate  constant buffer
   // TODO should this be static constant buffer? investigate
@@ -392,8 +433,8 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   return handle;
 }
 
-const std::string &MaterialManager::getStringFromShaderTypeFlag(
-    const SHADER_TYPE_FLAGS type) {
+const std::string &
+MaterialManager::getStringFromShaderTypeFlag(const SHADER_TYPE_FLAGS type) {
   const auto found = materialKeys::TYPE_FLAGS_TO_STRING.find(type);
   if (found != materialKeys::TYPE_FLAGS_TO_STRING.end()) {
     return found->second;
@@ -405,4 +446,4 @@ const std::string &MaterialManager::getStringFromShaderTypeFlag(
   return unknown->second;
 }
 
-}  // namespace SirEngine
+} // namespace SirEngine
