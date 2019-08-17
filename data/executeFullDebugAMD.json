@@ -14,6 +14,7 @@
       "-p ../data/external/meshes/knightB/eyeCornea.obj -o ../data/processed/meshes/knightB/eyeCornea.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/eyeCornea.tangents\"",
       "-p ../data/external/meshes/knightB/eyeNew.obj -o ../data/processed/meshes/knightB/eyeNew.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/eyeNew.tangents\"",
       "-p ../data/external/meshes/knightB/eyeLashes.obj -o ../data/processed/meshes/knightB/eyeLashes.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/eyeLashes.tangents\"",
+      "-p ../data/external/meshes/knightB/hair.obj -o ../data/processed/meshes/knightB/hair.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/hair.tangents\"",
 
       "-p ../data/external/meshes/eye/eye.obj -o ../data/processed/meshes/eye/eye.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/eye/eye.tangents\"",
 
@@ -110,8 +111,9 @@
       "-p ../data/external/textures/eye/eye_N.png -o ../data/processed/textures/eye/eye_N.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5   -m\"",
       "-p ../data/external/textures/knightB/eyelash_ALPHA.png -o ../data/processed/textures/knightB/eyelash_ALPHA.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1  -m\"",
       "-p ../data/external/textures/knightB/hair_ALPHA.png -o ../data/processed/textures/knightB/hair_ALPHA.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1  -m\"",
-      "-p ../data/external/textures/knightB/hair_A.png -o ../data/processed/textures/knightB/hair_A.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1  -m\"",
+      "-p ../data/external/textures/knightB/hair_A.png -o ../data/processed/textures/knightB/hair_A.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1 -g -m\"",
       "-p ../data/external/textures/knightB/hair_N.png -o ../data/processed/textures/knightB/hair_N.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1  -m\"",
+      "-p ../data/external/textures/knightB/hair_AO.png -o ../data/processed/textures/knightB/hair_AO.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\"",
 
       "-p ../data/external/textures/flatGround/stone_A.png -o ../data/processed/textures/flatGround/stone_A.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1 -g -m\"",
       "-p ../data/external/textures/flatGround/stone_N.png -o ../data/processed/textures/flatGround/stone_N.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\"",

@@ -69,7 +69,22 @@
               }
             ]
           }
+        },
+        {
+          "comment": "AO",
+          "type": "descriptorTable",
+          "data": {
+            "ranges": [
+              {
+                "type": "SRV",
+                "numDescriptors": 1,
+                "baseRegister": 3
+              }
+            ]
+          }
         }
+
+
 
       ],
       "flags": ["D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT"]

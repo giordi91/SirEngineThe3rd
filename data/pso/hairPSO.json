@@ -1,9 +1,9 @@
 {
   "type": "RASTER",
   "inputLayout": "fullMesh",
-  "globalRootSignature": "forwardPhongAlphaCutoutRS",
+  "globalRootSignature": "hairRS",
   "VS": "basicMeshVSTex",
-  "PS": "forwardPhongAlphaCutoutPS",
+  "PS": "hairPS",
   "rasterState": "default",
   "blendState": "default",
   "depthStencilState": "custom",
