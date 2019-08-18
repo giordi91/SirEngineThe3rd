@@ -8,6 +8,7 @@
 #include "SirEngine/graphics/camera.h"
 #include "SirEngine/graphics/nodeGraph.h"
 #include "platform/windows/graphics/dx12/DX12.h"
+#include "platform/windows/graphics/dx12/debugRenderer.h"
 
 #include "SirEngine/events/renderGraphEvent.h"
 #include "SirEngine/events/shaderCompileEvent.h"
@@ -111,6 +112,29 @@ void Graphics3DLayer::onAttach() {
                                       "inTexture");
 
   dx12::RENDERING_GRAPH->finalizeGraph();
+
+
+  if (!currentFc->isListOpen) {
+    dx12::resetAllocatorAndList(currentFc);
+  }
+  std::vector<float> data;
+  data.push_back(5.0f);
+  data.push_back(0.0f);
+  data.push_back(0.0f);
+  data.push_back(5.0f);
+  data.push_back(5.0f);
+  data.push_back(0.0f);
+  data.push_back(5.0f);
+  data.push_back(10.0f);
+  data.push_back(0.0f);
+  dx12::DEBUG_RENDERER->drawPoints(data.data(), data.size() * sizeof(float),
+                                   DirectX::XMFLOAT4{1, 0, 0, 1},1.0f,true,"debugPoints");
+  dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE, currentFc);
+  dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
+
+
+
+
 }
 void Graphics3DLayer::onDetach() {}
 void Graphics3DLayer::onUpdate() {

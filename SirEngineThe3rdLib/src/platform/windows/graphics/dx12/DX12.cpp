@@ -18,6 +18,7 @@
 #include "platform/windows/graphics/dx12/shaderLayout.h"
 #include "platform/windows/graphics/dx12/shaderManager.h"
 #include "platform/windows/graphics/dx12/swapChain.h"
+#include "platform/windows/graphics/dx12/debugRenderer.h"
 
 namespace SirEngine::dx12 {
 
@@ -45,6 +46,7 @@ PSOManager *PSO_MANAGER = nullptr;
 RootSignatureManager *ROOT_SIGNATURE_MANAGER = nullptr;
 ShadersLayoutRegistry *SHADER_LAYOUT_REGISTRY = nullptr;
 BufferManagerDx12 *BUFFER_MANAGER = nullptr;
+DebugRenderer*DEBUG_RENDERER =nullptr;
 
 void createFrameCommand(FrameCommand *fc) {
   auto result = DEVICE->CreateCommandAllocator(
@@ -218,6 +220,11 @@ bool initializeGraphicsDx12(Window *wnd, const uint32_t width,
   MATERIAL_MANAGER->init();
   MATERIAL_MANAGER->loadTypesInFolder(
       frameConcatenation(globals::DATA_SOURCE_PATH , "/materials/types"));
+
+  DEBUG_RENDERER = new DebugRenderer();
+  DEBUG_RENDERER->init();
+
+
 
   globals::DEBUG_FRAME_DATA = new globals::DebugFrameData();
 

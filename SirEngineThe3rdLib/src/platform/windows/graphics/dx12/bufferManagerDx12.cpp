@@ -3,7 +3,20 @@
 #include <cassert>
 
 namespace SirEngine::dx12 {
-void BufferManagerDx12::free(const BufferHandle handle) { assert(0); }
+void BufferManagerDx12::free(const BufferHandle handle) {
+
+  assertMagicNumber(handle);
+  uint32_t index = getIndexFromHandle(handle);
+  BufferData &data = m_bufferPool[index];
+  data.data->Release();
+
+  if (data.srv.cpuHandle.ptr != 0) {
+    dx12::GLOBAL_CBV_SRV_UAV_HEAP->freeDescriptor(data.srv);
+  }
+  if (data.uav.cpuHandle.ptr != 0) {
+    dx12::GLOBAL_CBV_SRV_UAV_HEAP->freeDescriptor(data.uav);
+  }
+}
 
 BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInByte,
                                          void *initData, const char *name,
@@ -15,11 +28,12 @@ BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInByte,
   uint32_t actualSize =
       sizeInByte % 256 == 0 ? sizeInByte : ((sizeInByte / 256) + 1) * 256;
 
+  auto heap = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+  auto bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(
+      actualSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
   // Create the actual default buffer resource.
   HRESULT res = dx12::DEVICE->CreateCommittedResource(
-      &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
-      &CD3DX12_RESOURCE_DESC::Buffer(
-          actualSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS),
+      &heap, D3D12_HEAP_FLAG_NONE, &bufferDesc,
       D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&buffer));
   assert(SUCCEEDED(res));
   assert(initData == nullptr);
@@ -56,16 +70,14 @@ void BufferManagerDx12::bindBuffer(
   commandList->SetComputeRootUnorderedAccessView(
       slot, data.data->GetGPUVirtualAddress());
 }
-void BufferManagerDx12::bindBufferAsSRVGraphics(const BufferHandle handle, const int slot,
-                     ID3D12GraphicsCommandList2 *commandList)const 
-{
+void BufferManagerDx12::bindBufferAsSRVGraphics(
+    const BufferHandle handle, const int slot,
+    ID3D12GraphicsCommandList2 *commandList) const {
   assertMagicNumber(handle);
   uint32_t index = getIndexFromHandle(handle);
   const BufferData &data = m_bufferPool.getConstRef(index);
 
   commandList->SetGraphicsRootShaderResourceView(
       slot, data.data->GetGPUVirtualAddress());
-	
-
 }
 } // namespace SirEngine::dx12

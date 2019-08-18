@@ -52,6 +52,7 @@
       "-p ../data/shaders/compute/depthMinMaxReduceClear.hlsl -o ../data/processed/shaders/compute/depthMinMaxReduceClear.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t cs_6_2  -e CS -d \"",
       "-p ../data/shaders/rasterization/forwardPhongAlphaCutoutPS.hlsl -o ../data/processed/shaders/rasterization/forwardPhongAlphaCutoutPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
       "-p ../data/shaders/rasterization/hairPS.hlsl -o ../data/processed/shaders/rasterization/hairPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
+      "-p ../data/shaders/rasterization/basicColorPS.hlsl -o ../data/processed/shaders/rasterization/basicColorPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
 
       "-p ../data/rs/simpleMeshRS.json -o ../data/processed/rs/simpleMeshRS.root --pluginName rootSignatureCompilerPlugin",
       "-p ../data/rs/simpleMeshRSTex.json -o ../data/processed/rs/simpleMeshRSTex.root --pluginName rootSignatureCompilerPlugin",
@@ -72,6 +73,7 @@
       "-p ../data/rs/forwardPBRRS.json -o ../data/processed/rs/forwardPBRRS.root --pluginName rootSignatureCompilerPlugin",
       "-p ../data/rs/forwardPhongAlphaCutoutRS.json -o ../data/processed/rs/forwardPhongAlphaCutoutRS.root --pluginName rootSignatureCompilerPlugin",
       "-p ../data/rs/hairRS.json -o ../data/processed/rs/hairRS.root --pluginName rootSignatureCompilerPlugin",
+      "-p ../data/rs/debugDrawPointsSingleColorRS.json -o ../data/processed/rs/debugDrawPointsSingleColorRS.root --pluginName rootSignatureCompilerPlugin",
         
 
       "-p ../data/external/textures/cerberus/Cerberus_A.tga -o ../data/processed/textures/cerberus/Cerberus_A.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1 -g -m\"",

@@ -2,11 +2,15 @@
   "commands": 
     [
       "-p ../data/shaders/rasterization/basicMeshForwardPBRPS.hlsl -o ../data/processed/shaders/rasterization/basicMeshForwardPBRPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
+      "-p ../data/shaders/rasterization/basicColorPS.hlsl -o ../data/processed/shaders/rasterization/basicColorPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
+      "-p ../data/shaders/rasterization/pointExpandVS.hlsl -o ../data/processed/shaders/rasterization/pointExpandVS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t vs_6_2  -e VS -d \"",
+
       "-p ../data/shaders/rasterization/hairPS.hlsl -o ../data/processed/shaders/rasterization/hairPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
       "-p ../data/shaders/rasterization/deferredDirectionalLightPS.hlsl -o ../data/processed/shaders/rasterization/deferredDirectionalLightPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
       "-p ../data/rs/forwardPBRRS.json -o ../data/processed/rs/forwardPBRRS.root --pluginName rootSignatureCompilerPlugin",
       "-p ../data/rs/forwardPhongAlphaCutoutRS.json -o ../data/processed/rs/forwardPhongAlphaCutoutRS.root --pluginName rootSignatureCompilerPlugin",
       "-p ../data/rs/hairRS.json -o ../data/processed/rs/hairRS.root --pluginName rootSignatureCompilerPlugin",
+      "-p ../data/rs/debugDrawPointsSingleColorRS.json -o ../data/processed/rs/debugDrawPointsSingleColorRS.root --pluginName rootSignatureCompilerPlugin",
       "-p ../data/external/meshes/knightB/eyeLashes.obj -o ../data/processed/meshes/knightB/eyeLashes.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/eyeLashes.tangents\"",
       "-p ../data/external/meshes/knightB/hair.obj -o ../data/processed/meshes/knightB/hair.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/hair.tangents\"",
       "-p ../data/shaders/rasterization/forwardPhongAlphaCutoutPS.hlsl -o ../data/processed/shaders/rasterization/forwardPhongAlphaCutoutPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",

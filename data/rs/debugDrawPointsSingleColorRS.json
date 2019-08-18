@@ -1,0 +1,53 @@
+{
+  "debugDrawPointsSingleColorRS": {
+    "type": "RASTER",
+    "staticSamplers": false,
+    "config": [
+      {
+        "comment": "camera",
+        "type": "descriptorTable",
+        "data": {
+          "numberDescriptor": "1",
+          "ranges": [
+            {
+              "type": "CBV",
+              "numDescriptors": 1,
+              "baseRegister": 0
+            }
+          ]
+        },
+        "visibility": "ALL"
+      },
+      {
+        "comment": "debug config",
+        "type": "descriptorTable",
+        "data": {
+          "numberDescriptor": "1",
+          "ranges": [
+            {
+              "type": "CBV",
+              "numDescriptors": 1,
+              "baseRegister": 1
+            }
+          ]
+        },
+        "visibility": "ALL"
+      },
+      {
+        "comment": "input geo",
+        "type": "descriptorTable",
+        "data": {
+          "numberDescriptor": "1",
+          "ranges": [
+            {
+              "type": "SRV",
+              "numDescriptors": 1,
+              "baseRegister": 0
+            }
+          ]
+        }
+      }
+    ],
+    "flags": [ "D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT" ]
+  }
+}

@@ -1,10 +1,10 @@
 #pragma once
 
+#include "SirEngine/handle.h"
+#include "memory/SparseMemoryPool.h"
 #include <cassert>
 #include <unordered_map>
 #include <vector>
-#include "SirEngine/handle.h"
-#include "memory/SparseMemoryPool.h"
 
 #if GRAPHICS_API == DX12
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
@@ -17,7 +17,7 @@ struct ShaderBind {
   PSOHandle pso;
 };
 
-enum class STENCIL_REF { CLEAR = 0,SSSSS = 1 };
+enum class STENCIL_REF { CLEAR = 0, SSSSS = 1 };
 
 struct MaterialRuntime final {
   D3D12_GPU_VIRTUAL_ADDRESS cbVirtualAddress;
@@ -71,13 +71,27 @@ struct Material final {
 enum class SHADER_QUEUE_FLAGS {
   FORWARD = 1 << 0,
   DEFERRED = 1 << 1,
-  SHADOW = 1 << 2
+  SHADOW = 1 << 2,
+  DEBUG = 1 << 3,
 };
 
-enum class SHADER_TYPE_FLAGS { UNKNOWN = 0, PBR = 1, SKIN = 2, FORWARD_PBR=3, FORWARD_PHONG_ALPHA_CUTOUT=4 ,HAIR=5};
+enum class SHADER_TYPE_FLAGS {
+  UNKNOWN = 0,
+  PBR = 1,
+  SKIN = 2,
+  FORWARD_PBR = 3,
+  FORWARD_PHONG_ALPHA_CUTOUT = 4,
+  HAIR = 5,
+  DEBUG_POINTS_SINGLE_COLOR = 6,
+  DEBUG_POINTS_COLORS = 7,
+  DEBUG_LINES_SINGLE_COLOR = 8,
+  DEBUG_LINES_COLORS = 9,
+  DEBUG_TRIANGLE_SINGLE_COLOR = 10,
+  DEBUG_TRIANGLE_COLORS = 11,
+};
 
 class MaterialManager final {
- public:
+public:
   MaterialManager() : m_idxPool(RESERVE_SIZE) {
     m_materials.resize(RESERVE_SIZE), m_materialsMagic.resize(RESERVE_SIZE),
         m_materialTextureHandles.resize(RESERVE_SIZE);
@@ -123,7 +137,7 @@ class MaterialManager final {
 
   const std::string &getStringFromShaderTypeFlag(SHADER_TYPE_FLAGS type);
 
- private:
+private:
   inline uint32_t getIndexFromHandel(const MaterialHandle h) const {
     return h.handle & INDEX_MASK;
   }
@@ -139,7 +153,7 @@ class MaterialManager final {
   }
   void loadTypeFile(const char *path);
 
- private:
+private:
   std::unordered_map<uint16_t, ShaderBind> m_shderTypeToShaderBind;
   std::unordered_map<std::string, MaterialHandle> m_nameToHandle;
   static const uint32_t INDEX_MASK = (1 << 16) - 1;
@@ -153,4 +167,4 @@ class MaterialManager final {
   std::vector<MaterialDataHandles> m_materialTextureHandles;
 };
 
-}  // namespace SirEngine
+} // namespace SirEngine

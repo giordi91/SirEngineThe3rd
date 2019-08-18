@@ -24,6 +24,7 @@ class RootSignatureManager;
 class ShadersLayoutRegistry;
 class PSOManager;
 class BufferManagerDx12;
+class DebugRenderer;
 
 enum class DescriptorType {
   NONE = 0,
@@ -131,6 +132,7 @@ extern RootSignatureManager *ROOT_SIGNATURE_MANAGER;
 extern PSOManager *PSO_MANAGER;
 extern ShadersLayoutRegistry *SHADER_LAYOUT_REGISTRY;
 extern BufferManagerDx12 *BUFFER_MANAGER;
+extern DebugRenderer*DEBUG_RENDERER;
 
 inline UINT64 insertFenceToGlobalQueue() {
   // Advance the fence value to mark commands up to this fence point.
