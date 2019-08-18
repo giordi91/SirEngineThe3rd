@@ -59,4 +59,12 @@ struct SSSSSConfig {
 	float width;
 	float2 direction;
 };
+
+
+struct DebugPointsFixedColor
+{
+    float4 color;
+    float pointSize;
+    float3 padding;
+};
 #endif

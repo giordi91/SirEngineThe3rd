@@ -1,6 +1,11 @@
 #ifndef VTX_DEFINITIONS_HLSL 
 #define VTX_DEFINITIONS_HLSL
 
+struct PositionOnlyVertexIn 
+{
+	float3 pos : POSITION;
+};
+
 struct TexturedVertexIn16
 {
 	float4 PosL  : POSITION;
@@ -38,7 +43,7 @@ struct FullScreenVertexOut {
   float2 uv : TEXCOORD1;
 };
 
-struct PositionOnly{
+struct PositionOnlyVertexOut{
   float4 pos : SV_POSITION;
   float4 worldPos: POSITION;
 };

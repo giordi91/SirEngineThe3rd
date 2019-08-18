@@ -6,6 +6,7 @@
 #include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/TextureManagerDx12.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
+#include "platform/windows/graphics/dx12/debugRenderer.h"
 
 namespace SirEngine {
 
@@ -141,6 +142,8 @@ void SimpleForward::compute() {
 
     }
   }
+  //TEMP
+  dx12::DEBUG_RENDERER->render();
 
   m_outputPlugs[0].plugValue = renderTarget.handle;
   annotateGraphicsEnd();

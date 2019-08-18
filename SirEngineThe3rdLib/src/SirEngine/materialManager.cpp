@@ -19,7 +19,7 @@ static const char *ALBEDO = "albedo";
 static const char *NORMAL = "normal";
 static const char *METALLIC = "metallic";
 static const char *ROUGHNESS = "roughness";
-static const char *AO= "ao";
+static const char *AO = "ao";
 static const char *SEPARATE_ALPHA = "separateAlpha";
 static const char *ROUGHNESS_MULT = "roughnessMult";
 static const char *METALLIC_MULT = "metallicMult";
@@ -44,6 +44,17 @@ static const std::unordered_map<std::string, SirEngine::SHADER_TYPE_FLAGS>
          SirEngine::SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT},
         {"skin", SirEngine::SHADER_TYPE_FLAGS::SKIN},
         {"hair", SirEngine::SHADER_TYPE_FLAGS::HAIR},
+        {"debugLinesColors", SirEngine::SHADER_TYPE_FLAGS::DEBUG_LINES_COLORS},
+        {"debugLinesSingleColor",
+         SirEngine::SHADER_TYPE_FLAGS::DEBUG_LINES_SINGLE_COLOR},
+        {"debugPointsColors",
+         SirEngine::SHADER_TYPE_FLAGS::DEBUG_POINTS_COLORS},
+        {"debugPointsSingleColor",
+         SirEngine::SHADER_TYPE_FLAGS::DEBUG_POINTS_SINGLE_COLOR},
+        {"debugTrianglesColors",
+         SirEngine::SHADER_TYPE_FLAGS::DEBUG_TRIANGLE_COLORS},
+        {"debugTrianglesSingleColor",
+         SirEngine::SHADER_TYPE_FLAGS::DEBUG_TRIANGLE_SINGLE_COLOR},
     };
 static const std::unordered_map<SirEngine::SHADER_TYPE_FLAGS, std::string>
     TYPE_FLAGS_TO_STRING{
@@ -53,6 +64,17 @@ static const std::unordered_map<SirEngine::SHADER_TYPE_FLAGS, std::string>
          "forwardPhongAlphaCutout"},
         {SirEngine::SHADER_TYPE_FLAGS::SKIN, "skin"},
         {SirEngine::SHADER_TYPE_FLAGS::HAIR, "hair"},
+        {SirEngine::SHADER_TYPE_FLAGS::DEBUG_LINES_COLORS, "debugLinesColors"},
+        {SirEngine::SHADER_TYPE_FLAGS::DEBUG_LINES_SINGLE_COLOR,
+         "debugLinesSingleColor"},
+        {SirEngine::SHADER_TYPE_FLAGS::DEBUG_POINTS_COLORS,
+         "debugPointsColors"},
+        {SirEngine::SHADER_TYPE_FLAGS::DEBUG_POINTS_SINGLE_COLOR,
+         "debugPointsSingleColor"},
+        {SirEngine::SHADER_TYPE_FLAGS::DEBUG_TRIANGLE_COLORS,
+         "debugTrianglesColors"},
+        {SirEngine::SHADER_TYPE_FLAGS::DEBUG_TRIANGLE_SINGLE_COLOR,
+         "debugTrianglesSingleColor"},
     };
 
 } // namespace materialKeys
@@ -303,8 +325,7 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
       getValueIfInJson(jobj, materialKeys::THICKNESS, empty);
   const std::string separateAlphaName =
       getValueIfInJson(jobj, materialKeys::SEPARATE_ALPHA, empty);
-  const std::string aoName=
-      getValueIfInJson(jobj, materialKeys::AO, empty);
+  const std::string aoName = getValueIfInJson(jobj, materialKeys::AO, empty);
 
   TextureHandle albedoTex{0};
   TextureHandle normalTex{0};
@@ -346,10 +367,9 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
     separateAlphaTex = dx12::TEXTURE_MANAGER->getWhiteTexture();
   }
   if (!aoName.empty()) {
-    aoTex=
-        dx12::TEXTURE_MANAGER->loadTexture(aoName.c_str());
+    aoTex = dx12::TEXTURE_MANAGER->loadTexture(aoName.c_str());
   } else {
-    aoTex= dx12::TEXTURE_MANAGER->getWhiteTexture();
+    aoTex = dx12::TEXTURE_MANAGER->getWhiteTexture();
   }
 
   uint32_t queueTypeFlags = parseQueueTypeFlags(jobj);
@@ -375,7 +395,7 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   texHandles.roughness = roughnessTex;
   texHandles.thickness = thicknessTex;
   texHandles.separateAlpha = separateAlphaTex;
-  texHandles.ao= aoTex;
+  texHandles.ao = aoTex;
 
   if (albedoTex.handle != 0) {
     texHandles.albedoSrv = dx12::TEXTURE_MANAGER->getSRVDx12(albedoTex);
@@ -397,8 +417,7 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
         dx12::TEXTURE_MANAGER->getSRVDx12(separateAlphaTex);
   }
   if (aoTex.handle != 0) {
-    texHandles.aoSrv=
-        dx12::TEXTURE_MANAGER->getSRVDx12(aoTex);
+    texHandles.aoSrv = dx12::TEXTURE_MANAGER->getSRVDx12(aoTex);
   }
   MaterialRuntime matCpu{};
   matCpu.albedo = texHandles.albedoSrv.gpuHandle;
@@ -407,7 +426,7 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   matCpu.roughness = texHandles.roughnessSrv.gpuHandle;
   matCpu.thickness = texHandles.thicknessSrv.gpuHandle;
   matCpu.separateAlpha = texHandles.separateAlphaSrv.gpuHandle;
-  matCpu.ao= texHandles.aoSrv.gpuHandle;
+  matCpu.ao = texHandles.aoSrv.gpuHandle;
 
   // we need to allocate  constant buffer
   // TODO should this be static constant buffer? investigate
