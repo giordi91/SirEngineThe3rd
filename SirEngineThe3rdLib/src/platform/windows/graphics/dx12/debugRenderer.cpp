@@ -21,6 +21,15 @@ void DebugRenderer::init() {
   m_shderTypeToShaderBind[static_cast<uint16_t>(
       SHADER_TYPE_FLAGS::DEBUG_POINTS_SINGLE_COLOR)] =
       ShaderBind{rsHandle, psoHandle};
+
+  psoHandle =
+      dx12::PSO_MANAGER->getHandleFromName("debugDrawLinesSingleColorPSO");
+  rsHandle = dx12::ROOT_SIGNATURE_MANAGER->getHandleFromName(
+      "debugDrawLinesSingleColorRS");
+
+  m_shderTypeToShaderBind[static_cast<uint16_t>(
+      SHADER_TYPE_FLAGS::DEBUG_LINES_SINGLE_COLOR)] =
+      ShaderBind{rsHandle, psoHandle};
 }
 void DebugRenderer::cleanPerFrame() {
   /*
@@ -97,16 +106,16 @@ inline D3D12_VERTEX_BUFFER_VIEW getVertexBufferView(ID3D12Resource *buffer,
   return vbv;
 }
 
-DebugDrawHandle DebugRenderer::drawPoints(float *data, uint32_t sizeInByte,
-                                          DirectX::XMFLOAT4 color, float size,
-                                          bool isPeristen,
-                                          const char *debugName) {
+DebugDrawHandle
+DebugRenderer::drawPointsUniformColor(float *data, uint32_t sizeInByte,
+                                      DirectX::XMFLOAT4 color, float size,
+                                      bool isPeristen, const char *debugName) {
   BufferUploadResource upload;
   DebugPrimitive primitive;
   assert(isPeristen);
   // allocate vertex buffer
   assert((sizeInByte % (sizeof(float) * 3)) == 0);
-  uint32_t elementCount = sizeInByte / (sizeof(float) * 3);
+  const uint32_t elementCount = sizeInByte / (sizeof(float) * 3);
 
   primitive.buffer = createDefaultBuffer(
       dx12::DEVICE, dx12::CURRENT_FRAME_RESOURCE->fc.commandList, data,
@@ -117,24 +126,26 @@ DebugDrawHandle DebugRenderer::drawPoints(float *data, uint32_t sizeInByte,
   primitive.bufferView =
       getVertexBufferView(primitive.buffer, sizeof(float) * 3, sizeInByte);
 
-  dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferSRV(primitive.srv,primitive.buffer,elementCount,sizeof(float)*3);
+  dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferSRV(
+      primitive.srv, primitive.buffer, elementCount, sizeof(float) * 3);
 
   // allocate constant buffer
   DebugPointsFixedColor settings{color, size};
-  ConstantBufferHandle chandle = dx12::CONSTANT_BUFFER_MANAGER->allocateDynamic(
-      sizeof(settings), &settings);
+  const ConstantBufferHandle chandle =
+      dx12::CONSTANT_BUFFER_MANAGER->allocateDynamic(sizeof(settings),
+                                                     &settings);
 
   // store it such way that we can render it
   primitive.primitiveType = PrimitiveType::POINT;
   primitive.cbHandle = chandle;
   primitive.primitiveToRender = elementCount * 6;
 
-  DebugDrawHandle debugHandle{++MAGIC_NUMBER_COUNTER};
+  const DebugDrawHandle debugHandle{++MAGIC_NUMBER_COUNTER};
 
   // generate handle for storing
   SHADER_QUEUE_FLAGS queue = SHADER_QUEUE_FLAGS::DEBUG;
   SHADER_TYPE_FLAGS type = SHADER_TYPE_FLAGS::DEBUG_POINTS_SINGLE_COLOR;
-  uint32_t storeHandle =
+  const uint32_t storeHandle =
       static_cast<uint32_t>(queue) | (static_cast<uint32_t>(type) << 16);
 
   if (isPeristen) {
@@ -144,6 +155,57 @@ DebugDrawHandle DebugRenderer::drawPoints(float *data, uint32_t sizeInByte,
   }
   return debugHandle;
 }
+
+DebugDrawHandle
+DebugRenderer::drawLinesUniformColor(float *data, uint32_t sizeInByte,
+                                     DirectX::XMFLOAT4 color, float size,
+                                     bool isPeristen, const char *debugName) {
+  BufferUploadResource upload;
+  DebugPrimitive primitive;
+  assert(isPeristen);
+  // allocate vertex buffer
+  assert((sizeInByte % (sizeof(float) * 3)) == 0);
+  const uint32_t elementCount = sizeInByte / (sizeof(float) * 3);
+
+  primitive.buffer = createDefaultBuffer(
+      dx12::DEVICE, dx12::CURRENT_FRAME_RESOURCE->fc.commandList, data,
+      sizeInByte, &upload.uploadBuffer);
+  // set a signal for the resource.
+  upload.fence = dx12::insertFenceToGlobalQueue();
+  m_uploadRequests.push_back(upload);
+  primitive.bufferView =
+      getVertexBufferView(primitive.buffer, sizeof(float) * 3, sizeInByte);
+
+  dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferSRV(
+      primitive.srv, primitive.buffer, elementCount, sizeof(float) * 3);
+
+  // allocate constant buffer
+  DebugPointsFixedColor settings{color, size};
+  const ConstantBufferHandle chandle =
+      dx12::CONSTANT_BUFFER_MANAGER->allocateDynamic(sizeof(settings),
+                                                     &settings);
+
+  // store it such way that we can render it
+  primitive.primitiveType = PrimitiveType::LINE;
+  primitive.cbHandle = chandle;
+  primitive.primitiveToRender = static_cast<int>(elementCount);
+
+  const DebugDrawHandle debugHandle{++MAGIC_NUMBER_COUNTER};
+
+  // generate handle for storing
+  SHADER_QUEUE_FLAGS queue = SHADER_QUEUE_FLAGS::DEBUG;
+  SHADER_TYPE_FLAGS type = SHADER_TYPE_FLAGS::DEBUG_LINES_SINGLE_COLOR;
+  const uint32_t storeHandle =
+      static_cast<uint32_t>(queue) | (static_cast<uint32_t>(type) << 16);
+
+  if (isPeristen) {
+    m_renderablesPersistant[storeHandle].push_back(primitive);
+  } else {
+    m_renderablesPersistant[storeHandle].push_back(primitive);
+  }
+  return debugHandle;
+}
+
 void DebugRenderer::render() {
 
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
@@ -184,19 +246,29 @@ void DebugRenderer::render() {
                  ->getConstantBufferDx12Handle(prim.cbHandle)
                  .gpuHandle);
 
-      //currentFc->commandList->IASetVertexBuffers(0, 1, &prim.bufferView);
-	  //currentFc->commandList->SetGraphicsRootShaderResourceView(1,prim.buffer->GetGPUVirtualAddress());
-      commandList->SetGraphicsRootDescriptorTable(2,prim.srv.gpuHandle);
+      // currentFc->commandList->IASetVertexBuffers(0, 1, &prim.bufferView);
+      // currentFc->commandList->SetGraphicsRootShaderResourceView(1,prim.buffer->GetGPUVirtualAddress());
+      const uint32_t isPC = type == SHADER_TYPE_FLAGS::DEBUG_POINTS_COLORS;
+      const uint32_t isPSC =
+          type == SHADER_TYPE_FLAGS::DEBUG_POINTS_SINGLE_COLOR;
+      if (isPC | isPSC) {
+        commandList->SetGraphicsRootDescriptorTable(2, prim.srv.gpuHandle);
+        currentFc->commandList->IASetPrimitiveTopology(
+            D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+      } else {
+        currentFc->commandList->IASetVertexBuffers(0, 1, &prim.bufferView);
+        currentFc->commandList->IASetPrimitiveTopology(
+            D3D_PRIMITIVE_TOPOLOGY_LINELIST);
+      }
 
       currentFc->commandList->IASetVertexBuffers(0, 1, nullptr);
-      currentFc->commandList->IASetPrimitiveTopology(
-          D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
       currentFc->commandList->DrawInstanced(prim.primitiveToRender, 1, 0, 0);
     }
 
     annotateGraphicsEnd();
   }
+  currentFc->commandList->IASetPrimitiveTopology(
+      D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 } // namespace SirEngine::dx12
 void DebugRenderer::clearUploadRequests() {
 

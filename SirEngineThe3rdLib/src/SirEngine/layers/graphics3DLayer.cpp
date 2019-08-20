@@ -127,8 +127,27 @@ void Graphics3DLayer::onAttach() {
   data.push_back(5.0f);
   data.push_back(10.0f);
   data.push_back(0.0f);
-  dx12::DEBUG_RENDERER->drawPoints(data.data(), data.size() * sizeof(float),
+  dx12::DEBUG_RENDERER->drawPointsUniformColor(data.data(), data.size() * sizeof(float),
                                    DirectX::XMFLOAT4{1, 0, 0, 1},1.0f,true,"debugPoints");
+
+  std::vector<float> data2;
+  data.push_back(5.0f);
+  data.push_back(0.0f);
+  data.push_back(0.0f);
+  data.push_back(5.0f);
+  data.push_back(5.0f);
+  data.push_back(0.0f);
+  data.push_back(5.0f);
+  data.push_back(5.0f);
+  data.push_back(0.0f);
+  data.push_back(15.0f);
+  data.push_back(10.0f);
+  data.push_back(0.0f);
+  dx12::DEBUG_RENDERER->drawLinesUniformColor(data.data(), data.size() * sizeof(float),
+                                   DirectX::XMFLOAT4{1, 0, 0, 1},1.0f,true,"debugLines");
+
+
+
   dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE, currentFc);
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
 

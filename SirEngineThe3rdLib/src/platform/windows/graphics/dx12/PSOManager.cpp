@@ -92,7 +92,10 @@ static const std::unordered_map<std::string, DXGI_FORMAT> STRING_TO_DXGI_FORMAT{
 #undef X
 
 static const std::unordered_map<std::string, D3D12_PRIMITIVE_TOPOLOGY_TYPE>
-    STRING_TO_TOPOLOGY = {{"triangle", D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE}};
+    STRING_TO_TOPOLOGY = {
+    	{"triangle", D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE}, 
+    	{"line", D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE}, 
+    };
 
 inline PSOType convertStringPSOTypeToEnum(const std::string &type) {
   const auto found = STRING_TO_PSO_TYPE.find(type);
@@ -112,6 +115,9 @@ inline D3D12_PRIMITIVE_TOPOLOGY_TYPE convertStringToTopology(
     const std::string &topology) {
   const auto found = STRING_TO_TOPOLOGY.find(topology);
   if (found != STRING_TO_TOPOLOGY.end()) {
+	if(found->first== "line") {
+		int x =0;
+    }
     return found->second;
   }
   assert(
