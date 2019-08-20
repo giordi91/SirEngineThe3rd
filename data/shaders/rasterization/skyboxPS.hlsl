@@ -11,6 +11,6 @@ SamplerState gsamLinearClamp : register(s3);
 SamplerState gsamAnisotropicWrap : register(s4);
 SamplerState gsamAnisotropicClamp : register(s5);
 
-float4 PS(PositionOnly input) : SV_TARGET {
+float4 PS(PositionOnlyVertexOut input) : SV_TARGET {
   return skyboxTexture.Sample(gsamLinearClamp,input.worldPos.xyz);
 }

@@ -3,9 +3,9 @@
 
 ConstantBuffer<CameraBuffer> g_cameraBuffer : register(b0);
 
-PositionOnly VS(TexturedVertexIn12 vin)
+PositionOnlyVertexOut VS(TexturedVertexIn12 vin)
 {
-	PositionOnly vout;
+	PositionOnlyVertexOut vout;
 	
 	// Transform to homogeneous clip space.
 	
