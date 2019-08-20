@@ -42,7 +42,10 @@ public:
                DirectX::XMFLOAT4 &color, float rayLen, float originSize,
                bool isPeristen);
 
-  DebugDrawHandle drawPoints(float *data, uint32_t sizeInByte,
+  DebugDrawHandle drawPointsUniformColor(float *data, uint32_t sizeInByte,
+                             DirectX::XMFLOAT4 color, float size,
+                             bool isPeristen, const char *debugName);
+  DebugDrawHandle drawLinesUniformColor(float *data, uint32_t sizeInByte,
                              DirectX::XMFLOAT4 color, float size,
                              bool isPeristen, const char *debugName);
 
@@ -50,12 +53,6 @@ public:
                     DirectX::XMFLOAT4 color, bool isPeristen);
 
   void drawAABBs(float *float3aabs, int size, bool isPersisten);
-  void drawPointsUniformColor(std::vector<float> &data, DirectX::XMFLOAT4 color,
-                              float size, bool isPeristen);
-
-  void drawPointsUniformColor(float *dataFloat3, int pointsCount,
-                              DirectX::XMFLOAT4 color, float size,
-                              bool isPeristen);
   void drawPointsColor(std::vector<float> &data, float size, bool isPeristen);
   void drawGeoPointsColor(std::vector<float> &data, float size,
                           bool isPeristen);
@@ -68,6 +65,13 @@ private:
   DebugRenderer &operator=(const DebugRenderer &) = delete;
 
 private:
+	struct PSORSPair
+	{
+		PSOHandle pso;
+		RSHandle rs;
+	};
+
+
   std::unordered_map<uint32_t, std::vector<DebugPrimitive>>
       m_renderablesPersistant;
   std::unordered_map<uint32_t, std::vector<DebugPrimitive>> m_renderables;
