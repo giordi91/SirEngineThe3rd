@@ -3,9 +3,9 @@
 
 ConstantBuffer<CameraBuffer> g_cameraBuffer : register(b0);
 
-PositionOnly VS(TexturedVertexIn12 vin)
+PositionOnlyVertexOut VS(TexturedVertexIn12 vin)
 {
-    PositionOnly vout;
+    PositionOnlyVertexOut vout;
 	
     //offsetting  the position such that the skybox is always on the camera
     float4 offsetPos = float4(vin.PosL, 0.0f) + g_cameraBuffer.position;
