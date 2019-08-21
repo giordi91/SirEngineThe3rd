@@ -6,15 +6,16 @@
 #include <vector>
 
 namespace SirEngine::dx12 {
-enum PrimitiveType { TRIANGLE, LINE, POINT };
+enum PRIMITIVE_TYPE { TRIANGLE, LINE, POINT };
 struct DebugPrimitive {
   // slow I know but for the time being will get the job done
   ConstantBufferHandle cbHandle;
-  ID3D12Resource* buffer;
+  ID3D12Resource *buffer;
   D3D12_VERTEX_BUFFER_VIEW bufferView;
   int primitiveToRender;
-  PrimitiveType primitiveType;
+  PRIMITIVE_TYPE primitiveType;
   DescriptorPair srv;
+  uint64_t fence;
 };
 
 class DebugRenderer {
@@ -43,11 +44,12 @@ public:
                bool isPeristen);
 
   DebugDrawHandle drawPointsUniformColor(float *data, uint32_t sizeInByte,
-                             DirectX::XMFLOAT4 color, float size,
-                             bool isPeristen, const char *debugName);
+                                         DirectX::XMFLOAT4 color, float size,
+                                         bool isPeristen,
+                                         const char *debugName);
   DebugDrawHandle drawLinesUniformColor(float *data, uint32_t sizeInByte,
-                             DirectX::XMFLOAT4 color, float size,
-                             bool isPeristen, const char *debugName);
+                                        DirectX::XMFLOAT4 color, float size,
+                                        bool isPersistent, const char *debugName);
 
   void drawTriangle(float *point0, float *point1, float *point2,
                     DirectX::XMFLOAT4 color, bool isPeristen);
@@ -65,12 +67,10 @@ private:
   DebugRenderer &operator=(const DebugRenderer &) = delete;
 
 private:
-	struct PSORSPair
-	{
-		PSOHandle pso;
-		RSHandle rs;
-	};
-
+  struct PSORSPair {
+    PSOHandle pso;
+    RSHandle rs;
+  };
 
   std::unordered_map<uint32_t, std::vector<DebugPrimitive>>
       m_renderablesPersistant;
@@ -78,6 +78,7 @@ private:
   uint32_t MAGIC_NUMBER_COUNTER = 1;
   std::unordered_map<uint16_t, ShaderBind> m_shderTypeToShaderBind;
   std::vector<BufferUploadResource> m_uploadRequests;
+  std::vector<DebugPrimitive> m_primToFree;
 };
 
 } // namespace SirEngine::dx12

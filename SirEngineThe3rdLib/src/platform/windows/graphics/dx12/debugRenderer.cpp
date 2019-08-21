@@ -3,6 +3,7 @@
 #include "SirEngine/graphics/debugAnnotations.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/materialManager.h"
+#include "SirEngine/memory/stringPool.h"
 #include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/PSOManager.h"
@@ -32,15 +33,42 @@ void DebugRenderer::init() {
       ShaderBind{rsHandle, psoHandle};
 }
 void DebugRenderer::cleanPerFrame() {
+
   /*
-for (auto &queue : m_renderables) {
-for (auto &prim : queue.second) {
-// dx12::CONSTANT_BUFFER_MANAGER->free
-// prim.cbHandle
-dx12::CON
-}
+for (auto &prim : m_primToFree) {
+prim.buffer->Release();
+dx12::CONSTANT_BUFFER_MANAGER->free(prim.cbHandle);
 }
 */
+  // for (auto &queue : m_renderables) {
+  //  for (auto &prim : queue.second) {
+  //    // dx12::CONSTANT_BUFFER_MANAGER->free
+  //  }
+  //}
+}
+
+inline ID3D12Resource *
+allocateUploadBuffer(ID3D12Device *pDevice, void *pData,
+                     const uint64_t dataSize,
+                     const wchar_t *resourceName = nullptr) {
+  ID3D12Resource *ppResource;
+  auto uploadHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+  auto bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(dataSize);
+  HRESULT res = pDevice->CreateCommittedResource(
+      &uploadHeapProperties, D3D12_HEAP_FLAG_NONE, &bufferDesc,
+      D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&ppResource));
+
+  if (FAILED(res)) {
+    SE_CORE_ERROR("error allocating uppload buffer");
+  }
+  if (resourceName) {
+    (ppResource)->SetName(resourceName);
+  }
+  void *pMappedData;
+  (ppResource)->Map(0, nullptr, &pMappedData);
+  memcpy(pMappedData, pData, dataSize);
+  (ppResource)->Unmap(0, nullptr);
+  return ppResource;
 }
 
 static ID3D12Resource *createDefaultBuffer(ID3D12Device *device,
@@ -136,7 +164,7 @@ DebugRenderer::drawPointsUniformColor(float *data, uint32_t sizeInByte,
                                                      &settings);
 
   // store it such way that we can render it
-  primitive.primitiveType = PrimitiveType::POINT;
+  primitive.primitiveType = PRIMITIVE_TYPE::POINT;
   primitive.cbHandle = chandle;
   primitive.primitiveToRender = elementCount * 6;
 
@@ -156,23 +184,30 @@ DebugRenderer::drawPointsUniformColor(float *data, uint32_t sizeInByte,
   return debugHandle;
 }
 
-DebugDrawHandle
-DebugRenderer::drawLinesUniformColor(float *data, uint32_t sizeInByte,
-                                     DirectX::XMFLOAT4 color, float size,
-                                     bool isPeristen, const char *debugName) {
-  BufferUploadResource upload;
+DebugDrawHandle DebugRenderer::drawLinesUniformColor(
+    float *data, const uint32_t sizeInByte, const DirectX::XMFLOAT4 color,
+    const float size, const bool isPersistent, const char *debugName) {
   DebugPrimitive primitive;
-  assert(isPeristen);
+
   // allocate vertex buffer
   assert((sizeInByte % (sizeof(float) * 3)) == 0);
   const uint32_t elementCount = sizeInByte / (sizeof(float) * 3);
 
-  primitive.buffer = createDefaultBuffer(
-      dx12::DEVICE, dx12::CURRENT_FRAME_RESOURCE->fc.commandList, data,
-      sizeInByte, &upload.uploadBuffer);
-  // set a signal for the resource.
-  upload.fence = dx12::insertFenceToGlobalQueue();
-  m_uploadRequests.push_back(upload);
+  if (isPersistent) {
+    BufferUploadResource upload;
+    primitive.buffer = createDefaultBuffer(
+        dx12::DEVICE, dx12::CURRENT_FRAME_RESOURCE->fc.commandList, data,
+        sizeInByte, &upload.uploadBuffer);
+    // set a signal for the resource.
+    upload.fence = dx12::insertFenceToGlobalQueue();
+    m_uploadRequests.push_back(upload);
+  } else {
+    const wchar_t *debugNameWide =
+        globals::STRING_POOL->convertFrameWide(debugName);
+    primitive.buffer = allocateUploadBuffer(
+        dx12::DEVICE, dx12::CURRENT_FRAME_RESOURCE->fc.commandList, sizeInByte,
+        debugNameWide);
+  }
   primitive.bufferView =
       getVertexBufferView(primitive.buffer, sizeof(float) * 3, sizeInByte);
 
@@ -186,7 +221,7 @@ DebugRenderer::drawLinesUniformColor(float *data, uint32_t sizeInByte,
                                                      &settings);
 
   // store it such way that we can render it
-  primitive.primitiveType = PrimitiveType::LINE;
+  primitive.primitiveType = PRIMITIVE_TYPE::LINE;
   primitive.cbHandle = chandle;
   primitive.primitiveToRender = static_cast<int>(elementCount);
 
@@ -198,10 +233,10 @@ DebugRenderer::drawLinesUniformColor(float *data, uint32_t sizeInByte,
   const uint32_t storeHandle =
       static_cast<uint32_t>(queue) | (static_cast<uint32_t>(type) << 16);
 
-  if (isPeristen) {
+  if (isPersistent) {
     m_renderablesPersistant[storeHandle].push_back(primitive);
   } else {
-    m_renderablesPersistant[storeHandle].push_back(primitive);
+    m_renderables[storeHandle].push_back(primitive);
   }
   return debugHandle;
 }

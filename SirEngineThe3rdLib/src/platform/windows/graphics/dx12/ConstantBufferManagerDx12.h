@@ -7,30 +7,30 @@
 #include "platform/windows/graphics/dx12/DX12.h"
 #include <vector>
 
-namespace SirEngine {
-namespace dx12 {
+namespace SirEngine::dx12 {
 
 class ConstantBufferManagerDx12 final : public ConstantBufferManager {
 public:
-  ConstantBufferManagerDx12();
+  ConstantBufferManagerDx12() = default;
   virtual ~ConstantBufferManagerDx12() = default;
   void initialize();
+  // deleted method to avoid copy, you can still move it though
   ConstantBufferManagerDx12(const ConstantBufferManagerDx12 &) = delete;
   ConstantBufferManagerDx12 &
   operator=(const ConstantBufferManagerDx12 &) = delete;
+
   virtual ConstantBufferHandle allocateDynamic(uint32_t sizeInBytes,
                                                void *data = nullptr) override;
+
+  bool free(ConstantBufferHandle handle) override;
 
   inline DescriptorPair
   getConstantBufferDx12Handle(const ConstantBufferHandle handle) {
 
     // making sure the resource has not been de-allocated
     assertMagicNumber(handle);
-
-    uint32_t index = getIndexFromHandle(handle);
-    uint32_t dIndex =
-        m_dynamicStorage[globals::CURRENT_FRAME][index].descriptorIndex;
-    return m_descriptorStorage[dIndex];
+    const uint32_t index = getIndexFromHandle(handle);
+    return m_dynamicStorage[globals::CURRENT_FRAME][index].pair;
   }
 
   inline D3D12_GPU_VIRTUAL_ADDRESS
@@ -62,12 +62,13 @@ private:
   struct ConstantBufferData final {
     // we are using one byte for the mapped flag and 31 bytes for the
     // the actual data size, we can't have buffers that big anyway
-    bool mapped : 1;
-    uint32_t size : 31;
-    uint32_t descriptorIndex : 16;
-    uint32_t magicNumber : 16;
     uchar *mappedData = nullptr;
     ID3D12Resource *resource = nullptr;
+    bool mapped : 1;
+    uint32_t size : 31;
+    uint32_t magicNumber : 16;
+    uint32_t padding : 16;
+    DescriptorPair pair;
   };
 
 private:
@@ -89,7 +90,7 @@ private:
 
 private:
   std::vector<ConstantBufferData> m_dynamicStorage[FRAME_BUFFERS_COUNT];
-  std::vector<DescriptorPair> m_descriptorStorage;
+  // std::vector<DescriptorPair> m_descriptorStorage;
   static const uint32_t INDEX_MASK = (1 << 16) - 1;
   static const uint32_t MAGIC_NUMBER_MASK = ~INDEX_MASK;
   static const uint32_t RESERVE_SIZE = 200;
@@ -98,5 +99,4 @@ private:
   std::unordered_map<uint32_t, ConstantBufferedData> m_bufferedRequests;
 };
 
-} // namespace dx12
-} // namespace SirEngine
+} // namespace SirEngine::dx12

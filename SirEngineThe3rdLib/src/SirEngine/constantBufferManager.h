@@ -3,22 +3,25 @@
 
 namespace SirEngine {
 
-class ConstantBufferManager{
+class ConstantBufferManager {
 public:
-  ConstantBufferManager() =default;
+  ConstantBufferManager() = default;
   virtual ~ConstantBufferManager() = default;
-  ConstantBufferManager(const ConstantBufferManager&) = delete;
-  ConstantBufferManager&
-  operator=(const ConstantBufferManager&) = delete;
+  ConstantBufferManager(const ConstantBufferManager &) = delete;
+  ConstantBufferManager &operator=(const ConstantBufferManager &) = delete;
 
-  virtual ConstantBufferHandle allocateDynamic(uint32_t sizeInBytes, void* data = nullptr) =0;
-  virtual void updateConstantBufferNotBuffered(const ConstantBufferHandle handle,
-                                    void* dataToUpload) =0;
+  virtual bool free(ConstantBufferHandle handle) = 0;
+  virtual ConstantBufferHandle allocateDynamic(uint32_t sizeInBytes,
+                                               void *data = nullptr) = 0;
+  virtual void
+  updateConstantBufferNotBuffered(const ConstantBufferHandle handle,
+                                  void *dataToUpload) = 0;
 
   virtual void updateConstantBufferBuffered(const ConstantBufferHandle handle,
-                                    void* dataToUpload) =0;
+                                            void *dataToUpload) = 0;
 
-  virtual void processBufferedData() =0;
+  virtual void processBufferedData() = 0;
+
 protected:
   inline uint32_t getIndexFromHandle(const ConstantBufferHandle h) const {
     return h.handle & INDEX_MASK;
