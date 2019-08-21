@@ -11,7 +11,18 @@ void ConstantBufferManagerDx12::initialize() {
   m_randomAlloc.initialize(4096, 20);
 }
 
-bool ConstantBufferManagerDx12::free(ConstantBufferHandle handle) { return false; }
+bool ConstantBufferManagerDx12::free(ConstantBufferHandle handle)
+{
+	//here we insert a fence so that we know when will be safe to delete 
+    // making sure the resource has not been de-allocated
+    assertMagicNumber(handle);
+    const uint32_t index = getIndexFromHandle(handle);
+	const uint64_t fence = dx12::insertFenceToGlobalQueue();
+	m_dynamicStorage[0][index].fence = fence;
+	m_dynamicStorage[1][index].fence = fence;
+	
+	return false;
+}
 
 ConstantBufferHandle
 ConstantBufferManagerDx12::allocateDynamic(const uint32_t sizeInBytes,
@@ -107,7 +118,7 @@ void ConstantBufferManagerDx12::updateConstantBufferBuffered(
 
 void ConstantBufferManagerDx12::processBufferedData() {
   std::vector<int> processedIdxs;
-  int bufferedRequests = static_cast<int>(m_bufferedRequests.size());
+  const int bufferedRequests = static_cast<int>(m_bufferedRequests.size());
   processedIdxs.reserve(bufferedRequests);
 
   for (auto &handle : m_bufferedRequests) {

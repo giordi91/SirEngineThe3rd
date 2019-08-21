@@ -64,6 +64,7 @@ private:
     // the actual data size, we can't have buffers that big anyway
     uchar *mappedData = nullptr;
     ID3D12Resource *resource = nullptr;
+	uint64_t fence =0;
     bool mapped : 1;
     uint32_t size : 31;
     uint32_t magicNumber : 16;
@@ -90,7 +91,6 @@ private:
 
 private:
   std::vector<ConstantBufferData> m_dynamicStorage[FRAME_BUFFERS_COUNT];
-  // std::vector<DescriptorPair> m_descriptorStorage;
   static const uint32_t INDEX_MASK = (1 << 16) - 1;
   static const uint32_t MAGIC_NUMBER_MASK = ~INDEX_MASK;
   static const uint32_t RESERVE_SIZE = 200;
