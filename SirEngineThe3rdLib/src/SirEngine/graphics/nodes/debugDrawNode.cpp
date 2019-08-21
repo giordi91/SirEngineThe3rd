@@ -15,6 +15,13 @@ DebugDrawNode::DebugDrawNode(const char *name) : GraphNode(name, "DebugDrawNode"
   inTexture.name = "inTexture";
   registerPlug(inTexture);
 
+  Plug inDepth;
+  inDepth.plugValue = 0;
+  inDepth.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
+  inDepth.nodePtr = this;
+  inDepth.name = "depthTexture";
+  registerPlug(inDepth);
+
   Plug outTexture;
   outTexture.plugValue = 0;
   outTexture.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
@@ -42,7 +49,12 @@ void DebugDrawNode::compute() {
   Plug *source = conn[0];
   TextureHandle texH{source->plugValue};
 
-  dx12::DEBUG_RENDERER->render(texH);
+  auto &conn2 = m_connections[&m_inputPlugs[1]];
+  assert(conn2.size() == 1 && "too many input connections");
+  Plug *sourceDepth = conn2[0];
+  TextureHandle depthH{sourceDepth->plugValue};
+
+  dx12::DEBUG_RENDERER->render(texH,depthH);
 
   m_outputPlugs[0].plugValue = texH.handle;
   annotateGraphicsEnd();

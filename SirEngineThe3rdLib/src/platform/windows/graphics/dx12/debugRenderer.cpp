@@ -242,7 +242,7 @@ DebugDrawHandle DebugRenderer::drawLinesUniformColor(
   return debugHandle;
 }
 
-void DebugRenderer::render(const TextureHandle input) {
+void DebugRenderer::render(const TextureHandle input, const TextureHandle depth) {
 
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
@@ -270,7 +270,6 @@ void DebugRenderer::render(const TextureHandle input) {
     annotateGraphicsBegin(typeName.c_str());
     globals::RENDERING_CONTEXT->bindCameraBuffer(0);
 
-    TextureHandle depth = globals::DEBUG_FRAME_DATA->gbufferDepth;
     int counter = 0;
     D3D12_RESOURCE_BARRIER barriers[2];
     counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
