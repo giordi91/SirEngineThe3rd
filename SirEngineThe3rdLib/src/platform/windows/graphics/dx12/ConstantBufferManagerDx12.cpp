@@ -5,23 +5,22 @@
 namespace SirEngine::dx12 {
 
 void ConstantBufferManagerDx12::initialize() {
-  for (auto &i : m_dynamicStorage) {
-    i.reserve(RESERVE_SIZE);
-  }
+  // for (auto &i : m_dynamicStorage) {
+  //  i.reserve(RESERVE_SIZE);
+  //}
   m_randomAlloc.initialize(4096, 20);
 }
 
-bool ConstantBufferManagerDx12::free(ConstantBufferHandle handle)
-{
-	//here we insert a fence so that we know when will be safe to delete 
-    // making sure the resource has not been de-allocated
-    assertMagicNumber(handle);
-    const uint32_t index = getIndexFromHandle(handle);
-	const uint64_t fence = dx12::insertFenceToGlobalQueue();
-	m_dynamicStorage[0][index].fence = fence;
-	m_dynamicStorage[1][index].fence = fence;
-	
-	return false;
+bool ConstantBufferManagerDx12::free(ConstantBufferHandle handle) {
+  // here we insert a fence so that we know when will be safe to delete
+  // making sure the resource has not been de-allocated
+  assertMagicNumber(handle);
+  const uint32_t index = getIndexFromHandle(handle);
+  const uint64_t fence = dx12::insertFenceToGlobalQueue();
+  m_dynamicStorage[0].cbData[index].fence = fence;
+  m_dynamicStorage[1].cbData[index].fence = fence;
+
+  return false;
 }
 
 ConstantBufferHandle
@@ -37,15 +36,16 @@ ConstantBufferManagerDx12::allocateDynamic(const uint32_t sizeInBytes,
   const uint32_t actualSize =
       sizeInBytes % 256 == 0 ? sizeInBytes : ((sizeInBytes / 256) + 1) * 256;
 
-  const ConstantBufferHandle handle{
-      (MAGIC_NUMBER_COUNTER << 16) |
-      (static_cast<uint32_t>(m_dynamicStorage[0].size()))};
+  //finding a free block in the pool
+  uint32_t index;
+  ConstantBufferDataDynamic &data = m_dynamicStorage.getFreeMemoryData(index);
+
+  const ConstantBufferHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
 
   // here we allocate the N constant buffers
   for (int i = 0; i < FRAME_BUFFERS_COUNT; ++i) {
-    ConstantBufferData data;
-    data.mapped = false;
-    data.size = sizeInBytes;
+    data.cbData[i].mapped = false;
+    data.cbData[i].size = sizeInBytes;
 
     // create the upload buffer
     auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
@@ -54,22 +54,22 @@ ConstantBufferManagerDx12::allocateDynamic(const uint32_t sizeInBytes,
     dx12::DEVICE->CreateCommittedResource(
         &heapProperties, D3D12_HEAP_FLAG_NONE, &bufferDesc,
         D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-        IID_PPV_ARGS(&data.resource));
+        IID_PPV_ARGS(&data.cbData[i].resource));
 
-	//allocating a descriptor
+    // allocating a descriptor
     DescriptorPair pair{};
-    dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferCBV(pair, data.resource,
+    dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferCBV(pair, data.cbData[i].resource,
                                                    actualSize);
     // map the buffer and copy the memory over
-    mapConstantBuffer(data);
+    mapConstantBuffer(data.cbData[i]);
     if (inputData != nullptr) {
-      memcpy(data.mappedData, inputData, sizeInBytes);
+      memcpy(data.cbData[i].mappedData, inputData, sizeInBytes);
     }
 
-    data.pair = pair;
-    data.magicNumber = MAGIC_NUMBER_COUNTER;
-    m_dynamicStorage[i].push_back(data);
-    assert(data.resource != nullptr);
+    data.cbData[i].pair = pair;
+    data.cbData[i].magicNumber = MAGIC_NUMBER_COUNTER;
+    //m_dynamicStorage[i].push_back(data);
+    assert(data.cbData[i].resource != nullptr);
   }
   ++MAGIC_NUMBER_COUNTER;
   return handle;
@@ -80,7 +80,7 @@ void ConstantBufferManagerDx12::updateConstantBufferNotBuffered(
   assertMagicNumber(handle);
   const uint32_t index = getIndexFromHandle(handle);
   const ConstantBufferData &data =
-      m_dynamicStorage[globals::CURRENT_FRAME][index];
+      m_dynamicStorage[index].cbData[globals::CURRENT_FRAME];
 
   assert(data.mappedData != nullptr);
   memcpy(data.mappedData, dataToUpload, data.size);
@@ -101,7 +101,7 @@ void ConstantBufferManagerDx12::updateConstantBufferBuffered(
   assertMagicNumber(handle);
   const uint32_t index = getIndexFromHandle(handle);
   const ConstantBufferData data =
-      m_dynamicStorage[globals::CURRENT_FRAME][index];
+      m_dynamicStorage[index].cbData[globals::CURRENT_FRAME];
 
   // setting data on the buffer request
   buffRequest.dataAllocHandle = m_randomAlloc.allocate(data.size);
