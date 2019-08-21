@@ -7,6 +7,7 @@
 #include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/PSOManager.h"
+#include "platform/windows/graphics/dx12/TextureManagerDx12.h"
 #include "platform/windows/graphics/dx12/bufferManagerDx12.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
 
@@ -241,7 +242,7 @@ DebugDrawHandle DebugRenderer::drawLinesUniformColor(
   return debugHandle;
 }
 
-void DebugRenderer::render() {
+void DebugRenderer::render(const TextureHandle input) {
 
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
@@ -269,6 +270,19 @@ void DebugRenderer::render() {
     annotateGraphicsBegin(typeName.c_str());
     globals::RENDERING_CONTEXT->bindCameraBuffer(0);
 
+    TextureHandle depth = globals::DEBUG_FRAME_DATA->gbufferDepth;
+    int counter = 0;
+    D3D12_RESOURCE_BARRIER barriers[2];
+    counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
+        depth, D3D12_RESOURCE_STATE_DEPTH_WRITE, barriers, counter);
+    counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
+        input, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, counter);
+
+    if (counter) {
+      commandList->ResourceBarrier(counter, barriers);
+    }
+
+    globals::TEXTURE_MANAGER->bindRenderTarget(input, depth);
     for (auto &prim : queue.second) {
 
       int x = 0;

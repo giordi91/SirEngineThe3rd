@@ -42,7 +42,7 @@ void DebugDrawNode::compute() {
   Plug *source = conn[0];
   TextureHandle texH{source->plugValue};
 
-  dx12::DEBUG_RENDERER->render();
+  dx12::DEBUG_RENDERER->render(texH);
 
   m_outputPlugs[0].plugValue = texH.handle;
   annotateGraphicsEnd();

@@ -59,7 +59,7 @@ public:
   void drawGeoPointsColor(std::vector<float> &data, float size,
                           bool isPeristen);
 
-  void render();
+  void render(const TextureHandle input);
   void clearUploadRequests();
 
 private:
