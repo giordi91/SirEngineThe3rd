@@ -112,6 +112,8 @@ void Graphics3DLayer::onAttach() {
 
   dx12::RENDERING_GRAPH->connectNodes(postProcess, "outTexture", debugDraw,
                                       "inTexture");
+  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, "depth", debugDraw,
+                                      "depthTexture");
 
   dx12::RENDERING_GRAPH->connectNodes(debugDraw, "outTexture", finalBlit,
                                       "inTexture");
