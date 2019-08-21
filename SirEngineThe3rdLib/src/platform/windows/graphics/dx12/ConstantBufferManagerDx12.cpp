@@ -5,10 +5,46 @@
 namespace SirEngine::dx12 {
 
 void ConstantBufferManagerDx12::initialize() {
-  // for (auto &i : m_dynamicStorage) {
-  //  i.reserve(RESERVE_SIZE);
-  //}
   m_randomAlloc.initialize(4096, 20);
+}
+
+void ConstantBufferManagerDx12::clearUpQueueFree() {
+
+  const uint64_t id = GLOBAL_FENCE->GetCompletedValue();
+  const auto count = static_cast<int>(m_bufferToFree.size()) - 1;
+  int stackTopIdx = count;
+
+  for (int i = count; i >= 0; --i) {
+    const ConstantBufferHandle handle{m_bufferToFree[i]};
+    const int32_t index = getIndexFromHandle(handle);
+    ConstantBufferDataDynamic &data = m_dynamicStorage[index];
+
+    for (int c = 0; c < FRAME_BUFFERS_COUNT; ++c) {
+
+      if (data.cbData[i].fence < id) {
+
+        // we need to remove it from the request list if it is there
+        auto found = m_bufferedRequests.find(handle.handle);
+        if (found != m_bufferedRequests.end()) {
+          // freeing the random allocation
+          m_randomAlloc.freeAllocation(found->second.dataAllocHandle);
+          // removing the actuall entry
+          m_bufferedRequests.erase(found);
+        }
+
+        // we can free the memory
+        data.cbData[i].resource->Release();
+
+        dx12::GLOBAL_CBV_SRV_UAV_HEAP->freeDescriptor(data.cbData[i].pair);
+        unmapConstantBuffer(data.cbData[i]);
+        if (stackTopIdx != i) {
+          // lets copy
+          m_bufferToFree[i] = m_bufferToFree[stackTopIdx];
+        }
+        --stackTopIdx;
+      }
+    }
+  }
 }
 
 bool ConstantBufferManagerDx12::free(ConstantBufferHandle handle) {
@@ -17,8 +53,11 @@ bool ConstantBufferManagerDx12::free(ConstantBufferHandle handle) {
   assertMagicNumber(handle);
   const uint32_t index = getIndexFromHandle(handle);
   const uint64_t fence = dx12::insertFenceToGlobalQueue();
-  m_dynamicStorage[0].cbData[index].fence = fence;
-  m_dynamicStorage[1].cbData[index].fence = fence;
+  for (int i = 0; i < FRAME_BUFFERS_COUNT; ++i) {
+    m_dynamicStorage[index].cbData[i].fence = fence;
+  }
+  m_bufferToFree.push_back(handle.handle);
+  // now we can set the index ready to be freed in the queue
 
   return false;
 }
@@ -27,16 +66,16 @@ ConstantBufferHandle
 ConstantBufferManagerDx12::allocateDynamic(const uint32_t sizeInBytes,
                                            void *inputData) {
 
-  // allocate dynamics takes into account we could have multiple frame in flight
-  // and we don not want to override the value meanwhile is still in use,
-  // so multiple version are allocated same number of flame inflight the engine
-  // is using
+  // allocate dynamics takes into account we could have multiple frame in
+  // flight and we don not want to override the value meanwhile is still in
+  // use, so multiple version are allocated same number of flame inflight the
+  // engine is using
 
   // must be at least 256 bytes, size is clamped if too small
   const uint32_t actualSize =
       sizeInBytes % 256 == 0 ? sizeInBytes : ((sizeInBytes / 256) + 1) * 256;
 
-  //finding a free block in the pool
+  // finding a free block in the pool
   uint32_t index;
   ConstantBufferDataDynamic &data = m_dynamicStorage.getFreeMemoryData(index);
 
@@ -58,8 +97,8 @@ ConstantBufferManagerDx12::allocateDynamic(const uint32_t sizeInBytes,
 
     // allocating a descriptor
     DescriptorPair pair{};
-    dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferCBV(pair, data.cbData[i].resource,
-                                                   actualSize);
+    dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferCBV(
+        pair, data.cbData[i].resource, actualSize);
     // map the buffer and copy the memory over
     mapConstantBuffer(data.cbData[i]);
     if (inputData != nullptr) {
@@ -68,7 +107,7 @@ ConstantBufferManagerDx12::allocateDynamic(const uint32_t sizeInBytes,
 
     data.cbData[i].pair = pair;
     data.cbData[i].magicNumber = MAGIC_NUMBER_COUNTER;
-    //m_dynamicStorage[i].push_back(data);
+    // m_dynamicStorage[i].push_back(data);
     assert(data.cbData[i].resource != nullptr);
   }
   ++MAGIC_NUMBER_COUNTER;
@@ -100,6 +139,8 @@ void ConstantBufferManagerDx12::updateConstantBufferBuffered(
   ConstantBufferedData buffRequest;
   assertMagicNumber(handle);
   const uint32_t index = getIndexFromHandle(handle);
+  buffRequest.poolIndex = index;
+
   const ConstantBufferData data =
       m_dynamicStorage[index].cbData[globals::CURRENT_FRAME];
 

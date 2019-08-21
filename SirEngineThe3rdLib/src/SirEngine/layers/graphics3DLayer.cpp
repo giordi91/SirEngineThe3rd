@@ -166,6 +166,7 @@ void Graphics3DLayer::onUpdate() {
   dx12::RENDERING_GRAPH->compute();
 
   // making any clean up for the mesh manager if we have to
+  dx12::CONSTANT_BUFFER_MANAGER->clearUpQueueFree();
   dx12::MESH_MANAGER->clearUploadRequests();
 }
 void Graphics3DLayer::onEvent(Event &event) {
