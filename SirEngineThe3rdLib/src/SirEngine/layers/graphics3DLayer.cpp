@@ -1,5 +1,4 @@
 #include "SirEngine/layers/graphics3DLayer.h"
-#include <DirectXMath.h>
 #include "SirEngine/application.h"
 #include "SirEngine/assetManager.h"
 #include "SirEngine/events/debugEvent.h"
@@ -9,20 +8,22 @@
 #include "SirEngine/graphics/nodeGraph.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/debugRenderer.h"
+#include <DirectXMath.h>
 
 #include "SirEngine/events/renderGraphEvent.h"
 #include "SirEngine/events/shaderCompileEvent.h"
-#include "SirEngine/graphics/nodes/DebugNode.h"
 #include "SirEngine/graphics/nodes/FinalBlitNode.h"
 #include "SirEngine/graphics/nodes/assetManagerNode.h"
 #include "SirEngine/graphics/nodes/deferredLighting.h"
+#include "SirEngine/graphics/nodes/framePassDebugNode.h"
 #include "SirEngine/graphics/nodes/gbufferPassPBR.h"
+#include "SirEngine/graphics/nodes/simpleForward.h"
+#include "SirEngine/graphics/nodes/debugDrawNode.h"
 #include "SirEngine/graphics/nodes/skybox.h"
+#include "SirEngine/graphics/postProcess/effects/SSSSSEffect.h"
 #include "SirEngine/graphics/postProcess/effects/gammaAndToneMappingEffect.h"
 #include "SirEngine/graphics/postProcess/postProcessStack.h"
 #include "SirEngine/graphics/renderingContext.h"
-#include "SirEngine/graphics/postProcess/effects/SSSSSEffect.h"
-#include "SirEngine/graphics/nodes/simpleForward.h"
 
 namespace SirEngine {
 
@@ -56,9 +57,9 @@ void Graphics3DLayer::onAttach() {
   const auto lighting = new DeferredLightingPass("Deferred lighting");
   // auto sky = new ProceduralSkyBoxPass("Procedural Sky");
   const auto sky = new SkyBoxPass("Skybox");
+  const auto debugDraw = new DebugDrawNode("DebugDraw");
 
-  postProcess->allocateRenderPass<SSSSSEffect>(
-      "SSSSS");
+  postProcess->allocateRenderPass<SSSSSEffect>("SSSSS");
   postProcess->allocateRenderPass<GammaAndToneMappingEffect>(
       "GammaToneMapping");
   postProcess->initialize();
@@ -70,6 +71,7 @@ void Graphics3DLayer::onAttach() {
   dx12::RENDERING_GRAPH->addNode(lighting);
   dx12::RENDERING_GRAPH->addNode(simpleForward);
   dx12::RENDERING_GRAPH->addNode(sky);
+  dx12::RENDERING_GRAPH->addNode(debugDraw);
   dx12::RENDERING_GRAPH->setFinalNode(finalBlit);
 
   dx12::RENDERING_GRAPH->connectNodes(assetNode, "assetStream", gbufferPass,
@@ -94,25 +96,27 @@ void Graphics3DLayer::onAttach() {
 
   dx12::RENDERING_GRAPH->connectNodes(gbufferPass, "depth", sky, "depth");
 
-  //connecting forward
-  dx12::RENDERING_GRAPH->connectNodes(sky, "buffer", simpleForward, "inTexture");
+  // connecting forward
+  dx12::RENDERING_GRAPH->connectNodes(sky, "buffer", simpleForward,
+                                      "inTexture");
   dx12::RENDERING_GRAPH->connectNodes(gbufferPass, "depth", simpleForward,
                                       "depthTexture");
 
-  dx12::RENDERING_GRAPH->connectNodes(simpleForward, "outTexture", postProcess, "inTexture");
+  dx12::RENDERING_GRAPH->connectNodes(simpleForward, "outTexture", postProcess,
+                                      "inTexture");
   dx12::RENDERING_GRAPH->connectNodes(assetNode, "assetStream", simpleForward,
                                       "assetStream");
-
-
 
   dx12::RENDERING_GRAPH->connectNodes(gbufferPass, "depth", postProcess,
                                       "depthTexture");
 
-  dx12::RENDERING_GRAPH->connectNodes(postProcess, "outTexture", finalBlit,
+  dx12::RENDERING_GRAPH->connectNodes(postProcess, "outTexture", debugDraw,
+                                      "inTexture");
+
+  dx12::RENDERING_GRAPH->connectNodes(debugDraw, "outTexture", finalBlit,
                                       "inTexture");
 
   dx12::RENDERING_GRAPH->finalizeGraph();
-
 
   if (!currentFc->isListOpen) {
     dx12::resetAllocatorAndList(currentFc);
@@ -127,8 +131,9 @@ void Graphics3DLayer::onAttach() {
   data.push_back(5.0f);
   data.push_back(10.0f);
   data.push_back(0.0f);
-  dx12::DEBUG_RENDERER->drawPointsUniformColor(data.data(), data.size() * sizeof(float),
-                                   DirectX::XMFLOAT4{1, 0, 0, 1},1.0f,true,"debugPoints");
+  dx12::DEBUG_RENDERER->drawPointsUniformColor(
+      data.data(), static_cast<uint32_t>(data.size() * sizeof(float)),
+      DirectX::XMFLOAT4{1, 0, 0, 1}, 1.0f, true, "debugPoints");
 
   std::vector<float> data2;
   data.push_back(5.0f);
@@ -143,17 +148,12 @@ void Graphics3DLayer::onAttach() {
   data.push_back(15.0f);
   data.push_back(10.0f);
   data.push_back(0.0f);
-  dx12::DEBUG_RENDERER->drawLinesUniformColor(data.data(), data.size() * sizeof(float),
-                                   DirectX::XMFLOAT4{1, 0, 0, 1},1.0f,true,"debugLines");
-
-
+  dx12::DEBUG_RENDERER->drawLinesUniformColor(
+      data.data(), static_cast<uint32_t>(data.size() * sizeof(float)), DirectX::XMFLOAT4{1, 0, 0, 1},
+      1.0f, true, "debugLines");
 
   dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE, currentFc);
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
-
-
-
-
 }
 void Graphics3DLayer::onDetach() {}
 void Graphics3DLayer::onUpdate() {
@@ -234,42 +234,42 @@ bool Graphics3DLayer::onMouseMoveEvent(MouseMoveEvent &e) {
 bool Graphics3DLayer::onDebugLayerEvent(DebugLayerChanged &e) {
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
   switch (e.getLayer()) {
-    case (0): {
-      // if we have 0, we have no layer to debug so we can just check if there
-      // there is a debug node and remove it
-      GraphNode *debugNode = dx12::RENDERING_GRAPH->findNodeOfType("DebugNode");
-      if (debugNode == nullptr) {  // no debug we are good
-        return true;
-      }
-      dx12::RENDERING_GRAPH->removeDebugNode(debugNode);
-      dx12::RENDERING_GRAPH->finalizeGraph();
-      RenderGraphChanged *graphE = new RenderGraphChanged();
-      globals::APPLICATION->queueEventForEndOfFrame(graphE);
+  case (0): {
+    // if we have 0, we have no layer to debug so we can just check if there
+    // there is a debug node and remove it
+    GraphNode *debugNode = dx12::RENDERING_GRAPH->findNodeOfType("FramePassDebugNode");
+    if (debugNode == nullptr) { // no debug we are good
       return true;
     }
-    case (1):
-    case (2):
-    case (3):
-    case (4):
-    case (5):
-    case (6):
-    case (7): {
-      // lets add debug
-      GraphNode *debugNode = dx12::RENDERING_GRAPH->findNodeOfType("DebugNode");
-      // debug already there, maybe i just need to change configuration?
-      if (debugNode != nullptr) {  // no debug we are good
-        static_cast<DebugNode *>(debugNode)->setDebugIndex(e.getLayer());
-        return true;
-      }
-      // lest add a debug node
-      auto debug = new DebugNode("DebugNode");
-      debug->setDebugIndex(e.getLayer());
-      dx12::RENDERING_GRAPH->addDebugNode(debug);
-      dx12::RENDERING_GRAPH->finalizeGraph();
-      auto *graphE = new RenderGraphChanged();
-      globals::APPLICATION->queueEventForEndOfFrame(graphE);
+    dx12::RENDERING_GRAPH->removeDebugNode(debugNode);
+    dx12::RENDERING_GRAPH->finalizeGraph();
+    RenderGraphChanged *graphE = new RenderGraphChanged();
+    globals::APPLICATION->queueEventForEndOfFrame(graphE);
+    return true;
+  }
+  case (1):
+  case (2):
+  case (3):
+  case (4):
+  case (5):
+  case (6):
+  case (7): {
+    // lets add debug
+    GraphNode *debugNode = dx12::RENDERING_GRAPH->findNodeOfType("FramePassDebugNode");
+    // debug already there, maybe i just need to change configuration?
+    if (debugNode != nullptr) { // no debug we are good
+      static_cast<FramePassDebugNode *>(debugNode)->setDebugIndex(e.getLayer());
       return true;
     }
+    // lest add a debug node
+    auto debug = new FramePassDebugNode("FramePassDebugNode");
+    debug->setDebugIndex(e.getLayer());
+    dx12::RENDERING_GRAPH->addDebugNode(debug);
+    dx12::RENDERING_GRAPH->finalizeGraph();
+    auto *graphE = new RenderGraphChanged();
+    globals::APPLICATION->queueEventForEndOfFrame(graphE);
+    return true;
+  }
   }
   return false;
 }
@@ -283,7 +283,7 @@ bool Graphics3DLayer::onResizeEvent(WindowResizeEvent &e) {
 bool Graphics3DLayer::onDebugConfigChanged(DebugRenderConfigChanged &e) {
   GraphNode *debugNode = dx12::RENDERING_GRAPH->findNodeOfType("DebugNode");
   if (debugNode) {
-    auto *debugNodeTyped = (DebugNode *)debugNode;
+    auto *debugNodeTyped = (FramePassDebugNode *)debugNode;
     debugNodeTyped->setConfig(e.getConfig());
   }
   return true;
@@ -293,4 +293,4 @@ bool Graphics3DLayer::onShaderCompileEvent(ShaderCompileEvent &e) {
   dx12::PSO_MANAGER->recompilePSOFromShader(e.getShader(), e.getOffsetPath());
   return true;
 }
-}  // namespace SirEngine
+} // namespace SirEngine
