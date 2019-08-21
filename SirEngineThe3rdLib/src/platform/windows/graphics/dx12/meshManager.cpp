@@ -7,9 +7,8 @@
 namespace SirEngine::dx12 {
 void MeshManager::clearUploadRequests() {
 
-  auto id = GLOBAL_FENCE->GetCompletedValue();
-  // uint32_t freed = 0;
-  int requestSize = static_cast<int>(m_uploadRequests.size()) - 1;
+  const auto id = GLOBAL_FENCE->GetCompletedValue();
+  const int requestSize = static_cast<int>(m_uploadRequests.size()) - 1;
   int stackTopIdx = requestSize;
   for (int i = requestSize; i >= 0; --i) {
     MeshUploadResource &upload = m_uploadRequests[i];
@@ -99,12 +98,13 @@ MeshHandle MeshManager::loadMesh(const char *path, MeshRuntime *meshRuntime) {
 
     const uint32_t stride = mapper->strideInByte / sizeof(float);
     // creating the buffers
-    const uint32_t vertexCount = mapper->vertexDataSizeInByte / mapper->strideInByte;
+    const uint32_t vertexCount =
+        mapper->vertexDataSizeInByte / mapper->strideInByte;
     const uint32_t indexCount = mapper->indexDataSizeInByte / sizeof(int);
 
     // lets get the vertex data
-    auto *vertexData = reinterpret_cast<float *>(binaryData.data() +
-                                                 sizeof(BinaryFileHeader));
+    auto *vertexData =
+        reinterpret_cast<float *>(binaryData.data() + sizeof(BinaryFileHeader));
     auto *indexData =
         reinterpret_cast<int *>(binaryData.data() + sizeof(BinaryFileHeader) +
                                 mapper->vertexDataSizeInByte);

@@ -15,6 +15,7 @@ public:
   ConstantBufferManagerDx12() : m_dynamicStorage(RESERVE_SIZE){} 
   virtual ~ConstantBufferManagerDx12() = default;
   void initialize();
+  void clearUpQueueFree();
   // deleted method to avoid copy, you can still move it though
   ConstantBufferManagerDx12(const ConstantBufferManagerDx12 &) = delete;
   ConstantBufferManagerDx12 &
@@ -58,6 +59,7 @@ private:
     ConstantBufferHandle handle;
     RandomSizeAllocationHandle dataAllocHandle;
     int counter = 0;
+	int poolIndex;
   };
 
   struct ConstantBufferData final {
@@ -93,6 +95,14 @@ private:
       SE_CORE_WARN("Tried to map an already mapped buffer");
     }
   };
+  inline void unmapConstantBuffer(ConstantBufferData &data) const {
+    if (data.mapped) {
+      data.mapped = false;
+      data.resource->Unmap(0,nullptr);
+    } else {
+      SE_CORE_WARN("Tried to unmap an already mapped buffer");
+    }
+  };
 
 private:
   // std::vector<ConstantBufferData> m_dynamicStorage[FRAME_BUFFERS_COUNT];
@@ -104,6 +114,7 @@ private:
   uint32_t MAGIC_NUMBER_COUNTER = 1;
   RandomSizeAllocator m_randomAlloc;
   std::unordered_map<uint32_t, ConstantBufferedData> m_bufferedRequests;
+  std::vector<uint32_t> m_bufferToFree;
 };
 
 } // namespace SirEngine::dx12
