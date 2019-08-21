@@ -142,8 +142,6 @@ void SimpleForward::compute() {
 
     }
   }
-  //TEMP
-  dx12::DEBUG_RENDERER->render();
 
   m_outputPlugs[0].plugValue = renderTarget.handle;
   annotateGraphicsEnd();

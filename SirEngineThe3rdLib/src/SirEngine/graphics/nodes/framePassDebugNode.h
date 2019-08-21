@@ -6,10 +6,10 @@
 
 struct ID3D12RootSignature;
 namespace SirEngine {
-class DebugNode final : public GraphNode {
+class FramePassDebugNode final : public GraphNode {
 public:
-  explicit DebugNode(const char *name);
-  virtual ~DebugNode() = default;
+  explicit FramePassDebugNode(const char *name);
+  virtual ~FramePassDebugNode() = default;
   virtual void initialize() override;
   virtual void compute() override;
   void setDebugIndex(int index) { m_index = static_cast<DebugIndex>(index); }

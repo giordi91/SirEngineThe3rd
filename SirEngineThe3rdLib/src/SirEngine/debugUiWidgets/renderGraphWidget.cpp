@@ -16,8 +16,8 @@
 #include "SirEngine/graphics/postProcess/effects/gammaAndToneMappingEffect.h"
 #include "SirEngine/graphics/postProcess/postProcessStack.h"
 
-namespace SirEngine {
-namespace debug {
+namespace SirEngine::debug
+{
 
 enum class PostProcessTypeDebug { NONE, GAMMA_TONE_MAPPING, SSSSS };
 
@@ -537,5 +537,4 @@ void RenderGraphWidget::showGraph(bool value) {
     status->opened = value;
   }
 }
-}  // namespace debug
-}  // namespace SirEngine
+} // namespace SirEngine

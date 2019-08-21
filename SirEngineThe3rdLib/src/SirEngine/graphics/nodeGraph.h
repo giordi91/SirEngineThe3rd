@@ -158,7 +158,7 @@ public:
     delete debugNode;
   }
   void addDebugNode(GraphNode *debugNode) {
-    assert(debugNode->getNodeType() == "DebugNode");
+    assert(debugNode->getNodeType() == "FramePassDebugNode");
     assert(finalNode != nullptr);
 
     // disconnect input
