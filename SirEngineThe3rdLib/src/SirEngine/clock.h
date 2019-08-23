@@ -71,8 +71,8 @@ Clock<T>::Clock()
 template <typename T> inline long long Clock<T>::getTicks() const {
   // if the clock is running we returns the ticks from now to the beginning of
   // time, otherwise we use the time at which the clock has been stopped
-  return m_running ? duration_cast<T>(now().time_since_epoch()).count()
-                   : duration_cast<T>(m_past.time_since_epoch()).count();
+  return m_running ? std::chrono::duration_cast<T>(now().time_since_epoch()).count()
+                   : std::chrono::duration_cast<T>(m_past.time_since_epoch()).count();
 }
 
 template <typename T> long long Clock<T>::getDelta() {

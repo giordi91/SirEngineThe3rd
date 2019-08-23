@@ -9,8 +9,7 @@
 #include "nlohmann/json_fwd.hpp"
 #include "platform/windows/graphics/dx12/d3dx12.h"
 
-namespace SirEngine {
-namespace dx12 {
+namespace SirEngine::dx12 {
 class RootSignatureManager;
 class ShaderManager;
 class ShadersLayoutRegistry;
@@ -97,12 +96,12 @@ private:
   std::unordered_map<std::string, ID3D12PipelineState *> m_psoRegister;
   std::unordered_map<std::string, PSOHandle> m_psoRegisterHandle;
 
-  // TODO temporary horrible nested data struct will need to thinkk about thi
+  // TODO temporary horrible nested data struct will need to think about thi
   std::unordered_map<std::string, std::vector<std::string>> m_shaderToPSOFile;
 
-  SirEngine::dx12::ShadersLayoutRegistry *layoutManger = nullptr;
-  SirEngine::dx12::RootSignatureManager *rs_manager = nullptr;
-  SirEngine::dx12::ShaderManager *shaderManager = nullptr;
+  ShadersLayoutRegistry *layoutManger = nullptr;
+  RootSignatureManager *rs_manager = nullptr;
+  ShaderManager *shaderManager = nullptr;
 
   // this is only used for the hot recompilation
   std::string compileLog;
@@ -114,5 +113,4 @@ private:
   static const uint32_t INDEX_MASK = (1 << 16) - 1;
   static const uint32_t MAGIC_NUMBER_MASK = ~INDEX_MASK;
 };
-} // namespace dx12
-} // namespace SirEngine
+} // namespace SirEngine::dx12

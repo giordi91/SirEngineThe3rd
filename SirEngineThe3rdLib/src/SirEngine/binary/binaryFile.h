@@ -77,21 +77,21 @@ inline std::string getBinaryFileTypeName(const BinaryFileType type) {
 }
 
 struct ModelMapperData final {
-  unsigned int vertexDataSizeInByte = 0;
-  unsigned int indexDataSizeInByte = 0;
-  unsigned int strideInByte = 0;
+  uint32_t vertexDataSizeInByte = 0;
+  uint32_t indexDataSizeInByte = 0;
+  uint32_t strideInByte = 0;
 };
 
 struct ShaderMapperData final {
-  unsigned int shaderFlags =0;
-  unsigned int shaderSizeInByte = 0;
-  unsigned int typeSizeInByte = 0;
-  unsigned int entryPointInByte = 0;
-  unsigned int pathSizeInByte= 0;
-  unsigned int compilerArgsInByte =0;
+  uint32_t shaderFlags =0;
+  uint32_t shaderSizeInByte = 0;
+  uint32_t typeSizeInByte = 0;
+  uint32_t entryPointInByte = 0;
+  uint32_t pathSizeInByte= 0;
+  uint32_t compilerArgsInByte =0;
 };
 
 struct RootSignatureMappedData final {
-  unsigned int type = 0;
-  unsigned int sizeInByte = 0;
+  uint32_t type = 0;
+  uint32_t sizeInByte = 0;
 };

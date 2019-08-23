@@ -107,7 +107,7 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
   // what we want to do is to store the data in this way
   //| shader | shader type | shader entry point | shader path | mapper |
   // we need to store enough data for everything
-  int totalBulkDataInBytes = blob->GetBufferSize();
+  int totalBulkDataInBytes = static_cast<int>(blob->GetBufferSize());
   //+1 is to take into account the termination value
   totalBulkDataInBytes +=
       static_cast<int>((shaderArgs.type.size() + 1) * sizeof(wchar_t));
@@ -124,7 +124,7 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
   char *bulkDataPtr = dataPtr;
 
   // write down the shader in the buffer
-  int dataToWriteSizeInByte = blob->GetBufferSize();
+  int dataToWriteSizeInByte = static_cast<int>(blob->GetBufferSize());
   mapperData.shaderSizeInByte = dataToWriteSizeInByte;
   memcpy(bulkDataPtr, blob->GetBufferPointer(), dataToWriteSizeInByte);
   bulkDataPtr += dataToWriteSizeInByte;
@@ -163,7 +163,7 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
   request.bulkData = dataPtr;
   request.bulkDataSizeInByte = totalBulkDataInBytes;
 
-  mapperData.shaderSizeInByte = blob->GetBufferSize();
+  mapperData.shaderSizeInByte = static_cast<uint32_t>(blob->GetBufferSize());
   request.mapperData = &mapperData;
   request.mapperDataSizeInByte = sizeof(ShaderMapperData);
 
