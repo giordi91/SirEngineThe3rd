@@ -27,6 +27,7 @@
 
 #include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
 #include "platform/windows/graphics/dx12/PSOManager.h"
+#include "SirEngine/animation/skeleton.h"
 
 namespace SirEngine {
 
@@ -159,6 +160,12 @@ void Graphics3DLayer::onAttach() {
 
   dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE, currentFc);
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
+
+
+  m_skeleton = new Skeleton;
+  m_skeleton->initialize("../data/external/animation/exported/skeleton/knightBSkeleton.json");
+
+
 }
 void Graphics3DLayer::onDetach() {}
 void Graphics3DLayer::onUpdate() {

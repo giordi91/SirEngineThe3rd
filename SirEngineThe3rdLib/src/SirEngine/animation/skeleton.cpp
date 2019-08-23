@@ -75,7 +75,7 @@ void SkeletonPose::updateGlobalFromLocal() {
   // for now is not a bottle neck since i evalaute few skeletons
   // only
   // TODO maybe remove glm or do the computation manually so to avoid
-  // intermediate copies and convertions between datatypes etc
+  // intermediate copies and conversions between datatypes etc
   DirectX::XMVECTOR &r = m_local_pose[0].m_rot;
   DirectX::XMMATRIX qM = DirectX::XMMatrixRotationQuaternion(r);
   // auto qM = glm::toMat4(r);
