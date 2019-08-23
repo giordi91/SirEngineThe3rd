@@ -2,12 +2,6 @@
 
 #include "SirEngine/identityManager.h"
 #include "SirEngine/layer.h"
-#include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
-#include "platform/windows/graphics/dx12/PSOManager.h"
-#include "platform/windows/graphics/dx12/rootSignatureManager.h"
-#include "platform/windows/graphics/dx12/shaderLayout.h"
-#include "platform/windows/graphics/dx12/shaderManager.h"
-#include <directxmath.h>
 
 namespace SirEngine {
 class DebugRenderConfigChanged;

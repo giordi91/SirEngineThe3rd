@@ -25,6 +25,9 @@
 #include "SirEngine/graphics/postProcess/postProcessStack.h"
 #include "SirEngine/graphics/renderingContext.h"
 
+#include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
+#include "platform/windows/graphics/dx12/PSOManager.h"
+
 namespace SirEngine {
 
 void Graphics3DLayer::onAttach() {
