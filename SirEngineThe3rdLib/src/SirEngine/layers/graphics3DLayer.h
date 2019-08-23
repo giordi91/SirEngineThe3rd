@@ -11,6 +11,7 @@ class MouseMoveEvent;
 class WindowResizeEvent;
 class DebugLayerChanged;
 class ShaderCompileEvent;
+class Skeleton;
 
 namespace dx12 {
 class Texture2D;
@@ -35,7 +36,7 @@ private:
   bool onDebugLayerEvent(DebugLayerChanged &e);
   bool onResizeEvent(WindowResizeEvent &e);
   bool onDebugConfigChanged(DebugRenderConfigChanged &e);
-  bool onShaderCompileEvent(ShaderCompileEvent&e);
+  bool onShaderCompileEvent(ShaderCompileEvent &e);
 
   // camera event control
   bool leftDown = false;
@@ -44,5 +45,7 @@ private:
   float previousX = 0;
   float previousY = 0;
 
+  // TODO temp
+  Skeleton *m_skeleton;
 };
 } // namespace SirEngine

@@ -83,8 +83,8 @@ private:
     return (h.handle & MAGIC_NUMBER_MASK) >> 16;
   }
   inline void assertMagicNumber(const PSOHandle handle) const {
-    uint32_t magic = getMagicFromHandle(handle);
-    uint32_t idx = getIndexFromHandle(handle);
+    const uint32_t magic = getMagicFromHandle(handle);
+    const uint32_t idx = getIndexFromHandle(handle);
     assert(static_cast<uint32_t>(m_psoPool.getConstRef(idx).magicNumber) ==
                magic &&
            "invalid magic handle for constant buffer");
