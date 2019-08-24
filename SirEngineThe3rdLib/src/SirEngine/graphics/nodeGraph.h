@@ -126,7 +126,7 @@ public:
   }
   void removeDebugNode(GraphNode *debugNode) {
     // disconnect input
-    assert(debugNode->getNodeType() == "DebugNode");
+    assert(debugNode->getNodeType() == "FramePassDebugNode");
     const std::vector<Plug> &inPlugs = debugNode->getInputPlugs();
     assert(inPlugs.size() == 1);
     const Plug &inPlug = inPlugs[0];

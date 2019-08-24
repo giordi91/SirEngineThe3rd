@@ -180,7 +180,7 @@ void ShadersLayoutRegistry::generateLayouts() {
   LayoutHandle positionOnlyHandleHandle{new D3D12_INPUT_ELEMENT_DESC[1], 1};
   zeroOutLayouts(positionOnlyHandleHandle);
 
-  generatePositionFloat4(positionOnlyHandleHandle.layout);
+  generatePositionFloat3(positionOnlyHandleHandle.layout);
   m_registry[ShaderLayout::positionOnly] = positionOnlyHandleHandle;
 
   m_registry[ShaderLayout::deferredNull] = LayoutHandle{nullptr, 0};

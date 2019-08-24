@@ -5,7 +5,12 @@
 #include <unordered_map>
 #include <vector>
 
-namespace SirEngine::dx12 {
+namespace SirEngine {
+
+// forward declare
+struct Skeleton;
+namespace dx12 {
+
 enum PRIMITIVE_TYPE { TRIANGLE, LINE, POINT };
 struct DebugPrimitive {
   // slow I know but for the time being will get the job done
@@ -49,7 +54,10 @@ public:
                                          const char *debugName);
   DebugDrawHandle drawLinesUniformColor(float *data, uint32_t sizeInByte,
                                         DirectX::XMFLOAT4 color, float size,
-                                        bool isPersistent, const char *debugName);
+                                        bool isPersistent,
+                                        const char *debugName);
+  DebugDrawHandle drawSkeleton(Skeleton *skeleton, DirectX::XMFLOAT4 color,
+                               float pointSize, bool isPersistent);
 
   void drawTriangle(float *point0, float *point1, float *point2,
                     DirectX::XMFLOAT4 color, bool isPeristen);
@@ -81,4 +89,5 @@ private:
   std::vector<DebugPrimitive> m_primToFree;
 };
 
-} // namespace SirEngine::dx12
+} // namespace dx12
+} // namespace SirEngine

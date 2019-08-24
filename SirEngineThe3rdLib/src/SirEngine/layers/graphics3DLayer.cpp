@@ -127,6 +127,7 @@ void Graphics3DLayer::onAttach() {
   if (!currentFc->isListOpen) {
     dx12::resetAllocatorAndList(currentFc);
   }
+  /*
   std::vector<float> data;
   data.push_back(5.0f);
   data.push_back(0.0f);
@@ -157,13 +158,19 @@ void Graphics3DLayer::onAttach() {
   dx12::DEBUG_RENDERER->drawLinesUniformColor(
       data.data(), static_cast<uint32_t>(data.size() * sizeof(float)), DirectX::XMFLOAT4{1, 0, 0, 1},
       1.0f, true, "debugLines");
+  */
+
+
+  m_skeleton = new Skeleton;
+  m_skeleton->initialize("../data/external/animation/exported/skeleton/knightBSkeleton.json");
+  dx12::DEBUG_RENDERER->drawSkeleton(m_skeleton,DirectX::XMFLOAT4(0,1,0,1),0.05f,true);
+
 
   dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE, currentFc);
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
 
 
-  m_skeleton = new Skeleton;
-  m_skeleton->initialize("../data/external/animation/exported/skeleton/knightBSkeleton.json");
+
 
 
 }
