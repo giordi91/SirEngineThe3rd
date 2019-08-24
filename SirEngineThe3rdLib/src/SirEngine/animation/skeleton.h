@@ -6,7 +6,7 @@ namespace SirEngine {
 struct Joint {
   DirectX::XMMATRIX m_inv_bind_pose;
   std::string m_name;
-  unsigned char m_parent_id;
+  int m_parent_id;
 };
 
 struct JointPose {

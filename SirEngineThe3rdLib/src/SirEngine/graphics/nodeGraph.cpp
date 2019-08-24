@@ -6,8 +6,6 @@
 namespace SirEngine {
 void GraphNode::addConnection(const std::string &thisNodePlugName,
                               Plug *otherPlug) {
-  Plug *thisPlug = nullptr;
-
   for (int i = 0; i < m_inputPlugs.size(); ++i) {
     if (m_inputPlugs[i].name == thisNodePlugName) {
       m_connections[&m_inputPlugs[i]].push_back(otherPlug);

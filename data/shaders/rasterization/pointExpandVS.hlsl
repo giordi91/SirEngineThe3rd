@@ -18,7 +18,7 @@ static float3 offsets[] =
 PositionOnlyVertexOut VS(uint id : SV_VertexID)
 {
     PositionOnlyVertexOut vout;
-    float3 offset = offsets[id % 6] * 0.2f;
+    float3 offset = offsets[id % 6] * g_settings.pointSize;
 
     float3 up = { 0, 1, 0 };
     float3 view = float3(g_cameraBuffer.ViewMatrix._31, g_cameraBuffer.

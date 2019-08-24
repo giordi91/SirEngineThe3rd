@@ -1,4 +1,5 @@
 #include "platform/windows/graphics/dx12/debugRenderer.h"
+#include "SirEngine/animation/skeleton.h"
 #include "SirEngine/graphics/cpuGraphicsStructures.h"
 #include "SirEngine/graphics/debugAnnotations.h"
 #include "SirEngine/graphics/renderingContext.h"
@@ -242,7 +243,48 @@ DebugDrawHandle DebugRenderer::drawLinesUniformColor(
   return debugHandle;
 }
 
-void DebugRenderer::render(const TextureHandle input, const TextureHandle depth) {
+DebugDrawHandle DebugRenderer::drawSkeleton(Skeleton *skeleton,
+                                            DirectX::XMFLOAT4 color,
+                                            float pointSize,
+                                            bool isPersistent) {
+
+  // TODO cleanup all this lovely vectors and fix debug handle,
+  // how to deal with compound handles?, should we basically
+  // have a compound handle?
+  // first we need to convert the skeleton to points we can actually render
+  std::vector<DirectX::XMFLOAT3> points;
+  std::vector<DirectX::XMFLOAT3> lines;
+  const std::vector<Joint> &joints = skeleton->m_joints;
+  for (int i = 0; i < joints.size(); ++i) {
+    DirectX::XMMATRIX inv = joints[i].m_inv_bind_pose;
+    DirectX::XMMATRIX mat = DirectX::XMMatrixInverse(nullptr, inv);
+    DirectX::XMVECTOR pos;
+    DirectX::XMVECTOR scale;
+    DirectX::XMVECTOR rot;
+    DirectX::XMMatrixDecompose(&scale, &rot, &pos, mat);
+    points.push_back(
+        DirectX::XMFLOAT3{pos.m128_f32[0], pos.m128_f32[1], pos.m128_f32[2]});
+
+    if (joints[i].m_parent_id != -1) {
+      lines.push_back(points[joints[i].m_parent_id]);
+      lines.push_back(
+          DirectX::XMFLOAT3{pos.m128_f32[0], pos.m128_f32[1], pos.m128_f32[2]});
+    }
+  }
+  drawPointsUniformColor(&points.data()[0].x,
+                         points.size() * sizeof(DirectX::XMFLOAT3), color,
+                         pointSize, isPersistent, skeleton->m_name.c_str());
+
+  drawLinesUniformColor(&lines.data()[0].x,
+                        lines.size() * sizeof(DirectX::XMFLOAT3), color,
+                        pointSize, isPersistent, skeleton->m_name.c_str());
+
+  //TODO FIX THIS FOR FUCK SAKE IS DAMM HORRIBLE!
+  return DebugDrawHandle();
+}
+
+void DebugRenderer::render(const TextureHandle input,
+                           const TextureHandle depth) {
 
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
