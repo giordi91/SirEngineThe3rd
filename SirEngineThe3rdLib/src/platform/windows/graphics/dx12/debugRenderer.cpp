@@ -171,15 +171,28 @@ DebugDrawHandle DebugRenderer::drawPointsUniformColor(float *data,
   primitive.cbHandle = chandle;
   primitive.primitiveToRender = elementCount * 6;
 
-  const DebugDrawHandle debugHandle{++MAGIC_NUMBER_COUNTER};
-
   // generate handle for storing
   SHADER_QUEUE_FLAGS queue = SHADER_QUEUE_FLAGS::DEBUG;
   SHADER_TYPE_FLAGS type = SHADER_TYPE_FLAGS::DEBUG_POINTS_SINGLE_COLOR;
   const uint32_t storeHandle =
       static_cast<uint32_t>(queue) | (static_cast<uint32_t>(type) << 16);
 
+  DebugTracker tracker;
+  tracker.compoundCount = 0;
+  tracker.index = m_renderables[storeHandle].size();
+  tracker.magicNumber = MAGIC_NUMBER_COUNTER;
+  tracker.queue = storeHandle;
+
+  const DebugDrawHandle debugHandle{(MAGIC_NUMBER_COUNTER << 16) |
+                                    tracker.index};
+
+  // registering the tracker
+  m_trackers[debugHandle.handle] = tracker;
+  // registering the renderables
   m_renderables[storeHandle].push_back(primitive);
+
+  ++MAGIC_NUMBER_COUNTER;
+
   return debugHandle;
 }
 
@@ -218,15 +231,28 @@ DebugRenderer::drawLinesUniformColor(float *data, const uint32_t sizeInByte,
   primitive.cbHandle = chandle;
   primitive.primitiveToRender = static_cast<int>(elementCount);
 
-  const DebugDrawHandle debugHandle{++MAGIC_NUMBER_COUNTER};
-
   // generate handle for storing
   SHADER_QUEUE_FLAGS queue = SHADER_QUEUE_FLAGS::DEBUG;
   SHADER_TYPE_FLAGS type = SHADER_TYPE_FLAGS::DEBUG_LINES_SINGLE_COLOR;
   const uint32_t storeHandle =
       static_cast<uint32_t>(queue) | (static_cast<uint32_t>(type) << 16);
 
+  DebugTracker tracker;
+  tracker.compoundCount = 0;
+  tracker.index = m_renderables[storeHandle].size();
+  tracker.magicNumber = MAGIC_NUMBER_COUNTER;
+  tracker.queue = storeHandle;
+
+  const DebugDrawHandle debugHandle{(MAGIC_NUMBER_COUNTER << 16) |
+                                    tracker.index};
+
+  // registering the tracker
+  m_trackers[debugHandle.handle] = tracker;
+  // registering the renderables
   m_renderables[storeHandle].push_back(primitive);
+
+  ++MAGIC_NUMBER_COUNTER;
+
   return debugHandle;
 }
 
@@ -265,18 +291,21 @@ DebugDrawHandle DebugRenderer::drawSkeleton(Skeleton *skeleton,
       pointSize, skeleton->m_name.c_str());
 
   // making sure they are consecutive
+  /*
+  const uint32_t pidx = getIndexFromHandle(linesHandle);
   assert(linesHandle.handle > pointsHandle.handle);
   assert((linesHandle.handle - pointsHandle.handle) == 1);
+  */
 
   // lets prepare the compound handle
   // there are two items only lines and points and the points is the first
-  DebugCompoundTracker tracker{2, pointsHandle.handle};
+  DebugTracker tracker{2, pointsHandle.handle};
 
   uint32_t compoundBit = 1 << 31;
-  DebugDrawHandle returnHandle{compoundBit | (++MAGIC_NUMBER_COUNTER)};
+  DebugDrawHandle returnHandle{compoundBit | (MAGIC_NUMBER_COUNTER)};
 
   m_trackers[returnHandle.handle] = tracker;
-
+  ++MAGIC_NUMBER_COUNTER;
   return returnHandle;
 }
 
@@ -310,15 +339,14 @@ DebugDrawHandle DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
     // we need to allocate the memory
     // making sure our handle is an actual compound handle
     assert((handle.handle & (1 << 31)) > 0);
-	//extact from the tracker map
-	auto found = m_trackers.find(handle.handle);
-	assert(found != m_trackers.end());
-	assert(found->second.count ==2);
+    // extact from the tracker map
+    auto found = m_trackers.find(handle.handle);
+    assert(found != m_trackers.end());
+    assert(found->second.compoundCount == 2);
 
-	//TODO NEED TO FIX PROPER INDEXING WITH THE HANDLE
-	//DebugPrimitive& pointPrimitive = m_renderables[found->second.startIdx]; 
-	assert(0);
-
+    // TODO NEED TO FIX PROPER INDEXING WITH THE HANDLE
+    // DebugPrimitive& pointPrimitive = m_renderables[found->second.startIdx];
+    assert(0);
 
   } else {
     DebugDrawHandle pointsHandle = drawPointsUniformColor(
@@ -335,7 +363,7 @@ DebugDrawHandle DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
 
     // lets prepare the compound handle
     // there are two items only lines and points and the points is the first
-    DebugCompoundTracker tracker{2, pointsHandle.handle};
+    DebugTracker tracker{2, pointsHandle.handle};
 
     uint32_t compoundBit = 1 << 31;
     DebugDrawHandle returnHandle{compoundBit | (++MAGIC_NUMBER_COUNTER)};

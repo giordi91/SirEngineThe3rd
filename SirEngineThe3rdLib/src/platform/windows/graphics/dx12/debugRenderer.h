@@ -24,9 +24,11 @@ struct DebugPrimitive {
   uint64_t fence;
 };
 
-struct DebugCompoundTracker {
-  uint32_t count : 16;
-  uint32_t startIdx : 16;
+struct DebugTracker {
+  uint32_t compoundCount;
+  uint32_t queue;
+  uint32_t index : 16;
+  uint32_t magicNumber : 16;
 };
 
 class DebugRenderer {
@@ -72,6 +74,20 @@ private:
   inline bool isCompound(const DebugDrawHandle handle) {
     return (handle.handle & (1 << 31)) > 0;
   }
+  inline uint32_t getIndexFromHandle(const DebugDrawHandle h) const {
+    return h.handle & INDEX_MASK;
+  }
+  inline uint32_t getMagicFromHandle(const DebugDrawHandle h) const {
+    return (h.handle & MAGIC_NUMBER_MASK) >> 16;
+  }
+
+  inline void assertMagicNumber(const DebugDrawHandle handle) const {
+    const uint32_t magic = getMagicFromHandle(handle);
+    const uint32_t idx = getIndexFromHandle(handle);
+	auto found = m_trackers.find(handle.handle);
+	assert(found != m_trackers.end());
+	assert(found->second.magicNumber == magic && "invalid magic number for debug tracker");
+  }
 
 private:
   struct PSORSPair {
@@ -80,8 +96,10 @@ private:
   };
 
   std::unordered_map<uint32_t, std::vector<DebugPrimitive>> m_renderables;
-  std::unordered_map<uint32_t, DebugCompoundTracker> m_trackers;
+  std::unordered_map<uint32_t, DebugTracker> m_trackers;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
+  static const uint32_t INDEX_MASK = (1 << 16) - 1;
+  static const uint32_t MAGIC_NUMBER_MASK = ~INDEX_MASK;
   std::unordered_map<uint16_t, ShaderBind> m_shderTypeToShaderBind;
   std::vector<BufferUploadResource> m_uploadRequests;
   std::vector<DebugPrimitive> m_primToFree;

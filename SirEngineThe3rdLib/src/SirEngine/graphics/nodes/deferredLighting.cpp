@@ -148,6 +148,8 @@ void DeferredLightingPass::compute() {
       8, dx12::TEXTURE_MANAGER->getSRVDx12(m_brdfHandle).gpuHandle);
 
   // the newer ID3DUserDefinedAnnotation API is also supported
+  currentFc->commandList->IASetPrimitiveTopology(
+      D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
   commandList->DrawInstanced(6, 1, 0, 0);
   m_outputPlugs[0].plugValue = m_lightBuffer.handle;
   annotateGraphicsEnd();
