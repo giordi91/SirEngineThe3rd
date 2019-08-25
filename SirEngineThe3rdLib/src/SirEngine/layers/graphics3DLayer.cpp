@@ -1,4 +1,5 @@
 #include "SirEngine/layers/graphics3DLayer.h"
+#include "SirEngine/animation/animation_manager.h"
 #include "SirEngine/application.h"
 #include "SirEngine/assetManager.h"
 #include "SirEngine/events/debugEvent.h"
@@ -14,20 +15,20 @@
 #include "SirEngine/events/shaderCompileEvent.h"
 #include "SirEngine/graphics/nodes/FinalBlitNode.h"
 #include "SirEngine/graphics/nodes/assetManagerNode.h"
+#include "SirEngine/graphics/nodes/debugDrawNode.h"
 #include "SirEngine/graphics/nodes/deferredLighting.h"
 #include "SirEngine/graphics/nodes/framePassDebugNode.h"
 #include "SirEngine/graphics/nodes/gbufferPassPBR.h"
 #include "SirEngine/graphics/nodes/simpleForward.h"
-#include "SirEngine/graphics/nodes/debugDrawNode.h"
 #include "SirEngine/graphics/nodes/skybox.h"
 #include "SirEngine/graphics/postProcess/effects/SSSSSEffect.h"
 #include "SirEngine/graphics/postProcess/effects/gammaAndToneMappingEffect.h"
 #include "SirEngine/graphics/postProcess/postProcessStack.h"
 #include "SirEngine/graphics/renderingContext.h"
 
+#include "SirEngine/animation/skeleton.h"
 #include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
 #include "platform/windows/graphics/dx12/PSOManager.h"
-#include "SirEngine/animation/skeleton.h"
 
 namespace SirEngine {
 
@@ -156,26 +157,29 @@ void Graphics3DLayer::onAttach() {
   data.push_back(10.0f);
   data.push_back(0.0f);
   dx12::DEBUG_RENDERER->drawLinesUniformColor(
-      data.data(), static_cast<uint32_t>(data.size() * sizeof(float)), DirectX::XMFLOAT4{1, 0, 0, 1},
-      1.0f, true, "debugLines");
+      data.data(), static_cast<uint32_t>(data.size() * sizeof(float)),
+  DirectX::XMFLOAT4{1, 0, 0, 1}, 1.0f, true, "debugLines");
   */
 
-
   m_skeleton = new Skeleton;
-  m_skeleton->initialize("../data/external/animation/exported/skeleton/knightBSkeleton.json");
-  dx12::DEBUG_RENDERER->drawSkeleton(m_skeleton,DirectX::XMFLOAT4(0,1,0,1),0.05f,true);
-
+  m_skeleton->initialize(
+      "../data/external/animation/exported/skeleton/knightBSkeleton.json");
+  dx12::DEBUG_RENDERER->drawSkeleton(m_skeleton, DirectX::XMFLOAT4(0, 1, 0, 1),
+                                     0.05f);
 
   dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE, currentFc);
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
 
-
-
-
-
+  auto m_animation = globals::ANIMATION_MANAGER->loadAnimationConfig(
+      "../data/external/animation/exported/clip/knightBIdleConfig.json");
+  m_config= globals::ANIMATION_MANAGER->getConfig(m_animation);
+  globals::ANIMATION_MANAGER->registerState(m_config.m_anim_state);
 }
 void Graphics3DLayer::onDetach() {}
 void Graphics3DLayer::onUpdate() {
+
+  globals::ANIMATION_MANAGER->evaluate();
+
   // setting up camera for the frame
   globals::CONSTANT_BUFFER_MANAGER->processBufferedData();
   globals::RENDERING_CONTEXT->setupCameraForFrame();
@@ -257,7 +261,8 @@ bool Graphics3DLayer::onDebugLayerEvent(DebugLayerChanged &e) {
   case (0): {
     // if we have 0, we have no layer to debug so we can just check if there
     // there is a debug node and remove it
-    GraphNode *debugNode = dx12::RENDERING_GRAPH->findNodeOfType("FramePassDebugNode");
+    GraphNode *debugNode =
+        dx12::RENDERING_GRAPH->findNodeOfType("FramePassDebugNode");
     if (debugNode == nullptr) { // no debug we are good
       return true;
     }
@@ -275,7 +280,8 @@ bool Graphics3DLayer::onDebugLayerEvent(DebugLayerChanged &e) {
   case (6):
   case (7): {
     // lets add debug
-    GraphNode *debugNode = dx12::RENDERING_GRAPH->findNodeOfType("FramePassDebugNode");
+    GraphNode *debugNode =
+        dx12::RENDERING_GRAPH->findNodeOfType("FramePassDebugNode");
     // debug already there, maybe i just need to change configuration?
     if (debugNode != nullptr) { // no debug we are good
       static_cast<FramePassDebugNode *>(debugNode)->setDebugIndex(e.getLayer());

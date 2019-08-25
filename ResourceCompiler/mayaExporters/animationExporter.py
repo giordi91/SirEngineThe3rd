@@ -1,11 +1,9 @@
-import sys 
-sys.path.append( "E:\\WORK_IN_PROGRESS\\C\\platfoorm\\engine\\misc\\exporters")
 
 
 from maya import cmds
 from maya.api import OpenMaya
-import skeleton_exporter
-reload(skeleton_exporter)
+import skeletonExporter
+reload(skeletonExporter)
 import json
 
 
@@ -14,7 +12,7 @@ import json
 
 def get_anim_data(root, start,end):
     
-    data,joints = skeleton_exporter.get_skeleton_data(root)
+    data,joints = skeletonExporter.get_skeleton_data(root)
     anim_data= []
     for frame in range(start, end+1):
         cmds.currentTime(frame)

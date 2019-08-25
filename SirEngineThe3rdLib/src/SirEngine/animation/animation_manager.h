@@ -32,6 +32,7 @@ public:
   // those functions either get an already loaded json file
   // or the full path to the json to load
   AnimationConfigHandle loadAnimationConfig(const std::string &path);
+  void init(){};
 
   inline AnimationConfig getConfig(AnimationConfigHandle handle) {
     auto found = m_handleToConfig.find(handle);

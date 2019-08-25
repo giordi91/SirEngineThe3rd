@@ -13,6 +13,7 @@ class Camera3DPivot;
 class TextureManager;
 class RenderingContext;
 class BufferManager;
+class AnimationManager;
 
 class StringPool;
 class StackAllocator;
@@ -45,6 +46,7 @@ extern AssetManager *ASSET_MANAGER;
 extern Application *APPLICATION;
 extern RenderingContext *RENDERING_CONTEXT;
 extern DebugFrameData *DEBUG_FRAME_DATA;
+extern AnimationManager* ANIMATION_MANAGER;
 
 // generic allocators
 extern SIR_ENGINE_API StringPool *STRING_POOL;

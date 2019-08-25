@@ -1,0 +1,3 @@
+C:/WORK_IN_PROGRESS/C/directX/SirEngineThe3rd/ResourceCompiler/mayaExporters/CMakeFiles/ResourceCompiler.dir
+C:/WORK_IN_PROGRESS/C/directX/SirEngineThe3rd/ResourceCompiler/mayaExporters/CMakeFiles/ALL_BUILD.dir
+C:/WORK_IN_PROGRESS/C/directX/SirEngineThe3rd/ResourceCompiler/mayaExporters/CMakeFiles/ZERO_CHECK.dir

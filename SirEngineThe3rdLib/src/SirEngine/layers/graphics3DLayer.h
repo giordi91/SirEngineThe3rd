@@ -2,6 +2,8 @@
 
 #include "SirEngine/identityManager.h"
 #include "SirEngine/layer.h"
+//TODO TEMP
+#include "SirEngine/animation/animation_manager.h"
 
 namespace SirEngine {
 class DebugRenderConfigChanged;
@@ -11,7 +13,7 @@ class MouseMoveEvent;
 class WindowResizeEvent;
 class DebugLayerChanged;
 class ShaderCompileEvent;
-class Skeleton;
+struct Skeleton;
 
 namespace dx12 {
 class Texture2D;
@@ -47,5 +49,6 @@ private:
 
   // TODO temp
   Skeleton *m_skeleton;
+  AnimationConfig m_config;
 };
 } // namespace SirEngine

@@ -19,6 +19,7 @@
 #include "platform/windows/graphics/dx12/shaderManager.h"
 #include "platform/windows/graphics/dx12/swapChain.h"
 #include "platform/windows/graphics/dx12/debugRenderer.h"
+#include "SirEngine/animation/animation_manager.h"
 
 namespace SirEngine::dx12 {
 
@@ -224,6 +225,8 @@ bool initializeGraphicsDx12(Window *wnd, const uint32_t width,
   DEBUG_RENDERER = new DebugRenderer();
   DEBUG_RENDERER->init();
 
+  globals::ANIMATION_MANAGER = new AnimationManager();
+  globals::ANIMATION_MANAGER->init();
 
 
   globals::DEBUG_FRAME_DATA = new globals::DebugFrameData();
