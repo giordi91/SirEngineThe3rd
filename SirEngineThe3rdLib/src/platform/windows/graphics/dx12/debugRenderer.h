@@ -9,6 +9,7 @@ namespace SirEngine {
 
 // forward declare
 struct Skeleton;
+struct AnimState;
 namespace dx12 {
 
 enum PRIMITIVE_TYPE { TRIANGLE, LINE, POINT };
@@ -21,6 +22,11 @@ struct DebugPrimitive {
   PRIMITIVE_TYPE primitiveType;
   DescriptorPair srv;
   uint64_t fence;
+};
+
+struct DebugCompoundTracker {
+  uint32_t count : 16;
+  uint32_t startIdx : 16;
 };
 
 class DebugRenderer {
@@ -41,31 +47,17 @@ public:
     // m_persistante_q.clear();
   }
 
-  void drawAABB(DirectX::XMFLOAT4 &minP, DirectX::XMFLOAT4 &maxP,
-                DirectX::XMFLOAT4 &color, bool isPeristen);
-
-  void drawRay(DirectX::XMFLOAT4 &rayOrigin, DirectX::XMFLOAT4 &rayDirection,
-               DirectX::XMFLOAT4 &color, float rayLen, float originSize,
-               bool isPeristen);
-
   DebugDrawHandle drawPointsUniformColor(float *data, uint32_t sizeInByte,
                                          DirectX::XMFLOAT4 color, float size,
-                                         bool isPeristen,
                                          const char *debugName);
   DebugDrawHandle drawLinesUniformColor(float *data, uint32_t sizeInByte,
                                         DirectX::XMFLOAT4 color, float size,
-                                        bool isPersistent,
                                         const char *debugName);
   DebugDrawHandle drawSkeleton(Skeleton *skeleton, DirectX::XMFLOAT4 color,
-                               float pointSize, bool isPersistent);
-
-  void drawTriangle(float *point0, float *point1, float *point2,
-                    DirectX::XMFLOAT4 color, bool isPeristen);
-
-  void drawAABBs(float *float3aabs, int size, bool isPersisten);
-  void drawPointsColor(std::vector<float> &data, float size, bool isPeristen);
-  void drawGeoPointsColor(std::vector<float> &data, float size,
-                          bool isPeristen);
+                               float pointSize);
+  DebugDrawHandle drawAnimatedSkeleton(DebugDrawHandle handle, AnimState *state,
+                                       DirectX::XMFLOAT4 color,
+                                       float pointSize);
 
   void render(const TextureHandle input, const TextureHandle depth);
   void clearUploadRequests();
@@ -73,6 +65,13 @@ public:
 private:
   DebugRenderer(const DebugRenderer &) = delete;
   DebugRenderer &operator=(const DebugRenderer &) = delete;
+  void renderQueue(
+      std::unordered_map<uint32_t, std::vector<DebugPrimitive>> &inQueue,
+      const TextureHandle input, const TextureHandle depth);
+
+  inline bool isCompound(const DebugDrawHandle handle) {
+    return (handle.handle & (1 << 31)) > 0;
+  }
 
 private:
   struct PSORSPair {
@@ -80,9 +79,8 @@ private:
     RSHandle rs;
   };
 
-  std::unordered_map<uint32_t, std::vector<DebugPrimitive>>
-      m_renderablesPersistant;
   std::unordered_map<uint32_t, std::vector<DebugPrimitive>> m_renderables;
+  std::unordered_map<uint32_t, DebugCompoundTracker> m_trackers;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
   std::unordered_map<uint16_t, ShaderBind> m_shderTypeToShaderBind;
   std::vector<BufferUploadResource> m_uploadRequests;

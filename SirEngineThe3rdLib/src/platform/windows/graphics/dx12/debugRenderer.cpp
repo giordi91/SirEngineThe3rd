@@ -1,4 +1,5 @@
 #include "platform/windows/graphics/dx12/debugRenderer.h"
+#include "SirEngine/animation/animationClip.h"
 #include "SirEngine/animation/skeleton.h"
 #include "SirEngine/graphics/cpuGraphicsStructures.h"
 #include "SirEngine/graphics/debugAnnotations.h"
@@ -136,13 +137,13 @@ inline D3D12_VERTEX_BUFFER_VIEW getVertexBufferView(ID3D12Resource *buffer,
   return vbv;
 }
 
-DebugDrawHandle
-DebugRenderer::drawPointsUniformColor(float *data, uint32_t sizeInByte,
-                                      DirectX::XMFLOAT4 color, float size,
-                                      bool isPeristen, const char *debugName) {
+DebugDrawHandle DebugRenderer::drawPointsUniformColor(float *data,
+                                                      uint32_t sizeInByte,
+                                                      DirectX::XMFLOAT4 color,
+                                                      float size,
+                                                      const char *debugName) {
   BufferUploadResource upload;
   DebugPrimitive primitive;
-  assert(isPeristen);
   // allocate vertex buffer
   assert((sizeInByte % (sizeof(float) * 3)) == 0);
   const uint32_t elementCount = sizeInByte / (sizeof(float) * 3);
@@ -178,38 +179,28 @@ DebugRenderer::drawPointsUniformColor(float *data, uint32_t sizeInByte,
   const uint32_t storeHandle =
       static_cast<uint32_t>(queue) | (static_cast<uint32_t>(type) << 16);
 
-  if (isPeristen) {
-    m_renderablesPersistant[storeHandle].push_back(primitive);
-  } else {
-    m_renderablesPersistant[storeHandle].push_back(primitive);
-  }
+  m_renderables[storeHandle].push_back(primitive);
   return debugHandle;
 }
 
-DebugDrawHandle DebugRenderer::drawLinesUniformColor(
-    float *data, const uint32_t sizeInByte, const DirectX::XMFLOAT4 color,
-    const float size, const bool isPersistent, const char *debugName) {
+DebugDrawHandle
+DebugRenderer::drawLinesUniformColor(float *data, const uint32_t sizeInByte,
+                                     const DirectX::XMFLOAT4 color,
+                                     const float size, const char *debugName) {
   DebugPrimitive primitive;
 
   // allocate vertex buffer
   assert((sizeInByte % (sizeof(float) * 3)) == 0);
   const uint32_t elementCount = sizeInByte / (sizeof(float) * 3);
 
-  if (isPersistent) {
-    BufferUploadResource upload;
-    primitive.buffer = createDefaultBuffer(
-        dx12::DEVICE, dx12::CURRENT_FRAME_RESOURCE->fc.commandList, data,
-        sizeInByte, &upload.uploadBuffer);
-    // set a signal for the resource.
-    upload.fence = dx12::insertFenceToGlobalQueue();
-    m_uploadRequests.push_back(upload);
-  } else {
-    const wchar_t *debugNameWide =
-        globals::STRING_POOL->convertFrameWide(debugName);
-    primitive.buffer = allocateUploadBuffer(
-        dx12::DEVICE, dx12::CURRENT_FRAME_RESOURCE->fc.commandList, sizeInByte,
-        debugNameWide);
-  }
+  BufferUploadResource upload;
+  primitive.buffer = createDefaultBuffer(
+      dx12::DEVICE, dx12::CURRENT_FRAME_RESOURCE->fc.commandList, data,
+      sizeInByte, &upload.uploadBuffer);
+  // set a signal for the resource.
+  upload.fence = dx12::insertFenceToGlobalQueue();
+  m_uploadRequests.push_back(upload);
+
   primitive.bufferView =
       getVertexBufferView(primitive.buffer, sizeof(float) * 3, sizeInByte);
 
@@ -235,22 +226,16 @@ DebugDrawHandle DebugRenderer::drawLinesUniformColor(
   const uint32_t storeHandle =
       static_cast<uint32_t>(queue) | (static_cast<uint32_t>(type) << 16);
 
-  if (isPersistent) {
-    m_renderablesPersistant[storeHandle].push_back(primitive);
-  } else {
-    m_renderables[storeHandle].push_back(primitive);
-  }
+  m_renderables[storeHandle].push_back(primitive);
   return debugHandle;
 }
 
 DebugDrawHandle DebugRenderer::drawSkeleton(Skeleton *skeleton,
                                             DirectX::XMFLOAT4 color,
-                                            float pointSize,
-                                            bool isPersistent) {
+                                            float pointSize) {
 
-  // TODO cleanup all this lovely vectors and fix debug handle,
-  // how to deal with compound handles?, should we basically
-  // have a compound handle?
+  // TODO cleanup all this lovely vectors
+
   // first we need to convert the skeleton to points we can actually render
   std::vector<DirectX::XMFLOAT3> points;
   std::vector<DirectX::XMFLOAT3> lines;
@@ -271,25 +256,106 @@ DebugDrawHandle DebugRenderer::drawSkeleton(Skeleton *skeleton,
           DirectX::XMFLOAT3{pos.m128_f32[0], pos.m128_f32[1], pos.m128_f32[2]});
     }
   }
-  drawPointsUniformColor(&points.data()[0].x,
-                         points.size() * sizeof(DirectX::XMFLOAT3), color,
-                         pointSize, isPersistent, skeleton->m_name.c_str());
+  DebugDrawHandle pointsHandle = drawPointsUniformColor(
+      &points.data()[0].x, points.size() * sizeof(DirectX::XMFLOAT3), color,
+      pointSize, skeleton->m_name.c_str());
 
-  drawLinesUniformColor(&lines.data()[0].x,
-                        lines.size() * sizeof(DirectX::XMFLOAT3), color,
-                        pointSize, isPersistent, skeleton->m_name.c_str());
+  DebugDrawHandle linesHandle = drawLinesUniformColor(
+      &lines.data()[0].x, lines.size() * sizeof(DirectX::XMFLOAT3), color,
+      pointSize, skeleton->m_name.c_str());
 
-  //TODO FIX THIS FOR FUCK SAKE IS DAMM HORRIBLE!
+  // making sure they are consecutive
+  assert(linesHandle.handle > pointsHandle.handle);
+  assert((linesHandle.handle - pointsHandle.handle) == 1);
+
+  // lets prepare the compound handle
+  // there are two items only lines and points and the points is the first
+  DebugCompoundTracker tracker{2, pointsHandle.handle};
+
+  uint32_t compoundBit = 1 << 31;
+  DebugDrawHandle returnHandle{compoundBit | (++MAGIC_NUMBER_COUNTER)};
+
+  m_trackers[returnHandle.handle] = tracker;
+
+  return returnHandle;
+}
+
+DebugDrawHandle DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
+                                                    AnimState *state,
+                                                    DirectX::XMFLOAT4 color,
+                                                    float pointSize) {
+
+  const std::vector<DirectX::XMMATRIX> &pose = state->m_pose->m_global_pose;
+  std::vector<DirectX::XMFLOAT3> points;
+  std::vector<DirectX::XMFLOAT3> lines;
+  for (int i = 0; i < pose.size(); ++i) {
+    DirectX::XMMATRIX mat = pose[i];
+    DirectX::XMVECTOR pos;
+    DirectX::XMVECTOR scale;
+    DirectX::XMVECTOR rot;
+    DirectX::XMMatrixDecompose(&scale, &rot, &pos, mat);
+    points.push_back(
+        DirectX::XMFLOAT3{pos.m128_f32[0], pos.m128_f32[1], pos.m128_f32[2]});
+
+    int parentId = state->m_pose->m_skeleton->m_joints[i].m_parent_id;
+    if (parentId != -1) {
+      lines.push_back(points[parentId]);
+      lines.push_back(
+          DirectX::XMFLOAT3{pos.m128_f32[0], pos.m128_f32[1], pos.m128_f32[2]});
+    }
+  }
+
+  // if handle is null means we need to allocate, if not we reuse the memory
+  if (!handle.isHandleValid()) {
+    // we need to allocate the memory
+    // making sure our handle is an actual compound handle
+    assert((handle.handle & (1 << 31)) > 0);
+	//extact from the tracker map
+	auto found = m_trackers.find(handle.handle);
+	assert(found != m_trackers.end());
+	assert(found->second.count ==2);
+
+	//TODO NEED TO FIX PROPER INDEXING WITH THE HANDLE
+	//DebugPrimitive& pointPrimitive = m_renderables[found->second.startIdx]; 
+	assert(0);
+
+
+  } else {
+    DebugDrawHandle pointsHandle = drawPointsUniformColor(
+        &points.data()[0].x, points.size() * sizeof(DirectX::XMFLOAT3), color,
+        pointSize, state->m_pose->m_skeleton->m_name.c_str());
+
+    DebugDrawHandle linesHandle = drawLinesUniformColor(
+        &lines.data()[0].x, lines.size() * sizeof(DirectX::XMFLOAT3), color,
+        pointSize, state->m_pose->m_skeleton->m_name.c_str());
+
+    // making sure they are consecutive
+    assert(linesHandle.handle > pointsHandle.handle);
+    assert((linesHandle.handle - pointsHandle.handle) == 1);
+
+    // lets prepare the compound handle
+    // there are two items only lines and points and the points is the first
+    DebugCompoundTracker tracker{2, pointsHandle.handle};
+
+    uint32_t compoundBit = 1 << 31;
+    DebugDrawHandle returnHandle{compoundBit | (++MAGIC_NUMBER_COUNTER)};
+
+    m_trackers[returnHandle.handle] = tracker;
+
+    return returnHandle;
+  }
+
   return DebugDrawHandle();
 }
 
-void DebugRenderer::render(const TextureHandle input,
-                           const TextureHandle depth) {
+void DebugRenderer::renderQueue(
+    std::unordered_map<uint32_t, std::vector<DebugPrimitive>> &inQueue,
+    const TextureHandle input, const TextureHandle depth) {
 
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
-  // first static stuff
-  for (auto &queue : m_renderablesPersistant) {
+
+  for (auto &queue : inQueue) {
     assert((dx12::MATERIAL_MANAGER->isQueueType(queue.first,
                                                 SHADER_QUEUE_FLAGS::DEBUG)));
     constexpr auto mask = static_cast<uint32_t>(~((1 << 16) - 1));
@@ -354,16 +420,28 @@ void DebugRenderer::render(const TextureHandle input,
       currentFc->commandList->IASetVertexBuffers(0, 1, nullptr);
       currentFc->commandList->DrawInstanced(prim.primitiveToRender, 1, 0, 0);
     }
-
-    annotateGraphicsEnd();
   }
+}
+
+void DebugRenderer::render(const TextureHandle input,
+                           const TextureHandle depth) {
+
+  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
+  auto commandList = currentFc->commandList;
+  // first static stuff
+  renderQueue(m_renderables, input, depth);
+
+  // we need to clean up the per frame data
+
+  annotateGraphicsEnd();
+
   currentFc->commandList->IASetPrimitiveTopology(
       D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 } // namespace SirEngine::dx12
 void DebugRenderer::clearUploadRequests() {
 
   auto id = GLOBAL_FENCE->GetCompletedValue();
-  // uint32_t freed = 0;
+
   int requestSize = static_cast<int>(m_uploadRequests.size()) - 1;
   int stackTopIdx = requestSize;
   for (int i = requestSize; i >= 0; --i) {
