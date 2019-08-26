@@ -49,7 +49,6 @@ private:
   float previousY = 0;
 
   // TODO temp
-  Skeleton *m_skeleton;
   AnimationConfig m_config;
   DebugDrawHandle m_animHandle{};
 };

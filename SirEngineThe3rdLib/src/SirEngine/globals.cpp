@@ -1,5 +1,6 @@
 #include "SirEngine/globals.h"
 #include <SirEngine/memory/stringPool.h>
+#include <SirEngine/memory/threeSizesPool.h>
 #include <d3d12.h>
 #include <cstdint>
 
@@ -28,6 +29,7 @@ const char *START_SCENE_PATH = nullptr;
 // generic allocators
 StringPool *STRING_POOL = nullptr;
 StackAllocator *FRAME_ALLOCATOR = nullptr;
+ThreeSizesPool *PERSISTANT_ALLOCATOR = nullptr;
 
 D3D12_VIEWPORT CURRENT_VIEWPORT =
     D3D12_VIEWPORT{0,

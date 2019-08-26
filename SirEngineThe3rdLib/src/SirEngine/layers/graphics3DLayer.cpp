@@ -161,19 +161,17 @@ void Graphics3DLayer::onAttach() {
   DirectX::XMFLOAT4{1, 0, 0, 1}, 1.0f, true, "debugLines");
   */
 
-  m_skeleton = new Skeleton;
-  m_skeleton->loadFromFile(
-      "../data/external/animation/exported/skeleton/knightBSkeleton.json");
-  dx12::DEBUG_RENDERER->drawSkeleton(m_skeleton, DirectX::XMFLOAT4(0, 1, 0, 1),
+  auto m_animation = globals::ANIMATION_MANAGER->loadAnimationConfig(
+      "../data/external/animation/exported/clip/knightBIdleConfig.json");
+  m_config= globals::ANIMATION_MANAGER->getConfig(m_animation);
+  globals::ANIMATION_MANAGER->registerState(m_config.m_anim_state);
+
+  dx12::DEBUG_RENDERER->drawSkeleton(m_config.m_skeleton, DirectX::XMFLOAT4(0, 1, 0, 1),
                                      0.05f);
 
   dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE, currentFc);
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
 
-  auto m_animation = globals::ANIMATION_MANAGER->loadAnimationConfig(
-      "../data/external/animation/exported/clip/knightBIdleConfig.json");
-  m_config= globals::ANIMATION_MANAGER->getConfig(m_animation);
-  globals::ANIMATION_MANAGER->registerState(m_config.m_anim_state);
 }
 void Graphics3DLayer::onDetach() {}
 void Graphics3DLayer::onUpdate() {

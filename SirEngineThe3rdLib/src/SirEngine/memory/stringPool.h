@@ -220,7 +220,7 @@ class SIR_ENGINE_API StringPool final {
   enum class STRING_TYPE { CHAR = 1, WCHAR = 2 };
 
  private:
-  ThreeSizesPool<64, 256> m_pool;
+  ThreeSizesPool m_pool;
   StackAllocator m_stackAllocator;
 };
 

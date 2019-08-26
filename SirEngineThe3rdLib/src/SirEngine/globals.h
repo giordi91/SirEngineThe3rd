@@ -17,6 +17,9 @@ class AnimationManager;
 
 class StringPool;
 class StackAllocator;
+class ThreeSizesPool;
+
+using PersistantAllocatorType = ThreeSizesPool;
 
 namespace globals {
 
@@ -51,6 +54,7 @@ extern AnimationManager* ANIMATION_MANAGER;
 // generic allocators
 extern SIR_ENGINE_API StringPool *STRING_POOL;
 extern SIR_ENGINE_API StackAllocator *FRAME_ALLOCATOR;
+extern SIR_ENGINE_API ThreeSizesPool *PERSISTANT_ALLOCATOR;
 
 // config
 extern const char* DATA_SOURCE_PATH;

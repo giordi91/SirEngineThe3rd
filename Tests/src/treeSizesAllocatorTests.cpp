@@ -2,14 +2,14 @@
 #include "catch/catch.hpp"
 
 TEST_CASE("Tree sizes pool basic alloc 1", "[memory]") {
-  SirEngine::ThreeSizesPool<64, 256> alloc(2 << 16);
+  SirEngine::ThreeSizesPool alloc(2 << 16,64,256);
   void *mem = alloc.allocate(16);
   REQUIRE(mem != nullptr);
   REQUIRE(alloc.getSmallAllocCount() == 1);
 }
 
 TEST_CASE("Tree sizes pool basic alloc 2", "[memory]") {
-  SirEngine::ThreeSizesPool<64, 256> alloc(2 << 16);
+  SirEngine::ThreeSizesPool alloc(2 << 16,64,256);
   void *mem = alloc.allocate(16);
   void *mem2 = alloc.allocate(128);
   void *mem3 = alloc.allocate(300);
@@ -22,7 +22,7 @@ TEST_CASE("Tree sizes pool basic alloc 2", "[memory]") {
 }
 
 TEST_CASE("Tree sizes pool getAlloc size", "[memory]") {
-  SirEngine::ThreeSizesPool<64, 256> alloc(2 << 16);
+  SirEngine::ThreeSizesPool alloc(2 << 16);
   void *mem = alloc.allocate(16);
   void *mem2 = alloc.allocate(128);
   void *mem3 = alloc.allocate(300);
@@ -40,9 +40,9 @@ TEST_CASE("Tree sizes pool getAlloc size", "[memory]") {
 }
 
 TEST_CASE("Tree sizes pool min alloc size", "[memory]") {
-  SirEngine::ThreeSizesPool<64, 256> alloc(2 << 16);
+  SirEngine::ThreeSizesPool alloc(2 << 16);
   void *mem = alloc.allocate(2);
-  uint32_t minAllocSize = SirEngine::ThreeSizesPool<64, 256>::getMinAllocSize();
+  uint32_t minAllocSize = alloc.getMinAllocSize();
   REQUIRE(mem != nullptr);
 
   uint32_t allocSize = alloc.getAllocSize(mem);
@@ -53,7 +53,7 @@ TEST_CASE("Tree sizes pool min alloc size", "[memory]") {
 }
 
 TEST_CASE("Tree sizes pool delete alloc 1", "[memory]") {
-  SirEngine::ThreeSizesPool<64, 256> alloc(2 << 16);
+  SirEngine::ThreeSizesPool alloc(2 << 16);
   void *mem = alloc.allocate(16);
   void *mem2 = alloc.allocate(128);
   void *mem3 = alloc.allocate(300);
@@ -102,7 +102,7 @@ TEST_CASE("Tree sizes pool delete alloc 1", "[memory]") {
 }
 
 TEST_CASE("Tree sizes pool delete alloc 2", "[memory]") {
-  SirEngine::ThreeSizesPool<64, 256> alloc(2 << 16);
+  SirEngine::ThreeSizesPool alloc(2 << 16);
   void *mem1 = alloc.allocate(128);
   void *mem2 = alloc.allocate(128);
   void *mem3 = alloc.allocate(128);
