@@ -6,6 +6,7 @@
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/materialManager.h"
 #include "SirEngine/memory/stringPool.h"
+#include "SirEngine/runtimeString.h"
 #include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/PSOManager.h"
@@ -52,7 +53,7 @@ dx12::CONSTANT_BUFFER_MANAGER->free(prim.cbHandle);
 
 inline ID3D12Resource *
 allocateUploadBuffer(ID3D12Device *pDevice, void *pData,
-                     const uint64_t dataSize,
+                     const uint64_t dataSize, void **pMappedData,
                      const wchar_t *resourceName = nullptr) {
   ID3D12Resource *ppResource;
   auto uploadHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
@@ -67,10 +68,9 @@ allocateUploadBuffer(ID3D12Device *pDevice, void *pData,
   if (resourceName) {
     (ppResource)->SetName(resourceName);
   }
-  void *pMappedData;
-  (ppResource)->Map(0, nullptr, &pMappedData);
-  memcpy(pMappedData, pData, dataSize);
-  (ppResource)->Unmap(0, nullptr);
+  (ppResource)->Map(0, nullptr, pMappedData);
+  memcpy(*pMappedData, pData, dataSize);
+  //(ppResource)->Unmap(0, nullptr);
   return ppResource;
 }
 
@@ -144,16 +144,22 @@ DebugDrawHandle DebugRenderer::drawPointsUniformColor(float *data,
                                                       const char *debugName) {
   BufferUploadResource upload;
   DebugPrimitive primitive;
+  void *mappedData;
   // allocate vertex buffer
   assert((sizeInByte % (sizeof(float) * 3)) == 0);
   const uint32_t elementCount = sizeInByte / (sizeof(float) * 3);
 
-  primitive.buffer = createDefaultBuffer(
-      dx12::DEVICE, dx12::CURRENT_FRAME_RESOURCE->fc.commandList, data,
-      sizeInByte, &upload.uploadBuffer);
+  // primitive.buffer = createDefaultBuffer(
+  //    dx12::DEVICE, dx12::CURRENT_FRAME_RESOURCE->fc.commandList, data,
+  //    sizeInByte, &upload.uploadBuffer);
+  primitive.buffer = allocateUploadBuffer(
+      dx12::DEVICE, data, sizeInByte, &mappedData, frameConvertWide(debugName));
+
+  /*
   // set a signal for the resource.
   upload.fence = dx12::insertFenceToGlobalQueue();
   m_uploadRequests.push_back(upload);
+  */
   primitive.bufferView =
       getVertexBufferView(primitive.buffer, sizeof(float) * 3, sizeInByte);
 
@@ -177,11 +183,13 @@ DebugDrawHandle DebugRenderer::drawPointsUniformColor(float *data,
   const uint32_t storeHandle =
       static_cast<uint32_t>(queue) | (static_cast<uint32_t>(type) << 16);
 
-  DebugTracker tracker;
+  DebugTracker tracker{};
   tracker.compoundCount = 0;
   tracker.index = m_renderables[storeHandle].size();
   tracker.magicNumber = MAGIC_NUMBER_COUNTER;
   tracker.queue = storeHandle;
+  tracker.mappedData = mappedData;
+  tracker.sizeInBtye = sizeInByte;
 
   const DebugDrawHandle debugHandle{(MAGIC_NUMBER_COUNTER << 16) |
                                     tracker.index};
@@ -206,13 +214,20 @@ DebugRenderer::drawLinesUniformColor(float *data, const uint32_t sizeInByte,
   assert((sizeInByte % (sizeof(float) * 3)) == 0);
   const uint32_t elementCount = sizeInByte / (sizeof(float) * 3);
 
+  /*
   BufferUploadResource upload;
   primitive.buffer = createDefaultBuffer(
       dx12::DEVICE, dx12::CURRENT_FRAME_RESOURCE->fc.commandList, data,
       sizeInByte, &upload.uploadBuffer);
+          */
+  void *mappedData;
+  primitive.buffer = allocateUploadBuffer(
+      dx12::DEVICE, data, sizeInByte, &mappedData, frameConvertWide(debugName));
+  /*
   // set a signal for the resource.
   upload.fence = dx12::insertFenceToGlobalQueue();
   m_uploadRequests.push_back(upload);
+  */
 
   primitive.bufferView =
       getVertexBufferView(primitive.buffer, sizeof(float) * 3, sizeInByte);
@@ -242,6 +257,8 @@ DebugRenderer::drawLinesUniformColor(float *data, const uint32_t sizeInByte,
   tracker.index = m_renderables[storeHandle].size();
   tracker.magicNumber = MAGIC_NUMBER_COUNTER;
   tracker.queue = storeHandle;
+  tracker.mappedData = mappedData;
+  tracker.sizeInBtye = sizeInByte;
 
   const DebugDrawHandle debugHandle{(MAGIC_NUMBER_COUNTER << 16) |
                                     tracker.index};
@@ -290,21 +307,22 @@ DebugDrawHandle DebugRenderer::drawSkeleton(Skeleton *skeleton,
       &lines.data()[0].x, lines.size() * sizeof(DirectX::XMFLOAT3), color,
       pointSize, skeleton->m_name.c_str());
 
-  // making sure they are consecutive
-  /*
-  const uint32_t pidx = getIndexFromHandle(linesHandle);
-  assert(linesHandle.handle > pointsHandle.handle);
-  assert((linesHandle.handle - pointsHandle.handle) == 1);
-  */
-
   // lets prepare the compound handle
   // there are two items only lines and points and the points is the first
-  DebugTracker tracker{2, pointsHandle.handle};
+  DebugTracker tracker{};
+  tracker.compoundCount = 2;
+  // TODO remove this naked allocation use an allocator
+  // being compound we only store the compound count and handles
+  tracker.compoundHandles = new DebugDrawHandle[2];
+  tracker.compoundHandles[0] = pointsHandle;
+  tracker.compoundHandles[1] = linesHandle;
 
   uint32_t compoundBit = 1 << 31;
-  DebugDrawHandle returnHandle{compoundBit | (MAGIC_NUMBER_COUNTER)};
+  const DebugDrawHandle returnHandle{compoundBit |
+                                     (MAGIC_NUMBER_COUNTER << 16) | 0};
 
   m_trackers[returnHandle.handle] = tracker;
+
   ++MAGIC_NUMBER_COUNTER;
   return returnHandle;
 }
@@ -314,7 +332,7 @@ DebugDrawHandle DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
                                                     DirectX::XMFLOAT4 color,
                                                     float pointSize) {
 
-  const std::vector<DirectX::XMMATRIX> &pose = state->m_pose->m_global_pose;
+  const std::vector<DirectX::XMMATRIX> &pose = state->m_pose->m_worldMat;
   std::vector<DirectX::XMFLOAT3> points;
   std::vector<DirectX::XMFLOAT3> lines;
   for (int i = 0; i < pose.size(); ++i) {
@@ -335,7 +353,7 @@ DebugDrawHandle DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
   }
 
   // if handle is null means we need to allocate, if not we reuse the memory
-  if (!handle.isHandleValid()) {
+  if (handle.isHandleValid()) {
     // we need to allocate the memory
     // making sure our handle is an actual compound handle
     assert((handle.handle & (1 << 31)) > 0);
@@ -344,9 +362,33 @@ DebugDrawHandle DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
     assert(found != m_trackers.end());
     assert(found->second.compoundCount == 2);
 
-    // TODO NEED TO FIX PROPER INDEXING WITH THE HANDLE
-    // DebugPrimitive& pointPrimitive = m_renderables[found->second.startIdx];
-    assert(0);
+    // we have the tracker so we should be able to get out data
+    const DebugDrawHandle pointsHandle = found->second.compoundHandles[0];
+    const DebugDrawHandle linesHandle = found->second.compoundHandles[1];
+
+    // lets get the trackers out for each one
+    auto foundPoint = m_trackers.find(pointsHandle.handle);
+    assert(foundPoint != m_trackers.end());
+    assert(foundPoint->second.compoundCount == 0);
+
+    const DebugTracker &pointTracker = foundPoint->second;
+    assert(pointTracker.sizeInBtye ==
+           (sizeof(DirectX::XMFLOAT3) * points.size()));
+    memcpy(pointTracker.mappedData, points.data(), pointTracker.sizeInBtye);
+
+    auto foundLines= m_trackers.find(linesHandle.handle);
+    assert(foundLines != m_trackers.end());
+    assert(foundLines->second.compoundCount == 0);
+
+    const DebugTracker &lineTracker = foundLines->second;
+    assert(lineTracker.sizeInBtye ==
+           (sizeof(DirectX::XMFLOAT3) * lines.size()));
+    memcpy(lineTracker.mappedData, lines.data(), lineTracker.sizeInBtye);
+
+	//data is updated we are good to go, returning same handle
+	//since a new one has not been allocated
+	return handle;
+
 
   } else {
     DebugDrawHandle pointsHandle = drawPointsUniformColor(
@@ -357,23 +399,26 @@ DebugDrawHandle DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
         &lines.data()[0].x, lines.size() * sizeof(DirectX::XMFLOAT3), color,
         pointSize, state->m_pose->m_skeleton->m_name.c_str());
 
-    // making sure they are consecutive
-    assert(linesHandle.handle > pointsHandle.handle);
-    assert((linesHandle.handle - pointsHandle.handle) == 1);
-
     // lets prepare the compound handle
     // there are two items only lines and points and the points is the first
-    DebugTracker tracker{2, pointsHandle.handle};
+    DebugTracker tracker{};
+    tracker.compoundCount = 2;
+    // TODO remove this naked allocation use an allocator
+    // being compound we only store the compound count and handles
+    tracker.compoundHandles = new DebugDrawHandle[2];
+    tracker.compoundHandles[0] = pointsHandle;
+    tracker.compoundHandles[1] = linesHandle;
 
     uint32_t compoundBit = 1 << 31;
-    DebugDrawHandle returnHandle{compoundBit | (++MAGIC_NUMBER_COUNTER)};
+    const DebugDrawHandle returnHandle{compoundBit |
+                                       (MAGIC_NUMBER_COUNTER << 16) | 0};
 
     m_trackers[returnHandle.handle] = tracker;
 
+    ++MAGIC_NUMBER_COUNTER;
+
     return returnHandle;
   }
-
-  return DebugDrawHandle();
 }
 
 void DebugRenderer::renderQueue(

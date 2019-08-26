@@ -25,10 +25,14 @@ struct DebugPrimitive {
 };
 
 struct DebugTracker {
-  uint32_t compoundCount;
   uint32_t queue;
   uint32_t index : 16;
   uint32_t magicNumber : 16;
+  //this part refer to a compound handle only
+  uint32_t compoundCount;
+  DebugDrawHandle* compoundHandles;
+  void* mappedData;
+  uint32_t sizeInBtye;
 };
 
 class DebugRenderer {
