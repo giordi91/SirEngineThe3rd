@@ -282,9 +282,10 @@ DebugDrawHandle DebugRenderer::drawSkeleton(Skeleton *skeleton,
   // first we need to convert the skeleton to points we can actually render
   std::vector<DirectX::XMFLOAT3> points;
   std::vector<DirectX::XMFLOAT3> lines;
-  const std::vector<Joint> &joints = skeleton->m_joints;
+  const ResizableVector<DirectX::XMMATRIX> &joints = skeleton->m_joints;
+  const ResizableVector<int> &parentIds= skeleton->m_parentIds;
   for (int i = 0; i < joints.size(); ++i) {
-    DirectX::XMMATRIX inv = joints[i].m_inv_bind_pose;
+    DirectX::XMMATRIX inv = joints[i];
     DirectX::XMMATRIX mat = DirectX::XMMatrixInverse(nullptr, inv);
     DirectX::XMVECTOR pos;
     DirectX::XMVECTOR scale;
@@ -293,8 +294,8 @@ DebugDrawHandle DebugRenderer::drawSkeleton(Skeleton *skeleton,
     points.push_back(
         DirectX::XMFLOAT3{pos.m128_f32[0], pos.m128_f32[1], pos.m128_f32[2]});
 
-    if (joints[i].m_parent_id != -1) {
-      lines.push_back(points[joints[i].m_parent_id]);
+    if (parentIds[i] != -1) {
+      lines.push_back(points[parentIds[i]]);
       lines.push_back(
           DirectX::XMFLOAT3{pos.m128_f32[0], pos.m128_f32[1], pos.m128_f32[2]});
     }
@@ -344,7 +345,7 @@ DebugDrawHandle DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
     points.push_back(
         DirectX::XMFLOAT3{pos.m128_f32[0], pos.m128_f32[1], pos.m128_f32[2]});
 
-    int parentId = state->m_pose->m_skeleton->m_joints[i].m_parent_id;
+    int parentId = state->m_pose->m_skeleton->m_parentIds[i];
     if (parentId != -1) {
       lines.push_back(points[parentId]);
       lines.push_back(

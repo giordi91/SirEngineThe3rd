@@ -2,6 +2,7 @@
 #include "SirEngine/fileUtils.h"
 #include <string>
 
+#include "SirEngine/runtimeString.h"
 namespace SirEngine {
 inline DirectX::XMVECTOR expandF3ToVec(const DirectX::XMFLOAT3 f3) {
   DirectX::XMFLOAT4 fvec(f3.x, f3.y, f3.z, 1.0f);
@@ -29,6 +30,11 @@ bool Skeleton::initialize(const std::string &path) {
   // if not loaed we start to read in the joints, first we allocated
   // the needed memory
   m_joints.resize(size);
+  m_parentIds.resize(size);
+  m_names.resize(size);
+  auto* joints = m_joints.data();
+  auto* parentIds= m_parentIds.data();
+  auto* names= m_names.data();
   m_joint_count = size;
   // anim::Joint *joints =
   //    static_cast<Joint *>(m_joints_alloc.allocate(sizeof(Joint) * size));
@@ -39,19 +45,20 @@ bool Skeleton::initialize(const std::string &path) {
   for (const auto &e : j_obj["data"]) {
 
     // lets grab the ref to the memory we allocated
-    Joint &jntStr = m_joints[counter];
+    //Joint &jntStr = m_joints[counter];
 
     // then we start extracting the data from the joint
     auto jnt = nlohmann::json(e);
-    jntStr.m_inv_bind_pose =
+    joints[counter] =
         getValueIfInJson<DirectX::XMMATRIX>(jnt, "mat", defaultMatrix);
 
     // bone parent id
     const int idx = jnt["idx"].get<int>();
-    jntStr.m_parent_id = idx;
+    parentIds[counter] = idx;
 
     // bone name
-    jntStr.m_name = jnt["name"].get<std::string>();
+    const std::string currentName = jnt["name"].get<std::string>();
+	names[counter] = persistentString(currentName.c_str()); 
     ++counter;
   }
 
@@ -82,10 +89,10 @@ void SkeletonPose::updateGlobalFromLocal() {
   qM.r[3] = expandF3ToVec(m_local_pose[0].m_trans);
 
   m_worldMat[0] = qM;
-  m_global_pose[0] = qM * m_skeleton->m_joints[0].m_inv_bind_pose;
+  m_global_pose[0] = qM * m_skeleton->m_joints.getConstRef(0);
 
-  for (unsigned int i = 1; i < m_skeleton->m_joint_count; ++i) {
-    const int idx = m_skeleton->m_joints[i].m_parent_id;
+  for (uint32_t i = 1; i < m_skeleton->m_joint_count; ++i) {
+    int idx = m_skeleton->m_parentIds[i];
 
     // here just getting a reference to avoid to nest too much
     // the compiler should optimize that away
@@ -103,7 +110,7 @@ void SkeletonPose::updateGlobalFromLocal() {
     // transformation m_global_pose[i] = m_worldMat[i] *
     // m_skeleton->m_joints[i].m_inv_bind_pose;
     m_global_pose[i] = DirectX::XMMatrixTranspose(DirectX::XMMatrixMultiply(
-        m_skeleton->m_joints[i].m_inv_bind_pose, m_worldMat[i]));
+        m_skeleton->m_joints[i], m_worldMat[i]));
   }
 }
 } // namespace SirEngine
