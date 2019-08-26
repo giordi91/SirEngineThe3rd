@@ -93,7 +93,7 @@ AnimationManager::loadAnimationClip(const std::string &path) const {
 
 Skeleton *AnimationManager::loadSkeleton(const std::string &path) const {
   auto *sk = new Skeleton();
-  bool res = sk->initialize(path);
+  bool res = sk->loadFromFile(path.c_str());
   return res == true ? sk : nullptr;
 }
 
@@ -110,8 +110,8 @@ SkeletonPose *AnimationManager::getNamedSkeletonPose(const std::string &name) {
   // allocate one
   auto *pose = new SkeletonPose();
   pose->m_skeleton = sk;
-  pose->m_local_pose.resize(sk->m_joint_count);
-  pose->m_global_pose.resize(sk->m_joint_count);
+  pose->m_localPose.resize(sk->m_jointCount);
+  pose->m_globalPose.resize(sk->m_jointCount);
   m_namedPosesMap[name] = pose;
   return pose;
 }

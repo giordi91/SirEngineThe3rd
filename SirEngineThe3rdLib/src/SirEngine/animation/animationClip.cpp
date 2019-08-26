@@ -81,8 +81,8 @@ inline DirectX::XMFLOAT3 lerp3(const DirectX::XMFLOAT3& v1,
 void AnimState::updateGlobalByAnim(long long stamp_ns) {
   assert(clip != nullptr);
   assert(stamp_ns >= 0);
-  int globalSize = m_pose->m_global_pose.size();
-  int localSize = m_pose->m_local_pose.size();
+  int globalSize = m_pose->m_globalPose.size();
+  int localSize = m_pose->m_localPose.size();
   assert((globalSize == localSize));
 
   // we convert to seconds, since we need to count how many frames
@@ -115,7 +115,7 @@ void AnimState::updateGlobalByAnim(long long stamp_ns) {
   float interp = (frames_elapsed_f - float(frames_elapsed));
 
   //#pragma omp parallel for
-  for (unsigned int i = 0; i < m_pose->m_skeleton->m_joint_count; ++i) {
+  for (unsigned int i = 0; i < m_pose->m_skeleton->m_jointCount; ++i) {
     // interpolating all the bones in local space
     auto &j_s = start_p.m_local_pose[i];
     auto &j_e = end_p.m_local_pose[i];
@@ -127,8 +127,8 @@ void AnimState::updateGlobalByAnim(long long stamp_ns) {
 	DirectX::XMFLOAT3 pos = lerp3(j_s.m_trans, j_e.m_trans, interp);
     // the compiler should be able to omptimise out this
     // copy
-    m_pose->m_local_pose[i].m_rot = rot;
-    m_pose->m_local_pose[i].m_trans = pos;
+    m_pose->m_localPose[i].m_rot = rot;
+    m_pose->m_localPose[i].m_trans = pos;
   }
   // now that the anim has been blended I will compute the
   // matrices in worldspace (skin ready)

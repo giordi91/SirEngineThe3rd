@@ -1,14 +1,8 @@
 #pragma once
 #include <DirectXMath.h>
-#include <string>
 #include <vector>
 #include "SirEngine/memory/resizableVector.h"
 namespace SirEngine {
-//struct Joint {
-//  DirectX::XMMATRIX m_inv_bind_pose;
-//  std::string m_name;
-//  int m_parent_id;
-//};
 
 struct JointPose {
   DirectX::XMVECTOR m_rot;
@@ -17,22 +11,23 @@ struct JointPose {
 };
 
 struct Skeleton {
-  unsigned int m_joint_count;
-  //std::vector<Joint> m_joints;
-  ResizableVector<DirectX::XMMATRIX> m_joints;
+  //Skeleton(ThreeSizesPool *allocator = nullptr)
+  //    : m_jointCount(0), m_jointsWolrdInv(20, allocator), m_names(20,allocator),m_parentIds(20,allocator){};
+  unsigned int m_jointCount;
+  ResizableVector<DirectX::XMMATRIX> m_jointsWolrdInv;
   ResizableVector<const char*> m_names;
   ResizableVector<int> m_parentIds;
-  std::string m_name;
+  const char* m_name;
 
-  bool initialize(const std::string &path);
+  bool loadFromFile(const char* path);
 };
 
 struct SkeletonPose {
   // pointer to the skeleton
   const Skeleton *m_skeleton;
-  std::vector<JointPose> m_local_pose;
+  std::vector<JointPose> m_localPose;
   // matrices ready to be uploaded to the shader
-  std::vector<DirectX::XMMATRIX> m_global_pose;
+  std::vector<DirectX::XMMATRIX> m_globalPose;
   std::vector<DirectX::XMMATRIX> m_worldMat;
 
   /*
