@@ -44,7 +44,13 @@ public:
     m_size += 1;
   };
 
-  inline T operator[](const uint32_t index) {
+  inline T operator[](const uint32_t index) const {
+#if SE_MEMORY_INDEX_CHECKING
+    assert(index < m_size);
+#endif
+    return m_memory[index];
+  }
+  inline T operator[](const int index) const {
 #if SE_MEMORY_INDEX_CHECKING
     assert(index < m_size);
 #endif
@@ -54,8 +60,9 @@ public:
   void resize(const uint32_t newSize) {
     if (newSize > m_reserved) {
       // if not enough space we re-allocate
-      reallocateMemoryInternal(newSize);
-      m_reserved = newSize;
+      reallocateMemoryInternal(newSize*2);
+      m_reserved = newSize*2;
+	  m_size = newSize;
     } else if (newSize < m_size) {
       // here we perform a trunctation
       m_size = newSize;
@@ -94,7 +101,9 @@ private:
 
   void reallocateMemoryInternal(const uint32_t newSize) {
     T *tempMemory = reinterpret_cast<T *>(allocateMemoryInternal(newSize));
-    memcpy(tempMemory, m_memory, m_size * sizeof(T));
+    if ((m_size!= 0) & (m_memory != nullptr)) {
+      memcpy(tempMemory, m_memory, m_size * sizeof(T));
+    }
 #if SE_DEBUG
     // just setting memory to an easily readable value in case we are in debug
     memset(tempMemory + m_size, 0xDEADBAAD, sizeof(T) * (newSize - m_size));
@@ -105,7 +114,7 @@ private:
 
 private:
   ALLOCATOR *m_allocator;
-  T *m_memory;
+  T *m_memory = nullptr;
   uint32_t m_size;
   uint32_t m_reserved;
 };

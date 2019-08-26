@@ -40,7 +40,7 @@ TEST_CASE("Vector add elements", "[memory]") {
 TEST_CASE("Vector add elements allocator", "[memory]") {
 
   SirEngine::ThreeSizesPool<64, 256> pool(200);
-  SirEngine::ResizableVector<float> vec(10,&pool);
+  SirEngine::ResizableVector<float> vec(10, &pool);
   vec.pushBack(1.0f);
   vec.pushBack(2.0f);
   vec.pushBack(3.0f);
@@ -86,7 +86,7 @@ TEST_CASE("Vector add elements internal resize", "[memory]") {
   REQUIRE(vec.getConstRef(5) == 6.0f);
   REQUIRE(vec.getConstRef(6) == 7.0f);
 
-  //force re-allocating internally
+  // force re-allocating internally
   vec.pushBack(8.0f);
   vec.pushBack(9.0f);
   vec.pushBack(10.0f);
@@ -115,13 +115,12 @@ TEST_CASE("Vector add elements internal resize", "[memory]") {
   REQUIRE(vec.getConstRef(8) == 9.0f);
   REQUIRE(vec.getConstRef(9) == 10.0f);
   REQUIRE(vec.getConstRef(10) == 11.0f);
-
 }
 
 TEST_CASE("Vector add elements internal resize allocator", "[memory]") {
 
   SirEngine::ThreeSizesPool<64, 256> pool(200);
-  SirEngine::ResizableVector<float> vec(10,&pool);
+  SirEngine::ResizableVector<float> vec(10, &pool);
   vec.pushBack(1.0f);
   vec.pushBack(2.0f);
   vec.pushBack(3.0f);
@@ -147,7 +146,7 @@ TEST_CASE("Vector add elements internal resize allocator", "[memory]") {
   REQUIRE(vec.getConstRef(5) == 6.0f);
   REQUIRE(vec.getConstRef(6) == 7.0f);
 
-  //force re-allocating internally
+  // force re-allocating internally
   vec.pushBack(8.0f);
   vec.pushBack(9.0f);
   vec.pushBack(10.0f);
@@ -197,8 +196,8 @@ TEST_CASE("Vector resize", "[memory]") {
   REQUIRE(vec[4] == 5.0f);
   REQUIRE(vec[5] == 6.0f);
   REQUIRE(vec[6] == 7.0f);
-  REQUIRE(vec.size() == 7);
-  REQUIRE(vec.reservedSize() == 20);
+  REQUIRE(vec.size() == 20);
+  REQUIRE(vec.reservedSize() == 40);
 
   vec.resize(5);
   REQUIRE(vec[0] == 1.0f);
@@ -207,13 +206,12 @@ TEST_CASE("Vector resize", "[memory]") {
   REQUIRE(vec[3] == 4.0f);
   REQUIRE(vec[4] == 5.0f);
   REQUIRE(vec.size() == 5);
-  REQUIRE(vec.reservedSize() == 20);
-
+  REQUIRE(vec.reservedSize() == 40);
 }
 
 TEST_CASE("Vector resize allocator", "[memory]") {
 
-  SirEngine::ThreeSizesPool<64, 256> pool(200);
+  SirEngine::ThreeSizesPool<64, 256> pool(400);
   SirEngine::ResizableVector<float> vec(10, &pool);
   vec.pushBack(1.0f);
   vec.pushBack(2.0f);
@@ -231,8 +229,8 @@ TEST_CASE("Vector resize allocator", "[memory]") {
   REQUIRE(vec[4] == 5.0f);
   REQUIRE(vec[5] == 6.0f);
   REQUIRE(vec[6] == 7.0f);
-  REQUIRE(vec.size() == 7);
-  REQUIRE(vec.reservedSize() == 20);
+  REQUIRE(vec.size() == 20);
+  REQUIRE(vec.reservedSize() == 40);
 
   vec.resize(5);
   REQUIRE(vec[0] == 1.0f);
@@ -241,6 +239,28 @@ TEST_CASE("Vector resize allocator", "[memory]") {
   REQUIRE(vec[3] == 4.0f);
   REQUIRE(vec[4] == 5.0f);
   REQUIRE(vec.size() == 5);
+  REQUIRE(vec.reservedSize() == 40);
+}
+
+TEST_CASE("Vector resize with no initialization", "[memory]"){
+
+  SirEngine::ResizableVector<float> vec;
+  REQUIRE(vec.size() == 0);
+  REQUIRE(vec.reservedSize() == 0);
+  vec.resize(10);
+  REQUIRE(vec.size() == 10);
+  REQUIRE(vec.reservedSize() == 20);
+
+}
+
+TEST_CASE("Vector resize with no initialization allocator", "[memory]"){
+
+  SirEngine::ThreeSizesPool<64, 256> pool(200);
+  SirEngine::ResizableVector<float> vec;
+  REQUIRE(vec.size() == 0);
+  REQUIRE(vec.reservedSize() == 0);
+  vec.resize(10);
+  REQUIRE(vec.size() == 10);
   REQUIRE(vec.reservedSize() == 20);
 
 }

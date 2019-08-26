@@ -2,12 +2,13 @@
 #include <DirectXMath.h>
 #include <string>
 #include <vector>
+#include "SirEngine/memory/resizableVector.h"
 namespace SirEngine {
-struct Joint {
-  DirectX::XMMATRIX m_inv_bind_pose;
-  std::string m_name;
-  int m_parent_id;
-};
+//struct Joint {
+//  DirectX::XMMATRIX m_inv_bind_pose;
+//  std::string m_name;
+//  int m_parent_id;
+//};
 
 struct JointPose {
   DirectX::XMVECTOR m_rot;
@@ -17,7 +18,10 @@ struct JointPose {
 
 struct Skeleton {
   unsigned int m_joint_count;
-  std::vector<Joint> m_joints;
+  //std::vector<Joint> m_joints;
+  ResizableVector<DirectX::XMMATRIX> m_joints;
+  ResizableVector<const char*> m_names;
+  ResizableVector<int> m_parentIds;
   std::string m_name;
 
   bool initialize(const std::string &path);

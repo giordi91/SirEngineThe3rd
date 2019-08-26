@@ -184,7 +184,7 @@ class ThreeSizesPool final {
   };
 
   void *allocate(const uint32_t sizeInByte, uint8_t flags = 0) {
-    assert(sizeInByte < m_poolSizeInByte);
+    assert((m_stackPointerOffset + sizeInByte) < m_poolSizeInByte);
     // first lets find out what kind of allocation has been requested
     uint32_t allocType = getAllocationTypeFromSize(sizeInByte);
 
