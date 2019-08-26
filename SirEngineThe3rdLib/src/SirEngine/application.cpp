@@ -33,7 +33,11 @@ Application::Application() {
   // initializing allocators as first thing so everything else can use it 
   globals::STRING_POOL = new StringPool(2 << 22);  // 4 megabyte allocation
   globals::FRAME_ALLOCATOR = new StackAllocator();
+  //TODO fix the interface to be same as other allocators 
   globals::FRAME_ALLOCATOR->initialize(2 << 22);
+  //allocating 20 mb
+  //TODO this should be a settings from somewhere
+  globals::PERSISTANT_ALLOCATOR = new ThreeSizesPool(20*1024*1024);
 
   parseConfigFile();
 

@@ -333,7 +333,7 @@ DebugDrawHandle DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
                                                     DirectX::XMFLOAT4 color,
                                                     float pointSize) {
 
-  const std::vector<DirectX::XMMATRIX> &pose = state->m_pose->m_worldMat;
+  const ResizableVector<DirectX::XMMATRIX> &pose = state->m_pose->m_worldMat;
   std::vector<DirectX::XMFLOAT3> points;
   std::vector<DirectX::XMFLOAT3> lines;
   for (int i = 0; i < pose.size(); ++i) {

@@ -12,9 +12,8 @@ namespace SirEngine {
 // made, if there is any allocation to be recycled it will be used, otherwise
 // normal allocation will be made by increasing the stack pointer, to note stack
 // pointer can never be decreased.
-template <size_t SMALL_SIZE, size_t MEDIUM_SIZE>
 class ThreeSizesPool final {
- private:
+private:
 // flags used to mark the headers and allocations
 #define SMALL_ALLOC_TAG 1;
 #define MEDIUM_ALLOC_TAG 2;
@@ -25,21 +24,21 @@ class ThreeSizesPool final {
   // the smallest allocation possible is the same size of the NextAlloc
   // otherwise we would not be able to store the node in the pool
   struct NextAlloc {
-    uint32_t offset : 32;  // offset from the start of the pool in byte
-    uint32_t nextOffset;   // offset from the start of the pool in byte for the
-    uint32_t previousOffset;  // offset from the start of the pool in byte for
-                              // the previous node in the linked list, 0 if null
-    bool isNode : 1;     // a bit flag setting whether the data here refers to a
-                         // node or an alloc, mostly debugging purpose
-    uint32_t size : 28;  // size of the allocation in byte
-    uint32_t allocType : 3;  // type of allocation
+    uint32_t offset : 32; // offset from the start of the pool in byte
+    uint32_t nextOffset;  // offset from the start of the pool in byte for the
+    uint32_t previousOffset; // offset from the start of the pool in byte for
+                             // the previous node in the linked list, 0 if null
+    bool isNode : 1;    // a bit flag setting whether the data here refers to a
+                        // node or an alloc, mostly debugging purpose
+    uint32_t size : 28; // size of the allocation in byte
+    uint32_t allocType : 3; // type of allocation
   };
 
   // helpers
-  static uint32_t getAllocationTypeFromSize(const uint32_t sizeInByte) {
+  uint32_t getAllocationTypeFromSize(const uint32_t sizeInByte) {
     const int isInMediumRange =
-        (sizeInByte < MEDIUM_SIZE) & (sizeInByte >= SMALL_SIZE);
-    const int isInLargeRange = sizeInByte >= MEDIUM_SIZE;
+        (sizeInByte < m_mediumSize) & (sizeInByte >= m_smallSize);
+    const int isInLargeRange = sizeInByte >= m_mediumSize;
 
     return isInMediumRange + isInLargeRange * 2;
   }
@@ -77,7 +76,7 @@ class ThreeSizesPool final {
     return nullptr;
   }
 
- public:
+public:
   // this is an allocation description, is always going to be present, so if we
   // ask to allocate a some memory we will always allocate that memory + the
   // header. It is public because some tools, like string pool can benefit from
@@ -86,17 +85,21 @@ class ThreeSizesPool final {
   // This class defines a memory allocation, the data will live before the
   // actual reserved memory for the user
   struct AllocHeader {
-    uint32_t size : 20;       // size in byte of the allocation
-    uint32_t allocFlags : 8;  // user defined flags for the allocation, mostly
-                              // useful for tools
-    uint32_t type : 3;    // type of allocation, either SMALL , MEDIUM or LARGE
-                          // depending of the bit set
-    uint32_t isNode : 1;  // for internal use, whether the memory is a linked
-                          // list node or not, mostly used for assertions
+    uint32_t size : 20;      // size in byte of the allocation
+    uint32_t allocFlags : 8; // user defined flags for the allocation, mostly
+                             // useful for tools
+    uint32_t type : 3;   // type of allocation, either SMALL , MEDIUM or LARGE
+                         // depending of the bit set
+    uint32_t isNode : 1; // for internal use, whether the memory is a linked
+                         // list node or not, mostly used for assertions
   };
 
-  explicit ThreeSizesPool(const uint32_t poolSizeInByte) {
+  explicit ThreeSizesPool(const uint32_t poolSizeInByte,
+                          const uint32_t smallSize = 64,
+                          const uint32_t mediumSize = 256) {
     m_poolSizeInByte = poolSizeInByte;
+    m_smallSize = smallSize;
+    m_mediumSize = mediumSize;
     m_memory = new char[m_poolSizeInByte];
 
     m_nextAlloc[0] = nullptr;
@@ -252,7 +255,7 @@ class ThreeSizesPool final {
   ThreeSizesPool(const ThreeSizesPool &) = delete;
   ThreeSizesPool &operator=(const ThreeSizesPool &) = delete;
 
- private:
+private:
   static constexpr uint32_t MIN_ALLOC_SIZE = sizeof(NextAlloc);
   char *m_memory = nullptr;
   uint32_t m_poolSizeInByte;
@@ -260,6 +263,8 @@ class ThreeSizesPool final {
 
   NextAlloc *m_nextAlloc[3];
   uint32_t m_allocCount[3]{};
+  uint32_t m_smallSize;
+  uint32_t m_mediumSize;
 };
 
-}  // namespace SirEngine
+} // namespace SirEngine

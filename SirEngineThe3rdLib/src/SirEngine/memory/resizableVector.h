@@ -13,7 +13,7 @@ happens is a shallow copy when resizing or more memory required, if you have
 pointers there those won't be deep copied, which might be the intended
 behaviour, just be whare!
 */
-template <typename T, typename ALLOCATOR = ThreeSizesPool<64, 256>>
+template <typename T, typename ALLOCATOR = ThreeSizesPool>
 class ResizableVector {
 
 public:
@@ -44,13 +44,13 @@ public:
     m_size += 1;
   };
 
-  inline T operator[](const uint32_t index) const {
+  inline T& operator[](const uint32_t index) const {
 #if SE_MEMORY_INDEX_CHECKING
     assert(index < m_size);
 #endif
     return m_memory[index];
   }
-  inline T operator[](const int index) const {
+  inline T& operator[](const int index) const {
 #if SE_MEMORY_INDEX_CHECKING
     assert(index < m_size);
 #endif
