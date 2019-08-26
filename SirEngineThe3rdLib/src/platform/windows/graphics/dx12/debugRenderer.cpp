@@ -282,7 +282,7 @@ DebugDrawHandle DebugRenderer::drawSkeleton(Skeleton *skeleton,
   // first we need to convert the skeleton to points we can actually render
   std::vector<DirectX::XMFLOAT3> points;
   std::vector<DirectX::XMFLOAT3> lines;
-  const ResizableVector<DirectX::XMMATRIX> &joints = skeleton->m_joints;
+  const ResizableVector<DirectX::XMMATRIX> &joints = skeleton->m_jointsWolrdInv;
   const ResizableVector<int> &parentIds= skeleton->m_parentIds;
   for (int i = 0; i < joints.size(); ++i) {
     DirectX::XMMATRIX inv = joints[i];
@@ -302,11 +302,11 @@ DebugDrawHandle DebugRenderer::drawSkeleton(Skeleton *skeleton,
   }
   DebugDrawHandle pointsHandle = drawPointsUniformColor(
       &points.data()[0].x, points.size() * sizeof(DirectX::XMFLOAT3), color,
-      pointSize, skeleton->m_name.c_str());
+      pointSize, skeleton->m_name);
 
   DebugDrawHandle linesHandle = drawLinesUniformColor(
       &lines.data()[0].x, lines.size() * sizeof(DirectX::XMFLOAT3), color,
-      pointSize, skeleton->m_name.c_str());
+      pointSize, skeleton->m_name);
 
   // lets prepare the compound handle
   // there are two items only lines and points and the points is the first
@@ -394,11 +394,11 @@ DebugDrawHandle DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
   } else {
     DebugDrawHandle pointsHandle = drawPointsUniformColor(
         &points.data()[0].x, points.size() * sizeof(DirectX::XMFLOAT3), color,
-        pointSize, state->m_pose->m_skeleton->m_name.c_str());
+        pointSize, state->m_pose->m_skeleton->m_name);
 
     DebugDrawHandle linesHandle = drawLinesUniformColor(
         &lines.data()[0].x, lines.size() * sizeof(DirectX::XMFLOAT3), color,
-        pointSize, state->m_pose->m_skeleton->m_name.c_str());
+        pointSize, state->m_pose->m_skeleton->m_name);
 
     // lets prepare the compound handle
     // there are two items only lines and points and the points is the first

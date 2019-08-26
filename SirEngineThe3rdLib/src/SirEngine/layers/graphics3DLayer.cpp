@@ -162,7 +162,7 @@ void Graphics3DLayer::onAttach() {
   */
 
   m_skeleton = new Skeleton;
-  m_skeleton->initialize(
+  m_skeleton->loadFromFile(
       "../data/external/animation/exported/skeleton/knightBSkeleton.json");
   dx12::DEBUG_RENDERER->drawSkeleton(m_skeleton, DirectX::XMFLOAT4(0, 1, 0, 1),
                                      0.05f);

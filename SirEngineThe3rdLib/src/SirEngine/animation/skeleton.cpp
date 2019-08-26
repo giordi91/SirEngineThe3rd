@@ -9,7 +9,7 @@ inline DirectX::XMVECTOR expandF3ToVec(const DirectX::XMFLOAT3 f3) {
   return DirectX::XMLoadFloat4(&fvec);
 }
 
-bool Skeleton::initialize(const std::string &path) {
+bool Skeleton::loadFromFile(const char* path) {
 
   auto j_obj = getJsonObj(path);
 
@@ -18,24 +18,15 @@ bool Skeleton::initialize(const std::string &path) {
   // sk name
   std::string name = j_obj["name"].get<std::string>();
 
-  /*
-  // lets check wheter the skeleton has been loaded already
-  // or not, if it is we just return a pointer to it
-  auto res = m_skeleton_map.find(name);
-  if (res != m_skeleton_map.end()) {
-    return m_skeleton_map[name];
-  }
-  */
-
   // if not loaed we start to read in the joints, first we allocated
   // the needed memory
-  m_joints.resize(size);
+  m_jointsWolrdInv.resize(size);
   m_parentIds.resize(size);
   m_names.resize(size);
-  auto* joints = m_joints.data();
+  auto* joints = m_jointsWolrdInv.data();
   auto* parentIds= m_parentIds.data();
   auto* names= m_names.data();
-  m_joint_count = size;
+  m_jointCount = size;
   // anim::Joint *joints =
   //    static_cast<Joint *>(m_joints_alloc.allocate(sizeof(Joint) * size));
 
@@ -63,7 +54,7 @@ bool Skeleton::initialize(const std::string &path) {
   }
 
   // add skeleton to the map
-  m_name = j_obj["name"].get<std::string>();
+  m_name = persistentString(j_obj["name"].get<std::string>().c_str());
 
   return true;
 }
@@ -71,7 +62,7 @@ bool Skeleton::initialize(const std::string &path) {
 void SkeletonPose::updateGlobalFromLocal() {
   // allocating enough memory for the temporary world matrices
   // std::vector<DirectX::XMMATRIX> m_worldMat;
-  m_worldMat.resize(m_skeleton->m_joint_count);
+  m_worldMat.resize(m_skeleton->m_jointCount);
   // estabilishing the invariant, where every bone
   // in the list appears after the parent,so meanwhile we fill
   // the globalpose list we can access to get the world matrices
@@ -83,24 +74,24 @@ void SkeletonPose::updateGlobalFromLocal() {
   // only
   // TODO maybe remove glm or do the computation manually so to avoid
   // intermediate copies and conversions between datatypes etc
-  DirectX::XMVECTOR &r = m_local_pose[0].m_rot;
+  DirectX::XMVECTOR &r = m_localPose[0].m_rot;
   DirectX::XMMATRIX qM = DirectX::XMMatrixRotationQuaternion(r);
   // auto qM = glm::toMat4(r);
-  qM.r[3] = expandF3ToVec(m_local_pose[0].m_trans);
+  qM.r[3] = expandF3ToVec(m_localPose[0].m_trans);
 
   m_worldMat[0] = qM;
-  m_global_pose[0] = qM * m_skeleton->m_joints.getConstRef(0);
+  m_globalPose[0] = qM * m_skeleton->m_jointsWolrdInv.getConstRef(0);
 
-  for (uint32_t i = 1; i < m_skeleton->m_joint_count; ++i) {
+  for (uint32_t i = 1; i < m_skeleton->m_jointCount; ++i) {
     int idx = m_skeleton->m_parentIds[i];
 
     // here just getting a reference to avoid to nest too much
     // the compiler should optimize that away
-    DirectX::XMVECTOR &rr = m_local_pose[i].m_rot;
+    DirectX::XMVECTOR &rr = m_localPose[i].m_rot;
     qM = DirectX::XMMatrixRotationQuaternion(rr);
     // qM = glm::toMat4(rr);
 
-    auto v4 = expandF3ToVec(m_local_pose[i].m_trans);
+    auto v4 = expandF3ToVec(m_localPose[i].m_trans);
     qM.r[3] = v4;
     // qM[3] = glm::vec4(m_local_pose[i].m_trans, 1.0f);
     // here I compute the global pose so this is the world matrix
@@ -109,8 +100,8 @@ void SkeletonPose::updateGlobalFromLocal() {
     // in the global pose I will store the matrix ready for vertex
     // transformation m_global_pose[i] = m_worldMat[i] *
     // m_skeleton->m_joints[i].m_inv_bind_pose;
-    m_global_pose[i] = DirectX::XMMatrixTranspose(DirectX::XMMatrixMultiply(
-        m_skeleton->m_joints[i], m_worldMat[i]));
+    m_globalPose[i] = DirectX::XMMatrixTranspose(DirectX::XMMatrixMultiply(
+        m_skeleton->m_jointsWolrdInv[i], m_worldMat[i]));
   }
 }
 } // namespace SirEngine
