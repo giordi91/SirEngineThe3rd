@@ -4,6 +4,7 @@
 #include "SirEngine/layer.h"
 //TODO TEMP
 #include "SirEngine/animation/animation_manager.h"
+#include "SirEngine/handle.h"
 
 namespace SirEngine {
 class DebugRenderConfigChanged;
@@ -50,5 +51,6 @@ private:
   // TODO temp
   Skeleton *m_skeleton;
   AnimationConfig m_config;
+  DebugDrawHandle m_animHandle{};
 };
 } // namespace SirEngine

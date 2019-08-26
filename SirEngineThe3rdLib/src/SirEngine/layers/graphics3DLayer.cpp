@@ -186,6 +186,9 @@ void Graphics3DLayer::onUpdate() {
   // evaluating rendering graph
   dx12::RENDERING_GRAPH->compute();
 
+  m_animHandle = dx12::DEBUG_RENDERER->drawAnimatedSkeleton(
+      m_animHandle, m_config.m_anim_state, DirectX::XMFLOAT4{1, 0, 0, 1},0.1f);
+
   // making any clean up for the mesh manager if we have to
   dx12::CONSTANT_BUFFER_MANAGER->clearUpQueueFree();
   dx12::MESH_MANAGER->clearUploadRequests();
