@@ -86,7 +86,7 @@ AnimationManager::loadAnimationConfig(const std::string &path) {
 AnimationClip *
 AnimationManager::loadAnimationClip(const std::string &path) const {
   auto *clip = new AnimationClip();
-  bool res = clip->initialize(path);
+  bool res = clip->initialize(path.c_str());
   assert(clip != nullptr);
   return res == true ? clip : nullptr;
 }

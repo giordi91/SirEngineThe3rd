@@ -18,7 +18,7 @@ bool Skeleton::loadFromFile(const char *path) {
   auto jObj = getJsonObj(path);
 
   // extracting how many bones
-  auto size = static_cast<uint32_t>(jObj[SKELETON_KEY_DATA].size());
+  const auto size = static_cast<uint32_t>(jObj[SKELETON_KEY_DATA].size());
 
   // if not loaded we start to read in the joints, first we allocated
   // the needed memory
@@ -32,7 +32,7 @@ bool Skeleton::loadFromFile(const char *path) {
 
   // then we start looping
   int counter = 0;
-  DirectX::XMMATRIX defaultMatrix = DirectX::XMMatrixIdentity();
+  const DirectX::XMMATRIX defaultMatrix = DirectX::XMMatrixIdentity();
   for (const auto &e : jObj[SKELETON_KEY_DATA]) {
 
     // then we start extracting the data from the joint
