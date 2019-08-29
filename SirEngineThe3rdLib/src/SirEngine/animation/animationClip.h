@@ -1,29 +1,30 @@
 #pragma once
 
 #include "SirEngine/animation/skeleton.h"
-#include <string>
-#include <vector>
 
 namespace SirEngine {
 
 struct AnimPose {
-  std::vector<JointPose> m_local_pose;
+  // std::vector<JointPose> m_local_pose;
+  JointPose* m_local_pose = nullptr;
+  uint32_t size;
 };
 
 struct AnimationClip {
 
   AnimationClip() = default;
   ~AnimationClip() = default;
-  bool initialize(const std::string &path);
+  bool initialize(const char *path);
 
-  std::vector<AnimPose> m_poses;
-  std::string m_name;
+  JointPose * m_poses;
+  const char* m_name;
   int m_frameCount;
+  int m_bonesPerFrame;
   float m_frameRate;
   bool m_isLoopable;
 };
 
-// this structure rapresent a state of an animaiton,
+// this structure represent a state of an animaiton,
 // meaning all the data needed to evalaute an animation,
 // what the clip is and what the  skeleton is etc
 struct AnimState {
@@ -43,6 +44,6 @@ struct AnimState {
   // global clock
   long long globalStartStamp;
 
-  void updateGlobalByAnim(long long stampNS);
+  void updateGlobalByAnim(long long stampNS) const;
 };
-} // namespace animation
+} // namespace SirEngine

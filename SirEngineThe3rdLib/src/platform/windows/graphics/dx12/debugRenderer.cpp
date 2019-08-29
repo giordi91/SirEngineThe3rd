@@ -274,39 +274,47 @@ DebugRenderer::drawLinesUniformColor(float *data, const uint32_t sizeInByte,
 }
 
 DebugDrawHandle DebugRenderer::drawSkeleton(Skeleton *skeleton,
-                                            DirectX::XMFLOAT4 color,
-                                            float pointSize) {
+                                            const DirectX::XMFLOAT4 color,
+                                            const float pointSize) {
 
-  // TODO cleanup all this lovely vectors
-
-  // first we need to convert the skeleton to points we can actually render
-  std::vector<DirectX::XMFLOAT3> points;
-  std::vector<DirectX::XMFLOAT3> lines;
   const ResizableVector<DirectX::XMMATRIX> &joints = skeleton->m_jointsWolrdInv;
-  const ResizableVector<int> &parentIds= skeleton->m_parentIds;
-  for (int i = 0; i < joints.size(); ++i) {
-    DirectX::XMMATRIX inv = joints[i];
-    DirectX::XMMATRIX mat = DirectX::XMMatrixInverse(nullptr, inv);
+  // first we need to convert the skeleton to points we can actually render
+  auto *points =
+      reinterpret_cast<DirectX::XMFLOAT3 *>(globals::FRAME_ALLOCATOR->allocate(
+          sizeof(DirectX::XMFLOAT3) * joints.size()));
+  auto *lines =
+      reinterpret_cast<DirectX::XMFLOAT3 *>(globals::FRAME_ALLOCATOR->allocate(
+          sizeof(DirectX::XMFLOAT3) * joints.size() * 2));
+
+  const ResizableVector<int> &parentIds = skeleton->m_parentIds;
+  uint32_t lineCounter = 0;
+  for (uint32_t i = 0; i < joints.size(); ++i) {
+    const DirectX::XMMATRIX inv = joints[i];
+    const DirectX::XMMATRIX mat = DirectX::XMMatrixInverse(nullptr, inv);
     DirectX::XMVECTOR pos;
     DirectX::XMVECTOR scale;
     DirectX::XMVECTOR rot;
     DirectX::XMMatrixDecompose(&scale, &rot, &pos, mat);
-    points.push_back(
-        DirectX::XMFLOAT3{pos.m128_f32[0], pos.m128_f32[1], pos.m128_f32[2]});
+    points[i] =
+        DirectX::XMFLOAT3{pos.m128_f32[0], pos.m128_f32[1], pos.m128_f32[2]};
 
     if (parentIds[i] != -1) {
-      lines.push_back(points[parentIds[i]]);
-      lines.push_back(
-          DirectX::XMFLOAT3{pos.m128_f32[0], pos.m128_f32[1], pos.m128_f32[2]});
+
+      // here we add a line from the parent to the children, might do a more
+      // elaborate joint drawing one day
+      lines[lineCounter] = points[parentIds[i]];
+      lines[lineCounter + 1] =
+          DirectX::XMFLOAT3{pos.m128_f32[0], pos.m128_f32[1], pos.m128_f32[2]};
+      lineCounter += 2;
     }
   }
-  DebugDrawHandle pointsHandle = drawPointsUniformColor(
-      &points.data()[0].x, points.size() * sizeof(DirectX::XMFLOAT3), color,
-      pointSize, skeleton->m_name);
+  const DebugDrawHandle pointsHandle = drawPointsUniformColor(
+      &points[0].x, joints.size() * sizeof(DirectX::XMFLOAT3), color, pointSize,
+      skeleton->m_name);
 
-  DebugDrawHandle linesHandle = drawLinesUniformColor(
-      &lines.data()[0].x, lines.size() * sizeof(DirectX::XMFLOAT3), color,
-      pointSize, skeleton->m_name);
+  const DebugDrawHandle linesHandle = drawLinesUniformColor(
+      &lines[0].x, lineCounter * sizeof(DirectX::XMFLOAT3), color, pointSize,
+      skeleton->m_name);
 
   // lets prepare the compound handle
   // there are two items only lines and points and the points is the first
@@ -318,7 +326,7 @@ DebugDrawHandle DebugRenderer::drawSkeleton(Skeleton *skeleton,
   tracker.compoundHandles[0] = pointsHandle;
   tracker.compoundHandles[1] = linesHandle;
 
-  uint32_t compoundBit = 1 << 31;
+  const uint32_t compoundBit = 1u << 31u;
   const DebugDrawHandle returnHandle{compoundBit |
                                      (MAGIC_NUMBER_COUNTER << 16) | 0};
 
@@ -334,22 +342,33 @@ DebugDrawHandle DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
                                                     float pointSize) {
 
   const ResizableVector<DirectX::XMMATRIX> &pose = state->m_pose->m_worldMat;
-  std::vector<DirectX::XMFLOAT3> points;
-  std::vector<DirectX::XMFLOAT3> lines;
-  for (int i = 0; i < pose.size(); ++i) {
-    DirectX::XMMATRIX mat = pose[i];
+
+  auto *points =
+      reinterpret_cast<DirectX::XMFLOAT3 *>(globals::FRAME_ALLOCATOR->allocate(
+          sizeof(DirectX::XMFLOAT3) * pose.size()));
+  auto *lines =
+      reinterpret_cast<DirectX::XMFLOAT3 *>(globals::FRAME_ALLOCATOR->allocate(
+          sizeof(DirectX::XMFLOAT3) * pose.size() * 2));
+
+  uint32_t lineCounter = 0;
+
+  for (uint32_t i = 0; i < pose.size(); ++i) {
+    const DirectX::XMMATRIX mat = pose[i];
     DirectX::XMVECTOR pos;
     DirectX::XMVECTOR scale;
     DirectX::XMVECTOR rot;
     DirectX::XMMatrixDecompose(&scale, &rot, &pos, mat);
-    points.push_back(
-        DirectX::XMFLOAT3{pos.m128_f32[0], pos.m128_f32[1], pos.m128_f32[2]});
+    points[i] =
+        DirectX::XMFLOAT3{pos.m128_f32[0], pos.m128_f32[1], pos.m128_f32[2]};
 
-    int parentId = state->m_pose->m_skeleton->m_parentIds[i];
+    const int parentId = state->m_pose->m_skeleton->m_parentIds[i];
     if (parentId != -1) {
-      lines.push_back(points[parentId]);
-      lines.push_back(
-          DirectX::XMFLOAT3{pos.m128_f32[0], pos.m128_f32[1], pos.m128_f32[2]});
+      // here we add a line from the parent to the children, might do a more
+      // elaborate joint drawing one day
+      lines[lineCounter] = points[parentId];
+      lines[lineCounter + 1] =
+          DirectX::XMFLOAT3{pos.m128_f32[0], pos.m128_f32[1], pos.m128_f32[2]};
+      lineCounter += 2;
     }
   }
 
@@ -359,7 +378,7 @@ DebugDrawHandle DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
     // making sure our handle is an actual compound handle
     assert((handle.handle & (1 << 31)) > 0);
     // extact from the tracker map
-    auto found = m_trackers.find(handle.handle);
+    const auto found = m_trackers.find(handle.handle);
     assert(found != m_trackers.end());
     assert(found->second.compoundCount == 2);
 
@@ -368,37 +387,35 @@ DebugDrawHandle DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
     const DebugDrawHandle linesHandle = found->second.compoundHandles[1];
 
     // lets get the trackers out for each one
-    auto foundPoint = m_trackers.find(pointsHandle.handle);
+    const auto foundPoint = m_trackers.find(pointsHandle.handle);
     assert(foundPoint != m_trackers.end());
     assert(foundPoint->second.compoundCount == 0);
 
     const DebugTracker &pointTracker = foundPoint->second;
     assert(pointTracker.sizeInBtye ==
-           (sizeof(DirectX::XMFLOAT3) * points.size()));
-    memcpy(pointTracker.mappedData, points.data(), pointTracker.sizeInBtye);
+           (sizeof(DirectX::XMFLOAT3) * pose.size()));
+    memcpy(pointTracker.mappedData, points, pointTracker.sizeInBtye);
 
-    auto foundLines= m_trackers.find(linesHandle.handle);
+    const auto foundLines = m_trackers.find(linesHandle.handle);
     assert(foundLines != m_trackers.end());
     assert(foundLines->second.compoundCount == 0);
 
     const DebugTracker &lineTracker = foundLines->second;
-    assert(lineTracker.sizeInBtye ==
-           (sizeof(DirectX::XMFLOAT3) * lines.size()));
-    memcpy(lineTracker.mappedData, lines.data(), lineTracker.sizeInBtye);
+    assert(lineTracker.sizeInBtye == (sizeof(DirectX::XMFLOAT3) * lineCounter));
+    memcpy(lineTracker.mappedData, lines, lineTracker.sizeInBtye);
 
-	//data is updated we are good to go, returning same handle
-	//since a new one has not been allocated
-	return handle;
-
+    // data is updated we are good to go, returning same handle
+    // since a new one has not been allocated
+    return handle;
 
   } else {
     DebugDrawHandle pointsHandle = drawPointsUniformColor(
-        &points.data()[0].x, points.size() * sizeof(DirectX::XMFLOAT3), color,
-        pointSize, state->m_pose->m_skeleton->m_name);
+        &points[0].x, pose.size() * sizeof(DirectX::XMFLOAT3), color, pointSize,
+        state->m_pose->m_skeleton->m_name);
 
     DebugDrawHandle linesHandle = drawLinesUniformColor(
-        &lines.data()[0].x, lines.size() * sizeof(DirectX::XMFLOAT3), color,
-        pointSize, state->m_pose->m_skeleton->m_name);
+        &lines[0].x, lineCounter * sizeof(DirectX::XMFLOAT3), color, pointSize,
+        state->m_pose->m_skeleton->m_name);
 
     // lets prepare the compound handle
     // there are two items only lines and points and the points is the first
@@ -420,7 +437,7 @@ DebugDrawHandle DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
 
     return returnHandle;
   }
-}
+} // namespace SirEngine::dx12
 
 void DebugRenderer::renderQueue(
     std::unordered_map<uint32_t, std::vector<DebugPrimitive>> &inQueue,
@@ -465,12 +482,6 @@ void DebugRenderer::renderQueue(
 
     globals::TEXTURE_MANAGER->bindRenderTarget(input, depth);
     for (auto &prim : queue.second) {
-
-      int x = 0;
-      // const auto address =
-      //    dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(prim.cbHandle);
-      // commandList->SetGraphicsRootConstantBufferView(1, address);
-
       commandList->SetGraphicsRootDescriptorTable(
           1, dx12::CONSTANT_BUFFER_MANAGER
                  ->getConstantBufferDx12Handle(prim.cbHandle)
@@ -494,6 +505,8 @@ void DebugRenderer::renderQueue(
       currentFc->commandList->IASetVertexBuffers(0, 1, nullptr);
       currentFc->commandList->DrawInstanced(prim.primitiveToRender, 1, 0, 0);
     }
+	annotateGraphicsEnd();
+
   }
 }
 
@@ -505,18 +518,14 @@ void DebugRenderer::render(const TextureHandle input,
   // first static stuff
   renderQueue(m_renderables, input, depth);
 
-  // we need to clean up the per frame data
-
-  annotateGraphicsEnd();
-
   currentFc->commandList->IASetPrimitiveTopology(
       D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 } // namespace SirEngine::dx12
 void DebugRenderer::clearUploadRequests() {
 
-  auto id = GLOBAL_FENCE->GetCompletedValue();
+  const uint64_t id = GLOBAL_FENCE->GetCompletedValue();
 
-  int requestSize = static_cast<int>(m_uploadRequests.size()) - 1;
+  const int requestSize = static_cast<int>(m_uploadRequests.size()) - 1;
   int stackTopIdx = requestSize;
   for (int i = requestSize; i >= 0; --i) {
     BufferUploadResource &upload = m_uploadRequests[i];
