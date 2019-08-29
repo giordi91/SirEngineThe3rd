@@ -28,10 +28,10 @@ struct DebugTracker {
   uint32_t queue;
   uint32_t index : 16;
   uint32_t magicNumber : 16;
-  //this part refer to a compound handle only
+  // this part refer to a compound handle only
   uint32_t compoundCount;
-  DebugDrawHandle* compoundHandles;
-  void* mappedData;
+  DebugDrawHandle *compoundHandles;
+  void *mappedData;
   uint32_t sizeInBtye;
 };
 
@@ -65,7 +65,7 @@ public:
                                        DirectX::XMFLOAT4 color,
                                        float pointSize);
 
-  void render(const TextureHandle input, const TextureHandle depth);
+  void render(TextureHandle input, TextureHandle depth);
   void clearUploadRequests();
 
 private:
@@ -75,7 +75,7 @@ private:
       std::unordered_map<uint32_t, std::vector<DebugPrimitive>> &inQueue,
       const TextureHandle input, const TextureHandle depth);
 
-  inline bool isCompound(const DebugDrawHandle handle) {
+  static bool isCompound(const DebugDrawHandle handle) {
     return (handle.handle & (1 << 31)) > 0;
   }
   inline uint32_t getIndexFromHandle(const DebugDrawHandle h) const {
@@ -88,9 +88,10 @@ private:
   inline void assertMagicNumber(const DebugDrawHandle handle) const {
     const uint32_t magic = getMagicFromHandle(handle);
     const uint32_t idx = getIndexFromHandle(handle);
-	auto found = m_trackers.find(handle.handle);
-	assert(found != m_trackers.end());
-	assert(found->second.magicNumber == magic && "invalid magic number for debug tracker");
+    const auto found = m_trackers.find(handle.handle);
+    assert(found != m_trackers.end());
+    assert(found->second.magicNumber == magic &&
+           "invalid magic number for debug tracker");
   }
 
 private:
