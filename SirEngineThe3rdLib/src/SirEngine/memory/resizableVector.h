@@ -32,6 +32,12 @@ public:
 #endif
   };
 
+  ~ResizableVector()
+  {
+	  freeMemoryInternal(m_memory);
+	  
+  }
+
   inline void clear() { m_size = 0; };
   inline void pushBack(const T &value) {
     // first checking whether there is enough buffer left, if
@@ -44,13 +50,13 @@ public:
     m_size += 1;
   };
 
-  inline T& operator[](const uint32_t index) const {
+  inline T &operator[](const uint32_t index) const {
 #if SE_MEMORY_INDEX_CHECKING
     assert(index < m_size);
 #endif
     return m_memory[index];
   }
-  inline T& operator[](const int index) const {
+  inline T &operator[](const int index) const {
 #if SE_MEMORY_INDEX_CHECKING
     assert(index < m_size);
 #endif
@@ -60,9 +66,9 @@ public:
   void resize(const uint32_t newSize) {
     if (newSize > m_reserved) {
       // if not enough space we re-allocate
-      reallocateMemoryInternal(newSize*2);
-      m_reserved = newSize*2;
-	  m_size = newSize;
+      reallocateMemoryInternal(newSize * 2);
+      m_reserved = newSize * 2;
+      m_size = newSize;
     } else if (newSize < m_size) {
       // here we perform a trunctation
       m_size = newSize;
@@ -92,7 +98,7 @@ private:
     }
   }
   void freeMemoryInternal(void *memory) {
-    if (m_allocator != nullptr) {
+    if ((m_allocator != nullptr) & (memory != nullptr)) {
       m_allocator->free(memory);
     } else {
       delete[] m_memory;
@@ -101,7 +107,7 @@ private:
 
   void reallocateMemoryInternal(const uint32_t newSize) {
     T *tempMemory = reinterpret_cast<T *>(allocateMemoryInternal(newSize));
-    if ((m_size!= 0) & (m_memory != nullptr)) {
+    if ((m_size != 0) & (m_memory != nullptr)) {
       memcpy(tempMemory, m_memory, m_size * sizeof(T));
     }
 #if SE_DEBUG
