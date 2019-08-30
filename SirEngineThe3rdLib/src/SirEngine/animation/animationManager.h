@@ -1,11 +1,10 @@
 #pragma once
-//#include "rendering/skinCluster.h"
+
 #include "SirEngine/clock.h"
 #include "SirEngine/handle.h"
 #include "SirEngine/hashing.h"
 #include "SirEngine/memory/hashMap.h"
-#include <unordered_map>
-#include <vector>
+#include "SirEngine/memory/resizableVector.h"
 
 namespace SirEngine {
 
@@ -23,10 +22,11 @@ struct AnimationConfig {
 };
 
 class AnimationManager final {
-  // friend delcaration needed for singleton
 
 public:
-  AnimationManager() : m_handleToConfig(500), m_nameToConfigHandle(500){};
+  AnimationManager()
+      : m_handleToConfig(500), m_nameToConfigHandle(500),
+        m_animationClipCache(500), m_skeletonCache(50), m_namedPosesMap(500){};
   ~AnimationManager() = default;
 
   // loader functions
@@ -46,7 +46,7 @@ public:
   // this is the pose which the animation evaluates,  so you can use it
   // to see the values of the matrix after animation update, ready
   // for the skin cluster
-  SkeletonPose *getNamedSkeletonPose(const std::string &name);
+  SkeletonPose *getNamedSkeletonPose(const char *name);
 
   // registering an animation state for being evaluated
   void registerState(AnimState *state);
@@ -60,38 +60,36 @@ public:
 
 private:
   [[nodiscard]] static AnimationClip *
-  loadAnimationClip(const std::string &path);
-  [[nodiscard]] static Skeleton *loadSkeleton(const std::string &fullPath);
+  loadAnimationClip(const char* path);
+  [[nodiscard]] static Skeleton *loadSkeleton(const char *path);
 
-  inline AnimationClip *getCachedAnimationClip(const std::string &name) const {
-    const auto found = m_animationClipCache.find(name);
-    if (found != m_animationClipCache.end()) {
-      return found->second;
-    }
-    return nullptr;
+  inline AnimationClip *getCachedAnimationClip(const char *name,
+                                               const uint32_t len) const {
+    const uint64_t hash = hashString(name, len);
+    AnimationClip *clip = nullptr;
+    const auto found = m_animationClipCache.get(hash, clip);
+    return found ? clip : nullptr;
   };
 
-  inline Skeleton *getCachedSkeleton(const std::string &name) const {
-    const auto found = m_skeletonCache.find(name);
-    if (found != m_skeletonCache.end()) {
-      return found->second;
-    }
-    return nullptr;
+  inline Skeleton *getCachedSkeleton(const char *name, uint32_t len) const {
+
+    const uint64_t hash = hashString(name, len);
+    Skeleton *skeleton = nullptr;
+    const auto found = m_skeletonCache.get(hash, skeleton);
+    return found ? skeleton : nullptr;
   };
 
 private:
+  typedef uint64_t string64;
   // resources to be evaluated per frame
-  std::vector<AnimState *> m_activeAnims;
+  ResizableVector<AnimState *> m_activeAnims;
 
   AnimClock m_animClock;
-  // HashMap<uint32_t, AnimationConfig> m_handleToConfig;
   HashMap<uint32_t, AnimationConfig, hashUint32> m_handleToConfig;
-  // std::unordered_map<std::string, AnimationConfigHandle>
-  // m_nameToConfigHandle;
-  HashMap<uint64_t, AnimationConfigHandle, hashUint64> m_nameToConfigHandle;
-  std::unordered_map<std::string, AnimationClip *> m_animationClipCache;
-  std::unordered_map<std::string, Skeleton *> m_skeletonCache;
-  std::unordered_map<std::string, SkeletonPose *> m_namedPosesMap;
+  HashMap<string64, AnimationConfigHandle, hashUint64> m_nameToConfigHandle;
+  HashMap<string64, AnimationClip *, hashUint64> m_animationClipCache;
+  HashMap<string64, Skeleton *, hashUint64> m_skeletonCache;
+  HashMap<string64, SkeletonPose *, hashUint64> m_namedPosesMap;
   unsigned int configIndex = 0;
 };
 } // namespace SirEngine
