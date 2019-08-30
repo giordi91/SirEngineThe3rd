@@ -19,7 +19,7 @@
 #include "platform/windows/graphics/dx12/shaderManager.h"
 #include "platform/windows/graphics/dx12/swapChain.h"
 #include "platform/windows/graphics/dx12/debugRenderer.h"
-#include "SirEngine/animation/animation_manager.h"
+#include "SirEngine/animation/animationManager.h"
 
 namespace SirEngine::dx12 {
 

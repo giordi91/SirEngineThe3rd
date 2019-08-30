@@ -8,9 +8,10 @@ namespace SirEngine {
 template <typename KEY, typename VALUE, uint32_t (*HASH)(const KEY &)>
 class HashMap {
 public:
+  // TODO add use of engine allocator, not only heap allocations
   explicit HashMap(const uint32_t bins) : m_bins(bins) {
     m_keys = new KEY[m_bins];
-    m_values = new KEY[m_bins];
+    m_values = new VALUE[m_bins];
     const int count = ((m_bins * BIN_FLAGS_SIZE) / (8 * sizeof(uint32_t))) + 1;
     m_metadata = new uint32_t[count];
     // 85 is 01010101 in binary this means we fill 4 bins with the value of 1,
@@ -102,20 +103,23 @@ private:
     const uint32_t startBin = bin;
 
     bool go = true;
+    bool status = true;
     while (go) {
       const uint32_t meta = getMetadata(bin);
-      if ((key == m_keys[bin]) |
-          (meta == static_cast<uint32_t>(BIN_FLAGS::FREE))) {
+      const bool isKeyTheSame = key == m_keys[bin];
+      const bool isBinUsed = meta == static_cast<uint32_t>(BIN_FLAGS::USED);
+      if (isKeyTheSame & isBinUsed) {
         break;
       }
 
       ++bin;
       bin = bin % m_bins; // wrap around the bins count
-      if (bin == startBin) {
+      if ((bin == startBin) | !isBinUsed) {
         go = false;
+        status = false;
       }
     }
-    return true;
+    return status;
   }
 
   inline bool canWriteToBin(const uint32_t metadata) {
@@ -133,7 +137,7 @@ private:
     const uint32_t bit = bin * BIN_FLAGS_SIZE;
     const uint32_t bit32 = bit / 32;
     const uint32_t reminder32 = bit % 32;
-    const uint32_t flag32 = static_cast<uint32_t>(flag);
+    const auto flag32 = static_cast<uint32_t>(flag);
     // first we want to clear the value
     const uint32_t mask = (~0) & ~(3 << reminder32);
     m_metadata[bit32] &= mask;

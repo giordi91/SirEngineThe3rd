@@ -1,6 +1,5 @@
 
-#include "SirEngine/animation/animation_manager.h"
-
+#include "SirEngine/animation/animationManager.h"
 
 #include <SirEngine/fileUtils.h>
 #undef max
@@ -11,7 +10,7 @@
 
 #include <string>
 
-namespace SirEngine{
+namespace SirEngine {
 static const std::string TYPE_KEY = "type";
 static const std::string SKELETON_KEY = "skeleton";
 static const std::string ASSET_NAME_KEY = "assetName";
@@ -19,8 +18,7 @@ static const std::string ANIMATION_CLIP_KEY = "animationClip";
 static const std::string ANIMATION_CONFIG_TYPE = "animationConfig";
 static const std::string ANIMATION_CONFIG_NAME_KEY = "name";
 
-AnimationConfigHandle
-AnimationManager::loadAnimationConfig(const std::string &path) {
+AnimationConfigHandle AnimationManager::loadAnimationConfig(const char *path) {
   auto configJson = getJsonObj(path);
   std::string empty("");
 
@@ -32,9 +30,14 @@ AnimationManager::loadAnimationConfig(const std::string &path) {
 
   assert(!configName.empty());
   // checking if is cached by any chance
-  auto found = m_nameToConfigName.find(configName);
-  if (found != m_nameToConfigName.end()) {
-    return found->second;
+  // this is a string so we need to hash it
+  uint64_t hash =
+      hashString(configName.c_str(), static_cast<uint32_t>(configName.size()));
+
+  AnimationConfigHandle earlyHandle{};
+  bool found = m_nameToConfigHandle.get(hash, earlyHandle);
+  if (found) {
+    return earlyHandle;
   }
 
   const std::string animationClipFile =
@@ -79,22 +82,23 @@ AnimationManager::loadAnimationConfig(const std::string &path) {
 
   AnimationConfig config{clip, skeleton, animState};
   AnimationConfigHandle handle{configIndex++};
-  m_handleToConfig[handle] = config;
+  m_handleToConfig.insert(handle.handle, config);
   return handle;
 }
 
-AnimationClip *
-AnimationManager::loadAnimationClip(const std::string &path) const {
+AnimationClip *AnimationManager::loadAnimationClip(const std::string &path) {
+  // TODO fix naked
   auto *clip = new AnimationClip();
-  bool res = clip->initialize(path.c_str());
+  const bool res = clip->initialize(path.c_str());
   assert(clip != nullptr);
   return res == true ? clip : nullptr;
 }
 
-Skeleton *AnimationManager::loadSkeleton(const std::string &path) const {
+Skeleton *AnimationManager::loadSkeleton(const std::string &path) {
+  // TODO fix naked
   auto *sk = new Skeleton();
-  bool res = sk->loadFromFile(path.c_str());
-  return res == true ? sk : nullptr;
+  const bool res = sk->loadFromFile(path.c_str());
+  return res ? sk : nullptr;
 }
 
 SkeletonPose *AnimationManager::getNamedSkeletonPose(const std::string &name) {
@@ -135,4 +139,4 @@ void AnimationManager::evaluate() {
     s->updateGlobalByAnim(nano.count());
   }
 }
-} // namespace animation
+} // namespace SirEngine

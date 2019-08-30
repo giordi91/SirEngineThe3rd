@@ -1,5 +1,5 @@
 #include "SirEngine/layers/graphics3DLayer.h"
-#include "SirEngine/animation/animation_manager.h"
+#include "SirEngine/animation/animationManager.h"
 #include "SirEngine/application.h"
 #include "SirEngine/assetManager.h"
 #include "SirEngine/events/debugEvent.h"
@@ -26,7 +26,6 @@
 #include "SirEngine/graphics/postProcess/postProcessStack.h"
 #include "SirEngine/graphics/renderingContext.h"
 
-#include "SirEngine/animation/skeleton.h"
 #include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
 #include "platform/windows/graphics/dx12/PSOManager.h"
 
