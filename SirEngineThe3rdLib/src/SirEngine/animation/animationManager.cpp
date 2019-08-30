@@ -5,9 +5,6 @@
 #undef max
 #include "SirEngine/animation/animationClip.h"
 #include "SirEngine/animation/skeleton.h"
-//#include "rendering/skinCluster.h"
-//#include <json\json.hpp>
-
 #include <string>
 
 namespace SirEngine {
@@ -31,11 +28,11 @@ AnimationConfigHandle AnimationManager::loadAnimationConfig(const char *path) {
   assert(!configName.empty());
   // checking if is cached by any chance
   // this is a string so we need to hash it
-  uint64_t hash =
+  uint64_t configNameHash =
       hashString(configName.c_str(), static_cast<uint32_t>(configName.size()));
 
   AnimationConfigHandle earlyHandle{};
-  bool found = m_nameToConfigHandle.get(hash, earlyHandle);
+  bool found = m_nameToConfigHandle.get(configNameHash, earlyHandle);
   if (found) {
     return earlyHandle;
   }
@@ -52,20 +49,26 @@ AnimationConfigHandle AnimationManager::loadAnimationConfig(const char *path) {
   // animation
   // checking if the animation clip is already cached, if not load it
   const std::string animationClipFileName = getFileName(animationClipFile);
-  AnimationClip *clip = getCachedAnimationClip(animationClipFile);
+  AnimationClip *clip = getCachedAnimationClip(animationClipFile.c_str(),
+                                               animationClipFile.size());
   if (clip == nullptr) {
-    clip = loadAnimationClip(animationClipFile);
-    m_animationClipCache[clip->m_name] = clip;
+    clip = loadAnimationClip(animationClipFile.c_str());
+    uint64_t hashClip =
+        hashString(animationClipFile.c_str(), animationClipFile.size());
+    m_animationClipCache.insert(hashClip, clip);
   }
   assert(clip != nullptr);
 
   // skeleton
   // checking if the skeleton is already cached, if not load it
   const std::string skeletonFileName = getFileName(skeletonFile);
-  Skeleton *skeleton = getCachedSkeleton(skeletonFileName);
+  Skeleton *skeleton =
+      getCachedSkeleton(skeletonFileName.c_str(), skeletonFileName.size());
   if (skeleton == nullptr) {
-    skeleton = loadSkeleton(skeletonFile);
-    m_skeletonCache[skeleton->m_name] = skeleton;
+    skeleton = loadSkeleton(skeletonFile.c_str());
+    uint64_t hashSkeleton =
+        hashString(skeletonFileName.c_str(), skeletonFileName.size());
+    m_skeletonCache.insert(hashSkeleton, skeleton);
   }
   assert(skeleton != nullptr);
 
@@ -83,45 +86,52 @@ AnimationConfigHandle AnimationManager::loadAnimationConfig(const char *path) {
   AnimationConfig config{clip, skeleton, animState};
   AnimationConfigHandle handle{configIndex++};
   m_handleToConfig.insert(handle.handle, config);
+  m_nameToConfigHandle.insert(configNameHash, handle);
   return handle;
 }
 
-AnimationClip *AnimationManager::loadAnimationClip(const std::string &path) {
+AnimationClip *AnimationManager::loadAnimationClip(const char *path) {
   // TODO fix naked
   auto *clip = new AnimationClip();
-  const bool res = clip->initialize(path.c_str());
+  const bool res = clip->initialize(path);
   assert(clip != nullptr);
-  return res == true ? clip : nullptr;
+  return res ? clip : nullptr;
 }
 
-Skeleton *AnimationManager::loadSkeleton(const std::string &path) {
+Skeleton *AnimationManager::loadSkeleton(const char *path) {
   // TODO fix naked
   auto *sk = new Skeleton();
-  const bool res = sk->loadFromFile(path.c_str());
+  const bool res = sk->loadFromFile(path);
   return res ? sk : nullptr;
 }
 
-SkeletonPose *AnimationManager::getNamedSkeletonPose(const std::string &name) {
+SkeletonPose *AnimationManager::getNamedSkeletonPose(const char *name) {
 
-  auto *sk = getCachedSkeleton(name);
+  const uint32_t nameLen = strlen(name);
+  auto *sk = getCachedSkeleton(name, nameLen);
   assert(sk != nullptr);
 
-  const auto found = m_namedPosesMap.find(name);
-  if (found != m_namedPosesMap.end()) {
-    return found->second;
+  // TODO this cache is actually bad, what happen if we have multiple characters
+  // pointing to same skeleton?
+  const uint64_t hash = hashString(name, nameLen);
+  SkeletonPose *pose = nullptr;
+  const bool found = m_namedPosesMap.get(hash, pose);
+  if (found) {
+    return pose;
   }
 
   // allocate one
-  auto *pose = new SkeletonPose();
+  // TODO fix naked
+  pose = new SkeletonPose();
   pose->m_skeleton = sk;
   pose->m_localPose.resize(sk->m_jointCount);
   pose->m_globalPose.resize(sk->m_jointCount);
-  m_namedPosesMap[name] = pose;
+  m_namedPosesMap.insert(hash, pose);
   return pose;
 }
 
 void AnimationManager::registerState(AnimState *state) {
-  m_activeAnims.push_back(state);
+  m_activeAnims.pushBack(state);
 }
 
 void AnimationManager::evaluate() {
@@ -129,14 +139,15 @@ void AnimationManager::evaluate() {
   // but makes easier to sync animations, we grab the time stam in
   // nanoseconds and pass it along for update, most likely will be converted
   // in seconds. we might evaluate if to convert that upfront
-  auto stamp = m_animClock.getTicks();
-  // converting from clock resolution to nanoesconds that s what the
+  const long long stamp = m_animClock.getTicks();
+  // converting from clock resolution to nanoseconds that s what the
   // anim system uses before converting to seconds
-  std::chrono::nanoseconds nano{stamp};
+  const std::chrono::nanoseconds nano{stamp};
 
   // evaluates all the animations
-  for (auto &s : m_activeAnims) {
-    s->updateGlobalByAnim(nano.count());
+  const uint32_t animCount = m_activeAnims.size();
+  for (uint32_t i = 0; i < animCount; ++i) {
+    m_activeAnims[i]->updateGlobalByAnim(nano.count());
   }
 }
 } // namespace SirEngine

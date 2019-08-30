@@ -162,6 +162,8 @@ void Graphics3DLayer::onAttach() {
 
   auto m_animation = globals::ANIMATION_MANAGER->loadAnimationConfig(
       "../data/external/animation/exported/clip/knightBIdleConfig.json");
+  auto m_animation2 = globals::ANIMATION_MANAGER->loadAnimationConfig(
+      "../data/external/animation/exported/clip/knightBIdleConfig.json");
   m_config= globals::ANIMATION_MANAGER->getConfig(m_animation);
   globals::ANIMATION_MANAGER->registerState(m_config.m_anim_state);
 
