@@ -1,9 +1,8 @@
 #pragma once
 
-#include "SirEngine/identityManager.h"
 #include "SirEngine/layer.h"
 //TODO TEMP
-#include "SirEngine/animation/animation_manager.h"
+#include "SirEngine/animation/animationManager.h"
 #include "SirEngine/handle.h"
 
 namespace SirEngine {

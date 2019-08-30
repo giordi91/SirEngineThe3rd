@@ -1,12 +1,13 @@
 #pragma once
 //#include "rendering/skinCluster.h"
 #include "SirEngine/clock.h"
+#include "SirEngine/handle.h"
+#include "SirEngine/hashing.h"
+#include "SirEngine/memory/hashMap.h"
 #include <unordered_map>
 #include <vector>
 
 namespace SirEngine {
-
-typedef unsigned int AnimationConfigHandle;
 
 using AnimClock = Clock<std::chrono::nanoseconds>;
 // in anim space forward declare
@@ -21,47 +22,46 @@ struct AnimationConfig {
   AnimState *m_anim_state = nullptr;
 };
 
-class AnimationManager {
+class AnimationManager final {
   // friend delcaration needed for singleton
 
 public:
-  AnimationManager() = default;
-  virtual ~AnimationManager() = default;
+  AnimationManager() : m_handleToConfig(500), m_nameToConfigHandle(500){};
+  ~AnimationManager() = default;
 
   // loader functions
   // those functions either get an already loaded json file
   // or the full path to the json to load
-  AnimationConfigHandle loadAnimationConfig(const std::string &path);
+  AnimationConfigHandle loadAnimationConfig(const char *path);
   void init(){};
 
-  inline AnimationConfig getConfig(AnimationConfigHandle handle) {
-    auto found = m_handleToConfig.find(handle);
-    if (found != m_handleToConfig.end()) {
-      return found->second;
-    }
-    return AnimationConfig{};
+  inline AnimationConfig getConfig(const AnimationConfigHandle handle) const {
+    AnimationConfig config{};
+    const bool result = m_handleToConfig.get(handle.handle, config);
+    assert(result);
+    return config;
   }
 
-  /* This function returns the skeleton pose used for a named skeleton,
-   * this is the pose which the animation evaluates on so you can use it
-   * for see the valua of the matrix after animation, ready for the skin
-   * cluster
-   */
+  // This function returns the skeleton pose used for a named skeleton,
+  // this is the pose which the animation evaluates,  so you can use it
+  // to see the values of the matrix after animation update, ready
+  // for the skin cluster
   SkeletonPose *getNamedSkeletonPose(const std::string &name);
 
-  // registering an animation state for being evluated
+  // registering an animation state for being evaluated
   void registerState(AnimState *state);
 
-  // evaluaets the registered resources which are skins and
+  // evaluates the registered resources which are skins and
   // animations, skins should only be registered for debug
   // purpose, otherwise let the rendering component do the
-  // skinnign at render time
+  // skinning at render time
   void evaluate();
   inline const AnimClock &getAnimClock() const { return m_animClock; }
 
 private:
-  AnimationClip *loadAnimationClip(const std::string &path) const;
-  Skeleton *loadSkeleton(const std::string &fullPath) const;
+  [[nodiscard]] static AnimationClip *
+  loadAnimationClip(const std::string &path);
+  [[nodiscard]] static Skeleton *loadSkeleton(const std::string &fullPath);
 
   inline AnimationClip *getCachedAnimationClip(const std::string &name) const {
     const auto found = m_animationClipCache.find(name);
@@ -84,12 +84,14 @@ private:
   std::vector<AnimState *> m_activeAnims;
 
   AnimClock m_animClock;
-  std::unordered_map<AnimationConfigHandle, AnimationConfig> m_handleToConfig;
-  std::unordered_map<std::string, AnimationConfigHandle> m_nameToConfigName;
+  // HashMap<uint32_t, AnimationConfig> m_handleToConfig;
+  HashMap<uint32_t, AnimationConfig, hashUint32> m_handleToConfig;
+  // std::unordered_map<std::string, AnimationConfigHandle>
+  // m_nameToConfigHandle;
+  HashMap<uint64_t, AnimationConfigHandle, hashUint64> m_nameToConfigHandle;
   std::unordered_map<std::string, AnimationClip *> m_animationClipCache;
   std::unordered_map<std::string, Skeleton *> m_skeletonCache;
   std::unordered_map<std::string, SkeletonPose *> m_namedPosesMap;
   unsigned int configIndex = 0;
-
 };
 } // namespace SirEngine
