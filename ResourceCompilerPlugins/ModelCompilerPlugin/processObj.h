@@ -11,6 +11,11 @@ struct Model {
   int triangleCount;
 };
 
+struct SkinData {
+  std::vector<int> jnts;
+  std::vector<float> weights;
+};
+
 void convertObj(const tinyobj::attrib_t &attr, const tinyobj::shape_t &shape,
-                Model &model, const std::string &tangentsPath,
+                Model &model,SkinData& finalSkinData, const std::string &tangentsPath,
                 const std::string &skinPath);

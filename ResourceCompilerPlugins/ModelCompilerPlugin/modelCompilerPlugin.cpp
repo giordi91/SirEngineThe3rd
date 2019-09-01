@@ -3,9 +3,9 @@
 #include "SirEngine/log.h"
 #include "cxxopts/cxxopts.hpp"
 
+#include "SirEngine/argsUtils.h"
 #include "SirEngine/binary/binaryFile.h"
 #include "processObj.h"
-#include "SirEngine/argsUtils.h"
 #include "tinyobjloader/tiny_obj_loader.h"
 #include <filesystem>
 const std::string PLUGIN_NAME = "modelCompilerPlugin";
@@ -13,7 +13,7 @@ const unsigned int VERSION_MAJOR = 0;
 const unsigned int VERSION_MINOR = 1;
 const unsigned int VERSION_PATCH = 0;
 
-void processArgs(const std::string& args, std::string &tangentPath,
+void processArgs(const std::string &args, std::string &tangentPath,
                  std::string &skinPath) {
   // lets get arguments like they were from commandline
   auto v = splitArgs(args);
@@ -65,17 +65,19 @@ bool processModel(const std::string &assetPath, const std::string &outputPath,
                               assetPath.c_str());
   if (!ret) {
     SE_CORE_ERROR("Error in parsing obj file {0}", assetPath);
-    return false ;
+    return false;
   }
 
   // processing the model so that is ready for the GPU
   Model model;
-  convertObj(attr, shapes[0], model, tangentsPath, skinPath);
+  SkinData finalSkinData;
+  convertObj(attr, shapes[0], model, finalSkinData, tangentsPath, skinPath);
 
   // writing binary file
   BinaryFileWriteRequest request;
   request.fileType = BinaryFileType::MODEL;
-  request.version = ((VERSION_MAJOR << 16) | (VERSION_MINOR << 8) | VERSION_PATCH);
+  request.version =
+      ((VERSION_MAJOR << 16) | (VERSION_MINOR << 8) | VERSION_PATCH);
 
   std::experimental::filesystem::path inp(assetPath);
   const std::string fileName = inp.stem().string();
@@ -108,6 +110,51 @@ bool processModel(const std::string &assetPath, const std::string &outputPath,
   writeBinaryFile(request);
 
   SE_CORE_INFO("Model successfully compiled ---> {0}", outputPath);
+
+  // if there is a skin data we need to save it aswell
+  if (skinPath.empty()) {
+    return true;
+  }
+  // writing binary file
+  BinaryFileWriteRequest skinRequest;
+  skinRequest.fileType = BinaryFileType::SKIN;
+  skinRequest.version =
+      ((VERSION_MAJOR << 16) | (VERSION_MINOR << 8) | VERSION_PATCH);
+
+  std::string skinOut = outputPath;
+  std::string::size_type pos = 0u;
+  std::string toReplace = ".model";
+  std::string newReplace = ".skin";
+  while ((pos = skinOut.find(toReplace, pos)) != std::string::npos) {
+    skinOut.replace(pos, toReplace.length(), newReplace);
+    pos += newReplace.length();
+  }
+  skinRequest.outPath = skinOut.c_str();
+
+  // need to merge indices and vertices
+  std::vector<float> skinData;
+  uint32_t jointCount = static_cast<uint32_t>(finalSkinData.jnts.size());
+  uint32_t weightsCount = static_cast<uint32_t>(finalSkinData.weights.size());
+  uint32_t totalSkinSizeByte = (jointCount + weightsCount) * sizeof(float);
+
+  skinData.resize(jointCount + weightsCount);
+  memcpy(skinData.data(), finalSkinData.jnts.data(), jointCount* sizeof(float));
+  // stride is in float being data a float ptr
+  memcpy(skinData.data() + jointCount, finalSkinData.weights.data(),
+         weightsCount* sizeof(float));
+  skinRequest.bulkData = skinData.data();
+  skinRequest.bulkDataSizeInByte = totalSkinSizeByte;
+
+  SkinMapperData skinMapperData{};
+  //TODO HARDCODED, should move this to globals? 
+  skinMapperData.influenceCountPerVertex= 6;
+  skinMapperData.jointsSizeInByte= jointCount* sizeof(float);
+  skinMapperData.weightsSizeInByte= weightsCount* sizeof(float);
+  skinRequest.mapperData = &skinMapperData;
+  skinRequest.mapperDataSizeInByte = sizeof(SkinMapperData);
+
+  writeBinaryFile(skinRequest);
+
   return true;
 }
 
