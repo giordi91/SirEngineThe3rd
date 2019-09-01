@@ -97,6 +97,66 @@ std::vector<float> loadTangents(const std::string &tanPath) {
   return tempT;
 }
 
+constexpr uint32_t VERTEX_INFLUENCE_COUNT = 6;
+constexpr float SKIN_TOTAL_WEIGHT_TOLLERANCE = 0.001f;
+bool loadSkin(const std::string &skinPath, SkinData &skinData) {
+  if (skinPath.empty()) {
+    return false;
+  }
+  // here we load the skincluster
+  auto s_obj = getJsonObj(skinPath);
+  // getting the skeleton name
+  std::string sk = s_obj["skeleton"].get<std::string>();
+  // allocating a new skincluster
+
+  // allocating space for the joints and the weights
+  auto data = s_obj["data"];
+  auto size = s_obj["data"].size();
+  //  auto jnts = static_cast<int *>(
+  //      m_skin_alloc.allocate(size * VERTEX_INFLUENCE_COUNT * sizeof(int)));
+  skinData.jnts.resize(size * VERTEX_INFLUENCE_COUNT);
+  skinData.weights.resize(size * VERTEX_INFLUENCE_COUNT);
+  // auto weights = static_cast<float *>(
+  //    m_skin_alloc.allocate(size * VERTEX_INFLUENCE_COUNT * sizeof(float)));
+
+  // those two variables are used to keep track
+  // to where to write in the buffer
+  int counter = 0;
+
+  for (auto d : s_obj["data"]) {
+
+    assert(d.find("j") != d.end());
+    assert(d.find("w") != d.end());
+    nlohmann::basic_json<> j = d["j"];
+    nlohmann::basic_json<> w = d["w"];
+    int id = counter * VERTEX_INFLUENCE_COUNT;
+
+    // making sure we have the expected amount of data for each joint
+    assert(j.size() == VERTEX_INFLUENCE_COUNT);
+    assert(w.size() == VERTEX_INFLUENCE_COUNT);
+
+#if _DEBUG
+    float wTotal = 0.0f;
+#endif
+    for (int i = 0; i < VERTEX_INFLUENCE_COUNT; ++i) {
+      skinData.jnts[id + i] = j[i].get<int>();
+      skinData.weights[id + i] = w[i].get<float>();
+
+// checking that the weights don't exceed one
+#if _DEBUG
+      wTotal += skinData.weights[id + i];
+#endif
+    }
+
+#if _DEBUG
+    bool res = (wTotal <= (1.0f + SKIN_TOTAL_WEIGHT_TOLLERANCE));
+    assert(res);
+#endif
+    ++counter;
+  }
+  return true;
+}
+
 void convertObjNoTangents(const tinyobj::attrib_t &attr,
                           const tinyobj::shape_t &shape, Model &model,
                           const std::string &skinPath) {
@@ -166,7 +226,7 @@ void convertObjNoTangents(const tinyobj::attrib_t &attr,
 }
 
 void convertObj(const tinyobj::attrib_t &attr, const tinyobj::shape_t &shape,
-                Model &model, const std::string &tangentsPath,
+                Model &model, SkinData& finalSkinData, const std::string &tangentsPath, 
                 const std::string &skinPath) {
 
   if (tangentsPath.empty()) {
@@ -176,6 +236,12 @@ void convertObj(const tinyobj::attrib_t &attr, const tinyobj::shape_t &shape,
 
   // here we need to process a model which has tangents
   std::vector<float> tangents = loadTangents(tangentsPath);
+  SkinData skinData;
+  bool hasSkin = loadSkin(skinPath, skinData);
+  if (hasSkin) {
+    finalSkinData.jnts.resize(skinData.jnts.size());
+    finalSkinData.weights.resize(skinData.weights.size());
+  }
 
   // how it works:
   // first of all we need  to iterate over all the geometry, we expand all
@@ -190,7 +256,7 @@ void convertObj(const tinyobj::attrib_t &attr, const tinyobj::shape_t &shape,
   std::vector<VertexCompare> vertexData;
 
   // Loop over faces(polygon)
-  size_t index_offset = 0;
+  size_t indexOffset = 0;
   int indexCount = 0;
   for (size_t f = 0; f < shape.mesh.num_face_vertices.size(); f++) {
     size_t fv = shape.mesh.num_face_vertices[f];
@@ -199,7 +265,7 @@ void convertObj(const tinyobj::attrib_t &attr, const tinyobj::shape_t &shape,
     // Loop over vertices in the face.
     for (size_t v = 0; v < fv; v++) {
       // access to vertex
-      tinyobj::index_t idx = shape.mesh.indices[index_offset + v];
+      tinyobj::index_t idx = shape.mesh.indices[indexOffset + v];
       VertexCompare c;
       c.p.x = attr.vertices[3 * idx.vertex_index + 0];
       c.p.y = attr.vertices[3 * idx.vertex_index + 1];
@@ -207,12 +273,16 @@ void convertObj(const tinyobj::attrib_t &attr, const tinyobj::shape_t &shape,
       c.n.x = attr.normals[3 * idx.normal_index + 0];
       c.n.y = attr.normals[3 * idx.normal_index + 1];
       c.n.z = attr.normals[3 * idx.normal_index + 2];
-	  //we had cases where the UV index was -1!! so let us check against that
-	  float texU = idx.texcoord_index < 0 ? 0.0f: attr.texcoords[2 * idx.texcoord_index + 0];
-	  float texV = idx.texcoord_index < 0 ? 0.0f: attr.texcoords[2 * idx.texcoord_index + 1];
-	  float mod =1.0f;
+      // we had cases where the UV index was -1!! so let us check against that
+      float texU = idx.texcoord_index < 0
+                       ? 0.0f
+                       : attr.texcoords[2 * idx.texcoord_index + 0];
+      float texV = idx.texcoord_index < 0
+                       ? 0.0f
+                       : attr.texcoords[2 * idx.texcoord_index + 1];
+      float mod = 1.0f;
       c.uv.x = std::modf(texU, &mod);
-      c.uv.y = std::modf(texV,&mod);
+      c.uv.y = std::modf(texV, &mod);
       c.t.x = tangents[3 * idx.vertex_index + 0];
       c.t.y = tangents[3 * idx.vertex_index + 1];
       c.t.z = tangents[3 * idx.vertex_index + 2];
@@ -220,13 +290,23 @@ void convertObj(const tinyobj::attrib_t &attr, const tinyobj::shape_t &shape,
       // if the vertex is not in the map, it means is unique
       // and needs to be added and is a valid vertex in the vertex buffer
       if (uniqueVertices.count(c) == 0) {
-        uniqueVertices[c] = indexCount++;
+        uniqueVertices[c] = indexCount;
         vertexData.push_back(c);
+        // need to push the skin if we have one
+        if (hasSkin) {
+          for (int subI = 0; subI < VERTEX_INFLUENCE_COUNT; ++subI) {
+			int id = v* VERTEX_INFLUENCE_COUNT + subI;
+            finalSkinData.jnts.push_back(skinData.jnts[id]);
+            finalSkinData.weights.push_back(skinData.weights[id]);
+          }
+        }
+		//incrementing the counter
+        ++indexCount;
       }
 
       indices.push_back(uniqueVertices[c]);
     }
-    index_offset += fv;
+    indexOffset += fv;
   }
 
   // model is loaded, lets copy data to output struct

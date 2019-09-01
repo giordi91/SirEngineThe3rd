@@ -61,8 +61,9 @@ bool SIR_ENGINE_API readAllBytes(const std::string &filename,
   X(MODEL)                                                                     \
   X(SHADER)                                                                    \
   X(RS)                                                                        \
+  X(SKIN)                                                                        \
 
-enum BinaryFileType { NONE = 0, MODEL = 1, SHADER = 2, RS = 3};
+enum BinaryFileType { NONE = 0, MODEL = 1, SHADER = 2, RS = 3, SKIN=4};
 
 SIR_ENGINE_API
 extern const std::unordered_map<BinaryFileType, std::string>
@@ -94,4 +95,11 @@ struct ShaderMapperData final {
 struct RootSignatureMappedData final {
   uint32_t type = 0;
   uint32_t sizeInByte = 0;
+};
+
+struct SkinMapperData
+{
+	uint32_t influenceCountPerVertex;
+	uint32_t jointsSizeInByte;
+	uint32_t weightsSizeInByte;
 };
