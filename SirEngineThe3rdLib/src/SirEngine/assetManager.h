@@ -36,6 +36,7 @@ public:
   AssetManager(const AssetManager &) = delete;
   AssetManager &operator=(const AssetManager &) = delete;
 
+  BufferHandle loadSkin(const std::string& skinPath);
   // assets
   IdentityHandle loadAsset(const char *path);
   void loadScene(const char *path);

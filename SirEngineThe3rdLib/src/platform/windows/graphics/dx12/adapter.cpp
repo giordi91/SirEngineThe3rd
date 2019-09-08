@@ -3,6 +3,7 @@
 #include <d3d12.h>
 #include <iostream>
 #include <wrl.h>
+#include <cassert>
 
 namespace SirEngine {
 namespace dx12 {
@@ -21,10 +22,10 @@ bool Adapter::findBestAdapter(IDXGIFactory4 *dxgiFactory, bool verbose) {
        dxgiFactory->EnumAdapters1(adapterIdx, &curAdapter) == S_OK;
        ++adapterIdx) {
 
-    IDXGIAdapter3 *adapter = (IDXGIAdapter3 *)curAdapter;
-    if (adapter == nullptr) {
+    if (curAdapter== nullptr) {
       break;
     }
+    IDXGIAdapter3 *adapter = (IDXGIAdapter3 *)curAdapter;
 
     // inspecting the description
     DXGI_ADAPTER_DESC desc;
@@ -36,10 +37,20 @@ bool Adapter::findBestAdapter(IDXGIFactory4 *dxgiFactory, bool verbose) {
         isDXR = (wcsstr(desc.Description, L"RTX") != 0);
       }
 
+	  std::wcout<<desc.Description<<std::endl;
       // checking for Microsoft software adapter, we want to skip it
       bool isSoftwareVendor = desc.VendorId == 0x1414;
       bool isSoftwareId = desc.DeviceId == 0x8c;
       bool isSoftware = isSoftwareVendor & isSoftwareId;
+	if(isSoftware && (m_vendor == AdapterVendor::WARP )) {
+		m_adapter = adapter;
+		DXGI_ADAPTER_DESC1 desc1;
+		adapter->GetDesc1(&desc1);
+		assert((desc1.Flags & DXGI_ADAPTER_FLAG_SOFTWARE));
+		return true;
+      }
+
+
       if (!((isSoftware) & (isDXR & requiresDXR))) {
         // then we just prioritize memory size, in the future we
         // might want to use also other metrics
