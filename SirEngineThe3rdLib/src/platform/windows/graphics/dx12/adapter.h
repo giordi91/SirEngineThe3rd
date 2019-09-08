@@ -4,7 +4,7 @@
 // forward
 namespace SirEngine {
 namespace dx12 {
-enum class AdapterVendor { NVIDIA, AMD, INTEL, ANY };
+enum class AdapterVendor { NVIDIA, AMD, INTEL, WARP,ANY };
 
 enum class AdapterFeature { DXR = 2, ANY = 4 };
 

@@ -27,7 +27,16 @@ public:
   void bindBuffer(BufferHandle handle, int slot,
                   ID3D12GraphicsCommandList2 *commandList) const;
   void bindBufferAsSRVGraphics(BufferHandle handle, int slot,
-                  ID3D12GraphicsCommandList2 *commandList) const;
+                               ID3D12GraphicsCommandList2 *commandList) const;
+
+  BufferHandle getBufferFromName(const std::string &name) const {
+    const auto found = m_nameToHandle.find(name);
+    if (found != m_nameToHandle.end()) {
+      return found->second;
+    }
+
+    return BufferHandle{0};
+  }
 
   inline int bufferUAVTransition(const BufferHandle handle,
                                  D3D12_RESOURCE_BARRIER *barriers,
@@ -51,8 +60,8 @@ public:
 
     auto state = data.state;
     if (state != wantedState) {
-      barriers[counter] = CD3DX12_RESOURCE_BARRIER::Transition(
-          data.data, state, wantedState);
+      barriers[counter] =
+          CD3DX12_RESOURCE_BARRIER::Transition(data.data, state, wantedState);
       data.state = wantedState;
       ++counter;
     }
@@ -92,6 +101,7 @@ private:
 
   static const int RESERVE_SIZE = 200;
   SparseMemoryPool<BufferData> m_bufferPool;
+  std::unordered_map<std::string, BufferHandle> m_nameToHandle;
 };
 } // namespace dx12
 } // namespace SirEngine

@@ -5,12 +5,15 @@
 #include "fileUtils.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/TextureManagerDx12.h"
+#include "platform/windows/graphics/dx12/bufferManagerDx12.h"
 #include "platform/windows/graphics/dx12/meshManager.h"
 
 namespace SirEngine {
 namespace AssetManagerKeys {
 static const char *MESH_KEY = "mesh";
 static const char *MATERIAL_KEY = "material";
+static const char *SKIN_KEY = "skin";
+static const char *ANIM_CONFIG_KEY = "animConfig";
 static const char *ASSETS_KEY = "assets";
 static const char *SUB_ASSETS_KEY = "subAssets";
 static const char *ENVIROMENT_MAP_KEY = "enviromentMap";
@@ -28,6 +31,19 @@ bool AssetManager::initialize() {
   m_renderables = &m_streamMapper[m_masterHandle.handle];
 
   return true;
+}
+
+BufferHandle AssetManager::loadSkin(const std::string &skinPath) {
+  if (skinPath.empty()) {
+    return BufferHandle{0};
+  }
+
+  const BufferHandle cachedHandle =
+      dx12::BUFFER_MANAGER->getBufferFromName(skinPath);
+  if (cachedHandle.isHandleValid()) {
+    return cachedHandle;
+  }
+
 }
 
 IdentityHandle AssetManager::loadAsset(const char *path) {
@@ -59,9 +75,16 @@ IdentityHandle AssetManager::loadAsset(const char *path) {
     MaterialHandle matHandle = dx12::MATERIAL_MANAGER->loadMaterial(
         materialString.c_str(), &renderable.m_materialRuntime);
 
+    // load skin if present
+	/*
+    const std::string skinPath = getValueIfInJson(
+        subAsset, AssetManagerKeys::SKIN_KEY, AssetManagerKeys::DEFAULT_STRING);
+    SkinHandle skinHandle = loadSkin(skinPath);
+  	*/
+
     // store the renderable
-    (*m_renderables)[renderable.m_materialRuntime.shaderQueueTypeFlags].push_back(
-        renderable);
+    (*m_renderables)[renderable.m_materialRuntime.shaderQueueTypeFlags]
+        .push_back(renderable);
   }
 
   // TODO identity handle concept is not used and is completely broken since we
