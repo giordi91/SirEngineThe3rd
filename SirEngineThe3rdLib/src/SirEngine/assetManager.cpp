@@ -1,4 +1,5 @@
 #include "SirEngine/assetManager.h"
+#include "SirEngine/animation/animationManager.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/identityManager.h"
 #include "SirEngine/materialManager.h"
@@ -7,6 +8,7 @@
 #include "platform/windows/graphics/dx12/TextureManagerDx12.h"
 #include "platform/windows/graphics/dx12/bufferManagerDx12.h"
 #include "platform/windows/graphics/dx12/meshManager.h"
+#include "skinClusterManager.h"
 
 namespace SirEngine {
 namespace AssetManagerKeys {
@@ -31,19 +33,6 @@ bool AssetManager::initialize() {
   m_renderables = &m_streamMapper[m_masterHandle.handle];
 
   return true;
-}
-
-BufferHandle AssetManager::loadSkin(const std::string &skinPath) {
-  if (skinPath.empty()) {
-    return BufferHandle{0};
-  }
-
-  const BufferHandle cachedHandle =
-      dx12::BUFFER_MANAGER->getBufferFromName(skinPath);
-  if (cachedHandle.isHandleValid()) {
-    return cachedHandle;
-  }
-
 }
 
 IdentityHandle AssetManager::loadAsset(const char *path) {
@@ -75,12 +64,24 @@ IdentityHandle AssetManager::loadAsset(const char *path) {
     MaterialHandle matHandle = dx12::MATERIAL_MANAGER->loadMaterial(
         materialString.c_str(), &renderable.m_materialRuntime);
 
+    // load animation if present
+    const std::string animConfigPath =
+        getValueIfInJson(subAsset, AssetManagerKeys::ANIM_CONFIG_KEY,
+                         AssetManagerKeys::DEFAULT_STRING);
+    AnimationConfigHandle animHandle{0};
+    if (!animConfigPath.empty()) {
+      animHandle = globals::ANIMATION_MANAGER->loadAnimationConfig(
+          animConfigPath.c_str());
+    }
+
     // load skin if present
-	/*
     const std::string skinPath = getValueIfInJson(
         subAsset, AssetManagerKeys::SKIN_KEY, AssetManagerKeys::DEFAULT_STRING);
-    SkinHandle skinHandle = loadSkin(skinPath);
-  	*/
+    SkinHandle skinHandle{0};
+    if (!skinPath.empty()) {
+      skinHandle =
+          globals::SKIN_MANAGER->loadSkinCluster(skinPath.c_str(), animHandle);
+    }
 
     // store the renderable
     (*m_renderables)[renderable.m_materialRuntime.shaderQueueTypeFlags]

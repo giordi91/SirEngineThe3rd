@@ -20,6 +20,7 @@
 #include "platform/windows/graphics/dx12/swapChain.h"
 #include "platform/windows/graphics/dx12/debugRenderer.h"
 #include "SirEngine/animation/animationManager.h"
+#include "SirEngine/skinClusterManager.h"
 
 namespace SirEngine::dx12 {
 
@@ -228,6 +229,8 @@ bool initializeGraphicsDx12(Window *wnd, const uint32_t width,
   globals::ANIMATION_MANAGER = new AnimationManager();
   globals::ANIMATION_MANAGER->init();
 
+  globals::SKIN_MANAGER= new SkinClusterManager();
+  globals::SKIN_MANAGER->init();
 
   globals::DEBUG_FRAME_DATA = new globals::DebugFrameData();
 

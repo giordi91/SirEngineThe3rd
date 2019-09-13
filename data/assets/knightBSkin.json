@@ -4,7 +4,7 @@
       "mesh": "../data/processed/meshes/knightB/jacket.model",
       "material": "../data/materials/knightBJacket.json",
       "skin": "../data/processed/meshes/knightB/jacket.skin",
-      "animConfig": "../data/external/animation/external/knightBIdleConfig.json"
+      "animConfig": "../data/external/animation/exported/clip/knightBIdleConfig.json"
     }  
 
   ]

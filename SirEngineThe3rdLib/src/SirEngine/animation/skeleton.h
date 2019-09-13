@@ -13,7 +13,7 @@ struct JointPose {
 struct Skeleton {
   static constexpr uint32_t PREALLOCATION_SIZE = 32;
   explicit Skeleton(
-      PersistantAllocatorType *allocator = globals::PERSISTANT_ALLOCATOR)
+      PersistantAllocatorType *allocator = globals::PERSISTENT_ALLOCATOR)
       : m_jointCount(0), m_jointsWolrdInv(PREALLOCATION_SIZE, allocator),
         m_names(PREALLOCATION_SIZE, allocator),
         m_parentIds(PREALLOCATION_SIZE, allocator), m_name(nullptr){};
@@ -30,7 +30,7 @@ struct SkeletonPose {
   static constexpr uint32_t PREALLOCATION_SIZE = 32;
 
   explicit SkeletonPose(
-      PersistantAllocatorType *allocator = globals::PERSISTANT_ALLOCATOR)
+      PersistantAllocatorType *allocator = globals::PERSISTENT_ALLOCATOR)
       : m_skeleton(nullptr), m_localPose(PREALLOCATION_SIZE, allocator),
         m_globalPose(PREALLOCATION_SIZE, allocator),
         m_worldMat(PREALLOCATION_SIZE, allocator) {}

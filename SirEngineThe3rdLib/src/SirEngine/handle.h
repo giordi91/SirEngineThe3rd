@@ -43,7 +43,13 @@ struct DebugDrawHandle{
   uint32_t handle;
   bool isHandleValid() const { return handle != 0; }
 };
+
 struct AnimationConfigHandle{ 
+  uint32_t handle;
+  bool isHandleValid() const { return handle != 0; }
+};
+
+struct SkinHandle{ 
   uint32_t handle;
   bool isHandleValid() const { return handle != 0; }
 };

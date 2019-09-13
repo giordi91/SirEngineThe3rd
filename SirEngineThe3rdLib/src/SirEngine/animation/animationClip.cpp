@@ -26,7 +26,7 @@ bool AnimationClip::initialize(const char *path) {
   const int posesSize = int(jObj["poses"].size());
   m_bonesPerFrame = int(jObj["bonesPerPose"]);
   m_poses =
-      reinterpret_cast<JointPose *>(globals::PERSISTANT_ALLOCATOR->allocate(
+      reinterpret_cast<JointPose *>(globals::PERSISTENT_ALLOCATOR->allocate(
           posesSize * m_bonesPerFrame * sizeof(JointPose)));
   m_frameCount = posesSize;
   m_name = persistentString(name.c_str());
