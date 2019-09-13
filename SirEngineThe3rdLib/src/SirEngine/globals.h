@@ -14,6 +14,7 @@ class TextureManager;
 class RenderingContext;
 class BufferManager;
 class AnimationManager;
+class SkinClusterManager;
 
 class StringPool;
 class StackAllocator;
@@ -50,11 +51,12 @@ extern Application *APPLICATION;
 extern RenderingContext *RENDERING_CONTEXT;
 extern DebugFrameData *DEBUG_FRAME_DATA;
 extern AnimationManager* ANIMATION_MANAGER;
+extern SkinClusterManager* SKIN_MANAGER;
 
 // generic allocators
 extern SIR_ENGINE_API StringPool *STRING_POOL;
 extern SIR_ENGINE_API StackAllocator *FRAME_ALLOCATOR;
-extern SIR_ENGINE_API ThreeSizesPool *PERSISTANT_ALLOCATOR;
+extern SIR_ENGINE_API ThreeSizesPool *PERSISTENT_ALLOCATOR;
 
 // config
 extern const char* DATA_SOURCE_PATH;

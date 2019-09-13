@@ -16,8 +16,10 @@ static const std::string ANIMATION_CONFIG_TYPE = "animationConfig";
 static const std::string ANIMATION_CONFIG_NAME_KEY = "name";
 
 AnimationConfigHandle AnimationManager::loadAnimationConfig(const char *path) {
+
+  //TODO move this to resource compiler
   auto configJson = getJsonObj(path);
-  std::string empty("");
+  std::string empty;
 
   const std::string type = getValueIfInJson(configJson, TYPE_KEY, empty);
   assert(type == ANIMATION_CONFIG_TYPE);

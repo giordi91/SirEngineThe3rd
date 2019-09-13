@@ -1,6 +1,6 @@
 {
 "assetsOld": [ "../data/assets/knightB.json" ],
-"assets": [],
+"assets": ["../data/assets/knightBSkin.json"],
 "enviromentMap" :"../data/external/textures/outdoorEnv1/qwantaniSkybox.texture",
 "enviromentMapIrradiance" :"../data/external/textures/outdoorEnv1/qwantaniIrradiance.texture",
 "enviromentMapRadiance" :"../data/external/textures/outdoorEnv1/qwantaniRadiance.texture"

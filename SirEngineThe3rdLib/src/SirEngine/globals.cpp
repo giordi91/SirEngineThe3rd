@@ -22,6 +22,7 @@ Application *APPLICATION = nullptr;
 RenderingContext *RENDERING_CONTEXT = nullptr;
 DebugFrameData *DEBUG_FRAME_DATA = nullptr;
 AnimationManager* ANIMATION_MANAGER = nullptr;
+SkinClusterManager* SKIN_MANAGER = nullptr;
 
 const char *DATA_SOURCE_PATH = nullptr;
 const char *START_SCENE_PATH = nullptr;
@@ -29,7 +30,7 @@ const char *START_SCENE_PATH = nullptr;
 // generic allocators
 StringPool *STRING_POOL = nullptr;
 StackAllocator *FRAME_ALLOCATOR = nullptr;
-ThreeSizesPool *PERSISTANT_ALLOCATOR = nullptr;
+ThreeSizesPool *PERSISTENT_ALLOCATOR = nullptr;
 
 D3D12_VIEWPORT CURRENT_VIEWPORT =
     D3D12_VIEWPORT{0,

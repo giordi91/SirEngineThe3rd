@@ -37,7 +37,7 @@ Application::Application() {
   globals::FRAME_ALLOCATOR->initialize(2 << 22);
   //allocating 20 mb
   //TODO this should be a settings from somewhere
-  globals::PERSISTANT_ALLOCATOR = new ThreeSizesPool(20*1024*1024);
+  globals::PERSISTENT_ALLOCATOR = new ThreeSizesPool(20*1024*1024);
 
   parseConfigFile();
 
