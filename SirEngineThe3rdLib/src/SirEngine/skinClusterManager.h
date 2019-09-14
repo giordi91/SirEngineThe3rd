@@ -1,6 +1,9 @@
 #pragma once
 #include "SirEngine/handle.h"
+#include "memory/SparseMemoryPool.h"
 #include <stdint.h>
+#include <string>
+#include <unordered_map>
 
 namespace SirEngine {
 class SkinClusterManager final {
@@ -9,23 +12,14 @@ class SkinClusterManager final {
     BufferHandle influencesBuffer;
     // used to look up the matrices we want to use for the render
     AnimationConfigHandle animHandle;
+	uint32_t magicNumber;
   };
 
-  // BufferHandle AssetManager::loadSkin(const std::string &skinPath) {
-  //  if (skinPath.empty()) {
-  //    return BufferHandle{0};
-  //  }
-  //
-  //  const BufferHandle cachedHandle =
-  //      dx12::BUFFER_MANAGER->getBufferFromName(skinPath);
-  //  if (cachedHandle.isHandleValid()) {
-  //    return cachedHandle;
-  //  }
-  //}
 
 public:
-  SkinClusterManager() = default;
+  SkinClusterManager():m_skinPool(RESERVE_SIZE){}
   virtual ~SkinClusterManager() = default;
+  //here mostly for consistency of interface
   void init(){};
   SkinClusterManager(const SkinClusterManager &) = delete;
   SkinClusterManager &operator=(const SkinClusterManager &) = delete;
@@ -43,6 +37,9 @@ private:
   }
 
 private:
+  // TODO can we do anything about it?
+  std::unordered_map<std::string, SkinHandle> m_nameToHandle;
+  SparseMemoryPool<SkinData> m_skinPool;
   static const uint32_t INDEX_MASK = (1 << 16) - 1;
   static const uint32_t MAGIC_NUMBER_MASK = ~INDEX_MASK;
   static const uint32_t RESERVE_SIZE = 200;

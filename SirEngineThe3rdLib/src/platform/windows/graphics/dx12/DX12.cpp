@@ -91,7 +91,8 @@ bool initializeGraphicsDx12(Window *wnd, const uint32_t width,
   ADAPTER->setVendor(AdapterVendor::NVIDIA);
 #else
   ADAPTER->setFeture(AdapterFeature::ANY);
-  ADAPTER->setVendor(AdapterVendor::WARP);
+  ADAPTER->setVendor(AdapterVendor::ANY);
+  //ADAPTER->setVendor(AdapterVendor::WARP);
 #endif
   const bool found = ADAPTER->findBestAdapter(DXGI_FACTORY);
   assert(found && "could not find adapter matching features");
