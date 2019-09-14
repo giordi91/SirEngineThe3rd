@@ -48,6 +48,7 @@ struct MaterialDataHandles {
   dx12::DescriptorPair separateAlphaSrv;
   dx12::DescriptorPair aoSrv;
   ConstantBufferHandle cbHandle;
+  SkinHandle skinHandle;
 };
 struct Material final {
   float kDR;
@@ -107,7 +108,7 @@ public:
 
   void init(){};
   MaterialHandle loadMaterial(const char *path,
-                              MaterialRuntime *materialRuntime);
+                              MaterialRuntime *materialRuntime,const SkinHandle handle);
 
   inline SHADER_TYPE_FLAGS getTypeFlags(const uint32_t flags) {
     // here we are creating a mask for the fist 16 bits, then we flip it
