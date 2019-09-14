@@ -2,7 +2,7 @@
 
 #include "SirEngine/bufferManager.h"
 #include "SirEngine/handle.h"
-#include "SirEngine/memory/SparseMemoryPool.h"
+#include "SirEngine/memory/sparseMemoryPool.h"
 #include "d3dx12.h"
 #include "descriptorHeap.h"
 #include <unordered_map>
@@ -10,11 +10,18 @@
 namespace SirEngine {
 namespace dx12 {
 class BufferManagerDx12 final : public BufferManager {
+	struct UploadRequest
+	{
+		ID3D12Resource* uploadBuffer;
+		uint64_t fence;
+	};
+
 public:
   BufferManagerDx12() : m_bufferPool(RESERVE_SIZE){};
 
   virtual ~BufferManagerDx12() = default;
-  BufferManagerDx12(const BufferManagerDx12 &) = delete;
+	ID3D12Resource* getNativeBuffer(const BufferHandle bufferHandle);
+	BufferManagerDx12(const BufferManagerDx12 &) = delete;
   BufferManagerDx12 &operator=(const BufferManagerDx12 &) = delete;
   void free(const BufferHandle handle) override;
   // this function only exists to have api consistency
@@ -102,6 +109,7 @@ private:
   static const int RESERVE_SIZE = 200;
   SparseMemoryPool<BufferData> m_bufferPool;
   std::unordered_map<std::string, BufferHandle> m_nameToHandle;
+  std::vector<UploadRequest> m_uploadRequests;
 };
 } // namespace dx12
 } // namespace SirEngine
