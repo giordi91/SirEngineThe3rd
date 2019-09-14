@@ -5,10 +5,12 @@
 #include "fileUtils.h"
 #include "globals.h"
 #include "log.h"
+#include "animation/animationManager.h"
+#include "animation/skeleton.h"
 
 namespace SirEngine {
 
-static const int VERTEX_INFLUENCE_COUNT = 4;
+static const int VERTEX_INFLUENCE_COUNT = 6;
 static const float SKIN_TOTAL_WEIGHT_TOLERANCE = 0.001f;
 
 SkinHandle
@@ -93,14 +95,23 @@ assert((w_total <= (1.0f + SKIN_TOTAL_WEIGHT_TOLERANCE)));
         mapper->jointsSizeInByte, joints, "",
         mapper->jointsSizeInByte / sizeof(int), sizeof(int), false);
     BufferHandle weightsHandle = globals::BUFFER_MANAGER->allocate(
-        mapper->jointsSizeInByte, weights, "",
-        mapper->jointsSizeInByte / sizeof(float), sizeof(float), false);
+        mapper->weightsSizeInByte, weights, "",
+        mapper->weightsSizeInByte/ sizeof(float), sizeof(float), false);
+
+	//now we need to generate the buffer for the matrices we are going to use
+	const AnimationConfig animConfig = globals::ANIMATION_MANAGER->getConfig(animHandle);
+	int jointCount = animConfig.m_skeleton->m_jointCount;
+    BufferHandle matricesHandle = globals::BUFFER_MANAGER->allocateUpload(
+        jointCount * sizeof(float)*16,"");
+
+  	
 
     uint32_t index;
     SkinData &data = m_skinPool.getFreeMemoryData(index);
     data.animHandle = animHandle;
     data.influencesBuffer = influecesHandle;
     data.weightsBuffer = weightsHandle;
+	data.matricesBuffer= matricesHandle; 
 
     // data is now loaded need to create handle etc
     const SkinHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
@@ -109,7 +120,7 @@ assert((w_total <= (1.0f + SKIN_TOTAL_WEIGHT_TOLERANCE)));
 
     m_nameToHandle[name] = handle;
 
-    return SkinHandle{0};
+	return handle;
   }
   return found->second;
 }

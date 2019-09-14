@@ -31,6 +31,7 @@ struct MaterialRuntime final {
   D3D12_GPU_DESCRIPTOR_HANDLE ao;
 #endif
   uint32_t shaderQueueTypeFlags = 0;
+  SkinHandle skinHandle;
 };
 struct MaterialDataHandles {
   TextureHandle albedo;
@@ -89,6 +90,7 @@ enum class SHADER_TYPE_FLAGS {
   DEBUG_LINES_COLORS = 9,
   DEBUG_TRIANGLE_SINGLE_COLOR = 10,
   DEBUG_TRIANGLE_COLORS = 11,
+  SKINCLUSTER= 12,
 };
 
 class MaterialManager final {

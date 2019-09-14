@@ -30,6 +30,7 @@ public:
   BufferHandle allocate(const uint32_t sizeInByte, void *initData,
                         const char *name, int numElements, int elementSize,
                         bool isUAV) override;
+  BufferHandle allocateUpload(const uint32_t sizeInByte, const char *name ) override;
 
   void bindBuffer(BufferHandle handle, int slot,
                   ID3D12GraphicsCommandList2 *commandList) const;
@@ -43,6 +44,13 @@ public:
     }
 
     return BufferHandle{0};
+  }
+  inline void* getMappedData(const BufferHandle& handle)const
+  {
+    assertMagicNumber(handle);
+    const uint32_t index = getIndexFromHandle(handle);
+    const BufferData &data = m_bufferPool.getConstRef(index);
+	return data.mappedData;
   }
 
   inline int bufferUAVTransition(const BufferHandle handle,
@@ -104,6 +112,7 @@ private:
     uint32_t magicNumber;
     DescriptorPair srv;
     DescriptorPair uav;
+	void* mappedData = nullptr;
   };
 
   static const int RESERVE_SIZE = 200;

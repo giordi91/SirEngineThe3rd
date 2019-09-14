@@ -14,6 +14,7 @@ public:
   virtual void free(const BufferHandle handle) = 0;
   virtual BufferHandle allocate(const uint32_t sizeInByte,void *initData, const char *name,
                                  int numElements, int elementSize,bool isUAV) = 0;
+  virtual BufferHandle allocateUpload(const uint32_t sizeInByte, const char *name ) = 0;
 
   //virtual void bindBuffer(BufferHandle handle, int slot) = 0;
 protected:
@@ -29,4 +30,5 @@ protected:
   static const uint32_t MAGIC_NUMBER_MASK = ~INDEX_MASK;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
 };
+
 } // namespace SirEngine

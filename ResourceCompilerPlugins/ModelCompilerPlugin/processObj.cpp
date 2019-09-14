@@ -239,8 +239,8 @@ void convertObj(const tinyobj::attrib_t &attr, const tinyobj::shape_t &shape,
   SkinData skinData;
   bool hasSkin = loadSkin(skinPath, skinData);
   if (hasSkin) {
-    finalSkinData.jnts.resize(skinData.jnts.size());
-    finalSkinData.weights.resize(skinData.weights.size());
+    finalSkinData.jnts.reserve(skinData.jnts.size());
+    finalSkinData.weights.reserve(skinData.weights.size());
   }
 
   // how it works:
@@ -295,7 +295,7 @@ void convertObj(const tinyobj::attrib_t &attr, const tinyobj::shape_t &shape,
         // need to push the skin if we have one
         if (hasSkin) {
           for (int subI = 0; subI < VERTEX_INFLUENCE_COUNT; ++subI) {
-			int id = v* VERTEX_INFLUENCE_COUNT + subI;
+			int id = (VERTEX_INFLUENCE_COUNT* idx.vertex_index) + subI;
             finalSkinData.jnts.push_back(skinData.jnts[id]);
             finalSkinData.weights.push_back(skinData.weights[id]);
           }

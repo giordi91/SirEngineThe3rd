@@ -2,7 +2,7 @@
   "subAssets" : [
     {
       "mesh": "../data/processed/meshes/knightB/jacket.model",
-      "material": "../data/materials/knightBJacket.json",
+      "material": "../data/materials/knightBJacketSkin.json",
       "skin": "../data/processed/meshes/knightB/jacket.skin",
       "animConfig": "../data/external/animation/exported/clip/knightBIdleConfig.json"
     }  
