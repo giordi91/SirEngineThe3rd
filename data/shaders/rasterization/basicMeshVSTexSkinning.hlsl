@@ -14,13 +14,17 @@ FullMeshVertexOut VS(TexturedVertexIn12 vin, uint vid : SV_VertexID)
     int id = vid* NUMBER_OF_INFLUENCES;
 
     float4 skin_p = float4(0, 0, 0, 1);
+    float3 skinNormal = float3(0, 0, 0);
     float4 v = float4(vin.PosL, 1.0f);
 
     float4 temp;
+    float3 tempNormal;
     for (int i = 0; i < NUMBER_OF_INFLUENCES; ++i)
     {
         temp = mul(v, g_matrices[g_influences[id + i]]);
         skin_p += (g_weights[id + i] * temp);
+        tempNormal = mul(vin.Normal, (float3x3) g_matrices[g_influences[id + i]]);
+        skinNormal+= (g_weights[id + i] * tempNormal);
     }
     skin_p.w = 1.0f;
 	
@@ -28,7 +32,7 @@ FullMeshVertexOut VS(TexturedVertexIn12 vin, uint vid : SV_VertexID)
     vout.PosH = mul(skin_p, g_cameraBuffer.MVP);
 	
 	// Just pass vertex color into the pixel shader.
-    vout.Normal = vin.Normal;
+    vout.Normal = normalize(skinNormal);
     vout.uv = vin.uvs.xy;
     vout.tangent = vin.tangents.xyz;
     vout.worldPos = float4(vin.PosL, 1.0f);
