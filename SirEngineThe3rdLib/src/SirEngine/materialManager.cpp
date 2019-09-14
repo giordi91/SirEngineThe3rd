@@ -291,7 +291,7 @@ void MaterialManager::loadTypeFile(const char *path) {
   m_shderTypeToShaderBind[flags] = ShaderBind{rsHandle, psoHandle};
 }
 MaterialHandle MaterialManager::loadMaterial(const char *path,
-                                             MaterialRuntime *materialRuntime) {
+                                             MaterialRuntime *materialRuntime, const SkinHandle skinHandle) {
   // for materials we do not perform the check whether is loaded or not
   // each object is going to get it s own material copy.
   // if that starts to be an issue we will add extra logic to deal with this.
@@ -396,6 +396,7 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   texHandles.thickness = thicknessTex;
   texHandles.separateAlpha = separateAlphaTex;
   texHandles.ao = aoTex;
+  texHandles.skinHandle = skinHandle;
 
   if (albedoTex.handle != 0) {
     texHandles.albedoSrv = dx12::TEXTURE_MANAGER->getSRVDx12(albedoTex);

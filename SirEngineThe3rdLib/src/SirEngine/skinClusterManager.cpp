@@ -87,7 +87,6 @@ assert((w_total <= (1.0f + SKIN_TOTAL_WEIGHT_TOLERANCE)));
         reinterpret_cast<float *>(binaryData.data() + sizeof(BinaryFileHeader) +
                                   mapper->jointsSizeInByte);
 
-	/*
     // TODO fix buffer names
     // TODO I think those buffers are in the uplaod heap, they are not
     BufferHandle influecesHandle = globals::BUFFER_MANAGER->allocate(
@@ -109,7 +108,7 @@ assert((w_total <= (1.0f + SKIN_TOTAL_WEIGHT_TOLERANCE)));
     ++MAGIC_NUMBER_COUNTER;
 
     m_nameToHandle[name] = handle;
-	*/
+
     return SkinHandle{0};
   }
   return found->second;

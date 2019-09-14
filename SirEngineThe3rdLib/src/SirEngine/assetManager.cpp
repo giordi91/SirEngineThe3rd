@@ -61,8 +61,6 @@ IdentityHandle AssetManager::loadAsset(const char *path) {
     MeshHandle mHandle = dx12::MESH_MANAGER->loadMesh(
         meshString.c_str(), &renderable.m_meshRuntime);
 
-    MaterialHandle matHandle = dx12::MATERIAL_MANAGER->loadMaterial(
-        materialString.c_str(), &renderable.m_materialRuntime);
 
     // load animation if present
     const std::string animConfigPath =
@@ -82,6 +80,8 @@ IdentityHandle AssetManager::loadAsset(const char *path) {
       skinHandle =
           globals::SKIN_MANAGER->loadSkinCluster(skinPath.c_str(), animHandle);
     }
+    MaterialHandle matHandle = dx12::MATERIAL_MANAGER->loadMaterial(
+        materialString.c_str(), &renderable.m_materialRuntime,skinHandle);
 
     // store the renderable
     (*m_renderables)[renderable.m_materialRuntime.shaderQueueTypeFlags]
