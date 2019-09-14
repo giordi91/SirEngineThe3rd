@@ -3,6 +3,14 @@
 #include <cassert>
 
 namespace SirEngine::dx12 {
+ID3D12Resource *
+BufferManagerDx12::getNativeBuffer(const BufferHandle bufferHandle) {
+  assertMagicNumber(bufferHandle);
+  uint32_t index = getIndexFromHandle(bufferHandle);
+  BufferData &data = m_bufferPool[index];
+  return data.data;
+}
+
 void BufferManagerDx12::free(const BufferHandle handle) {
 
   assertMagicNumber(handle);
@@ -37,11 +45,10 @@ BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInByte,
   HRESULT res = dx12::DEVICE->CreateCommittedResource(
       &heap, D3D12_HEAP_FLAG_NONE, &bufferDesc,
       isUAV ? D3D12_RESOURCE_STATE_UNORDERED_ACCESS
-            : D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE |
-                  D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
+            : D3D12_RESOURCE_STATE_COMMON,
       nullptr, IID_PPV_ARGS(&buffer));
   assert(SUCCEEDED(res));
-  assert(initData == nullptr);
+  //assert(initData == nullptr);
 
   if (initData != nullptr) {
 
@@ -78,11 +85,13 @@ BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInByte,
         D3D12_RESOURCE_STATE_GENERIC_READ);
     commandList->ResourceBarrier(1, &postTransition);
 
+    m_uploadRequests.emplace_back(
+        UploadRequest{uploadBuffer, dx12::insertFenceToGlobalQueue()});
     //// Note: uploadBuffer has to be kept alive after the above function calls
     //// because the command list has not been executed yet that performs the
     //// actual copy. The caller can Release the uploadBuffer after it knows the
     //// copy has been executed.
-    //return defaultBuffer;
+    // return defaultBuffer;
   }
 
   // lets get a data from the pool
@@ -94,7 +103,7 @@ BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInByte,
     dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferUAV(data.uav, data.data,
                                                    numElements, elementSize);
   } else {
-    assert(0);
+    //assert(0);
   }
 
   // data is now loaded need to create handle etc
@@ -102,8 +111,7 @@ BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInByte,
   data.magicNumber = MAGIC_NUMBER_COUNTER;
   data.data = buffer;
   data.state = isUAV ? D3D12_RESOURCE_STATE_UNORDERED_ACCESS
-                     : D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE |
-                           D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
+                     : D3D12_RESOURCE_STATE_GENERIC_READ ;
   data.type = isUAV ? BufferType::UAV : BufferType::SRV;
 
   return handle;

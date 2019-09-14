@@ -1,8 +1,10 @@
 #include "platform/windows/graphics/dx12/meshManager.h"
 
+#include "ConstantBufferManagerDx12.h"
 #include "SirEngine/binary/binaryFile.h"
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
+#include "bufferManagerDx12.h"
 
 namespace SirEngine::dx12 {
 void MeshManager::clearUploadRequests() {
@@ -15,7 +17,7 @@ void MeshManager::clearUploadRequests() {
     if (upload.fence < id) {
       // we can free the memory
       upload.uploadVertexBuffer->Release();
-      upload.uploadIndexBuffer->Release();
+      // upload.uploadIndexBuffer->Release();
       if (stackTopIdx != i) {
         // lets copy
         m_uploadRequests[i] = m_uploadRequests[stackTopIdx];
@@ -119,16 +121,28 @@ MeshHandle MeshManager::loadMesh(const char *path, MeshRuntime *meshRuntime) {
     MeshUploadResource upload;
 
     FrameCommand *currentFc = &CURRENT_FRAME_RESOURCE->fc;
-    meshData->vertexBuffer = createDefaultBuffer(
-        DEVICE, currentFc->commandList, vertexData,
-        vertexCount * stride * sizeof(float), &upload.uploadVertexBuffer);
-    meshData->indexBuffer = createDefaultBuffer(
-        DEVICE, currentFc->commandList, indexData, indexCount * sizeof(int),
-        &upload.uploadIndexBuffer);
+    //meshData->vertexBuffer = createDefaultBuffer(
+    //    DEVICE, currentFc->commandList, vertexData,
+    //    vertexCount * stride * sizeof(float), &upload.uploadVertexBuffer);
+
+    uint32_t totalSize = vertexCount * stride * sizeof(float);
+    meshData->vtxBuffHandle = dx12::BUFFER_MANAGER->allocate(
+        totalSize, vertexData, "", totalSize, sizeof(float), false);
+    meshData->vertexBuffer =
+        dx12::BUFFER_MANAGER->getNativeBuffer(meshData->vtxBuffHandle);
+
+    // meshData->indexBuffer = createDefaultBuffer(
+    //    DEVICE, currentFc->commandList, indexData, indexCount * sizeof(int),
+    //    &upload.uploadIndexBuffer);
+    totalSize = indexCount * sizeof(int);
+    meshData->idxBuffHandle = dx12::BUFFER_MANAGER->allocate(
+        totalSize, indexData, "", totalSize / sizeof(int), sizeof(int), false);
+    meshData->indexBuffer =
+        dx12::BUFFER_MANAGER->getNativeBuffer(meshData->idxBuffHandle);
 
     // set a signal for the resource.
     upload.fence = dx12::insertFenceToGlobalQueue();
-    m_uploadRequests.push_back(upload);
+    //m_uploadRequests.push_back(upload);
 
     // data is now loaded need to create handle etc
     handle = MeshHandle{(MAGIC_NUMBER_COUNTER << 16) | index};

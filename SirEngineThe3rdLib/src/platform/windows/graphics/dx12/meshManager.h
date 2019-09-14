@@ -26,6 +26,8 @@ private:
     uint32_t stride : 16;
     ID3D12Resource *vertexBuffer;
     ID3D12Resource *indexBuffer;
+	BufferHandle vtxBuffHandle;
+	BufferHandle idxBuffHandle;
     uint32_t indexCount;
     uint32_t vertexCount;
   };
