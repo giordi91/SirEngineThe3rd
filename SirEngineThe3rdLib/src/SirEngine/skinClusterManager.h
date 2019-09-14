@@ -6,26 +6,33 @@
 #include <unordered_map>
 
 namespace SirEngine {
-class SkinClusterManager final {
-  struct SkinData {
-    BufferHandle weightsBuffer;
-    BufferHandle influencesBuffer;
-    // used to look up the matrices we want to use for the render
-    AnimationConfigHandle animHandle;
-	uint32_t magicNumber;
-  };
+struct SkinData {
+  BufferHandle weightsBuffer;
+  BufferHandle influencesBuffer;
+  BufferHandle matricesBuffer;
+  // used to look up the matrices we want to use for the render
+  AnimationConfigHandle animHandle;
+  uint32_t magicNumber;
+};
 
+class SkinClusterManager final {
 
 public:
-  SkinClusterManager():m_skinPool(RESERVE_SIZE){}
+  SkinClusterManager() : m_skinPool(RESERVE_SIZE) {}
   virtual ~SkinClusterManager() = default;
-  //here mostly for consistency of interface
+  // here mostly for consistency of interface
   void init(){};
   SkinClusterManager(const SkinClusterManager &) = delete;
   SkinClusterManager &operator=(const SkinClusterManager &) = delete;
 
   SkinHandle loadSkinCluster(const char *path,
                              AnimationConfigHandle animHandle);
+  inline const SkinData &getSkinData(const SkinHandle handle) const
+  {
+	  assertMagicNumber(handle);
+	  const uint32_t idx = getIndexFromHandle(handle);
+	  return m_skinPool.getConstRef(idx);
+  }
 
 private:
   static inline uint32_t getIndexFromHandle(const SkinHandle h) {
@@ -34,6 +41,12 @@ private:
 
   static inline uint16_t getMagicFromHandle(const SkinHandle h) {
     return static_cast<uint16_t>((h.handle & MAGIC_NUMBER_MASK) >> 16);
+  }
+  inline void assertMagicNumber(const SkinHandle handle) const {
+	  const uint32_t magic = getMagicFromHandle(handle);
+	  const uint32_t idx = getIndexFromHandle(handle);
+    assert(m_skinPool.getConstRef(idx).magicNumber == magic &&
+           "invalid magic handle for constant buffer");
   }
 
 private:

@@ -1,6 +1,7 @@
 {
   "commands": 
     [
+      "-p ../data/external/meshes/knightB/jacket.obj -o ../data/processed/meshes/knightB/jacket.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/jacket.tangents --skin ../data/external/animation/exported/skin/knightBJacketSkin.json\"",
       "-p ../data/shaders/rasterization/basicMeshVSTexSkinning.hlsl -o ../data/processed/shaders/rasterization/basicMeshVSTexSkinning.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t vs_6_2  -e VS -d \"",
       "-p ../data/rs/gbufferPBRSkinningRS.json -o ../data/processed/rs/gbufferPBRSkinningRS.root --pluginName rootSignatureCompilerPlugin"
     ]

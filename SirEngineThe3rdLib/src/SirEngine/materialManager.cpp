@@ -5,6 +5,10 @@
 #include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/TextureManagerDx12.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
+#include "animation/animationManager.h"
+#include "skinClusterManager.h"
+#include "platform/windows/graphics/dx12/bufferManagerDx12.h"
+#include "animation/animationClip.h"
 
 #if GRAPHICS_API == DX12
 #include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
@@ -55,6 +59,8 @@ static const std::unordered_map<std::string, SirEngine::SHADER_TYPE_FLAGS>
          SirEngine::SHADER_TYPE_FLAGS::DEBUG_TRIANGLE_COLORS},
         {"debugTrianglesSingleColor",
          SirEngine::SHADER_TYPE_FLAGS::DEBUG_TRIANGLE_SINGLE_COLOR},
+        {"skinCluster",
+         SirEngine::SHADER_TYPE_FLAGS::SKINCLUSTER},
     };
 static const std::unordered_map<SirEngine::SHADER_TYPE_FLAGS, std::string>
     TYPE_FLAGS_TO_STRING{
@@ -75,6 +81,8 @@ static const std::unordered_map<SirEngine::SHADER_TYPE_FLAGS, std::string>
          "debugTrianglesColors"},
         {SirEngine::SHADER_TYPE_FLAGS::DEBUG_TRIANGLE_SINGLE_COLOR,
          "debugTrianglesSingleColor"},
+        {SirEngine::SHADER_TYPE_FLAGS::SKINCLUSTER,
+         "skinCluster"},
     };
 
 } // namespace materialKeys
@@ -138,6 +146,38 @@ void bindPBR(const MaterialRuntime &materialRuntime,
   commandList->SetGraphicsRootDescriptorTable(3, materialRuntime.normal);
   commandList->SetGraphicsRootDescriptorTable(4, materialRuntime.metallic);
   commandList->SetGraphicsRootDescriptorTable(5, materialRuntime.roughness);
+}
+
+void bindSkinning(const MaterialRuntime &materialRuntime,
+             ID3D12GraphicsCommandList2 *commandList) {
+  commandList->SetGraphicsRootConstantBufferView(
+      1, materialRuntime.cbVirtualAddress);
+  commandList->SetGraphicsRootDescriptorTable(2, materialRuntime.albedo);
+  commandList->SetGraphicsRootDescriptorTable(3, materialRuntime.normal);
+  commandList->SetGraphicsRootDescriptorTable(4, materialRuntime.metallic);
+  commandList->SetGraphicsRootDescriptorTable(5, materialRuntime.roughness);
+
+  //need to bind the skinning data
+  const SkinHandle skHandle = materialRuntime.skinHandle;
+  const SkinData& data = globals::SKIN_MANAGER->getSkinData(skHandle);
+  //now we have both static buffers, influences and weights
+  //dx12::BUFFER_MANAGER->bindBufferAsSRVDescriptorTable(data.influencesBuffer,6,commandList);
+
+  dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.influencesBuffer,6,commandList);
+  dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.weightsBuffer,7,commandList);
+  //now we need to update the matrices buffer and bind it!
+  //get the mapped data pointer of the gpu buffer
+  void * mappedData = dx12::BUFFER_MANAGER->getMappedData(data.matricesBuffer);
+  assert(mappedData!=nullptr);
+  //get the actual updated matrices buffer
+  AnimationConfig animConfig = globals::ANIMATION_MANAGER->getConfig(data.animHandle);
+  const auto& matricesDataToCopy = animConfig.m_anim_state->m_pose->m_globalPose;
+  memcpy(mappedData, matricesDataToCopy.data(),matricesDataToCopy.size()*sizeof(float)*16);
+
+  //finally binding it
+  dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.matricesBuffer,8,commandList);
+
+	
 }
 void bindSkin(const MaterialRuntime &materialRuntime,
               ID3D12GraphicsCommandList2 *commandList) {
@@ -236,6 +276,10 @@ void MaterialManager::bindMaterial(const MaterialRuntime &materialRuntime,
   }
   case (SHADER_TYPE_FLAGS::HAIR): {
     bindHair(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::SKINCLUSTER): {
+    bindSkinning(materialRuntime, commandList);
     break;
   }
   default: {
@@ -428,6 +472,7 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   matCpu.thickness = texHandles.thicknessSrv.gpuHandle;
   matCpu.separateAlpha = texHandles.separateAlphaSrv.gpuHandle;
   matCpu.ao = texHandles.aoSrv.gpuHandle;
+  matCpu.skinHandle = skinHandle;
 
   // we need to allocate  constant buffer
   // TODO should this be static constant buffer? investigate

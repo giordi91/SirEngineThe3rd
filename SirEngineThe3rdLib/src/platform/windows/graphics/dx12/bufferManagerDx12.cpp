@@ -48,7 +48,7 @@ BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInByte,
             : D3D12_RESOURCE_STATE_COMMON,
       nullptr, IID_PPV_ARGS(&buffer));
   assert(SUCCEEDED(res));
-  //assert(initData == nullptr);
+  // assert(initData == nullptr);
 
   if (initData != nullptr) {
 
@@ -103,7 +103,7 @@ BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInByte,
     dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferUAV(data.uav, data.data,
                                                    numElements, elementSize);
   } else {
-    //assert(0);
+    // assert(0);
   }
 
   // data is now loaded need to create handle etc
@@ -111,8 +111,38 @@ BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInByte,
   data.magicNumber = MAGIC_NUMBER_COUNTER;
   data.data = buffer;
   data.state = isUAV ? D3D12_RESOURCE_STATE_UNORDERED_ACCESS
-                     : D3D12_RESOURCE_STATE_GENERIC_READ ;
+                     : D3D12_RESOURCE_STATE_GENERIC_READ;
   data.type = isUAV ? BufferType::UAV : BufferType::SRV;
+
+  return handle;
+}
+
+BufferHandle BufferManagerDx12::allocateUpload(const uint32_t sizeInByte,
+                                               const char *name) {
+  uint32_t actualSize =
+      sizeInByte % 256 == 0 ? sizeInByte : ((sizeInByte / 256) + 1) * 256;
+
+  ID3D12Resource *uploadBuffer = nullptr;
+  auto uploadHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+  auto uploadBufferDesc = CD3DX12_RESOURCE_DESC::Buffer(actualSize);
+  HRESULT res = dx12::DEVICE->CreateCommittedResource(
+      &uploadHeapProperties, D3D12_HEAP_FLAG_NONE, &uploadBufferDesc,
+      D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&uploadBuffer));
+  assert(SUCCEEDED(res));
+
+  // lets get a data from the pool
+  uint32_t index;
+  BufferData &data = m_bufferPool.getFreeMemoryData(index);
+
+  // data is now loaded need to create handle etc
+  BufferHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
+  data.magicNumber = MAGIC_NUMBER_COUNTER;
+  data.data = uploadBuffer;
+  data.state = D3D12_RESOURCE_STATE_GENERIC_READ;
+  data.type =  BufferType::SRV;
+
+  HRESULT mapResult = uploadBuffer->Map(0, nullptr, &data.mappedData);
+  assert(SUCCEEDED(mapResult));
 
   return handle;
 }
@@ -125,6 +155,7 @@ void BufferManagerDx12::bindBuffer(
   uint32_t index = getIndexFromHandle(handle);
   const BufferData &data = m_bufferPool.getConstRef(index);
 
+  //TODO FIX THIS, this never worked LOL
   D3D12_GPU_DESCRIPTOR_HANDLE toBind =
       data.type == BufferType::UAV ? data.uav.gpuHandle : data.srv.gpuHandle;
   // commandList->SetComputeRootDescriptorTable(slot, toBind);
