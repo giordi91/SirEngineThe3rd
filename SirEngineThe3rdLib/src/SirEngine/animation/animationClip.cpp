@@ -9,12 +9,13 @@ namespace SirEngine {
 const float AnimState::NANO_TO_SECONDS = float(1e-9);
 bool AnimationClip::initialize(const char *path) {
 
+  // TODO compile this with resource compiler
   auto jObj = getJsonObj(path);
   // we first check the name because if the name is in the cache
   // we just get out
   const auto name = jObj["name"].get<std::string>();
 
-  // quering the basic data
+  // querying the basic data
   m_isLoopable = jObj["looping"].get<bool>();
 
   // this are the maya start and end frame, not used in the engine, leaving
@@ -67,7 +68,6 @@ bool AnimationClip::initialize(const char *path) {
 
   return true;
 }
-
 
 inline DirectX::XMFLOAT3 lerp3(const DirectX::XMFLOAT3 &v1,
                                const DirectX::XMFLOAT3 &v2,
