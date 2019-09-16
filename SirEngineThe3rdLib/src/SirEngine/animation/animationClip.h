@@ -13,7 +13,7 @@ struct AnimPose {
 struct AnimationClip {
 
   AnimationClip() = default;
-  ~AnimationClip() = default;
+  ~AnimationClip();
   bool initialize(const char *path);
 
   JointPose * m_poses;

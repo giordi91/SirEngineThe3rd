@@ -120,20 +120,14 @@ MeshHandle MeshManager::loadMesh(const char *path, MeshRuntime *meshRuntime) {
     meshData->stride = stride;
     MeshUploadResource upload;
 
-    FrameCommand *currentFc = &CURRENT_FRAME_RESOURCE->fc;
-    //meshData->vertexBuffer = createDefaultBuffer(
-    //    DEVICE, currentFc->commandList, vertexData,
-    //    vertexCount * stride * sizeof(float), &upload.uploadVertexBuffer);
 
+	//TODO clear the resource from the buffer manager
     uint32_t totalSize = vertexCount * stride * sizeof(float);
     meshData->vtxBuffHandle = dx12::BUFFER_MANAGER->allocate(
         totalSize, vertexData, "", totalSize, sizeof(float), false);
     meshData->vertexBuffer =
         dx12::BUFFER_MANAGER->getNativeBuffer(meshData->vtxBuffHandle);
 
-    // meshData->indexBuffer = createDefaultBuffer(
-    //    DEVICE, currentFc->commandList, indexData, indexCount * sizeof(int),
-    //    &upload.uploadIndexBuffer);
     totalSize = indexCount * sizeof(int);
     meshData->idxBuffHandle = dx12::BUFFER_MANAGER->allocate(
         totalSize, indexData, "", totalSize / sizeof(int), sizeof(int), false);
