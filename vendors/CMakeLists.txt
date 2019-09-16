@@ -8,6 +8,7 @@ file(COPY "cxxopts/include/cxxopts.hpp" DESTINATION "${CMAKE_SOURCE_DIR}/Resourc
 file(COPY "cxxopts/include/cxxopts.hpp" DESTINATION "${CMAKE_SOURCE_DIR}/ResourceCompilerPlugins/ModelCompilerPlugin/vendors/includes/cxxopts" )
 file(COPY "cxxopts/include/cxxopts.hpp" DESTINATION "${CMAKE_SOURCE_DIR}/ResourceCompilerPlugins/rootSignatureCompilerPlugin/vendors/includes/cxxopts" )
 file(COPY "cxxopts/include/cxxopts.hpp" DESTINATION "${CMAKE_SOURCE_DIR}/ResourceCompilerPlugins/TextureCompilerPlugin/vendors/includes/cxxopts" )
+file(COPY "cxxopts/include/cxxopts.hpp" DESTINATION "${CMAKE_SOURCE_DIR}/ResourceCompilerPlugins/AnimationCompilerPlugin/vendors/includes/cxxopts" )
 
 
 file(COPY "Compressonator/Compressonator/Header" DESTINATION "${CMAKE_SOURCE_DIR}/ResourceCompilerPlugins/TextureCompilerPlugin/vendors/includes/Compressonator" )

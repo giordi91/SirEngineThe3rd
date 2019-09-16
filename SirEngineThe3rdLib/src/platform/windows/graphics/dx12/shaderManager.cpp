@@ -2,10 +2,10 @@
 
 #include "platform/windows/graphics/dx12/shaderCompiler.h"
 
-#include <d3dcompiler.h>
 #include "SirEngine/argsUtils.h"
 #include "SirEngine/binary/binaryFile.h"
 #include "SirEngine/fileUtils.h"
+#include <d3dcompiler.h>
 
 namespace SirEngine {
 namespace dx12 {
@@ -44,7 +44,7 @@ void ShaderManager::loadShaderFile(const char *path) {
 }
 
 ShaderMetadata *extractShaderMetadata(StackAllocator &alloc,
-                                      ShaderMapperData *mapper,
+                                      const ShaderMapperData *mapper,
                                       void *startOfData) {
   // extract metadata
   // I know, this aint pretty
@@ -132,6 +132,8 @@ void ShaderManager::recompileShader(const char *path, const char *offsetPath,
   args.compilerArgs = wcompilerArgs;
   std::string compilerArgs(wcompilerArgs.begin(), wcompilerArgs.end());
 
+  // TODO this is quite a mess, so many conversiong with Wstring back and
+  // fort small allocations etc.
   splitCompilerArgs(compilerArgs, args.splitCompilerArgs,
                     args.splitCompilerArgsPointers);
 
@@ -183,5 +185,5 @@ void ShaderManager::loadShadersInFolder(const char *directory) {
   }
 }
 
-}  // namespace dx12
-}  // namespace SirEngine
+} // namespace dx12
+} // namespace SirEngine

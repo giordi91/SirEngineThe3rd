@@ -27,15 +27,15 @@ same for the index buffer, what kind of attributes we have in the mesh etc.
 
 */
 
-inline const BinaryFileHeader *getHeader(void *binaryData) {
+inline const BinaryFileHeader *getHeader(const void *binaryData) {
   return reinterpret_cast<const BinaryFileHeader *>(binaryData);
 };
 
-template <typename T> T *getMapperData(void *binaryData) {
+template <typename T> const T *getMapperData(const void *binaryData) {
   const BinaryFileHeader *header = getHeader(binaryData);
-  char *outPointer =
-      reinterpret_cast<char *>(binaryData) + header->mapperDataOffsetInByte;
-  return reinterpret_cast<T *>(outPointer);
+  const char *outPointer =
+      reinterpret_cast<const char *>(binaryData) + header->mapperDataOffsetInByte;
+  return reinterpret_cast<const T *>(outPointer);
 }
 
 struct BinaryFileWriteRequest {
@@ -62,8 +62,9 @@ bool SIR_ENGINE_API readAllBytes(const std::string &filename,
   X(SHADER)                                                                    \
   X(RS)                                                                        \
   X(SKIN)                                                                        \
+  X(ANIM)
 
-enum BinaryFileType { NONE = 0, MODEL = 1, SHADER = 2, RS = 3, SKIN=4};
+enum BinaryFileType { NONE = 0, MODEL = 1, SHADER = 2, RS = 3, SKIN=4, ANIM=5};
 
 SIR_ENGINE_API
 extern const std::unordered_map<BinaryFileType, std::string>
@@ -102,4 +103,14 @@ struct SkinMapperData
 	uint32_t influenceCountPerVertex;
 	uint32_t jointsSizeInByte;
 	uint32_t weightsSizeInByte;
+};
+
+struct ClipMapperData
+{
+	int nameSizeInByte;
+	int posesSizeInByte;
+	float frameRate;
+	int bonesPerFrame;
+	int frameCount;
+	bool isLoopable;
 };

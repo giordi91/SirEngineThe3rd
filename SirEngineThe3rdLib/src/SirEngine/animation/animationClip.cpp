@@ -1,71 +1,40 @@
 #include "SirEngine/animation/animationClip.h"
+#include "SirEngine/binary/binaryFile.h"
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/globals.h"
+#include "SirEngine/log.h"
 #include "SirEngine/runtimeString.h"
 
 namespace SirEngine {
 
 // initializing the constants
 const float AnimState::NANO_TO_SECONDS = float(1e-9);
+
+AnimationClip::~AnimationClip() {
+  globals::PERSISTENT_ALLOCATOR->free(m_poses);
+}
+
 bool AnimationClip::initialize(const char *path) {
+  // load the binary file
+  SE_CORE_INFO("Loading animation clip {0}", path);
+  const bool res = fileExists(path);
+  assert(res);
 
-  // TODO compile this with resource compiler
-  auto jObj = getJsonObj(path);
-  // we first check the name because if the name is in the cache
-  // we just get out
-  const auto name = jObj["name"].get<std::string>();
+  uint32_t fileSize;
+  const char *binaryData = frameFileLoad(path, fileSize);
 
-  // querying the basic data
-  m_isLoopable = jObj["looping"].get<bool>();
+  const auto mapper = getMapperData<ClipMapperData>(binaryData);
+  m_isLoopable = mapper->isLoopable;
+  m_bonesPerFrame = mapper->bonesPerFrame;
+  m_frameCount = mapper->frameCount;
+  m_frameRate = mapper->frameRate;
 
-  // this are the maya start and end frame, not used in the engine, leaving
-  // them here as reference
-  // int start = j_obj["start"].get<int>();
-  // int end = j_obj["end"].get<int>();
-  m_frameRate = jObj["frame_rate"].get<float>();
-
-  const int posesSize = int(jObj["poses"].size());
-  m_bonesPerFrame = int(jObj["bonesPerPose"]);
-  m_poses =
-      reinterpret_cast<JointPose *>(globals::PERSISTENT_ALLOCATOR->allocate(
-          posesSize * m_bonesPerFrame * sizeof(JointPose)));
-  m_frameCount = posesSize;
-  m_name = persistentString(name.c_str());
-
-  const DirectX::XMFLOAT3 zeroV(0, 0, 0);
-  const DirectX::XMVECTOR zeroQ = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-
-  int poseCounter = 0;
-  for (auto &pose : jObj["poses"]) {
-    const int jointSize = int(pose.size());
-    assert(jointSize == m_bonesPerFrame);
-
-    auto *joints = m_poses + (poseCounter * jointSize);
-
-    int jointCounter = 0;
-    for (auto &joint : pose) {
-
-      const DirectX::XMFLOAT3 position =
-          getValueIfInJson<DirectX::XMFLOAT3>(joint, "pos", zeroV);
-
-      // extracting joint quaternion
-      // to note I export quaternion as x,y,z,w,  is initialized as
-      // w,x,y,z
-      const DirectX::XMVECTOR rotation =
-          getValueIfInJson<DirectX::XMVECTOR>(joint, "quat", zeroQ);
-
-      joints[jointCounter].m_rot = rotation;
-      joints[jointCounter].m_trans = position;
-
-      // scale hardcoded, not used for the time being
-      joints[jointCounter].m_scale = 1.0f;
-
-      ++jointCounter;
-    }
-
-    ++poseCounter;
-  }
-
+  m_name = persistentString(binaryData + sizeof(BinaryFileHeader));
+  m_poses = reinterpret_cast<JointPose *>(
+      globals::PERSISTENT_ALLOCATOR->allocate(mapper->posesSizeInByte));
+  memcpy(m_poses,
+         binaryData + sizeof(BinaryFileHeader) + mapper->nameSizeInByte,
+         mapper->posesSizeInByte);
   return true;
 }
 
