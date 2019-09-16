@@ -494,6 +494,7 @@ void DebugRenderer::renderQueue(
           type == SHADER_TYPE_FLAGS::DEBUG_POINTS_SINGLE_COLOR;
       if (isPC | isPSC) {
         commandList->SetGraphicsRootDescriptorTable(2, prim.srv.gpuHandle);
+		currentFc->commandList->IASetVertexBuffers(0, 1, nullptr);
         currentFc->commandList->IASetPrimitiveTopology(
             D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
       } else {
@@ -502,7 +503,6 @@ void DebugRenderer::renderQueue(
             D3D_PRIMITIVE_TOPOLOGY_LINELIST);
       }
 
-      currentFc->commandList->IASetVertexBuffers(0, 1, nullptr);
       currentFc->commandList->DrawInstanced(prim.primitiveToRender, 1, 0, 0);
     }
 	annotateGraphicsEnd();
