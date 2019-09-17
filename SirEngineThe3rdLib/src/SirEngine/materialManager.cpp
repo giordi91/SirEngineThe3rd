@@ -61,6 +61,8 @@ static const std::unordered_map<std::string, SirEngine::SHADER_TYPE_FLAGS>
          SirEngine::SHADER_TYPE_FLAGS::DEBUG_TRIANGLE_SINGLE_COLOR},
         {"skinCluster",
          SirEngine::SHADER_TYPE_FLAGS::SKINCLUSTER},
+        {"skinSkinCluster",
+         SirEngine::SHADER_TYPE_FLAGS::SKINSKINCLUSTER},
     };
 static const std::unordered_map<SirEngine::SHADER_TYPE_FLAGS, std::string>
     TYPE_FLAGS_TO_STRING{
@@ -83,6 +85,8 @@ static const std::unordered_map<SirEngine::SHADER_TYPE_FLAGS, std::string>
          "debugTrianglesSingleColor"},
         {SirEngine::SHADER_TYPE_FLAGS::SKINCLUSTER,
          "skinCluster"},
+        {SirEngine::SHADER_TYPE_FLAGS::SKINSKINCLUSTER,
+         "skinSkinCluster"},
     };
 
 } // namespace materialKeys
@@ -193,6 +197,40 @@ void bindSkin(const MaterialRuntime &materialRuntime,
   // HARDCODED stencil value might have to think of a nice way to handle this
   commandList->OMSetStencilRef(static_cast<uint32_t>(STENCIL_REF::SSSSS));
 }
+void bindSkinSkinning(const MaterialRuntime &materialRuntime,
+              ID3D12GraphicsCommandList2 *commandList) {
+  commandList->SetGraphicsRootConstantBufferView(
+      1, materialRuntime.cbVirtualAddress);
+  commandList->SetGraphicsRootDescriptorTable(2, materialRuntime.albedo);
+  commandList->SetGraphicsRootDescriptorTable(3, materialRuntime.normal);
+  commandList->SetGraphicsRootDescriptorTable(4, materialRuntime.metallic);
+  commandList->SetGraphicsRootDescriptorTable(5, materialRuntime.roughness);
+  // bind extra thickness map
+  commandList->SetGraphicsRootDescriptorTable(6, materialRuntime.thickness);
+
+  //need to bind the skinning data
+  const SkinHandle skHandle = materialRuntime.skinHandle;
+  const SkinData& data = globals::SKIN_MANAGER->getSkinData(skHandle);
+  //now we have both static buffers, influences and weights
+  //dx12::BUFFER_MANAGER->bindBufferAsSRVDescriptorTable(data.influencesBuffer,6,commandList);
+
+  dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.influencesBuffer,7,commandList);
+  dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.weightsBuffer,8,commandList);
+  //now we need to update the matrices buffer and bind it!
+  //get the mapped data pointer of the gpu buffer
+  void * mappedData = dx12::BUFFER_MANAGER->getMappedData(data.matricesBuffer);
+  assert(mappedData!=nullptr);
+  //get the actual updated matrices buffer
+  AnimationConfig animConfig = globals::ANIMATION_MANAGER->getConfig(data.animHandle);
+  const auto& matricesDataToCopy = animConfig.m_anim_state->m_pose->m_globalPose;
+  memcpy(mappedData, matricesDataToCopy.data(),matricesDataToCopy.size()*sizeof(float)*16);
+
+  //finally binding it
+  dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.matricesBuffer,9,commandList);
+
+  // HARDCODED stencil value might have to think of a nice way to handle this
+  commandList->OMSetStencilRef(static_cast<uint32_t>(STENCIL_REF::SSSSS));
+}
 void bindForwardPBR(const MaterialRuntime &materialRuntime,
                     ID3D12GraphicsCommandList2 *commandList) {
   const ConstantBufferHandle lightCB = globals::RENDERING_CONTEXT->getLightCB();
@@ -280,6 +318,10 @@ void MaterialManager::bindMaterial(const MaterialRuntime &materialRuntime,
   }
   case (SHADER_TYPE_FLAGS::SKINCLUSTER): {
     bindSkinning(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::SKINSKINCLUSTER): {
+    bindSkinSkinning(materialRuntime, commandList);
     break;
   }
   default: {

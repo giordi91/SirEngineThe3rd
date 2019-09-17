@@ -1,5 +1,5 @@
 {
-  "gbufferPBRSkinningRS": {
+  "gbufferPBRSkinSkinningRS": {
     "type": "RASTER",
     "staticSamplers": true,
     "config": [
@@ -76,6 +76,19 @@
         }
       },
       {
+        "comment": "thickness tex",
+        "type": "descriptorTable",
+        "data": {
+          "ranges": [
+            {
+              "type": "SRV",
+              "numDescriptors": 1,
+              "baseRegister": 4
+            }
+          ]
+        }
+      },
+      {
         "comment": "skinIndices",
         "type": "SRV",
         "data": { "baseRegister": 5 },
@@ -93,6 +106,8 @@
         "data": { "baseRegister": 7 },
         "visibility": "ALL"
       }
+
+ 
 
     ],
     "flags": [ "D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT" ]

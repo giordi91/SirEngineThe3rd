@@ -23,6 +23,12 @@
       "material": "../data/materials/knightBPlatesSkin.json",
       "skin": "../data/processed/meshes/knightB/plates.skin",
       "animConfig": "../data/external/animation/exported/clip/knightBIdleConfig.json"
+    },  
+    {
+      "mesh": "../data/processed/meshes/knightB/face.model",
+      "material": "../data/materials/knightBFaceSkin.json",
+      "skin": "../data/processed/meshes/knightB/face.skin",
+      "animConfig": "../data/external/animation/exported/clip/knightBIdleConfig.json"
     }  
 
   ]
