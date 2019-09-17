@@ -11,12 +11,11 @@
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/TextureManagerDx12.h"
-#include "platform/windows/graphics/dx12/bufferManagerDx12.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
 
 namespace SirEngine::dx12 {
 void DebugRenderer::init() {
-  // lests build the map of rs and pso
+  // lets build the map of rs and pso
   // points single color
   PSOHandle psoHandle =
       dx12::PSO_MANAGER->getHandleFromName("debugDrawPointsSingleColorPSO");
@@ -35,20 +34,6 @@ void DebugRenderer::init() {
   m_shderTypeToShaderBind[static_cast<uint16_t>(
       SHADER_TYPE_FLAGS::DEBUG_LINES_SINGLE_COLOR)] =
       ShaderBind{rsHandle, psoHandle};
-}
-void DebugRenderer::cleanPerFrame() {
-
-  /*
-for (auto &prim : m_primToFree) {
-prim.buffer->Release();
-dx12::CONSTANT_BUFFER_MANAGER->free(prim.cbHandle);
-}
-*/
-  // for (auto &queue : m_renderables) {
-  //  for (auto &prim : queue.second) {
-  //    // dx12::CONSTANT_BUFFER_MANAGER->free
-  //  }
-  //}
 }
 
 inline ID3D12Resource *
@@ -252,7 +237,7 @@ DebugRenderer::drawLinesUniformColor(float *data, const uint32_t sizeInByte,
   const uint32_t storeHandle =
       static_cast<uint32_t>(queue) | (static_cast<uint32_t>(type) << 16);
 
-  DebugTracker tracker;
+  DebugTracker tracker{};
   tracker.compoundCount = 0;
   tracker.index = m_renderables[storeHandle].size();
   tracker.magicNumber = MAGIC_NUMBER_COUNTER;

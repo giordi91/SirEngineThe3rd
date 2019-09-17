@@ -60,7 +60,6 @@ struct SSSSSConfig {
 	float2 direction;
 };
 
-
 struct DebugPointsFixedColor
 {
     float4 color;
