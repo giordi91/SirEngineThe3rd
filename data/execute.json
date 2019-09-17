@@ -8,8 +8,11 @@
       "-p ../data/external/meshes/knightB/plates.obj -o ../data/processed/meshes/knightB/plates.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/plates.tangents --skin ../data/external/animation/exported/skin/knightBPlatesSkin.json\"",
       "-p ../data/external/meshes/knightB/plates.obj -o ../data/processed/meshes/knightB/plates.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/plates.tangents --skin ../data/external/animation/exported/skin/knightBPlatesSkin.json\"",
       "-p ../data/external/meshes/knightB/face.obj -o ../data/processed/meshes/knightB/face.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/face.tangents --skin ../data/external/animation/exported/skin/knightBFaceSkin.json \"",
+      "-p ../data/external/meshes/knightB/eyeLashes.obj -o ../data/processed/meshes/knightB/eyeLashes.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/eyeLashes.tangents --skin ../data/external/animation/exported/skin/knightBLashesSkin.json \"",
       "-p ../data/shaders/rasterization/basicMeshVSTexSkinning.hlsl -o ../data/processed/shaders/rasterization/basicMeshVSTexSkinning.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t vs_6_2  -e VS -d \"",
       "-p ../data/rs/gbufferPBRSkinningRS.json -o ../data/processed/rs/gbufferPBRSkinningRS.root --pluginName rootSignatureCompilerPlugin",
-      "-p ../data/rs/gbufferPBRSkinSkinningRS.json -o ../data/processed/rs/gbufferPBRSkinSkinningRS.root --pluginName rootSignatureCompilerPlugin"
+      "-p ../data/rs/gbufferPBRSkinSkinningRS.json -o ../data/processed/rs/gbufferPBRSkinSkinningRS.root --pluginName rootSignatureCompilerPlugin",
+      "-p ../data/external/meshes/knightB/eyeNew.obj -o ../data/processed/meshes/knightB/eyeNew.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/eyeNew.tangents --skin ../data/external/animation/exported/skin/knightBEyeSkin.json\"",
+      "-p ../data/rs/forwardPhongAlphaCutoutSkinRS.json -o ../data/processed/rs/forwardPhongAlphaCutoutSkinRS.root --pluginName rootSignatureCompilerPlugin"
     ]
 }
