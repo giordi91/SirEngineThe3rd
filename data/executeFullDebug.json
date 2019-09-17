@@ -4,11 +4,11 @@
       "-p ../data/meshes/pSphere1.obj -o ../data/processed/meshes/pSphere1.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/meshes/pSphere1.tangents\"",
       "-p ../data/meshes/skybox.obj -o ../data/processed/meshes/skybox.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/meshes/skybox.tangents\"",
       "-p ../data/external/meshes/cerberus.obj -o ../data/processed/meshes/cerberus.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/meshes/cerberus.tangents\"",
-      "-p ../data/external/meshes/knightB/jacket.obj -o ../data/processed/meshes/knightB/jacket.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/jacket.tangents\"",
-      "-p ../data/external/meshes/knightB/pants.obj -o ../data/processed/meshes/knightB/pants.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/pants.tangents\"",
-      "-p ../data/external/meshes/knightB/belt.obj -o ../data/processed/meshes/knightB/belt.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/belt.tangents\"",
+      "-p ../data/external/meshes/knightB/jacket.obj -o ../data/processed/meshes/knightB/jacket.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/jacket.tangents --skin ../data/external/animation/exported/skin/knightBJacketSkin.json\"",
+      "-p ../data/external/meshes/knightB/pants.obj -o ../data/processed/meshes/knightB/pants.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/pants.tangents --skin ../data/external/animation/exported/skin/knightBPantsSkin.json\"",
+      "-p ../data/external/meshes/knightB/belt.obj -o ../data/processed/meshes/knightB/belt.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/belt.tangents --skin ../data/external/animation/exported/skin/knightBBeltsSkin.json\"",
+      "-p ../data/external/meshes/knightB/plates.obj -o ../data/processed/meshes/knightB/plates.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/plates.tangents --skin ../data/external/animation/exported/skin/knightBPlatesSkin.json\"",
       "-p ../data/external/meshes/knightB/cape.obj -o ../data/processed/meshes/knightB/cape.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/cape.tangents\"",
-      "-p ../data/external/meshes/knightB/plates.obj -o ../data/processed/meshes/knightB/plates.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/plates.tangents\"",
       "-p ../data/external/meshes/knightB/sword.obj -o ../data/processed/meshes/knightB/sword.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/sword.tangents\"",
       "-p ../data/external/meshes/knightB/face.obj -o ../data/processed/meshes/knightB/face.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/face.tangents\"",
       "-p ../data/external/meshes/knightB/eyeBalls.obj -o ../data/processed/meshes/knightB/eyeBalls.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/eyeBalls.tangents\"",
@@ -17,9 +17,13 @@
       "-p ../data/external/meshes/knightB/eyeLashes.obj -o ../data/processed/meshes/knightB/eyeLashes.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/eyeLashes.tangents\"",
       "-p ../data/external/meshes/knightB/hair.obj -o ../data/processed/meshes/knightB/hair.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/hair.tangents\"",
 
+
       "-p ../data/external/meshes/eye/eye.obj -o ../data/processed/meshes/eye/eye.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/eye/eye.tangents\"",
 
       "-p ../data/external/meshes/flatGround/flatGround.obj -o ../data/processed/meshes/flatGround/flatGround.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/flatGround/flatGround.tangents\"",
+
+      "-p ../data/external/animation/exported/clip/knightBIdle.json -o ../data/processed/clip/knightB/knightBIdle.clip --pluginName animationCompilerPlugin",
+
 
       "-p ../data/shaders/rasterization/basicMeshVS.hlsl -o ../data/processed/shaders/rasterization/basicMeshVS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t vs_6_2  -e VS -d \"",
       "-p ../data/shaders/rasterization/meshPositionOnlyVS.hlsl -o ../data/processed/shaders/rasterization/meshPositionOnlyVS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t vs_6_2  -e VS -d \"",
