@@ -44,7 +44,6 @@ class DebugRenderer {
 public:
   DebugRenderer() = default;
   void init();
-  void cleanPerFrame();
 
   void cleanup() {
     // for (auto &deb : m_persistante_q) {
@@ -68,9 +67,10 @@ public:
   void render(TextureHandle input, TextureHandle depth);
   void clearUploadRequests();
 
-private:
   DebugRenderer(const DebugRenderer &) = delete;
   DebugRenderer &operator=(const DebugRenderer &) = delete;
+
+private:
   void renderQueue(
       std::unordered_map<uint32_t, std::vector<DebugPrimitive>> &inQueue,
       const TextureHandle input, const TextureHandle depth);
