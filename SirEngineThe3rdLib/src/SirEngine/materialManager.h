@@ -90,8 +90,9 @@ enum class SHADER_TYPE_FLAGS {
   DEBUG_LINES_COLORS = 9,
   DEBUG_TRIANGLE_SINGLE_COLOR = 10,
   DEBUG_TRIANGLE_COLORS = 11,
-  SKINCLUSTER= 12,
-  SKINSKINCLUSTER= 13,
+  SKINCLUSTER = 12,
+  SKINSKINCLUSTER = 13,
+  FORWARD_PHONG_ALPHA_CUTOUT_SKIN = 14,
 };
 
 class MaterialManager final {
@@ -111,7 +112,8 @@ public:
 
   void init(){};
   MaterialHandle loadMaterial(const char *path,
-                              MaterialRuntime *materialRuntime,const SkinHandle handle);
+                              MaterialRuntime *materialRuntime,
+                              const SkinHandle handle);
 
   inline SHADER_TYPE_FLAGS getTypeFlags(const uint32_t flags) {
     // here we are creating a mask for the fist 16 bits, then we flip it

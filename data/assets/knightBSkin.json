@@ -29,7 +29,25 @@
       "material": "../data/materials/knightBFaceSkin.json",
       "skin": "../data/processed/meshes/knightB/face.skin",
       "animConfig": "../data/external/animation/exported/clip/knightBIdleConfig.json"
-    }  
+    },  
+    {
+      "mesh": "../data/processed/meshes/knightB/face.model",
+      "material": "../data/materials/knightBFaceSkin.json",
+      "skin": "../data/processed/meshes/knightB/face.skin",
+      "animConfig": "../data/external/animation/exported/clip/knightBIdleConfig.json"
+    },  
+    {
+      "mesh": "../data/processed/meshes/knightB/eyeNew.model",
+      "material": "../data/materials/eyeMaterialSkin.json",
+      "skin": "../data/processed/meshes/knightB/eyeNew.skin",
+      "animConfig": "../data/external/animation/exported/clip/knightBIdleConfig.json"
+    },
+    {
+      "mesh": "../data/processed/meshes/knightB/eyeLashes.model",
+      "material": "../data/materials/knightBEyeLashesMaterialSkin.json",
+      "skin": "../data/processed/meshes/knightB/eyeLashes.skin",
+      "animConfig": "../data/external/animation/exported/clip/knightBIdleConfig.json"
+    }
 
   ]
 }
