@@ -2,9 +2,9 @@
 #include "../common/vertexDefinitions.hlsl"
 
 ConstantBuffer<CameraBuffer> g_cameraBuffer : register(b0);
-StructuredBuffer<int> g_influences : register(t4);
-StructuredBuffer<float> g_weights : register(t5);
-StructuredBuffer<float4x4> g_matrices : register(t6);
+StructuredBuffer<int> g_influences : register(t5);
+StructuredBuffer<float> g_weights : register(t6);
+StructuredBuffer<float4x4> g_matrices : register(t7);
 static const int NUMBER_OF_INFLUENCES = 6;
 
 
