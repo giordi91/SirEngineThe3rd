@@ -47,7 +47,14 @@
       "material": "../data/materials/knightBEyeLashesMaterialSkin.json",
       "skin": "../data/processed/meshes/knightB/eyeLashes.skin",
       "animConfig": "../data/external/animation/exported/clip/knightBIdleConfig.json"
+    },
+    {
+      "mesh": "../data/processed/meshes/knightB/hair.model",
+      "material": "../data/materials/knightBHairMaterialSkin.json",
+      "skin": "../data/processed/meshes/knightB/hair.skin",
+      "animConfig": "../data/external/animation/exported/clip/knightBIdleConfig.json"
     }
+
 
   ]
 }

@@ -48,6 +48,7 @@ static const std::unordered_map<std::string, SirEngine::SHADER_TYPE_FLAGS>
          SirEngine::SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT},
         {"skin", SirEngine::SHADER_TYPE_FLAGS::SKIN},
         {"hair", SirEngine::SHADER_TYPE_FLAGS::HAIR},
+        {"hairSkin", SirEngine::SHADER_TYPE_FLAGS::HAIRSKIN},
         {"debugLinesColors", SirEngine::SHADER_TYPE_FLAGS::DEBUG_LINES_COLORS},
         {"debugLinesSingleColor",
          SirEngine::SHADER_TYPE_FLAGS::DEBUG_LINES_SINGLE_COLOR},
@@ -74,6 +75,7 @@ static const std::unordered_map<SirEngine::SHADER_TYPE_FLAGS, std::string>
          "forwardPhongAlphaCutout"},
         {SirEngine::SHADER_TYPE_FLAGS::SKIN, "skin"},
         {SirEngine::SHADER_TYPE_FLAGS::HAIR, "hair"},
+        {SirEngine::SHADER_TYPE_FLAGS::HAIRSKIN, "hairSkin"},
         {SirEngine::SHADER_TYPE_FLAGS::DEBUG_LINES_COLORS, "debugLinesColors"},
         {SirEngine::SHADER_TYPE_FLAGS::DEBUG_LINES_SINGLE_COLOR,
          "debugLinesSingleColor"},
@@ -332,6 +334,45 @@ void bindHair(const MaterialRuntime &materialRuntime,
   // HARDCODED stencil value might have to think of a nice way to handle this
   commandList->OMSetStencilRef(static_cast<uint32_t>(STENCIL_REF::CLEAR));
 }
+void bindHairSkin(const MaterialRuntime &materialRuntime,
+              ID3D12GraphicsCommandList2 *commandList) {
+  const ConstantBufferHandle lightCB = globals::RENDERING_CONTEXT->getLightCB();
+  const auto address =
+      dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(lightCB);
+
+  commandList->SetGraphicsRootConstantBufferView(1, address);
+  commandList->SetGraphicsRootConstantBufferView(
+      2, materialRuntime.cbVirtualAddress);
+  commandList->SetGraphicsRootDescriptorTable(3, materialRuntime.albedo);
+  commandList->SetGraphicsRootDescriptorTable(4, materialRuntime.normal);
+  commandList->SetGraphicsRootDescriptorTable(5, materialRuntime.separateAlpha);
+  commandList->SetGraphicsRootDescriptorTable(6, materialRuntime.ao);
+
+  //need to bind the skinning data
+  const SkinHandle skHandle = materialRuntime.skinHandle;
+  const SkinData& data = globals::SKIN_MANAGER->getSkinData(skHandle);
+  //now we have both static buffers, influences and weights
+  //dx12::BUFFER_MANAGER->bindBufferAsSRVDescriptorTable(data.influencesBuffer,6,commandList);
+
+  //TODO UPLOAD THIS DATA ONLY ONCE!! the first time is used or as prepass early in the
+  //frame, binding material should not worry about upload
+  dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.influencesBuffer,7,commandList);
+  dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.weightsBuffer,8,commandList);
+  //now we need to update the matrices buffer and bind it!
+  //get the mapped data pointer of the gpu buffer
+  void * mappedData = dx12::BUFFER_MANAGER->getMappedData(data.matricesBuffer);
+  assert(mappedData!=nullptr);
+  //get the actual updated matrices buffer
+  AnimationConfig animConfig = globals::ANIMATION_MANAGER->getConfig(data.animHandle);
+  const auto& matricesDataToCopy = animConfig.m_anim_state->m_pose->m_globalPose;
+  memcpy(mappedData, matricesDataToCopy.data(),matricesDataToCopy.size()*sizeof(float)*16);
+
+  //finally binding it
+  dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.matricesBuffer,9,commandList);
+
+  // HARDCODED stencil value might have to think of a nice way to handle this
+  commandList->OMSetStencilRef(static_cast<uint32_t>(STENCIL_REF::CLEAR));
+}
 
 void MaterialManager::bindMaterial(const MaterialRuntime &materialRuntime,
                                    ID3D12GraphicsCommandList2 *commandList) {
@@ -368,6 +409,10 @@ void MaterialManager::bindMaterial(const MaterialRuntime &materialRuntime,
   }
   case (SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT_SKIN): {
     bindForwardPhongAlphaCutoutSkin(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::HAIRSKIN): {
+    bindHairSkin(materialRuntime, commandList);
     break;
   }
   default: {

@@ -1,0 +1,13 @@
+{
+  "kd" : [0.01,0.01,0.01,1.0],
+  "ks" : [1.0,1.0,1.0,1.0],
+  "ka" : [0.1,0.1,0.1,1.0],
+  "pbr" : [1.0,1.0,0.1,1.0],
+  "shiness":200.0,
+  "albedo" :  "../data/processed/textures/knightB/hair_A.texture",
+  "normal" :  "../data/processed/textures/knightB/hair_N.texture",
+  "ao" :  "../data/processed/textures/knightB/hair_AO.texture",
+  "separateAlpha" :  "../data/processed/textures/knightB/hair_ALPHA.texture",
+  "queue" :  ["forward"],
+  "type": "hairSkin"
+}
