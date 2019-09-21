@@ -23,6 +23,7 @@
       "-p ../data/external/meshes/flatGround/flatGround.obj -o ../data/processed/meshes/flatGround/flatGround.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/flatGround/flatGround.tangents\"",
 
       "-p ../data/external/animation/exported/clip/knightBIdle.json -o ../data/processed/clip/knightB/knightBIdle.clip --pluginName animationCompilerPlugin",
+      "-p ../data/external/animation/exported/clip/knightBWalk.json -o ../data/processed/clip/knightB/knightBWalk.clip --pluginName animationCompilerPlugin",
 
 
       "-p ../data/shaders/rasterization/basicMeshVS.hlsl -o ../data/processed/shaders/rasterization/basicMeshVS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t vs_6_2  -e VS -d \"",
