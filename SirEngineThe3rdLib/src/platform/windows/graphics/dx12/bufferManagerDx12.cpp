@@ -1,6 +1,7 @@
 #include "platform/windows/graphics/dx12/bufferManagerDx12.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include <cassert>
+#include "SirEngine/log.h"
 
 namespace SirEngine::dx12 {
 ID3D12Resource *
@@ -171,5 +172,28 @@ void BufferManagerDx12::bindBufferAsSRVGraphics(
 
   commandList->SetGraphicsRootShaderResourceView(
       slot, data.data->GetGPUVirtualAddress());
+}
+
+void BufferManagerDx12::clearUploadRequests()
+{
+
+  const auto id = GLOBAL_FENCE->GetCompletedValue();
+  const int requestSize = static_cast<int>(m_uploadRequests.size()) - 1;
+  int stackTopIdx = requestSize;
+  for (int i = requestSize; i >= 0; --i) {
+    UploadRequest&upload = m_uploadRequests[i];
+    if (upload.fence < id) {
+      // we can free the memory
+		upload.uploadBuffer->Release();
+		SE_CORE_INFO("Freed buffer upload with fence {0}", upload.fence);
+      if (stackTopIdx != i) {
+        // lets copy
+        m_uploadRequests[i] = m_uploadRequests[stackTopIdx];
+      }
+      --stackTopIdx;
+    }
+  }
+  // resizing the vector
+  m_uploadRequests.resize(stackTopIdx + 1);
 }
 } // namespace SirEngine::dx12

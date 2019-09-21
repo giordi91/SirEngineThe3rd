@@ -7,27 +7,6 @@
 #include "bufferManagerDx12.h"
 
 namespace SirEngine::dx12 {
-void MeshManager::clearUploadRequests() {
-
-  const auto id = GLOBAL_FENCE->GetCompletedValue();
-  const int requestSize = static_cast<int>(m_uploadRequests.size()) - 1;
-  int stackTopIdx = requestSize;
-  for (int i = requestSize; i >= 0; --i) {
-    MeshUploadResource &upload = m_uploadRequests[i];
-    if (upload.fence < id) {
-      // we can free the memory
-      upload.uploadVertexBuffer->Release();
-      // upload.uploadIndexBuffer->Release();
-      if (stackTopIdx != i) {
-        // lets copy
-        m_uploadRequests[i] = m_uploadRequests[stackTopIdx];
-      }
-      --stackTopIdx;
-    }
-  }
-  // resizing the vector
-  m_uploadRequests.resize(stackTopIdx + 1);
-}
 
 static ID3D12Resource *createDefaultBuffer(ID3D12Device *device,
                                            ID3D12GraphicsCommandList *cmdList,

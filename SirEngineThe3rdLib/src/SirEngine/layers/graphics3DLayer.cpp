@@ -27,8 +27,8 @@
 #include "SirEngine/graphics/renderingContext.h"
 
 #include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
+#include "platform/windows/graphics/dx12/bufferManagerDx12.h"
 #include "platform/windows/graphics/dx12/PSOManager.h"
-#include "SirEngine/animation/animationClip.h"
 #include "SirEngine/skinClusterManager.h"
 
 namespace SirEngine {
@@ -194,7 +194,7 @@ void Graphics3DLayer::onUpdate() {
 
   // making any clean up for the mesh manager if we have to
   dx12::CONSTANT_BUFFER_MANAGER->clearUpQueueFree();
-  dx12::MESH_MANAGER->clearUploadRequests();
+  dx12::BUFFER_MANAGER->clearUploadRequests();
 }
 void Graphics3DLayer::onEvent(Event &event) {
   EventDispatcher dispatcher(event);

@@ -67,5 +67,6 @@ Features:
 
 ![alt text](./images/04_walk.gif "test")
 
-*** Credits ***
+***Credits***
+
 Copyright (c) 2010-2016 Richard Geldreich, Jr., Tenacious Software, and Binomial LLC
