@@ -84,6 +84,7 @@
       "-p ../data/rs/forwardPhongAlphaCutoutRS.json -o ../data/processed/rs/forwardPhongAlphaCutoutRS.root --pluginName rootSignatureCompilerPlugin",
       "-p ../data/rs/forwardPhongAlphaCutoutSkinRS.json -o ../data/processed/rs/forwardPhongAlphaCutoutSkinRS.root --pluginName rootSignatureCompilerPlugin",
       "-p ../data/rs/hairRS.json -o ../data/processed/rs/hairRS.root --pluginName rootSignatureCompilerPlugin",
+      "-p ../data/rs/hairSkinRS.json -o ../data/processed/rs/hairSkinRS.root --pluginName rootSignatureCompilerPlugin",
       "-p ../data/rs/debugDrawPointsSingleColorRS.json -o ../data/processed/rs/debugDrawPointsSingleColorRS.root --pluginName rootSignatureCompilerPlugin",
       "-p ../data/rs/debugDrawLinesSingleColorRS.json -o ../data/processed/rs/debugDrawLinesSingleColorRS.root --pluginName rootSignatureCompilerPlugin",
         
