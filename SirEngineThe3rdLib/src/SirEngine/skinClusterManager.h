@@ -34,6 +34,8 @@ public:
 	  return m_skinPool.getConstRef(idx);
   }
 
+  void uploadDirtyMatrices();
+
 private:
   static inline uint32_t getIndexFromHandle(const SkinHandle h) {
     return h.handle & INDEX_MASK;

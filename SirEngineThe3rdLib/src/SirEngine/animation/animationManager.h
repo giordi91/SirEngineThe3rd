@@ -15,6 +15,7 @@ struct SkeletonPose;
 struct AnimationClip;
 struct AnimState;
 
+
 struct AnimationConfig {
   AnimationClip *m_animationClip = nullptr;
   Skeleton *m_skeleton = nullptr;
@@ -33,7 +34,11 @@ public:
   // those functions either get an already loaded json file
   // or the full path to the json to load
   AnimationConfigHandle loadAnimationConfig(const char *path);
-  void init(){};
+  void init(){}
+  const ResizableVector<AnimState*>& getAnimStates()const
+  {
+	  return m_activeAnims;
+  }
 
   inline AnimationConfig getConfig(const AnimationConfigHandle handle) const {
     AnimationConfig config{};

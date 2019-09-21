@@ -47,7 +47,7 @@ inline DirectX::XMFLOAT3 lerp3(const DirectX::XMFLOAT3 &v1,
       ((1.0f - amount) * v1.z) + (amount * v2.z),
   };
 }
-void AnimState::updateGlobalByAnim(const long long stampNS) const {
+void AnimState::updateGlobalByAnim(const long long stampNS) {
   assert(clip != nullptr);
   assert(stampNS >= 0);
   const int globalSize = m_pose->m_globalPose.size();
@@ -103,6 +103,7 @@ void AnimState::updateGlobalByAnim(const long long stampNS) const {
   // now that the anim has been blended I will compute the
   // matrices in world-space (skin ready)
   m_pose->updateGlobalFromLocal();
+  m_flags = ANIM_FLAGS::NEW_MATRICES;
 }
 
 } // namespace SirEngine
