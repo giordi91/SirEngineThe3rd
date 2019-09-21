@@ -5,10 +5,10 @@
 namespace SirEngine {
 
 struct AnimPose {
-  // std::vector<JointPose> m_local_pose;
-  JointPose* m_local_pose = nullptr;
+  JointPose *m_local_pose = nullptr;
   uint32_t size;
 };
+enum class ANIM_FLAGS { READY = 1, NEW_MATRICES = 2 };
 
 struct AnimationClip {
 
@@ -16,8 +16,8 @@ struct AnimationClip {
   ~AnimationClip();
   bool initialize(const char *path);
 
-  JointPose * m_poses;
-  const char* m_name;
+  JointPose *m_poses;
+  const char *m_name;
   int m_frameCount;
   int m_bonesPerFrame;
   float m_frameRate;
@@ -43,7 +43,8 @@ struct AnimState {
   // the calculation, any kind of sync need to be done with the
   // global clock
   long long globalStartStamp;
+  ANIM_FLAGS m_flags = ANIM_FLAGS::READY;
 
-  void updateGlobalByAnim(long long stampNS) const;
+  void updateGlobalByAnim(long long stampNS) ;
 };
 } // namespace SirEngine
