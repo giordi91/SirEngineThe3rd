@@ -13,7 +13,8 @@ Here a I will keep a chronological list of the progress:
 ##### Table of Contents  
 [0.1.0: basic window](#v010)  
 [0.2.0: basic engine arch](#v020)  
-[0.3.0: PBR shader](#v020)  
+[0.3.0: PBR shader](#v030)  
+[0.3.0: Fully skinned character](#v040)  
 
 ## 0.1.0 <a name="v010"/>
 This version is the most basic version of the engine, but starts to put togheter the foundation of the engine:
@@ -52,6 +53,19 @@ This main goal of this version was to give a first good crack at the graphics: f
 * AMD work to fetch data out of the card like core freq etc
 
 ![alt text](./images/03_PBR.png "test")
+
+## 0.4.0 <a name="v040"/>
+The main goeal of this release was to get a full character in, this required several shader
+to be created for the head, and animation skinning implementation.
+Features:
+* Screen space subsurface scattering, basic implementation, required extension to use stencil
+* Alpha cut out for hair, added forward pass to support transparen shader
+* Added animation import and evaluation, (compiler plugin to compile animations)
+* Added debug renderer to debug skeletons
+* Added skincluster shaders and matrices upload
+* Skinning required refactoring of the whole buffer management
+
+![alt text](./images/04_walk.gif "test")
 
 *** Credits ***
 Copyright (c) 2010-2016 Richard Geldreich, Jr., Tenacious Software, and Binomial LLC
