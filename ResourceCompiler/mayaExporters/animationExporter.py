@@ -78,7 +78,8 @@ def save_anim(root,anim_name,skeleton_name,looping,start, end , path, frame_rate
             "type" : "clip",
             "name" : anim_name,
             "skeleton_name": skeleton_name,
-            "frame_rate":frame_rate}
+            "frame_rate":frame_rate,
+			"bonesPerPose": len(data[0])}
 
     to_save = json.dumps(full)
     f = open( path, 'w')
