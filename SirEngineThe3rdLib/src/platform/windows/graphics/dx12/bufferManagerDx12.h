@@ -82,6 +82,7 @@ public:
     }
     return counter;
   }
+  void clearUploadRequests();
 
   // inline BufferHandle getHandleFromName(const char *name) {
   //  auto found = m_nameToHandle.find(name);

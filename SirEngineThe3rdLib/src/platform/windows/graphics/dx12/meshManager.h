@@ -171,7 +171,6 @@ public:
     fc->commandList->DrawIndexedInstanced(runtime.indexCount, 1, 0, 0, 0);
   }
 
-  void clearUploadRequests();
 
 private:
   SparseMemoryPool<MeshData> m_meshPool;
