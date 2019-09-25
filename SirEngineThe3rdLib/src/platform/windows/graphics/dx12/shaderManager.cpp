@@ -35,7 +35,7 @@ ID3DBlob *loadCompiledShader(const std::string &filename) {
 }
 
 void ShaderManager::loadShaderFile(const char *path) {
-  auto exp_path = std::experimental::filesystem::path(path);
+  auto exp_path = std::filesystem::path(path);
   std::string name = exp_path.stem().string();
   if (m_stringToShader.find(name) == m_stringToShader.end()) {
     ID3DBlob *blob = loadCompiledShader(path);
@@ -93,7 +93,7 @@ ShaderMetadata *extractShaderMetadata(StackAllocator &alloc,
 }
 
 void ShaderManager::loadShaderBinaryFile(const char *path) {
-  const auto expPath = std::experimental::filesystem::path(path);
+  const auto expPath = std::filesystem::path(path);
   const std::string name = expPath.stem().string();
   if (m_stringToShader.find(name) == m_stringToShader.end()) {
     // TODO just use scrap memory for this instead of a heap alloc
@@ -143,7 +143,7 @@ void ShaderManager::recompileShader(const char *path, const char *offsetPath,
   ID3DBlob *compiledShader =
       m_compiler->compileShader(fullShaderPath.c_str(), args, log);
   if (compiledShader != nullptr) {
-    auto exp_path = std::experimental::filesystem::path(path);
+    auto exp_path = std::filesystem::path(path);
     std::string name = exp_path.stem().string();
     // release old shader
     blob.shader->Release();

@@ -37,5 +37,33 @@ add_subdirectory(Compressonator)
 add_subdirectory(crunch)
 add_subdirectory(imgui)
 add_subdirectory(DirectXTK12)
+add_subdirectory(farmhash)
+
+
+file(COPY "Catch2/single_include/catch2/" DESTINATION ${CMAKE_SOURCE_DIR}/../builtDependencies/includes/catch )
+file(COPY "spdlog/include/spdlog" DESTINATION ${CMAKE_SOURCE_DIR}/../builtDependencies/includes/ )
+
+file(COPY "cxxopts/include/cxxopts.hpp" DESTINATION ${CMAKE_SOURCE_DIR}/../builtDependencies/includes/cxxopts )
+
+file(COPY "tinyobjloader/tiny_obj_loader.h" DESTINATION ${CMAKE_SOURCE_DIR}/../builtDependencies/includes/tinyobjloader )
+file(COPY "json/include/nlohmann" DESTINATION ${CMAKE_SOURCE_DIR}/../builtDependencies/includes/ )
+file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/../builtDependencies/includes/amd)
+file(COPY "display-library/include/adl_defines.h" DESTINATION ${CMAKE_SOURCE_DIR}/../builtDependencies/includes/amd )
+file(COPY "display-library/include/adl_sdk.h" DESTINATION ${CMAKE_SOURCE_DIR}/../builtDependencies/includes/amd )
+file(COPY "display-library/include/adl_structures.h" DESTINATION ${CMAKE_SOURCE_DIR}/../builtDependencies/includes/amd )
+
+file(COPY "stb/stb_image.h" DESTINATION ${CMAKE_SOURCE_DIR}/../builtDependencies/includes/stb )
+
+#pix event, might want to do this only on windows
+if(WIN32)
+file(COPY "PixEvent/Include/WinPixEventRuntime" DESTINATION ${CMAKE_SOURCE_DIR}/../builtDependencies/includes/WinPixEventRuntime)
+file(COPY "PixEvent/bin/WinPixEventRuntime.lib" DESTINATION ${CMAKE_SOURCE_DIR}/../builtDependencies/windows/Release)
+file(COPY "PixEvent/bin/WinPixEventRuntime.lib" DESTINATION ${CMAKE_SOURCE_DIR}/../builtDependencies/windows/Debug)
+endif()
+
+#fuzzy match
+file(COPY "lib_fts/code/fts_fuzzy_match.h" DESTINATION ${CMAKE_SOURCE_DIR}/../builtDependencies/includes/lib_fts/ )
+
+
 
 

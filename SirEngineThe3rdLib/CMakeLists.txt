@@ -6,7 +6,7 @@ project(SirEngineThe3rdLib)
     file(GLOB_RECURSE SOURCE_FILES "src/*.cpp" "src/*.h")
 
     message (STATUS ${CMAKE_CURRENT_SOURCE_DIR})
-    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/vendors/includes
+    include_directories(${CMAKE_SOURCE_DIR}/builtDependencies/includes
 						${CMAKE_CURRENT_SOURCE_DIR}/src
 	)
 
@@ -95,7 +95,10 @@ project(SirEngineThe3rdLib)
             PROPERTIES HEADER_FILE_ONLY TRUE
          )
 
-	link_directories(${CMAKE_BINARY_DIR}/bin/$<CONFIGURATION>)
+	#link_directories(${CMAKE_BINARY_DIR}/bin/$<CONFIGURATION>)
+	if(WIN32)
+		link_directories(${CMAKE_SOURCE_DIR}/builtDependencies/windows/$<CONFIGURATION>)
+	endif()
     #adding the executable
     add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES} ${INCLUDES_FILES} ${ASSETS_FILES}
 	${MATERIAL_FILES}
@@ -119,7 +122,7 @@ project(SirEngineThe3rdLib)
 	SET(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 
 	#file(COPY "PixEvent/bin/WinPixEventRuntime.dll" DESTINATION "${CMAKE_BINARY_DIR}/bin")
-	target_link_libraries(${PROJECT_NAME} d3dcompiler dxcompiler DXGI D3D12 imgui DXTK12 farmhash WinPixEventRuntime)
+	target_link_libraries(${PROJECT_NAME} d3dcompiler dxcompiler farmhash DXGI D3D12 imgui DXTK12 WinPixEventRuntime)
 
 	#need to copy pix event
 	add_custom_command(
