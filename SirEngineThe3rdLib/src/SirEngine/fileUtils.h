@@ -16,12 +16,12 @@ inline void listFilesInFolder(const char *folderPath,
                               std::string extension = "NONE") {
   bool shouldFilter = extension != "NONE";
   std::string _extension = "." + extension;
-  auto program_p = std::experimental::filesystem::path(folderPath);
-  auto dirIt = std::experimental::filesystem::directory_iterator(program_p);
+  auto program_p = std::filesystem::path(folderPath);
+  auto dirIt = std::filesystem::directory_iterator(program_p);
   for (auto p : dirIt) {
-    bool isDir = std::experimental::filesystem::is_directory(p);
+    bool isDir = std::filesystem::is_directory(p);
     if (!isDir) {
-      auto path = std::experimental::filesystem::path(p);
+      auto path = std::filesystem::path(p);
 
       if (shouldFilter && !(path.extension() == _extension)) {
         continue;
@@ -33,26 +33,26 @@ inline void listFilesInFolder(const char *folderPath,
   }
 }
 inline std::string getFileName(const std::string &path) {
-  const auto expPath = std::experimental::filesystem::path(path);
+  const auto expPath = std::filesystem::path(path);
   return expPath.stem().string();
 }
 inline std::string getFileExtension(const std::string &path) {
-  const auto expPath = std::experimental::filesystem::path(path);
+  const auto expPath = std::filesystem::path(path);
   return expPath.extension().string();
 }
 
 inline std::string getPathName(const std::string &path) {
-  const auto expPath = std::experimental::filesystem::path(path);
+  const auto expPath = std::filesystem::path(path);
   return expPath.parent_path().string();
 }
 
 inline bool fileExists(const std::string &name) {
-  return std::experimental::filesystem::exists(name);
+  return std::filesystem::exists(name);
 }
 inline bool filePathExists(const std::string &name) {
-  const std::experimental::filesystem::path path(name);
-  const std::experimental::filesystem::path parent = path.parent_path();
-  return std::experimental::filesystem::exists(parent);
+  const std::filesystem::path path(name);
+  const std::filesystem::path parent = path.parent_path();
+  return std::filesystem::exists(parent);
 }
 
 template <typename T>
