@@ -6,7 +6,8 @@ project(SirEngineThe3rdLib)
     file(GLOB_RECURSE SOURCE_FILES "src/*.cpp" "src/*.h")
 
     message (STATUS ${CMAKE_CURRENT_SOURCE_DIR})
-    include_directories(${CMAKE_SOURCE_DIR}/builtDependencies/includes
+    include_directories(
+						${CMAKE_SOURCE_DIR}/builtDependencies/includes
 						${CMAKE_CURRENT_SOURCE_DIR}/src
 	)
 
@@ -95,7 +96,6 @@ project(SirEngineThe3rdLib)
             PROPERTIES HEADER_FILE_ONLY TRUE
          )
 
-	#link_directories(${CMAKE_BINARY_DIR}/bin/$<CONFIGURATION>)
 	if(WIN32)
 		link_directories(${CMAKE_SOURCE_DIR}/builtDependencies/windows/$<CONFIGURATION>)
 	endif()

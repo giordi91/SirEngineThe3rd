@@ -7,12 +7,11 @@ project(Tests)
 
 
     message (STATUS ${CMAKE_CURRENT_SOURCE_DIR})
-    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/vendors/includes
+    include_directories(
 						${CMAKE_CURRENT_SOURCE_DIR}
 						${CMAKE_SOURCE_DIR}/SirEngineThe3rdLib/src
-						${CMAKE_SOURCE_DIR}/SirEngineThe3rdLib/vendors/includes
 						${CMAKE_SOURCE_DIR}/ResourceCompilerLib/src
-						${CMAKE_SOURCE_DIR}/ResourceCompilerLib/vendors/includes
+						${CMAKE_SOURCE_DIR}/builtDependencies/includes
 	)
 
 	#lets add specific windows build definitions
@@ -27,7 +26,9 @@ project(Tests)
 	file(COPY "testData" DESTINATION "${CMAKE_BINARY_DIR}/bin" )
 
 
-	link_directories(${CMAKE_BINARY_DIR}/bin/$<CONFIGURATION>)
+	if(WIN32)
+		link_directories(${CMAKE_SOURCE_DIR}/builtDependencies/windows/$<CONFIGURATION>)
+	endif()
     #adding the executable
     add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 	SET(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)

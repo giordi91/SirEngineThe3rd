@@ -6,9 +6,9 @@
 
 #include "d3d12.h"
 
-#include "Compressonator/Header/Compressonator.h"
+#include "Compressonator/Compressonator.h"
 #include "DDS_Helpers.h"
-#include "DirectXTex/DirectXTex.h"
+//#include "DirectXTex/DirectXTex.h"
 #include "SirEngine/log.h"
 
 #include "nlohmann/json.hpp"

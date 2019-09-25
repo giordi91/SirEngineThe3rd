@@ -156,7 +156,7 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
   memcpy(bulkDataPtr, shaderArgs.compilerArgs.c_str(), dataToWriteSizeInByte);
 
   // preparing the binary file write request
-  std::experimental::filesystem::path inp(assetPath);
+  std::filesystem::path inp(assetPath);
   const std::string fileName = inp.stem().string();
   request.outPath = outputPath.c_str();
 
