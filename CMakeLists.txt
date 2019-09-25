@@ -46,7 +46,7 @@ MESSAGE( STATUS "BUILD AMD:                    " ${BUILD_AMD})
 #MESSAGE( STATUS "BUILD TESTS:                  " ${BUILD_TESTS})
 #adding core
 
-add_subdirectory(vendors)
+
 add_subdirectory(SirEngineThe3rdLib)
 add_subdirectory(Sandbox)
 add_subdirectory(ResourceCompilerLib)
