@@ -29,7 +29,7 @@ const std::string getExecutablePath() {
   HMODULE hModule = GetModuleHandleW(NULL);
   WCHAR path[MAX_PATH];
   GetModuleFileName(hModule, path, MAX_PATH);
-  auto expPath = std::experimental::filesystem::path(path);
+  auto expPath = std::filesystem::path(path);
   return expPath.parent_path().string();
 }
 

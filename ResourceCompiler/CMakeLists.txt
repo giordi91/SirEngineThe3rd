@@ -7,12 +7,11 @@ project(ResourceCompiler)
 
     #looking for  files
     message (STATUS ${CMAKE_CURRENT_SOURCE_DIR})
-    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/vendors/includes
+    include_directories(
+						${CMAKE_SOURCE_DIR}/builtDependencies/includes
 						${CMAKE_CURRENT_SOURCE_DIR}
 						${CMAKE_SOURCE_DIR}/SirEngineThe3rdLib/src
-						${CMAKE_SOURCE_DIR}/SirEngineThe3rdLib/vendors/includes
 						${CMAKE_SOURCE_DIR}/ResourceCompilerLib/src
-						${CMAKE_SOURCE_DIR}/ResourceCompilerLib/vendors/includes
 	)
 
 	file(COPY "../data" DESTINATION "${CMAKE_BINARY_DIR}/bin" )
@@ -42,7 +41,9 @@ project(ResourceCompiler)
 	#making sure to add the common cpp flags, that are defined in the main cpp file
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_CXX_FLAGS}")
 
-	link_directories(${CMAKE_BINARY_DIR}/bin/$<CONFIGURATION>)
+	if(WIN32)
+		link_directories(${CMAKE_SOURCE_DIR}/builtDependencies/windows/$<CONFIGURATION>)
+	endif()
 
     #adding the executable
     add_executable(${PROJECT_NAME} main.cpp)

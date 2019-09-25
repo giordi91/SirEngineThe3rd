@@ -44,7 +44,7 @@ bool processRoot(const std::string &assetPath, const std::string &outputPath,
     request.version =
         ((VERSION_MAJOR << 16) | (VERSION_MINOR << 8) | VERSION_PATCH);
 
-    std::experimental::filesystem::path inp(assetPath);
+    std::filesystem::path inp(assetPath);
     const std::string fileName = inp.stem().string();
     const std::string outFilePath =
         getPathName(outputPath) + "/" + subBlobl.name + ".root";

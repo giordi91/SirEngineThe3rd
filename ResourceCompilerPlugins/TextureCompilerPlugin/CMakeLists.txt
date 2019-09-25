@@ -8,12 +8,11 @@ project(textureCompilerPlugin)
     #looking for  files
     file(GLOB_RECURSE SOURCE_FILES "*.cpp" "*.h")
 
-    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/vendors/includes
+    include_directories(
+						${CMAKE_SOURCE_DIR}/builtDependencies/includes
 						${CMAKE_CURRENT_SOURCE_DIR}
 						${CMAKE_SOURCE_DIR}/SirEngineThe3rdLib/src
-						${CMAKE_SOURCE_DIR}/SirEngineThe3rdLib/vendors/includes
 						${CMAKE_SOURCE_DIR}/ResourceCompilerLib/src
-						${CMAKE_SOURCE_DIR}/ResourceCompilerLib/vendors/includes
 	)
 
 	#lets add specific windows build definitions
@@ -26,7 +25,9 @@ project(textureCompilerPlugin)
 	#making sure to add the common cpp flags, that are defined in the main cpp file
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_CXX_FLAGS}")
 
-	link_directories(${CMAKE_BINARY_DIR}/bin/$<CONFIGURATION>)
+	if(WIN32)
+		link_directories(${CMAKE_SOURCE_DIR}/builtDependencies/windows/$<CONFIGURATION>)
+	endif()
 
     #adding the executable
     add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES} ${INCLUDES_FILES})
@@ -36,7 +37,7 @@ project(textureCompilerPlugin)
 )
 
     #message (STATUS  ${CMAKE_RUNTIME_OUTPUT_DIRECTORY} SHIT)
-	target_link_libraries(${PROJECT_NAME} Compressonator SirEngineThe3rdLib ResourceCompilerLib DirectXTex crunch)
+	target_link_libraries(${PROJECT_NAME} Compressonator SirEngineThe3rdLib ResourceCompilerLib crunch)
 
 	#This madness is needed because in order to have a plug-in folder inside the 
 	#output dir, I have to do a post copy, by default on windows it adds a Debug/Release 

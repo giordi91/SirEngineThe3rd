@@ -6,10 +6,10 @@ project(ResourceCompilerLib)
     file(GLOB_RECURSE SOURCE_FILES "src/resourceCompilerLib/*.cpp" "src/resourceCompilerLib/*.h")
 
     message (STATUS ${CMAKE_CURRENT_SOURCE_DIR})
-    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/vendors/includes
+    include_directories(
 						${CMAKE_CURRENT_SOURCE_DIR}
 						${CMAKE_SOURCE_DIR}/SirEngineThe3rdLib/src
-						${CMAKE_SOURCE_DIR}/SirEngineThe3rdLib/vendors/includes
+						${CMAKE_SOURCE_DIR}/builtDependencies/includes
 	)
 
 	#lets add specific windows build definitions
@@ -21,7 +21,9 @@ project(ResourceCompilerLib)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_CXX_FLAGS}")
 
 
-	link_directories(${CMAKE_BINARY_DIR}/bin/$<CONFIGURATION>)
+	if(WIN32)
+		link_directories(${CMAKE_SOURCE_DIR}/builtDependencies/windows/$<CONFIGURATION>)
+	endif()
     #adding the executable
     add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES} ${INCLUDES_FILES})
 	SET(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
