@@ -52,3 +52,6 @@
 [submodule "vendors/lua"]
 	path = vendors/lua
 	url = https://github.com/giordi91/lua.git
+[submodule "vendors/--force"]
+	path = vendors/--force
+	url = https://github.com/giordi91/lua.git
