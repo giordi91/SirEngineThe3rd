@@ -43,10 +43,14 @@ Application::Application() {
 
   m_window = Window::create();
   m_window->setEventCallback([this](Event &e) -> void { this->onEvent(e); });
-  m_queuedEndOfFrameEvents[0].events = static_cast<Event**>(globals::PERSISTENT_ALLOCATOR->allocate(sizeof(Event*)*ALLOC_EVENT_QUEUE));
-  m_queuedEndOfFrameEvents[0].totalSize= ALLOC_EVENT_QUEUE;
-  m_queuedEndOfFrameEvents[1].events = static_cast<Event**>(globals::PERSISTENT_ALLOCATOR->allocate(sizeof(Event*)*ALLOC_EVENT_QUEUE));
-  m_queuedEndOfFrameEvents[1].totalSize= ALLOC_EVENT_QUEUE;
+  m_queuedEndOfFrameEvents[0].events =
+      static_cast<Event **>(globals::PERSISTENT_ALLOCATOR->allocate(
+          sizeof(Event *) * RESERVE_ALLOC_EVENT_QUEUE));
+  m_queuedEndOfFrameEvents[0].totalSize = RESERVE_ALLOC_EVENT_QUEUE;
+  m_queuedEndOfFrameEvents[1].events =
+      static_cast<Event **>(globals::PERSISTENT_ALLOCATOR->allocate(
+          sizeof(Event *) * RESERVE_ALLOC_EVENT_QUEUE));
+  m_queuedEndOfFrameEvents[1].totalSize = RESERVE_ALLOC_EVENT_QUEUE;
   m_queuedEndOfFrameEventsCurrent = &m_queuedEndOfFrameEvents[0];
 
   imGuiLayer = new ImguiLayer();
@@ -73,12 +77,11 @@ void Application::run() {
 
     const auto currentQueue = m_queuedEndOfFrameEventsCurrent;
     flipEndOfFrameQueue();
-	for(int i =0; i < currentQueue->allocCount;++i)
-	{
-		onEvent(*(currentQueue->events[i]));
-		delete currentQueue->events[i];
-	}
-	currentQueue->allocCount=0;
+    for (uint32_t i = 0; i < currentQueue->allocCount; ++i) {
+      onEvent(*(currentQueue->events[i]));
+      delete currentQueue->events[i];
+    }
+    currentQueue->allocCount = 0;
   }
 
   // lets make sure any graphics operation are done
@@ -94,8 +97,8 @@ void Application::run() {
   // shutdown anything graphics related;
   graphics::shutdownGraphics();
 }
-void Application::queueEventForEndOfFrame(Event *e) {
-  int alloc = m_queuedEndOfFrameEventsCurrent->allocCount;
+void Application::queueEventForEndOfFrame(Event *e) const {
+  const int alloc = m_queuedEndOfFrameEventsCurrent->allocCount;
   m_queuedEndOfFrameEventsCurrent->events[alloc] = e;
   ++(m_queuedEndOfFrameEventsCurrent->allocCount);
 }
@@ -118,7 +121,7 @@ void Application::onEvent(Event &e) {
 
   const int count = m_layerStack.count();
   Layer **layers = m_layerStack.begin();
-  for (int i = (count-1); i >= 0; --i) {
+  for (int i = (count - 1); i >= 0; --i) {
     layers[i]->onEvent(e);
     if (e.handled()) {
       break;

@@ -1,22 +1,23 @@
 #pragma once
 #include "stringPool.h"
-#include <assert.h>
 #include <stdint.h>
 #include <string.h>
+#include "SirEngine/memory/hashMap.h"
+#include "SirEngine/hashing.h"
 
 namespace SirEngine {
 
-template <typename KEY, typename VALUE, uint32_t (*HASH)(const KEY &)>
-class HashMap {
+template <typename VALUE> class HashMap<const char *, VALUE, hashString32> {
 public:
   // TODO add use of engine allocator, not only heap allocations
   explicit HashMap(const uint32_t bins) : m_bins(bins) {
-    m_keys = new KEY[m_bins];
+    m_keys = new const char *[m_bins];
     m_values = new VALUE[m_bins];
     const int count = ((m_bins * BIN_FLAGS_SIZE) / (8 * sizeof(uint32_t))) + 1;
     m_metadata = new uint32_t[count];
     // 85 is 01010101 in binary this means we fill 4 bins with the value of 1,
     // meaning free
+    memset(m_keys, 0, m_bins * sizeof(char *));
     memset(m_metadata, 85, count * sizeof(uint32_t));
   }
 
@@ -25,12 +26,12 @@ public:
     delete[] m_values;
     delete[] m_metadata;
   }
-  bool insert(KEY key, VALUE value) {
-    const uint32_t computedHash = HASH(key);
+  bool insert(const char *key, VALUE value) {
+    const uint32_t computedHash = hashString32(key);
 
     // modding wit the bin count
     uint32_t bin = computedHash % m_bins;
-    if (m_keys[bin] == key) {
+    if (m_keys[bin] != nullptr && strcmp(m_keys[bin], key) == 0) {
       // key exists we just override the value
       m_values[bin] = value;
       return true;
@@ -48,19 +49,21 @@ public:
         return false;
       }
     }
-    // internalize the key
-    writeToBin(bin, key, value);
+    const char *newKey = globals::STRING_POOL->allocatePersistent(key);
+    writeToBin(bin, newKey, value);
     setMetadata(bin, BIN_FLAGS::USED);
 
     return true;
   }
 
-  [[nodiscard]] bool containsKey(const KEY key) const {
+  [[nodiscard]] bool containsKey(const char *key) const {
 
     uint32_t bin = 0;
-    bool isKeyFound = getBin(key, bin);
+    const bool isKeyFound = getBin(key, bin);
     const uint32_t meta = getMetadata(bin);
-    return isKeyFound & (m_keys[bin] == key) // does the key match?
+    return isKeyFound &
+           (m_keys[bin] != nullptr &&
+            strcmp(m_keys[bin], key) == 0) // does the key match?
            &
            (meta == static_cast<uint32_t>(
                         BIN_FLAGS::USED)); // is the bin actually used, we dont
@@ -69,20 +72,22 @@ public:
                                            // match but metadata is set to free
   }
 
-  inline bool get(KEY key, VALUE &value) const {
+  inline bool get(const char *key, VALUE &value) const {
     uint32_t bin = 0;
     const bool result = getBin(key, bin);
     value = m_values[bin];
     return result;
   }
 
-  inline bool remove(KEY key) {
+  inline bool remove(const char *key) {
     uint32_t bin = 0;
     const bool result = getBin(key, bin);
     const uint32_t meta = getMetadata(bin);
     assert(meta == static_cast<uint32_t>(BIN_FLAGS::USED));
     if (result) {
       setMetadata(bin, BIN_FLAGS::DELETED);
+	  globals::STRING_POOL->free(m_keys[bin]);
+      m_keys[bin] = nullptr;
       --m_usedBins;
     }
     return result;
@@ -97,8 +102,8 @@ public:
 private:
   enum class BIN_FLAGS { NONE = 0, FREE = 1, DELETED = 2, USED = 3 };
 
-  bool getBin(const KEY key, uint32_t &bin) const {
-    const uint32_t computedHash = HASH(key);
+  bool getBin(const char *key, uint32_t &bin) const {
+    const uint32_t computedHash = hashString32(key);
     bin = computedHash % m_bins;
     const uint32_t startBin = bin;
 
@@ -106,7 +111,8 @@ private:
     bool status = true;
     while (go) {
       const uint32_t meta = getMetadata(bin);
-      const bool isKeyTheSame = key == m_keys[bin];
+      const bool isKeyTheSame =
+          m_keys[bin] != nullptr && strcmp(key, m_keys[bin]) == 0;
       const bool isBinUsed = meta == static_cast<uint32_t>(BIN_FLAGS::USED);
       if (isKeyTheSame & isBinUsed) {
         break;
@@ -127,7 +133,7 @@ private:
            (metadata == static_cast<uint32_t>(BIN_FLAGS::DELETED));
   }
 
-  inline void writeToBin(uint32_t bin, KEY key, VALUE value) {
+  inline void writeToBin(uint32_t bin, const char *key, VALUE value) {
     m_keys[bin] = key;
     m_values[bin] = value;
     ++m_usedBins;
@@ -160,13 +166,10 @@ private:
   static constexpr uint32_t BIN_FLAGS_SIZE = 2;
   static constexpr uint32_t BIN_FLAGS_MASK = 3; // first two bit sets
 
-  KEY *m_keys;
+  const char **m_keys;
   VALUE *m_values;
   uint32_t *m_metadata;
   uint32_t m_bins;
   uint32_t m_usedBins = 0;
 };
-
-
 } // namespace SirEngine
-  // namespace SirEngine

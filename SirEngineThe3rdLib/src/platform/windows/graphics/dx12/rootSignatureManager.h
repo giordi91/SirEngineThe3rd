@@ -1,21 +1,23 @@
 #pragma once
 #include "DX12.h"
-#include "SirEngine/core.h"
 #include "SirEngine/handle.h"
+#include "SirEngine/hashing.h"
 #include "SirEngine/memory/SparseMemoryPool.h"
+#include "SirEngine/memory/stringHashMap.h"
 #include <cassert>
 #include <string>
-#include <unordered_map>
 
 namespace SirEngine {
+
 namespace dx12 {
 
 enum class ROOT_FILE_TYPE { RASTER = 0, COMPUTE = 1, DXR = 2, NULL_TYPE };
 
-class SIR_ENGINE_API RootSignatureManager final {
+class RootSignatureManager final {
 
 public:
-  RootSignatureManager() : m_rsPool(RESERVE_SIZE){};
+  RootSignatureManager()
+      : m_rootRegister(RESERVE_SIZE), m_rsPool(RESERVE_SIZE){};
   RootSignatureManager(const RootSignatureManager &) = delete;
   RootSignatureManager &operator=(const RootSignatureManager &) = delete;
   ~RootSignatureManager() = default;
@@ -50,12 +52,10 @@ public:
   }
 
   inline RSHandle getHandleFromName(const std::string &name) const {
-    const auto found = m_rootRegister.find(name);
-    if (found != m_rootRegister.end()) {
-      return found->second;
-    }
-    assert(0 && "could not find RS from name");
-    return RSHandle{};
+    assert(m_rootRegister.containsKey(name.c_str()));
+    RSHandle value;
+    m_rootRegister.get(name.c_str(), value);
+    return value;
   }
 
 private:
@@ -66,8 +66,8 @@ private:
     return (h.handle & MAGIC_NUMBER_MASK) >> 16;
   }
   inline void assertMagicNumber(const RSHandle handle) const {
-    uint32_t magic = getMagicFromHandle(handle);
-    uint32_t idx = getIndexFromHandle(handle);
+    const uint32_t magic = getMagicFromHandle(handle);
+    const uint32_t idx = getIndexFromHandle(handle);
     assert(static_cast<uint32_t>(m_rsPool.getConstRef(idx).magicNumber) ==
                magic &&
            "invalid magic handle for constant buffer");
@@ -79,7 +79,7 @@ private:
     uint32_t magicNumber;
   };
 
-  std::unordered_map<std::string, RSHandle> m_rootRegister;
+  HashMap<const char *, RSHandle, hashString32> m_rootRegister;
   // handles
   SparseMemoryPool<RSData> m_rsPool;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
