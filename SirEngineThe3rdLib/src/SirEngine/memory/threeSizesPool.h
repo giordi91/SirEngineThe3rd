@@ -2,6 +2,7 @@
 #include <cassert>
 #include <cstdint>
 #include <cstring>
+#include "SirEngine/core.h"
 
 namespace SirEngine {
 
@@ -12,7 +13,7 @@ namespace SirEngine {
 // made, if there is any allocation to be recycled it will be used, otherwise
 // normal allocation will be made by increasing the stack pointer, to note stack
 // pointer can never be decreased.
-class ThreeSizesPool final {
+class SIR_ENGINE_API ThreeSizesPool final {
 private:
 // flags used to mark the headers and allocations
 #define SMALL_ALLOC_TAG 1;

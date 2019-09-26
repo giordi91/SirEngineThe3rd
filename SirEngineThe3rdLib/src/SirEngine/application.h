@@ -29,6 +29,7 @@ private:
   };
 
 private:
+  //ResizableVector<Event*>m_queuedEndOfFrameEvents[2];
   std::vector<std::vector<Event *>> m_queuedEndOfFrameEvents;
   std::vector<Event *> *m_queuedEndOfFrameEventsCurrent;
   uint32_t m_queueEndOfFrameCounter = 0;

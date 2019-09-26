@@ -1,10 +1,11 @@
 #pragma once
 #include <cassert>
+#include "SirEngine/core.h"
 
 // not thread safe
 namespace SirEngine {
 
-class StackAllocator final {
+class SIR_ENGINE_API StackAllocator final {
  public:
   StackAllocator() = default;
   ~StackAllocator() { delete[] m_start; }

@@ -142,7 +142,7 @@ bool processAnim(const std::string &assetPath, const std::string &outputPath,
 
   ClipMapperData mapperData;
   mapperData.nameSizeInByte= static_cast<int>(data.name.size()+1);
-  mapperData.posesSizeInByte= data.poses.size()*sizeof(SirEngine::JointPose);
+  mapperData.posesSizeInByte= static_cast<int>(data.poses.size())*sizeof(SirEngine::JointPose);
   mapperData.frameRate = data.frameRate;
   mapperData.bonesPerFrame= data.bonesPerFrame;
   mapperData.frameCount= data.frameCount;
