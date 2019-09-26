@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <string>
 #include <unordered_map>
+#include "SirEngine/globals.h"
+#include "SirEngine/runtimeString.h"
 
 namespace SirEngine {
 
@@ -37,9 +39,9 @@ public:
   virtual void compute(){};
   virtual void initialize(){};
   virtual void clear(){};
-  //un-named parameters are screenWidth and screenHeight
-  //removing the names just to avoid huge spam;
-  virtual void onResizeEvent(int , int ){};
+  // un-named parameters are screenWidth and screenHeight
+  // removing the names just to avoid huge spam;
+  virtual void onResizeEvent(int, int){};
 
   // getters
   inline Plug *getInputPlug(const std::string &name) {
@@ -202,7 +204,7 @@ public:
   inline void setFinalNode(GraphNode *node) { finalNode = node; }
   void finalizeGraph();
   void compute();
-  void onResizeEvent (int screenWidth, int screenHeight) {
+  void onResizeEvent(int screenWidth, int screenHeight) {
     for (auto node : m_linearizedGraph) {
       node->onResizeEvent(screenWidth, screenHeight);
     }
@@ -213,6 +215,50 @@ private:
   GraphNode *finalNode = nullptr;
   uint32_t m_nodeCounter = 0;
   std::vector<GraphNode *> m_linearizedGraph;
+};
+
+// new node graph
+struct GPlug final {
+  uint32_t plugValue;
+  uint32_t flags;
+  GraphNode *nodePtr = nullptr;
+  const char *name;
+};
+
+class SIR_ENGINE_API GNode {
+public:
+  // interface
+  GNode(const char *name, const char *type)
+  {
+	  m_nodeName = globals::STRING_POOL->allocatePersistent(name);
+	  m_nodeType = globals::STRING_POOL->allocatePersistent(type);
+  };
+  virtual ~GNode() = default;
+  void addInConnection(int plugIndex, GPlug *otherPlug);
+  void addOutConnection(int plugIndex, GPlug *otherPlug);
+  void removeInConnection(int plugIndex, GPlug *otherPlug);
+  void removeOutConnection(int plugIndex, GPlug *otherPlug);
+
+  virtual void compute(){};
+  virtual void initialize(){};
+  virtual void clear(){};
+  // un-named parameters are screenWidth and screenHeight
+  // removing the names just to avoid huge spam;
+  virtual void onResizeEvent(int, int){};
+
+protected:
+  inline bool isFlag(const Plug &plug, const PlugFlags flag) const {
+    return (plug.flags & flag) > 0;
+  }
+
+protected:
+  const char *m_nodeName;
+  const char *m_nodeType;
+  GPlug *m_inputPlugs = nullptr;
+  GPlug *m_outputPlugs = nullptr;
+  uint32_t m_inputPlugsCount = 0;
+  uint32_t m_outputPlugsCount = 0;
+  uint32_t nodeIdx = 0;
 };
 
 } // namespace SirEngine
