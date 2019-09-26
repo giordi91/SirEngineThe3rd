@@ -13,7 +13,7 @@ const unsigned int VERSION_MINOR = 1;
 const unsigned int VERSION_PATCH = 0;
 
 bool processRoot(const std::string &assetPath, const std::string &outputPath,
-                 const std::string &args) {
+                 const std::string &) {
 
   // checking IO files exits
   bool exits = fileExists(assetPath);
@@ -55,7 +55,7 @@ bool processRoot(const std::string &assetPath, const std::string &outputPath,
 
     RootSignatureMappedData mapperData;
     mapperData.type = static_cast<int>(subBlobl.type);
-    mapperData.sizeInByte = subBlobl.blob->GetBufferSize();
+    mapperData.sizeInByte = static_cast<uint32_t>(subBlobl.blob->GetBufferSize());
     request.mapperData = &mapperData;
     request.mapperDataSizeInByte = sizeof(ModelMapperData);
 

@@ -25,5 +25,9 @@ inline uint32_t hashUint64(const uint64_t &value) {
 inline uint64_t hashString(const char *value, const uint32_t len) {
   return util::Hash64(value, len);
 }
+inline uint32_t hashString32(const char *const&value) {
+  uint32_t len = static_cast<uint32_t>(strlen(value));
+  return util::Hash32(value, len);
+}
 
 } // namespace SirEngine

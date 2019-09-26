@@ -12,10 +12,10 @@ namespace dx12 {
 
 void RootSignatureManager::cleanup() {
   // cleanup the allocated root signatures
-  for (const auto& it : m_rootRegister) {
-	  getRootSignatureFromHandle(it.second)->Release();
-  }
-  m_rootRegister.clear();
+  //for (const auto& it : m_rootRegister) {
+  //    getRootSignatureFromHandle(it.second)->Release();
+  //}
+  //m_rootRegister.clear();
 }
 
 void RootSignatureManager::loadSignatureBinaryFile(const char *file) {
@@ -23,8 +23,9 @@ void RootSignatureManager::loadSignatureBinaryFile(const char *file) {
   // check the file exists and read all the binary data out of the file
   const auto expPath = std::filesystem::path(file);
   const std::string name = expPath.stem().string();
-  if (m_rootRegister.find(name) == m_rootRegister.end()) {
+  const bool containsKey = m_rootRegister.containsKey(file);
 
+  if (!containsKey) {
     std::vector<char> data;
     const bool fileOpenRes = readAllBytes(file, data);
     if (!fileOpenRes) {
@@ -62,7 +63,8 @@ void RootSignatureManager::loadSignatureBinaryFile(const char *file) {
     rsdata.rs= rootSig;
     const RSHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
     rsdata.magicNumber = MAGIC_NUMBER_COUNTER;
-    m_rootRegister[name] = handle;
+	m_rootRegister.insert(name.c_str(),handle);
+    //m_rootRegister[name] = handle;
     ++MAGIC_NUMBER_COUNTER;
 
 
