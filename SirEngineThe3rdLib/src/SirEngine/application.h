@@ -29,15 +29,23 @@ private:
   };
 
 private:
-  //ResizableVector<Event*>m_queuedEndOfFrameEvents[2];
-  std::vector<std::vector<Event *>> m_queuedEndOfFrameEvents;
-  std::vector<Event *> *m_queuedEndOfFrameEventsCurrent;
+  struct EventQueue {
+    Event**events = nullptr;
+    uint32_t totalSize = 0;
+    uint32_t allocCount = 0;
+  };
+
+private:
+  EventQueue m_queuedEndOfFrameEvents[2];
+  //std::vector<std::vector<Event *>> m_queuedEndOfFrameEvents;
+  EventQueue *m_queuedEndOfFrameEventsCurrent;
   uint32_t m_queueEndOfFrameCounter = 0;
   Window *m_window = nullptr;
   bool m_run = true;
   LayerStack m_layerStack;
   Layer *imGuiLayer;
   Layer *graphicsLayer;
+  static constexpr uint32_t ALLOC_EVENT_QUEUE = 200;
 };
 
 // To be implemented by the client
