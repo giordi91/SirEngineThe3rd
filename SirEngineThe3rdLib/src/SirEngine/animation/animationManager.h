@@ -26,7 +26,7 @@ class AnimationManager final {
 
 public:
   AnimationManager()
-      : m_handleToConfig(500), m_nameToConfigHandle(500),
+      : m_activeAnims(200),m_handleToConfig(500), m_nameToConfigHandle(500),
         m_animationClipCache(500), m_skeletonCache(50), m_namedPosesMap(500){};
   ~AnimationManager() = default;
 

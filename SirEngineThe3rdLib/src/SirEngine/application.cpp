@@ -43,9 +43,10 @@ Application::Application() {
 
   m_window = Window::create();
   m_window->setEventCallback([this](Event &e) -> void { this->onEvent(e); });
-  m_queuedEndOfFrameEvents.resize(2);
-  m_queuedEndOfFrameEvents[0].reserve(10);
-  m_queuedEndOfFrameEvents[1].reserve(10);
+  m_queuedEndOfFrameEvents[0].events = static_cast<Event**>(globals::PERSISTENT_ALLOCATOR->allocate(sizeof(Event*)*ALLOC_EVENT_QUEUE));
+  m_queuedEndOfFrameEvents[0].totalSize= ALLOC_EVENT_QUEUE;
+  m_queuedEndOfFrameEvents[1].events = static_cast<Event**>(globals::PERSISTENT_ALLOCATOR->allocate(sizeof(Event*)*ALLOC_EVENT_QUEUE));
+  m_queuedEndOfFrameEvents[1].totalSize= ALLOC_EVENT_QUEUE;
   m_queuedEndOfFrameEventsCurrent = &m_queuedEndOfFrameEvents[0];
 
   imGuiLayer = new ImguiLayer();
@@ -70,13 +71,14 @@ void Application::run() {
     }
     graphics::dispatchFrame();
 
-    auto currentQueue = m_queuedEndOfFrameEventsCurrent;
+    const auto currentQueue = m_queuedEndOfFrameEventsCurrent;
     flipEndOfFrameQueue();
-    for (auto e : (*currentQueue)) {
-      onEvent(*e);
-      delete e;
-    }
-    currentQueue->clear();
+	for(int i =0; i < currentQueue->allocCount;++i)
+	{
+		onEvent(*(currentQueue->events[i]));
+		delete currentQueue->events[i];
+	}
+	currentQueue->allocCount=0;
   }
 
   // lets make sure any graphics operation are done
@@ -93,7 +95,9 @@ void Application::run() {
   graphics::shutdownGraphics();
 }
 void Application::queueEventForEndOfFrame(Event *e) {
-  m_queuedEndOfFrameEventsCurrent->push_back(e);
+  int alloc = m_queuedEndOfFrameEventsCurrent->allocCount;
+  m_queuedEndOfFrameEventsCurrent->events[alloc] = e;
+  ++(m_queuedEndOfFrameEventsCurrent->allocCount);
 }
 void Application::onEvent(Event &e) {
   // close event dispatch
@@ -114,7 +118,7 @@ void Application::onEvent(Event &e) {
 
   const int count = m_layerStack.count();
   Layer **layers = m_layerStack.begin();
-  for (int i = 0; i < count; ++i) {
+  for (int i = (count-1); i >= 0; --i) {
     layers[i]->onEvent(e);
     if (e.handled()) {
       break;
