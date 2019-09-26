@@ -15,7 +15,7 @@
       "-p ../data/external/meshes/knightB/eyeBalls.obj -o ../data/processed/meshes/knightB/eyeBalls.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/eyeBalls.tangents\"",
       "-p ../data/external/meshes/knightB/eyeCornea.obj -o ../data/processed/meshes/knightB/eyeCornea.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/eyeCornea.tangents\"",
       "-p ../data/external/meshes/knightB/eyeNew.obj -o ../data/processed/meshes/knightB/eyeNew.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/eyeNew.tangents --skin ../data/external/animation/exported/skin/knightBEyeSkin.json\"",
-      "-p ../data/external/meshes/knightB/hair.obj -o ../data/processed/meshes/knightB/hair.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/hair.tangents\"",
+      "-p ../data/external/meshes/knightB/hair.obj -o ../data/processed/meshes/knightB/hair.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/hair.tangents --skin ../data/external/animation/exported/skin/knightBHairSkin.json\"",
 
 
       "-p ../data/external/meshes/eye/eye.obj -o ../data/processed/meshes/eye/eye.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/eye/eye.tangents\"",
