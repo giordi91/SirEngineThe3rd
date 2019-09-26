@@ -1,5 +1,4 @@
 #include "SirEngine/application.h"
-#include <random>
 #include "SirEngine/globals.h"
 #include "SirEngine/graphics/graphicsCore.h"
 #include "SirEngine/layer.h"
@@ -7,6 +6,7 @@
 #include "fileUtils.h"
 #include "layers/graphics3DLayer.h"
 #include "layers/imguiLayer.h"
+#include <random>
 
 #include "SirEngine/runtimeString.h"
 
@@ -22,7 +22,7 @@ void Application::parseConfigFile() {
   const nlohmann::json jobj = getJsonObj(CONFIG_PATH);
   globals::DATA_SOURCE_PATH = persistentString(
       getValueIfInJson(jobj, CONFIG_DATA_SOURCE_KEY, DEFAULT_STRING).c_str());
-  assert(globals::DATA_SOURCE_PATH[0]!= '\0');
+  assert(globals::DATA_SOURCE_PATH[0] != '\0');
   globals::START_SCENE_PATH = persistentString(
       getValueIfInJson(jobj, CONFIG_STARTING_SCENE_KEY, DEFAULT_STRING)
           .c_str());
@@ -30,14 +30,14 @@ void Application::parseConfigFile() {
 }
 
 Application::Application() {
-  // initializing allocators as first thing so everything else can use it 
-  globals::STRING_POOL = new StringPool(2 << 22);  // 4 megabyte allocation
+  // initializing allocators as first thing so everything else can use it
+  globals::STRING_POOL = new StringPool(2 << 22); // 4 megabyte allocation
   globals::FRAME_ALLOCATOR = new StackAllocator();
-  //TODO fix the interface to be same as other allocators 
+  // TODO fix the interface to be same as other allocators
   globals::FRAME_ALLOCATOR->initialize(2 << 22);
-  //allocating 20 mb
-  //TODO this should be a settings from somewhere
-  globals::PERSISTENT_ALLOCATOR = new ThreeSizesPool(20*1024*1024);
+  // allocating 20 mb
+  // TODO this should be a settings from somewhere
+  globals::PERSISTENT_ALLOCATOR = new ThreeSizesPool(20 * 1024 * 1024);
 
   parseConfigFile();
 
@@ -51,7 +51,7 @@ Application::Application() {
   imGuiLayer = new ImguiLayer();
   graphicsLayer = new Graphics3DLayer();
   m_layerStack.pushLayer(graphicsLayer);
-  m_layerStack.pushOverlayLayer(imGuiLayer);
+  m_layerStack.pushLayer(imGuiLayer);
   globals::APPLICATION = this;
 }
 
@@ -63,8 +63,10 @@ void Application::run() {
     m_window->onUpdate();
     graphics::newFrame();
 
-    for (Layer *l : m_layerStack) {
-      l->onUpdate();
+    const int count = m_layerStack.count();
+    Layer **layers = m_layerStack.begin();
+    for (int i = 0; i < count; ++i) {
+      layers[i]->onUpdate();
     }
     graphics::dispatchFrame();
 
@@ -81,8 +83,10 @@ void Application::run() {
   graphics::stopGraphics();
 
   // lets clean up the layers, now is safe to free up resources
-  for (Layer *l : m_layerStack) {
-    l->clear();
+  const int count = m_layerStack.count();
+  Layer **layers = m_layerStack.begin();
+  for (int i = 0; i < count; ++i) {
+    layers[i]->clear();
   }
 
   // shutdown anything graphics related;
@@ -107,8 +111,11 @@ void Application::onEvent(Event &e) {
   if (e.handled()) {
     return;
   }
-  for (auto it = m_layerStack.end(); it != m_layerStack.begin();) {
-    (*--it)->onEvent(e);
+
+  const int count = m_layerStack.count();
+  Layer **layers = m_layerStack.begin();
+  for (int i = 0; i < count; ++i) {
+    layers[i]->onEvent(e);
     if (e.handled()) {
       break;
     }
@@ -127,8 +134,10 @@ bool Application::onResizeWindow(WindowResizeEvent &e) {
   graphics::onResize(globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT);
 
   // push the resize event to everyone in case is needed
-  for (auto it = m_layerStack.end(); it != m_layerStack.begin();) {
-    (*--it)->onEvent(e);
+  const int count = m_layerStack.count();
+  Layer **layers = m_layerStack.begin();
+  for (int i = 0; i < count; ++i) {
+    layers[i]->onEvent(e);
     if (e.handled()) {
       break;
     }
@@ -137,7 +146,4 @@ bool Application::onResizeWindow(WindowResizeEvent &e) {
 }
 
 void Application::pushLayer(Layer *layer) { m_layerStack.pushLayer(layer); }
-void Application::pushOverlay(Layer *layer) {
-  m_layerStack.pushOverlayLayer(layer);
-}
-}  // namespace SirEngine
+} // namespace SirEngine

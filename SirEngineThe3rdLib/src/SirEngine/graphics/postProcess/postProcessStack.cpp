@@ -87,7 +87,7 @@ void PostProcessStack::clear() {
     handles[1].handle = 0;
   }
 }
-void PostProcessStack::onResizeEvent(int screenWidth, int screenHeight) {
+void PostProcessStack::onResizeEvent(int , int ) {
   clear();
   initialize();
 }

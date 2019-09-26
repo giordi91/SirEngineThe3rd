@@ -412,7 +412,7 @@ DebugDrawHandle DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
     tracker.compoundHandles[0] = pointsHandle;
     tracker.compoundHandles[1] = linesHandle;
 
-    uint32_t compoundBit = 1 << 31;
+    const uint32_t compoundBit = 1u << 31u;
     const DebugDrawHandle returnHandle{compoundBit |
                                        (MAGIC_NUMBER_COUNTER << 16) | 0};
 
@@ -499,7 +499,6 @@ void DebugRenderer::render(const TextureHandle input,
                            const TextureHandle depth) {
 
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
-  auto commandList = currentFc->commandList;
   // first static stuff
   renderQueue(m_renderables, input, depth);
 

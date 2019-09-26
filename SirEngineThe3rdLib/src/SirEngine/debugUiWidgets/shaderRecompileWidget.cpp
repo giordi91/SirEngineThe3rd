@@ -6,11 +6,8 @@
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/shaderManager.h"
 
-#define FTS_FUZZY_MATCH_IMPLEMENTATION
-#include "lib_fts/fts_fuzzy_match.h"
-
-namespace SirEngine {
-namespace debug {
+namespace SirEngine::debug
+{
 
 struct ShaderCompileConsole {
   char InputBuf[256];
@@ -182,6 +179,15 @@ void ShaderCompilerWidget::initialize() {
   elementsToRender.reserve(100);
   console = new ShaderCompileConsole();
 }
+static bool fuzzy_match_simple(char const *pattern, char const *str) {
+  while (*pattern != '\0' && *str != '\0') {
+    if (tolower(*pattern) == tolower(*str))
+      ++pattern;
+    ++str;
+  }
+
+  return *pattern == '\0' ? true : false;
+}
 void ShaderCompilerWidget::render() {
 
   ImVec2 winPos{globals::SCREEN_WIDTH - width - 100, 0};
@@ -198,12 +204,11 @@ void ShaderCompilerWidget::render() {
       dx12::SHADER_MANAGER->getShaderMap();
 
   const char *pattern = &shaderName[0];
-  int score = 0;
 
   elementsToRender.clear();
   for (const auto &shader : shaders) {
 
-    bool shouldRender = fts::fuzzy_match(pattern, shader.first.c_str(), score);
+    bool shouldRender = fuzzy_match_simple(pattern, shader.first.c_str());
     shouldRender = strlen(pattern) == 0 ? true : shouldRender;
     if (shouldRender) {
       elementsToRender.push_back(shader.first.c_str());
@@ -251,5 +256,4 @@ void ShaderCompilerWidget::requestCompile() {
     globals::APPLICATION->queueEventForEndOfFrame(event);
   }
 }
-} // namespace debug
 } // namespace SirEngine

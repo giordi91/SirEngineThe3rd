@@ -161,6 +161,7 @@ void convertObjNoTangents(const tinyobj::attrib_t &attr,
                           const tinyobj::shape_t &shape, Model &model,
                           const std::string &skinPath) {
 
+  // TODO need to add skinPath usage
   // how it works:
   // first of all we need  to iterate over all the geometry, we expand all
   // the auxiliary indices, meaning uv,normals etc indices, and we expand
@@ -226,8 +227,8 @@ void convertObjNoTangents(const tinyobj::attrib_t &attr,
 }
 
 void convertObj(const tinyobj::attrib_t &attr, const tinyobj::shape_t &shape,
-                Model &model, SkinData& finalSkinData, const std::string &tangentsPath, 
-                const std::string &skinPath) {
+                Model &model, SkinData &finalSkinData,
+                const std::string &tangentsPath, const std::string &skinPath) {
 
   if (tangentsPath.empty()) {
     convertObjNoTangents(attr, shape, model, skinPath);
@@ -295,12 +296,12 @@ void convertObj(const tinyobj::attrib_t &attr, const tinyobj::shape_t &shape,
         // need to push the skin if we have one
         if (hasSkin) {
           for (int subI = 0; subI < VERTEX_INFLUENCE_COUNT; ++subI) {
-			int id = (VERTEX_INFLUENCE_COUNT* idx.vertex_index) + subI;
+            int id = (VERTEX_INFLUENCE_COUNT * idx.vertex_index) + subI;
             finalSkinData.jnts.push_back(skinData.jnts[id]);
             finalSkinData.weights.push_back(skinData.weights[id]);
           }
         }
-		//incrementing the counter
+        // incrementing the counter
         ++indexCount;
       }
 

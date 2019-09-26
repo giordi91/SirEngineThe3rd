@@ -115,9 +115,6 @@ inline D3D12_PRIMITIVE_TOPOLOGY_TYPE convertStringToTopology(
     const std::string &topology) {
   const auto found = STRING_TO_TOPOLOGY.find(topology);
   if (found != STRING_TO_TOPOLOGY.end()) {
-	if(found->first== "line") {
-		int x =0;
-    }
     return found->second;
   }
   assert(

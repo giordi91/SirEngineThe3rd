@@ -13,6 +13,9 @@ inline const char* frameConcatenation(const char* first, const char* second) {
 inline const wchar_t* frameConvertWide(const char* first) {
   return globals::STRING_POOL->convertFrameWide(first);
 }
+inline const char* frameConvert(const wchar_t* first) {
+  return globals::STRING_POOL->convertFrame(first);
+}
 
 inline const char* persistentFileLoad(const char* path, uint32_t& fileSize) {
   return globals::STRING_POOL->loadFilePersistent(path, fileSize);

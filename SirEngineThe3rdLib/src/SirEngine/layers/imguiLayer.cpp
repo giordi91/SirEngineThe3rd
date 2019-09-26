@@ -240,7 +240,7 @@ bool ImguiLayer::onCompileResultEvent(const ShaderCompileResultEvent &e) {
   return true;
 }
 
-bool ImguiLayer::onRequestCompileEvent(const RequestShaderCompileEvent &e) {
+bool ImguiLayer::onRequestCompileEvent(const RequestShaderCompileEvent &) {
   m_shaderWidget.requestCompile();
   return true;
 }

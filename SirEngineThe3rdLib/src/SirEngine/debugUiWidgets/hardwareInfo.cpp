@@ -10,8 +10,8 @@
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/hardware/amd/amdGPUquery.h"
 
-namespace SirEngine {
-namespace debug {
+namespace SirEngine::debug
+{
 HWInfoWidget::HWInfoWidget() {
   for (int i = 0; i < NUMBER_OF_SAMPLES; ++i) {
     temperatureSamples[i] = 0.0f;
@@ -37,9 +37,9 @@ void HWInfoWidget::render() {
     gpuQuery->update();
 
     temperatureSamples[runningCounter] = gpuQuery->m_temp;
-    coreClockSamples[runningCounter] = gpuQuery->m_coreFreq;
-    memClockSamples[runningCounter] = gpuQuery->m_memFreq;
-    usageSamples[runningCounter] = gpuQuery->m_usage;
+    coreClockSamples[runningCounter] = static_cast<float>(gpuQuery->m_coreFreq);
+    memClockSamples[runningCounter] = static_cast<float>(gpuQuery->m_memFreq);
+    usageSamples[runningCounter] = static_cast<float>(gpuQuery->m_usage);
 
     std::stringstream stream;
     std::string s;
@@ -77,7 +77,7 @@ void HWInfoWidget::render() {
       s = stream.str();
       ImGui::PlotLines(s.c_str(), coreClockSamples,
                        IM_ARRAYSIZE(coreClockSamples), runningCounter, "",
-                       gpuQuery->m_minCoreFreq, gpuQuery->m_maxCoreFreq,
+                       static_cast<float>(gpuQuery->m_minCoreFreq), static_cast<float>(gpuQuery->m_maxCoreFreq),
                        ImVec2(0, 60));
     }
 
@@ -91,11 +91,10 @@ void HWInfoWidget::render() {
       s = stream.str();
       ImGui::PlotLines(s.c_str(), memClockSamples,
                        IM_ARRAYSIZE(memClockSamples), runningCounter, "",
-                       gpuQuery->m_minMemFreq, gpuQuery->m_maxMemFreq,
+                       static_cast<float>(gpuQuery->m_minMemFreq), static_cast<float>(gpuQuery->m_maxMemFreq),
                        ImVec2(0, 60));
   }
 
   runningCounter = ((runningCounter + 1) % NUMBER_OF_SAMPLES);
 }
-} // namespace debug
 } // namespace SirEngine
