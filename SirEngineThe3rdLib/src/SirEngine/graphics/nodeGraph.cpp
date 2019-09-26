@@ -139,4 +139,5 @@ void Graph::compute() {
     node->compute();
   }
 }
+
 } // namespace SirEngine
