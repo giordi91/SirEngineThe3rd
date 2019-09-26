@@ -110,14 +110,7 @@ static void *__stdcall ADL_Main_Memory_Alloc(int iSize) {
   return lpBuffer;
 }
 
-// Optional Memory de-allocation function
-static void __stdcall ADL_Main_Memory_Free(void **lpBuffer) {
-  if (NULL != *lpBuffer) {
-    free(*lpBuffer);
-    *lpBuffer = NULL;
-  }
-}
-AMDGPUQuery::~AMDGPUQuery() {}
+
 void AMDGPUQuery::update() {
 
   auto now = std::chrono::high_resolution_clock::now();

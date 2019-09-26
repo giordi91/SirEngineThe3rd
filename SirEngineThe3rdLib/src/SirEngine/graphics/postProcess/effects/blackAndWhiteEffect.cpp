@@ -19,7 +19,7 @@ void BlackAndWhiteEffect::initialize() {
 
 void BlackAndWhiteEffect::render(const TextureHandle input,
                                  const TextureHandle output,
-                                 const PostProcessResources &resources) {
+                                 const PostProcessResources &) {
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
 

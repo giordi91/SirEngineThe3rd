@@ -17,7 +17,7 @@ template <typename T, typename ALLOCATOR = ThreeSizesPool>
 class ResizableVector {
 
 public:
-  ResizableVector(uint32_t reserveSize = 0, ALLOCATOR *allocator = nullptr)
+	explicit ResizableVector(const uint32_t reserveSize = 0, ALLOCATOR *allocator = nullptr)
       : m_allocator(allocator) {
     m_size = 0;
     m_reserved = reserveSize;
@@ -32,17 +32,14 @@ public:
 #endif
   };
 
-  ~ResizableVector()
-  {
-	  freeMemoryInternal(m_memory);
-	  
-  }
+  ~ResizableVector() { freeMemoryInternal(m_memory); }
 
   inline void clear() { m_size = 0; };
   inline void pushBack(const T &value) {
     // first checking whether there is enough buffer left, if
     // not we re-allocate
     if (m_size >= m_reserved) {
+      assert(m_reserved != 0);
       reallocateMemoryInternal(m_size * 2);
       m_reserved *= 2;
     }

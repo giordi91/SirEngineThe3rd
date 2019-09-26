@@ -103,7 +103,8 @@ void blitStencilDebug(const TextureHandle input,
 
   // TODO the input should be the depth, there should be
   // no need for us to get it directly
-  TextureHandle depth = globals::DEBUG_FRAME_DATA->gbufferDepth;
+  //TextureHandle depth = globals::DEBUG_FRAME_DATA->gbufferDepth;
+  const TextureHandle depth = input;
   D3D12_RESOURCE_BARRIER barriers[2];
   int counter = 0;
   float black[4] = {0.0f, 0.0f, 0.0f, 1.0f};

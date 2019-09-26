@@ -6,7 +6,7 @@ namespace Hardware {
 class AMDGPUQuery {
 public:
   AMDGPUQuery() = default;
-  ~AMDGPUQuery();
+  ~AMDGPUQuery() = default;
 
   // delta time defines how often will a new sample be taken
   void update();

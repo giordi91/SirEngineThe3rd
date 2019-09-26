@@ -60,10 +60,7 @@ file(COPY "PixEvent/Include/WinPixEventRuntime" DESTINATION ${CMAKE_SOURCE_DIR}/
 file(COPY "PixEvent/bin/WinPixEventRuntime.lib" DESTINATION ${CMAKE_SOURCE_DIR}/../builtDependencies/windows/Release)
 file(COPY "PixEvent/bin/WinPixEventRuntime.lib" DESTINATION ${CMAKE_SOURCE_DIR}/../builtDependencies/windows/Debug)
 endif()
-
-#fuzzy match
-file(COPY "lib_fts/code/fts_fuzzy_match.h" DESTINATION ${CMAKE_SOURCE_DIR}/../builtDependencies/includes/lib_fts/ )
-
+                                                                                                                        
 
 
 

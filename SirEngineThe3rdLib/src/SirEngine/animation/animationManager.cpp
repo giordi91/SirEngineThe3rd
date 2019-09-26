@@ -17,7 +17,7 @@ static const std::string ANIMATION_CONFIG_NAME_KEY = "name";
 
 AnimationConfigHandle AnimationManager::loadAnimationConfig(const char *path) {
 
-  //TODO move this to resource compiler
+  // TODO move this to resource compiler
   auto configJson = getJsonObj(path);
   std::string empty;
 
@@ -51,12 +51,14 @@ AnimationConfigHandle AnimationManager::loadAnimationConfig(const char *path) {
   // animation
   // checking if the animation clip is already cached, if not load it
   const std::string animationClipFileName = getFileName(animationClipFile);
+  uint32_t animationClipStringSize =
+      static_cast<uint32_t>(animationClipFile.size());
   AnimationClip *clip = getCachedAnimationClip(animationClipFile.c_str(),
-                                               animationClipFile.size());
+                                               animationClipStringSize);
   if (clip == nullptr) {
     clip = loadAnimationClip(animationClipFile.c_str());
     uint64_t hashClip =
-        hashString(animationClipFile.c_str(), animationClipFile.size());
+        hashString(animationClipFile.c_str(), animationClipStringSize);
     m_animationClipCache.insert(hashClip, clip);
   }
   assert(clip != nullptr);
@@ -64,12 +66,13 @@ AnimationConfigHandle AnimationManager::loadAnimationConfig(const char *path) {
   // skeleton
   // checking if the skeleton is already cached, if not load it
   const std::string skeletonFileName = getFileName(skeletonFile);
+  uint32_t skeletonFileNameSize = static_cast<uint32_t>(skeletonFileName.size());
   Skeleton *skeleton =
-      getCachedSkeleton(skeletonFileName.c_str(), skeletonFileName.size());
+      getCachedSkeleton(skeletonFileName.c_str(), skeletonFileNameSize);
   if (skeleton == nullptr) {
     skeleton = loadSkeleton(skeletonFile.c_str());
     uint64_t hashSkeleton =
-        hashString(skeletonFileName.c_str(), skeletonFileName.size());
+        hashString(skeletonFileName.c_str(), skeletonFileNameSize);
     m_skeletonCache.insert(hashSkeleton, skeleton);
   }
   assert(skeleton != nullptr);
@@ -109,7 +112,7 @@ Skeleton *AnimationManager::loadSkeleton(const char *path) {
 
 SkeletonPose *AnimationManager::getNamedSkeletonPose(const char *name) {
 
-  const uint32_t nameLen = strlen(name);
+  const uint32_t nameLen = static_cast<uint32_t>(strlen(name));
   auto *sk = getCachedSkeleton(name, nameLen);
   assert(sk != nullptr);
 

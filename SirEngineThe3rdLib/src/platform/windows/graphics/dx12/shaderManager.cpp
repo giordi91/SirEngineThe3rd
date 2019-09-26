@@ -6,6 +6,7 @@
 #include "SirEngine/binary/binaryFile.h"
 #include "SirEngine/fileUtils.h"
 #include <d3dcompiler.h>
+#include "SirEngine/runtimeString.h"
 
 namespace SirEngine {
 namespace dx12 {
@@ -130,7 +131,7 @@ void ShaderManager::recompileShader(const char *path, const char *offsetPath,
   args.type = meta->type;
   std::wstring wcompilerArgs = meta->compilerArgs;
   args.compilerArgs = wcompilerArgs;
-  std::string compilerArgs(wcompilerArgs.begin(), wcompilerArgs.end());
+  std::string compilerArgs(frameConvert(meta->compilerArgs));
 
   // TODO this is quite a mess, so many conversiong with Wstring back and
   // fort small allocations etc.
