@@ -5,29 +5,41 @@
 
 namespace SirEngine {
 
+DebugDrawNode::DebugDrawNode(GraphAllocators &allocators)
+    : GNode("DebugDrawNode", "DebugDrawNode", allocators) {
 
-DebugDrawNode::DebugDrawNode(const char *name) : GraphNode(name, "DebugDrawNode") {
+  defaultInitializePlugsAndConnections(2, 1);
   // lets create the plugs
-  Plug inTexture;
+  GPlug &inTexture = m_inputPlugs[PLUG_INDEX(PLUGS::IN_TEXTURE)];
   inTexture.plugValue = 0;
   inTexture.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
   inTexture.nodePtr = this;
   inTexture.name = "inTexture";
-  registerPlug(inTexture);
 
-  Plug inDepth;
+  GPlug &inDepth = m_inputPlugs[PLUG_INDEX(PLUGS::DEPTH_RT)];
   inDepth.plugValue = 0;
   inDepth.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
   inDepth.nodePtr = this;
   inDepth.name = "depthTexture";
-  registerPlug(inDepth);
 
-  Plug outTexture;
+  GPlug &outTexture = m_outputPlugs[PLUG_INDEX(PLUGS::OUT_TEXTURE)];
   outTexture.plugValue = 0;
   outTexture.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
   outTexture.nodePtr = this;
   outTexture.name = "outTexture";
-  registerPlug(outTexture);
+}
+
+template <typename T>
+inline T getInputConnection(ResizableVector<GPlug *> **conns,
+                            const int plugId) {
+  const auto conn = conns[PLUG_INDEX(plugId)];
+
+  // TODO not super safe to do this, might be worth improving this
+  assert(conn->size() == 1 && "too many input connections");
+  GPlug *source = (*conn)[0];
+  const auto h = T{source->plugValue};
+  assert(h.isHandleValid());
+  return h;
 }
 
 inline void checkHandle(const TextureHandle input,
@@ -36,25 +48,19 @@ inline void checkHandle(const TextureHandle input,
   assert(input.handle != handleToWriteOn.handle);
 }
 
-
-void DebugDrawNode::initialize() {
-}
+void DebugDrawNode::initialize() {}
 
 void DebugDrawNode::compute() {
   // get the render texture
   annotateGraphicsBegin("DebugDrawPass");
 
-  auto &conn = m_connections[&m_inputPlugs[0]];
-  assert(conn.size() == 1 && "too many input connections");
-  Plug *source = conn[0];
-  TextureHandle texH{source->plugValue};
+  const auto texH =
+      getInputConnection<TextureHandle>(m_inConnections, IN_TEXTURE);
 
-  auto &conn2 = m_connections[&m_inputPlugs[1]];
-  assert(conn2.size() == 1 && "too many input connections");
-  Plug *sourceDepth = conn2[0];
-  TextureHandle depthH{sourceDepth->plugValue};
+  const auto depth =
+      getInputConnection<TextureHandle>(m_inConnections, DEPTH_RT);
 
-  dx12::DEBUG_RENDERER->render(texH,depthH);
+  dx12::DEBUG_RENDERER->render(texH, depth);
 
   m_outputPlugs[0].plugValue = texH.handle;
   annotateGraphicsEnd();

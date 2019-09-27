@@ -28,9 +28,16 @@ class PostProcessEffect {
   bool m_enabled = true;
 };
 
-class PostProcessStack final : public GraphNode {
+class PostProcessStack final : public GNode {
+public:
+  enum PLUGS {
+    IN_TEXTURE = INPUT_PLUG_CODE(0),
+    DEPTH_RT = INPUT_PLUG_CODE(1),
+    OUT_TEXTURE = OUTPUT_PLUG_CODE(0),
+    COUNT = 3
+  };
  public:
-  PostProcessStack();
+  PostProcessStack(GraphAllocators &allocators);
   virtual void initialize() override;
   void clear() override;
   virtual void compute() override;

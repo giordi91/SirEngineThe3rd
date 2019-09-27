@@ -5,46 +5,43 @@
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/TextureManagerDx12.h"
-#include "platform/windows/graphics/dx12/rootSignatureManager.h"
 #include "platform/windows/graphics/dx12/debugRenderer.h"
+#include "platform/windows/graphics/dx12/rootSignatureManager.h"
 
 namespace SirEngine {
 
 static const char *SIMPLE_FORWARD_RS = "simpleMeshRSTex";
 static const char *SIMPLE_FORWARD_PSO = "simpleMeshPSOTex";
 
-SimpleForward::SimpleForward(const char *name)
-    : GraphNode(name, "SimpleForward") {
+SimpleForward::SimpleForward(GraphAllocators &allocators)
+    : GNode("SimpleForward", "SimpleForward", allocators) {
+
+  defaultInitializePlugsAndConnections(3, 1);
   // lets create the plugs
-  Plug inTexture;
+  GPlug &inTexture = m_inputPlugs[PLUG_INDEX(PLUGS::IN_TEXTURE)];
   inTexture.plugValue = 0;
-  inTexture.flags = PlugFlags::PLUG_INPUT| PlugFlags::PLUG_TEXTURE;
+  inTexture.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
   inTexture.nodePtr = this;
   inTexture.name = "inTexture";
-  registerPlug(inTexture);
 
-  Plug outTexture;
-  outTexture.plugValue = 0;
-  outTexture.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
-  outTexture.nodePtr = this;
-  outTexture.name = "outTexture";
-  registerPlug(outTexture);
-
-  Plug depthBuffer;
+  GPlug &depthBuffer = m_inputPlugs[PLUG_INDEX(PLUGS::DEPTH_RT)];
   depthBuffer.plugValue = 0;
-  depthBuffer.flags = PlugFlags::PLUG_INPUT| PlugFlags::PLUG_TEXTURE;
+  depthBuffer.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
   depthBuffer.nodePtr = this;
   depthBuffer.name = "depthTexture";
-  registerPlug(depthBuffer);
 
   // lets create the plugs
-  Plug stream;
+  GPlug &stream = m_inputPlugs[PLUG_INDEX(PLUGS::ASSET_STREAM)];
   stream.plugValue = 0;
   stream.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_CPU_BUFFER;
   stream.nodePtr = this;
   stream.name = "assetStream";
-  registerPlug(stream);
 
+  GPlug &outTexture = m_outputPlugs[PLUG_INDEX(PLUGS::OUT_TEXTURE)];
+  outTexture.plugValue = 0;
+  outTexture.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
+  outTexture.nodePtr = this;
+  outTexture.name = "outTexture";
 
   // fetching root signature
   rs =
@@ -55,17 +52,17 @@ SimpleForward::SimpleForward(const char *name)
 void SimpleForward::initialize() {
   m_brdfHandle = globals::TEXTURE_MANAGER->loadTexture(
       "../data/processed/textures/brdf.texture");
-
-
 }
-inline StreamHandle
-getInputConnection(std::unordered_map<const Plug *, std::vector<Plug *>> &conns,
-                   Plug *plug) {
+
+template <typename T>
+inline T getInputConnection(ResizableVector<GPlug *> **conns,
+                            const int plugId) {
+  const auto conn = conns[PLUG_INDEX(plugId)];
+
   // TODO not super safe to do this, might be worth improving this
-  auto &inConns = conns[plug];
-  assert(inConns.size() == 1 && "too many input connections");
-  Plug *source = inConns[0];
-  const auto h = StreamHandle{source->plugValue};
+  assert(conn->size() == 1 && "too many input connections");
+  GPlug *source = (*conn)[0];
+  const auto h = T{source->plugValue};
   assert(h.isHandleValid());
   return h;
 }
@@ -74,21 +71,17 @@ void SimpleForward::compute() {
 
   annotateGraphicsBegin("Simple Forward");
 
-  //get input color texture
-  auto &conn = m_connections[&m_inputPlugs[0]];
-  assert(conn.size() == 1 && "too many input connections");
-  Plug *source = conn[0];
-  const TextureHandle renderTarget{source->plugValue};
+  // get input color texture
+  const auto renderTarget =
+      getInputConnection<TextureHandle>(m_inConnections, IN_TEXTURE);
 
-  auto &connDepth = m_connections[&m_inputPlugs[1]];
-  assert(connDepth.size() == 1 && "too many input connections");
-  Plug *sourceDepth = connDepth[0];
-  const TextureHandle depth{sourceDepth->plugValue};
+  const auto depth =
+      getInputConnection<TextureHandle>(m_inConnections, DEPTH_RT);
 
   // we can now start to render our geometries, the way it works is you first
   // access the renderable stream coming in from the node input
   const StreamHandle streamH =
-      getInputConnection(m_connections, &m_inputPlugs[2]);
+      getInputConnection<StreamHandle>(m_inConnections, ASSET_STREAM);
   const std::unordered_map<uint32_t, std::vector<Renderable>> &renderables =
       globals::ASSET_MANAGER->getRenderables(streamH);
 
@@ -98,15 +91,14 @@ void SimpleForward::compute() {
   D3D12_RESOURCE_BARRIER barriers[1];
   int counter = 0;
   counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
-      renderTarget, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers,
-      counter);
+      renderTarget, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, counter);
 
   if (counter) {
     commandList->ResourceBarrier(counter, barriers);
   }
 
   globals::TEXTURE_MANAGER->bindRenderTarget(renderTarget, depth);
-  //globals::TEXTURE_MANAGER->bindRenderTarget(renderTarget, TextureHandle{});
+  // globals::TEXTURE_MANAGER->bindRenderTarget(renderTarget, TextureHandle{});
 
   for (const auto &renderableList : renderables) {
     if (dx12::MATERIAL_MANAGER->isQueueType(renderableList.first,
@@ -139,7 +131,6 @@ void SimpleForward::compute() {
                                                      currentFc);
       }
       annotateGraphicsEnd();
-
     }
   }
 
@@ -147,8 +138,7 @@ void SimpleForward::compute() {
   annotateGraphicsEnd();
 }
 
-void SimpleForward::clear() {
-}
+void SimpleForward::clear() {}
 
 void SimpleForward::onResizeEvent(int, int) {
   clear();

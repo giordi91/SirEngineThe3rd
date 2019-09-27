@@ -14,28 +14,28 @@ namespace SirEngine {
 static const char *SKYBOX_RS = "skybox_RS";
 static const char *SKYBOX_PSO = "skyboxPSO";
 
-SkyBoxPass::SkyBoxPass(const char *name) : GraphNode(name, "SkyBoxPass") {
+SkyBoxPass::SkyBoxPass(GraphAllocators &allocators)
+    : GNode("SkyBoxPass", "SkyBoxPass", allocators) {
+
+  defaultInitializePlugsAndConnections(2, 1);
   // lets create the plugs
-  Plug fullscreenPass;
+  GPlug &fullscreenPass = m_inputPlugs[PLUG_INDEX(PLUGS::IN_TEXTURE)];
   fullscreenPass.plugValue = 0;
   fullscreenPass.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
   fullscreenPass.nodePtr = this;
   fullscreenPass.name = "fullscreenPass";
-  registerPlug(fullscreenPass);
 
-  Plug depthBuffer;
+  GPlug &depthBuffer = m_inputPlugs[PLUG_INDEX(PLUGS::DEPTH)];
   depthBuffer.plugValue = 0;
   depthBuffer.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
   depthBuffer.nodePtr = this;
   depthBuffer.name = "depth";
-  registerPlug(depthBuffer);
 
-  Plug buffer;
+  GPlug &buffer = m_outputPlugs[PLUG_INDEX(PLUGS::OUT_TEX)];
   buffer.plugValue = 0;
   buffer.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
   buffer.nodePtr = this;
   buffer.name = "buffer";
-  registerPlug(buffer);
 }
 
 void SkyBoxPass::initialize() {
@@ -52,14 +52,14 @@ void SkyBoxPass::initialize() {
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
 }
 
-inline TextureHandle
-getInputConnection(std::unordered_map<const Plug *, std::vector<Plug *>> &conns,
-                   Plug *plug) {
+inline TextureHandle getInputConnection(ResizableVector<GPlug *> **conns,
+                                        const int plugId) {
+  const auto conn = conns[PLUG_INDEX(plugId)];
+
   // TODO not super safe to do this, might be worth improving this
-  auto &inConns = conns[plug];
-  assert(inConns.size() == 1 && "too many input connections");
-  Plug *source = inConns[0];
-  auto h = TextureHandle{source->plugValue};
+  assert(conn->size() == 1 && "too many input connections");
+  GPlug *source = (*conn)[0];
+  const auto h = TextureHandle{source->plugValue};
   assert(h.isHandleValid());
   return h;
 }
@@ -67,10 +67,9 @@ getInputConnection(std::unordered_map<const Plug *, std::vector<Plug *>> &conns,
 void SkyBoxPass::compute() {
 
   annotateGraphicsBegin("Skybox");
-  TextureHandle bufferHandle =
-      getInputConnection(m_connections, &m_inputPlugs[0]);
-  TextureHandle depthHandle =
-      getInputConnection(m_connections, &m_inputPlugs[1]);
+  const TextureHandle bufferHandle =
+      getInputConnection(m_inConnections, IN_TEXTURE);
+  const TextureHandle depthHandle = getInputConnection(m_inConnections, DEPTH);
 
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
@@ -101,7 +100,8 @@ void SkyBoxPass::compute() {
   globals::TEXTURE_MANAGER->bindRenderTarget(bufferHandle, depthHandle);
   commandList->SetGraphicsRootSignature(rs);
 
-  TextureHandle skyHandle = globals::RENDERING_CONTEXT->getEnviromentMapHandle();
+  TextureHandle skyHandle =
+      globals::RENDERING_CONTEXT->getEnviromentMapHandle();
   // TextureHandle skyHandle =
   // globals::RENDERING_CONTEX->getEnviromentMapIrradianceHandle();
   globals::RENDERING_CONTEXT->bindCameraBuffer(0);
