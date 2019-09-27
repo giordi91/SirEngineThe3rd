@@ -26,10 +26,10 @@
 #include "SirEngine/graphics/postProcess/postProcessStack.h"
 #include "SirEngine/graphics/renderingContext.h"
 
-#include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
-#include "platform/windows/graphics/dx12/bufferManagerDx12.h"
-#include "platform/windows/graphics/dx12/PSOManager.h"
 #include "SirEngine/skinClusterManager.h"
+#include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
+#include "platform/windows/graphics/dx12/PSOManager.h"
+#include "platform/windows/graphics/dx12/bufferManagerDx12.h"
 
 namespace SirEngine {
 
@@ -53,13 +53,14 @@ void Graphics3DLayer::onAttach() {
   dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE, currentFc);
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
 
-  dx12::RENDERING_GRAPH = new Graph();
-  const auto assetNode = new AssetManagerNode();
-  const auto finalBlit = new FinalBlitNode();
+  GraphAllocators alloc{globals::STRING_POOL, globals::PERSISTENT_ALLOCATOR};
+  dx12::RENDERING_GRAPH = new DependencyGraph();
+  const auto assetNode = new AssetManagerNode(alloc);
+  const auto finalBlit = new FinalBlitNode(alloc);
   const auto simpleForward = new SimpleForward("simpleForward");
   auto postProcess = new PostProcessStack();
   // auto gbufferPass = new GBufferPass("GBufferPass");
-  const auto gbufferPass = new GBufferPassPBR("GBufferPassPBR");
+  const auto gbufferPass = new GBufferPassPBR(alloc);
   const auto lighting = new DeferredLightingPass("Deferred lighting");
   // auto sky = new ProceduralSkyBoxPass("Procedural Sky");
   const auto sky = new SkyBoxPass("Skybox");
@@ -74,21 +75,25 @@ void Graphics3DLayer::onAttach() {
   dx12::RENDERING_GRAPH->addNode(assetNode);
   dx12::RENDERING_GRAPH->addNode(finalBlit);
   dx12::RENDERING_GRAPH->addNode(gbufferPass);
-  dx12::RENDERING_GRAPH->addNode(lighting);
-  dx12::RENDERING_GRAPH->addNode(simpleForward);
-  dx12::RENDERING_GRAPH->addNode(sky);
-  dx12::RENDERING_GRAPH->addNode(debugDraw);
+  // dx12::RENDERING_GRAPH->addNode(lighting);
+  // dx12::RENDERING_GRAPH->addNode(simpleForward);
+  // dx12::RENDERING_GRAPH->addNode(sky);
+  // dx12::RENDERING_GRAPH->addNode(debugDraw);
+  // dx12::RENDERING_GRAPH->addNode(postProcess);
   dx12::RENDERING_GRAPH->setFinalNode(finalBlit);
 
-  dx12::RENDERING_GRAPH->connectNodes(assetNode, "assetStream", gbufferPass,
-                                      "assetStream");
+  dx12::RENDERING_GRAPH->connectNodes(assetNode, AssetManagerNode::ASSET_STREAM,
+                                      gbufferPass,
+                                      GBufferPassPBR::ASSET_STREAM);
 
+  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::GEOMETRY_RT,
+                                      finalBlit, FinalBlitNode::IN_TEXTURE);
   // auto bw = new DebugNode("debugBW");
-  dx12::RENDERING_GRAPH->addNode(postProcess);
   // dx12::RENDERING_GRAPH->connectNodes(simpleForward, "outTexture",
   // postProcess,
   //                                    "inTexture");
 
+  /*
   dx12::RENDERING_GRAPH->connectNodes(gbufferPass, "geometry", lighting,
                                       "geometry");
   dx12::RENDERING_GRAPH->connectNodes(gbufferPass, "normal", lighting,
@@ -97,6 +102,7 @@ void Graphics3DLayer::onAttach() {
                                       "specular");
   dx12::RENDERING_GRAPH->connectNodes(gbufferPass, "depth", lighting, "depth");
 
+  /*
   dx12::RENDERING_GRAPH->connectNodes(lighting, "lighting", sky,
                                       "fullscreenPass");
 
@@ -123,6 +129,7 @@ void Graphics3DLayer::onAttach() {
 
   dx12::RENDERING_GRAPH->connectNodes(debugDraw, "outTexture", finalBlit,
                                       "inTexture");
+  */
 
   dx12::RENDERING_GRAPH->finalizeGraph();
 
@@ -262,6 +269,7 @@ bool Graphics3DLayer::onMouseMoveEvent(MouseMoveEvent &e) {
 }
 
 bool Graphics3DLayer::onDebugLayerEvent(DebugLayerChanged &e) {
+  /*
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
   switch (e.getLayer()) {
   case (0): {
@@ -303,6 +311,7 @@ bool Graphics3DLayer::onDebugLayerEvent(DebugLayerChanged &e) {
     return true;
   }
   }
+  */
   return false;
 }
 
@@ -313,12 +322,16 @@ bool Graphics3DLayer::onResizeEvent(WindowResizeEvent &e) {
 }
 
 bool Graphics3DLayer::onDebugConfigChanged(DebugRenderConfigChanged &e) {
-  GraphNode *debugNode = dx12::RENDERING_GRAPH->findNodeOfType("DebugNode");
-  if (debugNode) {
-    auto *debugNodeTyped = (FramePassDebugNode *)debugNode;
-    debugNodeTyped->setConfig(e.getConfig());
-  }
-  return true;
+	//FIXNOW
+  /*
+GraphNode *debugNode = dx12::RENDERING_GRAPH->findNodeOfType("DebugNode");
+if (debugNode) {
+auto *debugNodeTyped = (FramePassDebugNode *)debugNode;
+debugNodeTyped->setConfig(e.getConfig());
+}
+return true;
+*/
+	return true;
 }
 bool Graphics3DLayer::onShaderCompileEvent(ShaderCompileEvent &e) {
   SE_CORE_INFO("Reading to compile shader");

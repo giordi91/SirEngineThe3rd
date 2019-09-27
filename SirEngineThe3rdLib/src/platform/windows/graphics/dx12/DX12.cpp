@@ -21,6 +21,7 @@
 #include "platform/windows/graphics/dx12/debugRenderer.h"
 #include "SirEngine/animation/animationManager.h"
 #include "SirEngine/skinClusterManager.h"
+//#include "SirEngine/graphics/nodeGraph.h"
 
 namespace SirEngine::dx12 {
 
@@ -41,7 +42,7 @@ TextureManagerDx12 *TEXTURE_MANAGER = nullptr;
 MeshManager *MESH_MANAGER = nullptr;
 IdentityManager *IDENTITY_MANAGER = nullptr;
 MaterialManager *MATERIAL_MANAGER = nullptr;
-Graph *RENDERING_GRAPH = nullptr;
+DependencyGraph*RENDERING_GRAPH = nullptr;
 ConstantBufferManagerDx12 *CONSTANT_BUFFER_MANAGER = nullptr;
 ShaderManager *SHADER_MANAGER = nullptr;
 PSOManager *PSO_MANAGER = nullptr;

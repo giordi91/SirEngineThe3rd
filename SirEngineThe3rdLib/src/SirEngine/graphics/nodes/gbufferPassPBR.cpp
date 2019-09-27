@@ -9,45 +9,41 @@
 #include "platform/windows/graphics/dx12/textureManagerDx12.h"
 
 namespace SirEngine {
-GBufferPassPBR::GBufferPassPBR(const char *name)
-    : GraphNode(name, "GBufferPassPBR") {
+GBufferPassPBR::GBufferPassPBR(GraphAllocators &allocators)
+    : GNode("GBufferPassPBR", "GBufferPassPBR", allocators) {
+
+  defaultInitializePlugsAndConnections(1, 4);
   // lets create the plugs
-  Plug geometryBuffer;
+  GPlug &geometryBuffer = m_outputPlugs[PLUG_INDEX(PLUGS::GEOMETRY_RT)];
   geometryBuffer.plugValue = 0;
   geometryBuffer.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
   geometryBuffer.nodePtr = this;
   geometryBuffer.name = "geometry";
-  registerPlug(geometryBuffer);
 
-  Plug normalBuffer;
+  GPlug &normalBuffer = m_outputPlugs[PLUG_INDEX(PLUGS::NORMALS_RT)];
   normalBuffer.plugValue = 0;
   normalBuffer.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
   normalBuffer.nodePtr = this;
   normalBuffer.name = "normal";
-  registerPlug(normalBuffer);
 
-  Plug specularBuffer;
+  GPlug &specularBuffer = m_outputPlugs[PLUG_INDEX(PLUGS::SPECULAR_RT)];
   specularBuffer.plugValue = 0;
   specularBuffer.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
   specularBuffer.nodePtr = this;
   specularBuffer.name = "specular";
-  registerPlug(specularBuffer);
 
-  Plug depthBuffer;
+  GPlug &depthBuffer = m_outputPlugs[PLUG_INDEX(PLUGS::DEPTH_RT)];
   depthBuffer.plugValue = 0;
   depthBuffer.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
   depthBuffer.nodePtr = this;
   depthBuffer.name = "depth";
-  registerPlug(depthBuffer);
 
   // lets create the plugs
-  Plug stream;
+  GPlug &stream = m_inputPlugs[PLUG_INDEX(PLUGS::ASSET_STREAM)];
   stream.plugValue = 0;
   stream.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_CPU_BUFFER;
   stream.nodePtr = this;
   stream.name = "assetStream";
-  registerPlug(stream);
-
 }
 
 void GBufferPassPBR::initialize() {
@@ -68,13 +64,12 @@ void GBufferPassPBR::initialize() {
       "specularBuffer");
 }
 
-inline StreamHandle
-getInputConnection(std::unordered_map<const Plug *, std::vector<Plug *>> &conns,
-                   Plug *plug) {
+inline StreamHandle getInputConnection(ResizableVector<GPlug *> **conns) {
+  const auto conn = conns[PLUG_INDEX(GBufferPassPBR::PLUGS::ASSET_STREAM)];
+
   // TODO not super safe to do this, might be worth improving this
-  auto &inConns = conns[plug];
-  assert(inConns.size() == 1 && "too many input connections");
-  Plug *source = inConns[0];
+  assert(conn->size() == 1 && "too many input connections");
+  GPlug *source = (*conn)[0];
   const auto h = StreamHandle{source->plugValue};
   assert(h.isHandleValid());
   return h;
@@ -122,8 +117,7 @@ void GBufferPassPBR::compute() {
 
   // we can now start to render our geometries, the way it works is you first
   // access the renderable stream coming in from the node input
-  const StreamHandle streamH =
-      getInputConnection(m_connections, &m_inputPlugs[0]);
+  const StreamHandle streamH = getInputConnection(m_inConnections);
   const std::unordered_map<uint32_t, std::vector<Renderable>> &renderables =
       globals::ASSET_MANAGER->getRenderables(streamH);
 

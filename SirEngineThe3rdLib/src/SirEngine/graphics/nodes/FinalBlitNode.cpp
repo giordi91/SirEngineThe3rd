@@ -13,27 +13,29 @@ namespace SirEngine {
 
 static const char *FINAL_BLIT_PSO = "HDRtoSDREffect_PSO";
 static const char *FINAL_BLIT_RS = "standardPostProcessEffect_RS";
-FinalBlitNode::FinalBlitNode() : GraphNode("FinalBlit", "FinalBlit") {
+FinalBlitNode::FinalBlitNode(GraphAllocators &allocators)
+    : GNode("FinalBlit", "FinalBlit", allocators) {
   // lets create the plugs
-  Plug inTexture;
+  defaultInitializePlugsAndConnections(1, 0);
+
+  GPlug &inTexture= m_inputPlugs[PLUG_INDEX(PLUGS::IN_TEXTURE)];
   inTexture.plugValue = 0;
   inTexture.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
   inTexture.nodePtr = this;
   inTexture.name = "inTexture";
-  registerPlug(inTexture);
 }
 
 void FinalBlitNode::compute() {
   // get the render texture
   annotateGraphicsBegin("EndOfFrameBlit");
 
-  auto &conn = m_connections[&m_inputPlugs[0]];
-  assert(conn.size() == 1 && "too many input connections");
-  Plug *source = conn[0];
+  const auto conn = m_inConnections[PLUG_INDEX(PLUGS::IN_TEXTURE)];
+  assert(conn->size() == 1 && "too many input connections");
+  GPlug *source = (*conn)[0];
   TextureHandle texH;
   texH.handle = source->plugValue;
 
-  TextureHandle destination = dx12::SWAP_CHAIN->currentBackBufferTexture();
+  const TextureHandle destination = dx12::SWAP_CHAIN->currentBackBufferTexture();
   // globals::TEXTURE_MANAGER->copyTexture(texH,destination);
 
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
@@ -52,7 +54,7 @@ void FinalBlitNode::compute() {
   globals::TEXTURE_MANAGER->bindRenderTarget(destination, TextureHandle{});
   dx12::DescriptorPair pair = dx12::TEXTURE_MANAGER->getSRVDx12(texH);
 
-  dx12::PSO_MANAGER->bindPSO(m_pso,commandList);
+  dx12::PSO_MANAGER->bindPSO(m_pso, commandList);
   commandList->SetGraphicsRootSignature(m_rs);
   commandList->SetGraphicsRootDescriptorTable(1, pair.gpuHandle);
 

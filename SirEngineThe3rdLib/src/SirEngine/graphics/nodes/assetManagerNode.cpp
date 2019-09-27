@@ -2,15 +2,16 @@
 #include "SirEngine/assetManager.h"
 
 namespace SirEngine {
-AssetManagerNode::AssetManagerNode()
-    : GraphNode("AssetManagerNode", "AssetManagerNode") {
+AssetManagerNode::AssetManagerNode(GraphAllocators &allocators)
+    : GNode("AssetManagerNode", "AssetManagerNode", allocators) {
   // lets create the plugs
-  Plug stream;
+  defaultInitializePlugsAndConnections(0, 1);
+
+  GPlug &stream = m_outputPlugs[PLUG_INDEX(PLUGS::ASSET_STREAM)];
   stream.plugValue = 0;
   stream.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_CPU_BUFFER;
   stream.nodePtr = this;
   stream.name = "assetStream";
-  registerPlug(stream);
 }
 
 void AssetManagerNode::compute() {

@@ -2,13 +2,22 @@
 
 #include "SirEngine/graphics/nodeGraph.h"
 #include "SirEngine/handle.h"
-#include <d3d12.h>
 
 namespace SirEngine {
 
-class GBufferPassPBR final : public GraphNode {
+class GBufferPassPBR final : public GNode {
 public:
-	explicit GBufferPassPBR(const char *name);
+  enum PLUGS {
+    GEOMETRY_RT = OUTPUT_PLUG_CODE(0),
+    NORMALS_RT = OUTPUT_PLUG_CODE(1),
+    SPECULAR_RT = OUTPUT_PLUG_CODE(2),
+    DEPTH_RT = OUTPUT_PLUG_CODE(3),
+    ASSET_STREAM = INPUT_PLUG_CODE(0),
+    COUNT = 5
+  };
+
+public:
+  explicit GBufferPassPBR(GraphAllocators &allocators);
   virtual ~GBufferPassPBR() { clear(); };
   virtual void initialize() override;
   virtual void compute() override;

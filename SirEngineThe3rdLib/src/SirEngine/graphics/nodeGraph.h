@@ -218,6 +218,11 @@ private:
   std::vector<GraphNode *> m_linearizedGraph;
 };
 
+struct GraphAllocators {
+  StringPool *stringPool;
+  ThreeSizesPool *allocator;
+};
+
 // new node graph
 class GNode;
 struct GPlug final {
@@ -225,11 +230,6 @@ struct GPlug final {
   const char *name;
   uint32_t plugValue;
   uint32_t flags;
-};
-
-struct GraphAllocators {
-  StringPool *stringPool;
-  ThreeSizesPool *allocator;
 };
 
 class SIR_ENGINE_API GNode {
@@ -331,6 +331,21 @@ public:
 protected:
   inline bool isFlag(const GPlug &plug, const PlugFlags flag) const {
     return (plug.flags & flag) > 0;
+  }
+  void defaultInitializePlugsAndConnections(
+      int inputCount, int outputCount,
+      int reserve = DEFAULT_PLUG_CONNECTION_ALLOCATION) {
+
+    const int totalCount = inputCount + outputCount;
+    auto *plugs = static_cast<GPlug *>(
+        m_allocs.allocator->allocate(sizeof(GPlug) * totalCount));
+
+    m_inputPlugs = inputCount != 0 ? plugs : nullptr;
+    m_inputPlugsCount = inputCount;
+    m_outputPlugs = outputCount != 0 ?plugs + inputCount: nullptr;
+    m_outputPlugsCount = outputCount;
+
+    defaultInitializeConnectionPool(inputCount, outputCount, reserve);
   }
 
   void defaultInitializeConnectionPool(
