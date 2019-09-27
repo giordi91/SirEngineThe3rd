@@ -225,12 +225,12 @@ void DependencyGraph::finalizeGraph() {
   // should not be any risk of overflow.
   recurseNode(finalNode, m_linearizedGraph, visitedNodes);
 
-  //std::vector<GNode *> temp;
-  //for (int i = 0; i < linearCount; ++i) {
+  // std::vector<GNode *> temp;
+  // for (int i = 0; i < linearCount; ++i) {
   //  temp.push_back(m_linearizedGraph[i]);
   //}
 
-  //std::reverse(temp.begin(), temp.end());
+  // std::reverse(temp.begin(), temp.end());
   // just need to flip the vector
   const int linearCount = m_linearizedGraph.size();
   for (int low = 0, high = linearCount - 1; low < high; ++low, --high) {
@@ -242,6 +242,12 @@ void DependencyGraph::finalizeGraph() {
   for (int i = 0; i < linearCount; ++i) {
     m_linearizedGraph[i]->initialize();
   }
+}
 
+void DependencyGraph::compute() {
+  const int count = m_linearizedGraph.size();
+  for (int i = 0; i < count; ++i) {
+    m_linearizedGraph[i]->compute();
+  }
 }
 } // namespace SirEngine
