@@ -95,7 +95,7 @@ void recurseNode(GraphNode *currentNode, std::vector<GraphNode *> &queue,
   if (visitedNodes.find(currentNode->getNodeIdx()) == visitedNodes.end()) {
     visitedNodes.insert(currentNode->getNodeIdx());
 
-	queue.push_back(currentNode);
+    queue.push_back(currentNode);
     // let us now recurse depth first
     const std::vector<Plug> &inPlugs = currentNode->getInputPlugs();
     for (size_t i = 0; i < inPlugs.size(); ++i) {
@@ -122,9 +122,9 @@ void Graph::finalizeGraph() {
   }
 
   std::unordered_set<uint32_t> visitedNodes;
-  //using recursion, graph should be small, and we check against cycles
-  //should not be any risk of overflow.
-  recurseNode(finalNode,m_linearizedGraph,visitedNodes);
+  // using recursion, graph should be small, and we check against cycles
+  // should not be any risk of overflow.
+  recurseNode(finalNode, m_linearizedGraph, visitedNodes);
 
   // just need to flip the vector
   std::reverse(m_linearizedGraph.begin(), m_linearizedGraph.end());
@@ -140,4 +140,108 @@ void Graph::compute() {
   }
 }
 
+bool GNode::connect(const int sourcePlugId, GNode *destinationNode,
+                    const int destinationPlugId) {
+  const bool isInput = IS_INPUT_PLUG(sourcePlugId);
+  GPlug *destinationPlug = destinationNode->getPlug(destinationPlugId);
+
+  // making sure the in->out or out->in condition is met
+  const PlugFlags requiredDestinationFlag =
+      isInput ? PlugFlags::PLUG_OUTPUT : PlugFlags::PLUG_INPUT;
+  assert(isFlag(*destinationPlug, requiredDestinationFlag));
+
+  // if it is then we are good to go!
+  GPlug *sourcePlug = getPlug(sourcePlugId);
+  const int sourceIndex = PLUG_INDEX(sourcePlugId);
+
+  ResizableVector<GPlug *> **plugPtr =
+      isInput ? m_inConnections : m_outConnections;
+  plugPtr[sourceIndex]->pushBack(destinationPlug);
+  return true;
+}
+
+void GNode::defaultInitializeConnectionPool(int inputCount, int outputCount,
+                                            int reserve) {
+  auto *connections = static_cast<ResizableVector<GPlug *> **>(
+      m_allocs.allocator->allocate(sizeof(GPlug) * (inputCount + outputCount)));
+  // for each connection we need to allocate a vector
+  m_inConnections = connections;
+  m_outConnections = connections + inputCount;
+  for (int i = 0; i < inputCount; ++i) {
+    m_inConnections[i] =
+        new ResizableVector<GPlug *>(DEFAULT_PLUG_CONNECTION_ALLOCATION);
+  }
+  for (int i = 0; i < outputCount; ++i) {
+    m_outConnections[i] =
+        new ResizableVector<GPlug *>(DEFAULT_PLUG_CONNECTION_ALLOCATION);
+  }
+}
+void recurseNode(GNode *currentNode, ResizableVector<GNode *> &queue,
+                 std::unordered_set<uint32_t> &visitedNodes) {
+
+  // first we check whether or not the already processed the node
+  if (visitedNodes.find(currentNode->getNodeIdx()) == visitedNodes.end()) {
+    visitedNodes.insert(currentNode->getNodeIdx());
+
+    queue.pushBack(currentNode);
+    // let us now recurse depth first
+    int inCount;
+    const GPlug *inPlugs = currentNode->getInputPlugs(inCount);
+    for (size_t i = 0; i < inCount; ++i) {
+      // get the connections
+      const ResizableVector<GPlug *> *conns =
+          currentNode->getPlugConnections(&inPlugs[i]);
+      // if not empty we iterate all of them and extract the node at the
+      // other end side
+      const int connsCount = conns->size();
+      if (connsCount != 0) {
+        // if (conns != nullptr) {
+
+        for (int i = 0; i < connsCount; ++i) {
+          recurseNode(conns->getConstRef(i)->nodePtr, queue, visitedNodes);
+        }
+        // for (auto &conn : (*conns)) {
+        // recurseNode(conn->nodePtr, queue, visitedNodes);
+      }
+    }
+  }
+}
+
+void DependencyGraph::finalizeGraph() {
+  // for the time being we will linearize the graph
+  m_linearizedGraph.clear();
+  // m_linearizedGraph.reserve(m_nodeCounter);
+  const int count = m_nodes.size();
+
+  for (int i = 0; i < count; ++i) {
+    m_nodes[i]->clear();
+  }
+  // for (auto &node : m_nodes) {
+  //  node.second->clear();
+  //}
+
+  std::unordered_set<uint32_t> visitedNodes;
+  // using recursion, graph should be small, and we check against cycles
+  // should not be any risk of overflow.
+  recurseNode(finalNode, m_linearizedGraph, visitedNodes);
+
+  //std::vector<GNode *> temp;
+  //for (int i = 0; i < linearCount; ++i) {
+  //  temp.push_back(m_linearizedGraph[i]);
+  //}
+
+  //std::reverse(temp.begin(), temp.end());
+  // just need to flip the vector
+  const int linearCount = m_linearizedGraph.size();
+  for (int low = 0, high = linearCount - 1; low < high; ++low, --high) {
+    GNode *temp = m_linearizedGraph[low];
+    m_linearizedGraph[low] = m_linearizedGraph[high];
+    m_linearizedGraph[high] = temp;
+  }
+
+  for (int i = 0; i < linearCount; ++i) {
+    m_linearizedGraph[i]->initialize();
+  }
+
+}
 } // namespace SirEngine
