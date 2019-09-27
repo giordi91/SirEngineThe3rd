@@ -1,24 +1,33 @@
 #pragma once
 
-#include <d3d12.h>
 #include "SirEngine/graphics/nodeGraph.h"
 #include "SirEngine/handle.h"
+#include <d3d12.h>
 
 namespace SirEngine {
 
-class SimpleForward : public GraphNode {
- public:
-  explicit SimpleForward(const char* name);
+class SimpleForward final : public GNode {
+public:
+  enum PLUGS {
+    IN_TEXTURE = INPUT_PLUG_CODE(0),
+    DEPTH_RT = INPUT_PLUG_CODE(1),
+    ASSET_STREAM = INPUT_PLUG_CODE(2),
+    OUT_TEXTURE = OUTPUT_PLUG_CODE(0),
+    COUNT = 4
+  };
+
+public:
+  explicit SimpleForward(GraphAllocators &allocators);
   virtual ~SimpleForward() { clear(); };
   virtual void initialize() override;
   virtual void compute() override;
   virtual void clear() override;
   virtual void onResizeEvent(int screenWidth, int screenHeight) override;
 
- private:
-  ID3D12RootSignature* rs = nullptr;
+private:
+  ID3D12RootSignature *rs = nullptr;
   PSOHandle pso;
   TextureHandle m_brdfHandle;
 };
 
-}  // namespace SirEngine
+} // namespace SirEngine

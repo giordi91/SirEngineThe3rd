@@ -57,14 +57,14 @@ void Graphics3DLayer::onAttach() {
   dx12::RENDERING_GRAPH = new DependencyGraph();
   const auto assetNode = new AssetManagerNode(alloc);
   const auto finalBlit = new FinalBlitNode(alloc);
-  const auto simpleForward = new SimpleForward("simpleForward");
-  auto postProcess = new PostProcessStack();
+  const auto simpleForward = new SimpleForward(alloc);
+  auto postProcess = new PostProcessStack(alloc);
   // auto gbufferPass = new GBufferPass("GBufferPass");
   const auto gbufferPass = new GBufferPassPBR(alloc);
-  const auto lighting = new DeferredLightingPass("Deferred lighting");
+  const auto lighting = new DeferredLightingPass(alloc);
   // auto sky = new ProceduralSkyBoxPass("Procedural Sky");
-  const auto sky = new SkyBoxPass("Skybox");
-  const auto debugDraw = new DebugDrawNode("DebugDraw");
+  const auto sky = new SkyBoxPass(alloc);
+  const auto debugDraw = new DebugDrawNode(alloc);
 
   postProcess->allocateRenderPass<SSSSSEffect>("SSSSS");
   postProcess->allocateRenderPass<GammaAndToneMappingEffect>(
@@ -75,11 +75,11 @@ void Graphics3DLayer::onAttach() {
   dx12::RENDERING_GRAPH->addNode(assetNode);
   dx12::RENDERING_GRAPH->addNode(finalBlit);
   dx12::RENDERING_GRAPH->addNode(gbufferPass);
-  // dx12::RENDERING_GRAPH->addNode(lighting);
-  // dx12::RENDERING_GRAPH->addNode(simpleForward);
-  // dx12::RENDERING_GRAPH->addNode(sky);
-  // dx12::RENDERING_GRAPH->addNode(debugDraw);
-  // dx12::RENDERING_GRAPH->addNode(postProcess);
+  dx12::RENDERING_GRAPH->addNode(lighting);
+  dx12::RENDERING_GRAPH->addNode(sky);
+  dx12::RENDERING_GRAPH->addNode(simpleForward);
+  dx12::RENDERING_GRAPH->addNode(postProcess);
+  dx12::RENDERING_GRAPH->addNode(debugDraw);
   dx12::RENDERING_GRAPH->setFinalNode(finalBlit);
 
   dx12::RENDERING_GRAPH->connectNodes(assetNode, AssetManagerNode::ASSET_STREAM,
@@ -87,89 +87,59 @@ void Graphics3DLayer::onAttach() {
                                       GBufferPassPBR::ASSET_STREAM);
 
   dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::GEOMETRY_RT,
-                                      finalBlit, FinalBlitNode::IN_TEXTURE);
-  // auto bw = new DebugNode("debugBW");
-  // dx12::RENDERING_GRAPH->connectNodes(simpleForward, "outTexture",
-  // postProcess,
-  //                                    "inTexture");
+                                      lighting,
+                                      DeferredLightingPass::GEOMETRY_RT);
+  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::NORMALS_RT,
+                                      lighting,
+                                      DeferredLightingPass::NORMALS_RT);
+  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::SPECULAR_RT,
+                                      lighting,
+                                      DeferredLightingPass::SPECULAR_RT);
+  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::DEPTH_RT,
+                                      lighting, DeferredLightingPass::DEPTH_RT);
 
-  /*
-  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, "geometry", lighting,
-                                      "geometry");
-  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, "normal", lighting,
-                                      "normal");
-  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, "specular", lighting,
-                                      "specular");
-  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, "depth", lighting, "depth");
+  dx12::RENDERING_GRAPH->connectNodes(
+      lighting, DeferredLightingPass::LIGHTING_RT, sky, SkyBoxPass::IN_TEXTURE);
 
-  /*
-  dx12::RENDERING_GRAPH->connectNodes(lighting, "lighting", sky,
-                                      "fullscreenPass");
-
-  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, "depth", sky, "depth");
+  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::DEPTH_RT,
+                                      sky, SkyBoxPass::DEPTH);
 
   // connecting forward
-  dx12::RENDERING_GRAPH->connectNodes(sky, "buffer", simpleForward,
-                                      "inTexture");
-  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, "depth", simpleForward,
-                                      "depthTexture");
+  dx12::RENDERING_GRAPH->connectNodes(sky, SkyBoxPass::OUT_TEX, simpleForward,
+                                      SimpleForward::IN_TEXTURE);
+  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::DEPTH_RT,
+                                      simpleForward, SimpleForward::DEPTH_RT);
 
-  dx12::RENDERING_GRAPH->connectNodes(simpleForward, "outTexture", postProcess,
-                                      "inTexture");
-  dx12::RENDERING_GRAPH->connectNodes(assetNode, "assetStream", simpleForward,
-                                      "assetStream");
+  // dx12::RENDERING_GRAPH->connectNodes(simpleForward,
+  // SimpleForward::OUT_TEXTURE,
+  //                                    postProcess, "inTexture");
+  dx12::RENDERING_GRAPH->connectNodes(assetNode, AssetManagerNode::ASSET_STREAM,
+                                      simpleForward,
+                                      SimpleForward::ASSET_STREAM);
+  dx12::RENDERING_GRAPH->connectNodes(simpleForward, SimpleForward::OUT_TEXTURE,
+                                      postProcess,
+                                      PostProcessStack::IN_TEXTURE);
 
-  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, "depth", postProcess,
-                                      "depthTexture");
+  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::DEPTH_RT,
+                                      postProcess, PostProcessStack::DEPTH_RT);
 
-  dx12::RENDERING_GRAPH->connectNodes(postProcess, "outTexture", debugDraw,
-                                      "inTexture");
-  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, "depth", debugDraw,
-                                      "depthTexture");
+  dx12::RENDERING_GRAPH->connectNodes(postProcess,
+                                      PostProcessStack::OUT_TEXTURE, debugDraw,
+                                      DebugDrawNode::IN_TEXTURE);
+  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::DEPTH_RT,
+                                      debugDraw, DebugDrawNode::DEPTH_RT);
 
-  dx12::RENDERING_GRAPH->connectNodes(debugDraw, "outTexture", finalBlit,
-                                      "inTexture");
-  */
+  dx12::RENDERING_GRAPH->connectNodes(debugDraw, DebugDrawNode::OUT_TEXTURE,
+                                      finalBlit, FinalBlitNode::IN_TEXTURE);
 
   dx12::RENDERING_GRAPH->finalizeGraph();
 
   if (!currentFc->isListOpen) {
     dx12::resetAllocatorAndList(currentFc);
   }
-  /*
-  std::vector<float> data;
-  data.push_back(5.0f);
-  data.push_back(0.0f);
-  data.push_back(0.0f);
-  data.push_back(5.0f);
-  data.push_back(5.0f);
-  data.push_back(0.0f);
-  data.push_back(5.0f);
-  data.push_back(10.0f);
-  data.push_back(0.0f);
-  dx12::DEBUG_RENDERER->drawPointsUniformColor(
-      data.data(), static_cast<uint32_t>(data.size() * sizeof(float)),
-      DirectX::XMFLOAT4{1, 0, 0, 1}, 1.0f, true, "debugPoints");
 
-  std::vector<float> data2;
-  data.push_back(5.0f);
-  data.push_back(0.0f);
-  data.push_back(0.0f);
-  data.push_back(5.0f);
-  data.push_back(5.0f);
-  data.push_back(0.0f);
-  data.push_back(5.0f);
-  data.push_back(5.0f);
-  data.push_back(0.0f);
-  data.push_back(15.0f);
-  data.push_back(10.0f);
-  data.push_back(0.0f);
-  dx12::DEBUG_RENDERER->drawLinesUniformColor(
-      data.data(), static_cast<uint32_t>(data.size() * sizeof(float)),
-  DirectX::XMFLOAT4{1, 0, 0, 1}, 1.0f, true, "debugLines");
-  */
-
-  auto m_animation = globals::ANIMATION_MANAGER->loadAnimationConfig(
+  //TODO REMOVE THIS
+  const auto m_animation = globals::ANIMATION_MANAGER->loadAnimationConfig(
       "../data/external/animation/exported/clip/knightBIdleConfig.json");
   auto m_animation2 = globals::ANIMATION_MANAGER->loadAnimationConfig(
       "../data/external/animation/exported/clip/knightBIdleConfig.json");
@@ -322,7 +292,7 @@ bool Graphics3DLayer::onResizeEvent(WindowResizeEvent &e) {
 }
 
 bool Graphics3DLayer::onDebugConfigChanged(DebugRenderConfigChanged &e) {
-	//FIXNOW
+  // FIXNOW
   /*
 GraphNode *debugNode = dx12::RENDERING_GRAPH->findNodeOfType("DebugNode");
 if (debugNode) {
@@ -331,7 +301,7 @@ debugNodeTyped->setConfig(e.getConfig());
 }
 return true;
 */
-	return true;
+  return true;
 }
 bool Graphics3DLayer::onShaderCompileEvent(ShaderCompileEvent &e) {
   SE_CORE_INFO("Reading to compile shader");

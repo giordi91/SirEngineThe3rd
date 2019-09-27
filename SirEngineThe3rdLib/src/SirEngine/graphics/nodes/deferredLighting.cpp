@@ -13,43 +13,41 @@ namespace SirEngine {
 static const char *DEFERRED_LIGHTING_PSO = "deferredDirectionalLight_PSO";
 static const char *DEFERRED_LIGHTING_RS = "deferredDirectionalLight_RS";
 
-DeferredLightingPass::DeferredLightingPass(const char *name)
-    : GraphNode(name, "DeferredLightingPass") {
+DeferredLightingPass::DeferredLightingPass(GraphAllocators &allocators)
+    : GNode("DeferredLightingPass", "DeferredLightingPass", allocators) {
+  // init data
+  defaultInitializePlugsAndConnections(4, 1);
+
   // lets create the plugs
-  Plug geometryBuffer;
+  GPlug &geometryBuffer = m_inputPlugs[PLUG_INDEX(PLUGS::GEOMETRY_RT)];
   geometryBuffer.plugValue = 0;
   geometryBuffer.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
   geometryBuffer.nodePtr = this;
   geometryBuffer.name = "geometry";
-  registerPlug(geometryBuffer);
 
-  Plug normalBuffer;
+  GPlug &normalBuffer = m_inputPlugs[PLUG_INDEX(PLUGS::NORMALS_RT)];
   normalBuffer.plugValue = 0;
   normalBuffer.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
   normalBuffer.nodePtr = this;
   normalBuffer.name = "normal";
-  registerPlug(normalBuffer);
 
-  Plug specularBuffer;
+  GPlug &specularBuffer = m_inputPlugs[PLUG_INDEX(PLUGS::SPECULAR_RT)];
   specularBuffer.plugValue = 0;
   specularBuffer.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
   specularBuffer.nodePtr = this;
   specularBuffer.name = "specular";
-  registerPlug(specularBuffer);
 
-  Plug depthBuffer;
+  GPlug &depthBuffer = m_inputPlugs[PLUG_INDEX(PLUGS::DEPTH_RT)];
   depthBuffer.plugValue = 0;
   depthBuffer.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
   depthBuffer.nodePtr = this;
   depthBuffer.name = "depth";
-  registerPlug(depthBuffer);
 
-  Plug lightBuffer;
+  GPlug &lightBuffer = m_outputPlugs[PLUG_INDEX(PLUGS::LIGHTING_RT)];
   lightBuffer.plugValue = 0;
   lightBuffer.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
   lightBuffer.nodePtr = this;
   lightBuffer.name = "lighting";
-  registerPlug(lightBuffer);
 
   // fetching root signature
   rs = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(
@@ -67,7 +65,6 @@ void DeferredLightingPass::initialize() {
   m_lightCB = globals::RENDERING_CONTEXT->getLightCB();
   m_lightAddress = dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(m_lightCB);
   m_brdfHandle = globals::RENDERING_CONTEXT->getBrdfHandle();
-
 }
 
 inline TextureHandle
@@ -82,18 +79,30 @@ getInputConnection(std::unordered_map<const Plug *, std::vector<Plug *>> &conns,
   return h;
 }
 
+inline TextureHandle getInputConnection(ResizableVector<GPlug *> **conns,
+                                        int plugId) {
+  const auto conn = conns[PLUG_INDEX(plugId)];
+
+  // TODO not super safe to do this, might be worth improving this
+  assert(conn->size() == 1 && "too many input connections");
+  GPlug *source = (*conn)[0];
+  const auto h = TextureHandle{source->plugValue};
+  assert(h.isHandleValid());
+  return h;
+}
+
 void DeferredLightingPass::compute() {
 
   annotateGraphicsBegin("DeferredLightingPass");
 
-  TextureHandle gbufferHandle =
-      getInputConnection(m_connections, &m_inputPlugs[0]);
-  TextureHandle normalBufferHandle =
-      getInputConnection(m_connections, &m_inputPlugs[1]);
-  TextureHandle specularBufferHandle =
-      getInputConnection(m_connections, &m_inputPlugs[2]);
-  TextureHandle depthHandle =
-      getInputConnection(m_connections, &m_inputPlugs[3]);
+  const TextureHandle gbufferHandle =
+      getInputConnection(m_inConnections, GEOMETRY_RT);
+  const TextureHandle normalBufferHandle =
+      getInputConnection(m_inConnections, NORMALS_RT);
+  const TextureHandle specularBufferHandle =
+      getInputConnection(m_inConnections, SPECULAR_RT);
+  const TextureHandle depthHandle =
+      getInputConnection(m_inConnections, DEPTH_RT);
 
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
@@ -135,12 +144,14 @@ void DeferredLightingPass::compute() {
       4, dx12::TEXTURE_MANAGER->getSRVDx12(normalBufferHandle).gpuHandle);
   commandList->SetGraphicsRootDescriptorTable(
       5, dx12::TEXTURE_MANAGER->getSRVDx12(specularBufferHandle).gpuHandle);
-  TextureHandle skyHandle =
+  const TextureHandle skyHandle =
       globals::RENDERING_CONTEXT->getEnviromentMapIrradianceHandle();
   commandList->SetGraphicsRootDescriptorTable(
       6, dx12::TEXTURE_MANAGER->getSRVDx12(skyHandle).gpuHandle);
 
-  TextureHandle skyRadianceHandle =
+  // TODO: investigate bug of lighting pass, irradiance seems to be
+  // weirdly rotated
+  const TextureHandle skyRadianceHandle =
       globals::RENDERING_CONTEXT->getEnviromentMapRadianceHandle();
   commandList->SetGraphicsRootDescriptorTable(
       7, dx12::TEXTURE_MANAGER->getSRVDx12(skyRadianceHandle).gpuHandle);

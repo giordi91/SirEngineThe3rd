@@ -7,29 +7,27 @@
 
 namespace SirEngine {
 
-PostProcessStack::PostProcessStack()
-    : GraphNode("PostProcessStack", "PostProcessStack") {
+PostProcessStack::PostProcessStack(GraphAllocators &allocators)
+    : GNode("PostProcessStack", "PostProcessStack", allocators) {
+  defaultInitializePlugsAndConnections(2, 1);
   // lets create the plugs
-  Plug inTexture;
+  GPlug &inTexture = m_inputPlugs[PLUG_INDEX(PLUGS::IN_TEXTURE)];
   inTexture.plugValue = 0;
   inTexture.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
   inTexture.nodePtr = this;
   inTexture.name = "inTexture";
-  registerPlug(inTexture);
 
-  Plug depthTexture;
+  GPlug &depthTexture = m_inputPlugs[PLUG_INDEX(PLUGS::DEPTH_RT)];
   depthTexture.plugValue = 0;
   depthTexture.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
   depthTexture.nodePtr = this;
   depthTexture.name = "depthTexture";
-  registerPlug(depthTexture);
 
-  Plug outTexture;
+  GPlug &outTexture = m_outputPlugs[PLUG_INDEX(PLUGS::OUT_TEXTURE)];
   outTexture.plugValue = 0;
   outTexture.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
   outTexture.nodePtr = this;
   outTexture.name = "outTexture";
-  registerPlug(outTexture);
 }
 
 void PostProcessStack::initialize() {
@@ -41,20 +39,34 @@ void PostProcessStack::initialize() {
 
   // allocate ping pong textures
   handles[0] = globals::TEXTURE_MANAGER->allocateRenderTexture(
-      globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT, RenderTargetFormat::R16G16B16A16_FLOAT,
-      "postProcess1");
+      globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT,
+      RenderTargetFormat::R16G16B16A16_FLOAT, "postProcess1");
   handles[1] = globals::TEXTURE_MANAGER->allocateRenderTexture(
-      globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT, RenderTargetFormat::R16G16B16A16_FLOAT,
-      "postProcess2");
+      globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT,
+      RenderTargetFormat::R16G16B16A16_FLOAT, "postProcess2");
 }
 
+template <typename T>
+inline T getInputConnection(ResizableVector<GPlug *> **conns,
+                            const int plugId) {
+  const auto conn = conns[PLUG_INDEX(plugId)];
+
+  // TODO not super safe to do this, might be worth improving this
+  assert(conn->size() == 1 && "too many input connections");
+  GPlug *source = (*conn)[0];
+  const auto h = T{source->plugValue};
+  assert(h.isHandleValid());
+  return h;
+}
 
 void PostProcessStack::compute() {
   annotateGraphicsBegin("Post processing");
-  auto &conn = m_connections[&m_inputPlugs[0]];
-  assert(conn.size() == 1 && "too many input connections");
-  Plug *source = conn[0];
-  TextureHandle texH{texH.handle = source->plugValue};
+
+  const auto texH =
+      getInputConnection<TextureHandle>(m_inConnections, IN_TEXTURE);
+
+  const auto depth =
+      getInputConnection<TextureHandle>(m_inConnections, DEPTH_RT);
 
   if (m_stack.empty()) {
     m_outputPlugs[0].plugValue = texH.handle;
@@ -62,8 +74,8 @@ void PostProcessStack::compute() {
   }
   m_internalCounter = 0;
   const size_t stackSize = m_stack.size();
-  auto &connDepth = m_connections[&m_inputPlugs[1]];
-  const PostProcessResources resources{connDepth[0]->plugValue};
+
+  const PostProcessResources resources{depth};
   m_stack[0]->render(texH, handles[0], resources);
 
   for (size_t i = 1; i < stackSize; ++i) {
@@ -87,9 +99,9 @@ void PostProcessStack::clear() {
     handles[1].handle = 0;
   }
 }
-void PostProcessStack::onResizeEvent(int , int ) {
+void PostProcessStack::onResizeEvent(int, int) {
   clear();
   initialize();
 }
 
-}  // namespace SirEngine
+} // namespace SirEngine
