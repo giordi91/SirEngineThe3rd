@@ -53,18 +53,18 @@ void Graphics3DLayer::onAttach() {
   dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE, currentFc);
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
 
-  GraphAllocators alloc{globals::STRING_POOL, globals::PERSISTENT_ALLOCATOR};
+  alloc =new GraphAllocators{globals::STRING_POOL, globals::PERSISTENT_ALLOCATOR};
   dx12::RENDERING_GRAPH = new DependencyGraph();
-  const auto assetNode = new AssetManagerNode(alloc);
-  const auto finalBlit = new FinalBlitNode(alloc);
-  const auto simpleForward = new SimpleForward(alloc);
-  auto postProcess = new PostProcessStack(alloc);
+  const auto assetNode = new AssetManagerNode(*alloc);
+  const auto finalBlit = new FinalBlitNode(*alloc);
+  const auto simpleForward = new SimpleForward(*alloc);
+  auto postProcess = new PostProcessStack(*alloc);
   // auto gbufferPass = new GBufferPass("GBufferPass");
-  const auto gbufferPass = new GBufferPassPBR(alloc);
-  const auto lighting = new DeferredLightingPass(alloc);
+  const auto gbufferPass = new GBufferPassPBR(*alloc);
+  const auto lighting = new DeferredLightingPass(*alloc);
   // auto sky = new ProceduralSkyBoxPass("Procedural Sky");
-  const auto sky = new SkyBoxPass(alloc);
-  const auto debugDraw = new DebugDrawNode(alloc);
+  const auto sky = new SkyBoxPass(*alloc);
+  const auto debugDraw = new DebugDrawNode(*alloc);
 
   postProcess->allocateRenderPass<SSSSSEffect>("SSSSS");
   postProcess->allocateRenderPass<GammaAndToneMappingEffect>(
@@ -239,11 +239,11 @@ bool Graphics3DLayer::onMouseMoveEvent(MouseMoveEvent &e) {
 }
 void removeDebugNode(DependencyGraph *graph, GNode *debugNode) {
   // disconnect input
-  assert(debugNode->getType() == "FramePassDebugNode");
+  assert(debugNode->isOfType("FramePassDebugNode"));
   int inCount;
   const GPlug *inPlugs = debugNode->getInputPlugs(inCount);
   assert(inCount == 1);
-  const ResizableVector<GPlug *> *inConnections =
+  const ResizableVector<const GPlug *> *inConnections =
       debugNode->getPlugConnections(&inPlugs[0]);
   assert((*inConnections).size() == 1);
   const GPlug *inConnectionPlug = (*inConnections)[0];
@@ -256,7 +256,7 @@ void removeDebugNode(DependencyGraph *graph, GNode *debugNode) {
   int outputCount;
   const GPlug *outPlugs = debugNode->getOutputPlugs(outputCount);
   assert(outputCount == 1);
-  const ResizableVector<GPlug *> *outConnections =
+  const ResizableVector<const GPlug *> *outConnections =
       debugNode->getPlugConnections(&outPlugs[0]);
   assert((*outConnections).size() == 1);
   const GPlug *outConnectionPlug = (*outConnections)[0];
@@ -265,91 +265,92 @@ void removeDebugNode(DependencyGraph *graph, GNode *debugNode) {
 
   // now lets connect the two sides
   graph->connectNodes(inConnectionPlug, outConnectionPlug);
-
-  //m_nodes.erase(m_nodes.find(debugNode->getNodeName()));
+  graph->removeNode(debugNode);
   delete debugNode;
 }
-void addDebugNode(GraphNode *debugNode) {
-  /*
-assert(debugNode->getNodeType() == "FramePassDebugNode");
-assert(finalNode != nullptr);
+void addDebugNode(DependencyGraph *graph, GNode *debugNode) {
 
-// disconnect input
-const std::vector<Plug> &inPlugs = finalNode->getInputPlugs();
-assert(inPlugs.size() == 1);
-const Plug &inPlug = inPlugs[0];
-const std::vector<Plug *> *inConnections =
-finalNode->getPlugConnections(&inPlug);
-assert((*inConnections).size() == 1);
-const Plug *inConnectionPlug = (*inConnections)[0];
-finalNode->removeConnection(inPlug.name, inConnectionPlug);
-inConnectionPlug->nodePtr->removeConnection(inConnectionPlug->name,
-                                        &inPlug);
+  assert(debugNode->isOfType("FramePassDebugNode"));
+  assert(graph->getFinalNode() != nullptr);
 
-// no output to disconnect, final node has no output
-// now lets connect the two sides
-connectNodes(inConnectionPlug->nodePtr, inConnectionPlug->name.c_str(),
-         debugNode, debugNode->getInputPlugs()[0].name.c_str());
+  GNode *finalNode = graph->getFinalNode();
+  // disconnect input
+  int inCount;
+  const GPlug *inPlugs = finalNode->getInputPlugs(inCount);
+  assert(inCount == 1);
+  const ResizableVector<const GPlug *> *inConnections =
+      finalNode->getPlugConnections(&inPlugs[0]);
+  assert((*inConnections).size() == 1);
+  const GPlug *inConnectionPlug = (*inConnections)[0];
+  finalNode->removeConnection(&inPlugs[0], inConnectionPlug);
+  inConnectionPlug->nodePtr->removeConnection(inConnectionPlug, &inPlugs[0]);
 
-connectNodes(debugNode, debugNode->getOutputPlugs()[0].name.c_str(),
-         finalNode, inPlug.name.c_str());
+  // no output to disconnect, final node has no output
+  // now lets connect the two sides
+  int debugInputCount;
+  const GPlug *debugInputPlugs = debugNode->getInputPlugs(debugInputCount);
+  int debugOutputCount;
+  const GPlug *debugOutputPlugs = debugNode->getOutputPlugs(debugOutputCount);
+  graph->connectNodes(inConnectionPlug, &debugInputPlugs[0]);
 
-// we need to re-compact the indices of the graph.
-std::unordered_map<std::string, GraphNode *> tempNodes = m_nodes;
-m_nodes.clear();
-m_nodeCounter = 0;
-for (auto node : tempNodes) {
-addNode(node.second);
-}
-addNode(debugNode);
-*/
+  graph->connectNodes(&debugOutputPlugs[0], &inPlugs[0]);
+
+  // TODO what?
+  // we need to re-compact the indices of the graph.
+  // std::unordered_map<std::string, GraphNode *> tempNodes = m_nodes;
+  // m_nodes.clear();
+  // m_nodeCounter = 0;
+  // for (auto node : tempNodes) {
+  //  addNode(node.second);
+  //}
+  graph->addNode(debugNode);
 }
 
 bool Graphics3DLayer::onDebugLayerEvent(DebugLayerChanged &e) {
-  /*
-dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
-switch (e.getLayer()) {
-case (0): {
-// if we have 0, we have no layer to debug so we can just check if there
-// there is a debug node and remove it
-const GNode *debugNode =
-  dx12::RENDERING_GRAPH->findNodeOfType("FramePassDebugNode");
-if (debugNode == nullptr) { // no debug we are good
-return true;
-}
+  dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
+  switch (e.getLayer()) {
+  case (0): {
+    // if we have 0, we have no layer to debug so we can just check if there
+    // there is a debug node and remove it
+    const GNode *debugNode =
+        dx12::RENDERING_GRAPH->findNodeOfType("FramePassDebugNode");
+    if (debugNode == nullptr) { // no debug we are good
+      return true;
+    }
 
-removeDebugNode(dx12::RENDERING_GRAPH,debugNode);
-dx12::RENDERING_GRAPH->finalizeGraph();
-RenderGraphChanged *graphE = new RenderGraphChanged();
-globals::APPLICATION->queueEventForEndOfFrame(graphE);
-return true;
-}
-case (1):
-case (2):
-case (3):
-case (4):
-case (5):
-case (6):
-case (7): {
-// lets add debug
-GraphNode *debugNode =
-  dx12::RENDERING_GRAPH->findNodeOfType("FramePassDebugNode");
-// debug already there, maybe i just need to change configuration?
-if (debugNode != nullptr) { // no debug we are good
-static_cast<FramePassDebugNode *>(debugNode)->setDebugIndex(e.getLayer());
-return true;
-}
-// lest add a debug node
-auto debug = new FramePassDebugNode("FramePassDebugNode");
-debug->setDebugIndex(e.getLayer());
-dx12::RENDERING_GRAPH->addDebugNode(debug);
-dx12::RENDERING_GRAPH->finalizeGraph();
-auto *graphE = new RenderGraphChanged();
-globals::APPLICATION->queueEventForEndOfFrame(graphE);
-return true;
-}
-}
-*/
+    removeDebugNode(dx12::RENDERING_GRAPH, const_cast<GNode *>(debugNode));
+    dx12::RENDERING_GRAPH->finalizeGraph();
+    RenderGraphChanged *graphE = new RenderGraphChanged();
+    globals::APPLICATION->queueEventForEndOfFrame(graphE);
+    return true;
+  }
+  case (1):
+  case (2):
+  case (3):
+  case (4):
+  case (5):
+  case (6):
+  case (7): {
+    // lets add debug
+    const GNode *debugNode =
+        dx12::RENDERING_GRAPH->findNodeOfType("FramePassDebugNode");
+    // debug already there, maybe i just need to change configuration?
+    if (debugNode != nullptr) { // no debug we are good
+      static_cast<FramePassDebugNode *>(const_cast<GNode *>(debugNode))
+          ->setDebugIndex(e.getLayer());
+      return true;
+    }
+    // lest add a debug node
+    // TODO move the allocator inside the graph? not sure yet
+    auto debug = new FramePassDebugNode(*alloc);
+    debug->setDebugIndex(e.getLayer());
+    addDebugNode(dx12::RENDERING_GRAPH, debug);
+    dx12::RENDERING_GRAPH->finalizeGraph();
+    auto *graphE = new RenderGraphChanged();
+    globals::APPLICATION->queueEventForEndOfFrame(graphE);
+    return true;
+  }
+  }
   return false;
 }
 

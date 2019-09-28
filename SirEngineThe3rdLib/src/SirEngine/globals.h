@@ -1,5 +1,4 @@
 #pragma once
-#include <string>
 #include "SirEngine/handle.h"
 #include "clock.h"
 #include "core.h"

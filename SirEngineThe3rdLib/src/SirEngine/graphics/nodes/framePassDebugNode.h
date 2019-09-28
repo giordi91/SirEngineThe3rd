@@ -6,9 +6,15 @@
 
 struct ID3D12RootSignature;
 namespace SirEngine {
-class FramePassDebugNode final : public GraphNode {
+class FramePassDebugNode final : public GNode {
 public:
-  explicit FramePassDebugNode(const char *name);
+  enum PLUGS {
+    IN_TEXTURE = INPUT_PLUG_CODE(0),
+    OUT_TEXTURE = OUTPUT_PLUG_CODE(0),
+    COUNT = 2
+  };
+public:
+  explicit FramePassDebugNode(GraphAllocators &allocators);
   virtual ~FramePassDebugNode() = default;
   virtual void initialize() override;
   virtual void compute() override;

@@ -14,6 +14,7 @@ class WindowResizeEvent;
 class DebugLayerChanged;
 class ShaderCompileEvent;
 struct Skeleton;
+struct GraphAllocators;
 
 namespace dx12 {
 class Texture2D;
@@ -50,5 +51,6 @@ private:
   // TODO temp
   AnimationConfig m_config;
   DebugDrawHandle m_animHandle{};
+  GraphAllocators* alloc;
 };
 } // namespace SirEngine

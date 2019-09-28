@@ -1,8 +1,8 @@
 #include "SirEngine/globals.h"
 #include <SirEngine/memory/stringPool.h>
 #include <SirEngine/memory/threeSizesPool.h>
-#include <d3d12.h>
 #include <cstdint>
+#include <d3d12.h>
 
 namespace SirEngine::globals {
 uint32_t SCREEN_WIDTH = 1280;
@@ -21,8 +21,8 @@ AssetManager *ASSET_MANAGER = nullptr;
 Application *APPLICATION = nullptr;
 RenderingContext *RENDERING_CONTEXT = nullptr;
 DebugFrameData *DEBUG_FRAME_DATA = nullptr;
-AnimationManager* ANIMATION_MANAGER = nullptr;
-SkinClusterManager* SKIN_MANAGER = nullptr;
+AnimationManager *ANIMATION_MANAGER = nullptr;
+SkinClusterManager *SKIN_MANAGER = nullptr;
 
 const char *DATA_SOURCE_PATH = nullptr;
 const char *START_SCENE_PATH = nullptr;
@@ -40,4 +40,4 @@ D3D12_VIEWPORT CURRENT_VIEWPORT =
                    MIN_DEPTH,
                    MAX_DEPTH};
 
-}  // namespace SirEngine::globals
+} // namespace SirEngine::globals

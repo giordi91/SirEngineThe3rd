@@ -1,6 +1,7 @@
 #pragma once
 
 #include "SirEngine/animation/skeleton.h"
+#include <string>
 
 namespace SirEngine {
 
@@ -31,6 +32,7 @@ struct AnimState {
 
   static const float NANO_TO_SECONDS;
   // the name of the clip
+  //TODO FIX name here
   std::string name;
   AnimationClip *clip = nullptr;
   SkeletonPose *m_pose = nullptr;

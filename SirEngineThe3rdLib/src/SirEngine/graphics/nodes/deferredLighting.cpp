@@ -67,25 +67,13 @@ void DeferredLightingPass::initialize() {
   m_brdfHandle = globals::RENDERING_CONTEXT->getBrdfHandle();
 }
 
-inline TextureHandle
-getInputConnection(std::unordered_map<const Plug *, std::vector<Plug *>> &conns,
-                   Plug *plug) {
-  // TODO not super safe to do this, might be worth improving this
-  auto &inConns = conns[plug];
-  assert(inConns.size() == 1 && "too many input connections");
-  Plug *source = inConns[0];
-  auto h = TextureHandle{source->plugValue};
-  assert(h.isHandleValid());
-  return h;
-}
-
-inline TextureHandle getInputConnection(ResizableVector<GPlug *> **conns,
+inline TextureHandle getInputConnection(ResizableVector<const GPlug *> **conns,
                                         int plugId) {
   const auto conn = conns[PLUG_INDEX(plugId)];
 
   // TODO not super safe to do this, might be worth improving this
   assert(conn->size() == 1 && "too many input connections");
-  GPlug *source = (*conn)[0];
+  const GPlug *source = (*conn)[0];
   const auto h = TextureHandle{source->plugValue};
   assert(h.isHandleValid());
   return h;
