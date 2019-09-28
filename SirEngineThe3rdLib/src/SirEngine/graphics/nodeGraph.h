@@ -275,10 +275,13 @@ public:
   }
 
   bool connect(int sourcePlugId, GNode *destinationNode, int destinationPlugId);
+  bool connect(const GPlug *sourcePlug, const GPlug *destPlug);
+  bool removeConnection(const GPlug *sourcePlug, const GPlug *destPlug);
+
   inline void setNodeIndex(const uint32_t index) { m_nodeIdx = index; }
 
-  bool isConnected(const int sourceId, GNode *destinationNode,
-                   const int destinationPlugId) const {
+  int isConnected(const int sourceId, GNode *destinationNode,
+                  const int destinationPlugId) const {
     const bool isInput = IS_INPUT_PLUG(sourceId);
     const int plugIndex = PLUG_INDEX(sourceId);
 
@@ -297,10 +300,27 @@ public:
     const int connectionCount = connectionList->size();
     for (int i = 0; i < connectionCount; ++i) {
       if (connectionList->getConstRef(i) == destinationPlug) {
-        return true;
+        return i;
       }
     }
-    return false;
+    return -1;
+  }
+
+  int isConnected(const GPlug *sourcePlug, const GPlug *destinationPlug) const {
+    int srcIndex = findPlugIndexFromInstance(sourcePlug);
+    const bool isInput = isFlag(*sourcePlug, PlugFlags::PLUG_INPUT);
+    ResizableVector<GPlug *> **connections =
+        isInput ? m_inConnections : m_outConnections;
+    int count = isInput ? m_inputPlugsCount : m_outputPlugsCount;
+    assert(srcIndex < count);
+    ResizableVector<GPlug *> *connectionList = connections[srcIndex];
+    const int connectionCount = connectionList->size();
+    for (int i = 0; i < connectionCount; ++i) {
+      if (connectionList->getConstRef(i) == destinationPlug) {
+        return i;
+      }
+    }
+    return -1;
   }
 
   inline bool isOfType(const char *type) const {
@@ -366,7 +386,6 @@ protected:
       int inputCount, int outputCount,
       int reserve = DEFAULT_PLUG_CONNECTION_ALLOCATION);
 
-
 protected:
   const GraphAllocators &m_allocs;
   const char *m_nodeName;
@@ -413,6 +432,13 @@ public:
         destinationNode->connect(destinationId, sourceNode, sourceId);
     return sourceConnect & destConnect;
   }
+  static inline bool connectNodes(const GPlug *sourcePlug, const GPlug *destinationPlug) {
+    const bool sourceConnect =
+        sourcePlug->nodePtr->connect(sourcePlug, destinationPlug);
+    const bool destConnect =
+        destinationPlug->nodePtr->connect(destinationPlug, sourcePlug);
+    return sourceConnect & destConnect;
+  }
 
   inline const ResizableVector<GNode *> &getLinearizedGraph() const {
     return m_linearizedGraph;
@@ -420,11 +446,11 @@ public:
 
   static bool isConnected(GNode *sourceNode, const int sourceId,
                           GNode *destinationNode, const int destinationId) {
-    const bool sourceConnected =
+    const int sourceConnected =
         sourceNode->isConnected(sourceId, destinationNode, destinationId);
-    const bool destinationConnected =
+    const int destinationConnected =
         destinationNode->isConnected(destinationId, sourceNode, sourceId);
-    return sourceConnected & destinationConnected;
+    return (sourceConnected != -1) & (destinationConnected != -1);
   }
 
   [[nodiscard]] const GNode *getFinalNode() const { return finalNode; }

@@ -492,14 +492,58 @@ TEST_CASE("finalize graph 1", "[graphics,graph]") {
   graph.finalizeGraph();
 
   const ResizableVector<GNode *> &list = graph.getLinearizedGraph();
-  int assetId = getIndexOfNodeOfType(list,asset.getType());
-  int gbufferId= getIndexOfNodeOfType(list,gbuffer.getType());
-  int blitId= getIndexOfNodeOfType(list,blit.getType());
+  int assetId = getIndexOfNodeOfType(list, asset.getType());
+  int gbufferId = getIndexOfNodeOfType(list, gbuffer.getType());
+  int blitId = getIndexOfNodeOfType(list, blit.getType());
   REQUIRE(assetId != -1);
-  REQUIRE(gbufferId!= -1);
-  REQUIRE(blitId!= -1);
+  REQUIRE(gbufferId != -1);
+  REQUIRE(blitId != -1);
   REQUIRE(assetId < gbufferId);
-  REQUIRE(gbufferId< blitId);
+  REQUIRE(gbufferId < blitId);
+}
+
+TEST_CASE("remove connection", "[graphics,graph]") {
+  StringPool stringPool(1024);
+  ThreeSizesPool allocator(1024);
+  GraphAllocators allocs{&stringPool, &allocator};
+
+  GAssetManagerNodeProxy asset(allocs);
+  GGBufferPassPBRProxy gbuffer(allocs);
+  GFinalBlitNodeProxy blit(allocs);
+
+  DependencyGraph graph;
+  graph.addNode(&asset);
+  graph.addNode(&gbuffer);
+  graph.addNode(&blit);
+  graph.setFinalNode(&blit);
+
+  bool res = graph.connectNodes(&asset, GAssetManagerNodeProxy::MESHES,
+                                &gbuffer, GGBufferPassPBRProxy::MESHES);
+  REQUIRE(res == true);
+  res = graph.connectNodes(&gbuffer, GGBufferPassPBRProxy::GEOMETRY_RT, &blit,
+                           GFinalBlitNodeProxy::IN_TEXTURE);
+  REQUIRE(res == true);
+  graph.finalizeGraph();
+
+  int outSourceCount;
+  const GPlug *outPlugs = asset.getOutputPlugs(outSourceCount);
+  int inDestCount;
+  const GPlug *inPlugs = gbuffer.getInputPlugs(inDestCount);
+  asset.removeConnection(&outPlugs[PLUG_INDEX(GAssetManagerNodeProxy::MESHES)],
+                         &inPlugs[PLUG_INDEX(GGBufferPassPBRProxy::MESHES)]);   
+  REQUIRE(res == true);
+  res = graph.isConnected(&asset, GAssetManagerNodeProxy::MESHES,
+                                &gbuffer, GGBufferPassPBRProxy::MESHES);
+  REQUIRE(res == false);
+
+  res = graph.connectNodes(&outPlugs[PLUG_INDEX(GAssetManagerNodeProxy::MESHES)],
+                         &inPlugs[PLUG_INDEX(GGBufferPassPBRProxy::MESHES)]);
+  REQUIRE(res == true);
+  res = graph.isConnected(&asset, GAssetManagerNodeProxy::MESHES,
+                                &gbuffer, GGBufferPassPBRProxy::MESHES);
+  REQUIRE(res == true);
+
+	
 }
 /*
 TEST_CASE("Graph sorting", "[graphics,graph]") {

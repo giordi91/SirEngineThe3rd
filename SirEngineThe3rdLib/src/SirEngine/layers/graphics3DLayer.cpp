@@ -138,7 +138,7 @@ void Graphics3DLayer::onAttach() {
     dx12::resetAllocatorAndList(currentFc);
   }
 
-  //TODO REMOVE THIS
+  // TODO REMOVE THIS
   const auto m_animation = globals::ANIMATION_MANAGER->loadAnimationConfig(
       "../data/external/animation/exported/clip/knightBIdleConfig.json");
   auto m_animation2 = globals::ANIMATION_MANAGER->loadAnimationConfig(
@@ -237,119 +237,119 @@ bool Graphics3DLayer::onMouseMoveEvent(MouseMoveEvent &e) {
   previousY = e.getY();
   return true;
 }
-  void removeDebugNode(GraphNode *debugNode) {
-	  /*
-    // disconnect input
-    assert(debugNode->getNodeType() == "FramePassDebugNode");
-    const std::vector<Plug> &inPlugs = debugNode->getInputPlugs();
-    assert(inPlugs.size() == 1);
-    const Plug &inPlug = inPlugs[0];
-    const std::vector<Plug *> *inConnections =
-        debugNode->getPlugConnections(&inPlug);
-    assert((*inConnections).size() == 1);
-    const Plug *inConnectionPlug = (*inConnections)[0];
-    debugNode->removeConnection(inPlug.name, inConnectionPlug);
-    inConnectionPlug->nodePtr->removeConnection(inConnectionPlug->name,
-                                                &inPlug);
+void removeDebugNode(DependencyGraph *graph, GNode *debugNode) {
+  // disconnect input
+  assert(debugNode->getType() == "FramePassDebugNode");
+  int inCount;
+  const GPlug *inPlugs = debugNode->getInputPlugs(inCount);
+  assert(inCount == 1);
+  const ResizableVector<GPlug *> *inConnections =
+      debugNode->getPlugConnections(&inPlugs[0]);
+  assert((*inConnections).size() == 1);
+  const GPlug *inConnectionPlug = (*inConnections)[0];
 
-    // disconnect output
-    const std::vector<Plug> &outPlugs = debugNode->getOutputPlugs();
-    assert(outPlugs.size() == 1);
-    const Plug &outPlug = outPlugs[0];
-    const std::vector<Plug *> *outConnections =
-        debugNode->getPlugConnections(&outPlug);
-    assert((*outConnections).size() == 1);
-    const Plug *outConnectionPlug = (*outConnections)[0];
-    debugNode->removeConnection(outPlug.name, outConnectionPlug);
-    outConnectionPlug->nodePtr->removeConnection(outConnectionPlug->name,
-                                                 &outPlug);
+  // removing the connection in both directions
+  debugNode->removeConnection(&inPlugs[0], inConnectionPlug);
+  inConnectionPlug->nodePtr->removeConnection(inConnectionPlug, &inPlugs[0]);
 
-    // now lets connect the two sides
-    connectNodes(inConnectionPlug->nodePtr, inConnectionPlug->name.c_str(),
-                 outConnectionPlug->nodePtr, outConnectionPlug->name.c_str());
+  // disconnect output
+  int outputCount;
+  const GPlug *outPlugs = debugNode->getOutputPlugs(outputCount);
+  assert(outputCount == 1);
+  const ResizableVector<GPlug *> *outConnections =
+      debugNode->getPlugConnections(&outPlugs[0]);
+  assert((*outConnections).size() == 1);
+  const GPlug *outConnectionPlug = (*outConnections)[0];
+  debugNode->removeConnection(&outPlugs[0], outConnectionPlug);
+  outConnectionPlug->nodePtr->removeConnection(outConnectionPlug, &outPlugs[0]);
 
-    m_nodes.erase(m_nodes.find(debugNode->getNodeName()));
-    delete debugNode;
-  }
-  void addDebugNode(GraphNode *debugNode) {
-    assert(debugNode->getNodeType() == "FramePassDebugNode");
-    assert(finalNode != nullptr);
+  // now lets connect the two sides
+  graph->connectNodes(inConnectionPlug, outConnectionPlug);
 
-    // disconnect input
-    const std::vector<Plug> &inPlugs = finalNode->getInputPlugs();
-    assert(inPlugs.size() == 1);
-    const Plug &inPlug = inPlugs[0];
-    const std::vector<Plug *> *inConnections =
-        finalNode->getPlugConnections(&inPlug);
-    assert((*inConnections).size() == 1);
-    const Plug *inConnectionPlug = (*inConnections)[0];
-    finalNode->removeConnection(inPlug.name, inConnectionPlug);
-    inConnectionPlug->nodePtr->removeConnection(inConnectionPlug->name,
-                                                &inPlug);
+  //m_nodes.erase(m_nodes.find(debugNode->getNodeName()));
+  delete debugNode;
+}
+void addDebugNode(GraphNode *debugNode) {
+  /*
+assert(debugNode->getNodeType() == "FramePassDebugNode");
+assert(finalNode != nullptr);
 
-    // no output to disconnect, final node has no output
-    // now lets connect the two sides
-    connectNodes(inConnectionPlug->nodePtr, inConnectionPlug->name.c_str(),
-                 debugNode, debugNode->getInputPlugs()[0].name.c_str());
+// disconnect input
+const std::vector<Plug> &inPlugs = finalNode->getInputPlugs();
+assert(inPlugs.size() == 1);
+const Plug &inPlug = inPlugs[0];
+const std::vector<Plug *> *inConnections =
+finalNode->getPlugConnections(&inPlug);
+assert((*inConnections).size() == 1);
+const Plug *inConnectionPlug = (*inConnections)[0];
+finalNode->removeConnection(inPlug.name, inConnectionPlug);
+inConnectionPlug->nodePtr->removeConnection(inConnectionPlug->name,
+                                        &inPlug);
 
-    connectNodes(debugNode, debugNode->getOutputPlugs()[0].name.c_str(),
-                 finalNode, inPlug.name.c_str());
+// no output to disconnect, final node has no output
+// now lets connect the two sides
+connectNodes(inConnectionPlug->nodePtr, inConnectionPlug->name.c_str(),
+         debugNode, debugNode->getInputPlugs()[0].name.c_str());
 
-    // we need to re-compact the indices of the graph.
-    std::unordered_map<std::string, GraphNode *> tempNodes = m_nodes;
-    m_nodes.clear();
-    m_nodeCounter = 0;
-    for (auto node : tempNodes) {
-      addNode(node.second);
-    }
-    addNode(debugNode);
-	*/
-  }
+connectNodes(debugNode, debugNode->getOutputPlugs()[0].name.c_str(),
+         finalNode, inPlug.name.c_str());
+
+// we need to re-compact the indices of the graph.
+std::unordered_map<std::string, GraphNode *> tempNodes = m_nodes;
+m_nodes.clear();
+m_nodeCounter = 0;
+for (auto node : tempNodes) {
+addNode(node.second);
+}
+addNode(debugNode);
+*/
+}
 
 bool Graphics3DLayer::onDebugLayerEvent(DebugLayerChanged &e) {
   /*
-  dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
-  switch (e.getLayer()) {
-  case (0): {
-    // if we have 0, we have no layer to debug so we can just check if there
-    // there is a debug node and remove it
-    GraphNode *debugNode =
-        dx12::RENDERING_GRAPH->findNodeOfType("FramePassDebugNode");
-    if (debugNode == nullptr) { // no debug we are good
-      return true;
-    }
-    dx12::RENDERING_GRAPH->removeDebugNode(debugNode);
-    dx12::RENDERING_GRAPH->finalizeGraph();
-    RenderGraphChanged *graphE = new RenderGraphChanged();
-    globals::APPLICATION->queueEventForEndOfFrame(graphE);
-    return true;
-  }
-  case (1):
-  case (2):
-  case (3):
-  case (4):
-  case (5):
-  case (6):
-  case (7): {
-    // lets add debug
-    GraphNode *debugNode =
-        dx12::RENDERING_GRAPH->findNodeOfType("FramePassDebugNode");
-    // debug already there, maybe i just need to change configuration?
-    if (debugNode != nullptr) { // no debug we are good
-      static_cast<FramePassDebugNode *>(debugNode)->setDebugIndex(e.getLayer());
-      return true;
-    }
-    // lest add a debug node
-    auto debug = new FramePassDebugNode("FramePassDebugNode");
-    debug->setDebugIndex(e.getLayer());
-    dx12::RENDERING_GRAPH->addDebugNode(debug);
-    dx12::RENDERING_GRAPH->finalizeGraph();
-    auto *graphE = new RenderGraphChanged();
-    globals::APPLICATION->queueEventForEndOfFrame(graphE);
-    return true;
-  }
-  }
-  */
+dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
+switch (e.getLayer()) {
+case (0): {
+// if we have 0, we have no layer to debug so we can just check if there
+// there is a debug node and remove it
+const GNode *debugNode =
+  dx12::RENDERING_GRAPH->findNodeOfType("FramePassDebugNode");
+if (debugNode == nullptr) { // no debug we are good
+return true;
+}
+
+removeDebugNode(dx12::RENDERING_GRAPH,debugNode);
+dx12::RENDERING_GRAPH->finalizeGraph();
+RenderGraphChanged *graphE = new RenderGraphChanged();
+globals::APPLICATION->queueEventForEndOfFrame(graphE);
+return true;
+}
+case (1):
+case (2):
+case (3):
+case (4):
+case (5):
+case (6):
+case (7): {
+// lets add debug
+GraphNode *debugNode =
+  dx12::RENDERING_GRAPH->findNodeOfType("FramePassDebugNode");
+// debug already there, maybe i just need to change configuration?
+if (debugNode != nullptr) { // no debug we are good
+static_cast<FramePassDebugNode *>(debugNode)->setDebugIndex(e.getLayer());
+return true;
+}
+// lest add a debug node
+auto debug = new FramePassDebugNode("FramePassDebugNode");
+debug->setDebugIndex(e.getLayer());
+dx12::RENDERING_GRAPH->addDebugNode(debug);
+dx12::RENDERING_GRAPH->finalizeGraph();
+auto *graphE = new RenderGraphChanged();
+globals::APPLICATION->queueEventForEndOfFrame(graphE);
+return true;
+}
+}
+*/
   return false;
 }
 

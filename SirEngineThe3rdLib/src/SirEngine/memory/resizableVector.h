@@ -11,13 +11,14 @@ engine, not many features hopefully faster at both runtime(debug) and
 compilation. You can only use POD data, and or structures in pod data, what
 happens is a shallow copy when resizing or more memory required, if you have
 pointers there those won't be deep copied, which might be the intended
-behaviour, just be whare!
+behaviour, just bewhare!
 */
 template <typename T, typename ALLOCATOR = ThreeSizesPool>
 class ResizableVector {
 
 public:
-	explicit ResizableVector(const uint32_t reserveSize = 0, ALLOCATOR *allocator = nullptr)
+  explicit ResizableVector(const uint32_t reserveSize = 0,
+                           ALLOCATOR *allocator = nullptr)
       : m_allocator(allocator) {
     m_size = 0;
     m_reserved = reserveSize;
@@ -34,7 +35,24 @@ public:
 
   ~ResizableVector() { freeMemoryInternal(m_memory); }
 
-  inline void clear() { m_size = 0; };
+  inline void clear() { m_size = 0; }
+  /*This function is designed  for quick removal of objects,
+   *in this vector we cannot put object that need deep copy
+   *as such we can shallow copy and move item easily, this method
+   *will remove an object and copy the last one in its place of course
+   *is not stable be careful of what you do! Speed comes with rules
+   */
+
+  T removeByPatchingFromLast(const uint32_t index) {
+    assert(index < m_size);
+    // we need to patch the index
+    int copyIndex = m_size - 1;
+    T value = m_memory[index];
+    m_memory[index] = m_memory[copyIndex];
+    --m_size;
+    return value;
+  }
+
   inline void pushBack(const T &value) {
     // first checking whether there is enough buffer left, if
     // not we re-allocate
@@ -120,6 +138,6 @@ private:
   T *m_memory = nullptr;
   uint32_t m_size;
   uint32_t m_reserved;
-};
+}; // namespace SirEngine
 
 } // namespace SirEngine
