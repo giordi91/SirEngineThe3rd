@@ -127,14 +127,22 @@ TEST_CASE("Split compiler args", "[argsSplit]") {
 TEST_CASE("get ready compiler args", "[argsSplit]") {
   // pluging args are passed removed of the extra quotes
   // here is to test if the cargs are parsed properly
+
+  SirEngine::globals::STRING_POOL =
+      new SirEngine::StringPool(2 << 22); // 4 megabyte allocation
+  SirEngine::globals::FRAME_ALLOCATOR = new SirEngine::StackAllocator();
+  SirEngine::globals::FRAME_ALLOCATOR->initialize(2 << 22);
   const std::string inargs = "/D AMD";
   std::vector<std::wstring> splitCompilerArgsList;
-  std::vector<wchar_t *> splitCompilerArgsListPointers;
-  splitCompilerArgs(inargs, splitCompilerArgsList,
+  SirEngine::ResizableVector<wchar_t *> splitCompilerArgsListPointers;
+  splitCompilerArgs(inargs,
                     splitCompilerArgsListPointers);
 
   // look silly, after all this work we get out to the same value BUT
   // this will work for multiple arguments/defines, which should give
   // us room in the future for shader variants if we ever want them
   REQUIRE(splitCompilerArgsList[0] == std::wstring(L"/D AMD"));
+  // release memory
+  delete SirEngine::globals::STRING_POOL;
+  delete SirEngine::globals::FRAME_ALLOCATOR;
 }

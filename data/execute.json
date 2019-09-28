@@ -1,6 +1,8 @@
 {
   "commands": 
     [
+      "-p ../data/shaders/rasterization/basicColorPS.hlsl -o ../data/processed/shaders/rasterization/basicColorPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
+      "-p ../data/shaders/rasterization/basicMeshVSTexSkinning.hlsl -o ../data/processed/shaders/rasterization/basicMeshVSTexSkinning.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t vs_6_2  -e VS -d \"",
       "-p ../data/external/meshes/knightB/belt.obj -o ../data/processed/meshes/knightB/belt.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/belt.tangents --skin ../data/external/animation/exported/skin/knightBBeltsSkin.json\"",
       "-p ../data/external/animation/exported/clip/knightBIdle.json -o ../data/processed/clip/knightB/knightBIdle.clip --pluginName animationCompilerPlugin",
       "-p ../data/external/animation/exported/clip/knightBWalk.json -o ../data/processed/clip/knightB/knightBWalk.clip --pluginName animationCompilerPlugin",

@@ -1,4 +1,6 @@
 #pragma once
+#include "SirEngine/memory/resizableVector.h"
+#include "runtimeString.h"
 #include <regex>
 #include <string>
 #include <vector>
@@ -51,10 +53,9 @@ inline SplitArgs splitArgs(const std::string &args) {
 
 // This function is used to get a string with extra compiler args
 // the user pass in and to get it read to be used
-inline void
-splitCompilerArgs(const std::string &args,
-                  std::vector<std::wstring> &splitCompilerArgsList,
-                  std::vector<wchar_t *> &splitCompilerArgsListPointers) {
+inline void splitCompilerArgs(
+    const std::string &args,
+    SirEngine::ResizableVector<wchar_t *> &splitCompilerArgsListPointers) {
   const SplitArgs intermediateArgs = splitArgs(args);
 
   // removing the dummy
@@ -69,12 +70,7 @@ splitCompilerArgs(const std::string &args,
     std::string currArg = (*intermediateArgs.storage)[i];
     currArg += " ";
     currArg += (*intermediateArgs.storage)[i + 1];
-    splitCompilerArgsList.emplace_back(
-        std::wstring(currArg.begin(), currArg.end()));
-  }
-  // extracting the pointers
-  for (int i = 0; i < finalArgCount; ++i) {
-    splitCompilerArgsListPointers.push_back(
-        const_cast<wchar_t *>(splitCompilerArgsList[i].c_str()));
+    splitCompilerArgsListPointers.pushBack(
+        const_cast<wchar_t *>(SirEngine::frameConvertWide(currArg.c_str())));
   }
 }

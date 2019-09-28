@@ -94,7 +94,6 @@ bool processTextureFile(const char *path, const char *outPath,
   unsigned char *data = getTextureDataFromFile(path, &w, &h);
 
   bool srgb_colorspace = gamma;
-  bool has_alpha_channel = false;
 
   crn_comp_params comp_params;
 
