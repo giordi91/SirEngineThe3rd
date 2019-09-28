@@ -5,7 +5,6 @@
 #include "SirEngine/memory/SparseMemoryPool.h"
 #include "SirEngine/memory/stringHashMap.h"
 #include <cassert>
-#include <string>
 
 namespace SirEngine {
 
@@ -51,10 +50,10 @@ public:
     commandList->SetGraphicsRootSignature(data.rs);
   }
 
-  inline RSHandle getHandleFromName(const std::string &name) const {
-    assert(m_rootRegister.containsKey(name.c_str()));
+  inline RSHandle getHandleFromName(const char *name) const {
+    assert(m_rootRegister.containsKey(name));
     RSHandle value;
-    m_rootRegister.get(name.c_str(), value);
+    m_rootRegister.get(name, value);
     return value;
   }
 

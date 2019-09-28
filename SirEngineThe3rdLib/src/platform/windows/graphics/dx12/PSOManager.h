@@ -1,13 +1,11 @@
 #pragma once
-#include "SirEngine/core.h"
-#include <cassert>
-#include <string>
-#include <unordered_map>
 
 #include "DX12.h"
-#include "SirEngine/memory/SparseMemoryPool.h"
+#include "SirEngine/memory/sparseMemoryPool.h"
+#include "SirEngine/memory/stringHashMap.h"
 #include "nlohmann/json_fwd.hpp"
 #include "platform/windows/graphics/dx12/d3dx12.h"
+#include "SirEngine/memory/resizableVector.h"
 
 namespace SirEngine::dx12 {
 class RootSignatureManager;
@@ -16,7 +14,7 @@ class ShadersLayoutRegistry;
 
 enum class PSOType { DXR = 0, RASTER, COMPUTE, INVALID };
 
-class SIR_ENGINE_API PSOManager final {
+class PSOManager final {
 
   struct PSOData {
     ID3D12PipelineState *pso;
@@ -24,7 +22,9 @@ class SIR_ENGINE_API PSOManager final {
   };
 
 public:
-  PSOManager() : m_psoPool(RESERVE_SIZE){};
+  PSOManager()
+      : m_psoDXRRegister(RESERVE_SIZE), m_psoRegister(RESERVE_SIZE),
+        m_psoRegisterHandle(RESERVE_SIZE), m_shaderToPSOFile(RESERVE_SIZE), m_psoPool(RESERVE_SIZE){};
   ~PSOManager() = default;
   void init(D3D12DeviceType *device, SirEngine::dx12::ShadersLayoutRegistry *,
             SirEngine::dx12::RootSignatureManager *,
@@ -36,7 +36,7 @@ public:
   // state object
   static void printStateObjectDesc(const D3D12_STATE_OBJECT_DESC *desc);
   inline ID3D12PipelineState *
-  getComputePSOByName(const std::string &name) const {
+  getComputePSOByName(const char* name) const {
     const PSOHandle handle = getHandleFromName(name);
     assertMagicNumber(handle);
     const uint32_t index = getIndexFromHandle(handle);
@@ -55,13 +55,12 @@ public:
     commandList->SetPipelineState(data.pso);
   }
 
-  inline PSOHandle getHandleFromName(const std::string &name) const {
-    const auto found = m_psoRegisterHandle.find(name);
-    if (found != m_psoRegisterHandle.end()) {
-      return found->second;
-    }
-    assert(0 && "could not find PSO from name");
-    return PSOHandle{};
+  inline PSOHandle getHandleFromName(const char* name) const {
+
+    assert(m_psoRegisterHandle.containsKey(name));
+    PSOHandle value{};
+    m_psoRegisterHandle.get(name, value);
+    return value;
   }
 
 private:
@@ -92,12 +91,12 @@ private:
 
 private:
   D3D12DeviceType *m_dxrDevice = nullptr;
-  std::unordered_map<std::string, ID3D12StateObject *> m_psoDXRRegister;
-  std::unordered_map<std::string, ID3D12PipelineState *> m_psoRegister;
-  std::unordered_map<std::string, PSOHandle> m_psoRegisterHandle;
 
-  // TODO temporary horrible nested data struct will need to think about thi
-  std::unordered_map<std::string, std::vector<std::string>> m_shaderToPSOFile;
+  HashMap<const char *, ID3D12StateObject *, hashString32> m_psoDXRRegister;
+  HashMap<const char *, ID3D12PipelineState *, hashString32> m_psoRegister;
+  HashMap<const char *, PSOHandle, hashString32> m_psoRegisterHandle;
+
+  HashMap<const char *, ResizableVector<const char*>*, hashString32> m_shaderToPSOFile;
 
   ShadersLayoutRegistry *layoutManger = nullptr;
   RootSignatureManager *rs_manager = nullptr;

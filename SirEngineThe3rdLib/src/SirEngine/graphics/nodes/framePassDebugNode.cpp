@@ -11,17 +11,17 @@
 
 namespace SirEngine {
 
-static const std::string &GBUFFER_DEBUG_PSO_NAME = "gbufferDebugPSO";
-static const std::string &NORMAL_DEBUG_PSO_NAME = "normalBufferDebugPSO";
-static const std::string &METALLIC_DEBUG_PSO_NAME = "metallicBufferDebugPSO";
-static const std::string &ROUGHNESS_DEBUG_PSO_NAME = "roughnessBufferDebugPSO";
-static const std::string &THICKNESS_DEBUG_PSO_NAME = "thicknessBufferDebugPSO";
-static const std::string &STENCIL_DEBUG_PSO_NAME = "stencilDebugPSO";
-static const std::string &DEPTH_DEBUG_PSO_NAME = "depthBufferDebugPSO";
-static const std::string &DEBUG_FULL_SCREEN_RS_NAME = "debugFullScreenBlit_RS";
-static const std::string &DEBUG_REDUCE_DEPTH_RS_NAME = "depthMinMaxReduce_RS";
-static const std::string &DEBUG_REDUCE_DEPTH_PSO_NAME = "depthMinMaxReduce_PSO";
-static const std::string &DEBUG_REDUCE_DEPTH_CLEAR_PSO_NAME =
+static const char* GBUFFER_DEBUG_PSO_NAME = "gbufferDebugPSO";
+static const char* NORMAL_DEBUG_PSO_NAME = "normalBufferDebugPSO";
+static const char* METALLIC_DEBUG_PSO_NAME = "metallicBufferDebugPSO";
+static const char* ROUGHNESS_DEBUG_PSO_NAME = "roughnessBufferDebugPSO";
+static const char* THICKNESS_DEBUG_PSO_NAME = "thicknessBufferDebugPSO";
+static const char* STENCIL_DEBUG_PSO_NAME = "stencilDebugPSO";
+static const char* DEPTH_DEBUG_PSO_NAME = "depthBufferDebugPSO";
+static const char* DEBUG_FULL_SCREEN_RS_NAME = "debugFullScreenBlit_RS";
+static const char* DEBUG_REDUCE_DEPTH_RS_NAME = "depthMinMaxReduce_RS";
+static const char* DEBUG_REDUCE_DEPTH_PSO_NAME = "depthMinMaxReduce_PSO";
+static const char* DEBUG_REDUCE_DEPTH_CLEAR_PSO_NAME =
     "depthMinMaxReduceClear_PSO";
 
 FramePassDebugNode::FramePassDebugNode(GraphAllocators &allocators)
@@ -59,9 +59,9 @@ FramePassDebugNode::FramePassDebugNode(GraphAllocators &allocators)
       dx12::PSO_MANAGER->getHandleFromName(DEBUG_REDUCE_DEPTH_CLEAR_PSO_NAME);
 
   m_rs = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(
-      (DEBUG_FULL_SCREEN_RS_NAME.c_str()));
+      (DEBUG_FULL_SCREEN_RS_NAME));
   m_reduceRs = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(
-      (DEBUG_REDUCE_DEPTH_RS_NAME.c_str()));
+      (DEBUG_REDUCE_DEPTH_RS_NAME));
 }
 void blitBuffer(const TextureHandle input, const TextureHandle handleToWriteOn,
                 const PSOHandle psoHandle, ID3D12RootSignature *rs,
