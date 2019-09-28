@@ -362,7 +362,7 @@ bool Graphics3DLayer::onResizeEvent(WindowResizeEvent &e) {
 }
 
 bool Graphics3DLayer::onDebugConfigChanged(DebugRenderConfigChanged &e) {
-  GNode *debugNode = dx12::RENDERING_GRAPH->findNodeOfType("DebugNode");
+  GNode *debugNode = dx12::RENDERING_GRAPH->findNodeOfType("FramePassDebugNode");
   if (debugNode) {
     auto *debugNodeTyped = (FramePassDebugNode *)debugNode;
     debugNodeTyped->setConfig(e.getConfig());
