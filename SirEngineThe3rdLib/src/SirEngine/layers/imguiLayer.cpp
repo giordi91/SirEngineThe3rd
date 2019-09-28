@@ -63,7 +63,7 @@ void ImguiLayer::onAttach() {
                           static_cast<float>(globals::SCREEN_HEIGHT));
 
 
-  //m_renderGraph.initialize(dx12::RENDERING_GRAPH);
+  m_renderGraph.initialize(dx12::RENDERING_GRAPH);
   m_shaderWidget.initialize();
 }
 

@@ -5,9 +5,9 @@
 #include "imgui/imgui.h"
 #include "imgui/imgui_internal.h"
 
+#include "SirEngine/log.h"
 #include <queue>
 #include <unordered_set>
-#include "SirEngine/log.h"
 
 #include "SirEngine/application.h"
 #include "SirEngine/events/debugEvent.h"
@@ -16,8 +16,7 @@
 #include "SirEngine/graphics/postProcess/effects/gammaAndToneMappingEffect.h"
 #include "SirEngine/graphics/postProcess/postProcessStack.h"
 
-namespace SirEngine::debug
-{
+namespace SirEngine::debug {
 
 enum class PostProcessTypeDebug { NONE, GAMMA_TONE_MAPPING, SSSSS };
 
@@ -39,10 +38,10 @@ struct Node {
   char Name[64];
   ImVec2 Pos, Size;
   int InputsCount, OutputsCount;
-  const GraphNode *node;
+  const GNode *node;
 
   Node(int id, const char *name, const ImVec2 &pos, int inputs_count,
-       int outputs_count, const GraphNode *inNode) {
+       int outputs_count, const GNode *inNode) {
     ID = id;
     strncpy(Name, name, 31);
     Name[31] = 0;
@@ -163,7 +162,7 @@ void renderImguiGraph(GraphStatus *status) {
 
   // Display links
   draw_list->ChannelsSplit(2);
-  draw_list->ChannelsSetCurrent(0);  // Background
+  draw_list->ChannelsSetCurrent(0); // Background
   for (int link_idx = 0; link_idx < status->links.Size; link_idx++) {
     NodeLink *link = &status->links[link_idx];
     Node *node_inp = &status->nodes[link->InputIdx];
@@ -181,10 +180,10 @@ void renderImguiGraph(GraphStatus *status) {
     ImVec2 node_rect_min = offset + node->Pos;
 
     // Display node contents first
-    draw_list->ChannelsSetCurrent(1);  // Foreground
+    draw_list->ChannelsSetCurrent(1); // Foreground
     bool old_any_active = ImGui::IsAnyItemActive();
     ImGui::SetCursorScreenPos(node_rect_min + NODE_WINDOW_PADDING);
-    ImGui::BeginGroup();  // Lock horizontal position
+    ImGui::BeginGroup(); // Lock horizontal position
     ImGui::Text("%s", node->Name);
     // if you want any kind of content for the node you can add it here
     // ADD WIDGETS HERe
@@ -198,7 +197,7 @@ void renderImguiGraph(GraphStatus *status) {
     ImVec2 node_rect_max = node_rect_min + node->Size;
 
     // Display node box
-    draw_list->ChannelsSetCurrent(0);  // Background
+    draw_list->ChannelsSetCurrent(0); // Background
     ImGui::SetCursorScreenPos(node_rect_min);
     ImGui::InvisibleButton("node", node->Size);
     if (ImGui::IsItemHovered()) {
@@ -230,7 +229,9 @@ void renderImguiGraph(GraphStatus *status) {
                                    IM_COL32(250, 150, 150, 150));
 
         // check how fare we are
-        plugToolTip(node->node->getInputPlugs()[slot_idx].name.c_str());
+		int inPlugCount;
+        plugToolTip(node->node->getInputPlugs(inPlugCount)[slot_idx].name);
+		assert(slot_idx < inPlugCount);
       } else {
         draw_list->AddCircleFilled(pos, NODE_SLOT_RADIUS,
                                    IM_COL32(150, 150, 150, 150));
@@ -246,7 +247,9 @@ void renderImguiGraph(GraphStatus *status) {
                                    IM_COL32(250, 150, 150, 150));
         // check how fare we are
         // ImGui::SetTooltip("out name");
-        plugToolTip(node->node->getOutputPlugs()[slot_idx].name.c_str());
+		int outPlugCount;
+        plugToolTip(node->node->getOutputPlugs(outPlugCount)[slot_idx].name);
+		assert(slot_idx < outPlugCount);
 
         // ImGui::SetTooltip();
         // ImGui::SetTooltip()
@@ -317,18 +320,18 @@ void renderImguiGraph(GraphStatus *status) {
 }
 
 struct NodePosition {
-  const GraphNode *node;
+  const GNode *node;
   float posAtRecursion;
   uint32_t parentIdx;
 };
 struct NodeQueue {
-  const GraphNode *node;
+  const GNode *node;
   int parentIdx = -1;
 };
 
 RenderGraphWidget::~RenderGraphWidget() { delete status; }
 
-void RenderGraphWidget::initialize(Graph *graph) {
+void RenderGraphWidget::initialize(DependencyGraph *graph) {
   m_graph = graph;
 
   m_debugConfig.stencilValue = 1;
@@ -340,7 +343,7 @@ void RenderGraphWidget::initialize(Graph *graph) {
 
   float yStart = status->GRAPH_HEIGHT * 0.5f;
   float xMid = status->GRAPH_WIDTH - 100;
-  const GraphNode *finalNode = graph->getFinalNode();
+  const GNode *finalNode = graph->getFinalNode();
 
   std::vector<NodePosition> nodesToAdd;
   std::unordered_map<uint32_t, uint32_t> m_inputCountPerNode;
@@ -380,18 +383,24 @@ void RenderGraphWidget::initialize(Graph *graph) {
         // lets process all the inputs, by accessing the other plug and getting
         // the parent node, the node will be added to the queue to be processed
         // in the next round
-        const std::vector<Plug> &inPlugs = curr.node->getInputPlugs();
-        for (size_t i = 0; i < inPlugs.size(); ++i) {
+        int inPlugCount;
+        const GPlug *inPlugs = curr.node->getInputPlugs(inPlugCount);
+        for (int i = 0; i < inPlugCount; ++i) {
           // get the connections
-          const std::vector<Plug *> *conns =
+          const ResizableVector<GPlug *> *conns =
               curr.node->getPlugConnections(&inPlugs[i]);
           // if not empty we iterate all of them and extract the node at the
           // other end side
           if (conns != nullptr) {
-            for (auto &conn : (*conns)) {
+			uint32_t connCount = conns->size();
+
+            for (uint32_t c =0; c < connCount;++c) {
+			  GPlug* conn = (*conns)[c];
+			  int destinationIndex = conn->nodePtr->findPlugIndexFromInstance(conn);
+			  int  sourceIndex =i;
               status->links.push_back(
-                  NodeLink(conn->nodePtr->getNodeIdx(), conn->index,
-                           curr.node->getNodeIdx(), inPlugs[i].index));
+                  NodeLink(conn->nodePtr->getNodeIdx(), destinationIndex,
+                           curr.node->getNodeIdx(), sourceIndex));
               nextQueue->push(NodeQueue{
                   conn->nodePtr, static_cast<int>(curr.node->getNodeIdx())});
             }
@@ -440,7 +449,7 @@ void RenderGraphWidget::initialize(Graph *graph) {
     // creating a node for the graph
     status->nodes[nodesToAdd[i].node->getNodeIdx()] =
         Node(nodesToAdd[i].node->getNodeIdx(),
-             nodesToAdd[i].node->getNodeName().c_str(), ImVec2(xPos, yPos),
+             nodesToAdd[i].node->getName(), ImVec2(xPos, yPos),
              nodesToAdd[i].node->getInputCount(),
              nodesToAdd[i].node->getOutputCount(), nodesToAdd[i].node);
   }
@@ -465,7 +474,7 @@ void RenderGraphWidget::render() {
 
   // lets render post process stack configuration
   if (ImGui::CollapsingHeader("Post process stack")) {
-    PostProcessStack *stack = dynamic_cast<PostProcessStack *>(
+    const PostProcessStack *stack = dynamic_cast<const PostProcessStack *>(
         m_graph->findNodeOfType("PostProcessStack"));
     if (stack != nullptr) {
       const std::vector<PostProcessEffect *> &effects = stack->getEffects();
@@ -477,37 +486,37 @@ void RenderGraphWidget::render() {
         }
         if (ImGui::CollapsingHeader(effect->getName())) {
           switch (type) {
-            case (PostProcessTypeDebug::GAMMA_TONE_MAPPING): {
-              auto *typedEffect =
-	              dynamic_cast<GammaAndToneMappingEffect *>(effect);
-              GammaToneMappingConfig &config = typedEffect->getConfig();
-              const bool exposure =
-                  ImGui::SliderFloat("exposure", &config.exposure, 0.0f, 10.0f);
-              const bool gamma =
-                  ImGui::SliderFloat("gamma", &config.gamma, 0.0f, 10.0f);
-              if (exposure | gamma) {
-                typedEffect->setConfigDirty();
-              }
+          case (PostProcessTypeDebug::GAMMA_TONE_MAPPING): {
+            auto *typedEffect =
+                dynamic_cast<GammaAndToneMappingEffect *>(effect);
+            GammaToneMappingConfig &config = typedEffect->getConfig();
+            const bool exposure =
+                ImGui::SliderFloat("exposure", &config.exposure, 0.0f, 10.0f);
+            const bool gamma =
+                ImGui::SliderFloat("gamma", &config.gamma, 0.0f, 10.0f);
+            if (exposure | gamma) {
+              typedEffect->setConfigDirty();
+            }
 
-              break;
+            break;
+          }
+          case (PostProcessTypeDebug::SSSSS): {
+            auto *typedEffect = dynamic_cast<SSSSSEffect *>(effect);
+            SSSSSConfig &config = typedEffect->getConfig();
+            const bool sssLevel =
+                ImGui::SliderFloat("sssLevel", &config.sssLevel, 0.0f, 60.0f);
+            const bool maxdd =
+                ImGui::SliderFloat("maxdd", &config.maxdd, 0.0f, 1.0f);
+            const bool correction = ImGui::SliderFloat(
+                "correction", &config.correction, 0.0f, 2000.0f);
+            const bool width =
+                ImGui::SliderFloat("width", &config.width, 0.0f, 10.0f);
+            if (sssLevel | maxdd | correction | width) {
+              typedEffect->setConfigDirty();
             }
-            case (PostProcessTypeDebug::SSSSS): {
-              auto *typedEffect = dynamic_cast<SSSSSEffect *>(effect);
-              SSSSSConfig &config = typedEffect->getConfig();
-              const bool sssLevel =
-                  ImGui::SliderFloat("sssLevel", &config.sssLevel, 0.0f, 60.0f);
-              const bool maxdd =
-                  ImGui::SliderFloat("maxdd", &config.maxdd, 0.0f, 1.0f);
-              const bool correction = ImGui::SliderFloat(
-                  "correction", &config.correction, 0.0f, 2000.0f);
-              const bool width =
-                  ImGui::SliderFloat("width", &config.width, 0.0f, 10.0f);
-              if (sssLevel | maxdd | correction | width) {
-                typedEffect->setConfigDirty();
-              }
-              break;
-            }
-            default:;
+            break;
+          }
+          default:;
           }
         }
       }
@@ -537,4 +546,4 @@ void RenderGraphWidget::showGraph(bool value) {
     status->opened = value;
   }
 }
-} // namespace SirEngine
+} // namespace SirEngine::debug

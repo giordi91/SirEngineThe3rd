@@ -315,6 +315,8 @@ public:
     count = m_outputPlugsCount;
     return m_outputPlugs;
   }
+  inline uint32_t getInputCount() const { return m_inputPlugsCount; }
+  inline uint32_t getOutputCount() const { return m_outputPlugsCount; }
 
   // TODO make this friend?
   const ResizableVector<GPlug *> *getPlugConnections(const GPlug *plug) const {
@@ -326,6 +328,18 @@ public:
     ResizableVector<GPlug *> **connections =
         isInput ? m_inConnections : m_outConnections;
     return connections[plugIdx];
+  }
+
+  int findPlugIndexFromInstance(const GPlug *plug) const {
+    const bool isInput = isFlag(*plug, PlugFlags::PLUG_INPUT);
+    const int count = isInput ? m_inputPlugsCount : m_outputPlugsCount;
+    const GPlug *plugs = isInput ? m_inputPlugs : m_outputPlugs;
+    for (int i = 0; i < count; ++i) {
+      if (&plugs[i] == plug) {
+        return i;
+      }
+    }
+    return -1;
   }
 
 protected:
@@ -342,7 +356,7 @@ protected:
 
     m_inputPlugs = inputCount != 0 ? plugs : nullptr;
     m_inputPlugsCount = inputCount;
-    m_outputPlugs = outputCount != 0 ?plugs + inputCount: nullptr;
+    m_outputPlugs = outputCount != 0 ? plugs + inputCount : nullptr;
     m_outputPlugsCount = outputCount;
 
     defaultInitializeConnectionPool(inputCount, outputCount, reserve);
@@ -352,17 +366,6 @@ protected:
       int inputCount, int outputCount,
       int reserve = DEFAULT_PLUG_CONNECTION_ALLOCATION);
 
-  int findPlugIndexFromInstance(const GPlug *plug) const {
-    const bool isInput = isFlag(*plug, PlugFlags::PLUG_INPUT);
-    const int count = isInput ? m_inputPlugsCount : m_outputPlugsCount;
-    const GPlug *plugs = isInput ? m_inputPlugs : m_outputPlugs;
-    for (int i = 0; i < count; ++i) {
-      if (&plugs[i] == plug) {
-        return i;
-      }
-    }
-    return -1;
-  }
 
 protected:
   const GraphAllocators &m_allocs;
@@ -400,77 +403,10 @@ public:
     }
     return nullptr;
   }
-  /*
-  void removeDebugNode(GraphNode *debugNode) {
-    // disconnect input
-    assert(debugNode->getNodeType() == "FramePassDebugNode");
-    const std::vector<Plug> &inPlugs = debugNode->getInputPlugs();
-    assert(inPlugs.size() == 1);
-    const Plug &inPlug = inPlugs[0];
-    const std::vector<Plug *> *inConnections =
-        debugNode->getPlugConnections(&inPlug);
-    assert((*inConnections).size() == 1);
-    const Plug *inConnectionPlug = (*inConnections)[0];
-    debugNode->removeConnection(inPlug.name, inConnectionPlug);
-    inConnectionPlug->nodePtr->removeConnection(inConnectionPlug->name,
-                                                &inPlug);
 
-    // disconnect output
-    const std::vector<Plug> &outPlugs = debugNode->getOutputPlugs();
-    assert(outPlugs.size() == 1);
-    const Plug &outPlug = outPlugs[0];
-    const std::vector<Plug *> *outConnections =
-        debugNode->getPlugConnections(&outPlug);
-    assert((*outConnections).size() == 1);
-    const Plug *outConnectionPlug = (*outConnections)[0];
-    debugNode->removeConnection(outPlug.name, outConnectionPlug);
-    outConnectionPlug->nodePtr->removeConnection(outConnectionPlug->name,
-                                                 &outPlug);
-
-    // now lets connect the two sides
-    connectNodes(inConnectionPlug->nodePtr, inConnectionPlug->name.c_str(),
-                 outConnectionPlug->nodePtr, outConnectionPlug->name.c_str());
-
-    m_nodes.erase(m_nodes.find(debugNode->getNodeName()));
-    delete debugNode;
-  }
-  void addDebugNode(GraphNode *debugNode) {
-    assert(debugNode->getNodeType() == "FramePassDebugNode");
-    assert(finalNode != nullptr);
-
-    // disconnect input
-    const std::vector<Plug> &inPlugs = finalNode->getInputPlugs();
-    assert(inPlugs.size() == 1);
-    const Plug &inPlug = inPlugs[0];
-    const std::vector<Plug *> *inConnections =
-        finalNode->getPlugConnections(&inPlug);
-    assert((*inConnections).size() == 1);
-    const Plug *inConnectionPlug = (*inConnections)[0];
-    finalNode->removeConnection(inPlug.name, inConnectionPlug);
-    inConnectionPlug->nodePtr->removeConnection(inConnectionPlug->name,
-                                                &inPlug);
-
-    // no output to disconnect, final node has no output
-    // now lets connect the two sides
-    connectNodes(inConnectionPlug->nodePtr, inConnectionPlug->name.c_str(),
-                 debugNode, debugNode->getInputPlugs()[0].name.c_str());
-
-    connectNodes(debugNode, debugNode->getOutputPlugs()[0].name.c_str(),
-                 finalNode, inPlug.name.c_str());
-
-    // we need to re-compact the indices of the graph.
-    std::unordered_map<std::string, GraphNode *> tempNodes = m_nodes;
-    m_nodes.clear();
-    m_nodeCounter = 0;
-    for (auto node : tempNodes) {
-      addNode(node.second);
-    }
-    addNode(debugNode);
-  }
-  */
-
-  inline bool connectNodes(GNode *sourceNode, const int sourceId,
-                           GNode *destinationNode, const int destinationId) {
+  static inline bool connectNodes(GNode *sourceNode, const int sourceId,
+                                  GNode *destinationNode,
+                                  const int destinationId) {
     const bool sourceConnect =
         sourceNode->connect(sourceId, destinationNode, destinationId);
     const bool destConnect =
@@ -496,18 +432,15 @@ public:
   void finalizeGraph();
   void compute();
   inline uint32_t nodeCount() const { return m_nodes.size(); }
-  void onResizeEvent(int screenWidth, int screenHeight) {
-    assert(0);
-    /*
-for (auto node : m_linearizedGraph) {
-  node->onResizeEvent(screenWidth, screenHeight);
-}
-    */
+  void onResizeEvent(const int screenWidth, const int screenHeight) {
+    int count = m_linearizedGraph.size();
+    for (int i = 0; i < count; ++i) {
+      m_linearizedGraph[i]->onResizeEvent(screenWidth, screenHeight);
+    }
   };
 
 private:
   ResizableVector<GNode *> m_nodes;
-  // std::unordered_map<std::string, GraphNode *> m_nodes;
   GNode *finalNode = nullptr;
   uint32_t m_nodeCounter = 0;
   ResizableVector<GNode *> m_linearizedGraph;
