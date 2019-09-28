@@ -237,6 +237,74 @@ bool Graphics3DLayer::onMouseMoveEvent(MouseMoveEvent &e) {
   previousY = e.getY();
   return true;
 }
+  void removeDebugNode(GraphNode *debugNode) {
+	  /*
+    // disconnect input
+    assert(debugNode->getNodeType() == "FramePassDebugNode");
+    const std::vector<Plug> &inPlugs = debugNode->getInputPlugs();
+    assert(inPlugs.size() == 1);
+    const Plug &inPlug = inPlugs[0];
+    const std::vector<Plug *> *inConnections =
+        debugNode->getPlugConnections(&inPlug);
+    assert((*inConnections).size() == 1);
+    const Plug *inConnectionPlug = (*inConnections)[0];
+    debugNode->removeConnection(inPlug.name, inConnectionPlug);
+    inConnectionPlug->nodePtr->removeConnection(inConnectionPlug->name,
+                                                &inPlug);
+
+    // disconnect output
+    const std::vector<Plug> &outPlugs = debugNode->getOutputPlugs();
+    assert(outPlugs.size() == 1);
+    const Plug &outPlug = outPlugs[0];
+    const std::vector<Plug *> *outConnections =
+        debugNode->getPlugConnections(&outPlug);
+    assert((*outConnections).size() == 1);
+    const Plug *outConnectionPlug = (*outConnections)[0];
+    debugNode->removeConnection(outPlug.name, outConnectionPlug);
+    outConnectionPlug->nodePtr->removeConnection(outConnectionPlug->name,
+                                                 &outPlug);
+
+    // now lets connect the two sides
+    connectNodes(inConnectionPlug->nodePtr, inConnectionPlug->name.c_str(),
+                 outConnectionPlug->nodePtr, outConnectionPlug->name.c_str());
+
+    m_nodes.erase(m_nodes.find(debugNode->getNodeName()));
+    delete debugNode;
+  }
+  void addDebugNode(GraphNode *debugNode) {
+    assert(debugNode->getNodeType() == "FramePassDebugNode");
+    assert(finalNode != nullptr);
+
+    // disconnect input
+    const std::vector<Plug> &inPlugs = finalNode->getInputPlugs();
+    assert(inPlugs.size() == 1);
+    const Plug &inPlug = inPlugs[0];
+    const std::vector<Plug *> *inConnections =
+        finalNode->getPlugConnections(&inPlug);
+    assert((*inConnections).size() == 1);
+    const Plug *inConnectionPlug = (*inConnections)[0];
+    finalNode->removeConnection(inPlug.name, inConnectionPlug);
+    inConnectionPlug->nodePtr->removeConnection(inConnectionPlug->name,
+                                                &inPlug);
+
+    // no output to disconnect, final node has no output
+    // now lets connect the two sides
+    connectNodes(inConnectionPlug->nodePtr, inConnectionPlug->name.c_str(),
+                 debugNode, debugNode->getInputPlugs()[0].name.c_str());
+
+    connectNodes(debugNode, debugNode->getOutputPlugs()[0].name.c_str(),
+                 finalNode, inPlug.name.c_str());
+
+    // we need to re-compact the indices of the graph.
+    std::unordered_map<std::string, GraphNode *> tempNodes = m_nodes;
+    m_nodes.clear();
+    m_nodeCounter = 0;
+    for (auto node : tempNodes) {
+      addNode(node.second);
+    }
+    addNode(debugNode);
+	*/
+  }
 
 bool Graphics3DLayer::onDebugLayerEvent(DebugLayerChanged &e) {
   /*
