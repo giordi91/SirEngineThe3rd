@@ -157,9 +157,11 @@ bool loadSkin(const std::string &skinPath, SkinData &skinData) {
   return true;
 }
 
+//TODO decide what to do with object with no tangent at this point every
+//object has tangent and this should be changed
 void convertObjNoTangents(const tinyobj::attrib_t &attr,
                           const tinyobj::shape_t &shape, Model &model,
-                          const std::string &skinPath) {
+                          const std::string &) {
 
   // TODO need to add skinPath usage
   // how it works:

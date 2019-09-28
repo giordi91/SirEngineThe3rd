@@ -36,7 +36,7 @@ DXCShaderCompiler::~DXCShaderCompiler() {
 }
 
 ID3DBlob *DXCShaderCompiler::compileShader(const char *shaderPath,
-                                           const ShaderArgs &shaderArgs,
+                                           ShaderArgs &shaderArgs,
                                            std::string *log) {
   // creating a blob of data with the content of the shader
   const wchar_t *wshader = frameConvertWide(shaderPath);
@@ -61,19 +61,21 @@ ID3DBlob *DXCShaderCompiler::compileShader(const char *shaderPath,
                                     : _countof(COMPILATION_FLAGS);
 
   // making a copy of the args vector
-  auto finalFlags = shaderArgs.splitCompilerArgsPointers;
+
+  auto& finalFlags = shaderArgs.splitCompilerArgsPointers;
   // adding the needed pointers to the list
   for (int i = 0; i < flagsCount; ++i) {
-    finalFlags.push_back(const_cast<wchar_t *>(flags[i]));
+	//this flags are static no need to internalize them
+    finalFlags.pushBack(const_cast<wchar_t *>(flags[i]));
   }
-  flagsCount += static_cast<int>(shaderArgs.splitCompilerArgsPointers.size());
+  flagsCount = static_cast<int>(shaderArgs.splitCompilerArgsPointers.size());
 
   // kick the compilation
   pCompiler->Compile(
       pSource,                        // program text
       wshader,                        // file name, mostly for error messages
-      shaderArgs.entryPoint.c_str(),  // entry point function
-      shaderArgs.type.c_str(),        // target profile
+      shaderArgs.entryPoint,  // entry point function
+      shaderArgs.type,        // target profile
       const_cast<LPCWSTR *>(finalFlags.data()),  // compilation arguments
       flagsCount,     // number of compilation arguments
       nullptr, 0,     // name/value defines and their count

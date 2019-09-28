@@ -7,10 +7,10 @@
 #include "SirEngine/binary/binaryFile.h"
 #include "platform/windows/graphics/dx12/shaderCompiler.h"
 
-#include <d3dcommon.h>
-#include <filesystem>
 #include "SirEngine/memory/stringPool.h"
 #include "platform/windows/graphics/dx12/PSOManager.h"
+#include <d3dcommon.h>
+#include <filesystem>
 
 const std::string PLUGIN_NAME = "shaderCompilerPlugin";
 const unsigned int VERSION_MAJOR = 0;
@@ -47,15 +47,20 @@ bool processArgs(const std::string args,
     return false;
   }
 
+  auto stringEntry = result["entry"].as<std::string>();
+  auto stringType = result["type"].as<std::string>();
   returnArgs.debug = result.count("debug");
-  returnArgs.entryPoint = toWstring(result["entry"].as<std::string>());
-  returnArgs.type = toWstring(result["type"].as<std::string>());
+  // TODO can I do anything about this const cast?
+  returnArgs.entryPoint = const_cast<wchar_t *>(
+      SirEngine::globals::STRING_POOL->convertWide(stringEntry.c_str()));
+  returnArgs.type = const_cast<wchar_t *>(
+      SirEngine::globals::STRING_POOL->convertWide(stringType.c_str()));
   if (result.count("compilerArgs")) {
     const std::string cargs = result["compilerArgs"].as<std::string>();
     std::string strippedCargs = cargs.substr(1, cargs.length() - 2);
-    char t = strippedCargs[2];
-    returnArgs.compilerArgs = toWstring(strippedCargs);
-    splitCompilerArgs(strippedCargs, returnArgs.splitCompilerArgs,
+    returnArgs.compilerArgs = const_cast<wchar_t *>(
+        SirEngine::globals::STRING_POOL->convertWide(strippedCargs.c_str()));
+    splitCompilerArgs(strippedCargs, 
                       returnArgs.splitCompilerArgsPointers);
 
   } else {
@@ -69,10 +74,6 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
                    const std::string &args) {
   // processing plugins args
   SirEngine::dx12::ShaderArgs shaderArgs;
-  bool result = processArgs(args, shaderArgs);
-  if (!result) {
-    return false;
-  }
 
   // checking IO files exits
   bool exits = fileExists(assetPath);
@@ -88,9 +89,16 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
 
   // initialize memory pool used by the compiler
   SirEngine::globals::STRING_POOL =
-      new SirEngine::StringPool(2 << 22);  // 4 megabyte allocation
+      new SirEngine::StringPool(2 << 22); // 4 megabyte allocation
   SirEngine::globals::FRAME_ALLOCATOR = new SirEngine::StackAllocator();
   SirEngine::globals::FRAME_ALLOCATOR->initialize(2 << 22);
+
+  // process arguments, needs to happen after initialization because allocators
+  // are used
+  bool result = processArgs(args, shaderArgs);
+  if (!result) {
+    return false;
+  }
 
   SirEngine::dx12::DXCShaderCompiler compiler;
   ID3DBlob *blob = compiler.compileShader(assetPath.c_str(), shaderArgs);
@@ -110,12 +118,12 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
   int totalBulkDataInBytes = static_cast<int>(blob->GetBufferSize());
   //+1 is to take into account the termination value
   totalBulkDataInBytes +=
-      static_cast<int>((shaderArgs.type.size() + 1) * sizeof(wchar_t));
+      static_cast<int>((wcslen(shaderArgs.type) + 1) * sizeof(wchar_t));
   totalBulkDataInBytes +=
-      static_cast<int>((shaderArgs.entryPoint.size() + 1) * sizeof(wchar_t));
+      static_cast<int>((wcslen(shaderArgs.entryPoint) + 1) * sizeof(wchar_t));
   totalBulkDataInBytes += static_cast<int>(assetPath.size() + 1);
   totalBulkDataInBytes +=
-      static_cast<int>((shaderArgs.compilerArgs.size() + 1) * sizeof(wchar_t));
+      static_cast<int>((wcslen(shaderArgs.compilerArgs)+ 1) * sizeof(wchar_t));
 
   // layout the data
 
@@ -131,16 +139,16 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
 
   // write down the type
   dataToWriteSizeInByte =
-      static_cast<int>((shaderArgs.type.size() + 1) * sizeof(wchar_t));
+      static_cast<int>((wcslen(shaderArgs.type)+ 1) * sizeof(wchar_t));
   mapperData.typeSizeInByte = dataToWriteSizeInByte;
-  memcpy(bulkDataPtr, shaderArgs.type.c_str(), dataToWriteSizeInByte);
+  memcpy(bulkDataPtr, shaderArgs.type, dataToWriteSizeInByte);
   bulkDataPtr += dataToWriteSizeInByte;
 
   // write down the entry point
   dataToWriteSizeInByte =
-      static_cast<int>((shaderArgs.entryPoint.size() + 1) * sizeof(wchar_t));
+      static_cast<int>((wcslen(shaderArgs.entryPoint)+ 1) * sizeof(wchar_t));
   mapperData.entryPointInByte = dataToWriteSizeInByte;
-  memcpy(bulkDataPtr, shaderArgs.entryPoint.c_str(), dataToWriteSizeInByte);
+  memcpy(bulkDataPtr, shaderArgs.entryPoint, dataToWriteSizeInByte);
   bulkDataPtr += dataToWriteSizeInByte;
 
   // write down the shader path
@@ -151,9 +159,9 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
 
   // write down the compiler args
   dataToWriteSizeInByte =
-      static_cast<int>((shaderArgs.compilerArgs.size() + 1) * sizeof(wchar_t));
+      static_cast<int>((wcslen(shaderArgs.compilerArgs) + 1) * sizeof(wchar_t));
   mapperData.compilerArgsInByte = dataToWriteSizeInByte;
-  memcpy(bulkDataPtr, shaderArgs.compilerArgs.c_str(), dataToWriteSizeInByte);
+  memcpy(bulkDataPtr, shaderArgs.compilerArgs, dataToWriteSizeInByte);
 
   // preparing the binary file write request
   std::filesystem::path inp(assetPath);

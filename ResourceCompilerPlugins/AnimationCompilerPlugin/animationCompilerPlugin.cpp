@@ -22,14 +22,9 @@ struct AnimData
 	bool isLoopable;
 };
 
-void processArgs(const std::string &args) {
+void processArgs(const std::string &) {
   // nothing do to here for now
   return;
-  // lets get arguments like they were from commandline
-  auto v = splitArgs(args);
-  // lets build the options
-  cxxopts::Options options("Animation compiler",
-                           "Converts animations to game ready binary blob");
 }
 
 void convertAnim(const std::string &path, AnimData& data) {
