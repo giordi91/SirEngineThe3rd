@@ -64,7 +64,6 @@ void RootSignatureManager::loadSignatureBinaryFile(const char *file) {
     const RSHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
     rsdata.magicNumber = MAGIC_NUMBER_COUNTER;
 	m_rootRegister.insert(name.c_str(),handle);
-    //m_rootRegister[name] = handle;
     ++MAGIC_NUMBER_COUNTER;
 
 

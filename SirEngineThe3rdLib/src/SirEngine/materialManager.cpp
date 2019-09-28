@@ -420,9 +420,9 @@ void MaterialManager::loadTypeFile(const char *path) {
   assert(!psoString.empty() && "pso  is emtpy in material type");
 
   // get the handles
-  const PSOHandle psoHandle = dx12::PSO_MANAGER->getHandleFromName(psoString);
+  const PSOHandle psoHandle = dx12::PSO_MANAGER->getHandleFromName(psoString.c_str());
   const RSHandle rsHandle =
-      dx12::ROOT_SIGNATURE_MANAGER->getHandleFromName(rsString);
+      dx12::ROOT_SIGNATURE_MANAGER->getHandleFromName(rsString.c_str());
 
   std::string name = getFileName(path);
 

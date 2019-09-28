@@ -1,8 +1,8 @@
 #include "platform/windows/graphics/dx12/PSOManager.h"
 
-#include <d3d12.h>
 #include "SirEngine/fileUtils.h"
 #include "nlohmann/json.hpp"
+#include <d3d12.h>
 
 #include "platform/windows/graphics/dx12/dxgiFormatsDefine.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
@@ -15,6 +15,7 @@
 #include "SirEngine/events/shaderCompileEvent.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/log.h"
+#include "SirEngine/runtimeString.h"
 
 namespace SirEngine::dx12 {
 
@@ -93,9 +94,9 @@ static const std::unordered_map<std::string, DXGI_FORMAT> STRING_TO_DXGI_FORMAT{
 
 static const std::unordered_map<std::string, D3D12_PRIMITIVE_TOPOLOGY_TYPE>
     STRING_TO_TOPOLOGY = {
-    	{"triangle", D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE}, 
-    	{"line", D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE}, 
-    };
+        {"triangle", D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE},
+        {"line", D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE},
+};
 
 inline PSOType convertStringPSOTypeToEnum(const std::string &type) {
   const auto found = STRING_TO_PSO_TYPE.find(type);
@@ -111,8 +112,8 @@ inline DXGI_FORMAT convertStringToDXGIFormat(const std::string &format) {
   return DXGI_FORMAT_UNKNOWN;
 }
 
-inline D3D12_PRIMITIVE_TOPOLOGY_TYPE convertStringToTopology(
-    const std::string &topology) {
+inline D3D12_PRIMITIVE_TOPOLOGY_TYPE
+convertStringToTopology(const std::string &topology) {
   const auto found = STRING_TO_TOPOLOGY.find(topology);
   if (found != STRING_TO_TOPOLOGY.end()) {
     return found->second;
@@ -200,7 +201,7 @@ inline D3D12_DEPTH_STENCIL_DESC getDSState(const std::string &state,
     desc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
     desc.DepthFunc =
         getComparisonFunction(dssObj, PSO_KEY_DEPTH_COMPARISON_FUNCTION);
-	const bool stencilEnabled = 
+    const bool stencilEnabled =
         getValueIfInJson(dssObj, PSO_KEY_STENCIL_ENABLED, DEFAULT_BOOL);
     desc.StencilEnable = stencilEnabled;
     desc.StencilReadMask = D3D12_DEFAULT_STENCIL_READ_MASK;
@@ -234,15 +235,16 @@ void PSOManager::init(D3D12DeviceType *device,
   layoutManger = registry;
 }
 void PSOManager::cleanup() {
-  for (auto pso : m_psoDXRRegister) {
-    pso.second->Release();
-  }
+  // TODO need to be able to iterate hash map even if not idea;
+  // for (auto pso : m_psoDXRRegister) {
+  //  pso.second->Release();
+  //}
 
-  for (auto pso : m_psoRegister) {
-    pso.second->Release();
-  }
-  m_psoDXRRegister.clear();
-  m_psoRegister.clear();
+  // for (auto pso : m_psoRegister) {
+  //  pso.second->Release();
+  //}
+  // m_psoDXRRegister.clear();
+  // m_psoRegister.clear();
 }
 void PSOManager::loadPSOInFolder(const char *directory) {
   std::vector<std::string> paths;
@@ -272,22 +274,21 @@ void PSOManager::recompilePSOFromShader(const char *shaderName,
                                         const char *offsetPath) {
   // clearing the log
   compileLog = "";
-
-  const std::string shaderNameString = shaderName;
-  const auto found = m_shaderToPSOFile.find(shaderNameString);
-  if (found == m_shaderToPSOFile.end()) {
+  ResizableVector<const char *> *psos;
+  bool found = m_shaderToPSOFile.get(shaderName, psos);
+  if (!found) {
     assert(0);
     return;
   }
-  const std::vector<std::string> &psoToRecompile = found->second;
-
   // now we need to extract the data out of the pso to figure out which shaders
   // to recompile
   std::vector<std::string> shadersToRecompile;
   shadersToRecompile.reserve(10);
   std::string vs;
   std::string ps;
-  for (auto &pso : psoToRecompile) {
+  int psoCount = psos->size();
+  for (int i = 0; i < psoCount; ++i) {
+    const char *pso = (*psos)[i];
     const auto jobj = getJsonObj(pso);
     std::cout << "[Engine]: Loading PSO from: " << pso << std::endl;
 
@@ -295,23 +296,23 @@ void PSOManager::recompilePSOFromShader(const char *shaderName,
         getValueIfInJson(jobj, PSO_KEY_TYPE, DEFAULT_STRING);
     const PSOType psoType = convertStringPSOTypeToEnum(psoTypeString);
     switch (psoType) {
-      case (PSOType::COMPUTE): {
-        shadersToRecompile.push_back(getComputeShaderNameFromPSO(jobj));
-        break;
-      }
-      // case (PSOType::DXR): {
-      //  processDXRPSO(jobj, path);
-      //  break;
-      //}
-      case (PSOType::RASTER): {
-        getRasterShaderNameFromPSO(jobj, vs, ps);
-        shadersToRecompile.push_back(vs);
-        shadersToRecompile.push_back(ps);
-        break;
-      }
-      default: {
-        assert(0 && "PSO type not supported");
-      }
+    case (PSOType::COMPUTE): {
+      shadersToRecompile.push_back(getComputeShaderNameFromPSO(jobj));
+      break;
+    }
+    // case (PSOType::DXR): {
+    //  processDXRPSO(jobj, path);
+    //  break;
+    //}
+    case (PSOType::RASTER): {
+      getRasterShaderNameFromPSO(jobj, vs, ps);
+      shadersToRecompile.push_back(vs);
+      shadersToRecompile.push_back(ps);
+      break;
+    }
+    default: {
+      assert(0 && "PSO type not supported");
+    }
     }
   }
 
@@ -324,8 +325,10 @@ void PSOManager::recompilePSOFromShader(const char *shaderName,
   // before doing that we do need to flush to make sure none of the PSO are used
   dx12::flushDx12();
 
-  for (auto &pso : psoToRecompile) {
-    loadPSOFile(pso.c_str(), true);
+  // for (auto &pso : psoToRecompile) {
+  for (int i = 0; i < psoCount; ++i) {
+    const char *pso = (*psos)[i];
+    loadPSOFile(pso, true);
     compileLog += "Compiled PSO: ";
     compileLog += pso;
     compileLog += "\n";
@@ -333,7 +336,7 @@ void PSOManager::recompilePSOFromShader(const char *shaderName,
 
   // all the shader have been recompiled, we should be able to
   // recompile the PSO now
-  SirEngine::ShaderCompileResultEvent *e =
+  ShaderCompileResultEvent *e =
       new ShaderCompileResultEvent(compileLog.c_str());
   globals::APPLICATION->queueEventForEndOfFrame(e);
 }
@@ -347,21 +350,21 @@ void PSOManager::loadPSOFile(const char *path, bool reload) {
   assert(!psoTypeString.empty());
   const PSOType psoType = convertStringPSOTypeToEnum(psoTypeString);
   switch (psoType) {
-    case (PSOType::COMPUTE): {
-      processComputePSO(jobj, path, reload);
-      break;
-    }
-    // case (PSOType::DXR): {
-    //  processDXRPSO(jobj, path);
-    //  break;
-    //}
-    case (PSOType::RASTER): {
-      processRasterPSO(jobj, path, reload);
-      break;
-    }
-    default: {
-      assert(0 && "PSO Type not supported");
-    }
+  case (PSOType::COMPUTE): {
+    processComputePSO(jobj, path, reload);
+    break;
+  }
+  // case (PSOType::DXR): {
+  //  processDXRPSO(jobj, path);
+  //  break;
+  //}
+  case (PSOType::RASTER): {
+    processRasterPSO(jobj, path, reload);
+    break;
+  }
+  default: {
+    assert(0 && "PSO Type not supported");
+  }
   }
 }
 
@@ -406,15 +409,28 @@ void PSOManager::processComputePSO(nlohmann::json &jobj,
     data.pso = pipeStateObject;
     const PSOHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
     data.magicNumber = MAGIC_NUMBER_COUNTER;
-    m_psoRegisterHandle[name] = handle;
+    m_psoRegisterHandle.insert(name.c_str(), handle);
     ++MAGIC_NUMBER_COUNTER;
 
-    m_psoRegister[name] = pipeStateObject;
-    m_shaderToPSOFile[shaderName].push_back(path);
+    m_psoRegister.insert(name.c_str(), pipeStateObject);
+
+    // need to push the pso to the map
+    // first we make sure there is a vector to push to
+    bool hasShader = m_shaderToPSOFile.containsKey(shaderName.c_str());
+    if (!hasShader) {
+      m_shaderToPSOFile.insert(shaderName.c_str(),
+                               new ResizableVector<const char *>(20));
+    }
+    // now we can push
+    ResizableVector<const char *> *list;
+    m_shaderToPSOFile.get(shaderName.c_str(), list);
+    list->pushBack(persistentString(path.c_str()));
+    // m_shaderToPSOFile[shaderName.c_str()].push_back(path);
   } else {
     // if we are reloading the pso already exists we just need to update data
-    assert(m_psoRegisterHandle.find(name) != m_psoRegisterHandle.end());
-    PSOHandle handle = m_psoRegisterHandle[name];
+    assert(m_psoRegisterHandle.containsKey(name.c_str()));
+    PSOHandle handle;
+    m_psoRegisterHandle.get(name.c_str(), handle);
     uint32_t index = getIndexFromHandle(handle);
     PSOData &data = m_psoPool[index];
     // releasing old PSO
@@ -516,14 +532,29 @@ void PSOManager::processRasterPSO(nlohmann::json &jobj, const std::string &path,
   assert(SUCCEEDED(result));
   const std::string name = getFileName(path);
   // assert(m_psoRegister.find(name) == m_psoRegister.end());
-  m_psoRegister[name] = pso;
+  m_psoRegister.insert(name.c_str(), pso);
 
-	
   SE_CORE_INFO(PSname);
 
   if (!reload) {
-    m_shaderToPSOFile[VSname].push_back(path);
-    m_shaderToPSOFile[PSname].push_back(path);
+    bool hasShader = m_shaderToPSOFile.containsKey(VSname.c_str());
+    if (!hasShader) {
+      m_shaderToPSOFile.insert(VSname.c_str(),
+                               new ResizableVector<const char *>(20));
+    }
+	ResizableVector<const char *>*list;
+	m_shaderToPSOFile.get(VSname.c_str(),list);
+	//make sure to internalize the string
+	list->pushBack(persistentString(path.c_str()));
+
+    hasShader = m_shaderToPSOFile.containsKey(PSname.c_str());
+    if (!hasShader) {
+      m_shaderToPSOFile.insert(PSname.c_str(),
+                               new ResizableVector<const char *>(20));
+    }
+	m_shaderToPSOFile.get(PSname.c_str(),list);
+	//make sure to internalize the string
+	list->pushBack(persistentString(path.c_str()));
 
     // generating and storing the handle
     uint32_t index;
@@ -531,12 +562,13 @@ void PSOManager::processRasterPSO(nlohmann::json &jobj, const std::string &path,
     data.pso = pso;
     PSOHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
     data.magicNumber = MAGIC_NUMBER_COUNTER;
-    m_psoRegisterHandle[name] = handle;
+    m_psoRegisterHandle.insert(name.c_str(), handle);
     ++MAGIC_NUMBER_COUNTER;
   } else {
     // if we are reloading the pso already exists we just need to update data
-    assert(m_psoRegisterHandle.find(name) != m_psoRegisterHandle.end());
-    PSOHandle handle = m_psoRegisterHandle[name];
+    assert(m_psoRegisterHandle.containsKey(name.c_str()));
+    PSOHandle handle;
+    m_psoRegisterHandle.get(name.c_str(), handle);
     uint32_t index = getIndexFromHandle(handle);
     PSOData &data = m_psoPool[index];
     data.pso = pso;
@@ -578,7 +610,8 @@ void PSOManager::printStateObjectDesc(const D3D12_STATE_OBJECT_DESC *desc) {
           L"-\n";
   wstr << L"| D3D12 State Object 0x" << static_cast<const void *>(desc)
        << L": ";
-  if (desc->Type == D3D12_STATE_OBJECT_TYPE_COLLECTION) wstr << L"Collection\n";
+  if (desc->Type == D3D12_STATE_OBJECT_TYPE_COLLECTION)
+    wstr << L"Collection\n";
   if (desc->Type == D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE)
     wstr << L"Raytracing Pipeline\n";
 
@@ -588,7 +621,8 @@ void PSOManager::printStateObjectDesc(const D3D12_STATE_OBJECT_DESC *desc) {
     for (UINT i = 0; i < numExports; i++) {
       woss << L"|";
       if (depth > 0) {
-        for (UINT j = 0; j < 2 * depth - 1; j++) woss << L" ";
+        for (UINT j = 0; j < 2 * depth - 1; j++)
+          woss << L" ";
       }
       woss << L" [" << i << L"]: ";
       if (exports[i].ExportToRename)
@@ -601,108 +635,105 @@ void PSOManager::printStateObjectDesc(const D3D12_STATE_OBJECT_DESC *desc) {
   for (UINT i = 0; i < desc->NumSubobjects; i++) {
     wstr << L"| [" << i << L"]: ";
     switch (desc->pSubobjects[i].Type) {
-      // case D3D12_STATE_SUBOBJECT_TYPE_FLAGS:
-      //  wstr << L"Flags (not yet defined)\n";
-      //  break;
-      case D3D12_STATE_SUBOBJECT_TYPE_GLOBAL_ROOT_SIGNATURE:
-        wstr << L"Root Signature 0x" << desc->pSubobjects[i].pDesc << L"\n";
-        break;
-      case D3D12_STATE_SUBOBJECT_TYPE_LOCAL_ROOT_SIGNATURE:
-        wstr << L"Local Root Signature 0x" << desc->pSubobjects[i].pDesc
-             << L"\n";
-        break;
-      case D3D12_STATE_SUBOBJECT_TYPE_NODE_MASK:
-        wstr << L"Node Mask: 0x" << std::hex << std::setfill(L'0')
-             << std::setw(8)
-             << *static_cast<const UINT *>(desc->pSubobjects[i].pDesc)
-             << std::setw(0) << std::dec << L"\n";
-        break;
-      // case D3D12_STATE_SUBOBJECT_TYPE_CACHED_STATE_OBJECT:
-      //  wstr << L"Cached State Object (not yet defined)\n";
-      //  break;
-      case D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY: {
-        wstr << L"DXIL Library 0x";
-        auto lib = static_cast<const D3D12_DXIL_LIBRARY_DESC *>(
-            desc->pSubobjects[i].pDesc);
-        wstr << lib->DXILLibrary.pShaderBytecode << L", "
-             << lib->DXILLibrary.BytecodeLength << L" bytes\n";
-        wstr << exportTree(1, lib->NumExports, lib->pExports);
-        break;
+    // case D3D12_STATE_SUBOBJECT_TYPE_FLAGS:
+    //  wstr << L"Flags (not yet defined)\n";
+    //  break;
+    case D3D12_STATE_SUBOBJECT_TYPE_GLOBAL_ROOT_SIGNATURE:
+      wstr << L"Root Signature 0x" << desc->pSubobjects[i].pDesc << L"\n";
+      break;
+    case D3D12_STATE_SUBOBJECT_TYPE_LOCAL_ROOT_SIGNATURE:
+      wstr << L"Local Root Signature 0x" << desc->pSubobjects[i].pDesc << L"\n";
+      break;
+    case D3D12_STATE_SUBOBJECT_TYPE_NODE_MASK:
+      wstr << L"Node Mask: 0x" << std::hex << std::setfill(L'0') << std::setw(8)
+           << *static_cast<const UINT *>(desc->pSubobjects[i].pDesc)
+           << std::setw(0) << std::dec << L"\n";
+      break;
+    // case D3D12_STATE_SUBOBJECT_TYPE_CACHED_STATE_OBJECT:
+    //  wstr << L"Cached State Object (not yet defined)\n";
+    //  break;
+    case D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY: {
+      wstr << L"DXIL Library 0x";
+      auto lib = static_cast<const D3D12_DXIL_LIBRARY_DESC *>(
+          desc->pSubobjects[i].pDesc);
+      wstr << lib->DXILLibrary.pShaderBytecode << L", "
+           << lib->DXILLibrary.BytecodeLength << L" bytes\n";
+      wstr << exportTree(1, lib->NumExports, lib->pExports);
+      break;
+    }
+    case D3D12_STATE_SUBOBJECT_TYPE_EXISTING_COLLECTION: {
+      wstr << L"Existing Library 0x";
+      auto collection = static_cast<const D3D12_EXISTING_COLLECTION_DESC *>(
+          desc->pSubobjects[i].pDesc);
+      wstr << collection->pExistingCollection << L"\n";
+      wstr << exportTree(1, collection->NumExports, collection->pExports);
+      break;
+    }
+    case D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION: {
+      wstr << L"Subobject to Exports Association (Subobject [";
+      auto association =
+          static_cast<const D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION *>(
+              desc->pSubobjects[i].pDesc);
+      UINT index = static_cast<UINT>(association->pSubobjectToAssociate -
+                                     desc->pSubobjects);
+      wstr << index << L"])\n";
+      for (UINT j = 0; j < association->NumExports; j++) {
+        wstr << L"|  [" << j << L"]: " << association->pExports[j] << L"\n";
       }
-      case D3D12_STATE_SUBOBJECT_TYPE_EXISTING_COLLECTION: {
-        wstr << L"Existing Library 0x";
-        auto collection = static_cast<const D3D12_EXISTING_COLLECTION_DESC *>(
-            desc->pSubobjects[i].pDesc);
-        wstr << collection->pExistingCollection << L"\n";
-        wstr << exportTree(1, collection->NumExports, collection->pExports);
-        break;
+      break;
+    }
+    case D3D12_STATE_SUBOBJECT_TYPE_DXIL_SUBOBJECT_TO_EXPORTS_ASSOCIATION: {
+      wstr << L"DXIL Subobjects to Exports Association (";
+      auto association =
+          static_cast<const D3D12_DXIL_SUBOBJECT_TO_EXPORTS_ASSOCIATION *>(
+              desc->pSubobjects[i].pDesc);
+      wstr << association->SubobjectToAssociate << L")\n";
+      for (UINT j = 0; j < association->NumExports; j++) {
+        wstr << L"|  [" << j << L"]: " << association->pExports[j] << L"\n";
       }
-      case D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION: {
-        wstr << L"Subobject to Exports Association (Subobject [";
-        auto association =
-            static_cast<const D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION *>(
-                desc->pSubobjects[i].pDesc);
-        UINT index = static_cast<UINT>(association->pSubobjectToAssociate -
-                                       desc->pSubobjects);
-        wstr << index << L"])\n";
-        for (UINT j = 0; j < association->NumExports; j++) {
-          wstr << L"|  [" << j << L"]: " << association->pExports[j] << L"\n";
-        }
-        break;
-      }
-      case D3D12_STATE_SUBOBJECT_TYPE_DXIL_SUBOBJECT_TO_EXPORTS_ASSOCIATION: {
-        wstr << L"DXIL Subobjects to Exports Association (";
-        auto association =
-            static_cast<const D3D12_DXIL_SUBOBJECT_TO_EXPORTS_ASSOCIATION *>(
-                desc->pSubobjects[i].pDesc);
-        wstr << association->SubobjectToAssociate << L")\n";
-        for (UINT j = 0; j < association->NumExports; j++) {
-          wstr << L"|  [" << j << L"]: " << association->pExports[j] << L"\n";
-        }
-        break;
-      }
-      case D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_SHADER_CONFIG: {
-        wstr << L"Raytracing Shader Config\n";
-        auto config = static_cast<const D3D12_RAYTRACING_SHADER_CONFIG *>(
-            desc->pSubobjects[i].pDesc);
-        wstr << L"|  [0]: Max Payload Size: " << config->MaxPayloadSizeInBytes
-             << L" bytes\n";
-        wstr << L"|  [1]: Max Attribute Size: "
-             << config->MaxAttributeSizeInBytes << L" bytes\n";
-        break;
-      }
-      case D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_PIPELINE_CONFIG: {
-        wstr << L"Raytracing Pipeline Config\n";
-        auto config = static_cast<const D3D12_RAYTRACING_PIPELINE_CONFIG *>(
-            desc->pSubobjects[i].pDesc);
-        wstr << L"|  [0]: Max Recursion Depth: "
-             << config->MaxTraceRecursionDepth << L"\n";
-        break;
-      }
-      case D3D12_STATE_SUBOBJECT_TYPE_HIT_GROUP: {
-        wstr << L"Hit Group (";
-        auto hitGroup = static_cast<const D3D12_HIT_GROUP_DESC *>(
-            desc->pSubobjects[i].pDesc);
-        wstr << (hitGroup->HitGroupExport ? hitGroup->HitGroupExport
-                                          : L"[none]")
-             << L")\n";
-        wstr << L"|  [0]: Any Hit Import: "
-             << (hitGroup->AnyHitShaderImport ? hitGroup->AnyHitShaderImport
-                                              : L"[none]")
-             << L"\n";
-        wstr << L"|  [1]: Closest Hit Import: "
-             << (hitGroup->ClosestHitShaderImport
-                     ? hitGroup->ClosestHitShaderImport
-                     : L"[none]")
-             << L"\n";
-        wstr << L"|  [2]: Intersection Import: "
-             << (hitGroup->IntersectionShaderImport
-                     ? hitGroup->IntersectionShaderImport
-                     : L"[none]")
-             << L"\n";
-        break;
-      }
-      default:;
+      break;
+    }
+    case D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_SHADER_CONFIG: {
+      wstr << L"Raytracing Shader Config\n";
+      auto config = static_cast<const D3D12_RAYTRACING_SHADER_CONFIG *>(
+          desc->pSubobjects[i].pDesc);
+      wstr << L"|  [0]: Max Payload Size: " << config->MaxPayloadSizeInBytes
+           << L" bytes\n";
+      wstr << L"|  [1]: Max Attribute Size: " << config->MaxAttributeSizeInBytes
+           << L" bytes\n";
+      break;
+    }
+    case D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_PIPELINE_CONFIG: {
+      wstr << L"Raytracing Pipeline Config\n";
+      auto config = static_cast<const D3D12_RAYTRACING_PIPELINE_CONFIG *>(
+          desc->pSubobjects[i].pDesc);
+      wstr << L"|  [0]: Max Recursion Depth: " << config->MaxTraceRecursionDepth
+           << L"\n";
+      break;
+    }
+    case D3D12_STATE_SUBOBJECT_TYPE_HIT_GROUP: {
+      wstr << L"Hit Group (";
+      auto hitGroup =
+          static_cast<const D3D12_HIT_GROUP_DESC *>(desc->pSubobjects[i].pDesc);
+      wstr << (hitGroup->HitGroupExport ? hitGroup->HitGroupExport : L"[none]")
+           << L")\n";
+      wstr << L"|  [0]: Any Hit Import: "
+           << (hitGroup->AnyHitShaderImport ? hitGroup->AnyHitShaderImport
+                                            : L"[none]")
+           << L"\n";
+      wstr << L"|  [1]: Closest Hit Import: "
+           << (hitGroup->ClosestHitShaderImport
+                   ? hitGroup->ClosestHitShaderImport
+                   : L"[none]")
+           << L"\n";
+      wstr << L"|  [2]: Intersection Import: "
+           << (hitGroup->IntersectionShaderImport
+                   ? hitGroup->IntersectionShaderImport
+                   : L"[none]")
+           << L"\n";
+      break;
+    }
+    default:;
     }
     wstr << L"|--------------------------------------------------------------"
             L"--"
@@ -711,4 +742,4 @@ void PSOManager::printStateObjectDesc(const D3D12_STATE_OBJECT_DESC *desc) {
   wstr << L"\n";
   std::wcout << wstr.str() << std::endl;
 }
-}  // namespace SirEngine::dx12
+} // namespace SirEngine::dx12
