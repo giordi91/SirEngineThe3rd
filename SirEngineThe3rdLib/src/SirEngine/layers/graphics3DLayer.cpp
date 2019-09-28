@@ -53,7 +53,8 @@ void Graphics3DLayer::onAttach() {
   dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE, currentFc);
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
 
-  alloc =new GraphAllocators{globals::STRING_POOL, globals::PERSISTENT_ALLOCATOR};
+  alloc =
+      new GraphAllocators{globals::STRING_POOL, globals::PERSISTENT_ALLOCATOR};
   dx12::RENDERING_GRAPH = new DependencyGraph();
   const auto assetNode = new AssetManagerNode(*alloc);
   const auto finalBlit = new FinalBlitNode(*alloc);
@@ -361,15 +362,11 @@ bool Graphics3DLayer::onResizeEvent(WindowResizeEvent &e) {
 }
 
 bool Graphics3DLayer::onDebugConfigChanged(DebugRenderConfigChanged &e) {
-  // FIXNOW
-  /*
-GraphNode *debugNode = dx12::RENDERING_GRAPH->findNodeOfType("DebugNode");
-if (debugNode) {
-auto *debugNodeTyped = (FramePassDebugNode *)debugNode;
-debugNodeTyped->setConfig(e.getConfig());
-}
-return true;
-*/
+  GNode *debugNode = dx12::RENDERING_GRAPH->findNodeOfType("DebugNode");
+  if (debugNode) {
+    auto *debugNodeTyped = (FramePassDebugNode *)debugNode;
+    debugNodeTyped->setConfig(e.getConfig());
+  }
   return true;
 }
 bool Graphics3DLayer::onShaderCompileEvent(ShaderCompileEvent &e) {

@@ -232,11 +232,8 @@ bool ImguiLayer::onKeyTypeEvent(const KeyTypeEvent &e) const {
 }
 
 bool ImguiLayer::onRenderGraphEvent(const RenderGraphChanged &) {
-  //FIXNOW
-  /*
   m_renderGraph.initialize(dx12::RENDERING_GRAPH);
   m_renderGraph.showGraph(true);
-  */
   return true;
 }
 bool ImguiLayer::onCompileResultEvent(const ShaderCompileResultEvent &e) {
