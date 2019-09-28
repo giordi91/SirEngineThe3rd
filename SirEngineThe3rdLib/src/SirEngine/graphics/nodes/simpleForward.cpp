@@ -54,20 +54,6 @@ void SimpleForward::initialize() {
       "../data/processed/textures/brdf.texture");
 }
 
-//TODO move that somewhere?
-template <typename T>
-inline T getInputConnection(ResizableVector<const GPlug *> **conns,
-                            const int plugId) {
-  const auto conn = conns[PLUG_INDEX(plugId)];
-
-  // TODO not super safe to do this, might be worth improving this
-  assert(conn->size() == 1 && "too many input connections");
-  const GPlug *source = (*conn)[0];
-  const auto h = T{source->plugValue};
-  assert(h.isHandleValid());
-  return h;
-}
-
 void SimpleForward::compute() {
 
   annotateGraphicsBegin("Simple Forward");

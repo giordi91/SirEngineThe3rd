@@ -2,6 +2,7 @@
 #include "platform/windows/graphics/dx12/DX12.h"
 #include <cassert>
 #include "SirEngine/log.h"
+#include "SirEngine/runtimeString.h"
 
 namespace SirEngine::dx12 {
 ID3D12Resource *
@@ -29,8 +30,8 @@ void BufferManagerDx12::free(const BufferHandle handle) {
 
 BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInByte,
                                          void *initData, const char *name,
-                                         int numElements, int elementSize,
-                                         bool isUAV) {
+                                         const int numElements, const int elementSize,
+                                         const bool isUAV) {
   ID3D12Resource *buffer = nullptr;
   ID3D12Resource *uploadBuffer = nullptr;
 
@@ -49,6 +50,7 @@ BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInByte,
             : D3D12_RESOURCE_STATE_COMMON,
       nullptr, IID_PPV_ARGS(&buffer));
   assert(SUCCEEDED(res));
+  buffer->SetName(persistentConvertWide(name));
   // assert(initData == nullptr);
 
   if (initData != nullptr) {
@@ -130,6 +132,7 @@ BufferHandle BufferManagerDx12::allocateUpload(const uint32_t sizeInByte,
       &uploadHeapProperties, D3D12_HEAP_FLAG_NONE, &uploadBufferDesc,
       D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&uploadBuffer));
   assert(SUCCEEDED(res));
+  uploadBuffer->SetName(persistentConvertWide(name));
 
   // lets get a data from the pool
   uint32_t index;

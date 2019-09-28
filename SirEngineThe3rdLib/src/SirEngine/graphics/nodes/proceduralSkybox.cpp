@@ -1,41 +1,39 @@
 #include "SirEngine/graphics/nodes/proceduralSkybox.h"
 #include "SirEngine/assetManager.h"
+#include "SirEngine/graphics/debugAnnotations.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
 #include "platform/windows/graphics/dx12/textureManagerDx12.h"
-#include "SirEngine/graphics/debugAnnotations.h"
 
 namespace SirEngine {
 
 static const char *SKYBOX_RS = "proceduralSkybox_RS";
 static const char *SKYBOX_PSO = "proceduralSkybox_PSO";
 
-ProceduralSkyBoxPass::ProceduralSkyBoxPass(const char *name)
-    : GraphNode(name, "ProceduralSkyBoxPass") {
+ProceduralSkyBoxPass::ProceduralSkyBoxPass(GraphAllocators &allocators)
+    : GNode("ProceduralSkyBoxPass", "ProceduralSkyBoxPass", allocators) {
+  defaultInitializePlugsAndConnections(2, 1);
   // lets create the plugs
-  Plug fullscreenPass;
+  GPlug &fullscreenPass= m_inputPlugs[PLUG_INDEX(PLUGS::FULLSCREEN_PASS)];
   fullscreenPass.plugValue = 0;
   fullscreenPass.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
   fullscreenPass.nodePtr = this;
   fullscreenPass.name = "fullscreenPass";
-  registerPlug(fullscreenPass);
 
-  Plug depthBuffer;
+  GPlug &depthBuffer= m_inputPlugs[PLUG_INDEX(PLUGS::DEPTH_RT)];
   depthBuffer.plugValue = 0;
   depthBuffer.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
   depthBuffer.nodePtr = this;
   depthBuffer.name = "depth";
-  registerPlug(depthBuffer);
 
-  Plug buffer;
+  GPlug &buffer = m_outputPlugs[PLUG_INDEX(PLUGS::OUT_TEXTURE)];
   buffer.plugValue = 0;
   buffer.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
   buffer.nodePtr = this;
-  buffer.name = "buffer";
-  registerPlug(buffer);
+  buffer.name = "outTexture";
 }
 
 void ProceduralSkyBoxPass::initialize() {
@@ -59,10 +57,12 @@ getInputConnection(std::unordered_map<const Plug *, std::vector<Plug *>> &conns,
 void ProceduralSkyBoxPass::compute() {
 
   annotateGraphicsBegin("Procedural Skybox");
-  TextureHandle bufferHandle =
-      getInputConnection(m_connections, &m_inputPlugs[0]);
-  TextureHandle depthHandle =
-      getInputConnection(m_connections, &m_inputPlugs[1]);
+
+  const auto bufferHandle=
+      getInputConnection<TextureHandle>(m_inConnections, FULLSCREEN_PASS);
+
+  const auto depthHandle =
+      getInputConnection<TextureHandle>(m_inConnections, DEPTH_RT);
 
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
@@ -84,15 +84,6 @@ void ProceduralSkyBoxPass::compute() {
   commandList->SetGraphicsRootSignature(rs);
 
   globals::RENDERING_CONTEXT->bindCameraBuffer(0);
-  // commandList->SetGraphicsRootConstantBufferView(1, m_lightAddress);
-  // commandList->SetGraphicsRootDescriptorTable(
-  //    2, dx12::TEXTURE_MANAGER->getSRVDx12(depthHandle).gpuHandle);
-  // commandList->SetGraphicsRootDescriptorTable(
-  //    3, dx12::TEXTURE_MANAGER->getSRVDx12(gbufferHandle).gpuHandle);
-  // commandList->SetGraphicsRootDescriptorTable(
-  //    4, dx12::TEXTURE_MANAGER->getSRVDx12(normalBufferHandle).gpuHandle);
-  // commandList->SetGraphicsRootDescriptorTable(
-  //    5, dx12::TEXTURE_MANAGER->getSRVDx12(specularBufferHandle).gpuHandle);
 
   commandList->DrawInstanced(6, 1, 0, 0);
   m_outputPlugs[0].plugValue = bufferHandle.handle;
