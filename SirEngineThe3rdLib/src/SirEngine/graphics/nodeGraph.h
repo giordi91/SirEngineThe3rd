@@ -420,7 +420,7 @@ public:
     node->setNodeIndex(m_nodeCounter++);
     m_nodes.pushBack(node);
   }
-  inline const GNode *findNodeOfType(const char *type) const {
+  inline GNode *findNodeOfType(const char *type){
 
     const size_t nodesCount = m_nodes.size();
     for (size_t i = 0; i < nodesCount; ++i) {
