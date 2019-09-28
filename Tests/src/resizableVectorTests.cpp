@@ -264,3 +264,52 @@ TEST_CASE("Vector resize with no initialization allocator", "[memory]"){
   REQUIRE(vec.reservedSize() == 20);
 
 }
+TEST_CASE("Vector remove by patching", "[memory]") {
+
+  SirEngine::ThreeSizesPool pool(400,64,256);
+  SirEngine::ResizableVector<float> vec(10, &pool);
+  vec.pushBack(1.0f);
+  vec.pushBack(2.0f);
+  vec.pushBack(3.0f);
+  vec.pushBack(4.0f);
+  vec.pushBack(5.0f);
+  vec.pushBack(6.0f);
+  vec.pushBack(7.0f);
+
+  REQUIRE(vec.size() == 7);
+  float value = vec.removeByPatchingFromLast(4); //1 2 3 4 7 6
+  REQUIRE(vec.size() == 6);
+  REQUIRE(value == 5.0f);
+  REQUIRE(vec[4]== 7.0f);
+
+  value = vec.removeByPatchingFromLast(0);//6 2 3 4 7 
+  REQUIRE(vec.size() == 5);
+  REQUIRE(value == 1.0f);
+  REQUIRE(vec[0]== 6.0f);
+
+  value = vec.removeByPatchingFromLast(1);//6 7 3 4  
+  REQUIRE(vec.size() == 4);
+  REQUIRE(value == 2.0f);
+  REQUIRE(vec[1]== 7.0f);
+
+  value = vec.removeByPatchingFromLast(3);//6 7 3  
+  REQUIRE(vec.size() == 3);
+  REQUIRE(value == 4.0f);
+  REQUIRE(vec[2]== 3.0f);
+
+  value = vec.removeByPatchingFromLast(1);//6 3  
+  REQUIRE(vec.size() == 2);
+  REQUIRE(value == 7.0f);
+  REQUIRE(vec[0]== 6.0f);
+  REQUIRE(vec[1]== 3.0f);
+
+  value = vec.removeByPatchingFromLast(1);//6   
+  REQUIRE(vec.size() == 1);
+  REQUIRE(value == 3.0f);
+  REQUIRE(vec[0]== 6.0f);
+
+  value = vec.removeByPatchingFromLast(0);// empty   
+  REQUIRE(vec.size() == 0);
+  REQUIRE(value == 6.0f);
+
+}

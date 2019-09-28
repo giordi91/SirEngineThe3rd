@@ -159,8 +159,71 @@ bool GNode::connect(const int sourcePlugId, GNode *destinationNode,
   plugPtr[sourceIndex]->pushBack(destinationPlug);
   return true;
 }
+bool GNode::connect(const GPlug* sourcePlug, const GPlug* destPlug) {
+  // making sure this plug belongs to this node
+  assert(sourcePlug->nodePtr == this);
 
-void GNode::defaultInitializeConnectionPool(int inputCount, int outputCount,
+  // making sure the in->out or out->in condition is met
+  const bool isInput = isFlag(*sourcePlug, PlugFlags::PLUG_INPUT);
+
+  // making sure the in->out or out->in condition is met
+  const PlugFlags requiredDestinationFlag =
+      isInput ? PlugFlags::PLUG_OUTPUT : PlugFlags::PLUG_INPUT;
+  assert(isFlag(*destPlug, requiredDestinationFlag));
+
+  const int sourceIndex = findPlugIndexFromInstance(sourcePlug);
+
+  ResizableVector<GPlug *> **plugPtr =
+      isInput ? m_inConnections : m_outConnections;
+  //temp fix
+  plugPtr[sourceIndex]->pushBack(const_cast<GPlug*>(destPlug));
+  return true;
+}
+
+bool GNode::removeConnection(const GPlug *sourcePlug, const GPlug *destPlug) {
+
+  // making sure this plug belongs to this node
+  assert(sourcePlug->nodePtr == this);
+
+  // making sure the in->out or out->in condition is met
+  const bool isInput = isFlag(*sourcePlug, PlugFlags::PLUG_INPUT);
+  const PlugFlags requiredDestinationFlag =
+      isInput ? PlugFlags::PLUG_OUTPUT : PlugFlags::PLUG_INPUT;
+  assert(isFlag(*destPlug, requiredDestinationFlag));
+
+  // first we find the index of the plug, this will allow us to
+  // to find the connections vector
+  int srcIndex = findPlugIndexFromInstance(sourcePlug);
+  ResizableVector<GPlug *> **connections =
+      isInput ? m_inConnections : m_outConnections;
+  int count = isInput ? m_inputPlugsCount : m_outputPlugsCount;
+  assert(srcIndex < count);
+
+  // now that we have the connections we need to iterate all of them
+  // to see if any matches
+  ResizableVector<GPlug *> *connectionList = connections[srcIndex];
+  const int connectionCount = connectionList->size();
+  int foundIndex = -1;
+  for (int i = 0; i < connectionCount; ++i) {
+    if (connectionList->getConstRef(i) == destPlug) {
+      foundIndex = i;
+      break;
+    }
+  }
+  // at this point we know if we have a connection and which index it is
+  if (foundIndex == -1) {
+    assert(0 && "plugs are not connected");
+    return false;
+  }
+  // clearing the connection and patching the hole in the vector
+  connectionList->removeByPatchingFromLast(foundIndex);
+
+  // connections successfully removed we can return
+  return true;
+}
+
+void GNode::defaultInitializeConnectionPool(const int inputCount,
+                                            const int outputCount,
                                             int reserve) {
   auto *connections = static_cast<ResizableVector<GPlug *> **>(
       m_allocs.allocator->allocate(sizeof(GPlug) * (inputCount + outputCount)));
