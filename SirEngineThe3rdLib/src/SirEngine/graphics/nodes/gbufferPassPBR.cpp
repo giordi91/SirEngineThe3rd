@@ -64,12 +64,12 @@ void GBufferPassPBR::initialize() {
       "specularBuffer");
 }
 
-inline StreamHandle getInputConnection(ResizableVector<GPlug *> **conns) {
+inline StreamHandle getInputConnection(ResizableVector<const GPlug *> **conns) {
   const auto conn = conns[PLUG_INDEX(GBufferPassPBR::PLUGS::ASSET_STREAM)];
 
   // TODO not super safe to do this, might be worth improving this
   assert(conn->size() == 1 && "too many input connections");
-  GPlug *source = (*conn)[0];
+  const GPlug *source = (*conn)[0];
   const auto h = StreamHandle{source->plugValue};
   assert(h.isHandleValid());
   return h;

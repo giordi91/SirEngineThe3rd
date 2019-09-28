@@ -31,7 +31,7 @@ void FinalBlitNode::compute() {
 
   const auto conn = m_inConnections[PLUG_INDEX(PLUGS::IN_TEXTURE)];
   assert(conn->size() == 1 && "too many input connections");
-  GPlug *source = (*conn)[0];
+  const GPlug *source = (*conn)[0];
   TextureHandle texH;
   texH.handle = source->plugValue;
 

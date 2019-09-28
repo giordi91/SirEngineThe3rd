@@ -154,12 +154,12 @@ bool GNode::connect(const int sourcePlugId, GNode *destinationNode,
   GPlug *sourcePlug = getPlug(sourcePlugId);
   const int sourceIndex = PLUG_INDEX(sourcePlugId);
 
-  ResizableVector<GPlug *> **plugPtr =
+  ResizableVector<const GPlug *> **plugPtr =
       isInput ? m_inConnections : m_outConnections;
   plugPtr[sourceIndex]->pushBack(destinationPlug);
   return true;
 }
-bool GNode::connect(const GPlug* sourcePlug, const GPlug* destPlug) {
+bool GNode::connect(const GPlug *sourcePlug, const GPlug *destPlug) {
   // making sure this plug belongs to this node
   assert(sourcePlug->nodePtr == this);
 
@@ -173,10 +173,10 @@ bool GNode::connect(const GPlug* sourcePlug, const GPlug* destPlug) {
 
   const int sourceIndex = findPlugIndexFromInstance(sourcePlug);
 
-  ResizableVector<GPlug *> **plugPtr =
+  ResizableVector<const GPlug *> **plugPtr =
       isInput ? m_inConnections : m_outConnections;
-  //temp fix
-  plugPtr[sourceIndex]->pushBack(const_cast<GPlug*>(destPlug));
+  // temp fix
+  plugPtr[sourceIndex]->pushBack(destPlug);
   return true;
 }
 
@@ -194,14 +194,14 @@ bool GNode::removeConnection(const GPlug *sourcePlug, const GPlug *destPlug) {
   // first we find the index of the plug, this will allow us to
   // to find the connections vector
   int srcIndex = findPlugIndexFromInstance(sourcePlug);
-  ResizableVector<GPlug *> **connections =
+  ResizableVector<const GPlug *> **connections =
       isInput ? m_inConnections : m_outConnections;
   int count = isInput ? m_inputPlugsCount : m_outputPlugsCount;
   assert(srcIndex < count);
 
   // now that we have the connections we need to iterate all of them
   // to see if any matches
-  ResizableVector<GPlug *> *connectionList = connections[srcIndex];
+  ResizableVector<const GPlug *> *connectionList = connections[srcIndex];
   const int connectionCount = connectionList->size();
   int foundIndex = -1;
   for (int i = 0; i < connectionCount; ++i) {
@@ -225,18 +225,18 @@ bool GNode::removeConnection(const GPlug *sourcePlug, const GPlug *destPlug) {
 void GNode::defaultInitializeConnectionPool(const int inputCount,
                                             const int outputCount,
                                             int reserve) {
-  auto *connections = static_cast<ResizableVector<GPlug *> **>(
+  auto *connections = static_cast<ResizableVector<const GPlug *> **>(
       m_allocs.allocator->allocate(sizeof(GPlug) * (inputCount + outputCount)));
   // for each connection we need to allocate a vector
   m_inConnections = connections;
   m_outConnections = connections + inputCount;
   for (int i = 0; i < inputCount; ++i) {
     m_inConnections[i] =
-        new ResizableVector<GPlug *>(DEFAULT_PLUG_CONNECTION_ALLOCATION);
+        new ResizableVector<const GPlug *>(DEFAULT_PLUG_CONNECTION_ALLOCATION);
   }
   for (int i = 0; i < outputCount; ++i) {
     m_outConnections[i] =
-        new ResizableVector<GPlug *>(DEFAULT_PLUG_CONNECTION_ALLOCATION);
+        new ResizableVector<const GPlug *>(DEFAULT_PLUG_CONNECTION_ALLOCATION);
   }
 }
 void recurseNode(GNode *currentNode, ResizableVector<GNode *> &queue,
@@ -252,22 +252,29 @@ void recurseNode(GNode *currentNode, ResizableVector<GNode *> &queue,
     const GPlug *inPlugs = currentNode->getInputPlugs(inCount);
     for (size_t i = 0; i < inCount; ++i) {
       // get the connections
-      const ResizableVector<GPlug *> *conns =
+      const ResizableVector<const GPlug *> *conns =
           currentNode->getPlugConnections(&inPlugs[i]);
       // if not empty we iterate all of them and extract the node at the
       // other end side
       const int connsCount = conns->size();
       if (connsCount != 0) {
-        // if (conns != nullptr) {
-
-        for (int i = 0; i < connsCount; ++i) {
-          recurseNode(conns->getConstRef(i)->nodePtr, queue, visitedNodes);
+        for (int c = 0; c < connsCount; ++c) {
+          recurseNode(conns->getConstRef(c)->nodePtr, queue, visitedNodes);
         }
-        // for (auto &conn : (*conns)) {
-        // recurseNode(conn->nodePtr, queue, visitedNodes);
       }
     }
   }
+}
+
+bool DependencyGraph::removeNode(GNode *node) {
+  int nodeCount = m_nodes.size();
+  for (int i = 0; i < nodeCount; ++i) {
+    if (m_nodes[i] == node) {
+      m_nodes.removeByPatchingFromLast(i);
+      return true;
+    }
+  }
+  return false;
 }
 
 void DependencyGraph::finalizeGraph() {

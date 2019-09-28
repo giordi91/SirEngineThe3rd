@@ -30,13 +30,13 @@ DebugDrawNode::DebugDrawNode(GraphAllocators &allocators)
 }
 
 template <typename T>
-inline T getInputConnection(ResizableVector<GPlug *> **conns,
+inline T getInputConnection(ResizableVector<const GPlug *> **conns,
                             const int plugId) {
   const auto conn = conns[PLUG_INDEX(plugId)];
 
   // TODO not super safe to do this, might be worth improving this
   assert(conn->size() == 1 && "too many input connections");
-  GPlug *source = (*conn)[0];
+  const GPlug *source = (*conn)[0];
   const auto h = T{source->plugValue};
   assert(h.isHandleValid());
   return h;

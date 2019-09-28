@@ -387,7 +387,7 @@ void RenderGraphWidget::initialize(DependencyGraph *graph) {
         const GPlug *inPlugs = curr.node->getInputPlugs(inPlugCount);
         for (int i = 0; i < inPlugCount; ++i) {
           // get the connections
-          const ResizableVector<GPlug *> *conns =
+          const ResizableVector<const GPlug *> *conns =
               curr.node->getPlugConnections(&inPlugs[i]);
           // if not empty we iterate all of them and extract the node at the
           // other end side
@@ -395,7 +395,7 @@ void RenderGraphWidget::initialize(DependencyGraph *graph) {
 			uint32_t connCount = conns->size();
 
             for (uint32_t c =0; c < connCount;++c) {
-			  GPlug* conn = (*conns)[c];
+			  const GPlug* conn = (*conns)[c];
 			  int destinationIndex = conn->nodePtr->findPlugIndexFromInstance(conn);
 			  int  sourceIndex =i;
               status->links.push_back(

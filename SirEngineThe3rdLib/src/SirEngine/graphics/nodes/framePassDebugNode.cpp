@@ -24,21 +24,21 @@ static const std::string &DEBUG_REDUCE_DEPTH_PSO_NAME = "depthMinMaxReduce_PSO";
 static const std::string &DEBUG_REDUCE_DEPTH_CLEAR_PSO_NAME =
     "depthMinMaxReduceClear_PSO";
 
-FramePassDebugNode::FramePassDebugNode(const char *name) : GraphNode(name, "FramePassDebugNode") {
+FramePassDebugNode::FramePassDebugNode(GraphAllocators &allocators)
+    : GNode("FramePassDebugNode", "FramePassDebugNode", allocators) {
+  defaultInitializePlugsAndConnections(1, 1);
   // lets create the plugs
-  Plug inTexture;
+  GPlug &inTexture = m_inputPlugs[PLUG_INDEX(PLUGS::IN_TEXTURE)];
   inTexture.plugValue = 0;
   inTexture.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
   inTexture.nodePtr = this;
   inTexture.name = "inTexture";
-  registerPlug(inTexture);
 
-  Plug outTexture;
+  GPlug &outTexture = m_outputPlugs[PLUG_INDEX(PLUGS::OUT_TEXTURE)];
   outTexture.plugValue = 0;
   outTexture.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
   outTexture.nodePtr = this;
   outTexture.name = "outTexture";
-  registerPlug(outTexture);
 
   m_gbufferPSOHandle =
       dx12::PSO_MANAGER->getHandleFromName(GBUFFER_DEBUG_PSO_NAME);
@@ -103,7 +103,7 @@ void blitStencilDebug(const TextureHandle input,
 
   // TODO the input should be the depth, there should be
   // no need for us to get it directly
-  //TextureHandle depth = globals::DEBUG_FRAME_DATA->gbufferDepth;
+  // TextureHandle depth = globals::DEBUG_FRAME_DATA->gbufferDepth;
   const TextureHandle depth = input;
   D3D12_RESOURCE_BARRIER barriers[2];
   int counter = 0;
@@ -172,7 +172,8 @@ inline void checkHandle(const TextureHandle input,
   assert(input.handle != handleToWriteOn.handle);
 }
 
-void FramePassDebugNode::blitDebugFrame(const TextureHandle handleToWriteOn) const {
+void FramePassDebugNode::blitDebugFrame(
+    const TextureHandle handleToWriteOn) const {
   switch (m_index) {
   case (DebugIndex::GBUFFER): {
     const TextureHandle input = globals::DEBUG_FRAME_DATA->geometryBuffer;
@@ -302,15 +303,25 @@ void FramePassDebugNode::initialize() {
       sizeof(ReducedDepth), true);
   m_config.stencilValue = 1;
 }
+template <typename T>
+inline T getInputConnection(ResizableVector<const GPlug *> **conns,
+                            const int plugId) {
+  const auto conn = conns[PLUG_INDEX(plugId)];
+
+  // TODO not super safe to do this, might be worth improving this
+  assert(conn->size() == 1 && "too many input connections");
+  const GPlug *source = (*conn)[0];
+  const auto h = T{source->plugValue};
+  assert(h.isHandleValid());
+  return h;
+}
 
 void FramePassDebugNode::compute() {
   // get the render texture
   annotateGraphicsBegin("DebugPass");
 
-  auto &conn = m_connections[&m_inputPlugs[0]];
-  assert(conn.size() == 1 && "too many input connections");
-  Plug *source = conn[0];
-  TextureHandle texH{source->plugValue};
+  const auto texH =
+      getInputConnection<TextureHandle>(m_inConnections, IN_TEXTURE);
 
   // check if we need to update the constant buffer
   if (m_updateConfig) {

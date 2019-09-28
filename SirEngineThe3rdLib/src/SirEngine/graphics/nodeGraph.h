@@ -1,6 +1,5 @@
 #pragma once
 #include "SirEngine/core.h"
-#include "SirEngine/globals.h"
 #include "SirEngine/memory/resizableVector.h"
 #include "SirEngine/runtimeString.h"
 #include <cassert>
@@ -233,11 +232,20 @@ struct GPlug final {
 };
 
 class SIR_ENGINE_API GNode {
-// creates a mask for the first 31 bits, masking last one out and extracts
+// TODO consider a constexpr inline function instead?
+/**
+ * \brief creates a mask for the first 31 bits, masking last one out and
+ * extracts \param x 32 bit integer value representing the plug id
+ */
 #define PLUG_INDEX(x) (((1u << 31u) - 1u) & (x))
+// sets the last bit of the 32bit value to 1, marking it an input
 #define INPUT_PLUG_CODE(x) ((1u << 31u) | (x))
+// sets the last bit of the 32bit value to 0, marking it an output
+// as of now this does nothing, is pure visual for the programmer, might want to
+// force the last bit to be zero with an & ?
 #define OUTPUT_PLUG_CODE(x) x
-#define IS_INPUT_PLUG(x) ((1u << 31u) & (x))
+// extracting the last bit, if one is an input plug
+#define IS_INPUT_PLUG(x) (((1u << 31u) & (x)) > 0)
 
 public:
   // interface
@@ -289,14 +297,14 @@ public:
     assert(plugIndex < plugCount);
 
     // fetch the connections and iterate over them
-    ResizableVector<GPlug *> **connections =
+    ResizableVector<const GPlug *> **connections =
         isInput ? m_inConnections : m_outConnections;
 
     GPlug *destinationPlug = destinationNode->getPlug(destinationPlugId);
 
     // TODO might be worth change this to test all of them and return
     // instead to have an extra check inside
-    ResizableVector<GPlug *> *connectionList = connections[plugIndex];
+    ResizableVector<const GPlug *> *connectionList = connections[plugIndex];
     const int connectionCount = connectionList->size();
     for (int i = 0; i < connectionCount; ++i) {
       if (connectionList->getConstRef(i) == destinationPlug) {
@@ -309,11 +317,11 @@ public:
   int isConnected(const GPlug *sourcePlug, const GPlug *destinationPlug) const {
     int srcIndex = findPlugIndexFromInstance(sourcePlug);
     const bool isInput = isFlag(*sourcePlug, PlugFlags::PLUG_INPUT);
-    ResizableVector<GPlug *> **connections =
+    ResizableVector<const GPlug *> **connections =
         isInput ? m_inConnections : m_outConnections;
     int count = isInput ? m_inputPlugsCount : m_outputPlugsCount;
     assert(srcIndex < count);
-    ResizableVector<GPlug *> *connectionList = connections[srcIndex];
+    ResizableVector<const GPlug *> *connectionList = connections[srcIndex];
     const int connectionCount = connectionList->size();
     for (int i = 0; i < connectionCount; ++i) {
       if (connectionList->getConstRef(i) == destinationPlug) {
@@ -339,13 +347,14 @@ public:
   inline uint32_t getOutputCount() const { return m_outputPlugsCount; }
 
   // TODO make this friend?
-  const ResizableVector<GPlug *> *getPlugConnections(const GPlug *plug) const {
+  const ResizableVector<const GPlug *> *
+  getPlugConnections(const GPlug *plug) const {
     const bool isInput = isFlag(*plug, PlugFlags::PLUG_INPUT);
     const int plugIdx = findPlugIndexFromInstance(plug);
     const int plugCount = isInput ? m_inputPlugsCount : m_outputPlugsCount;
     assert(plugIdx != -1);
     assert(plugIdx < plugCount);
-    ResizableVector<GPlug *> **connections =
+    ResizableVector<const GPlug *> **connections =
         isInput ? m_inConnections : m_outConnections;
     return connections[plugIdx];
   }
@@ -396,8 +405,8 @@ protected:
   uint32_t m_outputPlugsCount = 0;
   uint32_t m_nodeIdx = 0;
   static const int DEFAULT_PLUG_CONNECTION_ALLOCATION = 3;
-  ResizableVector<GPlug *> **m_inConnections;
-  ResizableVector<GPlug *> **m_outConnections;
+  ResizableVector<const GPlug *> **m_inConnections = nullptr;
+  ResizableVector<const GPlug *> **m_outConnections = nullptr;
 };
 
 class SIR_ENGINE_API DependencyGraph final {
@@ -423,6 +432,17 @@ public:
     return nullptr;
   }
 
+  /* This function removes the node from the graph
+   * NOTE this function won't cleanup the connections,
+   * is a simple function to find the node and remove it, is up to the user
+   * to clean up connections or, call the removeNodeAndConnections method (if
+   * exists, if not you need to make it :D No check is done whether or not you
+   * are removing the last node in the graph used for linearization, this is
+   * still up for debate Ownership of the node is returned, this mean no clean
+   * up on the node itself will be done
+   */
+  bool removeNode(GNode *node);
+
   static inline bool connectNodes(GNode *sourceNode, const int sourceId,
                                   GNode *destinationNode,
                                   const int destinationId) {
@@ -432,7 +452,8 @@ public:
         destinationNode->connect(destinationId, sourceNode, sourceId);
     return sourceConnect & destConnect;
   }
-  static inline bool connectNodes(const GPlug *sourcePlug, const GPlug *destinationPlug) {
+  static inline bool connectNodes(const GPlug *sourcePlug,
+                                  const GPlug *destinationPlug) {
     const bool sourceConnect =
         sourcePlug->nodePtr->connect(sourcePlug, destinationPlug);
     const bool destConnect =
@@ -453,7 +474,7 @@ public:
     return (sourceConnected != -1) & (destinationConnected != -1);
   }
 
-  [[nodiscard]] const GNode *getFinalNode() const { return finalNode; }
+  [[nodiscard]] GNode *getFinalNode() const { return finalNode; }
   inline void setFinalNode(GNode *node) { finalNode = node; }
   void finalizeGraph();
   void compute();

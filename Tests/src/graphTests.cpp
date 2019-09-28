@@ -545,6 +545,30 @@ TEST_CASE("remove connection", "[graphics,graph]") {
 
 	
 }
+
+TEST_CASE("remove node", "[graphics,graph]") {
+  StringPool stringPool(1024);
+  ThreeSizesPool allocator(1024);
+  GraphAllocators allocs{&stringPool, &allocator};
+
+  GAssetManagerNodeProxy asset(allocs);
+  GGBufferPassPBRProxy gbuffer(allocs);
+  GFinalBlitNodeProxy blit(allocs);
+
+  DependencyGraph graph;
+  graph.addNode(&asset);
+  graph.addNode(&gbuffer);
+  graph.addNode(&blit);
+  graph.setFinalNode(&blit);
+
+  bool found = graph.findNodeOfType("GBufferPassPBRProxy");
+  REQUIRE(found == true);
+  bool removed = graph.removeNode(&gbuffer);
+  REQUIRE(removed == true);
+  found = graph.findNodeOfType("GBufferPassPBRProxy");
+  REQUIRE(found == false);
+	
+}
 /*
 TEST_CASE("Graph sorting", "[graphics,graph]") {
   Graph *graph = buildGraphOne();
