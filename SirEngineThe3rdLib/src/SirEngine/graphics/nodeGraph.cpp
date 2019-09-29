@@ -114,7 +114,7 @@ void recurseNode(GNode *currentNode, ResizableVector<GNode *> &queue,
     // let us now recurse depth first
     int inCount;
     const GPlug *inPlugs = currentNode->getInputPlugs(inCount);
-    for (size_t i = 0; i < inCount; ++i) {
+    for (int i = 0; i < inCount; ++i) {
       // get the connections
       const ResizableVector<const GPlug *> *conns =
           currentNode->getPlugConnections(&inPlugs[i]);

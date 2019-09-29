@@ -4,7 +4,6 @@
 #include "SirEngine/runtimeString.h"
 #include <cassert>
 #include <cstdint>
-#include <string>
 
 namespace SirEngine {
 
@@ -15,15 +14,6 @@ enum PlugFlags {
   PLUG_TEXTURE = 8,
   PLUG_CPU_BUFFER = 16,
   PLUG_MESHES = 32
-};
-
-class GraphNode;
-struct Plug final {
-  uint32_t plugValue;
-  uint32_t flags;
-  GraphNode *nodePtr = nullptr;
-  std::string name;
-  uint32_t index = 0;
 };
 
 struct GraphAllocators {
@@ -41,6 +31,7 @@ struct GPlug final {
 };
 
 
+//TODO make node not copiable assignable
 class SIR_ENGINE_API GNode {
 // TODO consider a constexpr inline function instead?
 /**
