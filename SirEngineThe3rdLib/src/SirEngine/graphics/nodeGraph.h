@@ -31,7 +31,7 @@ struct GPlug final {
 };
 
 
-//TODO make node not copiable assignable
+//TODO make node not copyable assignable
 class SIR_ENGINE_API GNode {
 // TODO consider a constexpr inline function instead?
 /**
