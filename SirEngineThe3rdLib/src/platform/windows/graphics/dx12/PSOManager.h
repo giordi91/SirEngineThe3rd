@@ -14,6 +14,7 @@ class ShadersLayoutRegistry;
 
 enum class PSOType { DXR = 0, RASTER, COMPUTE, INVALID };
 
+//TODO make it not copiable assignable
 class PSOManager final {
 
   struct PSOData {
