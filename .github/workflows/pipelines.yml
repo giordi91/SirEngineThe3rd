@@ -4,7 +4,7 @@ on: [push]
 
 jobs:
   build-dependencies:
-  name: "build dependencies"
+  name: build dependencies
   runs-on: windows-latest
   steps:
    - name: Prepare
