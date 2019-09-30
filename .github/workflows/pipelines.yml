@@ -3,9 +3,9 @@ name: Engine pipeline
 on: [push]
 
 jobs:
-  build-dependencies:
-  name: build dependencies
-  runs-on: windows-latest
-  steps:
-   - name: Prepare
-     run: cd vendors && mkdir build && cd build && cmake ../ && cmake --build . 
+  build:
+    name: build dependencies
+    runs-on: windows-latest
+    steps:
+    - name: Prepare
+      run: cd vendors && mkdir build && cd build && cmake ../ && cmake --build . 
