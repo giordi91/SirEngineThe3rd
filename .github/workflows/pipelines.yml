@@ -9,4 +9,3 @@ jobs:
   steps:
    - name: Prepare
      run: cd vendors && mkdir build && cd build && cmake ../ && cmake --build .
-			
