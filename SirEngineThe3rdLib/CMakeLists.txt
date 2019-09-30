@@ -122,7 +122,7 @@ project(SirEngineThe3rdLib)
 	SET(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 
 	#file(COPY "PixEvent/bin/WinPixEventRuntime.dll" DESTINATION "${CMAKE_BINARY_DIR}/bin")
-	target_link_libraries(${PROJECT_NAME} d3dcompiler dxcompiler farmhash DXGI D3D12 imgui DXTK12 WinPixEventRuntime)
+	target_link_libraries(${PROJECT_NAME} d3dcompiler dxcompiler farmhash DXGI D3D12 imgui DXTK12 WinPixEventRuntime lualib)
 
 	#need to copy pix event
 	add_custom_command(

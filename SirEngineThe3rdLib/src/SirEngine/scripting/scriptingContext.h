@@ -1,10 +1,11 @@
 #pragma once
+#include "SirEngine/core.h"
 #include <cstdint>
 
 // forward declare
 struct lua_State;
 namespace SirEngine {
-class ScriptingContext final {
+class SIR_ENGINE_API ScriptingContext final {
 
 public:
   ScriptingContext() = default;

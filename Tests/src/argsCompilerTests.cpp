@@ -133,15 +133,15 @@ TEST_CASE("get ready compiler args", "[argsSplit]") {
   SirEngine::globals::FRAME_ALLOCATOR = new SirEngine::StackAllocator();
   SirEngine::globals::FRAME_ALLOCATOR->initialize(2 << 22);
   const std::string inargs = "/D AMD";
-  std::vector<std::wstring> splitCompilerArgsList;
-  SirEngine::ResizableVector<wchar_t *> splitCompilerArgsListPointers;
+  SirEngine::ResizableVector<wchar_t *> splitCompilerArgsListPointers(20);
   splitCompilerArgs(inargs,
                     splitCompilerArgsListPointers);
 
   // look silly, after all this work we get out to the same value BUT
   // this will work for multiple arguments/defines, which should give
   // us room in the future for shader variants if we ever want them
-  REQUIRE(splitCompilerArgsList[0] == std::wstring(L"/D AMD"));
+  //REQUIRE(splitCompilerArgsList[0] == std::wstring(L"/D AMD"));
+  REQUIRE(wcscmp(splitCompilerArgsListPointers[0], L"/D AMD") == 0);
   // release memory
   delete SirEngine::globals::STRING_POOL;
   delete SirEngine::globals::FRAME_ALLOCATOR;
