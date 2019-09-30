@@ -8,4 +8,5 @@ jobs:
     runs-on: windows-latest
     steps:
     - name: Prepare
-      run: dir 
+    - uses: actions/checkout@v1
+    - run:  cd vendors && mkdir build && cd build && cmake ../ && cmake --build .
