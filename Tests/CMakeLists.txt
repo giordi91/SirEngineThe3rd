@@ -32,7 +32,7 @@ project(Tests)
     #adding the executable
     add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 	SET(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
-	target_link_libraries(${PROJECT_NAME} SirEngineThe3rdLib)
+	target_link_libraries(${PROJECT_NAME} SirEngineThe3rdLib lualib)
 
 	#setting working directory
 	set_target_properties(
