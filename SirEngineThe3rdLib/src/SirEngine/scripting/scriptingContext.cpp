@@ -2,25 +2,25 @@
 
 #include <cassert>
 
-#include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
 
-extern "C" 
-{
+#include "SirEngine/fileUtils.h"
+#include "SirEngine/runtimeString.h"
+
+extern "C" {
 #include <lua/lauxlib.h>
 #include <lua/lua.h>
 #include <lua/lualib.h>
 }
 
-
-
 namespace SirEngine {
+
 ScriptingContext::~ScriptingContext() {
   assert(m_state != nullptr);
   // finish up with the Lua context
   lua_close(m_state);
 }
-void print_error(lua_State *state) {
+void printError(lua_State *state) {
   // The error message is on top of the stack.
   // Fetch it, print it and then pop it off the stack.
   const char *message = lua_tostring(state, -1);
@@ -28,7 +28,7 @@ void print_error(lua_State *state) {
   lua_pop(state, 1);
 }
 
-void ScriptingContext::init() {
+bool ScriptingContext::init(const bool verbose) {
   // create a new lua context to work with
   m_state = luaL_newstate();
 
@@ -36,37 +36,46 @@ void ScriptingContext::init() {
   luaL_openlibs(m_state);
 
   // read the Lua script off disk and execute it
-   if ((luaL_dofile(m_state, "../data/scripts/test.lua")) != 0) {
+  if ((luaL_dofile(m_state, "../data/scripts/scriptingCore.lua")) != 0) {
 
-    // handle any errors
-    std::cout << "unable to load test.lua" << std::endl;
-    return;
-    // return 1;
+    SE_CORE_ERROR("unable to load scriptingCore.lua");
+    printError(m_state);
+    return false;
   }
 
-  //// put the value of X at the top of the stack
-  // lua_getglobal(m_state, "x");
-
-  //// interpret the value at the top of the stack
-  //// as an integer and put it in the variable "val"
-  // int val = (int)lua_tointeger(m_state, -1);
-
-  //// pop the value of X off the stack
-  // lua_pop(m_state, 1);
-
-  // write the value out
-  // std::cout << "Value of X: " << val << std::endl;
+  if(verbose) {
+	SE_CORE_INFO("Initializing scripting LUA v1.0.0 based on lua 5.3.5");
+  }
+  return true;
 }
 
-void ScriptingContext::loadScript(const char *path) {
+ScriptHandle ScriptingContext::loadScript(const char *path,
+                                          const bool execute) {
 
   const int res = luaL_loadfile(m_state, path);
   if (res != LUA_OK) {
     SE_CORE_ERROR("Could not load script {0}, error is:", path);
-    print_error(m_state);
+    printError(m_state);
   }
 
   // now we have a script, lets generate a handle for it
+  const ScriptHandle handle = {MAGIC_NUMBER_COUNTER++};
+  const std::string fileName = getFileName(path);
+  const char *fileNameStr = persistentString(fileName.c_str());
+
+  lua_setglobal(m_state, fileNameStr);
+  m_nameToScript.insert(fileNameStr, handle);
+  m_handleToName.insert(handle.handle, fileNameStr);
+
+  if (execute) {
+	lua_getglobal(m_state, fileNameStr);
+    const int status = lua_pcall(m_state, 0, 0, 0);
+	if(status != LUA_OK) {
+		printError(m_state);
+    }
+
+  }
+  return handle;
 }
 
 void ScriptingContext::loadScriptsInFolder(const char *path) {}

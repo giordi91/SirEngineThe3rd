@@ -80,6 +80,8 @@ project(SirEngineThe3rdLib)
 	SOURCE_GROUP("data" FILES "../data/executeTexture.json")
 	SOURCE_GROUP("data" FILES "../data/engineConfig.json")
 	SOURCE_GROUP("data" FILES "../data/executeMeshes.json")
+    file(GLOB_RECURSE SCRIPTS_FILES "../data/scripts/*.lua" )
+	SOURCE_GROUP("data/scripts" FILES ${SCRIPTS_FILES})
 
 
 
@@ -108,6 +110,7 @@ project(SirEngineThe3rdLib)
 	${SHADERS_COMMON_FILES}
 	${SHADERS_RASTERIZATION_FILES}
 	${SHADERS_COMPUTE_FILES}
+	${SCRIPTS_FILES}
 	"../data/execute.json"
 	"../data/executeFullDebugAMD.json"
 	"../data/executeFullDebug.json"

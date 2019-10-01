@@ -1,4 +1,5 @@
 #include "log.h"
+#include <iostream>
 
 namespace SirEngine {
 
@@ -14,4 +15,14 @@ namespace SirEngine {
 		s_clientLogger->set_level(spdlog::level::trace);
 	}
 
+	void Log::free()
+	{
+
+		spdlog::drop(s_coreLogger->name());
+		spdlog::drop(s_clientLogger->name());
+		s_coreLogger.reset();
+		s_clientLogger.reset();
+		s_coreLogger = nullptr;
+		s_clientLogger= nullptr;
+	}
 } // namespace SirEngine
