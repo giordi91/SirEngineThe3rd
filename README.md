@@ -1,7 +1,8 @@
 
 A dx12 game engine (kind of).
 
-![](https://github.com/giordi91/SirEngineThe3rd/workflows/pipelines/badge.svg)
+# SirEngineThe3rd [![Actions Status](https://github.com/giordi91/SirEngineThe3rd/workflows/pipelines/badge.svg)](https://github.com/giordi91/SirEngineThe3rd/actions) 
+
 
 Initially inspired by The Cherno project game engine series: https://www.youtube.com/user/TheChernoProject
 
