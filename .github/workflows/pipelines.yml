@@ -15,3 +15,7 @@ jobs:
     - name: Build engine
       run: |
         mkdir build && cd build && cmake ../ && cmake --build .
+    - name: Run tests
+      run: |
+        cd build/bin/Debug/ 
+        Tests.exe
