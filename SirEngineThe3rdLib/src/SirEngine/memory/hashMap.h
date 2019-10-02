@@ -18,6 +18,8 @@ public:
     // 85 is 01010101 in binary this means we fill 4 bins with the value of 1,
     // meaning free
     memset(m_metadata, 85, count * sizeof(uint32_t));
+    memset(m_keys, 0, m_bins * sizeof(KEY));
+    memset(m_values, 0, m_bins * sizeof(VALUE));
   }
 
   ~HashMap() {
@@ -30,14 +32,16 @@ public:
 
     // modding wit the bin count
     uint32_t bin = computedHash % m_bins;
-    if (m_keys[bin] == key) {
+
+    uint32_t meta = getMetadata(bin);
+    if ((m_keys[bin] == key) &
+        (meta == static_cast<uint32_t>(BIN_FLAGS::USED))) {
       // key exists we just override the value
       m_values[bin] = value;
       return true;
     }
 
     const uint32_t startBin = bin;
-    uint32_t meta = getMetadata(bin);
     bool free = canWriteToBin(meta);
     while (!free) {
       ++bin;
@@ -93,6 +97,8 @@ public:
   // deleted functions
   HashMap(const HashMap &) = delete;
   HashMap &operator=(const HashMap &) = delete;
+
+  KEY *getKeys() { return m_keys; }
 
 private:
   enum class BIN_FLAGS { NONE = 0, FREE = 1, DELETED = 2, USED = 3 };
@@ -166,7 +172,6 @@ private:
   uint32_t m_bins;
   uint32_t m_usedBins = 0;
 };
-
 
 } // namespace SirEngine
   // namespace SirEngine
