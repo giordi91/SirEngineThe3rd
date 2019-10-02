@@ -7,9 +7,8 @@ jobs:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v1
-    - name: Prepare
-      run: |
-        cd vendors && git submodule update --init --recursive
+      with:
+        submodules: true
     - name: Build dependencies    
       run: |
         cd vendors && mkdir build && cd build && cmake ../ && cmake --build . 
