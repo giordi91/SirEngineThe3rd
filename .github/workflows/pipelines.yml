@@ -12,7 +12,7 @@ jobs:
         cd vendors && git submodule update --init --recursive
     - name: Build dependencies    
       run: |
-        mkdir build && cd build && cmake && ../ cmake --build . 
+        mkdir build && cd build && cmake ../ && cmake --build . 
     - name: Build engine
       run: |
         cd ../../ && mkdir build && cd build && cmake ../ && cmake --build .
