@@ -1,6 +1,6 @@
 name: Engine pipeline 2
 #triggered on push
-on: [push]
+on: [push, pull_request]
 
 jobs:
   windows:
