@@ -1,0 +1,27 @@
+name: Engine pipeline 2
+#triggered on push
+on: [push, pull_request]
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        configuration: [Debug, Release]
+    steps:
+    - uses: actions/checkout@v1
+      with:
+        submodules: true
+    - name: Build dependencies    
+      run: |
+        cd vendors && git submodule update --init --recursive 
+        mkdir build && cd build
+        cmake ../ 
+        cmake --build . --config ${{matrix.configuration}} 
+    - name: Build engine
+      run: |
+        mkdir build && cd build && cmake ../ && cmake --build . --config ${{matrix.configuration}} 
+    - name: Run tests
+      run: |
+        cd build/bin/${{matrix.configuration}} / 
+        Tests.exe
