@@ -14,4 +14,4 @@ jobs:
         cd vendors && mkdir build && cd build && cmake ../ && cmake --build . 
     - name: Build engine
       run: |
-        cd ../../ && mkdir build && cd build && cmake ../ && cmake --build .
+        cd mkdir build && cd build && cmake ../ && cmake --build .
