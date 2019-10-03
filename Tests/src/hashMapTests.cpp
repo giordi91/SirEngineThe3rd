@@ -101,7 +101,6 @@ TEST_CASE("hashmap psudo random insert 1500", "[memory]") {
   REQUIRE(alloc.getUsedBins() == count);
 }
 
-/*
 TEST_CASE("hashmap psudo random insert 1900", "[memory]") {
   SirEngine::HashMap<uint32_t, uint32_t, SirEngine::hashUint32> alloc(2000);
   std::vector<uint32_t> keys;
@@ -180,4 +179,3 @@ TEST_CASE("hashmap empty 2000", "[memory]") {
     REQUIRE(alloc.get(k,value) == false);
   }
 }
-*/
