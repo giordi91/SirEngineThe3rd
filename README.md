@@ -1,4 +1,4 @@
-# Sir Engine the 3rd [![Actions Status](https://github.com/giordi91/SirEngineThe3rd/workflows/pipelines/badge.svg)](https://github.com/giordi91/SirEngineThe3rd/actions) 
+# Sir Engine the 3rd [![Actions Status](https://github.com/giordi91/SirEngineThe3rd/workflows/build/badge.svg)](https://github.com/giordi91/SirEngineThe3rd/actions) 
 
 A dx12 game engine (kind of).
 
