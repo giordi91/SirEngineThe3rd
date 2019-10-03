@@ -1,4 +1,4 @@
-name: pipelines
+name: build
 #triggered on push
 on: [push, pull_request]
 
@@ -11,10 +11,10 @@ jobs:
     steps:
     - uses: actions/checkout@v1
       with:
-        submodules: true
+        submodules: recursive
     - name: Build dependencies    
       run: |
-        cd vendors && git submodule update --init --recursive 
+        cd vendors 
         mkdir build && cd build
         cmake ../ 
         cmake --build . --config ${{matrix.configuration}} 
