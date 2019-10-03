@@ -16,7 +16,7 @@ Here a I will keep a chronological list of the progress:
 [0.1.0: basic window](#v010)  
 [0.2.0: basic engine arch](#v020)  
 [0.3.0: PBR shader](#v030)  
-[0.3.0: Fully skinned character](#v040)  
+[0.4.0: Fully skinned character](#v040)  
 
 ## 0.1.0 <a name="v010"/>
 This version is the most basic version of the engine, but starts to put togheter the foundation of the engine:
