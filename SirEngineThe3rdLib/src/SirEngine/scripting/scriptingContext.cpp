@@ -98,7 +98,8 @@ void ScriptingContext::reloadContext(const char *offsetPath) {
     const char *path = m_loadedPaths[i].path;
     bool execute = m_loadedPaths[i].shouldExecute;
     // load/run the script
-    const int res = luaL_loadfile(m_state, frameConcatenation(offsetPath,path));
+    const int res =
+        luaL_loadfile(m_state, frameConcatenation(offsetPath, path));
     lua_setglobal(m_state, m_loadedPaths[i].fileName);
     if (res != LUA_OK) {
       SE_CORE_ERROR("Could not load script {0}, error is:", path);
@@ -117,9 +118,10 @@ void ScriptingContext::reloadContext(const char *offsetPath) {
   }
 }
 
-void ScriptingContext::runAnimScripts() const {
-  assert(m_runAnimHandle.isHandleValid());
-  int id = getIndexFromHandle(m_runAnimHandle);
+void ScriptingContext::runScriptSlot(SCRIPT_CALLBACK_SLOT slot) {
+  ScriptHandle handle = m_callbackHandles[static_cast<uint32_t>(slot)];
+  assert(handle.isHandleValid());
+  int id = getIndexFromHandle(handle);
   const ScriptData &data = m_loadedPaths[id];
   lua_getglobal(m_state, data.fileName);
   const int status = lua_pcall(m_state, 0, 0, 0);
@@ -142,7 +144,8 @@ bool ScriptingContext::initContext() {
     printError(m_state);
     return false;
   }
-  m_runAnimHandle = loadScript(RUN_ANIM, false);
+  m_callbackHandles[static_cast<uint32_t>(SCRIPT_CALLBACK_SLOT::PRE_ANIM)] =
+      loadScript(RUN_ANIM, false);
 
   return true;
 }

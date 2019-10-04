@@ -55,6 +55,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT umessage, WPARAM wparam,
         ASSERT_CALLBACK_AND_DISPATCH(e);
         return 0;
       } else if (code == 93) {
+		//93 is ], used to reload scripts
 		ReloadScriptsEvent e;
         ASSERT_CALLBACK_AND_DISPATCH(e);
         return 0;

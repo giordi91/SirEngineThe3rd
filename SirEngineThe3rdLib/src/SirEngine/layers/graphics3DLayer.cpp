@@ -156,14 +156,12 @@ void Graphics3DLayer::onAttach() {
   dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE, currentFc);
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
 
-
-  //globals::SCRIPTING_CONTEXT->loadScript("../data/scripts/test.lua",true);
-	
+  globals::SCRIPTING_CONTEXT->loadScript("../data/scripts/test.lua",true);
 }
 void Graphics3DLayer::onDetach() {}
 void Graphics3DLayer::onUpdate() {
 
-  globals::SCRIPTING_CONTEXT->runAnimScripts();
+  globals::SCRIPTING_CONTEXT->runScriptSlot(SCRIPT_CALLBACK_SLOT::PRE_ANIM);
   globals::ANIMATION_MANAGER->evaluate();
 
   // upload skinning matrices
@@ -387,8 +385,7 @@ bool Graphics3DLayer::onShaderCompileEvent(ShaderCompileEvent &e) {
   return true;
 }
 
-bool Graphics3DLayer::onReloadScriptEvent(ReloadScriptsEvent& e)
-{
+bool Graphics3DLayer::onReloadScriptEvent(ReloadScriptsEvent &e) {
   globals::SCRIPTING_CONTEXT->reloadContext();
   return true;
 }
