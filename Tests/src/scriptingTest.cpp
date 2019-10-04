@@ -5,7 +5,11 @@
 
 TEST_CASE("scripting init", "[scripting]") {
 
+  // initialize memory pools and loggers
+  SirEngine::StringPool stringPool(1024);
+  SirEngine::globals::STRING_POOL = &stringPool;
   SirEngine::Log::init();
+
   SirEngine::ScriptingContext ctx;
   bool res = ctx.init();
   SirEngine::Log::free();
@@ -13,13 +17,17 @@ TEST_CASE("scripting init", "[scripting]") {
 }
 
 TEST_CASE("load script", "[scripting]") {
+
+  // initialize memory pools and loggers
   SirEngine::StringPool stringPool(1024);
   SirEngine::globals::STRING_POOL = &stringPool;
   SirEngine::Log::init();
+
   SirEngine::ScriptingContext ctx;
   bool res = ctx.init();
   REQUIRE(res == true);
-  SirEngine::ScriptHandle handle = ctx.loadScript("../testData/registerTest1.lua", true);
+  SirEngine::ScriptHandle handle =
+      ctx.loadScript("../testData/registerTest1.lua", true);
   REQUIRE(handle.isHandleValid());
   handle = ctx.loadScript("../testData/registerTest2.lua", true);
   REQUIRE(handle.isHandleValid());
