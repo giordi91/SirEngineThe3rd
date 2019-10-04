@@ -6,6 +6,7 @@
 
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/runtimeString.h"
+#include "SirEngine/scripting/scriptingBindings.h"
 
 extern "C" {
 #include <lua/lauxlib.h>
@@ -15,17 +16,14 @@ extern "C" {
 
 namespace SirEngine {
 
-int helloFromC(lua_State *L)
-{
-	SE_CORE_INFO("hello from C");
-	return 0;
+static const char *CORE_SCRIPT_PATH = "../data/scripts/scriptingCore.lua";
+static const char *RUN_ANIM = "../data/scripts/runAnim.lua";
+int helloFromC(lua_State *L) {
+  SE_CORE_INFO("hello from C");
+  return 0;
 }
 
-ScriptingContext::~ScriptingContext() {
-  assert(m_state != nullptr);
-  // finish up with the Lua context
-  lua_close(m_state);
-}
+ScriptingContext::~ScriptingContext() { cleanup(); }
 void printError(lua_State *state) {
   // The error message is on top of the stack.
   // Fetch it, print it and then pop it off the stack.
@@ -35,25 +33,15 @@ void printError(lua_State *state) {
 }
 
 bool ScriptingContext::init(const bool verbose) {
-  // create a new lua context to work with
-  m_state = luaL_newstate();
 
-  // open any library we may use
-  luaL_openlibs(m_state);
-
-  // read the Lua script off disk and execute it
-  if ((luaL_dofile(m_state, "../data/scripts/scriptingCore.lua")) != 0) {
-
-    SE_CORE_ERROR("unable to load scriptingCore.lua");
-    printError(m_state);
-    return false;
+  bool res = initContext();
+  assert(res);
+  if (verbose) {
+    SE_CORE_INFO("Initializing scripting LUA v1.0.0 based on lua 5.3.5");
   }
 
-  if(verbose) {
-	SE_CORE_INFO("Initializing scripting LUA v1.0.0 based on lua 5.3.5");
-  }
-
-  registerCFunction("helloFromC",helloFromC);
+  registerCFunction("helloFromC", helloFromC);
+  registerBuildInFunctions(this, verbose);
 
   return true;
 }
@@ -68,31 +56,100 @@ ScriptHandle ScriptingContext::loadScript(const char *path,
   }
 
   // now we have a script, lets generate a handle for it
-  const ScriptHandle handle = {MAGIC_NUMBER_COUNTER++};
   const std::string fileName = getFileName(path);
   const char *fileNameStr = persistentString(fileName.c_str());
 
   lua_setglobal(m_state, fileNameStr);
+  int id = m_loadedPaths.size();
+  const ScriptHandle handle{(MAGIC_NUMBER_COUNTER << 16) | id};
+  m_loadedPaths.pushBack(
+      ScriptData{path, fileNameStr, execute, handle, MAGIC_NUMBER_COUNTER});
   m_nameToScript.insert(fileNameStr, handle);
-  m_handleToName.insert(handle.handle, fileNameStr);
+
+  MAGIC_NUMBER_COUNTER += 1;
 
   if (execute) {
-	lua_getglobal(m_state, fileNameStr);
+    lua_getglobal(m_state, fileNameStr);
     const int status = lua_pcall(m_state, 0, 0, 0);
-	if(status != LUA_OK) {
-		printError(m_state);
+    if (status != LUA_OK) {
+      printError(m_state);
     }
-
   }
   return handle;
 }
 
 void ScriptingContext::loadScriptsInFolder(const char *path) {}
 
-void ScriptingContext::registerCFunction(const char* name, lua_CFunction function)
-{
-  //registering functions 
-  lua_register(m_state,name,function);
-  m_dynamicallyRegisteredFunctions.insert(name,function);
+void ScriptingContext::registerCFunction(const char *name,
+                                         lua_CFunction function) {
+  // registering functions
+  lua_register(m_state, name, function);
+  m_dynamicallyRegisteredFunctions.insert(name, function);
+}
+
+void ScriptingContext::reloadContext(const char *offsetPath) {
+  cleanup();
+  initContext();
+
+  // now we need to load all the scripts that were loaded and reload them and
+  // make them point to the same handle
+  uint32_t count = m_loadedPaths.size();
+  for (uint32_t i = 0; i < count; ++i) {
+    const char *path = m_loadedPaths[i].path;
+    bool execute = m_loadedPaths[i].shouldExecute;
+    // load/run the script
+    const int res = luaL_loadfile(m_state, frameConcatenation(offsetPath,path));
+    lua_setglobal(m_state, m_loadedPaths[i].fileName);
+    if (res != LUA_OK) {
+      SE_CORE_ERROR("Could not load script {0}, error is:", path);
+      assert(0);
+      printError(m_state);
+    }
+
+    if (execute) {
+      lua_getglobal(m_state, m_loadedPaths[i].fileName);
+      const int status = lua_pcall(m_state, 0, 0, 0);
+      if (status != LUA_OK) {
+        assert(0);
+        printError(m_state);
+      }
+    }
+  }
+}
+
+void ScriptingContext::runAnimScripts() const {
+  assert(m_runAnimHandle.isHandleValid());
+  int id = getIndexFromHandle(m_runAnimHandle);
+  const ScriptData &data = m_loadedPaths[id];
+  lua_getglobal(m_state, data.fileName);
+  const int status = lua_pcall(m_state, 0, 0, 0);
+  if (status != LUA_OK) {
+    assert(0);
+    printError(m_state);
+  }
+}
+
+bool ScriptingContext::initContext() {
+  // create a new lua context to work with
+  m_state = luaL_newstate();
+
+  // open any library we may use
+  luaL_openlibs(m_state);
+
+  // read the Lua script off disk and execute it
+  if ((luaL_dofile(m_state, CORE_SCRIPT_PATH)) != 0) {
+    SE_CORE_ERROR("unable to load scriptingCore.lua");
+    printError(m_state);
+    return false;
+  }
+  m_runAnimHandle = loadScript(RUN_ANIM, false);
+
+  return true;
+}
+
+void ScriptingContext::cleanup() {
+  assert(m_state != nullptr);
+  // finish up with the Lua context
+  lua_close(m_state);
 }
 } // namespace SirEngine

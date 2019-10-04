@@ -31,6 +31,8 @@
 #include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/bufferManagerDx12.h"
 
+#include "SirEngine/scripting/scriptingContext.h"
+
 namespace SirEngine {
 
 void Graphics3DLayer::onAttach() {
@@ -152,15 +154,21 @@ void Graphics3DLayer::onAttach() {
 
   dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE, currentFc);
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
+
+
+  globals::SCRIPTING_CONTEXT->loadScript("../data/scripts/test.lua",true);
+	
 }
 void Graphics3DLayer::onDetach() {}
 void Graphics3DLayer::onUpdate() {
 
+  globals::SCRIPTING_CONTEXT->runAnimScripts();
   globals::ANIMATION_MANAGER->evaluate();
 
   // upload skinning matrices
   globals::SKIN_MANAGER->uploadDirtyMatrices();
 
+  globals::MAIN_CAMERA->spinCameraWorldYAxis(0.0005);
   // setting up camera for the frame
   globals::CONSTANT_BUFFER_MANAGER->processBufferedData();
   globals::RENDERING_CONTEXT->setupCameraForFrame();
@@ -362,7 +370,8 @@ bool Graphics3DLayer::onResizeEvent(WindowResizeEvent &e) {
 }
 
 bool Graphics3DLayer::onDebugConfigChanged(DebugRenderConfigChanged &e) {
-  GNode *debugNode = dx12::RENDERING_GRAPH->findNodeOfType("FramePassDebugNode");
+  GNode *debugNode =
+      dx12::RENDERING_GRAPH->findNodeOfType("FramePassDebugNode");
   if (debugNode) {
     auto *debugNodeTyped = (FramePassDebugNode *)debugNode;
     debugNodeTyped->setConfig(e.getConfig());
@@ -372,6 +381,7 @@ bool Graphics3DLayer::onDebugConfigChanged(DebugRenderConfigChanged &e) {
 bool Graphics3DLayer::onShaderCompileEvent(ShaderCompileEvent &e) {
   SE_CORE_INFO("Reading to compile shader");
   dx12::PSO_MANAGER->recompilePSOFromShader(e.getShader(), e.getOffsetPath());
+  globals::SCRIPTING_CONTEXT->reloadContext();
   return true;
 }
 } // namespace SirEngine

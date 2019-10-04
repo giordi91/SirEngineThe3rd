@@ -4,6 +4,7 @@
 #include <string.h>
 #include "SirEngine/memory/hashMap.h"
 #include "SirEngine/hashing.h"
+#include "SirEngine/globals.h"
 
 namespace SirEngine {
 
@@ -162,7 +163,7 @@ private:
   }
 
 private:
-  // this is the number of bytes required for
+  // this is the number of bits required for bin
   static constexpr uint32_t BIN_FLAGS_SIZE = 2;
   static constexpr uint32_t BIN_FLAGS_MASK = 3; // first two bit sets
 
