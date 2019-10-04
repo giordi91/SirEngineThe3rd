@@ -1,11 +1,12 @@
 #pragma once
 
 #include "SirEngine/layer.h"
-//TODO TEMP
+// TODO TEMP
 #include "SirEngine/animation/animationManager.h"
 #include "SirEngine/handle.h"
 
 namespace SirEngine {
+class ReloadScriptsEvent;
 class DebugRenderConfigChanged;
 class MouseButtonPressEvent;
 class MouseButtonReleaseEvent;
@@ -40,6 +41,7 @@ private:
   bool onResizeEvent(WindowResizeEvent &e);
   bool onDebugConfigChanged(DebugRenderConfigChanged &e);
   bool onShaderCompileEvent(ShaderCompileEvent &e);
+  bool onReloadScriptEvent(ReloadScriptsEvent &e);
 
   // camera event control
   bool leftDown = false;
@@ -51,6 +53,6 @@ private:
   // TODO temp
   AnimationConfig m_config;
   DebugDrawHandle m_animHandle{};
-  GraphAllocators* alloc;
+  GraphAllocators *alloc;
 };
 } // namespace SirEngine

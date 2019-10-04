@@ -32,6 +32,7 @@
 #include "platform/windows/graphics/dx12/bufferManagerDx12.h"
 
 #include "SirEngine/scripting/scriptingContext.h"
+#include <SirEngine/events/scriptingEvent.h>
 
 namespace SirEngine {
 
@@ -156,7 +157,7 @@ void Graphics3DLayer::onAttach() {
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
 
 
-  globals::SCRIPTING_CONTEXT->loadScript("../data/scripts/test.lua",true);
+  //globals::SCRIPTING_CONTEXT->loadScript("../data/scripts/test.lua",true);
 	
 }
 void Graphics3DLayer::onDetach() {}
@@ -198,6 +199,8 @@ void Graphics3DLayer::onEvent(Event &event) {
       SE_BIND_EVENT_FN(Graphics3DLayer::onDebugConfigChanged));
   dispatcher.dispatch<ShaderCompileEvent>(
       SE_BIND_EVENT_FN(Graphics3DLayer::onShaderCompileEvent));
+  dispatcher.dispatch<ReloadScriptsEvent>(
+      SE_BIND_EVENT_FN(Graphics3DLayer::onReloadScriptEvent));
 }
 
 void Graphics3DLayer::clear() {}
@@ -381,6 +384,11 @@ bool Graphics3DLayer::onDebugConfigChanged(DebugRenderConfigChanged &e) {
 bool Graphics3DLayer::onShaderCompileEvent(ShaderCompileEvent &e) {
   SE_CORE_INFO("Reading to compile shader");
   dx12::PSO_MANAGER->recompilePSOFromShader(e.getShader(), e.getOffsetPath());
+  return true;
+}
+
+bool Graphics3DLayer::onReloadScriptEvent(ReloadScriptsEvent& e)
+{
   globals::SCRIPTING_CONTEXT->reloadContext();
   return true;
 }

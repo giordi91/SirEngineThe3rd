@@ -14,6 +14,7 @@
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/swapChain.h"
 #include "SirEngine/scripting/scriptingContext.h"
+#include <SirEngine/events/scriptingEvent.h>
 
 namespace SirEngine {
 
@@ -45,11 +46,16 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT umessage, WPARAM wparam,
     // You can also use ToAscii()+GetKeyboardState() to retrieve characters.
     if (wparam > 0 && wparam < 0x10000) {
 
+
       // basic shortcut handling
       // 114 is r, we want to reload/recompile shader
       auto code = static_cast<unsigned int>(wparam);
       if (code == 114) {
         RequestShaderCompileEvent e;
+        ASSERT_CALLBACK_AND_DISPATCH(e);
+        return 0;
+      } else if (code == 93) {
+		ReloadScriptsEvent e;
         ASSERT_CALLBACK_AND_DISPATCH(e);
         return 0;
       }
