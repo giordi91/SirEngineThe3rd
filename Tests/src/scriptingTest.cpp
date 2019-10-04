@@ -31,6 +31,5 @@ TEST_CASE("load script", "[scripting]") {
   REQUIRE(handle.isHandleValid());
   handle = ctx.loadScript("../testData/registerTest2.lua", true);
   REQUIRE(handle.isHandleValid());
-  ctx.runAnimScripts();
   SirEngine::Log::free();
 }

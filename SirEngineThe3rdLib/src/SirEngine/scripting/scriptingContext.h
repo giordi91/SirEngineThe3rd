@@ -12,6 +12,12 @@ struct lua_State;
 typedef int (*lua_CFunction)(lua_State *L);
 namespace SirEngine {
 
+enum class SCRIPT_CALLBACK_SLOT
+{
+	PRE_ANIM =0,
+	COUNT,
+};
+
 template class SIR_ENGINE_API HashMap<const char *, ScriptHandle, hashString32>;
 template class SIR_ENGINE_API HashMap<uint32_t, const char *, hashUint32>;
 class SIR_ENGINE_API ScriptingContext final {
@@ -29,7 +35,8 @@ public:
   // Small hack to reload original script files and not the one in the game
   // folder this should go away once we have a proper project folder
   void reloadContext(const char *offsetPath = "../../");
-  void runAnimScripts() const;
+  //void runAnimScripts() const;
+  void runScriptSlot(SCRIPT_CALLBACK_SLOT slot);
 
   ScriptingContext(const ScriptingContext &) = delete;
   ScriptingContext &operator=(const ScriptingContext &) = delete;
@@ -56,6 +63,6 @@ private:
       m_dynamicallyRegisteredFunctions;
   ResizableVector<ScriptData> m_loadedPaths;
   // script handles
-  ScriptHandle m_runAnimHandle{};
+  ScriptHandle m_callbackHandles[static_cast<uint32_t>(SCRIPT_CALLBACK_SLOT::COUNT)];
 };
 } // namespace SirEngine
