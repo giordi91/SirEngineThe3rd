@@ -12,11 +12,13 @@
 #include "platform/windows/graphics/dx12/TextureManagerDx12.h"
 #include "platform/windows/graphics/dx12/swapChain.h"
 
+#include "SirEngine/application.h"
 #include "SirEngine/events/applicationEvent.h"
 #include "SirEngine/events/event.h"
 #include "SirEngine/events/keyboardEvent.h"
 #include "SirEngine/events/mouseEvent.h"
 #include "SirEngine/events/renderGraphEvent.h"
+#include "SirEngine/events/scriptingEvent.h"
 #include "SirEngine/events/shaderCompileEvent.h"
 #include "SirEngine/graphics/debugAnnotations.h"
 
@@ -61,7 +63,6 @@ void ImguiLayer::onAttach() {
 
   io.DisplaySize = ImVec2(static_cast<float>(globals::SCREEN_WIDTH),
                           static_cast<float>(globals::SCREEN_HEIGHT));
-
 
   m_renderGraph.initialize(dx12::RENDERING_GRAPH);
   m_shaderWidget.initialize();
@@ -122,6 +123,11 @@ void ImguiLayer::onUpdate() {
     if (ImGui::BeginMenu("Tools")) {
       if (ImGui::MenuItem("Shader compiler", nullptr)) {
         m_renderShaderCompiler = !m_renderShaderCompiler;
+      }
+      if (ImGui::MenuItem("Reload scripts", nullptr)) {
+        SE_CORE_INFO("reload scripts");
+        auto *event = new ReloadScriptsEvent();
+        globals::APPLICATION->queueEventForEndOfFrame(event);
       }
       ImGui::Separator();
       ImGui::EndMenu();

@@ -1,8 +1,8 @@
 #pragma once
 #include "SirEngine/core.h"
 #include <functional>
-#include <string>
 #include <ostream>
+#include <string>
 namespace SirEngine {
 
 enum class EventType {
@@ -24,7 +24,8 @@ enum class EventType {
   RenderGraphChanged,
   ShaderCompile,
   RequestShaderCompile,
-  ShaderCompileResult
+  ShaderCompileResult,
+  ReloadScripts
 };
 
 enum EventCategory {
@@ -36,7 +37,7 @@ enum EventCategory {
   EventCategoryMouseButton = SET_BIT(4),
   EventCategoryDebug = SET_BIT(5),
   EventCategoryRendering = SET_BIT(6),
-  EventCategoryShaderCompile= SET_BIT(7)
+  EventCategoryShaderCompile = SET_BIT(7)
 };
 
 #define EVENT_CLASS_TYPE(type)                                                 \
