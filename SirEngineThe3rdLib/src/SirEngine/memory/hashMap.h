@@ -93,6 +93,23 @@ public:
   }
 
   [[nodiscard]] uint32_t getUsedBins() const { return m_usedBins; }
+  inline uint32_t binCount() const { return m_bins; }
+  inline bool isBinUsed(const uint32_t bin) const {
+    assert(bin < m_bins);
+    uint32_t meta = getMetadata(bin);
+    return meta == static_cast<uint32_t>(BIN_FLAGS::USED);
+  }
+
+  KEY getKeyAtBin(uint32_t bin) {
+    // no check done whether the bin is used or not, up to you kid
+    assert(bin < m_bins);
+    return m_keys[bin];
+  }
+  VALUE getValueAtBin(uint32_t bin) {
+    // no check done whether the bin is used or not, up to you kid
+    assert(bin < m_bins);
+    return m_values[bin];
+  }
 
   // deleted functions
   HashMap(const HashMap &) = delete;

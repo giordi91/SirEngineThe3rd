@@ -17,7 +17,8 @@ public:
   DirectX::XMMATRIX getMVPInverse(DirectX::XMMATRIX modelM);
   DirectX::XMMATRIX getViewInverse(DirectX::XMMATRIX modelM);
 
-  inline DirectX::XMMATRIX getViewMatrix() const { return m_viewMatrix; };
+  inline DirectX::XMMATRIX getViewMatrix() const { return m_viewMatrix; }
+  void spinCameraWorldYAxis(float angleInDegrees);
 
   void updateCamera() {
     m_viewMatrix = DirectX::XMMatrixLookAtLH(posV, lookAtPosV, upVector);

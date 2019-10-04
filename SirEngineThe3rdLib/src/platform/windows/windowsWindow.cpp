@@ -13,6 +13,7 @@
 #include "SirEngine/graphics/graphicsCore.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/swapChain.h"
+#include "SirEngine/scripting/scriptingContext.h"
 
 namespace SirEngine {
 
@@ -247,6 +248,9 @@ WindowsWindow::WindowsWindow(const WindowProps &props) {
   if (!result) {
     SE_CORE_ERROR("FATAL: could not initialize graphics");
   }
+  //TODO have a centralize initialize for the engine
+  globals::SCRIPTING_CONTEXT = new ScriptingContext(); 
+  globals::SCRIPTING_CONTEXT->init();
 }
 
 void WindowsWindow::render() {}

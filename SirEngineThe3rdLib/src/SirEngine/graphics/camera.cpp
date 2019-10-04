@@ -39,72 +39,18 @@ DirectX::XMMATRIX Camera3DPivot::getViewInverse(DirectX::XMMATRIX modelM) {
   return XMMatrixInverse(&det, mat);
 }
 
-// void Camera::setupCameraBuffer(ID3D11DeviceContext *context, int slot) {
-//  // preparing camera values for deferred
-//  auto *rendManager = rendering::RenderingManager::get_instance();
-//  int screenW = rendManager->m_screenWidth;
-//  int screenH = rendManager->m_screenHeight;
-//  auto *camera = rendManager->m_mainCamera;
-//  auto proj = getProjCamera(screenW, screenH);
-//
-//  auto viewM = camera->getViewInverse(DirectX::XMMatrixIdentity());
-//  auto viewInv = DirectX::XMMatrixTranspose(viewM);
-//
-//  m_persp.perspectiveValues = camera->getProjParams();
-//  m_persp.viewInv = viewInv;
-//  auto p = camera->getPosition();
-//  m_persp.cameraPosition = DirectX::XMFLOAT4(p.x, p.y, p.z, 1.0f);
-//
-//  // setup persp values
-//  D3D11_MAPPED_SUBRESOURCE mappedResource;
-//  HRESULT result = context->Map(m_perspValuesBuffer, 0,
-//  D3D11_MAP_WRITE_DISCARD,
-//                                0, &mappedResource);
-//  if (FAILED(result)) {
-//    assert(0);
-//    return;
-//  }
-//  memcpy(mappedResource.pData, &m_persp, sizeof(PerspectiveBufferDef));
-//  context->Unmap(m_perspValuesBuffer, 0);
-//  context->PSSetConstantBuffers(slot, 1, &m_perspValuesBuffer);
-//}
+void Camera3DPivot::spinCameraWorldYAxis(float angleInDegrees) {
 
-// void Camera::setCameraMatrixToShader(DirectX::XMMATRIX modelMatrix) {
-//  HRESULT result;
-//  D3D11_MAPPED_SUBRESOURCE mappedResource;
-//  ObjectBufferDef *dataPtr;
-//  unsigned int bufferNumber;
-//
-//  auto *d3d = D3DClass::get_instance();
-//  auto *dev_context = d3d->GetDeviceContext();
-//  auto *rendManager = RenderingManager::get_instance();
-//  int screenW = rendManager->m_screenWidth;
-//  int screenH = rendManager->m_screenHeight;
-//  DirectX::XMMATRIX mvp = getMVP(modelMatrix);
-//  mvp = XMMatrixTranspose(mvp);
-//  // Lock the constant buffer so it can be written to.
-//  result = dev_context->Map(m_cameraBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0,
-//                            &mappedResource);
-//  if (FAILED(result)) {
-//    assert(0);
-//    return;
-//  }
-//
-//  // Get a pointer to the data in the constant buffer.
-//  dataPtr = (ObjectBufferDef*)mappedResource.pData;
-//  // Copy the matrices into the constant buffer.
-//  dataPtr->MVP = mvp;
-//  dataPtr->normalMatrix = XMMatrixTranspose(m_viewMatrix);
-//  // Unlock the constant buffer.
-//  dev_context->Unmap(m_cameraBuffer, 0);
-//
-//  // Set the position of the constant buffer in the vertex shader.
-//  bufferNumber = 0;
-//
-//  // Finanly set the constant buffer in the vertex shader with the updated
-//  // values.
-//  dev_context->VSSetConstantBuffers(bufferNumber, 1, &m_cameraBuffer);
-//}
+  //this is a pivot camera, we want to rotate around the pivot	
+  auto rotationMatrix = DirectX::XMMatrixRotationY(angleInDegrees);
+
+  //we translate the camera near the origin, compensating for look at position
+  auto tempXPos = DirectX::XMVectorSubtract(posV, lookAtPosV);
+  //next we rotate
+  tempXPos = DirectX::XMVector3TransformCoord(tempXPos, rotationMatrix);
+  //adding back the offset of the look at
+  posV = DirectX::XMVectorAdd(tempXPos, lookAtPosV);
+}
 
 void Camera3DPivot::panCamera(float deltaX, float deltaY) {
 

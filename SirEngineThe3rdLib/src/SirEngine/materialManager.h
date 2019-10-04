@@ -21,7 +21,6 @@ enum class STENCIL_REF { CLEAR = 0, SSSSS = 1 };
 
 struct MaterialRuntime final {
   D3D12_GPU_VIRTUAL_ADDRESS cbVirtualAddress;
-#if GRAPHICS_API == DX12
   D3D12_GPU_DESCRIPTOR_HANDLE albedo;
   D3D12_GPU_DESCRIPTOR_HANDLE normal;
   D3D12_GPU_DESCRIPTOR_HANDLE metallic;
@@ -29,7 +28,6 @@ struct MaterialRuntime final {
   D3D12_GPU_DESCRIPTOR_HANDLE thickness;
   D3D12_GPU_DESCRIPTOR_HANDLE separateAlpha;
   D3D12_GPU_DESCRIPTOR_HANDLE ao;
-#endif
   uint32_t shaderQueueTypeFlags = 0;
   SkinHandle skinHandle;
 };
