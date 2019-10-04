@@ -19,9 +19,9 @@ TEST_CASE("load script", "[scripting]") {
   SirEngine::ScriptingContext ctx;
   bool res = ctx.init();
   REQUIRE(res == true);
-  SirEngine::ScriptHandle handle = ctx.loadScript("../data/scripts/registerTest1.lua", true);
+  SirEngine::ScriptHandle handle = ctx.loadScript("../testData/registerTest1.lua", true);
   REQUIRE(handle.isHandleValid());
-  handle = ctx.loadScript("../data/scripts/registerTest2.lua", true);
+  handle = ctx.loadScript("../testData/registerTest2.lua", true);
   REQUIRE(handle.isHandleValid());
   SirEngine::Log::free();
 }
