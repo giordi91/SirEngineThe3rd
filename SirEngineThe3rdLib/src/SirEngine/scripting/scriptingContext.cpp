@@ -15,6 +15,12 @@ extern "C" {
 
 namespace SirEngine {
 
+int helloFromC(lua_State *L)
+{
+	SE_CORE_INFO("hello from C");
+	return 0;
+}
+
 ScriptingContext::~ScriptingContext() {
   assert(m_state != nullptr);
   // finish up with the Lua context
@@ -46,6 +52,9 @@ bool ScriptingContext::init(const bool verbose) {
   if(verbose) {
 	SE_CORE_INFO("Initializing scripting LUA v1.0.0 based on lua 5.3.5");
   }
+
+  registerCFunction("helloFromC",helloFromC);
+
   return true;
 }
 
@@ -79,4 +88,11 @@ ScriptHandle ScriptingContext::loadScript(const char *path,
 }
 
 void ScriptingContext::loadScriptsInFolder(const char *path) {}
+
+void ScriptingContext::registerCFunction(const char* name, lua_CFunction function)
+{
+  //registering functions 
+  lua_register(m_state,name,function);
+  m_dynamicallyRegisteredFunctions.insert(name,function);
+}
 } // namespace SirEngine

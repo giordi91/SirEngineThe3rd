@@ -12,6 +12,6 @@ function register()
 end
 
 register();
-
+helloFromC();
 scriptingCore.logCallbacks();
 
