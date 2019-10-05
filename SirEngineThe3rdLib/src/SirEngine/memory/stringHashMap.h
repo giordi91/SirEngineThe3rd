@@ -1,10 +1,10 @@
 #pragma once
+#include "SirEngine/globals.h"
+#include "SirEngine/hashing.h"
+#include "SirEngine/memory/hashMap.h"
 #include "stringPool.h"
 #include <stdint.h>
 #include <string.h>
-#include "SirEngine/memory/hashMap.h"
-#include "SirEngine/hashing.h"
-#include "SirEngine/globals.h"
 
 namespace SirEngine {
 
@@ -87,7 +87,7 @@ public:
     assert(meta == static_cast<uint32_t>(BIN_FLAGS::USED));
     if (result) {
       setMetadata(bin, BIN_FLAGS::DELETED);
-	  globals::STRING_POOL->free(m_keys[bin]);
+      globals::STRING_POOL->free(m_keys[bin]);
       m_keys[bin] = nullptr;
       --m_usedBins;
     }
@@ -95,6 +95,24 @@ public:
   }
 
   [[nodiscard]] uint32_t getUsedBins() const { return m_usedBins; }
+  inline uint32_t binCount() const { return m_bins; }
+  inline bool isBinUsed(const uint32_t bin) const {
+    assert(bin < m_bins);
+    uint32_t meta = getMetadata(bin);
+    return meta == static_cast<uint32_t>(BIN_FLAGS::USED);
+  }
+
+  const char* getKeyAtBin(const uint32_t bin) const
+  {
+    // no check done whether the bin is used or not, up to you kid
+    assert(bin < m_bins);
+    return m_keys[bin];
+  }
+  VALUE getValueAtBin(uint32_t bin) {
+    // no check done whether the bin is used or not, up to you kid
+    assert(bin < m_bins);
+    return m_values[bin];
+  }
 
   // deleted functions
   HashMap(const HashMap &) = delete;

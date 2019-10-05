@@ -12,10 +12,9 @@ struct lua_State;
 typedef int (*lua_CFunction)(lua_State *L);
 namespace SirEngine {
 
-enum class SCRIPT_CALLBACK_SLOT
-{
-	PRE_ANIM =0,
-	COUNT,
+enum class SCRIPT_CALLBACK_SLOT {
+  PRE_ANIM = 0,
+  COUNT,
 };
 
 template class SIR_ENGINE_API HashMap<const char *, ScriptHandle, hashString32>;
@@ -25,7 +24,7 @@ class SIR_ENGINE_API ScriptingContext final {
 public:
   ScriptingContext()
       : m_nameToScript(RESERVE_SIZE), m_dynamicallyRegisteredFunctions(400),
-        m_loadedPaths(RESERVE_SIZE) {}
+        m_userLoadedScripts(RESERVE_SIZE),m_internalScripts(RESERVE_SIZE) {}
   ~ScriptingContext();
 
   bool init(bool verbose = false);
@@ -35,8 +34,9 @@ public:
   // Small hack to reload original script files and not the one in the game
   // folder this should go away once we have a proper project folder
   void reloadContext(const char *offsetPath = "../../");
-  //void runAnimScripts() const;
-  void runScriptSlot(SCRIPT_CALLBACK_SLOT slot);
+  // void runAnimScripts() const;
+  void runScriptSlot(SCRIPT_CALLBACK_SLOT slot) const;
+  void executeFromHandle(ScriptHandle handle) const;
 
   ScriptingContext(const ScriptingContext &) = delete;
   ScriptingContext &operator=(const ScriptingContext &) = delete;
@@ -51,18 +51,24 @@ private:
   };
 
 private:
+  void loadAllInternalScripts();
   bool initContext();
   void cleanup();
+  ScriptHandle loadScriptInternal(const char *path,
+                                          const bool execute);
 
 private:
   lua_State *m_state = nullptr;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
+  uint32_t MAGIC_INTERNAL_NUMBER_COUNTER = 1;
   static const uint32_t RESERVE_SIZE = 400;
   HashMap<const char *, ScriptHandle, hashString32> m_nameToScript;
   HashMap<const char *, lua_CFunction, hashString32>
       m_dynamicallyRegisteredFunctions;
-  ResizableVector<ScriptData> m_loadedPaths;
+  ResizableVector<ScriptData> m_userLoadedScripts;
+  ResizableVector<ScriptData> m_internalScripts;
   // script handles
-  ScriptHandle m_callbackHandles[static_cast<uint32_t>(SCRIPT_CALLBACK_SLOT::COUNT)];
+  ScriptHandle
+      m_callbackHandles[static_cast<uint32_t>(SCRIPT_CALLBACK_SLOT::COUNT)];
 };
 } // namespace SirEngine
