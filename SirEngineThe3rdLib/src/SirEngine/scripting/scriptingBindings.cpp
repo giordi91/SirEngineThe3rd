@@ -3,6 +3,7 @@
 #include "SirEngine/scripting/scriptingContext.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/graphics/camera.h"
+
 extern "C" {
 #include <lua/lauxlib.h>
 #include <lua/lua.h>
@@ -16,10 +17,8 @@ int rotateMainCameraY(lua_State *L)
 	//number of arguments
 	int n = lua_gettop(L);
 	assert(n == 1);
-	float angleInDegrees = static_cast<float>(lua_tonumber(L,0));
-
+	const auto angleInDegrees = static_cast<float>(lua_tonumber(L,1));
 	globals::MAIN_CAMERA->spinCameraWorldYAxis(angleInDegrees);
-
 	return 0;
 };
 

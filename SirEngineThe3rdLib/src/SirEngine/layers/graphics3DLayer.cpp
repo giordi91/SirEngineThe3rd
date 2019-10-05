@@ -167,7 +167,6 @@ void Graphics3DLayer::onUpdate() {
   // upload skinning matrices
   globals::SKIN_MANAGER->uploadDirtyMatrices();
 
-  globals::MAIN_CAMERA->spinCameraWorldYAxis(0.0005);
   // setting up camera for the frame
   globals::CONSTANT_BUFFER_MANAGER->processBufferedData();
   globals::RENDERING_CONTEXT->setupCameraForFrame();
