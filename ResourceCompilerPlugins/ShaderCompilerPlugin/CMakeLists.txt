@@ -16,7 +16,7 @@ project(ShaderCompilerPlugin)
 
 	#lets add specific windows build definitions
 	if (WIN32)
-		add_compile_definitions(RC_PLATFORM_WINDOWS RC_BUILD_PLUGIN_DLL SE_PLATFORM_WINDOWS _UNICODE)
+		add_compile_definitions(RC_PLATFORM_WINDOWS RC_BUILD_PLUGIN_DLL SE_PLATFORM_WINDOWS _UNICODE _CRT_SECURE_NO_WARNINGS)
 	endif (WIN32)
 
 	#making sure to add the common cpp flags, that are defined in the main cpp file

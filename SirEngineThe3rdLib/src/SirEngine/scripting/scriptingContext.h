@@ -16,15 +16,26 @@ enum class SCRIPT_CALLBACK_SLOT {
   PRE_ANIM = 0,
   COUNT,
 };
+// This should be a private struct, forced to be public due to dll interface
+struct ScriptData {
+  const char *path;
+  const char *fileName;
+  bool shouldExecute;
+  ScriptHandle handle;
+  uint32_t magicNumber;
+};
 
 template class SIR_ENGINE_API HashMap<const char *, ScriptHandle, hashString32>;
 template class SIR_ENGINE_API HashMap<uint32_t, const char *, hashUint32>;
+template class SIR_ENGINE_API
+    HashMap<const char *, lua_CFunction, hashString32>;
+template class SIR_ENGINE_API ResizableVector<ScriptData>;
 class SIR_ENGINE_API ScriptingContext final {
 
 public:
   ScriptingContext()
       : m_nameToScript(RESERVE_SIZE), m_dynamicallyRegisteredFunctions(400),
-        m_userLoadedScripts(RESERVE_SIZE),m_internalScripts(RESERVE_SIZE) {}
+        m_userLoadedScripts(RESERVE_SIZE), m_internalScripts(RESERVE_SIZE) {}
   ~ScriptingContext();
 
   bool init(bool verbose = false);
@@ -42,20 +53,10 @@ public:
   ScriptingContext &operator=(const ScriptingContext &) = delete;
 
 private:
-  struct ScriptData {
-    const char *path;
-    const char *fileName;
-    bool shouldExecute;
-    ScriptHandle handle;
-    uint32_t magicNumber;
-  };
-
-private:
   void loadAllInternalScripts();
   bool initContext();
   void cleanup();
-  ScriptHandle loadScriptInternal(const char *path,
-                                          const bool execute);
+  ScriptHandle loadScriptInternal(const char *path, const bool execute);
 
 private:
   lua_State *m_state = nullptr;

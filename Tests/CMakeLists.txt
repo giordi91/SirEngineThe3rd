@@ -16,7 +16,7 @@ project(Tests)
 
 	#lets add specific windows build definitions
 	if (WIN32)
-		add_compile_definitions(RC_PLATFORM_WINDOWS SE_PLATFORM_WINDOWS _UNICODE)
+		add_compile_definitions(RC_PLATFORM_WINDOWS SE_PLATFORM_WINDOWS _UNICODE _CRT_SECURE_NO_WARNINGS)
 	endif (WIN32)
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DSE_DEBUG")
 
