@@ -37,7 +37,7 @@ class Ui_path_form(object):
         QtCore.QMetaObject.connectSlotsByName(path_form)
 
     def retranslateUi(self, path_form):
-        path_form.setWindowTitle(QtWidgets.QApplication.translate("path_form", "Form", None, QtWidgets.QApplication.UnicodeUTF8))
-        self.label.setText(QtWidgets.QApplication.translate("path_form", "TextLabel", None, QtWidgets.QApplication.UnicodeUTF8))
-        self.pickPB.setText(QtWidgets.QApplication.translate("path_form", "...", None, QtWidgets.QApplication.UnicodeUTF8))
+        path_form.setWindowTitle(QtWidgets.QApplication.translate("path_form", "Form", None))
+        self.label.setText(QtWidgets.QApplication.translate("path_form", "TextLabel", None))
+        self.pickPB.setText(QtWidgets.QApplication.translate("path_form", "...", None))
 

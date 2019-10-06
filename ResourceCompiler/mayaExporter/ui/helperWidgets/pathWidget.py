@@ -12,8 +12,9 @@ class PathWidget(QtWidgets.QWidget, path_form.Ui_path_form):
     This class define a widget with a lineedit and a button 
     to load a path in the line edit
     """
-    ##custom signal used when the text is changed
+    #custom signal used when the text is changed
     textChanged = QtCore.Signal()
+    __shouldFileExists = True 
 
     def __init__(self, parent=None):
         """
@@ -22,7 +23,7 @@ class PathWidget(QtWidgets.QWidget, path_form.Ui_path_form):
         """
         QtWidgets.QWidget.__init__(self,parent)
         self.setupUi(self)
-        ##Holds the type of extension we want to filter for
+        #Holds the type of extension we want to filter for
         self.file_extension = "*.*"
 
         #attach the file browser event
@@ -34,18 +35,26 @@ class PathWidget(QtWidgets.QWidget, path_form.Ui_path_form):
         """
         This function set the label text
         """
-
         self.label.setText(text)
+
+    def set_should_file_exists(self, exits):
+        self.__shouldFileExists = exits
 
     def pick_file(self):
         """
         This fucntion fires up the browser for picikng the file
         """
-        fileName = QtWidgets.QFileDialog.getOpenFileName(self,
-                    "Open Session", __file__, 
-                    "Session Files ({x})".format( \
-                        x = self.file_extension))
-        
+        if self.__shouldFileExists :
+            fileName = QtWidgets.QFileDialog.getOpenFileName(self,
+                        "Open", __file__, 
+                        "Files ({x})".format( \
+                            x = self.file_extension))
+        else:
+            fileName = QtWidgets.QFileDialog.getSaveFileName(self,
+                        "Save Session", __file__, 
+                        "Files ({x})".format( \
+                            x = self.file_extension))
+
         self.pathLE.setText(fileName[0])
         self.textChanged.emit()
 

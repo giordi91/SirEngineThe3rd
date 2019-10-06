@@ -24,7 +24,7 @@ class FileActionUi(actionUi.ActionUi):
         """
         actionUi.ActionUi.__init__(self, session_instance, internal_action, session_ui, parent)
 
-        ##Widget used to pick a path from disk
+        #Widget used to pick a path from disk
         self.pathWidget = pathWidget.PathWidget()
         self.verticalLayout_2.addWidget(self.pathWidget)
 
