@@ -1,11 +1,11 @@
 #pragma once
 
 #include "SirEngine/events/event.h"
-#include <sstream>
+#include "SirEngine/runtimeString.h"
 
 namespace SirEngine {
 
-class SIR_ENGINE_API WindowCloseEvent : public Event {
+class SIR_ENGINE_API WindowCloseEvent final : public Event {
 public:
   WindowCloseEvent() = default;
 
@@ -13,17 +13,20 @@ public:
   EVENT_CLASS_CATEGORY(EventCategoryApplication)
 };
 
-class SIR_ENGINE_API WindowResizeEvent : public Event {
+class SIR_ENGINE_API WindowResizeEvent final : public Event {
 public:
-  WindowResizeEvent(unsigned int width, unsigned int height)
+  WindowResizeEvent(const uint32_t width, const uint32_t height)
       : m_width(width), m_height(height) {}
 
   EVENT_CLASS_TYPE(WindowResize)
   EVENT_CLASS_CATEGORY(EventCategoryApplication)
-  std::string toString() const override {
-    std::stringstream s;
-    s << "WindowResizeEvent: " << m_width << "x" << m_height;
-    return s.str();
+  const char* toString() const override {
+	char widthStr[30];
+	char heightStr[30];
+	_itoa(m_width, widthStr,10);
+	_itoa(m_height, heightStr,10);
+	const char* temp = frameConcatenation(widthStr,heightStr,"x");
+	return frameConcatenation("WindowResizeEvent: ",temp);
   }
 
   inline unsigned int getWidth() const { return m_width; }

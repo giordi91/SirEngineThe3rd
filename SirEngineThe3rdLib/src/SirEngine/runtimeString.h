@@ -9,8 +9,21 @@ inline const wchar_t* persistentConvertWide(const char* string) {
   return globals::STRING_POOL->convertWide(string);
 }
 
-inline const char* frameConcatenation(const char* first, const char* second) {
-  return globals::STRING_POOL->concatenateFrame(first, second, "");
+inline const char* frameConcatenation(const char* first, const char* second, const char* joiner="") {
+  return globals::STRING_POOL->concatenateFrame(first, second, joiner);
+}
+inline const char* frameConcatenation(const char* first, const int second, const char* joiner="") {
+  char temp[40];
+  _itoa(second,temp,10);
+  return globals::STRING_POOL->concatenateFrame(first, temp, joiner);
+}
+inline const char* frameConcatenation(const float first, const float second, const char* joiner="") {
+  char firstTemp[40];
+  char secondTemp[40];
+  sprintf(firstTemp,"%.9g",first);
+  sprintf(secondTemp,"%.9g",second);
+
+  return globals::STRING_POOL->concatenateFrame(firstTemp, secondTemp, joiner);
 }
 
 inline const wchar_t* frameConvertWide(const char* first) {

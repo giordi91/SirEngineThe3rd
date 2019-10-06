@@ -1,11 +1,10 @@
 #pragma once
 
 #include "SirEngine/events/event.h"
-#include <sstream>
 
 namespace SirEngine {
 
-class SIR_ENGINE_API ReloadScriptsEvent: public Event {
+class SIR_ENGINE_API ReloadScriptsEvent final : public Event {
 public:
   ReloadScriptsEvent() = default;
 

@@ -384,7 +384,7 @@ bool Graphics3DLayer::onShaderCompileEvent(ShaderCompileEvent &e) {
   return true;
 }
 
-bool Graphics3DLayer::onReloadScriptEvent(ReloadScriptsEvent &e) {
+bool Graphics3DLayer::onReloadScriptEvent(ReloadScriptsEvent &) {
   globals::SCRIPTING_CONTEXT->reloadContext();
   return true;
 }
