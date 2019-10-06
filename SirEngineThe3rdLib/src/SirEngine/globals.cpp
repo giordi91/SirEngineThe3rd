@@ -24,6 +24,7 @@ DebugFrameData *DEBUG_FRAME_DATA = nullptr;
 AnimationManager *ANIMATION_MANAGER = nullptr;
 SkinClusterManager *SKIN_MANAGER = nullptr;
 ScriptingContext* SCRIPTING_CONTEXT = nullptr;
+Input* INPUT = nullptr;
 
 const char *DATA_SOURCE_PATH = nullptr;
 const char *START_SCENE_PATH = nullptr;
