@@ -137,7 +137,11 @@ class SessionUi(QtWidgets.QMainWindow, session_form.Ui_session_form):
         """
         This function returns a list of all availble actions
         """
-        results = os.listdir(get_sessionPath())
+        sessionPath = get_sessionPath()
+        if sessionPath != '':
+            results = os.listdir(sessionPath)
+        else:
+            results = []
 
         self.__available_sessions = [subRes for subRes in results if subRes.find(".session") != -1]
         self.__available_sessions.insert(0,self.NEW_SESSION_TAG)
