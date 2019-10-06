@@ -1,63 +1,58 @@
 #pragma once
 
 #include "SirEngine/events/event.h"
-#include <sstream>
 
 namespace SirEngine {
-class SIR_ENGINE_API KeyboardPressEvent : public Event {
+class SIR_ENGINE_API KeyboardPressEvent final : public Event {
 public:
-  KeyboardPressEvent(unsigned int button) : m_button(button) {}
+  KeyboardPressEvent(const uint32_t button) : m_button(button) {}
 
   EVENT_CLASS_TYPE(KeyPressed)
   EVENT_CLASS_CATEGORY(EventCategory::EventCategoryInput |
-                       EventCategory::EventCategoryKeyboard) std::string
-      toString() const override {
-    std::stringstream s;
-    s << "KeyboardPressEvent: " << m_button;
-    return s.str();
+                       EventCategory::EventCategoryKeyboard)
+  [[nodiscard]] const char *toString() const override {
+    return frameConcatenation("KeyboardPressEvent: ",
+                              static_cast<int>(m_button));
   }
-  unsigned int getKeyCode() const { return m_button; }
+  uint32_t getKeyCode() const { return m_button; }
 
 private:
-  unsigned int m_button;
+  uint32_t m_button;
 };
 
 class SIR_ENGINE_API KeyboardReleaseEvent : public Event {
 public:
-  KeyboardReleaseEvent(unsigned int button) : m_button(button) {}
+  explicit KeyboardReleaseEvent(const uint32_t button) : m_button(button) {}
 
   EVENT_CLASS_TYPE(KeyReleased)
   EVENT_CLASS_CATEGORY(EventCategory::EventCategoryInput |
-                       EventCategory::EventCategoryKeyboard) std::string
-      toString() const override {
-    std::stringstream s;
-    s << "KeyboardReleaseEvent: " << m_button;
-    return s.str();
-}
+                       EventCategory::EventCategoryKeyboard)
+  [[nodiscard]] const char *toString() const override {
+    return frameConcatenation("KeyboardPressEvent: ",
+                              static_cast<int>(m_button));
+  }
 
-  unsigned int getKeyCode() const { return m_button; }
+  uint32_t getKeyCode() const { return m_button; }
 
 private:
-  unsigned int m_button;
+  uint32_t m_button;
 };
 
-
-class SIR_ENGINE_API KeyTypeEvent: public Event {
+class SIR_ENGINE_API KeyTypeEvent : public Event {
 public:
-  KeyTypeEvent(unsigned int button) : m_button(button) {}
+  explicit KeyTypeEvent(const uint32_t button) : m_button(button) {}
 
   EVENT_CLASS_TYPE(KeyTyped)
   EVENT_CLASS_CATEGORY(EventCategory::EventCategoryInput |
-                       EventCategory::EventCategoryKeyboard) std::string
-      toString() const override {
-    std::stringstream s;
-    s << "Keyboard typed char: " << m_button;
-    return s.str();
+                       EventCategory::EventCategoryKeyboard)
+  [[nodiscard]] const char *toString() const override {
+    return frameConcatenation("Keyboard typed char: ",
+                              static_cast<int>(m_button));
   }
-  inline unsigned int getKeyCode() const { return m_button; }
+  inline uint32_t getKeyCode() const { return m_button; }
 
 private:
-  unsigned int m_button;
+  uint32_t m_button;
 };
 
 } // namespace SirEngine

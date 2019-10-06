@@ -3,6 +3,9 @@
 #include <functional>
 #include <ostream>
 #include <string>
+
+#include <stdint.h>
+
 namespace SirEngine {
 
 enum class EventType {
@@ -56,13 +59,13 @@ public:
   virtual EventType getEventType() const = 0;
   virtual const char *getName() const = 0;
   virtual int getCategoryFlags() const = 0;
-  virtual std::string toString() const { return getName(); }
+  virtual const char* toString() const { return getName(); }
 
-  inline bool isInCategory(EventCategory category) {
+  inline bool isInCategory(const EventCategory category) const {
     return getCategoryFlags() & category;
   }
-  inline bool handled() { return m_handled; };
-  inline void setHandled(bool handled) { m_handled = handled; }
+  inline bool handled() const { return m_handled; };
+  inline void setHandled(const bool handled) { m_handled = handled; }
 
 protected:
   bool m_handled = false;

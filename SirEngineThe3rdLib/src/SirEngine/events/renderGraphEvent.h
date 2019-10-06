@@ -9,7 +9,6 @@ public:
 
   EVENT_CLASS_TYPE(RenderGraphChanged)
   EVENT_CLASS_CATEGORY(EventCategory::EventCategoryRendering)
-  std::string toString() const override { return "RenderGraph changed"; }
 };
 
 } // namespace SirEngine
