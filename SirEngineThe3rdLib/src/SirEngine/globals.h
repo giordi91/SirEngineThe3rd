@@ -15,6 +15,7 @@ class BufferManager;
 class AnimationManager;
 class SkinClusterManager;
 class ScriptingContext;
+class Input;
 
 class StringPool;
 class StackAllocator;
@@ -53,6 +54,7 @@ extern DebugFrameData *DEBUG_FRAME_DATA;
 extern AnimationManager* ANIMATION_MANAGER;
 extern SkinClusterManager* SKIN_MANAGER;
 extern ScriptingContext* SCRIPTING_CONTEXT;
+extern Input* INPUT;
 
 // generic allocators
 extern SIR_ENGINE_API StringPool *STRING_POOL;

@@ -9,12 +9,12 @@
 
 #include <windowsx.h>
 
+#include "SirEngine/events/scriptingEvent.h"
 #include "SirEngine/events/shaderCompileEvent.h"
 #include "SirEngine/graphics/graphicsCore.h"
+#include "SirEngine/input.h"
 #include "SirEngine/scripting/scriptingContext.h"
-#include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/swapChain.h"
-#include <SirEngine/events/scriptingEvent.h>
 
 namespace SirEngine {
 
@@ -48,7 +48,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT umessage, WPARAM wparam,
 
       // basic shortcut handling
       // 114 is r, we want to reload/recompile shader
-      auto code = static_cast<unsigned int>(wparam);
+      auto code = static_cast<uint32_t>(wparam);
       if (code == 114) {
         RequestShaderCompileEvent e;
         ASSERT_CALLBACK_AND_DISPATCH(e);
@@ -59,7 +59,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT umessage, WPARAM wparam,
         ASSERT_CALLBACK_AND_DISPATCH(e);
         return 0;
       }
-      KeyTypeEvent e{static_cast<unsigned int>(wparam)};
+
+      globals::INPUT->keyDown(code);
+      KeyTypeEvent e{static_cast<uint32_t>(wparam)};
       ASSERT_CALLBACK_AND_DISPATCH(e);
     }
     return 0;
@@ -70,8 +72,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT umessage, WPARAM wparam,
     // before the user has time to set the callback to the window if
     auto callback = windowsApplicationHandle->getEventCallback();
     if (callback != nullptr) {
-      unsigned int w = (UINT)LOWORD(lparam);
-      unsigned int h = (UINT)HIWORD(lparam);
+      auto w = static_cast<uint32_t>(LOWORD(lparam));
+      auto h = static_cast<uint32_t>(HIWORD(lparam));
       WindowResizeEvent resizeEvent{w, h};
       callback(resizeEvent);
     }
@@ -84,7 +86,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT umessage, WPARAM wparam,
     // giving you if the first press or a repeat, not sure how to get the
     //"lag" in before sending repeats.
 
-    auto code = static_cast<unsigned int>(wparam);
+    auto code = static_cast<uint32_t>(wparam);
+    globals::INPUT->keyDown(code);
     KeyboardPressEvent e{code};
     ASSERT_CALLBACK_AND_DISPATCH(e);
 
@@ -93,7 +96,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT umessage, WPARAM wparam,
 
     // Check if a key has been released on the keyboard.
   case WM_KEYUP: {
-    KeyboardReleaseEvent e{static_cast<unsigned int>(wparam)};
+    auto code = static_cast<uint32_t>(wparam);
+    globals::INPUT->keyUp(code);
+    KeyboardReleaseEvent e{code};
 
 #ifdef QUIT_ESCAPE
     // here we hard-coded this behavior where if the VK_ESCAPE button
@@ -110,45 +115,54 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT umessage, WPARAM wparam,
     return 0;
   }
   case WM_LBUTTONDOWN: {
+    globals::INPUT->setMouse(MOUSE_BUTTONS::LEFT, 1);
     MouseButtonPressEvent e{MOUSE_BUTTONS_EVENT::LEFT};
     ASSERT_CALLBACK_AND_DISPATCH(e);
     return 0;
   }
   case WM_RBUTTONDOWN: {
+    globals::INPUT->setMouse(MOUSE_BUTTONS::RIGHT, 1);
     MouseButtonPressEvent e{MOUSE_BUTTONS_EVENT::RIGHT};
     ASSERT_CALLBACK_AND_DISPATCH(e);
     return 0;
   }
   case WM_MBUTTONDOWN: {
+    globals::INPUT->setMouse(MOUSE_BUTTONS::MIDDLE, 1);
     MouseButtonPressEvent e{MOUSE_BUTTONS_EVENT::MIDDLE};
     ASSERT_CALLBACK_AND_DISPATCH(e);
     return 0;
   }
   case WM_MOUSEWHEEL: {
-    float movementY = static_cast<float>(GET_WHEEL_DELTA_WPARAM(wparam));
+    auto movementY = static_cast<float>(GET_WHEEL_DELTA_WPARAM(wparam));
+    globals::INPUT->setMouse(MOUSE_BUTTONS::WHEEL, movementY ? 1 : -1);
     // side tilt of the scroll currently not supported, always 0.0f
     MouseScrollEvent e{0.0f, movementY};
     ASSERT_CALLBACK_AND_DISPATCH(e);
     return 0;
   }
   case WM_LBUTTONUP: {
+    globals::INPUT->setMouse(MOUSE_BUTTONS::LEFT, 0);
     MouseButtonReleaseEvent e{MOUSE_BUTTONS_EVENT::LEFT};
     ASSERT_CALLBACK_AND_DISPATCH(e);
     return 0;
   }
   case WM_RBUTTONUP: {
+    globals::INPUT->setMouse(MOUSE_BUTTONS::RIGHT, 0);
     MouseButtonReleaseEvent e{MOUSE_BUTTONS_EVENT::RIGHT};
     ASSERT_CALLBACK_AND_DISPATCH(e);
     return 0;
   }
   case WM_MBUTTONUP: {
+    globals::INPUT->setMouse(MOUSE_BUTTONS::MIDDLE, 0);
     MouseButtonReleaseEvent e{MOUSE_BUTTONS_EVENT::MIDDLE};
     ASSERT_CALLBACK_AND_DISPATCH(e);
     return 0;
   }
   case WM_MOUSEMOVE: {
-    float posX = static_cast<float>(GET_X_LPARAM(lparam));
-    float posY = static_cast<float>(GET_Y_LPARAM(lparam));
+    const auto posX = static_cast<float>(GET_X_LPARAM(lparam));
+    const auto posY = static_cast<float>(GET_Y_LPARAM(lparam));
+    globals::INPUT->setMousePos(posX, posY);
+
     MouseMoveEvent e{posX, posY};
     ASSERT_CALLBACK_AND_DISPATCH(e);
     return 0;
@@ -173,8 +187,6 @@ WindowsWindow::WindowsWindow(const WindowProps &props) {
                 props.height);
 
   WNDCLASSEX wc;
-  // DEVMODE dmScreenSettings;
-  int posX, posY;
 
   // Get an external pointer to this object.
   WindowsImpl::windowsApplicationHandle = this;
@@ -228,17 +240,18 @@ WindowsWindow::WindowsWindow(const WindowProps &props) {
   m_data.title = props.title;
 
   // Place the window in the middle of the screen.
-  posX = (GetSystemMetrics(SM_CXSCREEN) - m_data.width) / 2;
-  posY = (GetSystemMetrics(SM_CYSCREEN) - m_data.height) / 2;
+  // uint32_t posX = (GetSystemMetrics(SM_CXSCREEN) - m_data.width) / 2u;
+  // uint32_t posY = (GetSystemMetrics(SM_CYSCREEN) - m_data.height) / 2u;
 
   constexpr DWORD style =
       WS_OVERLAPPEDWINDOW | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
-  RECT wr{0, 0, (LONG)m_data.width, (LONG)m_data.height};
+  RECT wr{0, 0, static_cast<LONG>(m_data.width),
+          static_cast<LONG>(m_data.height)};
   // needed to create the window of the right size, or wont match the gui
   AdjustWindowRectEx(&wr, style, false, NULL);
   m_hwnd = CreateWindowEx(0, title.c_str(), title.c_str(), style, 0, 0,
-                          wr.right - wr.left, wr.bottom - wr.top, NULL, NULL,
-                          GetModuleHandle(NULL), 0);
+                          wr.right - wr.left, wr.bottom - wr.top, nullptr, nullptr,
+                          GetModuleHandle(nullptr), 0);
 
   // Bring the window up on the screen and set it as main focus.
   ShowWindow(m_hwnd, SW_SHOWDEFAULT);
@@ -257,6 +270,9 @@ WindowsWindow::WindowsWindow(const WindowProps &props) {
   // TODO have a centralize initialize for the engine
   globals::SCRIPTING_CONTEXT = new ScriptingContext();
   globals::SCRIPTING_CONTEXT->init();
+
+  globals::INPUT = new Input();
+  globals::INPUT->init();
 }
 
 // TODO either remove it or move the render stuff in here, what should go in
@@ -280,13 +296,13 @@ void WindowsWindow::onUpdate() {
   render();
 }
 
-void WindowsWindow::onResize(unsigned int width, unsigned int height) {
+void WindowsWindow::onResize(uint32_t width, uint32_t height) {
   m_data.width = width;
   m_data.height = height;
 }
 
-unsigned int WindowsWindow::getWidth() const { return m_data.width; }
-unsigned int WindowsWindow::getHeight() const { return m_data.height; }
+uint32_t WindowsWindow::getWidth() const { return m_data.width; }
+uint32_t WindowsWindow::getHeight() const { return m_data.height; }
 void WindowsWindow::setEventCallback(const EventCallbackFn &callback) {
   m_callback = callback;
 }
