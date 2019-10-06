@@ -9,6 +9,7 @@
 #include <random>
 
 #include "SirEngine/runtimeString.h"
+#include "SirEngine/input.h"
 
 namespace SirEngine {
 
@@ -74,6 +75,8 @@ void Application::run() {
       layers[i]->onUpdate();
     }
     graphics::dispatchFrame();
+    // update input to cache current input for next frame
+    globals::INPUT->swapFrameKey();
 
     const auto currentQueue = m_queuedEndOfFrameEventsCurrent;
     flipEndOfFrameQueue();

@@ -49,4 +49,5 @@ struct AnimState {
 
   void updateGlobalByAnim(long long stampNS) ;
 };
+
 } // namespace SirEngine

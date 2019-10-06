@@ -29,6 +29,23 @@ public:
   inline uint32_t isKeyDown(const uint32_t input) const {
     return m_keys[input];
   }
+  inline bool isKeyReleased(const uint32_t input) const {
+    return (m_keys[input] == 0) & (m_keysPrev[input] != 0);
+  }
+  inline bool isKeyPressedThisFrame(const uint32_t input) const {
+    return (m_keys[input] != 0) & (m_keysPrev[input] == 0);
+  }
+  // NOTE: this is not a proper key repeat event, just tells you if
+  // the key was pressed in the previous frame and this frame, which
+  // might be most likely the case with every press since a user cannot
+  // press that fast
+  inline bool isKeyRepeaded(const uint32_t input) const {
+    return (m_keys[input] != 0) & (m_keysPrev[input] != 0);
+  }
+
+  inline uint32_t isKeyDownPreviousFrame(const uint32_t input) const {
+    return m_keysPrev[input];
+  }
   inline void setMouse(const MOUSE_BUTTONS button, const uint32_t input) {
     m_mouse[button] = input;
   }
@@ -36,10 +53,15 @@ public:
     m_mousePosX = x;
     m_mousePosY = y;
   }
+  void swapFrameKey() {
+    // copying current keys to the previous frame
+    memcpy(m_keysPrev, m_keys, sizeof(uint32_t) * SIZE_OF_KEYS);
+  };
 
-  int m_mouse[4];
+  int m_mouse[4]{};
   float m_mousePosX = 0;
   float m_mousePosY = 0;
-  uint32_t m_keys[SIZE_OF_KEYS];
+  uint32_t m_keys[SIZE_OF_KEYS]{};
+  uint32_t m_keysPrev[SIZE_OF_KEYS]{};
 };
 } // namespace SirEngine
