@@ -105,7 +105,7 @@ class Ui_session_form(object):
         QtCore.QMetaObject.connectSlotsByName(session_form)
 
     def retranslateUi(self, session_form):
-        session_form.setWindowTitle(QtWidgets.QApplication.translate("session_form", "Master Reload V 2.0", None))
+        session_form.setWindowTitle(QtWidgets.QApplication.translate("session_form", "SirEngineThe3rd Exporter v1.0", None))
         self.sessionGB.setTitle(QtWidgets.QApplication.translate("session_form", "Sessions", None ))
         self.setSessionPB.setText(QtWidgets.QApplication.translate("session_form", "SET", None))
         self.actionsGB.setTitle(QtWidgets.QApplication.translate("session_form", "Actions", None))

@@ -45,27 +45,27 @@ class SessionUi(QtWidgets.QMainWindow, session_form.Ui_session_form):
         it is going to add all the missing bits that are not 
         possible to add in the designer
         """
-        ##the stileSheet file
-        self.ssh_file= str(__file__).rsplit(os.path.sep,1)[0]+ \
-                            "/resources/darkorange.stylesheet"
-        with open(self.ssh_file,"r") as fh:
-            self.setStyleSheet(fh.read())
+        #the stileSheet file
+        #self.ssh_file= str(__file__).rsplit(os.path.sep,1)[0]+ \
+        #                    "/resources/darkorange.stylesheet"
+        #with open(self.ssh_file,"r") as fh:
+        #    self.setStyleSheet(fh.read())
 
-        ##this attribute holds the instance of the currently 
-        ##displayed session
+        #this attribute holds the instance of the currently 
+        #displayed session
         self.currentSession = session.ActionSession()
-        ##this attribute holds the Actions added to the session
+        #this attribute holds the Actions added to the session
         self.actions = []
-        ##this private list holds the list of the available 
-        ##action guis to be instanciated
+        #this private list holds the list of the available 
+        #action guis to be instanciated
         self.__available_actions_uis = []
-        ##this private dict holds a dict that maps the module
-        ##name to its full path on disk
+        #this private dict holds a dict that maps the module
+        #name to its full path on disk
         self.__uis_dict = {}
-        ##this private list holds all the stored sessions
+        #this private list holds all the stored sessions
         self.__available_sessions = []
-        ##QSetting used for the tool
-        self.__settings = QtCore.QSettings("reloadMaster", "MG_dev")
+        #QSetting used for the tool
+        self.__settings = QtCore.QSettings("SirEngineExporter", "MG_dev")
         
         #forcing the private variables to populate
         self.__get_available_actions_uis()
@@ -380,7 +380,7 @@ def run_default():
     """
     This function runs the default action
     """
-    settings = QtCore.QSettings("reloadMaster", "MG_dev")
+    settings = QtCore.QSettings("SirEngineExporter", "MG_dev")
     value = settings.value("current_session", SessionUi.NEW_SESSION_TAG)
     current = session.ActionSession()
 
@@ -395,6 +395,6 @@ def get_sessionPath():
     This function returns the the path to the session folder
     @return str
     """
-    settings = QtCore.QSettings("reloadMaster", "MG_dev")
+    settings = QtCore.QSettings("SirEngineExporter", "MG_dev")
     sessionPath = settings.value("sessionPath",expanduser("~"))
     return sessionPath

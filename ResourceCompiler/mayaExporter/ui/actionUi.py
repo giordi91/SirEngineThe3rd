@@ -2,7 +2,7 @@
 This class holds the basic ui class for an action ui
 """
 
-from PySide2 import QtWidgets, QtCore, QtGui
+from PySide2 import QtWidgets, QtCore, QtWidgets
 from functools import partial
 
 import workFile.masterReload_rc
@@ -25,7 +25,7 @@ class ActionUi(QtWidgets.QWidget, action_form.Ui_Action_form):
         @param session_ui: this is is the instance of the sessionUi class
         @param parent: this is the parent widget holding the sub_ui
         """
-        QtGui.QWidget.__init__(self,parent)
+        QtWidgets.QWidget.__init__(self,parent)
         #setupping the ui from the designer
         self.setupUi(self)
         #setting the title
@@ -33,7 +33,7 @@ class ActionUi(QtWidgets.QWidget, action_form.Ui_Action_form):
         
         ##This attribute holds a pointer to 
         ##the current session class
-        self.session = session_instance;
+        self.session = session_instance
         ##This attribute holds a pointer to the 
         ##action we are referring to
         self.internal_action = internal_action

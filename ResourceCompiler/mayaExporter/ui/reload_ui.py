@@ -6,11 +6,12 @@ from ui import fileActionUi
 from ui import runSystemActionUi
 from ui import runPyActionUi
 from ui import runPyFileActionUi
+from ui import exportModelActionUi 
 
 
 
 modules = [reload_helper_widgets, reload_work_file, actionUi,
-            sessionUi, fileActionUi ]
+            sessionUi, fileActionUi ,exportModelActionUi]
 
 reload_it_modules = [reload_helper_widgets, reload_work_file]
 def reload_it():
