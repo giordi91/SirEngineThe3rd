@@ -11,7 +11,7 @@ project(Sandbox)
 
 	#lets check if we are on windows:
 	if (WIN32)
-		add_compile_definitions(SE_PLATFORM_WINDOWS _UNICODE)
+		add_compile_definitions(SE_PLATFORM_WINDOWS _UNICODE _CRT_SECURE_NO_WARNINGS)
 	endif (WIN32)
 
     #defining standard compiling flags

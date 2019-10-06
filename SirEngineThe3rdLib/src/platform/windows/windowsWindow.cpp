@@ -11,9 +11,9 @@
 
 #include "SirEngine/events/shaderCompileEvent.h"
 #include "SirEngine/graphics/graphicsCore.h"
+#include "SirEngine/scripting/scriptingContext.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/swapChain.h"
-#include "SirEngine/scripting/scriptingContext.h"
 #include <SirEngine/events/scriptingEvent.h>
 
 namespace SirEngine {
@@ -46,7 +46,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT umessage, WPARAM wparam,
     // You can also use ToAscii()+GetKeyboardState() to retrieve characters.
     if (wparam > 0 && wparam < 0x10000) {
 
-
       // basic shortcut handling
       // 114 is r, we want to reload/recompile shader
       auto code = static_cast<unsigned int>(wparam);
@@ -55,8 +54,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT umessage, WPARAM wparam,
         ASSERT_CALLBACK_AND_DISPATCH(e);
         return 0;
       } else if (code == 93) {
-		//93 is ], used to reload scripts
-		ReloadScriptsEvent e;
+        // 93 is ], used to reload scripts
+        ReloadScriptsEvent e;
         ASSERT_CALLBACK_AND_DISPATCH(e);
         return 0;
       }
@@ -255,11 +254,13 @@ WindowsWindow::WindowsWindow(const WindowProps &props) {
   if (!result) {
     SE_CORE_ERROR("FATAL: could not initialize graphics");
   }
-  //TODO have a centralize initialize for the engine
-  globals::SCRIPTING_CONTEXT = new ScriptingContext(); 
+  // TODO have a centralize initialize for the engine
+  globals::SCRIPTING_CONTEXT = new ScriptingContext();
   globals::SCRIPTING_CONTEXT->init();
 }
 
+// TODO either remove it or move the render stuff in here, what should go in
+// onUpdate? what should go on render?
 void WindowsWindow::render() {}
 
 void WindowsWindow::onUpdate() {

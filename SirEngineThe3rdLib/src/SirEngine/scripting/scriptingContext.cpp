@@ -73,7 +73,7 @@ ScriptHandle ScriptingContext::loadScript(const char *path,
   return handle;
 }
 
-void ScriptingContext::loadScriptsInFolder(const char *path) {}
+void ScriptingContext::loadScriptsInFolder(const char *) {}
 
 void ScriptingContext::registerCFunction(const char *name,
                                          lua_CFunction function) {

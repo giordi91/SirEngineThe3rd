@@ -1,10 +1,7 @@
 #pragma once
 #include "SirEngine/core.h"
 #include <functional>
-#include <ostream>
-#include <string>
 
-#include <stdint.h>
 
 namespace SirEngine {
 
@@ -75,7 +72,7 @@ class EventDispatcher {
   template <typename T> using EventFn = std::function<bool(T &)>;
 
 public:
-  EventDispatcher(Event &event) : m_event(event) {}
+  explicit EventDispatcher(Event &event) : m_event(event) {}
 
   // This is the dispatcher, the way the dispatcher works is the following,
   // the dispatcher has been created with an event, which is going to reference
@@ -93,8 +90,5 @@ public:
 private:
   Event &m_event;
 };
-inline std::ostream &operator<<(std::ostream &os, const Event &e) {
-  return os << e.toString();
-}
 
 } // namespace SirEngine
