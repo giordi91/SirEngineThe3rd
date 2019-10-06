@@ -2,7 +2,7 @@
 
 A dx12 game engine (kind of).
 
-Initially inspired by The Cherno project game engine series: https://www.youtube.com/user/TheChernoProject
+Initially inspired by The Cherno project game engine series: https://www.youtube.com/user/TheChernoProject before going my own way. The series is pretty cool, check it out!
 
 This is my attempt to a dx12 engine, this is my third iteration to a so called engine. 
 My first one was a poor Opengl viewport, then a more serious approach to a dx11 engine, but mostly geared toward getting stuff on screen quickly. 
