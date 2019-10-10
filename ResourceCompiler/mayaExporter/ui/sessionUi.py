@@ -43,23 +43,22 @@ class SessionUi(QtWidgets.QMainWindow, session_form.Ui_session_form):
         it is going to add all the missing bits that are not 
         possible to add in the designer
         """
-        #the stileSheet file
-        #self.ssh_file= str(__file__).rsplit(os.path.sep,1)[0]+ \
-        #                    "/resources/darkorange.stylesheet"
-        #with open(self.ssh_file,"r") as fh:
-        #    self.setStyleSheet(fh.read())
-
-        #adding path widget for base path
-        self.basePath = pathWidget.PathWidget()
-        self.basePath.set_should_file_exists(False)
-        self.basePath.set_label_text("Base path:")
-        self.horizontalLayout_6.addWidget(self.basePath)
-
 
         #this attribute holds the instance of the currently 
         #displayed session
         self.currentSession = session.ActionSession()
         self.currentSession.load()
+
+
+        #adding path widget for base path
+        self.projectPath = pathWidget.PathWidget()
+        self.projectPath.set_should_file_exists(True)
+        self.projectPath.set_is_directory(True)
+        self.projectPath.set_label_text("Project path:")
+        self.projectPath.path = self.currentSession.projectPath
+        self.horizontalLayout_6.addWidget(self.projectPath)
+
+
         #this attribute holds the Actions added to the session
         self.actions = []
         #this private list holds the list of the available 
@@ -283,6 +282,8 @@ class SessionUi(QtWidgets.QMainWindow, session_form.Ui_session_form):
         This function saves the current
         session on disk
         """
+        self.currentSession.projectPath = self.projectPath.path
+        self.currentSession.save()
         for sub_ui in self.action_uis:
             sub_ui.save()
 

@@ -3,14 +3,13 @@ This module is specialized for reloading a subset of modules
 """
 
 from actions import action
-from actions import runSystemAction
-from actions import runPyAction
-from actions import runPyFileAction
 from actions import exportModelAction 
+from actions import exportSkinAction
+from actions import exportSkeletonAction
 
 
 
-modules = [action, runSystemAction, runPyAction, runPyFileAction]
+modules = [action, exportModelAction, exportSkinAction, exportSkeletonAction]
 
 def reload_it():
     """

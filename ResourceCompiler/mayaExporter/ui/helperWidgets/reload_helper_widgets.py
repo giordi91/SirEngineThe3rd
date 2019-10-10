@@ -13,8 +13,8 @@ def reload_it():
     
     print "------> Sarted reload of helperWidgets"
     for sub_module in modules:
-        reload(sub_module)
         print "---> Reloading : " +str(sub_module.__name__)
+        reload(sub_module)
 
     print "------> Ended reload of helperWidgets"
     

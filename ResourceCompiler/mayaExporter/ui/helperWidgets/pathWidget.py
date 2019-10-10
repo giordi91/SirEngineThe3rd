@@ -15,6 +15,8 @@ class PathWidget(QtWidgets.QWidget, path_form.Ui_path_form):
     #custom signal used when the text is changed
     textChanged = QtCore.Signal()
     __shouldFileExists = True 
+    __isFolder = False
+    __force_end_slash = False
 
     def __init__(self, parent=None):
         """
@@ -40,22 +42,41 @@ class PathWidget(QtWidgets.QWidget, path_form.Ui_path_form):
     def set_should_file_exists(self, exits):
         self.__shouldFileExists = exits
 
+    def set_is_directory(self, isFolder):
+        print ("setting ",isFolder)
+        self.__isFolder = isFolder 
+    def set_force_end_slash(self, value):
+        self.__force_end_slash = value
+
     def pick_file(self):
         """
         This fucntion fires up the browser for picikng the file
         """
-        if self.__shouldFileExists :
-            fileName = QtWidgets.QFileDialog.getOpenFileName(self,
-                        "Open", __file__, 
-                        "Files ({x})".format( \
-                            x = self.file_extension))
-        else:
-            fileName = QtWidgets.QFileDialog.getSaveFileName(self,
-                        "Save Session", __file__, 
-                        "Files ({x})".format( \
-                            x = self.file_extension))
+        if not self.__isFolder:
+            if self.__shouldFileExists :
+                fileName = QtWidgets.QFileDialog.getOpenFileName(self,
+                            "Open", __file__, 
+                            "Files ({x})".format( \
+                                x = self.file_extension))
+            else:
+                fileName = QtWidgets.QFileDialog.getSaveFileName(self,
+                            "Save Session", __file__, 
+                            "Files ({x})".format( \
+                                x = self.file_extension))
 
-        self.pathLE.setText(fileName[0])
+            self.pathLE.setText(fileName[0])
+        else :
+            if self.__shouldFileExists :
+                fileName = QtWidgets.QFileDialog.getExistingDirectory(self,
+                            "Open", __file__ 
+                            )
+                self.pathLE.setText(fileName)
+            else:
+                raise ValueError("Cannot pick a not existing path")
+
+        if(self.__force_end_slash):
+            if not self.pathLE.text().endswith("/"):
+                self.pathLE.setText(self.pathLE.text() + "/")
         self.textChanged.emit()
 
     @property
@@ -64,6 +85,9 @@ class PathWidget(QtWidgets.QWidget, path_form.Ui_path_form):
         Decorator getter returning the current path of the widget
         by extracting it from the line edit widget
         """
+        if(self.__force_end_slash):
+            if not self.pathLE.text().endswith("/"):
+                self.pathLE.setText(self.pathLE.text() + "/")
         return str(self.pathLE.text())
 
     @path.setter
@@ -72,6 +96,9 @@ class PathWidget(QtWidgets.QWidget, path_form.Ui_path_form):
         Decorator setter for the attribute path, sets the given path
         in the line edit widget
         """
+        if(self.__force_end_slash):
+            if not self.pathLE.text().endswith("/"):
+                self.pathLE.setText(self.pathLE.text() + "/")
         self.pathLE.setText(value)
         
     def emit_text_changed(self, *args):
