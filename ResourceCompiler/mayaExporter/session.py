@@ -9,6 +9,7 @@ from actions import action
 import json_utils
 import env_config
 
+from maya import cmds
 
 class ActionSession(object):
     """
@@ -17,10 +18,14 @@ class ActionSession(object):
     The user is able to create interactivly the session then save it load it
     and execute it
     """
+    __META_NODE_TYPE ="lightInfo" 
     #constant used to exlcude folders in the parsing
     __foldersToExclude = []
     #constant used to exlcude files in the parsing
     __filesToExclude = ["__init__.py", "action.py"]
+
+    #root metadata maya node
+    __root = None
 
     def __init__(self):
         """
@@ -39,6 +44,36 @@ class ActionSession(object):
 
         #get the fresh list of available actions
         self.__get_available_actions()
+        self.__setup_metanode()
+    
+    def __create_root_metanode(self, attach_node):
+            #there is no connected node we need to setup one
+            self.__root = cmds.createNode(self.__META_NODE_TYPE, name="rootMeta")
+            cmds.addAttr(self.__root, sn = "isr", ln="isRoot", at="message")
+            cmds.connectAttr(attach_node + ".message", self.__root +".isRoot")
+            cmds.addAttr(self.__root,sn="act",ln="actions", at="bool", m=True )
+
+    def __setup_metanode(self):
+        #try to find the metanode
+        camera = "persp"
+        connections = cmds.listConnections(camera + ".message",s =False,d=True)
+        if not connections:
+            self.__create_root_metanode(camera)
+        else:
+            #we need to see if we need to create one  or one exists
+            print (connections)
+            for conn in connections:
+                nodeType = cmds.nodeType(conn)
+                isRoot = cmds.attributeQuery("isRoot", node=conn, exists=True)
+                print(nodeType,isRoot)
+                if(nodeType == self.__META_NODE_TYPE and isRoot):
+                    #found the node break
+                    self.__root = conn
+                    return
+            
+            #if wee did not find one we create it
+            self.__create_root_metanode(camera)
+        
 
     @property
     def available_actions(self):
@@ -75,7 +110,8 @@ class ActionSession(object):
         @param action_name: str , the name of the action to add
         """
         action_name = action_name.replace(".py","")
-        my_action = self.__get_nstance_from_str(action_name)[0]
+        my_action = self.__get_instance_from_str(action_name)[0]
+        my_action.initialize(self.__root)
         self.add_action(my_action)
 
     def remove_action(self, my_action):
@@ -86,8 +122,10 @@ class ActionSession(object):
 
         if my_action in self.actions:
             self.actions.remove(my_action)
+            #need to unplug the action from the nodes
+            my_action.remove(self.__root)
         else :
-            print "action not found"
+            print ("action not found")
 
     def execute(self):
         """
@@ -109,25 +147,41 @@ class ActionSession(object):
         path = json_utils.save(data, path, expanduser("~"))
         return path.rsplit("/",1)[1]
 
-    def load(self, path=None):
+    def load(self):
         """
         This method initialize a fresh session from a given json session
         @param path: str, the path to the json file in which the session
                          is stored
         """
         self.actions = []
-        data = json_utils.load(path)
-        for sub_data in data:
-            my_action = self.__get_nstance_from_str(sub_data["action_type"])
-            
+
+        #get all the connected actions
+        connections = cmds.listConnections(self.__root + ".actions", s=0,d=1)
+        for conn in connections or []:
+            actionType = cmds.getAttr(conn + ".actionType")
+            my_action = self.__get_instance_from_str(actionType)
             #we check if we got avalid action otherwise we just skip it
             if my_action :
                 my_action = my_action[0]
             else :
                 continue
-            
-            my_action.load(sub_data)
+            my_action.initializeFromNode(conn)
             self.add_action(my_action)
+
+
+
+        #data = json_utils.load(path)
+        #for sub_data in data:
+        #    my_action = self.__get_instance_from_str(sub_data["action_type"])
+        #    
+        #    #we check if we got avalid action otherwise we just skip it
+        #    if my_action :
+        #        my_action = my_action[0]
+        #    else :
+        #        continue
+        #    
+        #    my_action.load(sub_data)
+        #    self.add_action(my_action)
 
 
     def get_file_path_from_name(self, name):
@@ -193,7 +247,7 @@ class ActionSession(object):
 
         return val
 
-    def __get_nstance_from_str(self, action_name):
+    def __get_instance_from_str(self, action_name):
         """
         This procedure returns a class instance from the given string
         @param moduleName: str ,the name of the module

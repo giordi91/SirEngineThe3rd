@@ -8,11 +8,11 @@ from os.path import expanduser
 
 from PySide2 import QtWidgets, QtCore, QtGui
 
-import workFile.masterReload_rc
 import session
 from ui.workFile import session_form
 from ui import actionUi
 import env_config
+from ui.helperWidgets import pathWidget
 
 class SessionUi(QtWidgets.QMainWindow, session_form.Ui_session_form):
     """
@@ -25,8 +25,6 @@ class SessionUi(QtWidgets.QMainWindow, session_form.Ui_session_form):
     __FOLDERS_TO_EXCLUDE = ["workFile"]
     #private constant of the files to exclude
     __FILES_TO_EXCLUDE = []
-    #The tag used to identify a new session
-    NEW_SESSION_TAG = "new session"
 
     def __init__(self, parent=None):
         """
@@ -51,9 +49,17 @@ class SessionUi(QtWidgets.QMainWindow, session_form.Ui_session_form):
         #with open(self.ssh_file,"r") as fh:
         #    self.setStyleSheet(fh.read())
 
+        #adding path widget for base path
+        self.basePath = pathWidget.PathWidget()
+        self.basePath.set_should_file_exists(False)
+        self.basePath.set_label_text("Base path:")
+        self.horizontalLayout_6.addWidget(self.basePath)
+
+
         #this attribute holds the instance of the currently 
         #displayed session
         self.currentSession = session.ActionSession()
+        self.currentSession.load()
         #this attribute holds the Actions added to the session
         self.actions = []
         #this private list holds the list of the available 
@@ -64,12 +70,9 @@ class SessionUi(QtWidgets.QMainWindow, session_form.Ui_session_form):
         self.__uis_dict = {}
         #this private list holds all the stored sessions
         self.__available_sessions = []
-        #QSetting used for the tool
-        self.__settings = QtCore.QSettings("SirEngineExporter", "MG_dev")
         
         #forcing the private variables to populate
         self.__get_available_actions_uis()
-        self.__get_available_sessions()
 
         #laoding the data in the session then in the ui
         self.load_actions()
@@ -81,27 +84,15 @@ class SessionUi(QtWidgets.QMainWindow, session_form.Ui_session_form):
         ##Item used to squeze the sessionsUis up
         self.__spacer_item = None
 
+
         #now that all is in place we load the current session
         self.load_current_session()
+
 
         #adding needed signals
         self.addPB.clicked.connect(self.add_action)
         self.savePB.clicked.connect(self.save_session)
-        self.sessionsCB.currentIndexChanged.connect(self.load_current_session)
         self.executePB.clicked.connect(self.execute)
-        self.setDefaultPB.clicked.connect(self.set_current_as_default)
-        self.actionSession_Path.triggered.connect(self.set_session_path)
-
-    def set_session_path(self):
-        """
-        This fucntion is used to store the session 
-        path in the settings
-        """
-        path  = QtWidgets.QFileDialog.getExistingDirectory(None,
-        "Pick session folder", get_sessionPath())
-
-        self.__settings.setValue("sessionPath",path)
-        print "Path corretly stored:", path
 
     @property
     def available_action_uis(self):
@@ -122,29 +113,7 @@ class SessionUi(QtWidgets.QMainWindow, session_form.Ui_session_form):
         self.__check_path(env_config.UI_PATH)
         return self.__available_actions_uis
 
-    @property
-    def available_sessions(self):
-        """
-        This is the getter function for the attribute
-        available_actions, this attribute holds all the possible
-        actions that the user can instanciate
-        """
-        self.__available_sessions = []
-        self.__get_available_sessions()
-        return self.__available_sessions
 
-    def __get_available_sessions(self):
-        """
-        This function returns a list of all availble actions
-        """
-        sessionPath = get_sessionPath()
-        if sessionPath != '':
-            results = os.listdir(sessionPath)
-        else:
-            results = []
-
-        self.__available_sessions = [subRes for subRes in results if subRes.find(".session") != -1]
-        self.__available_sessions.insert(0,self.NEW_SESSION_TAG)
     def __check_path(self, path):
         """
         This procedure checks a path for the py files and kicks the recursions
@@ -179,9 +148,10 @@ class SessionUi(QtWidgets.QMainWindow, session_form.Ui_session_form):
         This function loads the available sessions in the ui
         """
         
-        self.sessionsCB.clear()
-        self.sessionsCB.addItems(self.available_sessions)
-        self.set_current_session_ui()
+        #TODO fix loading
+        #self.sessionsCB.clear()
+        #self.sessionsCB.addItems(self.available_sessions)
+        #self.set_current_session_ui()
 
 
     def load_current_session(self):
@@ -189,13 +159,14 @@ class SessionUi(QtWidgets.QMainWindow, session_form.Ui_session_form):
         This procedure load the available session in the ui
         """
 
-        current = str(self.sessionsCB.currentText())
-        if current == "":
-            return
-        self.currentSession = session.ActionSession()
-        if current != self.NEW_SESSION_TAG:
-            self.currentSession.load(get_sessionPath() \
-                + "/" + current)
+        #TODO fix current session
+        #current = str(self.sessionsCB.currentText())
+        #if current == "":
+        #    return
+        #self.currentSession = session.ActionSession()
+        #if current != self.NEW_SESSION_TAG:
+        #    self.currentSession.load(get_sessionPath() \
+        #        + "/" + current)
 
         self.update_ui()  
         
@@ -306,65 +277,20 @@ class SessionUi(QtWidgets.QMainWindow, session_form.Ui_session_form):
             self.__spacer_item = None
             self.update()
 
-    def __transfer_data(self):
-        """
-        This function copies all the data 
-        from the UI to the session
-        """
-        for sub_ui in self.action_uis:
-            sub_ui.save()
 
     def save_session(self):
         """
         This function saves the current
         session on disk
         """
-        self.__transfer_data()
-        current = str(self.sessionsCB.currentText())
-        if current == self.NEW_SESSION_TAG :
-            current = self.currentSession.save(None )
-        else:
-            self.currentSession.save(get_sessionPath() + "/" +current)
-
-        self.__settings.setValue("current_session", current)
-        self.load_ui_sessions()
-        self.update()
-
+        for sub_ui in self.action_uis:
+            sub_ui.save()
 
     def execute(self):
         """
         This function execute the currenct session
         """
         self.currentSession.execute()
-
-    def get_current_session_ui(self):
-        """
-        This function loads the current session 
-        uis
-        """
-        return self.__settings.value("current_session", self.NEW_SESSION_TAG)
-        
-
-    def set_current_session_ui(self):
-        """
-        This function sets the combobox to the correct
-        index pointing to the current session if exists
-        """
-        toSet = self.get_current_session_ui()
-        for i in range(self.sessionsCB.count()):
-            if str(self.sessionsCB.itemText(i)) == toSet:
-                self.sessionsCB.setCurrentIndex(i)
-                self.update()
-                return
-
-    def set_current_as_default(self):
-        """
-        This function sets the current sessions
-        as defult
-        """
-        toSet = str(self.sessionsCB.currentText())
-        self.__settings.setValue("current_session", toSet)
-
 
     def swap_action(self, action, direction="down"):
         """
@@ -380,21 +306,10 @@ def run_default():
     """
     This function runs the default action
     """
-    settings = QtCore.QSettings("SirEngineExporter", "MG_dev")
-    value = settings.value("current_session", SessionUi.NEW_SESSION_TAG)
-    current = session.ActionSession()
+    #TODO fix this
+    #current = session.ActionSession()
 
-
-    path = get_sessionPath() + "/" + value
-    if os.path.isfile(path) == 1 :
-        current.load(path)
-        current.execute()
-
-def get_sessionPath():
-    """
-    This function returns the the path to the session folder
-    @return str
-    """
-    settings = QtCore.QSettings("SirEngineExporter", "MG_dev")
-    sessionPath = settings.value("sessionPath",expanduser("~"))
-    return sessionPath
+    #path = get_sessionPath() + "/" + value
+    #if os.path.isfile(path) == 1 :
+    #    current.load(path)
+    #    current.execute()

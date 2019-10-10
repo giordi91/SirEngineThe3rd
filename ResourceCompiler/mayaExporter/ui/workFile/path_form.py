@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'pathUi.ui'
+# Form implementation generated from reading ui file 'pathUi.ui',
+# licensing of 'pathUi.ui' applies.
 #
-# Created: Sun Aug 31 23:10:09 2014
-#      by: pyside-uic 0.2.15 running on PySide 1.2.2
+# Created: Thu Oct 10 10:55:50 2019
+#      by: pyside2-uic  running on PySide2 5.13.1
 #
 # WARNING! All changes made in this file will be lost!
 
-from PySide2 import QtCore, QtWidgets
+from PySide2 import QtCore, QtGui, QtWidgets
 
 class Ui_path_form(object):
     def setupUi(self, path_form):
@@ -20,7 +21,7 @@ class Ui_path_form(object):
         path_form.setSizePolicy(sizePolicy)
         path_form.setMinimumSize(QtCore.QSize(0, 40))
         self.horizontalLayout_2 = QtWidgets.QHBoxLayout(path_form)
-        self.horizontalLayout_2.setSpacing(2)
+        self.horizontalLayout_2.setSpacing(0)
         self.horizontalLayout_2.setContentsMargins(1, 1, 1, 1)
         self.horizontalLayout_2.setObjectName("horizontalLayout_2")
         self.label = QtWidgets.QLabel(path_form)
@@ -37,7 +38,7 @@ class Ui_path_form(object):
         QtCore.QMetaObject.connectSlotsByName(path_form)
 
     def retranslateUi(self, path_form):
-        path_form.setWindowTitle(QtWidgets.QApplication.translate("path_form", "Form", None))
-        self.label.setText(QtWidgets.QApplication.translate("path_form", "TextLabel", None))
-        self.pickPB.setText(QtWidgets.QApplication.translate("path_form", "...", None))
+        path_form.setWindowTitle(QtWidgets.QApplication.translate("path_form", "Form", None, -1))
+        self.label.setText(QtWidgets.QApplication.translate("path_form", "TextLabel", None, -1))
+        self.pickPB.setText(QtWidgets.QApplication.translate("path_form", "...", None, -1))
 

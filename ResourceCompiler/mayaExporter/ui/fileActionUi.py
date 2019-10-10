@@ -27,9 +27,6 @@ class FileActionUi(actionUi.ActionUi):
         #Widget used to pick a path from disk
         self.pathWidget = pathWidget.PathWidget()
         self.verticalLayout_2.addWidget(self.pathWidget)
-
-        #connect the signal of the widget to the save function
-        self.pathWidget.textChanged.connect(self.save)
     
     def save(self):
         """
