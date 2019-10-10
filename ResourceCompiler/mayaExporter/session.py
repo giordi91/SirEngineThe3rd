@@ -26,6 +26,7 @@ class ActionSession(object):
 
     #root metadata maya node
     __root = None
+    projectPath = ""
 
     def __init__(self):
         """
@@ -52,6 +53,7 @@ class ActionSession(object):
             cmds.addAttr(self.__root, sn = "isr", ln="isRoot", at="message")
             cmds.connectAttr(attach_node + ".message", self.__root +".isRoot")
             cmds.addAttr(self.__root,sn="act",ln="actions", at="bool", m=True )
+            cmds.addAttr(self.__root, sn="pph",ln="projectPath",type="string")
 
     def __setup_metanode(self):
         #try to find the metanode
@@ -61,11 +63,9 @@ class ActionSession(object):
             self.__create_root_metanode(camera)
         else:
             #we need to see if we need to create one  or one exists
-            print (connections)
             for conn in connections:
                 nodeType = cmds.nodeType(conn)
                 isRoot = cmds.attributeQuery("isRoot", node=conn, exists=True)
-                print(nodeType,isRoot)
                 if(nodeType == self.__META_NODE_TYPE and isRoot):
                     #found the node break
                     self.__root = conn
@@ -74,6 +74,7 @@ class ActionSession(object):
             #if wee did not find one we create it
             self.__create_root_metanode(camera)
         
+        self.projectPath = cmds.getAttr(self.__root + ".pph")
 
     @property
     def available_actions(self):
@@ -132,7 +133,7 @@ class ActionSession(object):
         This function executes the whole session
         """
         for act in self.actions:
-            act.execute()
+            act.execute(self.projectPath)
 
     def save(self, path=None):
         """
@@ -140,12 +141,7 @@ class ActionSession(object):
         @param path: str, where to save the session, if arg not given
                          a pop up will show up
         """
-        data = []
-        for act in self.actions:
-            data.append(act.save())
-
-        path = json_utils.save(data, path, expanduser("~"))
-        return path.rsplit("/",1)[1]
+        cmds.setAttr(self.__root + ".pph", self.projectPath, type="string")
 
     def load(self):
         """
@@ -154,6 +150,8 @@ class ActionSession(object):
                          is stored
         """
         self.actions = []
+
+        self.projectPath = cmds.getAttr(self.__root + ".pph")
 
         #get all the connected actions
         connections = cmds.listConnections(self.__root + ".actions", s=0,d=1)
@@ -167,22 +165,6 @@ class ActionSession(object):
                 continue
             my_action.initializeFromNode(conn)
             self.add_action(my_action)
-
-
-
-        #data = json_utils.load(path)
-        #for sub_data in data:
-        #    my_action = self.__get_instance_from_str(sub_data["action_type"])
-        #    
-        #    #we check if we got avalid action otherwise we just skip it
-        #    if my_action :
-        #        my_action = my_action[0]
-        #    else :
-        #        continue
-        #    
-        #    my_action.load(sub_data)
-        #    self.add_action(my_action)
-
 
     def get_file_path_from_name(self, name):
         """

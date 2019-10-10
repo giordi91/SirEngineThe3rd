@@ -1,6 +1,8 @@
 """
 This module contains an action used to execute a python code
 """
+import os
+
 from maya import cmds
 
 from actions import action
@@ -20,11 +22,15 @@ class ExportModelAction(action.FileAction):
         self.meshName = name
         
 
-    def execute(self):
+    def execute(self, basePath):
         """
         Exports the model using the exporter function
         """
-        meshExporter.export_obj(self.meshName, self.path)
+
+        print (basePath + os.path.dirname(self.path))
+        if not os.path.exists(basePath + os.path.dirname(self.path)):
+            os.makedirs(basePath + os.path.dirname(self.path))
+        meshExporter.export_obj(self.meshName, basePath + self.path + ".obj")
 
         if self.exportSkin and self.skinPath:
             #find the skin cluster
@@ -52,7 +58,6 @@ class ExportModelAction(action.FileAction):
                     continue
 
                 parentNode = cmds.listRelatives(conns[0], p=1)
-                print (parentNode)
                 #no parent we consider it a root
                 if not parentNode:
                     skeletonRoot = conns[0]
@@ -66,16 +71,13 @@ class ExportModelAction(action.FileAction):
                 cmds.error("Could not find skeleton root")
                 return 
             
-            outSkinPath = self.skinPath + self.meshName +"Skin.json"
-            print("Saving skin with:\n root {root} \n skinNode {skin} \n skinPath {skinPath} ".format(root=skeletonRoot,skin=skinNode,skinPath=outSkinPath ))
-            skinclusterExporter.export_skin(skeletonRoot, skinNode, outSkinPath, self.meshName, None, False)
-
-
-            
-
-
-
-
+            if not os.path.exists(basePath + os.path.dirname(self.skinPath)):
+                os.makedirs(basePath + os.path.dirname(self.skinPath))
+            outSkinPath = basePath + self.skinPath + ".json"
+            print("Saving skin with:\n root {root} \n skinNode {skin} \n skinPath {skinPath} ".format(root=skeletonRoot,
+            skin=skinNode,skinPath=outSkinPath ))
+            skinclusterExporter.export_skin(skeletonRoot, skinNode, 
+                            outSkinPath, self.meshName, None, False)
 
     def initialize(self, rootNode):
         #calling base class for basic setup

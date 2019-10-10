@@ -102,15 +102,14 @@ def export_obj(mesh,path):
     cmds.select(mesh)
 
     
-    outMesh = mesh + ".obj"
-    cmds.file(path + "/" + outMesh,pr=1,typ="OBJexport",es=1, f=1,
+    cmds.file(path ,pr=1,typ="OBJexport",es=1, f=1,
     op="groups=0; ptgroups=0; materials=0; smoothing=0; normals=1")
 
     shape = cmds.listRelatives(mesh, shapes=1)[0]
     print "shape found was:", shape
 
     tans_dict = get_tans(shape)
-    t_path = path + "/" + mesh + ".tangents" 
+    t_path = path.replace(".obj",".tangents") 
     data_j = json.dumps(tans_dict, indent=4, separators=(',', ': '))
     f = open(t_path, "w")
     f.write(data_j)

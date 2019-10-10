@@ -3,15 +3,14 @@ from ui.workFile import reload_work_file
 from ui import actionUi
 from ui import sessionUi
 from ui import fileActionUi
-from ui import runSystemActionUi
-from ui import runPyActionUi
-from ui import runPyFileActionUi
 from ui import exportModelActionUi 
+from ui import exportSkinActionUi
+from ui import exportSkeletonActionUi
 
 
 
-modules = [reload_helper_widgets, reload_work_file, actionUi,
-            sessionUi, fileActionUi ,exportModelActionUi]
+modules = [reload_helper_widgets, reload_work_file, 
+            sessionUi,exportModelActionUi, exportSkinActionUi,exportSkeletonActionUi ]
 
 reload_it_modules = [reload_helper_widgets, reload_work_file]
 def reload_it():

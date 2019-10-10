@@ -69,9 +69,11 @@ def save_skeleton(name,root, path):
     f.close()
     print "saved to", path
 
+"""
 if __name__ == "__main__" or __name__ == "__builtin__":
     root = "root"
     path =  r"E:\WORK_IN_PROGRESS\C\platfoorm\engine\misc\exporters\temp_data\skeleton_mannequin.json"
     save_skeleton("dogSkeleton",root, path)
+"""
 
 
