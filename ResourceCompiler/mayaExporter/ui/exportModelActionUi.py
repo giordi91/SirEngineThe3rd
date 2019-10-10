@@ -1,9 +1,11 @@
 """
 This module holds a run py file action Ui
 """
+from PySide2 import QtWidgets
 
 from ui import fileActionUi
-from PySide2 import QtWidgets
+from ui.helperWidgets import pathWidget
+
 
 class ExportModelActionUi(fileActionUi.FileActionUi):
     """
@@ -24,16 +26,25 @@ class ExportModelActionUi(fileActionUi.FileActionUi):
         #Setupping the pathWidget
         self.pathWidget.set_label_text("exportPath:")
         self.pathWidget.set_should_file_exists(False)
+        self.meshName= pathWidget.PathWidget()
+        self.meshName.set_label_text("meshName: ")
+        self.meshName.pickPB.hide()
+        self.verticalLayout_2.addWidget(self.meshName)
+
         self.skinCB = QtWidgets.QCheckBox("Export Skin")
-        self.skinCB.stateChanged.connect(self.save)
         self.verticalLayout_2.addWidget(self.skinCB)
 
+        self.skinPathWidget= pathWidget.PathWidget()
+        self.skinPathWidget.set_label_text("skinPath: ")
+
+        self.verticalLayout_2.addWidget(self.skinPathWidget)
+
     def save(self):
-        """
-        This function stores the path of the file in the action
-        """
         fileActionUi.FileActionUi.save(self)
         self.internal_action.exportSkin= self.skinCB.isChecked()
+        self.internal_action.skinPath = self.skinPathWidget.path
+        self.internal_action.meshName = self.meshName.path
+        self.internal_action.save()
 
     def load(self):
         """
@@ -42,6 +53,8 @@ class ExportModelActionUi(fileActionUi.FileActionUi):
         """
         fileActionUi.FileActionUi.load(self)
         self.skinCB.setChecked(self.internal_action.exportSkin)
+        self.skinPathWidget.path = self.internal_action.skinPath
+        self.meshName.path = self.internal_action.meshName
 
 def get_ui(session_instance, internal_action, session_ui, parent):
     """

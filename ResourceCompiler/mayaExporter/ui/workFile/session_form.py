@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'sessionUi.ui'
+# Form implementation generated from reading ui file 'sessionUi.ui',
+# licensing of 'sessionUi.ui' applies.
 #
-# Created: Mon Sep 22 19:59:31 2014
-#      by: pyside-uic 0.2.15 running on PySide 1.2.2
+# Created: Thu Oct 10 10:57:13 2019
+#      by: pyside2-uic  running on PySide2 5.13.1
 #
 # WARNING! All changes made in this file will be lost!
 
-from PySide2 import QtCore, QtWidgets
+from PySide2 import QtCore, QtGui, QtWidgets
 
 class Ui_session_form(object):
     def setupUi(self, session_form):
@@ -17,24 +18,13 @@ class Ui_session_form(object):
         self.centralwidget.setObjectName("centralwidget")
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.centralwidget)
         self.verticalLayout_2.setObjectName("verticalLayout_2")
-        self.sessionGB = QtWidgets.QGroupBox(self.centralwidget)
-        self.sessionGB.setObjectName("sessionGB")
-        self.horizontalLayout_6 = QtWidgets.QHBoxLayout(self.sessionGB)
+        self.basePathGB = QtWidgets.QGroupBox(self.centralwidget)
+        self.basePathGB.setObjectName("basePathGB")
+        self.horizontalLayout_6 = QtWidgets.QHBoxLayout(self.basePathGB)
         self.horizontalLayout_6.setSpacing(2)
         self.horizontalLayout_6.setContentsMargins(4, 4, 4, 4)
         self.horizontalLayout_6.setObjectName("horizontalLayout_6")
-        self.sessionsCB = QtWidgets.QComboBox(self.sessionGB)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.sessionsCB.sizePolicy().hasHeightForWidth())
-        self.sessionsCB.setSizePolicy(sizePolicy)
-        self.sessionsCB.setObjectName("sessionsCB")
-        self.horizontalLayout_6.addWidget(self.sessionsCB)
-        self.setSessionPB = QtWidgets.QPushButton(self.sessionGB)
-        self.setSessionPB.setObjectName("setSessionPB")
-        self.horizontalLayout_6.addWidget(self.setSessionPB)
-        self.verticalLayout_2.addWidget(self.sessionGB)
+        self.verticalLayout_2.addWidget(self.basePathGB)
         self.actionsGB = QtWidgets.QGroupBox(self.centralwidget)
         self.actionsGB.setObjectName("actionsGB")
         self.horizontalLayout_4 = QtWidgets.QHBoxLayout(self.actionsGB)
@@ -63,10 +53,10 @@ class Ui_session_form(object):
         self.sessionSCR.setWidgetResizable(True)
         self.sessionSCR.setObjectName("sessionSCR")
         self.scrollAreaWidgetContents = QtWidgets.QWidget()
-        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 422, 300))
+        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 422, 323))
         self.scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents")
         self.verticalLayout_5 = QtWidgets.QVBoxLayout(self.scrollAreaWidgetContents)
-        self.verticalLayout_5.setSpacing(1)
+        self.verticalLayout_5.setSpacing(0)
         self.verticalLayout_5.setContentsMargins(1, 1, 1, 1)
         self.verticalLayout_5.setObjectName("verticalLayout_5")
         self.sessionSCR.setWidget(self.scrollAreaWidgetContents)
@@ -93,27 +83,21 @@ class Ui_session_form(object):
         self.menuBar = QtWidgets.QMenuBar(session_form)
         self.menuBar.setGeometry(QtCore.QRect(0, 0, 452, 21))
         self.menuBar.setObjectName("menuBar")
-        self.menuSettings = QtWidgets.QMenu(self.menuBar)
-        self.menuSettings.setObjectName("menuSettings")
         session_form.setMenuBar(self.menuBar)
         self.actionSession_Path = QtWidgets.QAction(session_form)
         self.actionSession_Path.setObjectName("actionSession_Path")
-        self.menuSettings.addAction(self.actionSession_Path)
-        self.menuBar.addAction(self.menuSettings.menuAction())
 
         self.retranslateUi(session_form)
         QtCore.QMetaObject.connectSlotsByName(session_form)
 
     def retranslateUi(self, session_form):
-        session_form.setWindowTitle(QtWidgets.QApplication.translate("session_form", "SirEngineThe3rd Exporter v1.0", None))
-        self.sessionGB.setTitle(QtWidgets.QApplication.translate("session_form", "Sessions", None ))
-        self.setSessionPB.setText(QtWidgets.QApplication.translate("session_form", "SET", None))
-        self.actionsGB.setTitle(QtWidgets.QApplication.translate("session_form", "Actions", None))
-        self.addPB.setText(QtWidgets.QApplication.translate("session_form", "ADD", None))
-        self.currentSessionGB.setTitle(QtWidgets.QApplication.translate("session_form", "Current session", None))
-        self.savePB.setText(QtWidgets.QApplication.translate("session_form", "&Save session", None))
-        self.executePB.setText(QtWidgets.QApplication.translate("session_form", "&excute", None))
-        self.setDefaultPB.setText(QtWidgets.QApplication.translate("session_form", "&SetDefault", None))
-        self.menuSettings.setTitle(QtWidgets.QApplication.translate("session_form", "Settings", None))
-        self.actionSession_Path.setText(QtWidgets.QApplication.translate("session_form", "Set session &Path", None))
+        session_form.setWindowTitle(QtWidgets.QApplication.translate("session_form", "Sir Engine the 3rd game exporter v1.0", None, -1))
+        self.basePathGB.setTitle(QtWidgets.QApplication.translate("session_form", "Base path:", None, -1))
+        self.actionsGB.setTitle(QtWidgets.QApplication.translate("session_form", "Actions", None, -1))
+        self.addPB.setText(QtWidgets.QApplication.translate("session_form", "ADD", None, -1))
+        self.currentSessionGB.setTitle(QtWidgets.QApplication.translate("session_form", "Current session", None, -1))
+        self.savePB.setText(QtWidgets.QApplication.translate("session_form", "&Save session", None, -1))
+        self.executePB.setText(QtWidgets.QApplication.translate("session_form", "&excute", None, -1))
+        self.setDefaultPB.setText(QtWidgets.QApplication.translate("session_form", "&SetDefault", None, -1))
+        self.actionSession_Path.setText(QtWidgets.QApplication.translate("session_form", "Set session &Path", None, -1))
 

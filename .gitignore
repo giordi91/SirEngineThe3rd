@@ -294,3 +294,4 @@ external
 build2019
 out
 *.pyc
+.vscode
