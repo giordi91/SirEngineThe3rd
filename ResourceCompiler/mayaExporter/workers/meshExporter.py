@@ -100,8 +100,6 @@ def debug_tangents(mesh_name,tans_dict):
 
 def export_obj(mesh,path):
     cmds.select(mesh)
-
-    
     cmds.file(path ,pr=1,typ="OBJexport",es=1, f=1,
     op="groups=0; ptgroups=0; materials=0; smoothing=0; normals=1")
 
@@ -136,9 +134,7 @@ def exportSelected(outPath):
     objs = cmds.ls(selection=1)
     
     for obj in objs:
-        print obj 
         export_obj(obj, outPath)
-        #exportMaterial(obj,outPath)
     
     
 

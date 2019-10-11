@@ -27,7 +27,6 @@ class ExportModelAction(action.FileAction):
         Exports the model using the exporter function
         """
 
-        print (basePath + os.path.dirname(self.path))
         if not os.path.exists(basePath + os.path.dirname(self.path)):
             os.makedirs(basePath + os.path.dirname(self.path))
         meshExporter.export_obj(self.meshName, basePath + self.path + ".obj")

@@ -32,7 +32,7 @@ class Action(object):
         """
         raise NotImplementedError()
 
-    def execute(self):
+    def execute(self, basePath) :
         """
         This is the abstract method used to execute the action
         """
