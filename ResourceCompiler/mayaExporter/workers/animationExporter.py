@@ -3,7 +3,6 @@
 from maya import cmds
 from maya.api import OpenMaya
 import skeletonExporter
-reload(skeletonExporter)
 import json
 
 
@@ -45,14 +44,6 @@ def joint_to_QT(joint):
     mfn = OpenMaya.MTransformationMatrix(mmat)
     rot = mfn.rotation(asQuaternion =True)
 
-    """
-    l = cmds.spacelocator()[0]
-    if p:
-        cmds.parent(l,p)
-        cmds.setattr(l +'.t', 0,0,0)
-        cmds.setattr(l +'.r', 0,0,0)
-    cmds.xform(l, m=m)
-    """
     return {"pos":pos, "quat": [rot.x,rot.y,rot.z,rot.w]}
 
 
@@ -85,14 +76,16 @@ def save_anim(root,anim_name,skeleton_name,looping,start, end , path, frame_rate
     f = open( path, 'w')
     f.write(to_save)
     f.close()
-    print "saved to", path
+    print ("saved to", path)
 
 
+"""
 if __name__ == "__main__" or __name__ == "__builtin__":
     print "exporting anim"
     
     root = "root"
     path =  r"E:\WORK_IN_PROGRESS\C\platfoorm\engine\misc\exporters\temp_data\mannequin_idle.json"
     save_anim(root,"mannequinIdle","mannequinSkeleton",True, 0,78, path, 1.0/33.0)
+"""
 
 

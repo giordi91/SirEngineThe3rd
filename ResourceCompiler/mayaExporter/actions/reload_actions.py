@@ -6,10 +6,12 @@ from actions import action
 from actions import exportModelAction 
 from actions import exportSkinAction
 from actions import exportSkeletonAction
+from actions import exportAnimAction
 
 
 
-modules = [action, exportModelAction, exportSkinAction, exportSkeletonAction]
+modules = [action, exportModelAction, exportSkinAction, 
+exportSkeletonAction, exportAnimAction]
 
 def reload_it():
     """
