@@ -53,7 +53,7 @@ class ActionSession(object):
             cmds.addAttr(self.__root, sn = "isr", ln="isRoot", at="message")
             cmds.connectAttr(attach_node + ".message", self.__root +".isRoot")
             cmds.addAttr(self.__root,sn="act",ln="actions", at="bool", m=True )
-            cmds.addAttr(self.__root, sn="pph",ln="projectPath",type="string")
+            cmds.addAttr(self.__root, sn="pph",ln="projectPath",dt="string")
 
     def __setup_metanode(self):
         #try to find the metanode
@@ -151,6 +151,7 @@ class ActionSession(object):
         """
         self.actions = []
 
+        print (self.__root)
         self.projectPath = cmds.getAttr(self.__root + ".pph")
 
         #get all the connected actions
