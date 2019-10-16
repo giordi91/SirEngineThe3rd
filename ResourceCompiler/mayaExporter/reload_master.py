@@ -4,13 +4,14 @@ import env_config
 import json_utils
 import session
 
+from workers import reload_workers 
 from actions import reload_actions
 from ui import reload_ui
 
-modules = [env_config, json_utils, session, reload_actions,
+modules = [env_config, json_utils, session, reload_workers, reload_actions,
             reload_ui]
 
-reload_it_modules = [reload_ui, reload_actions]
+reload_it_modules = [reload_workers,reload_ui, reload_actions]
 
 def reload_it():
     """

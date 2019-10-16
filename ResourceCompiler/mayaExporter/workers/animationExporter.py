@@ -5,10 +5,6 @@ from maya.api import OpenMaya
 import skeletonExporter
 import json
 
-
-
-
-
 def get_anim_data(root, start,end):
     
     data,joints = skeletonExporter.get_skeleton_data(root)
@@ -47,7 +43,7 @@ def joint_to_QT(joint):
     return {"pos":pos, "quat": [rot.x,rot.y,rot.z,rot.w]}
 
 
-def save_anim(root,anim_name,skeleton_name,looping,start, end , path, frame_rate):
+def save_anim(root,anim_name,skeleton_name,looping,start, end , path, frame_rate, metadata):
     """
     function that export the animation ready to be processed by the engine
     @param root:str, the name of the root bone
@@ -58,6 +54,9 @@ def save_anim(root,anim_name,skeleton_name,looping,start, end , path, frame_rate
     @param end: int, end frame of the animation
     @param path: str, where to store the animation on disk
     @param framerare: float the rate at which frames should be plated, example 1/24
+    @param metadata: a list of tuples, where tuples are key value data used for the animation
+                    like footdown and what frames is affected, both key and values are string
+                    this will be dumped as is in the clip 
     """
     
     data = get_anim_data(root, start, end)
@@ -70,7 +69,8 @@ def save_anim(root,anim_name,skeleton_name,looping,start, end , path, frame_rate
             "name" : anim_name,
             "skeleton_name": skeleton_name,
             "frame_rate":frame_rate,
-			"bonesPerPose": len(data[0])}
+			"bonesPerPose": len(data[0]),
+            "metadata": metadata}
 
     to_save = json.dumps(full)
     f = open( path, 'w')
