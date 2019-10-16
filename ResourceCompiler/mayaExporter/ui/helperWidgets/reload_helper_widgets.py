@@ -5,7 +5,8 @@ This module holds the reload for this subsection of the tool
 
 from ui.helperWidgets import pathWidget
 from ui.helperWidgets import spinWidget 
-modules = [pathWidget, spinWidget]
+from ui.helperWidgets import keywordWidget 
+modules = [pathWidget, spinWidget,keywordWidget]
 
 def reload_it():
     """
