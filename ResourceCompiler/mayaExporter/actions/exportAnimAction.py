@@ -2,6 +2,7 @@
 This module contains an action used to execute a python code
 """
 import os
+import json
 
 from maya import cmds
 
@@ -32,9 +33,15 @@ class ExportAnimAction(action.FileAction):
         if not os.path.exists(basePath + os.path.dirname(self.path)):
             os.makedirs(basePath + os.path.dirname(self.path))
 
+        #lets get the metadata and build an array for it
+        data = json.loads(self.keyData)["data"]
+
+
+
+
         path = basePath + self.path + ".json"
         animationExporter.save_anim(self.root, name, self.skeletonName, True,
-                                    self.startFrame, self.endFrame, path, self.frameRate)
+                                    self.startFrame, self.endFrame, path, self.frameRate,data)
 
     def initialize(self, rootNode):
         # calling base class for basic setup
