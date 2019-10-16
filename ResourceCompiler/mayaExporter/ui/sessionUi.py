@@ -10,7 +10,6 @@ from PySide2 import QtWidgets, QtCore, QtGui
 
 import session
 from ui.workFile import session_form
-from ui import actionUi
 import env_config
 from ui.helperWidgets import pathWidget
 
@@ -203,7 +202,6 @@ class SessionUi(QtWidgets.QMainWindow, session_form.Ui_session_form):
             ui_name = sub_action.__class__.__name__ + "Ui"
             my_ui = self.__get_nstance_from_str(ui_name, sub_action)[0]
 
-            # aui = actionUi.ActionUi(self.currentSession, sub_action, self)
             self.verticalLayout_5.addWidget(my_ui)
             self.action_uis.append(my_ui)
             my_ui.load()
