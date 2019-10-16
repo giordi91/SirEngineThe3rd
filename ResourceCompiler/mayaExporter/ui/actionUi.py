@@ -1,11 +1,7 @@
-"""
-This class holds the basic ui class for an action ui
-"""
+#--coding: utf-8 --
 
 from PySide2 import QtWidgets, QtCore, QtWidgets
 from functools import partial
-
-import workFile.masterReload_rc
 
 from ui.workFile import action_form
 

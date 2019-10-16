@@ -113,10 +113,10 @@
             </size>
            </property>
            <property name="styleSheet">
-            <string notr="true">background-image: url(:/images/down.png);</string>
+            <string notr="true"/>
            </property>
            <property name="text">
-            <string/>
+            <string>⏷</string>
            </property>
           </widget>
          </item>
@@ -135,10 +135,10 @@
             </size>
            </property>
            <property name="styleSheet">
-            <string notr="true">background-image: url(:/images/up.png);</string>
+            <string notr="true"/>
            </property>
            <property name="text">
-            <string/>
+            <string>⏶</string>
            </property>
           </widget>
          </item>
@@ -157,10 +157,10 @@
             </size>
            </property>
            <property name="styleSheet">
-            <string notr="true">background-image: url(:/images/x.png);</string>
+            <string notr="true"/>
            </property>
            <property name="text">
-            <string/>
+            <string>✖</string>
            </property>
           </widget>
          </item>

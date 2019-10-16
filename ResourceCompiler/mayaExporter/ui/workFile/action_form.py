@@ -3,7 +3,7 @@
 # Form implementation generated from reading ui file 'actionUi.ui',
 # licensing of 'actionUi.ui' applies.
 #
-# Created: Thu Oct 10 10:57:11 2019
+# Created: Wed Oct 16 15:35:09 2019
 #      by: pyside2-uic  running on PySide2 5.13.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -44,22 +44,17 @@ class Ui_Action_form(object):
         self.downPB = QtWidgets.QPushButton(self.cntsF)
         self.downPB.setMinimumSize(QtCore.QSize(24, 24))
         self.downPB.setMaximumSize(QtCore.QSize(24, 24))
-        self.downPB.setStyleSheet("background-image: url(:/images/down.png);")
-        self.downPB.setText("")
         self.downPB.setObjectName("downPB")
         self.horizontalLayout_2.addWidget(self.downPB)
         self.upPB = QtWidgets.QPushButton(self.cntsF)
         self.upPB.setMinimumSize(QtCore.QSize(24, 24))
         self.upPB.setMaximumSize(QtCore.QSize(24, 24))
-        self.upPB.setStyleSheet("background-image: url(:/images/up.png);")
-        self.upPB.setText("")
         self.upPB.setObjectName("upPB")
         self.horizontalLayout_2.addWidget(self.upPB)
         self.closePB = QtWidgets.QPushButton(self.cntsF)
         self.closePB.setMinimumSize(QtCore.QSize(24, 24))
         self.closePB.setMaximumSize(QtCore.QSize(24, 24))
-        self.closePB.setStyleSheet("background-image: url(:/images/x.png);")
-        self.closePB.setText("")
+        self.closePB.setStyleSheet("")
         self.closePB.setObjectName("closePB")
         self.horizontalLayout_2.addWidget(self.closePB)
         self.gridLayout.addWidget(self.cntsF, 0, 1, 1, 1)
@@ -88,4 +83,7 @@ class Ui_Action_form(object):
     def retranslateUi(self, Action_form):
         Action_form.setWindowTitle(QtWidgets.QApplication.translate("Action_form", "Form", None, -1))
         self.mainGB.setTitle(QtWidgets.QApplication.translate("Action_form", "XXX", None, -1))
+        self.downPB.setText(QtWidgets.QApplication.translate("Action_form", "⏷", None, -1))
+        self.upPB.setText(QtWidgets.QApplication.translate("Action_form", "⏶", None, -1))
+        self.closePB.setText(QtWidgets.QApplication.translate("Action_form", "✖", None, -1))
 
