@@ -5,16 +5,15 @@
 #include "SirEngine/hashing.h"
 #include "SirEngine/memory/hashMap.h"
 #include "SirEngine/memory/resizableVector.h"
+#include "SirEngine/memory/stringHashMap.h"
 
 namespace SirEngine {
 
-using AnimClock = Clock<std::chrono::nanoseconds>;
 // in anim space forward declare
 struct Skeleton;
 struct SkeletonPose;
 struct AnimationClip;
 struct AnimState;
-
 
 struct AnimationConfig {
   AnimationClip *m_animationClip = nullptr;
@@ -22,22 +21,39 @@ struct AnimationConfig {
   AnimState *m_anim_state = nullptr;
 };
 
-class AnimationManager final {
+// Anim metadata mostly used for blending, can be extended by user in case is
+// needed
+enum ANIM_KEYWORDS { L_FOOT_DOWN = 1, R_FOOT_DOWN = 2 };
+
+//upeasing dll interface for interfaces
+template class SIR_ENGINE_API Clock<std::chrono::nanoseconds>;
+using AnimClock = Clock<std::chrono::nanoseconds>;
+template class SIR_ENGINE_API ResizableVector<AnimState *>;
+template class SIR_ENGINE_API HashMap<uint32_t, AnimationConfig, hashUint32>;
+template class SIR_ENGINE_API
+    HashMap<uint64_t, AnimationConfigHandle, hashUint64>;
+template class SIR_ENGINE_API HashMap<uint64_t, AnimationClip *, hashUint64>;
+template class SIR_ENGINE_API HashMap<uint64_t, Skeleton *, hashUint64>;
+template class SIR_ENGINE_API HashMap<uint64_t, SkeletonPose *, hashUint64>;
+template class SIR_ENGINE_API HashMap<const char *, int, hashString32>;
+class SIR_ENGINE_API AnimationManager final {
 
 public:
   AnimationManager()
-      : m_activeAnims(200),m_handleToConfig(500), m_nameToConfigHandle(500),
-        m_animationClipCache(500), m_skeletonCache(50), m_namedPosesMap(500){};
+      : m_activeAnims(200), m_handleToConfig(500), m_nameToConfigHandle(500),
+        m_animationClipCache(500), m_skeletonCache(50), m_namedPosesMap(500),
+        m_keywordRegisterMap(50){};
   ~AnimationManager() = default;
 
   // loader functions
   // those functions either get an already loaded json file
   // or the full path to the json to load
   AnimationConfigHandle loadAnimationConfig(const char *path);
-  void init(){}
-  const ResizableVector<AnimState*>& getAnimStates()const
-  {
-	  return m_activeAnims;
+  [[nodiscard]] static AnimationClip *loadAnimationClip(const char *path);
+  void init();
+
+  const ResizableVector<AnimState *> &getAnimStates() const {
+    return m_activeAnims;
   }
 
   inline AnimationConfig getConfig(const AnimationConfigHandle handle) const {
@@ -62,10 +78,13 @@ public:
   // skinning at render time
   void evaluate();
   inline const AnimClock &getAnimClock() const { return m_animClock; }
+  inline int animationKeywordNameToValue(const char *key) const {
+    int value = -1;
+    const bool found = m_keywordRegisterMap.get(key, value);
+    return found ? value : -1;
+  }
 
 private:
-  [[nodiscard]] static AnimationClip *
-  loadAnimationClip(const char* path);
   [[nodiscard]] static Skeleton *loadSkeleton(const char *path);
 
   inline AnimationClip *getCachedAnimationClip(const char *name,
@@ -91,10 +110,14 @@ private:
 
   AnimClock m_animClock;
   HashMap<uint32_t, AnimationConfig, hashUint32> m_handleToConfig;
+  // TODO why string64 and not directly the string variant? what happened
+  // if we get a collision?
   HashMap<string64, AnimationConfigHandle, hashUint64> m_nameToConfigHandle;
   HashMap<string64, AnimationClip *, hashUint64> m_animationClipCache;
   HashMap<string64, Skeleton *, hashUint64> m_skeletonCache;
   HashMap<string64, SkeletonPose *, hashUint64> m_namedPosesMap;
+
+  HashMap<const char *, int, hashString32> m_keywordRegisterMap;
   unsigned int configIndex = 0;
 };
 } // namespace SirEngine

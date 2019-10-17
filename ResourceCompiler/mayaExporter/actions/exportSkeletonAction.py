@@ -22,7 +22,8 @@ class ExportSkeletonAction(action.FileAction):
         """
         Exports the model using the exporter function
         """
-        name = os.path.basename(self.path[:-1]) 
+        name = os.path.basename(self.path) 
+        print (name)
         if not os.path.exists(basePath + os.path.dirname(self.path)):
             os.makedirs(basePath + os.path.dirname(self.path))
         skeletonExporter.save_skeleton(name,self.root, basePath + self.path + ".json")

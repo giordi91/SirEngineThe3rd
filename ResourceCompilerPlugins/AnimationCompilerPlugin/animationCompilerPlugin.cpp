@@ -3,23 +3,28 @@
 #include "SirEngine/log.h"
 #include "cxxopts/cxxopts.hpp"
 
+#include "SirEngine/animation/animationManager.h"
 #include "SirEngine/animation/skeleton.h"
 #include "SirEngine/argsUtils.h"
 #include "SirEngine/binary/binaryFile.h"
 #include <filesystem>
+using namespace std::string_literals;
+
 const std::string PLUGIN_NAME = "animationCompilerPlugin";
 const unsigned int VERSION_MAJOR = 0;
 const unsigned int VERSION_MINOR = 1;
 const unsigned int VERSION_PATCH = 0;
 
-struct AnimData
-{
-	std::string name;
-	std::vector<SirEngine::JointPose>poses;
-	float frameRate;
-	int bonesPerFrame;
-	int frameCount;
-	bool isLoopable;
+struct AnimData {
+  std::string name;
+  std::vector<SirEngine::JointPose> poses;
+  float frameRate;
+  int bonesPerFrame;
+  int frameCount;
+  bool isLoopable;
+  // holds the metadata for the animation, where the first int is
+  // the keyword and the vector is the frames affected by that keyword
+  std::unordered_map<int, std::vector<int>> animationKeywordToFrame;
 };
 
 void processArgs(const std::string &) {
@@ -27,7 +32,12 @@ void processArgs(const std::string &) {
   return;
 }
 
-void convertAnim(const std::string &path, AnimData& data) {
+bool isNumber(const std::string &s) {
+  return !s.empty() && std::find_if(s.begin(), s.end(), [](char c) {
+                         return !std::isdigit(c);
+                       }) == s.end();
+}
+void convertAnim(const std::string &path, AnimData &data) {
 
   // TODO compile this with resource compiler
   auto jObj = getJsonObj(path);
@@ -86,6 +96,71 @@ void convertAnim(const std::string &path, AnimData& data) {
 
     ++poseCounter;
   }
+
+  // processing metadata
+  // auto reString = R"("(\d+)-?(\d+)?")";
+  auto reString = R"((\d+)-?(\d+)?)";
+  std::regex re(reString);
+  if (jObj.find("metadata") == jObj.end()) {
+    // no metadata just return
+    return;
+  }
+  auto metadata = jObj["metadata"];
+  for (auto keyValue : metadata) {
+    const auto key = keyValue[0].get<std::string>();
+    const auto value = keyValue[1].get<std::string>();
+
+    // converting key to int
+    int keyInt =
+        SirEngine::globals::ANIMATION_MANAGER->animationKeywordNameToValue(
+            key.c_str());
+    if (keyInt == -1) {
+      SE_CORE_WARN("Could not map key to value: {0}", key);
+    }
+
+    // we need to process the value
+    std::smatch matches;
+    if (std::regex_search(value, matches, re)) {
+      // if matches size 1 is one number only
+      // std::cout<<matches.size()<<std::endl;
+      int size = static_cast<int>(matches.size());
+      assert(size == 3);
+
+      const std::string match0 = matches[0].str();
+      const std::string match1 = matches[1].str();
+      const std::string match2 = matches[2].str();
+
+      bool match1Empty = match1.empty();
+      bool match2Empty = match2.empty();
+
+      if (match1Empty || !isNumber(match1)) {
+        SE_CORE_WARN("Could not parse key value:  {0}:{1}, match1 failed", key,
+                     value);
+        continue;
+      }
+      int match1Int = strtol(match1.c_str(), nullptr, 10);
+      if (!match2Empty) {
+        if (!isNumber(match2)) {
+          SE_CORE_WARN("Could not parse key value:  {0}:{1}, match2 failed",
+                       key, value);
+          continue;
+        }
+        // it means we are dealing with a range
+        int match2Int = strtol(match2.c_str(), nullptr, 10);
+        for (int i = match1Int; i < match2Int; ++i) {
+          data.animationKeywordToFrame[keyInt].push_back(i);
+        }
+      } else {
+        data.animationKeywordToFrame[keyInt].push_back(match1Int);
+      }
+    } else {
+      SE_CORE_WARN("Could not parse key value:  {0}:{1}", key, value);
+    }
+  }
+  // finally lets sort all the keys
+  for (auto keyValue : data.animationKeywordToFrame) {
+    std::sort(keyValue.second.begin(), keyValue.second.end());
+  }
 }
 
 bool processAnim(const std::string &assetPath, const std::string &outputPath,
@@ -106,10 +181,25 @@ bool processAnim(const std::string &assetPath, const std::string &outputPath,
     SE_CORE_ERROR("[Animation Compiler] : could not find path/file {0}",
                   outputPath);
   }
+  SirEngine::AnimationManager animManager;
+  animManager.init();
+  SirEngine::globals::ANIMATION_MANAGER = &animManager;
 
   // loading the obj
   AnimData data{};
-  convertAnim(assetPath,data);
+  convertAnim(assetPath, data);
+
+  // need to flatten out the key value map
+  struct KeyValue {
+    int key;
+    int value;
+  };
+  std::vector<KeyValue> keyValueVector;
+  for (auto keyValue : data.animationKeywordToFrame) {
+    for (auto value : keyValue.second) {
+      keyValueVector.emplace_back(KeyValue{keyValue.first, value});
+    }
+  }
 
   // writing binary file
   BinaryFileWriteRequest request;
@@ -121,27 +211,34 @@ bool processAnim(const std::string &assetPath, const std::string &outputPath,
   const std::string fileName = inp.stem().string();
   request.outPath = outputPath.c_str();
 
-  //need to merge the data, name and poses
+  // need to merge the data, name and poses
   std::vector<char> outputData;
-  const int nameSize =  static_cast<int>(data.name.size() +1);
-  const int posesSize = static_cast<int>(data.poses.size()* sizeof(SirEngine::JointPose));
-  const int totalSize = nameSize + posesSize;
+  const int nameSize = static_cast<int>(data.name.size() + 1);
+  const int posesSize =
+      static_cast<int>(data.poses.size() * sizeof(SirEngine::JointPose));
+  const int keyValueSize =
+      static_cast<int>(sizeof(KeyValue) * keyValueVector.size());
+  const int totalSize = nameSize + posesSize + keyValueSize;
   outputData.resize(totalSize);
 
-  //copying the data over
-  memcpy(outputData.data(), data.name.data(),nameSize);
-  memcpy(outputData.data()+ nameSize, data.poses.data(),posesSize);
+  // copying the data over
+  memcpy(outputData.data(), data.name.data(), nameSize);
+  memcpy(outputData.data() + nameSize, data.poses.data(), posesSize);
+  memcpy(outputData.data() + nameSize + posesSize, keyValueVector.data(),
+         keyValueSize);
 
   request.bulkData = outputData.data();
   request.bulkDataSizeInByte = totalSize;
 
   ClipMapperData mapperData;
-  mapperData.nameSizeInByte= static_cast<int>(data.name.size()+1);
-  mapperData.posesSizeInByte= static_cast<int>(data.poses.size())*sizeof(SirEngine::JointPose);
+  mapperData.nameSizeInByte = static_cast<int>(data.name.size() + 1);
+  mapperData.posesSizeInByte =
+      static_cast<int>(data.poses.size()) * sizeof(SirEngine::JointPose);
   mapperData.frameRate = data.frameRate;
-  mapperData.bonesPerFrame= data.bonesPerFrame;
-  mapperData.frameCount= data.frameCount;
-  mapperData.isLoopable= data.isLoopable;
+  mapperData.bonesPerFrame = data.bonesPerFrame;
+  mapperData.frameCount = data.frameCount;
+  mapperData.isLoopable = data.isLoopable;
+  mapperData.keyValueSizeInByte = keyValueSize;
   request.mapperData = &mapperData;
   request.mapperDataSizeInByte = sizeof(ClipMapperData);
 

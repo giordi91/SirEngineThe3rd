@@ -25,7 +25,7 @@ inline cxxopts::Options getCxxOptions() {
   return options;
 }
 
-const std::string getExecutablePath() {
+std::string getExecutablePath() {
   HMODULE hModule = GetModuleHandleW(NULL);
   WCHAR path[MAX_PATH];
   GetModuleFileName(hModule, path, MAX_PATH);
@@ -106,6 +106,8 @@ void executeFile(const cxxopts::ParseResult &result) {
 
 int main(int argc, char *argv[]) {
 
+  SirEngine::StringPool stringPool(1024*10);
+  SirEngine::globals::STRING_POOL = &stringPool;
   SirEngine::Log::init();
   auto options = getCxxOptions();
 
@@ -119,18 +121,20 @@ int main(int argc, char *argv[]) {
 
   const cxxopts::ParseResult result = options.parse(argc, argv);
 
-  size_t executeCount = result.count("execute");
+  const size_t executeCount = result.count("execute");
 
-  auto start = std::chrono::high_resolution_clock::now();
+  const auto start = std::chrono::high_resolution_clock::now();
   if (executeCount) {
     executeFile(result);
   } else {
     executeFromArgs(result);
   }
-  auto end = std::chrono::high_resolution_clock::now();
-  auto seconds = std::chrono::duration_cast<std::chrono::seconds>(end - start).count();
+  const auto end = std::chrono::high_resolution_clock::now();
+  const auto seconds = std::chrono::duration_cast<std::chrono::seconds>(end - start).count();
   SE_CORE_INFO("------------------------------------------------");
   SE_CORE_INFO("Compilation time taken: {0}",seconds);
+
+  SirEngine::Log::free();
 
   return 0;
 }
