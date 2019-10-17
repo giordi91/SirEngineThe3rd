@@ -60,8 +60,9 @@ void PluginRegistry::registerFunction(const std::string &name,
 }
 
 void PluginRegistry::init() {
-  assert(registryInst == nullptr);
-  PluginRegistry::registryInst = new PluginRegistry();
+  if(registryInst == nullptr) {
+	  PluginRegistry::registryInst = new PluginRegistry();
+  }
 }
 
 void PluginRegistry::clear() {

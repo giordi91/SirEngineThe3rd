@@ -35,7 +35,7 @@ struct DebugFrameData {
 extern unsigned int SCREEN_WIDTH;
 extern unsigned int SCREEN_HEIGHT;
 extern Camera3DPivot *MAIN_CAMERA;
-extern GameClock GAME_CLOCK;
+extern Clock<std::chrono::nanoseconds>GAME_CLOCK;
 extern uint64_t LAST_FRAME_TIME_NS;
 extern uint32_t TOTAL_NUMBER_OF_FRAMES;
 extern uint64_t CURRENT_FRAME;
@@ -51,10 +51,10 @@ extern AssetManager *ASSET_MANAGER;
 extern Application *APPLICATION;
 extern RenderingContext *RENDERING_CONTEXT;
 extern DebugFrameData *DEBUG_FRAME_DATA;
-extern AnimationManager* ANIMATION_MANAGER;
-extern SkinClusterManager* SKIN_MANAGER;
-extern ScriptingContext* SCRIPTING_CONTEXT;
-extern Input* INPUT;
+extern SIR_ENGINE_API AnimationManager *ANIMATION_MANAGER;
+extern SkinClusterManager *SKIN_MANAGER;
+extern ScriptingContext *SCRIPTING_CONTEXT;
+extern Input *INPUT;
 
 // generic allocators
 extern SIR_ENGINE_API StringPool *STRING_POOL;
@@ -62,10 +62,10 @@ extern SIR_ENGINE_API StackAllocator *FRAME_ALLOCATOR;
 extern SIR_ENGINE_API ThreeSizesPool *PERSISTENT_ALLOCATOR;
 
 // config
-extern const char* DATA_SOURCE_PATH;
-extern const char* START_SCENE_PATH;
+extern const char *DATA_SOURCE_PATH;
+extern const char *START_SCENE_PATH;
 extern D3D12_VIEWPORT CURRENT_VIEWPORT;
 
-}  // namespace globals
+} // namespace globals
 typedef unsigned char uchar;
-}  // namespace SirEngine
+} // namespace SirEngine

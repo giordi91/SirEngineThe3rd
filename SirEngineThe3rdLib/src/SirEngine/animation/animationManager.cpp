@@ -95,6 +95,13 @@ AnimationConfigHandle AnimationManager::loadAnimationConfig(const char *path) {
   return handle;
 }
 
+void AnimationManager::init() 
+{
+	//build up the keyword mapping
+	m_keywordRegisterMap.insert("l_foot_down", L_FOOT_DOWN);
+	m_keywordRegisterMap.insert("r_foot_down", R_FOOT_DOWN);
+}
+
 AnimationClip *AnimationManager::loadAnimationClip(const char *path) {
   // TODO fix naked
   auto *clip = new AnimationClip();
@@ -112,7 +119,7 @@ Skeleton *AnimationManager::loadSkeleton(const char *path) {
 
 SkeletonPose *AnimationManager::getNamedSkeletonPose(const char *name) {
 
-  const uint32_t nameLen = static_cast<uint32_t>(strlen(name));
+  const auto nameLen = static_cast<uint32_t>(strlen(name));
   auto *sk = getCachedSkeleton(name, nameLen);
   assert(sk != nullptr);
 

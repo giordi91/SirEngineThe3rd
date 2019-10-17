@@ -112,5 +112,7 @@ struct ClipMapperData
 	float frameRate;
 	int bonesPerFrame;
 	int frameCount;
+	int keyValueSizeInByte;
 	bool isLoopable;
+
 };

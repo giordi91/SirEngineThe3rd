@@ -1,0 +1,8 @@
+{
+  "animationClip": "../testData/idle1.clip",
+  "assetName": "idle1Test",
+  "department": "animation",
+  "skeleton": "../testData/mannequin.json",
+  "type": "animationConfig",
+  "name" : "kidle1Config"
+}

@@ -1,11 +1,11 @@
 #include "core.h"
+#include <Windows.h>
 #include <string>
 #include <unordered_map>
-#include <Windows.h>
 
 typedef bool (*ResourceProcessFunction)(const std::string &assetPath,
                                         const std::string &outputPath,
-										const std::string &pluginArgs);
+                                        const std::string &pluginArgs);
 class PluginRegistry {
 public:
   static RC_API void init();
@@ -15,17 +15,20 @@ public:
   void RC_API registerFunction(const std::string &name,
                                ResourceProcessFunction func);
   RC_API void loadPlugin(const std::string &dllPath);
-  RC_API ResourceProcessFunction 
-  getFunction(const std::string &name) const {
+  RC_API ResourceProcessFunction getFunction(const std::string &name) const {
     auto found = m_registry.find(name);
     if (found != m_registry.end()) {
       return found->second;
     }
     return nullptr;
   }
-  RC_API void loadPluginsInFolder(const std::string& path);
+  RC_API void loadPluginsInFolder(const std::string &path);
 
-  PluginRegistry() =default;
+  PluginRegistry() = default;
+  ~PluginRegistry() {
+    clear();
+    registryInst = nullptr;
+  };
 
 private:
   std::unordered_map<std::string, ResourceProcessFunction> m_registry;

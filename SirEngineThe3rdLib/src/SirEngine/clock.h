@@ -107,6 +107,6 @@ template <typename T> void Clock<T>::sleep(const long long amount) const {
 }
 // generating a game clock using the default resolution set in the constants
 
-using GAME_CLOCK_RESOLUTION = std::chrono::nanoseconds;
-typedef Clock<GAME_CLOCK_RESOLUTION> GameClock;
+//using GAME_CLOCK_RESOLUTION = std::chrono::nanoseconds;
+//typedef Clock<GAME_CLOCK_RESOLUTION> GameClock;
 } // namespace SirEngine
