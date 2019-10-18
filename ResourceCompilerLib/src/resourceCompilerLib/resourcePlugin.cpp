@@ -8,7 +8,7 @@ const std::string SHARED_LIBRARY_EXTENSION = "dll";
 
 PluginRegistry *PluginRegistry::registryInst = nullptr;
 
-void PluginRegistry::loadPlugin(const std::string &dllPath) {
+void PluginRegistry::loadPlugin(const std::string &dllPath, bool verbose) {
   auto ws = std::wstring(dllPath.begin(), dllPath.end());
   HMODULE loadedDLL = LoadLibrary(ws.c_str());
   if (loadedDLL) {
@@ -19,7 +19,9 @@ void PluginRegistry::loadPlugin(const std::string &dllPath) {
       bool res = loadFun(PluginRegistry::getInstance());
       if (res) {
         m_dlls.push_back(loadedDLL);
-        SE_CORE_INFO("Successfully loaded plug-in {0}", getFileName(dllPath));
+        if (verbose) {
+          SE_CORE_INFO("Successfully loaded plug-in {0}", getFileName(dllPath));
+        }
         return;
       } else {
         SE_CORE_ERROR("Problem in loading plug-in {0}", getFileName(dllPath));
@@ -38,19 +40,22 @@ void PluginRegistry::loadPlugin(const std::string &dllPath) {
         (LPSTR)&messageBuffer, 0, NULL);
 
     std::string message(messageBuffer, size);
-	SE_CORE_ERROR("DLL load error: {0}", message);
+    SE_CORE_ERROR("DLL load error: {0}", message);
 
     // Free the buffer.
     LocalFree(messageBuffer);
   }
 }
 
-void PluginRegistry::loadPluginsInFolder(const std::string &sourcePath) {
+void PluginRegistry::loadPluginsInFolder(const std::string &sourcePath,
+                                         bool verbose) {
   std::vector<std::string> paths;
   listFilesInFolder(sourcePath.c_str(), paths, SHARED_LIBRARY_EXTENSION);
   for (const auto &path : paths) {
-    SE_CORE_INFO("Found plug-in: {0}", getFileName(path));
-    loadPlugin(path);
+    if (verbose) {
+      SE_CORE_INFO("Found plug-in: {0}", getFileName(path));
+    }
+    loadPlugin(path, verbose);
   }
 }
 
@@ -60,8 +65,8 @@ void PluginRegistry::registerFunction(const std::string &name,
 }
 
 void PluginRegistry::init() {
-  if(registryInst == nullptr) {
-	  PluginRegistry::registryInst = new PluginRegistry();
+  if (registryInst == nullptr) {
+    PluginRegistry::registryInst = new PluginRegistry();
   }
 }
 

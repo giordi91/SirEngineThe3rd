@@ -23,7 +23,6 @@ struct AnimationConfig {
 
 // Anim metadata mostly used for blending, can be extended by user in case is
 // needed
-enum ANIM_KEYWORDS { L_FOOT_DOWN = 1, R_FOOT_DOWN = 2 };
 
 //upeasing dll interface for interfaces
 template class SIR_ENGINE_API Clock<std::chrono::nanoseconds>;

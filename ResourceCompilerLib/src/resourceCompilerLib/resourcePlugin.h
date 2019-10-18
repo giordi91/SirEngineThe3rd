@@ -14,7 +14,7 @@ public:
 
   void RC_API registerFunction(const std::string &name,
                                ResourceProcessFunction func);
-  RC_API void loadPlugin(const std::string &dllPath);
+  RC_API void loadPlugin(const std::string &dllPath, bool verbose);
   RC_API ResourceProcessFunction getFunction(const std::string &name) const {
     auto found = m_registry.find(name);
     if (found != m_registry.end()) {
@@ -22,7 +22,7 @@ public:
     }
     return nullptr;
   }
-  RC_API void loadPluginsInFolder(const std::string &path);
+  RC_API void loadPluginsInFolder(const std::string &path, bool verbose =false);
 
   PluginRegistry() = default;
   ~PluginRegistry() {

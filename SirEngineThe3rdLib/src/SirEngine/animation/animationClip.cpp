@@ -35,7 +35,29 @@ bool AnimationClip::initialize(const char *path) {
   memcpy(m_poses,
          binaryData + sizeof(BinaryFileHeader) + mapper->nameSizeInByte,
          mapper->posesSizeInByte);
+
+  // need to load metadata
+  m_metadata = reinterpret_cast<AnimationMetadataKey *>(
+      globals::PERSISTENT_ALLOCATOR->allocate(mapper->keyValueSizeInByte));
+  memcpy(m_metadata,
+         binaryData + sizeof(BinaryFileHeader) + mapper->nameSizeInByte +
+             mapper->posesSizeInByte,
+         mapper->keyValueSizeInByte);
+  m_metadataCount = mapper->keyValueSizeInByte / (sizeof(AnimationMetadataKey));
+
   return true;
+}
+
+
+int AnimationClip::findFirstMetadataFrame(const ANIM_CLILP_KEYWORDS flag)
+{
+	//super simple linear search
+	for(int i =0; i < m_metadataCount;++i) {
+		if(m_metadata[i].m_key == static_cast<int>(flag)) {
+			return static_cast<int>(m_metadata[i].m_value);
+          }
+	}
+	return -1;
 }
 
 inline DirectX::XMFLOAT3 lerp3(const DirectX::XMFLOAT3 &v1,
@@ -48,7 +70,7 @@ inline DirectX::XMFLOAT3 lerp3(const DirectX::XMFLOAT3 &v1,
   };
 }
 void AnimState::updateGlobalByAnim(const long long stampNS) {
-  assert(clip != nullptr);
+  assert(m_clip != nullptr);
   assert(stampNS >= 0);
   const int globalSize = m_pose->m_globalPose.size();
   const int localSize = m_pose->m_localPose.size();
@@ -56,27 +78,28 @@ void AnimState::updateGlobalByAnim(const long long stampNS) {
 
   // we convert to seconds, since we need to count how many frames
   // passed and that is expressed in seconds
-  const float speedTimeMultiplier = NANO_TO_SECONDS * multiplier;
-  const float delta = (stampNS - globalStartStamp) * speedTimeMultiplier;
+  const float speedTimeMultiplier = NANO_TO_SECONDS * m_multiplier;
+  const float delta = (stampNS - m_globalStartStamp) * speedTimeMultiplier;
   // dividing the time elapsed since we started playing animation
   // and divide by the frame-rate so we know how many frames we played so far
-  const float framesElapsedF = delta / (clip->m_frameRate);
+  const float framesElapsedF = delta / (m_clip->m_frameRate);
   const int framesElapsed = static_cast<int>(floor(framesElapsedF));
   // converting the frames in loop
-  const int startIdx = framesElapsed % clip->m_frameCount;
+  const int startIdx = framesElapsed % m_clip->m_frameCount;
 
   // convert counter to idx
   // we find the two frames we need to interpoalte to
   int endIdx = startIdx + 1;
-  const int endRange = clip->m_frameCount - 1;
+  const int endRange = m_clip->m_frameCount - 1;
   // if the end frame is out of the range it means needs to loop around
   if (endIdx > endRange) {
     endIdx = 0;
   }
 
   // extracting the two poses
-  const JointPose *startP = clip->m_poses + (startIdx * clip->m_bonesPerFrame);
-  const JointPose *endP = clip->m_poses + (endIdx * clip->m_bonesPerFrame);
+  const JointPose *startP =
+      m_clip->m_poses + (startIdx * m_clip->m_bonesPerFrame);
+  const JointPose *endP = m_clip->m_poses + (endIdx * m_clip->m_bonesPerFrame);
   // here we find how much in the frame we are, we do that
   // by subtracting the frames elapsed in flaot minues the floored
   // value basically leaving us only with the decimal part as

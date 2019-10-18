@@ -117,7 +117,7 @@ int main(int argc, char *argv[]) {
   PluginRegistry *registry = PluginRegistry::getInstance();
 
   const std::string basePath = getExecutablePath();
-  registry->loadPluginsInFolder(basePath + "/plugins");
+  registry->loadPluginsInFolder(basePath + "/plugins", true);
 
   const cxxopts::ParseResult result = options.parse(argc, argv);
 
