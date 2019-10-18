@@ -82,11 +82,11 @@ AnimationConfigHandle AnimationManager::loadAnimationConfig(const char *path) {
 
   // allocating anim state;
   auto *animState = new AnimState();
-  animState->name = clip->m_name;
-  animState->clip = clip;
-  animState->m_pose = namedPose, animState->multiplier = 1.0f,
+  animState->m_name = clip->m_name;
+  animState->m_clip = clip;
+  animState->m_pose = namedPose, animState->m_multiplier = 1.0f,
   animState->m_loop = true,
-  animState->globalStartStamp = m_animClock.getTicks();
+  animState->m_globalStartStamp = m_animClock.getTicks();
 
   AnimationConfig config{clip, skeleton, animState};
   AnimationConfigHandle handle{configIndex++};
@@ -98,8 +98,8 @@ AnimationConfigHandle AnimationManager::loadAnimationConfig(const char *path) {
 void AnimationManager::init() 
 {
 	//build up the keyword mapping
-	m_keywordRegisterMap.insert("l_foot_down", L_FOOT_DOWN);
-	m_keywordRegisterMap.insert("r_foot_down", R_FOOT_DOWN);
+	m_keywordRegisterMap.insert("l_foot_down", static_cast<int>(ANIM_CLILP_KEYWORDS::L_FOOT_DOWN));
+	m_keywordRegisterMap.insert("r_foot_down", static_cast<int>(ANIM_CLILP_KEYWORDS::R_FOOT_DOWN));
 }
 
 AnimationClip *AnimationManager::loadAnimationClip(const char *path) {

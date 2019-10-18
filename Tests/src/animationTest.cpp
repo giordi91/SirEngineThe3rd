@@ -1,10 +1,10 @@
+#include "SirEngine/animation/animationClip.h"
 #include "SirEngine/animation/animationManager.h"
 #include "SirEngine/argsUtils.h"
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
 #include "catch/catch.hpp"
 #include "resourceCompilerLib/resourcePlugin.h"
-#include <filesystem>
 
 void compileAnim(const char *in, const char *out) {
 
@@ -97,5 +97,45 @@ TEST_CASE("animation key 1 read", "[animation]") {
   SirEngine::AnimationClip *clip =
       animManager.loadAnimationClip("../testData/idle1.clip");
 
+  REQUIRE(clip->m_metadataCount == 238 );
+  REQUIRE(clip->findFirstMetadataFrame(SirEngine::ANIM_CLILP_KEYWORDS::L_FOOT_DOWN) == 1 );
+  REQUIRE(clip->findFirstMetadataFrame(SirEngine::ANIM_CLILP_KEYWORDS::R_FOOT_DOWN) == 1 );
+
+
   SirEngine::Log::free();
+
+}
+TEST_CASE("animation key 2 read", "[animation]") {
+
+  // initialize memory pools and loggers
+  SirEngine::StringPool stringPool(1024 * 1024 * 10);
+  SirEngine::globals::STRING_POOL = &stringPool;
+  SirEngine::Log::init();
+  SirEngine::ThreeSizesPool pool(1024 * 1024 * 10);
+  SirEngine::globals::PERSISTENT_ALLOCATOR = &pool;
+
+  SirEngine::AnimationManager animManager;
+  animManager.init();
+  SirEngine::globals::ANIMATION_MANAGER = &animManager;
+
+  PluginRegistry::init();
+  PluginRegistry *registry = PluginRegistry::getInstance();
+  registry->loadPluginsInFolder("plugins");
+  // compiling animation clip on the fly, then we read it back as the engine
+  // would
+  compileAnim("../testData/idle2.json", "../testData/idle2.clip");
+
+  // now we can read it
+  SirEngine::AnimationConfigHandle config =
+      animManager.loadAnimationConfig("../testData/idle1Config.json");
+  SirEngine::AnimationClip *clip =
+      animManager.loadAnimationClip("../testData/idle2.clip");
+
+  REQUIRE(clip->m_metadataCount == 3 );
+  REQUIRE(clip->findFirstMetadataFrame(SirEngine::ANIM_CLILP_KEYWORDS::L_FOOT_DOWN) == 30 );
+  REQUIRE(clip->findFirstMetadataFrame(SirEngine::ANIM_CLILP_KEYWORDS::R_FOOT_DOWN) == 10 );
+
+
+  SirEngine::Log::free();
+
 }
