@@ -57,8 +57,7 @@ bool Skeleton::loadFromFile(const char *path) {
 }
 
 void SkeletonPose::updateGlobalFromLocal() {
-  // allocating enough memory for the temporary world matrices
-  m_worldMat.resize(m_skeleton->m_jointCount);
+
   // establishing the invariant, where every bone
   // in the list appears after the parent,so meanwhile we fill
   // the global pose list we can access to get the world matrices
@@ -79,7 +78,7 @@ void SkeletonPose::updateGlobalFromLocal() {
   m_globalPose[0] = qM * m_skeleton->m_jointsWolrdInv.getConstRef(0);
 
   for (uint32_t i = 1; i < m_skeleton->m_jointCount; ++i) {
-    int idx = m_skeleton->m_parentIds[i];
+    const int idx = m_skeleton->m_parentIds[i];
 
     // here just getting a reference to avoid to nest too much
     // the compiler should optimize that away
@@ -88,7 +87,6 @@ void SkeletonPose::updateGlobalFromLocal() {
     // setting the translation
     qM.r[3] = expandF3ToVec(m_localPose[i].m_trans);
     // here I compute the global pose so this is the world matrix
-    // m_worldMat[i] = m_worldMat[idx] * qM;
     m_worldMat[i] = DirectX::XMMatrixMultiply(qM, m_worldMat[idx]);
     // in the global pose I will store the matrix ready for vertex
     // transformation

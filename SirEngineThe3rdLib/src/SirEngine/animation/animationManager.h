@@ -24,16 +24,18 @@ struct AnimationConfig {
 // Anim metadata mostly used for blending, can be extended by user in case is
 // needed
 
-//upeasing dll interface for interfaces
+// upeasing dll interface for interfaces
 template class SIR_ENGINE_API Clock<std::chrono::nanoseconds>;
 using AnimClock = Clock<std::chrono::nanoseconds>;
 template class SIR_ENGINE_API ResizableVector<AnimState *>;
 template class SIR_ENGINE_API HashMap<uint32_t, AnimationConfig, hashUint32>;
 template class SIR_ENGINE_API
-    HashMap<uint64_t, AnimationConfigHandle, hashUint64>;
-template class SIR_ENGINE_API HashMap<uint64_t, AnimationClip *, hashUint64>;
-template class SIR_ENGINE_API HashMap<uint64_t, Skeleton *, hashUint64>;
-template class SIR_ENGINE_API HashMap<uint64_t, SkeletonPose *, hashUint64>;
+    HashMap<const char *, AnimationConfigHandle, hashString32>;
+template class SIR_ENGINE_API
+    HashMap<const char *, AnimationClip *, hashString32>;
+template class SIR_ENGINE_API HashMap<const char *, Skeleton *, hashString32>;
+template class SIR_ENGINE_API
+    HashMap<const char *, SkeletonPose *, hashString32>;
 template class SIR_ENGINE_API HashMap<const char *, int, hashString32>;
 class SIR_ENGINE_API AnimationManager final {
 
@@ -62,11 +64,10 @@ public:
     return config;
   }
 
-  // This function returns the skeleton pose used for a named skeleton,
-  // this is the pose which the animation evaluates,  so you can use it
-  // to see the values of the matrix after animation update, ready
-  // for the skin cluster
-  SkeletonPose *getNamedSkeletonPose(const char *name);
+  // Returns a block of memory that will be used to store the evluated
+  // pose for the given animation, enough memory is allocated to fit the
+  // given skeleton
+  SkeletonPose *getSkeletonPose(const Skeleton *skeleton) const;
 
   // registering an animation state for being evaluated
   void registerState(AnimState *state);
@@ -86,19 +87,16 @@ public:
 private:
   [[nodiscard]] static Skeleton *loadSkeleton(const char *path);
 
-  inline AnimationClip *getCachedAnimationClip(const char *name,
-                                               const uint32_t len) const {
-    const uint64_t hash = hashString(name, len);
+  inline AnimationClip *getCachedAnimationClip(const char *name) const {
     AnimationClip *clip = nullptr;
-    const auto found = m_animationClipCache.get(hash, clip);
+    const auto found = m_animationClipCache.get(name, clip);
     return found ? clip : nullptr;
   };
 
-  inline Skeleton *getCachedSkeleton(const char *name, uint32_t len) const {
+  inline Skeleton *getCachedSkeleton(const char *name) const {
 
-    const uint64_t hash = hashString(name, len);
     Skeleton *skeleton = nullptr;
-    const auto found = m_skeletonCache.get(hash, skeleton);
+    const auto found = m_skeletonCache.get(name, skeleton);
     return found ? skeleton : nullptr;
   };
 
@@ -111,10 +109,11 @@ private:
   HashMap<uint32_t, AnimationConfig, hashUint32> m_handleToConfig;
   // TODO why string64 and not directly the string variant? what happened
   // if we get a collision?
-  HashMap<string64, AnimationConfigHandle, hashUint64> m_nameToConfigHandle;
-  HashMap<string64, AnimationClip *, hashUint64> m_animationClipCache;
-  HashMap<string64, Skeleton *, hashUint64> m_skeletonCache;
-  HashMap<string64, SkeletonPose *, hashUint64> m_namedPosesMap;
+  HashMap<const char *, AnimationConfigHandle, hashString32>
+      m_nameToConfigHandle;
+  HashMap<const char *, AnimationClip *, hashString32> m_animationClipCache;
+  HashMap<const char *, Skeleton *, hashString32> m_skeletonCache;
+  HashMap<const char *, SkeletonPose *, hashString32> m_namedPosesMap;
 
   HashMap<const char *, int, hashString32> m_keywordRegisterMap;
   unsigned int configIndex = 0;

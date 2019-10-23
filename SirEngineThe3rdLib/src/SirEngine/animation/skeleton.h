@@ -17,7 +17,7 @@ struct Skeleton {
       : m_jointCount(0), m_jointsWolrdInv(PREALLOCATION_SIZE, allocator),
         m_names(PREALLOCATION_SIZE, allocator),
         m_parentIds(PREALLOCATION_SIZE, allocator), m_name(nullptr){};
-  unsigned int m_jointCount;
+  uint32_t m_jointCount;
   ResizableVector<DirectX::XMMATRIX> m_jointsWolrdInv;
   ResizableVector<const char *> m_names;
   ResizableVector<int> m_parentIds;
@@ -27,19 +27,17 @@ struct Skeleton {
 };
 
 struct SkeletonPose {
-  static constexpr uint32_t PREALLOCATION_SIZE = 32;
-
-  explicit SkeletonPose(
-      PersistantAllocatorType *allocator = globals::PERSISTENT_ALLOCATOR)
-      : m_skeleton(nullptr), m_localPose(PREALLOCATION_SIZE, allocator),
-        m_globalPose(PREALLOCATION_SIZE, allocator),
-        m_worldMat(PREALLOCATION_SIZE, allocator) {}
-  // pointer to the skeleton
   const Skeleton *m_skeleton;
-  ResizableVector<JointPose> m_localPose;
-  // matrices ready to be uploaded to the shader
-  ResizableVector<DirectX::XMMATRIX> m_globalPose;
-  ResizableVector<DirectX::XMMATRIX> m_worldMat;
+  // this 3 arrays have all the same size, which will be
+  // m_skeleton->m_jointcount the function allocating this will allocate a
+  // single array and set the pointers of the correct sub-allocations
+  JointPose *m_localPose;
+  // this is the pose ready to be uploaded to the skinning shader, each matrix
+  // is pre-multiplied by the bind matrix
+  DirectX::XMMATRIX *m_globalPose;
+  // those are the world matrices not multiplied by the bind matrix, useful for
+  // debug drawing etc
+  DirectX::XMMATRIX *m_worldMat;
 
   /*
    * This functions will generates a global pose for all the bones,

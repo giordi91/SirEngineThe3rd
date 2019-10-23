@@ -29,12 +29,8 @@ AnimationConfigHandle AnimationManager::loadAnimationConfig(const char *path) {
 
   assert(!configName.empty());
   // checking if is cached by any chance
-  // this is a string so we need to hash it
-  uint64_t configNameHash =
-      hashString(configName.c_str(), static_cast<uint32_t>(configName.size()));
-
   AnimationConfigHandle earlyHandle{};
-  bool found = m_nameToConfigHandle.get(configNameHash, earlyHandle);
+  bool found = m_nameToConfigHandle.get(configName.c_str(), earlyHandle);
   if (found) {
     return earlyHandle;
   }
@@ -51,55 +47,49 @@ AnimationConfigHandle AnimationManager::loadAnimationConfig(const char *path) {
   // animation
   // checking if the animation clip is already cached, if not load it
   const std::string animationClipFileName = getFileName(animationClipFile);
-  uint32_t animationClipStringSize =
-      static_cast<uint32_t>(animationClipFile.size());
-  AnimationClip *clip = getCachedAnimationClip(animationClipFile.c_str(),
-                                               animationClipStringSize);
+  AnimationClip *clip = getCachedAnimationClip(animationClipFile.c_str());
   if (clip == nullptr) {
     clip = loadAnimationClip(animationClipFile.c_str());
-    uint64_t hashClip =
-        hashString(animationClipFile.c_str(), animationClipStringSize);
-    m_animationClipCache.insert(hashClip, clip);
+    m_animationClipCache.insert(animationClipFile.c_str(), clip);
   }
   assert(clip != nullptr);
 
   // skeleton
   // checking if the skeleton is already cached, if not load it
   const std::string skeletonFileName = getFileName(skeletonFile);
-  uint32_t skeletonFileNameSize = static_cast<uint32_t>(skeletonFileName.size());
-  Skeleton *skeleton =
-      getCachedSkeleton(skeletonFileName.c_str(), skeletonFileNameSize);
+
+  Skeleton *skeleton = getCachedSkeleton(skeletonFileName.c_str());
   if (skeleton == nullptr) {
     skeleton = loadSkeleton(skeletonFile.c_str());
-    uint64_t hashSkeleton =
-        hashString(skeletonFileName.c_str(), skeletonFileNameSize);
-    m_skeletonCache.insert(hashSkeleton, skeleton);
+    m_skeletonCache.insert(skeletonFileName.c_str(), skeleton);
   }
   assert(skeleton != nullptr);
 
   // allocating named pose
-  auto *namedPose = getNamedSkeletonPose(skeleton->m_name);
+  SkeletonPose *namedPose = getSkeletonPose(skeleton);
 
   // allocating anim state;
   auto *animState = new AnimState();
   animState->m_name = clip->m_name;
   animState->m_clip = clip;
-  animState->m_pose = namedPose, animState->m_multiplier = 1.0f,
+  animState->m_pose = namedPose;
+  animState->m_multiplier = 1.0f;
   animState->m_loop = true,
   animState->m_globalStartStamp = m_animClock.getTicks();
 
   AnimationConfig config{clip, skeleton, animState};
   AnimationConfigHandle handle{configIndex++};
   m_handleToConfig.insert(handle.handle, config);
-  m_nameToConfigHandle.insert(configNameHash, handle);
+  m_nameToConfigHandle.insert(configName.c_str(), handle);
   return handle;
 }
 
-void AnimationManager::init() 
-{
-	//build up the keyword mapping
-	m_keywordRegisterMap.insert("l_foot_down", static_cast<int>(ANIM_CLILP_KEYWORDS::L_FOOT_DOWN));
-	m_keywordRegisterMap.insert("r_foot_down", static_cast<int>(ANIM_CLILP_KEYWORDS::R_FOOT_DOWN));
+void AnimationManager::init() {
+  // build up the keyword mapping
+  m_keywordRegisterMap.insert(
+      "l_foot_down", static_cast<int>(ANIM_CLILP_KEYWORDS::L_FOOT_DOWN));
+  m_keywordRegisterMap.insert(
+      "r_foot_down", static_cast<int>(ANIM_CLILP_KEYWORDS::R_FOOT_DOWN));
 }
 
 AnimationClip *AnimationManager::loadAnimationClip(const char *path) {
@@ -117,28 +107,28 @@ Skeleton *AnimationManager::loadSkeleton(const char *path) {
   return res ? sk : nullptr;
 }
 
-SkeletonPose *AnimationManager::getNamedSkeletonPose(const char *name) {
+SkeletonPose *
+AnimationManager::getSkeletonPose(const Skeleton *skeleton) const {
 
-  const auto nameLen = static_cast<uint32_t>(strlen(name));
-  auto *sk = getCachedSkeleton(name, nameLen);
-  assert(sk != nullptr);
+  //allocating the pose, it is a simple struct with some pointers in it,
+  auto *pose = reinterpret_cast<SkeletonPose *>(
+      globals::PERSISTENT_ALLOCATOR->allocate(sizeof(SkeletonPose)));
 
-  // TODO this cache is actually bad, what happen if we have multiple characters
-  // pointing to same skeleton?
-  const uint64_t hash = hashString(name, nameLen);
-  SkeletonPose *pose = nullptr;
-  const bool found = m_namedPosesMap.get(hash, pose);
-  if (found) {
-    return pose;
-  }
-
-  // allocate one
-  // TODO fix naked
-  pose = new SkeletonPose();
-  pose->m_skeleton = sk;
-  pose->m_localPose.resize(sk->m_jointCount);
-  pose->m_globalPose.resize(sk->m_jointCount);
-  m_namedPosesMap.insert(hash, pose);
+  pose->m_skeleton = skeleton;
+  const uint32_t jointCount = pose->m_skeleton->m_jointCount;
+  const uint32_t totalSize = sizeof(JointPose) * jointCount +
+                        (sizeof(DirectX::XMMATRIX) * jointCount) * 2;
+  char *memory = reinterpret_cast<char *>(
+      globals::PERSISTENT_ALLOCATOR->allocate(totalSize));
+  // local pose is the first pointer so we just need to cast it to correct type
+  pose->m_localPose = reinterpret_cast<JointPose *>(memory);
+  // the global pose is right after the local pose so we are going to shift for
+  // jointCount*JointPoseSize
+  pose->m_globalPose = reinterpret_cast<DirectX::XMMATRIX *>(
+      memory + (sizeof(JointPose) * jointCount));
+  // finally the last array is after m_globalPose, the datatype is already of a
+  // matrix so we just go and shift by the joint count
+  pose->m_worldMat = pose->m_globalPose + jointCount;
   return pose;
 }
 
