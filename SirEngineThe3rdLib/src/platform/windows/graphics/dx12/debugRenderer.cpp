@@ -326,18 +326,19 @@ DebugDrawHandle DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
                                                     DirectX::XMFLOAT4 color,
                                                     float pointSize) {
 
-  const ResizableVector<DirectX::XMMATRIX> &pose = state->m_pose->m_worldMat;
+  const DirectX::XMMATRIX* pose = state->m_pose->m_worldMat;
+  const int jointCount = state->m_pose->m_skeleton->m_jointCount;
 
   auto *points =
       reinterpret_cast<DirectX::XMFLOAT3 *>(globals::FRAME_ALLOCATOR->allocate(
-          sizeof(DirectX::XMFLOAT3) * pose.size()));
+          sizeof(DirectX::XMFLOAT3) * jointCount));
   auto *lines =
       reinterpret_cast<DirectX::XMFLOAT3 *>(globals::FRAME_ALLOCATOR->allocate(
-          sizeof(DirectX::XMFLOAT3) * pose.size() * 2));
+          sizeof(DirectX::XMFLOAT3) * jointCount * 2));
 
   uint32_t lineCounter = 0;
 
-  for (uint32_t i = 0; i < pose.size(); ++i) {
+  for (uint32_t i = 0; i < jointCount; ++i) {
     const DirectX::XMMATRIX mat = pose[i];
     DirectX::XMVECTOR pos;
     DirectX::XMVECTOR scale;
@@ -378,7 +379,7 @@ DebugDrawHandle DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
 
     const DebugTracker &pointTracker = foundPoint->second;
     assert(pointTracker.sizeInBtye ==
-           (sizeof(DirectX::XMFLOAT3) * pose.size()));
+           (sizeof(DirectX::XMFLOAT3) * jointCount));
     memcpy(pointTracker.mappedData, points, pointTracker.sizeInBtye);
 
     const auto foundLines = m_trackers.find(linesHandle.handle);
@@ -395,7 +396,7 @@ DebugDrawHandle DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
 
   } else {
     DebugDrawHandle pointsHandle = drawPointsUniformColor(
-        &points[0].x, pose.size() * sizeof(DirectX::XMFLOAT3), color, pointSize,
+        &points[0].x, jointCount * sizeof(DirectX::XMFLOAT3), color, pointSize,
         state->m_pose->m_skeleton->m_name);
 
     DebugDrawHandle linesHandle = drawLinesUniformColor(

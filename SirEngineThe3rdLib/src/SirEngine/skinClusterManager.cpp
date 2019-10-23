@@ -1,4 +1,5 @@
 #include "SirEngine/skinClusterManager.h"
+#include "SirEngine/animation/animationClip.h"
 #include "SirEngine/animation/animationManager.h"
 #include "SirEngine/animation/skeleton.h"
 #include "SirEngine/binary/binaryFile.h"
@@ -9,7 +10,6 @@
 #include "SirEngine/memory/stackAllocator.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/bufferManagerDx12.h"
-#include "SirEngine/animation/animationClip.h"
 
 namespace SirEngine {
 
@@ -75,20 +75,21 @@ SkinClusterManager::loadSkinCluster(const char *path,
 }
 
 void SkinClusterManager::uploadDirtyMatrices() {
-  for (const std::pair<std::string, SkinHandle> element : m_nameToHandle) {
-    SkinHandle handle = element.second;
-    int index = getIndexFromHandle(handle);
+  for (const std::pair<std::string, SkinHandle> &element : m_nameToHandle) {
+    const SkinHandle handle = element.second;
+    const int index = getIndexFromHandle(handle);
     const SkinData &data = m_skinPool.getConstRef(index);
 
     void *mappedData = dx12::BUFFER_MANAGER->getMappedData(data.matricesBuffer);
     assert(mappedData != nullptr);
 
-    AnimationConfig animConfig =
+    const AnimationConfig animConfig =
         globals::ANIMATION_MANAGER->getConfig(data.animHandle);
-    const auto &matricesDataToCopy =
+    const DirectX::XMMATRIX *matricesDataToCopy =
         animConfig.m_anim_state->m_pose->m_globalPose;
-    memcpy(mappedData, matricesDataToCopy.data(),
-           matricesDataToCopy.size() * sizeof(float) * 16);
+    const uint32_t jointCount =
+        animConfig.m_anim_state->m_pose->m_skeleton->m_jointCount;
+    memcpy(mappedData, matricesDataToCopy, jointCount * sizeof(float) * 16);
   }
 }
 } // namespace SirEngine

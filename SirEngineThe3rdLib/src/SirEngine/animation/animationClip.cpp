@@ -72,9 +72,6 @@ inline DirectX::XMFLOAT3 lerp3(const DirectX::XMFLOAT3 &v1,
 void AnimState::updateGlobalByAnim(const long long stampNS) {
   assert(m_clip != nullptr);
   assert(stampNS >= 0);
-  const int globalSize = m_pose->m_globalPose.size();
-  const int localSize = m_pose->m_localPose.size();
-  assert((globalSize == localSize));
 
   // we convert to seconds, since we need to count how many frames
   // passed and that is expressed in seconds
