@@ -49,7 +49,7 @@ bool AnimationClip::initialize(const char *path) {
 }
 
 
-int AnimationClip::findFirstMetadataFrame(const ANIM_CLILP_KEYWORDS flag)
+int AnimationClip::findFirstMetadataFrame(const ANIM_CLIP_KEYWORDS flag)
 {
 	//super simple linear search
 	for(int i =0; i < m_metadataCount;++i) {

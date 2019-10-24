@@ -10,6 +10,7 @@
 #include "SirEngine/memory/stackAllocator.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/bufferManagerDx12.h"
+#include "SirEngine/animation/animationPlayer.h"
 
 namespace SirEngine {
 
@@ -49,10 +50,10 @@ SkinClusterManager::loadSkinCluster(const char *path,
         mapper->weightsSizeInByte / sizeof(float), sizeof(float), false);
 
     // now we need to generate the buffer for the matrices we are going to use
-    const AnimationConfig animConfig =
+    const AnimationPlayer* animConfig =
         globals::ANIMATION_MANAGER->getConfig(animHandle);
-    int jointCount = animConfig.m_skeleton->m_jointCount;
-    BufferHandle matricesHandle = globals::BUFFER_MANAGER->allocateUpload(
+    const uint32_t jointCount = animConfig->getJointCount();
+    const BufferHandle matricesHandle = globals::BUFFER_MANAGER->allocateUpload(
         jointCount * sizeof(float) * 16, "");
 
     uint32_t index;
@@ -75,21 +76,27 @@ SkinClusterManager::loadSkinCluster(const char *path,
 }
 
 void SkinClusterManager::uploadDirtyMatrices() {
-  for (const std::pair<std::string, SkinHandle> &element : m_nameToHandle) {
-    const SkinHandle handle = element.second;
+
+  // TODO why the heck I am using a string here? investigate hopefully remove
+  // for a simple array?
+  std::unordered_map<std::string, SkinHandle>::iterator it =
+      m_nameToHandle.begin();
+  while (it != m_nameToHandle.end()) {
+    const SkinHandle handle = it->second;
     const int index = getIndexFromHandle(handle);
     const SkinData &data = m_skinPool.getConstRef(index);
 
     void *mappedData = dx12::BUFFER_MANAGER->getMappedData(data.matricesBuffer);
     assert(mappedData != nullptr);
 
-    const AnimationConfig animConfig =
+    const AnimationPlayer* animConfig =
         globals::ANIMATION_MANAGER->getConfig(data.animHandle);
     const DirectX::XMMATRIX *matricesDataToCopy =
-        animConfig.m_anim_state->m_pose->m_globalPose;
-    const uint32_t jointCount =
-        animConfig.m_anim_state->m_pose->m_skeleton->m_jointCount;
+        animConfig->getOutPose()->m_globalPose;
+
+    const uint32_t jointCount = animConfig->getJointCount();
     memcpy(mappedData, matricesDataToCopy, jointCount * sizeof(float) * 16);
+    ++it;
   }
 }
 } // namespace SirEngine

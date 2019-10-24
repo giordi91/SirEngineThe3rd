@@ -38,6 +38,7 @@ bool AssetManager::initialize() {
 IdentityHandle AssetManager::loadAsset(const char *path) {
   auto jobj = getJsonObj(path);
 
+  const std::string  assetName = getFileName(path);
   // now that we have the asset we can check that the sub asset is present
 
   assert(jobj.find(AssetManagerKeys::SUB_ASSETS_KEY) != jobj.end());
@@ -69,7 +70,7 @@ IdentityHandle AssetManager::loadAsset(const char *path) {
     AnimationConfigHandle animHandle{0};
     if (!animConfigPath.empty()) {
       animHandle = globals::ANIMATION_MANAGER->loadAnimationConfig(
-          animConfigPath.c_str());
+          animConfigPath.c_str(), assetName.c_str());
     }
 
     // load skin if present

@@ -51,7 +51,7 @@ private:
   float previousY = 0;
 
   // TODO temp
-  AnimationConfig m_config;
+  //AnimationConfig m_config;
   DebugDrawHandle m_animHandle{};
   GraphAllocators *alloc;
 };

@@ -92,14 +92,12 @@ TEST_CASE("animation key 1 read", "[animation]") {
   compileAnim("../testData/idle1.json", "../testData/idle1.clip");
 
   // now we can read it
-  SirEngine::AnimationConfigHandle config =
-      animManager.loadAnimationConfig("../testData/idle1Config.json");
   SirEngine::AnimationClip *clip =
-      animManager.loadAnimationClip("../testData/idle1.clip");
+      animManager.loadAnimationClip("idle1","../testData/idle1.clip");
 
   REQUIRE(clip->m_metadataCount == 238 );
-  REQUIRE(clip->findFirstMetadataFrame(SirEngine::ANIM_CLILP_KEYWORDS::L_FOOT_DOWN) == 1 );
-  REQUIRE(clip->findFirstMetadataFrame(SirEngine::ANIM_CLILP_KEYWORDS::R_FOOT_DOWN) == 1 );
+  REQUIRE(clip->findFirstMetadataFrame(SirEngine::ANIM_CLIP_KEYWORDS::L_FOOT_DOWN) == 1 );
+  REQUIRE(clip->findFirstMetadataFrame(SirEngine::ANIM_CLIP_KEYWORDS::R_FOOT_DOWN) == 1 );
 
 
   SirEngine::Log::free();
@@ -126,14 +124,12 @@ TEST_CASE("animation key 2 read", "[animation]") {
   compileAnim("../testData/idle2.json", "../testData/idle2.clip");
 
   // now we can read it
-  SirEngine::AnimationConfigHandle config =
-      animManager.loadAnimationConfig("../testData/idle1Config.json");
   SirEngine::AnimationClip *clip =
-      animManager.loadAnimationClip("../testData/idle2.clip");
+      animManager.loadAnimationClip("idle2","../testData/idle2.clip");
 
   REQUIRE(clip->m_metadataCount == 3 );
-  REQUIRE(clip->findFirstMetadataFrame(SirEngine::ANIM_CLILP_KEYWORDS::L_FOOT_DOWN) == 30 );
-  REQUIRE(clip->findFirstMetadataFrame(SirEngine::ANIM_CLILP_KEYWORDS::R_FOOT_DOWN) == 10 );
+  REQUIRE(clip->findFirstMetadataFrame(SirEngine::ANIM_CLIP_KEYWORDS::L_FOOT_DOWN) == 30 );
+  REQUIRE(clip->findFirstMetadataFrame(SirEngine::ANIM_CLIP_KEYWORDS::R_FOOT_DOWN) == 10 );
 
 
   SirEngine::Log::free();
