@@ -51,21 +51,9 @@ void AnimationLoopPlayer::init(AnimationManager *manager,
   assert(skeleton != nullptr);
 
   // allocating named pose
-  outPose = manager->getSkeletonPose(skeleton);
+  m_outPose = manager->getSkeletonPose(skeleton);
   m_globalStartStamp = manager->getAnimClock().getTicks();
-
-  // allocating anim state;
-  // auto *animState = new AnimState();
-  // animState->m_name = clip->m_name;
-  // animState->m_clip = clip;
-  // animState->m_pose = namedPose;
-  // animState->m_multiplier = 1.0f;
-  // animState->m_loop = true,
-  // AnimationConfig config{clip, skeleton, animState};
-  // AnimationConfigHandle handle{configIndex++};
-  // m_handleToConfig.insert(handle.handle, config);
-  // m_nameToConfigHandle.insert(configName.c_str(), handle);
-  // return handle;
+  m_flags = ANIM_FLAGS::READY;
 }
 
 inline DirectX::XMFLOAT3 lerp3(const DirectX::XMFLOAT3 &v1,
@@ -113,7 +101,7 @@ void AnimationLoopPlayer::evaluate(long long stampNS) {
   const float interpolationValue = (framesElapsedF - float(framesElapsed));
 
   //#pragma omp parallel for
-  for (unsigned int i = 0; i < outPose->m_skeleton->m_jointCount; ++i) {
+  for (unsigned int i = 0; i < m_outPose->m_skeleton->m_jointCount; ++i) {
     // interpolating all the bones in local space
     auto &jointStart = startP[i];
     auto &jointEnd = endP[i];
@@ -126,13 +114,13 @@ void AnimationLoopPlayer::evaluate(long long stampNS) {
     const DirectX::XMFLOAT3 pos =
         lerp3(jointStart.m_trans, jointEnd.m_trans, interpolationValue);
     // the compiler should be able to optimize out this copy
-    outPose->m_localPose[i].m_rot = rot;
-    outPose->m_localPose[i].m_trans = pos;
+    m_outPose->m_localPose[i].m_rot = rot;
+    m_outPose->m_localPose[i].m_trans = pos;
   }
   // now that the anim has been blended I will compute the
   // matrices in world-space (skin ready)
-  outPose->updateGlobalFromLocal();
-  //m_flags = ANIM_FLAGS::NEW_MATRICES;
+  m_outPose->updateGlobalFromLocal();
+  m_flags = ANIM_FLAGS::NEW_MATRICES;
 }
 
 uint32_t AnimationLoopPlayer::getJointCount() const {

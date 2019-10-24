@@ -7,9 +7,6 @@
 
 namespace SirEngine {
 
-// initializing the constants
-const float AnimState::NANO_TO_SECONDS = float(1e-9);
-
 AnimationClip::~AnimationClip() {
   globals::PERSISTENT_ALLOCATOR->free(m_poses);
 }
@@ -49,7 +46,7 @@ bool AnimationClip::initialize(const char *path) {
 }
 
 
-int AnimationClip::findFirstMetadataFrame(const ANIM_CLIP_KEYWORDS flag)
+int AnimationClip::findFirstMetadataFrame(const ANIM_CLIP_KEYWORDS flag) const
 {
 	//super simple linear search
 	for(int i =0; i < m_metadataCount;++i) {
@@ -68,62 +65,6 @@ inline DirectX::XMFLOAT3 lerp3(const DirectX::XMFLOAT3 &v1,
       ((1.0f - amount) * v1.y) + (amount * v2.y),
       ((1.0f - amount) * v1.z) + (amount * v2.z),
   };
-}
-void AnimState::updateGlobalByAnim(const long long stampNS) {
-  assert(m_clip != nullptr);
-  assert(stampNS >= 0);
-
-  // we convert to seconds, since we need to count how many frames
-  // passed and that is expressed in seconds
-  const float speedTimeMultiplier = NANO_TO_SECONDS * m_multiplier;
-  const float delta = (stampNS - m_globalStartStamp) * speedTimeMultiplier;
-  // dividing the time elapsed since we started playing animation
-  // and divide by the frame-rate so we know how many frames we played so far
-  const float framesElapsedF = delta / (m_clip->m_frameRate);
-  const int framesElapsed = static_cast<int>(floor(framesElapsedF));
-  // converting the frames in loop
-  const int startIdx = framesElapsed % m_clip->m_frameCount;
-
-  // convert counter to idx
-  // we find the two frames we need to interpoalte to
-  int endIdx = startIdx + 1;
-  const int endRange = m_clip->m_frameCount - 1;
-  // if the end frame is out of the range it means needs to loop around
-  if (endIdx > endRange) {
-    endIdx = 0;
-  }
-
-  // extracting the two poses
-  const JointPose *startP =
-      m_clip->m_poses + (startIdx * m_clip->m_bonesPerFrame);
-  const JointPose *endP = m_clip->m_poses + (endIdx * m_clip->m_bonesPerFrame);
-  // here we find how much in the frame we are, we do that
-  // by subtracting the frames elapsed in flaot minues the floored
-  // value basically leaving us only with the decimal part as
-  // it was a modf
-  const float interpolationValue = (framesElapsedF - float(framesElapsed));
-
-  //#pragma omp parallel for
-  for (unsigned int i = 0; i < m_pose->m_skeleton->m_jointCount; ++i) {
-    // interpolating all the bones in local space
-    auto &jointStart = startP[i];
-    auto &jointEnd = endP[i];
-
-    // we slerp the rotation and linearlly interpolate the
-    // translation
-    const DirectX::XMVECTOR rot = DirectX::XMQuaternionSlerp(
-        jointStart.m_rot, jointEnd.m_rot, interpolationValue);
-
-    const DirectX::XMFLOAT3 pos =
-        lerp3(jointStart.m_trans, jointEnd.m_trans, interpolationValue);
-    // the compiler should be able to optimize out this copy
-    m_pose->m_localPose[i].m_rot = rot;
-    m_pose->m_localPose[i].m_trans = pos;
-  }
-  // now that the anim has been blended I will compute the
-  // matrices in world-space (skin ready)
-  m_pose->updateGlobalFromLocal();
-  m_flags = ANIM_FLAGS::NEW_MATRICES;
 }
 
 } // namespace SirEngine

@@ -12,6 +12,7 @@
 #include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/TextureManagerDx12.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
+#include "SirEngine/animation/animationPlayer.h"
 
 namespace SirEngine::dx12 {
 void DebugRenderer::init() {
@@ -322,12 +323,12 @@ DebugDrawHandle DebugRenderer::drawSkeleton(Skeleton *skeleton,
 }
 
 DebugDrawHandle DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
-                                                    AnimState *state,
+                                                    AnimationPlayer*state,
                                                     DirectX::XMFLOAT4 color,
                                                     float pointSize) {
 
-  const DirectX::XMMATRIX* pose = state->m_pose->m_worldMat;
-  const int jointCount = state->m_pose->m_skeleton->m_jointCount;
+  const DirectX::XMMATRIX* pose = state->getOutPose()->m_worldMat;
+  const int jointCount = state->getOutPose()->m_skeleton->m_jointCount;
 
   auto *points =
       reinterpret_cast<DirectX::XMFLOAT3 *>(globals::FRAME_ALLOCATOR->allocate(
@@ -347,7 +348,7 @@ DebugDrawHandle DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
     points[i] =
         DirectX::XMFLOAT3{pos.m128_f32[0], pos.m128_f32[1], pos.m128_f32[2]};
 
-    const int parentId = state->m_pose->m_skeleton->m_parentIds[i];
+    const int parentId = state->getOutPose()->m_skeleton->m_parentIds[i];
     if (parentId != -1) {
       // here we add a line from the parent to the children, might do a more
       // elaborate joint drawing one day
@@ -397,11 +398,11 @@ DebugDrawHandle DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
   } else {
     DebugDrawHandle pointsHandle = drawPointsUniformColor(
         &points[0].x, jointCount * sizeof(DirectX::XMFLOAT3), color, pointSize,
-        state->m_pose->m_skeleton->m_name);
+        state->getOutPose()->m_skeleton->m_name);
 
     DebugDrawHandle linesHandle = drawLinesUniformColor(
         &lines[0].x, lineCounter * sizeof(DirectX::XMFLOAT3), color, pointSize,
-        state->m_pose->m_skeleton->m_name);
+        state->getOutPose()->m_skeleton->m_name);
 
     // lets prepare the compound handle
     // there are two items only lines and points and the points is the first
