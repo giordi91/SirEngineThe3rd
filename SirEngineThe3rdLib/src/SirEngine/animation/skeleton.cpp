@@ -69,9 +69,9 @@ void SkeletonPose::updateGlobalFromLocal() {
   // only
   // TODO maybe remove glm or do the computation manually so to avoid
   // intermediate copies and conversions between data-types etc
-  DirectX::XMVECTOR &r = m_localPose[0].m_rot;
+  const DirectX::XMVECTOR &r = m_localPose[0].m_rot;
   DirectX::XMMATRIX qM = DirectX::XMMatrixRotationQuaternion(r);
-  // auto qM = glm::toMat4(r);
+  //patching the rotation in
   qM.r[3] = expandF3ToVec(m_localPose[0].m_trans);
 
   m_worldMat[0] = qM;
@@ -82,12 +82,12 @@ void SkeletonPose::updateGlobalFromLocal() {
 
     // here just getting a reference to avoid to nest too much
     // the compiler should optimize that away
-    DirectX::XMVECTOR &rr = m_localPose[i].m_rot;
-    qM = DirectX::XMMatrixRotationQuaternion(rr);
+    const DirectX::XMVECTOR &rr = m_localPose[i].m_rot;
+    DirectX::XMMATRIX qM2 = DirectX::XMMatrixRotationQuaternion(rr);
     // setting the translation
-    qM.r[3] = expandF3ToVec(m_localPose[i].m_trans);
+    qM2.r[3] = expandF3ToVec(m_localPose[i].m_trans);
     // here I compute the global pose so this is the world matrix
-    m_worldMat[i] = DirectX::XMMatrixMultiply(qM, m_worldMat[idx]);
+    m_worldMat[i] = DirectX::XMMatrixMultiply(qM2, m_worldMat[idx]);
     // in the global pose I will store the matrix ready for vertex
     // transformation
     m_globalPose[i] = DirectX::XMMatrixTranspose(DirectX::XMMatrixMultiply(
