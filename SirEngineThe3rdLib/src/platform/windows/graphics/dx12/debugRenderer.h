@@ -9,7 +9,8 @@ namespace SirEngine {
 
 // forward declare
 struct Skeleton;
-struct AnimState;
+class AnimationPlayer;
+
 namespace dx12 {
 
 enum PRIMITIVE_TYPE { TRIANGLE, LINE, POINT };
@@ -60,7 +61,8 @@ public:
                                         const char *debugName);
   DebugDrawHandle drawSkeleton(Skeleton *skeleton, DirectX::XMFLOAT4 color,
                                float pointSize);
-  DebugDrawHandle drawAnimatedSkeleton(DebugDrawHandle handle, AnimState *state,
+  DebugDrawHandle drawAnimatedSkeleton(DebugDrawHandle handle,
+                                       AnimationPlayer *state,
                                        DirectX::XMFLOAT4 color,
                                        float pointSize);
 

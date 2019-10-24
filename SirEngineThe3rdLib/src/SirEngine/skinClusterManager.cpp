@@ -89,13 +89,14 @@ void SkinClusterManager::uploadDirtyMatrices() {
     void *mappedData = dx12::BUFFER_MANAGER->getMappedData(data.matricesBuffer);
     assert(mappedData != nullptr);
 
-    const AnimationPlayer* animConfig =
+    AnimationPlayer* animConfig =
         globals::ANIMATION_MANAGER->getConfig(data.animHandle);
     const DirectX::XMMATRIX *matricesDataToCopy =
         animConfig->getOutPose()->m_globalPose;
 
     const uint32_t jointCount = animConfig->getJointCount();
     memcpy(mappedData, matricesDataToCopy, jointCount * sizeof(float) * 16);
+	animConfig->setFlags(ANIM_FLAGS::READY);
     ++it;
   }
 }

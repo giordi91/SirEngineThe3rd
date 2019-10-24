@@ -66,7 +66,7 @@ public:
     return player;
   }
 
-  // Returns a block of memory that will be used to store the evluated
+  // Returns a block of memory that will be used to store the evaluated
   // pose for the given animation, enough memory is allocated to fit the
   // given skeleton
   SkeletonPose *getSkeletonPose(const Skeleton *skeleton) const;
@@ -85,6 +85,9 @@ public:
     const bool found = m_keywordRegisterMap.get(key, value);
     return found ? value : -1;
   }
+  [[nodiscard]] Skeleton *loadSkeleton(const char *name, const char *path);
+
+private:
   inline AnimationClip *getCachedAnimationClip(const char *name) const {
     AnimationClip *clip = nullptr;
     const auto found = m_animationClipCache.get(name, clip);
@@ -96,7 +99,6 @@ public:
     const auto found = m_skeletonCache.get(name, skeleton);
     return found ? skeleton : nullptr;
   };
-  [[nodiscard]] Skeleton *loadSkeleton(const char *name, const char *path);
 
 private:
   typedef uint64_t string64;
