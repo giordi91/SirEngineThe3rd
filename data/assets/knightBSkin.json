@@ -4,55 +4,55 @@
       "mesh": "../data/processed/meshes/knightB/jacket.model",
       "material": "../data/materials/knightBJacketSkin.json",
       "skin": "../data/processed/meshes/knightB/jacket.skin",
-      "animConfig": "../data/external/animation/exported/clip/knightBWalkConfig.json"
+      "animConfig": "../data/external/animation/exported/clip/knightBLuaStateConfig.json"
     },  
     {
       "mesh": "../data/processed/meshes/knightB/pants.model",
       "material": "../data/materials/knightBPantsSkin.json",
       "skin": "../data/processed/meshes/knightB/pants.skin",
-      "animConfig": "../data/external/animation/exported/clip/knightBWalkConfig.json"
+      "animConfig": "../data/external/animation/exported/clip/knightBLuaStateConfig.json"
     },  
     {
       "mesh": "../data/processed/meshes/knightB/belt.model",
       "material": "../data/materials/knightBBeltSkin.json",
       "skin": "../data/processed/meshes/knightB/belt.skin",
-      "animConfig": "../data/external/animation/exported/clip/knightBWalkConfig.json"
+      "animConfig": "../data/external/animation/exported/clip/knightBLuaStateConfig.json"
     },  
     {
       "mesh": "../data/processed/meshes/knightB/plates.model",
       "material": "../data/materials/knightBPlatesSkin.json",
       "skin": "../data/processed/meshes/knightB/plates.skin",
-      "animConfig": "../data/external/animation/exported/clip/knightBWalkConfig.json"
+      "animConfig": "../data/external/animation/exported/clip/knightBLuaStateConfig.json"
     },  
     {
       "mesh": "../data/processed/meshes/knightB/face.model",
       "material": "../data/materials/knightBFaceSkin.json",
       "skin": "../data/processed/meshes/knightB/face.skin",
-      "animConfig": "../data/external/animation/exported/clip/knightBWalkConfig.json"
+      "animConfig": "../data/external/animation/exported/clip/knightBLuaStateConfig.json"
     },  
     {
       "mesh": "../data/processed/meshes/knightB/face.model",
       "material": "../data/materials/knightBFaceSkin.json",
       "skin": "../data/processed/meshes/knightB/face.skin",
-      "animConfig": "../data/external/animation/exported/clip/knightBWalkConfig.json"
+      "animConfig": "../data/external/animation/exported/clip/knightBLuaStateConfig.json"
     },  
     {
       "mesh": "../data/processed/meshes/knightB/eyeNew.model",
       "material": "../data/materials/eyeMaterialSkin.json",
       "skin": "../data/processed/meshes/knightB/eyeNew.skin",
-      "animConfig": "../data/external/animation/exported/clip/knightBWalkConfig.json"
+      "animConfig": "../data/external/animation/exported/clip/knightBLuaStateConfig.json"
     },
     {
       "mesh": "../data/processed/meshes/knightB/eyeLashes.model",
       "material": "../data/materials/knightBEyeLashesMaterialSkin.json",
       "skin": "../data/processed/meshes/knightB/eyeLashes.skin",
-      "animConfig": "../data/external/animation/exported/clip/knightBWalkConfig.json"
+      "animConfig": "../data/external/animation/exported/clip/knightBLuaStateConfig.json"
     },
     {
       "mesh": "../data/processed/meshes/knightB/hair.model",
       "material": "../data/materials/knightBHairMaterialSkin.json",
       "skin": "../data/processed/meshes/knightB/hair.skin",
-      "animConfig": "../data/external/animation/exported/clip/knightBWalkConfig.json"
+      "animConfig": "../data/external/animation/exported/clip/knightBLuaStateConfig.json"
     }
 
 

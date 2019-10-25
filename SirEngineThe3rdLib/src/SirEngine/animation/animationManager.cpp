@@ -6,6 +6,7 @@
 #include "SirEngine/animation/animationClip.h"
 #include "SirEngine/animation/animationLoopPlayer.h"
 #include "SirEngine/animation/skeleton.h"
+#include "luaStatePlayer.h"
 
 #include <string>
 
@@ -16,11 +17,18 @@ static const std::string ASSET_NAME_KEY = "assetName";
 static const std::string ANIMATION_CLIP_KEY = "animationClip";
 static const std::string ANIMATION_CONFIG_TYPE_SIMPLE_LOOP =
     "animationLoopPlayer";
+static const std::string ANIMATION_CONFIG_TYPE_LUA_STATE = "luaStatePlayer";
 static const std::string ANIMATION_CONFIG_NAME_KEY = "name";
 
 AnimationPlayer *loadAnimationLoopPlayer(AnimationManager *manager,
                                          nlohmann::json &jObj) {
   auto *loop = new AnimationLoopPlayer();
+  loop->init(manager, jObj);
+  return loop;
+}
+AnimationPlayer *loadLuaStatePlayer(AnimationManager *manager,
+                                    nlohmann::json &jObj) {
+  auto *loop = new LuaStatePlayer();
   loop->init(manager, jObj);
   return loop;
 }
@@ -31,7 +39,6 @@ AnimationManager::loadAnimationConfig(const char *path, const char *assetName) {
   AnimationConfigHandle earlyHandle{};
   const bool alreadyLoaded = m_nameToConfigHandle.get(assetName, earlyHandle);
   if (alreadyLoaded) {
-    std::cout << "hitting the cache" << std::endl;
     return earlyHandle;
   }
 
@@ -46,6 +53,8 @@ AnimationManager::loadAnimationConfig(const char *path, const char *assetName) {
   // to allow user defined loaders for new types etc
   if (type == ANIMATION_CONFIG_TYPE_SIMPLE_LOOP) {
     player = loadAnimationLoopPlayer(this, configJson);
+  } else if (type == ANIMATION_CONFIG_TYPE_LUA_STATE) {
+    player = loadLuaStatePlayer(this, configJson);
   } else {
     assert(0 && "uknown animation player type");
   }

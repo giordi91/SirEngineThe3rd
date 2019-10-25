@@ -51,7 +51,7 @@ public:
   // or the full path to the json to load
   AnimationConfigHandle loadAnimationConfig(const char *path,
                                             const char *assetName);
-  [[nodiscard]] AnimationClip *loadAnimationClip(const char *name,
+  AnimationClip *loadAnimationClip(const char *name,
                                                  const char *path);
   void init();
 

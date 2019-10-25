@@ -47,10 +47,18 @@ public:
   void reloadContext(const char *offsetPath = "../../");
   // void runAnimScripts() const;
   void runScriptSlot(SCRIPT_CALLBACK_SLOT slot) const;
-  void executeFromHandle(ScriptHandle handle) const;
+  void executeFromHandle(const ScriptHandle handle, int nargs = 0,
+                         int nreturn = 0) const;
+  const ScriptData &getScriptDataFromHandle(const ScriptHandle handle) const {
+    assert(handle.isHandleValid());
+    const int id = getIndexFromHandle(handle);
+    return m_userLoadedScripts[id];
+  }
 
   ScriptingContext(const ScriptingContext &) = delete;
   ScriptingContext &operator=(const ScriptingContext &) = delete;
+
+  inline lua_State *getContext() const { return m_state; }
 
 private:
   void loadAllInternalScripts();
