@@ -25,11 +25,14 @@ public:
   void evaluate(long long stampNS) override;
   uint32_t getJointCount() const override;
 
+  void evaluateAnim(const char *animation, long long stampNS); 
+
 private:
   Skeleton *skeleton;
   float m_multiplier = 1.0f;
   ScriptHandle stateMachine;
   const char* currentState ="";
+  const char* currentAnim="";
 };
 
 } // namespace SirEngine

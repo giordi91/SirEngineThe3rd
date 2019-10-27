@@ -5,6 +5,7 @@
 #include "SirEngine/log.h"
 #include "SirEngine/runtimeString.h"
 #include "SirEngine/scripting/scriptingContext.h"
+#include "SirEngine/animation/animationClip.h"
 
 extern "C" {
 #include <lua/lua.h>
@@ -71,15 +72,36 @@ void LuaStatePlayer::init(AnimationManager *manager,
   }
 
   // start state
-  const std::string startState =
-      getValueIfInJson(configJson, START_STATE_KEY, empty);
-  assert(!startState.empty());
-  currentState = persistentString(startState.c_str());
+  // const std::string startState =
+  //    getValueIfInJson(configJson, START_STATE_KEY, empty);
+  // assert(!startState.empty());
+  // currentState = persistentString(startState.c_str());
 
   // allocating named pose
   m_outPose = manager->getSkeletonPose(skeleton);
   m_globalStartStamp = manager->getAnimClock().getTicks();
   m_flags = ANIM_FLAGS::READY;
+
+  // execute the start of the state machine
+  const ScriptData &data =
+      globals::SCRIPTING_CONTEXT->getScriptDataFromHandle(stateMachine);
+  lua_State *state = globals::SCRIPTING_CONTEXT->getContext();
+  lua_getglobal(state, "start");
+
+  const int status = lua_pcall(state, 0, 2, 0);
+  if (status != LUA_OK) {
+    const char *message = lua_tostring(state, -1);
+    SE_CORE_ERROR(message);
+    lua_pop(state, 1);
+    assert(0);
+  }
+  int x = 0;
+  const char *newState = lua_tostring(state, -2);
+  assert(newState != nullptr);
+  currentState = persistentString(newState);
+  const char *currentAnimStr = lua_tostring(state, -1);
+  assert(currentAnimStr != nullptr);
+  currentAnim = persistentString(currentAnimStr);
 }
 
 inline DirectX::XMFLOAT3 lerp3(const DirectX::XMFLOAT3 &v1,
@@ -98,7 +120,7 @@ void LuaStatePlayer::evaluate(long long stampNS) {
   lua_State *state = globals::SCRIPTING_CONTEXT->getContext();
   lua_getglobal(state, "evaluate");
   lua_pushstring(state, currentState);
-  const int status = lua_pcall(state, 1, 1, 0);
+  const int status = lua_pcall(state, 1, 4, 0);
   if (status != LUA_OK) {
     const char *message = lua_tostring(state, -1);
     SE_CORE_ERROR(message);
@@ -106,9 +128,38 @@ void LuaStatePlayer::evaluate(long long stampNS) {
     assert(0);
   }
   int x = 0;
-  currentState = lua_tostring(state,-1); 
-  /*
-  assert(m_clip != nullptr);
+  const char *newState = lua_tostring(state, -4);
+  // the method among other param returns a state, if the state changed from the
+  // one we passed in, it means we also got enough data to perform a transition,
+  // (the other arguments
+  // return args are:
+  //- new state, string: the state the state machine is in
+  //- current animation clip: string,
+  //- transition to animation clip, string
+  //- transition key: string, which key we want to use for the transition
+  bool shouldParseArguments = strcmp(newState, currentState) != 0;
+  if (shouldParseArguments) {
+    // also mean we took a transition to a new state
+    const char *sourceAnim = lua_tostring(state, -3);
+    const char *targetAnim = lua_tostring(state, -2);
+    const char *transitionKey = lua_tostring(state, -1);
+    // SE_CORE_INFO("New target state: {0},{1},{2},{3}", newState, sourceAnim,
+    //            targetAnim, transitionKey);
+    stringFree(currentState);
+    stringFree(currentAnim);
+    currentState = persistentString(newState);
+	currentAnim = persistentString(targetAnim);
+  }
+
+  // lets evaluate the animation
+  evaluateAnim(currentAnim,stampNS);
+}
+
+void LuaStatePlayer::evaluateAnim(const char *animation, long long stampNS) {
+
+  //need to fetch the clip!
+  auto* m_clip = globals::ANIMATION_MANAGER->getAnimationClipByName(animation);
+  //assert(m_clip != nullptr);
   assert(stampNS >= 0);
   float NANO_TO_SECONDS = float(1e-9);
 
@@ -124,7 +175,7 @@ void LuaStatePlayer::evaluate(long long stampNS) {
   const int startIdx = framesElapsed % m_clip->m_frameCount;
 
   // convert counter to idx
-  // we find the two frames we need to interpoalte to
+  // we find the two frames we need to interpolate to
   int endIdx = startIdx + 1;
   const int endRange = m_clip->m_frameCount - 1;
   // if the end frame is out of the range it means needs to loop around
@@ -163,7 +214,6 @@ void LuaStatePlayer::evaluate(long long stampNS) {
   // matrices in world-space (skin ready)
   m_outPose->updateGlobalFromLocal();
   m_flags = ANIM_FLAGS::NEW_MATRICES;
-  */
 }
 
 uint32_t LuaStatePlayer::getJointCount() const {

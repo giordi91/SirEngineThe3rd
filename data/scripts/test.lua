@@ -3,7 +3,7 @@ package.path = package.path .. ";../data/scripts/?.lua"
 local scriptingCore = require("scriptingCore")
 
 function spinCameraFunc()
-	rotateMainCameraY(0.0015);
+	rotateMainCameraY(0.00001);
 end
 
 function register()
