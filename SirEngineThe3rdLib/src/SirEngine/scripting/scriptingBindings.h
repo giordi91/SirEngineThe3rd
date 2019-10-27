@@ -3,6 +3,6 @@
 namespace SirEngine
 {
 	class ScriptingContext;
-	void registerBuildInFunctions(ScriptingContext* ctx,bool verbose);
+	void registerBuiltInFunctions(ScriptingContext* ctx,bool verbose);
 	
 }

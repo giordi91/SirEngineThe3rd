@@ -51,8 +51,7 @@ public:
   // or the full path to the json to load
   AnimationConfigHandle loadAnimationConfig(const char *path,
                                             const char *assetName);
-  AnimationClip *loadAnimationClip(const char *name,
-                                                 const char *path);
+  AnimationClip *loadAnimationClip(const char *name, const char *path);
   void init();
 
   const ResizableVector<AnimationPlayer *> &getAnimStates() const {
@@ -86,6 +85,13 @@ public:
     return found ? value : -1;
   }
   [[nodiscard]] Skeleton *loadSkeleton(const char *name, const char *path);
+
+  inline const AnimationClip *getAnimationClipByName(const char *name) const {
+    AnimationClip *clip;
+    const bool found = m_animationClipCache.get(name, clip);
+    assert(found);
+    return clip;
+  }
 
 private:
   inline AnimationClip *getCachedAnimationClip(const char *name) const {

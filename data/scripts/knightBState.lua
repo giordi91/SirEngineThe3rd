@@ -1,17 +1,22 @@
 package.path = package.path .. ";../data/scripts/?.lua"
 
---local scriptingCore = require("scriptingCore")
-
-
 -- transition functions
 function idleToWalk()
-	print("lets go walking!");
-	return true;
+    spaceButton = 32;
+	if inputButtonWentDownThisFrame(spaceButton) == true then
+		print("lets go walking!");
+		return true;
+	end
+	return false;
 end
 
 function walkToIdle()
-	print("lets go idle");
-	return true;
+    spaceButton = 32;
+	if inputButtonWentDownThisFrame(spaceButton) == true then
+		print("lets go idle");
+		return true;
+	end
+	return false;
 end
 
 
@@ -25,30 +30,36 @@ states = {
 -- transitions
 transitions = {
 				-- idle transitions
-				idle = {{targetState="walk", delayInSeconds = 1, logic = idleToWalk}},
+				idle = {{targetState="walk", transitionKey="L_foot_down", delayInSeconds = 1, logic = idleToWalk }},
 				-- walk transitions
-				walk = {{targetState="idle", delayInSeconds = 1, logic = walkToIdle }},
+				walk = {{targetState="idle", transitionKey="L_foot_down", delayInSeconds = 1, logic = walkToIdle }},
 			  },
 }
 
 function evaluate(currentState)
 	-- lets get the current state
-	state = stateMachine.states[currentState];
+	stateMap = stateMachine.states[currentState];
 	
 	-- lets get the transitions and start to iterate over them
 	transitions = stateMachine.transitions[currentState];
 	for state,transition in pairs(transitions) do
 		result = transition.logic(); 
-		print(result);
 		if result == true then
 			-- the transition was taken!! we need to perform the transition
-			return transition.targetState
-			--currentState = transition.targetState;
-			-- call some c++ code for doing the transition
+			targetState = stateMachine.states[transition.targetState]; 
+			targetAnim = targetState.animation;
+			sourceAnim = stateMap.animation; 
+			transitionKey = transition.transitionKey;
+			-- need to push the transition
+			return transition.targetState, sourceAnim,targetAnim,transitionKey;
 		end
 	end
-	return currentState 
+	return currentState,nil,nil,nil;
 end
 
-
---return evaluate(currentState);
+-- returns the starting animation and state we wish to use
+function start()
+	startState = "idle";
+	stateMap = stateMachine.states[startState];
+	return startState ,stateMap.animation;
+end

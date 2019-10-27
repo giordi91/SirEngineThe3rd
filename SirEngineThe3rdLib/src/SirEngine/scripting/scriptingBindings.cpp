@@ -3,6 +3,7 @@
 #include "SirEngine/scripting/scriptingContext.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/graphics/camera.h"
+#include "SirEngine/input.h"
 
 extern "C" {
 #include <lua/lauxlib.h>
@@ -31,7 +32,35 @@ void registerFunction(ScriptingContext *ctx, const bool verbose,
   }
 }
 
-void registerBuildInFunctions(ScriptingContext *ctx, const bool verbose) {
+//expected int as input and returns bool
+int inputButtonDown(lua_State* L)
+{
+	//number of arguments
+	int n = lua_gettop(L);
+	assert(n == 1);
+	const auto buttonCode= static_cast<int>(lua_tonumber(L,1));
+	bool isDown = globals::INPUT->isKeyDown(buttonCode);
+	lua_pushboolean(L,isDown);
+	return 1;
+}
+
+int inputButtonWentDownThisFrame(lua_State* L)
+{
+	//number of arguments
+	int n = lua_gettop(L);
+	assert(n == 1);
+	const auto buttonCode= static_cast<int>(lua_tonumber(L,1));
+	bool isDown = globals::INPUT->isKeyPressedThisFrame(buttonCode);
+	lua_pushboolean(L,isDown);
+	return 1;
+
+	
+}
+
+
+void registerBuiltInFunctions(ScriptingContext *ctx, const bool verbose) {
   registerFunction(ctx, verbose, "rotateMainCameraY", rotateMainCameraY);
+  registerFunction(ctx, verbose,"inputButtonDown",inputButtonDown);
+  registerFunction(ctx, verbose,"inputButtonWentDownThisFrame",inputButtonWentDownThisFrame);
 }
 } // namespace SirEngine

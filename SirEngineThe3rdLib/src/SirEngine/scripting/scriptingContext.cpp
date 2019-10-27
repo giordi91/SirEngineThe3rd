@@ -36,7 +36,7 @@ bool ScriptingContext::init(const bool verbose) {
     SE_CORE_INFO("Initializing scripting LUA v1.0.0 based on lua 5.3.5");
   }
 
-  registerBuildInFunctions(this, verbose);
+  registerBuiltInFunctions(this, verbose);
 
   return true;
 }
