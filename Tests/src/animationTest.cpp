@@ -93,15 +93,15 @@ TEST_CASE("animation key 1 read", "[animation]") {
 
   // now we can read it
   SirEngine::AnimationClip *clip =
-      animManager.loadAnimationClip("idle1","../testData/idle1.clip");
+      animManager.loadAnimationClip("idle1", "../testData/idle1.clip");
 
-  REQUIRE(clip->m_metadataCount == 238 );
-  REQUIRE(clip->findFirstMetadataFrame(SirEngine::ANIM_CLIP_KEYWORDS::L_FOOT_DOWN) == 1 );
-  REQUIRE(clip->findFirstMetadataFrame(SirEngine::ANIM_CLIP_KEYWORDS::R_FOOT_DOWN) == 1 );
-
+  REQUIRE(clip->m_metadataCount == 238);
+  REQUIRE(clip->findFirstMetadataFrame(
+              SirEngine::ANIM_CLIP_KEYWORDS::L_FOOT_DOWN) == 1);
+  REQUIRE(clip->findFirstMetadataFrame(
+              SirEngine::ANIM_CLIP_KEYWORDS::R_FOOT_DOWN) == 1);
 
   SirEngine::Log::free();
-
 }
 TEST_CASE("animation key 2 read", "[animation]") {
 
@@ -125,13 +125,59 @@ TEST_CASE("animation key 2 read", "[animation]") {
 
   // now we can read it
   SirEngine::AnimationClip *clip =
-      animManager.loadAnimationClip("idle2","../testData/idle2.clip");
+      animManager.loadAnimationClip("idle2", "../testData/idle2.clip");
 
-  REQUIRE(clip->m_metadataCount == 3 );
-  REQUIRE(clip->findFirstMetadataFrame(SirEngine::ANIM_CLIP_KEYWORDS::L_FOOT_DOWN) == 30 );
-  REQUIRE(clip->findFirstMetadataFrame(SirEngine::ANIM_CLIP_KEYWORDS::R_FOOT_DOWN) == 10 );
-
+  REQUIRE(clip->m_metadataCount == 3);
+  REQUIRE(clip->findFirstMetadataFrame(
+              SirEngine::ANIM_CLIP_KEYWORDS::L_FOOT_DOWN) == 30);
+  REQUIRE(clip->findFirstMetadataFrame(
+              SirEngine::ANIM_CLIP_KEYWORDS::R_FOOT_DOWN) == 10);
 
   SirEngine::Log::free();
+}
 
+TEST_CASE("animation key 2 read from frame", "[animation]") {
+  // initialize memory pools and loggers
+  SirEngine::StringPool stringPool(1024 * 1024 * 10);
+  SirEngine::globals::STRING_POOL = &stringPool;
+  SirEngine::Log::init();
+  SirEngine::ThreeSizesPool pool(1024 * 1024 * 10);
+  SirEngine::globals::PERSISTENT_ALLOCATOR = &pool;
+
+  SirEngine::AnimationManager animManager;
+  animManager.init();
+  SirEngine::globals::ANIMATION_MANAGER = &animManager;
+
+  PluginRegistry::init();
+  PluginRegistry *registry = PluginRegistry::getInstance();
+  registry->loadPluginsInFolder("plugins");
+  // compiling animation clip on the fly, then we read it back as the engine
+  // would
+  compileAnim("../testData/idle2.json", "../testData/idle2.clip");
+
+  // now we can read it
+  SirEngine::AnimationClip *clip =
+      animManager.loadAnimationClip("idle2", "../testData/idle2.clip");
+
+  REQUIRE(clip->m_metadataCount == 3);
+  int resultFrame = clip->findMetadataFrameFromGivenFrame(
+      SirEngine::ANIM_CLIP_KEYWORDS::R_FOOT_DOWN, 20);
+  REQUIRE(resultFrame == 60);
+  resultFrame = clip->findMetadataFrameFromGivenFrame(
+      SirEngine::ANIM_CLIP_KEYWORDS::L_FOOT_DOWN, 20);
+  REQUIRE(resultFrame == 30);
+  resultFrame = clip->findMetadataFrameFromGivenFrame(
+      SirEngine::ANIM_CLIP_KEYWORDS::R_FOOT_DOWN, 9);
+  REQUIRE(resultFrame == 10);
+  resultFrame = clip->findMetadataFrameFromGivenFrame(
+      SirEngine::ANIM_CLIP_KEYWORDS::R_FOOT_DOWN, 70);
+  REQUIRE(resultFrame == -1);
+  resultFrame = clip->findMetadataFrameFromGivenFrame(
+      SirEngine::ANIM_CLIP_KEYWORDS::L_FOOT_DOWN, 35);
+  REQUIRE(resultFrame == -1);
+  resultFrame = clip->findMetadataFrameFromGivenFrame(
+      SirEngine::ANIM_CLIP_KEYWORDS::L_FOOT_DOWN, 30);
+  REQUIRE(resultFrame == 30);
+
+  SirEngine::Log::free();
 }

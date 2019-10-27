@@ -45,16 +45,32 @@ bool AnimationClip::initialize(const char *path) {
   return true;
 }
 
+int AnimationClip::findFirstMetadataFrame(const ANIM_CLIP_KEYWORDS flag) const {
+  // super simple linear search
+  for (int i = 0; i < m_metadataCount; ++i) {
+    if (m_metadata[i].m_key == flag) {
+      return m_metadata[i].m_value;
+    }
+  }
+  return -1;
+}
 
-int AnimationClip::findFirstMetadataFrame(const ANIM_CLIP_KEYWORDS flag) const
-{
-	//super simple linear search
-	for(int i =0; i < m_metadataCount;++i) {
-		if(m_metadata[i].m_key == static_cast<int>(flag)) {
-			return static_cast<int>(m_metadata[i].m_value);
-          }
-	}
-	return -1;
+int AnimationClip::findMetadataFrameFromGivenFrame(
+    const ANIM_CLIP_KEYWORDS flag, const int sourceFrame) const {
+  if (sourceFrame >= m_frameCount) {
+    return -1;
+  }
+  // super simple linear search
+  for (int i = 0; i < m_metadataCount; ++i) {
+    ANIM_CLIP_KEYWORDS key = m_metadata[i].m_key;
+    int value = m_metadata[i].m_value;
+    bool isFlag = key == flag;
+    bool isValidFrameRange = value >= sourceFrame;
+    if (isFlag & isValidFrameRange) {
+      return m_metadata[i].m_value;
+    }
+  }
+  return -1;
 }
 
 inline DirectX::XMFLOAT3 lerp3(const DirectX::XMFLOAT3 &v1,

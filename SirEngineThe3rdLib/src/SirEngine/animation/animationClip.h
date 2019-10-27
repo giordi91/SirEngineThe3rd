@@ -7,8 +7,8 @@ namespace SirEngine {
 enum class ANIM_CLIP_KEYWORDS { L_FOOT_DOWN = 1, R_FOOT_DOWN = 2 };
 
 struct AnimationMetadataKey {
-  int m_key;
-  ANIM_CLIP_KEYWORDS m_value;
+  ANIM_CLIP_KEYWORDS m_key;
+  int m_value;
 };
 
 struct SIR_ENGINE_API AnimationClip {
@@ -17,6 +17,8 @@ struct SIR_ENGINE_API AnimationClip {
   ~AnimationClip();
   bool initialize(const char *path);
   int findFirstMetadataFrame(ANIM_CLIP_KEYWORDS flag) const;
+  int findMetadataFrameFromGivenFrame(const ANIM_CLIP_KEYWORDS flag,
+                                      const int sourceFrame) const;
 
   JointPose *m_poses = nullptr;
   const char *m_name = nullptr;
