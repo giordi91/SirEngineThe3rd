@@ -1,11 +1,11 @@
 #include "SirEngine/animation/luaStatePlayer.h"
+#include "SirEngine/animation/animationClip.h"
 #include "SirEngine/animation/animationManager.h"
 #include "SirEngine/animation/skeleton.h"
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
 #include "SirEngine/runtimeString.h"
 #include "SirEngine/scripting/scriptingContext.h"
-#include "SirEngine/animation/animationClip.h"
 
 extern "C" {
 #include <lua/lua.h>
@@ -79,6 +79,9 @@ void LuaStatePlayer::init(AnimationManager *manager,
 
   // allocating named pose
   m_outPose = manager->getSkeletonPose(skeleton);
+  // scratch memory to perform the transition
+  m_transitionSource = manager->getSkeletonPose(skeleton);
+  m_transitionDest = manager->getSkeletonPose(skeleton);
   m_globalStartStamp = manager->getAnimClock().getTicks();
   m_flags = ANIM_FLAGS::READY;
 
@@ -143,30 +146,63 @@ void LuaStatePlayer::evaluate(long long stampNS) {
     const char *sourceAnim = lua_tostring(state, -3);
     const char *targetAnim = lua_tostring(state, -2);
     const char *transitionKey = lua_tostring(state, -1);
+
+    // stringFree(currentState);
+    // currentState = persistentString(newState);
+    Transition transition;
+    transition.m_targetAnimation = persistentString(targetAnim);
+    transition.m_targetState = persistentString(newState);
+    // lets convert the transition key
+    if (strlen(transitionKey) != 0) {
+      transition.m_transitionKeyID =
+          globals::ANIMATION_MANAGER->animationKeywordNameToValue(
+              transitionKey);
+    } else {
+      transition.m_transitionKeyID = -1;
+    }
+
+    m_transitionsQueue.push(transition);
+
     // SE_CORE_INFO("New target state: {0},{1},{2},{3}", newState, sourceAnim,
     //            targetAnim, transitionKey);
-    stringFree(currentState);
-    stringFree(currentAnim);
-    currentState = persistentString(newState);
-	currentAnim = persistentString(targetAnim);
   }
 
+  // let us check if there is any transition to be done
   // lets evaluate the animation
-  evaluateAnim(currentAnim,stampNS);
+  if (m_currentTransition == nullptr && m_transitionsQueue.empty()) {
+
+    // no transition to make
+    AnimationEvalRequest eval{currentAnim, m_outPose, stampNS,
+                              m_globalStartStamp};
+    evaluateAnim(&eval);
+  } else {
+    // we do indeed need to perform a transition
+
+  	//if there is not a currently active transition we get the front of the queue
+    if (m_currentTransition == nullptr) {
+		m_currentTransition = &m_transitionsQueue.front();
+    }
+
+  	//now we have a current transition and we need to get started
+
+  	
+  }
 }
 
-void LuaStatePlayer::evaluateAnim(const char *animation, long long stampNS) {
+void LuaStatePlayer::evaluateAnim(const AnimationEvalRequest *request) {
 
-  //need to fetch the clip!
-  auto* m_clip = globals::ANIMATION_MANAGER->getAnimationClipByName(animation);
-  //assert(m_clip != nullptr);
+  // need to fetch the clip!
+  auto *m_clip =
+      globals::ANIMATION_MANAGER->getAnimationClipByName(request->m_animation);
+  // assert(m_clip != nullptr);
+  long long stampNS = request->m_stampNS;
   assert(stampNS >= 0);
   float NANO_TO_SECONDS = float(1e-9);
 
   // we convert to seconds, since we need to count how many frames
   // passed and that is expressed in seconds
   const float speedTimeMultiplier = NANO_TO_SECONDS * m_multiplier;
-  const float delta = (stampNS - m_globalStartStamp) * speedTimeMultiplier;
+  const float delta = (stampNS - request->m_originTime) * speedTimeMultiplier;
   // dividing the time elapsed since we started playing animation
   // and divide by the frame-rate so we know how many frames we played so far
   const float framesElapsedF = delta / (m_clip->m_frameRate);
@@ -194,12 +230,13 @@ void LuaStatePlayer::evaluateAnim(const char *animation, long long stampNS) {
   const float interpolationValue = (framesElapsedF - float(framesElapsed));
 
   //#pragma omp parallel for
-  for (unsigned int i = 0; i < m_outPose->m_skeleton->m_jointCount; ++i) {
+  for (unsigned int i = 0; i < request->m_destination->m_skeleton->m_jointCount;
+       ++i) {
     // interpolating all the bones in local space
     auto &jointStart = startP[i];
     auto &jointEnd = endP[i];
 
-    // we slerp the rotation and linearlly interpolate the
+    // we slerp the rotation and linearly interpolate the
     // translation
     const DirectX::XMVECTOR rot = DirectX::XMQuaternionSlerp(
         jointStart.m_rot, jointEnd.m_rot, interpolationValue);
@@ -207,12 +244,12 @@ void LuaStatePlayer::evaluateAnim(const char *animation, long long stampNS) {
     const DirectX::XMFLOAT3 pos =
         lerp3(jointStart.m_trans, jointEnd.m_trans, interpolationValue);
     // the compiler should be able to optimize out this copy
-    m_outPose->m_localPose[i].m_rot = rot;
-    m_outPose->m_localPose[i].m_trans = pos;
+    request->m_destination->m_localPose[i].m_rot = rot;
+    request->m_destination->m_localPose[i].m_trans = pos;
   }
   // now that the anim has been blended I will compute the
   // matrices in world-space (skin ready)
-  m_outPose->updateGlobalFromLocal();
+  request->m_destination->updateGlobalFromLocal();
   m_flags = ANIM_FLAGS::NEW_MATRICES;
 }
 
