@@ -4,7 +4,7 @@
 
 namespace SirEngine {
 
-enum class ANIM_CLIP_KEYWORDS { L_FOOT_DOWN = 1, R_FOOT_DOWN = 2 };
+enum class ANIM_CLIP_KEYWORDS { L_FOOT_DOWN = 1, R_FOOT_DOWN = 2, NONE };
 
 struct AnimationMetadataKey {
   ANIM_CLIP_KEYWORDS m_key;
@@ -18,7 +18,7 @@ struct SIR_ENGINE_API AnimationClip {
   bool initialize(const char *path);
   int findFirstMetadataFrame(ANIM_CLIP_KEYWORDS flag) const;
   int findMetadataFrameFromGivenFrame(const ANIM_CLIP_KEYWORDS flag,
-                                      const int sourceFrame) const;
+                                      const int sourceFrame, bool allowWrapAround =true) const;
 
   JointPose *m_poses = nullptr;
   const char *m_name = nullptr;

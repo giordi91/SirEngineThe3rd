@@ -56,11 +56,14 @@ int AnimationClip::findFirstMetadataFrame(const ANIM_CLIP_KEYWORDS flag) const {
 }
 
 int AnimationClip::findMetadataFrameFromGivenFrame(
-    const ANIM_CLIP_KEYWORDS flag, const int sourceFrame) const {
+    const ANIM_CLIP_KEYWORDS flag, const int sourceFrame,
+    bool allowWrapAround) const {
   if (sourceFrame >= m_frameCount) {
     return -1;
   }
   // super simple linear search
+  int bestNegative = -1;
+  int bestDelta = m_frameCount * 2;
   for (int i = 0; i < m_metadataCount; ++i) {
     ANIM_CLIP_KEYWORDS key = m_metadata[i].m_key;
     int value = m_metadata[i].m_value;
@@ -68,9 +71,19 @@ int AnimationClip::findMetadataFrameFromGivenFrame(
     bool isValidFrameRange = value >= sourceFrame;
     if (isFlag & isValidFrameRange) {
       return m_metadata[i].m_value;
+    } else if (isFlag & (!isValidFrameRange)) {
+      // as delta we use value, because we wrapped around, so we want the
+      // closest to
+      // zero, aka value - 0 = value
+      if (value < bestDelta) {
+        bestNegative = m_metadata[i].m_value;
+        bestDelta = value;
+      }
     }
   }
-  return -1;
+  // we did not find any key before us BUT we might have a negative key
+  // if that is the case we return it
+  return (bestNegative != -1) & allowWrapAround ? bestNegative : -1;
 }
 
 inline DirectX::XMFLOAT3 lerp3(const DirectX::XMFLOAT3 &v1,

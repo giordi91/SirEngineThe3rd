@@ -11,6 +11,7 @@
 // is not really pretty either
 #include "nlohmann/json_fwd.hpp"
 #include <queue>
+#include "animationClip.h"
 
 namespace SirEngine {
 struct SkeletonPose;
@@ -22,9 +23,9 @@ class LuaStatePlayer final : public AnimationPlayer {
   enum class TRANSITION_STATUS { NEW = 0, WAITING_FOR_TRANSITION_FRAME = 1 };
 
   struct Transition {
-    int m_transitionKeyID = 0;
+    ANIM_CLIP_KEYWORDS m_transitionKeyID;
     int m_transitionFrameSource = 0;
-	int m_transitionFrameDest = 0;
+    int m_transitionFrameDest = 0;
     int m_frameOverlap = 4;
     const char *m_targetAnimation = nullptr;
     const char *m_targetState = nullptr;
@@ -46,6 +47,9 @@ public:
   uint32_t getJointCount() const override;
 
   void evaluateAnim(const AnimationEvalRequest *request);
+  int convertTimeToFrames(const long long currentStamp,
+                          const long long originStamp,
+                          const AnimationClip *clip) const;
 
 private:
   Skeleton *skeleton;

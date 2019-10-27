@@ -154,12 +154,26 @@ void LuaStatePlayer::evaluate(long long stampNS) {
     transition.m_targetState = persistentString(newState);
     // lets convert the transition key
     if (strlen(transitionKey) != 0) {
-      transition.m_transitionKeyID =
+      transition.m_transitionKeyID = static_cast<ANIM_CLIP_KEYWORDS>(
           globals::ANIMATION_MANAGER->animationKeywordNameToValue(
-              transitionKey);
+              transitionKey));
     } else {
-      transition.m_transitionKeyID = -1;
+      transition.m_transitionKeyID = ANIM_CLIP_KEYWORDS::NONE;
     }
+    // now that we have the transition key we need to find which frame we are
+    // playing to figure out where we are going to transition our current
+    // animation
+    const AnimationClip *clip =
+        globals::ANIMATION_MANAGER->getAnimationClipByName(currentAnim);
+    int currentFrame = convertTimeToFrames(stampNS, m_globalStartStamp, clip);
+    transition.m_transitionFrameSource = clip->findMetadataFrameFromGivenFrame(
+        transition.m_transitionKeyID, currentFrame);
+    // next we need to get the destination source
+    const AnimationClip *clipDest =
+        globals::ANIMATION_MANAGER->getAnimationClipByName(
+            transition.m_targetAnimation);
+    transition.m_transitionFrameDest =
+        clipDest->findFirstMetadataFrame(transition.m_transitionKeyID);
 
     m_transitionsQueue.push(transition);
 
@@ -178,14 +192,13 @@ void LuaStatePlayer::evaluate(long long stampNS) {
   } else {
     // we do indeed need to perform a transition
 
-  	//if there is not a currently active transition we get the front of the queue
+    // if there is not a currently active transition we get the front of the
+    // queue
     if (m_currentTransition == nullptr) {
-		m_currentTransition = &m_transitionsQueue.front();
+      m_currentTransition = &m_transitionsQueue.front();
     }
 
-  	//now we have a current transition and we need to get started
-
-  	
+    // now we have a current transition and we need to get started
   }
 }
 
@@ -197,7 +210,7 @@ void LuaStatePlayer::evaluateAnim(const AnimationEvalRequest *request) {
   // assert(m_clip != nullptr);
   long long stampNS = request->m_stampNS;
   assert(stampNS >= 0);
-  float NANO_TO_SECONDS = float(1e-9);
+  constexpr float NANO_TO_SECONDS = float(1e-9);
 
   // we convert to seconds, since we need to count how many frames
   // passed and that is expressed in seconds
@@ -251,6 +264,23 @@ void LuaStatePlayer::evaluateAnim(const AnimationEvalRequest *request) {
   // matrices in world-space (skin ready)
   request->m_destination->updateGlobalFromLocal();
   m_flags = ANIM_FLAGS::NEW_MATRICES;
+}
+
+int LuaStatePlayer::convertTimeToFrames(const long long currentStamp,
+                                        const long long originStamp,
+                                        const AnimationClip *clip) const {
+  float NANO_TO_SECONDS = float(1e-9);
+  // we convert to seconds, since we need to count how many frames
+  // passed and that is expressed in seconds
+  const float speedTimeMultiplier = NANO_TO_SECONDS * m_multiplier;
+  const float delta = (currentStamp - originStamp) * speedTimeMultiplier;
+  // dividing the time elapsed since we started playing animation
+  // and divide by the frame-rate so we know how many frames we played so far
+  const float framesElapsedF = delta / (clip->m_frameRate);
+  const int framesElapsed = static_cast<int>(floor(framesElapsedF));
+  // converting the frames in loop
+  const int frame = framesElapsed % clip->m_frameCount;
+  return frame;
 }
 
 uint32_t LuaStatePlayer::getJointCount() const {

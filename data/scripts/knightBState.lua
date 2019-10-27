@@ -30,9 +30,9 @@ states = {
 -- transitions
 transitions = {
 				-- idle transitions
-				idle = {{targetState="walk", transitionKey="L_foot_down", delayInSeconds = 1, logic = idleToWalk }},
+				idle = {{targetState="walk", transitionKey="l_foot_down", delayInSeconds = 1, logic = idleToWalk }},
 				-- walk transitions
-				walk = {{targetState="idle", transitionKey="L_foot_down", delayInSeconds = 1, logic = walkToIdle }},
+				walk = {{targetState="idle", transitionKey="l_foot_down", delayInSeconds = 1, logic = walkToIdle }},
 			  },
 }
 

@@ -170,13 +170,19 @@ TEST_CASE("animation key 2 read from frame", "[animation]") {
       SirEngine::ANIM_CLIP_KEYWORDS::R_FOOT_DOWN, 9);
   REQUIRE(resultFrame == 10);
   resultFrame = clip->findMetadataFrameFromGivenFrame(
-      SirEngine::ANIM_CLIP_KEYWORDS::R_FOOT_DOWN, 70);
+      SirEngine::ANIM_CLIP_KEYWORDS::R_FOOT_DOWN, 70, false);
   REQUIRE(resultFrame == -1);
   resultFrame = clip->findMetadataFrameFromGivenFrame(
-      SirEngine::ANIM_CLIP_KEYWORDS::L_FOOT_DOWN, 35);
+      SirEngine::ANIM_CLIP_KEYWORDS::L_FOOT_DOWN, 35, false);
   REQUIRE(resultFrame == -1);
   resultFrame = clip->findMetadataFrameFromGivenFrame(
       SirEngine::ANIM_CLIP_KEYWORDS::L_FOOT_DOWN, 30);
+  REQUIRE(resultFrame == 30);
+  resultFrame = clip->findMetadataFrameFromGivenFrame(
+      SirEngine::ANIM_CLIP_KEYWORDS::R_FOOT_DOWN, 70 );
+  REQUIRE(resultFrame == 10);
+  resultFrame = clip->findMetadataFrameFromGivenFrame(
+      SirEngine::ANIM_CLIP_KEYWORDS::L_FOOT_DOWN, 35);
   REQUIRE(resultFrame == 30);
 
   SirEngine::Log::free();
