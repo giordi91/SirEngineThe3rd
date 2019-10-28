@@ -168,12 +168,6 @@ void LuaStatePlayer::evaluate(long long stampNS) {
     int currentFrame = convertTimeToFrames(stampNS, m_globalStartStamp, clip);
     transition.m_transitionFrameSource = clip->findMetadataFrameFromGivenFrame(
         transition.m_transitionKeyID, currentFrame);
-    // next we need to get the destination source
-    const AnimationClip *clipDest =
-        globals::ANIMATION_MANAGER->getAnimationClipByName(
-            transition.m_targetAnimation);
-    transition.m_transitionFrameDest =
-        clipDest->findFirstMetadataFrame(transition.m_transitionKeyID);
 
     m_transitionsQueue.push(transition);
 
@@ -199,6 +193,48 @@ void LuaStatePlayer::evaluate(long long stampNS) {
     }
 
     // now we have a current transition and we need to get started
+    bool completedTransition = performTransition(m_currentTransition, stampNS);
+  }
+}
+bool LuaStatePlayer::performTransition(Transition *transition,
+                                       const long long timeStamp) {
+  // first lets check the state of the transition, based on that we will perform
+  // different actions
+  const AnimationClip *clip =
+      globals::ANIMATION_MANAGER->getAnimationClipByName(currentAnim);
+  const AnimationClip *clipDest =
+      globals::ANIMATION_MANAGER->getAnimationClipByName(
+          transition->m_targetAnimation);
+
+  switch (transition->m_status) {
+  case TRANSITION_STATUS::NEW: {
+    // well well well, brand new transition! better get started then!
+    // first figure out at which frame we are going to transition the main clip
+    int currentFrame = convertTimeToFrames(timeStamp, m_globalStartStamp, clip);
+    transition->m_transitionFrameSrc =
+        clip->findFirstMetadataFrame(transition->m_transitionKeyID);
+    assert(transition->m_transitionFrameSrc != -1);
+
+    // getting at which frame we need to transition the destination
+    transition->m_transitionFrameDest =
+        clipDest->findFirstMetadataFrame(transition->m_transitionKeyID);
+    assert(transition->m_transitionFrameDest != -1);
+
+    break;
+  }
+  case TRANSITION_STATUS::WAITING_FOR_TRANSITION_FRAME: {
+    break;
+  };
+
+  case TRANSITION_STATUS::TRANSITIONING: {
+    break;
+  }
+  case TRANSITION_STATUS::DONE: {
+    // this should never happen as the code stands now
+    assert(0);
+    return true;
+  }
+  default:;
   }
 }
 

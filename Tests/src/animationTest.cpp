@@ -20,7 +20,6 @@ void compileAnim(const char *in, const char *out) {
   func(in, out, "");
 }
 
-/*
 TEST_CASE("animation key 1", "[animation]") {
 
   // initialize memory pools and loggers
@@ -137,9 +136,7 @@ TEST_CASE("animation key 2 read", "[animation]") {
 
   SirEngine::Log::free();
 }
-*/
 
-/*
 TEST_CASE("animation key 2 read from frame", "[animation]") {
   // initialize memory pools and loggers
   SirEngine::Log::init();
@@ -191,7 +188,6 @@ TEST_CASE("animation key 2 read from frame", "[animation]") {
 
   SirEngine::Log::free();
 }
-*/
 
 TEST_CASE("animation key 3 read from frame", "[animation]") {
   // initialize memory pools and loggers
