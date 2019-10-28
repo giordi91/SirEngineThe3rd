@@ -66,9 +66,9 @@ int AnimationClip::findMetadataFrameFromGivenFrame(
   int bestDelta = m_frameCount * 2;
   for (int i = 0; i < m_metadataCount; ++i) {
     ANIM_CLIP_KEYWORDS key = m_metadata[i].m_key;
-    int value = m_metadata[i].m_value;
-    bool isFlag = key == flag;
-    bool isValidFrameRange = value >= sourceFrame;
+    const int value = m_metadata[i].m_value;
+    const bool isFlag = key == flag;
+    const bool isValidFrameRange = value >= sourceFrame;
     if (isFlag & isValidFrameRange) {
       return m_metadata[i].m_value;
     } else if (isFlag & (!isValidFrameRange)) {

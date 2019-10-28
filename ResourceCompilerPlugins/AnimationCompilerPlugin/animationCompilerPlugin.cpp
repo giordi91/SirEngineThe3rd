@@ -133,6 +133,8 @@ void convertAnim(const std::string &path, AnimData &data) {
       bool match1Empty = match1.empty();
       bool match2Empty = match2.empty();
 
+      // TODO: bit too nested for my likings, might have to revisit in the
+      // future
       if (match1Empty || !isNumber(match1)) {
         SE_CORE_WARN("Could not parse key value:  {0}:{1}, match1 failed", key,
                      value);
@@ -147,9 +149,25 @@ void convertAnim(const std::string &path, AnimData &data) {
         }
         // it means we are dealing with a range
         int match2Int = strtol(match2.c_str(), nullptr, 10);
-        for (int i = match1Int; i < match2Int; ++i) {
-          data.animationKeywordToFrame[keyInt].push_back(i);
+
+        // now we need to check whether the start frame is less than the end
+        // frame
+        if (match2Int < match1Int) {
+          // now we have a wrap around happening we need to do two loops
+          for (int i = match1Int; i < data.frameCount; ++i) {
+            data.animationKeywordToFrame[keyInt].push_back(i);
+          }
+          for (int i = 0; i < match2Int; ++i) {
+            data.animationKeywordToFrame[keyInt].push_back(i);
+          }
+
+        } else {
+
+          for (int i = match1Int; i < match2Int; ++i) {
+            data.animationKeywordToFrame[keyInt].push_back(i);
+          }
         }
+
       } else {
         data.animationKeywordToFrame[keyInt].push_back(match1Int);
       }
@@ -158,7 +176,7 @@ void convertAnim(const std::string &path, AnimData &data) {
     }
   }
   // finally lets sort all the keys
-  for (auto keyValue : data.animationKeywordToFrame) {
+  for (auto& keyValue : data.animationKeywordToFrame) {
     std::sort(keyValue.second.begin(), keyValue.second.end());
   }
 }
@@ -251,7 +269,6 @@ bool processAnim(const std::string &assetPath, const std::string &outputPath,
   writeBinaryFile(request);
 
   SE_CORE_INFO("animation successfully compiled ---> {0}", outputPath);
-
 
   return true;
 }
