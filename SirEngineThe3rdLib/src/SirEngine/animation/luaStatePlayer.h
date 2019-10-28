@@ -20,11 +20,11 @@ class AnimationManager;
 struct AnimationClip;
 
 class LuaStatePlayer final : public AnimationPlayer {
-  enum class TRANSITION_STATUS { NEW = 0, WAITING_FOR_TRANSITION_FRAME = 1 };
+  enum class TRANSITION_STATUS { NEW = 0, WAITING_FOR_TRANSITION_FRAME = 1, TRANSITIONING=2,DONE=3};
 
   struct Transition {
     ANIM_CLIP_KEYWORDS m_transitionKeyID;
-    int m_transitionFrameSource = 0;
+    int m_transitionFrameSrc = 0;
     int m_transitionFrameDest = 0;
     int m_frameOverlap = 4;
     const char *m_targetAnimation = nullptr;
@@ -46,10 +46,13 @@ public:
   void evaluate(long long stampNS) override;
   uint32_t getJointCount() const override;
 
+  //TODO clear up to private stuff
   void evaluateAnim(const AnimationEvalRequest *request);
   int convertTimeToFrames(const long long currentStamp,
                           const long long originStamp,
                           const AnimationClip *clip) const;
+private:
+  bool performTransition(Transition *transition, const long long timeStamp);
 
 private:
   Skeleton *skeleton;
