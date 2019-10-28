@@ -181,6 +181,12 @@ bool processAnim(const std::string &assetPath, const std::string &outputPath,
     SE_CORE_ERROR("[Animation Compiler] : could not find path/file {0}",
                   outputPath);
   }
+  // initialize memory pools and loggers
+  SirEngine::StringPool stringPool(1024 * 1024 * 10);
+  SirEngine::globals::STRING_POOL = &stringPool;
+  SirEngine::ThreeSizesPool pool(1024 * 1024 * 10);
+  SirEngine::globals::PERSISTENT_ALLOCATOR = &pool;
+
   SirEngine::AnimationManager animManager;
   animManager.init();
   SirEngine::globals::ANIMATION_MANAGER = &animManager;
@@ -245,6 +251,7 @@ bool processAnim(const std::string &assetPath, const std::string &outputPath,
   writeBinaryFile(request);
 
   SE_CORE_INFO("animation successfully compiled ---> {0}", outputPath);
+
 
   return true;
 }
