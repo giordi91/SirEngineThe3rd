@@ -81,6 +81,7 @@ private:
   // temporary
   std::queue<Transition> m_transitionsQueue;
   Transition *m_currentTransition = nullptr;
+  long long tempStart;
 };
 
 } // namespace SirEngine
