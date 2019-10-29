@@ -141,7 +141,7 @@ void AnimationManager::registerState(AnimationPlayer *state) {
 
 void AnimationManager::evaluate() const {
   // animation works on a global clock, it is slightly harder
-  // but makes easier to sync animations, we grab the time stam in
+  // but makes easier to sync animations, we grab the time stamp in
   // nanoseconds and pass it along for update, most likely will be converted
   // in seconds. we might evaluate if to convert that upfront
   const long long stamp = m_animClock.getTicks();

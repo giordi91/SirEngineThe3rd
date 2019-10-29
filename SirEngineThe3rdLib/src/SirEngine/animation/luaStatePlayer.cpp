@@ -197,9 +197,12 @@ void LuaStatePlayer::evaluate(long long stampNS) {
     if (completedTransition) {
 
       currentAnim = m_currentTransition->m_targetAnimation;
+      m_globalStartStamp = m_currentTransition->m_destAnimOffset;
+	  currentState = m_currentTransition->m_targetState;
       // currentState = m_currentState
       m_currentTransition = nullptr;
       m_transitionsQueue.pop();
+       std::cout<<"time taken " <<double(stampNS - tempStart) * 1e-9<<std::endl;
     }
   }
 }
@@ -213,15 +216,18 @@ bool LuaStatePlayer::performTransition(Transition *transition,
   const AnimationClip *clipDest =
       globals::ANIMATION_MANAGER->getAnimationClipByName(
           transition->m_targetAnimation);
+  double framerate = clip->m_frameRate * 1000.0f;
 
+  constexpr long long MS_TO_NANO = 1000000;
   switch (transition->m_status) {
   case TRANSITION_STATUS::NEW: {
+    tempStart = timeStamp;
     // well well well, brand new transition! better get started then!
     // first figure out at which frame we are going to transition the main clip
     const int currentFrame =
         convertTimeToFrames(timeStamp, m_globalStartStamp, clip);
-    transition->m_transitionFrameSrc =
-        clip->findFirstMetadataFrame(transition->m_transitionKeyID);
+    transition->m_transitionFrameSrc = clip->findMetadataFrameFromGivenFrame(
+        transition->m_transitionKeyID, currentFrame);
     assert(transition->m_transitionFrameSrc != -1);
 
     // getting at which frame we need to transition the destination
@@ -232,16 +238,14 @@ bool LuaStatePlayer::performTransition(Transition *transition,
     // transition->m_destinationOriginalTime = timeStamp;
     // we know the transition frame start for the source, so we can compute what
     // that time will be
-    constexpr long long MS_TO_NANO = 1000000;
-    double framerate = 1.0 / 30.0;
     double totalMS = framerate * transition->m_transitionFrameSrc;
-    long nanoTimeOffset = static_cast<long long>(totalMS * MS_TO_NANO);
+    long long nanoTimeOffset = static_cast<long long>(totalMS * MS_TO_NANO);
     // this is the value the transition starts
-    long long stampStartTransition = m_globalStartStamp + nanoTimeOffset;
+    long long stampStartTransition = nanoTimeOffset;
 
     const long long offset =
-        //double(transition->m_frameOverlap) * framerate * MS_TO_NANO;
-        double(1000) * framerate * MS_TO_NANO;
+        // double(transition->m_frameOverlap) * framerate * MS_TO_NANO;
+        double(10) * framerate * MS_TO_NANO;
 
     // this is the timestamp for ending the transition
     long long stampEndTransition = stampStartTransition + offset;
@@ -259,14 +263,16 @@ bool LuaStatePlayer::performTransition(Transition *transition,
     transition->m_endTransitionRange = offset;
 
     if (currentFrame >= transition->m_transitionFrameSrc) {
-
       // we need to transition here
       // first we need to compute the blend factor between the two
-      //double range =
-      //    transition->m_endTransitionTime - transition->m_startTransitionTime;
-      double currentOffset = (timeStamp-m_globalStartStamp) - transition->m_startTransitionTime;
-      float ratio = static_cast<float>(currentOffset / (double)transition->m_endTransitionRange);
-	  std::cout<<"from new " <<ratio<<std::endl;
+      long long totalAnimationNS =
+          static_cast<long long>(clip->m_frameCount * framerate * MS_TO_NANO);
+      double startFromClip =
+          ((timeStamp - m_globalStartStamp) % totalAnimationNS);
+      double currentOffset = startFromClip - transition->m_startTransitionTime;
+      float ratio = static_cast<float>(
+          currentOffset / (double)transition->m_endTransitionRange);
+
 
       if (ratio >= 1.0f) {
         // we are past the range, no need o interpolate
@@ -279,6 +285,7 @@ bool LuaStatePlayer::performTransition(Transition *transition,
 
       } else {
         submitInterpRequest(timeStamp, transition, ratio);
+        transition->m_status = TRANSITION_STATUS::TRANSITIONING;
       }
 
       //==========================================================================
@@ -298,10 +305,14 @@ bool LuaStatePlayer::performTransition(Transition *transition,
     if (currentFrame >= transition->m_transitionFrameSrc) {
       // we need to transition here
       // first we need to compute the blend factor between the two
-      double range =
-          transition->m_endTransitionTime - transition->m_startTransitionTime;
-      double currentOffset = timeStamp - transition->m_startTransitionTime;
-      float ratio = static_cast<float>(currentOffset / range);
+      long long totalAnimationNS =
+          static_cast<long long>(clip->m_frameCount * framerate * MS_TO_NANO);
+      double startFromClip =
+          ((timeStamp - m_globalStartStamp) % totalAnimationNS);
+      double currentOffset = startFromClip - transition->m_startTransitionTime;
+      float ratio = static_cast<float>(
+          currentOffset / (double)transition->m_endTransitionRange);
+      std::cout << "from waiting " << ratio << std::endl;
 
       if (ratio >= 1.0f) {
         // we are past the range, no need o interpolate
@@ -315,6 +326,10 @@ bool LuaStatePlayer::performTransition(Transition *transition,
       } else {
         submitInterpRequest(timeStamp, transition, ratio);
       }
+    } else {
+        AnimationEvalRequest eval{currentAnim, m_outPose,
+                                  timeStamp, m_globalStartStamp};
+        evaluateAnim(&eval);
     }
     return false;
   };
@@ -322,10 +337,15 @@ bool LuaStatePlayer::performTransition(Transition *transition,
   case TRANSITION_STATUS::TRANSITIONING: {
     // we need to transition here
     // first we need to compute the blend factor between the two
-    double range =
-        transition->m_endTransitionTime - transition->m_startTransitionTime;
-    double currentOffset = timeStamp - transition->m_startTransitionTime;
-    float ratio = static_cast<float>(currentOffset / range);
+
+    long long totalAnimationNS =
+        static_cast<long long>(clip->m_frameCount * framerate * MS_TO_NANO);
+    double startFromClip =
+        ((timeStamp - m_globalStartStamp) % totalAnimationNS);
+    double currentOffset = startFromClip - transition->m_startTransitionTime;
+    float ratio = static_cast<float>(currentOffset /
+                                     (double)transition->m_endTransitionRange);
+    //std::cout << "from transitioning" << ratio << std::endl;
 
     if (ratio >= 1.0f) {
       // we are past the range, no need o interpolate
