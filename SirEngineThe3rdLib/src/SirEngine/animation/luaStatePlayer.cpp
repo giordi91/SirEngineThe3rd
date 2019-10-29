@@ -166,7 +166,7 @@ void LuaStatePlayer::evaluate(long long stampNS) {
     const AnimationClip *clip =
         globals::ANIMATION_MANAGER->getAnimationClipByName(currentAnim);
     int currentFrame = convertTimeToFrames(stampNS, m_globalStartStamp, clip);
-    transition.m_transitionFrameSource = clip->findMetadataFrameFromGivenFrame(
+    transition.m_transitionFrameSrc = clip->findMetadataFrameFromGivenFrame(
         transition.m_transitionKeyID, currentFrame);
 
     m_transitionsQueue.push(transition);
@@ -194,8 +194,16 @@ void LuaStatePlayer::evaluate(long long stampNS) {
 
     // now we have a current transition and we need to get started
     bool completedTransition = performTransition(m_currentTransition, stampNS);
+    if (completedTransition) {
+
+      currentAnim = m_currentTransition->m_targetAnimation;
+      // currentState = m_currentState
+      m_currentTransition = nullptr;
+      m_transitionsQueue.pop();
+    }
   }
 }
+
 bool LuaStatePlayer::performTransition(Transition *transition,
                                        const long long timeStamp) {
   // first lets check the state of the transition, based on that we will perform
@@ -210,7 +218,8 @@ bool LuaStatePlayer::performTransition(Transition *transition,
   case TRANSITION_STATUS::NEW: {
     // well well well, brand new transition! better get started then!
     // first figure out at which frame we are going to transition the main clip
-    int currentFrame = convertTimeToFrames(timeStamp, m_globalStartStamp, clip);
+    const int currentFrame =
+        convertTimeToFrames(timeStamp, m_globalStartStamp, clip);
     transition->m_transitionFrameSrc =
         clip->findFirstMetadataFrame(transition->m_transitionKeyID);
     assert(transition->m_transitionFrameSrc != -1);
@@ -220,13 +229,116 @@ bool LuaStatePlayer::performTransition(Transition *transition,
         clipDest->findFirstMetadataFrame(transition->m_transitionKeyID);
     assert(transition->m_transitionFrameDest != -1);
 
+    // transition->m_destinationOriginalTime = timeStamp;
+    // we know the transition frame start for the source, so we can compute what
+    // that time will be
+    constexpr long long MS_TO_NANO = 1000000;
+    double framerate = 1.0 / 30.0;
+    double totalMS = framerate * transition->m_transitionFrameSrc;
+    long nanoTimeOffset = static_cast<long long>(totalMS * MS_TO_NANO);
+    // this is the value the transition starts
+    long long stampStartTransition = m_globalStartStamp + nanoTimeOffset;
+
+    const long long offset =
+        double(transition->m_frameOverlap) * framerate * MS_TO_NANO;
+
+    // this is the timestamp for ending the transition
+    long long stampEndTransition = stampStartTransition + offset;
+
+    // now we can compute what offset is needed to align the second animatino
+    // such that it was started at the right time such that at the end of the
+    // transition we should play the right frame
+    const long long offsetDest =
+        double(transition->m_transitionFrameDest) * framerate * MS_TO_NANO;
+    const long long stampDestinationStart = stampEndTransition - offsetDest;
+
+    transition->m_startTransitionTime = stampStartTransition;
+    transition->m_endTransitionTime = stampEndTransition;
+    transition->m_destAnimOffset = stampDestinationStart;
+    transition->m_endTransitionRange = offset;
+
+    if (currentFrame >= transition->m_transitionFrameSrc) {
+
+      // we need to transition here
+      // first we need to compute the blend factor between the two
+      double range =
+          transition->m_endTransitionTime - transition->m_startTransitionTime;
+      double currentOffset = timeStamp - transition->m_startTransitionTime;
+      float ratio = static_cast<float>(currentOffset / range);
+
+      if (ratio >= 1.0f) {
+        // we are past the range, no need o interpolate
+        AnimationEvalRequest eval{transition->m_targetAnimation, m_outPose,
+                                  timeStamp, m_globalStartStamp};
+        evaluateAnim(&eval);
+        transition->m_status = TRANSITION_STATUS::DONE;
+        // we are done with the transition return true
+        return true;
+
+      } else {
+        submitInterpRequest(timeStamp, transition, ratio);
+      }
+
+      //==========================================================================
+      break;
+    } else {
+      // we can't transition now we need to wait for the frame
+      // we set the correct tag and move forward
+      transition->m_status = TRANSITION_STATUS::WAITING_FOR_TRANSITION_FRAME;
+      return false;
+    }
+
     break;
   }
   case TRANSITION_STATUS::WAITING_FOR_TRANSITION_FRAME: {
-    break;
+    const int currentFrame =
+        convertTimeToFrames(timeStamp, m_globalStartStamp, clip);
+    if (currentFrame >= transition->m_transitionFrameSrc) {
+      // we need to transition here
+      // first we need to compute the blend factor between the two
+      double range =
+          transition->m_endTransitionTime - transition->m_startTransitionTime;
+      double currentOffset = timeStamp - transition->m_startTransitionTime;
+      float ratio = static_cast<float>(currentOffset / range);
+
+      if (ratio >= 1.0f) {
+        // we are past the range, no need o interpolate
+        AnimationEvalRequest eval{transition->m_targetAnimation, m_outPose,
+                                  timeStamp, m_globalStartStamp};
+        evaluateAnim(&eval);
+        transition->m_status = TRANSITION_STATUS::DONE;
+        // we are done with the transition return true
+        return true;
+
+      } else {
+        submitInterpRequest(timeStamp, transition, ratio);
+      }
+    }
+    return false;
   };
 
   case TRANSITION_STATUS::TRANSITIONING: {
+    // we need to transition here
+    // first we need to compute the blend factor between the two
+    double range =
+        transition->m_endTransitionTime - transition->m_startTransitionTime;
+    double currentOffset = timeStamp - transition->m_startTransitionTime;
+    float ratio = static_cast<float>(currentOffset / range);
+
+    if (ratio >= 1.0f) {
+      // we are past the range, no need o interpolate
+      AnimationEvalRequest eval{transition->m_targetAnimation, m_outPose,
+                                timeStamp, m_globalStartStamp};
+      evaluateAnim(&eval);
+      transition->m_status = TRANSITION_STATUS::DONE;
+      // we are done with the transition return true
+      return true;
+
+    } else {
+      submitInterpRequest(timeStamp, transition, ratio);
+    }
+
+    //==========================================================================
     break;
   }
   case TRANSITION_STATUS::DONE: {
@@ -236,6 +348,68 @@ bool LuaStatePlayer::performTransition(Transition *transition,
   }
   default:;
   }
+  return false;
+}
+inline void
+LuaStatePlayer::interpolateTwoPoses(InterpolateTwoPosesRequest &request) {
+  //#pragma omp parallel for
+  for (unsigned int i = 0; i < request.output->m_skeleton->m_jointCount; ++i) {
+    // interpolating all the bones in local space
+    JointPose &jointStart = request.src->m_localPose[i];
+    JointPose &jointEnd = request.dest->m_localPose[i];
+
+    // we slerp the rotation and linearly interpolate the
+    // translation
+    const DirectX::XMVECTOR rot = DirectX::XMQuaternionSlerp(
+        jointStart.m_rot, jointEnd.m_rot, request.factor);
+
+    const DirectX::XMFLOAT3 pos =
+        lerp3(jointStart.m_trans, jointEnd.m_trans, request.factor);
+    // the compiler should be able to optimize out this copy
+    request.output->m_localPose[i].m_rot = rot;
+    request.output->m_localPose[i].m_trans = pos;
+  }
+  // now that the anim has been blended I will compute the
+  // matrices in world-space (skin ready)
+  request.output->updateGlobalFromLocal();
+  m_flags = ANIM_FLAGS::NEW_MATRICES;
+}
+
+void LuaStatePlayer::submitInterpRequest(long long timeStamp,
+                                         Transition *transition, float ratio) {
+  // we have to make two interpolation requests
+  // source interp request
+  AnimationEvalRequest srcRequest{};
+  srcRequest.convertToGlobals = false;
+  srcRequest.m_animation = currentAnim;
+  srcRequest.m_destination = m_transitionSource;
+  srcRequest.m_stampNS = timeStamp;
+  srcRequest.m_originTime = m_globalStartStamp;
+  evaluateAnim(&srcRequest);
+
+  // now we interpolate the destination
+  //--------------------------------------------------------------------------
+  //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  // TODO this is wrong possibly? we are not taking into account of the frame
+  //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  //--------------------------------------------------------------------------
+  // we want to start interpolating at not sure
+  AnimationEvalRequest destRequest{};
+  destRequest.convertToGlobals = false;
+  destRequest.m_animation = transition->m_targetAnimation;
+  destRequest.m_destination = m_transitionDest;
+  destRequest.m_stampNS = timeStamp;
+  destRequest.m_originTime = transition->m_destAnimOffset;
+  evaluateAnim(&destRequest);
+
+  // now we need to interpolate not two frames but to existing poses
+  InterpolateTwoPosesRequest finalRequest{};
+  finalRequest.factor = ratio;
+  finalRequest.src = m_transitionSource;
+  finalRequest.dest = m_transitionDest;
+  finalRequest.output = m_outPose;
+
+  interpolateTwoPoses(finalRequest);
 }
 
 void LuaStatePlayer::evaluateAnim(const AnimationEvalRequest *request) {

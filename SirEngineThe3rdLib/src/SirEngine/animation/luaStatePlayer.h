@@ -23,13 +23,18 @@ class LuaStatePlayer final : public AnimationPlayer {
   enum class TRANSITION_STATUS { NEW = 0, WAITING_FOR_TRANSITION_FRAME = 1, TRANSITIONING=2,DONE=3};
 
   struct Transition {
-    ANIM_CLIP_KEYWORDS m_transitionKeyID;
+    const char *m_targetAnimation = nullptr;
+    const char *m_targetState = nullptr;
+    //long long m_destinationOriginalTime = 0;
+    long long m_endTransitionTime;
     int m_transitionFrameSrc = 0;
     int m_transitionFrameDest = 0;
     int m_frameOverlap = 4;
-    const char *m_targetAnimation = nullptr;
-    const char *m_targetState = nullptr;
+    ANIM_CLIP_KEYWORDS m_transitionKeyID;
     TRANSITION_STATUS m_status = TRANSITION_STATUS::NEW;
+    long long m_endTransitionRange ;
+    long long m_startTransitionTime;
+    long long m_destAnimOffset;
   };
 
   struct AnimationEvalRequest {
@@ -37,6 +42,15 @@ class LuaStatePlayer final : public AnimationPlayer {
     SkeletonPose *m_destination = nullptr;
     long long m_stampNS = 0;
     long long m_originTime = 0;
+	bool convertToGlobals = true; 
+  };
+
+  struct InterpolateTwoPosesRequest
+  {
+	  float factor;
+	  SkeletonPose* src;
+	  SkeletonPose* dest;
+	  SkeletonPose* output;
   };
 
 public:
@@ -52,6 +66,8 @@ public:
                           const long long originStamp,
                           const AnimationClip *clip) const;
 private:
+  void interpolateTwoPoses(InterpolateTwoPosesRequest& finalRequest);
+  void submitInterpRequest(long long timeStamp, Transition* transition, float ratio);
   bool performTransition(Transition *transition, const long long timeStamp);
 
 private:
