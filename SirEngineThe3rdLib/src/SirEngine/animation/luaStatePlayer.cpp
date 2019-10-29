@@ -240,7 +240,8 @@ bool LuaStatePlayer::performTransition(Transition *transition,
     long long stampStartTransition = m_globalStartStamp + nanoTimeOffset;
 
     const long long offset =
-        double(transition->m_frameOverlap) * framerate * MS_TO_NANO;
+        //double(transition->m_frameOverlap) * framerate * MS_TO_NANO;
+        double(1000) * framerate * MS_TO_NANO;
 
     // this is the timestamp for ending the transition
     long long stampEndTransition = stampStartTransition + offset;
@@ -261,10 +262,11 @@ bool LuaStatePlayer::performTransition(Transition *transition,
 
       // we need to transition here
       // first we need to compute the blend factor between the two
-      double range =
-          transition->m_endTransitionTime - transition->m_startTransitionTime;
-      double currentOffset = timeStamp - transition->m_startTransitionTime;
-      float ratio = static_cast<float>(currentOffset / range);
+      //double range =
+      //    transition->m_endTransitionTime - transition->m_startTransitionTime;
+      double currentOffset = (timeStamp-m_globalStartStamp) - transition->m_startTransitionTime;
+      float ratio = static_cast<float>(currentOffset / (double)transition->m_endTransitionRange);
+	  std::cout<<"from new " <<ratio<<std::endl;
 
       if (ratio >= 1.0f) {
         // we are past the range, no need o interpolate
