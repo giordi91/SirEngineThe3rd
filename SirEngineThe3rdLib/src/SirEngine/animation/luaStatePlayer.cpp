@@ -1,7 +1,7 @@
 #include "SirEngine/animation/luaStatePlayer.h"
 #include "SirEngine/animation/animationClip.h"
-#include "SirEngine/animation/animationManipulation.h"
 #include "SirEngine/animation/animationManager.h"
+#include "SirEngine/animation/animationManipulation.h"
 #include "SirEngine/animation/skeleton.h"
 #include "SirEngine/scripting/scriptingContext.h"
 
@@ -20,29 +20,25 @@ static const std::string SKELETON_KEY = "skeleton";
 static const std::string ASSET_NAME_KEY = "assetName";
 static const std::string ANIMATION_CLIPS_KEY = "animationClips";
 static const std::string SCRIPT_KEY = "luaScript";
-static const std::string START_STATE_KEY = "startState";
 static const std::string ANIMATION_CONFIG_NAME_KEY = "name";
+static const char *EVALUATE_FUNCTION_NAME = "evaluate";
+static const char *START_FUNCTION_NAME = "start";
 
-int convertTimeToFrames(const long long currentStamp,
-                        const long long originStamp, const AnimationClip *clip,
-                        float speedMultiplier) {
+int convertTimeToFrames(const int64_t currentStamp, const int64_t originStamp,
+                        const AnimationClip *clip, float speedMultiplier) {
   // we convert to seconds, since we need to count how many frames
   // passed and that is expressed in seconds
-  const float speedTimeMultiplier =
-      TimeConversion::NANO_TO_SECONDS * speedMultiplier;
-  const float delta = (currentStamp - originStamp) * speedTimeMultiplier;
+  const double speedTimeMultiplier =
+      TimeConversion::NANO_TO_SECONDS * static_cast<double>(speedMultiplier);
+  const double delta = (currentStamp - originStamp) * speedTimeMultiplier;
   // dividing the time elapsed since we started playing animation
   // and divide by the frame-rate so we know how many frames we played so far
-  const float framesElapsedF = delta / (clip->m_frameRate);
+  const double framesElapsedF = delta / (clip->m_frameRate);
   const int framesElapsed = static_cast<int>(floor(framesElapsedF));
   // converting the frames in loop
   const int frame = framesElapsed % clip->m_frameCount;
   return frame;
 }
-
-LuaStatePlayer::LuaStatePlayer() : AnimationPlayer() {}
-
-LuaStatePlayer::~LuaStatePlayer() {}
 
 void LuaStatePlayer::init(AnimationManager *manager,
                           nlohmann::json &configJson) {
@@ -90,25 +86,19 @@ void LuaStatePlayer::init(AnimationManager *manager,
     manager->loadAnimationClip(animationClipFileName.c_str(), clipPath.c_str());
   }
 
-  // start state
-  // const std::string startState =
-  //    getValueIfInJson(configJson, START_STATE_KEY, empty);
-  // assert(!startState.empty());
-  // currentState = persistentString(startState.c_str());
-
   // allocating named pose
   m_outPose = manager->getSkeletonPose(skeleton);
   // scratch memory to perform the transition
   m_transitionSource = manager->getSkeletonPose(skeleton);
   m_transitionDest = manager->getSkeletonPose(skeleton);
-  m_globalStartStamp = manager->getAnimClock().getTicks();
+  m_startTimeStamp = manager->getAnimClock().getTicks();
   m_flags = ANIM_FLAGS::READY;
 
   // execute the start of the state machine
   const ScriptData &data =
       globals::SCRIPTING_CONTEXT->getScriptDataFromHandle(stateMachine);
   lua_State *state = globals::SCRIPTING_CONTEXT->getContext();
-  lua_getglobal(state, "start");
+  lua_getglobal(state, START_FUNCTION_NAME);
 
   const int status = lua_pcall(state, 0, 2, 0);
   if (status != LUA_OK) {
@@ -126,21 +116,22 @@ void LuaStatePlayer::init(AnimationManager *manager,
   currentAnim = persistentString(currentAnimStr);
 }
 
-void LuaStatePlayer::evaluate(long long stampNS) {
+void LuaStatePlayer::evaluateStateMachine() {
 
-  const ScriptData &data =
-      globals::SCRIPTING_CONTEXT->getScriptDataFromHandle(stateMachine);
+  // execute the lua state machine
   lua_State *state = globals::SCRIPTING_CONTEXT->getContext();
-  lua_getglobal(state, "evaluate");
+  lua_getglobal(state, EVALUATE_FUNCTION_NAME);
   lua_pushstring(state, currentState);
-  const int status = lua_pcall(state, 1, 4, 0);
+  const int status = lua_pcall(state, 1, 5, 0);
   if (status != LUA_OK) {
     const char *message = lua_tostring(state, -1);
     SE_CORE_ERROR(message);
     lua_pop(state, 1);
     assert(0);
   }
-  const char *newState = lua_tostring(state, -4);
+  // the first returned argument is the state that the state machine decided to
+  // be in
+  const char *newState = lua_tostring(state, -5);
   // the method among other param returns a state, if the state changed from the
   // one we passed in, it means we also got enough data to perform a transition,
   // (the other arguments
@@ -152,16 +143,19 @@ void LuaStatePlayer::evaluate(long long stampNS) {
   bool shouldParseArguments = strcmp(newState, currentState) != 0;
   if (shouldParseArguments) {
     // also mean we took a transition to a new state
-    const char *sourceAnim = lua_tostring(state, -3);
-    const char *targetAnim = lua_tostring(state, -2);
-    const char *transitionKey = lua_tostring(state, -1);
+    const char *sourceAnim = lua_tostring(state, -4);
+    const char *targetAnim = lua_tostring(state, -3);
+    const char *transitionKey = lua_tostring(state, -2);
+    auto transitionLenInSeconds = static_cast<float>(lua_tonumber(state, -1));
 
     // stringFree(currentState);
     // currentState = persistentString(newState);
     Transition transition;
     transition.m_targetAnimation = persistentString(targetAnim);
     transition.m_targetState = persistentString(newState);
-    // lets convert the transition key
+    transition.m_transitionLength = transitionLenInSeconds;
+
+    // lets convert the transition key from string to the correct enum
     if (strlen(transitionKey) != 0) {
       transition.m_transitionKeyID = static_cast<ANIM_CLIP_KEYWORDS>(
           globals::ANIMATION_MANAGER->animationKeywordNameToValue(
@@ -169,25 +163,32 @@ void LuaStatePlayer::evaluate(long long stampNS) {
     } else {
       transition.m_transitionKeyID = ANIM_CLIP_KEYWORDS::NONE;
     }
-    // now that we have the transition key we need to find which frame we are
-    // playing to figure out where we are going to transition our current
-    // animation
-    const AnimationClip *clip =
-        globals::ANIMATION_MANAGER->getAnimationClipByName(currentAnim);
+
+    // adding the transition to the queue for later evaluation
     m_transitionsQueue.push(transition);
 
-    // SE_CORE_INFO("New target state: {0},{1},{2},{3}", newState, sourceAnim,
-    //            targetAnim, transitionKey);
+    // we let current state move forward such that state machine evaluates
+    // correctly, but we throttle the evaluation based on the max state changes
+    // queue
+    stringFree(currentState);
+    currentState = persistentString(newState);
+  }
+}
+
+void LuaStatePlayer::evaluate(const int64_t stampNS) {
+
+  // if the queue is too full we just prevent the state machine from evaluating
+  bool shouldEvaluate = m_transitionsQueue.size() < m_queueMaxSize;
+  if (shouldEvaluate) {
+    evaluateStateMachine();
   }
 
   // let us check if there is any transition to be done
-  // lets evaluate the animation
   if (m_currentTransition == nullptr && m_transitionsQueue.empty()) {
 
-    // no transition to make
+    // no transition to make, let us perform a simple animation evaluation
     AnimationEvalRequest eval{currentAnim, m_outPose, stampNS,
-                              m_globalStartStamp};
-    // SE_CORE_INFO(stampNS);
+                              m_startTimeStamp};
     evaluateAnim(&eval);
     m_flags = ANIM_FLAGS::NEW_MATRICES;
   } else {
@@ -202,38 +203,40 @@ void LuaStatePlayer::evaluate(long long stampNS) {
     // now we have a current transition and we need to get started
     const bool completedTransition =
         performTransition(m_currentTransition, stampNS);
-    if (completedTransition) {
 
+    if (completedTransition) {
       currentAnim = m_currentTransition->m_targetAnimation;
-      m_globalStartStamp = m_currentTransition->m_destAnimOffset;
-      currentState = m_currentTransition->m_targetState;
+      m_startTimeStamp = m_currentTransition->m_destAnimStartTimeStamp;
+
+      // cleaning up the transition
       m_currentTransition = nullptr;
       m_transitionsQueue.pop();
-      std::cout << "time taken " << double(stampNS - tempStart) * 1e-9
-                << std::endl;
     }
   }
-
-  tempStart = stampNS;
 }
 
 bool LuaStatePlayer::performTransition(Transition *transition,
-                                       const long long timeStamp) {
-  // first lets check the state of the transition, based on that we will perform
-  // different actions
+                                       const int64_t timeStamp) {
+
+  // let us first fetch the clip from the animation manager, I am not
+  // particularly happy about this fetch based on string, BUT I will worry
+  // once the profile shows is an actual problem for now this will do
   const AnimationClip *clip =
       globals::ANIMATION_MANAGER->getAnimationClipByName(currentAnim);
   const AnimationClip *clipDest =
       globals::ANIMATION_MANAGER->getAnimationClipByName(
           transition->m_targetAnimation);
-  const double framerate = clip->m_frameRate * 1000.0f;
+
+  const double frameLenInMS = clip->m_frameRate * 1000.0;
 
   if (transition->m_status == TRANSITION_STATUS::NEW) {
-    tempStart = timeStamp;
-    // well well well, brand new transition! better get started then!
-    // first figure out at which frame we are going to transition the main clip
+
+    // we have a brand new transition, there are few parameters that needs to be
+    // computed
+    // first figure out at which frame we are going to transition the current
+    // clip
     const int currentFrame =
-        convertTimeToFrames(timeStamp, m_globalStartStamp, clip, m_multiplier);
+        convertTimeToFrames(timeStamp, m_startTimeStamp, clip, m_multiplier);
     transition->m_transitionFrameSrc = clip->findMetadataFrameFromGivenFrame(
         transition->m_transitionKeyID, currentFrame);
     assert(transition->m_transitionFrameSrc != -1);
@@ -245,52 +248,86 @@ bool LuaStatePlayer::performTransition(Transition *transition,
 
     // so we know which frame we are at, and at which frame the transition will
     // need to happen we can compute an offset in nanoseconds
-    int deltaFrames = transition->m_transitionFrameSrc - currentFrame;
-    long long nanoOffsetForTransition =
-        deltaFrames * framerate * TimeConversion::MS_TO_NANO;
-    long long timeStampTransitionStart = timeStamp + nanoOffsetForTransition;
+    int deltaFrames =
+        transition->m_transitionFrameSrc -
+        currentFrame; // delta from the frame we are currently at and the frame
+                      // the main animation will start the transition
 
-    const long long transitionDurationInNano =
-        // double(transition->m_frameOverlap) * framerate * MS_TO_NANO;
-        double(10) * framerate * TimeConversion::MS_TO_NANO;
-    long long timeStampTransitionEnd =
+    // next we compute the time stamp at which the transition will start to
+    // evaluate
+    const auto deltaFramesInNano = static_cast<int64_t>(
+        deltaFrames * frameLenInMS * TimeConversion::MS_TO_NANO);
+    int64_t timeStampTransitionStart = timeStamp + deltaFramesInNano;
+
+    // now that we know when we start the transition, we compute
+    // how long the transition is to find the time stamp at which the
+    // transition will end
+    const auto transitionDurationInNano = static_cast<int64_t>(
+        static_cast<double>(transition->m_transitionLength) *
+        TimeConversion::SECONDS_TO_NANO);
+    int64_t timeStampTransitionEnd =
         timeStampTransitionStart + transitionDurationInNano;
 
     // now we can compute what offset is needed to align the second animation
     // such that it was started at the right time such that at the end of the
     // transition we should play the right frame
-    const long long offsetDest = double(transition->m_transitionFrameDest) *
-                                 framerate * TimeConversion::MS_TO_NANO;
-    long long stampDestinationStart = timeStampTransitionEnd - offsetDest;
+    const int64_t offsetDest = double(transition->m_transitionFrameDest) *
+                               frameLenInMS * TimeConversion::MS_TO_NANO;
+    int64_t stampDestinationStart = timeStampTransitionEnd - offsetDest;
+
+    // there can be the case where the transition is longer than the amount of
+    // animation before the start frame in the destination. For example
+    // transition is 20 frames, but the transition frame in the destination is
+    // 5, there are only 5 frames left, if we shift the start time of the the
+    // animation by 5 frames only we would get a negative time delta, because
+    // our destination animation did not start yet, so what we do is simply
+    // subtract enough full animations length in nanoseconds such that we have
+    // an actual start time before our current time stamp. Since we are removing
+    // multiple of the whole animation it won't alter the actual local offset
     if ((timeStamp - stampDestinationStart) < 0) {
-      long long absDelta = abs(timeStamp - stampDestinationStart);
-      long long destLenInNano = double(clipDest->m_frameCount) * framerate *
-                                TimeConversion::MS_TO_NANO;
-      long long deltaCount = floor(absDelta / destLenInNano) + 1;
+      // computing time delta inbetween our current time and where animation
+      // should start
+      // playing
+      int64_t absDelta = abs(timeStamp - stampDestinationStart);
+      // we compute the total length in nanoseconds
+      int64_t destLenInNano = double(clipDest->m_frameCount) * frameLenInMS *
+                              TimeConversion::MS_TO_NANO;
+      // we perform the division and floor it, and add one such that we are 100%
+      // sure
+      // that we are going to subtract enough
+      int64_t deltaCount = floor(absDelta / destLenInNano) + 1;
+      // perform the shift
       stampDestinationStart -= destLenInNano * deltaCount;
     }
     assert((timeStamp - stampDestinationStart) > 0);
 
     transition->m_startTransitionTime = timeStampTransitionStart;
     transition->m_endTransitionTime = timeStampTransitionEnd;
-    transition->m_destAnimOffset = stampDestinationStart;
+    transition->m_destAnimStartTimeStamp = stampDestinationStart;
     transition->m_status = TRANSITION_STATUS::TRANSITIONING;
   }
 
-  const double range =
-      transition->m_endTransitionTime - transition->m_startTransitionTime;
-  assert(range > 0.0);
-  const auto ratio = static_cast<float>(
-      (timeStamp - transition->m_startTransitionTime) / range);
-
+  // first we check whether or not we should play a transition, if not,
+  // it means we are waiting for our designated frame and we just keep
+  // playing current animation
   if (timeStamp >= transition->m_startTransitionTime) {
+
+    // lets compute the interpoaltion factor for the two animations
+    const auto range = static_cast<double>(transition->m_endTransitionTime -
+                                           transition->m_startTransitionTime);
+    assert(range > 0.0);
+    const auto ratio = static_cast<float>(
+        static_cast<double>(timeStamp - transition->m_startTransitionTime) /
+        range);
+
+    // making sure the ratio is positive, baking in a small delta just to be
+    // on the safe side for float comparison
     assert(ratio > -0.00001f);
     if (ratio >= 1.0f) {
       // we are past the range, no need o interpolate
       AnimationEvalRequest eval{transition->m_targetAnimation, m_outPose,
-                                timeStamp, m_globalStartStamp};
+                                timeStamp, m_startTimeStamp};
       evaluateAnim(&eval);
-      m_flags = ANIM_FLAGS::NEW_MATRICES;
       transition->m_status = TRANSITION_STATUS::DONE;
       // we are done with the transition return true
       return true;
@@ -300,23 +337,24 @@ bool LuaStatePlayer::performTransition(Transition *transition,
     }
   } else {
     AnimationEvalRequest eval{currentAnim, m_outPose, timeStamp,
-                              m_globalStartStamp};
+                              m_startTimeStamp};
     evaluateAnim(&eval);
-    m_flags = ANIM_FLAGS::NEW_MATRICES;
   }
+  m_flags = ANIM_FLAGS::NEW_MATRICES;
   return false;
 }
 
-void LuaStatePlayer::submitInterpRequest(const long long timeStamp,
-                                         Transition *transition, const float ratio) {
+void LuaStatePlayer::submitInterpRequest(const int64_t timeStamp,
+                                         Transition *transition,
+                                         const float ratio) {
   // we have to make two interpolation requests
-  // source interp request
+  // source interpolation request request
   AnimationEvalRequest srcRequest{};
   srcRequest.convertToGlobals = false;
   srcRequest.m_animation = currentAnim;
   srcRequest.m_destination = m_transitionSource;
   srcRequest.m_stampNS = timeStamp;
-  srcRequest.m_originTime = m_globalStartStamp;
+  srcRequest.m_originTime = m_startTimeStamp;
   srcRequest.m_multiplier = 1.0f;
   evaluateAnim(&srcRequest);
 
@@ -326,11 +364,12 @@ void LuaStatePlayer::submitInterpRequest(const long long timeStamp,
   destRequest.m_animation = transition->m_targetAnimation;
   destRequest.m_destination = m_transitionDest;
   destRequest.m_stampNS = timeStamp;
-  destRequest.m_originTime = transition->m_destAnimOffset;
+  destRequest.m_originTime = transition->m_destAnimStartTimeStamp;
   destRequest.m_multiplier = 1.0f;
   evaluateAnim(&destRequest);
 
   // now we need to interpolate not two frames but to existing poses
+  // one from the source and one from the destination animation
   InterpolateTwoPosesRequest finalRequest{};
   finalRequest.factor = ratio;
   finalRequest.src = m_transitionSource;
@@ -344,4 +383,5 @@ void LuaStatePlayer::submitInterpRequest(const long long timeStamp,
 uint32_t LuaStatePlayer::getJointCount() const {
   return skeleton->m_jointCount;
 }
+
 } // namespace SirEngine

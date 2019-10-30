@@ -10,6 +10,7 @@ enum class ANIM_CLIP_KEYWORDS { L_FOOT_DOWN = 1, R_FOOT_DOWN = 2, NONE };
 namespace TimeConversion {
 static constexpr long long MS_TO_NANO = 1000000;
 static constexpr float NANO_TO_SECONDS = float(1e-9);
+static constexpr float SECONDS_TO_NANO = 1000000000.0f;
 } // namespace TimeConversion
 
 struct AnimationMetadataKey {
@@ -25,12 +26,12 @@ struct Transition {
   // long long m_destinationOriginalTime = 0;
   int m_transitionFrameSrc = 0;
   int m_transitionFrameDest = 0;
-  int m_frameOverlap = 4;
+  float m_transitionLength = 0.4f;
   ANIM_CLIP_KEYWORDS m_transitionKeyID;
   TRANSITION_STATUS m_status = TRANSITION_STATUS::NEW;
   long long m_startTransitionTime;
   long long m_endTransitionTime;
-  long long m_destAnimOffset;
+  long long m_destAnimStartTimeStamp;
 };
 
 struct AnimationEvalRequest {
