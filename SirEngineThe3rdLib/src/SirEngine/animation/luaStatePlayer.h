@@ -9,9 +9,9 @@
 // factory function to be called, then the callee will get whatever data needs
 // from there. One option is to pass a void pointer and cast it internally which
 // is not really pretty either
+#include "animationClip.h"
 #include "nlohmann/json_fwd.hpp"
 #include <queue>
-#include "animationClip.h"
 
 namespace SirEngine {
 struct SkeletonPose;
@@ -20,20 +20,19 @@ class AnimationManager;
 struct AnimationClip;
 
 class LuaStatePlayer final : public AnimationPlayer {
-  enum class TRANSITION_STATUS { NEW = 0, WAITING_FOR_TRANSITION_FRAME = 1, TRANSITIONING=2,DONE=3};
+  enum class TRANSITION_STATUS { NEW, TRANSITIONING, DONE };
 
   struct Transition {
     const char *m_targetAnimation = nullptr;
     const char *m_targetState = nullptr;
-    //long long m_destinationOriginalTime = 0;
-    long long m_endTransitionTime;
+    // long long m_destinationOriginalTime = 0;
     int m_transitionFrameSrc = 0;
     int m_transitionFrameDest = 0;
     int m_frameOverlap = 4;
     ANIM_CLIP_KEYWORDS m_transitionKeyID;
     TRANSITION_STATUS m_status = TRANSITION_STATUS::NEW;
-    long long m_endTransitionRange ;
     long long m_startTransitionTime;
+    long long m_endTransitionTime;
     long long m_destAnimOffset;
   };
 
@@ -42,15 +41,14 @@ class LuaStatePlayer final : public AnimationPlayer {
     SkeletonPose *m_destination = nullptr;
     long long m_stampNS = 0;
     long long m_originTime = 0;
-	bool convertToGlobals = true; 
+    bool convertToGlobals = true;
   };
 
-  struct InterpolateTwoPosesRequest
-  {
-	  float factor;
-	  SkeletonPose* src;
-	  SkeletonPose* dest;
-	  SkeletonPose* output;
+  struct InterpolateTwoPosesRequest {
+    float factor;
+    SkeletonPose *src;
+    SkeletonPose *dest;
+    SkeletonPose *output;
   };
 
 public:
@@ -60,17 +58,13 @@ public:
   void evaluate(long long stampNS) override;
   uint32_t getJointCount() const override;
 
-  //TODO clear up to private stuff
+  // TODO clear up to private stuff
   void evaluateAnim(const AnimationEvalRequest *request);
-  int convertTimeToFrames(const long long currentStamp,
-                          const long long originStamp,
-                          const AnimationClip *clip) const;
-  float convertTimeToFramesDecimal(const long long currentStamp,
-                          const long long originStamp,
-                          const AnimationClip *clip) const;
+
 private:
-  void interpolateTwoPoses(InterpolateTwoPosesRequest& finalRequest);
-  void submitInterpRequest(long long timeStamp, Transition* transition, float ratio);
+  void interpolateTwoPoses(InterpolateTwoPosesRequest &request);
+  void submitInterpRequest(long long timeStamp, Transition *transition,
+                           float ratio);
   bool performTransition(Transition *transition, const long long timeStamp);
 
 private:
