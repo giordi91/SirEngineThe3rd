@@ -16,6 +16,7 @@
 // once the queue is removed I can just also swap the allocation for pointers in
 // a pool and not have the include
 #include "SirEngine/animation/animationManipulation.h"
+#include <DirectXMath.h>
 
 namespace SirEngine {
 struct SkeletonPose;
@@ -48,6 +49,8 @@ private:
   SkeletonPose *m_transitionDest = nullptr;
   Transition *m_currentTransition = nullptr;
   int m_queueMaxSize = 2;
+  float m_currentCogSpeed =0.0f;
+  DirectX::XMMATRIX m_transform;
 
   // temporary
   std::queue<Transition> m_transitionsQueue;

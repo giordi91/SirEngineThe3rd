@@ -14,7 +14,7 @@ static const std::string ANIMATION_CONFIG_TYPE_SIMPLE_LOOP =
     "animationLoopPlayer";
 static const std::string ANIMATION_CONFIG_NAME_KEY = "name";
 
-AnimationLoopPlayer::AnimationLoopPlayer() : AnimationPlayer() {}
+AnimationLoopPlayer::AnimationLoopPlayer() : AnimationPlayer() { m_transform = DirectX::XMMatrixIdentity();}
 
 AnimationLoopPlayer::~AnimationLoopPlayer() {}
 
@@ -119,7 +119,7 @@ void AnimationLoopPlayer::evaluate(long long stampNS) {
   }
   // now that the anim has been blended I will compute the
   // matrices in world-space (skin ready)
-  m_outPose->updateGlobalFromLocal();
+  m_outPose->updateGlobalFromLocal(m_transform);
   m_flags = ANIM_FLAGS::NEW_MATRICES;
 }
 

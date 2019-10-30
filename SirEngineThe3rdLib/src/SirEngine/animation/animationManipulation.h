@@ -1,4 +1,5 @@
 #pragma once
+#include <DirectXMath.h>
 
 namespace SirEngine {
 
@@ -32,6 +33,7 @@ struct Transition {
   long long m_startTransitionTime;
   long long m_endTransitionTime;
   long long m_destAnimStartTimeStamp;
+  float m_cogSpeed;
 };
 
 struct AnimationEvalRequest {
@@ -41,6 +43,7 @@ struct AnimationEvalRequest {
   long long m_originTime = 0;
   float m_multiplier = 1.0f;
   bool convertToGlobals = true;
+  DirectX::XMMATRIX m_transform;
 };
 
 struct InterpolateTwoPosesRequest {
@@ -48,6 +51,7 @@ struct InterpolateTwoPosesRequest {
   SkeletonPose *src;
   SkeletonPose *dest;
   SkeletonPose *output;
+  DirectX::XMMATRIX m_transform;
 };
 
 struct AnimationEvalRequest;
