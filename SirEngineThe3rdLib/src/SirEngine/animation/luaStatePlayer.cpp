@@ -1,11 +1,13 @@
 #include "SirEngine/animation/luaStatePlayer.h"
 #include "SirEngine/animation/animationClip.h"
+#include "SirEngine/animation/animationManipulation.h"
 #include "SirEngine/animation/animationManager.h"
 #include "SirEngine/animation/skeleton.h"
+#include "SirEngine/scripting/scriptingContext.h"
+
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
 #include "SirEngine/runtimeString.h"
-#include "SirEngine/scripting/scriptingContext.h"
 
 extern "C" {
 #include <lua/lua.h>
@@ -24,10 +26,10 @@ static const std::string ANIMATION_CONFIG_NAME_KEY = "name";
 int convertTimeToFrames(const long long currentStamp,
                         const long long originStamp, const AnimationClip *clip,
                         float speedMultiplier) {
-  float NANO_TO_SECONDS = float(1e-9);
   // we convert to seconds, since we need to count how many frames
   // passed and that is expressed in seconds
-  const float speedTimeMultiplier = NANO_TO_SECONDS * speedMultiplier;
+  const float speedTimeMultiplier =
+      TimeConversion::NANO_TO_SECONDS * speedMultiplier;
   const float delta = (currentStamp - originStamp) * speedTimeMultiplier;
   // dividing the time elapsed since we started playing animation
   // and divide by the frame-rate so we know how many frames we played so far
@@ -124,15 +126,6 @@ void LuaStatePlayer::init(AnimationManager *manager,
   currentAnim = persistentString(currentAnimStr);
 }
 
-inline DirectX::XMFLOAT3 lerp3(const DirectX::XMFLOAT3 &v1,
-                               const DirectX::XMFLOAT3 &v2,
-                               const float amount) {
-  return DirectX::XMFLOAT3{
-      ((1.0f - amount) * v1.x) + (amount * v2.x),
-      ((1.0f - amount) * v1.y) + (amount * v2.y),
-      ((1.0f - amount) * v1.z) + (amount * v2.z),
-  };
-}
 void LuaStatePlayer::evaluate(long long stampNS) {
 
   const ScriptData &data =
@@ -196,6 +189,7 @@ void LuaStatePlayer::evaluate(long long stampNS) {
                               m_globalStartStamp};
     // SE_CORE_INFO(stampNS);
     evaluateAnim(&eval);
+    m_flags = ANIM_FLAGS::NEW_MATRICES;
   } else {
     // we do indeed need to perform a transition
 
@@ -253,12 +247,12 @@ bool LuaStatePlayer::performTransition(Transition *transition,
     // need to happen we can compute an offset in nanoseconds
     int deltaFrames = transition->m_transitionFrameSrc - currentFrame;
     long long nanoOffsetForTransition =
-        deltaFrames * framerate * AnimationManager::MS_TO_NANO;
+        deltaFrames * framerate * TimeConversion::MS_TO_NANO;
     long long timeStampTransitionStart = timeStamp + nanoOffsetForTransition;
 
     const long long transitionDurationInNano =
         // double(transition->m_frameOverlap) * framerate * MS_TO_NANO;
-        double(10) * framerate * AnimationManager::MS_TO_NANO;
+        double(10) * framerate * TimeConversion::MS_TO_NANO;
     long long timeStampTransitionEnd =
         timeStampTransitionStart + transitionDurationInNano;
 
@@ -266,12 +260,12 @@ bool LuaStatePlayer::performTransition(Transition *transition,
     // such that it was started at the right time such that at the end of the
     // transition we should play the right frame
     const long long offsetDest = double(transition->m_transitionFrameDest) *
-                                 framerate * AnimationManager::MS_TO_NANO;
+                                 framerate * TimeConversion::MS_TO_NANO;
     long long stampDestinationStart = timeStampTransitionEnd - offsetDest;
     if ((timeStamp - stampDestinationStart) < 0) {
       long long absDelta = abs(timeStamp - stampDestinationStart);
       long long destLenInNano = double(clipDest->m_frameCount) * framerate *
-                                AnimationManager::MS_TO_NANO;
+                                TimeConversion::MS_TO_NANO;
       long long deltaCount = floor(absDelta / destLenInNano) + 1;
       stampDestinationStart -= destLenInNano * deltaCount;
     }
@@ -288,14 +282,15 @@ bool LuaStatePlayer::performTransition(Transition *transition,
   assert(range > 0.0);
   const auto ratio = static_cast<float>(
       (timeStamp - transition->m_startTransitionTime) / range);
-  assert(ratio > 0);
 
   if (timeStamp >= transition->m_startTransitionTime) {
+    assert(ratio > -0.00001f);
     if (ratio >= 1.0f) {
       // we are past the range, no need o interpolate
       AnimationEvalRequest eval{transition->m_targetAnimation, m_outPose,
                                 timeStamp, m_globalStartStamp};
       evaluateAnim(&eval);
+      m_flags = ANIM_FLAGS::NEW_MATRICES;
       transition->m_status = TRANSITION_STATUS::DONE;
       // we are done with the transition return true
       return true;
@@ -307,36 +302,13 @@ bool LuaStatePlayer::performTransition(Transition *transition,
     AnimationEvalRequest eval{currentAnim, m_outPose, timeStamp,
                               m_globalStartStamp};
     evaluateAnim(&eval);
+    m_flags = ANIM_FLAGS::NEW_MATRICES;
   }
   return false;
 }
-inline void
-LuaStatePlayer::interpolateTwoPoses(InterpolateTwoPosesRequest &request) {
-  //#pragma omp parallel for
-  for (unsigned int i = 0; i < request.output->m_skeleton->m_jointCount; ++i) {
-    // interpolating all the bones in local space
-    JointPose &jointStart = request.src->m_localPose[i];
-    JointPose &jointEnd = request.dest->m_localPose[i];
 
-    // we slerp the rotation and linearly interpolate the
-    // translation
-    const DirectX::XMVECTOR rot = DirectX::XMQuaternionSlerp(
-        jointStart.m_rot, jointEnd.m_rot, request.factor);
-
-    const DirectX::XMFLOAT3 pos =
-        lerp3(jointStart.m_trans, jointEnd.m_trans, request.factor);
-    // the compiler should be able to optimize out this copy
-    request.output->m_localPose[i].m_rot = rot;
-    request.output->m_localPose[i].m_trans = pos;
-  }
-  // now that the anim has been blended I will compute the
-  // matrices in world-space (skin ready)
-  request.output->updateGlobalFromLocal();
-  m_flags = ANIM_FLAGS::NEW_MATRICES;
-}
-
-void LuaStatePlayer::submitInterpRequest(long long timeStamp,
-                                         Transition *transition, float ratio) {
+void LuaStatePlayer::submitInterpRequest(const long long timeStamp,
+                                         Transition *transition, const float ratio) {
   // we have to make two interpolation requests
   // source interp request
   AnimationEvalRequest srcRequest{};
@@ -345,6 +317,7 @@ void LuaStatePlayer::submitInterpRequest(long long timeStamp,
   srcRequest.m_destination = m_transitionSource;
   srcRequest.m_stampNS = timeStamp;
   srcRequest.m_originTime = m_globalStartStamp;
+  srcRequest.m_multiplier = 1.0f;
   evaluateAnim(&srcRequest);
 
   // now we interpolate the destination
@@ -354,6 +327,7 @@ void LuaStatePlayer::submitInterpRequest(long long timeStamp,
   destRequest.m_destination = m_transitionDest;
   destRequest.m_stampNS = timeStamp;
   destRequest.m_originTime = transition->m_destAnimOffset;
+  destRequest.m_multiplier = 1.0f;
   evaluateAnim(&destRequest);
 
   // now we need to interpolate not two frames but to existing poses
@@ -364,68 +338,6 @@ void LuaStatePlayer::submitInterpRequest(long long timeStamp,
   finalRequest.output = m_outPose;
 
   interpolateTwoPoses(finalRequest);
-}
-
-void LuaStatePlayer::evaluateAnim(const AnimationEvalRequest *request) {
-
-  // need to fetch the clip!
-  auto *clip =
-      globals::ANIMATION_MANAGER->getAnimationClipByName(request->m_animation);
-  // assert(m_clip != nullptr);
-  const long long stampNS = request->m_stampNS;
-  assert(stampNS >= 0);
-
-  // we convert to seconds, since we need to count how many frames
-  // passed and that is expressed in seconds
-  const float speedTimeMultiplier =
-      AnimationManager::NANO_TO_SECONDS * m_multiplier;
-  const float delta = (stampNS - request->m_originTime) * speedTimeMultiplier;
-  // dividing the time elapsed since we started playing animation
-  // and divide by the frame-rate so we know how many frames we played so far
-  const float framesElapsedF = delta / (clip->m_frameRate);
-  const int framesElapsed = static_cast<int>(floor(framesElapsedF));
-  // converting the frames in loop
-  const int startIdx = framesElapsed % clip->m_frameCount;
-
-  // convert counter to idx
-  // we find the two frames we need to interpolate to
-  int endIdx = startIdx + 1;
-  const int endRange = clip->m_frameCount - 1;
-  // if the end frame is out of the range it means needs to loop around
-  if (endIdx > endRange) {
-    endIdx = 0;
-  }
-
-  // extracting the two poses
-  const JointPose *startP = clip->m_poses + (startIdx * clip->m_bonesPerFrame);
-  const JointPose *endP = clip->m_poses + (endIdx * clip->m_bonesPerFrame);
-  // here we find how much in the frame we are, we do that
-  // by subtracting the frames elapsed in float minus the floored
-  // value basically leaving us only with the decimal part as
-  // it was a modf
-  const float interpolationValue = (framesElapsedF - float(framesElapsed));
-
-  //#pragma omp parallel for
-  for (unsigned int i = 0; i < request->m_destination->m_skeleton->m_jointCount;
-       ++i) {
-    // interpolating all the bones in local space
-    auto &jointStart = startP[i];
-    auto &jointEnd = endP[i];
-
-    // we slerp the rotation and linearly interpolate the
-    // translation
-    const DirectX::XMVECTOR rot = DirectX::XMQuaternionSlerp(
-        jointStart.m_rot, jointEnd.m_rot, interpolationValue);
-
-    const DirectX::XMFLOAT3 pos =
-        lerp3(jointStart.m_trans, jointEnd.m_trans, interpolationValue);
-    // the compiler should be able to optimize out this copy
-    request->m_destination->m_localPose[i].m_rot = rot;
-    request->m_destination->m_localPose[i].m_trans = pos;
-  }
-  // now that the anim has been blended I will compute the
-  // matrices in world-space (skin ready)
-  request->m_destination->updateGlobalFromLocal();
   m_flags = ANIM_FLAGS::NEW_MATRICES;
 }
 

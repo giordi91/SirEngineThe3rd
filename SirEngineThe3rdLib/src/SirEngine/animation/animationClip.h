@@ -1,15 +1,12 @@
 #pragma once
 
-#include "SirEngine/animation/skeleton.h"
+#include "SirEngine/core.h"
+#include "SirEngine/animation/animationManipulation.h"
 
 namespace SirEngine {
 
-enum class ANIM_CLIP_KEYWORDS { L_FOOT_DOWN = 1, R_FOOT_DOWN = 2, NONE };
 
-struct AnimationMetadataKey {
-  ANIM_CLIP_KEYWORDS m_key;
-  int m_value;
-};
+struct JointPose;
 
 struct SIR_ENGINE_API AnimationClip {
 

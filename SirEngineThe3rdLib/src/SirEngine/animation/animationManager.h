@@ -94,8 +94,6 @@ public:
   }
 
 public:
-  static constexpr long long MS_TO_NANO = 1000000;
-  static constexpr float NANO_TO_SECONDS = float(1e-9);
 private:
   inline AnimationClip *getCachedAnimationClip(const char *name) const {
     AnimationClip *clip = nullptr;
