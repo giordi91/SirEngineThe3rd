@@ -72,7 +72,7 @@ void evaluateAnim(const AnimationEvalRequest *request) {
   }
   // now that the anim has been blended I will compute the
   // matrices in world-space (skin ready)
-  request->m_destination->updateGlobalFromLocal();
+  request->m_destination->updateGlobalFromLocal(request->m_transform);
 }
 
 void interpolateTwoPoses(InterpolateTwoPosesRequest& request)
@@ -97,6 +97,6 @@ void interpolateTwoPoses(InterpolateTwoPosesRequest& request)
 	}
 	// now that the anim has been blended I will compute the
 	// matrices in world-space (skin ready)
-	request.output->updateGlobalFromLocal();
+	request.output->updateGlobalFromLocal(request.m_transform);
 }
 } // namespace SirEngine

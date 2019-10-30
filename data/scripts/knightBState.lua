@@ -30,9 +30,13 @@ states = {
 -- transitions
 transitions = {
 				-- idle transitions
-				idle = {{targetState="walk", transitionKey="l_foot_down", transitionLenInSeconds = 0.3, logic = idleToWalk }},
+				idle = {{targetState="walk", transitionKey="l_foot_down", 
+				         transitionLenInSeconds=0.3, logic=idleToWalk,
+						 cogSpeed = 0.0}},
 				-- walk transitions
-				walk = {{targetState="idle", transitionKey="l_foot_down", transitionLenInSeconds = 0.3, logic = walkToIdle }},
+				walk = {{targetState="idle", transitionKey="l_foot_down", 
+						 transitionLenInSeconds=0.3, logic=walkToIdle,
+						 cogSpeed=1.0}},
 			  },
 }
 
@@ -51,16 +55,17 @@ function evaluate(currentState)
 			sourceAnim = stateMap.animation; 
 			transitionKey = transition.transitionKey;
 			transitionLen = transition.transitionLenInSeconds;
+			speed = transition.cogSpeed;
 			-- need to push the transition
-			return transition.targetState, sourceAnim,targetAnim,transitionKey, transitionLen;
+			return transition.targetState, sourceAnim,targetAnim,transitionKey, transitionLen,speed;
 		end
 	end
-	return currentState,nil,nil,nil,nil;
+	return currentState,nil,nil,nil,nil,nil;
 end
 
 -- returns the starting animation and state we wish to use
 function start()
 	startState = "idle";
 	stateMap = stateMachine.states[startState];
-	return startState ,stateMap.animation;
+	return startState ,stateMap.animation, 0.0;
 end

@@ -42,6 +42,7 @@ int convertTimeToFrames(const int64_t currentStamp, const int64_t originStamp,
 
 void LuaStatePlayer::init(AnimationManager *manager,
                           nlohmann::json &configJson) {
+  m_transform = DirectX::XMMatrixIdentity();
   const std::string empty;
   const std::string configName =
       getValueIfInJson(configJson, ANIMATION_CONFIG_NAME_KEY, empty);
@@ -100,7 +101,7 @@ void LuaStatePlayer::init(AnimationManager *manager,
   lua_State *state = globals::SCRIPTING_CONTEXT->getContext();
   lua_getglobal(state, START_FUNCTION_NAME);
 
-  const int status = lua_pcall(state, 0, 2, 0);
+  const int status = lua_pcall(state, 0, 3, 0);
   if (status != LUA_OK) {
     const char *message = lua_tostring(state, -1);
     SE_CORE_ERROR(message);
@@ -108,12 +109,15 @@ void LuaStatePlayer::init(AnimationManager *manager,
     assert(0);
   }
   int x = 0;
-  const char *newState = lua_tostring(state, -2);
+  const char *newState = lua_tostring(state, -3);
   assert(newState != nullptr);
   currentState = persistentString(newState);
-  const char *currentAnimStr = lua_tostring(state, -1);
+  const char *currentAnimStr = lua_tostring(state, -2);
   assert(currentAnimStr != nullptr);
   currentAnim = persistentString(currentAnimStr);
+  auto cogSpeed = static_cast<float>(lua_tonumber(state, -1));
+
+  m_currentCogSpeed = cogSpeed;
 }
 
 void LuaStatePlayer::evaluateStateMachine() {
@@ -122,16 +126,17 @@ void LuaStatePlayer::evaluateStateMachine() {
   lua_State *state = globals::SCRIPTING_CONTEXT->getContext();
   lua_getglobal(state, EVALUATE_FUNCTION_NAME);
   lua_pushstring(state, currentState);
-  const int status = lua_pcall(state, 1, 5, 0);
+  const int status = lua_pcall(state, 1, 6, 0);
   if (status != LUA_OK) {
     const char *message = lua_tostring(state, -1);
     SE_CORE_ERROR(message);
     lua_pop(state, 1);
     assert(0);
   }
+  // TODO might be worth to return the table directly and parse that
   // the first returned argument is the state that the state machine decided to
   // be in
-  const char *newState = lua_tostring(state, -5);
+  const char *newState = lua_tostring(state, -6);
   // the method among other param returns a state, if the state changed from the
   // one we passed in, it means we also got enough data to perform a transition,
   // (the other arguments
@@ -143,10 +148,11 @@ void LuaStatePlayer::evaluateStateMachine() {
   bool shouldParseArguments = strcmp(newState, currentState) != 0;
   if (shouldParseArguments) {
     // also mean we took a transition to a new state
-    const char *sourceAnim = lua_tostring(state, -4);
-    const char *targetAnim = lua_tostring(state, -3);
-    const char *transitionKey = lua_tostring(state, -2);
-    auto transitionLenInSeconds = static_cast<float>(lua_tonumber(state, -1));
+    const char *sourceAnim = lua_tostring(state, -5);
+    const char *targetAnim = lua_tostring(state, -4);
+    const char *transitionKey = lua_tostring(state, -3);
+    auto transitionLenInSeconds = static_cast<float>(lua_tonumber(state, -2));
+    auto cogSpeed = static_cast<float>(lua_tonumber(state, -1));
 
     // stringFree(currentState);
     // currentState = persistentString(newState);
@@ -154,6 +160,7 @@ void LuaStatePlayer::evaluateStateMachine() {
     transition.m_targetAnimation = persistentString(targetAnim);
     transition.m_targetState = persistentString(newState);
     transition.m_transitionLength = transitionLenInSeconds;
+    transition.m_cogSpeed = cogSpeed;
 
     // lets convert the transition key from string to the correct enum
     if (strlen(transitionKey) != 0) {
@@ -177,6 +184,9 @@ void LuaStatePlayer::evaluateStateMachine() {
 
 void LuaStatePlayer::evaluate(const int64_t stampNS) {
 
+  auto spin = DirectX::XMMatrixRotationY(0.001f);
+  m_transform = DirectX::XMMatrixMultiply(m_transform, spin);
+
   // if the queue is too full we just prevent the state machine from evaluating
   bool shouldEvaluate = m_transitionsQueue.size() < m_queueMaxSize;
   if (shouldEvaluate) {
@@ -187,8 +197,9 @@ void LuaStatePlayer::evaluate(const int64_t stampNS) {
   if (m_currentTransition == nullptr && m_transitionsQueue.empty()) {
 
     // no transition to make, let us perform a simple animation evaluation
-    AnimationEvalRequest eval{currentAnim, m_outPose, stampNS,
-                              m_startTimeStamp};
+    AnimationEvalRequest eval{currentAnim,      m_outPose,    stampNS,
+                              m_startTimeStamp, m_multiplier, true,
+                              m_transform};
     evaluateAnim(&eval);
     m_flags = ANIM_FLAGS::NEW_MATRICES;
   } else {
@@ -325,8 +336,13 @@ bool LuaStatePlayer::performTransition(Transition *transition,
     assert(ratio > -0.00001f);
     if (ratio >= 1.0f) {
       // we are past the range, no need o interpolate
-      AnimationEvalRequest eval{transition->m_targetAnimation, m_outPose,
-                                timeStamp, m_startTimeStamp};
+      AnimationEvalRequest eval{transition->m_targetAnimation,
+                                m_outPose,
+                                timeStamp,
+                                m_startTimeStamp,
+                                m_multiplier,
+                                true,
+                                m_transform};
       evaluateAnim(&eval);
       transition->m_status = TRANSITION_STATUS::DONE;
       // we are done with the transition return true
@@ -336,8 +352,9 @@ bool LuaStatePlayer::performTransition(Transition *transition,
       submitInterpRequest(timeStamp, transition, ratio);
     }
   } else {
-    AnimationEvalRequest eval{currentAnim, m_outPose, timeStamp,
-                              m_startTimeStamp};
+    AnimationEvalRequest eval{currentAnim,      m_outPose,    timeStamp,
+                              m_startTimeStamp, m_multiplier, true,
+                              m_transform};
     evaluateAnim(&eval);
   }
   m_flags = ANIM_FLAGS::NEW_MATRICES;
@@ -356,6 +373,8 @@ void LuaStatePlayer::submitInterpRequest(const int64_t timeStamp,
   srcRequest.m_stampNS = timeStamp;
   srcRequest.m_originTime = m_startTimeStamp;
   srcRequest.m_multiplier = 1.0f;
+  srcRequest.m_transform =
+      m_transform; // not used since convert to global is off
   evaluateAnim(&srcRequest);
 
   // now we interpolate the destination
@@ -366,6 +385,8 @@ void LuaStatePlayer::submitInterpRequest(const int64_t timeStamp,
   destRequest.m_stampNS = timeStamp;
   destRequest.m_originTime = transition->m_destAnimStartTimeStamp;
   destRequest.m_multiplier = 1.0f;
+  destRequest.m_transform =
+      m_transform; // not used since convert to global is off
   evaluateAnim(&destRequest);
 
   // now we need to interpolate not two frames but to existing poses
@@ -375,6 +396,7 @@ void LuaStatePlayer::submitInterpRequest(const int64_t timeStamp,
   finalRequest.src = m_transitionSource;
   finalRequest.dest = m_transitionDest;
   finalRequest.output = m_outPose;
+  finalRequest.m_transform = m_transform;
 
   interpolateTwoPoses(finalRequest);
   m_flags = ANIM_FLAGS::NEW_MATRICES;

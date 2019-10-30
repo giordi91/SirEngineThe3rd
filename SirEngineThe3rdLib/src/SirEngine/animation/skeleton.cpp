@@ -56,7 +56,7 @@ bool Skeleton::loadFromFile(const char *path) {
   return true;
 }
 
-void SkeletonPose::updateGlobalFromLocal() {
+void SkeletonPose::updateGlobalFromLocal(const DirectX::XMMATRIX transform) const {
 
   // establishing the invariant, where every bone
   // in the list appears after the parent,so meanwhile we fill
@@ -71,8 +71,12 @@ void SkeletonPose::updateGlobalFromLocal() {
   // intermediate copies and conversions between data-types etc
   const DirectX::XMVECTOR &r = m_localPose[0].m_rot;
   DirectX::XMMATRIX qM = DirectX::XMMatrixRotationQuaternion(r);
-  //patching the rotation in
+  // patching the rotation in
   qM.r[3] = expandF3ToVec(m_localPose[0].m_trans);
+
+  // we want to hit the root by our transform, which will move the
+  // skeleton around the world
+  qM = DirectX::XMMatrixMultiply(qM, transform);
 
   m_worldMat[0] = qM;
   m_globalPose[0] = qM * m_skeleton->m_jointsWolrdInv.getConstRef(0);

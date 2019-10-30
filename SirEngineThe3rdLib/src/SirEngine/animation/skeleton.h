@@ -50,7 +50,7 @@ struct SkeletonPose {
    * allocator, allocating and freeing from multiple threads will make a mess
    * @Note : not thread safe
    */
-  void updateGlobalFromLocal();
+  void updateGlobalFromLocal(DirectX::XMMATRIX transform) const;
 };
 
 } // namespace SirEngine
