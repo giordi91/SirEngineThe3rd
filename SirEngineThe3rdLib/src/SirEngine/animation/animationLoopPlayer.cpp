@@ -52,7 +52,7 @@ void AnimationLoopPlayer::init(AnimationManager *manager,
 
   // allocating named pose
   m_outPose = manager->getSkeletonPose(skeleton);
-  m_globalStartStamp = manager->getAnimClock().getTicks();
+  m_startTimeStamp = manager->getAnimClock().getTicks();
   m_flags = ANIM_FLAGS::READY;
 }
 
@@ -73,7 +73,7 @@ void AnimationLoopPlayer::evaluate(long long stampNS) {
   // we convert to seconds, since we need to count how many frames
   // passed and that is expressed in seconds
   const float speedTimeMultiplier = NANO_TO_SECONDS * m_multiplier;
-  const float delta = (stampNS - m_globalStartStamp) * speedTimeMultiplier;
+  const float delta = (stampNS - m_startTimeStamp) * speedTimeMultiplier;
   // dividing the time elapsed since we started playing animation
   // and divide by the frame-rate so we know how many frames we played so far
   const float framesElapsedF = delta / (m_clip->m_frameRate);

@@ -25,30 +25,32 @@ class AnimationManager;
 class LuaStatePlayer final : public AnimationPlayer {
 
 public:
-  LuaStatePlayer();
-  ~LuaStatePlayer() override;
+  LuaStatePlayer() : AnimationPlayer() {}
+  ~LuaStatePlayer() override = default;
+
   void init(AnimationManager *manager, nlohmann::json &configJson);
   void evaluate(long long stampNS) override;
   uint32_t getJointCount() const override;
 
-
 private:
+  void evaluateStateMachine();
   void submitInterpRequest(long long timeStamp, Transition *transition,
                            float ratio);
   bool performTransition(Transition *transition, const long long timeStamp);
 
 private:
-  Skeleton *skeleton;
+  Skeleton *skeleton = nullptr;
   float m_multiplier = 1.0f;
-  ScriptHandle stateMachine;
+  ScriptHandle stateMachine{};
   const char *currentState = "";
   const char *currentAnim = "";
   SkeletonPose *m_transitionSource = nullptr;
   SkeletonPose *m_transitionDest = nullptr;
+  Transition *m_currentTransition = nullptr;
+  int m_queueMaxSize = 2;
+
   // temporary
   std::queue<Transition> m_transitionsQueue;
-  Transition *m_currentTransition = nullptr;
-  long long tempStart;
 };
 
 } // namespace SirEngine

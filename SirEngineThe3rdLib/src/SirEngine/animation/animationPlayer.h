@@ -15,15 +15,17 @@ public:
   // pure function used to evaluate the the animation
   virtual void evaluate(long long stampNS) = 0;
 
-  //getters/setters
+  // getters/setters
   virtual uint32_t getJointCount() const = 0;
   [[nodiscard]] SkeletonPose *getOutPose() const { return m_outPose; };
   inline ANIM_FLAGS getFlags() const { return m_flags; }
-  inline void setFlags(const ANIM_FLAGS flag) {m_flags = flag;}
+  inline void setFlags(const ANIM_FLAGS flag) { m_flags = flag; }
 
 protected:
-  long long m_globalStartStamp;
-  SkeletonPose *m_outPose;
+  long long m_startTimeStamp; // high resolution time stamp of when the
+                              // animation started playing
+  SkeletonPose *m_outPose =
+      nullptr; // where the evluated matrices will be stored
   ANIM_FLAGS m_flags;
 };
 

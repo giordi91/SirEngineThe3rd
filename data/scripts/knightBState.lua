@@ -30,9 +30,9 @@ states = {
 -- transitions
 transitions = {
 				-- idle transitions
-				idle = {{targetState="walk", transitionKey="l_foot_down", delayInSeconds = 1, logic = idleToWalk }},
+				idle = {{targetState="walk", transitionKey="l_foot_down", transitionLenInSeconds = 0.3, logic = idleToWalk }},
 				-- walk transitions
-				walk = {{targetState="idle", transitionKey="l_foot_down", delayInSeconds = 1, logic = walkToIdle }},
+				walk = {{targetState="idle", transitionKey="l_foot_down", transitionLenInSeconds = 0.3, logic = walkToIdle }},
 			  },
 }
 
@@ -50,11 +50,12 @@ function evaluate(currentState)
 			targetAnim = targetState.animation;
 			sourceAnim = stateMap.animation; 
 			transitionKey = transition.transitionKey;
+			transitionLen = transition.transitionLenInSeconds;
 			-- need to push the transition
-			return transition.targetState, sourceAnim,targetAnim,transitionKey;
+			return transition.targetState, sourceAnim,targetAnim,transitionKey, transitionLen;
 		end
 	end
-	return currentState,nil,nil,nil;
+	return currentState,nil,nil,nil,nil;
 end
 
 -- returns the starting animation and state we wish to use
