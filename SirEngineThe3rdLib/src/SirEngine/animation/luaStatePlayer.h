@@ -65,6 +65,9 @@ public:
   int convertTimeToFrames(const long long currentStamp,
                           const long long originStamp,
                           const AnimationClip *clip) const;
+  float convertTimeToFramesDecimal(const long long currentStamp,
+                          const long long originStamp,
+                          const AnimationClip *clip) const;
 private:
   void interpolateTwoPoses(InterpolateTwoPosesRequest& finalRequest);
   void submitInterpRequest(long long timeStamp, Transition* transition, float ratio);

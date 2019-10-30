@@ -37,7 +37,6 @@ transitions = {
 }
 
 function evaluate(currentState)
-    print(currentState)
 	-- lets get the current state
 	stateMap = stateMachine.states[currentState];
 	
