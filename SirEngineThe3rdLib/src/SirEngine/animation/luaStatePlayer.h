@@ -1,5 +1,6 @@
 #pragma once
 #include "SirEngine/animation/animationPlayer.h"
+
 #include "SirEngine/handle.h"
 
 // NOTE: not particularly happy with this, luckily is just forward declare but
@@ -9,47 +10,19 @@
 // factory function to be called, then the callee will get whatever data needs
 // from there. One option is to pass a void pointer and cast it internally which
 // is not really pretty either
-#include "animationClip.h"
 #include "nlohmann/json_fwd.hpp"
+// TODO remove std::queue
 #include <queue>
+// once the queue is removed I can just also swap the allocation for pointers in
+// a pool and not have the include
+#include "SirEngine/animation/animationManipulation.h"
 
 namespace SirEngine {
 struct SkeletonPose;
 struct Skeleton;
 class AnimationManager;
-struct AnimationClip;
 
 class LuaStatePlayer final : public AnimationPlayer {
-  enum class TRANSITION_STATUS { NEW, TRANSITIONING, DONE };
-
-  struct Transition {
-    const char *m_targetAnimation = nullptr;
-    const char *m_targetState = nullptr;
-    // long long m_destinationOriginalTime = 0;
-    int m_transitionFrameSrc = 0;
-    int m_transitionFrameDest = 0;
-    int m_frameOverlap = 4;
-    ANIM_CLIP_KEYWORDS m_transitionKeyID;
-    TRANSITION_STATUS m_status = TRANSITION_STATUS::NEW;
-    long long m_startTransitionTime;
-    long long m_endTransitionTime;
-    long long m_destAnimOffset;
-  };
-
-  struct AnimationEvalRequest {
-    const char *m_animation = nullptr;
-    SkeletonPose *m_destination = nullptr;
-    long long m_stampNS = 0;
-    long long m_originTime = 0;
-    bool convertToGlobals = true;
-  };
-
-  struct InterpolateTwoPosesRequest {
-    float factor;
-    SkeletonPose *src;
-    SkeletonPose *dest;
-    SkeletonPose *output;
-  };
 
 public:
   LuaStatePlayer();
@@ -58,11 +31,8 @@ public:
   void evaluate(long long stampNS) override;
   uint32_t getJointCount() const override;
 
-  // TODO clear up to private stuff
-  void evaluateAnim(const AnimationEvalRequest *request);
 
 private:
-  void interpolateTwoPoses(InterpolateTwoPosesRequest &request);
   void submitInterpRequest(long long timeStamp, Transition *transition,
                            float ratio);
   bool performTransition(Transition *transition, const long long timeStamp);
