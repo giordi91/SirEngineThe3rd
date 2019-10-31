@@ -6,6 +6,7 @@
 #include "SirEngine/scripting/scriptingContext.h"
 
 #include "SirEngine/fileUtils.h"
+#include "SirEngine/input.h"
 #include "SirEngine/log.h"
 #include "SirEngine/runtimeString.h"
 
@@ -184,8 +185,33 @@ void LuaStatePlayer::evaluateStateMachine() {
 
 void LuaStatePlayer::evaluate(const int64_t stampNS) {
 
-  auto spin = DirectX::XMMatrixRotationY(0.001f);
-  m_transform = DirectX::XMMatrixMultiply(m_transform, spin);
+  // buttons
+  int leftArrow = 37;
+  int rightArrow = 39;
+  float speed = 0.001f;
+  bool leftArrowDown = globals::INPUT->isKeyDown(leftArrow);
+  bool rightArrowDown = globals::INPUT->isKeyDown(rightArrow);
+  float spinValue = leftArrowDown ? -speed : 0.0f;
+  spinValue = rightArrowDown ? speed + spinValue : spinValue;
+
+  // move back transform
+  auto pos = m_transform.r[3];
+  auto translationMatrix = DirectX::XMMatrixTranslationFromVector(
+      DirectX::XMVectorScale(pos, -1.0f));
+  auto toSpin = DirectX::XMMatrixMultiply(m_transform, translationMatrix);
+
+  //spin
+  auto spin = DirectX::XMMatrixRotationY(spinValue);
+  m_transform = DirectX::XMMatrixMultiply(toSpin, spin);
+
+  // now translate using cog speed
+  auto forward = m_transform.r[2];
+  auto offsetVector = DirectX::XMVectorScale(forward, m_workingCogSpeed);
+  translationMatrix = DirectX::XMMatrixTranslationFromVector(offsetVector);
+  m_transform = DirectX::XMMatrixMultiply(m_transform, translationMatrix);
+  //add back the offset 
+  translationMatrix = DirectX::XMMatrixTranslationFromVector(pos);
+  m_transform = DirectX::XMMatrixMultiply(m_transform, translationMatrix);
 
   // if the queue is too full we just prevent the state machine from evaluating
   bool shouldEvaluate = m_transitionsQueue.size() < m_queueMaxSize;
@@ -218,6 +244,9 @@ void LuaStatePlayer::evaluate(const int64_t stampNS) {
     if (completedTransition) {
       currentAnim = m_currentTransition->m_targetAnimation;
       m_startTimeStamp = m_currentTransition->m_destAnimStartTimeStamp;
+      m_currentCogSpeed = m_currentTransition->m_cogSpeed;
+      m_workingCogSpeed = m_currentCogSpeed;
+      ;
 
       // cleaning up the transition
       m_currentTransition = nullptr;
@@ -400,6 +429,10 @@ void LuaStatePlayer::submitInterpRequest(const int64_t timeStamp,
 
   interpolateTwoPoses(finalRequest);
   m_flags = ANIM_FLAGS::NEW_MATRICES;
+
+  // interpolate cog speed
+  m_workingCogSpeed =
+      ratio * transition->m_cogSpeed + (1.0f - 0.0f) * m_currentCogSpeed;
 }
 
 uint32_t LuaStatePlayer::getJointCount() const {

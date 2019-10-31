@@ -50,6 +50,7 @@ private:
   Transition *m_currentTransition = nullptr;
   int m_queueMaxSize = 2;
   float m_currentCogSpeed =0.0f;
+  float m_workingCogSpeed = 0.0f;
   DirectX::XMMATRIX m_transform;
 
   // temporary

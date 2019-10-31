@@ -32,11 +32,11 @@ transitions = {
 				-- idle transitions
 				idle = {{targetState="walk", transitionKey="l_foot_down", 
 				         transitionLenInSeconds=0.3, logic=idleToWalk,
-						 cogSpeed = 0.0}},
+						 cogSpeed = 0.0125}},
 				-- walk transitions
 				walk = {{targetState="idle", transitionKey="l_foot_down", 
 						 transitionLenInSeconds=0.3, logic=walkToIdle,
-						 cogSpeed=1.0}},
+						 cogSpeed=0.0}},
 			  },
 }
 

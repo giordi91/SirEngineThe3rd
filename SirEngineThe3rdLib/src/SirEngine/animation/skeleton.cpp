@@ -56,7 +56,8 @@ bool Skeleton::loadFromFile(const char *path) {
   return true;
 }
 
-void SkeletonPose::updateGlobalFromLocal(const DirectX::XMMATRIX transform) const {
+void SkeletonPose::updateGlobalFromLocal(
+    const DirectX::XMMATRIX transform) const {
 
   // establishing the invariant, where every bone
   // in the list appears after the parent,so meanwhile we fill
@@ -79,7 +80,8 @@ void SkeletonPose::updateGlobalFromLocal(const DirectX::XMMATRIX transform) cons
   qM = DirectX::XMMatrixMultiply(qM, transform);
 
   m_worldMat[0] = qM;
-  m_globalPose[0] = qM * m_skeleton->m_jointsWolrdInv.getConstRef(0);
+  m_globalPose[0] = DirectX::XMMatrixTranspose(DirectX::XMMatrixMultiply(
+      m_skeleton->m_jointsWolrdInv.getConstRef(0), qM));
 
   for (uint32_t i = 1; i < m_skeleton->m_jointCount; ++i) {
     const int idx = m_skeleton->m_parentIds[i];
