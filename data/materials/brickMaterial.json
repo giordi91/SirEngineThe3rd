@@ -8,7 +8,7 @@
   "normal" :  "../data/processed/textures/bricks/bricks_N.texture",
   "roughness" :  "../data/processed/textures/bricks/bricks_R.texture",
   "metallic" :  "../data/processed/textures/black.texture",
-  "height" :  "../data/processed/textures/black.texture",
+  "height" :  "../data/processed/textures/bricks/bricks_HEIGHT.texture",
   "queue" :  ["forward"],
   "type" : "forwardParallax"
 }

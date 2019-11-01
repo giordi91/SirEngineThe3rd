@@ -27,6 +27,7 @@ struct MaterialRuntime final {
   D3D12_GPU_DESCRIPTOR_HANDLE roughness;
   D3D12_GPU_DESCRIPTOR_HANDLE thickness;
   D3D12_GPU_DESCRIPTOR_HANDLE separateAlpha;
+  D3D12_GPU_DESCRIPTOR_HANDLE heightMap;
   D3D12_GPU_DESCRIPTOR_HANDLE ao;
   uint32_t shaderQueueTypeFlags = 0;
   SkinHandle skinHandle;
@@ -39,6 +40,7 @@ struct MaterialDataHandles {
   TextureHandle thickness;
   TextureHandle separateAlpha;
   TextureHandle ao;
+  TextureHandle height;
   dx12::DescriptorPair albedoSrv;
   dx12::DescriptorPair normalSrv;
   dx12::DescriptorPair metallicSrv;
@@ -46,6 +48,7 @@ struct MaterialDataHandles {
   dx12::DescriptorPair thicknessSrv;
   dx12::DescriptorPair separateAlphaSrv;
   dx12::DescriptorPair aoSrv;
+  dx12::DescriptorPair heightSrv;
   ConstantBufferHandle cbHandle;
   SkinHandle skinHandle;
 };

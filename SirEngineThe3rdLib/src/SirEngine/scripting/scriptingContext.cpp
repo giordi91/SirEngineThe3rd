@@ -53,12 +53,13 @@ ScriptHandle ScriptingContext::loadScript(const char *path,
   // now we have a script, lets generate a handle for it
   const std::string fileName = getFileName(path);
   const char *fileNameStr = persistentString(fileName.c_str());
+  const char *pathStr= persistentString(path);
 
   lua_setglobal(m_state, fileNameStr);
   int id = m_userLoadedScripts.size();
   const ScriptHandle handle{(MAGIC_NUMBER_COUNTER << 16) | id};
   m_userLoadedScripts.pushBack(
-      ScriptData{path, fileNameStr, execute, handle, MAGIC_NUMBER_COUNTER});
+      ScriptData{pathStr, fileNameStr, execute, handle, MAGIC_NUMBER_COUNTER});
   m_nameToScript.insert(fileNameStr, handle);
 
   MAGIC_NUMBER_COUNTER += 1;
@@ -73,7 +74,6 @@ ScriptHandle ScriptingContext::loadScript(const char *path,
   return handle;
 }
 
-void ScriptingContext::loadScriptsInFolder(const char *) {}
 
 void ScriptingContext::registerCFunction(const char *name,
                                          lua_CFunction function) {

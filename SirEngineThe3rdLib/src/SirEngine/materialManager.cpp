@@ -23,6 +23,7 @@ static const char *ALBEDO = "albedo";
 static const char *NORMAL = "normal";
 static const char *METALLIC = "metallic";
 static const char *ROUGHNESS = "roughness";
+static const char *HEIGHT= "height";
 static const char *AO = "ao";
 static const char *SEPARATE_ALPHA = "separateAlpha";
 static const char *ROUGHNESS_MULT = "roughnessMult";
@@ -265,6 +266,37 @@ void bindForwardPhongAlphaCutout(const MaterialRuntime &materialRuntime,
   // HARDCODED stencil value might have to think of a nice way to handle this
   commandList->OMSetStencilRef(static_cast<uint32_t>(STENCIL_REF::CLEAR));
 }
+
+void bindParallaxPBR(const MaterialRuntime &materialRuntime,
+                    ID3D12GraphicsCommandList2 *commandList) {
+  const ConstantBufferHandle lightCB = globals::RENDERING_CONTEXT->getLightCB();
+  const auto address =
+      dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(lightCB);
+
+  commandList->SetGraphicsRootConstantBufferView(1, address);
+  commandList->SetGraphicsRootConstantBufferView(
+      2, materialRuntime.cbVirtualAddress);
+  commandList->SetGraphicsRootDescriptorTable(3, materialRuntime.albedo);
+  commandList->SetGraphicsRootDescriptorTable(4, materialRuntime.normal);
+  commandList->SetGraphicsRootDescriptorTable(5, materialRuntime.metallic);
+  commandList->SetGraphicsRootDescriptorTable(6, materialRuntime.roughness);
+
+  TextureHandle skyHandle =
+      globals::RENDERING_CONTEXT->getEnviromentMapIrradianceHandle();
+  commandList->SetGraphicsRootDescriptorTable(
+      7, dx12::TEXTURE_MANAGER->getSRVDx12(skyHandle).gpuHandle);
+
+  TextureHandle skyRadianceHandle =
+      globals::RENDERING_CONTEXT->getEnviromentMapRadianceHandle();
+  commandList->SetGraphicsRootDescriptorTable(
+      8, dx12::TEXTURE_MANAGER->getSRVDx12(skyRadianceHandle).gpuHandle);
+
+  TextureHandle brdfHandle = globals::RENDERING_CONTEXT->getBrdfHandle();
+  commandList->SetGraphicsRootDescriptorTable(
+      9, dx12::TEXTURE_MANAGER->getSRVDx12(brdfHandle).gpuHandle);
+  commandList->SetGraphicsRootDescriptorTable(10, materialRuntime.heightMap);
+}
+
 void bindForwardPhongAlphaCutoutSkin(const MaterialRuntime &materialRuntime,
                                  ID3D12GraphicsCommandList2 *commandList) {
   const ConstantBufferHandle lightCB = globals::RENDERING_CONTEXT->getLightCB();
@@ -382,7 +414,7 @@ void MaterialManager::bindMaterial(const MaterialRuntime &materialRuntime,
     break;
   }
   case (SHADER_TYPE_FLAGS::FORWARD_PARALLAX): {
-    bindForwardPBR(materialRuntime, commandList);
+    bindParallaxPBR(materialRuntime, commandList);
     break;
   }
   default: {
@@ -472,6 +504,8 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
       getValueIfInJson(jobj, materialKeys::THICKNESS, empty);
   const std::string separateAlphaName =
       getValueIfInJson(jobj, materialKeys::SEPARATE_ALPHA, empty);
+  const std::string heightName=
+      getValueIfInJson(jobj, materialKeys::HEIGHT, empty);
   const std::string aoName = getValueIfInJson(jobj, materialKeys::AO, empty);
 
   TextureHandle albedoTex{0};
@@ -480,6 +514,7 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   TextureHandle roughnessTex{0};
   TextureHandle thicknessTex{0};
   TextureHandle separateAlphaTex{0};
+  TextureHandle heightTex{0};
   TextureHandle aoTex{0};
 
   if (!albedoName.empty()) {
@@ -518,6 +553,11 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   } else {
     aoTex = dx12::TEXTURE_MANAGER->getWhiteTexture();
   }
+  if (!heightName.empty()) {
+    heightTex = dx12::TEXTURE_MANAGER->loadTexture(heightName.c_str());
+  } else {
+    heightTex= dx12::TEXTURE_MANAGER->getWhiteTexture();
+  }
 
   uint32_t queueTypeFlags = parseQueueTypeFlags(jobj);
 
@@ -544,6 +584,7 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   texHandles.separateAlpha = separateAlphaTex;
   texHandles.ao = aoTex;
   texHandles.skinHandle = skinHandle;
+  texHandles.height = heightTex;
 
   if (albedoTex.handle != 0) {
     texHandles.albedoSrv = dx12::TEXTURE_MANAGER->getSRVDx12(albedoTex);
@@ -567,6 +608,9 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   if (aoTex.handle != 0) {
     texHandles.aoSrv = dx12::TEXTURE_MANAGER->getSRVDx12(aoTex);
   }
+  if (heightTex.handle != 0) {
+    texHandles.heightSrv= dx12::TEXTURE_MANAGER->getSRVDx12(heightTex);
+  }
   MaterialRuntime matCpu{};
   matCpu.albedo = texHandles.albedoSrv.gpuHandle;
   matCpu.normal = texHandles.normalSrv.gpuHandle;
@@ -576,6 +620,7 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   matCpu.separateAlpha = texHandles.separateAlphaSrv.gpuHandle;
   matCpu.ao = texHandles.aoSrv.gpuHandle;
   matCpu.skinHandle = skinHandle;
+  matCpu.heightMap= texHandles.heightSrv.gpuHandle;
 
   // we need to allocate  constant buffer
   // TODO should this be static constant buffer? investigate

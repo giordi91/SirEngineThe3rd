@@ -13,7 +13,7 @@ Texture2D roughnessTex : register(t3);
 TextureCube skyboxIrradianceTexture: register(t4);
 TextureCube skyboxRadianceTexture: register(t5);
 Texture2D brdfTexture: register(t6);
-TextureCube heightTexture: register(t7);
+Texture2D heightTexture: register(t7);
 
 
 SamplerState gsamPointWrap : register(s0);
@@ -26,11 +26,12 @@ SamplerState gsamAnisotropicClamp : register(s5);
 
 
 float4 PS(FullMeshVertexOut input) : SV_Target {
-  float2 uv = float2(input.uv.x, 1.0f - input.uv.y);
-  float3 albedo = albedoTex.Sample(gsamLinearClamp, uv).xyz * g_material.kd.xyz;
+  float2 uv = float2(input.uv.x, 1.0f - input.uv.y)*9.0f;
+  float3 albedo = albedoTex.Sample(gsamLinearWrap, uv).xyz * g_material.kd.xyz;
+  float height = heightTexture.Sample(gsamLinearWrap, uv).x;
 
   float3 texNormal =
-      normalize(tangentTex.Sample(gsamLinearClamp, uv) * 2.0f - 1.0f).xyz;
+      normalize(tangentTex.Sample(gsamLinearWrap, uv) * 2.0f - 1.0f).xyz;
   // compute NTB
   float3 N = normalize(input.Normal.xyz);
   float3 T = normalize(input.tangent.xyz);
@@ -40,9 +41,9 @@ float4 PS(FullMeshVertexOut input) : SV_Target {
 
   // sampling PBR textures
   float metallic =
-      metallicTex.Sample(gsamLinearClamp, uv).x * g_material.metallicMult;
+      metallicTex.Sample(gsamLinearWrap, uv).x * g_material.metallicMult;
   float roughness =
-      roughnessTex.Sample(gsamLinearClamp, uv).x * g_material.roughnessMult;
+      roughnessTex.Sample(gsamLinearWrap, uv).x * g_material.roughnessMult;
 
   // view vectors
   float3 worldPos = input.worldPos.xyz;
@@ -91,7 +92,8 @@ float4 PS(FullMeshVertexOut input) : SV_Target {
 
   float3 ambient = (kD * diffuse) + specularDiff;
   float3 color = ambient + Lo;
-//  color = max(dot(N,toEyeDir),0.0f); 
+  //color = max(dot(N,toEyeDir),0.0f); 
+  color = height; 
 
   return float4(color, 1.0f);
 }
