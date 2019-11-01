@@ -10,6 +10,8 @@
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/debugRenderer.h"
 #include <DirectXMath.h>
+#include "SirEngine/animation/animationPlayer.h"
+#include "SirEngine/animation/skeleton.h"
 
 #include "SirEngine/events/renderGraphEvent.h"
 #include "SirEngine/events/shaderCompileEvent.h"
@@ -143,26 +145,34 @@ void Graphics3DLayer::onAttach() {
   }
 
   // TODO REMOVE THIS
-  //const auto m_animation = globals::ANIMATION_MANAGER->loadAnimationConfig(
+  // const auto m_animation = globals::ANIMATION_MANAGER->loadAnimationConfig(
   //    "../data/external/animation/exported/clip/knightBIdleConfig.json");
-  //auto m_animation2 = globals::ANIMATION_MANAGER->loadAnimationConfig(
+  // auto m_animation2 = globals::ANIMATION_MANAGER->loadAnimationConfig(
   //    "../data/external/animation/exported/clip/knightBIdleConfig.json");
-  //m_config = globals::ANIMATION_MANAGER->getConfig(m_animation);
-  //globals::ANIMATION_MANAGER->registerState(m_config.m_anim_state);
+  // m_config = globals::ANIMATION_MANAGER->getConfig(m_animation);
+  // globals::ANIMATION_MANAGER->registerState(m_config.m_anim_state);
 
-  //dx12::DEBUG_RENDERER->drawSkeleton(m_config.m_skeleton,
+  // dx12::DEBUG_RENDERER->drawSkeleton(m_config.m_skeleton,
   //                                   DirectX::XMFLOAT4(0, 1, 0, 1), 0.05f);
 
   dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE, currentFc);
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
 
-  //globals::SCRIPTING_CONTEXT->loadScript("../data/scripts/test.lua",true);
+  // globals::SCRIPTING_CONTEXT->loadScript("../data/scripts/test.lua",true);
 }
 void Graphics3DLayer::onDetach() {}
 void Graphics3DLayer::onUpdate() {
 
   globals::SCRIPTING_CONTEXT->runScriptSlot(SCRIPT_CALLBACK_SLOT::PRE_ANIM);
   globals::ANIMATION_MANAGER->evaluate();
+
+  // update the camera position
+  AnimationConfigHandle charHandle =
+      globals::ANIMATION_MANAGER->getConfigHandleFromName("knightBSkin");
+  AnimationPlayer* player = globals::ANIMATION_MANAGER->getAnimationPlayer(charHandle);
+  SkeletonPose* playerPose = player->getOutPose();
+  DirectX::XMMATRIX root = playerPose->m_worldMat[0];
+  //TODO manipulate camera to follow
 
   // upload skinning matrices
   globals::SKIN_MANAGER->uploadDirtyMatrices();
@@ -173,8 +183,9 @@ void Graphics3DLayer::onUpdate() {
   // evaluating rendering graph
   dx12::RENDERING_GRAPH->compute();
 
-  //m_animHandle = dx12::DEBUG_RENDERER->drawAnimatedSkeleton(
-  //    m_animHandle, m_config.m_anim_state, DirectX::XMFLOAT4{1, 0, 0, 1}, 0.1f);
+  // m_animHandle = dx12::DEBUG_RENDERER->drawAnimatedSkeleton(
+  //    m_animHandle, m_config.m_anim_state, DirectX::XMFLOAT4{1, 0, 0, 1},
+  //    0.1f);
 
   // making any clean up for the mesh manager if we have to
   dx12::CONSTANT_BUFFER_MANAGER->clearUpQueueFree();

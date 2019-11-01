@@ -183,35 +183,40 @@ void LuaStatePlayer::evaluateStateMachine() {
   lua_pop(state, 6);
 }
 
+void LuaStatePlayer::updateTransform()
+{
+	// buttons
+	int leftArrow = 37;
+	int rightArrow = 39;
+	float speed = 0.001f;
+	bool leftArrowDown = globals::INPUT->isKeyDown(leftArrow);
+	bool rightArrowDown = globals::INPUT->isKeyDown(rightArrow);
+	float spinValue = leftArrowDown ? -speed : 0.0f;
+	spinValue = rightArrowDown ? speed + spinValue : spinValue;
+
+	// move back transform
+	auto pos = m_transform.r[3];
+	auto translationMatrix = DirectX::XMMatrixTranslationFromVector(
+		DirectX::XMVectorScale(pos, -1.0f));
+	auto toSpin = DirectX::XMMatrixMultiply(m_transform, translationMatrix);
+
+	// spin
+	auto spin = DirectX::XMMatrixRotationY(spinValue);
+	m_transform = DirectX::XMMatrixMultiply(toSpin, spin);
+
+	// now translate using cog speed
+	auto forward = m_transform.r[2];
+	auto offsetVector = DirectX::XMVectorScale(forward, m_workingCogSpeed);
+	translationMatrix = DirectX::XMMatrixTranslationFromVector(offsetVector);
+	m_transform = DirectX::XMMatrixMultiply(m_transform, translationMatrix);
+	// add back the offset
+	translationMatrix = DirectX::XMMatrixTranslationFromVector(pos);
+	m_transform = DirectX::XMMatrixMultiply(m_transform, translationMatrix);
+}
+
 void LuaStatePlayer::evaluate(const int64_t stampNS) {
 
-  // buttons
-  int leftArrow = 37;
-  int rightArrow = 39;
-  float speed = 0.001f;
-  bool leftArrowDown = globals::INPUT->isKeyDown(leftArrow);
-  bool rightArrowDown = globals::INPUT->isKeyDown(rightArrow);
-  float spinValue = leftArrowDown ? -speed : 0.0f;
-  spinValue = rightArrowDown ? speed + spinValue : spinValue;
-
-  // move back transform
-  auto pos = m_transform.r[3];
-  auto translationMatrix = DirectX::XMMatrixTranslationFromVector(
-      DirectX::XMVectorScale(pos, -1.0f));
-  auto toSpin = DirectX::XMMatrixMultiply(m_transform, translationMatrix);
-
-  // spin
-  auto spin = DirectX::XMMatrixRotationY(spinValue);
-  m_transform = DirectX::XMMatrixMultiply(toSpin, spin);
-
-  // now translate using cog speed
-  auto forward = m_transform.r[2];
-  auto offsetVector = DirectX::XMVectorScale(forward, m_workingCogSpeed);
-  translationMatrix = DirectX::XMMatrixTranslationFromVector(offsetVector);
-  m_transform = DirectX::XMMatrixMultiply(m_transform, translationMatrix);
-  // add back the offset
-  translationMatrix = DirectX::XMMatrixTranslationFromVector(pos);
-  m_transform = DirectX::XMMatrixMultiply(m_transform, translationMatrix);
+  updateTransform();
 
   // if the queue is too full we just prevent the state machine from evaluating
   bool shouldEvaluate = m_transitionsQueue.size() < m_queueMaxSize;

@@ -35,6 +35,7 @@ public:
 
 private:
   void evaluateStateMachine();
+  void updateTransform();
   void submitInterpRequest(long long timeStamp, Transition *transition,
                            float ratio);
   bool performTransition(Transition *transition, const long long timeStamp);

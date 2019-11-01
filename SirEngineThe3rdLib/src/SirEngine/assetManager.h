@@ -8,6 +8,9 @@
 
 namespace SirEngine {
 
+// TODO/THIS IS POSSIBLY THE MOST HORRIBLE PART OF THE ENGINE IT NEEDS REWORK
+// COMPLETELY
+
 struct AssetDataHandle {
   union {
     uint32_t handle;
@@ -18,15 +21,9 @@ struct Renderable {
   DirectX::XMMATRIX m_matrixRuntime;
   dx12::MeshRuntime m_meshRuntime;
   MaterialRuntime m_materialRuntime;
-
 };
 
 enum AssetDataType { MATRICES = 1, MESHES = 2, MATERIALS = 3 };
-
-struct AssetDataBlob {
-  void *data;
-  uint32_t count;
-};
 
 class AssetManager final {
 public:
@@ -36,7 +33,6 @@ public:
   AssetManager(const AssetManager &) = delete;
   AssetManager &operator=(const AssetManager &) = delete;
 
-  BufferHandle loadSkin(const std::string& skinPath);
   // assets
   IdentityHandle loadAsset(const char *path);
   void loadScene(const char *path);
@@ -49,7 +45,7 @@ public:
     }
 
     SE_CORE_ERROR("Could not find stream in asset manager");
-	
+
     return m_streamMapper.find(m_masterHandle.handle)->second;
   }
 

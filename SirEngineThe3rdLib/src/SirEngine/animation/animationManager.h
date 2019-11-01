@@ -93,6 +93,22 @@ public:
     return clip;
   }
 
+  inline AnimationConfigHandle
+  getConfigHandleFromName(const char *configName) const {
+    AnimationConfigHandle handle;
+    const bool found = m_nameToConfigHandle.get(configName, handle);
+    assert(found);
+    return handle;
+  }
+
+  inline AnimationPlayer *
+  getAnimationPlayer(const AnimationConfigHandle handle) const {
+    AnimationPlayer *player;
+    const bool found = m_handleToConfig.get(handle.handle, player);
+    assert(found);
+    return player;
+  }
+
 public:
 private:
   inline AnimationClip *getCachedAnimationClip(const char *name) const {
