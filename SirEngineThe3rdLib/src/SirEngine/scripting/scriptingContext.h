@@ -47,8 +47,7 @@ public:
   void reloadContext(const char *offsetPath = "../../");
   // void runAnimScripts() const;
   void runScriptSlot(SCRIPT_CALLBACK_SLOT slot) const;
-  void executeFromHandle(const ScriptHandle handle, int nargs = 0,
-                         int nreturn = 0) const;
+  void executeFromHandle(const ScriptHandle handle) const;
   const ScriptData &getScriptDataFromHandle(const ScriptHandle handle) const {
     assert(handle.isHandleValid());
     const int id = getIndexFromHandle(handle);

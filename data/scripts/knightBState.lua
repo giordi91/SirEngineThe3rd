@@ -3,7 +3,8 @@ package.path = package.path .. ";../data/scripts/?.lua"
 -- transition functions
 function idleToWalk()
     spaceButton = 32;
-	if inputButtonWentDownThisFrame(spaceButton) == true then
+    upArrow = 38;
+	if inputButtonWentDownThisFrame(upArrow) == true then
 		print("lets go walking!");
 		return true;
 	end
@@ -12,7 +13,8 @@ end
 
 function walkToIdle()
     spaceButton = 32;
-	if inputButtonWentDownThisFrame(spaceButton) == true then
+    upArrow = 38;
+	if inputButtonDown(upArrow) == false then
 		print("lets go idle");
 		return true;
 	end
@@ -32,7 +34,7 @@ transitions = {
 				-- idle transitions
 				idle = {{targetState="walk", transitionKey="l_foot_down", 
 				         transitionLenInSeconds=0.3, logic=idleToWalk,
-						 cogSpeed = 0.0125}},
+						 cogSpeed = 0.0115}},
 				-- walk transitions
 				walk = {{targetState="idle", transitionKey="l_foot_down", 
 						 transitionLenInSeconds=0.3, logic=walkToIdle,

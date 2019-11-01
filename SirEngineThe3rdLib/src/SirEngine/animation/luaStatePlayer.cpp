@@ -181,6 +181,7 @@ void LuaStatePlayer::evaluateStateMachine() {
     stringFree(currentState);
     currentState = persistentString(newState);
   }
+  lua_pop(state, 6);
 }
 
 void LuaStatePlayer::evaluate(const int64_t stampNS) {
@@ -200,7 +201,7 @@ void LuaStatePlayer::evaluate(const int64_t stampNS) {
       DirectX::XMVectorScale(pos, -1.0f));
   auto toSpin = DirectX::XMMatrixMultiply(m_transform, translationMatrix);
 
-  //spin
+  // spin
   auto spin = DirectX::XMMatrixRotationY(spinValue);
   m_transform = DirectX::XMMatrixMultiply(toSpin, spin);
 
@@ -209,7 +210,7 @@ void LuaStatePlayer::evaluate(const int64_t stampNS) {
   auto offsetVector = DirectX::XMVectorScale(forward, m_workingCogSpeed);
   translationMatrix = DirectX::XMMatrixTranslationFromVector(offsetVector);
   m_transform = DirectX::XMMatrixMultiply(m_transform, translationMatrix);
-  //add back the offset 
+  // add back the offset
   translationMatrix = DirectX::XMMatrixTranslationFromVector(pos);
   m_transform = DirectX::XMMatrixMultiply(m_transform, translationMatrix);
 

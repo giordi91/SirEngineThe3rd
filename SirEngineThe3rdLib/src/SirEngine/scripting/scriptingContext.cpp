@@ -137,16 +137,17 @@ void ScriptingContext::runScriptSlot(SCRIPT_CALLBACK_SLOT slot) const {
   }
 }
 
-void ScriptingContext::executeFromHandle(const ScriptHandle handle, int nargs, int nreturn) const {
+void ScriptingContext::executeFromHandle(const ScriptHandle handle) const {
   assert(handle.isHandleValid());
   const int id = getIndexFromHandle(handle);
   const ScriptData &data = m_userLoadedScripts[id];
   lua_getglobal(m_state, data.fileName);
-  const int status = lua_pcall(m_state, nargs, nreturn, 0);
+  const int status = lua_pcall(m_state, 0,0,0);
   if (status != LUA_OK) {
     printError(m_state);
     assert(0);
   }
+  lua_pop(m_state,1);
 }
 
 void ScriptingContext::loadAllInternalScripts()
