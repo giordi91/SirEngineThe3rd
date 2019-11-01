@@ -40,7 +40,6 @@ public:
 
   bool init(bool verbose = false);
   ScriptHandle loadScript(const char *path, bool execute);
-  void loadScriptsInFolder(const char *path);
   void registerCFunction(const char *name, lua_CFunction function);
   // Small hack to reload original script files and not the one in the game
   // folder this should go away once we have a proper project folder
