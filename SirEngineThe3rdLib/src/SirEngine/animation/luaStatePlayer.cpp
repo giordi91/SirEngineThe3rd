@@ -97,8 +97,6 @@ void LuaStatePlayer::init(AnimationManager *manager,
   m_flags = ANIM_FLAGS::READY;
 
   // execute the start of the state machine
-  const ScriptData &data =
-      globals::SCRIPTING_CONTEXT->getScriptDataFromHandle(stateMachine);
   lua_State *state = globals::SCRIPTING_CONTEXT->getContext();
   lua_getglobal(state, START_FUNCTION_NAME);
 
@@ -109,7 +107,7 @@ void LuaStatePlayer::init(AnimationManager *manager,
     lua_pop(state, 1);
     assert(0);
   }
-  int x = 0;
+
   const char *newState = lua_tostring(state, -3);
   assert(newState != nullptr);
   currentState = persistentString(newState);
@@ -149,7 +147,8 @@ void LuaStatePlayer::evaluateStateMachine() {
   bool shouldParseArguments = strcmp(newState, currentState) != 0;
   if (shouldParseArguments) {
     // also mean we took a transition to a new state
-    const char *sourceAnim = lua_tostring(state, -5);
+    // currently not used
+    // const char *sourceAnim = lua_tostring(state, -5);
     const char *targetAnim = lua_tostring(state, -4);
     const char *transitionKey = lua_tostring(state, -3);
     auto transitionLenInSeconds = static_cast<float>(lua_tonumber(state, -2));
@@ -312,8 +311,9 @@ bool LuaStatePlayer::performTransition(Transition *transition,
     // now we can compute what offset is needed to align the second animation
     // such that it was started at the right time such that at the end of the
     // transition we should play the right frame
-    const int64_t offsetDest = double(transition->m_transitionFrameDest) *
-                               frameLenInMS * TimeConversion::MS_TO_NANO;
+    const int64_t offsetDest =
+        static_cast<int64_t>(double(transition->m_transitionFrameDest) *
+                             frameLenInMS * TimeConversion::MS_TO_NANO);
     int64_t stampDestinationStart = timeStampTransitionEnd - offsetDest;
 
     // there can be the case where the transition is longer than the amount of
@@ -329,14 +329,14 @@ bool LuaStatePlayer::performTransition(Transition *transition,
       // computing time delta inbetween our current time and where animation
       // should start
       // playing
-      int64_t absDelta = abs(timeStamp - stampDestinationStart);
+      const int64_t absDelta = abs(timeStamp - stampDestinationStart);
       // we compute the total length in nanoseconds
-      int64_t destLenInNano = double(clipDest->m_frameCount) * frameLenInMS *
-                              TimeConversion::MS_TO_NANO;
+      const int64_t destLenInNano =
+          static_cast<int64_t>(static_cast<double>(clipDest->m_frameCount) *
+                               frameLenInMS * TimeConversion::MS_TO_NANO);
       // we perform the division and floor it, and add one such that we are 100%
-      // sure
-      // that we are going to subtract enough
-      int64_t deltaCount = floor(absDelta / destLenInNano) + 1;
+      // sure that we are going to subtract enough
+      const int64_t deltaCount = (absDelta / destLenInNano) + 1;
       // perform the shift
       stampDestinationStart -= destLenInNano * deltaCount;
     }
