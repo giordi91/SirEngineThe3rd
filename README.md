@@ -17,6 +17,7 @@ Here a I will keep a chronological list of the progress:
 [0.2.0: basic engine arch](#v020)  
 [0.3.0: PBR shader](#v030)  
 [0.4.0: Fully skinned character](#v040)  
+[0.5.0: Scripted character animation](#v050)  
 
 ## 0.1.0 <a name="v010"/>
 This version is the most basic version of the engine, but starts to put togheter the foundation of the engine:
@@ -28,7 +29,7 @@ This version is the most basic version of the engine, but starts to put togheter
 * Started basic resource compiler for meshes
 
 More info on resource compiler here:
-link-coming-soon
+https://giordi91.github.io/post/resource_compiler/
 
 ![alt text](./images/01_clearImgui.jpg "test")
 
@@ -44,7 +45,7 @@ loop is still hard-coded and will come in 0.3.0, added features:
 More info on this new system here:
 link-coming-soon
 
-![alt text](./images/02_basicEngineArch.jpg "test")
+![alt text](./images/02_basicEngineArch.jpg "basic arch")
 
 ## 0.3.0 <a name="v030"/>
 This main goal of this version was to give a first good crack at the graphics: features:
@@ -54,10 +55,10 @@ This main goal of this version was to give a first good crack at the graphics: f
 * Basic rendering graph
 * AMD work to fetch data out of the card like core freq etc
 
-![alt text](./images/03_PBR.png "test")
+![alt text](./images/03_PBR.png "pbr")
 
 ## 0.4.0 <a name="v040"/>
-The main goeal of this release was to get a full character in, this required several shader
+The main goal of this release was to get a full character in, this required several shader
 to be created for the head, and animation skinning implementation.
 Features:
 * Screen space subsurface scattering, basic implementation, required extension to use stencil
@@ -67,7 +68,24 @@ Features:
 * Added skincluster shaders and matrices upload
 * Skinning required refactoring of the whole buffer management
 
-![alt text](./images/04_walk.gif "test")
+![alt text](./images/04_walk.gif "walk")
+
+## 0.5.0 <a name="v050"/>
+The main goal of this release was to being able to move the character around using input,
+to do so, I did not want hardcoded state machine so a scripting solution was needed.
+Features:
+* Added Lua scripting support
+* Automatic or manual execution of Lua scripts
+* Reworked animation manager to support multiple animation blending
+* Extensible animation player architecture, for example simpleLoopPlayer and luaPlayer
+* Lua state machine
+* Heavy refactoring of the engine to support the new feature, removed a lot of the STL data structure
+* Added custom hashmaps and string hashmaps
+* Animation resources are now pre compiled by resource compiler
+
+![alt text](./images/05_moving.gif "moving")
+
+
 
 ***Credits***
 
