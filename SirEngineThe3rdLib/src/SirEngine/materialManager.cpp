@@ -66,6 +66,8 @@ static const std::unordered_map<std::string, SirEngine::SHADER_TYPE_FLAGS>
          SirEngine::SHADER_TYPE_FLAGS::SKINSKINCLUSTER},
         {"forwardPhongAlphaCutoutSkin",
          SirEngine::SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT_SKIN},
+        {"forwardParallax",
+         SirEngine::SHADER_TYPE_FLAGS::FORWARD_PARALLAX},
     };
 static const std::unordered_map<SirEngine::SHADER_TYPE_FLAGS, std::string>
     TYPE_FLAGS_TO_STRING{
@@ -93,6 +95,8 @@ static const std::unordered_map<SirEngine::SHADER_TYPE_FLAGS, std::string>
          "skinSkinCluster"},
         {SirEngine::SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT_SKIN,
          "forwardPhongAlphaCutoutSkin"},
+        {SirEngine::SHADER_TYPE_FLAGS::FORWARD_PARALLAX,
+         "forwardParallax"},
     };
 
 } // namespace materialKeys
@@ -375,6 +379,10 @@ void MaterialManager::bindMaterial(const MaterialRuntime &materialRuntime,
   }
   case (SHADER_TYPE_FLAGS::HAIRSKIN): {
     bindHairSkin(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::FORWARD_PARALLAX): {
+    bindForwardPBR(materialRuntime, commandList);
     break;
   }
   default: {

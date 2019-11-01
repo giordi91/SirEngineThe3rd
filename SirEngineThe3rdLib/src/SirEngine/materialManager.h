@@ -92,6 +92,7 @@ enum class SHADER_TYPE_FLAGS {
   SKINSKINCLUSTER = 13,
   FORWARD_PHONG_ALPHA_CUTOUT_SKIN = 14,
   HAIRSKIN= 15,
+  FORWARD_PARALLAX= 16,
 };
 
 class MaterialManager final {

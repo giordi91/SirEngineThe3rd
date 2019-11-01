@@ -1,0 +1,4 @@
+{
+  "mesh": "../data/processed/meshes/flatGround.model",
+  "material": "../data/materials/brickMaterial.json"
+}
