@@ -156,7 +156,7 @@ void Graphics3DLayer::onAttach() {
   dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE, currentFc);
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
 
-  globals::SCRIPTING_CONTEXT->loadScript("../data/scripts/test.lua",true);
+  //globals::SCRIPTING_CONTEXT->loadScript("../data/scripts/test.lua",true);
 }
 void Graphics3DLayer::onDetach() {}
 void Graphics3DLayer::onUpdate() {
