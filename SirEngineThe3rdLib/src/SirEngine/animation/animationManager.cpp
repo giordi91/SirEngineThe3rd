@@ -89,7 +89,7 @@ AnimationClip *AnimationManager::loadAnimationClip(const char *name,
   AnimationClip *clip = getCachedAnimationClip(name);
   if (clip == nullptr) {
     // TODO fix naked
-    auto *clip = new AnimationClip();
+    clip = new AnimationClip();
     const bool res = clip->initialize(path);
     m_animationClipCache.insert(name, clip);
     return res ? clip : nullptr;
