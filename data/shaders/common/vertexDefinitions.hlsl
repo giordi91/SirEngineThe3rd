@@ -37,6 +37,17 @@ struct FullMeshVertexOut
     float3 tangent: TANGENTS;
 };
 
+struct FullMeshParallaxVertexOut
+{
+	float4 PosH  : SV_POSITION;
+	float4 worldPos: POSITION;
+    float2 uv : TEXCOORD0;
+    float3 Normal: NORMAL;
+    float3 tangent: TANGENTS;
+    float4 tangentFragPos: TEXCOORD1;
+    float4 tangentViewPos: TEXCOORD2;
+};
+
 struct FullScreenVertexOut {
   float4 pos : SV_POSITION;
   float2 clipPos : TEXCOORD0;
