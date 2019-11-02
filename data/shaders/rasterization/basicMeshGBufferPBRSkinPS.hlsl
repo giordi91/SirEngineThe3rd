@@ -26,13 +26,17 @@ PS_GBUFFER_OUT PS(FullMeshVertexOut input) {
 
 
   float4 tanN =
-      normalize(tangentTex.Sample(gsamLinearClamp, uv) * 2.0f - 1.0f);
+      tangentTex.Sample(gsamLinearClamp, uv) * 2.0f - 1.0f;
   // compute NTB
   float3 N = normalize(input.Normal.xyz);
   float3 T = normalize(input.tangent.xyz);
   float3 B = normalize(cross(N, T));
-  float3x3 NTB;
-  float3 normal = normalize(float3(tanN.x * T) + (tanN.y*B) + (tanN.z*N));
+    //float3x3 NTB = transpose(float3x3(N, T, B));
+    float3x3 NTB = float3x3(T, B,N);
+  //float3 normal = normalize(float3(tanN.x * T) + (tanN.y*B) + (tanN.z*N));
+  float3 normal = normalize(mul(tanN.xyz, NTB));
+  //float3 normal = normalize(mul(NTB,tanN.xyz ));
+  //float3 normal = 0.0f;
   //normal = input.Normal.xyz;
 
   //sampling PBR textures

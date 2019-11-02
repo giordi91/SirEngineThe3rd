@@ -2,7 +2,7 @@
  "type":  "RASTER",
  "inputLayout":  "fullMesh",
  "globalRootSignature": "forwardParallaxRS",
-  "VS": "basicMeshVSTex",
+  "VS": "basicMeshParallaxVSTex",
   "PS":  "basicMeshForwardParallaxPS",
   "rasterState":  "default",
   "blendState": "default",

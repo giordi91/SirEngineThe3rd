@@ -2,12 +2,12 @@
   "commands": 
     [
       "-p ../data/shaders/rasterization/basicMeshForwardParallaxPS.hlsl -o ../data/processed/shaders/rasterization/basicMeshForwardParallaxPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
+      "-p ../data/shaders/rasterization/basicMeshParallaxVSTex.hlsl -o ../data/processed/shaders/rasterization/basicMeshParallaxVSTex.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t vs_6_2  -e VS -d \"",
       "-p ../data/rs/forwardParallaxRS.json -o ../data/processed/rs/forwardParallaxRS.root --pluginName rootSignatureCompilerPlugin",
 
       "-p ../data/external/textures/bricks/bricks_A.png -o ../data/processed/textures/bricks/bricks_A.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1 -g -m\"",
       "-p ../data/external/textures/bricks/bricks_HEIGHT.png -o ../data/processed/textures/bricks/bricks_HEIGHT.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\"",
       "-p ../data/external/textures/bricks/bricks_N.png -o ../data/processed/textures/bricks/bricks_N.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\"",
       "-p ../data/external/textures/bricks/bricks_R.png -o ../data/processed/textures/bricks/bricks_R.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\""
-
     ]
 }
