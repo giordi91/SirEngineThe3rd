@@ -1,4 +1,7 @@
 cmake_minimum_required(VERSION 3.13.0)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
+
+include (${CMAKE_SOURCE_DIR}/cmake/cmakeUtils.cmake)
 
 project(SirEngineThe3rdLib)   
 
@@ -28,28 +31,7 @@ project(SirEngineThe3rdLib)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_CXX_FLAGS}")
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DSE_DEBUG")
 
-
-	MACRO(SOURCE_GROUP_BY_FOLDER target)
-	  SET(SOURCE_GROUP_DELIMITER "/")
-	  SET(last_dir "")
-	  SET(files "")
-	  FOREACH(file ${SOURCE_FILES})
-		file(RELATIVE_PATH relative_file "${PROJECT_SOURCE_DIR}/{target}" ${file})
-		GET_FILENAME_COMPONENT(dir "${relative_file}" PATH)
-		IF (NOT "${dir}" STREQUAL "${last_dir}")
-		  IF (files)
-			SOURCE_GROUP("${last_dir}" FILES ${files})
-		  ENDIF (files)
-		  SET(files "")
-		ENDIF (NOT "${dir}" STREQUAL "${last_dir}")
-		SET(files ${files} ${file})
-		SET(last_dir "${dir}")
-	  ENDFOREACH(file)
-	  IF (files)
-		SOURCE_GROUP("${last_dir}" FILES ${files})
-	  ENDIF (files)
-	ENDMACRO(SOURCE_GROUP_BY_FOLDER)
-
+	#grouping in the IDE based on path
 	SOURCE_GROUP_BY_FOLDER(SirEngineThe3rdLib)
 
 
@@ -85,22 +67,16 @@ project(SirEngineThe3rdLib)
 
 
 
-	set_source_files_properties(
-            ${SHADERS_RASTERIZATION_FILES}
-            PROPERTIES HEADER_FILE_ONLY TRUE
-         )
-	set_source_files_properties(
-            ${SHADERS_COMPUTE_FILES}
-            PROPERTIES HEADER_FILE_ONLY TRUE
-         )
-	set_source_files_properties(
-            ${SHADERS_COMMON_FILES}
-            PROPERTIES HEADER_FILE_ONLY TRUE
-         )
+	#NOTE: when passing arrays/lists to macro, to work 
+	#properly put the variable in quotes "${MY_VAR}"
+	SET_AS_HEADERS("${SHADERS_RASTERIZATION_FILES}")
+	SET_AS_HEADERS("${SHADERS_COMPUTE_FILES}")
+	SET_AS_HEADERS("${SHADERS_COMMON_FILES}")
 
 	if(WIN32)
 		link_directories(${CMAKE_SOURCE_DIR}/builtDependencies/windows/$<CONFIGURATION>)
 	endif()
+
     #adding the executable
     add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES} ${INCLUDES_FILES} ${ASSETS_FILES}
 	${MATERIAL_FILES}
@@ -124,36 +100,12 @@ project(SirEngineThe3rdLib)
 
 	SET(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 
-	#file(COPY "PixEvent/bin/WinPixEventRuntime.dll" DESTINATION "${CMAKE_BINARY_DIR}/bin")
 	target_link_libraries(${PROJECT_NAME} d3dcompiler dxcompiler farmhash DXGI D3D12 imgui DXTK12 WinPixEventRuntime lualib)
 
-	#need to copy pix event
-	add_custom_command(
-    TARGET ${PROJECT_NAME} 
-    PRE_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy
-       ${CMAKE_SOURCE_DIR}/vendors/PixEvent/bin/WinPixEventRuntime.dll  
-        ${CMAKE_BINARY_DIR}/bin/$<CONFIGURATION>/WinPixEventRuntime.dll
-	)
-	add_custom_command(
-    TARGET ${PROJECT_NAME} 
-    PRE_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy
-       ${CMAKE_SOURCE_DIR}/vendors/PixEvent/bin/WinPixEventRuntime.lib
-        ${CMAKE_BINARY_DIR}/bin/$<CONFIGURATION>/WinPixEventRuntime.lib
-	)
-	add_custom_command(
-    TARGET ${PROJECT_NAME} 
-    PRE_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy
-       ${CMAKE_SOURCE_DIR}/vendors/PixEvent/bin/WinPixEventRuntime_UAP.lib
-        ${CMAKE_BINARY_DIR}/bin/$<CONFIGURATION>/WinPixEventRuntime_UAP.lib
-	)
-	add_custom_command(
-    TARGET ${PROJECT_NAME} 
-    PRE_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy
-       ${CMAKE_SOURCE_DIR}/vendors/PixEvent/bin/WinPixEventRuntime_UAP.dll
-        ${CMAKE_BINARY_DIR}/bin/$<CONFIGURATION>/WinPixEventRuntime_UAP.dll
-	)
+	#copying needed libs from pix event dependency to output build folder
+	COPY_FILE_TO_BIN_DIRECTORY( "${CMAKE_SOURCE_DIR}/vendors/PixEvent/bin/WinPixEventRuntime.lib")
+	COPY_FILE_TO_BIN_DIRECTORY( "${CMAKE_SOURCE_DIR}/vendors/PixEvent/bin/WinPixEventRuntime.dll")
+	COPY_FILE_TO_BIN_DIRECTORY( "${CMAKE_SOURCE_DIR}/vendors/PixEvent/bin/WinPixEventRuntime_UAP.lib")
+	COPY_FILE_TO_BIN_DIRECTORY( "${CMAKE_SOURCE_DIR}/vendors/PixEvent/bin/WinPixEventRuntime_UAP.dll")
+
 
