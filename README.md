@@ -1,5 +1,9 @@
 # Sir Engine the 3rd [![Actions Status](https://github.com/giordi91/SirEngineThe3rd/workflows/build/badge.svg)](https://github.com/giordi91/SirEngineThe3rd/actions) 
 
+
+*TRELLO BOARD*: https://trello.com/b/iMSdavzF/sirenginethe3rd 
+
+
 A dx12 game engine (kind of).
 
 Initially inspired by The Cherno project game engine series: https://www.youtube.com/user/TheChernoProject before going my own way. The series is pretty cool, check it out!

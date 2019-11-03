@@ -1,6 +1,7 @@
 #pragma once
 
 #include "DXTK12/ResourceUploadBatch.h"
+#include "DirectXMath.h"
 #include "SirEngine/handle.h"
 #include "SirEngine/memory/sparseMemoryPool.h"
 #include "platform/windows/graphics/dx12/DX12.h"
@@ -19,6 +20,12 @@ struct MeshRuntime final {
   uint32_t indexCount;
 };
 
+struct BoundingBox {
+  DirectX::XMFLOAT3 min;
+  DirectX::XMFLOAT3 max;
+  float p1, p2; // padding
+};
+
 class MeshManager final {
 private:
   struct MeshData final {
@@ -26,10 +33,12 @@ private:
     uint32_t stride : 16;
     ID3D12Resource *vertexBuffer;
     ID3D12Resource *indexBuffer;
-	BufferHandle vtxBuffHandle;
-	BufferHandle idxBuffHandle;
+    BufferHandle vtxBuffHandle;
+    BufferHandle idxBuffHandle;
     uint32_t indexCount;
     uint32_t vertexCount;
+    uint32_t entityID; // this is an id that is used to index other data that we
+                       // are starting to split, for example bounding box;
   };
 
   struct MeshUploadResource final {
@@ -142,6 +151,10 @@ public:
     m_meshPool.free(index);
   }
 
+  inline const std::vector<BoundingBox> &getBoundingBoxes() {
+    return m_boundingBoxes;
+  }
+
   inline void bindMeshForRender(const MeshHandle handle,
                                 FrameCommand *fc) const {
     auto vview = getVertexBufferView(handle);
@@ -171,7 +184,6 @@ public:
     fc->commandList->DrawIndexedInstanced(runtime.indexCount, 1, 0, 0, 0);
   }
 
-
 private:
   SparseMemoryPool<MeshData> m_meshPool;
 
@@ -182,6 +194,7 @@ private:
   uint32_t MAGIC_NUMBER_COUNTER = 1;
   DirectX::ResourceUploadBatch batch;
   std::vector<MeshUploadResource> m_uploadRequests;
+  std::vector<BoundingBox> m_boundingBoxes;
 };
 
 } // namespace dx12

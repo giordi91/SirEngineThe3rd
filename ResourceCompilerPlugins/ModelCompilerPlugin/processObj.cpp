@@ -157,8 +157,8 @@ bool loadSkin(const std::string &skinPath, SkinData &skinData) {
   return true;
 }
 
-//TODO decide what to do with object with no tangent at this point every
-//object has tangent and this should be changed
+// TODO decide what to do with object with no tangent at this point every
+// object has tangent and this should be changed
 void convertObjNoTangents(const tinyobj::attrib_t &attr,
                           const tinyobj::shape_t &shape, Model &model,
                           const std::string &) {
@@ -261,6 +261,15 @@ void convertObj(const tinyobj::attrib_t &attr, const tinyobj::shape_t &shape,
   // Loop over faces(polygon)
   size_t indexOffset = 0;
   int indexCount = 0;
+
+  float minX = std::numeric_limits<float>::max();
+  float minY = minX;
+  float minZ = minY;
+
+  float maxX = std::numeric_limits<float>::min();
+  float maxY = maxX;
+  float maxZ = maxY;
+
   for (size_t f = 0; f < shape.mesh.num_face_vertices.size(); f++) {
     size_t fv = shape.mesh.num_face_vertices[f];
     assert(fv == 3);
@@ -270,12 +279,22 @@ void convertObj(const tinyobj::attrib_t &attr, const tinyobj::shape_t &shape,
       // access to vertex
       tinyobj::index_t idx = shape.mesh.indices[indexOffset + v];
       VertexCompare c;
-      c.p.x = attr.vertices[3 * idx.vertex_index + 0];
-      c.p.y = attr.vertices[3 * idx.vertex_index + 1];
-      c.p.z = attr.vertices[3 * idx.vertex_index + 2];
-      c.n.x = attr.normals[3 * idx.normal_index + 0];
-      c.n.y = attr.normals[3 * idx.normal_index + 1];
-      c.n.z = attr.normals[3 * idx.normal_index + 2];
+      c.p.x = attr.vertices[3u * idx.vertex_index + 0u];
+      c.p.y = attr.vertices[3u * idx.vertex_index + 1u];
+      c.p.z = attr.vertices[3u * idx.vertex_index + 2u];
+      c.n.x = attr.normals[3u * idx.normal_index + 0u];
+      c.n.y = attr.normals[3u * idx.normal_index + 1u];
+      c.n.z = attr.normals[3u * idx.normal_index + 2u];
+
+      // lets us compute bounding box
+      minX = c.p.x < minX ? c.p.x : minX;
+      minY = c.p.y < minY ? c.p.y : minY;
+      minZ = c.p.z < minZ ? c.p.z : minZ;
+
+      maxX = c.p.x > maxX ? c.p.x : maxX;
+      maxY = c.p.y > maxY ? c.p.y : maxY;
+      maxZ = c.p.z > maxZ ? c.p.z : maxZ;
+
       // we had cases where the UV index was -1!! so let us check against that
       float texU = idx.texcoord_index < 0
                        ? 0.0f
@@ -286,9 +305,9 @@ void convertObj(const tinyobj::attrib_t &attr, const tinyobj::shape_t &shape,
       float mod = 1.0f;
       c.uv.x = std::modf(texU, &mod);
       c.uv.y = std::modf(texV, &mod);
-      c.t.x = tangents[3 * idx.vertex_index + 0];
-      c.t.y = tangents[3 * idx.vertex_index + 1];
-      c.t.z = tangents[3 * idx.vertex_index + 2];
+      c.t.x = tangents[3u * idx.vertex_index + 0u];
+      c.t.y = tangents[3u * idx.vertex_index + 1u];
+      c.t.z = tangents[3u * idx.vertex_index + 2u];
 
       // if the vertex is not in the map, it means is unique
       // and needs to be added and is a valid vertex in the vertex buffer
@@ -326,4 +345,11 @@ void convertObj(const tinyobj::attrib_t &attr, const tinyobj::shape_t &shape,
   memcpy(model.vertices.data(), vertexData.data(),
          vertexCompareCount * stride * sizeof(float));
   memcpy(model.indices.data(), indices.data(), indicesCount * sizeof(float));
+
+  model.boundingBox[0] = minX;
+  model.boundingBox[1] = minY;
+  model.boundingBox[2] = minZ;
+  model.boundingBox[3] = maxX;
+  model.boundingBox[4] = maxY;
+  model.boundingBox[5] = maxZ;
 }
