@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.13.0)
 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
+
+include (${CMAKE_SOURCE_DIR}/cmake/cmakeUtils.cmake)
+
 project(Sandbox)   
 
     #looking for  files
@@ -14,13 +18,6 @@ project(Sandbox)
 		add_compile_definitions(SE_PLATFORM_WINDOWS _UNICODE _CRT_SECURE_NO_WARNINGS)
 	endif (WIN32)
 
-    #defining standard compiling flags
-    #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_CXX_FLAGS}")
-	#if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-	#	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4324 /wd4146 /wd4458 /wd4267 /wd4100 /wd4244 /wd4141 /wd4291 /wd4624 ")
-	#	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MD")
-	#	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
-	#endif()
 
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_CXX_FLAGS}")
 
@@ -32,7 +29,4 @@ project(Sandbox)
 
 	target_link_libraries(${PROJECT_NAME} d3dcompiler DXGI D3D12 SirEngineThe3rdLib WinPixEventRuntime lualib)
 
-	#setting working directory
-	set_target_properties(
-    ${PROJECT_NAME} PROPERTIES
-    VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin/$<CONFIGURATION>)
+	SET_WORKING_DIRECTORY("${CMAKE_BINARY_DIR}/bin/$<CONFIGURATION>")
