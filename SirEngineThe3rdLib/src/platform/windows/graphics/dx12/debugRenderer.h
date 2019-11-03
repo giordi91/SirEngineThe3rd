@@ -1,6 +1,7 @@
 #pragma once
 #include "SirEngine/handle.h"
 #include "SirEngine/materialManager.h"
+#include "meshManager.h"
 #include <DirectXMath.h>
 #include <unordered_map>
 #include <vector>
@@ -68,6 +69,9 @@ public:
 
   void render(TextureHandle input, TextureHandle depth);
   void clearUploadRequests();
+  DebugDrawHandle drawBoundingBoxes(BoundingBox *data, int count,
+                                    DirectX::XMFLOAT4 color,
+                                    const char *debugName);
 
   DebugRenderer(const DebugRenderer &) = delete;
   DebugRenderer &operator=(const DebugRenderer &) = delete;

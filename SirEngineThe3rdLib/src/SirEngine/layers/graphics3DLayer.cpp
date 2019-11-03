@@ -1,5 +1,7 @@
 #include "SirEngine/layers/graphics3DLayer.h"
 #include "SirEngine/animation/animationManager.h"
+#include "SirEngine/animation/animationPlayer.h"
+#include "SirEngine/animation/skeleton.h"
 #include "SirEngine/application.h"
 #include "SirEngine/assetManager.h"
 #include "SirEngine/events/debugEvent.h"
@@ -10,8 +12,6 @@
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/debugRenderer.h"
 #include <DirectXMath.h>
-#include "SirEngine/animation/animationPlayer.h"
-#include "SirEngine/animation/skeleton.h"
 
 #include "SirEngine/events/renderGraphEvent.h"
 #include "SirEngine/events/shaderCompileEvent.h"
@@ -158,6 +158,10 @@ void Graphics3DLayer::onAttach() {
   dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE, currentFc);
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
 
+  auto bboxes = dx12::MESH_MANAGER->getBoundingBoxes();
+  //dx12::DEBUG_RENDERER->drawBoundingBoxes(bboxes.data(), 1,
+  dx12::DEBUG_RENDERER->drawBoundingBoxes(bboxes.data(), bboxes.size()-1,
+                                          DirectX::XMFLOAT4{1, 1, 1, 1}, "");
   // globals::SCRIPTING_CONTEXT->loadScript("../data/scripts/test.lua",true);
 }
 void Graphics3DLayer::onDetach() {}
@@ -169,10 +173,11 @@ void Graphics3DLayer::onUpdate() {
   // update the camera position
   AnimationConfigHandle charHandle =
       globals::ANIMATION_MANAGER->getConfigHandleFromName("knightBSkin");
-  AnimationPlayer* player = globals::ANIMATION_MANAGER->getAnimationPlayer(charHandle);
-  SkeletonPose* playerPose = player->getOutPose();
+  AnimationPlayer *player =
+      globals::ANIMATION_MANAGER->getAnimationPlayer(charHandle);
+  SkeletonPose *playerPose = player->getOutPose();
   DirectX::XMMATRIX root = playerPose->m_worldMat[0];
-  //TODO manipulate camera to follow
+  // TODO manipulate camera to follow
 
   // upload skinning matrices
   globals::SKIN_MANAGER->uploadDirtyMatrices();

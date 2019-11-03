@@ -61,6 +61,8 @@
       "-p ../data/shaders/rasterization/basicColorPS.hlsl -o ../data/processed/shaders/rasterization/basicColorPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
       "-p ../data/shaders/rasterization/pointExpandVS.hlsl -o ../data/processed/shaders/rasterization/pointExpandVS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t vs_6_2  -e VS -d \"",
       "-p ../data/shaders/rasterization/positionOnlyVS.hlsl -o ../data/processed/shaders/rasterization/positionOnlyVS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t vs_6_2  -e VS -d \"",
+      "-p ../data/shaders/rasterization/basicMeshForwardParallaxPS.hlsl -o ../data/processed/shaders/rasterization/basicMeshForwardParallaxPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
+      "-p ../data/shaders/rasterization/basicMeshParallaxVSTex.hlsl -o ../data/processed/shaders/rasterization/basicMeshParallaxVSTex.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t vs_6_2  -e VS -d \"",
 
       "-p ../data/rs/simpleMeshRS.json -o ../data/processed/rs/simpleMeshRS.root --pluginName rootSignatureCompilerPlugin",
       "-p ../data/rs/simpleMeshRSTex.json -o ../data/processed/rs/simpleMeshRSTex.root --pluginName rootSignatureCompilerPlugin",
@@ -87,6 +89,7 @@
       "-p ../data/rs/hairSkinRS.json -o ../data/processed/rs/hairSkinRS.root --pluginName rootSignatureCompilerPlugin",
       "-p ../data/rs/debugDrawPointsSingleColorRS.json -o ../data/processed/rs/debugDrawPointsSingleColorRS.root --pluginName rootSignatureCompilerPlugin",
       "-p ../data/rs/debugDrawLinesSingleColorRS.json -o ../data/processed/rs/debugDrawLinesSingleColorRS.root --pluginName rootSignatureCompilerPlugin",
+      "-p ../data/rs/forwardParallaxRS.json -o ../data/processed/rs/forwardParallaxRS.root --pluginName rootSignatureCompilerPlugin",
         
 
       "-p ../data/external/textures/cerberus/Cerberus_A.tga -o ../data/processed/textures/cerberus/Cerberus_A.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1 -g -m\"",
@@ -144,6 +147,11 @@
       "-p ../data/textures/empty_N.png -o ../data/processed/textures/empty_N.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1  -m\"",
       "-p ../data/textures/zeroDotOne.png -o ../data/processed/textures/zeroDotOne.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1  -m\"",
       "-p ../data/textures/white.png -o ../data/processed/textures/white.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1  -m\"",
-      "-p ../data/textures/black.png -o ../data/processed/textures/black.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1  -m\""
+      "-p ../data/textures/black.png -o ../data/processed/textures/black.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1  -m\"",
+
+      "-p ../data/external/textures/bricks/bricks_A.png -o ../data/processed/textures/bricks/bricks_A.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1 -g -m\"",
+      "-p ../data/external/textures/bricks/bricks_HEIGHT.png -o ../data/processed/textures/bricks/bricks_HEIGHT.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\"",
+      "-p ../data/external/textures/bricks/bricks_N.png -o ../data/processed/textures/bricks/bricks_N.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\"",
+      "-p ../data/external/textures/bricks/bricks_R.png -o ../data/processed/textures/bricks/bricks_R.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\""
     ]
 }

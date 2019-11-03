@@ -1,5 +1,6 @@
 #include "platform/windows/graphics/dx12/debugRenderer.h"
 #include "SirEngine/animation/animationClip.h"
+#include "SirEngine/animation/animationPlayer.h"
 #include "SirEngine/animation/skeleton.h"
 #include "SirEngine/graphics/cpuGraphicsStructures.h"
 #include "SirEngine/graphics/debugAnnotations.h"
@@ -12,7 +13,6 @@
 #include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/TextureManagerDx12.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
-#include "SirEngine/animation/animationPlayer.h"
 
 namespace SirEngine::dx12 {
 void DebugRenderer::init() {
@@ -323,11 +323,11 @@ DebugDrawHandle DebugRenderer::drawSkeleton(Skeleton *skeleton,
 }
 
 DebugDrawHandle DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
-                                                    AnimationPlayer*state,
+                                                    AnimationPlayer *state,
                                                     DirectX::XMFLOAT4 color,
                                                     float pointSize) {
 
-  const DirectX::XMMATRIX* pose = state->getOutPose()->m_worldMat;
+  const DirectX::XMMATRIX *pose = state->getOutPose()->m_worldMat;
   const int jointCount = state->getOutPose()->m_skeleton->m_jointCount;
 
   auto *points =
@@ -379,8 +379,7 @@ DebugDrawHandle DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
     assert(foundPoint->second.compoundCount == 0);
 
     const DebugTracker &pointTracker = foundPoint->second;
-    assert(pointTracker.sizeInBtye ==
-           (sizeof(DirectX::XMFLOAT3) * jointCount));
+    assert(pointTracker.sizeInBtye == (sizeof(DirectX::XMFLOAT3) * jointCount));
     memcpy(pointTracker.mappedData, points, pointTracker.sizeInBtye);
 
     const auto foundLines = m_trackers.find(linesHandle.handle);
@@ -481,7 +480,7 @@ void DebugRenderer::renderQueue(
           type == SHADER_TYPE_FLAGS::DEBUG_POINTS_SINGLE_COLOR;
       if (isPC | isPSC) {
         commandList->SetGraphicsRootDescriptorTable(2, prim.srv.gpuHandle);
-		currentFc->commandList->IASetVertexBuffers(0, 1, nullptr);
+        currentFc->commandList->IASetVertexBuffers(0, 1, nullptr);
         currentFc->commandList->IASetPrimitiveTopology(
             D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
       } else {
@@ -492,8 +491,7 @@ void DebugRenderer::renderQueue(
 
       currentFc->commandList->DrawInstanced(prim.primitiveToRender, 1, 0, 0);
     }
-	annotateGraphicsEnd();
-
+    annotateGraphicsEnd();
   }
 }
 
@@ -504,6 +502,7 @@ void DebugRenderer::render(const TextureHandle input,
   // first static stuff
   renderQueue(m_renderables, input, depth);
 
+  // TODO fix this, every draw call should set as appropriate
   currentFc->commandList->IASetPrimitiveTopology(
       D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 } // namespace SirEngine::dx12
@@ -527,5 +526,77 @@ void DebugRenderer::clearUploadRequests() {
   }
   // resizing the vector
   m_uploadRequests.resize(stackTopIdx + 1);
+}
+inline int push3toVec(float *data, float x, float y, float z, int counter) {
+  data[counter++] = x;
+  data[counter++] = y;
+  data[counter++] = z;
+
+  return counter;
+}
+inline int push3toVec(float *data, DirectX::XMFLOAT3 v, int counter) {
+  data[counter++] = v.x;
+  data[counter++] = v.y;
+  data[counter++] = v.z;
+
+  return counter;
+}
+
+int drawSquareBetweenTwoPoints(float *data, DirectX::XMFLOAT3 minP,
+                               DirectX::XMFLOAT3 maxP, float y, int counter) {
+  counter = push3toVec(data, minP.x, y, minP.z, counter);
+  counter = push3toVec(data, maxP.x, y, minP.z, counter);
+
+  counter = push3toVec(data, maxP.x, y, minP.z, counter);
+  counter = push3toVec(data, maxP.x, y, maxP.z, counter);
+
+  counter = push3toVec(data, maxP.x, y, maxP.z, counter);
+  counter = push3toVec(data, minP.x, y, maxP.z, counter);
+
+  counter = push3toVec(data, minP.x, y, maxP.z, counter);
+  counter = push3toVec(data, minP.x, y, minP.z, counter);
+  return counter;
+}
+
+DebugDrawHandle DebugRenderer::drawBoundingBoxes(BoundingBox *data, int count,
+                                                 DirectX::XMFLOAT4 color,
+                                                 const char *debugName) {
+
+  // 12 is the number of lines needed for the AABB, 4 top, 4 bottom, 4 vertical
+  // two is because we need two points per line, we are not doing trianglestrip
+  int totalSize = 3 * count * 12 * 2; // here 3 is the xmfloat3
+
+  auto *points = reinterpret_cast<float *>(globals::FRAME_ALLOCATOR->allocate(
+      sizeof(DirectX::XMFLOAT3) * count * 12 * 2));
+  int counter = 0;
+  for (int i = 0; i < count; ++i) {
+
+    assert(counter <= totalSize);
+    const auto &minP = data[i].min;
+    const auto &maxP = data[i].max;
+    counter = drawSquareBetweenTwoPoints(points, minP, maxP, minP.y, counter);
+    counter = drawSquareBetweenTwoPoints(points, minP, maxP, maxP.y, counter);
+
+    // draw vertical lines
+    counter = push3toVec(points, minP, counter);
+    counter = push3toVec(points, minP.x, maxP.y, minP.z, counter);
+    counter = push3toVec(points, maxP.x, minP.y, minP.z, counter);
+    counter = push3toVec(points, maxP.x, maxP.y, minP.z, counter);
+
+    counter = push3toVec(points, maxP.x, minP.y, maxP.z, counter);
+    counter = push3toVec(points, maxP.x, maxP.y, maxP.z, counter);
+
+    counter = push3toVec(points, minP.x, minP.y, maxP.z, counter);
+    counter = push3toVec(points, minP.x, maxP.y, maxP.z, counter);
+    assert(counter <= totalSize);
+  }
+  drawLinesUniformColor(points, totalSize * sizeof(float), color, totalSize,
+                        debugName);
+
+  // this is not compound;
+  int compoundBit = 0;
+  const DebugDrawHandle returnHandle{compoundBit |
+                                     (MAGIC_NUMBER_COUNTER << 16) | 0};
+  return returnHandle;
 }
 } // namespace SirEngine::dx12

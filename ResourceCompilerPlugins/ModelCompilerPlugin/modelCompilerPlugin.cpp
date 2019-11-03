@@ -106,6 +106,9 @@ bool processModel(const std::string &assetPath, const std::string &outputPath,
   mapperData.strideInByte = stride * sizeof(float);
   request.mapperData = &mapperData;
   request.mapperDataSizeInByte = sizeof(ModelMapperData);
+  for (int i = 0; i < 6; ++i) {
+    mapperData.boundingBox[i] = model.boundingBox[i];
+  }
 
   writeBinaryFile(request);
 
@@ -138,18 +141,19 @@ bool processModel(const std::string &assetPath, const std::string &outputPath,
   uint32_t totalSkinSizeByte = (jointCount + weightsCount) * sizeof(float);
 
   skinData.resize(jointCount + weightsCount);
-  memcpy(skinData.data(), finalSkinData.jnts.data(), jointCount* sizeof(float));
+  memcpy(skinData.data(), finalSkinData.jnts.data(),
+         jointCount * sizeof(float));
   // stride is in float being data a float ptr
   memcpy(skinData.data() + jointCount, finalSkinData.weights.data(),
-         weightsCount* sizeof(float));
+         weightsCount * sizeof(float));
   skinRequest.bulkData = skinData.data();
   skinRequest.bulkDataSizeInByte = totalSkinSizeByte;
 
   SkinMapperData skinMapperData{};
-  //TODO HARDCODED, should move this to globals? 
-  skinMapperData.influenceCountPerVertex= 6;
-  skinMapperData.jointsSizeInByte= jointCount* sizeof(float);
-  skinMapperData.weightsSizeInByte= weightsCount* sizeof(float);
+  // TODO HARDCODED, should move this to globals?
+  skinMapperData.influenceCountPerVertex = 6;
+  skinMapperData.jointsSizeInByte = jointCount * sizeof(float);
+  skinMapperData.weightsSizeInByte = weightsCount * sizeof(float);
   skinRequest.mapperData = &skinMapperData;
   skinRequest.mapperDataSizeInByte = sizeof(SkinMapperData);
 

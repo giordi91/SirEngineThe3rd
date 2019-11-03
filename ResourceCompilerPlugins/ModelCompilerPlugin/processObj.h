@@ -9,6 +9,7 @@ struct Model {
   int strideInByte;
   int vertexCount;
   int triangleCount;
+  float boundingBox[6];
 };
 
 struct SkinData {

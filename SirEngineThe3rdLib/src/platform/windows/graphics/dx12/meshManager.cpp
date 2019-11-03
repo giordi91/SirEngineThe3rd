@@ -8,58 +8,6 @@
 
 namespace SirEngine::dx12 {
 
-static ID3D12Resource *createDefaultBuffer(ID3D12Device *device,
-                                           ID3D12GraphicsCommandList *cmdList,
-                                           const void *initData,
-                                           const UINT64 byteSize,
-                                           ID3D12Resource **uploadBuffer) {
-  ID3D12Resource *defaultBuffer = nullptr;
-
-  // Create the actual default buffer resource.
-  auto defaultHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-  auto defaultBufferDesc = CD3DX12_RESOURCE_DESC::Buffer(byteSize);
-  HRESULT res = device->CreateCommittedResource(
-      &defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &defaultBufferDesc,
-      D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&defaultBuffer));
-  assert(SUCCEEDED(res));
-
-  // In order to copy CPU memory data into our default buffer, we need to create
-  // an intermediate upload heap.
-  auto uploadHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-  auto uploadBufferDesc = CD3DX12_RESOURCE_DESC::Buffer(byteSize);
-  res = device->CreateCommittedResource(
-      &uploadHeapProperties, D3D12_HEAP_FLAG_NONE, &uploadBufferDesc,
-      D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(uploadBuffer));
-  assert(SUCCEEDED(res));
-
-  // Describe the data we want to copy into the default buffer.
-  D3D12_SUBRESOURCE_DATA subResourceData = {};
-  subResourceData.pData = initData;
-  subResourceData.RowPitch = byteSize;
-  subResourceData.SlicePitch = subResourceData.RowPitch;
-
-  // Schedule to copy the data to the default buffer resource.  At a high level,
-  // the helper function UpdateSubresources will copy the CPU memory into the
-  // intermediate upload heap.  Then, using
-  // ID3D12CommandList::CopySubresourceRegion, the intermediate upload heap data
-  // will be copied to mBuffer.
-  auto preTransition = CD3DX12_RESOURCE_BARRIER::Transition(
-      defaultBuffer, D3D12_RESOURCE_STATE_COMMON,
-      D3D12_RESOURCE_STATE_COPY_DEST);
-  cmdList->ResourceBarrier(1, &preTransition);
-  UpdateSubresources<1>(cmdList, defaultBuffer, *uploadBuffer, 0, 0, 1,
-                        &subResourceData);
-  auto postTransition = CD3DX12_RESOURCE_BARRIER::Transition(
-      defaultBuffer, D3D12_RESOURCE_STATE_COPY_DEST,
-      D3D12_RESOURCE_STATE_GENERIC_READ);
-  cmdList->ResourceBarrier(1, &postTransition);
-
-  // Note: uploadBuffer has to be kept alive after the above function calls
-  // because the command list has not been executed yet that performs the actual
-  // copy. The caller can Release the uploadBuffer after it knows the copy has
-  // been executed.
-  return defaultBuffer;
-}
 
 MeshHandle MeshManager::loadMesh(const char *path, MeshRuntime *meshRuntime) {
 
@@ -99,8 +47,6 @@ MeshHandle MeshManager::loadMesh(const char *path, MeshRuntime *meshRuntime) {
     meshData->stride = stride;
     MeshUploadResource upload;
 
-
-	//TODO clear the resource from the buffer manager
     uint32_t totalSize = vertexCount * stride * sizeof(float);
     meshData->vtxBuffHandle = dx12::BUFFER_MANAGER->allocate(
         totalSize, vertexData, "", totalSize, sizeof(float), false);
@@ -113,9 +59,18 @@ MeshHandle MeshManager::loadMesh(const char *path, MeshRuntime *meshRuntime) {
     meshData->indexBuffer =
         dx12::BUFFER_MANAGER->getNativeBuffer(meshData->idxBuffHandle);
 
+    // load bounding box
+    DirectX::XMFLOAT3 min = {mapper->boundingBox[0], mapper->boundingBox[1],
+                             mapper->boundingBox[2]};
+    DirectX::XMFLOAT3 max = {mapper->boundingBox[3], mapper->boundingBox[4],
+                             mapper->boundingBox[5]};
+    BoundingBox box{min, max};
+	meshData->entityID = m_boundingBoxes.size();
+	m_boundingBoxes.push_back(box);
+
     // set a signal for the resource.
     upload.fence = dx12::insertFenceToGlobalQueue();
-    //m_uploadRequests.push_back(upload);
+    // m_uploadRequests.push_back(upload);
 
     // data is now loaded need to create handle etc
     handle = MeshHandle{(MAGIC_NUMBER_COUNTER << 16) | index};
