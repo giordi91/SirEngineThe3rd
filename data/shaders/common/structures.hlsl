@@ -15,6 +15,8 @@ struct CameraBuffer {
 
 struct DirectionalLightData {
   float4x4 lightVP;
+  float4x4 worldToLocal;
+  float4x4 localToWorld;
   float4 lightPosition;
   float4 lightDir;
   float4 lightColor;
@@ -53,17 +55,22 @@ struct ReducedDepth {
 };
 
 struct SSSSSConfig {
-	float sssLevel;
-	float correction;
-	float maxdd;
-	float width;
-	float2 direction;
+  float sssLevel;
+  float correction;
+  float maxdd;
+  float width;
+  float2 direction;
 };
 
-struct DebugPointsFixedColor
-{
-    float4 color;
-    float pointSize;
-    float3 padding;
+struct DebugPointsFixedColor {
+  float4 color;
+  float pointSize;
+  float3 padding;
+};
+
+struct BoundingBox {
+	float3 min;
+	float3 max;
+	float2 padding;
 };
 #endif

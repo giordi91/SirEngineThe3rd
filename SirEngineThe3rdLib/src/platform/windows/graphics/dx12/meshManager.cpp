@@ -8,8 +8,8 @@
 
 namespace SirEngine::dx12 {
 
-
-MeshHandle MeshManager::loadMesh(const char *path, MeshRuntime *meshRuntime) {
+MeshHandle MeshManager::loadMesh(const char *path, MeshRuntime *meshRuntime,
+                                 bool isInternal) {
 
   SE_CORE_INFO("Loading mesh {0}", path);
   const bool res = fileExists(path);
@@ -59,14 +59,18 @@ MeshHandle MeshManager::loadMesh(const char *path, MeshRuntime *meshRuntime) {
     meshData->indexBuffer =
         dx12::BUFFER_MANAGER->getNativeBuffer(meshData->idxBuffHandle);
 
-    // load bounding box
-    DirectX::XMFLOAT3 min = {mapper->boundingBox[0], mapper->boundingBox[1],
-                             mapper->boundingBox[2]};
-    DirectX::XMFLOAT3 max = {mapper->boundingBox[3], mapper->boundingBox[4],
-                             mapper->boundingBox[5]};
-    BoundingBox box{min, max};
-	meshData->entityID = m_boundingBoxes.size();
-	m_boundingBoxes.push_back(box);
+    // TODO if is an internal mesh we don't want to go in the bounding box
+    // this needs to be replaced with a proper scene and asset management
+    if (!isInternal) {
+      // load bounding box
+      DirectX::XMFLOAT3 minP = {mapper->boundingBox[0], mapper->boundingBox[1],
+                                mapper->boundingBox[2]};
+      DirectX::XMFLOAT3 maxP = {mapper->boundingBox[3], mapper->boundingBox[4],
+                                mapper->boundingBox[5]};
+      BoundingBox box{minP, maxP};
+      meshData->entityID = m_boundingBoxes.size();
+      m_boundingBoxes.push_back(box);
+    }
 
     // set a signal for the resource.
     upload.fence = dx12::insertFenceToGlobalQueue();
