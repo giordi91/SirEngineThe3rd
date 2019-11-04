@@ -44,8 +44,12 @@ void Graphics3DLayer::onAttach() {
   // globals::MAIN_CAMERA->setPosition(00, 125, 60);
 
   globals::MAIN_CAMERA->setLookAt(0, 14, 0);
-  globals::MAIN_CAMERA->setPosition(00, 14, 10);
+  globals::MAIN_CAMERA->setPosition(0, 14, 10);
   globals::MAIN_CAMERA->updateCamera();
+
+  //globals::MAIN_CAMERA->setLookAt(0, 0, 0);
+  //globals::MAIN_CAMERA->setPosition(0, 0, 1);
+  //globals::MAIN_CAMERA->updateCamera();
 
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
@@ -159,10 +163,25 @@ void Graphics3DLayer::onAttach() {
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
 
   auto bboxes = dx12::MESH_MANAGER->getBoundingBoxes();
-  //dx12::DEBUG_RENDERER->drawBoundingBoxes(bboxes.data(), 1,
-  dx12::DEBUG_RENDERER->drawBoundingBoxes(bboxes.data(), bboxes.size()-1,
+  // dx12::DEBUG_RENDERER->drawBoundingBoxes(bboxes.data(), 1,
+  dx12::DEBUG_RENDERER->drawBoundingBoxes(bboxes.data(),
+                                          static_cast<int>(bboxes.size()),
                                           DirectX::XMFLOAT4{1, 1, 1, 1}, "");
   // globals::SCRIPTING_CONTEXT->loadScript("../data/scripts/test.lua",true);
+
+  // TEMP
+  // animation is up to date, we can update the scene bounding boxes
+  globals::RENDERING_CONTEXT->updateSceneBoundingBox();
+  // draw the scene bounding box
+  BoundingBox aabb = globals::RENDERING_CONTEXT->getBoundingBox();
+  dx12::DEBUG_RENDERER->drawBoundingBoxes(&aabb, 1,
+                                          DirectX::XMFLOAT4(0, 1, 0, 1), "");
+
+  auto light = globals::RENDERING_CONTEXT->getLightData();
+  dx12::DEBUG_RENDERER->drawMatrix(light.localToWorld, 3.0f,
+                                   DirectX::XMFLOAT4(1, 0, 0, 1), "");
+  dx12::DEBUG_RENDERER->drawMatrix(globals::MAIN_CAMERA->getViewInverse(DirectX::XMMatrixIdentity()), 3.0f,
+                                   DirectX::XMFLOAT4(1, 0, 0, 1), "");
 }
 void Graphics3DLayer::onDetach() {}
 void Graphics3DLayer::onUpdate() {
@@ -171,13 +190,17 @@ void Graphics3DLayer::onUpdate() {
   globals::ANIMATION_MANAGER->evaluate();
 
   // update the camera position
-  AnimationConfigHandle charHandle =
+  const AnimationConfigHandle charHandle =
       globals::ANIMATION_MANAGER->getConfigHandleFromName("knightBSkin");
   AnimationPlayer *player =
       globals::ANIMATION_MANAGER->getAnimationPlayer(charHandle);
   SkeletonPose *playerPose = player->getOutPose();
   DirectX::XMMATRIX root = playerPose->m_worldMat[0];
   // TODO manipulate camera to follow
+
+  // animation is up to date, we can update the scene bounding boxes
+  globals::RENDERING_CONTEXT->updateSceneBoundingBox();
+  globals::RENDERING_CONTEXT->updateDirectionalLightMatrix();
 
   // upload skinning matrices
   globals::SKIN_MANAGER->uploadDirtyMatrices();
@@ -320,14 +343,6 @@ void addDebugNode(DependencyGraph *graph, GNode *debugNode) {
 
   graph->connectNodes(&debugOutputPlugs[0], &inPlugs[0]);
 
-  // TODO what?
-  // we need to re-compact the indices of the graph.
-  // std::unordered_map<std::string, GraphNode *> tempNodes = m_nodes;
-  // m_nodes.clear();
-  // m_nodeCounter = 0;
-  // for (auto node : tempNodes) {
-  //  addNode(node.second);
-  //}
   graph->addNode(debugNode);
 }
 

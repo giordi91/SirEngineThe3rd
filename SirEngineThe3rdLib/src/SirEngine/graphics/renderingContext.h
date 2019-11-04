@@ -5,22 +5,28 @@
 namespace SirEngine {
 
 class RenderingContext {
- public:
+public:
   RenderingContext() = default;
   ~RenderingContext() = default;
   void initialize();
   void setupCameraForFrame();
   void bindCameraBuffer(int index) const;
   void bindCameraBufferCompute(int index) const;
+  void updateSceneBoundingBox();
+  void updateDirectionalLightMatrix();
+
   inline void setEnviromentMap(const TextureHandle enviromentMapHandle) {
     m_enviromentMapHandle = enviromentMapHandle;
-  };
+  }
+
   inline void setEnviromentMapIrradiance(
       const TextureHandle enviromentMapIrradianceHandle) {
     m_enviromentMapIrradianceHandle = enviromentMapIrradianceHandle;
-  };
-  inline void setEnviromentMapRadiance(
-      const TextureHandle enviromentMapRadianceHandle) {
+  }
+
+  inline const DirectionalLightData &getLightData() const { return m_light; };
+  inline void
+  setEnviromentMapRadiance(const TextureHandle enviromentMapRadianceHandle) {
     m_enviromentMapRadianceHandle = enviromentMapRadianceHandle;
   };
   inline TextureHandle getEnviromentMapHandle() const {
@@ -32,12 +38,15 @@ class RenderingContext {
   inline TextureHandle getEnviromentMapRadianceHandle() const {
     return m_enviromentMapRadianceHandle;
   }
-  inline void setBrdfHandle(const TextureHandle handle) { m_brdfHandle = handle; }
-  inline TextureHandle getBrdfHandle() const {return m_brdfHandle;}
+  inline void setBrdfHandle(const TextureHandle handle) {
+    m_brdfHandle = handle;
+  }
+  inline TextureHandle getBrdfHandle() const { return m_brdfHandle; }
 
   inline ConstantBufferHandle getLightCB() const { return m_lightCB; }
+  inline BoundingBox getBoundingBox() const { return m_boundingBox; }
 
- private:
+private:
   // member variable mostly temporary
   CameraBuffer m_camBufferCPU{};
   ConstantBufferHandle m_cameraHandle{};
@@ -48,6 +57,8 @@ class RenderingContext {
   TextureHandle m_enviromentMapIrradianceHandle;
   TextureHandle m_enviromentMapRadianceHandle;
   TextureHandle m_brdfHandle;
+  BoundingBox m_boundingBox;
+  DebugDrawHandle m_lightAABBHandle{};
 };
 
-}  // namespace SirEngine
+} // namespace SirEngine

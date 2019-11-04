@@ -541,6 +541,13 @@ inline int push3toVec(float *data, DirectX::XMFLOAT3 v, int counter) {
 
   return counter;
 }
+inline int push3toVec(float *data, DirectX::XMVECTOR v, int counter) {
+  data[counter++] = v.m128_f32[0];
+  data[counter++] = v.m128_f32[1];
+  data[counter++] = v.m128_f32[2];
+
+  return counter;
+}
 
 int drawSquareBetweenTwoPoints(float *data, DirectX::XMFLOAT3 minP,
                                DirectX::XMFLOAT3 maxP, float y, int counter) {
@@ -594,9 +601,152 @@ DebugDrawHandle DebugRenderer::drawBoundingBoxes(BoundingBox *data, int count,
                         debugName);
 
   // this is not compound;
-  int compoundBit = 0;
+  const int compoundBit = 0;
   const DebugDrawHandle returnHandle{compoundBit |
                                      (MAGIC_NUMBER_COUNTER << 16) | 0};
+  ++MAGIC_NUMBER_COUNTER;
   return returnHandle;
+}
+
+DebugDrawHandle DebugRenderer::drawAnimatedBoundingBoxes(
+    DebugDrawHandle handle, BoundingBox *data, int count,
+    DirectX::XMFLOAT4 color, const char *debugName) {
+  // first get AABB data
+  // 12 is the number of lines needed for the AABB, 4 top, 4 bottom, 4 vertical
+  // two is because we need two points per line, we are not doing trianglestrip
+  int totalSize = 3 * count * 12 * 2; // here 3 is the xmfloat3
+
+  auto *points = reinterpret_cast<float *>(globals::FRAME_ALLOCATOR->allocate(
+      sizeof(DirectX::XMFLOAT3) * count * 12 * 2));
+  int counter = 0;
+  for (int i = 0; i < count; ++i) {
+
+    assert(counter <= totalSize);
+    const auto &minP = data[i].min;
+    const auto &maxP = data[i].max;
+    counter = drawSquareBetweenTwoPoints(points, minP, maxP, minP.y, counter);
+    counter = drawSquareBetweenTwoPoints(points, minP, maxP, maxP.y, counter);
+
+    // draw vertical lines
+    counter = push3toVec(points, minP, counter);
+    counter = push3toVec(points, minP.x, maxP.y, minP.z, counter);
+    counter = push3toVec(points, maxP.x, minP.y, minP.z, counter);
+    counter = push3toVec(points, maxP.x, maxP.y, minP.z, counter);
+
+    counter = push3toVec(points, maxP.x, minP.y, maxP.z, counter);
+    counter = push3toVec(points, maxP.x, maxP.y, maxP.z, counter);
+
+    counter = push3toVec(points, minP.x, minP.y, maxP.z, counter);
+    counter = push3toVec(points, minP.x, maxP.y, maxP.z, counter);
+    assert(counter <= totalSize);
+  }
+
+  if (handle.isHandleValid()) {
+
+    // lets get the trackers out for each one
+    const auto found = m_trackers.find(handle.handle);
+    assert(found != m_trackers.end());
+    assert(found->second.compoundCount == 0);
+
+    const DebugTracker &tracker = found->second;
+    assert(tracker.sizeInBtye == (sizeof(float) * totalSize));
+    memcpy(tracker.mappedData, points, tracker.sizeInBtye);
+    return handle;
+
+  } else {
+    const DebugDrawHandle outHandle = drawLinesUniformColor(
+        points, totalSize * sizeof(float), color, totalSize, debugName);
+
+    return outHandle;
+  }
+}
+
+DebugDrawHandle DebugRenderer::drawAnimatedBoundingBoxFromFullPoints(
+    DebugDrawHandle handle, DirectX::XMFLOAT3 *data, int count,
+    DirectX::XMFLOAT4 color, const char *debugName) {
+  // first get AABB data
+  // 12 is the number of lines needed for the AABB, 4 top, 4 bottom, 4 vertical
+  // two is because we need two points per line, we are not doing trianglestrip
+  const int totalSize = 3 * count * 12 * 2; // here 3 is the xmfloat3
+
+  auto *points = reinterpret_cast<float *>(globals::FRAME_ALLOCATOR->allocate(
+      sizeof(DirectX::XMFLOAT3) * count * 12 * 2));
+  int counter = 0;
+
+  // draw vertical lines
+  counter = push3toVec(points, data[0], counter);
+  counter = push3toVec(points, data[2], counter);
+  counter = push3toVec(points, data[0], counter);
+  counter = push3toVec(points, data[3], counter);
+  counter = push3toVec(points, data[0], counter);
+  counter = push3toVec(points, data[4], counter);
+  counter = push3toVec(points, data[2], counter);
+  counter = push3toVec(points, data[6], counter);
+  counter = push3toVec(points, data[4], counter);
+  counter = push3toVec(points, data[6], counter);
+  counter = push3toVec(points, data[2], counter);
+  counter = push3toVec(points, data[5], counter);
+  counter = push3toVec(points, data[3], counter);
+  counter = push3toVec(points, data[7], counter);
+  counter = push3toVec(points, data[3], counter);
+  counter = push3toVec(points, data[5], counter);
+  counter = push3toVec(points, data[1], counter);
+  counter = push3toVec(points, data[6], counter);
+  counter = push3toVec(points, data[1], counter);
+  counter = push3toVec(points, data[5], counter);
+  counter = push3toVec(points, data[1], counter);
+  counter = push3toVec(points, data[7], counter);
+  counter = push3toVec(points, data[4], counter);
+  counter = push3toVec(points, data[7], counter);
+
+
+  assert(counter <= totalSize);
+
+  if (handle.isHandleValid()) {
+
+    // lets get the trackers out for each one
+    const auto found = m_trackers.find(handle.handle);
+    assert(found != m_trackers.end());
+    assert(found->second.compoundCount == 0);
+
+    const DebugTracker &tracker = found->second;
+    assert(tracker.sizeInBtye == (sizeof(float) * totalSize));
+    memcpy(tracker.mappedData, points, tracker.sizeInBtye);
+    return handle;
+
+  } else {
+    const DebugDrawHandle outHandle = drawLinesUniformColor(
+        points, totalSize * sizeof(float), color, totalSize, debugName);
+
+    return outHandle;
+  }
+} // namespace SirEngine::dx12
+
+void DebugRenderer::drawMatrix(const DirectX::XMMATRIX &mat, float size,
+                               DirectX::XMFLOAT4 color, const char *debugName) {
+  const int totalSize =
+      3 * 2 * 3; // 3 axis, each with two points, 3 floats each point
+  auto *points = reinterpret_cast<float *>(
+      globals::FRAME_ALLOCATOR->allocate(sizeof(float) * totalSize));
+
+  int counter = 0;
+  // start with z axis
+  auto scaledZ = DirectX::XMVectorScale(mat.r[2], size * 2.5f);
+  auto movedPosZ = DirectX::XMVectorAdd(mat.r[3], scaledZ);
+  counter = push3toVec(points, mat.r[3], counter);
+  counter = push3toVec(points, movedPosZ, counter);
+
+  auto scaledX = DirectX::XMVectorScale(mat.r[0], size);
+  auto movedPosX = DirectX::XMVectorAdd(mat.r[3], scaledX);
+  counter = push3toVec(points, mat.r[3], counter);
+  counter = push3toVec(points, movedPosX, counter);
+
+  auto scaledY = DirectX::XMVectorScale(mat.r[1], size * 1.5f);
+  auto movedPosY = DirectX::XMVectorAdd(mat.r[3], scaledY);
+  counter = push3toVec(points, mat.r[3], counter);
+  counter = push3toVec(points, movedPosY, counter);
+
+  drawLinesUniformColor(points, totalSize * sizeof(float), color, totalSize,
+                        debugName);
 }
 } // namespace SirEngine::dx12

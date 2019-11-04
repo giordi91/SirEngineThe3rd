@@ -73,6 +73,18 @@ public:
                                     DirectX::XMFLOAT4 color,
                                     const char *debugName);
 
+  DebugDrawHandle drawAnimatedBoundingBoxes(DebugDrawHandle handle ,BoundingBox *data, int count,
+                                    DirectX::XMFLOAT4 color,
+                                    const char *debugName);
+
+  DebugDrawHandle drawAnimatedBoundingBoxFromFullPoints(DebugDrawHandle handle ,DirectX::XMFLOAT3* data, int count,
+                                    DirectX::XMFLOAT4 color,
+                                    const char *debugName);
+
+  void drawMatrix(const DirectX::XMMATRIX& mat, float size,DirectX::XMFLOAT4 color,
+                                    const char *debugName );
+	
+
   DebugRenderer(const DebugRenderer &) = delete;
   DebugRenderer &operator=(const DebugRenderer &) = delete;
 

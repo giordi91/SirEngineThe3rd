@@ -3,6 +3,7 @@
 #include "DXTK12/ResourceUploadBatch.h"
 #include "DirectXMath.h"
 #include "SirEngine/handle.h"
+#include "SirEngine/graphics/cpuGraphicsStructures.h"
 #include "SirEngine/memory/sparseMemoryPool.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/d3dx12.h"
@@ -20,11 +21,6 @@ struct MeshRuntime final {
   uint32_t indexCount;
 };
 
-struct BoundingBox {
-  DirectX::XMFLOAT3 min;
-  DirectX::XMFLOAT3 max;
-  float p1, p2; // padding
-};
 
 class MeshManager final {
 private:
@@ -66,7 +62,7 @@ public:
   // for now a bit overkill to pass both the index and the memory,
   // I could just pass the pointer at right address but for the time
   // being this will keep symmetry.
-  MeshHandle loadMesh(const char *path, MeshRuntime *meshRuntime);
+  MeshHandle loadMesh(const char *path, MeshRuntime *meshRuntime, bool isInternal =false);
 
   inline void assertMagicNumber(const MeshHandle handle) const {
 #ifdef SE_DEBUG

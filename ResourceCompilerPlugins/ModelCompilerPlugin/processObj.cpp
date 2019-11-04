@@ -188,14 +188,14 @@ void convertObjNoTangents(const tinyobj::attrib_t &attr,
       // access to vertex
       tinyobj::index_t idx = shape.mesh.indices[indexOffset + v];
       VertexCompare c;
-      c.p.x = attr.vertices[3 * idx.vertex_index + 0];
-      c.p.y = attr.vertices[3 * idx.vertex_index + 1];
-      c.p.z = attr.vertices[3 * idx.vertex_index + 2];
-      c.n.x = attr.normals[3 * idx.normal_index + 0];
-      c.n.y = attr.normals[3 * idx.normal_index + 1];
-      c.n.z = attr.normals[3 * idx.normal_index + 2];
-      c.uv.x = attr.texcoords[2 * idx.texcoord_index + 0];
-      c.uv.y = attr.texcoords[2 * idx.texcoord_index + 1];
+      c.p.x = attr.vertices[3u * idx.vertex_index + 0];
+      c.p.y = attr.vertices[3u * idx.vertex_index + 1];
+      c.p.z = attr.vertices[3u * idx.vertex_index + 2];
+      c.n.x = attr.normals[3u * idx.normal_index + 0];
+      c.n.y = attr.normals[3u * idx.normal_index + 1];
+      c.n.z = attr.normals[3u * idx.normal_index + 2];
+      c.uv.x = attr.texcoords[2u * idx.texcoord_index + 0];
+      c.uv.y = attr.texcoords[2u * idx.texcoord_index + 1];
       c.t.x = 0.0f;
       c.t.y = 0.0f;
       c.t.z = 0.0f;
@@ -213,9 +213,9 @@ void convertObjNoTangents(const tinyobj::attrib_t &attr,
   }
 
   // model is loaded, lets copy data to output struct
-  size_t indicesCount = indices.size();
-  size_t vertexCompareCount = vertexData.size();
-  uint32_t stride = 12;
+  const size_t indicesCount = indices.size();
+  const size_t vertexCompareCount = vertexData.size();
+  const uint32_t stride = 12;
 
   model.indices.resize(indicesCount);
   model.vertices.resize(vertexCompareCount * stride);
