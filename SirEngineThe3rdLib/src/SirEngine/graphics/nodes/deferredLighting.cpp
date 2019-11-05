@@ -16,7 +16,7 @@ static const char *DEFERRED_LIGHTING_RS = "deferredDirectionalLight_RS";
 DeferredLightingPass::DeferredLightingPass(GraphAllocators &allocators)
     : GNode("DeferredLightingPass", "DeferredLightingPass", allocators) {
   // init data
-  defaultInitializePlugsAndConnections(4, 1);
+  defaultInitializePlugsAndConnections(5, 1);
 
   // lets create the plugs
   GPlug &geometryBuffer = m_inputPlugs[PLUG_INDEX(PLUGS::GEOMETRY_RT)];
@@ -42,6 +42,12 @@ DeferredLightingPass::DeferredLightingPass(GraphAllocators &allocators)
   depthBuffer.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
   depthBuffer.nodePtr = this;
   depthBuffer.name = "depth";
+
+  GPlug &shadowBuffer = m_inputPlugs[PLUG_INDEX(PLUGS::DIRECTIONAL_SHADOW_RT)];
+  shadowBuffer.plugValue = 0;
+  shadowBuffer.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
+  shadowBuffer.nodePtr = this;
+  shadowBuffer.name = "shadow";
 
   GPlug &lightBuffer = m_outputPlugs[PLUG_INDEX(PLUGS::LIGHTING_RT)];
   lightBuffer.plugValue = 0;

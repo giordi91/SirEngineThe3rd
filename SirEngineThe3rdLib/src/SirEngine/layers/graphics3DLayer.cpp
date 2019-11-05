@@ -35,6 +35,7 @@
 
 #include "SirEngine/scripting/scriptingContext.h"
 #include <SirEngine/events/scriptingEvent.h>
+#include "SirEngine/graphics/nodes/shadowPass.h"
 
 namespace SirEngine {
 
@@ -75,6 +76,7 @@ void Graphics3DLayer::onAttach() {
   // auto sky = new ProceduralSkyBoxPass("Procedural Sky");
   const auto sky = new SkyBoxPass(*alloc);
   const auto debugDraw = new DebugDrawNode(*alloc);
+  const auto shadowPass= new ShadowPass(*alloc);
 
   postProcess->allocateRenderPass<SSSSSEffect>("SSSSS");
   postProcess->allocateRenderPass<GammaAndToneMappingEffect>(
@@ -90,11 +92,16 @@ void Graphics3DLayer::onAttach() {
   dx12::RENDERING_GRAPH->addNode(simpleForward);
   dx12::RENDERING_GRAPH->addNode(postProcess);
   dx12::RENDERING_GRAPH->addNode(debugDraw);
+  dx12::RENDERING_GRAPH->addNode(shadowPass);
   dx12::RENDERING_GRAPH->setFinalNode(finalBlit);
 
   dx12::RENDERING_GRAPH->connectNodes(assetNode, AssetManagerNode::ASSET_STREAM,
                                       gbufferPass,
                                       GBufferPassPBR::ASSET_STREAM);
+
+  dx12::RENDERING_GRAPH->connectNodes(assetNode, AssetManagerNode::ASSET_STREAM,
+                                      shadowPass,
+                                      ShadowPass::ASSET_STREAM);
 
   dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::GEOMETRY_RT,
                                       lighting,
@@ -107,6 +114,10 @@ void Graphics3DLayer::onAttach() {
                                       DeferredLightingPass::SPECULAR_RT);
   dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::DEPTH_RT,
                                       lighting, DeferredLightingPass::DEPTH_RT);
+
+  dx12::RENDERING_GRAPH->connectNodes(shadowPass, ShadowPass::DIRECTIONAL_SHADOW_RT,
+                                      lighting,
+                                      DeferredLightingPass::DIRECTIONAL_SHADOW_RT);
 
   dx12::RENDERING_GRAPH->connectNodes(
       lighting, DeferredLightingPass::LIGHTING_RT, sky, SkyBoxPass::IN_TEXTURE);
