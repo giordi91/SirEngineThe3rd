@@ -141,14 +141,12 @@ void RenderingContext::updateDirectionalLightMatrix() {
 
   for (int i = 0; i < 8; ++i) {
     const DirectX::XMFLOAT3 &point = expanded[i];
-    DirectX::XMVECTOR point4 =
+    const DirectX::XMVECTOR point4 =
         DirectX::XMVectorSet(point.x, point.y, point.z, 1.0f);
 
     DirectX::XMVECTOR pp = DirectX::XMVectorSet(1, 1, 2, 1);
-    auto localPointV =
+    const auto localPointV =
         DirectX::XMVector4Transform(point4, m_light.worldToLocal);
-    // localPointV= DirectX::XMVector4Transform(localPointV,
-    // m_light.localToWorld);
 
     DirectX::XMFLOAT4 localPoint;
     DirectX::XMStoreFloat4(&localPoint, localPointV);
@@ -170,11 +168,12 @@ void RenderingContext::updateDirectionalLightMatrix() {
   m_lightAABB.max.y = maxY;
   m_lightAABB.max.z = maxZ;
 
+  // debug rendering of the light
   expandBoundingBox(m_lightAABB, expanded);
 
   for (int i = 0; i < 8; ++i) {
     DirectX::XMFLOAT3 &point = expanded[i];
-    DirectX::XMVECTOR point4 =
+    const DirectX::XMVECTOR point4 =
         DirectX::XMVectorSet(point.x, point.y, point.z, 1.0f);
 
     auto localPointV =
@@ -189,8 +188,10 @@ void RenderingContext::updateDirectionalLightMatrix() {
       dx12::DEBUG_RENDERER->drawAnimatedBoundingBoxFromFullPoints(
           m_lightAABBHandle, expanded, 1, DirectX::XMFLOAT4(1, 0, 0, 1), "");
 
-  //we can now use min max to generate the projection matrix needed;
-
-
+  // we can now use min max to generate the projection matrix needed;
+  const DirectX::XMMATRIX ortho =
+      DirectX::XMMatrixOrthographicLH(maxX - minX, maxY - minY, maxZ, minZ);
+  m_light.projectionMatrix = ortho;
+  m_light.lightVP = DirectX::XMMatrixMultiply(m_light.localToWorld, ortho);
 }
 } // namespace SirEngine

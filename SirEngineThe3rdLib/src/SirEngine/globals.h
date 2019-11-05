@@ -30,6 +30,7 @@ struct DebugFrameData {
   TextureHandle normalBuffer;
   TextureHandle specularBuffer;
   TextureHandle gbufferDepth;
+  TextureHandle directionalShadow;
 };
 
 extern unsigned int SCREEN_WIDTH;

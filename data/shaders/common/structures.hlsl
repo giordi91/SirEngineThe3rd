@@ -14,6 +14,7 @@ struct CameraBuffer {
 };
 
 struct DirectionalLightData {
+  float4x4 projectionMatrix;
   float4x4 lightVP;
   float4x4 worldToLocal;
   float4x4 localToWorld;
@@ -69,8 +70,8 @@ struct DebugPointsFixedColor {
 };
 
 struct BoundingBox {
-	float3 min;
-	float3 max;
-	float2 padding;
+  float3 min;
+  float3 max;
+  float2 padding;
 };
 #endif
