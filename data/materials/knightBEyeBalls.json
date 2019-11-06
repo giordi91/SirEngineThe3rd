@@ -9,5 +9,5 @@
   "roughness" :  "../data/processed/textures/zeroDotOne.texture",
   "metallic" :  "../data/processed/textures/black.texture",
   "queue" :  ["deferred"],
-  "type" : "pbr"
+  "type" : ["pbr"]
 }

@@ -10,5 +10,5 @@
   "roughness" :  "../data/processed/textures/white.texture",
   "metallic" :  "../data/processed/textures/black.texture",
   "queue" :  ["deferred"],
-  "type" : "skinCluster"
+  "type" : ["skinCluster"]
 }

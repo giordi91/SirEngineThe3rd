@@ -38,7 +38,7 @@ bool AssetManager::initialize() {
 IdentityHandle AssetManager::loadAsset(const char *path) {
   auto jobj = getJsonObj(path);
 
-  const std::string  assetName = getFileName(path);
+  const std::string assetName = getFileName(path);
   // now that we have the asset we can check that the sub asset is present
 
   assert(jobj.find(AssetManagerKeys::SUB_ASSETS_KEY) != jobj.end());
@@ -62,7 +62,6 @@ IdentityHandle AssetManager::loadAsset(const char *path) {
     MeshHandle mHandle = dx12::MESH_MANAGER->loadMesh(
         meshString.c_str(), &renderable.m_meshRuntime);
 
-
     // load animation if present
     const std::string animConfigPath =
         getValueIfInJson(subAsset, AssetManagerKeys::ANIM_CONFIG_KEY,
@@ -82,11 +81,16 @@ IdentityHandle AssetManager::loadAsset(const char *path) {
           globals::SKIN_MANAGER->loadSkinCluster(skinPath.c_str(), animHandle);
     }
     MaterialHandle matHandle = dx12::MATERIAL_MANAGER->loadMaterial(
-        materialString.c_str(), &renderable.m_materialRuntime,skinHandle);
+        materialString.c_str(), &renderable.m_materialRuntime, skinHandle);
 
-    // store the renderable
-    (*m_renderables)[renderable.m_materialRuntime.shaderQueueTypeFlags]
-        .push_back(renderable);
+    // store the renderable on each queue
+    for (int i = 0; i < 4; ++i) {
+      const uint32_t flag =
+          renderable.m_materialRuntime.shaderQueueTypeFlags[i];
+      if (flag != INVALID_QUEUE_TYPE_FLAGS) {
+        (*m_renderables)[flag].push_back(renderable);
+      }
+    }
   }
 
   // TODO identity handle concept is not used and is completely broken since we

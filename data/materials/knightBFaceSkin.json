@@ -10,5 +10,5 @@
   "metallic" :  "../data/processed/textures/black.texture",
   "thickness" :  "../data/processed/textures/knightB/face_SCATTER.texture",
   "queue" :  ["deferred"],
-  "type" : "skinSkinCluster"
+  "type" : ["skinSkinCluster"]
 }

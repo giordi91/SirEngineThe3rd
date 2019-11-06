@@ -9,5 +9,5 @@
   "roughness" :  "../data/processed/textures/knightB/cape_R.texture",
   "metallic" :  "../data/processed/textures/knightB/cape_M.texture",
   "queue" :  ["deferred"],
-  "type" : "pbr"
+  "type" : ["pbr"]
 }

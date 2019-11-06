@@ -9,5 +9,5 @@
   "ao" :  "../data/processed/textures/knightB/hair_AO.texture",
   "separateAlpha" :  "../data/processed/textures/knightB/hair_ALPHA.texture",
   "queue" :  ["forward"],
-  "type": "hairSkin"
+  "type": ["hairSkin"]
 }

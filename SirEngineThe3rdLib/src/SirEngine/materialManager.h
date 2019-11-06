@@ -18,6 +18,7 @@ struct ShaderBind {
 };
 
 enum class STENCIL_REF { CLEAR = 0, SSSSS = 1 };
+#define INVALID_QUEUE_TYPE_FLAGS 0xFFFFFFFF
 
 struct MaterialRuntime final {
   D3D12_GPU_VIRTUAL_ADDRESS cbVirtualAddress;
@@ -29,7 +30,9 @@ struct MaterialRuntime final {
   D3D12_GPU_DESCRIPTOR_HANDLE separateAlpha;
   D3D12_GPU_DESCRIPTOR_HANDLE heightMap;
   D3D12_GPU_DESCRIPTOR_HANDLE ao;
-  uint32_t shaderQueueTypeFlags = 0;
+  uint32_t shaderQueueTypeFlags[4] = {
+      INVALID_QUEUE_TYPE_FLAGS, INVALID_QUEUE_TYPE_FLAGS,
+      INVALID_QUEUE_TYPE_FLAGS, INVALID_QUEUE_TYPE_FLAGS};
   SkinHandle skinHandle;
 };
 struct MaterialDataHandles {
@@ -94,8 +97,8 @@ enum class SHADER_TYPE_FLAGS {
   SKINCLUSTER = 12,
   SKINSKINCLUSTER = 13,
   FORWARD_PHONG_ALPHA_CUTOUT_SKIN = 14,
-  HAIRSKIN= 15,
-  FORWARD_PARALLAX= 16,
+  HAIRSKIN = 15,
+  FORWARD_PARALLAX = 16,
 };
 
 class MaterialManager final {
@@ -105,7 +108,7 @@ public:
         m_materialTextureHandles.resize(RESERVE_SIZE);
   };
   ~MaterialManager() = default;
-  void bindMaterial(const MaterialRuntime &materialRuntime,
+  void bindMaterial(uint32_t queue, const MaterialRuntime &materialRuntime,
                     ID3D12GraphicsCommandList2 *commandList);
   void loadTypesInFolder(const char *folder);
   void bindRSandPSO(uint32_t shaderFlags,
