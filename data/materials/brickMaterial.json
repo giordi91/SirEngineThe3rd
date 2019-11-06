@@ -10,5 +10,5 @@
   "metallic" :  "../data/processed/textures/black.texture",
   "height" :  "../data/processed/textures/bricks/bricks_HEIGHT.texture",
   "queue" :  ["forward"],
-  "type" : "forwardParallax"
+  "type" : ["forwardParallax"]
 }

@@ -9,6 +9,6 @@
   "roughness": "../data/processed/textures/knightB/belt_R.texture",
   "metallic": "../data/processed/textures/knightB/belt_M.texture",
   "queue": [ "deferred" ],
-  "type": "skinCluster"
+  "type": ["skinCluster"]
 
 }

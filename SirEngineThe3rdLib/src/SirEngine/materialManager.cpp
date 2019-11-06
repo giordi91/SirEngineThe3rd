@@ -1,14 +1,14 @@
 #include "SirEngine/materialManager.h"
 #include "SirEngine/fileUtils.h"
+#include "animation/animationClip.h"
+#include "animation/animationManager.h"
 #include "graphics/renderingContext.h"
 #include "nlohmann/json.hpp"
 #include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/TextureManagerDx12.h"
-#include "platform/windows/graphics/dx12/rootSignatureManager.h"
-#include "animation/animationManager.h"
-#include "skinClusterManager.h"
 #include "platform/windows/graphics/dx12/bufferManagerDx12.h"
-#include "animation/animationClip.h"
+#include "platform/windows/graphics/dx12/rootSignatureManager.h"
+#include "skinClusterManager.h"
 
 #if GRAPHICS_API == DX12
 #include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
@@ -23,7 +23,7 @@ static const char *ALBEDO = "albedo";
 static const char *NORMAL = "normal";
 static const char *METALLIC = "metallic";
 static const char *ROUGHNESS = "roughness";
-static const char *HEIGHT= "height";
+static const char *HEIGHT = "height";
 static const char *AO = "ao";
 static const char *SEPARATE_ALPHA = "separateAlpha";
 static const char *ROUGHNESS_MULT = "roughnessMult";
@@ -61,14 +61,11 @@ static const std::unordered_map<std::string, SirEngine::SHADER_TYPE_FLAGS>
          SirEngine::SHADER_TYPE_FLAGS::DEBUG_TRIANGLE_COLORS},
         {"debugTrianglesSingleColor",
          SirEngine::SHADER_TYPE_FLAGS::DEBUG_TRIANGLE_SINGLE_COLOR},
-        {"skinCluster",
-         SirEngine::SHADER_TYPE_FLAGS::SKINCLUSTER},
-        {"skinSkinCluster",
-         SirEngine::SHADER_TYPE_FLAGS::SKINSKINCLUSTER},
+        {"skinCluster", SirEngine::SHADER_TYPE_FLAGS::SKINCLUSTER},
+        {"skinSkinCluster", SirEngine::SHADER_TYPE_FLAGS::SKINSKINCLUSTER},
         {"forwardPhongAlphaCutoutSkin",
          SirEngine::SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT_SKIN},
-        {"forwardParallax",
-         SirEngine::SHADER_TYPE_FLAGS::FORWARD_PARALLAX},
+        {"forwardParallax", SirEngine::SHADER_TYPE_FLAGS::FORWARD_PARALLAX},
     };
 static const std::unordered_map<SirEngine::SHADER_TYPE_FLAGS, std::string>
     TYPE_FLAGS_TO_STRING{
@@ -90,14 +87,11 @@ static const std::unordered_map<SirEngine::SHADER_TYPE_FLAGS, std::string>
          "debugTrianglesColors"},
         {SirEngine::SHADER_TYPE_FLAGS::DEBUG_TRIANGLE_SINGLE_COLOR,
          "debugTrianglesSingleColor"},
-        {SirEngine::SHADER_TYPE_FLAGS::SKINCLUSTER,
-         "skinCluster"},
-        {SirEngine::SHADER_TYPE_FLAGS::SKINSKINCLUSTER,
-         "skinSkinCluster"},
+        {SirEngine::SHADER_TYPE_FLAGS::SKINCLUSTER, "skinCluster"},
+        {SirEngine::SHADER_TYPE_FLAGS::SKINSKINCLUSTER, "skinSkinCluster"},
         {SirEngine::SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT_SKIN,
          "forwardPhongAlphaCutoutSkin"},
-        {SirEngine::SHADER_TYPE_FLAGS::FORWARD_PARALLAX,
-         "forwardParallax"},
+        {SirEngine::SHADER_TYPE_FLAGS::FORWARD_PARALLAX, "forwardParallax"},
     };
 
 } // namespace materialKeys
@@ -120,38 +114,41 @@ inline uint16_t stringToActualTypeFlag(const std::string &flag) {
   return 0;
 }
 
-uint16_t parseTypeFlags(const nlohmann::json &jobj) {
-  if (jobj.find(materialKeys::TYPE) == jobj.end()) {
-    assert(0 && "cannot find type flags in material");
-    return 0;
-  }
-  // extract the type flag
-  const auto &tJobj = jobj[materialKeys::TYPE];
-  const auto stringType = tJobj.get<std::string>();
+uint16_t parseTypeFlags(const std::string &stringType) {
   const uint16_t typeFlag = stringToActualTypeFlag(stringType);
   return typeFlag;
 }
 
-uint32_t parseQueueTypeFlags(const nlohmann::json &jobj) {
+void parseQueueTypeFlags(MaterialRuntime &matCpu, const nlohmann::json &jobj) {
   if (jobj.find(materialKeys::QUEUE) == jobj.end()) {
     assert(0 && "cannot find queue flags in material");
-    return 0;
+    return;
+  }
+  if (jobj.find(materialKeys::TYPE) == jobj.end()) {
+    assert(0 && "cannot find types in material");
+    return;
   }
 
   // extract the queue flags, that flag is a bit field for an
   // uint16, which is merged with the material type which
   // is a normal increasing uint16
   const auto &qjobj = jobj[materialKeys::QUEUE];
+  const auto &tjobj = jobj[materialKeys::TYPE];
+  assert(qjobj.size() == tjobj.size());
   uint32_t flags = 0;
-  for (const auto &flag : qjobj) {
-    const auto stringFlag = flag.get<std::string>();
+
+  // for (const auto &flag : qjobj) {
+  for (int i = 0; i < qjobj.size(); ++i) {
+    const auto stringFlag = qjobj[i].get<std::string>();
     const uint32_t currentFlag = stringToActualQueueFlag(stringFlag);
     flags |= currentFlag;
-  }
 
-  const uint32_t typeFlag = parseTypeFlags(jobj);
-  flags = typeFlag << 16 | flags;
-  return flags;
+    const auto stringType = tjobj[i].get<std::string>();
+    const uint32_t typeFlag = parseTypeFlags(stringType);
+    flags = typeFlag << 16 | flags;
+
+    matCpu.shaderQueueTypeFlags[currentFlag] = flags;
+  }
 }
 void bindPBR(const MaterialRuntime &materialRuntime,
              ID3D12GraphicsCommandList2 *commandList) {
@@ -164,7 +161,7 @@ void bindPBR(const MaterialRuntime &materialRuntime,
 }
 
 void bindSkinning(const MaterialRuntime &materialRuntime,
-             ID3D12GraphicsCommandList2 *commandList) {
+                  ID3D12GraphicsCommandList2 *commandList) {
   commandList->SetGraphicsRootConstantBufferView(
       1, materialRuntime.cbVirtualAddress);
   commandList->SetGraphicsRootDescriptorTable(2, materialRuntime.albedo);
@@ -172,18 +169,19 @@ void bindSkinning(const MaterialRuntime &materialRuntime,
   commandList->SetGraphicsRootDescriptorTable(4, materialRuntime.metallic);
   commandList->SetGraphicsRootDescriptorTable(5, materialRuntime.roughness);
 
-  //need to bind the skinning data
+  // need to bind the skinning data
   const SkinHandle skHandle = materialRuntime.skinHandle;
-  const SkinData& data = globals::SKIN_MANAGER->getSkinData(skHandle);
-  //now we have both static buffers, influences and weights
-  //dx12::BUFFER_MANAGER->bindBufferAsSRVDescriptorTable(data.influencesBuffer,6,commandList);
+  const SkinData &data = globals::SKIN_MANAGER->getSkinData(skHandle);
+  // now we have both static buffers, influences and weights
+  // dx12::BUFFER_MANAGER->bindBufferAsSRVDescriptorTable(data.influencesBuffer,6,commandList);
 
-  dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.influencesBuffer,6,commandList);
-  dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.weightsBuffer,7,commandList);
-  //binding skinning data
-  dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.matricesBuffer,8,commandList);
-
-	
+  dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.influencesBuffer, 6,
+                                                commandList);
+  dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.weightsBuffer, 7,
+                                                commandList);
+  // binding skinning data
+  dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.matricesBuffer, 8,
+                                                commandList);
 }
 void bindSkin(const MaterialRuntime &materialRuntime,
               ID3D12GraphicsCommandList2 *commandList) {
@@ -200,7 +198,7 @@ void bindSkin(const MaterialRuntime &materialRuntime,
   commandList->OMSetStencilRef(static_cast<uint32_t>(STENCIL_REF::SSSSS));
 }
 void bindSkinSkinning(const MaterialRuntime &materialRuntime,
-              ID3D12GraphicsCommandList2 *commandList) {
+                      ID3D12GraphicsCommandList2 *commandList) {
   commandList->SetGraphicsRootConstantBufferView(
       1, materialRuntime.cbVirtualAddress);
   commandList->SetGraphicsRootDescriptorTable(2, materialRuntime.albedo);
@@ -210,15 +208,18 @@ void bindSkinSkinning(const MaterialRuntime &materialRuntime,
   // bind extra thickness map
   commandList->SetGraphicsRootDescriptorTable(6, materialRuntime.thickness);
 
-  //need to bind the skinning data
+  // need to bind the skinning data
   const SkinHandle skHandle = materialRuntime.skinHandle;
-  const SkinData& data = globals::SKIN_MANAGER->getSkinData(skHandle);
+  const SkinData &data = globals::SKIN_MANAGER->getSkinData(skHandle);
 
-  //now we have both static buffers, influences and weights
-  dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.influencesBuffer,7,commandList);
-  dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.weightsBuffer,8,commandList);
-  //binding skinning data
-  dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.matricesBuffer,9,commandList);
+  // now we have both static buffers, influences and weights
+  dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.influencesBuffer, 7,
+                                                commandList);
+  dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.weightsBuffer, 8,
+                                                commandList);
+  // binding skinning data
+  dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.matricesBuffer, 9,
+                                                commandList);
 
   // HARDCODED stencil value might have to think of a nice way to handle this
   commandList->OMSetStencilRef(static_cast<uint32_t>(STENCIL_REF::SSSSS));
@@ -268,7 +269,7 @@ void bindForwardPhongAlphaCutout(const MaterialRuntime &materialRuntime,
 }
 
 void bindParallaxPBR(const MaterialRuntime &materialRuntime,
-                    ID3D12GraphicsCommandList2 *commandList) {
+                     ID3D12GraphicsCommandList2 *commandList) {
   const ConstantBufferHandle lightCB = globals::RENDERING_CONTEXT->getLightCB();
   const auto address =
       dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(lightCB);
@@ -298,7 +299,7 @@ void bindParallaxPBR(const MaterialRuntime &materialRuntime,
 }
 
 void bindForwardPhongAlphaCutoutSkin(const MaterialRuntime &materialRuntime,
-                                 ID3D12GraphicsCommandList2 *commandList) {
+                                     ID3D12GraphicsCommandList2 *commandList) {
   const ConstantBufferHandle lightCB = globals::RENDERING_CONTEXT->getLightCB();
   const auto address =
       dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(lightCB);
@@ -310,17 +311,20 @@ void bindForwardPhongAlphaCutoutSkin(const MaterialRuntime &materialRuntime,
   commandList->SetGraphicsRootDescriptorTable(4, materialRuntime.normal);
   commandList->SetGraphicsRootDescriptorTable(5, materialRuntime.separateAlpha);
 
-  //need to bind the skinning data
+  // need to bind the skinning data
   const SkinHandle skHandle = materialRuntime.skinHandle;
-  const SkinData& data = globals::SKIN_MANAGER->getSkinData(skHandle);
-  //now we have both static buffers, influences and weights
-  //dx12::BUFFER_MANAGER->bindBufferAsSRVDescriptorTable(data.influencesBuffer,6,commandList);
+  const SkinData &data = globals::SKIN_MANAGER->getSkinData(skHandle);
+  // now we have both static buffers, influences and weights
+  // dx12::BUFFER_MANAGER->bindBufferAsSRVDescriptorTable(data.influencesBuffer,6,commandList);
 
-  //frame, binding material should not worry about upload
-  dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.influencesBuffer,6,commandList);
-  dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.weightsBuffer,7,commandList);
-  //binding skinning data
-  dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.matricesBuffer,8,commandList);
+  // frame, binding material should not worry about upload
+  dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.influencesBuffer, 6,
+                                                commandList);
+  dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.weightsBuffer, 7,
+                                                commandList);
+  // binding skinning data
+  dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.matricesBuffer, 8,
+                                                commandList);
 
   // HARDCODED stencil value might have to think of a nice way to handle this
   commandList->OMSetStencilRef(static_cast<uint32_t>(STENCIL_REF::CLEAR));
@@ -342,7 +346,7 @@ void bindHair(const MaterialRuntime &materialRuntime,
   commandList->OMSetStencilRef(static_cast<uint32_t>(STENCIL_REF::CLEAR));
 }
 void bindHairSkin(const MaterialRuntime &materialRuntime,
-              ID3D12GraphicsCommandList2 *commandList) {
+                  ID3D12GraphicsCommandList2 *commandList) {
   const ConstantBufferHandle lightCB = globals::RENDERING_CONTEXT->getLightCB();
   const auto address =
       dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(lightCB);
@@ -355,27 +359,32 @@ void bindHairSkin(const MaterialRuntime &materialRuntime,
   commandList->SetGraphicsRootDescriptorTable(5, materialRuntime.separateAlpha);
   commandList->SetGraphicsRootDescriptorTable(6, materialRuntime.ao);
 
-  //need to bind the skinning data
+  // need to bind the skinning data
   const SkinHandle skHandle = materialRuntime.skinHandle;
-  const SkinData& data = globals::SKIN_MANAGER->getSkinData(skHandle);
-  //now we have both static buffers, influences and weights
-  //dx12::BUFFER_MANAGER->bindBufferAsSRVDescriptorTable(data.influencesBuffer,6,commandList);
+  const SkinData &data = globals::SKIN_MANAGER->getSkinData(skHandle);
+  // now we have both static buffers, influences and weights
+  // dx12::BUFFER_MANAGER->bindBufferAsSRVDescriptorTable(data.influencesBuffer,6,commandList);
 
-  //frame, binding material should not worry about upload
-  dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.influencesBuffer,7,commandList);
-  dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.weightsBuffer,8,commandList);
+  // frame, binding material should not worry about upload
+  dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.influencesBuffer, 7,
+                                                commandList);
+  dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.weightsBuffer, 8,
+                                                commandList);
 
-  //binding skinning matrices
-  dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.matricesBuffer,9,commandList);
+  // binding skinning matrices
+  dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.matricesBuffer, 9,
+                                                commandList);
 
   // HARDCODED stencil value might have to think of a nice way to handle this
   commandList->OMSetStencilRef(static_cast<uint32_t>(STENCIL_REF::CLEAR));
 }
 
-void MaterialManager::bindMaterial(const MaterialRuntime &materialRuntime,
+void MaterialManager::bindMaterial(uint32_t queueFlag,
+                                   const MaterialRuntime &materialRuntime,
                                    ID3D12GraphicsCommandList2 *commandList) {
+
   const SHADER_TYPE_FLAGS type =
-      getTypeFlags(materialRuntime.shaderQueueTypeFlags);
+      getTypeFlags(materialRuntime.shaderQueueTypeFlags[queueFlag]);
   switch (type) {
   case (SHADER_TYPE_FLAGS::PBR): {
     bindPBR(materialRuntime, commandList);
@@ -460,17 +469,20 @@ void MaterialManager::loadTypeFile(const char *path) {
   assert(!psoString.empty() && "pso  is emtpy in material type");
 
   // get the handles
-  const PSOHandle psoHandle = dx12::PSO_MANAGER->getHandleFromName(psoString.c_str());
+  const PSOHandle psoHandle =
+      dx12::PSO_MANAGER->getHandleFromName(psoString.c_str());
   const RSHandle rsHandle =
       dx12::ROOT_SIGNATURE_MANAGER->getHandleFromName(rsString.c_str());
 
   std::string name = getFileName(path);
 
-  const uint16_t flags = parseTypeFlags(jObj);
+  const std::string type = jObj[materialKeys::TYPE].get<std::string>();
+  const uint16_t flags = parseTypeFlags(type);
   m_shderTypeToShaderBind[flags] = ShaderBind{rsHandle, psoHandle};
 }
 MaterialHandle MaterialManager::loadMaterial(const char *path,
-                                             MaterialRuntime *materialRuntime, const SkinHandle skinHandle) {
+                                             MaterialRuntime *materialRuntime,
+                                             const SkinHandle skinHandle) {
   // for materials we do not perform the check whether is loaded or not
   // each object is going to get it s own material copy.
   // if that starts to be an issue we will add extra logic to deal with this.
@@ -504,7 +516,7 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
       getValueIfInJson(jobj, materialKeys::THICKNESS, empty);
   const std::string separateAlphaName =
       getValueIfInJson(jobj, materialKeys::SEPARATE_ALPHA, empty);
-  const std::string heightName=
+  const std::string heightName =
       getValueIfInJson(jobj, materialKeys::HEIGHT, empty);
   const std::string aoName = getValueIfInJson(jobj, materialKeys::AO, empty);
 
@@ -556,10 +568,8 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   if (!heightName.empty()) {
     heightTex = dx12::TEXTURE_MANAGER->loadTexture(heightName.c_str());
   } else {
-    heightTex= dx12::TEXTURE_MANAGER->getWhiteTexture();
+    heightTex = dx12::TEXTURE_MANAGER->getWhiteTexture();
   }
-
-  uint32_t queueTypeFlags = parseQueueTypeFlags(jobj);
 
   Material mat{};
   mat.kDR = kd.x;
@@ -609,7 +619,7 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
     texHandles.aoSrv = dx12::TEXTURE_MANAGER->getSRVDx12(aoTex);
   }
   if (heightTex.handle != 0) {
-    texHandles.heightSrv= dx12::TEXTURE_MANAGER->getSRVDx12(heightTex);
+    texHandles.heightSrv = dx12::TEXTURE_MANAGER->getSRVDx12(heightTex);
   }
   MaterialRuntime matCpu{};
   matCpu.albedo = texHandles.albedoSrv.gpuHandle;
@@ -620,7 +630,8 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   matCpu.separateAlpha = texHandles.separateAlphaSrv.gpuHandle;
   matCpu.ao = texHandles.aoSrv.gpuHandle;
   matCpu.skinHandle = skinHandle;
-  matCpu.heightMap= texHandles.heightSrv.gpuHandle;
+  matCpu.heightMap = texHandles.heightSrv.gpuHandle;
+  parseQueueTypeFlags(matCpu, jobj);
 
   // we need to allocate  constant buffer
   // TODO should this be static constant buffer? investigate
@@ -629,7 +640,7 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   uint32_t index;
   m_idxPool.getFreeMemoryData(index);
   m_materialsMagic[index] = static_cast<uint16_t>(MAGIC_NUMBER_COUNTER);
-  matCpu.shaderQueueTypeFlags = queueTypeFlags;
+
 
   matCpu.cbVirtualAddress =
       dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(texHandles.cbHandle);

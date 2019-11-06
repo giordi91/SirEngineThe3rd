@@ -30,8 +30,7 @@ ShadowPass::ShadowPass(GraphAllocators &allocators)
 }
 
 void ShadowPass::initialize() {
-
-  int shadowSize = 4096;
+  const int shadowSize = 4096;
   m_shadow = dx12::TEXTURE_MANAGER->createDepthTexture("directionalShadow",
                                                        shadowSize, shadowSize);
 }
@@ -49,7 +48,7 @@ inline StreamHandle getInputConnection(ResizableVector<const GPlug *> **conns) {
 
 void ShadowPass::compute() {
 
-  return;
+	return;
   annotateGraphicsBegin("ShadowPass");
 
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
@@ -68,12 +67,10 @@ void ShadowPass::compute() {
 
   // now that they are in the right state we are going to clear them
   globals::TEXTURE_MANAGER->clearDepth(m_shadow, 0.0f);
-  /*
-  float color[4] = {0.0f, 0.0f, 0.0f, 1.0f};
-  globals::TEXTURE_MANAGER->clearRT(m_geometryBuffer, color);
-  globals::TEXTURE_MANAGER->clearRT(m_normalBuffer, color);
-  globals::TEXTURE_MANAGER->clearRT(m_specularBuffer, color);
-  */
+  //float color[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+  //globals::TEXTURE_MANAGER->clearRT(m_geometryBuffer, color);
+  //globals::TEXTURE_MANAGER->clearRT(m_normalBuffer, color);
+  //globals::TEXTURE_MANAGER->clearRT(m_specularBuffer, color);
 
   // finally we can bind the buffers
 
@@ -114,7 +111,7 @@ void ShadowPass::compute() {
         const Renderable &renderable = currRenderables[i];
 
         // bind material data like textures etc, then render
-        dx12::MATERIAL_MANAGER->bindMaterial(renderable.m_materialRuntime,
+        dx12::MATERIAL_MANAGER->bindMaterial(renderableList.first,renderable.m_materialRuntime,
                                              commandList);
         dx12::MESH_MANAGER->bindMeshRuntimeAndRender(renderable.m_meshRuntime,
                                                      currentFc);

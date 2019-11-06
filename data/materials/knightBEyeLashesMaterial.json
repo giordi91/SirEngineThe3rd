@@ -8,5 +8,5 @@
   "normal" :  "../data/processed/textures/empty_N.texture",
   "separateAlpha" :  "../data/processed/textures/knightB/eyelash_ALPHA.texture",
   "queue" :  ["forward"],
-  "type": "forwardPhongAlphaCutout"
+  "type": ["forwardPhongAlphaCutout"]
 }
