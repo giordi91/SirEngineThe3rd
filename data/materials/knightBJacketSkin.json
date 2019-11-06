@@ -8,6 +8,6 @@
   "normal" :  "../data/processed/textures/knightB/jacket_N.texture",
   "roughness" :  "../data/processed/textures/knightB/jacket_R.texture",
   "metallic" :  "../data/processed/textures/knightB/jacket_M.texture",
-  "queue" :  ["deferred"],
-  "type" : ["skinCluster" ]
+  "queue" :  ["deferred","shadow"],
+  "type" : ["skinCluster","shaodwSkinCluster"]
 }
