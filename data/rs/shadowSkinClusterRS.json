@@ -1,14 +1,14 @@
 {
-    "shadowSkinClusterRS": {
-      "type": "RASTER",
-      "staticSamplers" : false,
-      "config": [
-        {
-          "comment":  "directionalLight", 
-          "type": "CBV",
-          "data": { "baseRegister": 0 },
-          "visibility": "ALL"
-        },
+  "shadowSkinClusterRS": {
+    "type": "RASTER",
+    "staticSamplers": false,
+    "config": [
+      {
+        "comment": "directionalLight",
+        "type": "CBV",
+        "data": { "baseRegister": 0 },
+        "visibility": "ALL"
+      },
       {
         "comment": "skinIndices",
         "type": "SRV",
@@ -27,7 +27,7 @@
         "data": { "baseRegister": 2 },
         "visibility": "ALL"
       }
-      ],
-      "flags": ["D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT"]
-    }
+    ],
+    "flags": [ "D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT" ]
+  }
 }

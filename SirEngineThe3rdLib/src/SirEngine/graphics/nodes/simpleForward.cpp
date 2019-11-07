@@ -111,9 +111,8 @@ void SimpleForward::compute() {
       for (int i = 0; i < count; ++i) {
         const Renderable &renderable = currRenderables[i];
 
-		uint32_t queueType = dx12::MATERIAL_MANAGER->getQueueFlags(renderableList.first);
         // bind material data like textures etc, then render
-        dx12::MATERIAL_MANAGER->bindMaterial(queueType,renderable.m_materialRuntime,
+        dx12::MATERIAL_MANAGER->bindMaterial(SHADER_QUEUE_FLAGS::FORWARD,renderable.m_materialRuntime,
                                              commandList);
         dx12::MESH_MANAGER->bindMeshRuntimeAndRender(renderable.m_meshRuntime,
                                                      currentFc);

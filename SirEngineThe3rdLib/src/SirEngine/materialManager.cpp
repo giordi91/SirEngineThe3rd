@@ -66,6 +66,8 @@ static const std::unordered_map<std::string, SirEngine::SHADER_TYPE_FLAGS>
         {"forwardPhongAlphaCutoutSkin",
          SirEngine::SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT_SKIN},
         {"forwardParallax", SirEngine::SHADER_TYPE_FLAGS::FORWARD_PARALLAX},
+        {"shadowSkinCluster",
+         SirEngine::SHADER_TYPE_FLAGS::SHADOW_SKIN_CLUSTER},
     };
 static const std::unordered_map<SirEngine::SHADER_TYPE_FLAGS, std::string>
     TYPE_FLAGS_TO_STRING{
@@ -92,6 +94,8 @@ static const std::unordered_map<SirEngine::SHADER_TYPE_FLAGS, std::string>
         {SirEngine::SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT_SKIN,
          "forwardPhongAlphaCutoutSkin"},
         {SirEngine::SHADER_TYPE_FLAGS::FORWARD_PARALLAX, "forwardParallax"},
+        {SirEngine::SHADER_TYPE_FLAGS::SHADOW_SKIN_CLUSTER,
+         "shadowSkinCluster"},
     };
 
 } // namespace materialKeys
@@ -135,19 +139,21 @@ void parseQueueTypeFlags(MaterialRuntime &matCpu, const nlohmann::json &jobj) {
   const auto &qjobj = jobj[materialKeys::QUEUE];
   const auto &tjobj = jobj[materialKeys::TYPE];
   assert(qjobj.size() == tjobj.size());
-  uint32_t flags = 0;
 
   // for (const auto &flag : qjobj) {
   for (int i = 0; i < qjobj.size(); ++i) {
+    uint32_t flags = 0;
     const auto stringFlag = qjobj[i].get<std::string>();
     const uint32_t currentFlag = stringToActualQueueFlag(stringFlag);
     flags |= currentFlag;
+
+    int currentFlagId = log2(currentFlag & -currentFlag);
 
     const auto stringType = tjobj[i].get<std::string>();
     const uint32_t typeFlag = parseTypeFlags(stringType);
     flags = typeFlag << 16 | flags;
 
-    matCpu.shaderQueueTypeFlags[currentFlag] = flags;
+    matCpu.shaderQueueTypeFlags[currentFlagId] = flags;
   }
 }
 void bindPBR(const MaterialRuntime &materialRuntime,
@@ -379,12 +385,14 @@ void bindHairSkin(const MaterialRuntime &materialRuntime,
   commandList->OMSetStencilRef(static_cast<uint32_t>(STENCIL_REF::CLEAR));
 }
 
-void MaterialManager::bindMaterial(uint32_t queueFlag,
+void MaterialManager::bindMaterial(SHADER_QUEUE_FLAGS queueFlag,
                                    const MaterialRuntime &materialRuntime,
                                    ID3D12GraphicsCommandList2 *commandList) {
 
+  int queueFlagInt = static_cast<int>(queueFlag);
+  int currentFlagId = log2(queueFlagInt & -queueFlagInt);
   const SHADER_TYPE_FLAGS type =
-      getTypeFlags(materialRuntime.shaderQueueTypeFlags[queueFlag]);
+      getTypeFlags(materialRuntime.shaderQueueTypeFlags[currentFlagId]);
   switch (type) {
   case (SHADER_TYPE_FLAGS::PBR): {
     bindPBR(materialRuntime, commandList);
@@ -640,7 +648,6 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   uint32_t index;
   m_idxPool.getFreeMemoryData(index);
   m_materialsMagic[index] = static_cast<uint16_t>(MAGIC_NUMBER_COUNTER);
-
 
   matCpu.cbVirtualAddress =
       dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(texHandles.cbHandle);

@@ -82,11 +82,17 @@ IdentityHandle AssetManager::loadAsset(const char *path) {
     }
     MaterialHandle matHandle = dx12::MATERIAL_MANAGER->loadMaterial(
         materialString.c_str(), &renderable.m_materialRuntime, skinHandle);
+    if (skinHandle.handle == 1900550) {
+      int x = 0;
+    }
 
     // store the renderable on each queue
     for (int i = 0; i < 4; ++i) {
       const uint32_t flag =
           renderable.m_materialRuntime.shaderQueueTypeFlags[i];
+      if (flag == 1900550) {
+        int x = 0;
+      }
       if (flag != INVALID_QUEUE_TYPE_FLAGS) {
         (*m_renderables)[flag].push_back(renderable);
       }

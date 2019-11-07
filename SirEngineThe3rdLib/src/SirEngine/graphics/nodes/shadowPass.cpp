@@ -35,7 +35,8 @@ void ShadowPass::initialize() {
                                                        shadowSize, shadowSize);
 }
 
-inline StreamHandle getInputConnection(ResizableVector<const GPlug *> **conns) {
+inline StreamHandle
+getInputConnectionX(ResizableVector<const GPlug *> **conns) {
   const auto conn = conns[PLUG_INDEX(ShadowPass::PLUGS::ASSET_STREAM)];
 
   // TODO not super safe to do this, might be worth improving this
@@ -48,6 +49,7 @@ inline StreamHandle getInputConnection(ResizableVector<const GPlug *> **conns) {
 
 void ShadowPass::compute() {
 
+  return;
   annotateGraphicsBegin("ShadowPass");
 
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
@@ -78,7 +80,7 @@ void ShadowPass::compute() {
 
   // we can now start to render our geometries, the way it works is you first
   // access the renderable stream coming in from the node input
-  const StreamHandle streamH = getInputConnection(m_inConnections);
+  const StreamHandle streamH = getInputConnectionX(m_inConnections);
   const std::unordered_map<uint32_t, std::vector<Renderable>> &renderables =
       globals::ASSET_MANAGER->getRenderables(streamH);
 
@@ -87,7 +89,7 @@ void ShadowPass::compute() {
   // deferred queue
   for (const auto &renderableList : renderables) {
     if (dx12::MATERIAL_MANAGER->isQueueType(renderableList.first,
-                                            SHADER_QUEUE_FLAGS::DEFERRED)) {
+                                            SHADER_QUEUE_FLAGS::SHADOW)) {
 
       // now that we know the material goes in the the deferred queue we can
       // start rendering it
@@ -109,11 +111,10 @@ void ShadowPass::compute() {
       for (int i = 0; i < count; ++i) {
         const Renderable &renderable = currRenderables[i];
 
-        const uint32_t queueType =
-            dx12::MATERIAL_MANAGER->getQueueFlags(renderableList.first);
         // bind material data like textures etc, then render
-        dx12::MATERIAL_MANAGER->bindMaterial(
-            queueType, renderable.m_materialRuntime, commandList);
+        dx12::MATERIAL_MANAGER->bindMaterial(SHADER_QUEUE_FLAGS::SHADOW,
+                                             renderable.m_materialRuntime,
+                                             commandList);
         dx12::MESH_MANAGER->bindMeshRuntimeAndRender(renderable.m_meshRuntime,
                                                      currentFc);
       }

@@ -512,8 +512,14 @@ void PSOManager::processRasterPSO(nlohmann::json &jobj, const std::string &path,
   psoDesc.pRootSignature = rootSignature;
   psoDesc.VS = {reinterpret_cast<BYTE *>(vs->GetBufferPointer()),
                 vs->GetBufferSize()};
-  psoDesc.PS = {reinterpret_cast<BYTE *>(ps->GetBufferPointer()),
-                ps->GetBufferSize()};
+
+  psoDesc.PS = {nullptr,
+                0};
+  if (ps != nullptr) {
+    psoDesc.PS = {reinterpret_cast<BYTE *>(ps->GetBufferPointer()),
+                  ps->GetBufferSize()};
+  }
+
   psoDesc.RasterizerState = rasterState;
   psoDesc.BlendState = blendState;
   psoDesc.DepthStencilState = dsState;
@@ -542,19 +548,19 @@ void PSOManager::processRasterPSO(nlohmann::json &jobj, const std::string &path,
       m_shaderToPSOFile.insert(VSname.c_str(),
                                new ResizableVector<const char *>(20));
     }
-	ResizableVector<const char *>*list;
-	m_shaderToPSOFile.get(VSname.c_str(),list);
-	//make sure to internalize the string
-	list->pushBack(persistentString(path.c_str()));
+    ResizableVector<const char *> *list;
+    m_shaderToPSOFile.get(VSname.c_str(), list);
+    // make sure to internalize the string
+    list->pushBack(persistentString(path.c_str()));
 
     hasShader = m_shaderToPSOFile.containsKey(PSname.c_str());
     if (!hasShader) {
       m_shaderToPSOFile.insert(PSname.c_str(),
                                new ResizableVector<const char *>(20));
     }
-	m_shaderToPSOFile.get(PSname.c_str(),list);
-	//make sure to internalize the string
-	list->pushBack(persistentString(path.c_str()));
+    m_shaderToPSOFile.get(PSname.c_str(), list);
+    // make sure to internalize the string
+    list->pushBack(persistentString(path.c_str()));
 
     // generating and storing the handle
     uint32_t index;
