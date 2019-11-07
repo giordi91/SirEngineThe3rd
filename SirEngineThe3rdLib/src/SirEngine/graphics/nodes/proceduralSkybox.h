@@ -16,10 +16,9 @@ public:
   };
 public:
   explicit ProceduralSkyBoxPass(GraphAllocators &allocators);
-  virtual ~ProceduralSkyBoxPass() { clear(); };
+  virtual ~ProceduralSkyBoxPass()=default; 
   virtual void initialize() override;
   virtual void compute() override;
-  virtual void clear() override;
   virtual void onResizeEvent(int screenWidth, int screenHeight) override;
 
 private:

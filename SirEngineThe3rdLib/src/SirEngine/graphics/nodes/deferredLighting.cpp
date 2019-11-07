@@ -160,13 +160,18 @@ void DeferredLightingPass::compute() {
   annotateGraphicsEnd();
 }
 
-#define FREE_TEXTURE_IF_VALID(h)                                               \
-  if (h.isHandleValid()) {                                                     \
-    dx12::TEXTURE_MANAGER->free(h);                                            \
-    h.handle = 0;                                                              \
+inline void freeTextureIfValid(TextureHandle h) {
+  if (h.isHandleValid()) {
+    dx12::TEXTURE_MANAGER->free(h);
+    h.handle = 0;
   }
+}
 
-void DeferredLightingPass::clear() { FREE_TEXTURE_IF_VALID(m_lightBuffer) }
+void DeferredLightingPass::clear()
+{
+	freeTextureIfValid(m_lightBuffer);
+	m_generation = -1;
+}
 
 void DeferredLightingPass::onResizeEvent(int, int) {
   clear();

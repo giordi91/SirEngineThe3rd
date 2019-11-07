@@ -17,10 +17,9 @@ public:
 
 public:
   SkyBoxPass(GraphAllocators &allocators);
-  virtual ~SkyBoxPass() { clear(); };
+  virtual ~SkyBoxPass() =default ;
   virtual void initialize() override;
   virtual void compute() override;
-  virtual void clear() override;
   virtual void onResizeEvent(int screenWidth, int screenHeight) override;
 
 private:

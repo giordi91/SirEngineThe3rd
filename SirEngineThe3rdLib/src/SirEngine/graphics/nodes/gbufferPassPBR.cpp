@@ -189,6 +189,7 @@ void GBufferPassPBR::clear() {
   freeTextureIfValid(m_geometryBuffer);
   freeTextureIfValid(m_normalBuffer);
   freeTextureIfValid(m_specularBuffer);
+  m_generation =-1;
 }
 
 void GBufferPassPBR::onResizeEvent(int, int) {

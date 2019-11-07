@@ -137,7 +137,6 @@ TEST_CASE("find node of type", "[graphics,graph]") {
   REQUIRE(found3 == &blit);
 }
 
-/*
 TEST_CASE("finalize graph 1", "[graphics,graph]") {
   StringPool stringPool(1024);
   ThreeSizesPool allocator(1024);
@@ -171,7 +170,6 @@ TEST_CASE("finalize graph 1", "[graphics,graph]") {
   REQUIRE(assetId < gbufferId);
   REQUIRE(gbufferId < blitId);
 }
-*/
 
 TEST_CASE("remove connection", "[graphics,graph]") {
   StringPool stringPool(1024);
@@ -324,44 +322,3 @@ TEST_CASE("sort graph 1", "[graphics,graph]") {
   REQUIRE(assetIdx < shadowIdx);
 
 }
-
-/*
-TEST_CASE("Graph sorting", "[graphics,graph]") {
-  Graph *graph = buildGraphOne();
-  const std::vector<GraphNode *> &linearizedGraph =
-graph->getLinearizedGraph(); int assetNodeIdx =
-      getIndexOfNodeOfType(linearizedGraph, "AssetManagerNodeProxy");
-  int finalBlitIdx =
-      getIndexOfNodeOfType(linearizedGraph, "FinalBlitNodeProxy");
-  int debugNodeIdx = getIndexOfNodeOfType(linearizedGraph, "DebugNodeProxy");
-  int deferredLightIdx =
-      getIndexOfNodeOfType(linearizedGraph, "DeferredLightingProxy");
-  int gbufferPBRIdx =
-      getIndexOfNodeOfType(linearizedGraph, "GBufferPassPBRProxy");
-  int skyboxIdx = getIndexOfNodeOfType(linearizedGraph, "SkyBoxPassProxy");
-  int postProcessIdx =
-      getIndexOfNodeOfType(linearizedGraph, "PostProcessStackProxy");
-
-  REQUIRE(linearizedGraph.size() == 6);
-
-  // asserting node idx have been found
-  REQUIRE(assetNodeIdx != -1);
-  REQUIRE(finalBlitIdx != -1);
-  REQUIRE(debugNodeIdx == -1);
-  REQUIRE(deferredLightIdx != -1);
-  REQUIRE(gbufferPBRIdx != -1);
-  REQUIRE(skyboxIdx != -1);
-  REQUIRE(postProcessIdx != -1);
-
-  // Checking dependencies
-  // Here we are not going to check for specific order, that might change,
-what
-  // we are really interested into is the fact that dependencies are
-respected, so
-  // we will just make sure that index count are lower for a dependency of a
-node REQUIRE(assetNodeIdx < gbufferPBRIdx); REQUIRE(gbufferPBRIdx<
-deferredLightIdx); REQUIRE(gbufferPBRIdx< skyboxIdx); REQUIRE(skyboxIdx<
-postProcessIdx); REQUIRE(postProcessIdx< finalBlitIdx);
-
-}
-*/

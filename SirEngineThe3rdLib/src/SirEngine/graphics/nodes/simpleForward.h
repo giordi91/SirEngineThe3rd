@@ -21,7 +21,6 @@ public:
   virtual ~SimpleForward() { clear(); };
   virtual void initialize() override;
   virtual void compute() override;
-  virtual void clear() override;
   virtual void onResizeEvent(int screenWidth, int screenHeight) override;
 
 private:

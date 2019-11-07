@@ -78,7 +78,6 @@ void ProceduralSkyBoxPass::compute() {
   annotateGraphicsEnd();
 }
 
-void ProceduralSkyBoxPass::clear() {}
 
 void ProceduralSkyBoxPass::onResizeEvent(int, int) {
   clear();

@@ -118,7 +118,6 @@ void SkyBoxPass::compute() {
   annotateGraphicsEnd();
 }
 
-void SkyBoxPass::clear() {}
 
 void SkyBoxPass::onResizeEvent(int, int) {
   clear();
