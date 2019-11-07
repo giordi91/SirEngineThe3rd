@@ -138,7 +138,10 @@ inline void freeTextureIfValid(TextureHandle h) {
   }
 }
 
-void ShadowPass::clear() { freeTextureIfValid(m_shadow); }
+void ShadowPass::clear() {
+  freeTextureIfValid(m_shadow);
+  m_generation = -1;
+}
 
 void ShadowPass::onResizeEvent(int, int) {
   clear();

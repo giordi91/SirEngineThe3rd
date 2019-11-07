@@ -30,8 +30,7 @@ struct GPlug final {
   uint32_t flags;
 };
 
-
-//TODO make node not copyable assignable
+// TODO make node not copyable assignable
 class SIR_ENGINE_API GNode {
 // TODO consider a constexpr inline function instead?
 /**
@@ -58,11 +57,14 @@ public:
   virtual ~GNode() {
     m_allocs.stringPool->free(m_nodeName);
     m_allocs.stringPool->free(m_nodeType);
-  };
+  }
+
+  inline void setGeneration(int generation) { m_generation = generation; }
+  inline int getGeneration() const { return m_generation; }
 
   virtual void compute() {}
   virtual void initialize(){};
-  virtual void clear(){};
+  virtual void clear() { m_generation = -1; };
   // un-named parameters are screenWidth and screenHeight
   // removing the names just to avoid huge spam;
   virtual void onResizeEvent(int, int){};
@@ -177,8 +179,8 @@ protected:
     return (plug.flags & flag) > 0;
   }
   void defaultInitializePlugsAndConnections(
-	  const int inputCount, const int outputCount,
-	  const int reserve = DEFAULT_PLUG_CONNECTION_ALLOCATION) {
+      const int inputCount, const int outputCount,
+      const int reserve = DEFAULT_PLUG_CONNECTION_ALLOCATION) {
 
     const int totalCount = inputCount + outputCount;
     auto *plugs = static_cast<GPlug *>(
@@ -205,6 +207,7 @@ protected:
   uint32_t m_inputPlugsCount = 0;
   uint32_t m_outputPlugsCount = 0;
   uint32_t m_nodeIdx = 0;
+  int m_generation = -1;
   static const int DEFAULT_PLUG_CONNECTION_ALLOCATION = 3;
   ResizableVector<const GPlug *> **m_inConnections = nullptr;
   ResizableVector<const GPlug *> **m_outConnections = nullptr;
@@ -235,7 +238,7 @@ public:
     m_nodes.pushBack(node);
   }
 
-  inline GNode *findNodeOfType(const char *type){
+  inline GNode *findNodeOfType(const char *type) {
 
     const uint32_t nodesCount = m_nodes.size();
     for (uint32_t i = 0; i < nodesCount; ++i) {

@@ -125,7 +125,6 @@ void SimpleForward::compute() {
   annotateGraphicsEnd();
 }
 
-void SimpleForward::clear() {}
 
 void SimpleForward::onResizeEvent(int, int) {
   clear();
