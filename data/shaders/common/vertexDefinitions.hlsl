@@ -58,5 +58,8 @@ struct PositionOnlyVertexOut{
   float4 pos : SV_POSITION;
   float4 worldPos: POSITION;
 };
+struct LocalPositionOnlyVertexOut{
+  float4 pos : SV_POSITION;
+};
 
 #endif

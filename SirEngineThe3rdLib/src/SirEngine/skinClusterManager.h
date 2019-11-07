@@ -48,7 +48,7 @@ private:
 	  const uint32_t magic = getMagicFromHandle(handle);
 	  const uint32_t idx = getIndexFromHandle(handle);
     assert(m_skinPool.getConstRef(idx).magicNumber == magic &&
-           "invalid magic handle for constant buffer");
+           "invalid magic handle for skin data");
   }
 
 private:

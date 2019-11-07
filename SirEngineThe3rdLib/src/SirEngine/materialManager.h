@@ -99,6 +99,7 @@ enum class SHADER_TYPE_FLAGS {
   FORWARD_PHONG_ALPHA_CUTOUT_SKIN = 14,
   HAIRSKIN = 15,
   FORWARD_PARALLAX = 16,
+  SHADOW_SKIN_CLUSTER = 17
 };
 
 class MaterialManager final {
@@ -108,7 +109,8 @@ public:
         m_materialTextureHandles.resize(RESERVE_SIZE);
   };
   ~MaterialManager() = default;
-  void bindMaterial(uint32_t queue, const MaterialRuntime &materialRuntime,
+  void bindMaterial(SHADER_QUEUE_FLAGS queueFlag,
+                    const MaterialRuntime &materialRuntime,
                     ID3D12GraphicsCommandList2 *commandList);
   void loadTypesInFolder(const char *folder);
   void bindRSandPSO(uint32_t shaderFlags,

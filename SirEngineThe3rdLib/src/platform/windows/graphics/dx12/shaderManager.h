@@ -1,9 +1,9 @@
 #pragma once
-#include <d3dcommon.h>
+#include "SirEngine/memory/stackAllocator.h"
 #include <cassert>
+#include <d3dcommon.h>
 #include <string>
 #include <unordered_map>
-#include "SirEngine/memory/stackAllocator.h"
 
 namespace SirEngine {
 namespace dx12 {
@@ -23,7 +23,7 @@ struct ShaderBlob {
 };
 
 class ShaderManager {
- public:
+public:
   ~ShaderManager();
   // right now this is empty, is kept here for the time being
   // just for simmetry with the other managers
@@ -34,6 +34,9 @@ class ShaderManager {
     const auto found = m_stringToShader.find(name);
     if (found != m_stringToShader.end()) {
       return found->second.shader;
+    }
+  	if(name == "null") {
+		return nullptr;
     }
     assert(0 && "could not find shader");
     return nullptr;
@@ -51,7 +54,7 @@ class ShaderManager {
   void recompileShader(const char *path, const char *offsetPath,
                        std::string *log);
 
- private:
+private:
   // 2 mb of data for the stack
   const int METADATA_STACK_SIZE = 1 << 21;
   // data caching
@@ -59,5 +62,5 @@ class ShaderManager {
   StackAllocator m_metadataAllocator;
   DXCShaderCompiler *m_compiler;
 };
-}  // namespace dx12
-}  // namespace SirEngine
+} // namespace dx12
+} // namespace SirEngine

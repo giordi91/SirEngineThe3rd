@@ -2,15 +2,16 @@
 #include "../common/vertexDefinitions.hlsl"
 
 ConstantBuffer<CameraBuffer> g_cameraBuffer : register(b0);
-StructuredBuffer<int> g_influences : register(t5);
-StructuredBuffer<float> g_weights : register(t6);
-StructuredBuffer<float4x4> g_matrices : register(t7);
+StructuredBuffer<int> g_influences : register(t0);
+StructuredBuffer<float> g_weights : register(t1);
+StructuredBuffer<float4x4> g_matrices : register(t2);
+
 static const int NUMBER_OF_INFLUENCES = 6;
 
 
-PositionOnlyVertexIn VS(TexturedVertexIn12 vin, uint vid : SV_VertexID)
+LocalPositionOnlyVertexOut VS(TexturedVertexIn12 vin, uint vid : SV_VertexID)
 {
-    PositionOnlyVertexIn vout;
+    LocalPositionOnlyVertexOut vout;
     int id = vid* NUMBER_OF_INFLUENCES;
 
     float4 skin_p = float4(0, 0, 0, 1);
@@ -26,6 +27,6 @@ PositionOnlyVertexIn VS(TexturedVertexIn12 vin, uint vid : SV_VertexID)
     skin_p.w = 1.0f;
 	
 	// Transform to homogeneous clip space.
-    vout.pos = mul(skin_p, g_cameraBuffer.MVP).xyz;
+    vout.pos = mul(skin_p, g_cameraBuffer.MVP);
     return vout;
 }

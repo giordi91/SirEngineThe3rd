@@ -125,8 +125,9 @@ void GBufferPassPBR::compute() {
   // all the renderable types and filter for the one that are tagged for the
   // deferred queue
   for (const auto &renderableList : renderables) {
-    if (dx12::MATERIAL_MANAGER->isQueueType(renderableList.first,
-                                            SHADER_QUEUE_FLAGS::DEFERRED)) {
+	bool shouldProcess= dx12::MATERIAL_MANAGER->isQueueType(renderableList.first,
+                                            SHADER_QUEUE_FLAGS::DEFERRED);
+    if (shouldProcess) {
 
       // now that we know the material goes in the the deferred queue we can
       // start rendering it
@@ -148,9 +149,9 @@ void GBufferPassPBR::compute() {
       for (int i = 0; i < count; ++i) {
         const Renderable &renderable = currRenderables[i];
 
-        const uint32_t queueType = dx12::MATERIAL_MANAGER->getQueueFlags(renderableList.first);
+        //const uint32_t queueType = dx12::MATERIAL_MANAGER->getQueueFlags(renderableList.first);
         // bind material data like textures etc, then render
-        dx12::MATERIAL_MANAGER->bindMaterial(queueType,renderable.m_materialRuntime,
+        dx12::MATERIAL_MANAGER->bindMaterial(SHADER_QUEUE_FLAGS::DEFERRED,renderable.m_materialRuntime,
                                              commandList);
         dx12::MESH_MANAGER->bindMeshRuntimeAndRender(renderable.m_meshRuntime,
                                                      currentFc);
