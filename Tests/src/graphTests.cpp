@@ -317,8 +317,32 @@ TEST_CASE("sort graph 1", "[graphics,graph]") {
   const ResizableVector<GNode *> &linearizedGraph = graph.getLinearizedGraph();
   int assetIdx = getIndexOfNodeOfType(linearizedGraph, "AssetManagerNode");
   int gbufferIdx = getIndexOfNodeOfType(linearizedGraph, "GBufferPassPBR");
-  int shadowIdx= getIndexOfNodeOfType(linearizedGraph, "ShadowPass");
+  int shadowIdx = getIndexOfNodeOfType(linearizedGraph, "ShadowPass");
+  int finalBlitIdx = getIndexOfNodeOfType(linearizedGraph, "FinalBlit");
+  int lightingIdx =
+      getIndexOfNodeOfType(linearizedGraph, "DeferredLightingPass");
+  int skyIdx = getIndexOfNodeOfType(linearizedGraph, "SkyBoxPass");
+  int simpleForwardIdx = getIndexOfNodeOfType(linearizedGraph, "SimpleForward");
+  int postProcessIdx =
+      getIndexOfNodeOfType(linearizedGraph, "PostProcessStack");
+  int debugDrawIdx = getIndexOfNodeOfType(linearizedGraph, "DebugDrawNode");
+
+  REQUIRE(assetIdx != -1);
+  REQUIRE(gbufferIdx != -1);
+  REQUIRE(shadowIdx != -1);
+  REQUIRE(finalBlitIdx != -1);
+  REQUIRE(lightingIdx != -1);
+  REQUIRE(skyIdx != -1);
+  REQUIRE(simpleForwardIdx != -1);
+  REQUIRE(postProcessIdx != -1);
+  REQUIRE(debugDrawIdx != -1);
+
   REQUIRE(assetIdx < gbufferIdx);
   REQUIRE(assetIdx < shadowIdx);
-
+  REQUIRE(debugDrawIdx < finalBlitIdx);
+  REQUIRE(lightingIdx < postProcessIdx);
+  REQUIRE(postProcessIdx < debugDrawIdx);
+  REQUIRE(simpleForwardIdx < postProcessIdx);
+  REQUIRE(lightingIdx < simpleForwardIdx);
+  REQUIRE(gbufferIdx< lightingIdx);
 }

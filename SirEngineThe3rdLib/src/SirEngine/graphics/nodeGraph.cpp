@@ -105,7 +105,7 @@ void GNode::defaultInitializeConnectionPool(const int inputCount,
 void recurseNode(GNode *currentNode, ResizableVector<GNode *> &queue,
                  std::unordered_map<uint32_t, int> &visitedNodes,
                  int generation) {
-	const auto found = visitedNodes.find(currentNode->getNodeIdx());
+  const auto found = visitedNodes.find(currentNode->getNodeIdx());
   // first we check whether or not the already processed the node
   if (found == visitedNodes.end()) {
 
@@ -161,9 +161,6 @@ void DependencyGraph::finalizeGraph() {
   for (int i = 0; i < count; ++i) {
     m_nodes[i]->clear();
   }
-  // for (auto &node : m_nodes) {
-  //  node.second->clear();
-  //}
 
   // node id, generation
   std::unordered_map<uint32_t, int> visitedNodes;
@@ -179,13 +176,19 @@ void DependencyGraph::finalizeGraph() {
     assert(found != visitedNodes.end());
     m_nodes[i]->setGeneration(found->second);
     toSort.push_back(m_nodes[i]);
+    m_linearizedGraph[i] = m_nodes[i];
   }
 
   std::sort(toSort.begin(), toSort.end(), [](const auto &lhs, const auto &rhs) {
     return lhs->getGeneration() < rhs->getGeneration();
   });
+  std::sort(m_linearizedGraph.data(),
+            m_linearizedGraph.data() + m_linearizedGraph.size(),
+            [](const auto &lhs, const auto &rhs) {
+              return lhs->getGeneration() < rhs->getGeneration();
+            });
 
-  std::reverse(toSort.begin(), toSort.end());
+  //std::reverse(toSort.begin(), toSort.end());
   // std::vector<GNode *> temp;
   // for (int i = 0; i < linearCount; ++i) {
   //  temp.push_back(m_linearizedGraph[i]);
@@ -193,15 +196,16 @@ void DependencyGraph::finalizeGraph() {
 
   // std::reverse(temp.begin(), temp.end());
   // just need to flip the vector
-  // const int linearCount = m_linearizedGraph.size();
-  // for (int low = 0, high = linearCount - 1; low < high; ++low, --high) {
-  //  GNode *temp = m_linearizedGraph[low];
-  //  m_linearizedGraph[low] = m_linearizedGraph[high];
-  //  m_linearizedGraph[high] = temp;
-  //}
+   const int linearCount = m_linearizedGraph.size();
+   for (int low = 0, high = linearCount - 1; low < high; ++low, --high) {
+    GNode *temp = m_linearizedGraph[low];
+    m_linearizedGraph[low] = m_linearizedGraph[high];
+    m_linearizedGraph[high] = temp;
+  }
 
-  for (int i = 0; i < toSort.size(); ++i) {
-    m_linearizedGraph[i] = toSort[i];
+  //for (int i = 0; i < toSort.size(); ++i) {
+  for (int i = 0; i < linearCount; ++i) {
+    //m_linearizedGraph[i] = toSort[i];
     m_linearizedGraph[i]->initialize();
   }
 }
