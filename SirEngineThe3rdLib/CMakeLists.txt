@@ -6,7 +6,26 @@ include (${CMAKE_SOURCE_DIR}/cmake/cmakeUtils.cmake)
 project(SirEngineThe3rdLib)   
 
     #looking for  files
-    file(GLOB_RECURSE SOURCE_FILES "src/*.cpp" "src/*.h")
+	#generic platform indepenent sir engine files
+    file(GLOB_RECURSE SOURCE_FILES_SIR_ENGINE "src/SirEngine/*.cpp" "src/SirEngine/*.h")
+	list (APPEND SOURCE_FILES ${SOURCE_FILES_SIR_ENGINE})
+
+	#windows specific files like the window
+    file(GLOB SOURCE_FILES_WINDOWS "src/platform/windows/*.cpp" "src/platform/windows/*.h")
+	list (APPEND SOURCE_FILES ${SOURCE_FILES_WINDOWS})
+
+	#dx12 api backend
+	if(${BUILD_DX12})
+		file(GLOB_RECURSE SOURCE_FILES_DX12 "src/platform/windows/graphics/*.cpp" "src/platform/windows/graphics/*.h")
+		list (APPEND SOURCE_FILES ${SOURCE_FILES_DX12})
+	endif(${BUILD_DX12})
+
+	#specific source files used on AMD hardware only (like hardware queries)
+	if(${BUILD_AMD})
+		file(GLOB SOURCE_FILES_HARDWARE_AMD "src/platform/windows/hardware/AMD/*.cpp" "src/platform/windows/hardware/AMD/*.h")
+		list (APPEND SOURCE_FILES ${SOURCE_FILES_HARDWARE_AMD})
+	endif(${BUILD_AMD})
+
 
     message (STATUS ${CMAKE_CURRENT_SOURCE_DIR})
     include_directories(
@@ -21,9 +40,9 @@ project(SirEngineThe3rdLib)
 	#lets add specific windows build definitions
 	if (WIN32)
 		if(${BUILD_AMD})
-		add_compile_definitions(BUILD_AMD SE_PLATFORM_WINDOWS SE_BUILD_DLL _CRT_SECURE_NO_WARNINGS _UNICODE QUIT_ESCAPE GRAPHICS_API=DX12)
+			add_compile_definitions(BUILD_AMD SE_PLATFORM_WINDOWS SE_BUILD_DLL _CRT_SECURE_NO_WARNINGS _UNICODE QUIT_ESCAPE GRAPHICS_API=DX12)
 		else(${BUILD_AMD})
-		add_compile_definitions(SE_PLATFORM_WINDOWS SE_BUILD_DLL _CRT_SECURE_NO_WARNINGS _UNICODE QUIT_ESCAPE GRAPHICS_API=DX12)
+			add_compile_definitions(SE_PLATFORM_WINDOWS SE_BUILD_DLL _CRT_SECURE_NO_WARNINGS _UNICODE QUIT_ESCAPE GRAPHICS_API=DX12)
 		endif(${BUILD_AMD})
 	endif (WIN32)
 
@@ -35,8 +54,8 @@ project(SirEngineThe3rdLib)
 	SOURCE_GROUP_BY_FOLDER(SirEngineThe3rdLib)
 
 
-	#finding the shaders stuff
-    #looking for  files
+	#finding all the files that are not c++, like shader, json definitions etc
+	#but is nice to have in the editor for quick editing
     file(GLOB_RECURSE ASSETS_FILES "../data/assets/*.json" )
 	SOURCE_GROUP("data/assets" FILES ${ASSETS_FILES})
     file(GLOB MATERIAL_FILES "../data/materials/*.json" )

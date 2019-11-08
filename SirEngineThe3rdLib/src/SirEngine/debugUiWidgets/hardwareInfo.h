@@ -3,8 +3,10 @@
 
 namespace SirEngine {
 namespace Hardware {
+#ifdef BUILD_AMD
 class AMDGPUQuery;
-}
+#endif
+} // namespace Hardware
 namespace debug {
 struct HWInfoWidget final {
   static const int NUMBER_OF_SAMPLES = 200;
@@ -16,7 +18,9 @@ struct HWInfoWidget final {
   float usageSamples[NUMBER_OF_SAMPLES]{};
   uint32_t runningCounter = 0;
 
-  Hardware::AMDGPUQuery* gpuQuery;
+#ifdef BUILD_AMD
+  Hardware::AMDGPUQuery *gpuQuery;
+#endif
 };
 }; // namespace debug
 } // namespace SirEngine
