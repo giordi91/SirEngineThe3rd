@@ -61,13 +61,19 @@ void RenderingContext::setupCameraForFrame() {
   globals::CONSTANT_BUFFER_MANAGER->updateConstantBufferNotBuffered(
       m_cameraHandle, &m_camBufferCPU);
 }
+
+void RenderingContext::setupLightingForFrame() {
+  globals::CONSTANT_BUFFER_MANAGER->updateConstantBufferNotBuffered(m_lightCB,
+                                                                    &m_light);
+}
+
 void RenderingContext::bindCameraBuffer(const int index) const {
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
-  commandList->SetGraphicsRootDescriptorTable(
-      index,
+  D3D12_GPU_DESCRIPTOR_HANDLE handle =
       dx12::CONSTANT_BUFFER_MANAGER->getConstantBufferDx12Handle(m_cameraHandle)
-          .gpuHandle);
+          .gpuHandle;
+  commandList->SetGraphicsRootDescriptorTable(index, handle);
 }
 void RenderingContext::bindCameraBufferCompute(const int index) const {
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;

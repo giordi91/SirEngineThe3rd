@@ -219,6 +219,7 @@ void Graphics3DLayer::onUpdate() {
   // setting up camera for the frame
   globals::CONSTANT_BUFFER_MANAGER->processBufferedData();
   globals::RENDERING_CONTEXT->setupCameraForFrame();
+  globals::RENDERING_CONTEXT->setupLightingForFrame();
   // evaluating rendering graph
   dx12::RENDERING_GRAPH->compute();
 

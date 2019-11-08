@@ -36,17 +36,17 @@ endif()
 
 #options
 option(BUILD_AMD "Wheter or not build on AMD hardware" OFF)
+option(BUILD_DX12 "Wheter or not build on AMD hardware" ON)
 #option(BUILD_JIT   "Whether or not to build the jit engine" ON)
 #option(BUILD_REPL  "Whether or not to build the interpreter" ON)
 
 #just an overal log of the passed options
 MESSAGE( STATUS "Building with the following options")
 MESSAGE( STATUS "BUILD AMD:                    " ${BUILD_AMD})
-#MESSAGE( STATUS "BUILD REPL:                   " ${BUILD_REPL})
-#MESSAGE( STATUS "BUILD TESTS:                  " ${BUILD_TESTS})
-#adding core
+MESSAGE( STATUS "BUILD DX12:                   " ${BUILD_DX12})
 
 
+#subfolders
 add_subdirectory(SirEngineThe3rdLib)
 add_subdirectory(Sandbox)
 add_subdirectory(ResourceCompilerLib)
@@ -57,6 +57,7 @@ add_subdirectory(ResourceCompilerPlugins/RootSignatureCompilerPlugin)
 add_subdirectory(ResourceCompilerPlugins/TextureCompilerPlugin)
 add_subdirectory(ResourceCompilerPlugins/AnimationCompilerPlugin)
 add_subdirectory(Tests)
+
 #if(${BUILD_JIT} STREQUAL "ON")
 #add_subdirectory(src/jit)
 #endif()

@@ -10,6 +10,7 @@ public:
   ~RenderingContext() = default;
   void initialize();
   void setupCameraForFrame();
+  void setupLightingForFrame();
   void bindCameraBuffer(int index) const;
   void bindCameraBufferCompute(int index) const;
   void updateSceneBoundingBox();

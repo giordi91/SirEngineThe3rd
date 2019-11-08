@@ -49,7 +49,6 @@ getInputConnectionX(ResizableVector<const GPlug *> **conns) {
 
 void ShadowPass::compute() {
 
-  return;
   annotateGraphicsBegin("ShadowPass");
 
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
@@ -84,6 +83,12 @@ void ShadowPass::compute() {
   const std::unordered_map<uint32_t, std::vector<Renderable>> &renderables =
       globals::ASSET_MANAGER->getRenderables(streamH);
 
+  ConstantBufferHandle lightCB;
+  D3D12_GPU_VIRTUAL_ADDRESS lightAddress;
+  lightCB = globals::RENDERING_CONTEXT->getLightCB();
+  lightAddress = dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(lightCB);
+  //globals::RENDERING_CONTEXT->bindCameraBuffer(0);
+
   // the stream is a series of rendarables sorted by type, so here we loop for
   // all the renderable types and filter for the one that are tagged for the
   // deferred queue
@@ -96,29 +101,31 @@ void ShadowPass::compute() {
 
       // bind the corresponding RS and PSO
       dx12::MATERIAL_MANAGER->bindRSandPSO(renderableList.first, commandList);
-      globals::RENDERING_CONTEXT->bindCameraBuffer(0);
+      commandList->SetGraphicsRootConstantBufferView(1, lightAddress);
+      // globals::RENDERING_CONTEXT->bindCameraBuffer(0);
+      // globals::RENDERING_CONTEXT->bindLight(0);
 
       // this is most for debug, it will boil down to nothing in release
       const SHADER_TYPE_FLAGS type =
           dx12::MATERIAL_MANAGER->getTypeFlags(renderableList.first);
       const std::string &typeName =
           dx12::MATERIAL_MANAGER->getStringFromShaderTypeFlag(type);
-      annotateGraphicsBegin(typeName.c_str());
+      // annotateGraphicsBegin(typeName.c_str());
 
-      // looping each of the object
-      const size_t count = renderableList.second.size();
-      const Renderable *currRenderables = renderableList.second.data();
-      for (int i = 0; i < count; ++i) {
-        const Renderable &renderable = currRenderables[i];
+      //// looping each of the object
+      // const size_t count = renderableList.second.size();
+      // const Renderable *currRenderables = renderableList.second.data();
+      // for (int i = 0; i < count; ++i) {
+      //  const Renderable &renderable = currRenderables[i];
 
-        // bind material data like textures etc, then render
-        dx12::MATERIAL_MANAGER->bindMaterial(SHADER_QUEUE_FLAGS::SHADOW,
-                                             renderable.m_materialRuntime,
-                                             commandList);
-        dx12::MESH_MANAGER->bindMeshRuntimeAndRender(renderable.m_meshRuntime,
-                                                     currentFc);
-      }
-      annotateGraphicsEnd();
+      //  // bind material data like textures etc, then render
+      //  dx12::MATERIAL_MANAGER->bindMaterial(SHADER_QUEUE_FLAGS::SHADOW,
+      //                                       renderable.m_materialRuntime,
+      //                                       commandList);
+      //  dx12::MESH_MANAGER->bindMeshRuntimeAndRender(renderable.m_meshRuntime,
+      //                                               currentFc);
+      //}
+      // annotateGraphicsEnd();
     }
   }
 
