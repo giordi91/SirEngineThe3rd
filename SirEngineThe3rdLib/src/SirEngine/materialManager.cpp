@@ -385,6 +385,35 @@ void bindHairSkin(const MaterialRuntime &materialRuntime,
   commandList->OMSetStencilRef(static_cast<uint32_t>(STENCIL_REF::CLEAR));
 }
 
+void bindShadowSkin(const MaterialRuntime &materialRuntime,
+              ID3D12GraphicsCommandList2 *commandList)
+{
+  const ConstantBufferHandle lightCB = globals::RENDERING_CONTEXT->getLightCB();
+  const auto address =
+      dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(lightCB);
+
+  commandList->SetGraphicsRootConstantBufferView(0, address);
+  // need to bind the skinning data
+  const SkinHandle skHandle = materialRuntime.skinHandle;
+  const SkinData &data = globals::SKIN_MANAGER->getSkinData(skHandle);
+  // now we have both static buffers, influences and weights
+  // dx12::BUFFER_MANAGER->bindBufferAsSRVDescriptorTable(data.influencesBuffer,6,commandList);
+
+  // frame, binding material should not worry about upload
+  dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.influencesBuffer, 1,
+                                                commandList);
+  dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.weightsBuffer, 2,
+                                                commandList);
+  // binding skinning data
+  dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.matricesBuffer, 3,
+                                                commandList);
+
+  // HARDCODED stencil value might have to think of a nice way to handle this
+  commandList->OMSetStencilRef(static_cast<uint32_t>(STENCIL_REF::CLEAR));
+
+	
+}
+
 void MaterialManager::bindMaterial(SHADER_QUEUE_FLAGS queueFlag,
                                    const MaterialRuntime &materialRuntime,
                                    ID3D12GraphicsCommandList2 *commandList) {
@@ -432,6 +461,10 @@ void MaterialManager::bindMaterial(SHADER_QUEUE_FLAGS queueFlag,
   }
   case (SHADER_TYPE_FLAGS::FORWARD_PARALLAX): {
     bindParallaxPBR(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::SHADOW_SKIN_CLUSTER): {
+    bindShadowSkin(materialRuntime, commandList);
     break;
   }
   default: {

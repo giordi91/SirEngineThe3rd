@@ -198,6 +198,8 @@ void RenderingContext::updateDirectionalLightMatrix() {
   const DirectX::XMMATRIX ortho =
       DirectX::XMMatrixOrthographicLH(maxX - minX, maxY - minY, maxZ, minZ);
   m_light.projectionMatrix = ortho;
-  m_light.lightVP = DirectX::XMMatrixMultiply(m_light.localToWorld, ortho);
+
+  m_light.lightVP = DirectX::XMMatrixTranspose(
+      DirectX::XMMatrixMultiply(m_light.worldToLocal, ortho));
 }
 } // namespace SirEngine

@@ -1,7 +1,7 @@
 #include "../common/structures.hlsl"
 #include "../common/vertexDefinitions.hlsl"
 
-ConstantBuffer<CameraBuffer> g_cameraBuffer : register(b0);
+ConstantBuffer<DirectionalLightData> g_light : register(b0);
 StructuredBuffer<int> g_influences : register(t0);
 StructuredBuffer<float> g_weights : register(t1);
 StructuredBuffer<float4x4> g_matrices : register(t2);
@@ -27,6 +27,6 @@ LocalPositionOnlyVertexOut VS(TexturedVertexIn12 vin, uint vid : SV_VertexID)
     skin_p.w = 1.0f;
 	
 	// Transform to homogeneous clip space.
-    vout.pos = mul(skin_p, g_cameraBuffer.MVP);
+    vout.pos = mul(skin_p, g_light.lightVP);
     return vout;
 }
