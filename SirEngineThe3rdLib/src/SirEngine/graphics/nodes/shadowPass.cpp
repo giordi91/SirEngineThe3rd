@@ -7,6 +7,7 @@
 #include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
 #include "platform/windows/graphics/dx12/textureManagerDx12.h"
+#include "platform/windows/graphics/dx12/swapChain.h"
 
 namespace SirEngine {
 ShadowPass::ShadowPass(GraphAllocators &allocators)
@@ -87,7 +88,17 @@ void ShadowPass::compute() {
   D3D12_GPU_VIRTUAL_ADDRESS lightAddress;
   lightCB = globals::RENDERING_CONTEXT->getLightCB();
   lightAddress = dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(lightCB);
-  //globals::RENDERING_CONTEXT->bindCameraBuffer(0);
+
+  // Set the viewport and scissor rect.  This needs to be reset whenever the
+  // command list is reset.
+  float width =4096.0f;
+  float height =4096.0f;
+  auto viewport= D3D12_VIEWPORT{0.0f, 0.0f, width, height, 0.0f, 1.0f};
+
+  D3D12_RECT scissorRect {0, 0, width, height};
+  commandList->RSSetViewports(1, &viewport);
+  commandList->RSSetScissorRects(1, &scissorRect);
+  // globals::RENDERING_CONTEXT->bindCameraBuffer(0);
 
   // the stream is a series of rendarables sorted by type, so here we loop for
   // all the renderable types and filter for the one that are tagged for the
@@ -101,7 +112,7 @@ void ShadowPass::compute() {
 
       // bind the corresponding RS and PSO
       dx12::MATERIAL_MANAGER->bindRSandPSO(renderableList.first, commandList);
-      commandList->SetGraphicsRootConstantBufferView(1, lightAddress);
+      //commandList->SetGraphicsRootConstantBufferView(1, lightAddress);
       // globals::RENDERING_CONTEXT->bindCameraBuffer(0);
       // globals::RENDERING_CONTEXT->bindLight(0);
 
@@ -110,24 +121,30 @@ void ShadowPass::compute() {
           dx12::MATERIAL_MANAGER->getTypeFlags(renderableList.first);
       const std::string &typeName =
           dx12::MATERIAL_MANAGER->getStringFromShaderTypeFlag(type);
-      // annotateGraphicsBegin(typeName.c_str());
+      annotateGraphicsBegin(typeName.c_str());
 
-      //// looping each of the object
-      // const size_t count = renderableList.second.size();
-      // const Renderable *currRenderables = renderableList.second.data();
-      // for (int i = 0; i < count; ++i) {
-      //  const Renderable &renderable = currRenderables[i];
+      // looping each of the object
+      const size_t count = renderableList.second.size();
+      const Renderable *currRenderables = renderableList.second.data();
+      for (int i = 0; i < count; ++i) {
+        const Renderable &renderable = currRenderables[i];
 
-      //  // bind material data like textures etc, then render
-      //  dx12::MATERIAL_MANAGER->bindMaterial(SHADER_QUEUE_FLAGS::SHADOW,
-      //                                       renderable.m_materialRuntime,
-      //                                       commandList);
-      //  dx12::MESH_MANAGER->bindMeshRuntimeAndRender(renderable.m_meshRuntime,
-      //                                               currentFc);
-      //}
-      // annotateGraphicsEnd();
+        // bind material data like textures etc, then render
+        dx12::MATERIAL_MANAGER->bindMaterial(SHADER_QUEUE_FLAGS::SHADOW,
+                                             renderable.m_materialRuntime,
+                                             commandList);
+        dx12::MESH_MANAGER->bindMeshRuntimeAndRender(renderable.m_meshRuntime,
+                                                     currentFc);
+      }
+      annotateGraphicsEnd();
     }
   }
+
+  //TODO remove this each draw call should set its own
+  // Set the viewport and scissor rect.  This needs to be reset whenever the
+  // command list is reset.
+  commandList->RSSetViewports(1, dx12::SWAP_CHAIN->getViewport());
+  commandList->RSSetScissorRects(1, dx12::SWAP_CHAIN->getScissorRect());
 
   // setting the data as output
   m_outputPlugs[0].plugValue = m_shadow.handle;
