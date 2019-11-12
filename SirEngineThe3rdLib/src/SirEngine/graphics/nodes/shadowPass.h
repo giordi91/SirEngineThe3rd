@@ -20,6 +20,7 @@ public:
   virtual void compute() override;
   virtual void clear() override;
   virtual void onResizeEvent(int screenWidth, int screenHeight) override;
+  static constexpr int shadowSize = 4096;
 
 private:
   TextureHandle m_shadow{};

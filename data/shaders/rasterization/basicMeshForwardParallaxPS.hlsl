@@ -23,7 +23,10 @@ SamplerState gsamLinearWrap : register(s2);
 SamplerState gsamLinearClamp : register(s3);
 SamplerState gsamAnisotropicWrap : register(s4);
 SamplerState gsamAnisotropicClamp : register(s5);
+SamplerComparisonState shadowPCFClamp: register(s6);
 
+static	const	float	SMAP_SIZE	=	2048.0f; 
+static	const	float	SMAP_DX	=	1.0f/SMAP_SIZE;
 
 float2 parallax(float2 uv, float3 viewDir, float height, float heightScale)
 {
@@ -99,7 +102,8 @@ float2 parallaxOcclusionMapping(float2 uv, float3 viewDir, float height, float h
     float2 prevTexCoords = currentTexCoords + deltaTexCoords;
 
     // get depth after and before collision for linear interpolation
-    float afterDepth = currentDepthMapValue;
+    //float afterDepth = currentDepthMapValue;
+	float afterDepth  = currentDepthMapValue - currentLayerDepth;
     float beforeDepth = (1.0 - heightTexture.Sample(gsamLinearWrap, prevTexCoords).x) - currentLayerDepth + layerDepth;
  
     // interpolation of texture coordinates
@@ -159,10 +163,37 @@ float4 PS(FullMeshParallaxVertexOut input) : SV_Target
 	shadowUV.y = 1.0f - shadowUV.y;
 
 	//sample the shadow
-    float shadowDepth =
-      directionalShadow.Sample(gsamLinearClamp, shadowUV).x;
+    float attenuation=0.0f;
+	//directionalShadow.SampleCmpLevelZero(shadowPCFClamp,shadowUV,shadowMapPos.z).x;
 
-	float attenuation = shadowDepth > shadowMapPos.z ? 0.0f : 1.0f;
+	
+	float dx = 1.0f / 4096.0f;
+	const	float2	offsets[9]	=		
+	{				
+		float2(-dx,	-dx),	
+		float2(0.0f,	-dx),	
+		float2(dx,	dx),				
+		float2(-dx,	0.0f),	
+		float2(0.0f,	0.0f),	
+		float2(dx, 0.0f),				
+		float2(-dx,	+dx),	
+		float2(0.0f,	+dx),	
+		float2(dx, +dx)		
+	};
+	[unroll]
+	for(int i =0; i < 9;++i)
+	{
+		attenuation+=directionalShadow.SampleCmpLevelZero(shadowPCFClamp,shadowUV + offsets[i],shadowMapPos.z).x;
+	}
+	attenuation/=9.0f;
+	
+
+
+
+
+
+	//float attenuation = shadowDepth > shadowMapPos.z ? 0.0f : 1.0f;
+
 	//float shwx = shadowUV.x;
 	//float shwy = shadowUV.y;
 	//bool outOfRangeShadow = (shwx > 1.0f) | (shwx < 0.0f) | (shwy < 0.0f) | (shwy > 1.0f);
@@ -213,7 +244,7 @@ float4 PS(FullMeshParallaxVertexOut input) : SV_Target
     float3 ambient = (kD * diffuse) + (specularDiff);
     float3 color = ambient + attenuation* Lo;
 	//color = float3(shadowUV,0);
-	//color = shadowDepth;
+	//color = attenuation;
 
     return float4(color, 1.0f);
 }

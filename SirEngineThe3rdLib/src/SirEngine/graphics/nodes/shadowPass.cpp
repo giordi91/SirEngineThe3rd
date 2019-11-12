@@ -31,7 +31,6 @@ ShadowPass::ShadowPass(GraphAllocators &allocators)
 }
 
 void ShadowPass::initialize() {
-  const int shadowSize = 4096;
   m_shadow = dx12::TEXTURE_MANAGER->createDepthTexture("directionalShadow",
                                                        shadowSize, shadowSize);
 }
@@ -91,11 +90,9 @@ void ShadowPass::compute() {
 
   // Set the viewport and scissor rect.  This needs to be reset whenever the
   // command list is reset.
-  float width =4096.0f;
-  float height =4096.0f;
-  auto viewport= D3D12_VIEWPORT{0.0f, 0.0f, width, height, 0.0f, 1.0f};
+  auto viewport= D3D12_VIEWPORT{0.0f, 0.0f, shadowSize, shadowSize, 0.0f, 1.0f};
 
-  D3D12_RECT scissorRect {0, 0, width, height};
+  D3D12_RECT scissorRect {0, 0, shadowSize, shadowSize};
   commandList->RSSetViewports(1, &viewport);
   commandList->RSSetScissorRects(1, &scissorRect);
   // globals::RENDERING_CONTEXT->bindCameraBuffer(0);
