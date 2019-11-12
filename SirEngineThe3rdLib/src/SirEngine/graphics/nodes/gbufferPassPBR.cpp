@@ -125,7 +125,7 @@ void GBufferPassPBR::compute() {
   // all the renderable types and filter for the one that are tagged for the
   // deferred queue
   for (const auto &renderableList : renderables) {
-	bool shouldProcess= dx12::MATERIAL_MANAGER->isQueueType(renderableList.first,
+	  const bool shouldProcess= dx12::MATERIAL_MANAGER->isQueueType(renderableList.first,
                                             SHADER_QUEUE_FLAGS::DEFERRED);
     if (shouldProcess) {
 
