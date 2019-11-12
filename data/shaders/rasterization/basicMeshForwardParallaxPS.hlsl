@@ -14,6 +14,7 @@ TextureCube skyboxIrradianceTexture : register(t4);
 TextureCube skyboxRadianceTexture : register(t5);
 Texture2D brdfTexture : register(t6);
 Texture2D heightTexture : register(t7);
+Texture2D directionalShadow: register(t8);
 
 
 SamplerState gsamPointWrap : register(s0);
@@ -149,6 +150,24 @@ float4 PS(FullMeshParallaxVertexOut input) : SV_Target
     // view vectors
     float3 worldPos = input.worldPos.xyz;
 
+	//lets check shadows
+	float4 shadowMapPos = mul(float4(worldPos,1.0),g_dirLight.lightVP);
+	shadowMapPos  /= shadowMapPos.w;
+	//convert to uv values
+	float2 shadowUV= 0.5f * shadowMapPos.xy + 0.5f;
+	//float2 shadowUV= uv/4;
+	shadowUV.y = 1.0f - shadowUV.y;
+
+	//sample the shadow
+    float shadowDepth =
+      directionalShadow.Sample(gsamLinearClamp, shadowUV).x;
+
+	float attenuation = shadowDepth > shadowMapPos.z ? 0.0f : 1.0f;
+	//float shwx = shadowUV.x;
+	//float shwy = shadowUV.y;
+	//bool outOfRangeShadow = (shwx > 1.0f) | (shwx < 0.0f) | (shwy < 0.0f) | (shwy > 1.0f);
+	//attenuation = outOfRangeShadow ? 1.0f : attenuation;
+
     // camera vector
     float3 ldir = normalize(-g_dirLight.lightDir.xyz);
     float3 toEyeDir = normalize(g_cameraBuffer.position.xyz - worldPos);
@@ -192,7 +211,9 @@ float4 PS(FullMeshParallaxVertexOut input) : SV_Target
     float3 specularDiff = prefilteredColor * (F * envBRDF.x + envBRDF.y);
 
     float3 ambient = (kD * diffuse) + (specularDiff);
-    float3 color = ambient + Lo;
+    float3 color = ambient + attenuation* Lo;
+	//color = float3(shadowUV,0);
+	//color = shadowDepth;
 
     return float4(color, 1.0f);
 }

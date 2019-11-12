@@ -302,6 +302,9 @@ void bindParallaxPBR(const MaterialRuntime &materialRuntime,
   commandList->SetGraphicsRootDescriptorTable(
       9, dx12::TEXTURE_MANAGER->getSRVDx12(brdfHandle).gpuHandle);
   commandList->SetGraphicsRootDescriptorTable(10, materialRuntime.heightMap);
+
+  commandList->SetGraphicsRootDescriptorTable(
+      11, dx12::TEXTURE_MANAGER->getSRVDx12(globals::DEBUG_FRAME_DATA->directionalShadow).gpuHandle);
 }
 
 void bindForwardPhongAlphaCutoutSkin(const MaterialRuntime &materialRuntime,
