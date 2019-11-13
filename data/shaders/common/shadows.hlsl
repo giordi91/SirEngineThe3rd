@@ -1,7 +1,7 @@
 #ifndef SHADOWS_HLSL
 #define SHADOWS_HLSL
 
-float samplePCF9taps(float3 worldPos, float4x4 lightVP) {
+float samplePCF9taps(float3 worldPos, float4x4 lightVP, float shadowBias) {
 
 	//lets check shadows
 	float4 shadowMapPos = mul(float4(worldPos,1.0), lightVP);
@@ -30,7 +30,7 @@ float samplePCF9taps(float3 worldPos, float4x4 lightVP) {
 	[unroll]
 	for(int i =0; i < 9;++i)
 	{
-		attenuation+=directionalShadow.SampleCmpLevelZero(shadowPCFClamp,shadowUV + offsets[i],shadowMapPos.z).x;
+		attenuation+=directionalShadow.SampleCmpLevelZero(shadowPCFClamp,shadowUV + offsets[i],shadowMapPos.z + shadowBias).x;
 	}
 	attenuation/=9.0f;
 	return attenuation;

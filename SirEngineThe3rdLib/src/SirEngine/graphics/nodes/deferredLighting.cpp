@@ -151,6 +151,10 @@ void DeferredLightingPass::compute() {
       7, dx12::TEXTURE_MANAGER->getSRVDx12(skyRadianceHandle).gpuHandle);
   commandList->SetGraphicsRootDescriptorTable(
       8, dx12::TEXTURE_MANAGER->getSRVDx12(m_brdfHandle).gpuHandle);
+  commandList->SetGraphicsRootDescriptorTable(
+      9, dx12::TEXTURE_MANAGER
+             ->getSRVDx12(globals::DEBUG_FRAME_DATA->directionalShadow)
+             .gpuHandle);
 
   // the newer ID3DUserDefinedAnnotation API is also supported
   currentFc->commandList->IASetPrimitiveTopology(
@@ -167,10 +171,9 @@ inline void freeTextureIfValid(TextureHandle h) {
   }
 }
 
-void DeferredLightingPass::clear()
-{
-	freeTextureIfValid(m_lightBuffer);
-	m_generation = -1;
+void DeferredLightingPass::clear() {
+  freeTextureIfValid(m_lightBuffer);
+  m_generation = -1;
 }
 
 void DeferredLightingPass::onResizeEvent(int, int) {
