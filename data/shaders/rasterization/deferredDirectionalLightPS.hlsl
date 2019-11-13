@@ -13,18 +13,11 @@ Texture2D specPowTexture : register(t3);
 TextureCube skyboxIrradianceTexture: register(t4);
 TextureCube skyboxRadianceTexture: register(t5);
 Texture2D brdfTexture: register(t6);
-
-SamplerState gsamPointWrap : register(s0);
-SamplerState gsamPointClamp : register(s1);
-SamplerState gsamLinearWrap : register(s2);
-SamplerState gsamLinearClamp : register(s3);
-SamplerState gsamAnisotropicWrap : register(s4);
-SamplerState gsamAnisotropicClamp : register(s5);
-
+Texture2D directionalShadow: register(t7);
 
 #include "../common/deferredUnpacking.hlsl"
 #include "../common/pbr.hlsl"
-
+#include "../common/shadows.hlsl"
 
 float3 CalcWorldPos(float2 csPos, float depth) {
   float4 position;
@@ -104,6 +97,8 @@ float4 PBRLighting(FullScreenVertexOut input) {
     float NdotL = max(dot(gbd.normal, ldir), 0.0f);
         Lo += (kD * (albedo / PI) + specular) * radiance * NdotL;
 
+	float shadowBias = 0.001f;
+	float attenuation = samplePCF9taps(worldPos, g_dirLight.lightVP,shadowBias);
 
 	//using irradiance map
 	float3 irradiance = skyboxIrradianceTexture.Sample(gsamLinearClamp,gbd.normal).xyz;
@@ -113,13 +108,14 @@ float4 PBRLighting(FullScreenVertexOut input) {
 	float3 prefilteredColor = skyboxRadianceTexture.SampleLevel(gsamLinearClamp,reflected, roughness* MAX_REFLECTION_LOD).rgb;
         float2 envBRDF = brdfTexture.Sample(gsamLinearClamp, float2(max(dot(normalize(gbd.normal), normalize(toEyeDir)), 0.0), roughness)).rg;
     float3 specularDiff = prefilteredColor * (F* envBRDF.x + envBRDF.y);
-
-
+	specularDiff*= attenuation;
 
 
 	float3 ambient = (kD * diffuse) + specularDiff;
 
-    float3 color = ambient + Lo;
+	//attenuation = 1.0f;
+
+    float3 color = ambient + Lo*attenuation;
 
 	//translucency
 	float distortion = 1.0f;
@@ -136,10 +132,14 @@ float4 PBRLighting(FullScreenVertexOut input) {
 	float translucency =   (tdot + tAmbient )*thickness ;
 
 	float3 lightScatterColor = g_dirLight.lightColor.xyz;
+	//TODO fix hardcoded lightscatter color
 	lightScatterColor = float3(0.8f,0.4f,0.4f);
 	color += (translucency*gbd.color* lightScatterColor);
 
 
+	//color = attenuation;
+	//if(attenuation < 0.8)
+	//	color = float3(1,0,0);
 
     //float3 color = irradiance*kD;
     //return float4(, 1.0f);

@@ -53,7 +53,9 @@ float4 PS(FullMeshParallaxVertexOut input) : SV_Target
     // view vectors
     float3 worldPos = input.worldPos.xyz;
 	
-	float attenuation = samplePCF9taps(worldPos, g_dirLight.lightVP);
+	//TODO set this as input parameter
+	float shadowBias = 0.001f;
+	float attenuation = samplePCF9taps(worldPos, g_dirLight.lightVP, shadowBias);
 
     // camera vector
     float3 ldir = normalize(-g_dirLight.lightDir.xyz);
@@ -99,7 +101,7 @@ float4 PS(FullMeshParallaxVertexOut input) : SV_Target
     float2 envBRDF = brdfTexture.Sample(gsamLinearClamp, float2(max(dot(normalize(N), normalize(toEyeDir)), 0.0), roughness)).rg;
     float3 specularDiff = prefilteredColor * (F * envBRDF.x + envBRDF.y);
 
-    float3 ambient = (kD * diffuse) + (specularDiff);
+    float3 ambient = (kD * diffuse) + (specularDiff)*attenuation;
     float3 color = ambient + attenuation* Lo;
 
     return float4(color, 1.0f);

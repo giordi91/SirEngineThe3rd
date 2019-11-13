@@ -1,5 +1,6 @@
 #ifndef DEFERRED_HLSL 
 #define DEFERRED_HLSL
+#include "../common/textureSamplers.hlsl"
 
 static const float2 g_SpecPowerRange = {10.0, 250.0};
 

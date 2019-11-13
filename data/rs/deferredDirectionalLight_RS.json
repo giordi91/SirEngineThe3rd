@@ -112,7 +112,21 @@
               }
             ]
           }
+        },
+        {
+          "comment": "shadow map",
+          "type": "descriptorTable",
+          "data": {
+            "ranges": [
+              {
+                "type": "SRV",
+                "numDescriptors": 1,
+                "baseRegister":7 
+              }
+            ]
+          }
         }
+
       ],
       "flags": []
     }
