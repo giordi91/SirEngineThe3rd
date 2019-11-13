@@ -8,10 +8,6 @@ int main()
 {
 	SirEngine::Log::init();
 
-	SE_CORE_INFO("Hello from core logger");
-	int var = 11;
-	SE_ERROR("Hello from client Var{0}",var);
-
 	auto* app= SirEngine::createApplication();
 	app->run();
 	delete app;

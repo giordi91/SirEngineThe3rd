@@ -15,10 +15,9 @@ public:
   void onEvent(Event &e);
   void queueEventForEndOfFrame(Event *e) const;
   void pushLayer(Layer *layer);
-  void pushOverlay(Layer *layer);
 
 private:
-  static void parseConfigFile();
+  static void loadConfigFile();
   bool onCloseWindow(WindowCloseEvent &e);
   bool onResizeWindow(WindowResizeEvent &e);
   inline void flipEndOfFrameQueue() {
@@ -38,7 +37,7 @@ private:
   EventQueue m_queuedEndOfFrameEvents[2];
   EventQueue *m_queuedEndOfFrameEventsCurrent;
   uint32_t m_queueEndOfFrameCounter = 0;
-  Window *m_window = nullptr;
+  BaseWindow *m_window = nullptr;
   bool m_run = true;
   LayerStack m_layerStack;
   Layer *imGuiLayer;

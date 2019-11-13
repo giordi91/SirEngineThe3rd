@@ -9,7 +9,7 @@
 namespace SirEngine::graphics {
 
 #if GRAPHICS_API == DX12
-bool initializeGraphics(Window *wnd, uint32_t width, uint32_t height) {
+bool initializeGraphics(BaseWindow *wnd, uint32_t width, uint32_t height) {
   return dx12::initializeGraphicsDx12(wnd, width, height);
 }
 

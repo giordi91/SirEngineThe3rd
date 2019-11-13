@@ -1,26 +1,27 @@
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "SirEngine/Window.h"
+#include "SirEngine/animation/animationManager.h"
 #include "SirEngine/assetManager.h"
+#include "SirEngine/engineConfig.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/identityManager.h"
 #include "SirEngine/log.h"
 #include "SirEngine/materialManager.h"
 #include "SirEngine/memory/stringPool.h"
 #include "SirEngine/runtimeString.h"
+#include "SirEngine/skinClusterManager.h"
 #include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
 #include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/TextureManagerDx12.h"
 #include "platform/windows/graphics/dx12/adapter.h"
 #include "platform/windows/graphics/dx12/bufferManagerDx12.h"
+#include "platform/windows/graphics/dx12/debugRenderer.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/meshManager.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
 #include "platform/windows/graphics/dx12/shaderLayout.h"
 #include "platform/windows/graphics/dx12/shaderManager.h"
 #include "platform/windows/graphics/dx12/swapChain.h"
-#include "platform/windows/graphics/dx12/debugRenderer.h"
-#include "SirEngine/animation/animationManager.h"
-#include "SirEngine/skinClusterManager.h"
 
 namespace SirEngine::dx12 {
 
@@ -41,14 +42,14 @@ TextureManagerDx12 *TEXTURE_MANAGER = nullptr;
 MeshManager *MESH_MANAGER = nullptr;
 IdentityManager *IDENTITY_MANAGER = nullptr;
 MaterialManager *MATERIAL_MANAGER = nullptr;
-DependencyGraph*RENDERING_GRAPH = nullptr;
+DependencyGraph *RENDERING_GRAPH = nullptr;
 ConstantBufferManagerDx12 *CONSTANT_BUFFER_MANAGER = nullptr;
 ShaderManager *SHADER_MANAGER = nullptr;
 PSOManager *PSO_MANAGER = nullptr;
 RootSignatureManager *ROOT_SIGNATURE_MANAGER = nullptr;
 ShadersLayoutRegistry *SHADER_LAYOUT_REGISTRY = nullptr;
 BufferManagerDx12 *BUFFER_MANAGER = nullptr;
-DebugRenderer*DEBUG_RENDERER =nullptr;
+DebugRenderer *DEBUG_RENDERER = nullptr;
 
 void createFrameCommand(FrameCommand *fc) {
   auto result = DEVICE->CreateCommandAllocator(
@@ -63,7 +64,7 @@ void createFrameCommand(FrameCommand *fc) {
   fc->isListOpen = false;
 }
 
-bool initializeGraphicsDx12(Window *wnd, const uint32_t width,
+bool initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
                             const uint32_t height) {
 // lets enable debug layer if needed
 #if defined(DEBUG) || defined(_DEBUG)
@@ -92,7 +93,7 @@ bool initializeGraphicsDx12(Window *wnd, const uint32_t width,
 #else
   ADAPTER->setFeture(AdapterFeature::ANY);
   ADAPTER->setVendor(AdapterVendor::ANY);
-  //ADAPTER->setVendor(AdapterVendor::WARP);
+  // ADAPTER->setVendor(AdapterVendor::WARP);
 #endif
   const bool found = ADAPTER->findBestAdapter(DXGI_FACTORY);
   assert(found && "could not find adapter matching features");
@@ -141,7 +142,8 @@ bool initializeGraphicsDx12(Window *wnd, const uint32_t width,
     D3D12_FEATURE_DATA_D3D12_OPTIONS5 opts5 = {};
     dx12::DEVICE->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &opts5,
                                       sizeof(opts5));
-    if (opts5.RaytracingTier == D3D12_RAYTRACING_TIER_NOT_SUPPORTED) assert(0);
+    if (opts5.RaytracingTier == D3D12_RAYTRACING_TIER_NOT_SUPPORTED)
+      assert(0);
   }
 #endif
 
@@ -200,29 +202,31 @@ bool initializeGraphicsDx12(Window *wnd, const uint32_t width,
 
   SHADER_MANAGER = new ShaderManager();
   SHADER_MANAGER->init();
+  SHADER_MANAGER->loadShadersInFolder(
+      frameConcatenation(globals::ENGINE_CONFIG->m_dataSourcePath,
+                         "/processed/shaders/rasterization"));
   SHADER_MANAGER->loadShadersInFolder(frameConcatenation(
-      globals::DATA_SOURCE_PATH, "/processed/shaders/rasterization"));
-  SHADER_MANAGER->loadShadersInFolder(frameConcatenation(
-      globals::DATA_SOURCE_PATH, "/processed/shaders/compute"));
+      globals::ENGINE_CONFIG->m_dataSourcePath, "/processed/shaders/compute"));
 
   ROOT_SIGNATURE_MANAGER = new RootSignatureManager();
-  ROOT_SIGNATURE_MANAGER->loadSignaturesInFolder(
-      frameConcatenation(globals::DATA_SOURCE_PATH , "/processed/rs"));
+  ROOT_SIGNATURE_MANAGER->loadSignaturesInFolder(frameConcatenation(
+      globals::ENGINE_CONFIG->m_dataSourcePath, "/processed/rs"));
 
   SHADER_LAYOUT_REGISTRY = new dx12::ShadersLayoutRegistry();
 
   PSO_MANAGER = new PSOManager();
   PSO_MANAGER->init(dx12::DEVICE, SHADER_LAYOUT_REGISTRY,
                     ROOT_SIGNATURE_MANAGER, dx12::SHADER_MANAGER);
-  PSO_MANAGER->loadPSOInFolder(frameConcatenation(globals::DATA_SOURCE_PATH , "/pso"));
+  PSO_MANAGER->loadPSOInFolder(
+      frameConcatenation(globals::ENGINE_CONFIG->m_dataSourcePath, "/pso"));
 
   // mesh manager needs to load after pso and RS since it initialize material
   // types
   MATERIAL_MANAGER = new MaterialManager();
 
   MATERIAL_MANAGER->init();
-  MATERIAL_MANAGER->loadTypesInFolder(
-      frameConcatenation(globals::DATA_SOURCE_PATH , "/materials/types"));
+  MATERIAL_MANAGER->loadTypesInFolder(frameConcatenation(
+      globals::ENGINE_CONFIG->m_dataSourcePath, "/materials/types"));
 
   DEBUG_RENDERER = new DebugRenderer();
   DEBUG_RENDERER->init();
@@ -230,7 +234,7 @@ bool initializeGraphicsDx12(Window *wnd, const uint32_t width,
   globals::ANIMATION_MANAGER = new AnimationManager();
   globals::ANIMATION_MANAGER->init();
 
-  globals::SKIN_MANAGER= new SkinClusterManager();
+  globals::SKIN_MANAGER = new SkinClusterManager();
   globals::SKIN_MANAGER->init();
 
   globals::DEBUG_FRAME_DATA = new globals::DebugFrameData();
@@ -239,10 +243,13 @@ bool initializeGraphicsDx12(Window *wnd, const uint32_t width,
 
   if (!isHeadless) {
     // init swap chain
-    auto *windowWnd = static_cast<HWND>(wnd->getNativeWindow());
+    auto *nativeWindow = wnd->getNativeWindow();
+    assert(sizeof(HWND) == 8);
+    HWND handle;
+    memcpy(&handle, &nativeWindow->data2 , sizeof(HWND));
 
     dx12::SWAP_CHAIN = new dx12::SwapChain();
-    dx12::SWAP_CHAIN->initialize(windowWnd, width, height);
+    dx12::SWAP_CHAIN->initialize(handle, width, height);
     dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
     dx12::SWAP_CHAIN->resize(&dx12::CURRENT_FRAME_RESOURCE->fc, width, height);
   } else {
@@ -319,9 +326,9 @@ bool newFrameDx12() {
   if (dx12::CURRENT_FRAME_RESOURCE->fence != 0 &&
       dx12::GLOBAL_FENCE->GetCompletedValue() <
           dx12::CURRENT_FRAME_RESOURCE->fence) {
-	  const HANDLE eventHandle =
+    const HANDLE eventHandle =
         CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
-	  const auto handleResult = dx12::GLOBAL_FENCE->SetEventOnCompletion(
+    const auto handleResult = dx12::GLOBAL_FENCE->SetEventOnCompletion(
         dx12::CURRENT_FRAME_RESOURCE->fence, eventHandle);
     assert(SUCCEEDED(handleResult));
     WaitForSingleObject(eventHandle, INFINITE);
@@ -340,7 +347,8 @@ bool newFrameDx12() {
   auto *commandList = dx12::CURRENT_FRAME_RESOURCE->fc.commandList;
   D3D12_RESOURCE_BARRIER rtbarrier[1];
 
-  const TextureHandle backBufferH = dx12::SWAP_CHAIN->currentBackBufferTexture();
+  const TextureHandle backBufferH =
+      dx12::SWAP_CHAIN->currentBackBufferTexture();
   int rtcounter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
       backBufferH, D3D12_RESOURCE_STATE_RENDER_TARGET, rtbarrier, 0);
   if (rtcounter != 0) {
@@ -381,4 +389,4 @@ bool dispatchFrameDx12() {
   globals::CURRENT_FRAME = (globals::CURRENT_FRAME + 1) % FRAME_BUFFERS_COUNT;
   return true;
 }
-}  // namespace SirEngine::dx12
+} // namespace SirEngine::dx12

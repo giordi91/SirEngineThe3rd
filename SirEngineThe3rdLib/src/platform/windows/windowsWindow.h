@@ -3,7 +3,7 @@
 
 namespace SirEngine {
 
-class WindowsWindow : public Window {
+class WindowsWindow : public BaseWindow {
 
 public:
   explicit WindowsWindow(const WindowProps &props);
@@ -19,7 +19,7 @@ public:
   void setVSync(bool enabled) override;
   void isVSync() const override;
   inline EventCallbackFn getEventCallback() const { return m_callback; }
-  void *getNativeWindow() const override { return m_hwnd; }
+  const NativeWindow *getNativeWindow() const override { return &m_nativeWindow; }
 
 private:
   struct WindowData {

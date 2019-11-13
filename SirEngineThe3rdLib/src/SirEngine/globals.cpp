@@ -8,7 +8,7 @@ namespace SirEngine::globals {
 uint32_t SCREEN_WIDTH = 1280;
 uint32_t SCREEN_HEIGHT = 720;
 Camera3DPivot *MAIN_CAMERA = nullptr;
-Clock<std::chrono::nanoseconds>GAME_CLOCK{};
+Clock<std::chrono::nanoseconds> GAME_CLOCK{};
 uint64_t LAST_FRAME_TIME_NS = 0;
 uint32_t TOTAL_NUMBER_OF_FRAMES = 0;
 uint64_t CURRENT_FRAME = 0;
@@ -23,11 +23,9 @@ RenderingContext *RENDERING_CONTEXT = nullptr;
 DebugFrameData *DEBUG_FRAME_DATA = nullptr;
 AnimationManager *ANIMATION_MANAGER = nullptr;
 SkinClusterManager *SKIN_MANAGER = nullptr;
-ScriptingContext* SCRIPTING_CONTEXT = nullptr;
-Input* INPUT = nullptr;
+ScriptingContext *SCRIPTING_CONTEXT = nullptr;
+Input *INPUT = nullptr;
 
-const char *DATA_SOURCE_PATH = nullptr;
-const char *START_SCENE_PATH = nullptr;
 
 // generic allocators
 StringPool *STRING_POOL = nullptr;
@@ -41,5 +39,6 @@ D3D12_VIEWPORT CURRENT_VIEWPORT =
                    static_cast<float>(SCREEN_HEIGHT),
                    MIN_DEPTH,
                    MAX_DEPTH};
+EngineConfig *ENGINE_CONFIG = nullptr;
 
 } // namespace SirEngine::globals

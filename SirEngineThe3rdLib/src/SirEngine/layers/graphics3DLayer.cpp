@@ -36,6 +36,7 @@
 #include "SirEngine/scripting/scriptingContext.h"
 #include <SirEngine/events/scriptingEvent.h>
 #include "SirEngine/graphics/nodes/shadowPass.h"
+#include "SirEngine/engineConfig.h"
 
 namespace SirEngine {
 
@@ -59,7 +60,7 @@ void Graphics3DLayer::onAttach() {
     dx12::resetAllocatorAndList(currentFc);
   }
 
-  globals::ASSET_MANAGER->loadScene(globals::START_SCENE_PATH);
+  globals::ASSET_MANAGER->loadScene(globals::ENGINE_CONFIG->m_startScenePath);
   dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE, currentFc);
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
 
