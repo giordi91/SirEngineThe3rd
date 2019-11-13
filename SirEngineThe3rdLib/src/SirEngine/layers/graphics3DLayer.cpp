@@ -173,20 +173,20 @@ void Graphics3DLayer::onAttach() {
   dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE, currentFc);
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
 
-  auto bboxes = dx12::MESH_MANAGER->getBoundingBoxes();
-  // dx12::DEBUG_RENDERER->drawBoundingBoxes(bboxes.data(), 1,
-  dx12::DEBUG_RENDERER->drawBoundingBoxes(bboxes.data(),
-                                          static_cast<int>(bboxes.size()),
-                                          DirectX::XMFLOAT4{1, 1, 1, 1}, "");
+  //auto bboxes = dx12::MESH_MANAGER->getBoundingBoxes();
+  //// dx12::DEBUG_RENDERER->drawBoundingBoxes(bboxes.data(), 1,
+  //dx12::DEBUG_RENDERER->drawBoundingBoxes(bboxes.data(),
+  //                                        static_cast<int>(bboxes.size()),
+  //                                        DirectX::XMFLOAT4{1, 1, 1, 1}, "");
   // globals::SCRIPTING_CONTEXT->loadScript("../data/scripts/test.lua",true);
 
   // TEMP
   // animation is up to date, we can update the scene bounding boxes
   globals::RENDERING_CONTEXT->updateSceneBoundingBox();
   // draw the scene bounding box
-  BoundingBox aabb = globals::RENDERING_CONTEXT->getBoundingBox();
-  dx12::DEBUG_RENDERER->drawBoundingBoxes(&aabb, 1,
-                                          DirectX::XMFLOAT4(0, 1, 0, 1), "");
+  //BoundingBox aabb = globals::RENDERING_CONTEXT->getBoundingBox();
+  //dx12::DEBUG_RENDERER->drawBoundingBoxes(&aabb, 1,
+  //                                        DirectX::XMFLOAT4(0, 1, 0, 1), "");
 
   auto light = globals::RENDERING_CONTEXT->getLightData();
   dx12::DEBUG_RENDERER->drawMatrix(light.localToWorld, 3.0f,
