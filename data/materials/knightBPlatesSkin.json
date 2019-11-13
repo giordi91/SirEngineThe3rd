@@ -8,7 +8,7 @@
   "normal" :  "../data/processed/textures/knightB/plates_N.texture",
   "roughness" :  "../data/processed/textures/knightB/plates_R.texture",
   "metallic" :  "../data/processed/textures/knightB/plates_M.texture",
-  "queue" :  ["deferred"],
-  "type" : ["skinCluster"]
+  "queue" :  ["deferred","shadow"],
+  "type" : ["skinCluster","shadowSkinCluster"]
 
 }

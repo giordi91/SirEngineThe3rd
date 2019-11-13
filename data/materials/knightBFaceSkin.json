@@ -9,6 +9,7 @@
   "roughness" :  "../data/processed/textures/knightB/face_R.texture",
   "metallic" :  "../data/processed/textures/black.texture",
   "thickness" :  "../data/processed/textures/knightB/face_SCATTER.texture",
-  "queue" :  ["deferred"],
-  "type" : ["skinSkinCluster"]
+  "queue" :  ["deferred","shadow"],
+  "type" : ["skinSkinCluster","shadowSkinCluster"]
+
 }

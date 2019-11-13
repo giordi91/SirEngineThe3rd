@@ -1,11 +1,12 @@
 #include "../common/pbr.hlsl"
-#include "../common/normals.hlsl"
 #include "../common/structures.hlsl"
+#include "../common/normals.hlsl"
 #include "../common/vertexDefinitions.hlsl"
 
 ConstantBuffer<CameraBuffer> g_cameraBuffer : register(b0);
 ConstantBuffer<DirectionalLightData> g_dirLight : register(b1);
 ConstantBuffer<PhongMaterial> g_material : register(b2);
+
 Texture2D albedoTex : register(t0);
 Texture2D tangentTex : register(t1);
 Texture2D metallicTex : register(t2);
@@ -16,105 +17,9 @@ Texture2D brdfTexture : register(t6);
 Texture2D heightTexture : register(t7);
 Texture2D directionalShadow: register(t8);
 
-
-SamplerState gsamPointWrap : register(s0);
-SamplerState gsamPointClamp : register(s1);
-SamplerState gsamLinearWrap : register(s2);
-SamplerState gsamLinearClamp : register(s3);
-SamplerState gsamAnisotropicWrap : register(s4);
-SamplerState gsamAnisotropicClamp : register(s5);
-SamplerComparisonState shadowPCFClamp: register(s6);
-
-static	const	float	SMAP_SIZE	=	2048.0f; 
-static	const	float	SMAP_DX	=	1.0f/SMAP_SIZE;
-
-float2 parallax(float2 uv, float3 viewDir, float height, float heightScale)
-{
-    float2 p = (viewDir.xy / viewDir.z) * (height * heightScale);
-    return uv - p;
-}
-float2 steepParallax(float2 uv, float3 viewDir, float height, float heightScale)
-{
-
-     // number of depth layers
-    const float minLayers = 8;
-    const float maxLayers = 32;
-    float numLayers = lerp(maxLayers, minLayers, abs(dot(float3(0.0, 0.0, 1.0), viewDir)));
-    float layerDepth = 1.0 / numLayers;
-    // depth of current layer
-    float currentLayerDepth = 0.0;
-    // the amount to shift the texture coordinates per layer (from vector P)
-    float2 P = viewDir.xy / viewDir.z * heightScale;
-    float2 deltaTexCoords = P / numLayers;
-  
-    // get initial values
-    float2 currentTexCoords = uv;
-    float currentDepthMapValue = 1.0 - heightTexture.Sample(gsamLinearWrap, currentTexCoords).x;
-      
-    bool run = true;
-    int layer = 0;
-    while (run)
-    {
-        // shift texture coordinates along direction of P
-        currentTexCoords -= deltaTexCoords;
-        // get height value at current texture coordinates
-        currentDepthMapValue = 1.0 - heightTexture.Sample(gsamLinearWrap, currentTexCoords).x;
-        // get depth of next layer
-        currentLayerDepth += layerDepth;
-        ++layer;
-        run = (currentLayerDepth < currentDepthMapValue) & (layer < numLayers);
-    }
-    
-    return currentTexCoords;
-}
-float2 parallaxOcclusionMapping(float2 uv, float3 viewDir, float height, float heightScale)
-{
-     // number of depth layers
-    const float minLayers = 8;
-    const float maxLayers = 32;
-    float numLayers = lerp(maxLayers, minLayers, abs(dot(float3(0.0, 0.0, 1.0), viewDir)));
-    //float numLayers = 100;
-    // calculate the size of each layer
-    float layerDepth = 1.0 / numLayers;
-    // depth of current layer
-    float currentLayerDepth = 0.0;
-    // the amount to shift the texture coordinates per layer (from vector P)
-    float2 P = viewDir.xy / viewDir.z * heightScale;
-    float2 deltaTexCoords = P / numLayers;
-  
-    // get initial values
-    float2 currentTexCoords = uv;
-    //float currentDepthMapValue = texture(depthMap, currentTexCoords).r;
-    float currentDepthMapValue = 1.0 - heightTexture.Sample(gsamLinearWrap, currentTexCoords).x;
-      
-    while (currentLayerDepth < currentDepthMapValue)
-    {
-        // shift texture coordinates along direction of P
-        currentTexCoords -= deltaTexCoords;
-        // get depthmap value at current texture coordinates
-        //currentDepthMapValue = texture(depthMap, currentTexCoords).r;  
-        currentDepthMapValue = 1.0 - heightTexture.Sample(gsamLinearWrap, currentTexCoords).x;
-        // get depth of next layer
-        currentLayerDepth += layerDepth;
-    }
-    
-    // get texture coordinates before collision (reverse operations)
-    float2 prevTexCoords = currentTexCoords + deltaTexCoords;
-
-    // get depth after and before collision for linear interpolation
-    //float afterDepth = currentDepthMapValue;
-	float afterDepth  = currentDepthMapValue - currentLayerDepth;
-    float beforeDepth = (1.0 - heightTexture.Sample(gsamLinearWrap, prevTexCoords).x) - currentLayerDepth + layerDepth;
- 
-    // interpolation of texture coordinates
-    float weight = afterDepth / (afterDepth - beforeDepth);
-    float2 finalTexCoords = prevTexCoords * weight + currentTexCoords * (1.0 - weight);
-
-    return finalTexCoords;
-
-    
-}
-
+//parallax requires heightTexture, we include after those texture has been declared
+#include "../common/parallax.hlsl"
+#include "../common/shadows.hlsl"
 
 float4 PS(FullMeshParallaxVertexOut input) : SV_Target
 {
@@ -129,15 +34,9 @@ float4 PS(FullMeshParallaxVertexOut input) : SV_Target
     float2 parallaxUV = parallaxOcclusionMapping(uv, toEyeTangent, height, heightScale);
     float3 albedo = albedoTex.Sample(gsamLinearWrap, parallaxUV).xyz * g_material.kd.xyz;
 
-
-    float3 view = toEyeTangent.xyz;
-    float lengthV =
-    length((view.xy / view.z * (height * heightScale)));
-    lengthV = lengthV > 1.0f ? 1 : 0;
-    float2 p = (view.xy / view.z) * (height * heightScale);
-
     float3 texNormal =
       normalize(tangentTex.Sample(gsamLinearWrap, parallaxUV) * 2.0f - 1.0f).xyz;
+
     // compute NTB
     float3 N = normalize(input.Normal.xyz);
     float3 T = normalize(input.tangent.xyz);
@@ -153,51 +52,8 @@ float4 PS(FullMeshParallaxVertexOut input) : SV_Target
 
     // view vectors
     float3 worldPos = input.worldPos.xyz;
-
-	//lets check shadows
-	float4 shadowMapPos = mul(float4(worldPos,1.0),g_dirLight.lightVP);
-	shadowMapPos  /= shadowMapPos.w;
-	//convert to uv values
-	float2 shadowUV= 0.5f * shadowMapPos.xy + 0.5f;
-	//float2 shadowUV= uv/4;
-	shadowUV.y = 1.0f - shadowUV.y;
-
-	//sample the shadow
-    float attenuation=0.0f;
-	//directionalShadow.SampleCmpLevelZero(shadowPCFClamp,shadowUV,shadowMapPos.z).x;
-
 	
-	float dx = 1.0f / 4096.0f;
-	const	float2	offsets[9]	=		
-	{				
-		float2(-dx,	-dx),	
-		float2(0.0f,	-dx),	
-		float2(dx,	dx),				
-		float2(-dx,	0.0f),	
-		float2(0.0f,	0.0f),	
-		float2(dx, 0.0f),				
-		float2(-dx,	+dx),	
-		float2(0.0f,	+dx),	
-		float2(dx, +dx)		
-	};
-	[unroll]
-	for(int i =0; i < 9;++i)
-	{
-		attenuation+=directionalShadow.SampleCmpLevelZero(shadowPCFClamp,shadowUV + offsets[i],shadowMapPos.z).x;
-	}
-	attenuation/=9.0f;
-	
-
-
-
-
-
-	//float attenuation = shadowDepth > shadowMapPos.z ? 0.0f : 1.0f;
-
-	//float shwx = shadowUV.x;
-	//float shwy = shadowUV.y;
-	//bool outOfRangeShadow = (shwx > 1.0f) | (shwx < 0.0f) | (shwy < 0.0f) | (shwy > 1.0f);
-	//attenuation = outOfRangeShadow ? 1.0f : attenuation;
+	float attenuation = samplePCF9taps(worldPos, g_dirLight.lightVP);
 
     // camera vector
     float3 ldir = normalize(-g_dirLight.lightDir.xyz);
@@ -236,6 +92,8 @@ float4 PS(FullMeshParallaxVertexOut input) : SV_Target
     float3 irradiance = skyboxIrradianceTexture.Sample(gsamLinearClamp, N).xyz;
     float3 diffuse = irradiance * albedo;
   
+	//TODO do not hardcode here in the shader, set parameter in header
+	//wrap in a function to sample those textures
     float MAX_REFLECTION_LOD = 6.0f;
     float3 prefilteredColor = skyboxRadianceTexture.SampleLevel(gsamLinearClamp, reflected, roughness * MAX_REFLECTION_LOD).rgb;
     float2 envBRDF = brdfTexture.Sample(gsamLinearClamp, float2(max(dot(normalize(N), normalize(toEyeDir)), 0.0), roughness)).rg;
@@ -243,8 +101,6 @@ float4 PS(FullMeshParallaxVertexOut input) : SV_Target
 
     float3 ambient = (kD * diffuse) + (specularDiff);
     float3 color = ambient + attenuation* Lo;
-	//color = float3(shadowUV,0);
-	//color = attenuation;
 
     return float4(color, 1.0f);
 }
