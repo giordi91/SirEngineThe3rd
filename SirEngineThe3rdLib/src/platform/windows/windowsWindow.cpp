@@ -178,7 +178,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT umessage, WPARAM wparam,
 } // namespace WindowsImpl
 
 // This needs to be implemented per platform
-Window *Window::create(const WindowProps &props) {
+BaseWindow *BaseWindow::create(const WindowProps &props) {
   return new WindowsWindow(props);
 };
 WindowsWindow::WindowsWindow(const WindowProps &props) {
@@ -207,8 +207,7 @@ WindowsWindow::WindowsWindow(const WindowProps &props) {
   wc.hCursor = LoadCursor(NULL, IDC_ARROW);
   wc.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
   wc.lpszMenuName = NULL;
-  std::wstring title(props.title.begin(), props.title.end());
-  wc.lpszClassName = title.c_str();
+  wc.lpszClassName = frameConvertWide(props.title);
   wc.cbSize = sizeof(WNDCLASSEX);
 
   // Register the window class.
@@ -242,6 +241,7 @@ WindowsWindow::WindowsWindow(const WindowProps &props) {
   // Place the window in the middle of the screen.
   // uint32_t posX = (GetSystemMetrics(SM_CXSCREEN) - m_data.width) / 2u;
   // uint32_t posY = (GetSystemMetrics(SM_CYSCREEN) - m_data.height) / 2u;
+  auto* title = wc.lpszClassName;
 
   constexpr DWORD style =
       WS_OVERLAPPEDWINDOW | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
@@ -249,7 +249,7 @@ WindowsWindow::WindowsWindow(const WindowProps &props) {
           static_cast<LONG>(m_data.height)};
   // needed to create the window of the right size, or wont match the gui
   AdjustWindowRectEx(&wr, style, false, NULL);
-  m_hwnd = CreateWindowEx(0, title.c_str(), title.c_str(), style, 0, 0,
+  m_hwnd = CreateWindowEx(0, title, title, style, 0, 0,
                           wr.right - wr.left, wr.bottom - wr.top, nullptr, nullptr,
                           GetModuleHandle(nullptr), 0);
 
@@ -261,6 +261,12 @@ WindowsWindow::WindowsWindow(const WindowProps &props) {
 
   // Hide the mouse cursor.
   ShowCursor(true);
+
+  //update the native window
+  assert(sizeof(m_hinstance) == 8);
+  memcpy(&m_nativeWindow.data, &m_hinstance, sizeof(m_hinstance)); 
+  assert(sizeof(m_hwnd) == 8);
+  memcpy(&m_nativeWindow.data2, &m_hwnd, sizeof(m_hwnd)); 
 
   // initialize dx12
   bool result = graphics::initializeGraphics(this, m_data.width, m_data.height);

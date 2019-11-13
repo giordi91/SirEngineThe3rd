@@ -7,7 +7,7 @@
 
 namespace SirEngine {
 class IdentityManager;
-class Window;
+class BaseWindow;
 class AssetManager;
 class MaterialManager;
 class DependencyGraph;
@@ -171,7 +171,7 @@ inline void flushCommandQueue(ID3D12CommandQueue *queue) {
   }
 }
 
-bool initializeGraphicsDx12(Window *wnd, uint32_t width, uint32_t height);
+bool initializeGraphicsDx12(BaseWindow *wnd, uint32_t width, uint32_t height);
 bool shutdownGraphicsDx12();
 bool stopGraphicsDx12();
 bool newFrameDx12();

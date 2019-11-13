@@ -2,10 +2,10 @@
 #include <cstdint>
 
 namespace SirEngine {
-class Window;
+class BaseWindow;
 namespace graphics {
 
-bool initializeGraphics(Window *wnd, uint32_t width, uint32_t height);
+bool initializeGraphics(BaseWindow *wnd, uint32_t width, uint32_t height);
 // should be called from the application whenever there is a resize
 void onResize(uint32_t width, uint32_t height);
 

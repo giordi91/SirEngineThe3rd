@@ -3,31 +3,29 @@
 #include "SirEngine/graphics/graphicsCore.h"
 #include "SirEngine/layer.h"
 #include "SirEngine/log.h"
+#include "engineConfig.h"
 #include "fileUtils.h"
 #include "layers/graphics3DLayer.h"
 #include "layers/imguiLayer.h"
 #include <random>
 
-#include "SirEngine/runtimeString.h"
 #include "SirEngine/input.h"
+#include "SirEngine/runtimeString.h"
 
 namespace SirEngine {
 
-static const std::string CONFIG_PATH = "../data/engineConfig.json";
-static const std::string CONFIG_DATA_SOURCE_KEY = "dataSource";
-static const std::string CONFIG_STARTING_SCENE_KEY = "startingScene";
-static const std::string DEFAULT_STRING = "";
+static const char *CONFIG_PATH = "../data/engineConfig.json";
 
-void Application::parseConfigFile() {
+void Application::loadConfigFile() {
   // try to read the configuration file
-  const nlohmann::json jobj = getJsonObj(CONFIG_PATH);
-  globals::DATA_SOURCE_PATH = persistentString(
-      getValueIfInJson(jobj, CONFIG_DATA_SOURCE_KEY, DEFAULT_STRING).c_str());
-  assert(globals::DATA_SOURCE_PATH[0] != '\0');
-  globals::START_SCENE_PATH = persistentString(
-      getValueIfInJson(jobj, CONFIG_STARTING_SCENE_KEY, DEFAULT_STRING)
-          .c_str());
-  assert(globals::START_SCENE_PATH[0] != '\0');
+  bool exists = fileExists(CONFIG_PATH);
+  globals::ENGINE_CONFIG = reinterpret_cast<EngineConfig *>(
+      globals::PERSISTENT_ALLOCATOR->allocate(sizeof(EngineConfig)));
+  if (exists) {
+    parseConfigFile(CONFIG_PATH, *globals::ENGINE_CONFIG);
+  } else {
+    initializeConfigDefault(*globals::ENGINE_CONFIG);
+  }
 }
 
 Application::Application() {
@@ -40,10 +38,11 @@ Application::Application() {
   // TODO this should be a settings from somewhere
   globals::PERSISTENT_ALLOCATOR = new ThreeSizesPool(20 * 1024 * 1024);
 
-  parseConfigFile();
+  loadConfigFile();
 
-  m_window = Window::create();
+  m_window = BaseWindow::create();
   m_window->setEventCallback([this](Event &e) -> void { this->onEvent(e); });
+
   m_queuedEndOfFrameEvents[0].events =
       static_cast<Event **>(globals::PERSISTENT_ALLOCATOR->allocate(
           sizeof(Event *) * RESERVE_ALLOC_EVENT_QUEUE));
