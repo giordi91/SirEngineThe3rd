@@ -134,7 +134,7 @@ void GBufferPassPBR::compute() {
 
       // bind the corresponding RS and PSO
       dx12::MATERIAL_MANAGER->bindRSandPSO(renderableList.first, commandList);
-      globals::RENDERING_CONTEXT->bindCameraBuffer(0);
+      dx12::RENDERING_CONTEXT->bindCameraBuffer(0);
 
       // this is most for debug, it will boil down to nothing in release
       const SHADER_TYPE_FLAGS type =

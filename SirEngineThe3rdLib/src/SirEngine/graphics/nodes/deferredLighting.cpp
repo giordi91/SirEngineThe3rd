@@ -68,9 +68,9 @@ void DeferredLightingPass::initialize() {
       globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT,
       RenderTargetFormat::R16G16B16A16_FLOAT, "lightBuffer");
 
-  m_lightCB = globals::RENDERING_CONTEXT->getLightCB();
+  m_lightCB = dx12::RENDERING_CONTEXT->getLightCB();
   m_lightAddress = dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(m_lightCB);
-  m_brdfHandle = globals::RENDERING_CONTEXT->getBrdfHandle();
+  m_brdfHandle = dx12::RENDERING_CONTEXT->getBrdfHandle();
 }
 
 inline TextureHandle getInputConnection(ResizableVector<const GPlug *> **conns,
@@ -128,7 +128,7 @@ void DeferredLightingPass::compute() {
   globals::TEXTURE_MANAGER->bindRenderTarget(m_lightBuffer, TextureHandle{});
   commandList->SetGraphicsRootSignature(rs);
 
-  globals::RENDERING_CONTEXT->bindCameraBuffer(0);
+  dx12::RENDERING_CONTEXT->bindCameraBuffer(0);
   commandList->SetGraphicsRootConstantBufferView(1, m_lightAddress);
   commandList->SetGraphicsRootDescriptorTable(
       2, dx12::TEXTURE_MANAGER->getSRVDx12(depthHandle).gpuHandle);
@@ -139,14 +139,14 @@ void DeferredLightingPass::compute() {
   commandList->SetGraphicsRootDescriptorTable(
       5, dx12::TEXTURE_MANAGER->getSRVDx12(specularBufferHandle).gpuHandle);
   const TextureHandle skyHandle =
-      globals::RENDERING_CONTEXT->getEnviromentMapIrradianceHandle();
+      dx12::RENDERING_CONTEXT->getEnviromentMapIrradianceHandle();
   commandList->SetGraphicsRootDescriptorTable(
       6, dx12::TEXTURE_MANAGER->getSRVDx12(skyHandle).gpuHandle);
 
   // TODO: investigate bug of lighting pass, irradiance seems to be
   // weirdly rotated
   const TextureHandle skyRadianceHandle =
-      globals::RENDERING_CONTEXT->getEnviromentMapRadianceHandle();
+      dx12::RENDERING_CONTEXT->getEnviromentMapRadianceHandle();
   commandList->SetGraphicsRootDescriptorTable(
       7, dx12::TEXTURE_MANAGER->getSRVDx12(skyRadianceHandle).gpuHandle);
   commandList->SetGraphicsRootDescriptorTable(

@@ -5,6 +5,7 @@ namespace SirEngine {
 class BaseWindow;
 namespace graphics {
 
+	/*
 bool initializeGraphics(BaseWindow *wnd, uint32_t width, uint32_t height);
 // should be called from the application whenever there is a resize
 void onResize(uint32_t width, uint32_t height);
@@ -31,6 +32,7 @@ void beginHeadlessWork();
 void endHeadlessWork();
 
 void flush();
+*/
 } // namespace graphics
 
 } // namespace SirEngine

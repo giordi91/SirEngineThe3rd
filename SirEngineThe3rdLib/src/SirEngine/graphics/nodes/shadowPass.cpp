@@ -85,7 +85,7 @@ void ShadowPass::compute() {
 
   ConstantBufferHandle lightCB;
   D3D12_GPU_VIRTUAL_ADDRESS lightAddress;
-  lightCB = globals::RENDERING_CONTEXT->getLightCB();
+  lightCB = dx12::RENDERING_CONTEXT->getLightCB();
   lightAddress = dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(lightCB);
 
   // Set the viewport and scissor rect.  This needs to be reset whenever the

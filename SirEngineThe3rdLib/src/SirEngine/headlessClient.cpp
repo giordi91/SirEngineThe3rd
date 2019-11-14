@@ -5,14 +5,19 @@
 
 namespace SirEngine {
 HeadlessClient::HeadlessClient() {
-  graphics::initializeGraphics(nullptr, 0, 0);
+	//TODO fix headless client
+  //graphics::initializeGraphics(nullptr, 0, 0);
 }
 
-HeadlessClient::~HeadlessClient() { graphics::shutdownGraphics(); }
+HeadlessClient::~HeadlessClient() { //graphics::shutdownGraphics();
+	}
 
-void HeadlessClient::beginWork() { graphics::beginHeadlessWork(); }
-void HeadlessClient::endWork() { graphics::endHeadlessWork(); }
-void HeadlessClient::flushAllOperation() { graphics::flush(); }
+void HeadlessClient::beginWork() { //graphics::beginHeadlessWork();
+	}
+void HeadlessClient::endWork() { //graphics::endHeadlessWork();
+	}
+void HeadlessClient::flushAllOperation() { //graphics::flush();
+	}
 
 dx12::RootSignatureManager *HeadlessClient::getRootSignatureManager() {
   return dx12::ROOT_SIGNATURE_MANAGER;

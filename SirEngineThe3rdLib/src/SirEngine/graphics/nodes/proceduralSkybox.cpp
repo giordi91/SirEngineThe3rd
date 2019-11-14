@@ -71,7 +71,7 @@ void ProceduralSkyBoxPass::compute() {
   globals::TEXTURE_MANAGER->bindRenderTarget(bufferHandle, depthHandle);
   commandList->SetGraphicsRootSignature(rs);
 
-  globals::RENDERING_CONTEXT->bindCameraBuffer(0);
+  dx12::RENDERING_CONTEXT->bindCameraBuffer(0);
 
   commandList->DrawInstanced(6, 1, 0, 0);
   m_outputPlugs[0].plugValue = bufferHandle.handle;

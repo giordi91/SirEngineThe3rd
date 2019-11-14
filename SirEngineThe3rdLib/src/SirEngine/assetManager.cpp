@@ -142,14 +142,14 @@ void AssetManager::loadScene(const char *path) {
       globals::TEXTURE_MANAGER->loadTexture(enviromentMapRadianceString.c_str(),
                                             true);
 
-  globals::RENDERING_CONTEXT->setEnviromentMap(enviromentMapHandle);
-  globals::RENDERING_CONTEXT->setEnviromentMapIrradiance(
+  dx12::RENDERING_CONTEXT->setEnviromentMap(enviromentMapHandle);
+  dx12::RENDERING_CONTEXT->setEnviromentMapIrradiance(
       enviromentMapIrradianceHandle);
-  globals::RENDERING_CONTEXT->setEnviromentMapRadiance(
+  dx12::RENDERING_CONTEXT->setEnviromentMapRadiance(
       enviromentMapRadianceHandle);
 
   TextureHandle brdfHandle = globals::TEXTURE_MANAGER->loadTexture(
       "../data/processed/textures/brdf.texture");
-  globals::RENDERING_CONTEXT->setBrdfHandle(brdfHandle);
+  dx12::RENDERING_CONTEXT->setBrdfHandle(brdfHandle);
 }
 } // namespace SirEngine
