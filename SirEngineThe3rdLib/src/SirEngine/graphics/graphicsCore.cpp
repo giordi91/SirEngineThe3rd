@@ -9,6 +9,7 @@
 namespace SirEngine::graphics {
 
 #if GRAPHICS_API == DX12
+/*
 bool initializeGraphics(BaseWindow *wnd, uint32_t width, uint32_t height) {
   return dx12::initializeGraphicsDx12(wnd, width, height);
 }
@@ -25,5 +26,6 @@ void beginHeadlessWork() { dx12::beginHeadlessWorkDx12(); }
 void endHeadlessWork() { dx12::endHeadlessWorkDx12(); }
 
 void flush() { dx12::flushDx12(); }
+*/
 #endif
 } // namespace SirEngine::graphics

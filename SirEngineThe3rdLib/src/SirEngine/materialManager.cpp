@@ -232,7 +232,7 @@ void bindSkinSkinning(const MaterialRuntime &materialRuntime,
 }
 void bindForwardPBR(const MaterialRuntime &materialRuntime,
                     ID3D12GraphicsCommandList2 *commandList) {
-  const ConstantBufferHandle lightCB = globals::RENDERING_CONTEXT->getLightCB();
+  const ConstantBufferHandle lightCB = dx12::RENDERING_CONTEXT->getLightCB();
   const auto address =
       dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(lightCB);
 
@@ -245,22 +245,22 @@ void bindForwardPBR(const MaterialRuntime &materialRuntime,
   commandList->SetGraphicsRootDescriptorTable(6, materialRuntime.roughness);
 
   TextureHandle skyHandle =
-      globals::RENDERING_CONTEXT->getEnviromentMapIrradianceHandle();
+      dx12::RENDERING_CONTEXT->getEnviromentMapIrradianceHandle();
   commandList->SetGraphicsRootDescriptorTable(
       7, dx12::TEXTURE_MANAGER->getSRVDx12(skyHandle).gpuHandle);
 
   TextureHandle skyRadianceHandle =
-      globals::RENDERING_CONTEXT->getEnviromentMapRadianceHandle();
+      dx12::RENDERING_CONTEXT->getEnviromentMapRadianceHandle();
   commandList->SetGraphicsRootDescriptorTable(
       8, dx12::TEXTURE_MANAGER->getSRVDx12(skyRadianceHandle).gpuHandle);
 
-  TextureHandle brdfHandle = globals::RENDERING_CONTEXT->getBrdfHandle();
+  TextureHandle brdfHandle = dx12::RENDERING_CONTEXT->getBrdfHandle();
   commandList->SetGraphicsRootDescriptorTable(
       9, dx12::TEXTURE_MANAGER->getSRVDx12(brdfHandle).gpuHandle);
 }
 void bindForwardPhongAlphaCutout(const MaterialRuntime &materialRuntime,
                                  ID3D12GraphicsCommandList2 *commandList) {
-  const ConstantBufferHandle lightCB = globals::RENDERING_CONTEXT->getLightCB();
+  const ConstantBufferHandle lightCB = dx12::RENDERING_CONTEXT->getLightCB();
   const auto address =
       dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(lightCB);
 
@@ -276,7 +276,7 @@ void bindForwardPhongAlphaCutout(const MaterialRuntime &materialRuntime,
 
 void bindParallaxPBR(const MaterialRuntime &materialRuntime,
                      ID3D12GraphicsCommandList2 *commandList) {
-  const ConstantBufferHandle lightCB = globals::RENDERING_CONTEXT->getLightCB();
+  const ConstantBufferHandle lightCB = dx12::RENDERING_CONTEXT->getLightCB();
   const auto address =
       dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(lightCB);
 
@@ -289,16 +289,16 @@ void bindParallaxPBR(const MaterialRuntime &materialRuntime,
   commandList->SetGraphicsRootDescriptorTable(6, materialRuntime.roughness);
 
   TextureHandle skyHandle =
-      globals::RENDERING_CONTEXT->getEnviromentMapIrradianceHandle();
+      dx12::RENDERING_CONTEXT->getEnviromentMapIrradianceHandle();
   commandList->SetGraphicsRootDescriptorTable(
       7, dx12::TEXTURE_MANAGER->getSRVDx12(skyHandle).gpuHandle);
 
   TextureHandle skyRadianceHandle =
-      globals::RENDERING_CONTEXT->getEnviromentMapRadianceHandle();
+      dx12::RENDERING_CONTEXT->getEnviromentMapRadianceHandle();
   commandList->SetGraphicsRootDescriptorTable(
       8, dx12::TEXTURE_MANAGER->getSRVDx12(skyRadianceHandle).gpuHandle);
 
-  TextureHandle brdfHandle = globals::RENDERING_CONTEXT->getBrdfHandle();
+  TextureHandle brdfHandle = dx12::RENDERING_CONTEXT->getBrdfHandle();
   commandList->SetGraphicsRootDescriptorTable(
       9, dx12::TEXTURE_MANAGER->getSRVDx12(brdfHandle).gpuHandle);
   commandList->SetGraphicsRootDescriptorTable(10, materialRuntime.heightMap);
@@ -309,7 +309,7 @@ void bindParallaxPBR(const MaterialRuntime &materialRuntime,
 
 void bindForwardPhongAlphaCutoutSkin(const MaterialRuntime &materialRuntime,
                                      ID3D12GraphicsCommandList2 *commandList) {
-  const ConstantBufferHandle lightCB = globals::RENDERING_CONTEXT->getLightCB();
+  const ConstantBufferHandle lightCB = dx12::RENDERING_CONTEXT->getLightCB();
   const auto address =
       dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(lightCB);
 
@@ -340,7 +340,7 @@ void bindForwardPhongAlphaCutoutSkin(const MaterialRuntime &materialRuntime,
 }
 void bindHair(const MaterialRuntime &materialRuntime,
               ID3D12GraphicsCommandList2 *commandList) {
-  const ConstantBufferHandle lightCB = globals::RENDERING_CONTEXT->getLightCB();
+  const ConstantBufferHandle lightCB = dx12::RENDERING_CONTEXT->getLightCB();
   const auto address =
       dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(lightCB);
 
@@ -356,7 +356,7 @@ void bindHair(const MaterialRuntime &materialRuntime,
 }
 void bindHairSkin(const MaterialRuntime &materialRuntime,
                   ID3D12GraphicsCommandList2 *commandList) {
-  const ConstantBufferHandle lightCB = globals::RENDERING_CONTEXT->getLightCB();
+  const ConstantBufferHandle lightCB = dx12::RENDERING_CONTEXT->getLightCB();
   const auto address =
       dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(lightCB);
 
@@ -391,7 +391,7 @@ void bindHairSkin(const MaterialRuntime &materialRuntime,
 void bindShadowSkin(const MaterialRuntime &materialRuntime,
               ID3D12GraphicsCommandList2 *commandList)
 {
-  const ConstantBufferHandle lightCB = globals::RENDERING_CONTEXT->getLightCB();
+  const ConstantBufferHandle lightCB = dx12::RENDERING_CONTEXT->getLightCB();
   const auto address =
       dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(lightCB);
 

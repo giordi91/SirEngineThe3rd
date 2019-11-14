@@ -183,13 +183,13 @@ void Graphics3DLayer::onAttach() {
 
   // TEMP
   // animation is up to date, we can update the scene bounding boxes
-  globals::RENDERING_CONTEXT->updateSceneBoundingBox();
+  dx12::RENDERING_CONTEXT->updateSceneBoundingBox();
   // draw the scene bounding box
   //BoundingBox aabb = globals::RENDERING_CONTEXT->getBoundingBox();
   //dx12::DEBUG_RENDERER->drawBoundingBoxes(&aabb, 1,
   //                                        DirectX::XMFLOAT4(0, 1, 0, 1), "");
 
-  auto light = globals::RENDERING_CONTEXT->getLightData();
+  auto light = dx12::RENDERING_CONTEXT->getLightData();
   dx12::DEBUG_RENDERER->drawMatrix(light.localToWorld, 3.0f,
                                    DirectX::XMFLOAT4(1, 0, 0, 1), "");
   dx12::DEBUG_RENDERER->drawMatrix(globals::MAIN_CAMERA->getViewInverse(DirectX::XMMatrixIdentity()), 3.0f,
@@ -211,16 +211,16 @@ void Graphics3DLayer::onUpdate() {
   // TODO manipulate camera to follow
 
   // animation is up to date, we can update the scene bounding boxes
-  globals::RENDERING_CONTEXT->updateSceneBoundingBox();
-  globals::RENDERING_CONTEXT->updateDirectionalLightMatrix();
+  dx12::RENDERING_CONTEXT->updateSceneBoundingBox();
+  dx12::RENDERING_CONTEXT->updateDirectionalLightMatrix();
 
   // upload skinning matrices
   globals::SKIN_MANAGER->uploadDirtyMatrices();
 
   // setting up camera for the frame
   globals::CONSTANT_BUFFER_MANAGER->processBufferedData();
-  globals::RENDERING_CONTEXT->setupCameraForFrame();
-  globals::RENDERING_CONTEXT->setupLightingForFrame();
+  dx12::RENDERING_CONTEXT->setupCameraForFrame();
+  dx12::RENDERING_CONTEXT->setupLightingForFrame();
   // evaluating rendering graph
   dx12::RENDERING_GRAPH->compute();
 

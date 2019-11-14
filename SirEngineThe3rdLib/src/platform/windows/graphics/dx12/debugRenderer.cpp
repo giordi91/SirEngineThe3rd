@@ -453,7 +453,7 @@ void DebugRenderer::renderQueue(
     const std::string &typeName =
         dx12::MATERIAL_MANAGER->getStringFromShaderTypeFlag(type);
     annotateGraphicsBegin(typeName.c_str());
-    globals::RENDERING_CONTEXT->bindCameraBuffer(0);
+    dx12::RENDERING_CONTEXT->bindCameraBuffer(0);
 
     int counter = 0;
     D3D12_RESOURCE_BARRIER barriers[2];

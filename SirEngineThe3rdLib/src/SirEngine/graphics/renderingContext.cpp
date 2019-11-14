@@ -7,6 +7,45 @@
 #include "platform/windows/graphics/dx12/meshManager.h"
 
 namespace SirEngine {
+
+RenderingContext *
+createWindowsRenderingContext(const RenderingContextCreationSettings &settings,
+                              uint32_t width, uint32_t height) {
+
+  if (!RenderingContext::isAPISupported(settings.graphicsAPI)) {
+    // logCoreError(
+    //    "Requested api is not supported on system: {0}",
+    //    GRAPHICS_API_TO_NAME[static_cast<uint32_t>(settings.graphicsAPI)]);
+    return nullptr;
+  }
+
+  // API is supported we can create the context based on the given API
+  switch (settings.graphicsAPI) {
+  case (GRAPHIC_API::DX12): {
+    return dx12::createDx12RenderingContext(settings, width, height);
+  }
+  case GRAPHIC_API::VULKAN:;
+    // return vulkan::createVulkanRenderingContext(settings,width,height);
+    assert(0);
+    return nullptr;
+  default:;
+    assert(!"Not supported API requested");
+    return nullptr;
+  }
+}
+
+RenderingContext *
+RenderingContext::create(const RenderingContextCreationSettings &settings,
+                         uint32_t width, uint32_t height) {
+  return createWindowsRenderingContext(settings, width, height);
+}
+
+bool RenderingContext::isAPISupported(const GRAPHIC_API graphicsAPI) {
+  return (graphicsAPI == GRAPHIC_API::DX12) |
+         (graphicsAPI == GRAPHIC_API::VULKAN);
+}
+
+/*
 void RenderingContext::initialize() {
   // ask for the camera buffer handle;
   m_cameraHandle =
@@ -202,4 +241,5 @@ void RenderingContext::updateDirectionalLightMatrix() {
   m_light.lightVP = DirectX::XMMatrixTranspose(
       DirectX::XMMatrixMultiply(m_light.worldToLocal, ortho));
 }
+*/
 } // namespace SirEngine

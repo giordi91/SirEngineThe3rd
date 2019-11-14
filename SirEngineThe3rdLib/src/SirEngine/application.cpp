@@ -11,6 +11,7 @@
 
 #include "SirEngine/input.h"
 #include "SirEngine/runtimeString.h"
+#include "graphics/renderingContext.h"
 
 namespace SirEngine {
 
@@ -40,9 +41,33 @@ Application::Application() {
 
   loadConfigFile();
 
-  m_window = BaseWindow::create();
+  // TODO HARDCODED: this sould be comping from parse config file
+  WindowProps windowProperty{};
+  windowProperty.width = 1280;
+  windowProperty.height = 720;
+  windowProperty.title = "editor";
+
+  m_window = BaseWindow::create(windowProperty);
   m_window->setEventCallback([this](Event &e) -> void { this->onEvent(e); });
 
+  // now that the window is created we can crate a rendering context
+  // HARDCODED
+  RenderingContextCreationSettings creationSettings{};
+  creationSettings.width = windowProperty.width;
+  creationSettings.height = windowProperty.height;
+  creationSettings.graphicsAPI = GRAPHIC_API::DX12;
+  //creationSettings.graphicsAPI = graphics::GRAPHICS_API::VULKAN;
+  creationSettings.window = m_window;
+  creationSettings.apiConfig = {};
+
+
+  globals::RENDERING_CONTEXT = RenderingContext::create(
+      creationSettings, creationSettings.width, creationSettings.height);
+  bool result = globals::RENDERING_CONTEXT->initializeGraphics();
+  if (!result) {
+      exit( EXIT_FAILURE);
+  }
+  /*
   // now that we have the window we can initialize the graphic
   // initialize dx12
   const int windowHeight = m_window->getHeight();
@@ -52,6 +77,7 @@ Application::Application() {
   if (!result) {
     SE_CORE_ERROR("FATAL: could not initialize graphics");
   }
+  */
 
   m_queuedEndOfFrameEvents[0].events =
       static_cast<Event **>(globals::PERSISTENT_ALLOCATOR->allocate(
@@ -76,14 +102,14 @@ void Application::run() {
     globals::LAST_FRAME_TIME_NS = globals::GAME_CLOCK.getDelta();
     ++globals::TOTAL_NUMBER_OF_FRAMES;
     m_window->onUpdate();
-    graphics::newFrame();
+    globals::RENDERING_CONTEXT->newFrame();
 
     const int count = m_layerStack.count();
     Layer **layers = m_layerStack.begin();
     for (int i = 0; i < count; ++i) {
       layers[i]->onUpdate();
     }
-    graphics::dispatchFrame();
+    globals::RENDERING_CONTEXT->dispatchFrame();
     // update input to cache current input for next frame
     globals::INPUT->swapFrameKey();
 
@@ -97,7 +123,7 @@ void Application::run() {
   }
 
   // lets make sure any graphics operation are done
-  graphics::stopGraphics();
+  globals::RENDERING_CONTEXT->stopGraphic();
 
   // lets clean up the layers, now is safe to free up resources
   const int count = m_layerStack.count();
@@ -107,7 +133,8 @@ void Application::run() {
   }
 
   // shutdown anything graphics related;
-  graphics::shutdownGraphics();
+  globals::RENDERING_CONTEXT->shutdownGraphic();
+
 }
 void Application::queueEventForEndOfFrame(Event *e) const {
   const int alloc = m_queuedEndOfFrameEventsCurrent->allocCount;
@@ -150,7 +177,7 @@ bool Application::onResizeWindow(WindowResizeEvent &e) {
   globals::SCREEN_HEIGHT = e.getHeight();
 
   m_window->onResize(globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT);
-  graphics::onResize(globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT);
+  globals::RENDERING_CONTEXT->resize(globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT);
 
   // push the resize event to everyone in case is needed
   const int count = m_layerStack.count();

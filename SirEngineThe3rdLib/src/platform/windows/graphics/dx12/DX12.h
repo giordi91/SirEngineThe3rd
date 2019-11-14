@@ -3,6 +3,7 @@
 #include <dxgi1_6.h>
 
 #include "SirEngine/globals.h"
+#include "SirEngine/graphics/renderingContext.h"
 #include <cassert>
 
 namespace SirEngine {
@@ -25,6 +26,7 @@ class ShadersLayoutRegistry;
 class PSOManager;
 class BufferManagerDx12;
 class DebugRenderer;
+class Dx12RenderingContext;
 
 enum class DescriptorType {
   NONE = 0,
@@ -125,14 +127,15 @@ extern TextureManagerDx12 *TEXTURE_MANAGER;
 extern MeshManager *MESH_MANAGER;
 extern IdentityManager *IDENTITY_MANAGER;
 extern MaterialManager *MATERIAL_MANAGER;
-extern DependencyGraph*RENDERING_GRAPH;
+extern DependencyGraph *RENDERING_GRAPH;
 extern ConstantBufferManagerDx12 *CONSTANT_BUFFER_MANAGER;
 extern ShaderManager *SHADER_MANAGER;
 extern RootSignatureManager *ROOT_SIGNATURE_MANAGER;
 extern PSOManager *PSO_MANAGER;
 extern ShadersLayoutRegistry *SHADER_LAYOUT_REGISTRY;
 extern BufferManagerDx12 *BUFFER_MANAGER;
-extern DebugRenderer*DEBUG_RENDERER;
+extern DebugRenderer *DEBUG_RENDERER;
+extern Dx12RenderingContext* RENDERING_CONTEXT;
 
 inline UINT64 insertFenceToGlobalQueue() {
   // Advance the fence value to mark commands up to this fence point.
@@ -181,6 +184,86 @@ void flushDx12();
 // headless client functions
 bool beginHeadlessWorkDx12();
 bool endHeadlessWorkDx12();
+
+RenderingContext *
+createDx12RenderingContext(const RenderingContextCreationSettings &settings,
+                           uint32_t width, uint32_t height);
+
+class Dx12RenderingContext final : public RenderingContext {
+public:
+  explicit Dx12RenderingContext(
+      const RenderingContextCreationSettings &settings, uint32_t width,
+      uint32_t height);
+  ~Dx12RenderingContext() = default;
+  // private copy and assignment
+  Dx12RenderingContext(const Dx12RenderingContext &) = delete;
+  Dx12RenderingContext &operator=(const Dx12RenderingContext &) = delete;
+
+  bool initializeGraphics() override;
+
+
+
+  void setupCameraForFrame();
+  void setupLightingForFrame();
+  void bindCameraBuffer(int index) const;
+  void bindCameraBufferCompute(int index) const;
+  void updateSceneBoundingBox();
+  void updateDirectionalLightMatrix();
+
+  inline void setEnviromentMap(const TextureHandle enviromentMapHandle) {
+    m_enviromentMapHandle = enviromentMapHandle;
+  }
+
+  inline void setEnviromentMapIrradiance(
+      const TextureHandle enviromentMapIrradianceHandle) {
+    m_enviromentMapIrradianceHandle = enviromentMapIrradianceHandle;
+  }
+
+  inline const DirectionalLightData &getLightData() const { return m_light; };
+  inline void
+  setEnviromentMapRadiance(const TextureHandle enviromentMapRadianceHandle) {
+    m_enviromentMapRadianceHandle = enviromentMapRadianceHandle;
+  };
+  inline TextureHandle getEnviromentMapHandle() const {
+    return m_enviromentMapHandle;
+  }
+  inline TextureHandle getEnviromentMapIrradianceHandle() const {
+    return m_enviromentMapIrradianceHandle;
+  }
+  inline TextureHandle getEnviromentMapRadianceHandle() const {
+    return m_enviromentMapRadianceHandle;
+  }
+  inline void setBrdfHandle(const TextureHandle handle) {
+    m_brdfHandle = handle;
+  }
+  inline TextureHandle getBrdfHandle() const { return m_brdfHandle; }
+
+  inline ConstantBufferHandle getLightCB() const { return m_lightCB; }
+  inline BoundingBox getBoundingBox() const { return m_boundingBox; }
+	
+  bool newFrame() override;
+  bool dispatchFrame() override;
+  bool resize(uint32_t width, uint32_t height) override;
+  void flushGlobalCommandQueue();
+  bool stopGraphic()override;
+  bool shutdownGraphic() override;
+
+private:
+
+  // member variable mostly temporary
+  CameraBuffer m_camBufferCPU{};
+  ConstantBufferHandle m_cameraHandle{};
+  ConstantBufferHandle m_lightBuffer{};
+  ConstantBufferHandle m_lightCB{};
+  DirectionalLightData m_light;
+  TextureHandle m_enviromentMapHandle;
+  TextureHandle m_enviromentMapIrradianceHandle;
+  TextureHandle m_enviromentMapRadianceHandle;
+  TextureHandle m_brdfHandle;
+  BoundingBox m_boundingBox;
+  DebugDrawHandle m_lightAABBHandle{};
+
+};
 
 } // namespace dx12
 } // namespace SirEngine

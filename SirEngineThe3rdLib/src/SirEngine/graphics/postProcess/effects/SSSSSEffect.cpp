@@ -91,7 +91,7 @@ void SSSSSEffect::render(const TextureHandle input, const TextureHandle output,
   //horizontal pass
   dx12::PSO_MANAGER->bindPSO(pso, commandList);
   commandList->SetGraphicsRootSignature(rs);
-  globals::RENDERING_CONTEXT->bindCameraBuffer(0);
+  dx12::RENDERING_CONTEXT->bindCameraBuffer(0);
   commandList->SetGraphicsRootDescriptorTable(1, pair.gpuHandle);
   commandList->SetGraphicsRootDescriptorTable(2, depthPair.gpuHandle);
   commandList->SetGraphicsRootDescriptorTable(
@@ -117,7 +117,7 @@ void SSSSSEffect::render(const TextureHandle input, const TextureHandle output,
   //dx12::TEXTURE_MANAGER->bindRenderTarget(input, resources.depth);
   dx12::PSO_MANAGER->bindPSO(pso, commandList);
   commandList->SetGraphicsRootSignature(rs);
-  globals::RENDERING_CONTEXT->bindCameraBuffer(0);
+  dx12::RENDERING_CONTEXT->bindCameraBuffer(0);
   commandList->SetGraphicsRootDescriptorTable(1, pairOut.gpuHandle);
   commandList->SetGraphicsRootDescriptorTable(2, depthPair.gpuHandle);
   commandList->SetGraphicsRootDescriptorTable(
