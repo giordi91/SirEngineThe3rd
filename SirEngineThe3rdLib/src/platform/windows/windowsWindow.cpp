@@ -268,11 +268,6 @@ WindowsWindow::WindowsWindow(const WindowProps &props) {
   assert(sizeof(m_hwnd) == 8);
   memcpy(&m_nativeWindow.data2, &m_hwnd, sizeof(m_hwnd)); 
 
-  // initialize dx12
-  bool result = graphics::initializeGraphics(this, m_data.width, m_data.height);
-  if (!result) {
-    SE_CORE_ERROR("FATAL: could not initialize graphics");
-  }
   // TODO have a centralize initialize for the engine
   globals::SCRIPTING_CONTEXT = new ScriptingContext();
   globals::SCRIPTING_CONTEXT->init();

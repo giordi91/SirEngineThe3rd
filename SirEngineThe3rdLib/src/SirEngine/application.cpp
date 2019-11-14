@@ -18,7 +18,7 @@ static const char *CONFIG_PATH = "../data/engineConfig.json";
 
 void Application::loadConfigFile() {
   // try to read the configuration file
-  bool exists = fileExists(CONFIG_PATH);
+  const bool exists = fileExists(CONFIG_PATH);
   globals::ENGINE_CONFIG = reinterpret_cast<EngineConfig *>(
       globals::PERSISTENT_ALLOCATOR->allocate(sizeof(EngineConfig)));
   if (exists) {
@@ -42,6 +42,16 @@ Application::Application() {
 
   m_window = BaseWindow::create();
   m_window->setEventCallback([this](Event &e) -> void { this->onEvent(e); });
+
+  // now that we have the window we can initialize the graphic
+  // initialize dx12
+  const int windowHeight = m_window->getHeight();
+  const int windowWidth = m_window->getWidth();
+  const bool result =
+      graphics::initializeGraphics(m_window, windowWidth, windowHeight);
+  if (!result) {
+    SE_CORE_ERROR("FATAL: could not initialize graphics");
+  }
 
   m_queuedEndOfFrameEvents[0].events =
       static_cast<Event **>(globals::PERSISTENT_ALLOCATOR->allocate(
