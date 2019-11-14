@@ -17,18 +17,16 @@ const DirectX::XMVECTOR Camera3DPivot::MOUSE_PAN_SPEED_VECTOR =
     DirectX::XMVectorSet(0.07f, 0.07f, 0.07f, 0.0f);
 
 DirectX::XMMATRIX Camera3DPivot::getMVP(DirectX::XMMATRIX modelM) {
-
-  int screenW = globals::SCREEN_WIDTH;
-  int screenH = globals::SCREEN_HEIGHT;
+  const int screenW = globals::SCREEN_WIDTH;
+  const int screenH = globals::SCREEN_HEIGHT;
   return XMMatrixMultiply(DirectX::XMMatrixMultiply(modelM, m_viewMatrix),
                           getProjCamera(screenW, screenH));
 }
 
 DirectX::XMMATRIX Camera3DPivot::getMVPInverse(DirectX::XMMATRIX modelM) {
-
-  int screenW = globals::SCREEN_WIDTH;
-  int screenH = globals::SCREEN_HEIGHT;
-  auto mat = XMMatrixMultiply(DirectX::XMMatrixMultiply(modelM, m_viewMatrix),
+  const int screenW = globals::SCREEN_WIDTH;
+  const int screenH = globals::SCREEN_HEIGHT;
+  const auto mat = XMMatrixMultiply(DirectX::XMMatrixMultiply(modelM, m_viewMatrix),
                               getProjCamera(screenW, screenH));
   auto det = DirectX::XMMatrixDeterminant(mat);
   return XMMatrixInverse(&det, mat);
@@ -41,14 +39,14 @@ DirectX::XMMATRIX Camera3DPivot::getViewInverse(DirectX::XMMATRIX modelM) {
 
 void Camera3DPivot::spinCameraWorldYAxis(float angleInDegrees) {
 
-  //this is a pivot camera, we want to rotate around the pivot	
+  // this is a pivot camera, we want to rotate around the pivot
   auto rotationMatrix = DirectX::XMMatrixRotationY(angleInDegrees);
 
-  //we translate the camera near the origin, compensating for look at position
+  // we translate the camera near the origin, compensating for look at position
   auto tempXPos = DirectX::XMVectorSubtract(posV, lookAtPosV);
-  //next we rotate
+  // next we rotate
   tempXPos = DirectX::XMVector3TransformCoord(tempXPos, rotationMatrix);
-  //adding back the offset of the look at
+  // adding back the offset of the look at
   posV = DirectX::XMVectorAdd(tempXPos, lookAtPosV);
 }
 
