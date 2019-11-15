@@ -340,8 +340,6 @@ bool newFrameDx12() {
   }
   // at this point we know we are ready to go
 
-  // Clear the back buffer and depth buffer.
-  float gray[4] = {0.5f, 0.9f, 0.5f, 1.0f};
   // Reuse the memory associated with command recording.
   // We can only reset when the associated command lists have finished
   // execution on the GPU.
@@ -456,8 +454,10 @@ bool Dx12RenderingContext::initializeGraphics() {
 void Dx12RenderingContext::setupCameraForFrame() {
   globals::MAIN_CAMERA->updateCamera();
   m_camBufferCPU.vFov = 60.0f;
-  m_camBufferCPU.screenWidth = static_cast<float>(globals::ENGINE_CONFIG->m_windowWidth);
-  m_camBufferCPU.screenHeight = static_cast<float>(globals::ENGINE_CONFIG->m_windowHeight);
+  m_camBufferCPU.screenWidth =
+      static_cast<float>(globals::ENGINE_CONFIG->m_windowWidth);
+  m_camBufferCPU.screenHeight =
+      static_cast<float>(globals::ENGINE_CONFIG->m_windowHeight);
   m_camBufferCPU.MVP = DirectX::XMMatrixTranspose(
       globals::MAIN_CAMERA->getMVP(DirectX::XMMatrixIdentity()));
   m_camBufferCPU.ViewMatrix = DirectX::XMMatrixTranspose(
@@ -623,14 +623,31 @@ bool Dx12RenderingContext::resize(uint32_t width, uint32_t height) {
                                   height);
 }
 
-void Dx12RenderingContext::flushGlobalCommandQueue() {
+bool Dx12RenderingContext::stopGraphic() { return stopGraphicsDx12(); }
+
+bool Dx12RenderingContext::shutdownGraphic() { return shutdownGraphicsDx12(); }
+
+void Dx12RenderingContext::flush() {
   flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
 }
 
-bool Dx12RenderingContext::stopGraphic() { return stopGraphicsDx12(); }
+void Dx12RenderingContext::executeGlobalCommandList() {
+  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
+  executeCommandList(dx12::GLOBAL_COMMAND_QUEUE, currentFc);
+  // if (shouldFlush) {
+  //  flush();
+  //}
+  // if (shouldResetCommandList) {
+  //  // if the command list is open we close it and reset it
+  //  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
+  //  if (!currentFc->isListOpen) {
+  //    dx12::resetAllocatorAndList(currentFc);
+  //  }
+  //}
+}
 
-bool Dx12RenderingContext::shutdownGraphic()
-{
-	return shutdownGraphicsDx12();
+void Dx12RenderingContext::resetGlobalCommandList() {
+  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
+  resetAllocatorAndList(currentFc);
 }
 } // namespace SirEngine::dx12

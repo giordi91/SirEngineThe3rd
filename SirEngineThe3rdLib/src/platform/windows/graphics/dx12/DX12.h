@@ -135,7 +135,7 @@ extern PSOManager *PSO_MANAGER;
 extern ShadersLayoutRegistry *SHADER_LAYOUT_REGISTRY;
 extern BufferManagerDx12 *BUFFER_MANAGER;
 extern DebugRenderer *DEBUG_RENDERER;
-extern Dx12RenderingContext* RENDERING_CONTEXT;
+extern Dx12RenderingContext *RENDERING_CONTEXT;
 
 inline UINT64 insertFenceToGlobalQueue() {
   // Advance the fence value to mark commands up to this fence point.
@@ -201,8 +201,6 @@ public:
 
   bool initializeGraphics() override;
 
-
-
   void setupCameraForFrame();
   void setupLightingForFrame();
   void bindCameraBuffer(int index) const;
@@ -240,16 +238,17 @@ public:
 
   inline ConstantBufferHandle getLightCB() const { return m_lightCB; }
   inline BoundingBox getBoundingBox() const { return m_boundingBox; }
-	
+
   bool newFrame() override;
   bool dispatchFrame() override;
   bool resize(uint32_t width, uint32_t height) override;
-  void flushGlobalCommandQueue();
-  bool stopGraphic()override;
+  bool stopGraphic() override;
   bool shutdownGraphic() override;
+  void flush() override;
+  void executeGlobalCommandList() override;
+  void resetGlobalCommandList() override;
 
 private:
-
   // member variable mostly temporary
   CameraBuffer m_camBufferCPU{};
   ConstantBufferHandle m_cameraHandle{};
@@ -262,7 +261,6 @@ private:
   TextureHandle m_brdfHandle;
   BoundingBox m_boundingBox;
   DebugDrawHandle m_lightAABBHandle{};
-
 };
 
 } // namespace dx12

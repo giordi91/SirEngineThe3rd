@@ -15,31 +15,17 @@ namespace SirEngine {
 
 static const char *CONFIG_PATH = "../data/engineConfig.json";
 
-void Application::loadConfigFile() {
-  // try to read the configuration file
-  const bool exists = fileExists(CONFIG_PATH);
-  globals::ENGINE_CONFIG = reinterpret_cast<EngineConfig *>(
-      globals::PERSISTENT_ALLOCATOR->allocate(sizeof(EngineConfig)));
-  if (exists) {
-    parseConfigFile(CONFIG_PATH, *globals::ENGINE_CONFIG);
-  } else {
-    initializeConfigDefault(*globals::ENGINE_CONFIG);
-  }
-}
 
 Application::Application() {
-  // initializing allocators as first thing so everything else can use it
-  globals::STRING_POOL = new StringPool(2 << 22); // 4 megabyte allocation
-  globals::FRAME_ALLOCATOR = new StackAllocator();
-  // TODO fix the interface to be same as other allocators
-  globals::FRAME_ALLOCATOR->initialize(2 << 22);
-  // allocating 20 mb
-  // TODO this should be a settings from somewhere
-  globals::PERSISTENT_ALLOCATOR = new ThreeSizesPool(20 * 1024 * 1024);
 
-  loadConfigFile();
+	
+  //this is in charge to start up the engine basic systems
+  
+  EngineInitializationConfig engineConfig{};
+  engineConfig.configPath = CONFIG_PATH;
+  engineConfig.initCoreWithNoConfig = false;
+  initializeEngine(engineConfig);
 
-  // TODO HARDCODED: this sould be comping from parse config file
   WindowProps windowProperty{};
   windowProperty.width = globals::ENGINE_CONFIG->m_windowWidth;
   windowProperty.height =globals::ENGINE_CONFIG->m_windowHeight; 
@@ -49,15 +35,12 @@ Application::Application() {
   m_window->setEventCallback([this](Event &e) -> void { this->onEvent(e); });
 
   // now that the window is created we can crate a rendering context
-  // HARDCODED
   RenderingContextCreationSettings creationSettings{};
   creationSettings.width = windowProperty.width;
   creationSettings.height = windowProperty.height;
-  creationSettings.graphicsAPI = GRAPHIC_API::DX12;
-  //creationSettings.graphicsAPI = graphics::GRAPHICS_API::VULKAN;
+  creationSettings.graphicsAPI = globals::ENGINE_CONFIG->m_graphicsAPI;
   creationSettings.window = m_window;
   creationSettings.apiConfig = {};
-
 
   globals::RENDERING_CONTEXT = RenderingContext::create(
       creationSettings, creationSettings.width, creationSettings.height);

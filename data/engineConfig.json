@@ -1,7 +1,12 @@
 {
+  "stringPoolSizeInMB": 25, 
+  "frameAllocatorSizeInMB": 20, 
+  "persistentAllocatorSizeInMB": 20, 
+
   "dataSource" :  "../data",
   "startingScene":  "../data/scenes/knightBOutdoorScene.json",
   "graphicAPI": "DX12",
+
   "windowTitle": "SirEngineThe3rd", 
   "windowWidth":  1280, 
   "windowHeight": 720 
