@@ -17,7 +17,6 @@ public:
   void pushLayer(Layer *layer);
 
 private:
-  static void loadConfigFile();
   bool onCloseWindow(WindowCloseEvent &e);
   bool onResizeWindow(WindowResizeEvent &e);
   inline void flipEndOfFrameQueue() {

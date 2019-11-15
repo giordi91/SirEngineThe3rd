@@ -105,6 +105,9 @@ public:
   virtual bool resize(uint32_t width, uint32_t height) = 0;
   virtual bool stopGraphic() = 0;
   virtual bool shutdownGraphic() = 0;
+  virtual void flush() = 0;
+  virtual void executeGlobalCommandList() = 0;
+  virtual void resetGlobalCommandList() = 0;
 
   inline const RenderingContextCreationSettings &getContextSettings() const {
     return m_settings;

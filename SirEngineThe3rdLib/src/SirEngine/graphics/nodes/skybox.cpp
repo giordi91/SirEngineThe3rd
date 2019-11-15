@@ -43,13 +43,15 @@ void SkyBoxPass::initialize() {
   rs = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(SKYBOX_RS);
   pso = dx12::PSO_MANAGER->getHandleFromName(SKYBOX_PSO);
 
-  dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
-  dx12::resetAllocatorAndList(&dx12::CURRENT_FRAME_RESOURCE->fc);
+  //dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
+  //if (!dx12::CURRENT_FRAME_RESOURCE->fc.isListOpen) {
+  //  dx12::resetAllocatorAndList(&dx12::CURRENT_FRAME_RESOURCE->fc);
+  //}
   dx12::MESH_MANAGER->loadMesh("../data/processed/meshes/skybox.model",
                                &m_meshRuntime, true);
-  dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE,
-                           &dx12::CURRENT_FRAME_RESOURCE->fc);
-  dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
+  //dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE,
+  //                         &dx12::CURRENT_FRAME_RESOURCE->fc);
+  //dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
 }
 
 inline TextureHandle getInputConnection(ResizableVector<const GPlug *> **conns,
@@ -100,8 +102,7 @@ void SkyBoxPass::compute() {
   globals::TEXTURE_MANAGER->bindRenderTarget(bufferHandle, depthHandle);
   commandList->SetGraphicsRootSignature(rs);
 
-  TextureHandle skyHandle =
-      dx12::RENDERING_CONTEXT->getEnviromentMapHandle();
+  TextureHandle skyHandle = dx12::RENDERING_CONTEXT->getEnviromentMapHandle();
   // TextureHandle skyHandle =
   // globals::RENDERING_CONTEX->getEnviromentMapIrradianceHandle();
   dx12::RENDERING_CONTEXT->bindCameraBuffer(0);
@@ -117,7 +118,6 @@ void SkyBoxPass::compute() {
   commandList->RSSetViewports(1, currViewport);
   annotateGraphicsEnd();
 }
-
 
 void SkyBoxPass::onResizeEvent(int, int) {
   clear();

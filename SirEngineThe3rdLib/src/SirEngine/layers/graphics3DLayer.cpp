@@ -33,10 +33,10 @@
 #include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/bufferManagerDx12.h"
 
+#include "SirEngine/engineConfig.h"
+#include "SirEngine/graphics/nodes/shadowPass.h"
 #include "SirEngine/scripting/scriptingContext.h"
 #include <SirEngine/events/scriptingEvent.h>
-#include "SirEngine/graphics/nodes/shadowPass.h"
-#include "SirEngine/engineConfig.h"
 
 namespace SirEngine {
 
@@ -49,20 +49,12 @@ void Graphics3DLayer::onAttach() {
   globals::MAIN_CAMERA->setPosition(0, 14, 10);
   globals::MAIN_CAMERA->updateCamera();
 
-  //globals::MAIN_CAMERA->setLookAt(0, 0, 0);
-  //globals::MAIN_CAMERA->setPosition(0, 0, 1);
-  //globals::MAIN_CAMERA->updateCamera();
-
-  dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
-  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
-
-  if (!currentFc->isListOpen) {
-    dx12::resetAllocatorAndList(currentFc);
-  }
-
+  globals::RENDERING_CONTEXT->flush();
+  globals::RENDERING_CONTEXT->resetGlobalCommandList();
   globals::ASSET_MANAGER->loadScene(globals::ENGINE_CONFIG->m_startScenePath);
-  dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE, currentFc);
-  dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
+  globals::RENDERING_CONTEXT->executeGlobalCommandList();
+  globals::RENDERING_CONTEXT->flush();
+  globals::RENDERING_CONTEXT->resetGlobalCommandList();
 
   alloc =
       new GraphAllocators{globals::STRING_POOL, globals::PERSISTENT_ALLOCATOR};
@@ -77,7 +69,7 @@ void Graphics3DLayer::onAttach() {
   // auto sky = new ProceduralSkyBoxPass("Procedural Sky");
   const auto sky = new SkyBoxPass(*alloc);
   const auto debugDraw = new DebugDrawNode(*alloc);
-  const auto shadowPass= new ShadowPass(*alloc);
+  const auto shadowPass = new ShadowPass(*alloc);
 
   postProcess->allocateRenderPass<SSSSSEffect>("SSSSS");
   postProcess->allocateRenderPass<GammaAndToneMappingEffect>(
@@ -101,8 +93,7 @@ void Graphics3DLayer::onAttach() {
                                       GBufferPassPBR::ASSET_STREAM);
 
   dx12::RENDERING_GRAPH->connectNodes(assetNode, AssetManagerNode::ASSET_STREAM,
-                                      shadowPass,
-                                      ShadowPass::ASSET_STREAM);
+                                      shadowPass, ShadowPass::ASSET_STREAM);
 
   dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::GEOMETRY_RT,
                                       lighting,
@@ -116,9 +107,9 @@ void Graphics3DLayer::onAttach() {
   dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::DEPTH_RT,
                                       lighting, DeferredLightingPass::DEPTH_RT);
 
-  dx12::RENDERING_GRAPH->connectNodes(shadowPass, ShadowPass::DIRECTIONAL_SHADOW_RT,
-                                      lighting,
-                                      DeferredLightingPass::DIRECTIONAL_SHADOW_RT);
+  dx12::RENDERING_GRAPH->connectNodes(
+      shadowPass, ShadowPass::DIRECTIONAL_SHADOW_RT, lighting,
+      DeferredLightingPass::DIRECTIONAL_SHADOW_RT);
 
   dx12::RENDERING_GRAPH->connectNodes(
       lighting, DeferredLightingPass::LIGHTING_RT, sky, SkyBoxPass::IN_TEXTURE);
@@ -132,9 +123,6 @@ void Graphics3DLayer::onAttach() {
   dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::DEPTH_RT,
                                       simpleForward, SimpleForward::DEPTH_RT);
 
-  // dx12::RENDERING_GRAPH->connectNodes(simpleForward,
-  // SimpleForward::OUT_TEXTURE,
-  //                                    postProcess, "inTexture");
   dx12::RENDERING_GRAPH->connectNodes(assetNode, AssetManagerNode::ASSET_STREAM,
                                       simpleForward,
                                       SimpleForward::ASSET_STREAM);
@@ -156,44 +144,17 @@ void Graphics3DLayer::onAttach() {
 
   dx12::RENDERING_GRAPH->finalizeGraph();
 
-  if (!currentFc->isListOpen) {
-    dx12::resetAllocatorAndList(currentFc);
-  }
-
-  // TODO REMOVE THIS
-  // const auto m_animation = globals::ANIMATION_MANAGER->loadAnimationConfig(
-  //    "../data/external/animation/exported/clip/knightBIdleConfig.json");
-  // auto m_animation2 = globals::ANIMATION_MANAGER->loadAnimationConfig(
-  //    "../data/external/animation/exported/clip/knightBIdleConfig.json");
-  // m_config = globals::ANIMATION_MANAGER->getConfig(m_animation);
-  // globals::ANIMATION_MANAGER->registerState(m_config.m_anim_state);
-
-  // dx12::DEBUG_RENDERER->drawSkeleton(m_config.m_skeleton,
-  //                                   DirectX::XMFLOAT4(0, 1, 0, 1), 0.05f);
-
-  dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE, currentFc);
-  dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
-
-  //auto bboxes = dx12::MESH_MANAGER->getBoundingBoxes();
-  //// dx12::DEBUG_RENDERER->drawBoundingBoxes(bboxes.data(), 1,
-  //dx12::DEBUG_RENDERER->drawBoundingBoxes(bboxes.data(),
-  //                                        static_cast<int>(bboxes.size()),
-  //                                        DirectX::XMFLOAT4{1, 1, 1, 1}, "");
-  // globals::SCRIPTING_CONTEXT->loadScript("../data/scripts/test.lua",true);
-
-  // TEMP
-  // animation is up to date, we can update the scene bounding boxes
-  dx12::RENDERING_CONTEXT->updateSceneBoundingBox();
-  // draw the scene bounding box
-  //BoundingBox aabb = globals::RENDERING_CONTEXT->getBoundingBox();
-  //dx12::DEBUG_RENDERER->drawBoundingBoxes(&aabb, 1,
-  //                                        DirectX::XMFLOAT4(0, 1, 0, 1), "");
+  // flushing whatever pending resource we have and leaving command list close,
+  // ready to start rendering frames
+  globals::RENDERING_CONTEXT->executeGlobalCommandList();
+  globals::RENDERING_CONTEXT->flush();
 
   auto light = dx12::RENDERING_CONTEXT->getLightData();
   dx12::DEBUG_RENDERER->drawMatrix(light.localToWorld, 3.0f,
                                    DirectX::XMFLOAT4(1, 0, 0, 1), "");
-  dx12::DEBUG_RENDERER->drawMatrix(globals::MAIN_CAMERA->getViewInverse(DirectX::XMMatrixIdentity()), 3.0f,
-                                   DirectX::XMFLOAT4(1, 0, 0, 1), "");
+  dx12::DEBUG_RENDERER->drawMatrix(
+      globals::MAIN_CAMERA->getViewInverse(DirectX::XMMatrixIdentity()), 3.0f,
+      DirectX::XMFLOAT4(1, 0, 0, 1), "");
 }
 void Graphics3DLayer::onDetach() {}
 void Graphics3DLayer::onUpdate() {
