@@ -3,10 +3,9 @@
 #include <SirEngine/memory/threeSizesPool.h>
 #include <cstdint>
 #include <d3d12.h>
+#include "engineConfig.h"
 
 namespace SirEngine::globals {
-uint32_t SCREEN_WIDTH = 1280;
-uint32_t SCREEN_HEIGHT = 720;
 Camera3DPivot *MAIN_CAMERA = nullptr;
 Clock<std::chrono::nanoseconds> GAME_CLOCK{};
 uint64_t LAST_FRAME_TIME_NS = 0;
@@ -32,13 +31,6 @@ StringPool *STRING_POOL = nullptr;
 StackAllocator *FRAME_ALLOCATOR = nullptr;
 ThreeSizesPool *PERSISTENT_ALLOCATOR = nullptr;
 
-D3D12_VIEWPORT CURRENT_VIEWPORT =
-    D3D12_VIEWPORT{0,
-                   0,
-                   static_cast<float>(SCREEN_WIDTH),
-                   static_cast<float>(SCREEN_HEIGHT),
-                   MIN_DEPTH,
-                   MAX_DEPTH};
 EngineConfig *ENGINE_CONFIG = nullptr;
 
 } // namespace SirEngine::globals

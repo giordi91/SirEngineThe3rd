@@ -15,6 +15,7 @@
 #include "SirEngine/graphics/postProcess/effects/SSSSSEffect.h"
 #include "SirEngine/graphics/postProcess/effects/gammaAndToneMappingEffect.h"
 #include "SirEngine/graphics/postProcess/postProcessStack.h"
+#include "SirEngine/engineConfig.h"
 
 namespace SirEngine::debug {
 
@@ -91,8 +92,8 @@ void inline plugToolTip(const char *name) {
   ImGui::EndTooltip();
 }
 void renderImguiGraph(GraphStatus *status) {
-  ImVec2 winPos{globals::SCREEN_WIDTH - status->GRAPH_WIDTH,
-                globals::SCREEN_HEIGHT - status->GRAPH_HEIGHT};
+  ImVec2 winPos{globals::ENGINE_CONFIG->m_windowWidth - status->GRAPH_WIDTH,
+                globals::ENGINE_CONFIG->m_windowHeight - status->GRAPH_HEIGHT};
   ImGui::SetNextWindowPos(winPos, ImGuiSetCond_FirstUseEver);
   ImGui::SetNextWindowSize(ImVec2(status->GRAPH_WIDTH, status->GRAPH_HEIGHT),
                            ImGuiSetCond_Always);

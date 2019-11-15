@@ -11,7 +11,6 @@
 
 #include "SirEngine/events/scriptingEvent.h"
 #include "SirEngine/events/shaderCompileEvent.h"
-#include "SirEngine/graphics/graphicsCore.h"
 #include "SirEngine/input.h"
 #include "SirEngine/scripting/scriptingContext.h"
 #include "platform/windows/graphics/dx12/swapChain.h"

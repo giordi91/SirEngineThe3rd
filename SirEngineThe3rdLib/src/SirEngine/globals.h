@@ -36,8 +36,6 @@ struct DebugFrameData {
   TextureHandle directionalShadow;
 };
 
-extern unsigned int SCREEN_WIDTH;
-extern unsigned int SCREEN_HEIGHT;
 extern Camera3DPivot *MAIN_CAMERA;
 extern Clock<std::chrono::nanoseconds> GAME_CLOCK;
 extern uint64_t LAST_FRAME_TIME_NS;
@@ -66,8 +64,9 @@ extern SIR_ENGINE_API StackAllocator *FRAME_ALLOCATOR;
 extern SIR_ENGINE_API ThreeSizesPool *PERSISTENT_ALLOCATOR;
 
 // config
-extern D3D12_VIEWPORT CURRENT_VIEWPORT;
+//extern D3D12_VIEWPORT CURRENT_VIEWPORT;
 extern EngineConfig *ENGINE_CONFIG;
+
 
 } // namespace globals
 typedef unsigned char uchar;

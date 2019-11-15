@@ -1,6 +1,7 @@
 #pragma once
 #include "SirEngine/globals.h"
 #include <directxmath.h>
+#include "SirEngine/engineConfig.h"
 
 namespace SirEngine {
 
@@ -50,8 +51,8 @@ public:
   }
   inline DirectX::XMFLOAT4 getProjParams() const {
     // preparing camera values for deferred
-    int screenW = globals::SCREEN_WIDTH;
-    int screenH = globals::SCREEN_HEIGHT;
+    int screenW = globals::ENGINE_CONFIG->m_windowWidth;
+    int screenH = globals::ENGINE_CONFIG->m_windowHeight;
     auto proj = getProjCamera(screenW, screenH);
     DirectX::XMFLOAT4X4 projView;
     DirectX::XMStoreFloat4x4(&projView, proj);

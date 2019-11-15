@@ -49,18 +49,18 @@ GBufferPassPBR::GBufferPassPBR(GraphAllocators &allocators)
 void GBufferPassPBR::initialize() {
 
   m_depth = dx12::TEXTURE_MANAGER->createDepthTexture(
-      "gbufferDepth", globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT);
+      "gbufferDepth", globals::ENGINE_CONFIG->m_windowWidth, globals::ENGINE_CONFIG->m_windowHeight);
 
   m_geometryBuffer = globals::TEXTURE_MANAGER->allocateRenderTexture(
-      globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT, RenderTargetFormat::RGBA32,
+      globals::ENGINE_CONFIG->m_windowWidth, globals::ENGINE_CONFIG->m_windowHeight, RenderTargetFormat::RGBA32,
       "geometryBuffer");
 
   m_normalBuffer = globals::TEXTURE_MANAGER->allocateRenderTexture(
-      globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT,
+      globals::ENGINE_CONFIG->m_windowWidth, globals::ENGINE_CONFIG->m_windowHeight,
       RenderTargetFormat::R11G11B10_UNORM, "normalBuffer");
 
   m_specularBuffer = globals::TEXTURE_MANAGER->allocateRenderTexture(
-      globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT, RenderTargetFormat::RGBA32,
+      globals::ENGINE_CONFIG->m_windowWidth, globals::ENGINE_CONFIG->m_windowHeight, RenderTargetFormat::RGBA32,
       "specularBuffer");
 }
 
