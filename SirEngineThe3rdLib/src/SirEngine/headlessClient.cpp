@@ -1,7 +1,5 @@
 #include "SirEngine/headlessClient.h"
-#include "SirEngine/graphics/graphicsCore.h"
 #include "platform/windows/graphics/dx12/DX12.h"
-#include <cassert>
 
 namespace SirEngine {
 HeadlessClient::HeadlessClient() {

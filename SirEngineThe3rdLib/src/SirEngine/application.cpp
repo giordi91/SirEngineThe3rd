@@ -1,6 +1,5 @@
 #include "SirEngine/application.h"
 #include "SirEngine/globals.h"
-#include "SirEngine/graphics/graphicsCore.h"
 #include "SirEngine/layer.h"
 #include "SirEngine/log.h"
 #include "engineConfig.h"
@@ -10,7 +9,6 @@
 #include <random>
 
 #include "SirEngine/input.h"
-#include "SirEngine/runtimeString.h"
 #include "graphics/renderingContext.h"
 
 namespace SirEngine {
@@ -43,9 +41,9 @@ Application::Application() {
 
   // TODO HARDCODED: this sould be comping from parse config file
   WindowProps windowProperty{};
-  windowProperty.width = 1280;
-  windowProperty.height = 720;
-  windowProperty.title = "editor";
+  windowProperty.width = globals::ENGINE_CONFIG->m_windowWidth;
+  windowProperty.height =globals::ENGINE_CONFIG->m_windowHeight; 
+  windowProperty.title = globals::ENGINE_CONFIG->m_windowTitle;
 
   m_window = BaseWindow::create(windowProperty);
   m_window->setEventCallback([this](Event &e) -> void { this->onEvent(e); });
@@ -63,21 +61,10 @@ Application::Application() {
 
   globals::RENDERING_CONTEXT = RenderingContext::create(
       creationSettings, creationSettings.width, creationSettings.height);
-  bool result = globals::RENDERING_CONTEXT->initializeGraphics();
+  const bool result = globals::RENDERING_CONTEXT->initializeGraphics();
   if (!result) {
       exit( EXIT_FAILURE);
   }
-  /*
-  // now that we have the window we can initialize the graphic
-  // initialize dx12
-  const int windowHeight = m_window->getHeight();
-  const int windowWidth = m_window->getWidth();
-  const bool result =
-      graphics::initializeGraphics(m_window, windowWidth, windowHeight);
-  if (!result) {
-    SE_CORE_ERROR("FATAL: could not initialize graphics");
-  }
-  */
 
   m_queuedEndOfFrameEvents[0].events =
       static_cast<Event **>(globals::PERSISTENT_ALLOCATOR->allocate(
@@ -173,11 +160,11 @@ bool Application::onCloseWindow(WindowCloseEvent &) {
   return true;
 }
 bool Application::onResizeWindow(WindowResizeEvent &e) {
-  globals::SCREEN_WIDTH = e.getWidth();
-  globals::SCREEN_HEIGHT = e.getHeight();
+  globals::ENGINE_CONFIG->m_windowWidth= e.getWidth();
+  globals::ENGINE_CONFIG->m_windowHeight = e.getHeight();
 
-  m_window->onResize(globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT);
-  globals::RENDERING_CONTEXT->resize(globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT);
+  m_window->onResize(globals::ENGINE_CONFIG->m_windowWidth, globals::ENGINE_CONFIG->m_windowHeight);
+  globals::RENDERING_CONTEXT->resize(globals::ENGINE_CONFIG->m_windowWidth, globals::ENGINE_CONFIG->m_windowHeight);
 
   // push the resize event to everyone in case is needed
   const int count = m_layerStack.count();

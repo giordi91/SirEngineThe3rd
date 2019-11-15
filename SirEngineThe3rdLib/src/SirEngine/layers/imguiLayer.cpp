@@ -61,8 +61,8 @@ void ImguiLayer::onAttach() {
       reinterpret_cast<LARGE_INTEGER *>(&g_TicksPerSecond));
   ::QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER *>(&g_Time));
 
-  io.DisplaySize = ImVec2(static_cast<float>(globals::SCREEN_WIDTH),
-                          static_cast<float>(globals::SCREEN_HEIGHT));
+  io.DisplaySize = ImVec2(static_cast<float>(globals::ENGINE_CONFIG->m_windowWidth),
+                          static_cast<float>(globals::ENGINE_CONFIG->m_windowHeight));
 
   m_renderGraph.initialize(dx12::RENDERING_GRAPH);
   m_shaderWidget.initialize();

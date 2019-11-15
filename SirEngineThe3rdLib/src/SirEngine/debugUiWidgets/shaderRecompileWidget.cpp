@@ -190,7 +190,7 @@ static bool fuzzy_match_simple(char const *pattern, char const *str) {
 }
 void ShaderCompilerWidget::render() {
 
-  ImVec2 winPos{globals::SCREEN_WIDTH - width - 100, 0};
+  ImVec2 winPos{globals::ENGINE_CONFIG->m_windowWidth - width - 100, 0};
   ImGui::SetNextWindowPos(winPos, ImGuiSetCond_FirstUseEver);
   ImGui::SetNextWindowSize(ImVec2(width, height), ImGuiSetCond_FirstUseEver);
   if (!ImGui::Begin("Shader HOTTTT recompile", &opened)) {

@@ -17,15 +17,15 @@ const DirectX::XMVECTOR Camera3DPivot::MOUSE_PAN_SPEED_VECTOR =
     DirectX::XMVectorSet(0.07f, 0.07f, 0.07f, 0.0f);
 
 DirectX::XMMATRIX Camera3DPivot::getMVP(DirectX::XMMATRIX modelM) {
-  const int screenW = globals::SCREEN_WIDTH;
-  const int screenH = globals::SCREEN_HEIGHT;
+  const int screenW = globals::ENGINE_CONFIG->m_windowWidth;
+  const int screenH = globals::ENGINE_CONFIG->m_windowHeight;
   return XMMatrixMultiply(DirectX::XMMatrixMultiply(modelM, m_viewMatrix),
                           getProjCamera(screenW, screenH));
 }
 
 DirectX::XMMATRIX Camera3DPivot::getMVPInverse(DirectX::XMMATRIX modelM) {
-  const int screenW = globals::SCREEN_WIDTH;
-  const int screenH = globals::SCREEN_HEIGHT;
+  const int screenW = globals::ENGINE_CONFIG->m_windowWidth;
+  const int screenH = globals::ENGINE_CONFIG->m_windowHeight;
   const auto mat = XMMatrixMultiply(DirectX::XMMatrixMultiply(modelM, m_viewMatrix),
                               getProjCamera(screenW, screenH));
   auto det = DirectX::XMMatrixDeterminant(mat);

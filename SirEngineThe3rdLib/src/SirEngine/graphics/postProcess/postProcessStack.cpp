@@ -39,10 +39,10 @@ void PostProcessStack::initialize() {
 
   // allocate ping pong textures
   handles[0] = globals::TEXTURE_MANAGER->allocateRenderTexture(
-      globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT,
+      globals::ENGINE_CONFIG->m_windowWidth, globals::ENGINE_CONFIG->m_windowHeight,
       RenderTargetFormat::R16G16B16A16_FLOAT, "postProcess1");
   handles[1] = globals::TEXTURE_MANAGER->allocateRenderTexture(
-      globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT,
+      globals::ENGINE_CONFIG->m_windowWidth, globals::ENGINE_CONFIG->m_windowHeight,
       RenderTargetFormat::R16G16B16A16_FLOAT, "postProcess2");
 }
 

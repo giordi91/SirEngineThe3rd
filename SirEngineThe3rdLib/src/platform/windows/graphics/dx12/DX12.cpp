@@ -456,8 +456,8 @@ bool Dx12RenderingContext::initializeGraphics() {
 void Dx12RenderingContext::setupCameraForFrame() {
   globals::MAIN_CAMERA->updateCamera();
   m_camBufferCPU.vFov = 60.0f;
-  m_camBufferCPU.screenWidth = static_cast<float>(globals::SCREEN_WIDTH);
-  m_camBufferCPU.screenHeight = static_cast<float>(globals::SCREEN_HEIGHT);
+  m_camBufferCPU.screenWidth = static_cast<float>(globals::ENGINE_CONFIG->m_windowWidth);
+  m_camBufferCPU.screenHeight = static_cast<float>(globals::ENGINE_CONFIG->m_windowHeight);
   m_camBufferCPU.MVP = DirectX::XMMatrixTranspose(
       globals::MAIN_CAMERA->getMVP(DirectX::XMMatrixIdentity()));
   m_camBufferCPU.ViewMatrix = DirectX::XMMatrixTranspose(

@@ -283,8 +283,8 @@ void FramePassDebugNode::reduceDepth(const TextureHandle source) const {
 
   dx12::PSO_MANAGER->bindPSO(m_depthReducePSOHandle, commandList);
 
-  const uint32_t width = globals::SCREEN_WIDTH;
-  const uint32_t height = globals::SCREEN_HEIGHT;
+  const uint32_t width = globals::ENGINE_CONFIG->m_windowWidth;
+  const uint32_t height = globals::ENGINE_CONFIG->m_windowHeight;
   const uint32_t blockWidth = 64;
   const uint32_t blockHeight = 4;
   const uint32_t gx =
