@@ -1,17 +1,23 @@
 #pragma once
+#include "graphics/graphicsDefines.h"
 
 namespace SirEngine {
 
-enum class GRAPHIC_API { DX12 = 0, VULKAN = 1, UNKNOWN };
 
 struct EngineConfig {
+  bool m_verboseStartup;
+
+  ADAPTER_VENDOR m_adapterVendor;
+  bool m_vendorTolerant;
+  ADAPTER_SELECTION_RULE m_adapterSelectionRule;
+
   const char *m_dataSourcePath;
   const char *m_startScenePath;
   GRAPHIC_API m_graphicsAPI;
+
   const char *m_windowTitle;
   int m_windowWidth;
   int m_windowHeight;
-  bool m_verboseStartup;
 };
 
 struct EngineInitializationConfig {
