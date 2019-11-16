@@ -1,7 +1,7 @@
 #include "platform/windows/graphics/dx12/memoryDebug.h"
 #include "SirEngine/log.h"
 #include "platform/windows/graphics/dx12/DX12.h"
-#include "platform/windows/graphics/dx12/adapter.h"
+#include "platform/windows/graphics/dx12/dx12Adapter.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include <imgui/imgui.h>
 #include <iomanip>

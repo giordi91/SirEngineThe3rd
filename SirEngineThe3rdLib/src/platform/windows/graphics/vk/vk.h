@@ -2,14 +2,13 @@
 #include <vulkan/vulkan.h>
 
 #include "SirEngine/graphics/renderingContext.h"
-#include <Windows.h>
 #include <cassert>
 #include <vector>
 
 namespace SirEngine {
 namespace vk {
 
-struct Swapchain;
+struct VkSwapchain;
 
 // runtime instances
 extern VkInstance INSTANCE;
@@ -18,7 +17,7 @@ extern VkDevice LOGICAL_DEVICE;
 extern VkQueue GRAPHICS_QUEUE;
 extern VkQueue COMPUTE_QUEUE;
 extern VkPhysicalDevice PHYSICAL_DEVICE;
-extern Swapchain *SWAP_CHAIN;
+extern VkSwapchain *SWAP_CHAIN;
 extern VkRenderPass RENDER_PASS;
 extern VkSemaphore IMAGE_ACQUIRED_SEMAPHORE;
 extern VkSemaphore READY_TO_PRESENT_SEMAPHORE;
@@ -28,6 +27,7 @@ extern VkFormat IMAGE_FORMAT;
 extern VkPipelineLayout PIPELINE_LAYOUT;
 extern VkDebugReportCallbackEXT DEBUG_CALLBACK;
 extern VkDebugUtilsMessengerEXT DEBUG_CALLBACK2;
+extern VkQueue PRESENTATION_QUEUE;
 
 extern std::vector<VkDescriptorSetLayout> LAYOUTS_TO_DELETE;
 

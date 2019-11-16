@@ -1,14 +1,16 @@
-#include "VulkanFunctions.h"
+#include "platform/windows/graphics/vk/VulkanFunctions.h"
 #include "platform/windows/graphics/vk/vkLoad.h"
 //#include "SirEngine/globals.h"
-//#include "swapchain.h"
 #include "SirEngine/Window.h"
+#include "SirEngine/engineConfig.h"
+#include "SirEngine/globals.h"
 #include "SirEngine/log.h"
 #include "platform/windows/graphics/vk/vk.h"
+#include "platform/windows/graphics/vk/vkSwapchain.h"
+#include "vkAdapter.h"
 #include <cassert>
 
-namespace SirEngine {
-namespace vk {
+namespace SirEngine::vk {
 VkInstance INSTANCE = nullptr;
 VkSurfaceKHR SURFACE = nullptr;
 static HMODULE VULKAN_LIBRARY = nullptr;
@@ -17,7 +19,7 @@ VkQueue GRAPHICS_QUEUE = nullptr;
 VkQueue COMPUTE_QUEUE = nullptr;
 VkQueue PRESENTATION_QUEUE = nullptr;
 VkPhysicalDevice PHYSICAL_DEVICE = nullptr;
-// Swapchain *SWAP_CHAIN = nullptr;
+VkSwapchain *SWAP_CHAIN = nullptr;
 VkRenderPass RENDER_PASS = nullptr;
 VkSemaphore IMAGE_ACQUIRED_SEMAPHORE = nullptr;
 VkSemaphore READY_TO_PRESENT_SEMAPHORE = nullptr;
@@ -72,68 +74,30 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
 
   assert(VK_SUCCESS == result);
 
-  // Logical device creation
-  std::vector<VkPhysicalDevice> physicalDevices;
-  enumerateAvailablePhysicalDevices(INSTANCE, physicalDevices);
+  // new adapter code here
+  AdapterRequestConfig adapterConfig;
+  adapterConfig.m_vendor = ADAPTER_VENDOR::ANY;
+  adapterConfig.vendorTolerant = true;
+  adapterConfig.genericRule = ADAPTER_SELECTION_RULE::LARGEST_FRAME_BUFFER;
 
-  uint32_t graphicsQueueFamilyIndex = 0;
-  uint32_t presentQueueFamilyIndex;
-  for (auto &physicalDevice : physicalDevices) {
-    if (!selectIndexOfQueueFamilyWithDesiredCapabilities(
-            physicalDevice, VK_QUEUE_GRAPHICS_BIT, graphicsQueueFamilyIndex)) {
-      continue;
-    }
-
-    if (!selectQueueFamilyThatSupportsPresentationToGivenSurface(
-            physicalDevice, SURFACE, presentQueueFamilyIndex)) {
-      continue;
-    }
-
-    std::vector<QueueInfo> requestedQueues = {
-        {graphicsQueueFamilyIndex, {1.0f}}};
-    if (graphicsQueueFamilyIndex != presentQueueFamilyIndex) {
-      requestedQueues.push_back({presentQueueFamilyIndex, {1.0f}});
-    }
-    std::vector<char const *> deviceExtensions;
-
-    VkPhysicalDevice8BitStorageFeaturesKHR feature8{
-        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_8BIT_STORAGE_FEATURES_KHR};
-    feature8.storageBuffer8BitAccess = true;
-    feature8.uniformAndStorageBuffer8BitAccess = true;
-
-    VkPhysicalDeviceFeatures2 deviceFeatures{
-        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2};
-    deviceFeatures.features = {};
-    deviceFeatures.features.vertexPipelineStoresAndAtomics = true;
-    deviceFeatures.features.geometryShader = true;
-
-    deviceFeatures.pNext = &feature8;
-
-    if (!createLogicalDeviceWithWsiExtensionsEnabled(
-            physicalDevice, requestedQueues, deviceExtensions, &deviceFeatures,
-            LOGICAL_DEVICE)) {
-      continue;
-    } else {
-      if (!loadDeviceLevelFunctions(LOGICAL_DEVICE, deviceExtensions)) {
-        continue;
-      }
-      PHYSICAL_DEVICE = physicalDevice;
-      // LOGICAL_DEVICE= std::move(logical_device);
-      getDeviceQueue(LOGICAL_DEVICE, graphicsQueueFamilyIndex, 0,
-                     GRAPHICS_QUEUE);
-      getDeviceQueue(LOGICAL_DEVICE, presentQueueFamilyIndex, 0,
-                     PRESENTATION_QUEUE);
-      break;
-    }
+  AdapterResult adapterResult;
+  bool adapterFound = getBestAdapter(adapterConfig, adapterResult);
+  assert(adapterFound);
+  PHYSICAL_DEVICE = adapterResult.physicalDevice;
+  LOGICAL_DEVICE = adapterResult.device;
+  if (globals::ENGINE_CONFIG->m_verboseStartup) {
+    logPhysicalDevice(PHYSICAL_DEVICE);
   }
 
-  assert(LOGICAL_DEVICE != nullptr);
+  getDeviceQueue(LOGICAL_DEVICE, adapterResult.graphicsQueueFamilyIndex, 0,
+                 GRAPHICS_QUEUE);
+  getDeviceQueue(LOGICAL_DEVICE, adapterResult.presentQueueFamilyIndex, 0,
+                 PRESENTATION_QUEUE);
+
   // create swap
-  /*
-  const auto swapchain = new Swapchain();
-  createSwapchain(LOGICAL_DEVICE, PHYSICAL_DEVICE, SURFACE,
-                  globals::SCREEN_WIDTH, globals::SCREEN_HEIGHT, SWAP_CHAIN,
-                  *swapchain, RENDER_PASS);
+  const auto swapchain = new VkSwapchain();
+  createSwapchain(LOGICAL_DEVICE, PHYSICAL_DEVICE, SURFACE, width, height,
+                  SWAP_CHAIN, *swapchain, RENDER_PASS);
   SWAP_CHAIN = swapchain;
 
   if (!newSemaphore(LOGICAL_DEVICE, IMAGE_ACQUIRED_SEMAPHORE)) {
@@ -145,9 +109,9 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   }
 
   // Command buffers creation
-  if (!createCommandPool(LOGICAL_DEVICE,
-                         VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-                         graphicsQueueFamilyIndex, COMMAND_POOL)) {
+  if (!createCommandPool(
+          LOGICAL_DEVICE, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+          adapterResult.graphicsQueueFamilyIndex, COMMAND_POOL)) {
     assert(0);
   }
 
@@ -158,7 +122,6 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
     assert(0);
   }
   COMMAND_BUFFER = commandBuffers[0];
-  */
   return true;
 }
 
@@ -286,8 +249,9 @@ createVkRenderingContext(const RenderingContextCreationSettings &settings,
   return new VkRenderingContext(settings, width, height);
 }
 
-VkRenderingContext::VkRenderingContext(const RenderingContextCreationSettings& settings, uint32_t width,
-	uint32_t height)
+VkRenderingContext::VkRenderingContext(
+    const RenderingContextCreationSettings &settings, uint32_t width,
+    uint32_t height)
     : RenderingContext(settings, width, height) {
   SE_CORE_INFO("Initializing a Vulkan context");
 }
@@ -333,5 +297,4 @@ void VkRenderingContext::flush() { assert(0); }
 void VkRenderingContext::executeGlobalCommandList() { assert(0); }
 
 void VkRenderingContext::resetGlobalCommandList() { assert(0); }
-} // namespace vk
-} // namespace SirEngine
+} // namespace SirEngine::vk

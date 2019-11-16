@@ -10,7 +10,7 @@
 #include "platform/windows/graphics/dx12/imgui_impl_dx12.h"
 
 #include "platform/windows/graphics/dx12/TextureManagerDx12.h"
-#include "platform/windows/graphics/dx12/swapChain.h"
+#include "platform/windows/graphics/dx12/dx12SwapChain.h"
 
 #include "SirEngine/application.h"
 #include "SirEngine/events/applicationEvent.h"
@@ -57,7 +57,6 @@ void ImguiLayer::onAttach() {
   io.KeyMap[ImGuiKey_Y] = 'Y';
   io.KeyMap[ImGuiKey_Z] = 'Z';
 
-  return;
   ::QueryPerformanceFrequency(
       reinterpret_cast<LARGE_INTEGER *>(&g_TicksPerSecond));
   ::QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER *>(&g_Time));

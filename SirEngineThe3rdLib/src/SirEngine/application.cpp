@@ -10,17 +10,16 @@
 
 #include "SirEngine/input.h"
 #include "graphics/renderingContext.h"
+#include "layers/vkTempLayer.h"
 
 namespace SirEngine {
 
 static const char *CONFIG_PATH = "../data/engineConfig.json";
 
-
 Application::Application() {
 
-	
-  //this is in charge to start up the engine basic systems
-  
+  // this is in charge to start up the engine basic systems
+
   EngineInitializationConfig engineConfig{};
   engineConfig.configPath = CONFIG_PATH;
   engineConfig.initCoreWithNoConfig = false;
@@ -28,7 +27,7 @@ Application::Application() {
 
   WindowProps windowProperty{};
   windowProperty.width = globals::ENGINE_CONFIG->m_windowWidth;
-  windowProperty.height =globals::ENGINE_CONFIG->m_windowHeight; 
+  windowProperty.height = globals::ENGINE_CONFIG->m_windowHeight;
   windowProperty.title = globals::ENGINE_CONFIG->m_windowTitle;
 
   m_window = BaseWindow::create(windowProperty);
@@ -38,8 +37,9 @@ Application::Application() {
   RenderingContextCreationSettings creationSettings{};
   creationSettings.width = windowProperty.width;
   creationSettings.height = windowProperty.height;
-  //creationSettings.graphicsAPI = globals::ENGINE_CONFIG->m_graphicsAPI;
+  // creationSettings.graphicsAPI = globals::ENGINE_CONFIG->m_graphicsAPI;
   creationSettings.graphicsAPI = GRAPHIC_API::VULKAN;
+  //creationSettings.graphicsAPI = GRAPHIC_API::DX12;
   creationSettings.window = m_window;
   creationSettings.apiConfig = {};
 
@@ -47,7 +47,7 @@ Application::Application() {
       creationSettings, creationSettings.width, creationSettings.height);
   const bool result = globals::RENDERING_CONTEXT->initializeGraphics();
   if (!result) {
-      exit( EXIT_FAILURE);
+    exit(EXIT_FAILURE);
   }
 
   m_queuedEndOfFrameEvents[0].events =
@@ -60,10 +60,15 @@ Application::Application() {
   m_queuedEndOfFrameEvents[1].totalSize = RESERVE_ALLOC_EVENT_QUEUE;
   m_queuedEndOfFrameEventsCurrent = &m_queuedEndOfFrameEvents[0];
 
-  imGuiLayer = new ImguiLayer();
-  graphicsLayer = new Graphics3DLayer();
-  m_layerStack.pushLayer(graphicsLayer);
-  m_layerStack.pushLayer(imGuiLayer);
+  if (globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::DX12) {
+    imGuiLayer = new ImguiLayer();
+    graphicsLayer = new Graphics3DLayer();
+    m_layerStack.pushLayer(graphicsLayer);
+    m_layerStack.pushLayer(imGuiLayer);
+  } else {
+    graphicsLayer = new VkTempLayer();
+    m_layerStack.pushLayer(graphicsLayer);
+  }
   globals::APPLICATION = this;
 }
 
@@ -105,7 +110,6 @@ void Application::run() {
 
   // shutdown anything graphics related;
   globals::RENDERING_CONTEXT->shutdownGraphic();
-
 }
 void Application::queueEventForEndOfFrame(Event *e) const {
   const int alloc = m_queuedEndOfFrameEventsCurrent->allocCount;
@@ -144,11 +148,13 @@ bool Application::onCloseWindow(WindowCloseEvent &) {
   return true;
 }
 bool Application::onResizeWindow(WindowResizeEvent &e) {
-  globals::ENGINE_CONFIG->m_windowWidth= e.getWidth();
+  globals::ENGINE_CONFIG->m_windowWidth = e.getWidth();
   globals::ENGINE_CONFIG->m_windowHeight = e.getHeight();
 
-  m_window->onResize(globals::ENGINE_CONFIG->m_windowWidth, globals::ENGINE_CONFIG->m_windowHeight);
-  globals::RENDERING_CONTEXT->resize(globals::ENGINE_CONFIG->m_windowWidth, globals::ENGINE_CONFIG->m_windowHeight);
+  m_window->onResize(globals::ENGINE_CONFIG->m_windowWidth,
+                     globals::ENGINE_CONFIG->m_windowHeight);
+  globals::RENDERING_CONTEXT->resize(globals::ENGINE_CONFIG->m_windowWidth,
+                                     globals::ENGINE_CONFIG->m_windowHeight);
 
   // push the resize event to everyone in case is needed
   const int count = m_layerStack.count();

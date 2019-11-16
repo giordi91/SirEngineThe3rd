@@ -16,9 +16,9 @@ class DependencyGraph;
 namespace dx12 {
 class TextureManagerDx12;
 class MeshManager;
-class Adapter;
+class Dx12Adapter;
 class DescriptorHeap;
-class SwapChain;
+class Dx12SwapChain;
 class ConstantBufferManagerDx12;
 class ShaderManager;
 class RootSignatureManager;
@@ -112,14 +112,14 @@ typedef ID3D12Device3 D3D12DeviceType;
 extern D3D12DeviceType *DEVICE;
 extern ID3D12Debug *DEBUG_CONTROLLER;
 extern IDXGIFactory6 *DXGI_FACTORY;
-extern Adapter *ADAPTER;
+extern Dx12Adapter *ADAPTER;
 extern UINT64 CURRENT_FENCE;
 extern DescriptorHeap *GLOBAL_CBV_SRV_UAV_HEAP;
 extern DescriptorHeap *GLOBAL_RTV_HEAP;
 extern DescriptorHeap *GLOBAL_DSV_HEAP;
 extern ID3D12CommandQueue *GLOBAL_COMMAND_QUEUE;
 extern ID3D12Fence *GLOBAL_FENCE;
-extern SwapChain *SWAP_CHAIN;
+extern Dx12SwapChain *SWAP_CHAIN;
 extern FrameResource FRAME_RESOURCES[FRAME_BUFFERS_COUNT];
 extern FrameResource *CURRENT_FRAME_RESOURCE;
 // resource managers

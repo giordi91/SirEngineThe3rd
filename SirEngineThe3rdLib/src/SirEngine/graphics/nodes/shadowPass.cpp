@@ -7,7 +7,7 @@
 #include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
 #include "platform/windows/graphics/dx12/textureManagerDx12.h"
-#include "platform/windows/graphics/dx12/swapChain.h"
+#include "platform/windows/graphics/dx12/dx12SwapChain.h"
 
 namespace SirEngine {
 ShadowPass::ShadowPass(GraphAllocators &allocators)

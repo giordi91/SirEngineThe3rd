@@ -1,5 +1,5 @@
 
-#include "platform/windows/graphics/dx12/swapChain.h"
+#include "platform/windows/graphics/dx12/dx12SwapChain.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/d3dx12.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
@@ -13,13 +13,13 @@ const char *BACK_BUFFER_NAMES[3]{"backBuffer1", "backBuffer2", "backBuffer3"};
 
 }
 
-SwapChain::~SwapChain() {
+Dx12SwapChain::~Dx12SwapChain() {
   for (int i = 0; i < FRAME_BUFFERS_COUNT; ++i) {
     dx12::TEXTURE_MANAGER->free(m_swapChainBuffersHandles[i]);
   }
   dx12::TEXTURE_MANAGER->free(m_swapChainDepth);
 }
-bool SwapChain::initialize(const HWND window, const int width,
+bool Dx12SwapChain::initialize(const HWND window, const int width,
                            const int height) {
 
   // Check 4X MSAA quality support for our back buffer format.
@@ -65,7 +65,7 @@ bool SwapChain::initialize(const HWND window, const int width,
   return FAILED(result);
 }
 
-bool SwapChain::resize(FrameCommand *command, const int width,
+bool Dx12SwapChain::resize(FrameCommand *command, const int width,
                        const int height) {
 
   // Flush before changing any resources.

@@ -215,9 +215,7 @@ assert(callbackResult == VK_SUCCESS);
       VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
   debug_utils_messenger_create_info.messageSeverity =
       VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT |
-      VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
-      VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
-      VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT;
+      VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT; 
   debug_utils_messenger_create_info.messageType =
       VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
       VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT |
@@ -469,47 +467,6 @@ bool createLogicalDevice(const VkPhysicalDevice physicalDevice,
     std::cout << "Could not create logical device." << std::endl;
     return false;
   }
-  VkPhysicalDeviceProperties properties;
-  VkPhysicalDeviceMemoryProperties memoryProperties;
-  vkGetPhysicalDeviceProperties(physicalDevice, &properties);
-  vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memoryProperties);
-  std::cout << "Physical device used:\n"
-            << properties.deviceName
-            << "\nDriver version: " << properties.driverVersion << "\nVRAM: ";
-  for (unsigned int i = 0; i < memoryProperties.memoryHeapCount; ++i) {
-    std::cout << "\n    Heap size:"
-              << memoryProperties.memoryHeaps[i].size * 1.0e-9 << " GB\n"
-              << "    Heap type: \n";
-    for (unsigned int h = 0; h < memoryProperties.memoryTypeCount; ++h) {
-      if (memoryProperties.memoryTypes[h].heapIndex == i) {
-        if (memoryProperties.memoryTypes[h].propertyFlags &
-            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) {
-          std::cout << "        DEVICE_LOCAL\n";
-        }
-        if (memoryProperties.memoryTypes[h].propertyFlags &
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) {
-          std::cout << "        HOST_VISIBLE\n";
-        }
-        if (memoryProperties.memoryTypes[h].propertyFlags &
-            VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) {
-          std::cout << "        HOST_COHERENT\n";
-        }
-        if (memoryProperties.memoryTypes[h].propertyFlags &
-            VK_MEMORY_PROPERTY_HOST_CACHED_BIT) {
-          std::cout << "        HOST_CACHED\n";
-        }
-        if (memoryProperties.memoryTypes[h].propertyFlags &
-            VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT) {
-          std::cout << "        LAZY_ALLOCATED\n";
-        }
-        if (memoryProperties.memoryTypes[h].propertyFlags &
-            VK_MEMORY_PROPERTY_PROTECTED_BIT) {
-          std::cout << "        PROTECTED_BIT\n";
-        }
-      }
-    }
-  }
-  std::cout << std::endl;
 
   return true;
 }

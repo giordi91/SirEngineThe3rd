@@ -1,18 +1,17 @@
 
-#include "platform/windows/graphics/dx12/adapter.h"
+#include "platform/windows/graphics/dx12/dx12Adapter.h"
+#include <cassert>
 #include <d3d12.h>
 #include <iostream>
 #include <wrl.h>
-#include <cassert>
 
-namespace SirEngine {
-namespace dx12 {
-Adapter::~Adapter() {
+namespace SirEngine::dx12 {
+Dx12Adapter::~Dx12Adapter() {
   if (m_adapter != nullptr) {
     m_adapter->Release();
   }
 }
-bool Adapter::findBestAdapter(IDXGIFactory4 *dxgiFactory, bool verbose) {
+bool Dx12Adapter::findBestAdapter(IDXGIFactory4 *dxgiFactory, bool verbose) {
 
   IDXGIAdapter1 *curAdapter;
   size_t adapterMemory = 0;
@@ -22,7 +21,7 @@ bool Adapter::findBestAdapter(IDXGIFactory4 *dxgiFactory, bool verbose) {
        dxgiFactory->EnumAdapters1(adapterIdx, &curAdapter) == S_OK;
        ++adapterIdx) {
 
-    if (curAdapter== nullptr) {
+    if (curAdapter == nullptr) {
       break;
     }
     IDXGIAdapter3 *adapter = (IDXGIAdapter3 *)curAdapter;
@@ -37,19 +36,18 @@ bool Adapter::findBestAdapter(IDXGIFactory4 *dxgiFactory, bool verbose) {
         isDXR = (wcsstr(desc.Description, L"RTX") != 0);
       }
 
-	  std::wcout<<desc.Description<<std::endl;
+      std::wcout << desc.Description << std::endl;
       // checking for Microsoft software adapter, we want to skip it
       bool isSoftwareVendor = desc.VendorId == 0x1414;
       bool isSoftwareId = desc.DeviceId == 0x8c;
       bool isSoftware = isSoftwareVendor & isSoftwareId;
-	if(isSoftware && (m_vendor == AdapterVendor::WARP )) {
-		m_adapter = adapter;
-		DXGI_ADAPTER_DESC1 desc1;
-		adapter->GetDesc1(&desc1);
-		assert((desc1.Flags & DXGI_ADAPTER_FLAG_SOFTWARE));
-		return true;
+      if (isSoftware && (m_vendor == ADAPTER_VENDOR::WARP)) {
+        m_adapter = adapter;
+        DXGI_ADAPTER_DESC1 desc1;
+        adapter->GetDesc1(&desc1);
+        assert((desc1.Flags & DXGI_ADAPTER_FLAG_SOFTWARE));
+        return true;
       }
-
 
       if (!((isSoftware) & (isDXR & requiresDXR))) {
         // then we just prioritize memory size, in the future we
@@ -70,5 +68,4 @@ bool Adapter::findBestAdapter(IDXGIFactory4 *dxgiFactory, bool verbose) {
   }
   return dxgiAdapter != nullptr;
 }
-} // namespace dx12
-} // namespace SirEngine
+} // namespace SirEngine::dx12

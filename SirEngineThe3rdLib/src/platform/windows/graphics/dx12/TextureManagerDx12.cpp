@@ -1,6 +1,6 @@
 #include "platform/windows/graphics/dx12/TextureManagerDx12.h"
 #include <DXTK12/DDSTextureLoader.h>
-#include <platform/windows/graphics/dx12/swapChain.h>
+#include <platform/windows/graphics/dx12/dx12SwapChain.h>
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
 
