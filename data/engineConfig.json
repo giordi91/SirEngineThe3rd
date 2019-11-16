@@ -4,6 +4,10 @@
   "persistentAllocatorSizeInMB": 20, 
   "verboseStartup": true,
 
+  "adapterVendor":"any",
+  "vendorTolerant": true,
+  "adapterSelectionRule":"largestFrameBuffer",
+
   "dataSource" :  "../data",
   "startingScene":  "../data/scenes/knightBOutdoorScene.json",
   "graphicAPI": "DX12",

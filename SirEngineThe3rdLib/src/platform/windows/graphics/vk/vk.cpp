@@ -75,12 +75,12 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   assert(VK_SUCCESS == result);
 
   // new adapter code here
-  AdapterRequestConfig adapterConfig;
-  adapterConfig.m_vendor = ADAPTER_VENDOR::NVIDIA;
-  adapterConfig.vendorTolerant = true;
-  adapterConfig.genericRule = ADAPTER_SELECTION_RULE::LARGEST_FRAME_BUFFER;
+  AdapterRequestConfig adapterConfig{};
+  adapterConfig.m_vendor = globals::ENGINE_CONFIG->m_adapterVendor;
+  adapterConfig.vendorTolerant = globals::ENGINE_CONFIG->m_vendorTolerant;
+  adapterConfig.genericRule = globals::ENGINE_CONFIG->m_adapterSelectionRule;
 
-  AdapterResult adapterResult;
+  AdapterResult adapterResult{};
   bool adapterFound = getBestAdapter(adapterConfig, adapterResult);
   assert(adapterFound);
   PHYSICAL_DEVICE = adapterResult.physicalDevice;
