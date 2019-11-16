@@ -4,6 +4,9 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 include (${CMAKE_SOURCE_DIR}/cmake/cmakeUtils.cmake)
 
 project(SirEngineThe3rdLib)   
+	if(${BUILD_VULKAN})
+		find_package(Vulkan REQUIRED)
+	endif(${BUILD_VULKAN})
 
     #looking for  files
 	#generic platform indepenent sir engine files
@@ -16,9 +19,15 @@ project(SirEngineThe3rdLib)
 
 	#dx12 api backend
 	if(${BUILD_DX12})
-		file(GLOB_RECURSE SOURCE_FILES_DX12 "src/platform/windows/graphics/*.cpp" "src/platform/windows/graphics/*.h")
+		file(GLOB_RECURSE SOURCE_FILES_DX12 "src/platform/windows/graphics/dx12/*.cpp" "src/platform/windows/graphics/dx12/*.h")
 		list (APPEND SOURCE_FILES ${SOURCE_FILES_DX12})
 	endif(${BUILD_DX12})
+
+	#vulkan api backend
+	if(${BUILD_VULKAN})
+		file(GLOB_RECURSE SOURCE_FILES_VK "src/platform/windows/graphics/vk/*.cpp" "src/platform/windows/graphics/vk/*.h")
+		list (APPEND SOURCE_FILES ${SOURCE_FILES_VK})
+	endif(${BUILD_VULKAN})
 
 	#specific source files used on AMD hardware only (like hardware queries)
 	if(${BUILD_AMD})
@@ -31,6 +40,7 @@ project(SirEngineThe3rdLib)
     include_directories(
 						${CMAKE_SOURCE_DIR}/builtDependencies/includes
 						${CMAKE_CURRENT_SOURCE_DIR}/src
+						 ${Vulkan_INCLUDE_DIRS}
 	)
 
 	if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
@@ -44,7 +54,16 @@ project(SirEngineThe3rdLib)
 		else(${BUILD_AMD})
 			add_compile_definitions(SE_PLATFORM_WINDOWS SE_BUILD_DLL _CRT_SECURE_NO_WARNINGS _UNICODE QUIT_ESCAPE GRAPHICS_API=DX12)
 		endif(${BUILD_AMD})
+
+		if(${BUILD_VULKAN})
+			add_compile_definitions(VK_USE_PLATFORM_WIN32_KHR)
+		endif(${BUILD_VULKAN})
+			
+
+
 	endif (WIN32)
+
+
 
 	#making sure to add the common cpp flags, that are defined in the main cpp file
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_CXX_FLAGS}")
@@ -93,7 +112,7 @@ project(SirEngineThe3rdLib)
 	SET_AS_HEADERS("${SHADERS_COMMON_FILES}")
 
 	if(WIN32)
-		link_directories(${CMAKE_SOURCE_DIR}/builtDependencies/windows/$<CONFIGURATION>)
+		link_directories(${CMAKE_SOURCE_DIR}/builtDependencies/windows/$<CONFIGURATION> )
 	endif()
 
     #adding the executable
@@ -119,7 +138,7 @@ project(SirEngineThe3rdLib)
 
 	SET(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 
-	target_link_libraries(${PROJECT_NAME} d3dcompiler dxcompiler farmhash DXGI D3D12 imgui DXTK12 WinPixEventRuntime lualib)
+	target_link_libraries(${PROJECT_NAME} d3dcompiler dxcompiler farmhash DXGI D3D12 imgui DXTK12 WinPixEventRuntime lualib  ${Vulkan_LIBRARIES})
 
 	#copying needed libs from pix event dependency to output build folder
 	COPY_FILE_TO_BIN_DIRECTORY( "${CMAKE_SOURCE_DIR}/vendors/PixEvent/bin/WinPixEventRuntime.lib")
