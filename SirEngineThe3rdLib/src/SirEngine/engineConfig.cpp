@@ -11,6 +11,7 @@ static std::string CONFIG_WINDOW_HEIGHT = "windowHeight";
 static std::string CONFIG_ALLOCATOR_STRING_POOL = "stringPoolSizeInMB";
 static std::string CONFIG_ALLOCATOR_FRAME = "frameAllocatorSizeInMB";
 static std::string CONFIG_ALLOCATOR_PERSISTENT = "persistentAllocatorSizeInMB";
+static std::string CONFIG_VERBOSE_STARTUP = "verboseStartup";
 
 static std::string DEFAULT_STRING = "";
 
@@ -80,6 +81,7 @@ void parseConfigFile(const char *path) {
       getValueIfInJson(jobj, CONFIG_WINDOW_TITLE, DEFAULT_STRING).c_str());
   config.m_windowWidth = getValueIfInJson(jobj, CONFIG_WINDOW_WIDTH, -1);
   config.m_windowHeight = getValueIfInJson(jobj, CONFIG_WINDOW_HEIGHT, -1);
+  config.m_verboseStartup= getValueIfInJson(jobj, CONFIG_VERBOSE_STARTUP, true);
 
   assert(config.m_windowWidth != -1);
   assert(config.m_windowHeight != -1);
@@ -108,6 +110,7 @@ void initializeConfigDefault() {
   globals::ENGINE_CONFIG->m_windowTitle = "SirEngineThe3rd";
   globals::ENGINE_CONFIG->m_windowWidth = 1280;
   globals::ENGINE_CONFIG->m_windowHeight = 720;
+  globals::ENGINE_CONFIG->m_verboseStartup= true;
 }
 
 void loadConfigFile(const EngineInitializationConfig &config) {

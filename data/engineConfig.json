@@ -2,6 +2,7 @@
   "stringPoolSizeInMB": 25, 
   "frameAllocatorSizeInMB": 20, 
   "persistentAllocatorSizeInMB": 20, 
+  "verboseStartup": true,
 
   "dataSource" :  "../data",
   "startingScene":  "../data/scenes/knightBOutdoorScene.json",

@@ -14,7 +14,7 @@
 #include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
 #include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/TextureManagerDx12.h"
-#include "platform/windows/graphics/dx12/adapter.h"
+#include "platform/windows/graphics/dx12/dx12Adapter.h"
 #include "platform/windows/graphics/dx12/bufferManagerDx12.h"
 #include "platform/windows/graphics/dx12/debugRenderer.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
@@ -22,7 +22,7 @@
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
 #include "platform/windows/graphics/dx12/shaderLayout.h"
 #include "platform/windows/graphics/dx12/shaderManager.h"
-#include "platform/windows/graphics/dx12/swapChain.h"
+#include "platform/windows/graphics/dx12/dx12SwapChain.h"
 
 #undef max;
 #undef min;
@@ -32,14 +32,14 @@ namespace SirEngine::dx12 {
 D3D12DeviceType *DEVICE;
 ID3D12Debug *DEBUG_CONTROLLER = nullptr;
 IDXGIFactory6 *DXGI_FACTORY = nullptr;
-Adapter *ADAPTER = nullptr;
+Dx12Adapter *ADAPTER = nullptr;
 UINT64 CURRENT_FENCE = 0;
 DescriptorHeap *GLOBAL_CBV_SRV_UAV_HEAP = nullptr;
 DescriptorHeap *GLOBAL_RTV_HEAP = nullptr;
 DescriptorHeap *GLOBAL_DSV_HEAP = nullptr;
 ID3D12CommandQueue *GLOBAL_COMMAND_QUEUE = nullptr;
 ID3D12Fence *GLOBAL_FENCE = nullptr;
-SwapChain *SWAP_CHAIN = nullptr;
+Dx12SwapChain *SWAP_CHAIN = nullptr;
 FrameResource FRAME_RESOURCES[FRAME_BUFFERS_COUNT];
 FrameResource *CURRENT_FRAME_RESOURCE = nullptr;
 TextureManagerDx12 *TEXTURE_MANAGER = nullptr;
@@ -91,13 +91,13 @@ bool initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
     return false;
   }
 
-  ADAPTER = new Adapter();
+  ADAPTER = new Dx12Adapter();
 #if DXR_ENABLED
   ADAPTER->setFeture(AdapterFeature::DXR);
   ADAPTER->setVendor(AdapterVendor::NVIDIA);
 #else
   ADAPTER->setFeture(AdapterFeature::ANY);
-  ADAPTER->setVendor(AdapterVendor::ANY);
+  ADAPTER->setVendor(ADAPTER_VENDOR::ANY);
   // ADAPTER->setVendor(AdapterVendor::WARP);
 #endif
   const bool found = ADAPTER->findBestAdapter(DXGI_FACTORY);
@@ -251,7 +251,7 @@ bool initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
     HWND handle;
     memcpy(&handle, &nativeWindow->data2, sizeof(HWND));
 
-    dx12::SWAP_CHAIN = new dx12::SwapChain();
+    dx12::SWAP_CHAIN = new dx12::Dx12SwapChain();
     dx12::SWAP_CHAIN->initialize(handle, width, height);
     dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
     dx12::SWAP_CHAIN->resize(&dx12::CURRENT_FRAME_RESOURCE->fc, width, height);

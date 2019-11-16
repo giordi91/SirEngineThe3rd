@@ -11,6 +11,7 @@ struct EngineConfig {
   const char *m_windowTitle;
   int m_windowWidth;
   int m_windowHeight;
+  bool m_verboseStartup;
 };
 
 struct EngineInitializationConfig {

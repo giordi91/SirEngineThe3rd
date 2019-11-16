@@ -1,27 +1,27 @@
 #pragma once
 #include <dxgi1_6.h>
+#include "SirEngine/graphics/graphicsDefines.h"
 
 // forward
 namespace SirEngine {
 namespace dx12 {
-enum class AdapterVendor { NVIDIA, AMD, INTEL, WARP,ANY };
 
 enum class AdapterFeature { DXR = 2, ANY = 4 };
 
-class Adapter {
+class Dx12Adapter {
 public:
-  Adapter() = default;
-  ~Adapter();
-  inline void setVendor(AdapterVendor vendor) { m_vendor = vendor; }
+  Dx12Adapter() = default;
+  ~Dx12Adapter();
+  inline void setVendor(ADAPTER_VENDOR vendor) { m_vendor = vendor; }
   inline void setFeture(AdapterFeature feature) { m_feature = feature; }
-  inline AdapterVendor getVendor() const { return m_vendor; }
+  inline ADAPTER_VENDOR getVendor() const { return m_vendor; }
   inline AdapterFeature getFeature() const { return m_feature; }
 
   bool findBestAdapter(IDXGIFactory4 *dxgiFactory, bool verbose = false);
   inline IDXGIAdapter3 *getAdapter() const { return m_adapter; }
 
 private:
-  AdapterVendor m_vendor = AdapterVendor::NVIDIA;
+  ADAPTER_VENDOR m_vendor = ADAPTER_VENDOR::NVIDIA;
   AdapterFeature m_feature = AdapterFeature::ANY;
   IDXGIAdapter3 *m_adapter = nullptr;
 };

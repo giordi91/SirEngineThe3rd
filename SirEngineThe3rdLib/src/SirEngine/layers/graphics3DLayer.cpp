@@ -48,7 +48,6 @@ void Graphics3DLayer::onAttach() {
   globals::MAIN_CAMERA->setLookAt(0, 14, 0);
   globals::MAIN_CAMERA->setPosition(0, 14, 10);
   globals::MAIN_CAMERA->updateCamera();
-  return;
 
   globals::RENDERING_CONTEXT->flush();
   globals::RENDERING_CONTEXT->resetGlobalCommandList();
@@ -161,7 +160,6 @@ void Graphics3DLayer::onDetach() {}
 void Graphics3DLayer::onUpdate() {
 
   
-  return;
   globals::SCRIPTING_CONTEXT->runScriptSlot(SCRIPT_CALLBACK_SLOT::PRE_ANIM);
   globals::ANIMATION_MANAGER->evaluate();
 
