@@ -76,7 +76,7 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
 
   // new adapter code here
   AdapterRequestConfig adapterConfig;
-  adapterConfig.m_vendor = ADAPTER_VENDOR::ANY;
+  adapterConfig.m_vendor = ADAPTER_VENDOR::NVIDIA;
   adapterConfig.vendorTolerant = true;
   adapterConfig.genericRule = ADAPTER_SELECTION_RULE::LARGEST_FRAME_BUFFER;
 
