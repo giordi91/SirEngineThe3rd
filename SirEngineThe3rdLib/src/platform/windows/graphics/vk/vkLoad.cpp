@@ -5,6 +5,7 @@
 #include <cassert>
 #include <iostream>
 
+namespace SirEngine{
 namespace vk {
 
 VkBool32 debugCallback(VkDebugReportFlagsEXT flags,
@@ -987,3 +988,4 @@ createGraphicsPipeline(VkDevice logicalDevice, VkShaderModule vs,
   return pipeline;
 }
 } // namespace vk
+} // namespace SirEngine
