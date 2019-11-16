@@ -93,9 +93,6 @@ bool findSpecificVendorBestAdapter(
     const std::vector<VkPhysicalDevice> &physicalDevices,
     AdapterResult &adapterResult) {
 
-  uint32_t graphicsQueueFamilyIndex = 0;
-  uint32_t presentQueueFamilyIndex;
-
   // it means we have a preference for an hardware vendor so let us try look
   // for it
   uint32_t largestFrameBuffer = 0;
@@ -108,7 +105,8 @@ bool findSpecificVendorBestAdapter(
     }
     // we found correct vendor, we need to see if support what we need
     bool result = physicalDeviceSupportsQueues(
-        physicalDevice, graphicsQueueFamilyIndex, presentQueueFamilyIndex);
+        physicalDevice, adapterResult.graphicsQueueFamilyIndex,
+        adapterResult.presentQueueFamilyIndex);
     if (!result) {
       continue;
     }
@@ -153,6 +151,10 @@ bool getBestAdapter(const AdapterRequestConfig &config,
   if (config.m_vendor != ADAPTER_VENDOR::ANY) {
     bool result =
         findSpecificVendorBestAdapter(config, physicalDevices, adapterResult);
+	//if found we are all good, otherwise we might have to do some error handling
+    if (result) {
+      return true;
+    }
 
     if (!result && !config.vendorTolerant) {
       // it means we found no valid adapter and we cannot search for fallback
