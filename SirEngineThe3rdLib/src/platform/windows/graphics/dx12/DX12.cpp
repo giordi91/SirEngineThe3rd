@@ -246,7 +246,7 @@ bool initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
 
   if (!isHeadless) {
     // init swap chain
-    auto *nativeWindow = wnd->getNativeWindow();
+    const NativeWindow *nativeWindow = wnd->getNativeWindow();
     assert(sizeof(HWND) == 8);
     HWND handle;
     memcpy(&handle, &nativeWindow->data2, sizeof(HWND));

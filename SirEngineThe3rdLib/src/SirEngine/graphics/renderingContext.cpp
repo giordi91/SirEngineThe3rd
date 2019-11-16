@@ -3,6 +3,8 @@
 #include "SirEngine/graphics/camera.h"
 #include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
 #include "platform/windows/graphics/dx12/DX12.h"
+#include "platform/windows/graphics/vk/vk.h"
+
 #include "platform/windows/graphics/dx12/debugRenderer.h"
 #include "platform/windows/graphics/dx12/meshManager.h"
 
@@ -25,9 +27,7 @@ createWindowsRenderingContext(const RenderingContextCreationSettings &settings,
     return dx12::createDx12RenderingContext(settings, width, height);
   }
   case GRAPHIC_API::VULKAN:;
-    // return vulkan::createVulkanRenderingContext(settings,width,height);
-    assert(0);
-    return nullptr;
+    return vk::createVkRenderingContext(settings,width,height);
   default:;
     assert(!"Not supported API requested");
     return nullptr;

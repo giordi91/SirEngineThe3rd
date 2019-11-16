@@ -1,6 +1,7 @@
 
 #include "VulkanFunctions.h"
 
+namespace SirEngine{
 namespace vk {
 
 #define EXPORTED_VULKAN_FUNCTION(name) PFN_##name name;
@@ -15,3 +16,4 @@ namespace vk {
 #include "ListOfVulkanFunctions.inl"
 
 }  // namespace vk
+} // namespace SirEngine

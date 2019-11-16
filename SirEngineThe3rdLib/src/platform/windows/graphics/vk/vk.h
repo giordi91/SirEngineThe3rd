@@ -1,10 +1,12 @@
 #pragma once
 #include <vulkan/vulkan.h>
 
+#include "SirEngine/graphics/renderingContext.h"
 #include <Windows.h>
 #include <cassert>
 #include <vector>
 
+namespace SirEngine {
 namespace vk {
 
 struct Swapchain;
@@ -25,11 +27,12 @@ extern VkCommandBuffer COMMAND_BUFFER;
 extern VkFormat IMAGE_FORMAT;
 extern VkPipelineLayout PIPELINE_LAYOUT;
 extern VkDebugReportCallbackEXT DEBUG_CALLBACK;
-extern VkDebugUtilsMessengerEXT DEBUG_CALLBACK2; 
+extern VkDebugUtilsMessengerEXT DEBUG_CALLBACK2;
 
 extern std::vector<VkDescriptorSetLayout> LAYOUTS_TO_DELETE;
 
-void initializeGraphics(HINSTANCE hinstance, HWND hwnd);
+bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
+                            const uint32_t height);
 bool newFrame();
 bool nextFrame();
 bool stopGraphics();
@@ -59,4 +62,86 @@ bool onResize(uint32_t width, uint32_t height);
     vkSetDebugUtilsObjectNameEXT(LOGICAL_DEVICE, &debugInfo_);                 \
   }
 
+RenderingContext *
+createVkRenderingContext(const RenderingContextCreationSettings &settings,
+                         uint32_t width, uint32_t height);
+
+class VkRenderingContext final : public RenderingContext {
+public:
+  explicit VkRenderingContext(const RenderingContextCreationSettings &settings,
+                              uint32_t width, uint32_t height);
+  ~VkRenderingContext() = default;
+  // private copy and assignment
+  VkRenderingContext(const VkRenderingContext &) = delete;
+  VkRenderingContext &operator=(const VkRenderingContext &) = delete;
+
+  bool initializeGraphics() override;
+
+  void setupCameraForFrame();
+  void setupLightingForFrame();
+  void bindCameraBuffer(int index) const;
+  void bindCameraBufferCompute(int index) const;
+  void updateSceneBoundingBox();
+  void updateDirectionalLightMatrix();
+
+  /*
+  inline void setEnviromentMap(const TextureHandle enviromentMapHandle) {
+    m_enviromentMapHandle = enviromentMapHandle;
+  }
+
+  inline void setEnviromentMapIrradiance(
+      const TextureHandle enviromentMapIrradianceHandle) {
+    m_enviromentMapIrradianceHandle = enviromentMapIrradianceHandle;
+  }
+
+  inline const DirectionalLightData &getLightData() const { return m_light; };
+  inline void
+  setEnviromentMapRadiance(const TextureHandle enviromentMapRadianceHandle) {
+    m_enviromentMapRadianceHandle = enviromentMapRadianceHandle;
+  };
+  inline TextureHandle getEnviromentMapHandle() const {
+    return m_enviromentMapHandle;
+  }
+  inline TextureHandle getEnviromentMapIrradianceHandle() const {
+    return m_enviromentMapIrradianceHandle;
+  }
+  inline TextureHandle getEnviromentMapRadianceHandle() const {
+    return m_enviromentMapRadianceHandle;
+  }
+  inline void setBrdfHandle(const TextureHandle handle) {
+    m_brdfHandle = handle;
+  }
+  inline TextureHandle getBrdfHandle() const { return m_brdfHandle; }
+
+  inline ConstantBufferHandle getLightCB() const { return m_lightCB; }
+  inline BoundingBox getBoundingBox() const { return m_boundingBox; }
+
+  */
+  bool newFrame() override;
+  bool dispatchFrame() override;
+  bool resize(uint32_t width, uint32_t height) override;
+  bool stopGraphic() override;
+  bool shutdownGraphic() override;
+  void flush() override;
+  void executeGlobalCommandList() override;
+  void resetGlobalCommandList() override;
+
+private:
+  /*
+// member variable mostly temporary
+CameraBuffer m_camBufferCPU{};
+ConstantBufferHandle m_cameraHandle{};
+ConstantBufferHandle m_lightBuffer{};
+ConstantBufferHandle m_lightCB{};
+DirectionalLightData m_light;
+TextureHandle m_enviromentMapHandle;
+TextureHandle m_enviromentMapIrradianceHandle;
+TextureHandle m_enviromentMapRadianceHandle;
+TextureHandle m_brdfHandle;
+BoundingBox m_boundingBox;
+DebugDrawHandle m_lightAABBHandle{};
+*/
+};
+
 } // namespace vk
+} // namespace SirEngine

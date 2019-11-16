@@ -2,9 +2,12 @@
 #include "platform/windows/graphics/vk/vkLoad.h"
 //#include "SirEngine/globals.h"
 //#include "swapchain.h"
+#include "SirEngine/Window.h"
+#include "SirEngine/log.h"
 #include "platform/windows/graphics/vk/vk.h"
 #include <cassert>
 
+namespace SirEngine {
 namespace vk {
 VkInstance INSTANCE = nullptr;
 VkSurfaceKHR SURFACE = nullptr;
@@ -14,7 +17,7 @@ VkQueue GRAPHICS_QUEUE = nullptr;
 VkQueue COMPUTE_QUEUE = nullptr;
 VkQueue PRESENTATION_QUEUE = nullptr;
 VkPhysicalDevice PHYSICAL_DEVICE = nullptr;
-Swapchain *SWAP_CHAIN = nullptr;
+// Swapchain *SWAP_CHAIN = nullptr;
 VkRenderPass RENDER_PASS = nullptr;
 VkSemaphore IMAGE_ACQUIRED_SEMAPHORE = nullptr;
 VkSemaphore READY_TO_PRESENT_SEMAPHORE = nullptr;
@@ -26,29 +29,38 @@ VkDebugReportCallbackEXT DEBUG_CALLBACK = nullptr;
 VkDebugUtilsMessengerEXT DEBUG_CALLBACK2 = nullptr;
 std::vector<VkDescriptorSetLayout> LAYOUTS_TO_DELETE;
 
-void initializeGraphics(const HINSTANCE hinstance, const HWND hwnd) {
+bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
+                          const uint32_t height) {
   VULKAN_LIBRARY = LoadLibrary(L"vulkan-1.dll");
   assert(VULKAN_LIBRARY != nullptr);
 
   if (!vk::loadFunctionExportedFromVulkanLoaderLibrary(VULKAN_LIBRARY)) {
-    return;
+    return false;
   }
 
   if (!vk::loadGlobalLevelFunctions()) {
-    return;
+    return false;
   }
 
   std::vector<char const *> instanceExtensions;
   if (!vk::createVulkanInstanceWithWsiExtensionsEnabled(
           instanceExtensions, "Vulkan Viewport", INSTANCE)) {
-    return;
+    return false;
   }
 
   if (!vk::loadInstanceLevelFunctions(INSTANCE, instanceExtensions)) {
-    return;
+    return false;
   }
 
   vk::registerDebugCallback(INSTANCE);
+
+  assert(sizeof(HWND) == 8);
+  assert(sizeof(HINSTANCE) == 8);
+  const NativeWindow *nativeWindow = wnd->getNativeWindow();
+  HWND hwnd;
+  memcpy(&hwnd, &nativeWindow->data2, sizeof(HWND));
+  HINSTANCE hinstance;
+  memcpy(&hinstance, &nativeWindow->data, sizeof(HINSTANCE));
 
   // init swap chain
   VkWin32SurfaceCreateInfoKHR surfaceCreateInfo = {
@@ -147,6 +159,7 @@ void initializeGraphics(const HINSTANCE hinstance, const HWND hwnd) {
   }
   COMMAND_BUFFER = commandBuffers[0];
   */
+  return true;
 }
 
 bool acquireSwapchainImage(const VkDevice logicalDevice,
@@ -267,5 +280,58 @@ SWAP_CHAIN = swapchain;
   return true;
 }
 
+RenderingContext *
+createVkRenderingContext(const RenderingContextCreationSettings &settings,
+                         uint32_t width, uint32_t height) {
+  return new VkRenderingContext(settings, width, height);
+}
+
+VkRenderingContext::VkRenderingContext(const RenderingContextCreationSettings& settings, uint32_t width,
+	uint32_t height)
+    : RenderingContext(settings, width, height) {
+  SE_CORE_INFO("Initializing a Vulkan context");
+}
+
 void setDebugNameImpl() {}
+bool VkRenderingContext::initializeGraphics() {
+
+  const bool result = vkInitializeGraphics(
+      m_settings.window, m_screenInfo.width, m_screenInfo.height);
+  if (!result) {
+    SE_CORE_ERROR("FATAL: could not initialize graphics");
+  }
+  return result;
+}
+
+bool VkRenderingContext::newFrame() {
+  assert(0);
+  return false;
+}
+
+bool VkRenderingContext::dispatchFrame() {
+  assert(0);
+  return false;
+}
+
+bool VkRenderingContext::resize(uint32_t width, uint32_t height) {
+  assert(0);
+  return false;
+}
+
+bool VkRenderingContext::stopGraphic() {
+  assert(0);
+  return false;
+}
+
+bool VkRenderingContext::shutdownGraphic() {
+  assert(0);
+  return false;
+}
+
+void VkRenderingContext::flush() { assert(0); }
+
+void VkRenderingContext::executeGlobalCommandList() { assert(0); }
+
+void VkRenderingContext::resetGlobalCommandList() { assert(0); }
 } // namespace vk
+} // namespace SirEngine
