@@ -57,6 +57,7 @@ void ImguiLayer::onAttach() {
   io.KeyMap[ImGuiKey_Y] = 'Y';
   io.KeyMap[ImGuiKey_Z] = 'Z';
 
+  return;
   ::QueryPerformanceFrequency(
       reinterpret_cast<LARGE_INTEGER *>(&g_TicksPerSecond));
   ::QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER *>(&g_Time));

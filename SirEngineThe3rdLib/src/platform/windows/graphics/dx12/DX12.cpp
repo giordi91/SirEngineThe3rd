@@ -361,6 +361,11 @@ bool newFrameDx12() {
   commandList->RSSetViewports(1, dx12::SWAP_CHAIN->getViewport());
   commandList->RSSetScissorRects(1, dx12::SWAP_CHAIN->getScissorRect());
 
+
+  //temporary  clear for vulkan port
+  float gray[4] = {0.5f, 0.9f, 0.5f, 1.0f};
+  commandList->ClearRenderTargetView(SWAP_CHAIN->currentBackBufferView(),gray,0,nullptr);
+
   auto *heap = dx12::GLOBAL_CBV_SRV_UAV_HEAP->getResource();
   commandList->SetDescriptorHeaps(1, &heap);
 

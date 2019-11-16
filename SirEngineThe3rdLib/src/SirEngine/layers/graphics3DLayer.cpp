@@ -48,6 +48,7 @@ void Graphics3DLayer::onAttach() {
   globals::MAIN_CAMERA->setLookAt(0, 14, 0);
   globals::MAIN_CAMERA->setPosition(0, 14, 10);
   globals::MAIN_CAMERA->updateCamera();
+  return;
 
   globals::RENDERING_CONTEXT->flush();
   globals::RENDERING_CONTEXT->resetGlobalCommandList();
@@ -159,6 +160,8 @@ void Graphics3DLayer::onAttach() {
 void Graphics3DLayer::onDetach() {}
 void Graphics3DLayer::onUpdate() {
 
+  
+  return;
   globals::SCRIPTING_CONTEXT->runScriptSlot(SCRIPT_CALLBACK_SLOT::PRE_ANIM);
   globals::ANIMATION_MANAGER->evaluate();
 
@@ -185,13 +188,10 @@ void Graphics3DLayer::onUpdate() {
   // evaluating rendering graph
   dx12::RENDERING_GRAPH->compute();
 
-  // m_animHandle = dx12::DEBUG_RENDERER->drawAnimatedSkeleton(
-  //    m_animHandle, m_config.m_anim_state, DirectX::XMFLOAT4{1, 0, 0, 1},
-  //    0.1f);
-
   // making any clean up for the mesh manager if we have to
   dx12::CONSTANT_BUFFER_MANAGER->clearUpQueueFree();
   dx12::BUFFER_MANAGER->clearUploadRequests();
+
 }
 void Graphics3DLayer::onEvent(Event &event) {
   EventDispatcher dispatcher(event);
