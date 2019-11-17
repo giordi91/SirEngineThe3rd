@@ -9,10 +9,10 @@ if ( ${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR} )
     endif()
 
 
-##enable c++ 17
-#set(CMAKE_CXX_STANDARD 17)
-#set(CMAKE_CXX_STANDARD_REQUIRED ON)
-#set(CMAKE_CXX_EXTENSIONS OFF)
+#enable c++ 17
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 
 
@@ -37,13 +37,13 @@ endif()
 #options
 option(BUILD_AMD "Wheter or not build on AMD hardware" OFF)
 option(BUILD_DX12 "Wheter or not build on AMD hardware" ON)
-#option(BUILD_JIT   "Whether or not to build the jit engine" ON)
-#option(BUILD_REPL  "Whether or not to build the interpreter" ON)
+option(BUILD_VULKAN "Wheter or not build on AMD hardware" OFF)#off because does not build on github actions
 
 #just an overal log of the passed options
 MESSAGE( STATUS "Building with the following options")
 MESSAGE( STATUS "BUILD AMD:                    " ${BUILD_AMD})
 MESSAGE( STATUS "BUILD DX12:                   " ${BUILD_DX12})
+MESSAGE( STATUS "BUILD Vulkan:                 " ${BUILD_VULKAN})
 
 
 #subfolders
@@ -57,11 +57,4 @@ add_subdirectory(ResourceCompilerPlugins/RootSignatureCompilerPlugin)
 add_subdirectory(ResourceCompilerPlugins/TextureCompilerPlugin)
 add_subdirectory(ResourceCompilerPlugins/AnimationCompilerPlugin)
 add_subdirectory(Tests)
-
-#if(${BUILD_JIT} STREQUAL "ON")
-#add_subdirectory(src/jit)
-#endif()
-#if(${BUILD_REPL} STREQUAL "ON")
-#    add_subdirectory(src/repl)
-#endif()
 

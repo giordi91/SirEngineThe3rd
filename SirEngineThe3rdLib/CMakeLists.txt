@@ -40,7 +40,7 @@ project(SirEngineThe3rdLib)
     include_directories(
 						${CMAKE_SOURCE_DIR}/builtDependencies/includes
 						${CMAKE_CURRENT_SOURCE_DIR}/src
-						 ${Vulkan_INCLUDE_DIRS}
+						${Vulkan_INCLUDE_DIRS}
 	)
 
 	if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
