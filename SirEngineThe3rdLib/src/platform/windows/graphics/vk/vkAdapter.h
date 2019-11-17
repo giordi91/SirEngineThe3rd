@@ -4,20 +4,15 @@
 
 namespace SirEngine::vk {
 
-struct AdapterRequestConfig {
-  ADAPTER_VENDOR m_vendor;
-  ADAPTER_SELECTION_RULE genericRule;
-  bool vendorTolerant;
+
+struct VkAdapterResult {
+  VkPhysicalDevice m_physicalDevice;
+  VkDevice m_device;
+  uint32_t m_graphicsQueueFamilyIndex;
+  uint32_t m_presentQueueFamilyIndex;
 };
 
-struct AdapterResult {
-  VkPhysicalDevice physicalDevice;
-  VkDevice device;
-  uint32_t graphicsQueueFamilyIndex;
-  uint32_t presentQueueFamilyIndex;
-};
-
-bool getBestAdapter(const AdapterRequestConfig &config,AdapterResult& adapterResult);
+bool getBestAdapter(const AdapterRequestConfig &config,VkAdapterResult& adapterResult);
 void logPhysicalDevice(VkPhysicalDevice physicalDevice);
 
 } // namespace SirEngine::vk

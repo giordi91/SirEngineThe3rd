@@ -14,15 +14,15 @@
 #include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
 #include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/TextureManagerDx12.h"
-#include "platform/windows/graphics/dx12/dx12Adapter.h"
 #include "platform/windows/graphics/dx12/bufferManagerDx12.h"
 #include "platform/windows/graphics/dx12/debugRenderer.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
+#include "platform/windows/graphics/dx12/dx12Adapter.h"
+#include "platform/windows/graphics/dx12/dx12SwapChain.h"
 #include "platform/windows/graphics/dx12/meshManager.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
 #include "platform/windows/graphics/dx12/shaderLayout.h"
 #include "platform/windows/graphics/dx12/shaderManager.h"
-#include "platform/windows/graphics/dx12/dx12SwapChain.h"
 
 #undef max;
 #undef min;
@@ -32,7 +32,7 @@ namespace SirEngine::dx12 {
 D3D12DeviceType *DEVICE;
 ID3D12Debug *DEBUG_CONTROLLER = nullptr;
 IDXGIFactory6 *DXGI_FACTORY = nullptr;
-Dx12Adapter *ADAPTER = nullptr;
+IDXGIAdapter3 *ADAPTER = nullptr;
 UINT64 CURRENT_FENCE = 0;
 DescriptorHeap *GLOBAL_CBV_SRV_UAV_HEAP = nullptr;
 DescriptorHeap *GLOBAL_RTV_HEAP = nullptr;
@@ -91,44 +91,22 @@ bool initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
     return false;
   }
 
-  ADAPTER = new Dx12Adapter();
-#if DXR_ENABLED
-  ADAPTER->setFeture(AdapterFeature::DXR);
-  ADAPTER->setVendor(AdapterVendor::NVIDIA);
-#else
-  ADAPTER->setFeture(AdapterFeature::ANY);
-  ADAPTER->setVendor(ADAPTER_VENDOR::ANY);
-  // ADAPTER->setVendor(AdapterVendor::WARP);
-#endif
-  const bool found = ADAPTER->findBestAdapter(DXGI_FACTORY);
-  assert(found && "could not find adapter matching features");
+  AdapterRequestConfig adapterConfig{};
+  adapterConfig.m_vendor = globals::ENGINE_CONFIG->m_adapterVendor;
+  adapterConfig.m_vendorTolerant = globals::ENGINE_CONFIG->m_vendorTolerant;
+  adapterConfig.m_genericRule = globals::ENGINE_CONFIG->m_adapterSelectionRule;
+
+  Dx12AdapterResult adapterResult{};
+  bool foundAdapter =
+      getBestAdapter(adapterConfig, adapterResult, DXGI_FACTORY);
+  assert(foundAdapter && "could not find adapter matching features");
+
+  ADAPTER = adapterResult.m_physicalDevice;
+  DEVICE = adapterResult.m_device;
 
   // log the adapter used
-  auto *adapter = ADAPTER->getAdapter();
-  DXGI_ADAPTER_DESC desc;
-  HRESULT adapterDescRes = SUCCEEDED(adapter->GetDesc(&desc));
-  assert(SUCCEEDED(adapterDescRes));
-  char t[128];
-  size_t converted = 0;
-  wcstombs_s(&converted, t, desc.Description, 128);
-  SE_CORE_INFO(t);
-
-  result = D3D12CreateDevice(ADAPTER->getAdapter(), D3D_FEATURE_LEVEL_12_1,
-                             IID_PPV_ARGS(&DEVICE));
-  if (FAILED(result)) {
-    SE_CORE_ERROR("Could not create device with requested features");
-    // falling back to WARP device
-    IDXGIAdapter *warpAdapter;
-    result = DXGI_FACTORY->EnumWarpAdapter(IID_PPV_ARGS(&warpAdapter));
-    if (FAILED(result)) {
-      return false;
-    }
-
-    result = D3D12CreateDevice(warpAdapter, D3D_FEATURE_LEVEL_12_1,
-                               IID_PPV_ARGS(&DEVICE));
-    if (FAILED(result)) {
-      return false;
-    }
+  if (globals::ENGINE_CONFIG->m_verboseStartup) {
+	  logPhysicalDevice(ADAPTER);
   }
 
   // Check the maximum feature level, and make sure it's above our minimum
@@ -361,10 +339,10 @@ bool newFrameDx12() {
   commandList->RSSetViewports(1, dx12::SWAP_CHAIN->getViewport());
   commandList->RSSetScissorRects(1, dx12::SWAP_CHAIN->getScissorRect());
 
-
-  //temporary  clear for vulkan port
+  // temporary  clear for vulkan port
   float gray[4] = {0.5f, 0.9f, 0.5f, 1.0f};
-  commandList->ClearRenderTargetView(SWAP_CHAIN->currentBackBufferView(),gray,0,nullptr);
+  commandList->ClearRenderTargetView(SWAP_CHAIN->currentBackBufferView(), gray,
+                                     0, nullptr);
 
   auto *heap = dx12::GLOBAL_CBV_SRV_UAV_HEAP->getResource();
   commandList->SetDescriptorHeaps(1, &heap);

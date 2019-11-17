@@ -68,18 +68,17 @@ ADAPTER_VENDOR getAdapterVendor(const nlohmann::json &jobj) {
   return ADAPTER_VENDOR::ANY;
 }
 
-ADAPTER_SELECTION_RULE getAdapterSelectionRule(const nlohmann::json &jobj)
-{
-  const std::string &rule= persistentString(
-      getValueIfInJson(jobj, CONFIG_ADAPTER_SELECTION_RULE, DEFAULT_ADAPTER_SELECTION_RULE).c_str());
+ADAPTER_SELECTION_RULE getAdapterSelectionRule(const nlohmann::json &jobj) {
+  const std::string &rule =
+      persistentString(getValueIfInJson(jobj, CONFIG_ADAPTER_SELECTION_RULE,
+                                        DEFAULT_ADAPTER_SELECTION_RULE)
+                           .c_str());
   const auto found = NAME_TO_ADAPTER_SELECTION_RULE.find(rule);
   if (found != NAME_TO_ADAPTER_SELECTION_RULE.end()) {
     return found->second;
   }
   assert(0 && "adapter selection rule not found");
   return ADAPTER_SELECTION_RULE::LARGEST_FRAME_BUFFER;
-
-	
 }
 
 void parseConfigFile(const char *path) {
@@ -163,6 +162,10 @@ void initializeConfigDefault() {
   globals::ENGINE_CONFIG->m_windowWidth = 1280;
   globals::ENGINE_CONFIG->m_windowHeight = 720;
   globals::ENGINE_CONFIG->m_verboseStartup = true;
+  globals::ENGINE_CONFIG->m_adapterVendor = ADAPTER_VENDOR::ANY;
+  globals::ENGINE_CONFIG->m_vendorTolerant = true;
+  globals::ENGINE_CONFIG->m_adapterSelectionRule =
+      ADAPTER_SELECTION_RULE::LARGEST_FRAME_BUFFER;
 }
 
 void loadConfigFile(const EngineInitializationConfig &config) {

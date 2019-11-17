@@ -77,21 +77,21 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   // new adapter code here
   AdapterRequestConfig adapterConfig{};
   adapterConfig.m_vendor = globals::ENGINE_CONFIG->m_adapterVendor;
-  adapterConfig.vendorTolerant = globals::ENGINE_CONFIG->m_vendorTolerant;
-  adapterConfig.genericRule = globals::ENGINE_CONFIG->m_adapterSelectionRule;
+  adapterConfig.m_vendorTolerant = globals::ENGINE_CONFIG->m_vendorTolerant;
+  adapterConfig.m_genericRule = globals::ENGINE_CONFIG->m_adapterSelectionRule;
 
-  AdapterResult adapterResult{};
+  VkAdapterResult adapterResult{};
   bool adapterFound = getBestAdapter(adapterConfig, adapterResult);
   assert(adapterFound);
-  PHYSICAL_DEVICE = adapterResult.physicalDevice;
-  LOGICAL_DEVICE = adapterResult.device;
+  PHYSICAL_DEVICE = adapterResult.m_physicalDevice;
+  LOGICAL_DEVICE = adapterResult.m_device;
   if (globals::ENGINE_CONFIG->m_verboseStartup) {
     logPhysicalDevice(PHYSICAL_DEVICE);
   }
 
-  getDeviceQueue(LOGICAL_DEVICE, adapterResult.graphicsQueueFamilyIndex, 0,
+  getDeviceQueue(LOGICAL_DEVICE, adapterResult.m_graphicsQueueFamilyIndex, 0,
                  GRAPHICS_QUEUE);
-  getDeviceQueue(LOGICAL_DEVICE, adapterResult.presentQueueFamilyIndex, 0,
+  getDeviceQueue(LOGICAL_DEVICE, adapterResult.m_presentQueueFamilyIndex, 0,
                  PRESENTATION_QUEUE);
 
   // create swap
@@ -111,7 +111,7 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   // Command buffers creation
   if (!createCommandPool(
           LOGICAL_DEVICE, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-          adapterResult.graphicsQueueFamilyIndex, COMMAND_POOL)) {
+          adapterResult.m_graphicsQueueFamilyIndex, COMMAND_POOL)) {
     assert(0);
   }
 
