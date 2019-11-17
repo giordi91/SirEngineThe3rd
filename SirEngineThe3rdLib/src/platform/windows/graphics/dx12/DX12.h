@@ -112,7 +112,7 @@ typedef ID3D12Device3 D3D12DeviceType;
 extern D3D12DeviceType *DEVICE;
 extern ID3D12Debug *DEBUG_CONTROLLER;
 extern IDXGIFactory6 *DXGI_FACTORY;
-extern Dx12Adapter *ADAPTER;
+extern IDXGIAdapter3*ADAPTER;
 extern UINT64 CURRENT_FENCE;
 extern DescriptorHeap *GLOBAL_CBV_SRV_UAV_HEAP;
 extern DescriptorHeap *GLOBAL_RTV_HEAP;

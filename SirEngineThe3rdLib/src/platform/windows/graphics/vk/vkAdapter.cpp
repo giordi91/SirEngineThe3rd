@@ -9,8 +9,6 @@
 
 namespace SirEngine::vk {
 
-uint32_t VENDOR_ID[] = {0x10DE, 0x1002, 0x8086, 0xFFFF, 0xFFFF};
-
 bool physicalDeviceSupportsQueues(VkPhysicalDevice physicalDevice,
                                   uint32_t &graphicsQueueFamilyIndex,
                                   uint32_t &presentQueueFamilyIndex) {
@@ -29,14 +27,15 @@ bool physicalDeviceSupportsQueues(VkPhysicalDevice physicalDevice,
 }
 
 bool createLogicalDevice(VkPhysicalDevice physicalDevice,
-                         AdapterResult &adapterResult) {
+                         VkAdapterResult &adapterResult) {
   // if we got to this point, it means we have the necessary queues
   // indices
   std::vector<QueueInfo> requestedQueues = {
-      {adapterResult.graphicsQueueFamilyIndex, {1.0f}}};
-  if (adapterResult.graphicsQueueFamilyIndex !=
-      adapterResult.presentQueueFamilyIndex) {
-    requestedQueues.push_back({adapterResult.presentQueueFamilyIndex, {1.0f}});
+      {adapterResult.m_graphicsQueueFamilyIndex, {1.0f}}};
+  if (adapterResult.m_graphicsQueueFamilyIndex !=
+      adapterResult.m_presentQueueFamilyIndex) {
+    requestedQueues.push_back(
+        {adapterResult.m_presentQueueFamilyIndex, {1.0f}});
   }
   std::vector<char const *> deviceExtensions;
 
@@ -58,14 +57,15 @@ bool createLogicalDevice(VkPhysicalDevice physicalDevice,
   // lets create a logical queue with the requested features
   if (!createLogicalDeviceWithWsiExtensionsEnabled(
           physicalDevice, requestedQueues, deviceExtensions, &deviceFeatures,
-          adapterResult.device)) {
+          adapterResult.m_device)) {
     return false;
-  } else {
-    if (!loadDeviceLevelFunctions(adapterResult.device, deviceExtensions)) {
-      return false;
-    }
-    adapterResult.physicalDevice = physicalDevice;
   }
+
+  if (!loadDeviceLevelFunctions(adapterResult.m_device, deviceExtensions)) {
+    return false;
+  }
+  adapterResult.m_physicalDevice = physicalDevice;
+  return true;
 }
 
 uint32_t getMaxPhysicalDeviceVRAMSizeInGB(VkPhysicalDevice physicalDevice) {
@@ -91,7 +91,7 @@ uint32_t getMaxPhysicalDeviceVRAMSizeInGB(VkPhysicalDevice physicalDevice) {
 bool findSpecificVendorBestAdapter(
     const AdapterRequestConfig &config,
     const std::vector<VkPhysicalDevice> &physicalDevices,
-    AdapterResult &adapterResult) {
+    VkAdapterResult &adapterResult) {
 
   // it means we have a preference for an hardware vendor so let us try look
   // for it
@@ -105,8 +105,8 @@ bool findSpecificVendorBestAdapter(
     }
     // we found correct vendor, we need to see if support what we need
     bool result = physicalDeviceSupportsQueues(
-        physicalDevice, adapterResult.graphicsQueueFamilyIndex,
-        adapterResult.presentQueueFamilyIndex);
+        physicalDevice, adapterResult.m_graphicsQueueFamilyIndex,
+        adapterResult.m_presentQueueFamilyIndex);
     if (!result) {
       continue;
     }
@@ -115,7 +115,7 @@ bool findSpecificVendorBestAdapter(
     // if our rule is to use the largest frame buffer we check
     // the current size, if it is smaller than the one already provided,
     // there is no point in going further and we just go the the next
-    if ((config.genericRule == ADAPTER_SELECTION_RULE::LARGEST_FRAME_BUFFER) &
+    if ((config.m_genericRule == ADAPTER_SELECTION_RULE::LARGEST_FRAME_BUFFER) &
         (currentGbSize < largestFrameBuffer)) {
       continue;
     }
@@ -134,7 +134,7 @@ bool findSpecificVendorBestAdapter(
                                ? currentGbSize
                                : largestFrameBuffer;
 
-      if (config.genericRule == ADAPTER_SELECTION_RULE::FIRST_VALID) {
+      if (config.m_genericRule == ADAPTER_SELECTION_RULE::FIRST_VALID) {
         return true;
       }
     }
@@ -143,20 +143,26 @@ bool findSpecificVendorBestAdapter(
 }
 
 bool getBestAdapter(const AdapterRequestConfig &config,
-                    AdapterResult &adapterResult) {
+                    VkAdapterResult &adapterResult) {
   // Logical device creation
   std::vector<VkPhysicalDevice> physicalDevices;
   enumerateAvailablePhysicalDevices(INSTANCE, physicalDevices);
 
+  if (config.m_vendor == ADAPTER_VENDOR::WARP) {
+    SE_CORE_ERROR("Warp adapter not supported in Vulkan, only in DirectX");
+    exit(EXIT_FAILURE);
+  }
+
   if (config.m_vendor != ADAPTER_VENDOR::ANY) {
     bool result =
         findSpecificVendorBestAdapter(config, physicalDevices, adapterResult);
-	//if found we are all good, otherwise we might have to do some error handling
+    // if found we are all good, otherwise we might have to do some error
+    // handling
     if (result) {
       return true;
     }
 
-    if (!result && !config.vendorTolerant) {
+    if (!result && !config.m_vendorTolerant) {
       // it means we found no valid adapter and we cannot search for fallback
       SE_CORE_ERROR("Could not find requested vendor {0}, and fail back to any "
                     "vendor is not allowed by settings",
@@ -175,8 +181,8 @@ bool getBestAdapter(const AdapterRequestConfig &config,
 
     // we found correct vendor, we need to see if support what we need
     bool result = physicalDeviceSupportsQueues(
-        physicalDevice, adapterResult.graphicsQueueFamilyIndex,
-        adapterResult.presentQueueFamilyIndex);
+        physicalDevice, adapterResult.m_graphicsQueueFamilyIndex,
+        adapterResult.m_presentQueueFamilyIndex);
     if (!result) {
       continue;
     }
@@ -186,7 +192,7 @@ bool getBestAdapter(const AdapterRequestConfig &config,
     // if our rule is to use the largest frame buffer we check
     // the current size, if it is smaller than the one already provided,
     // there is no point in going further and we just go the the next
-    if ((config.genericRule == ADAPTER_SELECTION_RULE::LARGEST_FRAME_BUFFER) &
+    if ((config.m_genericRule == ADAPTER_SELECTION_RULE::LARGEST_FRAME_BUFFER) &
         (currentGbSize < largestFrameBuffer)) {
       continue;
     }
@@ -205,14 +211,14 @@ bool getBestAdapter(const AdapterRequestConfig &config,
                                ? currentGbSize
                                : largestFrameBuffer;
 
-      if (config.genericRule == ADAPTER_SELECTION_RULE::FIRST_VALID) {
+      if (config.m_genericRule == ADAPTER_SELECTION_RULE::FIRST_VALID) {
         return true;
       }
     }
   }
 
-  assert(adapterResult.device != nullptr);
-  assert(adapterResult.physicalDevice != nullptr);
+  assert(adapterResult.m_device != nullptr);
+  assert(adapterResult.m_physicalDevice != nullptr);
 
   return largestFrameBuffer != 0;
 }

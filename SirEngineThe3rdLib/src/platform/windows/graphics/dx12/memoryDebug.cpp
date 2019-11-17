@@ -10,14 +10,14 @@ namespace SirEngine {
 namespace dx12 {
 uint32_t getTotalGpuMemoryMB() {
   DXGI_ADAPTER_DESC desc;
-  assert(SUCCEEDED(dx12::ADAPTER->getAdapter()->GetDesc(&desc)));
+  assert(SUCCEEDED(ADAPTER->GetDesc(&desc)));
   return static_cast<uint32_t>(desc.DedicatedVideoMemory * 1e-6f);
 }
 
 uint32_t getUsedGpuMemoryMB() {
   // get GPU memory
   DXGI_QUERY_VIDEO_MEMORY_INFO info = {};
-  dx12::ADAPTER->getAdapter()->QueryVideoMemoryInfo(
+  dx12::ADAPTER->QueryVideoMemoryInfo(
       0, DXGI_MEMORY_SEGMENT_GROUP_LOCAL, &info);
   return static_cast<uint32_t>(info.CurrentUsage * 1e-6f);
 }
@@ -40,11 +40,11 @@ void renderImGuiMemoryWidget() {
 
   // get gpu memory
   DXGI_QUERY_VIDEO_MEMORY_INFO info = {};
-  dx12::ADAPTER->getAdapter()->QueryVideoMemoryInfo(
+  dx12::ADAPTER->QueryVideoMemoryInfo(
       0, DXGI_MEMORY_SEGMENT_GROUP_LOCAL, &info);
 
   DXGI_ADAPTER_DESC desc;
-  SUCCEEDED(dx12::ADAPTER->getAdapter()->GetDesc(&desc));
+  SUCCEEDED(dx12::ADAPTER->GetDesc(&desc));
 
   float totalGPUMemGB = static_cast<float>(desc.DedicatedVideoMemory) * 1e-9f;
   float usedGPUMemInGB = static_cast<float>(info.CurrentUsage) * 1e-9f;
