@@ -40,7 +40,7 @@ extern Camera3DPivot *MAIN_CAMERA;
 extern Clock<std::chrono::nanoseconds> GAME_CLOCK;
 extern uint64_t LAST_FRAME_TIME_NS;
 extern uint32_t TOTAL_NUMBER_OF_FRAMES;
-extern uint64_t CURRENT_FRAME;
+extern uint32_t CURRENT_FRAME;
 extern float MIN_DEPTH;
 extern float MAX_DEPTH;
 #define FRAME_BUFFERS_COUNT 2
