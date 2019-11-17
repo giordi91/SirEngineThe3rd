@@ -2,9 +2,6 @@
 #include "platform/windows/graphics/dx12/dx12Adapter.h"
 #include "SirEngine/log.h"
 #include "platform/windows/graphics/dx12/DX12.h"
-#include <cassert>
-#include <d3d12.h>
-#include <wrl.h>
 
 namespace SirEngine::dx12 {
 
@@ -57,7 +54,7 @@ bool filterBestAdapterByVendor(const AdapterRequestConfig &config,
       break;
     }
 
-    IDXGIAdapter3 *adapter = (IDXGIAdapter3 *)curAdapter;
+    auto *adapter = static_cast<IDXGIAdapter3 *>(curAdapter);
     DXGI_ADAPTER_DESC desc;
     if (SUCCEEDED(adapter->GetDesc(&desc))) {
 
@@ -139,7 +136,7 @@ bool getBestAdapter(const AdapterRequestConfig &config,
       break;
     }
 
-    IDXGIAdapter3 *adapter = (IDXGIAdapter3 *)curAdapter;
+    auto *adapter = static_cast<IDXGIAdapter3 *>(curAdapter);
     DXGI_ADAPTER_DESC desc;
     if (FAILED(adapter->GetDesc(&desc))) {
       SE_CORE_WARN("Failed to fetch description for adapter");
@@ -186,8 +183,9 @@ void logPhysicalDevice(IDXGIAdapter3 *physicalDevice) {
   size_t converted = 0;
   wcstombs_s(&converted, t, desc.Description, 128);
   SE_CORE_INFO("Selected GPU: {0}", t);
-  SE_CORE_INFO("    vram: {0}GB", desc.DedicatedVideoMemory* 1.0e-9);
-  SE_CORE_INFO("    system memory: {0}GB", desc.DedicatedSystemMemory* 1.0e-9);
-  SE_CORE_INFO("    shared system memory: {0}GB", desc.SharedSystemMemory* 1.0e-9);
+  SE_CORE_INFO("    vram: {0}GB", desc.DedicatedVideoMemory * 1.0e-9);
+  SE_CORE_INFO("    system memory: {0}GB", desc.DedicatedSystemMemory * 1.0e-9);
+  SE_CORE_INFO("    shared system memory: {0}GB",
+               desc.SharedSystemMemory * 1.0e-9);
 }
 } // namespace SirEngine::dx12
