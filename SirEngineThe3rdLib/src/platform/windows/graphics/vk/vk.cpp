@@ -1,14 +1,12 @@
 #include "platform/windows/graphics/vk/VulkanFunctions.h"
 #include "platform/windows/graphics/vk/vkLoad.h"
-//#include "SirEngine/globals.h"
 #include "SirEngine/Window.h"
 #include "SirEngine/engineConfig.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/log.h"
 #include "platform/windows/graphics/vk/vk.h"
-#include "platform/windows/graphics/vk/vkSwapchain.h"
-#include "vkAdapter.h"
-#include <cassert>
+#include "platform/windows/graphics/vk/vkSwapChain.h"
+#include "platform/windows/graphics/vk/vkAdapter.h"
 
 namespace SirEngine::vk {
 VkInstance INSTANCE = nullptr;
@@ -75,7 +73,7 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   assert(VK_SUCCESS == result);
 
   // new adapter code here
-  AdapterRequestConfig adapterConfig{};
+  AdapterRequestConfig adapterConfig;
   adapterConfig.m_vendor = globals::ENGINE_CONFIG->m_adapterVendor;
   adapterConfig.m_vendorTolerant = globals::ENGINE_CONFIG->m_vendorTolerant;
   adapterConfig.m_genericRule = globals::ENGINE_CONFIG->m_adapterSelectionRule;
@@ -139,7 +137,33 @@ bool acquireSwapchainImage(const VkDevice logicalDevice,
     return false;
   }
 }
-bool vkNewFrame() {
+
+RenderingContext *
+createVkRenderingContext(const RenderingContextCreationSettings &settings,
+                         uint32_t width, uint32_t height) {
+  return new VkRenderingContext(settings, width, height);
+}
+
+VkRenderingContext::VkRenderingContext(
+    const RenderingContextCreationSettings &settings, uint32_t width,
+    uint32_t height)
+    : RenderingContext(settings, width, height) {
+  SE_CORE_INFO("Initializing a Vulkan context");
+}
+
+void setDebugNameImpl() {}
+bool VkRenderingContext::initializeGraphics() {
+
+  const bool result = vkInitializeGraphics(
+      m_settings.window, m_screenInfo.width, m_screenInfo.height);
+  if (!result) {
+    SE_CORE_ERROR("FATAL: could not initialize graphics");
+  }
+  return result;
+}
+
+bool VkRenderingContext::newFrame() {
+
   waitForAllSubmittedCommandsToBeFinished(LOGICAL_DEVICE);
 
   if (!acquireSwapchainImage(LOGICAL_DEVICE, SWAP_CHAIN->swapchain,
@@ -166,11 +190,10 @@ bool vkNewFrame() {
   setImageMemoryBarrier(COMMAND_BUFFER, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
                         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
                         {imageTransitionBeforeDrawing});
-
   return true;
 }
 
-bool vkNextFrame() {
+bool VkRenderingContext::dispatchFrame() {
 
   const ImageTransition imageTransitionBeforePresent = {
       SWAP_CHAIN->images[globals::CURRENT_FRAME],
@@ -205,11 +228,22 @@ bool vkNextFrame() {
   vkDeviceWaitIdle(LOGICAL_DEVICE);
   return res;
 }
-bool vkStopGraphics() {
+
+bool VkRenderingContext::resize(const uint32_t width, const uint32_t height) {
+  auto *swapchain = new VkSwapchain;
+  createSwapchain(LOGICAL_DEVICE, PHYSICAL_DEVICE, SURFACE, width, height,
+                  SWAP_CHAIN, *swapchain, RENDER_PASS);
+  SWAP_CHAIN = swapchain;
+  return true;
+}
+
+bool VkRenderingContext::stopGraphic() {
   vkDeviceWaitIdle(LOGICAL_DEVICE);
   return true;
 }
-bool vkShutdownGraphics() {
+
+bool VkRenderingContext::shutdownGraphic() {
+
   vkDeviceWaitIdle(LOGICAL_DEVICE);
 
   assert(destroySwapchain(LOGICAL_DEVICE, SWAP_CHAIN));
@@ -226,54 +260,7 @@ bool vkShutdownGraphics() {
   return true;
 }
 
-bool onResize(uint32_t width, uint32_t height) {
-  /*
-Swapchain *swapchain = new Swapchain;
-createSwapchain(LOGICAL_DEVICE, PHYSICAL_DEVICE, SURFACE, width, height,
-            SWAP_CHAIN, *swapchain, RENDER_PASS);
-SWAP_CHAIN = swapchain;
-*/
-  return true;
-}
-
-RenderingContext *
-createVkRenderingContext(const RenderingContextCreationSettings &settings,
-                         uint32_t width, uint32_t height) {
-  return new VkRenderingContext(settings, width, height);
-}
-
-VkRenderingContext::VkRenderingContext(
-    const RenderingContextCreationSettings &settings, uint32_t width,
-    uint32_t height)
-    : RenderingContext(settings, width, height) {
-  SE_CORE_INFO("Initializing a Vulkan context");
-}
-
-void setDebugNameImpl() {}
-bool VkRenderingContext::initializeGraphics() {
-
-  const bool result = vkInitializeGraphics(
-      m_settings.window, m_screenInfo.width, m_screenInfo.height);
-  if (!result) {
-    SE_CORE_ERROR("FATAL: could not initialize graphics");
-  }
-  return result;
-}
-
-bool VkRenderingContext::newFrame() { return vkNewFrame(); }
-
-bool VkRenderingContext::dispatchFrame() { return vkNextFrame(); }
-
-bool VkRenderingContext::resize(uint32_t width, uint32_t height) {
-  assert(0);
-  return false;
-}
-
-bool VkRenderingContext::stopGraphic() { return vkStopGraphics(); }
-
-bool VkRenderingContext::shutdownGraphic() { return vkShutdownGraphics(); }
-
-void VkRenderingContext::flush() { assert(0); }
+void VkRenderingContext::flush() { vkDeviceWaitIdle(LOGICAL_DEVICE); }
 
 void VkRenderingContext::executeGlobalCommandList() { assert(0); }
 

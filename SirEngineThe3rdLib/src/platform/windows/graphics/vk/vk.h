@@ -33,10 +33,6 @@ extern std::vector<VkDescriptorSetLayout> LAYOUTS_TO_DELETE;
 
 bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
                             const uint32_t height);
-bool newFrame();
-bool nextFrame();
-bool stopGraphics();
-bool shutdownGraphics();
 bool onResize(uint32_t width, uint32_t height);
 
 #define VK_CHECK(call)                                                         \
