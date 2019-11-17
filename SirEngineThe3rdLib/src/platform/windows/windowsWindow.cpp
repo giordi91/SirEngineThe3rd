@@ -13,7 +13,7 @@
 #include "SirEngine/events/shaderCompileEvent.h"
 #include "SirEngine/input.h"
 #include "SirEngine/scripting/scriptingContext.h"
-#include "platform/windows/graphics/dx12/swapChain.h"
+#include "platform/windows/graphics/dx12/dx12SwapChain.h"
 
 namespace SirEngine {
 
