@@ -6,7 +6,7 @@
 #include <sstream>
 #include <string>
 
-#include "platform/windows/graphics/dx12/Adapter.h"
+#include "platform/windows/graphics/dx12/dx12Adapter.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/hardware/amd/amdGPUquery.h"
 
