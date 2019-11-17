@@ -37,9 +37,10 @@ Application::Application() {
   RenderingContextCreationSettings creationSettings{};
   creationSettings.width = windowProperty.width;
   creationSettings.height = windowProperty.height;
-  // creationSettings.graphicsAPI = globals::ENGINE_CONFIG->m_graphicsAPI;
-  //creationSettings.graphicsAPI = GRAPHIC_API::VULKAN;
-  creationSettings.graphicsAPI = GRAPHIC_API::DX12;
+  creationSettings.graphicsAPI = globals::ENGINE_CONFIG->m_graphicsAPI;
+  // creationSettings.graphicsAPI = GRAPHIC_API::VULKAN;
+
+  // creationSettings.graphicsAPI = GRAPHIC_API::DX12;
   creationSettings.window = m_window;
   creationSettings.apiConfig = {};
 

@@ -10,7 +10,7 @@ Camera3DPivot *MAIN_CAMERA = nullptr;
 Clock<std::chrono::nanoseconds> GAME_CLOCK{};
 uint64_t LAST_FRAME_TIME_NS = 0;
 uint32_t TOTAL_NUMBER_OF_FRAMES = 0;
-uint64_t CURRENT_FRAME = 0;
+uint32_t CURRENT_FRAME = 0;
 float MIN_DEPTH = 1.0f;
 float MAX_DEPTH = 0.0f;
 ConstantBufferManager *CONSTANT_BUFFER_MANAGER = nullptr;

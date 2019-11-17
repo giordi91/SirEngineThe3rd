@@ -139,97 +139,90 @@ bool acquireSwapchainImage(const VkDevice logicalDevice,
     return false;
   }
 }
-bool newFrame() {
-  /*
-waitForAllSubmittedCommandsToBeFinished(LOGICAL_DEVICE);
+bool vkNewFrame() {
+  waitForAllSubmittedCommandsToBeFinished(LOGICAL_DEVICE);
 
-if (!acquireSwapchainImage(LOGICAL_DEVICE, SWAP_CHAIN->swapchain,
-                       IMAGE_ACQUIRED_SEMAPHORE, VK_NULL_HANDLE,
-                       globals::CURRENT_FRAME)) {
-return false;
-}
-if (!beginCommandBufferRecordingOperation(
-    COMMAND_BUFFER, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
-    nullptr)) {
-return false;
-}
+  if (!acquireSwapchainImage(LOGICAL_DEVICE, SWAP_CHAIN->swapchain,
+                             IMAGE_ACQUIRED_SEMAPHORE, VK_NULL_HANDLE,
+                             globals::CURRENT_FRAME)) {
+    return false;
+  }
+  if (!beginCommandBufferRecordingOperation(
+          COMMAND_BUFFER, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+          nullptr)) {
+    return false;
+  }
 
-const ImageTransition imageTransitionBeforeDrawing = {
-SWAP_CHAIN->images[globals::CURRENT_FRAME],
-0,
-VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-VK_IMAGE_LAYOUT_UNDEFINED,
-VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-VK_QUEUE_FAMILY_IGNORED, // used for cross queue sync
-VK_QUEUE_FAMILY_IGNORED,
-VK_IMAGE_ASPECT_COLOR_BIT}; // this wont work if you have depth buffers
+  const ImageTransition imageTransitionBeforeDrawing = {
+      SWAP_CHAIN->images[globals::CURRENT_FRAME],
+      0,
+      VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+      VK_IMAGE_LAYOUT_UNDEFINED,
+      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+      VK_QUEUE_FAMILY_IGNORED, // used for cross queue sync
+      VK_QUEUE_FAMILY_IGNORED,
+      VK_IMAGE_ASPECT_COLOR_BIT}; // this wont work if you have depth buffers
 
-setImageMemoryBarrier(COMMAND_BUFFER, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-                  VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                  {imageTransitionBeforeDrawing});
+  setImageMemoryBarrier(COMMAND_BUFFER, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+                        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                        {imageTransitionBeforeDrawing});
 
-                                          */
   return true;
 }
 
-bool nextFrame() {
+bool vkNextFrame() {
 
-  /*
-const ImageTransition imageTransitionBeforePresent = {
-SWAP_CHAIN->images[globals::CURRENT_FRAME],
-VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-VK_ACCESS_MEMORY_READ_BIT,
-VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-VK_QUEUE_FAMILY_IGNORED,
-VK_QUEUE_FAMILY_IGNORED,
-VK_IMAGE_ASPECT_COLOR_BIT};
-setImageMemoryBarrier(COMMAND_BUFFER,
-                  VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                  VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                  {imageTransitionBeforePresent});
+  const ImageTransition imageTransitionBeforePresent = {
+      SWAP_CHAIN->images[globals::CURRENT_FRAME],
+      VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+      VK_ACCESS_MEMORY_READ_BIT,
+      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+      VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+      VK_QUEUE_FAMILY_IGNORED,
+      VK_QUEUE_FAMILY_IGNORED,
+      VK_IMAGE_ASPECT_COLOR_BIT};
+  setImageMemoryBarrier(COMMAND_BUFFER,
+                        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                        {imageTransitionBeforePresent});
 
-if (!endCommandBufferRecordingOperation(COMMAND_BUFFER)) {
-return false;
+  if (!endCommandBufferRecordingOperation(COMMAND_BUFFER)) {
+    return false;
+  }
+
+  const WaitSemaphoreInfo waitSemaphoreInfo = {
+      IMAGE_ACQUIRED_SEMAPHORE, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT};
+  if (!submitCommandBuffersToQueue(
+          PRESENTATION_QUEUE, {waitSemaphoreInfo}, {COMMAND_BUFFER},
+          {READY_TO_PRESENT_SEMAPHORE}, VK_NULL_HANDLE)) {
+    return false;
+  }
+
+  const PresentInfo presentInfo = {SWAP_CHAIN->swapchain,
+                                   globals::CURRENT_FRAME};
+  bool res = presentImage(PRESENTATION_QUEUE, {READY_TO_PRESENT_SEMAPHORE},
+                          {presentInfo});
+  vkDeviceWaitIdle(LOGICAL_DEVICE);
+  return res;
 }
-
-const WaitSemaphoreInfo waitSemaphoreInfo = {
-IMAGE_ACQUIRED_SEMAPHORE, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT};
-if (!submitCommandBuffersToQueue(
-    PRESENTATION_QUEUE, {waitSemaphoreInfo}, {COMMAND_BUFFER},
-    {READY_TO_PRESENT_SEMAPHORE}, VK_NULL_HANDLE)) {
-return false;
-}
-
-const PresentInfo presentInfo = {SWAP_CHAIN->swapchain,
-                             globals::CURRENT_FRAME};
-bool res = presentImage(PRESENTATION_QUEUE, {READY_TO_PRESENT_SEMAPHORE},
-                {presentInfo});
-vkDeviceWaitIdle(LOGICAL_DEVICE);
-return res;
-*/
-  return false;
-}
-bool stopGraphics() {
+bool vkStopGraphics() {
   vkDeviceWaitIdle(LOGICAL_DEVICE);
   return true;
 }
-bool shutdownGraphics() {
-  /*
-vkDeviceWaitIdle(LOGICAL_DEVICE);
+bool vkShutdownGraphics() {
+  vkDeviceWaitIdle(LOGICAL_DEVICE);
 
-assert(destroySwapchain(LOGICAL_DEVICE, SWAP_CHAIN));
-vkDestroyPipelineLayout(LOGICAL_DEVICE, PIPELINE_LAYOUT, nullptr);
-vkDestroyRenderPass(LOGICAL_DEVICE, RENDER_PASS, nullptr);
-vkDestroySemaphore(LOGICAL_DEVICE, IMAGE_ACQUIRED_SEMAPHORE, nullptr);
-vkDestroySemaphore(LOGICAL_DEVICE, READY_TO_PRESENT_SEMAPHORE, nullptr);
-vkDestroyCommandPool(LOGICAL_DEVICE, COMMAND_POOL, nullptr);
-vkDestroyDevice(LOGICAL_DEVICE, nullptr);
-vkDestroySurfaceKHR(INSTANCE, SURFACE, nullptr);
-//vkDestroyDebugReportCallbackEXT(INSTANCE, DEBUG_CALLBACK, nullptr);
-vkDestroyDebugUtilsMessengerEXT(INSTANCE,DEBUG_CALLBACK2 , nullptr);
-vkDestroyInstance(INSTANCE, nullptr);
-*/
+  assert(destroySwapchain(LOGICAL_DEVICE, SWAP_CHAIN));
+  vkDestroyPipelineLayout(LOGICAL_DEVICE, PIPELINE_LAYOUT, nullptr);
+  vkDestroyRenderPass(LOGICAL_DEVICE, RENDER_PASS, nullptr);
+  vkDestroySemaphore(LOGICAL_DEVICE, IMAGE_ACQUIRED_SEMAPHORE, nullptr);
+  vkDestroySemaphore(LOGICAL_DEVICE, READY_TO_PRESENT_SEMAPHORE, nullptr);
+  vkDestroyCommandPool(LOGICAL_DEVICE, COMMAND_POOL, nullptr);
+  vkDestroyDevice(LOGICAL_DEVICE, nullptr);
+  vkDestroySurfaceKHR(INSTANCE, SURFACE, nullptr);
+  // vkDestroyDebugReportCallbackEXT(INSTANCE, DEBUG_CALLBACK, nullptr);
+  vkDestroyDebugUtilsMessengerEXT(INSTANCE, DEBUG_CALLBACK2, nullptr);
+  vkDestroyInstance(INSTANCE, nullptr);
   return true;
 }
 
@@ -267,30 +260,18 @@ bool VkRenderingContext::initializeGraphics() {
   return result;
 }
 
-bool VkRenderingContext::newFrame() {
-  assert(0);
-  return false;
-}
+bool VkRenderingContext::newFrame() { return vkNewFrame(); }
 
-bool VkRenderingContext::dispatchFrame() {
-  assert(0);
-  return false;
-}
+bool VkRenderingContext::dispatchFrame() { return vkNextFrame(); }
 
 bool VkRenderingContext::resize(uint32_t width, uint32_t height) {
   assert(0);
   return false;
 }
 
-bool VkRenderingContext::stopGraphic() {
-  assert(0);
-  return false;
-}
+bool VkRenderingContext::stopGraphic() { return vkStopGraphics(); }
 
-bool VkRenderingContext::shutdownGraphic() {
-  assert(0);
-  return false;
-}
+bool VkRenderingContext::shutdownGraphic() { return vkShutdownGraphics(); }
 
 void VkRenderingContext::flush() { assert(0); }
 
