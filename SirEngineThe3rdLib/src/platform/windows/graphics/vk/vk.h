@@ -55,7 +55,7 @@ bool onResize(uint32_t width, uint32_t height);
     debugInfo_.objectHandle = (uint64_t)resource;                              \
     debugInfo_.objectType = type;                                              \
     debugInfo_.pObjectName = name;                                             \
-    vkSetDebugUtilsObjectNameEXT(LOGICAL_DEVICE, &debugInfo_);                 \
+    vkSetDebugUtilsObjectNameEXT(vk::LOGICAL_DEVICE, &debugInfo_);                 \
   }
 
 RenderingContext *

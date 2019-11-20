@@ -56,5 +56,6 @@ add_subdirectory(ResourceCompilerPlugins/ShaderCompilerPlugin)
 add_subdirectory(ResourceCompilerPlugins/RootSignatureCompilerPlugin)
 add_subdirectory(ResourceCompilerPlugins/TextureCompilerPlugin)
 add_subdirectory(ResourceCompilerPlugins/AnimationCompilerPlugin)
+add_subdirectory(vendors/meshoptimizer)
 add_subdirectory(Tests)
 
