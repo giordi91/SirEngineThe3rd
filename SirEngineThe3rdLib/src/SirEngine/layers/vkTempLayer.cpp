@@ -8,6 +8,10 @@
 
 #include "SirEngine/engineConfig.h"
 #include "SirEngine/layers/vkTempLayer.h"
+#include "platform/windows/graphics/vk/vkLoad.h"
+#include "platform/windows/graphics/vk/vk.h"
+#include "platform/windows/graphics/vk/vkDescriptors.h"
+#include "platform/windows/graphics/vk/vkSwapChain.h"
 
 namespace SirEngine {
 
@@ -19,9 +23,232 @@ void VkTempLayer::onAttach() {
   globals::MAIN_CAMERA->setLookAt(0, 14, 0);
   globals::MAIN_CAMERA->setPosition(0, 14, 10);
   globals::MAIN_CAMERA->updateCamera();
+
+
+
+  
+  //if constexpr (!USE_PUSH) {
+  vk::createDescriptorPool(vk::LOGICAL_DEVICE, {10000, 10000}, m_dPool);
+  //}
+
+  // load the shaders
+  m_vs = vk::loadShader(vk::LOGICAL_DEVICE, "../data/external/vk/compiled/triangle.vert.glsl.spv");
+  assert(m_vs);
+  m_fs = vk::loadShader(vk::LOGICAL_DEVICE, "../data/external/vk/compiled/triangle.frag.glsl.spv");
+  assert(m_fs);
+
+  // load mesh
+  loadMesh("../data/external/vk/lucy.obj", m_mesh);
+
+  // allocate memory buffer for the mesh
+  VkPhysicalDeviceMemoryProperties memoryRequirements;
+  vkGetPhysicalDeviceMemoryProperties(vk::PHYSICAL_DEVICE, &memoryRequirements);
+  createBuffer(
+      m_vertexBuffer, vk::LOGICAL_DEVICE, memoryRequirements, 128 * 1024 * 1024,
+      VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+  createBuffer(
+      m_indexBuffer, vk::LOGICAL_DEVICE, memoryRequirements, 128 * 1024 * 1024,
+      VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+  assert(m_vertexBuffer.size >= m_mesh.vertices.size() * sizeof(vk::Vertex));
+  assert(m_indexBuffer.size >= m_mesh.indices.size() * sizeof(uint32_t));
+
+  memcpy(m_vertexBuffer.data, m_mesh.vertices.data(),
+         m_mesh.vertices.size() * sizeof(vk::Vertex));
+  memcpy(m_indexBuffer.data, m_mesh.indices.data(),
+         m_mesh.indices.size() * sizeof(uint32_t));
+
+  //SET_DEBUG_NAME(m_vertexBuffer.buffer, VK_OBJECT_TYPE_BUFFER, "vertex buffer");
+  //SET_DEBUG_NAME(m_indexBuffer.buffer, VK_OBJECT_TYPE_BUFFER, "index buffer");
+  m_pipeline =
+	  vk::createGraphicsPipeline(vk::LOGICAL_DEVICE, m_vs, m_fs, vk::RENDER_PASS, nullptr);
+
+  loadTextureFromFile("../data/external/vk/uv.DDS", VK_FORMAT_BC1_RGBA_UNORM_BLOCK,
+                      vk::LOGICAL_DEVICE, uvTexture);
+
+  //if constexpr (!USE_PUSH) {
+    createDescriptorLayoutAdvanced();
+  //}
+
+	
 }
+
+void VkTempLayer::createDescriptorLayoutAdvanced() {
+
+  // we are going to have two set layout, one per shader stage
+  VkDescriptorSetLayoutBinding setLayout[2] = {};
+
+  setLayout[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  // Shader binding point, aka index in the shader
+  setLayout[0].binding = 0;
+  // Accessible from the vertex shader only (flags can be combined to make it
+  // accessible to multiple shader stages)
+  setLayout[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+  // Binding contains one element (can be used for array bindings)
+  setLayout[0].descriptorCount = 1;
+
+  // Binding 1: Combined image sampler (used to pass per object texture
+  // information)
+  setLayout[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+  setLayout[1].binding = 1;
+  // Accessible from the fragment shader only
+  setLayout[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+  setLayout[1].descriptorCount = 1;
+
+  // Create the descriptor set layout
+  VkDescriptorSetLayoutCreateInfo descriptorLayoutCI{};
+  descriptorLayoutCI.sType =
+      VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+  descriptorLayoutCI.bindingCount = ARRAYSIZE(setLayout);
+  descriptorLayoutCI.pBindings = setLayout;
+
+  VK_CHECK(vkCreateDescriptorSetLayout(vk::LOGICAL_DEVICE, &descriptorLayoutCI,
+                                       nullptr, &m_setLayout));
+
+  // Allocates an empty descriptor set without actual descriptors from the pool
+  // using the set layout
+  VkDescriptorSetAllocateInfo allocateInfo{};
+  allocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+  allocateInfo.descriptorPool = m_dPool;
+  allocateInfo.descriptorSetCount = 1;
+  allocateInfo.pSetLayouts = &m_setLayout; // the layout we defined for the set,
+                                           // so it also knows the size
+  VK_CHECK(vkAllocateDescriptorSets(vk::LOGICAL_DEVICE, &allocateInfo,
+                                    &m_meshDescriptorSet));
+
+  // Update the descriptor set with the actual descriptors matching shader
+  // bindings set in the layout
+  // this far we defined just what descriptor we wanted and how they were setup,
+  // now we need to actually define the content of those descriptrs, the actual
+  // resources
+  VkWriteDescriptorSet writeDescriptorSets[2] = {};
+
+  // actual information of the descriptor, in this case it is our mesh buffer
+  VkDescriptorBufferInfo bufferInfo = {};
+  bufferInfo.buffer = m_vertexBuffer.buffer;
+  bufferInfo.offset = 0;
+  bufferInfo.range = m_vertexBuffer.size;
+
+  // Binding 0: Object matrices Uniform buffer
+  writeDescriptorSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  writeDescriptorSets[0].dstSet = m_meshDescriptorSet;
+  writeDescriptorSets[0].dstBinding = 0;
+  writeDescriptorSets[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  writeDescriptorSets[0].pBufferInfo = &bufferInfo;
+  writeDescriptorSets[0].descriptorCount = 1;
+
+  // Binding 1: Object texture
+  writeDescriptorSets[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  writeDescriptorSets[1].dstSet = m_meshDescriptorSet;
+  writeDescriptorSets[1].dstBinding = 1;
+  writeDescriptorSets[1].descriptorType =
+      VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+  // Images use a different descriptor strucutre, so we use pImageInfo instead
+  // of pBufferInfo
+  writeDescriptorSets[1].pImageInfo = &uvTexture.descriptor;
+  writeDescriptorSets[1].descriptorCount = 1;
+
+  // Execute the writes to update descriptors for this set
+  // Note that it's also possible to gather all writes and only run updates
+  // once, even for multiple sets This is possible because each
+  // VkWriteDescriptorSet also contains the destination set to be updated
+  // For simplicity we will update once per set instead
+  vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, ARRAYSIZE(writeDescriptorSets),
+                         writeDescriptorSets, 0, nullptr);
+}
+
+
+	
 void VkTempLayer::onDetach() {}
-void VkTempLayer::onUpdate() {}
+void VkTempLayer::onUpdate()
+{
+	  static float step = 0.01f;
+  static int index = 0;
+  static int counter = 0;
+
+  static VkClearColorValue color{0, 0, 0, 1};
+  color.float32[index] += 1.0f / 256.0f;
+  counter++;
+  if (counter == 255) {
+    index += 1;
+    counter = 0;
+  }
+  if (index == 3) {
+    counter = 0;
+    index = 0;
+    color.uint32[0] = 0;
+    color.uint32[1] = 0;
+    color.uint32[2] = 0;
+  }
+
+  // lets us start a render pass
+
+  VkClearValue clear{};
+  clear.color = color;
+
+  VkRenderPassBeginInfo beginInfo = {VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};
+  beginInfo.renderPass = vk::RENDER_PASS;
+  beginInfo.framebuffer = vk::SWAP_CHAIN->frameBuffers[globals::CURRENT_FRAME];
+
+  // similar to a viewport mostly used on "tiled renderers" to optimize, talking
+  // about hardware based tile renderer, aka mobile GPUs.
+  beginInfo.renderArea.extent.width =
+      static_cast<int32_t>(globals::ENGINE_CONFIG->m_windowWidth);
+  beginInfo.renderArea.extent.height =
+      static_cast<int32_t>(globals::ENGINE_CONFIG->m_windowHeight);
+  beginInfo.clearValueCount = 1;
+  beginInfo.pClearValues = &clear;
+
+  vkCmdBeginRenderPass(vk::COMMAND_BUFFER, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+  // draw calls go here
+  VkViewport viewport{0,
+                      float(globals::ENGINE_CONFIG->m_windowHeight),
+                      float(globals::ENGINE_CONFIG->m_windowWidth),
+                      -float(globals::ENGINE_CONFIG->m_windowHeight),
+                      0.0f,
+                      1.0f};
+  VkRect2D scissor{{0, 0}, {globals::ENGINE_CONFIG->m_windowWidth, globals::ENGINE_CONFIG->m_windowHeight}};
+  vkCmdSetViewport(vk::COMMAND_BUFFER, 0, 1, &viewport);
+  vkCmdSetScissor(vk::COMMAND_BUFFER, 0, 1, &scissor);
+  vkCmdBindPipeline(vk::COMMAND_BUFFER, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                    m_pipeline);
+
+  /*
+  if constexpr (USE_PUSH) {
+    VkDescriptorBufferInfo bufferInfo{};
+    bufferInfo.buffer = m_vertexBuffer.buffer;
+    bufferInfo.offset = 0;
+    bufferInfo.range = m_vertexBuffer.size;
+
+    VkWriteDescriptorSet descriptor[1]{};
+    descriptor[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    descriptor[0].dstBinding = 0;
+    descriptor[0].descriptorCount = 1;
+    descriptor[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    descriptor[0].pBufferInfo = &bufferInfo;
+
+    vkCmdPushDescriptorSetKHR(COMMAND_BUFFER, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                              PIPELINE_LAYOUT, 0, ARRAYSIZE(descriptor),
+                              descriptor);
+  } else {
+  */
+    vkCmdBindDescriptorSets(vk::COMMAND_BUFFER, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                            vk::PIPELINE_LAYOUT, 0, 1, &m_meshDescriptorSet, 0,
+                            nullptr);
+  //}
+
+  vkCmdBindIndexBuffer(vk::COMMAND_BUFFER, m_indexBuffer.buffer, 0,
+                       VK_INDEX_TYPE_UINT32);
+  // vkCmdDraw(COMMAND_BUFFER, 3, 1, 0, 0);
+  vkCmdDrawIndexed(vk::COMMAND_BUFFER, m_mesh.indices.size(), 1, 0, 0, 0);
+
+  vkCmdEndRenderPass(vk::COMMAND_BUFFER);
+
+
+
+
+	
+}
 void VkTempLayer::onEvent(Event &event) {
   EventDispatcher dispatcher(event);
   dispatcher.dispatch<MouseButtonPressEvent>(

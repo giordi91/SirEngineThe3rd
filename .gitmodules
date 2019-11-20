@@ -49,3 +49,12 @@
 [submodule "vendors/lua"]
 	path = vendors/lua
 	url = https://github.com/giordi91/lua.git
+[submodule "vendors/gli"]
+	path = vendors/gli
+	url = https://github.com/g-truc/gli.git
+[submodule "vendors/glm"]
+	path = vendors/glm
+	url = https://github.com/g-truc/glm.git
+[submodule "vendors/meshoptimizer"]
+	path = vendors/meshoptimizer
+	url = https://github.com/zeux/meshoptimizer.git

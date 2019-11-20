@@ -41,6 +41,9 @@ project(SirEngineThe3rdLib)
 						${CMAKE_SOURCE_DIR}/builtDependencies/includes
 						${CMAKE_CURRENT_SOURCE_DIR}/src
 						${Vulkan_INCLUDE_DIRS}
+						"../vendors/glm/"
+						"../vendors/meshoptimizer/src/"
+						"../vendors/gli"
 	)
 
 	if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
@@ -138,7 +141,7 @@ project(SirEngineThe3rdLib)
 
 	SET(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 
-	target_link_libraries(${PROJECT_NAME} d3dcompiler dxcompiler farmhash DXGI D3D12 imgui DXTK12 WinPixEventRuntime lualib  ${Vulkan_LIBRARIES})
+	target_link_libraries(${PROJECT_NAME} d3dcompiler dxcompiler farmhash DXGI D3D12 imgui DXTK12 WinPixEventRuntime lualib  ${Vulkan_LIBRARIES} meshoptimizer)
 
 	#copying needed libs from pix event dependency to output build folder
 	COPY_FILE_TO_BIN_DIRECTORY( "${CMAKE_SOURCE_DIR}/vendors/PixEvent/bin/WinPixEventRuntime.lib")

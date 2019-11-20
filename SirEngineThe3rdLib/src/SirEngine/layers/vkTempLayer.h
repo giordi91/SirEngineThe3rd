@@ -1,9 +1,18 @@
 #pragma once
+#include <vulkan/vulkan.h>
 
-#include "SirEngine/layer.h"
 #include "SirEngine/handle.h"
+#include "SirEngine/layer.h"
+#include "platform/windows/graphics/vk/vkMemory.h"
+#include "platform/windows/graphics/vk/vkMesh.h"
+#include "platform/windows/graphics/vk/vkTexture.h"
 
 namespace SirEngine {
+namespace vk {
+struct VkMesh;
+struct VkTexture2D;
+} // namespace vk
+
 class ReloadScriptsEvent;
 class DebugRenderConfigChanged;
 class MouseButtonPressEvent;
@@ -48,5 +57,21 @@ private:
   float previousX = 0;
   float previousY = 0;
 
+  void createDescriptorLayoutAdvanced();
+  // shaders
+  VkShaderModule m_vs;
+  VkShaderModule m_fs;
+  VkPipeline m_pipeline;
+
+  // mesh
+  vk::VkMesh m_mesh;
+  vk::Buffer m_vertexBuffer;
+  vk::Buffer m_indexBuffer;
+  VkVertexInputBindingDescription m_stream;
+  VkVertexInputAttributeDescription m_attr[3];
+  VkDescriptorPool m_dPool;
+  VkDescriptorSetLayout m_setLayout;
+  VkDescriptorSet m_meshDescriptorSet;
+  vk::VkTexture2D uvTexture;
 };
 } // namespace SirEngine
