@@ -1,7 +1,7 @@
 {
  "type":  "RASTER",
  "inputLayout":  "deferredNull",
- "globalRootSignature": "proceduralSkybox_RS",
+ "globalRootSignature": "../data/rs/proceduralSkybox_RS.json",
   "VS": "fullScreenQuadVS",
   "PS":  "proceduralSkyboxPS",
   "rasterState":  "default",

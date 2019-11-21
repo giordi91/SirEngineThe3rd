@@ -1,5 +1,4 @@
 {
-  "shadowSkinClusterRS": {
     "type": "RASTER",
     "staticSamplers": false,
     "config": [
@@ -29,5 +28,4 @@
       }
     ],
     "flags": [ "D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT" ]
-  }
 }

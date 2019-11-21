@@ -1,7 +1,7 @@
 {
   "type": "RASTER",
   "inputLayout": "fullMesh",
-  "globalRootSignature": "hairRS",
+  "globalRootSignature": "../data/rs/hairRS.json",
   "VS": "basicMeshVSTex",
   "PS": "hairPS",
   "rasterState": "default",
