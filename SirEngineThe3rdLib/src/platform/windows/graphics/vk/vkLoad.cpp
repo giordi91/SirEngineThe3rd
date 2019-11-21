@@ -775,6 +775,8 @@ VkRenderPass createRenderPass(VkDevice logicalDevice) {
   return renderPass;
 }
 
+//framebuffer is the collection of images you are rendering to plus
+//a couple of extra attributes
 VkFramebuffer createFrameBuffer(const VkDevice logicalDevice,
                                 const VkRenderPass renderPass,
                                 VkImageView imageView, const uint32_t width,

@@ -14,13 +14,27 @@ class ShadersLayoutRegistry;
 
 enum class PSOType { DXR = 0, RASTER, COMPUTE, INVALID };
 
-//TODO make it not copiable assignable
+
+struct PSOCompileResult
+{
+    ID3D12PipelineState *pso;
+	PSOType psoType;
+	const char* VSName = nullptr;
+	const char* PSName = nullptr;
+	const char* ComputeName = nullptr;
+	const char* PSOName;
+	const char* PSOFullPathFile;
+};
+	
+
+//TODO make it not copyable assignable
 class PSOManager final {
 
   struct PSOData {
     ID3D12PipelineState *pso;
     uint32_t magicNumber;
   };
+
 
 public:
   PSOManager()
@@ -65,17 +79,19 @@ public:
   }
 
 private:
-  void loadPSOFile(const char *path, bool reload = false);
-  void processComputePSO(nlohmann::json &jobj, const std::string &path,
-                         bool reload);
-  void processRasterPSO(nlohmann::json &jobj, const std::string &path,
-                        bool reload);
+  PSOCompileResult loadPSOFile(const char *path);
+  PSOCompileResult processComputePSO(nlohmann::json &jobj, const std::string &path
+                         );
+  PSOCompileResult processRasterPSO(nlohmann::json &jobj, const std::string &path);
   void processGlobalRootSignature(nlohmann::json &jobj,
                                   CD3DX12_STATE_OBJECT_DESC &pipe) const;
   void processPipelineConfig(nlohmann::json &jobj,
                              CD3DX12_STATE_OBJECT_DESC &pipe) const;
 
 private:
+void updatePSOCache(const char* name,ID3D12PipelineState* pso);
+void insertInPSOCache(const PSOCompileResult& result);
+
   inline uint32_t getIndexFromHandle(const PSOHandle h) const {
     return h.handle & INDEX_MASK;
   }

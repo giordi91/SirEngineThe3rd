@@ -10,7 +10,7 @@
 
   "dataSource" :  "../data",
   "startingScene":  "../data/scenes/knightBOutdoorScene.json",
-  "graphicAPI": "Vulkan",
+  "graphicAPI": "DX12",
 
   "windowTitle": "SirEngineThe3rd", 
   "windowWidth":  1280, 

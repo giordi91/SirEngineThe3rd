@@ -30,9 +30,7 @@ project(RootSignatureCompilerPlugin)
     #adding the executable
     add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES} ${INCLUDES_FILES})
 
-	set_target_properties (${PROJECT_NAME} PROPERTIES
-    FOLDER plugins
-)
+	set_target_properties (${PROJECT_NAME} PROPERTIES FOLDER plugins)
 
     #message (STATUS  ${CMAKE_RUNTIME_OUTPUT_DIRECTORY} SHIT)
 	target_link_libraries(${PROJECT_NAME} SirEngineThe3rdLib ResourceCompilerLib)
