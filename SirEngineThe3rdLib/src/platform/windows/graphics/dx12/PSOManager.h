@@ -6,23 +6,14 @@
 #include "SirEngine/memory/stringHashMap.h"
 #include "nlohmann/json_fwd.hpp"
 #include "platform/windows/graphics/dx12/d3dx12.h"
+#include "platform/windows/graphics/dx12/PSOCompile.h"
 
 namespace SirEngine::dx12 {
 class RootSignatureManager;
 class ShaderManager;
 class ShadersLayoutRegistry;
 
-enum class PSOType { DXR = 0, RASTER, COMPUTE, INVALID };
 
-struct PSOCompileResult {
-  ID3D12PipelineState *pso;
-  PSOType psoType;
-  const char *VSName = nullptr;
-  const char *PSName = nullptr;
-  const char *ComputeName = nullptr;
-  const char *PSOName;
-  const char *PSOFullPathFile;
-};
 
 // TODO make it not copyable assignable
 class PSOManager final {
@@ -75,14 +66,10 @@ public:
   }
 
 private:
-  PSOCompileResult loadPSOFile(const char *path);
-  PSOCompileResult loadPSOFileNew(const char *path);
-  PSOCompileResult processComputePSO(nlohmann::json &jobj,
-                                     const std::string &path);
-  PSOCompileResult processRasterPSO(nlohmann::json &jobj,
-                                    const std::string &path);
-  PSOCompileResult processRasterPSONew(nlohmann::json &jobj,
-                                                   const std::string &path);
+  //PSOCompileResult processComputePSO(nlohmann::json &jobj,
+  //                                   const std::string &path);
+  //PSOCompileResult processRasterPSO(nlohmann::json &jobj,
+  //                                  const std::string &path);
 
   void processGlobalRootSignature(nlohmann::json &jobj,
                                   CD3DX12_STATE_OBJECT_DESC &pipe) const;
