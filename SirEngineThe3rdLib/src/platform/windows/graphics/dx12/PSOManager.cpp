@@ -251,7 +251,8 @@ void PSOManager::loadPSOInFolder(const char *directory) {
   listFilesInFolder(directory, paths, "json");
 
   for (const auto &p : paths) {
-    loadPSOFile(p.c_str());
+    PSOCompileResult result = loadPSOFile(p.c_str());
+    insertInPSOCache(result);
   }
 }
 
@@ -270,6 +271,84 @@ void getRasterShaderNameFromPSO(const nlohmann::json &jobj, std::string &vs,
   assert(!ps.empty());
 }
 
+void PSOManager::updatePSOCache(const char *name, ID3D12PipelineState *pso) {
+  assert(m_psoRegisterHandle.containsKey(name));
+  PSOHandle handle;
+  m_psoRegisterHandle.get(name, handle);
+  uint32_t index = getIndexFromHandle(handle);
+  PSOData &data = m_psoPool[index];
+  // release old one
+  data.pso->Release();
+  data.pso = pso;
+}
+
+void PSOManager::insertInPSOCache(const PSOCompileResult &result) {
+  switch (result.psoType) {
+  case PSOType::DXR:
+    break;
+  case PSOType::RASTER: {
+    bool hasShader = m_shaderToPSOFile.containsKey(result.VSName);
+    if (!hasShader) {
+      m_shaderToPSOFile.insert(result.VSName,
+                               new ResizableVector<const char *>(20));
+    }
+    ResizableVector<const char *> *list;
+    m_shaderToPSOFile.get(result.VSName, list);
+    // make sure to internalize the string
+    list->pushBack(persistentString(result.PSOFullPathFile));
+
+    hasShader = m_shaderToPSOFile.containsKey(result.PSName);
+    if (!hasShader) {
+      m_shaderToPSOFile.insert(result.PSName,
+                               new ResizableVector<const char *>(20));
+    }
+    m_shaderToPSOFile.get(result.PSName, list);
+    // make sure to internalize the string
+    list->pushBack(persistentString(result.PSOFullPathFile));
+
+    // generating and storing the handle
+    uint32_t index;
+    PSOData &data = m_psoPool.getFreeMemoryData(index);
+    data.pso = result.pso;
+    const PSOHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
+    data.magicNumber = MAGIC_NUMBER_COUNTER;
+    m_psoRegisterHandle.insert(result.PSOName, handle);
+    ++MAGIC_NUMBER_COUNTER;
+    break;
+  }
+  case PSOType::COMPUTE: {
+    // can probably wrap this into a function to make it less verbose
+    // generating and storing the handle
+    uint32_t index;
+    PSOData &data = m_psoPool.getFreeMemoryData(index);
+    data.pso = result.pso;
+    const PSOHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
+    data.magicNumber = MAGIC_NUMBER_COUNTER;
+    m_psoRegisterHandle.insert(result.PSOName, handle);
+
+    ++MAGIC_NUMBER_COUNTER;
+
+    m_psoRegister.insert(result.ComputeName, result.pso);
+
+    // need to push the pso to the map
+    // first we make sure there is a vector to push to
+    const bool hasShader = m_shaderToPSOFile.containsKey(result.ComputeName);
+    if (!hasShader) {
+      m_shaderToPSOFile.insert(result.ComputeName,
+                               new ResizableVector<const char *>(20));
+    }
+    ResizableVector<const char *> *list;
+    m_shaderToPSOFile.get(result.ComputeName, list);
+    // make sure to internalize the string
+    list->pushBack(persistentString(result.PSOFullPathFile));
+    break;
+  }
+  case PSOType::INVALID:
+    break;
+  default:;
+  }
+}
+
 void PSOManager::recompilePSOFromShader(const char *shaderName,
                                         const char *offsetPath) {
   // clearing the log
@@ -280,8 +359,8 @@ void PSOManager::recompilePSOFromShader(const char *shaderName,
     assert(0);
     return;
   }
-  // now we need to extract the data out of the pso to figure out which shaders
-  // to recompile
+  // now we need to extract the data out of the pso to figure out which
+  // shaders to recompile
   std::vector<std::string> shadersToRecompile;
   shadersToRecompile.reserve(10);
   std::string vs;
@@ -322,13 +401,17 @@ void PSOManager::recompilePSOFromShader(const char *shaderName,
   }
 
   // now that all shaders are recompiled we can recompile the pso
-  // before doing that we do need to flush to make sure none of the PSO are used
+  // before doing that we do need to flush to make sure none of the PSO are
+  // used
   dx12::flushDx12();
 
-  // for (auto &pso : psoToRecompile) {
   for (int i = 0; i < psoCount; ++i) {
     const char *pso = (*psos)[i];
-    loadPSOFile(pso, true);
+    const PSOCompileResult result = loadPSOFile(pso);
+    // need to update the cache
+    updatePSOCache(result.PSOName, result.pso);
+
+    // log
     compileLog += "Compiled PSO: ";
     compileLog += pso;
     compileLog += "\n";
@@ -341,7 +424,7 @@ void PSOManager::recompilePSOFromShader(const char *shaderName,
   globals::APPLICATION->queueEventForEndOfFrame(e);
 }
 
-void PSOManager::loadPSOFile(const char *path, bool reload) {
+PSOCompileResult PSOManager::loadPSOFile(const char *path) {
   auto jobj = getJsonObj(path);
   SE_CORE_INFO("[Engine]: Loading PSO from: {0}", path);
 
@@ -349,17 +432,18 @@ void PSOManager::loadPSOFile(const char *path, bool reload) {
       getValueIfInJson(jobj, PSO_KEY_TYPE, DEFAULT_STRING);
   assert(!psoTypeString.empty());
   const PSOType psoType = convertStringPSOTypeToEnum(psoTypeString);
+
   switch (psoType) {
   case (PSOType::COMPUTE): {
-    processComputePSO(jobj, path, reload);
+    return processComputePSO(jobj, path);
     break;
   }
-  // case (PSOType::DXR): {
-  //  processDXRPSO(jobj, path);
-  //  break;
-  //}
+  case (PSOType::DXR): {
+    assert(0);
+    break;
+  }
   case (PSOType::RASTER): {
-    processRasterPSO(jobj, path, reload);
+    return processRasterPSO(jobj, path);
     break;
   }
   default: {
@@ -368,8 +452,8 @@ void PSOManager::loadPSOFile(const char *path, bool reload) {
   }
 }
 
-void PSOManager::processComputePSO(nlohmann::json &jobj,
-                                   const std::string &path, bool reload) {
+PSOCompileResult PSOManager::processComputePSO(nlohmann::json &jobj,
+                                               const std::string &path) {
   // lets process the PSO for a compute shader which is quite simple
   const std::string globalRootSignatureName =
       getValueIfInJson(jobj, PSO_KEY_GLOBAL_ROOT, DEFAULT_STRING);
@@ -379,8 +463,8 @@ void PSOManager::processComputePSO(nlohmann::json &jobj,
       getValueIfInJson(jobj, PSO_KEY_SHADER_NAME, DEFAULT_STRING);
   assert(!shaderName.empty());
 
-  auto *rootS =
-      rs_manager->getRootSignatureFromName(globalRootSignatureName.c_str());
+  ID3D12RootSignature* rootS =
+	  rs_manager->getRootSignatureFromName(globalRootSignatureName.c_str());
 
   // fetching the shader from the shader manager, the shader manager contains
   // both rasterization and compute shaders, the DXIL for raytracer are
@@ -389,58 +473,26 @@ void PSOManager::processComputePSO(nlohmann::json &jobj,
 
   D3D12_SHADER_BYTECODE computeShaderByteCode{computeShader->GetBufferPointer(),
                                               computeShader->GetBufferSize()};
-  ID3D12PipelineState *pipeStateObject;
+  ID3D12PipelineState *pso;
   // configure compute shader
   D3D12_COMPUTE_PIPELINE_STATE_DESC cdesc{};
   cdesc.pRootSignature = rootS;
   cdesc.CS = computeShaderByteCode;
   cdesc.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
-  m_dxrDevice->CreateComputePipelineState(&cdesc,
-                                          IID_PPV_ARGS(&pipeStateObject));
+  m_dxrDevice->CreateComputePipelineState(&cdesc, IID_PPV_ARGS(&pso));
 
   const std::string name = getFileName(path);
-
-  // if we are not realoading it means there is not a pso record so we just go
-  // in and add one
-  if (!reload) {
-    // generating and storing the handle
-    uint32_t index;
-    PSOData &data = m_psoPool.getFreeMemoryData(index);
-    data.pso = pipeStateObject;
-    const PSOHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
-    data.magicNumber = MAGIC_NUMBER_COUNTER;
-    m_psoRegisterHandle.insert(name.c_str(), handle);
-    ++MAGIC_NUMBER_COUNTER;
-
-    m_psoRegister.insert(name.c_str(), pipeStateObject);
-
-    // need to push the pso to the map
-    // first we make sure there is a vector to push to
-    bool hasShader = m_shaderToPSOFile.containsKey(shaderName.c_str());
-    if (!hasShader) {
-      m_shaderToPSOFile.insert(shaderName.c_str(),
-                               new ResizableVector<const char *>(20));
-    }
-    // now we can push
-    ResizableVector<const char *> *list;
-    m_shaderToPSOFile.get(shaderName.c_str(), list);
-    list->pushBack(persistentString(path.c_str()));
-    // m_shaderToPSOFile[shaderName.c_str()].push_back(path);
-  } else {
-    // if we are reloading the pso already exists we just need to update data
-    assert(m_psoRegisterHandle.containsKey(name.c_str()));
-    PSOHandle handle;
-    m_psoRegisterHandle.get(name.c_str(), handle);
-    uint32_t index = getIndexFromHandle(handle);
-    PSOData &data = m_psoPool[index];
-    // releasing old PSO
-    data.pso->Release();
-    data.pso = pipeStateObject;
-  }
+  return PSOCompileResult{pso,
+                          PSOType::COMPUTE,
+                          nullptr,
+                          nullptr,
+                          frameString(name.c_str()),
+                          frameString(name.c_str()),
+                          frameString(path.c_str())};
 }
 
-void PSOManager::processRasterPSO(nlohmann::json &jobj, const std::string &path,
-                                  bool reload) {
+PSOCompileResult PSOManager::processRasterPSO(nlohmann::json &jobj,
+                                              const std::string &path) {
   // find the input layout
   const std::string layoutString =
       getValueIfInJson(jobj, PSO_KEY_INPUT_LAYOUT, DEFAULT_STRING);
@@ -513,8 +565,7 @@ void PSOManager::processRasterPSO(nlohmann::json &jobj, const std::string &path,
   psoDesc.VS = {reinterpret_cast<BYTE *>(vs->GetBufferPointer()),
                 vs->GetBufferSize()};
 
-  psoDesc.PS = {nullptr,
-                0};
+  psoDesc.PS = {nullptr, 0};
   if (ps != nullptr) {
     psoDesc.PS = {reinterpret_cast<BYTE *>(ps->GetBufferPointer()),
                   ps->GetBufferSize()};
@@ -540,46 +591,14 @@ void PSOManager::processRasterPSO(nlohmann::json &jobj, const std::string &path,
   // assert(m_psoRegister.find(name) == m_psoRegister.end());
   m_psoRegister.insert(name.c_str(), pso);
 
-  SE_CORE_INFO(PSname);
-
-  if (!reload) {
-    bool hasShader = m_shaderToPSOFile.containsKey(VSname.c_str());
-    if (!hasShader) {
-      m_shaderToPSOFile.insert(VSname.c_str(),
-                               new ResizableVector<const char *>(20));
-    }
-    ResizableVector<const char *> *list;
-    m_shaderToPSOFile.get(VSname.c_str(), list);
-    // make sure to internalize the string
-    list->pushBack(persistentString(path.c_str()));
-
-    hasShader = m_shaderToPSOFile.containsKey(PSname.c_str());
-    if (!hasShader) {
-      m_shaderToPSOFile.insert(PSname.c_str(),
-                               new ResizableVector<const char *>(20));
-    }
-    m_shaderToPSOFile.get(PSname.c_str(), list);
-    // make sure to internalize the string
-    list->pushBack(persistentString(path.c_str()));
-
-    // generating and storing the handle
-    uint32_t index;
-    PSOData &data = m_psoPool.getFreeMemoryData(index);
-    data.pso = pso;
-    PSOHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
-    data.magicNumber = MAGIC_NUMBER_COUNTER;
-    m_psoRegisterHandle.insert(name.c_str(), handle);
-    ++MAGIC_NUMBER_COUNTER;
-  } else {
-    // if we are reloading the pso already exists we just need to update data
-    assert(m_psoRegisterHandle.containsKey(name.c_str()));
-    PSOHandle handle;
-    m_psoRegisterHandle.get(name.c_str(), handle);
-    uint32_t index = getIndexFromHandle(handle);
-    PSOData &data = m_psoPool[index];
-    data.pso = pso;
-  }
-}
+  return PSOCompileResult{pso,
+                          PSOType::RASTER,
+                          frameString(VSname.c_str()),
+                          frameString(PSname.c_str()),
+                          nullptr,
+                          frameString(name.c_str()),
+                          frameString(path.c_str())};
+} // namespace SirEngine::dx12
 
 void PSOManager::processGlobalRootSignature(
     nlohmann::json &jobj, CD3DX12_STATE_OBJECT_DESC &pipe) const {

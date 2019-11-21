@@ -1,7 +1,5 @@
 {
   "commands": 
     [
-      "-p ../data/shaders/rasterization/skinningPositionOnlyVS.hlsl -o ../data/processed/shaders/rasterization/skinningPositionOnlyVS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t vs_6_2  -e VS -d \"",
-      "-p ../data/rs/shadowSkinClusterRS.json -o ../data/processed/rs/shadowSkinClusterRS.root --pluginName rootSignatureCompilerPlugin"
     ]
 }

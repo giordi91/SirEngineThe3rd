@@ -6,9 +6,15 @@ VkPipeline
 createGraphicsPipeline(VkDevice logicalDevice, VkShaderModule vs,
                        VkShaderModule ps, VkRenderPass renderPass,
                        VkPipelineVertexInputStateCreateInfo *vertexInfo) {
+
+  // From spec:  The pipeline layout represents a sequence of descriptor sets
+  // with each having a specific layout.
+  // this is the same as root signature in DX12
   VkPipelineLayoutCreateInfo layoutInfo = {
       VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
 
+  // to do so we declare a set of layout bindings, basically an array telling us
+  // how many elements we have, this will be coming from a json file
   VkDescriptorSetLayoutBinding bindings[2]{};
   bindings[0].binding = 0;
   bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
@@ -20,24 +26,28 @@ createGraphicsPipeline(VkDevice logicalDevice, VkShaderModule vs,
   bindings[1].descriptorCount = 1;
   bindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
+  //passing in the "root signature"
   VkDescriptorSetLayoutCreateInfo descriptorInfo{
       VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
 
   descriptorInfo.bindingCount = ARRAYSIZE(bindings);
   descriptorInfo.pBindings = bindings;
 
+  //creating the layout/root signature
   VkDescriptorSetLayout descriptorLayout;
   vkCreateDescriptorSetLayout(logicalDevice, &descriptorInfo, nullptr,
                               &descriptorLayout);
 
+  //now we know how many layouts we have, and we can create the pipelien layout
   layoutInfo.setLayoutCount = 1;
   layoutInfo.pSetLayouts = &descriptorLayout;
 
-  //TODO need a manager
+  // TODO need a manager
   vkCreatePipelineLayout(logicalDevice, &layoutInfo, nullptr, &PIPELINE_LAYOUT);
 
   LAYOUTS_TO_DELETE.push_back(descriptorLayout);
 
+  //here we define all the stages of the pipeline
   VkPipelineShaderStageCreateInfo stages[2] = {};
   stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
   stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;

@@ -5,6 +5,10 @@ namespace SirEngine {
 inline const char* persistentString(const char* string) {
   return globals::STRING_POOL->allocatePersistent(string);
 }
+
+inline const char* frameString(const char* string) {
+  return globals::STRING_POOL->allocateFrame(string);
+}
 inline const wchar_t* persistentConvertWide(const char* string) {
   return globals::STRING_POOL->convertWide(string);
 }
