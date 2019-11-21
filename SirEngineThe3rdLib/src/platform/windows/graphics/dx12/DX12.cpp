@@ -24,8 +24,8 @@
 #include "platform/windows/graphics/dx12/shaderLayout.h"
 #include "platform/windows/graphics/dx12/shaderManager.h"
 
-#undef max;
-#undef min;
+#undef max
+#undef min
 
 namespace SirEngine::dx12 {
 

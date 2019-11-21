@@ -1,5 +1,4 @@
 {
-    "debugFullScreenBlit_RS": {
       "type": "RASTER",
       "staticSamplers" : true,
       "config": [
@@ -51,5 +50,4 @@
 
       ],
       "flags": []
-    }
 }

@@ -1,7 +1,7 @@
 {
  "type":  "RASTER",
  "inputLayout":  "deferredNull",
- "globalRootSignature": "blackAndWhiteEffect_RS",
+ "globalRootSignature": "../data/rs/blackAndWhiteEffect_RS.json",
   "VS": "fullScreenQuadVS",
   "PS":  "blackAndWhiteEffectPS",
   "rasterState":  "default",

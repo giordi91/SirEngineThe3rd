@@ -1,7 +1,7 @@
 {
  "type":  "RASTER",
  "inputLayout":  "deferredNull",
- "globalRootSignature": "deferredDirectionalLight_RS",
+ "globalRootSignature": "../data/rs/deferredDirectionalLight_RS.json",
   "VS": "fullScreenQuadVS",
   "PS":  "deferredDirectionalLightPS",
   "rasterState":  "default",

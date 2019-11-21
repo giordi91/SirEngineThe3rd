@@ -1,5 +1,4 @@
 {
-    "forwardPBRRS": {
       "type": "RASTER",
       "staticSamplers" : true,
       "config": [
@@ -124,5 +123,4 @@
         }
       ],
       "flags": ["D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT"]
-    }
 }

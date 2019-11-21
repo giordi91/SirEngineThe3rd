@@ -1,11 +1,11 @@
 #pragma once
 
 #include "DX12.h"
+#include "SirEngine/memory/resizableVector.h"
 #include "SirEngine/memory/sparseMemoryPool.h"
 #include "SirEngine/memory/stringHashMap.h"
 #include "nlohmann/json_fwd.hpp"
 #include "platform/windows/graphics/dx12/d3dx12.h"
-#include "SirEngine/memory/resizableVector.h"
 
 namespace SirEngine::dx12 {
 class RootSignatureManager;
@@ -14,20 +14,17 @@ class ShadersLayoutRegistry;
 
 enum class PSOType { DXR = 0, RASTER, COMPUTE, INVALID };
 
-
-struct PSOCompileResult
-{
-    ID3D12PipelineState *pso;
-	PSOType psoType;
-	const char* VSName = nullptr;
-	const char* PSName = nullptr;
-	const char* ComputeName = nullptr;
-	const char* PSOName;
-	const char* PSOFullPathFile;
+struct PSOCompileResult {
+  ID3D12PipelineState *pso;
+  PSOType psoType;
+  const char *VSName = nullptr;
+  const char *PSName = nullptr;
+  const char *ComputeName = nullptr;
+  const char *PSOName;
+  const char *PSOFullPathFile;
 };
-	
 
-//TODO make it not copyable assignable
+// TODO make it not copyable assignable
 class PSOManager final {
 
   struct PSOData {
@@ -35,11 +32,11 @@ class PSOManager final {
     uint32_t magicNumber;
   };
 
-
 public:
   PSOManager()
       : m_psoDXRRegister(RESERVE_SIZE), m_psoRegister(RESERVE_SIZE),
-        m_psoRegisterHandle(RESERVE_SIZE), m_shaderToPSOFile(RESERVE_SIZE), m_psoPool(RESERVE_SIZE){};
+        m_psoRegisterHandle(RESERVE_SIZE), m_shaderToPSOFile(RESERVE_SIZE),
+        m_psoPool(RESERVE_SIZE){};
   ~PSOManager() = default;
   void init(D3D12DeviceType *device, SirEngine::dx12::ShadersLayoutRegistry *,
             SirEngine::dx12::RootSignatureManager *,
@@ -50,8 +47,7 @@ public:
   // debugging function to be able to print to console the composition of a
   // state object
   static void printStateObjectDesc(const D3D12_STATE_OBJECT_DESC *desc);
-  inline ID3D12PipelineState *
-  getComputePSOByName(const char* name) const {
+  inline ID3D12PipelineState *getComputePSOByName(const char *name) const {
     const PSOHandle handle = getHandleFromName(name);
     assertMagicNumber(handle);
     const uint32_t index = getIndexFromHandle(handle);
@@ -70,7 +66,7 @@ public:
     commandList->SetPipelineState(data.pso);
   }
 
-  inline PSOHandle getHandleFromName(const char* name) const {
+  inline PSOHandle getHandleFromName(const char *name) const {
 
     assert(m_psoRegisterHandle.containsKey(name));
     PSOHandle value{};
@@ -80,17 +76,22 @@ public:
 
 private:
   PSOCompileResult loadPSOFile(const char *path);
-  PSOCompileResult processComputePSO(nlohmann::json &jobj, const std::string &path
-                         );
-  PSOCompileResult processRasterPSO(nlohmann::json &jobj, const std::string &path);
+  PSOCompileResult loadPSOFileNew(const char *path);
+  PSOCompileResult processComputePSO(nlohmann::json &jobj,
+                                     const std::string &path);
+  PSOCompileResult processRasterPSO(nlohmann::json &jobj,
+                                    const std::string &path);
+  PSOCompileResult processRasterPSONew(nlohmann::json &jobj,
+                                                   const std::string &path);
+
   void processGlobalRootSignature(nlohmann::json &jobj,
                                   CD3DX12_STATE_OBJECT_DESC &pipe) const;
   void processPipelineConfig(nlohmann::json &jobj,
                              CD3DX12_STATE_OBJECT_DESC &pipe) const;
 
 private:
-void updatePSOCache(const char* name,ID3D12PipelineState* pso);
-void insertInPSOCache(const PSOCompileResult& result);
+  void updatePSOCache(const char *name, ID3D12PipelineState *pso);
+  void insertInPSOCache(const PSOCompileResult &result);
 
   inline uint32_t getIndexFromHandle(const PSOHandle h) const {
     return h.handle & INDEX_MASK;
@@ -113,7 +114,8 @@ private:
   HashMap<const char *, ID3D12PipelineState *, hashString32> m_psoRegister;
   HashMap<const char *, PSOHandle, hashString32> m_psoRegisterHandle;
 
-  HashMap<const char *, ResizableVector<const char*>*, hashString32> m_shaderToPSOFile;
+  HashMap<const char *, ResizableVector<const char *> *, hashString32>
+      m_shaderToPSOFile;
 
   ShadersLayoutRegistry *layoutManger = nullptr;
   RootSignatureManager *rs_manager = nullptr;

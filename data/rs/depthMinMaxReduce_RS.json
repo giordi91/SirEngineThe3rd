@@ -1,5 +1,4 @@
 {
-    "depthMinMaxReduce_RS": {
       "type": "COMPUTE",
       "staticSamplers" : false,
       "config": [
@@ -38,5 +37,4 @@
         }
       ],
       "flags": []
-    }
 }

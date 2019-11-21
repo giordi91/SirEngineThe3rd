@@ -1,7 +1,7 @@
 {
  "type":  "RASTER",
  "inputLayout":  "positionOnly",
- "globalRootSignature": "debugDrawPointsSingleColorRS",
+ "globalRootSignature": "../data/rs/debugDrawPointsSingleColorRS.json",
   "VS": "pointExpandVS",
   "PS":  "basicColorPS",
   "rasterState":  "default",

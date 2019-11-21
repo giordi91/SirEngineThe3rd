@@ -1,7 +1,7 @@
 {
  "type":  "RASTER",
  "inputLayout":  "deferredNull",
- "globalRootSignature": "debugFullScreenBlit_RS",
+ "globalRootSignature": "../data/rs/debugFullScreenBlit_RS.json",
   "VS": "fullScreenQuadVS",
   "PS":  "depthBufferDebugPS",
   "rasterState":  "default",

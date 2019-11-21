@@ -1,7 +1,7 @@
 {
   "type": "RASTER",
   "inputLayout": "fullMesh",
-  "globalRootSignature": "forwardPhongAlphaCutoutRS",
+  "globalRootSignature": "../data/rs/forwardPhongAlphaCutoutRS.json",
   "VS": "basicMeshVSTex",
   "PS": "forwardPhongAlphaCutoutPS",
   "rasterState": "default",

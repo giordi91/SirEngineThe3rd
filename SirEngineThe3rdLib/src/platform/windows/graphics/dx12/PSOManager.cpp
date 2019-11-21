@@ -16,6 +16,7 @@
 #include "SirEngine/globals.h"
 #include "SirEngine/log.h"
 #include "SirEngine/runtimeString.h"
+#include "rootSignatureCompile.h"
 
 namespace SirEngine::dx12 {
 
@@ -250,6 +251,8 @@ void PSOManager::loadPSOInFolder(const char *directory) {
   std::vector<std::string> paths;
   listFilesInFolder(directory, paths, "json");
 
+  PSOCompileResult result = loadPSOFileNew("../data/PSO/blackAndWhiteEffect_PSO.json");
+
   for (const auto &p : paths) {
     PSOCompileResult result = loadPSOFile(p.c_str());
     insertInPSOCache(result);
@@ -424,6 +427,34 @@ void PSOManager::recompilePSOFromShader(const char *shaderName,
   globals::APPLICATION->queueEventForEndOfFrame(e);
 }
 
+PSOCompileResult PSOManager::loadPSOFileNew(const char *path) {
+  auto jobj = getJsonObj(path);
+  SE_CORE_INFO("[Engine]: Loading PSO from: {0}", path);
+
+  const std::string psoTypeString =
+      getValueIfInJson(jobj, PSO_KEY_TYPE, DEFAULT_STRING);
+  assert(!psoTypeString.empty());
+  const PSOType psoType = convertStringPSOTypeToEnum(psoTypeString);
+
+  switch (psoType) {
+  case (PSOType::COMPUTE): {
+	assert(0);
+    break;
+  }
+  case (PSOType::DXR): {
+    assert(0);
+    break;
+  }
+  case (PSOType::RASTER): {
+    return processRasterPSONew(jobj, path);
+    break;
+  }
+  default: {
+    assert(0 && "PSO Type not supported");
+  }
+  }
+}
+
 PSOCompileResult PSOManager::loadPSOFile(const char *path) {
   auto jobj = getJsonObj(path);
   SE_CORE_INFO("[Engine]: Loading PSO from: {0}", path);
@@ -463,8 +494,11 @@ PSOCompileResult PSOManager::processComputePSO(nlohmann::json &jobj,
       getValueIfInJson(jobj, PSO_KEY_SHADER_NAME, DEFAULT_STRING);
   assert(!shaderName.empty());
 
-  ID3D12RootSignature* rootS =
-	  rs_manager->getRootSignatureFromName(globalRootSignatureName.c_str());
+  //ID3D12RootSignature *rootS =
+  //    rs_manager->getRootSignatureFromName(globalRootSignatureName.c_str());
+
+  auto resultCompile = processSignatureFile(globalRootSignatureName.c_str());
+  auto rootS= resultCompile.root; 
 
   // fetching the shader from the shader manager, the shader manager contains
   // both rasterization and compute shaders, the DXIL for raytracer are
@@ -490,6 +524,116 @@ PSOCompileResult PSOManager::processComputePSO(nlohmann::json &jobj,
                           frameString(name.c_str()),
                           frameString(path.c_str())};
 }
+PSOCompileResult PSOManager::processRasterPSONew(nlohmann::json &jobj,
+                                              const std::string &path) {
+  // find the input layout
+  const std::string layoutString =
+      getValueIfInJson(jobj, PSO_KEY_INPUT_LAYOUT, DEFAULT_STRING);
+  SirEngine::dx12::LayoutHandle layout =
+      layoutManger->getShaderLayoutFromName(layoutString);
+
+  const std::string rootSignatureString =
+      getValueIfInJson(jobj, PSO_KEY_GLOBAL_ROOT, DEFAULT_STRING);
+  //auto rootSignature =
+      //rs_manager->getRootSignatureFromName(rootSignatureString.c_str());
+  auto resultCompile = processSignatureFile(rootSignatureString.c_str());
+  auto rootSignature = resultCompile.root; 
+
+  const std::string VSname =
+      getValueIfInJson(jobj, PSO_KEY_VS_SHADER, DEFAULT_STRING);
+  const std::string PSname =
+      getValueIfInJson(jobj, PSO_KEY_PS_SHADER, DEFAULT_STRING);
+
+  auto *vs = shaderManager->getShaderFromName(VSname);
+  auto *ps = shaderManager->getShaderFromName(PSname);
+
+  const std::string rasterStateString =
+      getValueIfInJson(jobj, PSO_KEY_RASTER_STATE, DEFAULT_STRING);
+
+  const std::string blendStateString =
+      getValueIfInJson(jobj, PSO_KEY_BLEND_STATE, DEFAULT_STRING);
+
+  const std::string depthStencilStateString =
+      getValueIfInJson(jobj, PSO_KEY_DEPTH_STENCIL_STATE, DEFAULT_STRING);
+
+  D3D12_RASTERIZER_DESC rasterState = getRasterState(rasterStateString, jobj);
+  D3D12_BLEND_DESC blendState = getBlendState(blendStateString);
+  D3D12_DEPTH_STENCIL_DESC dsState = getDSState(depthStencilStateString, jobj);
+
+  const std::string sampleMaskString =
+      getValueIfInJson(jobj, PSO_KEY_SAMPLE_MASK, DEFAULT_STRING);
+  UINT sampleMask = UINT_MAX;
+  if (sampleMaskString != "max") {
+    assert(0 && "unsupported sample mask");
+  }
+
+  const std::string topologyString =
+      getValueIfInJson(jobj, PSO_KEY_TOPOLOGY_TYPE, DEFAULT_STRING);
+  D3D12_PRIMITIVE_TOPOLOGY_TYPE topologyType =
+      convertStringToTopology(topologyString);
+
+  size_t renderTargets =
+      getValueIfInJson(jobj, PSO_KEY_RENDER_TARGETS, DEFAULT_INT);
+
+  assertInJson(jobj, PSO_KEY_RTV_FORMATS);
+  std::vector<DXGI_FORMAT> formats;
+  for (auto &format : jobj[PSO_KEY_RTV_FORMATS]) {
+    formats.push_back(convertStringToDXGIFormat(format.get<std::string>()));
+  }
+  assert(renderTargets == formats.size() &&
+         "number of render targets and provided formats don't match");
+
+  int sampleDescCount =
+      getValueIfInJson(jobj, PSO_KEY_SAMPLE_DESC_COUNT, DEFAULT_INT);
+  int sampleDescQuality =
+      getValueIfInJson(jobj, PSO_KEY_SAMPLE_DESC_QUALITY, DEFAULT_INT);
+
+  const std::string dsvFormatString =
+      getValueIfInJson(jobj, PSO_KEY_DSV_FORMAT, DEFAULT_STRING);
+  DXGI_FORMAT dsvFormat = convertStringToDXGIFormat(dsvFormatString);
+
+  D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc;
+  ID3D12PipelineState *pso = nullptr;
+  ZeroMemory(&psoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
+  psoDesc.InputLayout = {layout.layout, static_cast<UINT>(layout.size)};
+  psoDesc.pRootSignature = rootSignature;
+  psoDesc.VS = {reinterpret_cast<BYTE *>(vs->GetBufferPointer()),
+                vs->GetBufferSize()};
+
+  psoDesc.PS = {nullptr, 0};
+  if (ps != nullptr) {
+    psoDesc.PS = {reinterpret_cast<BYTE *>(ps->GetBufferPointer()),
+                  ps->GetBufferSize()};
+  }
+
+  psoDesc.RasterizerState = rasterState;
+  psoDesc.BlendState = blendState;
+  psoDesc.DepthStencilState = dsState;
+  psoDesc.SampleMask = sampleMask;
+  psoDesc.PrimitiveTopologyType = topologyType;
+  psoDesc.NumRenderTargets = static_cast<UINT>(renderTargets);
+  for (size_t i = 0; i < formats.size(); ++i) {
+    psoDesc.RTVFormats[i] = formats[i];
+  }
+  psoDesc.SampleDesc.Count = sampleDescCount;
+  psoDesc.SampleDesc.Quality = sampleDescQuality;
+  psoDesc.DSVFormat = dsvFormat;
+  HRESULT result =
+      m_dxrDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pso));
+
+  assert(SUCCEEDED(result));
+  const std::string name = getFileName(path);
+  // assert(m_psoRegister.find(name) == m_psoRegister.end());
+  m_psoRegister.insert(name.c_str(), pso);
+
+  return PSOCompileResult{pso,
+                          PSOType::RASTER,
+                          frameString(VSname.c_str()),
+                          frameString(PSname.c_str()),
+                          nullptr,
+                          frameString(name.c_str()),
+                          frameString(path.c_str())};
+} // namespace SirEngine::dx12
 
 PSOCompileResult PSOManager::processRasterPSO(nlohmann::json &jobj,
                                               const std::string &path) {
@@ -501,8 +645,11 @@ PSOCompileResult PSOManager::processRasterPSO(nlohmann::json &jobj,
 
   const std::string rootSignatureString =
       getValueIfInJson(jobj, PSO_KEY_GLOBAL_ROOT, DEFAULT_STRING);
-  auto rootSignature =
-      rs_manager->getRootSignatureFromName(rootSignatureString.c_str());
+  //auto rootSignature =
+  //    rs_manager->getRootSignatureFromName(rootSignatureString.c_str());
+
+  auto resultCompile = processSignatureFile(rootSignatureString.c_str());
+  auto rootSignature= resultCompile.root; 
 
   const std::string VSname =
       getValueIfInJson(jobj, PSO_KEY_VS_SHADER, DEFAULT_STRING);
