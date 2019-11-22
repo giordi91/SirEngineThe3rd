@@ -1,5 +1,5 @@
 {
  "type":  "COMPUTE",
  "globalRootSignature": "../data/rs/depthMinMaxReduce_RS.json",
- "shaderName" : "depthMinMaxReduce"
+ "shaderName" : "../data/shaders/compute/depthMinMaxReduce.hlsl"
 }

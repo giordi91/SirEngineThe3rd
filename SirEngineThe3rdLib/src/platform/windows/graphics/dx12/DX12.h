@@ -109,7 +109,7 @@ typedef ID3D12Device5 D3D12DeviceType;
 #else
 typedef ID3D12Device3 D3D12DeviceType;
 #endif
-extern D3D12DeviceType *DEVICE;
+extern SIR_ENGINE_API D3D12DeviceType *DEVICE;
 extern ID3D12Debug *DEBUG_CONTROLLER;
 extern IDXGIFactory6 *DXGI_FACTORY;
 extern IDXGIAdapter3*ADAPTER;
@@ -132,7 +132,7 @@ extern ConstantBufferManagerDx12 *CONSTANT_BUFFER_MANAGER;
 extern ShaderManager *SHADER_MANAGER;
 extern RootSignatureManager *ROOT_SIGNATURE_MANAGER;
 extern PSOManager *PSO_MANAGER;
-extern ShadersLayoutRegistry *SHADER_LAYOUT_REGISTRY;
+extern SIR_ENGINE_API ShadersLayoutRegistry *SHADER_LAYOUT_REGISTRY;
 extern BufferManagerDx12 *BUFFER_MANAGER;
 extern DebugRenderer *DEBUG_RENDERER;
 extern Dx12RenderingContext *RENDERING_CONTEXT;

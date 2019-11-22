@@ -5,8 +5,8 @@
 #include "SirEngine/argsUtils.h"
 #include "SirEngine/binary/binaryFile.h"
 #include "SirEngine/fileUtils.h"
-#include <d3dcompiler.h>
 #include "SirEngine/runtimeString.h"
+#include <d3dcompiler.h>
 
 namespace SirEngine {
 namespace dx12 {
@@ -134,8 +134,7 @@ void ShaderManager::recompileShader(const char *path, const char *offsetPath,
 
   // TODO this is quite a mess, so many conversiong with Wstring back and
   // fort small allocations etc.
-  splitCompilerArgs(compilerArgs, 
-                    args.splitCompilerArgsPointers);
+  splitCompilerArgs(compilerArgs, args.splitCompilerArgsPointers);
 
   std::string fullShaderPath(offsetPath);
   fullShaderPath += blob.metadata->shaderPath;
@@ -159,6 +158,12 @@ void ShaderManager::recompileShader(const char *path, const char *offsetPath,
       logRef += "\n";
     }
   }
+}
+
+ID3DBlob *ShaderManager::compileShader(const char *shaderPath,
+                                       ShaderArgs &shaderArgs,
+                                       std::string *log) {
+  return m_compiler->compileShader(shaderPath, shaderArgs, log);
 }
 
 ShaderManager::~ShaderManager() { delete m_compiler; }

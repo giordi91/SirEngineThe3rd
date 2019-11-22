@@ -33,8 +33,8 @@ inline const BinaryFileHeader *getHeader(const void *binaryData) {
 
 template <typename T> const T *getMapperData(const void *binaryData) {
   const BinaryFileHeader *header = getHeader(binaryData);
-  const char *outPointer =
-      reinterpret_cast<const char *>(binaryData) + header->mapperDataOffsetInByte;
+  const char *outPointer = reinterpret_cast<const char *>(binaryData) +
+                           header->mapperDataOffsetInByte;
   return reinterpret_cast<const T *>(outPointer);
 }
 
@@ -61,17 +61,26 @@ bool SIR_ENGINE_API readAllBytes(const std::string &filename,
   X(MODEL)                                                                     \
   X(SHADER)                                                                    \
   X(RS)                                                                        \
-  X(SKIN)                                                                        \
-  X(ANIM)
+  X(SKIN)                                                                      \
+  X(ANIM)                                                                      \
+  X(PSO)
 
-enum BinaryFileType { NONE = 0, MODEL = 1, SHADER = 2, RS = 3, SKIN=4, ANIM=5};
+enum BinaryFileType {
+  NONE = 0,
+  MODEL = 1,
+  SHADER = 2,
+  RS = 3,
+  SKIN = 4,
+  ANIM = 5,
+  PSO = 6
+};
 
 SIR_ENGINE_API
 extern const std::unordered_map<BinaryFileType, std::string>
     m_binaryFileTypeToString;
 
 inline std::string getBinaryFileTypeName(const BinaryFileType type) {
-	const auto found = m_binaryFileTypeToString.find(type);
+  const auto found = m_binaryFileTypeToString.find(type);
   if (found != m_binaryFileTypeToString.end()) {
     return found->second;
   }
@@ -86,12 +95,12 @@ struct ModelMapperData final {
 };
 
 struct ShaderMapperData final {
-  uint32_t shaderFlags =0;
+  uint32_t shaderFlags = 0;
   uint32_t shaderSizeInByte = 0;
   uint32_t typeSizeInByte = 0;
   uint32_t entryPointInByte = 0;
-  uint32_t pathSizeInByte= 0;
-  uint32_t compilerArgsInByte =0;
+  uint32_t pathSizeInByte = 0;
+  uint32_t compilerArgsInByte = 0;
 };
 
 struct RootSignatureMappedData final {
@@ -99,21 +108,23 @@ struct RootSignatureMappedData final {
   uint32_t sizeInByte = 0;
 };
 
-struct SkinMapperData
-{
-	uint32_t influenceCountPerVertex;
-	uint32_t jointsSizeInByte;
-	uint32_t weightsSizeInByte;
+struct SkinMapperData {
+  uint32_t influenceCountPerVertex;
+  uint32_t jointsSizeInByte;
+  uint32_t weightsSizeInByte;
 };
 
-struct ClipMapperData
-{
-	int nameSizeInByte;
-	int posesSizeInByte;
-	float frameRate;
-	int bonesPerFrame;
-	int frameCount;
-	int keyValueSizeInByte;
-	bool isLoopable;
+struct ClipMapperData {
+  int nameSizeInByte;
+  int posesSizeInByte;
+  float frameRate;
+  int bonesPerFrame;
+  int frameCount;
+  int keyValueSizeInByte;
+  bool isLoopable;
+};
 
+struct PSOMappedData {
+  int psoSizeInByte;
+  int psoNameSizeInByte;
 };

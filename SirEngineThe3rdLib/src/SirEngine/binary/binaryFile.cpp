@@ -26,6 +26,7 @@ WriteBinaryFileStatus
 writeBinaryFile(const BinaryFileWriteRequest &request) {
 
   std::ofstream myFile(request.outPath, std::ios::out | std::ios::binary);
+  assert(myFile.is_open());
   BinaryFileHeader header;
   header.fileType = request.fileType;
   header.version = request.version;

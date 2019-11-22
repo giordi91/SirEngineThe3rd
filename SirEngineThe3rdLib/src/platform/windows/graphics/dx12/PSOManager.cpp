@@ -11,11 +11,13 @@
 #include <iostream>
 
 #include "SirEngine/application.h"
+#include "SirEngine/binary/binaryFile.h"
 #include "SirEngine/events/shaderCompileEvent.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/log.h"
 #include "SirEngine/runtimeString.h"
 #include "rootSignatureCompile.h"
+#include <d3dcompiler.h>
 
 namespace SirEngine::dx12 {
 
@@ -50,10 +52,43 @@ void PSOManager::loadPSOInFolder(const char *directory) {
   std::vector<std::string> paths;
   listFilesInFolder(directory, paths, "json");
 
+
   for (const auto &p : paths) {
     PSOCompileResult result = loadPSOFile(p.c_str());
     insertInPSOCache(result);
   }
+
+  // temp
+  const std::string pp = "../data/processed/pso/blackAndWhiteEffect_PSO.pso";
+  const auto expPath = std::filesystem::path(pp);
+  const std::string name = expPath.stem().string();
+
+  std::vector<char> data;
+  const bool fileOpenRes = readAllBytes(pp.c_str(), data);
+  if (!fileOpenRes) {
+    return;
+  }
+  // extract the header and figure out the mapping of the file
+  const BinaryFileHeader *h = getHeader(data.data());
+  if (!(h->fileType == BinaryFileType::PSO)) {
+    SE_CORE_ERROR(
+        "Root signature manager: cannot load RS: \n {0} \n file type is {1}",
+        pp, getBinaryFileTypeName(static_cast<BinaryFileType>(h->fileType)));
+    return;
+  }
+    const auto mapper = getMapperData<PSOMappedData>(data.data());
+    void *ptr= data.data() + sizeof(BinaryFileHeader);
+    ID3DBlob *blob;
+    const HRESULT hr = D3DCreateBlob(mapper->psoSizeInByte, &blob);
+    assert(SUCCEEDED(hr) && "failed create blob of data for root signature");
+    memcpy(blob->GetBufferPointer(), ptr,
+           blob->GetBufferSize());
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC desc{};
+	desc.CachedPSO.pCachedBlob = blob;
+	desc.CachedPSO.CachedBlobSizeInBytes= blob->GetBufferSize();
+	ID3D12PipelineState* state = nullptr;
+	HRESULT please = DEVICE->CreateGraphicsPipelineState(&desc,IID_PPV_ARGS(&state));
+	int x = 0;
 }
 
 void PSOManager::updatePSOCache(const char *name, ID3D12PipelineState *pso) {
@@ -162,7 +197,7 @@ void PSOManager::recompilePSOFromShader(const char *shaderName,
     switch (psoType) {
     case (PSOType::COMPUTE): {
 
-      const std::string computeName=
+      const std::string computeName =
           getValueIfInJson(jobj, PSO_KEY_SHADER_NAME, DEFAULT_STRING);
       assert(!computeName.empty());
       shadersToRecompile.push_back(computeName);

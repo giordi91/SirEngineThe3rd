@@ -4,8 +4,8 @@
 #include "cxxopts/cxxopts.hpp"
 #include "rootProcess.h"
 
-#include "SirEngine/binary/binaryFile.h"
 #include "SirEngine/argsUtils.h"
+#include "SirEngine/binary/binaryFile.h"
 
 const std::string PLUGIN_NAME = "rootSignatureCompilerPlugin";
 const unsigned int VERSION_MAJOR = 0;
@@ -55,9 +55,10 @@ bool processRoot(const std::string &assetPath, const std::string &outputPath,
 
     RootSignatureMappedData mapperData;
     mapperData.type = static_cast<int>(subBlobl.type);
-    mapperData.sizeInByte = static_cast<uint32_t>(subBlobl.blob->GetBufferSize());
+    mapperData.sizeInByte =
+        static_cast<uint32_t>(subBlobl.blob->GetBufferSize());
     request.mapperData = &mapperData;
-    request.mapperDataSizeInByte = sizeof(ModelMapperData);
+    request.mapperDataSizeInByte = sizeof(RootSignatureMappedData);
 
     writeBinaryFile(request);
 
@@ -68,13 +69,14 @@ bool processRoot(const std::string &assetPath, const std::string &outputPath,
         getPathName(outputPath) + "/" + subBlobl.name + ".bin";
 
     std::ofstream myFile(outFilePathClean, std::ios::out | std::ios::binary);
-    myFile.write(static_cast<const char *>(request.bulkData), request.bulkDataSizeInByte);
+    myFile.write(static_cast<const char *>(request.bulkData),
+                 request.bulkDataSizeInByte);
     myFile.close();
   }
   return true;
 }
 
-  bool pluginRegisterFunction(PluginRegistry * registry) {
-    registry->registerFunction(PLUGIN_NAME, &processRoot);
-    return true;
-  }
+bool pluginRegisterFunction(PluginRegistry *registry) {
+  registry->registerFunction(PLUGIN_NAME, &processRoot);
+  return true;
+}
