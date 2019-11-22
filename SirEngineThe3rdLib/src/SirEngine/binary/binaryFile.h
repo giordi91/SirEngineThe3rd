@@ -126,5 +126,12 @@ struct ClipMapperData {
 
 struct PSOMappedData {
   int psoSizeInByte;
+  int psoDescSizeInByte;
   int psoNameSizeInByte;
+  int vsShaderNameSize;
+  int psShaderNameSize;
+  int csShaderNameSize;
+  int inputLayoutSize;
+  int rootSignatureSize;
+  int psoType;
 };

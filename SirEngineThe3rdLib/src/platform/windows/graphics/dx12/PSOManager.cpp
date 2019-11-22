@@ -16,7 +16,6 @@
 #include "SirEngine/globals.h"
 #include "SirEngine/log.h"
 #include "SirEngine/runtimeString.h"
-#include "rootSignatureCompile.h"
 #include <d3dcompiler.h>
 
 namespace SirEngine::dx12 {
@@ -37,7 +36,7 @@ void PSOManager::init(D3D12DeviceType *device,
   layoutManger = registry;
 }
 void PSOManager::cleanup() {
-  // TODO need to be able to iterate hash map even if not idea;
+  // TODO need to be able to iterate hash map even if not ideal;
   // for (auto pso : m_psoDXRRegister) {
   //  pso.second->Release();
   //}
@@ -48,15 +47,21 @@ void PSOManager::cleanup() {
   // m_psoDXRRegister.clear();
   // m_psoRegister.clear();
 }
+
+D3D12_SHADER_BYTECODE getShaderByteCodeFromFullPath(const char *path) {
+  if (path == nullptr) {
+    return {nullptr, 0};
+  }
+  ID3D10Blob *blob =
+      path != nullptr
+          ? dx12::SHADER_MANAGER->getShaderFromName(getFileName(path))
+          : nullptr;
+  return {blob->GetBufferPointer(), blob->GetBufferSize()};
+}
+
 void PSOManager::loadPSOInFolder(const char *directory) {
   std::vector<std::string> paths;
   listFilesInFolder(directory, paths, "json");
-
-
-  for (const auto &p : paths) {
-    PSOCompileResult result = loadPSOFile(p.c_str());
-    insertInPSOCache(result);
-  }
 
   // temp
   const std::string pp = "../data/processed/pso/blackAndWhiteEffect_PSO.pso";
@@ -76,19 +81,75 @@ void PSOManager::loadPSOInFolder(const char *directory) {
         pp, getBinaryFileTypeName(static_cast<BinaryFileType>(h->fileType)));
     return;
   }
-    const auto mapper = getMapperData<PSOMappedData>(data.data());
-    void *ptr= data.data() + sizeof(BinaryFileHeader);
-    ID3DBlob *blob;
-    const HRESULT hr = D3DCreateBlob(mapper->psoSizeInByte, &blob);
-    assert(SUCCEEDED(hr) && "failed create blob of data for root signature");
-    memcpy(blob->GetBufferPointer(), ptr,
-           blob->GetBufferSize());
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC desc{};
-	desc.CachedPSO.pCachedBlob = blob;
-	desc.CachedPSO.CachedBlobSizeInBytes= blob->GetBufferSize();
-	ID3D12PipelineState* state = nullptr;
-	HRESULT please = DEVICE->CreateGraphicsPipelineState(&desc,IID_PPV_ARGS(&state));
-	int x = 0;
+  const auto mapper = getMapperData<PSOMappedData>(data.data());
+  char *ptr = data.data() + sizeof(BinaryFileHeader);
+  ID3DBlob *blob;
+  const HRESULT hr = D3DCreateBlob(mapper->psoSizeInByte, &blob);
+  assert(SUCCEEDED(hr) && "failed create blob of data for root signature");
+  memcpy(blob->GetBufferPointer(), ptr, blob->GetBufferSize());
+  char *ptrOffset = ptr + blob->GetBufferSize();
+  ptrOffset += mapper->psoDescSizeInByte;
+  char *psoPath = ptrOffset;
+  ptrOffset += mapper->psoNameSizeInByte;
+  char *vsPath = mapper->vsShaderNameSize == 0 ? nullptr : ptrOffset;
+  ptrOffset += mapper->vsShaderNameSize;
+  char *psPath = mapper->psShaderNameSize == 0 ? nullptr : ptrOffset;
+  ptrOffset += mapper->psShaderNameSize;
+  char *csPath = mapper->csShaderNameSize == 0 ? nullptr : ptrOffset;
+  ptrOffset += mapper->csShaderNameSize;
+  char *inputLayout = mapper->inputLayoutSize == 0 ? nullptr : ptrOffset;
+  ptrOffset += mapper->inputLayoutSize;
+  char *rootSignature = mapper->rootSignatureSize == 0 ? nullptr : ptrOffset;
+  ptrOffset += mapper->rootSignatureSize;
+
+  auto psoEnum = static_cast<PSOType>(mapper->psoType);
+
+  ID3D12PipelineState *state = nullptr;
+  if (psoEnum == PSOType::RASTER) {
+    auto *desc = reinterpret_cast<D3D12_GRAPHICS_PIPELINE_STATE_DESC *>(
+        ptr + blob->GetBufferSize());
+    desc->CachedPSO.pCachedBlob = blob->GetBufferPointer();
+    desc->CachedPSO.CachedBlobSizeInBytes = blob->GetBufferSize();
+
+    // only thing left is to patch the shader in
+    desc->VS = getShaderByteCodeFromFullPath(vsPath);
+    desc->PS = getShaderByteCodeFromFullPath(psPath);
+
+    SirEngine::dx12::LayoutHandle layout =
+        dx12::SHADER_LAYOUT_REGISTRY->getShaderLayoutFromName(inputLayout);
+    desc->InputLayout = {layout.layout, static_cast<UINT>(layout.size)};
+    ID3D12RootSignature *root =
+        dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(
+            getFileName(rootSignature).c_str());
+    desc->pRootSignature = root;
+
+	//auto resultCompile = processSignatureFile(rootSignature);
+    //desc->pRootSignature = resultCompile.root;
+
+    HRESULT please =
+        DEVICE->CreateGraphicsPipelineState(desc, IID_PPV_ARGS(&state));
+    int x = 0;
+  } else {
+    auto *desc = reinterpret_cast<D3D12_COMPUTE_PIPELINE_STATE_DESC *>(
+        ptr + blob->GetBufferSize());
+    desc->CachedPSO.pCachedBlob = blob->GetBufferPointer();
+    desc->CachedPSO.CachedBlobSizeInBytes = blob->GetBufferSize();
+    // only thing left is to patch the shader in
+    desc->CS = getShaderByteCodeFromFullPath(csPath);
+    ID3D12RootSignature *root =
+        dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(
+            getFileName(rootSignature).c_str());
+    desc->pRootSignature = root;
+    HRESULT please =
+        DEVICE->CreateComputePipelineState(desc, IID_PPV_ARGS(&state));
+  }
+
+  int x = 0;
+
+  for (const auto &p : paths) {
+    PSOCompileResult result = loadPSOFile(p.c_str());
+    insertInPSOCache(result);
+  }
 }
 
 void PSOManager::updatePSOCache(const char *name, ID3D12PipelineState *pso) {

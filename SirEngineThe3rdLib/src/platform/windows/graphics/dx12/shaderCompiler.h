@@ -1,7 +1,7 @@
 #include "SirEngine/core.h"
-#include "SirEngine/memory/resizableVector.h"
 #include <d3dcommon.h>
 #include <string>
+#include "SirEngine/memory/resizableVector.h"
 
 struct IDxcCompiler;
 struct IDxcLibrary;

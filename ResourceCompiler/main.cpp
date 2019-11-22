@@ -106,8 +106,10 @@ void executeFile(const cxxopts::ParseResult &result) {
 
 int main(int argc, char *argv[]) {
 
-  SirEngine::StringPool stringPool(1024*10);
+  SirEngine::StringPool stringPool(1024*1024*10);
   SirEngine::globals::STRING_POOL = &stringPool;
+  SirEngine::globals::FRAME_ALLOCATOR = new SirEngine::StackAllocator();
+  SirEngine::globals::FRAME_ALLOCATOR->initialize(1024*1024*10);
   SirEngine::Log::init();
   auto options = getCxxOptions();
 
