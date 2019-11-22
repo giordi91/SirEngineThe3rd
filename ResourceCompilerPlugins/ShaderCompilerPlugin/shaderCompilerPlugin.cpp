@@ -87,12 +87,6 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
                   outputPath);
   }
 
-  // initialize memory pool used by the compiler
-  SirEngine::globals::STRING_POOL =
-      new SirEngine::StringPool(2 << 22); // 4 megabyte allocation
-  SirEngine::globals::FRAME_ALLOCATOR = new SirEngine::StackAllocator();
-  SirEngine::globals::FRAME_ALLOCATOR->initialize(2 << 22);
-
   // process arguments, needs to happen after initialization because allocators
   // are used
   bool result = processArgs(args, shaderArgs);
@@ -103,6 +97,7 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
   SirEngine::dx12::DXCShaderCompiler compiler;
   ID3DBlob *blob = compiler.compileShader(assetPath.c_str(), shaderArgs);
 
+  int size = blob->GetBufferSize();
   // save the file by building a binary request
   BinaryFileWriteRequest request;
   request.fileType = BinaryFileType::SHADER;
@@ -179,10 +174,6 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
 
   // release compiler data
   blob->Release();
-
-  // release memory
-  delete SirEngine::globals::STRING_POOL;
-  delete SirEngine::globals::FRAME_ALLOCATOR;
 
   SE_CORE_INFO("Shader successfully compiled ---> {0}", outputPath);
   return true;

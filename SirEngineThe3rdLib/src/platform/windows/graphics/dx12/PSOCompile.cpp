@@ -275,7 +275,6 @@ PSOCompileResult processComputePSO(nlohmann::json &jobj,
   auto resultCompile = processSignatureFile(globalRootSignatureName.c_str());
   auto rootS = resultCompile.root;
 
-  
   DXCShaderCompiler m_compiler;
   // fetching the shader from the shader manager, the shader manager contains
   // both rasterization and compute shaders, the DXIL for raytracer are
@@ -285,28 +284,33 @@ PSOCompileResult processComputePSO(nlohmann::json &jobj,
   csArgs.debug = true;
   csArgs.type = L"cs_6_2";
 
-
   std::string log;
-  auto *computeShader = m_compiler.compileShader(shaderName.c_str(),csArgs,&log);
+  auto *computeShader =
+      m_compiler.compileShader(shaderName.c_str(), csArgs, &log);
 
   D3D12_SHADER_BYTECODE computeShaderByteCode{computeShader->GetBufferPointer(),
                                               computeShader->GetBufferSize()};
   ID3D12PipelineState *pso;
   // configure compute shader
-  D3D12_COMPUTE_PIPELINE_STATE_DESC cdesc{};
-  cdesc.pRootSignature = rootS;
-  cdesc.CS = computeShaderByteCode;
-  cdesc.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
-  dx12::DEVICE->CreateComputePipelineState(&cdesc, IID_PPV_ARGS(&pso));
+  auto* cdesc = new D3D12_COMPUTE_PIPELINE_STATE_DESC;
+  cdesc->pRootSignature = rootS;
+  cdesc->CS = computeShaderByteCode;
+  cdesc->Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
+  dx12::DEVICE->CreateComputePipelineState(cdesc, IID_PPV_ARGS(&pso));
 
   const std::string name = getFileName(path);
-  return PSOCompileResult{pso,
+  return PSOCompileResult{cdesc,
+                          nullptr,
+                          pso,
                           PSOType::COMPUTE,
                           nullptr,
                           nullptr,
                           frameString(name.c_str()),
                           frameString(name.c_str()),
-                          frameString(path.c_str())};
+                          frameString(path.c_str()),
+						  nullptr,
+						frameString(globalRootSignatureName.c_str())
+  };
 }
 
 PSOCompileResult processRasterPSO(nlohmann::json &jobj,
@@ -330,7 +334,6 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj,
   const std::string PSname =
       getValueIfInJson(jobj, PSO_KEY_PS_SHADER, DEFAULT_STRING);
 
-
   DXCShaderCompiler m_compiler;
   ShaderArgs vsArgs;
   vsArgs.entryPoint = L"VS";
@@ -338,15 +341,15 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj,
   vsArgs.type = L"vs_6_2";
 
   std::string log;
-  auto *vs = m_compiler.compileShader(VSname.c_str(),vsArgs,&log);
+  auto *vs = m_compiler.compileShader(VSname.c_str(), vsArgs, &log);
 
-
-  vsArgs.entryPoint = L"PS";
-  vsArgs.debug = true;
-  vsArgs.type = L"ps_6_2";
-  ID3DBlob* ps = nullptr;
-  if(PSname != "null") {
-	ps = m_compiler.compileShader(PSname.c_str(),vsArgs,&log);
+  ShaderArgs psArgs;
+  psArgs.entryPoint = L"PS";
+  psArgs.debug = true;
+  psArgs.type = L"ps_6_2";
+  ID3DBlob *ps = nullptr;
+  if (PSname != "null") {
+    ps = m_compiler.compileShader(PSname.c_str(), psArgs, &log);
   }
 
   const std::string rasterStateString =
@@ -394,47 +397,52 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj,
       getValueIfInJson(jobj, PSO_KEY_DSV_FORMAT, DEFAULT_STRING);
   DXGI_FORMAT dsvFormat = convertStringToDXGIFormat(dsvFormatString);
 
-  D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc;
+  auto *psoDesc = new D3D12_GRAPHICS_PIPELINE_STATE_DESC();
   ID3D12PipelineState *pso = nullptr;
-  ZeroMemory(&psoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
-  psoDesc.InputLayout = {layout.layout, static_cast<UINT>(layout.size)};
-  psoDesc.pRootSignature = rootSignature;
-  psoDesc.VS = {reinterpret_cast<BYTE *>(vs->GetBufferPointer()),
-                vs->GetBufferSize()};
+  ZeroMemory(psoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
+  psoDesc->InputLayout = {layout.layout, static_cast<UINT>(layout.size)};
+  psoDesc->pRootSignature = rootSignature;
+  psoDesc->VS = {reinterpret_cast<BYTE *>(vs->GetBufferPointer()),
+                 vs->GetBufferSize()};
 
-  psoDesc.PS = {nullptr, 0};
+  psoDesc->PS = {nullptr, 0};
   if (ps != nullptr) {
-    psoDesc.PS = {reinterpret_cast<BYTE *>(ps->GetBufferPointer()),
-                  ps->GetBufferSize()};
+    psoDesc->PS = {reinterpret_cast<BYTE *>(ps->GetBufferPointer()),
+                   ps->GetBufferSize()};
   }
 
-  psoDesc.RasterizerState = rasterState;
-  psoDesc.BlendState = blendState;
-  psoDesc.DepthStencilState = dsState;
-  psoDesc.SampleMask = sampleMask;
-  psoDesc.PrimitiveTopologyType = topologyType;
-  psoDesc.NumRenderTargets = static_cast<UINT>(renderTargets);
+  psoDesc->RasterizerState = rasterState;
+  psoDesc->BlendState = blendState;
+  psoDesc->DepthStencilState = dsState;
+  psoDesc->SampleMask = sampleMask;
+  psoDesc->PrimitiveTopologyType = topologyType;
+  psoDesc->NumRenderTargets = static_cast<UINT>(renderTargets);
   for (size_t i = 0; i < formats.size(); ++i) {
-    psoDesc.RTVFormats[i] = formats[i];
+    psoDesc->RTVFormats[i] = formats[i];
   }
-  psoDesc.SampleDesc.Count = sampleDescCount;
-  psoDesc.SampleDesc.Quality = sampleDescQuality;
-  psoDesc.DSVFormat = dsvFormat;
+  psoDesc->SampleDesc.Count = sampleDescCount;
+  psoDesc->SampleDesc.Quality = sampleDescQuality;
+  psoDesc->DSVFormat = dsvFormat;
   HRESULT result =
-      dx12::DEVICE->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pso));
+      dx12::DEVICE->CreateGraphicsPipelineState(psoDesc, IID_PPV_ARGS(&pso));
 
   assert(SUCCEEDED(result));
   const std::string name = getFileName(path);
   // assert(m_psoRegister.find(name) == m_psoRegister.end());
   // m_psoRegister.insert(name.c_str(), pso);
 
-  return PSOCompileResult{pso,
+  return PSOCompileResult{nullptr,
+                          psoDesc,
+                          pso,
                           PSOType::RASTER,
                           frameString(VSname.c_str()),
                           frameString(PSname.c_str()),
                           nullptr,
                           frameString(name.c_str()),
-                          frameString(path.c_str())};
+                          frameString(path.c_str()),
+						frameString(layoutString.c_str()),
+						frameString(rootSignatureString.c_str())
+  };
 } // namespace SirEngine::dx12
 
 PSOCompileResult loadPSOFile(const char *path) {
@@ -464,7 +472,7 @@ PSOCompileResult loadPSOFile(const char *path) {
     break;
   }
   }
-  return PSOCompileResult{nullptr, PSOType::INVALID};
+  return PSOCompileResult{nullptr,nullptr,nullptr, PSOType::INVALID};
 }
 
 } // namespace SirEngine::dx12

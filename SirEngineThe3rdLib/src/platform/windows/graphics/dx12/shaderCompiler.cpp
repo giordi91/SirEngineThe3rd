@@ -7,8 +7,8 @@
 
 #include <dxcapi.h>
 
-#include <d3dcompiler.h>
 #include "SirEngine/runtimeString.h"
+#include <d3dcompiler.h>
 
 namespace SirEngine::dx12 {
 
@@ -49,9 +49,10 @@ ID3DBlob *DXCShaderCompiler::compileShader(const char *shaderPath,
   DxcCreateInstance(CLSID_DxcLibrary, __uuidof(IDxcLibrary),
                     reinterpret_cast<void **>(&pLibrary));
   pLibrary->CreateBlobWithEncodingFromPinned(
-	  //TODO should we return the null limiter in the size?
-	  //here we remove one from the file size since we include the null terminator
-      program, static_cast<uint32_t>(fileSize-1), CP_UTF8, &pSource);
+      // TODO should we return the null limiter in the size?
+      // here we remove one from the file size since we include the null
+      // terminator
+      program, static_cast<uint32_t>(fileSize - 1), CP_UTF8, &pSource);
 
   // lets build compiler flags, for now they are simple so we can just switch
   // between two sets based on debug or not
@@ -62,24 +63,24 @@ ID3DBlob *DXCShaderCompiler::compileShader(const char *shaderPath,
 
   // making a copy of the args vector
 
-  auto& finalFlags = shaderArgs.splitCompilerArgsPointers;
+  auto &finalFlags = shaderArgs.splitCompilerArgsPointers;
   // adding the needed pointers to the list
   for (int i = 0; i < flagsCount; ++i) {
-	//this flags are static no need to internalize them
+    // this flags are static no need to internalize them
     finalFlags.pushBack(const_cast<wchar_t *>(flags[i]));
   }
   flagsCount = static_cast<int>(shaderArgs.splitCompilerArgsPointers.size());
 
   // kick the compilation
   pCompiler->Compile(
-      pSource,                        // program text
-      wshader,                        // file name, mostly for error messages
-      shaderArgs.entryPoint,  // entry point function
-      shaderArgs.type,        // target profile
-      const_cast<LPCWSTR *>(finalFlags.data()),  // compilation arguments
-      flagsCount,     // number of compilation arguments
-      nullptr, 0,     // name/value defines and their count
-      includeHandle,  // handler for #include directives
+      pSource,               // program text
+      wshader,               // file name, mostly for error messages
+      shaderArgs.entryPoint, // entry point function
+      shaderArgs.type,       // target profile
+      const_cast<LPCWSTR *>(finalFlags.data()), // compilation arguments
+      flagsCount,    // number of compilation arguments
+      nullptr, 0,    // name/value defines and their count
+      includeHandle, // handler for #include directives
       &pResult);
 
   // checking whether or not compilation was successful
@@ -101,9 +102,9 @@ ID3DBlob *DXCShaderCompiler::compileShader(const char *shaderPath,
     SE_CORE_ERROR("ERROR_LOG:\n {0}", errorOut);
     pPrintBlob->Release();
     return nullptr;
-  } 
-	
-  if(!errorOut.empty()) {
+  }
+
+  if (!errorOut.empty()) {
     SE_CORE_WARN("COMPILER LOG:\n {0}", errorOut);
   }
 
@@ -118,7 +119,8 @@ ID3DBlob *DXCShaderCompiler::compileShader(const char *shaderPath,
   assert(SUCCEEDED(hr) && "could not create shader blob");
   memcpy(blob->GetBufferPointer(), pResultBlob->GetBufferPointer(),
          pResultBlob->GetBufferSize());
-
+  pResult->Release();
+  int size = pResultBlob->GetBufferSize();
   pResult->Release();
   pResultBlob->Release();
 
@@ -132,4 +134,4 @@ unsigned int DXCShaderCompiler::getShaderFlags(const ShaderArgs &shaderArgs) {
 
   return flags;
 }
-}  // namespace SirEngine::dx12
+} // namespace SirEngine::dx12

@@ -110,9 +110,9 @@ typedef ID3D12Device5 D3D12DeviceType;
 typedef ID3D12Device3 D3D12DeviceType;
 #endif
 extern SIR_ENGINE_API D3D12DeviceType *DEVICE;
-extern ID3D12Debug *DEBUG_CONTROLLER;
+extern SIR_ENGINE_API ID3D12Debug *DEBUG_CONTROLLER;
 extern IDXGIFactory6 *DXGI_FACTORY;
-extern IDXGIAdapter3*ADAPTER;
+extern SIR_ENGINE_API IDXGIAdapter3*ADAPTER;
 extern UINT64 CURRENT_FENCE;
 extern DescriptorHeap *GLOBAL_CBV_SRV_UAV_HEAP;
 extern DescriptorHeap *GLOBAL_RTV_HEAP;
