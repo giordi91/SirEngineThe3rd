@@ -7,6 +7,7 @@
 
 namespace SirEngine {
 namespace dx12 {
+struct ShaderArgs;
 
 class DXCShaderCompiler;
 
@@ -35,8 +36,8 @@ public:
     if (found != m_stringToShader.end()) {
       return found->second.shader;
     }
-  	if(name == "null") {
-		return nullptr;
+    if (name == "null") {
+      return nullptr;
     }
     assert(0 && "could not find shader");
     return nullptr;
@@ -53,6 +54,8 @@ public:
   void loadShaderBinaryFile(const char *path);
   void recompileShader(const char *path, const char *offsetPath,
                        std::string *log);
+  ID3DBlob *compileShader(const char *shaderPath, ShaderArgs &shaderArgs,
+                          std::string *log);
 
 private:
   // 2 mb of data for the stack

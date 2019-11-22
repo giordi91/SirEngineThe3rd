@@ -6,8 +6,8 @@
 #include "platform/windows/graphics/dx12/d3dx12.h"
 #include "platform/windows/graphics/dx12/dxgiFormatsDefine.h"
 #include "rootSignatureCompile.h"
+#include "shaderCompiler.h"
 #include "shaderLayout.h"
-#include "shaderManager.h"
 
 namespace SirEngine::dx12 {
 static const std::string PSO_KEY_GLOBAL_ROOT = "globalRootSignature";
@@ -89,7 +89,7 @@ static const std::unordered_map<std::string, D3D12_PRIMITIVE_TOPOLOGY_TYPE>
         {"line", D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE},
 };
 
-PSOType convertStringPSOTypeToEnum(const char*type) {
+PSOType convertStringPSOTypeToEnum(const char *type) {
   const auto found = STRING_TO_PSO_TYPE.find(type);
   return (found != STRING_TO_PSO_TYPE.end() ? found->second : PSOType::INVALID);
 }
@@ -275,10 +275,19 @@ PSOCompileResult processComputePSO(nlohmann::json &jobj,
   auto resultCompile = processSignatureFile(globalRootSignatureName.c_str());
   auto rootS = resultCompile.root;
 
+  
+  DXCShaderCompiler m_compiler;
   // fetching the shader from the shader manager, the shader manager contains
   // both rasterization and compute shaders, the DXIL for raytracer are
   // handled by the DXIL manager
-  auto *computeShader = dx12::SHADER_MANAGER->getShaderFromName(shaderName);
+  ShaderArgs csArgs;
+  csArgs.entryPoint = L"CS";
+  csArgs.debug = true;
+  csArgs.type = L"cs_6_2";
+
+
+  std::string log;
+  auto *computeShader = m_compiler.compileShader(shaderName.c_str(),csArgs,&log);
 
   D3D12_SHADER_BYTECODE computeShaderByteCode{computeShader->GetBufferPointer(),
                                               computeShader->GetBufferSize()};
@@ -321,8 +330,24 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj,
   const std::string PSname =
       getValueIfInJson(jobj, PSO_KEY_PS_SHADER, DEFAULT_STRING);
 
-  auto *vs = dx12::SHADER_MANAGER->getShaderFromName(VSname);
-  auto *ps = dx12::SHADER_MANAGER->getShaderFromName(PSname);
+
+  DXCShaderCompiler m_compiler;
+  ShaderArgs vsArgs;
+  vsArgs.entryPoint = L"VS";
+  vsArgs.debug = true;
+  vsArgs.type = L"vs_6_2";
+
+  std::string log;
+  auto *vs = m_compiler.compileShader(VSname.c_str(),vsArgs,&log);
+
+
+  vsArgs.entryPoint = L"PS";
+  vsArgs.debug = true;
+  vsArgs.type = L"ps_6_2";
+  ID3DBlob* ps = nullptr;
+  if(PSname != "null") {
+	ps = m_compiler.compileShader(PSname.c_str(),vsArgs,&log);
+  }
 
   const std::string rasterStateString =
       getValueIfInJson(jobj, PSO_KEY_RASTER_STATE, DEFAULT_STRING);
@@ -436,8 +461,10 @@ PSOCompileResult loadPSOFile(const char *path) {
   }
   default: {
     assert(0 && "PSO Type not supported");
+    break;
   }
   }
+  return PSOCompileResult{nullptr, PSOType::INVALID};
 }
 
 } // namespace SirEngine::dx12

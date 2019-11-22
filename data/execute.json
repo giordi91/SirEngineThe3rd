@@ -1,5 +1,5 @@
 {
-  "commands": 
-    [
-    ]
+  "commands": [
+      "-p ../data/pso/blackAndWhiteEffect_PSO.json -o ../data/processed/pso/blackAndWhiteEffect_PSO.pso --pluginName PSOCompilerPlugin"
+  ]
 }

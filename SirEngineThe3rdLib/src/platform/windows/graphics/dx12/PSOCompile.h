@@ -1,9 +1,10 @@
 #pragma once
 #include <d3d12.h>
+#include "SirEngine/core.h"
 
 namespace SirEngine::dx12 {
 enum class PSOType { DXR = 0, RASTER, COMPUTE, INVALID };
-struct PSOCompileResult {
+struct SIR_ENGINE_API PSOCompileResult {
   ID3D12PipelineState *pso;
   PSOType psoType;
   const char *VSName = nullptr;
@@ -12,7 +13,7 @@ struct PSOCompileResult {
   const char *PSOName;
   const char *PSOFullPathFile;
 };
-PSOCompileResult loadPSOFile(const char *path);
+PSOCompileResult SIR_ENGINE_API loadPSOFile(const char *path);
 PSOType convertStringPSOTypeToEnum(const char*type); 
 
 } // namespace SirEngine::dx12

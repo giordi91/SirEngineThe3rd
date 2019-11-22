@@ -40,59 +40,54 @@ bool process(const std::string &assetPath, const std::string &outputPath,
     SE_CORE_ERROR("[PSO Compiler] : could not find path/file {0}", assetPath);
   }
 
-  exits = filePathExists(outputPath);
-  if (!exits) {
-    SE_CORE_ERROR("[PSO Compiler] : could not find path/file {0}", outputPath);
-  }
+  //exits = filePathExists(outputPath);
+  //if (!exits) {
+  //  SE_CORE_ERROR("[PSO Compiler] : could not find path/file {0}", outputPath);
+  //}
 
   // graphics api target
   std::string target;
   processArgs(args, target);
 
-  //std::vector<ResultRoot> blobs;
-  //processPSO(assetPath.c_str(), blobs);
-  //SE_CORE_INFO("[PSO Compiler: found {0} root signatures", blobs.size());
+  SirEngine::dx12::PSOCompileResult result = processPSO(assetPath.c_str());
 
-  /*
-  for (auto &subBlobl : blobs) {
+  // writing binary file
+  BinaryFileWriteRequest request;
+  request.fileType = BinaryFileType::RS;
+  request.version =
+      ((VERSION_MAJOR << 16) | (VERSION_MINOR << 8) | VERSION_PATCH);
 
-    if (subBlobl.blob == nullptr) {
-      continue;
-    }
-    // writing binary file
-    BinaryFileWriteRequest request;
-    request.fileType = BinaryFileType::RS;
-    request.version =
-        ((VERSION_MAJOR << 16) | (VERSION_MINOR << 8) | VERSION_PATCH);
+  std::filesystem::path inp(assetPath);
+  const std::string fileName = inp.stem().string();
+  const std::string outFilePath =outputPath;
+  request.outPath = outFilePath.c_str();
 
-    std::filesystem::path inp(assetPath);
-    const std::string fileName = inp.stem().string();
-    const std::string outFilePath =
-        getPathName(outputPath) + "/" + subBlobl.name + ".root";
-    request.outPath = outFilePath.c_str();
+  ID3DBlob *blob = nullptr;
+  result.pso->GetCachedBlob(&blob);
 
-    request.bulkData = subBlobl.blob->GetBufferPointer();
-    request.bulkDataSizeInByte = subBlobl.blob->GetBufferSize();
+  //+1 is \0 for string
+  std::vector<char> bulkData(blob->GetBufferSize() +
+                             sizeof(char) * assetPath.size() + 1);
+  char *bulkDataPtr = bulkData.data();
 
-    RootSignatureMappedData mapperData;
-    mapperData.type = static_cast<int>(subBlobl.type);
-    mapperData.sizeInByte =
-  static_cast<uint32_t>(subBlobl.blob->GetBufferSize()); request.mapperData =
-  &mapperData; request.mapperDataSizeInByte = sizeof(ModelMapperData);
+  memcpy(bulkDataPtr, blob->GetBufferPointer(), blob->GetBufferSize());
+  memcpy(bulkDataPtr + blob->GetBufferSize(), assetPath.c_str(),
+         assetPath.size() + 1);
 
-    writeBinaryFile(request);
+  request.bulkData = bulkDataPtr;
+  request.bulkDataSizeInByte = bulkData.size();
 
-    SE_CORE_INFO("Root signature successfully compiled ---> {0}", outputPath);
+  PSOMappedData mapperData;
+  mapperData.psoSizeInByte = blob->GetBufferSize();
+  mapperData.psoNameSizeInByte = assetPath.size() * sizeof(char);
+  request.mapperData = &mapperData;
+  request.mapperDataSizeInByte = sizeof(PSOMappedData);
+  request.fileType = BinaryFileType::PSO;
 
-    // write clean RS for debugging, mostly Intel static analysis
-    const std::string outFilePathClean =
-        getPathName(outputPath) + "/" + subBlobl.name + ".bin";
+  writeBinaryFile(request);
 
-    std::ofstream myFile(outFilePathClean, std::ios::out | std::ios::binary);
-    myFile.write(static_cast<const char *>(request.bulkData),
-  request.bulkDataSizeInByte); myFile.close();
-  }
-  */
+  SE_CORE_INFO("PSO successfully compiled ---> {0}", outFilePath);
+
   return true;
 }
 

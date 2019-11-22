@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include "SirEngine/core.h"
 
 namespace SirEngine {
 enum class ADAPTER_VENDOR { NVIDIA = 0, AMD, INTEL, WARP, ANY };
@@ -15,7 +16,7 @@ inline const uint32_t VENDOR_ID[] = {
 };
 enum class GRAPHIC_API { DX12 = 0, VULKAN = 1, UNKNOWN };
 
-struct AdapterRequestConfig {
+struct SIR_ENGINE_API AdapterRequestConfig {
   ADAPTER_VENDOR m_vendor;
   ADAPTER_SELECTION_RULE m_genericRule;
   bool m_vendorTolerant;

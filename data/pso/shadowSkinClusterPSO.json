@@ -2,7 +2,7 @@
  "type":  "RASTER",
  "inputLayout":  "fullMesh",
  "globalRootSignature": "../data/rs/shadowSkinClusterRS.json",
-  "VS": "skinningPositionOnlyVS",
+  "VS": "../data/shaders/rasterization/skinningPositionOnlyVS.hlsl",
   "PS":  "null",
   "rasterState":  "default",
   "depthStencilState": "custom",
