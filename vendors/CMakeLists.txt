@@ -38,6 +38,7 @@ add_subdirectory(crunch)
 add_subdirectory(imgui)
 add_subdirectory(DirectXTK12)
 add_subdirectory(farmhash)
+add_subdirectory(volk)
 
 
 file(COPY "Catch2/single_include/catch2/" DESTINATION ${CMAKE_SOURCE_DIR}/../builtDependencies/includes/catch )

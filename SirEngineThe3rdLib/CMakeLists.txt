@@ -59,7 +59,7 @@ project(SirEngineThe3rdLib)
 		endif(${BUILD_AMD})
 
 		if(${BUILD_VULKAN})
-			add_compile_definitions(VK_USE_PLATFORM_WIN32_KHR)
+			add_compile_definitions(VK_USE_PLATFORM_WIN32_KHR VK_NO_PROTOTYPES)
 		endif(${BUILD_VULKAN})
 			
 

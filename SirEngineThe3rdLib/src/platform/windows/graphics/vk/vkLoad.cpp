@@ -1,6 +1,7 @@
 
+#include "platform/windows/graphics/vk/volk.h"
 #include "platform/windows/graphics/vk/vkLoad.h"
-#include "platform/windows/graphics/vk/VulkanFunctions.h"
+//#include "platform/windows/graphics/vk/VulkanFunctions.h"
 #include "vk.h"
 #include <cassert>
 #include <iostream>
@@ -66,6 +67,7 @@ debugCallback2(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
   return VK_FALSE;
 }
 
+/*
 bool loadFunctionExportedFromVulkanLoaderLibrary(
     LIBRARY_TYPE const &vulkanLibrary) {
 #if defined _WIN32
@@ -86,7 +88,9 @@ bool loadFunctionExportedFromVulkanLoaderLibrary(
 
   return true;
 }
+*/
 
+/*
 bool loadGlobalLevelFunctions() {
 #define GLOBAL_LEVEL_VULKAN_FUNCTION(name)                                     \
   name = (PFN_##name)vkGetInstanceProcAddr(nullptr, #name);                    \
@@ -100,6 +104,7 @@ bool loadGlobalLevelFunctions() {
 
   return true;
 }
+*/
 bool isExtensionSupported(
     std::vector<VkExtensionProperties> const &availableExtensions,
     char const *const extension) {
@@ -250,6 +255,7 @@ bool createVulkanInstanceWithWsiExtensionsEnabled(
   return createVulkanInstance(desiredExtensions, applicationName, instance);
 }
 
+/*
 bool loadInstanceLevelFunctions(VkInstance instance,
                                 std::vector<char const *> const &extensions) {
   // Load core Vulkan API instance-level functions
@@ -279,7 +285,9 @@ bool loadInstanceLevelFunctions(VkInstance instance,
 
   return true;
 }
+*/
 
+/*
 bool loadDeviceLevelFunctions(
     VkDevice logicalDevice,
     std::vector<char const *> const &enabledExtensions) {
@@ -310,6 +318,7 @@ bool loadDeviceLevelFunctions(
 
   return true;
 }
+*/
 
 bool enumerateAvailablePhysicalDevices(
     const VkInstance instance,

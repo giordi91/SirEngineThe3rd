@@ -1,5 +1,4 @@
 #include "platform/windows/graphics/vk/vkDescriptors.h"
-#include "platform/windows/graphics/vk/VulkanFunctions.h"
 #include "platform/windows/graphics/vk/vk.h"
 #include "algorithm"
 
