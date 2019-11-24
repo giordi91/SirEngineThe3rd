@@ -55,6 +55,11 @@ inline bool filePathExists(const std::string &name) {
   return std::filesystem::exists(parent);
 }
 
+inline bool isPathDirectory(const std::string &name)
+{
+    return std::filesystem::is_directory(name);
+}
+
 template <typename T>
 inline T getValueIfInJson(const nlohmann::json &data, const std::string &key,
                           const T &defaultValue) {

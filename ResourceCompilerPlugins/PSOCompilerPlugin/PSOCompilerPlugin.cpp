@@ -14,14 +14,21 @@ const unsigned int VERSION_MAJOR = 0;
 const unsigned int VERSION_MINOR = 1;
 const unsigned int VERSION_PATCH = 0;
 
-void processArgs(const std::string args, std::string &target) {
+void processArgs(const std::string args, std::string &target,
+                 std::string &shaderPath, bool &processFolder) {
   // lets get arguments like they were from commandline
   auto v = splitArgs(args);
   // lets build the options
   cxxopts::Options options("PSO Compiler", "Compilers a Pipeline state object");
   options.add_options()("t,target",
                         "which API to target, valid options are DX or VK",
-                        cxxopts::value<std::string>());
+                        cxxopts::value<std::string>())(
+      "s,shaderPath",
+      "base path for shaders, before the folder structure start, like "
+      "common,rasterization etc",
+      cxxopts::value<std::string>())(
+      "a,allInFolder", "compile all files in the given folder path",
+      cxxopts::value<std::string>()->implicit_value("1"));
 
   char **argv = v.argv.get();
   const cxxopts::ParseResult result = options.parse(v.argc, argv);
@@ -29,30 +36,20 @@ void processArgs(const std::string args, std::string &target) {
   if (result.count("target")) {
     target = result["target"].as<std::string>();
   } else {
-    target = "DX";
+    target = "DX12";
   }
+  if (result.count("shaderPath")) {
+    shaderPath = result["shaderPath"].as<std::string>();
+  } else {
+    shaderPath = "";
+  }
+  processFolder = result.count("allInFolder") > 0;
 }
 
-bool process(const std::string &assetPath, const std::string &outputPath,
-             const std::string &args) {
+bool compileAndSavePSO(const std::string &assetPath,
+                       const std::string &outputPath, const std::string& shaderPath) {
 
-  // checking IO files exits
-  bool exits = fileExists(assetPath);
-  if (!exits) {
-    SE_CORE_ERROR("[PSO Compiler] : could not find path/file {0}", assetPath);
-  }
-
-  // exits = filePathExists(outputPath);
-  // if (!exits) {
-  //  SE_CORE_ERROR("[PSO Compiler] : could not find path/file {0}",
-  //  outputPath);
-  //}
-
-  std::string target;
-  processArgs(args, target);
-
-
-  SirEngine::dx12::PSOCompileResult result = processPSO(assetPath.c_str());
+  SirEngine::dx12::PSOCompileResult result = processPSO(assetPath.c_str(), shaderPath.c_str());
 
   // writing binary file
   BinaryFileWriteRequest request;
@@ -80,8 +77,7 @@ bool process(const std::string &assetPath, const std::string &outputPath,
   //+1 is \0 for string
   int vsNameSize = result.VSName == nullptr ? 0 : strlen(result.VSName) + 1;
   int psNameSize = result.PSName == nullptr ? 0 : strlen(result.PSName) + 1;
-  int csNameSize =
-      result.ComputeName == nullptr ? 0 : strlen(result.ComputeName) + 1;
+  int csNameSize = result.CSName == nullptr ? 0 : strlen(result.CSName) + 1;
 
   totalSize += (vsNameSize + psNameSize + csNameSize);
 
@@ -122,7 +118,7 @@ bool process(const std::string &assetPath, const std::string &outputPath,
     ptrPos += psNameSize;
   }
   if (csNameSize != 0) {
-    memcpy(bulkDataPtr + ptrPos, result.ComputeName, csNameSize);
+    memcpy(bulkDataPtr + ptrPos, result.CSName, csNameSize);
     ptrPos += csNameSize;
   }
 
@@ -159,11 +155,55 @@ bool process(const std::string &assetPath, const std::string &outputPath,
   writeBinaryFile(request);
 
   SE_CORE_INFO("PSO successfully compiled ---> {0}", outFilePath);
+  return true;
+}
 
-  delete SirEngine::dx12::SHADER_LAYOUT_REGISTRY;
-  adapterResult.m_device->Release();
-  adapterResult.m_physicalDevice->Release();
-  DXGI_FACTORY->Release();
+bool process(const std::string &assetPath, const std::string &outputPath,
+             const std::string &args) {
+
+  // checking IO files exits
+  bool exits = fileExists(assetPath);
+  if (!exits) {
+    SE_CORE_ERROR("[PSO Compiler] : could not find path/file {0}", assetPath);
+  }
+
+  // exits = filePathExists(outputPath);
+  // if (!exits) {
+  //  SE_CORE_ERROR("[PSO Compiler] : could not find path/file {0}",
+  //  outputPath);
+  //}
+
+  std::string target;
+  std::string shaderPath;
+  bool processFolder = false;
+  processArgs(args, target, shaderPath, processFolder);
+
+  if (processFolder && !isPathDirectory(assetPath)) {
+    SE_CORE_ERROR("Requested to compile all PSO in path, but provided path is "
+                  "not a directory");
+  }
+  if(shaderPath.empty()) {
+    SE_CORE_ERROR("Shader path not provided, cannot compile PSO");
+	  return false;
+  }
+
+  if (!processFolder) {
+    compileAndSavePSO(assetPath, outputPath, shaderPath);
+    return true;
+  }
+
+  // get files in folder and process them
+  const std::string graphicsDirectory = "/" + target + "/";
+
+  std::vector<std::string> filePaths;
+  listFilesInFolder(assetPath.c_str(), filePaths, "json");
+  for (auto &path : filePaths) {
+    const std::string fileName = getFileName(path);
+    const std::string currOutputPath =
+        outputPath + graphicsDirectory + fileName + ".pso";
+    compileAndSavePSO(path, currOutputPath, shaderPath);
+  }
+
   return true;
 }
 

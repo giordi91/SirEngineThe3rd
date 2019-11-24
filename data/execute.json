@@ -1,6 +1,5 @@
 {
   "commands": [
-      "-p ../data/shaders/rasterization/blackAndWhiteEffectPS.hlsl -o ../data/processed/shaders/rasterization/blackAndWhiteEffectPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
-      "-p ../data/pso/blackAndWhiteEffect_PSO.json -o ../data/processed/pso/blackAndWhiteEffect_PSO.pso --pluginName PSOCompilerPlugin"
+      "-p ../data/pso -o ../data/processed/pso --pluginName PSOCompilerPlugin --pluginArgs \"-t DX12 -a -s ../data/shaders/DX12\""
   ]
 }

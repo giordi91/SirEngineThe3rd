@@ -30,6 +30,22 @@ TEST_CASE("Split model compile full args", "[argsSplit]") {
     REQUIRE((*args.storage)[i - 1].c_str() == args.argv[i]);
   }
 }
+TEST_CASE("Split args starting with ../", "[argsSplit]") {
+  const std::string inargs =
+      "-p ../data/pso -o ../data/processed/";
+  SplitArgs args = splitArgs(inargs);
+
+  REQUIRE(args.argc == 5);
+  REQUIRE((*args.storage)[0] == "-p");
+  REQUIRE((*args.storage)[1] == "../data/pso");
+  REQUIRE((*args.storage)[2] == "-o");
+  REQUIRE((*args.storage)[3] == "../data/processed/");
+
+  // checking the values have the right pointer in argv
+  for (int i = 1; i < args.argc; ++i) {
+    REQUIRE((*args.storage)[i - 1].c_str() == args.argv[i]);
+  }
+}
 
 TEST_CASE("Split model compile plugins args", "[argsSplit]") {
   // pluging args are passed removed of the extra quotes

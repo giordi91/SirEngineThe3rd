@@ -1,22 +1,25 @@
 {
- "type":  "RASTER",
- "inputLayout":  "fullMesh",
- "globalRootSignature": "../data/rs/gbufferRS.json",
-  "VS": "../data/shaders/rasterization/basicMeshVSTex.hlsl",
-  "PS":  "../data/shaders/rasterization/basicMeshGBufferPS.hlsl",
-  "rasterState":  "default",
+  "type": "RASTER",
+  "inputLayout": "fullMesh",
+  "globalRootSignature": "../data/rs/gbufferRS.json",
+  "VS": "basicMeshVSTex",
+  "PS": "basicMeshGBufferPS",
+  "rasterState": "default",
   "blendState": "default",
   "depthStencilState": "custom",
-  "depthStencilStateConfig": {"depthEnabled" :  true, "comparisonFunc" : "GREATER"},
-  "sampleMask":  "max",
+  "depthStencilStateConfig": {
+    "depthEnabled": true,
+    "comparisonFunc": "GREATER"
+  },
+  "sampleMask": "max",
   "topologyType": "triangle",
   "renderTargets": 3,
-  "rtvFormats": [ "DXGI_FORMAT_R8G8B8A8_UNORM",
-                  "DXGI_FORMAT_R10G10B10A2_UNORM", 
-                  "DXGI_FORMAT_R8G8B8A8_UNORM" ],
+  "rtvFormats": [
+    "DXGI_FORMAT_R8G8B8A8_UNORM",
+    "DXGI_FORMAT_R10G10B10A2_UNORM",
+    "DXGI_FORMAT_R8G8B8A8_UNORM"
+  ],
   "sampleDescCount": 1,
-  "sampleDescQuality":  0,
+  "sampleDescQuality": 0,
   "dsvFormat": "DXGI_FORMAT_D32_FLOAT_S8X24_UINT"
 }
-
-    

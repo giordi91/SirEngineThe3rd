@@ -1,5 +1,5 @@
 {
- "type":  "COMPUTE",
- "globalRootSignature": "../data/rs/textureMIPS_RS.json",
- "shaderName" : "../data/shaders/compute/textureMIPS.hlsl"
+  "type": "COMPUTE",
+  "globalRootSignature": "../data/rs/textureMIPS_RS.json",
+  "shaderName": "textureMIPS"
 }

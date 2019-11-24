@@ -7,4 +7,4 @@ typedef DirectX::XMFLOAT3 float3;
 typedef DirectX::XMFLOAT4 float4;
 typedef DirectX::XMINT2 int2;
 
-#include "SirEngine/../../../data/shaders/common/structures.hlsl"
+#include "SirEngine/../../../data/shaders/DX12/common/structures.hlsl"

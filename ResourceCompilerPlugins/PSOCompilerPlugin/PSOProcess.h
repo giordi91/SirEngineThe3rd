@@ -3,4 +3,4 @@
 #include "platform/windows/graphics/dx12/PSOManager.h"
 
 
-SirEngine::dx12::PSOCompileResult processPSO(const char *path);
+SirEngine::dx12::PSOCompileResult processPSO(const char *path, const char *shaderPath);

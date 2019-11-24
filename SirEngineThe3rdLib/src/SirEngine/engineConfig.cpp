@@ -15,6 +15,7 @@ static std::string CONFIG_VERBOSE_STARTUP = "verboseStartup";
 static std::string CONFIG_ADAPTER_VENDOR = "adapterVendor";
 static std::string CONFIG_VENDOR_TOLERANT = "vendorTolerant";
 static std::string CONFIG_ADAPTER_SELECTION_RULE = "adapterSelectionRule";
+static std::string CONFIG_USE_CACHED_PSO = "useCachedPSO";
 
 static std::string DEFAULT_STRING = "";
 static std::string DEFAULT_ADAPTER = "any";
@@ -108,6 +109,7 @@ void parseConfigFile(const char *path) {
   globals::ENGINE_CONFIG = reinterpret_cast<EngineConfig *>(
       globals::PERSISTENT_ALLOCATOR->allocate(sizeof(EngineConfig)));
 
+  // resources
   EngineConfig &config = *globals::ENGINE_CONFIG;
   config.m_dataSourcePath = persistentString(
       getValueIfInJson(jobj, CONFIG_DATA_SOURCE_KEY, DEFAULT_STRING).c_str());
@@ -116,6 +118,8 @@ void parseConfigFile(const char *path) {
       getValueIfInJson(jobj, CONFIG_STARTING_SCENE_KEY, DEFAULT_STRING)
           .c_str());
   assert(config.m_startScenePath[0] != '\0');
+  config.m_useCachedPSO = getValueIfInJson(jobj, CONFIG_USE_CACHED_PSO, false);
+
   const std::string api =
       getValueIfInJson(jobj, CONFIG_GRAPHIC_API, DEFAULT_STRING);
   config.m_graphicsAPI = getAPIFromName(api);
@@ -157,6 +161,7 @@ void initializeConfigDefault() {
 
   globals::ENGINE_CONFIG->m_dataSourcePath = "../data/";
   globals::ENGINE_CONFIG->m_startScenePath = "";
+  globals::ENGINE_CONFIG->m_useCachedPSO = false;
   globals::ENGINE_CONFIG->m_graphicsAPI = GRAPHIC_API::DX12;
   globals::ENGINE_CONFIG->m_windowTitle = "SirEngineThe3rd";
   globals::ENGINE_CONFIG->m_windowWidth = 1280;
