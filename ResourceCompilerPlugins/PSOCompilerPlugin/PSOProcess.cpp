@@ -10,7 +10,7 @@
 #include <string>
 #include <unordered_map>
 
-SirEngine::dx12::PSOCompileResult processPSO(const char *path) {
+SirEngine::dx12::PSOCompileResult processPSO(const char *path, const char* shaderPath) {
 
   // init graphics
 #if defined(DEBUG) || defined(_DEBUG)
@@ -62,7 +62,12 @@ SirEngine::dx12::PSOCompileResult processPSO(const char *path) {
 
   // COMPILING
   SirEngine::dx12::PSOCompileResult buildResult =
-      SirEngine::dx12::loadPSOFile(path);
+      SirEngine::dx12::compileRawPSO(path, shaderPath);
+  //cleanup 
+  delete SirEngine::dx12::SHADER_LAYOUT_REGISTRY;
+  adapterResult.m_device->Release();
+  adapterResult.m_physicalDevice->Release();
+  DXGI_FACTORY->Release();
 
   return buildResult;
 }

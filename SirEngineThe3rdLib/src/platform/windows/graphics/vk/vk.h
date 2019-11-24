@@ -45,9 +45,6 @@ bool onResize(uint32_t width, uint32_t height);
 #define ARRAYSIZE(array) sizeof(array) / sizeof(array[0]);
 #endif
 
-//#if _DEBUG #endif                                                            \
-//  }
-
 #define SET_DEBUG_NAME(resource, type, name)                                   \
   {                                                                            \
     VkDebugUtilsObjectNameInfoEXT debugInfo_{};                                \

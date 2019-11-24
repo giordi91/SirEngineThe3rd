@@ -5,15 +5,13 @@
 #include "SirEngine/memory/sparseMemoryPool.h"
 #include "SirEngine/memory/stringHashMap.h"
 #include "nlohmann/json_fwd.hpp"
-#include "platform/windows/graphics/dx12/d3dx12.h"
 #include "platform/windows/graphics/dx12/PSOCompile.h"
+#include "platform/windows/graphics/dx12/d3dx12.h"
 
 namespace SirEngine::dx12 {
 class RootSignatureManager;
 class ShaderManager;
 class ShadersLayoutRegistry;
-
-
 
 // TODO make it not copyable assignable
 class PSOManager final {
@@ -33,7 +31,8 @@ public:
             SirEngine::dx12::RootSignatureManager *,
             SirEngine::dx12::ShaderManager *);
   void cleanup();
-  void loadPSOInFolder(const char *directory);
+  void loadRawPSOInFolder(const char *directory);
+  void loadCachedPSOInFolder(const char *directory);
 
   // debugging function to be able to print to console the composition of a
   // state object
@@ -66,15 +65,16 @@ public:
   }
 
 private:
-  //PSOCompileResult processComputePSO(nlohmann::json &jobj,
+  // PSOCompileResult processComputePSO(nlohmann::json &jobj,
   //                                   const std::string &path);
-  //PSOCompileResult processRasterPSO(nlohmann::json &jobj,
+  // PSOCompileResult processRasterPSO(nlohmann::json &jobj,
   //                                  const std::string &path);
 
   void processGlobalRootSignature(nlohmann::json &jobj,
                                   CD3DX12_STATE_OBJECT_DESC &pipe) const;
   void processPipelineConfig(nlohmann::json &jobj,
                              CD3DX12_STATE_OBJECT_DESC &pipe) const;
+  PSOCompileResult loadCachedPSO(const char *path);
 
 private:
   void updatePSOCache(const char *name, ID3D12PipelineState *pso);

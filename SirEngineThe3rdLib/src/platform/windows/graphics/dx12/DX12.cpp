@@ -106,7 +106,7 @@ bool initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
 
   // log the adapter used
   if (globals::ENGINE_CONFIG->m_verboseStartup) {
-	  logPhysicalDevice(ADAPTER);
+    logPhysicalDevice(ADAPTER);
   }
 
   // Check the maximum feature level, and make sure it's above our minimum
@@ -198,8 +198,14 @@ bool initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
   PSO_MANAGER = new PSOManager();
   PSO_MANAGER->init(dx12::DEVICE, SHADER_LAYOUT_REGISTRY,
                     ROOT_SIGNATURE_MANAGER, dx12::SHADER_MANAGER);
-  PSO_MANAGER->loadPSOInFolder(
-      frameConcatenation(globals::ENGINE_CONFIG->m_dataSourcePath, "/pso"));
+
+  if (globals::ENGINE_CONFIG->m_useCachedPSO) {
+    PSO_MANAGER->loadCachedPSOInFolder(frameConcatenation(
+        globals::ENGINE_CONFIG->m_dataSourcePath, "/processed/pso/DX12"));
+  } else {
+    PSO_MANAGER->loadRawPSOInFolder(
+        frameConcatenation(globals::ENGINE_CONFIG->m_dataSourcePath, "/pso"));
+  }
 
   // mesh manager needs to load after pso and RS since it initialize material
   // types

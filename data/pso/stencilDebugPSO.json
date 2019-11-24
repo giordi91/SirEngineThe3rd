@@ -1,29 +1,27 @@
 {
- "type":  "RASTER",
- "inputLayout":  "deferredNull",
- "globalRootSignature": "../data/rs/debugFullScreenBlit_RS.json",
-  "VS": "../data/shaders/rasterization/fullScreenQuadVS.hlsl",
-  "PS":  "../data/shaders/rasterization/stencilDebugPS.hlsl",
-  "rasterState":  "default",
+  "type": "RASTER",
+  "inputLayout": "deferredNull",
+  "globalRootSignature": "../data/rs/debugFullScreenBlit_RS.json",
+  "VS": "fullScreenQuadVS",
+  "PS": "stencilDebugPS",
+  "rasterState": "default",
   "blendState": "default",
   "depthStencilState": "custom",
   "depthStencilStateConfig": {
-    "depthEnabled" :  false,
+    "depthEnabled": false,
     "depthFunc": "GREATER",
     "stencilEnabled": true,
-    "stencilFailOp" :  "KEEP",
-    "stencilDepthFailOp" :  "KEEP",
+    "stencilFailOp": "KEEP",
+    "stencilDepthFailOp": "KEEP",
     "stencilPassOp": "KEEP",
-    "stencilFunc" : "EQUAL" 
+    "stencilFunc": "EQUAL"
   },
 
-  "sampleMask":  "max",
+  "sampleMask": "max",
   "topologyType": "triangle",
   "renderTargets": 1,
   "rtvFormats": [ "DXGI_FORMAT_R8G8B8A8_UNORM" ],
   "sampleDescCount": 1,
-  "sampleDescQuality":  0,
+  "sampleDescQuality": 0,
   "dsvFormat": "DXGI_FORMAT_D32_FLOAT_S8X24_UINT"
 }
-
-    

@@ -37,6 +37,8 @@ void PSOManager::init(D3D12DeviceType *device,
 }
 void PSOManager::cleanup() {
   // TODO need to be able to iterate hash map even if not ideal;
+  // or I cannot free the pso
+
   // for (auto pso : m_psoDXRRegister) {
   //  pso.second->Release();
   //}
@@ -49,7 +51,7 @@ void PSOManager::cleanup() {
 }
 
 D3D12_SHADER_BYTECODE getShaderByteCodeFromFullPath(const char *path) {
-  if (path == nullptr) {
+  if (path == nullptr || strcmp(path,"null") ==0) {
     return {nullptr, 0};
   }
   ID3D10Blob *blob =
@@ -59,27 +61,47 @@ D3D12_SHADER_BYTECODE getShaderByteCodeFromFullPath(const char *path) {
   return {blob->GetBufferPointer(), blob->GetBufferSize()};
 }
 
-void PSOManager::loadPSOInFolder(const char *directory) {
+void PSOManager::loadRawPSOInFolder(const char *directory) {
   std::vector<std::string> paths;
   listFilesInFolder(directory, paths, "json");
 
-  // temp
-  const std::string pp = "../data/processed/pso/blackAndWhiteEffect_PSO.pso";
-  const auto expPath = std::filesystem::path(pp);
+  const char* shaderPath = frameConcatenation(globals::ENGINE_CONFIG->m_dataSourcePath , "/shaders/DX12");
+  for (const auto &p : paths) {
+
+    PSOCompileResult result = compileRawPSO(p.c_str(),shaderPath);
+    insertInPSOCache(result);
+  }
+}
+void PSOManager::loadCachedPSOInFolder(const char *directory) {
+  std::vector<std::string> paths;
+  listFilesInFolder(directory, paths, "pso");
+
+  for (const auto &p : paths) {
+
+    PSOCompileResult result = loadCachedPSO(p.c_str());
+    insertInPSOCache(result);
+  }
+}
+
+PSOCompileResult PSOManager::loadCachedPSO(const char *path) {
+  const auto expPath = std::filesystem::path(path);
   const std::string name = expPath.stem().string();
 
   std::vector<char> data;
-  const bool fileOpenRes = readAllBytes(pp.c_str(), data);
+  // TODO change this to read into temp file
+  const bool fileOpenRes = readAllBytes(path, data);
   if (!fileOpenRes) {
-    return;
+    assert(0 && "could not find requested pso file to load");
+    return {};
   }
   // extract the header and figure out the mapping of the file
   const BinaryFileHeader *h = getHeader(data.data());
   if (!(h->fileType == BinaryFileType::PSO)) {
     SE_CORE_ERROR(
-        "Root signature manager: cannot load RS: \n {0} \n file type is {1}",
-        pp, getBinaryFileTypeName(static_cast<BinaryFileType>(h->fileType)));
-    return;
+        "Root signature manager: cannot load PS): \n {0} \n file type is {1}",
+        path, getBinaryFileTypeName(static_cast<BinaryFileType>(h->fileType)));
+	assert(0);
+    return{};
   }
   const auto mapper = getMapperData<PSOMappedData>(data.data());
   char *ptr = data.data() + sizeof(BinaryFileHeader);
@@ -105,6 +127,8 @@ void PSOManager::loadPSOInFolder(const char *directory) {
   auto psoEnum = static_cast<PSOType>(mapper->psoType);
 
   ID3D12PipelineState *state = nullptr;
+  PSOCompileResult result{};
+
   if (psoEnum == PSOType::RASTER) {
     auto *desc = reinterpret_cast<D3D12_GRAPHICS_PIPELINE_STATE_DESC *>(
         ptr + blob->GetBufferSize());
@@ -123,12 +147,18 @@ void PSOManager::loadPSOInFolder(const char *directory) {
             getFileName(rootSignature).c_str());
     desc->pRootSignature = root;
 
-	//auto resultCompile = processSignatureFile(rootSignature);
-    //desc->pRootSignature = resultCompile.root;
+    // auto resultCompile = processSignatureFile(rootSignature);
+    // desc->pRootSignature = resultCompile.root;
 
-    HRESULT please =
+    HRESULT psoResult =
         DEVICE->CreateGraphicsPipelineState(desc, IID_PPV_ARGS(&state));
-    int x = 0;
+    assert(SUCCEEDED(psoResult));
+
+    result.psoType = PSOType::RASTER;
+    result.CSName = nullptr;
+    result.VSName = persistentString(vsPath);
+    result.PSName = persistentString(psPath);
+
   } else {
     auto *desc = reinterpret_cast<D3D12_COMPUTE_PIPELINE_STATE_DESC *>(
         ptr + blob->GetBufferSize());
@@ -140,16 +170,21 @@ void PSOManager::loadPSOInFolder(const char *directory) {
         dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(
             getFileName(rootSignature).c_str());
     desc->pRootSignature = root;
-    HRESULT please =
+    HRESULT psoResult =
         DEVICE->CreateComputePipelineState(desc, IID_PPV_ARGS(&state));
+    assert(SUCCEEDED(psoResult));
+    result.psoType = PSOType::COMPUTE;
+    result.CSName = persistentString(csPath);
+    result.VSName = nullptr;
+    result.PSName = nullptr;
   }
 
-  int x = 0;
-
-  for (const auto &p : paths) {
-    PSOCompileResult result = loadPSOFile(p.c_str());
-    insertInPSOCache(result);
-  }
+  result.pso = state;
+  result.PSOFullPathFile = persistentString(path);
+  result.PSOName = persistentString(getFileName(path).c_str());
+  // ONLY PART OF THE STRUCT IS FILLED, SINCE THE RESULT WILL BE USED ONLY FOR
+  // RUNTIME CACHING
+  return result;
 }
 
 void PSOManager::updatePSOCache(const char *name, ID3D12PipelineState *pso) {
@@ -209,17 +244,17 @@ void PSOManager::insertInPSOCache(const PSOCompileResult &result) {
 
     ++MAGIC_NUMBER_COUNTER;
 
-    m_psoRegister.insert(result.ComputeName, result.pso);
+    m_psoRegister.insert(result.CSName, result.pso);
 
     // need to push the pso to the map
     // first we make sure there is a vector to push to
-    const bool hasShader = m_shaderToPSOFile.containsKey(result.ComputeName);
+    const bool hasShader = m_shaderToPSOFile.containsKey(result.CSName);
     if (!hasShader) {
-      m_shaderToPSOFile.insert(result.ComputeName,
+      m_shaderToPSOFile.insert(result.CSName,
                                new ResizableVector<const char *>(20));
     }
     ResizableVector<const char *> *list;
-    m_shaderToPSOFile.get(result.ComputeName, list);
+    m_shaderToPSOFile.get(result.CSName, list);
     // make sure to internalize the string
     list->pushBack(persistentString(result.PSOFullPathFile));
     break;
@@ -293,9 +328,10 @@ void PSOManager::recompilePSOFromShader(const char *shaderName,
   // used
   dx12::flushDx12();
 
+  const char* shaderPath = frameConcatenation(globals::ENGINE_CONFIG->m_dataSourcePath , "/shaders/DX12");
   for (int i = 0; i < psoCount; ++i) {
     const char *pso = (*psos)[i];
-    const PSOCompileResult result = loadPSOFile(pso);
+    const PSOCompileResult result = compileRawPSO(pso, shaderPath);
     // need to update the cache
     updatePSOCache(result.PSOName, result.pso);
 

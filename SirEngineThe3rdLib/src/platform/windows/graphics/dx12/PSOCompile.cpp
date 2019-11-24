@@ -258,8 +258,8 @@ void getRasterShaderNameFromPSO(const nlohmann::json &jobj, std::string &vs,
 //  pipelineConfig->Config(maxRecursionDepth);
 //}
 
-PSOCompileResult processComputePSO(nlohmann::json &jobj,
-                                   const std::string &path) {
+PSOCompileResult processComputePSO(nlohmann::json &jobj, const char *path,
+                                   const char *shaderPath) {
   // lets process the PSO for a compute shader which is quite simple
   const std::string globalRootSignatureName =
       getValueIfInJson(jobj, PSO_KEY_GLOBAL_ROOT, DEFAULT_STRING);
@@ -269,8 +269,9 @@ PSOCompileResult processComputePSO(nlohmann::json &jobj,
       getValueIfInJson(jobj, PSO_KEY_SHADER_NAME, DEFAULT_STRING);
   assert(!shaderName.empty());
 
-  // ID3D12RootSignature *rootS =
-  //    rs_manager->getRootSignatureFromName(globalRootSignatureName.c_str());
+  const char *CSnameAndExtension = frameConcatenation(shaderName.c_str(), ".hlsl");
+  const char *csPath =
+      frameConcatenation(shaderPath, CSnameAndExtension, "/compute/");
 
   auto resultCompile = processSignatureFile(globalRootSignatureName.c_str());
   auto rootS = resultCompile.root;
@@ -286,13 +287,13 @@ PSOCompileResult processComputePSO(nlohmann::json &jobj,
 
   std::string log;
   auto *computeShader =
-      m_compiler.compileShader(shaderName.c_str(), csArgs, &log);
+      m_compiler.compileShader(csPath, csArgs, &log);
 
   D3D12_SHADER_BYTECODE computeShaderByteCode{computeShader->GetBufferPointer(),
                                               computeShader->GetBufferSize()};
   ID3D12PipelineState *pso;
   // configure compute shader
-  auto* cdesc = new D3D12_COMPUTE_PIPELINE_STATE_DESC;
+  auto *cdesc = new D3D12_COMPUTE_PIPELINE_STATE_DESC{};
   cdesc->pRootSignature = rootS;
   cdesc->CS = computeShaderByteCode;
   cdesc->Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
@@ -305,16 +306,15 @@ PSOCompileResult processComputePSO(nlohmann::json &jobj,
                           PSOType::COMPUTE,
                           nullptr,
                           nullptr,
+                          frameString(shaderName.c_str()),
                           frameString(name.c_str()),
-                          frameString(name.c_str()),
-                          frameString(path.c_str()),
-						  nullptr,
-						frameString(globalRootSignatureName.c_str())
-  };
+                          frameString(path),
+                          nullptr,
+                          frameString(globalRootSignatureName.c_str())};
 }
 
-PSOCompileResult processRasterPSO(nlohmann::json &jobj,
-                                  const std::string &path) {
+PSOCompileResult processRasterPSO(nlohmann::json &jobj, const char *path,
+                                  const char *shaderPath) {
   // find the input layout
   const std::string layoutString =
       getValueIfInJson(jobj, PSO_KEY_INPUT_LAYOUT, DEFAULT_STRING);
@@ -334,6 +334,14 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj,
   const std::string PSname =
       getValueIfInJson(jobj, PSO_KEY_PS_SHADER, DEFAULT_STRING);
 
+  const char *VSnameAndExtension = frameConcatenation(VSname.c_str(), ".hlsl");
+  const char *vsPath =
+      frameConcatenation(shaderPath, VSnameAndExtension, "/rasterization/");
+  const char *PSnameAndExtension = frameConcatenation(PSname.c_str(), ".hlsl");
+  const char *psPath =
+      frameConcatenation(shaderPath, PSnameAndExtension, "/rasterization/");
+
+  // we have the shader name, we need to find it.
   DXCShaderCompiler m_compiler;
   ShaderArgs vsArgs;
   vsArgs.entryPoint = L"VS";
@@ -341,7 +349,7 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj,
   vsArgs.type = L"vs_6_2";
 
   std::string log;
-  auto *vs = m_compiler.compileShader(VSname.c_str(), vsArgs, &log);
+  auto *vs = m_compiler.compileShader(vsPath, vsArgs, &log);
 
   ShaderArgs psArgs;
   psArgs.entryPoint = L"PS";
@@ -349,7 +357,7 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj,
   psArgs.type = L"ps_6_2";
   ID3DBlob *ps = nullptr;
   if (PSname != "null") {
-    ps = m_compiler.compileShader(PSname.c_str(), psArgs, &log);
+    ps = m_compiler.compileShader(psPath, psArgs, &log);
   }
 
   const std::string rasterStateString =
@@ -439,13 +447,12 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj,
                           frameString(PSname.c_str()),
                           nullptr,
                           frameString(name.c_str()),
-                          frameString(path.c_str()),
-						frameString(layoutString.c_str()),
-						frameString(rootSignatureString.c_str())
-  };
+                          frameString(path),
+                          frameString(layoutString.c_str()),
+                          frameString(rootSignatureString.c_str())};
 } // namespace SirEngine::dx12
 
-PSOCompileResult loadPSOFile(const char *path) {
+PSOCompileResult compileRawPSO(const char *path, const char *shaderPath) {
   auto jobj = getJsonObj(path);
   SE_CORE_INFO("[Engine]: Loading PSO from: {0}", path);
 
@@ -456,7 +463,7 @@ PSOCompileResult loadPSOFile(const char *path) {
 
   switch (psoType) {
   case (PSOType::COMPUTE): {
-    return processComputePSO(jobj, path);
+    return processComputePSO(jobj, path, shaderPath);
     break;
   }
   case (PSOType::DXR): {
@@ -464,7 +471,7 @@ PSOCompileResult loadPSOFile(const char *path) {
     break;
   }
   case (PSOType::RASTER): {
-    return processRasterPSO(jobj, path);
+    return processRasterPSO(jobj, path, shaderPath);
     break;
   }
   default: {
@@ -472,7 +479,7 @@ PSOCompileResult loadPSOFile(const char *path) {
     break;
   }
   }
-  return PSOCompileResult{nullptr,nullptr,nullptr, PSOType::INVALID};
+  return PSOCompileResult{nullptr, nullptr, nullptr, PSOType::INVALID};
 }
 
 } // namespace SirEngine::dx12

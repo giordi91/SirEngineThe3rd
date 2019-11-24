@@ -1,21 +1,22 @@
 {
- "type":  "RASTER",
- "inputLayout":  "positionOnly",
- "globalRootSignature": "../data/rs/debugDrawLinesSingleColorRS.json",
-  "VS": "../data/shaders/rasterization/positionOnlyVS.hlsl",
-  "PS":  "../data/shaders/rasterization/basicColorPS.hlsl",
+  "type": "RASTER",
+  "inputLayout": "positionOnly",
+  "globalRootSignature": "../data/rs/debugDrawLinesSingleColorRS.json",
+  "VS": "positionOnlyVS",
+  "PS": "basicColorPS",
   "blendState": "default",
-  "rasterState":  "custom",
-  "rasterStateConfig": {"cullMode" :  "NONE"},
+  "rasterState": "custom",
+  "rasterStateConfig": { "cullMode": "NONE" },
   "depthStencilState": "custom",
-  "depthStencilStateConfig": {"depthEnabled" :  true, "depthFunc" : "GREATER"},
-  "sampleMask":  "max",
+  "depthStencilStateConfig": {
+    "depthEnabled": true,
+    "depthFunc": "GREATER"
+  },
+  "sampleMask": "max",
   "topologyType": "line",
   "renderTargets": 1,
   "rtvFormats": [ "DXGI_FORMAT_R16G16B16A16_FLOAT" ],
   "sampleDescCount": 1,
-  "sampleDescQuality":  0,
+  "sampleDescQuality": 0,
   "dsvFormat": "DXGI_FORMAT_D32_FLOAT_S8X24_UINT"
 }
-
-    
