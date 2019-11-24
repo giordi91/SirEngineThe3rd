@@ -1,3 +1,4 @@
+#include "volk.h"
 
 #include "platform/windows/graphics/vk/vkAdapter.h"
 #include "SirEngine/log.h"
@@ -60,10 +61,12 @@ bool createLogicalDevice(VkPhysicalDevice physicalDevice,
           adapterResult.m_device)) {
     return false;
   }
+  volkLoadDevice(adapterResult.m_device);
 
-  if (!loadDeviceLevelFunctions(adapterResult.m_device, deviceExtensions)) {
-    return false;
-  }
+  // if (!loadDeviceLevelFunctions(adapterResult.m_device, deviceExtensions)) {
+  //  return false;
+  //}
+
   adapterResult.m_physicalDevice = physicalDevice;
   return true;
 }

@@ -20,9 +20,9 @@ struct PresentInfo {
   VkSwapchainKHR swapchain;
   uint32_t imageIndex;
 };
-bool loadFunctionExportedFromVulkanLoaderLibrary(
-    LIBRARY_TYPE const &vulkanLibrary);
-bool loadGlobalLevelFunctions();
+//bool loadFunctionExportedFromVulkanLoaderLibrary(
+//    LIBRARY_TYPE const &vulkanLibrary);
+//bool loadGlobalLevelFunctions();
 
 bool checkAvailableInstanceExtensions(
     std::vector<VkExtensionProperties> &availableExtensions);
@@ -35,8 +35,8 @@ bool registerDebugCallback(VkInstance instance);
 bool createVulkanInstanceWithWsiExtensionsEnabled(
     std::vector<char const *> &desiredExtensions,
     char const *const applicationName, VkInstance &instance);
-bool loadInstanceLevelFunctions(
-    VkInstance instance, std::vector<char const *> const &enabledExtensions);
+//bool loadInstanceLevelFunctions(
+//    VkInstance instance, std::vector<char const *> const &enabledExtensions);
 
 /*
 bool createLogicalDeviceWithGeometryShadersAndGraphicsAndComputeQueues(
@@ -60,8 +60,8 @@ bool createLogicalDeviceWithWsiExtensionsEnabled(
     std::vector<char const *> &desiredExtensions,
     VkPhysicalDeviceFeatures2 *desiredFeatures, VkDevice &logicalDevice);
 
-bool loadDeviceLevelFunctions(
-    VkDevice logicalDevice, std::vector<char const *> const &enabledExtensions);
+//bool loadDeviceLevelFunctions(
+//    VkDevice logicalDevice, std::vector<char const *> const &enabledExtensions);
 void getDeviceQueue(const VkDevice logicalDevice,
                     const uint32_t queueFamilyIndex, const uint32_t queueIndex,
                     VkQueue &queue);

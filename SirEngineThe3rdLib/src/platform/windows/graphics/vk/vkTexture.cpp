@@ -1,11 +1,12 @@
 #include "platform/windows/graphics/vk/vkTexture.h"
 #include "gli/gli.hpp"
-#include "platform/windows/graphics/vk/VulkanFunctions.h"
+//#include "platform/windows/graphics/vk/VulkanFunctions.h"
 #include "platform/windows/graphics/vk/vkMemory.h"
 
 #include "SirEngine/fileUtils.h"
 #include "platform/windows/graphics/vk/vk.h"
 #include <fstream>
+#include "volk.h"
 
 namespace SirEngine::vk {
 

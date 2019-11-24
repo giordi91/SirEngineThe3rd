@@ -1,4 +1,7 @@
-#include "platform/windows/graphics/vk/VulkanFunctions.h"
+
+#define VOLK_IMPLEMENTATION 
+#include "volk.h"
+
 #include "platform/windows/graphics/vk/vkLoad.h"
 #include "SirEngine/Window.h"
 #include "SirEngine/engineConfig.h"
@@ -37,16 +40,17 @@ std::vector<VkDescriptorSetLayout> LAYOUTS_TO_DELETE;
 
 bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
                           const uint32_t height) {
-  VULKAN_LIBRARY = LoadLibrary(L"vulkan-1.dll");
-  assert(VULKAN_LIBRARY != nullptr);
+  //VULKAN_LIBRARY = LoadLibrary(L"vulkan-1.dll");
+  //assert(VULKAN_LIBRARY != nullptr);
 
-  if (!vk::loadFunctionExportedFromVulkanLoaderLibrary(VULKAN_LIBRARY)) {
-    return false;
-  }
+  VkResult volkResult = volkInitialize();
+  //if (!vk::loadFunctionExportedFromVulkanLoaderLibrary(VULKAN_LIBRARY)) {
+  //  return false;
+  //}
 
-  if (!vk::loadGlobalLevelFunctions()) {
-    return false;
-  }
+  //if (!vk::loadGlobalLevelFunctions()) {
+  //  return false;
+  //}
 
   std::vector<char const *> instanceExtensions;
   if (!vk::createVulkanInstanceWithWsiExtensionsEnabled(
@@ -54,9 +58,10 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
     return false;
   }
 
-  if (!vk::loadInstanceLevelFunctions(INSTANCE, instanceExtensions)) {
-    return false;
-  }
+  volkLoadInstance(INSTANCE);
+  //if (!vk::loadInstanceLevelFunctions(INSTANCE, instanceExtensions)) {
+  //  return false;
+  //}
 
   vk::registerDebugCallback(INSTANCE);
 

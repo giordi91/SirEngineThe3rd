@@ -58,3 +58,6 @@
 [submodule "vendors/meshoptimizer"]
 	path = vendors/meshoptimizer
 	url = https://github.com/zeux/meshoptimizer.git
+[submodule "vendors/volk"]
+	path = vendors/volk
+	url = https://github.com/zeux/volk.git

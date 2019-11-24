@@ -6,12 +6,12 @@
 
 #include "SirEngine/engineConfig.h"
 #include "SirEngine/layers/vkTempLayer.h"
-#include "platform/windows/graphics/vk/VulkanFunctions.h"
 #include "platform/windows/graphics/vk/vk.h"
 #include "platform/windows/graphics/vk/vkDescriptors.h"
 #include "platform/windows/graphics/vk/vkLoad.h"
 #include "platform/windows/graphics/vk/vkPSOManager.h"
 #include "platform/windows/graphics/vk/vkSwapChain.h"
+#include "platform/windows/graphics/vk/volk.h"
 
 namespace SirEngine {
 

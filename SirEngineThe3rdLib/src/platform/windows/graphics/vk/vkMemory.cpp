@@ -1,5 +1,4 @@
 #include "platform/windows/graphics/vk/vkMemory.h"
-#include "platform/windows/graphics/vk/VulkanFunctions.h"
 #include "platform/windows/graphics/vk/vk.h"
 
 namespace SirEngine::vk {
