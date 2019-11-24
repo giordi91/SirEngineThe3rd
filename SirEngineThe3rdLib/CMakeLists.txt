@@ -52,6 +52,7 @@ project(SirEngineThe3rdLib)
 
 	#lets add specific windows build definitions
 	if (WIN32)
+		add_compile_definitions(NO_MIN_MAX)
 		if(${BUILD_AMD})
 			add_compile_definitions(BUILD_AMD SE_PLATFORM_WINDOWS SE_BUILD_DLL _CRT_SECURE_NO_WARNINGS _UNICODE QUIT_ESCAPE GRAPHICS_API=DX12)
 		else(${BUILD_AMD})
@@ -141,7 +142,17 @@ project(SirEngineThe3rdLib)
 
 	SET(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 
-	target_link_libraries(${PROJECT_NAME} d3dcompiler dxcompiler farmhash DXGI D3D12 imgui DXTK12 WinPixEventRuntime lualib  ${Vulkan_LIBRARIES} meshoptimizer)
+	target_link_libraries(${PROJECT_NAME} d3dcompiler dxcompiler farmhash DXGI D3D12 imgui DXTK12 WinPixEventRuntime lualib   meshoptimizer)
+
+	if(${BUILD_VULKAN})
+		#set(GLSLANG_LIB debug glslangd HLSLd OGLCompilerd OSDependentd SPIRVd optimized glslang HLSL OGLCompiler OSDependent SPIRV)
+		target_link_libraries(${PROJECT_NAME} ${Vulkan_LIBRARIES} )
+		target_link_libraries(${PROJECT_NAME}  debug glslangd  optimized glslang)
+		target_link_libraries(${PROJECT_NAME}  debug HLSLd optimized HLSL)
+		target_link_libraries(${PROJECT_NAME}  debug OGLCompilerd optimized OGLCompiler)
+		target_link_libraries(${PROJECT_NAME}  debug OSDependentd optimized OSDependent)
+		target_link_libraries(${PROJECT_NAME}  debug SPIRVd optimized SPIRV)
+	endif(${BUILD_VULKAN})
 
 	#copying needed libs from pix event dependency to output build folder
 	COPY_FILE_TO_BIN_DIRECTORY( "${CMAKE_SOURCE_DIR}/vendors/PixEvent/bin/WinPixEventRuntime.lib")

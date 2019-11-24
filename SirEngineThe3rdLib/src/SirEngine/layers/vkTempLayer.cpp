@@ -10,6 +10,7 @@
 #include "platform/windows/graphics/vk/vkDescriptors.h"
 #include "platform/windows/graphics/vk/vkLoad.h"
 #include "platform/windows/graphics/vk/vkPSOManager.h"
+#include "platform/windows/graphics/vk/vkShaderCompiler.h"
 #include "platform/windows/graphics/vk/vkSwapChain.h"
 #include "platform/windows/graphics/vk/volk.h"
 
@@ -29,11 +30,19 @@ void VkTempLayer::onAttach() {
   //}
 
   // load the shaders
-  m_vs = vk::loadShader(vk::LOGICAL_DEVICE,
-                        "../data/external/vk/compiled/triangle.vert.glsl.spv");
+  auto compiler = vk::VkShaderCompiler();
+  vk::VkShaderArgs shaderArgs;
+  std::string log;
+  m_vs = compiler.compileShader("../data/external/vk/triangle.vert",
+                         shaderArgs, &log);
+
+  m_fs = compiler.compileShader("../data/external/vk/triangle.frag",
+                         shaderArgs, &log);
+  //m_vs = vk::loadShader(vk::LOGICAL_DEVICE,
+  //                      "../data/external/vk/compiled/triangle.vert.glsl.spv");
   assert(m_vs);
-  m_fs = vk::loadShader(vk::LOGICAL_DEVICE,
-                        "../data/external/vk/compiled/triangle.frag.glsl.spv");
+  //m_fs = vk::loadShader(vk::LOGICAL_DEVICE,
+  //                      "../data/external/vk/compiled/triangle.frag.glsl.spv");
   assert(m_fs);
 
   // load mesh
