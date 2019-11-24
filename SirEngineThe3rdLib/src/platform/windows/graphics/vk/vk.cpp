@@ -40,17 +40,7 @@ std::vector<VkDescriptorSetLayout> LAYOUTS_TO_DELETE;
 
 bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
                           const uint32_t height) {
-  //VULKAN_LIBRARY = LoadLibrary(L"vulkan-1.dll");
-  //assert(VULKAN_LIBRARY != nullptr);
-
-  VkResult volkResult = volkInitialize();
-  //if (!vk::loadFunctionExportedFromVulkanLoaderLibrary(VULKAN_LIBRARY)) {
-  //  return false;
-  //}
-
-  //if (!vk::loadGlobalLevelFunctions()) {
-  //  return false;
-  //}
+  VK_CHECK(volkInitialize());
 
   std::vector<char const *> instanceExtensions;
   if (!vk::createVulkanInstanceWithWsiExtensionsEnabled(
@@ -59,9 +49,6 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   }
 
   volkLoadInstance(INSTANCE);
-  //if (!vk::loadInstanceLevelFunctions(INSTANCE, instanceExtensions)) {
-  //  return false;
-  //}
 
   vk::registerDebugCallback(INSTANCE);
 
