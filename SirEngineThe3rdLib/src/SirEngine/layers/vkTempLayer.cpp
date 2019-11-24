@@ -4,13 +4,13 @@
 #include "SirEngine/globals.h"
 #include "SirEngine/graphics/camera.h"
 
-#include "SirEngine/graphics/renderingContext.h"
-
 #include "SirEngine/engineConfig.h"
 #include "SirEngine/layers/vkTempLayer.h"
-#include "platform/windows/graphics/vk/vkLoad.h"
+#include "platform/windows/graphics/vk/VulkanFunctions.h"
 #include "platform/windows/graphics/vk/vk.h"
 #include "platform/windows/graphics/vk/vkDescriptors.h"
+#include "platform/windows/graphics/vk/vkLoad.h"
+#include "platform/windows/graphics/vk/vkPSOManager.h"
 #include "platform/windows/graphics/vk/vkSwapChain.h"
 
 namespace SirEngine {
@@ -24,17 +24,16 @@ void VkTempLayer::onAttach() {
   globals::MAIN_CAMERA->setPosition(0, 14, 10);
   globals::MAIN_CAMERA->updateCamera();
 
-
-
-  
-  //if constexpr (!USE_PUSH) {
+  // if constexpr (!USE_PUSH) {
   vk::createDescriptorPool(vk::LOGICAL_DEVICE, {10000, 10000}, m_dPool);
   //}
 
   // load the shaders
-  m_vs = vk::loadShader(vk::LOGICAL_DEVICE, "../data/external/vk/compiled/triangle.vert.glsl.spv");
+  m_vs = vk::loadShader(vk::LOGICAL_DEVICE,
+                        "../data/external/vk/compiled/triangle.vert.glsl.spv");
   assert(m_vs);
-  m_fs = vk::loadShader(vk::LOGICAL_DEVICE, "../data/external/vk/compiled/triangle.frag.glsl.spv");
+  m_fs = vk::loadShader(vk::LOGICAL_DEVICE,
+                        "../data/external/vk/compiled/triangle.frag.glsl.spv");
   assert(m_fs);
 
   // load mesh
@@ -57,19 +56,21 @@ void VkTempLayer::onAttach() {
   memcpy(m_indexBuffer.data, m_mesh.indices.data(),
          m_mesh.indices.size() * sizeof(uint32_t));
 
-  //SET_DEBUG_NAME(m_vertexBuffer.buffer, VK_OBJECT_TYPE_BUFFER, "vertex buffer");
-  //SET_DEBUG_NAME(m_indexBuffer.buffer, VK_OBJECT_TYPE_BUFFER, "index buffer");
-  m_pipeline =
-	  vk::createGraphicsPipeline(vk::LOGICAL_DEVICE, m_vs, m_fs, vk::RENDER_PASS, nullptr);
+  SET_DEBUG_NAME(m_vertexBuffer.buffer, VK_OBJECT_TYPE_BUFFER, "vertex buffer");
+  SET_DEBUG_NAME(m_indexBuffer.buffer, VK_OBJECT_TYPE_BUFFER, "index buffer");
 
-  loadTextureFromFile("../data/external/vk/uv.DDS", VK_FORMAT_BC1_RGBA_UNORM_BLOCK,
-                      vk::LOGICAL_DEVICE, uvTexture);
+  m_pipeline = vk::createGraphicsPipeline(vk::LOGICAL_DEVICE, m_vs, m_fs,
+                                          vk::RENDER_PASS, nullptr);
 
-  //if constexpr (!USE_PUSH) {
-    createDescriptorLayoutAdvanced();
+  loadTextureFromFile("../data/external/vk/uv.DDS",
+                      VK_FORMAT_BC1_RGBA_UNORM_BLOCK, vk::LOGICAL_DEVICE,
+                      uvTexture);
+
+  // if constexpr (!USE_PUSH) {
+  createDescriptorLayoutAdvanced();
   //}
 
-	
+  vk::PSO_MANAGER->loadRawPSO("../data/pso/forwardPhongPSO.json");
 }
 
 void VkTempLayer::createDescriptorLayoutAdvanced() {
@@ -156,12 +157,9 @@ void VkTempLayer::createDescriptorLayoutAdvanced() {
                          writeDescriptorSets, 0, nullptr);
 }
 
-
-	
 void VkTempLayer::onDetach() {}
-void VkTempLayer::onUpdate()
-{
-	  static float step = 0.01f;
+void VkTempLayer::onUpdate() {
+  static float step = 0.01f;
   static int index = 0;
   static int counter = 0;
 
@@ -198,7 +196,8 @@ void VkTempLayer::onUpdate()
   beginInfo.clearValueCount = 1;
   beginInfo.pClearValues = &clear;
 
-  vkCmdBeginRenderPass(vk::COMMAND_BUFFER, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
+  vkCmdBeginRenderPass(vk::COMMAND_BUFFER, &beginInfo,
+                       VK_SUBPASS_CONTENTS_INLINE);
 
   // draw calls go here
   VkViewport viewport{0,
@@ -207,7 +206,9 @@ void VkTempLayer::onUpdate()
                       -float(globals::ENGINE_CONFIG->m_windowHeight),
                       0.0f,
                       1.0f};
-  VkRect2D scissor{{0, 0}, {globals::ENGINE_CONFIG->m_windowWidth, globals::ENGINE_CONFIG->m_windowHeight}};
+  VkRect2D scissor{{0, 0},
+                   {globals::ENGINE_CONFIG->m_windowWidth,
+                    globals::ENGINE_CONFIG->m_windowHeight}};
   vkCmdSetViewport(vk::COMMAND_BUFFER, 0, 1, &viewport);
   vkCmdSetScissor(vk::COMMAND_BUFFER, 0, 1, &scissor);
   vkCmdBindPipeline(vk::COMMAND_BUFFER, VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -232,9 +233,9 @@ void VkTempLayer::onUpdate()
                               descriptor);
   } else {
   */
-    vkCmdBindDescriptorSets(vk::COMMAND_BUFFER, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                            vk::PIPELINE_LAYOUT, 0, 1, &m_meshDescriptorSet, 0,
-                            nullptr);
+  vkCmdBindDescriptorSets(vk::COMMAND_BUFFER, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                          vk::PIPELINE_LAYOUT, 0, 1, &m_meshDescriptorSet, 0,
+                          nullptr);
   //}
 
   vkCmdBindIndexBuffer(vk::COMMAND_BUFFER, m_indexBuffer.buffer, 0,
@@ -243,11 +244,6 @@ void VkTempLayer::onUpdate()
   vkCmdDrawIndexed(vk::COMMAND_BUFFER, m_mesh.indices.size(), 1, 0, 0, 0);
 
   vkCmdEndRenderPass(vk::COMMAND_BUFFER);
-
-
-
-
-	
 }
 void VkTempLayer::onEvent(Event &event) {
   EventDispatcher dispatcher(event);
@@ -257,19 +253,34 @@ void VkTempLayer::onEvent(Event &event) {
       SE_BIND_EVENT_FN(VkTempLayer::onMouseButtonReleaseEvent));
   dispatcher.dispatch<MouseMoveEvent>(
       SE_BIND_EVENT_FN(VkTempLayer::onMouseMoveEvent));
-  //dispatcher.dispatch<DebugLayerChanged>(
+  // dispatcher.dispatch<DebugLayerChanged>(
   //    SE_BIND_EVENT_FN(VkTempLayer::onDebugLayerEvent));
   dispatcher.dispatch<WindowResizeEvent>(
       SE_BIND_EVENT_FN(VkTempLayer::onResizeEvent));
-  //dispatcher.dispatch<DebugRenderConfigChanged>(
+  // dispatcher.dispatch<DebugRenderConfigChanged>(
   //    SE_BIND_EVENT_FN(VkTempLayer::onDebugConfigChanged));
-  //dispatcher.dispatch<ShaderCompileEvent>(
+  // dispatcher.dispatch<ShaderCompileEvent>(
   //    SE_BIND_EVENT_FN(VkTempLayer::onShaderCompileEvent));
-  //dispatcher.dispatch<ReloadScriptsEvent>(
+  // dispatcher.dispatch<ReloadScriptsEvent>(
   //    SE_BIND_EVENT_FN(VkTempLayer::onReloadScriptEvent));
 }
 
-void VkTempLayer::clear() {}
+void VkTempLayer::clear() {
+  vkDeviceWaitIdle(vk::LOGICAL_DEVICE);
+  vkDestroyShaderModule(vk::LOGICAL_DEVICE, m_vs, nullptr);
+  vkDestroyShaderModule(vk::LOGICAL_DEVICE, m_fs, nullptr);
+  destroyBuffer(vk::LOGICAL_DEVICE, m_vertexBuffer);
+  destroyBuffer(vk::LOGICAL_DEVICE, m_indexBuffer);
+  for (auto layout : vk::LAYOUTS_TO_DELETE) {
+    vkDestroyDescriptorSetLayout(vk::LOGICAL_DEVICE, layout, nullptr);
+  }
+  // if constexpr (!USE_PUSH) {
+  vkDestroyDescriptorSetLayout(vk::LOGICAL_DEVICE, m_setLayout, nullptr);
+  vkDestroyDescriptorPool(vk::LOGICAL_DEVICE, m_dPool, nullptr);
+  //}
+  destroyTexture(vk::LOGICAL_DEVICE, uvTexture);
+  vkDestroyPipeline(vk::LOGICAL_DEVICE, m_pipeline, nullptr);
+}
 
 bool VkTempLayer::onMouseButtonPressEvent(MouseButtonPressEvent &e) {
   if (e.getMouseButton() == MOUSE_BUTTONS_EVENT::LEFT) {
