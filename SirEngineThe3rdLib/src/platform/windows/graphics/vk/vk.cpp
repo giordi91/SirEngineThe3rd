@@ -7,6 +7,7 @@
 #include "platform/windows/graphics/vk/vk.h"
 #include "platform/windows/graphics/vk/vkSwapChain.h"
 #include "platform/windows/graphics/vk/vkAdapter.h"
+#include "vkPSOManager.h"
 
 namespace SirEngine::vk {
 VkInstance INSTANCE = nullptr;
@@ -27,6 +28,11 @@ VkFormat IMAGE_FORMAT = VK_FORMAT_UNDEFINED;
 VkPipelineLayout PIPELINE_LAYOUT = nullptr;
 VkDebugReportCallbackEXT DEBUG_CALLBACK = nullptr;
 VkDebugUtilsMessengerEXT DEBUG_CALLBACK2 = nullptr;
+
+
+VkPSOManager* PSO_MANAGER = nullptr;
+
+	
 std::vector<VkDescriptorSetLayout> LAYOUTS_TO_DELETE;
 
 bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
@@ -120,6 +126,10 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
     assert(0);
   }
   COMMAND_BUFFER = commandBuffers[0];
+
+  PSO_MANAGER = new VkPSOManager();
+  PSO_MANAGER->init();
+	
   return true;
 }
 

@@ -1,10 +1,11 @@
 #include "platform/windows/graphics/vk/vkTexture.h"
+#include "gli/gli.hpp"
 #include "platform/windows/graphics/vk/VulkanFunctions.h"
 #include "platform/windows/graphics/vk/vkMemory.h"
-#include "gli/gli.hpp"
-#include "vk.h"
-#include <fstream>
+
 #include "SirEngine/fileUtils.h"
+#include "platform/windows/graphics/vk/vk.h"
+#include <fstream>
 
 namespace SirEngine::vk {
 
@@ -134,7 +135,6 @@ bool loadTextureFromFile(const char *name, VkFormat format, VkDevice device,
   assert(!tex2D.empty());
 
   const std::string textureName = getFileName(name);
-	
 
   outTexture.width = static_cast<uint32_t>(tex2D[0].extent().x);
   outTexture.height = static_cast<uint32_t>(tex2D[0].extent().y);
@@ -166,7 +166,8 @@ bool loadTextureFromFile(const char *name, VkFormat format, VkDevice device,
   bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
   VK_CHECK(vkCreateBuffer(device, &bufferCreateInfo, nullptr, &stagingBuffer));
-  SET_DEBUG_NAME(stagingBuffer,VK_OBJECT_TYPE_BUFFER, (textureName + "Staging").c_str())
+  SET_DEBUG_NAME(stagingBuffer, VK_OBJECT_TYPE_BUFFER,
+                 (textureName + "Staging").c_str())
 
   // Get memory requirements for the staging buffer (alignment, memory type
   // bits)
@@ -180,7 +181,8 @@ bool loadTextureFromFile(const char *name, VkFormat format, VkDevice device,
                            VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
   VK_CHECK(vkAllocateMemory(device, &memAllocInfo, nullptr, &stagingMemory));
-  SET_DEBUG_NAME(stagingMemory,VK_OBJECT_TYPE_DEVICE_MEMORY, (textureName + "Memory").c_str())
+  SET_DEBUG_NAME(stagingMemory, VK_OBJECT_TYPE_DEVICE_MEMORY,
+                 (textureName + "Memory").c_str())
   VK_CHECK(vkBindBufferMemory(device, stagingBuffer, stagingMemory, 0));
 
   // Copy texture data into staging buffer
@@ -229,7 +231,8 @@ bool loadTextureFromFile(const char *name, VkFormat format, VkDevice device,
     imageCreateInfo.usage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
   }
   VK_CHECK(vkCreateImage(device, &imageCreateInfo, nullptr, &outTexture.image));
-  SET_DEBUG_NAME(outTexture.image,VK_OBJECT_TYPE_IMAGE, (textureName + "Image").c_str())
+  SET_DEBUG_NAME(outTexture.image, VK_OBJECT_TYPE_IMAGE,
+                 (textureName + "Image").c_str())
 
   vkGetImageMemoryRequirements(device, outTexture.image, &memReqs);
 
@@ -263,11 +266,10 @@ bool loadTextureFromFile(const char *name, VkFormat format, VkDevice device,
   // Change texture image layout to shader read after all mip levels have been
   // copied
   outTexture.imageLayout = imageLayout;
-  setImageLayout(buffer, outTexture.image,
-                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, imageLayout,
-                 subresourceRange);
+  setImageLayout(buffer, outTexture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                 imageLayout, subresourceRange);
 
-  flushCommandBuffer(buffer,GRAPHICS_QUEUE,true);
+  flushCommandBuffer(buffer, GRAPHICS_QUEUE, true);
   // Clean up staging resources
   vkFreeMemory(device, stagingMemory, nullptr);
   vkDestroyBuffer(device, stagingBuffer, nullptr);
@@ -297,10 +299,10 @@ bool loadTextureFromFile(const char *name, VkFormat format, VkDevice device,
   VK_CHECK(vkCreateSampler(device, &samplerCreateInfo, nullptr,
                            &outTexture.sampler));
 
-
-  //NOTE THIS NAME IS  TRASH needs to survive the whole life cycle
+  // NOTE THIS NAME IS  TRASH needs to survive the whole life cycle
   auto samplerName = (textureName + "Sampler");
-  SET_DEBUG_NAME(outTexture.sampler,VK_OBJECT_TYPE_SAMPLER, samplerName.c_str())
+  SET_DEBUG_NAME(outTexture.sampler, VK_OBJECT_TYPE_SAMPLER,
+                 samplerName.c_str())
 
   // Create image view
   // Textures are not directly accessed by the shaders and
@@ -319,7 +321,8 @@ bool loadTextureFromFile(const char *name, VkFormat format, VkDevice device,
   viewCreateInfo.image = outTexture.image;
   VK_CHECK(
       vkCreateImageView(device, &viewCreateInfo, nullptr, &outTexture.view));
-  SET_DEBUG_NAME(outTexture.view,VK_OBJECT_TYPE_IMAGE_VIEW, (textureName + "ImageView").c_str())
+  SET_DEBUG_NAME(outTexture.view, VK_OBJECT_TYPE_IMAGE_VIEW,
+                 (textureName + "ImageView").c_str())
 
   // Update descriptor image info member that can be used for setting up
   // descriptor sets
@@ -333,13 +336,12 @@ bool loadTextureFromFile(const char *name, VkFormat format, VkDevice device,
   return true;
 }
 
-bool destroyTexture(const VkDevice device, const VkTexture2D texture)
-{
-	vkDestroyImage(device, texture.image, nullptr);
-	vkDestroyImageView(device, texture.view,nullptr);
-	//vkDestroySampler(device,texture.sampler,nullptr);
-	vkFreeMemory(device, texture.deviceMemory,nullptr);
+bool destroyTexture(const VkDevice device, const VkTexture2D texture) {
+  vkDestroyImage(device, texture.image, nullptr);
+  vkDestroyImageView(device, texture.view, nullptr);
+  vkDestroySampler(device, texture.sampler, nullptr);
+  vkFreeMemory(device, texture.deviceMemory, nullptr);
 
-	return true;
+  return true;
 }
-} // namespace vk
+} // namespace SirEngine::vk

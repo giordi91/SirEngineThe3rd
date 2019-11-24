@@ -276,10 +276,8 @@ PSOCompileResult processComputePSO(nlohmann::json &jobj, const char *path,
   auto resultCompile = processSignatureFile(globalRootSignatureName.c_str());
   auto rootS = resultCompile.root;
 
-  DXCShaderCompiler m_compiler;
-  // fetching the shader from the shader manager, the shader manager contains
-  // both rasterization and compute shaders, the DXIL for raytracer are
-  // handled by the DXIL manager
+  //compiling the shader
+  DXCShaderCompiler compiler;
   ShaderArgs csArgs;
   csArgs.entryPoint = L"CS";
   csArgs.debug = true;
@@ -287,7 +285,7 @@ PSOCompileResult processComputePSO(nlohmann::json &jobj, const char *path,
 
   std::string log;
   auto *computeShader =
-      m_compiler.compileShader(csPath, csArgs, &log);
+      compiler.compileShader(csPath, csArgs, &log);
 
   D3D12_SHADER_BYTECODE computeShaderByteCode{computeShader->GetBufferPointer(),
                                               computeShader->GetBufferSize()};
@@ -323,8 +321,6 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj, const char *path,
 
   const std::string rootSignatureString =
       getValueIfInJson(jobj, PSO_KEY_GLOBAL_ROOT, DEFAULT_STRING);
-  // auto rootSignature =
-  //    rs_manager->getRootSignatureFromName(rootSignatureString.c_str());
 
   auto resultCompile = processSignatureFile(rootSignatureString.c_str());
   auto rootSignature = resultCompile.root;
@@ -342,14 +338,14 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj, const char *path,
       frameConcatenation(shaderPath, PSnameAndExtension, "/rasterization/");
 
   // we have the shader name, we need to find it.
-  DXCShaderCompiler m_compiler;
+  DXCShaderCompiler compiler;
   ShaderArgs vsArgs;
   vsArgs.entryPoint = L"VS";
   vsArgs.debug = true;
   vsArgs.type = L"vs_6_2";
 
   std::string log;
-  auto *vs = m_compiler.compileShader(vsPath, vsArgs, &log);
+  auto *vs = compiler.compileShader(vsPath, vsArgs, &log);
 
   ShaderArgs psArgs;
   psArgs.entryPoint = L"PS";
@@ -357,7 +353,7 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj, const char *path,
   psArgs.type = L"ps_6_2";
   ID3DBlob *ps = nullptr;
   if (PSname != "null") {
-    ps = m_compiler.compileShader(psPath, psArgs, &log);
+    ps = compiler.compileShader(psPath, psArgs, &log);
   }
 
   const std::string rasterStateString =
