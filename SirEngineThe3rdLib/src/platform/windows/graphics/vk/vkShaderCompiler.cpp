@@ -6,6 +6,7 @@
 #include <cassert>
 
 #undef max
+#include "SirEngine/log.h"
 #include <SPIRV/GlslangToSpv.h>
 #include <StandAlone/DirStackFileIncluder.h>
 #include <glslang/Public/ShaderLang.h>
@@ -29,7 +30,7 @@ EShLanguage GetShaderStage(const std::string &stage) {
     return EShLangCount;
   }
 }
-const TBuiltInResource DefaultTBuiltInResource = {
+static const TBuiltInResource DEFAULT_T_BUILT_IN_RESOURCE = {
     /* .MaxLights = */ 32,
     /* .MaxClipPlanes = */ 6,
     /* .MaxTextureUnits = */ 32,
@@ -140,81 +141,98 @@ VkShaderCompiler::VkShaderCompiler() { glslang::InitializeProcess(); }
 
 VkShaderCompiler::~VkShaderCompiler() { glslang::FinalizeProcess(); }
 
-VkShaderModule VkShaderCompiler::compileShader(const char *shaderPath,
-                                               VkShaderArgs &shaderArgs,
-                                               std::string *log) {
+SpirVBlob VkShaderCompiler::compileToSpirV(const char *shaderPath,
+                                           VkShaderArgs &shaderArgs,
+                                           std::string *log) const {
 
   uint32_t fileSize;
-  const char *program = frameFileLoad(shaderPath, fileSize);
+  const char *fileContent = frameFileLoad(shaderPath, fileSize);
 
   const std::string extension = getFileExtension(shaderPath);
   EShLanguage shaderType = GetShaderStage(extension);
-  glslang::TShader Shader(shaderType);
+  glslang::TShader shader(shaderType);
 
-  Shader.setStrings(&program, 1);
+  shader.setStrings(&fileContent, 1);
 
-  int ClientInputSemanticsVersion = 100; // maps to, say, #define VULKAN 100
+  int ClientInputSemanticsVersion = 110; // maps to, say, #define VULKAN 110
   glslang::EShTargetClientVersion VulkanClientVersion =
-      glslang::EShTargetVulkan_1_0;
-  glslang::EShTargetLanguageVersion TargetVersion = glslang::EShTargetSpv_1_0;
+      glslang::EShTargetVulkan_1_1;
+  glslang::EShTargetLanguageVersion TargetVersion = glslang::EShTargetSpv_1_5;
 
-  Shader.setEnvInput(glslang::EShSourceGlsl, shaderType,
+  shader.setEnvInput(glslang::EShSourceGlsl, shaderType,
                      glslang::EShClientVulkan, ClientInputSemanticsVersion);
-  Shader.setEnvClient(glslang::EShClientVulkan, VulkanClientVersion);
-  Shader.setEnvTarget(glslang::EShTargetSpv, TargetVersion);
+  shader.setEnvClient(glslang::EShClientVulkan, VulkanClientVersion);
+  shader.setEnvTarget(glslang::EShTargetSpv, TargetVersion);
 
-  TBuiltInResource Resources;
-  Resources = DefaultTBuiltInResource;
+  TBuiltInResource resources;
+  resources = DEFAULT_T_BUILT_IN_RESOURCE;
   // Resources = DefaultTBuiltInResource;
   EShMessages messages = (EShMessages)(EShMsgSpvRules | EShMsgVulkanRules);
 
-  const int DefaultVersion = 100;
+  const int defaultVersion = 100;
 
-  DirStackFileIncluder Includer;
+  DirStackFileIncluder includer;
 
   // Get Path of File
-  std::string Path = getPathName(shaderPath);
-  Includer.pushExternalLocalDirectory(Path);
+  std::string path = getPathName(shaderPath);
+  includer.pushExternalLocalDirectory(path);
 
-  std::string PreprocessedGLSL;
+  std::string preprocessedGlsl;
 
-  if (!Shader.preprocess(&Resources, DefaultVersion, ENoProfile, false, false,
-                         messages, &PreprocessedGLSL, Includer)) {
-    std::cout << "GLSL Preprocessing Failed for: " << shaderPath << std::endl;
-    std::cout << Shader.getInfoLog() << std::endl;
-    std::cout << Shader.getInfoDebugLog() << std::endl;
+  if (!shader.preprocess(&resources, defaultVersion, ENoProfile, false, false,
+                         messages, &preprocessedGlsl, includer)) {
+    SE_CORE_ERROR(
+        "GLSL Preprocessing Failed for: {0} \n LOG: {1} \n Debug LOG: {2}",
+        shaderPath, shader.getInfoLog(), shader.getInfoDebugLog());
+    return {nullptr, 0};
   }
-  const char *PreprocessedCStr = PreprocessedGLSL.c_str();
-  Shader.setStrings(&PreprocessedCStr, 1);
+  const char *preprocessedCStr = preprocessedGlsl.c_str();
+  shader.setStrings(&preprocessedCStr, 1);
 
-  if (!Shader.parse(&Resources, 100, false, messages)) {
-    std::cout << "GLSL Parsing Failed for: " << shaderPath << std::endl;
-    std::cout << Shader.getInfoLog() << std::endl;
-    std::cout << Shader.getInfoDebugLog() << std::endl;
+  if (!shader.parse(&resources, 100, false, messages)) {
+    SE_CORE_ERROR("GLSL parsing Failed for: {0} \n LOG: {1} \n Debug LOG: {2}",
+                  shaderPath, shader.getInfoLog(), shader.getInfoDebugLog());
+    return {nullptr, 0};
   }
-  glslang::TProgram Program;
-  Program.addShader(&Shader);
+  glslang::TProgram program;
+  program.addShader(&shader);
 
-  if (!Program.link(messages)) {
-    std::cout << "GLSL Linking Failed for: " << shaderPath << std::endl;
-    std::cout << Shader.getInfoLog() << std::endl;
-    std::cout << Shader.getInfoDebugLog() << std::endl;
+  if (!program.link(messages)) {
+    SE_CORE_ERROR("GLSL linking Failed for: {0} \n LOG: {1} \n Debug LOG: {2}",
+                  shaderPath, shader.getInfoLog(), shader.getInfoDebugLog());
+    return {nullptr, 0};
   }
-
-  std::vector<unsigned int> SpirV;
+  std::vector<unsigned int> spirV;
   spv::SpvBuildLogger logger;
   glslang::SpvOptions spvOptions;
-  glslang::GlslangToSpv(*Program.getIntermediate(shaderType), SpirV, &logger,
+  glslang::GlslangToSpv(*program.getIntermediate(shaderType), spirV, &logger,
                         &spvOptions);
 
+  uint32_t sizeInByte = static_cast<uint32_t>(spirV.size() * sizeof(uint32_t));
+  void *blobMemory = globals::FRAME_ALLOCATOR->allocate(sizeInByte);
+  memcpy(blobMemory, spirV.data(), sizeInByte);
+  return {blobMemory, static_cast<uint32_t>(sizeInByte)};
+}
+
+VkShaderModule VkShaderCompiler::compileToShaderModule(const char *shaderPath,
+                                                       VkShaderArgs &shaderArgs,
+                                                       std::string *log) const {
+  const SpirVBlob shader = compileToSpirV(shaderPath, shaderArgs, log);
   VkShaderModuleCreateInfo createInfo = {
       VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO};
-  createInfo.codeSize = SpirV.size() * sizeof(int);
-  createInfo.pCode = reinterpret_cast<uint32_t *>(SpirV.data());
+  createInfo.codeSize = shader.sizeInByte;
+  createInfo.pCode = reinterpret_cast<uint32_t *>(shader.memory);
 
   VkShaderModule shaderModule = nullptr;
-  vkCreateShaderModule(vk::LOGICAL_DEVICE, &createInfo, nullptr, &shaderModule);
+  VK_CHECK(vkCreateShaderModule(vk::LOGICAL_DEVICE, &createInfo, nullptr,
+                                &shaderModule));
 
   return shaderModule;
+}
+unsigned VkShaderCompiler::getShaderFlags(const VkShaderArgs &shaderArgs) {
+  unsigned int flags = 0;
+  flags |= (shaderArgs.debug ? SHADER_FLAGS::DEBUG : 0);
+
+  return flags;
 }
 } // namespace SirEngine::vk

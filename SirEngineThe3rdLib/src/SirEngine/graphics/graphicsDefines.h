@@ -21,4 +21,6 @@ struct SIR_ENGINE_API AdapterRequestConfig {
   ADAPTER_SELECTION_RULE m_genericRule;
   bool m_vendorTolerant;
 };
+
+enum SHADER_FLAGS { DEBUG = 1 };
 } // namespace SirEngine
