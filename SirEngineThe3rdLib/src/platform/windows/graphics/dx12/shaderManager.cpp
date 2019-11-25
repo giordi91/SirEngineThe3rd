@@ -7,6 +7,7 @@
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/runtimeString.h"
 #include <d3dcompiler.h>
+#include "SirEngine/graphics/graphicsDefines.h"
 
 namespace SirEngine {
 namespace dx12 {

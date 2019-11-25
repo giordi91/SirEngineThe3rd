@@ -4,6 +4,10 @@
 #include <string>
 
 namespace SirEngine::vk {
+struct SIR_ENGINE_API SpirVBlob {
+  void *memory = nullptr;
+  uint32_t sizeInByte = 0;
+};
 
 struct SIR_ENGINE_API VkShaderArgs {
   VkShaderArgs() : entryPoint(nullptr), type(nullptr), compilerArgs(nullptr) {}
@@ -21,8 +25,11 @@ class SIR_ENGINE_API VkShaderCompiler {
 public:
   VkShaderCompiler();
   ~VkShaderCompiler();
-  VkShaderModule compileShader(const char *shaderPath, VkShaderArgs &shaderArgs,
-                               std::string *log);
+  SpirVBlob compileToSpirV(const char *shaderPath, VkShaderArgs &shaderArgs,
+                           std::string *log) const;
+  VkShaderModule compileToShaderModule(const char *shaderPath,
+                                       VkShaderArgs &shaderArgs,
+                                       std::string *log) const;
   unsigned int getShaderFlags(const VkShaderArgs &shaderArgs);
 };
 

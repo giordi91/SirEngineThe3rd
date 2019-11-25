@@ -10,7 +10,6 @@ struct IDxcIncludeHandler;
 namespace SirEngine {
 namespace dx12 {
 
-enum SHADER_FLAGS { DEBUG = 1 };
 
 template class SIR_ENGINE_API ResizableVector<wchar_t *>;
 struct SIR_ENGINE_API ShaderArgs {
