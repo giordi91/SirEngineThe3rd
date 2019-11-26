@@ -32,11 +32,14 @@ void VkTempLayer::onAttach() {
   // load the shaders
   auto compiler = vk::VkShaderCompiler();
   vk::VkShaderArgs shaderArgs;
+  shaderArgs.debug=true;
+  shaderArgs.type=SHADER_TYPE::VERTEX;
   std::string log;
-  m_vs = compiler.compileToShaderModule("../data/external/vk/triangle.vert",
+  m_vs = compiler.compileToShaderModule("../data/shaders/VK/rasterization/triangle.vert.glsl",
                          shaderArgs, &log);
 
-  m_fs = compiler.compileToShaderModule("../data/external/vk/triangle.frag",
+  shaderArgs.type=SHADER_TYPE::FRAGMENT;
+  m_fs = compiler.compileToShaderModule("../data/shaders/VK/rasterization/triangle.frag.glsl",
                          shaderArgs, &log);
   assert(m_vs);
   assert(m_fs);

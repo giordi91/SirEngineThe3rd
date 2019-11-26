@@ -102,6 +102,14 @@ struct ShaderMapperData final {
   uint32_t pathSizeInByte = 0;
   uint32_t compilerArgsInByte = 0;
 };
+struct VkShaderMapperData final {
+  uint32_t shaderFlags = 0;
+  uint32_t shaderSizeInByte = 0;
+  uint32_t entryPointInByte = 0;
+  uint32_t pathSizeInByte = 0;
+  uint32_t compilerArgsInByte = 0;
+  uint32_t type=0;
+};
 
 struct RootSignatureMappedData final {
   uint32_t type = 0;

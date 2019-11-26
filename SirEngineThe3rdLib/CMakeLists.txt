@@ -89,12 +89,18 @@ project(SirEngineThe3rdLib)
 	SOURCE_GROUP("data/pso" FILES ${PSO_FILES})
     file(GLOB_RECURSE RS_FILES "../data/rs/*.json" )
 	SOURCE_GROUP("data/rs" FILES ${RS_FILES})
-    file(GLOB_RECURSE SHADERS_COMMON_FILES "../data/shaders/common/*.hlsl" "../data/shaders/common/*.h")
-	SOURCE_GROUP("data/shaders/common" FILES ${SHADERS_COMMON_FILES})
-    file(GLOB_RECURSE SHADERS_RASTERIZATION_FILES "../data/shaders/rasterization/*.hlsl" )
-	SOURCE_GROUP("data/shaders/rasterization" FILES ${SHADERS_RASTERIZATION_FILES})
-    file(GLOB_RECURSE SHADERS_COMPUTE_FILES "../data/shaders/compute/*.hlsl" )
-	SOURCE_GROUP("data/shaders/compute" FILES ${SHADERS_COMPUTE_FILES})
+    file(GLOB_RECURSE SHADERS_DX12_COMMON_FILES "../data/shaders/DX12/common/*.hlsl" "../data/shaders/DX12/common/*.h")
+    file(GLOB_RECURSE SHADERS_VK_COMMON_FILES "../data/shaders/vk/common/*.glsl" "../data/shaders/vk/common/*.h")
+	SOURCE_GROUP("data/shaders/DX12/common" FILES ${SHADERS_DX12_COMMON_FILES})
+	SOURCE_GROUP("data/shaders/vk/common" FILES ${SHADERS_VK_COMMON_FILES})
+    file(GLOB_RECURSE SHADERS_DX12_RASTERIZATION_FILES "../data/shaders/DX12/rasterization/*.hlsl" )
+    file(GLOB_RECURSE SHADERS_VK_RASTERIZATION_FILES "../data/shaders/vk/rasterization/*.glsl" )
+	SOURCE_GROUP("data/shaders/DX12/rasterization" FILES ${SHADERS_DX12_RASTERIZATION_FILES})
+	SOURCE_GROUP("data/shaders/vk/rasterization" FILES ${SHADERS_VK_RASTERIZATION_FILES})
+    file(GLOB_RECURSE SHADERS_DX12_COMPUTE_FILES "../data/shaders/DX12/compute/*.hlsl" )
+    file(GLOB_RECURSE SHADERS_VK_COMPUTE_FILES "../data/shaders/DX12/compute/*.glsl" )
+	SOURCE_GROUP("data/shaders/DX12/compute" FILES ${SHADERS_DX12_COMPUTE_FILES})
+	SOURCE_GROUP("data/shaders/vk/compute" FILES ${SHADERS_VK_COMPUTE_FILES})
     file(GLOB_RECURSE SCENE_FILES "../data/scenes/*.json" )
 	SOURCE_GROUP("data/scenes" FILES ${SCENE_FILES})
 	SOURCE_GROUP("data" FILES "../data/execute.json")
@@ -111,9 +117,12 @@ project(SirEngineThe3rdLib)
 
 	#NOTE: when passing arrays/lists to macro, to work 
 	#properly put the variable in quotes "${MY_VAR}"
-	SET_AS_HEADERS("${SHADERS_RASTERIZATION_FILES}")
-	SET_AS_HEADERS("${SHADERS_COMPUTE_FILES}")
-	SET_AS_HEADERS("${SHADERS_COMMON_FILES}")
+	SET_AS_HEADERS("${SHADERS_DX12_RASTERIZATION_FILES}")
+	SET_AS_HEADERS("${SHADERS_DX12_COMPUTE_FILES}")
+	SET_AS_HEADERS("${SHADERS_DX12_COMMON_FILES}")
+	SET_AS_HEADERS("${SHADERS_VK_RASTERIZATION_FILES}")
+	SET_AS_HEADERS("${SHADERS_VK_COMPUTE_FILES}")
+	SET_AS_HEADERS("${SHADERS_VK_COMMON_FILES}")
 
 	if(WIN32)
 		link_directories(${CMAKE_SOURCE_DIR}/builtDependencies/windows/$<CONFIGURATION> )
@@ -125,9 +134,12 @@ project(SirEngineThe3rdLib)
 	${MATERIAL_TYPES_FILES}
 	${PSO_FILES}
 	${RS_FILES}
-	${SHADERS_COMMON_FILES}
-	${SHADERS_RASTERIZATION_FILES}
-	${SHADERS_COMPUTE_FILES}
+	${SHADERS_DX12_COMMON_FILES}
+	${SHADERS_DX12_RASTERIZATION_FILES}
+	${SHADERS_DX12_COMPUTE_FILES}
+	${SHADERS_VK_COMMON_FILES}
+	${SHADERS_VK_RASTERIZATION_FILES}
+	${SHADERS_VK_COMPUTE_FILES}
 	${SCRIPTS_FILES}
 	"../data/execute.json"
 	"../data/executeFullDebugAMD.json"
@@ -145,7 +157,6 @@ project(SirEngineThe3rdLib)
 	target_link_libraries(${PROJECT_NAME} d3dcompiler dxcompiler farmhash DXGI D3D12 imgui DXTK12 WinPixEventRuntime lualib   meshoptimizer)
 
 	if(${BUILD_VULKAN})
-		#set(GLSLANG_LIB debug glslangd HLSLd OGLCompilerd OSDependentd SPIRVd optimized glslang HLSL OGLCompiler OSDependent SPIRV)
 		target_link_libraries(${PROJECT_NAME} ${Vulkan_LIBRARIES} )
 		target_link_libraries(${PROJECT_NAME}  debug glslangd  optimized glslang)
 		target_link_libraries(${PROJECT_NAME}  debug HLSLd optimized HLSL)

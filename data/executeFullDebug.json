@@ -93,6 +93,7 @@
       "-p ../data/rs/forwardParallaxRS.json -o ../data/processed/rs/forwardParallaxRS.root --pluginName rootSignatureCompilerPlugin",
       "-p ../data/rs/shadowSkinClusterRS.json -o ../data/processed/rs/shadowSkinClusterRS.root --pluginName rootSignatureCompilerPlugin",
         
+      "-p ../data/pso -o ../data/processed/pso --pluginName PSOCompilerPlugin --pluginArgs \"-t DX12 -a -s ../data/shaders/DX12\"",
 
       "-p ../data/external/textures/cerberus/Cerberus_A.tga -o ../data/processed/textures/cerberus/Cerberus_A.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1 -g -m\"",
       "-p ../data/external/textures/cerberus/Cerberus_N.tga -o ../data/processed/textures/cerberus/Cerberus_N.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\"",

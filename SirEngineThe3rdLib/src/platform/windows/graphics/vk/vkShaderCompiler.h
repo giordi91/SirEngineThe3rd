@@ -1,5 +1,6 @@
 #pragma once
 #include "SirEngine/core.h"
+#include "SirEngine/graphics/graphicsDefines.h"
 #include "vulkan/vulkan.h"
 #include <string>
 
@@ -10,15 +11,8 @@ struct SIR_ENGINE_API SpirVBlob {
 };
 
 struct SIR_ENGINE_API VkShaderArgs {
-  VkShaderArgs() : entryPoint(nullptr), type(nullptr), compilerArgs(nullptr) {}
-  // splitCompilerArgsPointers(20){};
   bool debug = false;
-
-  wchar_t *entryPoint;
-  wchar_t *type;
-  wchar_t *compilerArgs;
-  // this vector instead will hold the point of the args
-  // ResizableVector<wchar_t *> splitCompilerArgsPointers;
+  SHADER_TYPE type = SHADER_TYPE::INVALID;
 };
 
 class SIR_ENGINE_API VkShaderCompiler {
@@ -30,7 +24,8 @@ public:
   VkShaderModule compileToShaderModule(const char *shaderPath,
                                        VkShaderArgs &shaderArgs,
                                        std::string *log) const;
-  unsigned int getShaderFlags(const VkShaderArgs &shaderArgs);
+  static uint32_t getShaderFlags(const VkShaderArgs &shaderArgs);
+  static SHADER_TYPE getShaderTypeFromName(const char*name);
 };
 
 } // namespace SirEngine::vk

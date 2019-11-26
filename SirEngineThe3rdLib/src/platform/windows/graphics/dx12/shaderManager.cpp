@@ -133,7 +133,7 @@ void ShaderManager::recompileShader(const char *path, const char *offsetPath,
   args.compilerArgs = meta->compilerArgs;
   std::string compilerArgs(frameConvert(meta->compilerArgs));
 
-  // TODO this is quite a mess, so many conversiong with Wstring back and
+  // TODO this is quite a mess, so many conversion with Wstring back and
   // fort small allocations etc.
   splitCompilerArgs(compilerArgs, args.splitCompilerArgsPointers);
 
