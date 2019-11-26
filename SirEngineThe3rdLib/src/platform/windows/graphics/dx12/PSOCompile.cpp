@@ -338,6 +338,9 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj, const char *path,
       frameConcatenation(shaderPath, PSnameAndExtension, "/rasterization/");
 
   // we have the shader name, we need to find it.
+  //TODO not ideal, should this be an engine config? realistically aint going to
+  //support either mix and match or different versions, everything needs to compile
+  //for the lastest
   DXCShaderCompiler compiler;
   ShaderArgs vsArgs;
   vsArgs.entryPoint = L"VS";

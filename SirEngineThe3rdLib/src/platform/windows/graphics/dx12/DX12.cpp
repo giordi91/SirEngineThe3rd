@@ -185,9 +185,9 @@ bool initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
   SHADER_MANAGER->init();
   SHADER_MANAGER->loadShadersInFolder(
       frameConcatenation(globals::ENGINE_CONFIG->m_dataSourcePath,
-                         "/processed/shaders/rasterization"));
+                         "/processed/shaders/DX12/rasterization"));
   SHADER_MANAGER->loadShadersInFolder(frameConcatenation(
-      globals::ENGINE_CONFIG->m_dataSourcePath, "/processed/shaders/compute"));
+      globals::ENGINE_CONFIG->m_dataSourcePath, "/processed/shaders/DX12/compute"));
 
   ROOT_SIGNATURE_MANAGER = new RootSignatureManager();
   ROOT_SIGNATURE_MANAGER->loadSignaturesInFolder(frameConcatenation(

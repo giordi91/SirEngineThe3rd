@@ -1,16 +1,18 @@
 
-#define VOLK_IMPLEMENTATION 
+#define VOLK_IMPLEMENTATION
 #include "volk.h"
 
-#include "platform/windows/graphics/vk/vkLoad.h"
 #include "SirEngine/Window.h"
 #include "SirEngine/engineConfig.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/log.h"
+#include "SirEngine/runtimeString.h"
 #include "platform/windows/graphics/vk/vk.h"
-#include "platform/windows/graphics/vk/vkSwapChain.h"
 #include "platform/windows/graphics/vk/vkAdapter.h"
-#include "vkPSOManager.h"
+#include "platform/windows/graphics/vk/vkLoad.h"
+#include "platform/windows/graphics/vk/vkPSOManager.h"
+#include "platform/windows/graphics/vk/vkShaderManager.h"
+#include "platform/windows/graphics/vk/vkSwapChain.h"
 
 namespace SirEngine::vk {
 VkInstance INSTANCE = nullptr;
@@ -32,10 +34,9 @@ VkPipelineLayout PIPELINE_LAYOUT = nullptr;
 VkDebugReportCallbackEXT DEBUG_CALLBACK = nullptr;
 VkDebugUtilsMessengerEXT DEBUG_CALLBACK2 = nullptr;
 
+VkPSOManager *PSO_MANAGER = nullptr;
+VkShaderManager *SHADER_MANAGER = nullptr;
 
-VkPSOManager* PSO_MANAGER = nullptr;
-
-	
 std::vector<VkDescriptorSetLayout> LAYOUTS_TO_DELETE;
 
 bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
@@ -119,9 +120,15 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   }
   COMMAND_BUFFER = commandBuffers[0];
 
+  SHADER_MANAGER = new VkShaderManager();
+  SHADER_MANAGER->init();
+  SHADER_MANAGER->loadShadersInFolder(
+      frameConcatenation(globals::ENGINE_CONFIG->m_dataSourcePath,
+                         "/processed/shaders/VK/rasterization"));
+
   PSO_MANAGER = new VkPSOManager();
   PSO_MANAGER->init();
-	
+
   return true;
 }
 

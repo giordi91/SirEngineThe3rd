@@ -17,6 +17,12 @@ static const std::unordered_map<SHADER_TYPE, EShLanguage> TYPE_TO_LANGUAGE{
     {SHADER_TYPE::VERTEX, EShLangVertex},
     {SHADER_TYPE::FRAGMENT, EShLangFragment},
     {SHADER_TYPE::COMPUTE, EShLangCompute}};
+
+static const std::unordered_map<SHADER_TYPE, const char *> TYPE_TO_ENTRY_POINT{
+    {SHADER_TYPE::VERTEX, "VS"},
+    {SHADER_TYPE::FRAGMENT, "PS"},
+    {SHADER_TYPE::COMPUTE, "CS"}};
+
 static const std::unordered_map<std::string, SHADER_TYPE> NAME_TO_SHADER_TYPE{
     {"vertex", SHADER_TYPE::VERTEX},
     {"fragment", SHADER_TYPE::FRAGMENT},
@@ -141,6 +147,14 @@ VkShaderCompiler::VkShaderCompiler() { glslang::InitializeProcess(); }
 
 VkShaderCompiler::~VkShaderCompiler() { glslang::FinalizeProcess(); }
 
+const char *getEntryPointFromType(SHADER_TYPE type) {
+  const auto found = TYPE_TO_ENTRY_POINT.find(type);
+  if (found != TYPE_TO_ENTRY_POINT.end()) {
+	  return found->second;
+  }
+  return nullptr;
+};
+
 SpirVBlob VkShaderCompiler::compileToSpirV(const char *shaderPath,
                                            VkShaderArgs &shaderArgs,
                                            std::string *log) const {
@@ -153,6 +167,10 @@ SpirVBlob VkShaderCompiler::compileToSpirV(const char *shaderPath,
   glslang::TShader shader(shaderType);
 
   shader.setStrings(&fileContent, 1);
+  //TODO investigate why any entry point other than main does not work
+  //const char *entryPoint = getEntryPointFromType(shaderArgs.type);
+  //assert(entryPoint != nullptr);
+  //shader.setEntryPoint(entryPoint);
 
   int clientInputSemanticsVersion = 110; // maps to, say, #define VULKAN 110
   glslang::EShTargetClientVersion vulkanClientVersion =
@@ -181,8 +199,8 @@ SpirVBlob VkShaderCompiler::compileToSpirV(const char *shaderPath,
                          messages, &preprocessedGlsl, includer)) {
     SE_CORE_ERROR(
         "GLSL Preprocessing Failed for: {0}  \n LOG: {1} \n DEBUG LOG: {2}",
-        shaderPath, shader.getInfoLog(), shader.getInfoDebugLog()); 
-		if(log!= nullptr){
+        shaderPath, shader.getInfoLog(), shader.getInfoDebugLog());
+    if (log != nullptr) {
       (*log) += "GLSL Preprocessing Failed for: ";
       (*log) += shaderPath;
       (*log) += " \n LOG: ";
@@ -196,10 +214,9 @@ SpirVBlob VkShaderCompiler::compileToSpirV(const char *shaderPath,
   shader.setStrings(&preprocessedCStr, 1);
 
   if (!shader.parse(&resources, 100, false, messages)) {
-    SE_CORE_ERROR(
-        "GLSL parsing Failed for: {0}  \n LOG: {1} \n DEBUG LOG: {2}",
-        shaderPath, shader.getInfoLog(), shader.getInfoDebugLog()); 
-		if(log!= nullptr){
+    SE_CORE_ERROR("GLSL parsing Failed for: {0}  \n LOG: {1} \n DEBUG LOG: {2}",
+                  shaderPath, shader.getInfoLog(), shader.getInfoDebugLog());
+    if (log != nullptr) {
       (*log) += "GLSL parsing Failed for: ";
       (*log) += shaderPath;
       (*log) += " \n LOG: ";
@@ -213,16 +230,15 @@ SpirVBlob VkShaderCompiler::compileToSpirV(const char *shaderPath,
   program.addShader(&shader);
 
   if (!program.link(messages)) {
-    SE_CORE_ERROR(
-        "GLSL linking Failed for: {0}  \n LOG: {1} \n DEBUG LOG: {2}",
-        shaderPath, shader.getInfoLog(), shader.getInfoDebugLog()); 
-		if(log!= nullptr){
+    SE_CORE_ERROR("GLSL linking Failed for: {0}  \n LOG: {1} \n DEBUG LOG: {2}",
+                  shaderPath, program.getInfoLog(), program.getInfoDebugLog());
+    if (log != nullptr) {
       (*log) += "GLSL parsing Failed for: ";
       (*log) += shaderPath;
       (*log) += " \n LOG: ";
-      (*log) += shader.getInfoLog();
+      (*log) += program.getInfoLog();
       (*log) += "Debug LOG: ";
-      (*log) += shader.getInfoDebugLog();
+      (*log) += program.getInfoDebugLog();
     }
     return {nullptr, 0};
   }
@@ -239,20 +255,23 @@ SpirVBlob VkShaderCompiler::compileToSpirV(const char *shaderPath,
   return {blobMemory, static_cast<uint32_t>(sizeInByte)};
 }
 
-VkShaderModule VkShaderCompiler::compileToShaderModule(const char *shaderPath,
-                                                       VkShaderArgs &shaderArgs,
-                                                       std::string *log) const {
-  const SpirVBlob shader = compileToSpirV(shaderPath, shaderArgs, log);
+VkShaderModule VkShaderCompiler::spirvToShaderModule(const SpirVBlob &blob) {
   VkShaderModuleCreateInfo createInfo = {
       VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO};
-  createInfo.codeSize = shader.sizeInByte;
-  createInfo.pCode = reinterpret_cast<uint32_t *>(shader.memory);
+  createInfo.codeSize = blob.sizeInByte;
+  createInfo.pCode = reinterpret_cast<uint32_t *>(blob.memory);
 
   VkShaderModule shaderModule = nullptr;
   VK_CHECK(vkCreateShaderModule(vk::LOGICAL_DEVICE, &createInfo, nullptr,
                                 &shaderModule));
-
   return shaderModule;
+}
+
+VkShaderModule VkShaderCompiler::compileToShaderModule(const char *shaderPath,
+                                                       VkShaderArgs &shaderArgs,
+                                                       std::string *log) const {
+  const SpirVBlob shader = compileToSpirV(shaderPath, shaderArgs, log);
+  return spirvToShaderModule(shader);
 }
 uint32_t VkShaderCompiler::getShaderFlags(const VkShaderArgs &shaderArgs) {
   uint32_t flags = 0;

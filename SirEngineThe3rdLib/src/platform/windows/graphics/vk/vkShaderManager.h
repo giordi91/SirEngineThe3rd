@@ -1,37 +1,42 @@
 #pragma once
+#include "SirEngine/graphics/graphicsDefines.h"
 #include "SirEngine/memory/stackAllocator.h"
+#include "platform/windows/graphics/vk/volk.h"
 #include <cassert>
 #include <d3dcommon.h>
 #include <string>
 #include <unordered_map>
 
-namespace SirEngine {
-namespace dx12 {
-struct ShaderArgs;
+namespace SirEngine::vk {
+struct VkShaderArgs;
+struct SpirVBlob;
 
-class DXCShaderCompiler;
+class VkShaderCompiler;
 
-struct ShaderMetadata {
-  wchar_t *type;
-  wchar_t *entryPoint;
+struct VkShaderMetadata {
+  SHADER_TYPE type;
+  char *entryPoint;
   char *shaderPath;
   unsigned int shaderFlags;
-  wchar_t *compilerArgs;
+  // NOTE: compiler args currently not supported
+  // wchar_t *compilerArgs;
 };
-struct ShaderBlob {
-  ID3DBlob *shader;
-  ShaderMetadata *metadata;
+struct VkShaderBlob {
+  VkShaderModule shader;
+  VkShaderMetadata *metadata;
 };
 
-class ShaderManager {
+class VkShaderManager {
 public:
-  ~ShaderManager();
+  VkShaderManager() = default;
+  ~VkShaderManager();
   // right now this is empty, is kept here for the time being
   // just for simmetry with the other managers
   void init();
   void loadShadersInFolder(const char *directory);
   void cleanup();
-  inline ID3DBlob *getShaderFromName(const std::string &name) {
+
+  inline VkShaderModule getShaderFromName(const std::string &name) {
     const auto found = m_stringToShader.find(name);
     if (found != m_stringToShader.end()) {
       return found->second.shader;
@@ -43,14 +48,12 @@ public:
     return nullptr;
   }
 
-  inline const std::unordered_map<std::string, ShaderBlob> &getShaderMap() {
+  inline const std::unordered_map<std::string, VkShaderBlob> &getShaderMap() {
     return m_stringToShader;
   }
 
-  ShaderManager() = default;
-  ShaderManager(const ShaderManager &) = delete;
-  ShaderManager &operator=(const ShaderManager &) = delete;
-  void loadShaderFile(const char *path);
+  VkShaderManager(const VkShaderManager &) = delete;
+  VkShaderManager &operator=(const VkShaderManager &) = delete;
   void loadShaderBinaryFile(const char *path);
   void recompileShader(const char *path, const char *offsetPath,
                        std::string *log);
@@ -59,9 +62,8 @@ private:
   // 2 mb of data for the stack
   const int METADATA_STACK_SIZE = 1 << 21;
   // data caching
-  std::unordered_map<std::string, ShaderBlob> m_stringToShader;
+  std::unordered_map<std::string, VkShaderBlob> m_stringToShader;
   StackAllocator m_metadataAllocator;
-  DXCShaderCompiler *m_compiler;
+  VkShaderCompiler *m_compiler;
 };
-} // namespace dx12
-} // namespace SirEngine
+} // namespace SirEngine::vk
