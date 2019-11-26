@@ -16,7 +16,7 @@ layout (binding=0) buffer Vertices
 
 layout(location =0) out vec4 color;
 layout(location =1) out vec2 uv;
-void VS()
+void main()
 {
 	//this can't be used becuase seems like is making a copy and the 
 	//driver isn't happy about it and violates vulkan 1.1 specs, need to

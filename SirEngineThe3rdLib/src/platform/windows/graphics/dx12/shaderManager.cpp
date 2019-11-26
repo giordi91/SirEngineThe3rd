@@ -161,11 +161,6 @@ void ShaderManager::recompileShader(const char *path, const char *offsetPath,
   }
 }
 
-ID3DBlob *ShaderManager::compileShader(const char *shaderPath,
-                                       ShaderArgs &shaderArgs,
-                                       std::string *log) {
-  return m_compiler->compileShader(shaderPath, shaderArgs, log);
-}
 
 ShaderManager::~ShaderManager() { delete m_compiler; }
 

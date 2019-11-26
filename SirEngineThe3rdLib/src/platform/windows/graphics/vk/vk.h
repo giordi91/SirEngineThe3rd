@@ -9,6 +9,7 @@
 namespace SirEngine {
 namespace vk {
 class VkPSOManager;
+class VkShaderManager;
 struct VkSwapchain;
 
 // runtime instances
@@ -32,6 +33,7 @@ extern VkQueue PRESENTATION_QUEUE;
 //defined by the engine
 extern VkSwapchain *SWAP_CHAIN;
 extern VkPSOManager* PSO_MANAGER;
+extern VkShaderManager* SHADER_MANAGER;
 
 extern std::vector<VkDescriptorSetLayout> LAYOUTS_TO_DELETE;
 

@@ -78,7 +78,7 @@ void VkTempLayer::onAttach() {
   createDescriptorLayoutAdvanced();
   //}
 
-  vk::PSO_MANAGER->loadRawPSO("../data/pso/forwardPhongPSO.json");
+  //vk::PSO_MANAGER->loadRawPSO("../data/pso/forwardPhongPSO.json");
 }
 
 void VkTempLayer::createDescriptorLayoutAdvanced() {

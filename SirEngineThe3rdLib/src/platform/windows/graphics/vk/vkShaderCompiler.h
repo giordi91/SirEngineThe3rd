@@ -21,6 +21,7 @@ public:
   ~VkShaderCompiler();
   SpirVBlob compileToSpirV(const char *shaderPath, VkShaderArgs &shaderArgs,
                            std::string *log) const;
+  static VkShaderModule spirvToShaderModule(const SpirVBlob& blob);
   VkShaderModule compileToShaderModule(const char *shaderPath,
                                        VkShaderArgs &shaderArgs,
                                        std::string *log) const;

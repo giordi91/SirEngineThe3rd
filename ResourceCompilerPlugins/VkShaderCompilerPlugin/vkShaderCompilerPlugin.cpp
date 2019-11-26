@@ -175,7 +175,6 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
   request.bulkData = dataPtr;
   request.bulkDataSizeInByte = totalBulkDataInBytes;
 
-  mapperData.shaderSizeInByte = static_cast<uint32_t>(blob.sizeInByte);
   mapperData.type = static_cast<uint32_t>(shaderArgs.type);
   request.mapperData = &mapperData;
   request.mapperDataSizeInByte = sizeof(ShaderMapperData);
