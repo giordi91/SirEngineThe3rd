@@ -200,10 +200,6 @@ bool processAnim(const std::string &assetPath, const std::string &outputPath,
                   outputPath);
   }
   // initialize memory pools and loggers
-  SirEngine::StringPool stringPool(1024 * 1024 * 10);
-  SirEngine::globals::STRING_POOL = &stringPool;
-  SirEngine::ThreeSizesPool pool(1024 * 1024 * 10);
-  SirEngine::globals::PERSISTENT_ALLOCATOR = &pool;
 
   SirEngine::AnimationManager animManager;
   animManager.init();

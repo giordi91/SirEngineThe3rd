@@ -291,7 +291,8 @@ bool shouldBindSamplers(const nlohmann::json &jobj) {
   return toReturn;
 }
 
-RootCompilerResult processSignatureFile(const char *path) {
+RootCompilerResult processSignatureFileToBlob(const char *path,
+                                              ID3DBlob **blob) {
   auto jobj = getJsonObj(path);
   // there might be multiple signatures in the files lets loop them
 
@@ -376,16 +377,22 @@ RootCompilerResult processSignatureFile(const char *path) {
     }
   }
 
-  ROOT_TYPE fileTypeEnum = getFileTypeEnum(fileType);
-  ID3DBlob *blob = serializeRootSignature(rootSignatureDesc);
-  ID3D12RootSignature *rootSig;
+  const ROOT_TYPE fileTypeEnum = getFileTypeEnum(fileType);
+  (*blob) = serializeRootSignature(rootSignatureDesc);
 
+  return RootCompilerResult{frameString(name.c_str()), nullptr, fileTypeEnum};
+}
+
+RootCompilerResult processSignatureFile(const char *path) {
+  ID3D12RootSignature *rootSig;
+  ID3DBlob *blob;
+  RootCompilerResult compilerResult = processSignatureFileToBlob(path, &blob);
   const HRESULT res = SirEngine::dx12::DEVICE->CreateRootSignature(
       1, blob->GetBufferPointer(), blob->GetBufferSize(),
       IID_PPV_ARGS(&(rootSig)));
   assert(res == S_OK);
   blob->Release();
-
-  return RootCompilerResult{frameString(name.c_str()), rootSig, fileTypeEnum};
+  compilerResult.root = rootSig;
+  return compilerResult;
 }
 } // namespace SirEngine::dx12

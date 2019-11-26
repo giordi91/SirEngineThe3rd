@@ -1,13 +1,12 @@
 #include "SirEngine/fileUtils.h"
 #include "cxxopts/cxxopts.hpp"
 
-#include "SirEngine/log.h"
 #include "SirEngine/argsUtils.h"
+#include "SirEngine/log.h"
 #include "resourceCompilerLib/resourcePlugin.h"
 
-#include <filesystem>
 #include <chrono>
-
+#include <filesystem>
 
 inline cxxopts::Options getCxxOptions() {
   cxxopts::Options options("ResourceCompiler 1.0",
@@ -97,6 +96,10 @@ void executeFile(const cxxopts::ParseResult &result) {
       char **argv = args.argv.get();
       auto pluginResult = options.parse(args.argc, argv);
       executeFromArgs(pluginResult);
+
+      // free memory which is not persistent;
+      SirEngine::globals::STRING_POOL->resetFrameMemory();
+      SirEngine::globals::FRAME_ALLOCATOR->reset();
     }
 
   } else {
@@ -106,11 +109,14 @@ void executeFile(const cxxopts::ParseResult &result) {
 
 int main(int argc, char *argv[]) {
 
-  SirEngine::StringPool stringPool(1024*1024*10);
+  SirEngine::StringPool stringPool(1024 * 1024 * 10);
   SirEngine::globals::STRING_POOL = &stringPool;
   SirEngine::globals::FRAME_ALLOCATOR = new SirEngine::StackAllocator();
-  SirEngine::globals::FRAME_ALLOCATOR->initialize(1024*1024*10);
+  SirEngine::globals::FRAME_ALLOCATOR->initialize(1024 * 1024 * 10);
+  SirEngine::ThreeSizesPool pool(1024 * 1024 * 10);
+  SirEngine::globals::PERSISTENT_ALLOCATOR = &pool;
   SirEngine::Log::init();
+
   auto options = getCxxOptions();
 
   SE_CORE_INFO("starting the resource compiler");
@@ -132,9 +138,10 @@ int main(int argc, char *argv[]) {
     executeFromArgs(result);
   }
   const auto end = std::chrono::high_resolution_clock::now();
-  const auto seconds = std::chrono::duration_cast<std::chrono::seconds>(end - start).count();
+  const auto seconds =
+      std::chrono::duration_cast<std::chrono::seconds>(end - start).count();
   SE_CORE_INFO("------------------------------------------------");
-  SE_CORE_INFO("Compilation time taken: {0}",seconds);
+  SE_CORE_INFO("Compilation time taken: {0}", seconds);
 
   SirEngine::Log::free();
 
