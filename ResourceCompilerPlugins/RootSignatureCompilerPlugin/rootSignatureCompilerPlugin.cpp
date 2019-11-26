@@ -2,7 +2,7 @@
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
 #include "cxxopts/cxxopts.hpp"
-#include "rootProcess.h"
+#include "platform/windows/graphics/dx12/rootSignatureCompile.h"
 
 #include "SirEngine/argsUtils.h"
 #include "SirEngine/binary/binaryFile.h"
@@ -28,51 +28,47 @@ bool processRoot(const std::string &assetPath, const std::string &outputPath,
                   outputPath);
   }
 
-  std::vector<ResultRoot> blobs;
-  processSignatureFile(assetPath.c_str(), blobs);
-  SE_CORE_INFO("[Root Signature Compiler: found {0} root signatures",
-               blobs.size());
+  ID3D10Blob *blob;
+  auto result =
+      SirEngine::dx12::processSignatureFileToBlob(assetPath.c_str(), &blob);
 
-  for (auto &subBlobl : blobs) {
-
-    if (subBlobl.blob == nullptr) {
-      continue;
-    }
-    // writing binary file
-    BinaryFileWriteRequest request;
-    request.fileType = BinaryFileType::RS;
-    request.version =
-        ((VERSION_MAJOR << 16) | (VERSION_MINOR << 8) | VERSION_PATCH);
-
-    std::filesystem::path inp(assetPath);
-    const std::string fileName = inp.stem().string();
-    const std::string outFilePath =
-        getPathName(outputPath) + "/" + subBlobl.name + ".root";
-    request.outPath = outFilePath.c_str();
-
-    request.bulkData = subBlobl.blob->GetBufferPointer();
-    request.bulkDataSizeInByte = subBlobl.blob->GetBufferSize();
-
-    RootSignatureMappedData mapperData;
-    mapperData.type = static_cast<int>(subBlobl.type);
-    mapperData.sizeInByte =
-        static_cast<uint32_t>(subBlobl.blob->GetBufferSize());
-    request.mapperData = &mapperData;
-    request.mapperDataSizeInByte = sizeof(RootSignatureMappedData);
-
-    writeBinaryFile(request);
-
-    SE_CORE_INFO("Root signature successfully compiled ---> {0}", outputPath);
-
-    // write clean RS for debugging, mostly Intel static analysis
-    const std::string outFilePathClean =
-        getPathName(outputPath) + "/" + subBlobl.name + ".bin";
-
-    std::ofstream myFile(outFilePathClean, std::ios::out | std::ios::binary);
-    myFile.write(static_cast<const char *>(request.bulkData),
-                 request.bulkDataSizeInByte);
-    myFile.close();
+  if (blob == nullptr) {
+	SE_CORE_ERROR("Could not compiler root signature {0}",assetPath);
+	return false;
   }
+  // writing binary file
+  BinaryFileWriteRequest request;
+  request.fileType = BinaryFileType::RS;
+  request.version =
+      ((VERSION_MAJOR << 16) | (VERSION_MINOR << 8) | VERSION_PATCH);
+
+  std::filesystem::path inp(assetPath);
+  const std::string fileName = inp.stem().string();
+  const std::string outFilePath =
+      getPathName(outputPath) + "/" + result.name + ".root";
+  request.outPath = outFilePath.c_str();
+
+  request.bulkData = blob->GetBufferPointer();
+  request.bulkDataSizeInByte = blob->GetBufferSize();
+
+  RootSignatureMappedData mapperData;
+  mapperData.type = static_cast<int>(result.type);
+  mapperData.sizeInByte = static_cast<uint32_t>(blob->GetBufferSize());
+  request.mapperData = &mapperData;
+  request.mapperDataSizeInByte = sizeof(RootSignatureMappedData);
+
+  writeBinaryFile(request);
+
+  SE_CORE_INFO("Root signature successfully compiled ---> {0}", outputPath);
+
+  // write clean RS for debugging, mostly Intel static analysis
+  const std::string outFilePathClean =
+      getPathName(outputPath) + "/" + result.name + ".bin";
+
+  std::ofstream myFile(outFilePathClean, std::ios::out | std::ios::binary);
+  myFile.write(static_cast<const char *>(request.bulkData),
+               request.bulkDataSizeInByte);
+  myFile.close();
   return true;
 }
 
