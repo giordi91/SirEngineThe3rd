@@ -1,5 +1,5 @@
 {
   "commands": [
-      "-p ../data/pso -o ../data/processed/pso --pluginName PSOCompilerPlugin --pluginArgs \"-t DX12 -a -s ../data/shaders/DX12\""
+      "-p ../data/shaders/VK/rasterization/triangle.vert.glsl -o ../data/shaders/VK/rasterization/triangle.vert.glsl.spv --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \""
   ]
 }

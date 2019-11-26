@@ -1,7 +1,7 @@
-#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do
-                           // this in one cpp file
-#include "catch/catch.hpp"
+#define CATCH_CONFIG_MAIN // This tells Catch to provide a main() - only do
+                          // this in one cpp file
 #include "SirEngine/argsUtils.h"
+#include "catch/catch.hpp"
 
 unsigned int Factorial(unsigned int number) {
   return number <= 1 ? number : Factorial(number - 1) * number;
@@ -31,8 +31,7 @@ TEST_CASE("Split model compile full args", "[argsSplit]") {
   }
 }
 TEST_CASE("Split args starting with ../", "[argsSplit]") {
-  const std::string inargs =
-      "-p ../data/pso -o ../data/processed/";
+  const std::string inargs = "-p ../data/pso -o ../data/processed/";
   SplitArgs args = splitArgs(inargs);
 
   REQUIRE(args.argc == 5);
@@ -40,6 +39,37 @@ TEST_CASE("Split args starting with ../", "[argsSplit]") {
   REQUIRE((*args.storage)[1] == "../data/pso");
   REQUIRE((*args.storage)[2] == "-o");
   REQUIRE((*args.storage)[3] == "../data/processed/");
+
+  // checking the values have the right pointer in argv
+  for (int i = 1; i < args.argc; ++i) {
+    REQUIRE((*args.storage)[i - 1].c_str() == args.argv[i]);
+  }
+}
+
+TEST_CASE("Split args multi extensions 1", "[argsSplit]") {
+  const std::string inargs =
+      "-p ../data/shaders/VK/rasterization/triangle.vert.glsl";
+  SplitArgs args = splitArgs(inargs);
+
+  REQUIRE(args.argc == 3);
+  REQUIRE((*args.storage)[0] == "-p");
+  REQUIRE((*args.storage)[1] ==
+          "../data/shaders/VK/rasterization/triangle.vert.glsl");
+
+  // checking the values have the right pointer in argv
+  for (int i = 1; i < args.argc; ++i) {
+    REQUIRE((*args.storage)[i - 1].c_str() == args.argv[i]);
+  }
+}
+TEST_CASE("Split args multi extensions 2", "[argsSplit]") {
+  const std::string inargs =
+      "-p ../data/shaders/VK/rasterization/triangle.vert.glsl.spv";
+  SplitArgs args = splitArgs(inargs);
+
+  REQUIRE(args.argc == 3);
+  REQUIRE((*args.storage)[0] == "-p");
+  REQUIRE((*args.storage)[1] ==
+          "../data/shaders/VK/rasterization/triangle.vert.glsl.spv");
 
   // checking the values have the right pointer in argv
   for (int i = 1; i < args.argc; ++i) {
@@ -150,13 +180,12 @@ TEST_CASE("get ready compiler args", "[argsSplit]") {
   SirEngine::globals::FRAME_ALLOCATOR->initialize(2 << 22);
   const std::string inargs = "/D AMD";
   SirEngine::ResizableVector<wchar_t *> splitCompilerArgsListPointers(20);
-  splitCompilerArgs(inargs,
-                    splitCompilerArgsListPointers);
+  splitCompilerArgs(inargs, splitCompilerArgsListPointers);
 
   // look silly, after all this work we get out to the same value BUT
   // this will work for multiple arguments/defines, which should give
   // us room in the future for shader variants if we ever want them
-  //REQUIRE(splitCompilerArgsList[0] == std::wstring(L"/D AMD"));
+  // REQUIRE(splitCompilerArgsList[0] == std::wstring(L"/D AMD"));
   REQUIRE(wcscmp(splitCompilerArgsListPointers[0], L"/D AMD") == 0);
   // release memory
   delete SirEngine::globals::STRING_POOL;

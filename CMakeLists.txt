@@ -57,6 +57,10 @@ add_subdirectory(ResourceCompilerPlugins/RootSignatureCompilerPlugin)
 add_subdirectory(ResourceCompilerPlugins/TextureCompilerPlugin)
 add_subdirectory(ResourceCompilerPlugins/AnimationCompilerPlugin)
 add_subdirectory(ResourceCompilerPlugins/PSOCompilerPlugin)
+if(${BUILD_VULKAN})
+	add_subdirectory(ResourceCompilerPlugins/VkShaderCompilerPlugin)
+endif(${BUILD_VULKAN})
+
 add_subdirectory(vendors/meshoptimizer)
 add_subdirectory(Tests)
 

@@ -12,23 +12,23 @@
 #include <glslang/Public/ShaderLang.h>
 
 namespace SirEngine::vk {
-EShLanguage GetShaderStage(const std::string &stage) {
-  if (stage == ".vert") {
-    return EShLangVertex;
-  } else if (stage == ".tesc") {
-    return EShLangTessControl;
-  } else if (stage == ".tese") {
-    return EShLangTessEvaluation;
-  } else if (stage == ".geom") {
-    return EShLangGeometry;
-  } else if (stage == ".frag") {
-    return EShLangFragment;
-  } else if (stage == ".comp") {
-    return EShLangCompute;
-  } else {
-    assert(0 && "Unknown shader stage");
-    return EShLangCount;
+
+static const std::unordered_map<SHADER_TYPE, EShLanguage> TYPE_TO_LANGUAGE{
+    {SHADER_TYPE::VERTEX, EShLangVertex},
+    {SHADER_TYPE::FRAGMENT, EShLangFragment},
+    {SHADER_TYPE::COMPUTE, EShLangCompute}};
+static const std::unordered_map<std::string, SHADER_TYPE> NAME_TO_SHADER_TYPE{
+    {"vertex", SHADER_TYPE::VERTEX},
+    {"fragment", SHADER_TYPE::FRAGMENT},
+    {"compute", SHADER_TYPE::COMPUTE}};
+
+bool getShaderStage(SHADER_TYPE type, EShLanguage &language) {
+  const auto found = TYPE_TO_LANGUAGE.find(type);
+  if (found != TYPE_TO_LANGUAGE.end()) {
+    language = found->second;
+    return true;
   }
+  return false;
 }
 static const TBuiltInResource DEFAULT_T_BUILT_IN_RESOURCE = {
     /* .MaxLights = */ 32,
@@ -148,26 +148,24 @@ SpirVBlob VkShaderCompiler::compileToSpirV(const char *shaderPath,
   uint32_t fileSize;
   const char *fileContent = frameFileLoad(shaderPath, fileSize);
 
-  const std::string extension = getFileExtension(shaderPath);
-  EShLanguage shaderType = GetShaderStage(extension);
+  EShLanguage shaderType;
+  getShaderStage(shaderArgs.type, shaderType);
   glslang::TShader shader(shaderType);
 
   shader.setStrings(&fileContent, 1);
 
-  int ClientInputSemanticsVersion = 110; // maps to, say, #define VULKAN 110
-  glslang::EShTargetClientVersion VulkanClientVersion =
+  int clientInputSemanticsVersion = 110; // maps to, say, #define VULKAN 110
+  glslang::EShTargetClientVersion vulkanClientVersion =
       glslang::EShTargetVulkan_1_1;
-  glslang::EShTargetLanguageVersion TargetVersion = glslang::EShTargetSpv_1_5;
+  glslang::EShTargetLanguageVersion targetVersion = glslang::EShTargetSpv_1_5;
 
   shader.setEnvInput(glslang::EShSourceGlsl, shaderType,
-                     glslang::EShClientVulkan, ClientInputSemanticsVersion);
-  shader.setEnvClient(glslang::EShClientVulkan, VulkanClientVersion);
-  shader.setEnvTarget(glslang::EShTargetSpv, TargetVersion);
+                     glslang::EShClientVulkan, clientInputSemanticsVersion);
+  shader.setEnvClient(glslang::EShClientVulkan, vulkanClientVersion);
+  shader.setEnvTarget(glslang::EShTargetSpv, targetVersion);
 
-  TBuiltInResource resources;
-  resources = DEFAULT_T_BUILT_IN_RESOURCE;
-  // Resources = DefaultTBuiltInResource;
-  EShMessages messages = (EShMessages)(EShMsgSpvRules | EShMsgVulkanRules);
+  TBuiltInResource resources = DEFAULT_T_BUILT_IN_RESOURCE;
+  auto messages = static_cast<EShMessages>(EShMsgSpvRules | EShMsgVulkanRules);
 
   const int defaultVersion = 100;
 
@@ -182,33 +180,60 @@ SpirVBlob VkShaderCompiler::compileToSpirV(const char *shaderPath,
   if (!shader.preprocess(&resources, defaultVersion, ENoProfile, false, false,
                          messages, &preprocessedGlsl, includer)) {
     SE_CORE_ERROR(
-        "GLSL Preprocessing Failed for: {0} \n LOG: {1} \n Debug LOG: {2}",
-        shaderPath, shader.getInfoLog(), shader.getInfoDebugLog());
+        "GLSL Preprocessing Failed for: {0}  \n LOG: {1} \n DEBUG LOG: {2}",
+        shaderPath, shader.getInfoLog(), shader.getInfoDebugLog()); 
+		if(log!= nullptr){
+      (*log) += "GLSL Preprocessing Failed for: ";
+      (*log) += shaderPath;
+      (*log) += " \n LOG: ";
+      (*log) += shader.getInfoLog();
+      (*log) += "Debug LOG: ";
+      (*log) += shader.getInfoDebugLog();
+    }
     return {nullptr, 0};
   }
   const char *preprocessedCStr = preprocessedGlsl.c_str();
   shader.setStrings(&preprocessedCStr, 1);
 
   if (!shader.parse(&resources, 100, false, messages)) {
-    SE_CORE_ERROR("GLSL parsing Failed for: {0} \n LOG: {1} \n Debug LOG: {2}",
-                  shaderPath, shader.getInfoLog(), shader.getInfoDebugLog());
+    SE_CORE_ERROR(
+        "GLSL parsing Failed for: {0}  \n LOG: {1} \n DEBUG LOG: {2}",
+        shaderPath, shader.getInfoLog(), shader.getInfoDebugLog()); 
+		if(log!= nullptr){
+      (*log) += "GLSL parsing Failed for: ";
+      (*log) += shaderPath;
+      (*log) += " \n LOG: ";
+      (*log) += shader.getInfoLog();
+      (*log) += "Debug LOG: ";
+      (*log) += shader.getInfoDebugLog();
+    }
     return {nullptr, 0};
   }
   glslang::TProgram program;
   program.addShader(&shader);
 
   if (!program.link(messages)) {
-    SE_CORE_ERROR("GLSL linking Failed for: {0} \n LOG: {1} \n Debug LOG: {2}",
-                  shaderPath, shader.getInfoLog(), shader.getInfoDebugLog());
+    SE_CORE_ERROR(
+        "GLSL linking Failed for: {0}  \n LOG: {1} \n DEBUG LOG: {2}",
+        shaderPath, shader.getInfoLog(), shader.getInfoDebugLog()); 
+		if(log!= nullptr){
+      (*log) += "GLSL parsing Failed for: ";
+      (*log) += shaderPath;
+      (*log) += " \n LOG: ";
+      (*log) += shader.getInfoLog();
+      (*log) += "Debug LOG: ";
+      (*log) += shader.getInfoDebugLog();
+    }
     return {nullptr, 0};
   }
+  // Not really happy about having an std::vector at interface
   std::vector<unsigned int> spirV;
   spv::SpvBuildLogger logger;
   glslang::SpvOptions spvOptions;
   glslang::GlslangToSpv(*program.getIntermediate(shaderType), spirV, &logger,
                         &spvOptions);
 
-  uint32_t sizeInByte = static_cast<uint32_t>(spirV.size() * sizeof(uint32_t));
+  auto sizeInByte = static_cast<uint32_t>(spirV.size() * sizeof(uint32_t));
   void *blobMemory = globals::FRAME_ALLOCATOR->allocate(sizeInByte);
   memcpy(blobMemory, spirV.data(), sizeInByte);
   return {blobMemory, static_cast<uint32_t>(sizeInByte)};
@@ -229,10 +254,18 @@ VkShaderModule VkShaderCompiler::compileToShaderModule(const char *shaderPath,
 
   return shaderModule;
 }
-unsigned VkShaderCompiler::getShaderFlags(const VkShaderArgs &shaderArgs) {
-  unsigned int flags = 0;
+uint32_t VkShaderCompiler::getShaderFlags(const VkShaderArgs &shaderArgs) {
+  uint32_t flags = 0;
   flags |= (shaderArgs.debug ? SHADER_FLAGS::DEBUG : 0);
 
   return flags;
+}
+
+SHADER_TYPE VkShaderCompiler::getShaderTypeFromName(const char *name) {
+  const auto found = NAME_TO_SHADER_TYPE.find(name);
+  if (found != NAME_TO_SHADER_TYPE.end()) {
+    return found->second;
+  }
+  return SHADER_TYPE::INVALID;
 }
 } // namespace SirEngine::vk

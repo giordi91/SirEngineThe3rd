@@ -8,7 +8,6 @@
 // regex used to pars plugin arguments
 static const std::regex ARGS_REGEX(
     "(--*[a-zA-Z]+)|"                        // this is for the arguments
-    "(\\.*\\.*[_:/a-zA-Z0-9]+\\.[a-zA-Z]+)|" // TODO is this needed?
     "([\./_a-zA-Z0-9]+)|"                    // matches the path
     "(\".+\")"); // this will be used to match sub arguments wrapped in quotes
 

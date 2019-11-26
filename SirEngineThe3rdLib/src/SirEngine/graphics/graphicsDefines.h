@@ -1,6 +1,6 @@
 #pragma once
-#include <cstdint>
 #include "SirEngine/core.h"
+#include <cstdint>
 
 namespace SirEngine {
 enum class ADAPTER_VENDOR { NVIDIA = 0, AMD, INTEL, WARP, ANY };
@@ -22,5 +22,6 @@ struct SIR_ENGINE_API AdapterRequestConfig {
   bool m_vendorTolerant;
 };
 
+enum class SHADER_TYPE { VERTEX = 0, FRAGMENT, COMPUTE, INVALID };
 enum SHADER_FLAGS { DEBUG = 1 };
 } // namespace SirEngine
