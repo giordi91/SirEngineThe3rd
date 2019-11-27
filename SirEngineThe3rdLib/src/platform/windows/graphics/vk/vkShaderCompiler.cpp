@@ -168,9 +168,10 @@ SpirVBlob VkShaderCompiler::compileToSpirV(const char *shaderPath,
 
   shader.setStrings(&fileContent, 1);
   //TODO investigate why any entry point other than main does not work
-  //const char *entryPoint = getEntryPointFromType(shaderArgs.type);
-  //assert(entryPoint != nullptr);
-  //shader.setEntryPoint(entryPoint);
+  const char *entryPoint = getEntryPointFromType(shaderArgs.type);
+  assert(entryPoint != nullptr);
+  shader.setEntryPoint(entryPoint);
+  shader.setSourceEntryPoint(entryPoint);
 
   int clientInputSemanticsVersion = 110; // maps to, say, #define VULKAN 110
   glslang::EShTargetClientVersion vulkanClientVersion =
