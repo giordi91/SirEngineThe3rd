@@ -10,7 +10,7 @@
 #include "platform/windows/graphics/vk/vkDescriptors.h"
 #include "platform/windows/graphics/vk/vkLoad.h"
 #include "platform/windows/graphics/vk/vkPSOManager.h"
-#include "platform/windows/graphics/vk/vkShaderCompiler.h"
+#include "platform/windows/graphics/vk/vkShaderManager.h"
 #include "platform/windows/graphics/vk/vkSwapChain.h"
 #include "platform/windows/graphics/vk/volk.h"
 
@@ -29,18 +29,8 @@ void VkTempLayer::onAttach() {
   vk::createDescriptorPool(vk::LOGICAL_DEVICE, {10000, 10000}, m_dPool);
   //}
 
-  // load the shaders
-  auto compiler = vk::VkShaderCompiler();
-  vk::VkShaderArgs shaderArgs;
-  shaderArgs.debug=true;
-  shaderArgs.type=SHADER_TYPE::VERTEX;
-  std::string log;
-  m_vs = compiler.compileToShaderModule("../data/shaders/VK/rasterization/triangle.vert.glsl",
-                         shaderArgs, &log);
-
-  shaderArgs.type=SHADER_TYPE::FRAGMENT;
-  m_fs = compiler.compileToShaderModule("../data/shaders/VK/rasterization/triangle.frag.glsl",
-                         shaderArgs, &log);
+  m_vs = vk::SHADER_MANAGER->getShaderFromName("triangleVS");
+  m_fs = vk::SHADER_MANAGER->getShaderFromName("trianglePS");
   assert(m_vs);
   assert(m_fs);
 
@@ -78,7 +68,7 @@ void VkTempLayer::onAttach() {
   createDescriptorLayoutAdvanced();
   //}
 
-  //vk::PSO_MANAGER->loadRawPSO("../data/pso/forwardPhongPSO.json");
+  // vk::PSO_MANAGER->loadRawPSO("../data/pso/forwardPhongPSO.json");
 }
 
 void VkTempLayer::createDescriptorLayoutAdvanced() {

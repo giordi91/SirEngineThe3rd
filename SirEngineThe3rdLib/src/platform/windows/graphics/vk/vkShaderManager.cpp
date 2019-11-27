@@ -134,7 +134,7 @@ void VkShaderManager::loadShadersInFolder(const char *directory) {
   std::vector<std::string> paths;
 
   // lets look first for shader from our resource compiler
-  listFilesInFolder(directory, paths, "spv");
+  listFilesInFolder(directory, paths, "shader");
   for (const auto &p : paths) {
     loadShaderBinaryFile(p.c_str());
   }
