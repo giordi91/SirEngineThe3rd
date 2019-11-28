@@ -1,12 +1,12 @@
 
-#include "platform/windows/graphics/vk/volk.h"
 #include "platform/windows/graphics/vk/vkLoad.h"
+#include "platform/windows/graphics/vk/volk.h"
 //#include "platform/windows/graphics/vk/VulkanFunctions.h"
 #include "vk.h"
 #include <cassert>
 #include <iostream>
 
-namespace SirEngine{
+namespace SirEngine {
 namespace vk {
 
 VkBool32 debugCallback(VkDebugReportFlagsEXT flags,
@@ -189,6 +189,16 @@ bool createVulkanInstance(std::vector<char const *> const &desiredExtensions,
   instanceCreateInfo.enabledLayerCount = ARRAYSIZE(layers);
 #endif
 
+  VkValidationFeatureEnableEXT enables[] = {
+      VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT,
+	  VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_RESERVE_BINDING_SLOT_EXT,
+  };
+  VkValidationFeaturesEXT features = {};
+  features.sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
+  features.enabledValidationFeatureCount = ARRAYSIZE(enables);
+  features.pEnabledValidationFeatures = enables;
+
+	instanceCreateInfo.pNext = &features;
   const VkResult result =
       vkCreateInstance(&instanceCreateInfo, nullptr, &instance);
   if ((result != VK_SUCCESS) || (instance == VK_NULL_HANDLE)) {
@@ -220,15 +230,15 @@ assert(callbackResult == VK_SUCCESS);
       VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
   debug_utils_messenger_create_info.messageSeverity =
       VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT |
-      VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT; 
+      VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT;
   debug_utils_messenger_create_info.messageType =
       VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
       VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT |
       VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT;
   debug_utils_messenger_create_info.pfnUserCallback = debugCallback2;
-  if (VK_SUCCESS != vkCreateDebugUtilsMessengerEXT(
-                        instance, &debug_utils_messenger_create_info, NULL,
-                        &DEBUG_CALLBACK2))
+  if (VK_SUCCESS !=
+      vkCreateDebugUtilsMessengerEXT(
+          instance, &debug_utils_messenger_create_info, NULL, &DEBUG_CALLBACK2))
     exit(EXIT_FAILURE);
   return true;
 }
@@ -784,8 +794,8 @@ VkRenderPass createRenderPass(VkDevice logicalDevice) {
   return renderPass;
 }
 
-//framebuffer is the collection of images you are rendering to plus
-//a couple of extra attributes
+// framebuffer is the collection of images you are rendering to plus
+// a couple of extra attributes
 VkFramebuffer createFrameBuffer(const VkDevice logicalDevice,
                                 const VkRenderPass renderPass,
                                 VkImageView imageView, const uint32_t width,

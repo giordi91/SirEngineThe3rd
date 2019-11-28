@@ -70,11 +70,63 @@ void VkTempLayer::onAttach() {
 
   // vk::PSO_MANAGER->loadRawPSO("../data/pso/forwardPhongPSO.json");
 }
+void init_sampler(VkSampler &sampler) {
+
+  VkSamplerCreateInfo samplerCreateInfo = {};
+  samplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+  samplerCreateInfo.magFilter = VK_FILTER_NEAREST;
+  samplerCreateInfo.minFilter = VK_FILTER_NEAREST;
+  samplerCreateInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+  samplerCreateInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+  samplerCreateInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+  samplerCreateInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+  samplerCreateInfo.mipLodBias = 0.0;
+  samplerCreateInfo.anisotropyEnable = VK_FALSE;
+  samplerCreateInfo.maxAnisotropy = 1;
+  samplerCreateInfo.compareOp = VK_COMPARE_OP_NEVER;
+  samplerCreateInfo.minLod = 0.0;
+  samplerCreateInfo.maxLod = 0.0;
+  samplerCreateInfo.compareEnable = VK_FALSE;
+  samplerCreateInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+
+  /* create sampler */
+  VK_CHECK(
+      vkCreateSampler(vk::LOGICAL_DEVICE, &samplerCreateInfo, NULL, &sampler));
+}
 
 void VkTempLayer::createDescriptorLayoutAdvanced() {
 
+  constexpr int resource_count = 3;
+  VkDescriptorSetLayoutBinding resource_binding[resource_count] = {};
+  resource_binding[0].binding = 0;
+  resource_binding[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  resource_binding[0].descriptorCount = 1;
+  resource_binding[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+  resource_binding[0].pImmutableSamplers = NULL;
+  resource_binding[1].binding = 1;
+  resource_binding[1].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+  resource_binding[1].descriptorCount = 1;
+  resource_binding[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+  resource_binding[1].pImmutableSamplers = NULL;
+  resource_binding[2].binding = 2;
+  resource_binding[2].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+  resource_binding[2].descriptorCount = 1;
+  resource_binding[2].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+  resource_binding[2].pImmutableSamplers = NULL;
+
+  VkDescriptorSetLayoutCreateInfo resource_layout_info[1] = {};
+  resource_layout_info[0].sType =
+      VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+  resource_layout_info[0].pNext = NULL;
+  resource_layout_info[0].bindingCount = resource_count;
+  resource_layout_info[0].pBindings = resource_binding;
+
+  VK_CHECK(vkCreateDescriptorSetLayout(vk::LOGICAL_DEVICE, resource_layout_info, NULL,
+                                    &m_setLayout));
+
+  /*
   // we are going to have two set layout, one per shader stage
-  VkDescriptorSetLayoutBinding setLayout[2] = {};
+  VkDescriptorSetLayoutBinding setLayout[3] = {};
 
   setLayout[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   // Shader binding point, aka index in the shader
@@ -87,12 +139,22 @@ void VkTempLayer::createDescriptorLayoutAdvanced() {
 
   // Binding 1: Combined image sampler (used to pass per object texture
   // information)
-  setLayout[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+  setLayout[1].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
   setLayout[1].binding = 1;
   // Accessible from the fragment shader only
   setLayout[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
   setLayout[1].descriptorCount = 1;
+  setLayout[1].pImmutableSamplers = nullptr;
+  // binding 1 sampler
+  setLayout[2].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+  setLayout[2].binding = 2;
+  // Accessible from the fragment shader only
+  setLayout[2].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+  setLayout[2].descriptorCount = 1;
+  setLayout[2].pImmutableSamplers = nullptr;
+  */
 
+  /*
   // Create the descriptor set layout
   VkDescriptorSetLayoutCreateInfo descriptorLayoutCI{};
   descriptorLayoutCI.sType =
@@ -102,6 +164,7 @@ void VkTempLayer::createDescriptorLayoutAdvanced() {
 
   VK_CHECK(vkCreateDescriptorSetLayout(vk::LOGICAL_DEVICE, &descriptorLayoutCI,
                                        nullptr, &m_setLayout));
+									   */
 
   // Allocates an empty descriptor set without actual descriptors from the pool
   // using the set layout
@@ -114,12 +177,17 @@ void VkTempLayer::createDescriptorLayoutAdvanced() {
   VK_CHECK(vkAllocateDescriptorSets(vk::LOGICAL_DEVICE, &allocateInfo,
                                     &m_meshDescriptorSet));
 
+  // Create our separate sampler
+  init_sampler(separateSampler);
+
+  samplerInfo.sampler = separateSampler;
+
   // Update the descriptor set with the actual descriptors matching shader
   // bindings set in the layout
   // this far we defined just what descriptor we wanted and how they were setup,
   // now we need to actually define the content of those descriptrs, the actual
   // resources
-  VkWriteDescriptorSet writeDescriptorSets[2] = {};
+  VkWriteDescriptorSet writeDescriptorSets[3] = {};
 
   // actual information of the descriptor, in this case it is our mesh buffer
   VkDescriptorBufferInfo bufferInfo = {};
@@ -139,12 +207,19 @@ void VkTempLayer::createDescriptorLayoutAdvanced() {
   writeDescriptorSets[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   writeDescriptorSets[1].dstSet = m_meshDescriptorSet;
   writeDescriptorSets[1].dstBinding = 1;
-  writeDescriptorSets[1].descriptorType =
-      VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+  writeDescriptorSets[1].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
   // Images use a different descriptor strucutre, so we use pImageInfo instead
   // of pBufferInfo
   writeDescriptorSets[1].pImageInfo = &uvTexture.descriptor;
   writeDescriptorSets[1].descriptorCount = 1;
+  // Binding 2: sampler
+  writeDescriptorSets[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  writeDescriptorSets[2].pNext = NULL;
+  writeDescriptorSets[2].dstSet = m_meshDescriptorSet;
+  writeDescriptorSets[2].dstBinding = 2;
+  writeDescriptorSets[2].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+  writeDescriptorSets[2].pImageInfo = &samplerInfo;
+  writeDescriptorSets[2].descriptorCount = 1;
 
   // Execute the writes to update descriptors for this set
   // Note that it's also possible to gather all writes and only run updates

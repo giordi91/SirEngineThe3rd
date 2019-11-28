@@ -1,7 +1,112 @@
 #include "platform/windows/graphics/vk/graphicsPipeline.h"
 #include "platform/windows/graphics/vk/vk.h"
-
+#include <array>
 namespace SirEngine::vk {
+
+VkSampler STATIC_SAMPLERS[STATIC_SAMPLER_COUNT];
+
+std::array<const VkSamplerCreateInfo, STATIC_SAMPLER_COUNT>
+getStaticSamplersCreateInfo() {
+  // Applications usually only need a handful of samplers.  So just define them
+  // all up front and keep them available as part of the root signature.
+
+  const VkSamplerCreateInfo pointWrap{VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+                                      nullptr,
+                                      0,
+                                      VK_FILTER_NEAREST,
+                                      VK_FILTER_NEAREST,
+                                      VK_SAMPLER_MIPMAP_MODE_NEAREST,
+                                      VK_SAMPLER_ADDRESS_MODE_REPEAT,
+                                      VK_SAMPLER_ADDRESS_MODE_REPEAT,
+                                      VK_SAMPLER_ADDRESS_MODE_REPEAT,
+                                      0.0f,
+                                      VK_FALSE,
+                                      1};
+  const VkSamplerCreateInfo pointClamp{VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+                                       nullptr,
+                                       0,
+                                       VK_FILTER_NEAREST,
+                                       VK_FILTER_NEAREST,
+                                       VK_SAMPLER_MIPMAP_MODE_NEAREST,
+                                       VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+                                       VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+                                       VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+                                       0.0f,
+                                       VK_FALSE,
+                                       1};
+  const VkSamplerCreateInfo linearWrap{VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+                                       nullptr,
+                                       0,
+                                       VK_FILTER_LINEAR,
+                                       VK_FILTER_LINEAR,
+                                       VK_SAMPLER_MIPMAP_MODE_NEAREST,
+                                       VK_SAMPLER_ADDRESS_MODE_REPEAT,
+                                       VK_SAMPLER_ADDRESS_MODE_REPEAT,
+                                       VK_SAMPLER_ADDRESS_MODE_REPEAT,
+                                       0.0f,
+                                       VK_FALSE,
+                                       1};
+  const VkSamplerCreateInfo linearClamp{VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+                                        nullptr,
+                                        0,
+                                        VK_FILTER_LINEAR,
+                                        VK_FILTER_LINEAR,
+                                        VK_SAMPLER_MIPMAP_MODE_NEAREST,
+                                        VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+                                        VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+                                        VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+                                        0.0f,
+                                        VK_FALSE,
+                                        1};
+  const VkSamplerCreateInfo anisotropicWrap{
+      VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+      nullptr,
+      0,
+      VK_FILTER_LINEAR,
+      VK_FILTER_LINEAR,
+      VK_SAMPLER_MIPMAP_MODE_NEAREST,
+      VK_SAMPLER_ADDRESS_MODE_REPEAT,
+      VK_SAMPLER_ADDRESS_MODE_REPEAT,
+      VK_SAMPLER_ADDRESS_MODE_REPEAT,
+      0.0f,
+      VK_TRUE,
+      16};
+  const VkSamplerCreateInfo anisotropicClamp{
+      VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+      nullptr,
+      0,
+      VK_FILTER_LINEAR,
+      VK_FILTER_LINEAR,
+      VK_SAMPLER_MIPMAP_MODE_NEAREST,
+      VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+      VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+      VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+      0.0f,
+      VK_TRUE,
+      8};
+  const VkSamplerCreateInfo shadowPCFClamp{
+      VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+      nullptr,
+      0,
+      VK_FILTER_LINEAR,
+      VK_FILTER_LINEAR,
+      VK_SAMPLER_MIPMAP_MODE_NEAREST,
+      VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+      VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+      VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+      0.0f,
+      VK_FALSE,
+      1,
+      VK_TRUE,
+      VK_COMPARE_OP_GREATER,
+      0.0,
+      0.0,
+      VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK};
+
+  return {pointWrap,       pointClamp,       linearWrap,    linearClamp,
+          anisotropicWrap, anisotropicClamp, shadowPCFClamp};
+}
+
 VkPipeline
 createGraphicsPipeline(VkDevice logicalDevice, VkShaderModule vs,
                        VkShaderModule ps, VkRenderPass renderPass,
@@ -15,30 +120,35 @@ createGraphicsPipeline(VkDevice logicalDevice, VkShaderModule vs,
 
   // to do so we declare a set of layout bindings, basically an array telling us
   // how many elements we have, this will be coming from a json file
-  VkDescriptorSetLayoutBinding bindings[2]{};
+  VkDescriptorSetLayoutBinding bindings[3]{};
   bindings[0].binding = 0;
   bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   bindings[0].descriptorCount = 1;
   bindings[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
   bindings[1].binding = 1;
-  bindings[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+  bindings[1].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
   bindings[1].descriptorCount = 1;
   bindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-  //passing in the "root signature"
+  bindings[2].binding = 2;
+  bindings[2].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+  bindings[2].descriptorCount = 1;
+  bindings[2].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+  // passing in the "root signature"
   VkDescriptorSetLayoutCreateInfo descriptorInfo{
       VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
 
   descriptorInfo.bindingCount = ARRAYSIZE(bindings);
   descriptorInfo.pBindings = bindings;
 
-  //creating the layout/root signature
+  // creating the layout/root signature
   VkDescriptorSetLayout descriptorLayout;
   vkCreateDescriptorSetLayout(logicalDevice, &descriptorInfo, nullptr,
                               &descriptorLayout);
 
-  //now we know how many layouts we have, and we can create the pipelien layout
+  // now we know how many layouts we have, and we can create the pipelien layout
   layoutInfo.setLayoutCount = 1;
   layoutInfo.pSetLayouts = &descriptorLayout;
 
@@ -47,7 +157,7 @@ createGraphicsPipeline(VkDevice logicalDevice, VkShaderModule vs,
 
   LAYOUTS_TO_DELETE.push_back(descriptorLayout);
 
-  //here we define all the stages of the pipeline
+  // here we define all the stages of the pipeline
   VkPipelineShaderStageCreateInfo stages[2] = {};
   stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
   stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
@@ -135,4 +245,14 @@ createGraphicsPipeline(VkDevice logicalDevice, VkShaderModule vs,
   assert(pipeline);
   return pipeline;
 }
+
+void initStaticSamplers() {
+  auto createInfos = getStaticSamplersCreateInfo();
+  for (int i = 0; i < STATIC_SAMPLER_COUNT; ++i) {
+
+    VK_CHECK(vkCreateSampler(vk::LOGICAL_DEVICE, &createInfos[i], NULL,
+                             &STATIC_SAMPLERS[i]));
+  }
+}
+
 } // namespace SirEngine::vk
