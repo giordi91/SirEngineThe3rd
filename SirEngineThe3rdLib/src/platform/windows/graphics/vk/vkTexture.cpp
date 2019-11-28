@@ -5,8 +5,8 @@
 
 #include "SirEngine/fileUtils.h"
 #include "platform/windows/graphics/vk/vk.h"
-#include <fstream>
 #include "volk.h"
+#include <fstream>
 
 namespace SirEngine::vk {
 
@@ -330,9 +330,12 @@ bool loadTextureFromFile(const char *name, VkFormat format, VkDevice device,
   /*
   updateDescriptor();
   */
-  outTexture.descriptor.sampler = outTexture.sampler;
+  // outTexture.descriptor.sampler = outTexture.sampler;
+  outTexture.descriptor.sampler = 0;
   outTexture.descriptor.imageView = outTexture.view;
   outTexture.descriptor.imageLayout = imageLayout;
+
+  outTexture.samplerOnly.sampler = outTexture.sampler;
 
   return true;
 }

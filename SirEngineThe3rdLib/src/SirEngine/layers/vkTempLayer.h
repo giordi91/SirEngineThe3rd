@@ -74,5 +74,8 @@ private:
   VkDescriptorSetLayout m_setLayout;
   VkDescriptorSet m_meshDescriptorSet;
   vk::VkTexture2D uvTexture;
+
+  VkSampler separateSampler = {};
+  VkDescriptorImageInfo samplerInfo = {};
 };
 } // namespace SirEngine

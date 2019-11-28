@@ -12,7 +12,8 @@ struct VkTexture2D {
   VkImageLayout imageLayout;
   VkSampler sampler;
   VkImageView view;
-  VkDescriptorImageInfo descriptor;
+  VkDescriptorImageInfo descriptor{};
+  VkDescriptorImageInfo samplerOnly{};
 };
 
 bool loadTextureFromFile(

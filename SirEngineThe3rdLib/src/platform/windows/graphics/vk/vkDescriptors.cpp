@@ -8,15 +8,19 @@ void createDescriptorPool(VkDevice device,
                           const DescriptorPoolDefinition &definition,
                           VkDescriptorPool &descriptorPool) {
 
-  VkDescriptorPoolSize descriptorPoolSizes[2]{};
+  VkDescriptorPoolSize descriptorPoolSizes[3]{};
 
   // Uniform buffers : 1 for scene and 1 per object (scene and local matrices)
   descriptorPoolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
   descriptorPoolSizes[0].descriptorCount = definition.uniformDescriptorCount;
 
   // Combined image samples : 1 per mesh texture
-  descriptorPoolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+  descriptorPoolSizes[1].type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
   descriptorPoolSizes[1].descriptorCount = definition.imagesDescriptorCount;
+
+  //samplers
+  descriptorPoolSizes[2].type = VK_DESCRIPTOR_TYPE_SAMPLER;
+  descriptorPoolSizes[2].descriptorCount = definition.imagesDescriptorCount;
 
   // Create the global descriptor pool
   VkDescriptorPoolCreateInfo createInfo = {};
