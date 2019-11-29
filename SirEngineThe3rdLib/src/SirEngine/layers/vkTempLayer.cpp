@@ -6,6 +6,7 @@
 
 #include "SirEngine/engineConfig.h"
 #include "SirEngine/layers/vkTempLayer.h"
+#include "platform/windows/graphics/vk/graphicsPipeline.h"
 #include "platform/windows/graphics/vk/vk.h"
 #include "platform/windows/graphics/vk/vkDescriptors.h"
 #include "platform/windows/graphics/vk/vkLoad.h"
@@ -25,10 +26,13 @@ void VkTempLayer::onAttach() {
   globals::MAIN_CAMERA->setPosition(0, 14, 10);
   globals::MAIN_CAMERA->updateCamera();
 
+  vk::initStaticSamplers();
   // if constexpr (!USE_PUSH) {
   vk::createDescriptorPool(vk::LOGICAL_DEVICE, {10000, 10000}, m_dPool);
   //}
 
+  vk::createStaticSamplerDescriptorSet(m_dPool, m_samplersDescriptorSets,
+                                       m_samplersLayout);
   m_vs = vk::SHADER_MANAGER->getShaderFromName("triangleVS");
   m_fs = vk::SHADER_MANAGER->getShaderFromName("trianglePS");
   assert(m_vs);
@@ -110,7 +114,7 @@ void VkTempLayer::createDescriptorLayoutAdvanced() {
   resource_binding[1].pImmutableSamplers = NULL;
   resource_binding[2].binding = 2;
   resource_binding[2].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-  resource_binding[2].descriptorCount = 1;
+  resource_binding[2].descriptorCount = STATIC_SAMPLER_COUNT;
   resource_binding[2].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
   resource_binding[2].pImmutableSamplers = NULL;
 
@@ -121,8 +125,8 @@ void VkTempLayer::createDescriptorLayoutAdvanced() {
   resource_layout_info[0].bindingCount = resource_count;
   resource_layout_info[0].pBindings = resource_binding;
 
-  VK_CHECK(vkCreateDescriptorSetLayout(vk::LOGICAL_DEVICE, resource_layout_info, NULL,
-                                    &m_setLayout));
+  VK_CHECK(vkCreateDescriptorSetLayout(vk::LOGICAL_DEVICE, resource_layout_info,
+                                       NULL, &m_setLayout));
 
   /*
   // we are going to have two set layout, one per shader stage
@@ -164,7 +168,7 @@ void VkTempLayer::createDescriptorLayoutAdvanced() {
 
   VK_CHECK(vkCreateDescriptorSetLayout(vk::LOGICAL_DEVICE, &descriptorLayoutCI,
                                        nullptr, &m_setLayout));
-									   */
+                                                                           */
 
   // Allocates an empty descriptor set without actual descriptors from the pool
   // using the set layout
@@ -218,15 +222,16 @@ void VkTempLayer::createDescriptorLayoutAdvanced() {
   writeDescriptorSets[2].dstSet = m_meshDescriptorSet;
   writeDescriptorSets[2].dstBinding = 2;
   writeDescriptorSets[2].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-  writeDescriptorSets[2].pImageInfo = &samplerInfo;
-  writeDescriptorSets[2].descriptorCount = 1;
+  writeDescriptorSets[2].pImageInfo = vk::STATIC_SAMPLERS_INFO;
+  writeDescriptorSets[2].descriptorCount = STATIC_SAMPLER_COUNT;
 
   // Execute the writes to update descriptors for this set
   // Note that it's also possible to gather all writes and only run updates
   // once, even for multiple sets This is possible because each
   // VkWriteDescriptorSet also contains the destination set to be updated
   // For simplicity we will update once per set instead
-  vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, ARRAYSIZE(writeDescriptorSets),
+  // vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, ARRAYSIZE(writeDescriptorSets),
+  vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, ARRAYSIZE(writeDescriptorSets) - 1,
                          writeDescriptorSets, 0, nullptr);
 }
 
@@ -309,7 +314,9 @@ void VkTempLayer::onUpdate() {
   vkCmdBindDescriptorSets(vk::COMMAND_BUFFER, VK_PIPELINE_BIND_POINT_GRAPHICS,
                           vk::PIPELINE_LAYOUT, 0, 1, &m_meshDescriptorSet, 0,
                           nullptr);
-  //}
+  //vkCmdBindDescriptorSets(vk::COMMAND_BUFFER, VK_PIPELINE_BIND_POINT_GRAPHICS,
+  //                        vk::PIPELINE_LAYOUT, 0, 1, &m_samplersDescriptorSets, 1,
+  //                        nullptr);
 
   vkCmdBindIndexBuffer(vk::COMMAND_BUFFER, m_indexBuffer.buffer, 0,
                        VK_INDEX_TYPE_UINT32);

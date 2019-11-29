@@ -4,6 +4,7 @@
 namespace SirEngine::vk {
 
 VkSampler STATIC_SAMPLERS[STATIC_SAMPLER_COUNT];
+VkDescriptorImageInfo STATIC_SAMPLERS_INFO[STATIC_SAMPLER_COUNT];
 
 std::array<const VkSamplerCreateInfo, STATIC_SAMPLER_COUNT>
 getStaticSamplersCreateInfo() {
@@ -107,6 +108,42 @@ getStaticSamplersCreateInfo() {
           anisotropicWrap, anisotropicClamp, shadowPCFClamp};
 }
 
+
+void createStaticSamplerDescriptorSet(VkDescriptorPool& pool ,VkDescriptorSet& outSet,VkDescriptorSetLayout& layout )
+{
+  VkDescriptorSetLayoutBinding resource_binding[1] = {};
+  resource_binding[0].binding = 0;
+  resource_binding[0].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+  resource_binding[0].descriptorCount = STATIC_SAMPLER_COUNT;
+  resource_binding[0].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+  resource_binding[0].pImmutableSamplers = NULL;
+
+  VkDescriptorSetLayoutCreateInfo resource_layout_info[1] = {};
+  resource_layout_info[0].sType =
+      VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+  resource_layout_info[0].pNext = NULL;
+  resource_layout_info[0].bindingCount = 1;
+  resource_layout_info[0].pBindings = resource_binding;
+
+  VK_CHECK(vkCreateDescriptorSetLayout(vk::LOGICAL_DEVICE, resource_layout_info, NULL,
+                                    &layout));
+
+
+
+  VkDescriptorSetAllocateInfo allocateInfo{};
+  allocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+  allocateInfo.descriptorPool = pool ;
+  allocateInfo.descriptorSetCount = 1;
+  allocateInfo.pSetLayouts = &layout; // the layout we defined for the set,
+                                           // so it also knows the size
+  VK_CHECK(vkAllocateDescriptorSets(vk::LOGICAL_DEVICE, &allocateInfo,
+                                    &outSet));
+
+	
+}
+
+	
+
 VkPipeline
 createGraphicsPipeline(VkDevice logicalDevice, VkShaderModule vs,
                        VkShaderModule ps, VkRenderPass renderPass,
@@ -133,8 +170,9 @@ createGraphicsPipeline(VkDevice logicalDevice, VkShaderModule vs,
 
   bindings[2].binding = 2;
   bindings[2].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-  bindings[2].descriptorCount = 1;
+  bindings[2].descriptorCount = STATIC_SAMPLER_COUNT;
   bindings[2].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+  bindings[2].pImmutableSamplers = vk::STATIC_SAMPLERS;
 
   // passing in the "root signature"
   VkDescriptorSetLayoutCreateInfo descriptorInfo{
@@ -252,6 +290,9 @@ void initStaticSamplers() {
 
     VK_CHECK(vkCreateSampler(vk::LOGICAL_DEVICE, &createInfos[i], NULL,
                              &STATIC_SAMPLERS[i]));
+	STATIC_SAMPLERS_INFO[i] ={};
+	STATIC_SAMPLERS_INFO[i].sampler = STATIC_SAMPLERS[i];
+
   }
 }
 

@@ -189,16 +189,19 @@ bool createVulkanInstance(std::vector<char const *> const &desiredExtensions,
   instanceCreateInfo.enabledLayerCount = ARRAYSIZE(layers);
 #endif
 
+  /*
   VkValidationFeatureEnableEXT enables[] = {
       VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT,
-	  VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_RESERVE_BINDING_SLOT_EXT,
+      VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_RESERVE_BINDING_SLOT_EXT,
   };
   VkValidationFeaturesEXT features = {};
   features.sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
   features.enabledValidationFeatureCount = ARRAYSIZE(enables);
   features.pEnabledValidationFeatures = enables;
+  instanceCreateInfo.pNext = &features;
+  */
 
-	instanceCreateInfo.pNext = &features;
+  instanceCreateInfo.pNext = nullptr;
   const VkResult result =
       vkCreateInstance(&instanceCreateInfo, nullptr, &instance);
   if ((result != VK_SUCCESS) || (instance == VK_NULL_HANDLE)) {

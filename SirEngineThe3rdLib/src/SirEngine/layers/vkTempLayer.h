@@ -75,6 +75,10 @@ private:
   VkDescriptorSet m_meshDescriptorSet;
   vk::VkTexture2D uvTexture;
 
+  //static samplers descriptor set
+  VkDescriptorSetLayout m_samplersLayout;
+  VkDescriptorSet m_samplersDescriptorSets;
+
   VkSampler separateSampler = {};
   VkDescriptorImageInfo samplerInfo = {};
 };
