@@ -303,29 +303,23 @@ bool createSwapchainWithR8G8B8A8FormatAndMailboxPresentMode(
   const VkCompositeAlphaFlagBitsKHR surfaceComposites =
       getAlphaComposite(physicalDevice, presentationSurface);
 
-  // creating the actual swap chain:
-  VkSwapchainCreateInfoKHR swapchainCreateInfo = {
-      VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
-      nullptr,
-      0,
-      presentationSurface,
-      numberOfImages,
-      imageFormat,
-      imageColorSpace,
-      imageSize,
-      1,
-      imageUsage,
-      VK_SHARING_MODE_EXCLUSIVE,
-      0,
-      nullptr,
-      surfaceTransform,
-      surfaceComposites,
-      desiredPresentMode,
-      VK_TRUE,
-      oldSwapchain};
+  	VkSwapchainCreateInfoKHR createInfo = { VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR };
+	createInfo.surface = presentationSurface;
+	createInfo.minImageCount = numberOfImages;
+	createInfo.imageFormat = VK_FORMAT_B8G8R8A8_UNORM;
+	createInfo.imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+	createInfo.imageExtent.width = imageSize.height;
+	createInfo.imageExtent.height = imageSize.width;
+	createInfo.imageArrayLayers = 1;
+	createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+	createInfo.queueFamilyIndexCount = 1;
+	createInfo.pQueueFamilyIndices = 0;
+	createInfo.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+	createInfo.compositeAlpha = surfaceComposites;
+	createInfo.presentMode = VK_PRESENT_MODE_FIFO_KHR;
 
   const VkResult result = vkCreateSwapchainKHR(
-      logicalDevice, &swapchainCreateInfo, nullptr, &swapchain);
+      logicalDevice, &createInfo, nullptr, &swapchain);
   if ((VK_SUCCESS != result) || (VK_NULL_HANDLE == swapchain)) {
     std::cout << "Could not create a swapchain." << std::endl;
     return false;
