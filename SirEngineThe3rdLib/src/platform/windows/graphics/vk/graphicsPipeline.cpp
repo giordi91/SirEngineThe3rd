@@ -5,6 +5,9 @@ namespace SirEngine::vk {
 
 VkSampler STATIC_SAMPLERS[STATIC_SAMPLER_COUNT];
 VkDescriptorImageInfo STATIC_SAMPLERS_INFO[STATIC_SAMPLER_COUNT];
+const char *STATIC_SAMPLERS_NAMES[STATIC_SAMPLER_COUNT] = {
+    "pointWrapSampler",   "pointClampSampler",      "linearWrapSampler",
+    "linearClampSampler", "anisotropicWrapSampler", "anisotropicClampSampler"};
 
 std::array<const VkSamplerCreateInfo, STATIC_SAMPLER_COUNT>
 getStaticSamplersCreateInfo() {
@@ -108,9 +111,9 @@ getStaticSamplersCreateInfo() {
           anisotropicWrap, anisotropicClamp, shadowPCFClamp};
 }
 
-
-void createStaticSamplerDescriptorSet(VkDescriptorPool& pool ,VkDescriptorSet& outSet,VkDescriptorSetLayout& layout )
-{
+void createStaticSamplerDescriptorSet(VkDescriptorPool &pool,
+                                      VkDescriptorSet &outSet,
+                                      VkDescriptorSetLayout &layout) {
   VkDescriptorSetLayoutBinding resource_binding[1] = {};
   resource_binding[0].binding = 0;
   resource_binding[0].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
@@ -125,24 +128,24 @@ void createStaticSamplerDescriptorSet(VkDescriptorPool& pool ,VkDescriptorSet& o
   resource_layout_info[0].bindingCount = 1;
   resource_layout_info[0].pBindings = resource_binding;
 
-  VK_CHECK(vkCreateDescriptorSetLayout(vk::LOGICAL_DEVICE, resource_layout_info, NULL,
-                                    &layout));
-
-
+  VK_CHECK(vkCreateDescriptorSetLayout(vk::LOGICAL_DEVICE, resource_layout_info,
+                                       NULL, &layout));
 
   VkDescriptorSetAllocateInfo allocateInfo{};
   allocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-  allocateInfo.descriptorPool = pool ;
+  allocateInfo.descriptorPool = pool;
   allocateInfo.descriptorSetCount = 1;
   allocateInfo.pSetLayouts = &layout; // the layout we defined for the set,
-                                           // so it also knows the size
-  VK_CHECK(vkAllocateDescriptorSets(vk::LOGICAL_DEVICE, &allocateInfo,
-                                    &outSet));
-
-	
+                                      // so it also knows the size
+  VK_CHECK(
+      vkAllocateDescriptorSets(vk::LOGICAL_DEVICE, &allocateInfo, &outSet));
 }
 
-	
+void destroyStaticSamplers() {
+  for (int i = 0; i < STATIC_SAMPLER_COUNT; ++i) {
+    vkDestroySampler(vk::LOGICAL_DEVICE, STATIC_SAMPLERS[i], nullptr);
+  }
+}
 
 VkPipeline
 createGraphicsPipeline(VkDevice logicalDevice, VkShaderModule vs,
@@ -290,9 +293,12 @@ void initStaticSamplers() {
 
     VK_CHECK(vkCreateSampler(vk::LOGICAL_DEVICE, &createInfos[i], NULL,
                              &STATIC_SAMPLERS[i]));
-	STATIC_SAMPLERS_INFO[i] ={};
-	STATIC_SAMPLERS_INFO[i].sampler = STATIC_SAMPLERS[i];
+	//setting debug name
+    SET_DEBUG_NAME(STATIC_SAMPLERS[i], VK_OBJECT_TYPE_SAMPLER,
+                   STATIC_SAMPLERS_NAMES[i]);
 
+    STATIC_SAMPLERS_INFO[i] = {};
+    STATIC_SAMPLERS_INFO[i].sampler = STATIC_SAMPLERS[i];
   }
 }
 

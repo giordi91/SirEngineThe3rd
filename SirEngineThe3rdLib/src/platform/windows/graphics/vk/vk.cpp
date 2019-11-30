@@ -13,6 +13,7 @@
 #include "platform/windows/graphics/vk/vkPSOManager.h"
 #include "platform/windows/graphics/vk/vkShaderManager.h"
 #include "platform/windows/graphics/vk/vkSwapChain.h"
+#include "graphicsPipeline.h"
 
 namespace SirEngine::vk {
 VkInstance INSTANCE = nullptr;
@@ -255,7 +256,11 @@ bool VkRenderingContext::shutdownGraphic() {
 
   vkDeviceWaitIdle(LOGICAL_DEVICE);
 
-  assert(destroySwapchain(LOGICAL_DEVICE, SWAP_CHAIN));
+  bool result =destroySwapchain(LOGICAL_DEVICE, SWAP_CHAIN);
+  assert(result);
+
+  
+  destroyStaticSamplers();
   vkDestroyPipelineLayout(LOGICAL_DEVICE, PIPELINE_LAYOUT, nullptr);
   vkDestroyRenderPass(LOGICAL_DEVICE, RENDER_PASS, nullptr);
   vkDestroySemaphore(LOGICAL_DEVICE, IMAGE_ACQUIRED_SEMAPHORE, nullptr);

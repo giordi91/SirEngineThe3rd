@@ -30,10 +30,10 @@ extern VkDebugReportCallbackEXT DEBUG_CALLBACK;
 extern VkDebugUtilsMessengerEXT DEBUG_CALLBACK2;
 extern VkQueue PRESENTATION_QUEUE;
 
-//defined by the engine
+// defined by the engine
 extern VkSwapchain *SWAP_CHAIN;
-extern VkPSOManager* PSO_MANAGER;
-extern VkShaderManager* SHADER_MANAGER;
+extern VkPSOManager *PSO_MANAGER;
+extern VkShaderManager *SHADER_MANAGER;
 
 extern std::vector<VkDescriptorSetLayout> LAYOUTS_TO_DELETE;
 
@@ -51,6 +51,7 @@ bool onResize(uint32_t width, uint32_t height);
 #define ARRAYSIZE(array) sizeof(array) / sizeof(array[0]);
 #endif
 
+#if _DEBUG
 #define SET_DEBUG_NAME(resource, type, name)                                   \
   {                                                                            \
     VkDebugUtilsObjectNameInfoEXT debugInfo_{};                                \
@@ -60,6 +61,9 @@ bool onResize(uint32_t width, uint32_t height);
     debugInfo_.pObjectName = name;                                             \
     vkSetDebugUtilsObjectNameEXT(vk::LOGICAL_DEVICE, &debugInfo_);             \
   }
+#else
+SET_DEBUG_NAME(resource, type, name)
+#endif
 
 RenderingContext *
 createVkRenderingContext(const RenderingContextCreationSettings &settings,
