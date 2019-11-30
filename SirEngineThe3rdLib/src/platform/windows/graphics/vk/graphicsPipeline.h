@@ -14,5 +14,6 @@ createGraphicsPipeline(VkDevice logicalDevice, VkShaderModule vs,
                        VkPipelineVertexInputStateCreateInfo *vertexInfo);
 void initStaticSamplers();
 void createStaticSamplerDescriptorSet(VkDescriptorPool& pool ,VkDescriptorSet& outSet,VkDescriptorSetLayout& layout );
+void destroyStaticSamplers();
 
 }

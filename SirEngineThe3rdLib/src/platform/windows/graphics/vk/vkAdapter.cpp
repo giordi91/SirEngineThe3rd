@@ -1,7 +1,7 @@
 #include "volk.h"
 
-#include "platform/windows/graphics/vk/vkAdapter.h"
 #include "SirEngine/log.h"
+#include "platform/windows/graphics/vk/vkAdapter.h"
 #include "vk.h"
 #include "vkLoad.h"
 #include <cassert>
@@ -52,6 +52,10 @@ bool createLogicalDevice(VkPhysicalDevice physicalDevice,
   deviceFeatures.features = {};
   deviceFeatures.features.vertexPipelineStoresAndAtomics = true;
   deviceFeatures.features.geometryShader = true;
+  deviceFeatures.features.tessellationShader = true;
+  deviceFeatures.features.shaderTessellationAndGeometryPointSize = true;
+  deviceFeatures.features.textureCompressionBC = true;
+  deviceFeatures.features.samplerAnisotropy = true;
 
   deviceFeatures.pNext = &feature8;
 
@@ -82,7 +86,8 @@ uint32_t getMaxPhysicalDeviceVRAMSizeInGB(VkPhysicalDevice physicalDevice) {
       if (memoryProperties.memoryTypes[h].heapIndex == i) {
         if (memoryProperties.memoryTypes[h].propertyFlags &
             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) {
-          uint32_t tempGB = memoryProperties.memoryHeaps[i].size * 1.0e-9;
+          uint32_t tempGB = static_cast<uint32_t>(
+              memoryProperties.memoryHeaps[i].size * 1.0e-9);
           gb = gb < tempGB ? tempGB : gb;
         }
       }

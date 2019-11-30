@@ -231,7 +231,7 @@ void VkTempLayer::createDescriptorLayoutAdvanced() {
   // VkWriteDescriptorSet also contains the destination set to be updated
   // For simplicity we will update once per set instead
   // vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, ARRAYSIZE(writeDescriptorSets),
-  vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, ARRAYSIZE(writeDescriptorSets) - 1,
+  vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, ARRAYSIZE(writeDescriptorSets),
                          writeDescriptorSets, 0, nullptr);
 }
 

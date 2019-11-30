@@ -176,12 +176,12 @@ SpirVBlob VkShaderCompiler::compileToSpirV(const char *shaderPath,
   int clientInputSemanticsVersion = 110; // maps to, say, #define VULKAN 110
   glslang::EShTargetClientVersion vulkanClientVersion =
       glslang::EShTargetVulkan_1_1;
-  glslang::EShTargetLanguageVersion targetVersion = glslang::EShTargetSpv_1_5;
+  //glslang::EShTargetLanguageVersion targetVersion = glslang::EShTargetSpv_1_3;
 
   shader.setEnvInput(glslang::EShSourceGlsl, shaderType,
                      glslang::EShClientVulkan, clientInputSemanticsVersion);
   shader.setEnvClient(glslang::EShClientVulkan, vulkanClientVersion);
-  shader.setEnvTarget(glslang::EShTargetSpv, targetVersion);
+  //shader.setEnvTarget(glslang::EShTargetSpv, targetVersion);
 
   TBuiltInResource resources = DEFAULT_T_BUILT_IN_RESOURCE;
   auto messages = static_cast<EShMessages>(EShMsgSpvRules | EShMsgVulkanRules);
