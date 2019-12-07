@@ -11,7 +11,7 @@ extern VkDescriptorImageInfo STATIC_SAMPLERS_INFO[STATIC_SAMPLER_COUNT];
 VkPipeline
 createGraphicsPipeline(VkDevice logicalDevice, VkShaderModule vs,
                        VkShaderModule ps, VkRenderPass renderPass,
-                       VkPipelineVertexInputStateCreateInfo *vertexInfo);
+                       VkPipelineVertexInputStateCreateInfo *vertexInfo, VkDescriptorSetLayout samplersLayout);
 void initStaticSamplers();
 void createStaticSamplerDescriptorSet(VkDescriptorPool& pool ,VkDescriptorSet& outSet,VkDescriptorSetLayout& layout );
 void destroyStaticSamplers();
