@@ -62,7 +62,7 @@ void VkTempLayer::onAttach() {
   SET_DEBUG_NAME(m_indexBuffer.buffer, VK_OBJECT_TYPE_BUFFER, "index buffer");
 
   m_pipeline = vk::createGraphicsPipeline(vk::LOGICAL_DEVICE, m_vs, m_fs,
-                                          vk::RENDER_PASS, nullptr);
+                                          vk::RENDER_PASS, nullptr, m_samplersLayout);
 
   loadTextureFromFile("../data/external/vk/uv.DDS",
                       VK_FORMAT_BC1_RGBA_UNORM_BLOCK, vk::LOGICAL_DEVICE,
@@ -100,6 +100,38 @@ void init_sampler(VkSampler &sampler) {
 
 void VkTempLayer::createDescriptorLayoutAdvanced() {
 
+  constexpr int resource_count = 2;
+  VkDescriptorSetLayoutBinding resource_binding[resource_count] = {};
+  resource_binding[0].binding = 0;
+  resource_binding[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  resource_binding[0].descriptorCount = 1;
+  resource_binding[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+  resource_binding[0].pImmutableSamplers = NULL;
+  resource_binding[1].binding = 1;
+  resource_binding[1].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+  resource_binding[1].descriptorCount = 1;
+  resource_binding[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+  resource_binding[1].pImmutableSamplers = NULL;
+  //resource_binding[2].binding = 2;
+  //resource_binding[2].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+  //resource_binding[2].descriptorCount = STATIC_SAMPLER_COUNT;
+  //resource_binding[2].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+  //resource_binding[2].pImmutableSamplers = NULL;
+
+  VkDescriptorSetLayoutCreateInfo resource_layout_info[1] = {};
+  resource_layout_info[0].sType =
+      VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+  resource_layout_info[0].pNext = NULL;
+  resource_layout_info[0].bindingCount = resource_count;
+  resource_layout_info[0].pBindings = resource_binding;
+
+  VK_CHECK(vkCreateDescriptorSetLayout(vk::LOGICAL_DEVICE, resource_layout_info,
+                                       NULL, &m_setLayout));
+
+  SET_DEBUG_NAME(m_setLayout,VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT,"resourceBindingsLayoutNoSamplers");
+
+  /*
+  //single descriptor set, with sampler at the bottom
   constexpr int resource_count = 3;
   VkDescriptorSetLayoutBinding resource_binding[resource_count] = {};
   resource_binding[0].binding = 0;
@@ -127,6 +159,9 @@ void VkTempLayer::createDescriptorLayoutAdvanced() {
 
   VK_CHECK(vkCreateDescriptorSetLayout(vk::LOGICAL_DEVICE, resource_layout_info,
                                        NULL, &m_setLayout));
+
+  SET_DEBUG_NAME(m_setLayout,VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT,"resourceBindingsLayout");
+  */
 
   /*
   // we are going to have two set layout, one per shader stage
@@ -191,7 +226,7 @@ void VkTempLayer::createDescriptorLayoutAdvanced() {
   // this far we defined just what descriptor we wanted and how they were setup,
   // now we need to actually define the content of those descriptrs, the actual
   // resources
-  VkWriteDescriptorSet writeDescriptorSets[3] = {};
+  VkWriteDescriptorSet writeDescriptorSets[2] = {};
 
   // actual information of the descriptor, in this case it is our mesh buffer
   VkDescriptorBufferInfo bufferInfo = {};
@@ -199,7 +234,52 @@ void VkTempLayer::createDescriptorLayoutAdvanced() {
   bufferInfo.offset = 0;
   bufferInfo.range = m_vertexBuffer.size;
 
+  //updating descriptors, with no samplers bound
   // Binding 0: Object matrices Uniform buffer
+  writeDescriptorSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  writeDescriptorSets[0].dstSet = m_meshDescriptorSet;
+  writeDescriptorSets[0].dstBinding = 0;
+  writeDescriptorSets[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  writeDescriptorSets[0].pBufferInfo = &bufferInfo;
+  writeDescriptorSets[0].descriptorCount = 1;
+
+  // Binding 1: Object texture
+  writeDescriptorSets[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  writeDescriptorSets[1].dstSet = m_meshDescriptorSet;
+  writeDescriptorSets[1].dstBinding = 1;
+  writeDescriptorSets[1].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+  // Images use a different descriptor strucutre, so we use pImageInfo instead
+  // of pBufferInfo
+  writeDescriptorSets[1].pImageInfo = &uvTexture.descriptor;
+  writeDescriptorSets[1].descriptorCount = 1;
+  // Binding 2: sampler
+  //writeDescriptorSets[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  //writeDescriptorSets[2].pNext = NULL;
+  //writeDescriptorSets[2].dstSet = m_meshDescriptorSet;
+  //writeDescriptorSets[2].dstBinding = 2;
+  //writeDescriptorSets[2].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+  //writeDescriptorSets[2].pImageInfo = vk::STATIC_SAMPLERS_INFO;
+  //writeDescriptorSets[2].descriptorCount = STATIC_SAMPLER_COUNT;
+
+
+  VkWriteDescriptorSet samplersWrite[1] = {};
+
+  //updating descriptors, with no samplers bound
+  // Binding 0: Object matrices Uniform buffer
+  samplersWrite[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  samplersWrite[0].pNext = NULL;
+  samplersWrite[0].dstSet = m_samplersDescriptorSets;
+  samplersWrite[0].dstBinding = 0;
+  samplersWrite[0].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+  samplersWrite[0].pImageInfo = vk::STATIC_SAMPLERS_INFO;
+  samplersWrite[0].descriptorCount = STATIC_SAMPLER_COUNT;
+	
+
+
+  /*
+  //Single descriptor set bound
+  // Binding 0: Object matrices Uniform buffer
+  VkWriteDescriptorSet writeDescriptorSets[3] = {};
   writeDescriptorSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   writeDescriptorSets[0].dstSet = m_meshDescriptorSet;
   writeDescriptorSets[0].dstBinding = 0;
@@ -224,6 +304,7 @@ void VkTempLayer::createDescriptorLayoutAdvanced() {
   writeDescriptorSets[2].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
   writeDescriptorSets[2].pImageInfo = vk::STATIC_SAMPLERS_INFO;
   writeDescriptorSets[2].descriptorCount = STATIC_SAMPLER_COUNT;
+  */
 
   // Execute the writes to update descriptors for this set
   // Note that it's also possible to gather all writes and only run updates
@@ -233,6 +314,9 @@ void VkTempLayer::createDescriptorLayoutAdvanced() {
   // vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, ARRAYSIZE(writeDescriptorSets),
   vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, ARRAYSIZE(writeDescriptorSets),
                          writeDescriptorSets, 0, nullptr);
+
+  vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, ARRAYSIZE(samplersWrite),
+                         samplersWrite, 0, nullptr);
 }
 
 void VkTempLayer::onDetach() {}
@@ -311,9 +395,20 @@ void VkTempLayer::onUpdate() {
                               descriptor);
   } else {
   */
+  VkDescriptorSet sets[] ={m_meshDescriptorSet,m_samplersDescriptorSets}; 
+  //multiple descriptor sets
   vkCmdBindDescriptorSets(vk::COMMAND_BUFFER, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                          vk::PIPELINE_LAYOUT, 0, 1, &m_meshDescriptorSet, 0,
+                          vk::PIPELINE_LAYOUT, 0, 2, sets, 0,
                           nullptr);
+  //vkCmdBindDescriptorSets(vk::COMMAND_BUFFER, VK_PIPELINE_BIND_POINT_GRAPHICS,
+  //                        vk::PIPELINE_LAYOUT, 0, 1, &m_samplersDescriptorSets, 0,
+  //                        nullptr);
+
+  ////single descriptor set
+  //vkCmdBindDescriptorSets(vk::COMMAND_BUFFER, VK_PIPELINE_BIND_POINT_GRAPHICS,
+  //                        vk::PIPELINE_LAYOUT, 0, 1, &m_meshDescriptorSet, 0,
+  //                        nullptr);
+
   //vkCmdBindDescriptorSets(vk::COMMAND_BUFFER, VK_PIPELINE_BIND_POINT_GRAPHICS,
   //                        vk::PIPELINE_LAYOUT, 0, 1, &m_samplersDescriptorSets, 1,
   //                        nullptr);

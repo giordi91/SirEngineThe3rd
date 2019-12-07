@@ -3,7 +3,7 @@
 
 //layout (set = 0, binding = 1) uniform sampler2D samplerColorMap;
 layout (set=0,binding = 1) uniform texture2D colorTexture;
-layout (set=0,binding = 2) uniform sampler colorSampler;
+layout (set=1,binding = 0) uniform sampler colorSampler;
 
 layout(location=0) out vec4 outputColor;
 

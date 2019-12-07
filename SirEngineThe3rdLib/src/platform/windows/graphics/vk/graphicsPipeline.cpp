@@ -7,7 +7,7 @@ VkSampler STATIC_SAMPLERS[STATIC_SAMPLER_COUNT];
 VkDescriptorImageInfo STATIC_SAMPLERS_INFO[STATIC_SAMPLER_COUNT];
 const char *STATIC_SAMPLERS_NAMES[STATIC_SAMPLER_COUNT] = {
     "pointWrapSampler",   "pointClampSampler",      "linearWrapSampler",
-    "linearClampSampler", "anisotropicWrapSampler", "anisotropicClampSampler"};
+    "linearClampSampler", "anisotropicWrapSampler", "anisotropicClampSampler", "pcfSampler"};
 
 std::array<const VkSamplerCreateInfo, STATIC_SAMPLER_COUNT>
 getStaticSamplersCreateInfo() {
@@ -139,6 +139,9 @@ void createStaticSamplerDescriptorSet(VkDescriptorPool &pool,
                                       // so it also knows the size
   VK_CHECK(
       vkAllocateDescriptorSets(vk::LOGICAL_DEVICE, &allocateInfo, &outSet));
+
+
+	
 }
 
 void destroyStaticSamplers() {
@@ -150,7 +153,7 @@ void destroyStaticSamplers() {
 VkPipeline
 createGraphicsPipeline(VkDevice logicalDevice, VkShaderModule vs,
                        VkShaderModule ps, VkRenderPass renderPass,
-                       VkPipelineVertexInputStateCreateInfo *vertexInfo) {
+                       VkPipelineVertexInputStateCreateInfo *vertexInfo, VkDescriptorSetLayout samplersLayout) {
 
   // From spec:  The pipeline layout represents a sequence of descriptor sets
   // with each having a specific layout.
@@ -158,6 +161,26 @@ createGraphicsPipeline(VkDevice logicalDevice, VkShaderModule vs,
   VkPipelineLayoutCreateInfo layoutInfo = {
       VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
 
+  //multiple set, with separated samplers
+  // to do so we declare a set of layout bindings, basically an array telling us
+  // how many elements we have, this will be coming from a json file
+  VkDescriptorSetLayoutBinding bindings[2]{};
+  bindings[0].binding = 0;
+  bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  bindings[0].descriptorCount = 1;
+  bindings[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+  bindings[1].binding = 1;
+  bindings[1].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+  bindings[1].descriptorCount = 1;
+  bindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+  //bindings[2].binding = 2;
+  //bindings[2].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+  //bindings[2].descriptorCount = STATIC_SAMPLER_COUNT;
+  //bindings[2].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+  //bindings[2].pImmutableSamplers = vk::STATIC_SAMPLERS;
+  /*
   // to do so we declare a set of layout bindings, basically an array telling us
   // how many elements we have, this will be coming from a json file
   VkDescriptorSetLayoutBinding bindings[3]{};
@@ -176,6 +199,7 @@ createGraphicsPipeline(VkDevice logicalDevice, VkShaderModule vs,
   bindings[2].descriptorCount = STATIC_SAMPLER_COUNT;
   bindings[2].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
   bindings[2].pImmutableSamplers = vk::STATIC_SAMPLERS;
+  */
 
   // passing in the "root signature"
   VkDescriptorSetLayoutCreateInfo descriptorInfo{
@@ -189,9 +213,17 @@ createGraphicsPipeline(VkDevice logicalDevice, VkShaderModule vs,
   vkCreateDescriptorSetLayout(logicalDevice, &descriptorInfo, nullptr,
                               &descriptorLayout);
 
+  //mulitple layouts
   // now we know how many layouts we have, and we can create the pipelien layout
-  layoutInfo.setLayoutCount = 1;
-  layoutInfo.pSetLayouts = &descriptorLayout;
+  VkDescriptorSetLayout layouts[] = {descriptorLayout, samplersLayout};
+  layoutInfo.setLayoutCount = 2;
+  layoutInfo.pSetLayouts = layouts;
+
+
+  //single layout
+  // now we know how many layouts we have, and we can create the pipeline layout
+  //layoutInfo.setLayoutCount = 1;
+  //layoutInfo.pSetLayouts = &descriptorLayout;
 
   // TODO need a manager
   vkCreatePipelineLayout(logicalDevice, &layoutInfo, nullptr, &PIPELINE_LAYOUT);
