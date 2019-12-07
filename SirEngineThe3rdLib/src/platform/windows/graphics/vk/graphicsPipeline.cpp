@@ -119,7 +119,17 @@ void createStaticSamplerDescriptorSet(VkDescriptorPool &pool,
   resource_binding[0].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
   resource_binding[0].descriptorCount = STATIC_SAMPLER_COUNT;
   resource_binding[0].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+  resource_binding[0].pImmutableSamplers = STATIC_SAMPLERS;
+
+  /*
+  //Not static samplers
+  VkDescriptorSetLayoutBinding resource_binding[1] = {};
+  resource_binding[0].binding = 0;
+  resource_binding[0].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+  resource_binding[0].descriptorCount = STATIC_SAMPLER_COUNT;
+  resource_binding[0].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
   resource_binding[0].pImmutableSamplers = NULL;
+  */
 
   VkDescriptorSetLayoutCreateInfo resource_layout_info[1] = {};
   resource_layout_info[0].sType =
