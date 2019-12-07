@@ -315,8 +315,8 @@ void VkTempLayer::createDescriptorLayoutAdvanced() {
   vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, ARRAYSIZE(writeDescriptorSets),
                          writeDescriptorSets, 0, nullptr);
 
-  vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, ARRAYSIZE(samplersWrite),
-                         samplersWrite, 0, nullptr);
+  //vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, ARRAYSIZE(samplersWrite),
+  //                       samplersWrite, 0, nullptr);
 }
 
 void VkTempLayer::onDetach() {}
