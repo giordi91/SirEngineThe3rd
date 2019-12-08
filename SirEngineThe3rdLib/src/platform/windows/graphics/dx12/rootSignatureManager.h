@@ -6,9 +6,7 @@
 #include "SirEngine/memory/stringHashMap.h"
 #include <cassert>
 
-namespace SirEngine {
-
-namespace dx12 {
+namespace SirEngine::dx12 {
 
 enum class ROOT_FILE_TYPE { RASTER = 0, COMPUTE = 1, DXR = 2, NULL_TYPE };
 
@@ -69,7 +67,7 @@ private:
     const uint32_t idx = getIndexFromHandle(handle);
     assert(static_cast<uint32_t>(m_rsPool.getConstRef(idx).magicNumber) ==
                magic &&
-           "invalid magic handle for constant buffer");
+           "invalid magic handle for root signature");
   }
 
 private:
@@ -86,5 +84,4 @@ private:
   static const uint32_t INDEX_MASK = (1 << 16) - 1;
   static const uint32_t MAGIC_NUMBER_MASK = ~INDEX_MASK;
 };
-} // namespace dx12
-} // namespace SirEngine
+} // namespace SirEngine::dx12
