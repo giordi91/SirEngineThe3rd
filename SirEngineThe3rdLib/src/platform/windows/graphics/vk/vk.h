@@ -25,6 +25,7 @@ extern VkSemaphore IMAGE_ACQUIRED_SEMAPHORE;
 extern VkSemaphore READY_TO_PRESENT_SEMAPHORE;
 extern VkCommandPool COMMAND_POOL;
 extern VkCommandBuffer COMMAND_BUFFER;
+extern VkDescriptorPool DESCRIPTOR_POOL;
 extern VkFormat IMAGE_FORMAT;
 extern VkPipelineLayout PIPELINE_LAYOUT;
 extern VkDebugReportCallbackEXT DEBUG_CALLBACK;

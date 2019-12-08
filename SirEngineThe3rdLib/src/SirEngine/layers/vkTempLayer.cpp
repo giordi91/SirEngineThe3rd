@@ -27,12 +27,9 @@ void VkTempLayer::onAttach() {
   globals::MAIN_CAMERA->updateCamera();
 
   vk::initStaticSamplers();
-  // if constexpr (!USE_PUSH) {
-  vk::createDescriptorPool(vk::LOGICAL_DEVICE, {10000, 10000}, m_dPool);
-  //}
 
-  vk::createStaticSamplerDescriptorSet(m_dPool, m_samplersDescriptorSets,
-                                       m_samplersLayout);
+  //vk::createStaticSamplerDescriptorSet(m_dPool, m_samplersDescriptorSets,
+  //                                     m_samplersLayout);
   m_vs = vk::SHADER_MANAGER->getShaderFromName("triangleVS");
   m_fs = vk::SHADER_MANAGER->getShaderFromName("trianglePS");
   assert(m_vs);
@@ -63,7 +60,7 @@ void VkTempLayer::onAttach() {
 
   m_pipeline =
       vk::createGraphicsPipeline(vk::LOGICAL_DEVICE, m_vs, m_fs,
-                                 vk::RENDER_PASS, nullptr, m_samplersLayout);
+                                 vk::RENDER_PASS, nullptr);
 
   loadTextureFromFile("../data/external/vk/uv.DDS",
                       VK_FORMAT_BC1_RGBA_UNORM_BLOCK, vk::LOGICAL_DEVICE,
@@ -131,17 +128,12 @@ void VkTempLayer::createDescriptorLayoutAdvanced() {
   // using the set layout
   VkDescriptorSetAllocateInfo allocateInfo{};
   allocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-  allocateInfo.descriptorPool = m_dPool;
+  allocateInfo.descriptorPool = vk::DESCRIPTOR_POOL;
   allocateInfo.descriptorSetCount = 1;
   allocateInfo.pSetLayouts = &m_setLayout; // the layout we defined for the set,
                                            // so it also knows the size
   VK_CHECK(vkAllocateDescriptorSets(vk::LOGICAL_DEVICE, &allocateInfo,
                                     &m_meshDescriptorSet));
-
-  // Create our separate sampler
-  init_sampler(separateSampler);
-
-  samplerInfo.sampler = separateSampler;
 
   // Update the descriptor set with the actual descriptors matching shader
   // bindings set in the layout
@@ -264,25 +256,10 @@ void VkTempLayer::onUpdate() {
                               descriptor);
   } else {
   */
-  VkDescriptorSet sets[] = {m_meshDescriptorSet, m_samplersDescriptorSets};
+  VkDescriptorSet sets[] = {m_meshDescriptorSet, vk::STATIC_SEMPLER_DESCRIPTOR_SET};
   // multiple descriptor sets
   vkCmdBindDescriptorSets(vk::COMMAND_BUFFER, VK_PIPELINE_BIND_POINT_GRAPHICS,
                           vk::PIPELINE_LAYOUT, 0, 2, sets, 0, nullptr);
-  // vkCmdBindDescriptorSets(vk::COMMAND_BUFFER,
-  // VK_PIPELINE_BIND_POINT_GRAPHICS,
-  //                        vk::PIPELINE_LAYOUT, 0, 1,
-  //                        &m_samplersDescriptorSets, 0, nullptr);
-
-  ////single descriptor set
-  // vkCmdBindDescriptorSets(vk::COMMAND_BUFFER,
-  // VK_PIPELINE_BIND_POINT_GRAPHICS,
-  //                        vk::PIPELINE_LAYOUT, 0, 1, &m_meshDescriptorSet, 0,
-  //                        nullptr);
-
-  // vkCmdBindDescriptorSets(vk::COMMAND_BUFFER,
-  // VK_PIPELINE_BIND_POINT_GRAPHICS,
-  //                        vk::PIPELINE_LAYOUT, 0, 1,
-  //                        &m_samplersDescriptorSets, 1, nullptr);
 
   vkCmdBindIndexBuffer(vk::COMMAND_BUFFER, m_indexBuffer.buffer, 0,
                        VK_INDEX_TYPE_UINT32);
@@ -322,7 +299,7 @@ void VkTempLayer::clear() {
   }
   // if constexpr (!USE_PUSH) {
   vkDestroyDescriptorSetLayout(vk::LOGICAL_DEVICE, m_setLayout, nullptr);
-  vkDestroyDescriptorPool(vk::LOGICAL_DEVICE, m_dPool, nullptr);
+  vkDestroyDescriptorPool(vk::LOGICAL_DEVICE, vk::DESCRIPTOR_POOL, nullptr);
   //}
   destroyTexture(vk::LOGICAL_DEVICE, uvTexture);
   vkDestroyPipeline(vk::LOGICAL_DEVICE, m_pipeline, nullptr);

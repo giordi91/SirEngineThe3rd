@@ -10,6 +10,9 @@ namespace SirEngine::vk {
 
 VkSampler STATIC_SAMPLERS[STATIC_SAMPLER_COUNT];
 VkDescriptorImageInfo STATIC_SAMPLERS_INFO[STATIC_SAMPLER_COUNT];
+VkDescriptorSetLayout STATIC_SAMPLER_LAYOUT;
+VkDescriptorSet STATIC_SEMPLER_DESCRIPTOR_SET;
+
 const char *STATIC_SAMPLERS_NAMES[STATIC_SAMPLER_COUNT] = {
     "pointWrapSampler",   "pointClampSampler",      "linearWrapSampler",
     "linearClampSampler", "anisotropicWrapSampler", "anisotropicClampSampler",
@@ -123,21 +126,21 @@ void createStaticSamplerDescriptorSet(VkDescriptorPool &pool,
   // here we are are creating the layout, but we are using static samplers
   // so we are passing immutable samplers directly in the layout that
   // gets built in the graphics pipeline
-  VkDescriptorSetLayoutBinding resource_binding[1] = {};
-  resource_binding[0].binding = 0;
-  resource_binding[0].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
-  resource_binding[0].descriptorCount = STATIC_SAMPLER_COUNT;
-  resource_binding[0].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-  resource_binding[0].pImmutableSamplers = STATIC_SAMPLERS;
+  VkDescriptorSetLayoutBinding resourceBinding[1] = {};
+  resourceBinding[0].binding = 0;
+  resourceBinding[0].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+  resourceBinding[0].descriptorCount = STATIC_SAMPLER_COUNT;
+  resourceBinding[0].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+  resourceBinding[0].pImmutableSamplers = STATIC_SAMPLERS;
 
-  VkDescriptorSetLayoutCreateInfo resource_layout_info[1] = {};
-  resource_layout_info[0].sType =
+  VkDescriptorSetLayoutCreateInfo resourceLayoutInfo[1] = {};
+  resourceLayoutInfo[0].sType =
       VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-  resource_layout_info[0].pNext = NULL;
-  resource_layout_info[0].bindingCount = 1;
-  resource_layout_info[0].pBindings = resource_binding;
+  resourceLayoutInfo[0].pNext = NULL;
+  resourceLayoutInfo[0].bindingCount = 1;
+  resourceLayoutInfo[0].pBindings = resourceBinding;
 
-  VK_CHECK(vkCreateDescriptorSetLayout(vk::LOGICAL_DEVICE, resource_layout_info,
+  VK_CHECK(vkCreateDescriptorSetLayout(vk::LOGICAL_DEVICE, resourceLayoutInfo,
                                        NULL, &layout));
 
   VkDescriptorSetAllocateInfo allocateInfo{};
@@ -148,12 +151,15 @@ void createStaticSamplerDescriptorSet(VkDescriptorPool &pool,
                                       // so it also knows the size
   VK_CHECK(
       vkAllocateDescriptorSets(vk::LOGICAL_DEVICE, &allocateInfo, &outSet));
+  SET_DEBUG_NAME(outSet,VK_OBJECT_TYPE_DESCRIPTOR_SET,"staticSamplersDescriptorSet");
+  SET_DEBUG_NAME(layout,VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT,"staticSamplersDescriptorSetLayout");
 }
 
 void destroyStaticSamplers() {
   for (int i = 0; i < STATIC_SAMPLER_COUNT; ++i) {
     vkDestroySampler(vk::LOGICAL_DEVICE, STATIC_SAMPLERS[i], nullptr);
   }
+  vkDestroyDescriptorSetLayout(vk::LOGICAL_DEVICE,STATIC_SAMPLER_LAYOUT,nullptr);
 }
 
 void getPipelineLayout(VkDevice logicalDevice,
@@ -166,13 +172,14 @@ void getPipelineLayout(VkDevice logicalDevice,
 VkPipeline
 createGraphicsPipeline(VkDevice logicalDevice, VkShaderModule vs,
                        VkShaderModule ps, VkRenderPass renderPass,
-                       VkPipelineVertexInputStateCreateInfo *vertexInfo,
-                       VkDescriptorSetLayout samplersLayout) {
+                       VkPipelineVertexInputStateCreateInfo *vertexInfo) {
   const char *rootFile = "../data/rs/forwardPhongRS.json";
 
-  RSHandle layoutHandle = vk::PIPELINE_LAYOUT_MANAGER->loadSignatureFile(rootFile, samplersLayout);
-  //TODO fix this should not be global anymore
-  vk::PIPELINE_LAYOUT = vk::PIPELINE_LAYOUT_MANAGER->getLayoutFromHandle(layoutHandle);
+  RSHandle layoutHandle =
+      vk::PIPELINE_LAYOUT_MANAGER->loadSignatureFile(rootFile, vk::STATIC_SAMPLER_LAYOUT);
+  // TODO fix this should not be global anymore
+  vk::PIPELINE_LAYOUT =
+      vk::PIPELINE_LAYOUT_MANAGER->getLayoutFromHandle(layoutHandle);
 
   // here we define all the stages of the pipeline
   VkPipelineShaderStageCreateInfo stages[2] = {};
@@ -276,6 +283,9 @@ void initStaticSamplers() {
     STATIC_SAMPLERS_INFO[i] = {};
     STATIC_SAMPLERS_INFO[i].sampler = STATIC_SAMPLERS[i];
   }
+  createStaticSamplerDescriptorSet(vk::DESCRIPTOR_POOL,
+                                   STATIC_SEMPLER_DESCRIPTOR_SET,
+                                   STATIC_SAMPLER_LAYOUT);
 }
 
 } // namespace SirEngine::vk
