@@ -60,8 +60,6 @@ private:
 
   void createDescriptorLayoutAdvanced();
   // shaders
-  VkShaderModule m_vs;
-  VkShaderModule m_fs;
   VkPipeline m_pipeline;
 
   // mesh

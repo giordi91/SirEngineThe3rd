@@ -6,15 +6,14 @@
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/graphics/graphicsDefines.h"
 #include "SirEngine/runtimeString.h"
-#include <d3dcompiler.h>
+#include "vk.h"
 
 namespace SirEngine::vk {
 
 void VkShaderManager::cleanup() {
   // we need to de-allocate everything
   for (auto s : m_stringToShader) {
-    // TODO check how to release this
-    // s.second.shader->Release();
+    vkDestroyShaderModule(vk::LOGICAL_DEVICE, s.second.shader, nullptr);
   }
   m_stringToShader.clear();
 }
@@ -64,7 +63,8 @@ void VkShaderManager::loadShaderBinaryFile(const char *path) {
     const void *shaderPointer = data + sizeof(BinaryFileHeader);
 
     // TODO check if I can make Spirv blob const void*;
-    const SpirVBlob blob{const_cast<void *>(shaderPointer), mapper->shaderSizeInByte};
+    const SpirVBlob blob{const_cast<void *>(shaderPointer),
+                         mapper->shaderSizeInByte};
     const VkShaderModule shaderModule =
         SirEngine::vk::VkShaderCompiler::spirvToShaderModule(blob);
 
