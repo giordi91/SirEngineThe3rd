@@ -14,6 +14,7 @@
 #include "platform/windows/graphics/vk/vkShaderManager.h"
 #include "platform/windows/graphics/vk/vkSwapChain.h"
 #include "graphicsPipeline.h"
+#include "vkRootSignatureManager.h"
 
 namespace SirEngine::vk {
 VkInstance INSTANCE = nullptr;
@@ -37,7 +38,9 @@ VkDebugUtilsMessengerEXT DEBUG_CALLBACK2 = nullptr;
 
 VkPSOManager *PSO_MANAGER = nullptr;
 VkShaderManager *SHADER_MANAGER = nullptr;
+VkPipelineLayoutManager* PIPELINE_LAYOUT_MANAGER = nullptr;
 
+//TODO move this to manager
 std::vector<VkDescriptorSetLayout> LAYOUTS_TO_DELETE;
 
 bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
@@ -126,6 +129,8 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   SHADER_MANAGER->loadShadersInFolder(
       frameConcatenation(globals::ENGINE_CONFIG->m_dataSourcePath,
                          "/processed/shaders/VK/rasterization"));
+  PIPELINE_LAYOUT_MANAGER = new VkPipelineLayoutManager();
+  PIPELINE_LAYOUT_MANAGER->init();
 
   PSO_MANAGER = new VkPSOManager();
   PSO_MANAGER->init();
