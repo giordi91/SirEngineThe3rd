@@ -70,16 +70,9 @@ private:
   vk::Buffer m_indexBuffer;
   VkVertexInputBindingDescription m_stream;
   VkVertexInputAttributeDescription m_attr[3];
-  VkDescriptorPool m_dPool;
   VkDescriptorSetLayout m_setLayout;
   VkDescriptorSet m_meshDescriptorSet;
   vk::VkTexture2D uvTexture;
 
-  //static samplers descriptor set
-  VkDescriptorSetLayout m_samplersLayout;
-  VkDescriptorSet m_samplersDescriptorSets;
-
-  VkSampler separateSampler = {};
-  VkDescriptorImageInfo samplerInfo = {};
 };
 } // namespace SirEngine

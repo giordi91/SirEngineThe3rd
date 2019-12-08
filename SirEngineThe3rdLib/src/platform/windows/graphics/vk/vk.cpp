@@ -7,13 +7,14 @@
 #include "SirEngine/globals.h"
 #include "SirEngine/log.h"
 #include "SirEngine/runtimeString.h"
+#include "graphicsPipeline.h"
 #include "platform/windows/graphics/vk/vk.h"
 #include "platform/windows/graphics/vk/vkAdapter.h"
 #include "platform/windows/graphics/vk/vkLoad.h"
 #include "platform/windows/graphics/vk/vkPSOManager.h"
 #include "platform/windows/graphics/vk/vkShaderManager.h"
 #include "platform/windows/graphics/vk/vkSwapChain.h"
-#include "graphicsPipeline.h"
+#include "vkDescriptors.h"
 #include "vkRootSignatureManager.h"
 
 namespace SirEngine::vk {
@@ -31,6 +32,8 @@ VkSemaphore IMAGE_ACQUIRED_SEMAPHORE = nullptr;
 VkSemaphore READY_TO_PRESENT_SEMAPHORE = nullptr;
 VkCommandPool COMMAND_POOL = nullptr;
 VkCommandBuffer COMMAND_BUFFER = nullptr;
+VkDescriptorPool DESCRIPTOR_POOL = nullptr;
+;
 VkFormat IMAGE_FORMAT = VK_FORMAT_UNDEFINED;
 VkPipelineLayout PIPELINE_LAYOUT = nullptr;
 VkDebugReportCallbackEXT DEBUG_CALLBACK = nullptr;
@@ -38,9 +41,9 @@ VkDebugUtilsMessengerEXT DEBUG_CALLBACK2 = nullptr;
 
 VkPSOManager *PSO_MANAGER = nullptr;
 VkShaderManager *SHADER_MANAGER = nullptr;
-VkPipelineLayoutManager* PIPELINE_LAYOUT_MANAGER = nullptr;
+VkPipelineLayoutManager *PIPELINE_LAYOUT_MANAGER = nullptr;
 
-//TODO move this to manager
+// TODO move this to manager
 std::vector<VkDescriptorSetLayout> LAYOUTS_TO_DELETE;
 
 bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
@@ -123,6 +126,10 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
     assert(0);
   }
   COMMAND_BUFFER = commandBuffers[0];
+
+  // if constexpr (!USE_PUSH) {
+  vk::createDescriptorPool(vk::LOGICAL_DEVICE, {10000, 10000}, DESCRIPTOR_POOL);
+  //}
 
   SHADER_MANAGER = new VkShaderManager();
   SHADER_MANAGER->init();
@@ -261,10 +268,9 @@ bool VkRenderingContext::shutdownGraphic() {
 
   vkDeviceWaitIdle(LOGICAL_DEVICE);
 
-  bool result =destroySwapchain(LOGICAL_DEVICE, SWAP_CHAIN);
+  bool result = destroySwapchain(LOGICAL_DEVICE, SWAP_CHAIN);
   assert(result);
 
-  
   destroyStaticSamplers();
   vkDestroyPipelineLayout(LOGICAL_DEVICE, PIPELINE_LAYOUT, nullptr);
   vkDestroyRenderPass(LOGICAL_DEVICE, RENDER_PASS, nullptr);

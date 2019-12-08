@@ -121,10 +121,10 @@ VkFramebuffer createFrameBuffer(VkDevice logicalDevice, VkRenderPass renderPass,
                                 uint32_t height);
 
 VkShaderModule loadShader(VkDevice logicalDevice, const char *path);
-VkPipeline
-createGraphicsPipeline(VkDevice logicalDevice, VkShaderModule vs,
-                       VkShaderModule ps, VkRenderPass renderPass,
-                       VkPipelineVertexInputStateCreateInfo *vertexInfo);
+//VkPipeline
+//createGraphicsPipeline(VkDevice logicalDevice, VkShaderModule vs,
+//                       VkShaderModule ps, VkRenderPass renderPass,
+//                       VkPipelineVertexInputStateCreateInfo *vertexInfo);
 
 } // namespace vk
 } // namespace SirEngine
