@@ -4,9 +4,54 @@
 #include "SirEngine/memory/stackAllocator.h"
 #include "platform/windows/graphics/vk/vk.h"
 #include "vkRootSignatureManager.h"
+#include "vkShaderManager.h"
 #include <array>
 
 namespace SirEngine::vk {
+
+enum class PSOType { DXR = 0, RASTER, COMPUTE, INVALID };
+
+static const char *PSO_VS_SHADER_ENTRY_POINT = "main";
+static const char *PSO_PS_SHADER_ENTRY_POINT = "main";
+static const char *PSO_CS_SHADER_ENTRY_POINT = "main";
+
+static const std::string PSO_KEY_GLOBAL_ROOT = "globalRootSignature";
+static const std::string PSO_KEY_TYPE = "type";
+static const std::string PSO_KEY_TYPE_DXR = "DXR";
+static const std::string PSO_KEY_TYPE_RASTER = "RASTER";
+static const std::string PSO_KEY_TYPE_COMPUTE = "COMPUTE";
+static const std::string PSO_KEY_SHADER_NAME = "shaderName";
+static const std::string PSO_KEY_INPUT_LAYOUT = "inputLayout";
+static const std::string PSO_KEY_VS_SHADER = "VS";
+static const std::string PSO_KEY_PS_SHADER = "PS";
+static const std::string PSO_KEY_RASTER_STATE = "rasterState";
+static const std::string PSO_KEY_BLEND_STATE = "blendState";
+static const std::string PSO_KEY_DEPTH_STENCIL_STATE = "depthStencilState";
+static const std::string PSO_KEY_SAMPLE_MASK = "sampleMask";
+static const std::string PSO_KEY_TOPOLOGY_TYPE = "topologyType";
+static const std::string PSO_KEY_RENDER_TARGETS = "renderTargets";
+static const std::string PSO_KEY_RTV_FORMATS = "rtvFormats";
+static const std::string PSO_KEY_SAMPLE_DESC_COUNT = "sampleDescCount";
+static const std::string PSO_KEY_SAMPLE_DESC_QUALITY = "sampleDescQuality";
+static const std::string PSO_KEY_DSV_FORMAT = "dsvFormat";
+static const std::string PSO_KEY_DEPTH_STENCIL_CONFIG =
+    "depthStencilStateConfig";
+static const std::string DEFAULT_STRING = "";
+static const int DEFAULT_INT = -1;
+static const bool DEFAULT_BOOL = false;
+static const std::string DEFAULT_STATE = "default";
+static const std::string PSO_KEY_CUSTOM_STATE = "custom";
+static const std::string PSO_KEY_DEPTH_ENABLED = "depthEnabled";
+static const std::string PSO_KEY_STENCIL_ENABLED = "stencilEnabled";
+static const std::string PSO_KEY_DEPTH_COMPARISON_FUNCTION = "depthFunc";
+static const std::string PSO_KEY_RASTER_CONFIG = "rasterStateConfig";
+static const std::string PSO_KEY_RASTER_CULL_MODE = "cullMode";
+static const std::string PSO_KEY_STENCIL_FAIL_OP = "stencilFailOp";
+static const std::string PSO_KEY_STENCIL_DEPTH_FAIL_OP = "stencilDepthFailOp";
+static const std::string PSO_KEY_STENCIL_PASS_OP = "stencilPassOp";
+static const std::string PSO_KEY_STENCIL_COMPARISON_FUNCTION = "stencilFunc";
+
+static constexpr int MAX_SHADER_STAGE_COUNT = 5;
 
 VkSampler STATIC_SAMPLERS[STATIC_SAMPLER_COUNT];
 VkDescriptorImageInfo STATIC_SAMPLERS_INFO[STATIC_SAMPLER_COUNT];
@@ -17,6 +62,30 @@ const char *STATIC_SAMPLERS_NAMES[STATIC_SAMPLER_COUNT] = {
     "pointWrapSampler",   "pointClampSampler",      "linearWrapSampler",
     "linearClampSampler", "anisotropicWrapSampler", "anisotropicClampSampler",
     "pcfSampler"};
+
+static const std::unordered_map<std::string, PSOType> STRING_TO_PSO_TYPE{
+    {PSO_KEY_TYPE_DXR, PSOType::DXR},
+    {PSO_KEY_TYPE_COMPUTE, PSOType::COMPUTE},
+    {PSO_KEY_TYPE_RASTER, PSOType::RASTER},
+};
+static const std::unordered_map<std::string, VkPrimitiveTopology>
+    STRING_TO_TOPOLOGY = {
+        {"triangle", VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST},
+        {"line", VK_PRIMITIVE_TOPOLOGY_LINE_LIST},
+};
+
+static const std::unordered_map<std::string, VkCullModeFlagBits>
+    STRING_TO_CULL_MODE_FUNCTION{{"NONE", VK_CULL_MODE_NONE},
+                                 {"BACK", VK_CULL_MODE_BACK_BIT},
+                                 {"FRONT", VK_CULL_MODE_FRONT_BIT}};
+
+static const std::unordered_map<std::string, VkCompareOp>
+    STRING_TO_COMPARISON_FUNCTION{
+        {"LESS", VK_COMPARE_OP_LESS},
+        {"GREATER", VK_COMPARE_OP_GREATER},
+        {"ALWAYS", VK_COMPARE_OP_ALWAYS},
+        {"GREATER_EQUAL", VK_COMPARE_OP_GREATER_OR_EQUAL},
+        {"EQUAL", VK_COMPARE_OP_EQUAL}};
 
 std::array<const VkSamplerCreateInfo, STATIC_SAMPLER_COUNT>
 getStaticSamplersCreateInfo() {
@@ -151,82 +220,225 @@ void createStaticSamplerDescriptorSet(VkDescriptorPool &pool,
                                       // so it also knows the size
   VK_CHECK(
       vkAllocateDescriptorSets(vk::LOGICAL_DEVICE, &allocateInfo, &outSet));
-  SET_DEBUG_NAME(outSet,VK_OBJECT_TYPE_DESCRIPTOR_SET,"staticSamplersDescriptorSet");
-  SET_DEBUG_NAME(layout,VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT,"staticSamplersDescriptorSetLayout");
+  SET_DEBUG_NAME(outSet, VK_OBJECT_TYPE_DESCRIPTOR_SET,
+                 "staticSamplersDescriptorSet");
+  SET_DEBUG_NAME(layout, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT,
+                 "staticSamplersDescriptorSetLayout");
 }
 
 void destroyStaticSamplers() {
   for (int i = 0; i < STATIC_SAMPLER_COUNT; ++i) {
     vkDestroySampler(vk::LOGICAL_DEVICE, STATIC_SAMPLERS[i], nullptr);
   }
-  vkDestroyDescriptorSetLayout(vk::LOGICAL_DEVICE,STATIC_SAMPLER_LAYOUT,nullptr);
+  vkDestroyDescriptorSetLayout(vk::LOGICAL_DEVICE, STATIC_SAMPLER_LAYOUT,
+                               nullptr);
 }
 
-void getPipelineLayout(VkDevice logicalDevice,
-                       VkDescriptorSetLayout samplersLayout,
-                       VkDescriptorSetLayout &descriptorLayout,
-                       const char *rootFile, VkPipelineLayout *outLayout) {
-  // temporary hardcoded load root signature
+PSOType convertStringPSOTypeToEnum(const char *type) {
+  const auto found = STRING_TO_PSO_TYPE.find(type);
+  return (found != STRING_TO_PSO_TYPE.end() ? found->second : PSOType::INVALID);
 }
 
-VkPipeline
-createGraphicsPipeline(VkDevice logicalDevice, VkShaderModule vs,
-                       VkShaderModule ps, VkRenderPass renderPass,
-                       VkPipelineVertexInputStateCreateInfo *vertexInfo) {
-  const char *rootFile = "../data/rs/forwardPhongRS.json";
+void getShaderStageCreateInfo(const nlohmann::json &jobj,
+                              VkPipelineShaderStageCreateInfo *stages,
+                              int &shaderStageCount) {
 
-  RSHandle layoutHandle =
-      vk::PIPELINE_LAYOUT_MANAGER->loadSignatureFile(rootFile, vk::STATIC_SAMPLER_LAYOUT);
-  // TODO fix this should not be global anymore
-  vk::PIPELINE_LAYOUT =
-      vk::PIPELINE_LAYOUT_MANAGER->getLayoutFromHandle(layoutHandle);
+  // we have a raster pso lets pull out the shader stages
+  const std::string vsFile =
+      getValueIfInJson(jobj, PSO_KEY_VS_SHADER, DEFAULT_STRING);
+  assert(!vsFile.empty());
+  int id = shaderStageCount++;
+  // fill up shader binding
 
-  // here we define all the stages of the pipeline
-  VkPipelineShaderStageCreateInfo stages[2] = {};
-  stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-  stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
-  stages[0].module = vs;
-  stages[0].pName = "main";
   // this allows us to change constants at pipeline creation time,
   // this can allow for example to change compute shaders group size
-  // and possibly allow brute force benchmarks with different sizes
-  // vsInfo.pSpecializationInfo;
-  stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-  stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-  stages[1].module = ps;
-  stages[1].pName = "main";
+  // and possibly allow brute force benchmarks with different group sizes(CS
+  // only) vsInfo.pSpecializationInfo;
+  stages[id].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+  stages[id].stage = VK_SHADER_STAGE_VERTEX_BIT;
+  stages[id].module = vk::SHADER_MANAGER->getShaderFromName(vsFile);
+  stages[id].pName = PSO_VS_SHADER_ENTRY_POINT;
 
-  VkPipelineVertexInputStateCreateInfo vertexInputCreateInfo{
-      VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO};
+  const std::string psFile =
+      getValueIfInJson(jobj, PSO_KEY_PS_SHADER, DEFAULT_STRING);
+  if (!psFile.empty()) {
+    id = shaderStageCount++;
 
-  VkPipelineInputAssemblyStateCreateInfo inputAssemblyCreateInfo{
-      VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO};
-  inputAssemblyCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    stages[id].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    stages[id].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+    stages[id].module = vk::SHADER_MANAGER->getShaderFromName(psFile);
+    stages[id].pName = PSO_PS_SHADER_ENTRY_POINT;
+  }
+}
+
+inline VkPrimitiveTopology
+convertStringToTopology(const std::string &topology) {
+  const auto found = STRING_TO_TOPOLOGY.find(topology);
+  if (found != STRING_TO_TOPOLOGY.end()) {
+    return found->second;
+  }
+  assert(0 &&
+         "provided string format is not a valid VK topology, or unsupported");
+  return VK_PRIMITIVE_TOPOLOGY_MAX_ENUM;
+}
+
+void getAssemblyCreateInfo(
+    const nlohmann::json &jobj,
+    VkPipelineInputAssemblyStateCreateInfo &inputAssemblyCreateInfo) {
+
+  const std::string topology =
+      getValueIfInJson(jobj, PSO_KEY_TOPOLOGY_TYPE, DEFAULT_STRING);
+  assert(!topology.empty());
+
+  inputAssemblyCreateInfo.topology = convertStringToTopology(topology);
+  assert(inputAssemblyCreateInfo.topology != VK_PRIMITIVE_TOPOLOGY_MAX_ENUM);
+  // always false unless geometry shader?
   inputAssemblyCreateInfo.primitiveRestartEnable = false;
+}
 
-  VkPipelineViewportStateCreateInfo viewportCreateInfo{
-      VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO};
-  viewportCreateInfo.viewportCount = 1;
-  viewportCreateInfo.scissorCount = 1;
+VkCullModeFlagBits getCullMode(const nlohmann::json &jobj) {
+  const std::string funcDefault = "BACK";
+  const std::string func =
+      getValueIfInJson(jobj, PSO_KEY_RASTER_CULL_MODE, funcDefault);
+  const auto found = STRING_TO_CULL_MODE_FUNCTION.find(func);
+  assert(found != STRING_TO_CULL_MODE_FUNCTION.end());
+  return found->second;
+}
 
-  VkPipelineRasterizationStateCreateInfo rasterInfo{
-      VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO};
+void getRasterInfo(const nlohmann::json jobj,
+                   VkPipelineRasterizationStateCreateInfo &rasterInfo) {
   rasterInfo.depthClampEnable = false;
   rasterInfo.rasterizerDiscardEnable = false;
   rasterInfo.polygonMode = VK_POLYGON_MODE_FILL;
   rasterInfo.cullMode = VK_CULL_MODE_FRONT_BIT;
   rasterInfo.lineWidth = 1.0f; // even if we don't use it must be specified
   rasterInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-  ;
 
+  const std::string rasterStateString =
+      getValueIfInJson(jobj, PSO_KEY_RASTER_STATE, DEFAULT_STRING);
+
+  const bool rasterDefault = rasterStateString == DEFAULT_STATE;
+  if (rasterDefault) {
+    rasterInfo.depthClampEnable = false;
+    rasterInfo.rasterizerDiscardEnable = false;
+    rasterInfo.polygonMode = VK_POLYGON_MODE_FILL;
+    rasterInfo.cullMode = VK_CULL_MODE_BACK_BIT;
+    rasterInfo.lineWidth = 1.0f; // even if we don't use it must be specified
+    rasterInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
+    return;
+  }
+  // if we are here means we have a custom state
+  assert(jobj.find(PSO_KEY_RASTER_CONFIG) != jobj.end());
+  const auto config = jobj[PSO_KEY_RASTER_CONFIG];
+
+  rasterInfo.depthClampEnable = false;
+  rasterInfo.rasterizerDiscardEnable = false;
+  rasterInfo.polygonMode = VK_POLYGON_MODE_FILL;
+  rasterInfo.cullMode = getCullMode(config);
+  rasterInfo.lineWidth = 1.0f; // even if we don't use it must be specified
+  rasterInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
+}
+
+inline VkCompareOp getComparisonFunction(const nlohmann::json &jobj,
+                                                   const std::string &key) {
+  const std::string funcDefault = "LESS";
+  const std::string func = getValueIfInJson(jobj, key, funcDefault);
+  const auto found = STRING_TO_COMPARISON_FUNCTION.find(func);
+  assert(found != STRING_TO_COMPARISON_FUNCTION.end());
+  return found->second;
+}
+
+void getDepthStancilState(
+    const nlohmann::json jobj,
+    VkPipelineDepthStencilStateCreateInfo &depthStencilState) {
+  const std::string depthStencilStateString =
+      getValueIfInJson(jobj, PSO_KEY_DEPTH_STENCIL_STATE, DEFAULT_STRING);
+
+  const bool isDefault = depthStencilStateString == DEFAULT_STATE;
+  if (isDefault) {
+    depthStencilState.depthTestEnable = true;
+    depthStencilState.depthWriteEnable = true;
+    depthStencilState.depthCompareOp = VK_COMPARE_OP_GREATER;
+    return;
+  }
+  assert(jobj.find(PSO_KEY_DEPTH_STENCIL_CONFIG) != jobj.end());
+  const auto dssObj = jobj[PSO_KEY_DEPTH_STENCIL_CONFIG];
+
+  const bool depthEnabled =
+      getValueIfInJson(dssObj, PSO_KEY_DEPTH_ENABLED, DEFAULT_BOOL);
+  depthStencilState.depthTestEnable = depthEnabled;
+
+  depthStencilState.depthCompareOp =
+      getComparisonFunction(dssObj, PSO_KEY_DEPTH_COMPARISON_FUNCTION);
+  const bool stencilEnabled =
+      getValueIfInJson(dssObj, PSO_KEY_STENCIL_ENABLED, DEFAULT_BOOL);
+  depthStencilState.stencilTestEnable = stencilEnabled;
+
+  //TODO investigate stencil function in vulkan
+  //const D3D12_STENCIL_OP stencilFail =
+  //    getStencilOperationFunction(dssObj, PSO_KEY_STENCIL_FAIL_OP);
+  //const D3D12_STENCIL_OP depthFail =
+  //    getStencilOperationFunction(dssObj, PSO_KEY_STENCIL_DEPTH_FAIL_OP);
+  //const D3D12_STENCIL_OP stencilPass =
+  //    getStencilOperationFunction(dssObj, PSO_KEY_STENCIL_PASS_OP);
+  //const D3D12_COMPARISON_FUNC stencilFunction =
+  //    getComparisonFunction(dssObj, PSO_KEY_STENCIL_COMPARISON_FUNCTION);
+  //const D3D12_DEPTH_STENCILOP_DESC defaultStencilOp = {
+  //    stencilFail, depthFail, stencilPass, stencilFunction};
+  //desc.FrontFace = defaultStencilOp;
+  //desc.BackFace = defaultStencilOp;
+}
+
+VkPipeline processRasterPSO(nlohmann::json::const_reference jobj,
+                            VkRenderPass renderPass,
+                            VkPipelineVertexInputStateCreateInfo *vertexInfo) {
+  // load root signature
+  const std::string rootFile =
+      getValueIfInJson(jobj, PSO_KEY_GLOBAL_ROOT, DEFAULT_STRING);
+  assert(!rootFile.empty());
+
+  RSHandle layoutHandle = vk::PIPELINE_LAYOUT_MANAGER->loadSignatureFile(
+      rootFile.c_str(), vk::STATIC_SAMPLER_LAYOUT);
+  // TODO fix this should not be global anymore
+  vk::PIPELINE_LAYOUT =
+      vk::PIPELINE_LAYOUT_MANAGER->getLayoutFromHandle(layoutHandle);
+
+  // load shader stage
+  // here we define all the stages of the pipeline
+  VkPipelineShaderStageCreateInfo stages[MAX_SHADER_STAGE_COUNT] = {};
+  int shaderStageCount = 0;
+  getShaderStageCreateInfo(jobj, stages, shaderStageCount);
+
+  // TODO right now we are not using a vertex input, this needs to be fixed and
+  // read from PSO
+  VkPipelineVertexInputStateCreateInfo vertexInputCreateInfo{
+      VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO};
+
+  // input assembler info
+  VkPipelineInputAssemblyStateCreateInfo inputAssemblyCreateInfo{
+      VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO};
+  getAssemblyCreateInfo(jobj, inputAssemblyCreateInfo);
+
+  VkPipelineViewportStateCreateInfo viewportCreateInfo{
+      VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO};
+  viewportCreateInfo.viewportCount = 1;
+  viewportCreateInfo.scissorCount = 1;
+
+  // process raster info
+  VkPipelineRasterizationStateCreateInfo rasterInfo{
+      VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO};
+  getRasterInfo(jobj, rasterInfo);
+
+  // TODO support MSAA
   VkPipelineMultisampleStateCreateInfo multisampleState{
       VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO};
   multisampleState.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
-  VkGraphicsPipelineCreateInfo createInfo{
-      VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
+  // TODO fix depth test
   VkPipelineDepthStencilStateCreateInfo depthStencilState = {
       VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO};
+  getDepthStancilState(jobj, depthStencilState);
+  //TODO remove this
   depthStencilState.depthTestEnable = false;
 
   VkPipelineColorBlendAttachmentState attachState{};
@@ -239,6 +451,8 @@ createGraphicsPipeline(VkDevice logicalDevice, VkShaderModule vs,
   blendState.attachmentCount = 1;
   blendState.pAttachments = &attachState;
 
+  // always support dynamic viewport and scissor such that we can resize without
+  // recompile PSOs
   VkDynamicState dynStateFlags[] = {VK_DYNAMIC_STATE_VIEWPORT,
                                     VK_DYNAMIC_STATE_SCISSOR};
 
@@ -248,7 +462,10 @@ createGraphicsPipeline(VkDevice logicalDevice, VkShaderModule vs,
       sizeof(dynStateFlags) / sizeof(dynStateFlags[0]);
   dynamicState.pDynamicStates = dynStateFlags;
 
-  createInfo.stageCount = 2;
+  // create the actual pipline
+  VkGraphicsPipelineCreateInfo createInfo{
+      VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
+  createInfo.stageCount = shaderStageCount;
   createInfo.pStages = stages;
   createInfo.pVertexInputState =
       vertexInfo != nullptr ? vertexInfo : &vertexInputCreateInfo;
@@ -263,11 +480,45 @@ createGraphicsPipeline(VkDevice logicalDevice, VkShaderModule vs,
   createInfo.layout = PIPELINE_LAYOUT;
 
   VkPipeline pipeline = nullptr;
-  VkResult status = vkCreateGraphicsPipelines(logicalDevice, nullptr, 1,
+  VkResult status = vkCreateGraphicsPipelines(vk::LOGICAL_DEVICE, nullptr, 1,
                                               &createInfo, nullptr, &pipeline);
   assert(status == VK_SUCCESS);
   assert(pipeline);
   return pipeline;
+};
+
+VkPipeline
+createGraphicsPipeline(const char *psoPath, VkDevice logicalDevice,
+                       VkRenderPass renderPass,
+                       VkPipelineVertexInputStateCreateInfo *vertexInfo) {
+
+  auto jobj = getJsonObj(psoPath);
+
+  const std::string typeString =
+      getValueIfInJson(jobj, PSO_KEY_TYPE, DEFAULT_STRING);
+  assert(!typeString.empty());
+  PSOType type = convertStringPSOTypeToEnum(typeString.c_str());
+
+  switch (type) {
+  case PSOType::DXR: {
+    assert(0 && "Unsupported PSO type");
+    break;
+  }
+  case PSOType::RASTER: {
+    return processRasterPSO(jobj, renderPass, vertexInfo);
+    break;
+  }
+  case PSOType::COMPUTE: {
+    assert(0 && "Unsupported PSO type");
+    break;
+  }
+  case PSOType::INVALID: {
+    assert(0 && "Unsupported PSO type");
+    break;
+  }
+  default:;
+  }
+  return nullptr;
 }
 
 void initStaticSamplers() {

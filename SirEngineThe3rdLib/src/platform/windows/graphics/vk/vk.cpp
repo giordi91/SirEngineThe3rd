@@ -272,6 +272,7 @@ bool VkRenderingContext::shutdownGraphic() {
   assert(result);
 
   destroyStaticSamplers();
+  SHADER_MANAGER->cleanup();
   vkDestroyPipelineLayout(LOGICAL_DEVICE, PIPELINE_LAYOUT, nullptr);
   vkDestroyRenderPass(LOGICAL_DEVICE, RENDER_PASS, nullptr);
   vkDestroySemaphore(LOGICAL_DEVICE, IMAGE_ACQUIRED_SEMAPHORE, nullptr);

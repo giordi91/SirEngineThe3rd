@@ -4,6 +4,7 @@
 
 namespace SirEngine::vk {
 
+
 #define STATIC_SAMPLER_COUNT 7
 extern VkSampler STATIC_SAMPLERS[STATIC_SAMPLER_COUNT];
 extern VkDescriptorImageInfo STATIC_SAMPLERS_INFO[STATIC_SAMPLER_COUNT];
@@ -13,8 +14,8 @@ extern VkDescriptorSet
                                    // the samplers and not bound them as static
 
 VkPipeline
-createGraphicsPipeline(VkDevice logicalDevice, VkShaderModule vs,
-                       VkShaderModule ps, VkRenderPass renderPass,
+createGraphicsPipeline(const char *psoPath, VkDevice logicalDevice,
+                       VkRenderPass renderPass,
                        VkPipelineVertexInputStateCreateInfo *vertexInfo);
 void initStaticSamplers();
 void createStaticSamplerDescriptorSet(VkDescriptorPool &pool,

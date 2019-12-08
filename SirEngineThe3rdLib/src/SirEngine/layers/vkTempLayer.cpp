@@ -26,14 +26,8 @@ void VkTempLayer::onAttach() {
   globals::MAIN_CAMERA->setPosition(0, 14, 10);
   globals::MAIN_CAMERA->updateCamera();
 
+  //TODO move this in PSO manager
   vk::initStaticSamplers();
-
-  //vk::createStaticSamplerDescriptorSet(m_dPool, m_samplersDescriptorSets,
-  //                                     m_samplersLayout);
-  m_vs = vk::SHADER_MANAGER->getShaderFromName("triangleVS");
-  m_fs = vk::SHADER_MANAGER->getShaderFromName("trianglePS");
-  assert(m_vs);
-  assert(m_fs);
 
   // load mesh
   loadMesh("../data/external/vk/lucy.obj", m_mesh);
@@ -59,7 +53,7 @@ void VkTempLayer::onAttach() {
   SET_DEBUG_NAME(m_indexBuffer.buffer, VK_OBJECT_TYPE_BUFFER, "index buffer");
 
   m_pipeline =
-      vk::createGraphicsPipeline(vk::LOGICAL_DEVICE, m_vs, m_fs,
+      vk::createGraphicsPipeline("../data/pso/forwardPhongPSO.json",vk::LOGICAL_DEVICE,
                                  vk::RENDER_PASS, nullptr);
 
   loadTextureFromFile("../data/external/vk/uv.DDS",
@@ -99,26 +93,26 @@ void init_sampler(VkSampler &sampler) {
 void VkTempLayer::createDescriptorLayoutAdvanced() {
 
   constexpr int resource_count = 2;
-  VkDescriptorSetLayoutBinding resource_binding[resource_count] = {};
-  resource_binding[0].binding = 0;
-  resource_binding[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  resource_binding[0].descriptorCount = 1;
-  resource_binding[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-  resource_binding[0].pImmutableSamplers = NULL;
-  resource_binding[1].binding = 1;
-  resource_binding[1].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-  resource_binding[1].descriptorCount = 1;
-  resource_binding[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-  resource_binding[1].pImmutableSamplers = NULL;
+  VkDescriptorSetLayoutBinding resourceBinding[resource_count] = {};
+  resourceBinding[0].binding = 0;
+  resourceBinding[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  resourceBinding[0].descriptorCount = 1;
+  resourceBinding[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+  resourceBinding[0].pImmutableSamplers = NULL;
+  resourceBinding[1].binding = 1;
+  resourceBinding[1].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+  resourceBinding[1].descriptorCount = 1;
+  resourceBinding[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+  resourceBinding[1].pImmutableSamplers = NULL;
 
-  VkDescriptorSetLayoutCreateInfo resource_layout_info[1] = {};
-  resource_layout_info[0].sType =
+  VkDescriptorSetLayoutCreateInfo resourceLayoutInfo[1] = {};
+  resourceLayoutInfo[0].sType =
       VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-  resource_layout_info[0].pNext = NULL;
-  resource_layout_info[0].bindingCount = resource_count;
-  resource_layout_info[0].pBindings = resource_binding;
+  resourceLayoutInfo[0].pNext = NULL;
+  resourceLayoutInfo[0].bindingCount = resource_count;
+  resourceLayoutInfo[0].pBindings = resourceBinding;
 
-  VK_CHECK(vkCreateDescriptorSetLayout(vk::LOGICAL_DEVICE, resource_layout_info,
+  VK_CHECK(vkCreateDescriptorSetLayout(vk::LOGICAL_DEVICE, resourceLayoutInfo,
                                        NULL, &m_setLayout));
 
   SET_DEBUG_NAME(m_setLayout, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT,
@@ -290,8 +284,6 @@ void VkTempLayer::onEvent(Event &event) {
 
 void VkTempLayer::clear() {
   vkDeviceWaitIdle(vk::LOGICAL_DEVICE);
-  vkDestroyShaderModule(vk::LOGICAL_DEVICE, m_vs, nullptr);
-  vkDestroyShaderModule(vk::LOGICAL_DEVICE, m_fs, nullptr);
   destroyBuffer(vk::LOGICAL_DEVICE, m_vertexBuffer);
   destroyBuffer(vk::LOGICAL_DEVICE, m_indexBuffer);
   for (auto layout : vk::LAYOUTS_TO_DELETE) {
