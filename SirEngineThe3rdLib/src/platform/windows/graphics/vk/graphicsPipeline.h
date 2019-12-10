@@ -10,7 +10,7 @@ extern VkSampler STATIC_SAMPLERS[STATIC_SAMPLER_COUNT];
 extern VkDescriptorImageInfo STATIC_SAMPLERS_INFO[STATIC_SAMPLER_COUNT];
 extern VkDescriptorSetLayout STATIC_SAMPLER_LAYOUT;
 extern VkDescriptorSet
-    STATIC_SEMPLER_DESCRIPTOR_SET; // used in case you want to manually update
+    STATIC_SAMPLER_DESCRIPTOR_SET; // used in case you want to manually update
                                    // the samplers and not bound them as static
 
 VkPipeline

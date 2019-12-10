@@ -250,7 +250,7 @@ void VkTempLayer::onUpdate() {
                               descriptor);
   } else {
   */
-  VkDescriptorSet sets[] = {m_meshDescriptorSet, vk::STATIC_SEMPLER_DESCRIPTOR_SET};
+  VkDescriptorSet sets[] = {m_meshDescriptorSet, vk::STATIC_SAMPLER_DESCRIPTOR_SET};
   // multiple descriptor sets
   vkCmdBindDescriptorSets(vk::COMMAND_BUFFER, VK_PIPELINE_BIND_POINT_GRAPHICS,
                           vk::PIPELINE_LAYOUT, 0, 2, sets, 0, nullptr);

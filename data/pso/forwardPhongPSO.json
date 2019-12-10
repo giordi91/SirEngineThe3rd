@@ -6,7 +6,7 @@
   "PS": "trianglePS",
   "rasterState": "default",
   "blendState": "default",
-  "depthStencilState": "custom",
+  "depthStencilState": "default",
   "depthStencilStateConfig": {
     "depthEnabled": true,
     "depthFunc": "GREATER",

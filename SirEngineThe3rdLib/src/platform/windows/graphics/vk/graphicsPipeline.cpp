@@ -56,7 +56,12 @@ static constexpr int MAX_SHADER_STAGE_COUNT = 5;
 VkSampler STATIC_SAMPLERS[STATIC_SAMPLER_COUNT];
 VkDescriptorImageInfo STATIC_SAMPLERS_INFO[STATIC_SAMPLER_COUNT];
 VkDescriptorSetLayout STATIC_SAMPLER_LAYOUT;
-VkDescriptorSet STATIC_SEMPLER_DESCRIPTOR_SET;
+VkDescriptorSet STATIC_SAMPLER_DESCRIPTOR_SET;
+
+void assertInJson(const nlohmann::json &jobj, const std::string &key) {
+  const auto found = jobj.find(key);
+  assert(found != jobj.end());
+}
 
 const char *STATIC_SAMPLERS_NAMES[STATIC_SAMPLER_COUNT] = {
     "pointWrapSampler",   "pointClampSampler",      "linearWrapSampler",
@@ -86,6 +91,21 @@ static const std::unordered_map<std::string, VkCompareOp>
         {"ALWAYS", VK_COMPARE_OP_ALWAYS},
         {"GREATER_EQUAL", VK_COMPARE_OP_GREATER_OR_EQUAL},
         {"EQUAL", VK_COMPARE_OP_EQUAL}};
+
+static const std::unordered_map<std::string, VkStencilOp> STRING_TO_STENCIL_OP{
+    {"KEEP", VK_STENCIL_OP_KEEP},
+    {"ZERO", VK_STENCIL_OP_ZERO},
+    {"REPLACE", VK_STENCIL_OP_REPLACE},
+    {"INCR_SAT", VK_STENCIL_OP_INCREMENT_AND_CLAMP},
+    {"DECR_SAT", VK_STENCIL_OP_DECREMENT_AND_CLAMP},
+    {"INVERT", VK_STENCIL_OP_INVERT},
+    {"INCR", VK_STENCIL_OP_INCREMENT_AND_WRAP},
+    {"DECR", VK_STENCIL_OP_DECREMENT_AND_WRAP}};
+
+static const std::unordered_map<std::string, VkFormat> STRING_TO_VK_FORMAT{
+    {"DXGI_FORMAT_R16G16B16A16_FLOAT", VK_FORMAT_R16G16B16A16_SFLOAT},
+    {"DXGI_FORMAT_D32_FLOAT_S8X24_UINT", VK_FORMAT_D32_SFLOAT_S8_UINT},
+    {"DXGI_FORMAT_R8G8B8A8_UNORM", VK_FORMAT_R8G8B8A8_UNORM}};
 
 std::array<const VkSamplerCreateInfo, STATIC_SAMPLER_COUNT>
 getStaticSamplersCreateInfo() {
@@ -340,7 +360,7 @@ void getRasterInfo(const nlohmann::json jobj,
 }
 
 inline VkCompareOp getComparisonFunction(const nlohmann::json &jobj,
-                                                   const std::string &key) {
+                                         const std::string &key) {
   const std::string funcDefault = "LESS";
   const std::string func = getValueIfInJson(jobj, key, funcDefault);
   const auto found = STRING_TO_COMPARISON_FUNCTION.find(func);
@@ -348,7 +368,16 @@ inline VkCompareOp getComparisonFunction(const nlohmann::json &jobj,
   return found->second;
 }
 
-void getDepthStancilState(
+inline VkStencilOp getStencilOperationFunction(const nlohmann::json &jobj,
+                                               const std::string &key) {
+  const std::string funcDefault = "KEEP";
+  const std::string func = getValueIfInJson(jobj, key, funcDefault);
+  const auto found = STRING_TO_STENCIL_OP.find(func);
+  assert(found != STRING_TO_STENCIL_OP.end());
+  return found->second;
+}
+
+void getDepthStencilState(
     const nlohmann::json jobj,
     VkPipelineDepthStencilStateCreateInfo &depthStencilState) {
   const std::string depthStencilStateString =
@@ -359,6 +388,7 @@ void getDepthStancilState(
     depthStencilState.depthTestEnable = true;
     depthStencilState.depthWriteEnable = true;
     depthStencilState.depthCompareOp = VK_COMPARE_OP_GREATER;
+    depthStencilState.stencilTestEnable = false;
     return;
   }
   assert(jobj.find(PSO_KEY_DEPTH_STENCIL_CONFIG) != jobj.end());
@@ -373,20 +403,85 @@ void getDepthStancilState(
   const bool stencilEnabled =
       getValueIfInJson(dssObj, PSO_KEY_STENCIL_ENABLED, DEFAULT_BOOL);
   depthStencilState.stencilTestEnable = stencilEnabled;
+  const VkStencilOp stencilFail =
+      getStencilOperationFunction(dssObj, PSO_KEY_STENCIL_FAIL_OP);
+  const VkStencilOp depthFail =
+      getStencilOperationFunction(dssObj, PSO_KEY_STENCIL_DEPTH_FAIL_OP);
+  const VkStencilOp stencilPass =
+      getStencilOperationFunction(dssObj, PSO_KEY_STENCIL_PASS_OP);
+  const VkCompareOp stencilFunction =
+      getComparisonFunction(dssObj, PSO_KEY_STENCIL_COMPARISON_FUNCTION);
 
-  //TODO investigate stencil function in vulkan
-  //const D3D12_STENCIL_OP stencilFail =
-  //    getStencilOperationFunction(dssObj, PSO_KEY_STENCIL_FAIL_OP);
-  //const D3D12_STENCIL_OP depthFail =
-  //    getStencilOperationFunction(dssObj, PSO_KEY_STENCIL_DEPTH_FAIL_OP);
-  //const D3D12_STENCIL_OP stencilPass =
-  //    getStencilOperationFunction(dssObj, PSO_KEY_STENCIL_PASS_OP);
-  //const D3D12_COMPARISON_FUNC stencilFunction =
-  //    getComparisonFunction(dssObj, PSO_KEY_STENCIL_COMPARISON_FUNCTION);
-  //const D3D12_DEPTH_STENCILOP_DESC defaultStencilOp = {
-  //    stencilFail, depthFail, stencilPass, stencilFunction};
-  //desc.FrontFace = defaultStencilOp;
-  //desc.BackFace = defaultStencilOp;
+  depthStencilState.front.compareOp = stencilFunction;
+  depthStencilState.front.failOp = stencilFail;
+  depthStencilState.front.passOp = stencilPass;
+  depthStencilState.front.depthFailOp = depthFail;
+  depthStencilState.front.compareMask = 0xff;
+  depthStencilState.front.writeMask = 0xff;
+  depthStencilState.back = depthStencilState.front;
+}
+
+inline VkFormat convertStringToTextureFormat(const std::string &format) {
+  const auto found = STRING_TO_VK_FORMAT.find(format);
+  if (found != STRING_TO_VK_FORMAT.end()) {
+    return found->second;
+  }
+  assert(0 && "provided string format is not a valid VK format");
+  return VK_FORMAT_UNDEFINED;
+}
+
+
+VkRenderPass getRenderPass(const nlohmann::json &jobj) {
+  const uint32_t renderTargets =
+      getValueIfInJson(jobj, PSO_KEY_RENDER_TARGETS, DEFAULT_INT);
+
+  assertInJson(jobj, PSO_KEY_RTV_FORMATS);
+
+  // TODO change this to maximum number of attachments
+  VkAttachmentDescription attachments[10] = {};
+  VkAttachmentReference attachmentsRefs[10] = {};
+  int count = 0;
+  for (auto &format : jobj[PSO_KEY_RTV_FORMATS]) {
+    VkFormat currentFormat =
+        convertStringToTextureFormat(format.get<std::string>());
+    assert(currentFormat != VK_FORMAT_UNDEFINED && "Unsupported render format");
+
+    attachments[count].format = currentFormat;
+    // TODO no MSAA yet
+    attachments[count].samples = VK_SAMPLE_COUNT_1_BIT;
+    attachments[count].loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+    attachments[count].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    // TODO not really sure what to do about the stencil...
+    // for now set to load and store, should leave it untouched
+    attachments[count].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+    attachments[count].stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
+    attachments[count].initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    attachments[count].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+    // we have only one subpass and uses all attachments
+    attachmentsRefs[count].attachment = count;
+    attachmentsRefs[count].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    count++;
+  }
+  assert(renderTargets == count &&
+         "number of render targets and provided formats don't match");
+
+  VkRenderPass renderPass{};
+
+  VkSubpassDescription subPass{};
+  subPass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+  subPass.colorAttachmentCount = count;
+  subPass.pColorAttachments = attachmentsRefs;
+
+  VkRenderPassCreateInfo createInfo{VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO};
+  createInfo.attachmentCount = count;
+  createInfo.pAttachments = attachments;
+  createInfo.subpassCount = 1;
+  createInfo.pSubpasses = &subPass;
+
+  vkCreateRenderPass(vk::LOGICAL_DEVICE, &createInfo, nullptr, &renderPass);
+  return renderPass;
+
 }
 
 VkPipeline processRasterPSO(nlohmann::json::const_reference jobj,
@@ -437,9 +532,16 @@ VkPipeline processRasterPSO(nlohmann::json::const_reference jobj,
   // TODO fix depth test
   VkPipelineDepthStencilStateCreateInfo depthStencilState = {
       VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO};
-  getDepthStancilState(jobj, depthStencilState);
-  //TODO remove this
+  getDepthStencilState(jobj, depthStencilState);
+  // TODO remove this
   depthStencilState.depthTestEnable = false;
+
+  const std::string blendStateString =
+      getValueIfInJson(jobj, PSO_KEY_BLEND_STATE, DEFAULT_STRING);
+  assert(blendStateString == "default" &&
+         "no supported blend state other than default");
+
+  VkRenderPass pass = getRenderPass(jobj);
 
   VkPipelineColorBlendAttachmentState attachState{};
   attachState.colorWriteMask =
@@ -535,7 +637,7 @@ void initStaticSamplers() {
     STATIC_SAMPLERS_INFO[i].sampler = STATIC_SAMPLERS[i];
   }
   createStaticSamplerDescriptorSet(vk::DESCRIPTOR_POOL,
-                                   STATIC_SEMPLER_DESCRIPTOR_SET,
+                                   STATIC_SAMPLER_DESCRIPTOR_SET,
                                    STATIC_SAMPLER_LAYOUT);
 }
 
