@@ -15,7 +15,7 @@ extern VkDescriptorSet
 
 VkPipeline
 createGraphicsPipeline(const char *psoPath, VkDevice logicalDevice,
-                       VkRenderPass renderPass,
+                       VkRenderPass& renderPass,
                        VkPipelineVertexInputStateCreateInfo *vertexInfo);
 void initStaticSamplers();
 void createStaticSamplerDescriptorSet(VkDescriptorPool &pool,

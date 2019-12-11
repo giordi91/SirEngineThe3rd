@@ -19,7 +19,7 @@
   "sampleMask": "max",
   "topologyType": "triangle",
   "renderTargets": 1,
-  "rtvFormats": [ "DXGI_FORMAT_R16G16B16A16_FLOAT" ],
+  "rtvFormats": [ "DXGI_FORMAT_B8G8R8A8_UNORM" ],
   "sampleDescCount": 1,
   "sampleDescQuality": 0,
   "dsvFormat": "DXGI_FORMAT_D32_FLOAT_S8X24_UINT"
