@@ -16,6 +16,11 @@ struct VkTexture2D {
   VkDescriptorImageInfo samplerOnly{};
 };
 
+bool createRenderTarget (const char *name, VkFormat format, VkDevice device,
+                         VkTexture2D &outTexture,
+                         VkImageUsageFlags imageUsageFlags,
+                         VkImageLayout imageLayout, uint32_t width, uint32_t height); 
+
 bool loadTextureFromFile(
     const char *name, VkFormat format, VkDevice device, 
     VkTexture2D &outTexture,

@@ -71,6 +71,8 @@ private:
   VkDescriptorSetLayout m_setLayout;
   VkDescriptorSet m_meshDescriptorSet;
   vk::VkTexture2D uvTexture;
+  vk::VkTexture2D m_rt;
+  VkFramebuffer m_tempFrameBuffer;
 
 };
 } // namespace SirEngine

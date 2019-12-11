@@ -105,7 +105,8 @@ static const std::unordered_map<std::string, VkStencilOp> STRING_TO_STENCIL_OP{
 static const std::unordered_map<std::string, VkFormat> STRING_TO_VK_FORMAT{
     {"DXGI_FORMAT_R16G16B16A16_FLOAT", VK_FORMAT_R16G16B16A16_SFLOAT},
     {"DXGI_FORMAT_D32_FLOAT_S8X24_UINT", VK_FORMAT_D32_SFLOAT_S8_UINT},
-    {"DXGI_FORMAT_R8G8B8A8_UNORM", VK_FORMAT_R8G8B8A8_UNORM}};
+    {"DXGI_FORMAT_R8G8B8A8_UNORM", VK_FORMAT_R8G8B8A8_UNORM},
+    {"DXGI_FORMAT_B8G8R8A8_UNORM", VK_FORMAT_B8G8R8A8_UNORM}};
 
 std::array<const VkSamplerCreateInfo, STATIC_SAMPLER_COUNT>
 getStaticSamplersCreateInfo() {
@@ -244,6 +245,7 @@ void createStaticSamplerDescriptorSet(VkDescriptorPool &pool,
                  "staticSamplersDescriptorSet");
   SET_DEBUG_NAME(layout, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT,
                  "staticSamplersDescriptorSetLayout");
+
 }
 
 void destroyStaticSamplers() {
@@ -449,12 +451,15 @@ VkRenderPass getRenderPass(const nlohmann::json &jobj) {
     attachments[count].format = currentFormat;
     // TODO no MSAA yet
     attachments[count].samples = VK_SAMPLE_COUNT_1_BIT;
-    attachments[count].loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+    //attachments[count].loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+    attachments[count].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     attachments[count].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
     // TODO not really sure what to do about the stencil...
     // for now set to load and store, should leave it untouched
-    attachments[count].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
-    attachments[count].stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
+    //attachments[count].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+    //attachments[count].stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
+    attachments[count].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    attachments[count].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     attachments[count].initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
     attachments[count].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
@@ -485,7 +490,7 @@ VkRenderPass getRenderPass(const nlohmann::json &jobj) {
 }
 
 VkPipeline processRasterPSO(nlohmann::json::const_reference jobj,
-                            VkRenderPass renderPass,
+                            VkRenderPass& renderPass,
                             VkPipelineVertexInputStateCreateInfo *vertexInfo) {
   // load root signature
   const std::string rootFile =
@@ -541,7 +546,8 @@ VkPipeline processRasterPSO(nlohmann::json::const_reference jobj,
   assert(blendStateString == "default" &&
          "no supported blend state other than default");
 
-  VkRenderPass pass = getRenderPass(jobj);
+
+  renderPass = getRenderPass(jobj);
 
   VkPipelineColorBlendAttachmentState attachState{};
   attachState.colorWriteMask =
@@ -591,7 +597,7 @@ VkPipeline processRasterPSO(nlohmann::json::const_reference jobj,
 
 VkPipeline
 createGraphicsPipeline(const char *psoPath, VkDevice logicalDevice,
-                       VkRenderPass renderPass,
+                       VkRenderPass& renderPass,
                        VkPipelineVertexInputStateCreateInfo *vertexInfo) {
 
   auto jobj = getJsonObj(psoPath);

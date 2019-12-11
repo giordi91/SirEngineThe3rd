@@ -26,7 +26,7 @@ void VkTempLayer::onAttach() {
   globals::MAIN_CAMERA->setPosition(0, 14, 10);
   globals::MAIN_CAMERA->updateCamera();
 
-  //TODO move this in PSO manager
+  // TODO move this in PSO manager
   vk::initStaticSamplers();
 
   // load mesh
@@ -53,13 +53,31 @@ void VkTempLayer::onAttach() {
   SET_DEBUG_NAME(m_indexBuffer.buffer, VK_OBJECT_TYPE_BUFFER, "index buffer");
 
   m_pipeline =
-      vk::createGraphicsPipeline("../data/pso/forwardPhongPSO.json",vk::LOGICAL_DEVICE,
-                                 vk::RENDER_PASS, nullptr);
+      vk::createGraphicsPipeline("../data/pso/forwardPhongPSO.json",
+                                 vk::LOGICAL_DEVICE, vk::RENDER_PASS, nullptr);
 
   loadTextureFromFile("../data/external/vk/uv.DDS",
                       VK_FORMAT_BC1_RGBA_UNORM_BLOCK, vk::LOGICAL_DEVICE,
                       uvTexture);
 
+  vk::createRenderTarget(
+      "RT", VK_FORMAT_B8G8R8A8_UNORM, vk::LOGICAL_DEVICE, m_rt,
+      VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+      globals::ENGINE_CONFIG->m_windowWidth,
+      globals::ENGINE_CONFIG->m_windowHeight);
+
+  VkFramebufferCreateInfo createInfo = {
+      VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO};
+  createInfo.renderPass = vk::RENDER_PASS;
+  createInfo.pAttachments = &m_rt.view;
+  createInfo.attachmentCount = 1;
+  createInfo.width = m_rt.width;
+  createInfo.height = m_rt.height;
+  createInfo.layers = 1;
+
+  VK_CHECK(vkCreateFramebuffer(vk::LOGICAL_DEVICE, &createInfo, nullptr,
+                               &m_tempFrameBuffer));
   // if constexpr (!USE_PUSH) {
   createDescriptorLayoutAdvanced();
   //}
@@ -161,8 +179,6 @@ void VkTempLayer::createDescriptorLayoutAdvanced() {
   writeDescriptorSets[1].pImageInfo = &uvTexture.descriptor;
   writeDescriptorSets[1].descriptorCount = 1;
 
-  VkWriteDescriptorSet samplersWrite[1] = {};
-
   // Execute the writes to update descriptors for this set
   // Note that it's also possible to gather all writes and only run updates
   // once, even for multiple sets This is possible because each
@@ -201,7 +217,9 @@ void VkTempLayer::onUpdate() {
 
   VkRenderPassBeginInfo beginInfo = {VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};
   beginInfo.renderPass = vk::RENDER_PASS;
-  beginInfo.framebuffer = vk::SWAP_CHAIN->frameBuffers[globals::CURRENT_FRAME];
+  // beginInfo.framebuffer =
+  // vk::SWAP_CHAIN->frameBuffers[globals::CURRENT_FRAME];
+  beginInfo.framebuffer = m_tempFrameBuffer;
 
   // similar to a viewport mostly used on "tiled renderers" to optimize, talking
   // about hardware based tile renderer, aka mobile GPUs.
@@ -250,7 +268,8 @@ void VkTempLayer::onUpdate() {
                               descriptor);
   } else {
   */
-  VkDescriptorSet sets[] = {m_meshDescriptorSet, vk::STATIC_SAMPLER_DESCRIPTOR_SET};
+  VkDescriptorSet sets[] = {m_meshDescriptorSet,
+                            vk::STATIC_SAMPLER_DESCRIPTOR_SET};
   // multiple descriptor sets
   vkCmdBindDescriptorSets(vk::COMMAND_BUFFER, VK_PIPELINE_BIND_POINT_GRAPHICS,
                           vk::PIPELINE_LAYOUT, 0, 2, sets, 0, nullptr);
@@ -258,9 +277,94 @@ void VkTempLayer::onUpdate() {
   vkCmdBindIndexBuffer(vk::COMMAND_BUFFER, m_indexBuffer.buffer, 0,
                        VK_INDEX_TYPE_UINT32);
   // vkCmdDraw(COMMAND_BUFFER, 3, 1, 0, 0);
-  vkCmdDrawIndexed(vk::COMMAND_BUFFER, static_cast<uint32_t>(m_mesh.indices.size()), 1, 0, 0, 0);
+  vkCmdDrawIndexed(vk::COMMAND_BUFFER,
+                   static_cast<uint32_t>(m_mesh.indices.size()), 1, 0, 0, 0);
 
   vkCmdEndRenderPass(vk::COMMAND_BUFFER);
+
+  VkImageMemoryBarrier barrier[2]= {};
+  barrier[0].sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+  barrier[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+  barrier[0].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+  barrier[0].srcQueueFamilyIndex = 0;
+  barrier[0].dstQueueFamilyIndex = 0;
+  barrier[0].image = m_rt.image;
+  barrier[0].oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  barrier[0].newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+  barrier[0].subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  barrier[0].subresourceRange.baseArrayLayer = 0;
+  barrier[0].subresourceRange.baseMipLevel = 0;
+  barrier[0].subresourceRange.levelCount = 1;
+  barrier[0].subresourceRange.layerCount = 1;
+  barrier[1].sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+  barrier[1].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+  barrier[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+  barrier[1].srcQueueFamilyIndex = 0;
+  barrier[1].dstQueueFamilyIndex = 0;
+  barrier[1].image = vk::SWAP_CHAIN->images[globals::CURRENT_FRAME];
+  barrier[1].oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  barrier[1].newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+  barrier[1].subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  barrier[1].subresourceRange.baseArrayLayer = 0;
+  barrier[1].subresourceRange.baseMipLevel = 0;
+  barrier[1].subresourceRange.levelCount = 1;
+  barrier[1].subresourceRange.layerCount = 1;
+
+  vkCmdPipelineBarrier(vk::COMMAND_BUFFER, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
+                       VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
+                       VK_DEPENDENCY_DEVICE_GROUP_BIT, 0, nullptr, 0, nullptr,
+                       2, barrier);
+
+  VkImageCopy region{};
+  region.dstSubresource.layerCount = 1;
+  region.dstSubresource.aspectMask= VK_IMAGE_ASPECT_COLOR_BIT;
+  region.dstSubresource.baseArrayLayer= 0;
+  region.dstSubresource.mipLevel= 0;
+  region.srcSubresource.layerCount = 1;
+  region.srcSubresource.aspectMask= VK_IMAGE_ASPECT_COLOR_BIT;
+  region.srcSubresource.baseArrayLayer= 0;
+  region.srcSubresource.mipLevel= 0;
+  region.dstOffset =  VkOffset3D{};
+  region.srcOffset =  VkOffset3D{};
+  region.extent.width = m_rt.width; 
+  region.extent.height= m_rt.height; 
+  region.extent.depth= 1; 
+
+  vkCmdCopyImage(vk::COMMAND_BUFFER, m_rt.image,
+                 VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                 vk::SWAP_CHAIN->images[globals::CURRENT_FRAME],
+                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+  barrier[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+  barrier[0].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+  barrier[0].srcQueueFamilyIndex = 0;
+  barrier[0].dstQueueFamilyIndex = 0;
+  barrier[0].image = m_rt.image;
+  barrier[0].newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  barrier[0].oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+  barrier[0].subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  barrier[0].subresourceRange.baseArrayLayer = 0;
+  barrier[0].subresourceRange.baseMipLevel = 0;
+  barrier[0].subresourceRange.levelCount = 1;
+  barrier[0].subresourceRange.layerCount = 1;
+
+  barrier[1].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+  barrier[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+  barrier[1].srcQueueFamilyIndex = 0;
+  barrier[1].dstQueueFamilyIndex = 0;
+  barrier[1].image = vk::SWAP_CHAIN->images[globals::CURRENT_FRAME];
+  barrier[1].newLayout= VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  barrier[1].oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+  barrier[1].subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  barrier[1].subresourceRange.baseArrayLayer = 0;
+  barrier[1].subresourceRange.baseMipLevel = 0;
+  barrier[1].subresourceRange.levelCount = 1;
+  barrier[1].subresourceRange.layerCount = 1;
+
+  vkCmdPipelineBarrier(vk::COMMAND_BUFFER, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
+                       VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
+                       VK_DEPENDENCY_DEVICE_GROUP_BIT, 0, nullptr, 0, nullptr,
+                       2, barrier);
 }
 void VkTempLayer::onEvent(Event &event) {
   EventDispatcher dispatcher(event);

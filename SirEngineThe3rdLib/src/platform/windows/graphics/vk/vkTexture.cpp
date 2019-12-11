@@ -124,6 +124,179 @@ void setImageLayout(
                        nullptr, 1, &imageMemoryBarrier);
 }
 
+bool createRenderTarget (const char *name, VkFormat format, VkDevice device,
+                         VkTexture2D &outTexture,
+                         VkImageUsageFlags imageUsageFlags,
+                         VkImageLayout imageLayout, uint32_t width, uint32_t height) {
+
+  const std::string textureName = getFileName(name);
+
+  outTexture.width = width;
+  outTexture.height = height;
+  outTexture.mipLevels = 1;
+
+  // Get device properties for the requested texture format
+  VkFormatProperties formatProperties;
+  vkGetPhysicalDeviceFormatProperties(PHYSICAL_DEVICE, format,
+                                      &formatProperties);
+
+  VkPhysicalDeviceMemoryProperties memoryProperties;
+  vkGetPhysicalDeviceMemoryProperties(PHYSICAL_DEVICE, &memoryProperties);
+
+  VkMemoryAllocateInfo memAllocInfo = {VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO};
+  VkMemoryRequirements memReqs;
+
+  // create a command buffer separated to execute this stuff
+  VkCommandBuffer buffer =
+      createCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+
+  /*
+  // Create a host-visible staging buffer that contains the raw image data
+  VkBuffer stagingBuffer;
+  VkDeviceMemory stagingMemory;
+
+  VkBufferCreateInfo bufferCreateInfo = {VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};
+  bufferCreateInfo.size = tex2D.size();
+  // This buffer is used as a transfer source for the buffer copy
+  bufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+  bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+  VK_CHECK(vkCreateBuffer(device, &bufferCreateInfo, nullptr, &stagingBuffer));
+  SET_DEBUG_NAME(stagingBuffer, VK_OBJECT_TYPE_BUFFER,
+                 (textureName + "Staging").c_str())
+
+  // Get memory requirements for the staging buffer (alignment, memory type
+  // bits)
+  vkGetBufferMemoryRequirements(device, stagingBuffer, &memReqs);
+
+  memAllocInfo.allocationSize = memReqs.size;
+  // Get memory type index for a host visible buffer
+  memAllocInfo.memoryTypeIndex =
+      selectMemoryType(memoryProperties, memReqs.memoryTypeBits,
+                       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                           VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+  VK_CHECK(vkAllocateMemory(device, &memAllocInfo, nullptr, &stagingMemory));
+  SET_DEBUG_NAME(stagingMemory, VK_OBJECT_TYPE_DEVICE_MEMORY,
+                 (textureName + "Memory").c_str())
+  VK_CHECK(vkBindBufferMemory(device, stagingBuffer, stagingMemory, 0));
+
+  // Copy texture data into staging buffer
+  uint8_t *data;
+  VK_CHECK(
+      vkMapMemory(device, stagingMemory, 0, memReqs.size, 0, (void **)&data));
+  memcpy(data, tex2D.data(), tex2D.size());
+  vkUnmapMemory(device, stagingMemory);
+
+  // Setup buffer copy regions for each mip level
+  std::vector<VkBufferImageCopy> bufferCopyRegions;
+  uint32_t offset = 0;
+
+  for (uint32_t i = 0; i < outTexture.mipLevels; i++) {
+    VkBufferImageCopy bufferCopyRegion = {};
+    bufferCopyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    bufferCopyRegion.imageSubresource.mipLevel = i;
+    bufferCopyRegion.imageSubresource.baseArrayLayer = 0;
+    bufferCopyRegion.imageSubresource.layerCount = 1;
+    bufferCopyRegion.imageExtent.width =
+        static_cast<uint32_t>(tex2D[i].extent().x);
+    bufferCopyRegion.imageExtent.height =
+        static_cast<uint32_t>(tex2D[i].extent().y);
+    bufferCopyRegion.imageExtent.depth = 1;
+    bufferCopyRegion.bufferOffset = offset;
+
+    bufferCopyRegions.push_back(bufferCopyRegion);
+
+    offset += static_cast<uint32_t>(tex2D[i].size());
+  }
+  */
+
+  // Create optimal tiled target image
+  VkImageCreateInfo imageCreateInfo = {VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO};
+  imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
+  imageCreateInfo.format = format;
+  imageCreateInfo.mipLevels = outTexture.mipLevels;
+  imageCreateInfo.arrayLayers = 1;
+  imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+  imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+  imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+  imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  imageCreateInfo.extent = {outTexture.width, outTexture.height, 1};
+  imageCreateInfo.usage = imageUsageFlags;
+  // Ensure that the TRANSFER_DST bit is set for staging
+  if (!(imageCreateInfo.usage & VK_IMAGE_USAGE_TRANSFER_DST_BIT)) {
+    imageCreateInfo.usage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+  }
+  VK_CHECK(vkCreateImage(device, &imageCreateInfo, nullptr, &outTexture.image));
+  SET_DEBUG_NAME(outTexture.image, VK_OBJECT_TYPE_IMAGE,
+                 (textureName + "Image").c_str())
+
+  vkGetImageMemoryRequirements(device, outTexture.image, &memReqs);
+
+  memAllocInfo.allocationSize = memReqs.size;
+
+  memAllocInfo.memoryTypeIndex =
+      selectMemoryType(memoryProperties, memReqs.memoryTypeBits,
+                       VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+  VK_CHECK(vkAllocateMemory(device, &memAllocInfo, nullptr,
+                            &outTexture.deviceMemory));
+  VK_CHECK(
+      vkBindImageMemory(device, outTexture.image, outTexture.deviceMemory, 0));
+
+  VkImageSubresourceRange subresourceRange = {};
+  subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  subresourceRange.baseMipLevel = 0;
+  subresourceRange.levelCount = outTexture.mipLevels;
+  subresourceRange.layerCount = 1;
+
+  // Image barrier for optimal image (target)
+  // Optimal image will be used as destination for the copy
+  setImageLayout(buffer, outTexture.image, VK_IMAGE_LAYOUT_UNDEFINED,
+                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresourceRange);
+
+
+  // Change texture image layout to shader read after all mip levels have been
+  // copied
+  outTexture.imageLayout = imageLayout;
+  setImageLayout(buffer, outTexture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                 imageLayout, subresourceRange);
+
+  flushCommandBuffer(buffer, GRAPHICS_QUEUE, true);
+  // Clean up staging resources
+
+  // Create image view
+  // Textures are not directly accessed by the shaders and
+  // are abstracted by image views containing additional
+  // information and sub resource ranges
+  VkImageViewCreateInfo viewCreateInfo = {};
+  viewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+  viewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+  viewCreateInfo.format = format;
+  viewCreateInfo.components = {VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G,
+                               VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A};
+  viewCreateInfo.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
+  // Linear tiling usually won't support mip maps
+  // Only set mip map count if optimal tiling is used
+  viewCreateInfo.subresourceRange.levelCount = outTexture.mipLevels;
+  viewCreateInfo.image = outTexture.image;
+  VK_CHECK(
+      vkCreateImageView(device, &viewCreateInfo, nullptr, &outTexture.view));
+  SET_DEBUG_NAME(outTexture.view, VK_OBJECT_TYPE_IMAGE_VIEW,
+                 (textureName + "ImageView").c_str())
+
+  // Update descriptor image info member that can be used for setting up
+  // descriptor sets
+  /*
+  updateDescriptor();
+  */
+  // outTexture.descriptor.sampler = outTexture.sampler;
+  outTexture.descriptor.sampler = 0;
+  outTexture.descriptor.imageView = outTexture.view;
+  outTexture.descriptor.imageLayout = imageLayout;
+
+  return true;
+}
+
 bool loadTextureFromFile(const char *name, VkFormat format, VkDevice device,
                          VkTexture2D &outTexture,
                          VkImageUsageFlags imageUsageFlags,
