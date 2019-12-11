@@ -6,7 +6,6 @@
 
 #include "SirEngine/engineConfig.h"
 #include "SirEngine/layers/vkTempLayer.h"
-#include "platform/windows/graphics/vk/graphicsPipeline.h"
 #include "platform/windows/graphics/vk/vk.h"
 #include "platform/windows/graphics/vk/vkDescriptors.h"
 #include "platform/windows/graphics/vk/vkLoad.h"
@@ -52,9 +51,14 @@ void VkTempLayer::onAttach() {
   SET_DEBUG_NAME(m_vertexBuffer.buffer, VK_OBJECT_TYPE_BUFFER, "vertex buffer");
   SET_DEBUG_NAME(m_indexBuffer.buffer, VK_OBJECT_TYPE_BUFFER, "index buffer");
 
-  m_pipeline =
-      vk::createGraphicsPipeline("../data/pso/forwardPhongPSO.json",
-                                 vk::LOGICAL_DEVICE, vk::RENDER_PASS, nullptr);
+  // m_pipeline =
+  //    vk::createGraphicsPipeline("../data/pso/forwardPhongPSO.json",
+  //                               vk::LOGICAL_DEVICE, vk::RENDER_PASS,
+  //                               nullptr);
+  const PSOHandle handle =
+      vk::PSO_MANAGER->loadRawPSO("../data/pso/forwardPhongPSO.json");
+  m_pipeline = vk::PSO_MANAGER->getPipelineFromHandle(handle);
+  m_pass = vk::PSO_MANAGER->getRenderPassFromHandle(handle);
 
   loadTextureFromFile("../data/external/vk/uv.DDS",
                       VK_FORMAT_BC1_RGBA_UNORM_BLOCK, vk::LOGICAL_DEVICE,
@@ -69,7 +73,7 @@ void VkTempLayer::onAttach() {
 
   VkFramebufferCreateInfo createInfo = {
       VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO};
-  createInfo.renderPass = vk::RENDER_PASS;
+  createInfo.renderPass = m_pass;
   createInfo.pAttachments = &m_rt.view;
   createInfo.attachmentCount = 1;
   createInfo.width = m_rt.width;
@@ -216,7 +220,7 @@ void VkTempLayer::onUpdate() {
   clear.color = color;
 
   VkRenderPassBeginInfo beginInfo = {VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};
-  beginInfo.renderPass = vk::RENDER_PASS;
+  beginInfo.renderPass = m_pass;
   // beginInfo.framebuffer =
   // vk::SWAP_CHAIN->frameBuffers[globals::CURRENT_FRAME];
   beginInfo.framebuffer = m_tempFrameBuffer;
@@ -282,7 +286,7 @@ void VkTempLayer::onUpdate() {
 
   vkCmdEndRenderPass(vk::COMMAND_BUFFER);
 
-  VkImageMemoryBarrier barrier[2]= {};
+  VkImageMemoryBarrier barrier[2] = {};
   barrier[0].sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
   barrier[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
   barrier[0].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
@@ -317,18 +321,18 @@ void VkTempLayer::onUpdate() {
 
   VkImageCopy region{};
   region.dstSubresource.layerCount = 1;
-  region.dstSubresource.aspectMask= VK_IMAGE_ASPECT_COLOR_BIT;
-  region.dstSubresource.baseArrayLayer= 0;
-  region.dstSubresource.mipLevel= 0;
+  region.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  region.dstSubresource.baseArrayLayer = 0;
+  region.dstSubresource.mipLevel = 0;
   region.srcSubresource.layerCount = 1;
-  region.srcSubresource.aspectMask= VK_IMAGE_ASPECT_COLOR_BIT;
-  region.srcSubresource.baseArrayLayer= 0;
-  region.srcSubresource.mipLevel= 0;
-  region.dstOffset =  VkOffset3D{};
-  region.srcOffset =  VkOffset3D{};
-  region.extent.width = m_rt.width; 
-  region.extent.height= m_rt.height; 
-  region.extent.depth= 1; 
+  region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  region.srcSubresource.baseArrayLayer = 0;
+  region.srcSubresource.mipLevel = 0;
+  region.dstOffset = VkOffset3D{};
+  region.srcOffset = VkOffset3D{};
+  region.extent.width = m_rt.width;
+  region.extent.height = m_rt.height;
+  region.extent.depth = 1;
 
   vkCmdCopyImage(vk::COMMAND_BUFFER, m_rt.image,
                  VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
@@ -353,7 +357,7 @@ void VkTempLayer::onUpdate() {
   barrier[1].srcQueueFamilyIndex = 0;
   barrier[1].dstQueueFamilyIndex = 0;
   barrier[1].image = vk::SWAP_CHAIN->images[globals::CURRENT_FRAME];
-  barrier[1].newLayout= VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  barrier[1].newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
   barrier[1].oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
   barrier[1].subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
   barrier[1].subresourceRange.baseArrayLayer = 0;

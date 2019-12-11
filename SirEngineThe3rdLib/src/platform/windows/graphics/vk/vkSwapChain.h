@@ -16,8 +16,7 @@ struct VkSwapchain {
 bool createSwapchain(const VkDevice logicalDevice,
                      const VkPhysicalDevice physicalDevice,
                      VkSurfaceKHR surface, uint32_t width, uint32_t height,
-                     VkSwapchain *oldSwapchain, VkSwapchain &outSwapchain,
-                     VkRenderPass &renderPass);
+                     VkSwapchain *oldSwapchain, VkSwapchain &outSwapchain);
 
 bool destroySwapchain(const VkDevice logicalDevice, VkSwapchain* swapchain);
 

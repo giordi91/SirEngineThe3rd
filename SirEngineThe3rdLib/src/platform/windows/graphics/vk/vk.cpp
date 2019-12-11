@@ -7,7 +7,6 @@
 #include "SirEngine/globals.h"
 #include "SirEngine/log.h"
 #include "SirEngine/runtimeString.h"
-#include "graphicsPipeline.h"
 #include "platform/windows/graphics/vk/vk.h"
 #include "platform/windows/graphics/vk/vkAdapter.h"
 #include "platform/windows/graphics/vk/vkLoad.h"
@@ -27,7 +26,6 @@ VkQueue COMPUTE_QUEUE = nullptr;
 VkQueue PRESENTATION_QUEUE = nullptr;
 VkPhysicalDevice PHYSICAL_DEVICE = nullptr;
 VkSwapchain *SWAP_CHAIN = nullptr;
-VkRenderPass RENDER_PASS = nullptr;
 VkSemaphore IMAGE_ACQUIRED_SEMAPHORE = nullptr;
 VkSemaphore READY_TO_PRESENT_SEMAPHORE = nullptr;
 VkCommandPool COMMAND_POOL = nullptr;
@@ -79,13 +77,13 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   assert(VK_SUCCESS == result);
 
   // new adapter code here
-  AdapterRequestConfig adapterConfig;
+  AdapterRequestConfig adapterConfig{};
   adapterConfig.m_vendor = globals::ENGINE_CONFIG->m_adapterVendor;
   adapterConfig.m_vendorTolerant = globals::ENGINE_CONFIG->m_vendorTolerant;
   adapterConfig.m_genericRule = globals::ENGINE_CONFIG->m_adapterSelectionRule;
 
   VkAdapterResult adapterResult{};
-  bool adapterFound = getBestAdapter(adapterConfig, adapterResult);
+  const bool adapterFound = getBestAdapter(adapterConfig, adapterResult);
   assert(adapterFound);
   PHYSICAL_DEVICE = adapterResult.m_physicalDevice;
   LOGICAL_DEVICE = adapterResult.m_device;
@@ -101,7 +99,7 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   // create swap
   const auto swapchain = new VkSwapchain();
   createSwapchain(LOGICAL_DEVICE, PHYSICAL_DEVICE, SURFACE, width, height,
-                  SWAP_CHAIN, *swapchain, RENDER_PASS);
+                  SWAP_CHAIN, *swapchain);
   SWAP_CHAIN = swapchain;
 
   if (!newSemaphore(LOGICAL_DEVICE, IMAGE_ACQUIRED_SEMAPHORE)) {
@@ -254,7 +252,7 @@ bool VkRenderingContext::dispatchFrame() {
 bool VkRenderingContext::resize(const uint32_t width, const uint32_t height) {
   auto *swapchain = new VkSwapchain;
   createSwapchain(LOGICAL_DEVICE, PHYSICAL_DEVICE, SURFACE, width, height,
-                  SWAP_CHAIN, *swapchain, RENDER_PASS);
+                  SWAP_CHAIN, *swapchain);
   SWAP_CHAIN = swapchain;
   return true;
 }
@@ -274,7 +272,7 @@ bool VkRenderingContext::shutdownGraphic() {
   destroyStaticSamplers();
   SHADER_MANAGER->cleanup();
   vkDestroyPipelineLayout(LOGICAL_DEVICE, PIPELINE_LAYOUT, nullptr);
-  vkDestroyRenderPass(LOGICAL_DEVICE, RENDER_PASS, nullptr);
+  //vkDestroyRenderPass(LOGICAL_DEVICE, RENDER_PASS, nullptr);
   vkDestroySemaphore(LOGICAL_DEVICE, IMAGE_ACQUIRED_SEMAPHORE, nullptr);
   vkDestroySemaphore(LOGICAL_DEVICE, READY_TO_PRESENT_SEMAPHORE, nullptr);
   vkDestroyCommandPool(LOGICAL_DEVICE, COMMAND_POOL, nullptr);
