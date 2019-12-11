@@ -73,6 +73,7 @@ private:
   vk::VkTexture2D uvTexture;
   vk::VkTexture2D m_rt;
   VkFramebuffer m_tempFrameBuffer;
+  VkRenderPass m_pass;
 
 };
 } // namespace SirEngine

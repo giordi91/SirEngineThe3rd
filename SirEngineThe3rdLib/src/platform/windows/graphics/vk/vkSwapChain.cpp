@@ -359,8 +359,7 @@ bool createSwapchainWithR8G8B8A8FormatAndMailboxPresentMode(
 bool createSwapchain(const VkDevice logicalDevice,
                      const VkPhysicalDevice physicalDevice,
                      VkSurfaceKHR surface, uint32_t width, uint32_t height,
-                     VkSwapchain *oldSwapchain, VkSwapchain &outSwapchain,
-                     VkRenderPass &renderPass) {
+                     VkSwapchain *oldSwapchain, VkSwapchain &outSwapchain ) {
 
   waitForAllSubmittedCommandsToBeFinished(logicalDevice);
   VK_CHECK(vkDeviceWaitIdle(logicalDevice));
@@ -383,18 +382,18 @@ bool createSwapchain(const VkDevice logicalDevice,
 
   // create the render pass;
   // delete old renderPass
-  if (renderPass != VK_NULL_HANDLE) {
-    vkDestroyRenderPass(logicalDevice, renderPass, nullptr);
-  }
-  renderPass = createRenderPass(logicalDevice);
+  //if (renderPass != VK_NULL_HANDLE) {
+  //  vkDestroyRenderPass(logicalDevice, renderPass, nullptr);
+  //}
+  //renderPass = createRenderPass(logicalDevice);
 
   // create the frame buffer
   const size_t count = outSwapchain.images.size();
   outSwapchain.frameBuffers.resize(count);
-  for (size_t i = 0; i < count; ++i) {
-    outSwapchain.frameBuffers[i] = createFrameBuffer(
-        logicalDevice, renderPass, outSwapchain.imagesView[i], width, height);
-  }
+  //for (size_t i = 0; i < count; ++i) {
+  //  outSwapchain.frameBuffers[i] = createFrameBuffer(
+  //      logicalDevice, renderPass, outSwapchain.imagesView[i], width, height);
+  //}
   // createFrameBuffer(LOGICAL_DEVICE, FRAME_BUFFERS);
 
   if (oldSwapchain != nullptr) {
@@ -427,6 +426,6 @@ void resizeSwapchain(const VkDevice logicalDevice,
                      VkSwapchain &outSwapchain, VkRenderPass &renderPass) {
   VkSwapchain old = outSwapchain;
   createSwapchain(logicalDevice, physicalDevice, surface, width, height, &old,
-                  outSwapchain, renderPass);
+                  outSwapchain);
 }
 } // namespace SirEngine::vk

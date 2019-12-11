@@ -20,7 +20,6 @@ extern VkDevice LOGICAL_DEVICE;
 extern VkQueue GRAPHICS_QUEUE;
 extern VkQueue COMPUTE_QUEUE;
 extern VkPhysicalDevice PHYSICAL_DEVICE;
-extern VkRenderPass RENDER_PASS;
 extern VkSemaphore IMAGE_ACQUIRED_SEMAPHORE;
 extern VkSemaphore READY_TO_PRESENT_SEMAPHORE;
 extern VkCommandPool COMMAND_POOL;

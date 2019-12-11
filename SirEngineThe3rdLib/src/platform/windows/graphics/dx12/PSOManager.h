@@ -27,6 +27,9 @@ public:
         m_psoRegisterHandle(RESERVE_SIZE), m_shaderToPSOFile(RESERVE_SIZE),
         m_psoPool(RESERVE_SIZE){};
   ~PSOManager() = default;
+  PSOManager(const PSOManager &) = delete;
+  PSOManager &operator=(const PSOManager &) = delete;
+
   void init(D3D12DeviceType *device, SirEngine::dx12::ShadersLayoutRegistry *,
             SirEngine::dx12::RootSignatureManager *,
             SirEngine::dx12::ShaderManager *);
