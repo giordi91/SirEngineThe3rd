@@ -124,10 +124,11 @@ void setImageLayout(
                        nullptr, 1, &imageMemoryBarrier);
 }
 
-bool createRenderTarget (const char *name, VkFormat format, VkDevice device,
-                         VkTexture2D &outTexture,
-                         VkImageUsageFlags imageUsageFlags,
-                         VkImageLayout imageLayout, uint32_t width, uint32_t height) {
+bool createRenderTarget(const char *name, VkFormat format, VkDevice device,
+                        VkTexture2D &outTexture,
+                        VkImageUsageFlags imageUsageFlags,
+                        VkImageLayout imageLayout, uint32_t width,
+                        uint32_t height) {
 
   const std::string textureName = getFileName(name);
 
@@ -240,6 +241,8 @@ bool createRenderTarget (const char *name, VkFormat format, VkDevice device,
                        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
   VK_CHECK(vkAllocateMemory(device, &memAllocInfo, nullptr,
                             &outTexture.deviceMemory));
+  SET_DEBUG_NAME(outTexture.deviceMemory, VK_OBJECT_TYPE_DEVICE_MEMORY,
+                 (textureName + "Memory").c_str());
   VK_CHECK(
       vkBindImageMemory(device, outTexture.image, outTexture.deviceMemory, 0));
 
@@ -253,7 +256,6 @@ bool createRenderTarget (const char *name, VkFormat format, VkDevice device,
   // Optimal image will be used as destination for the copy
   setImageLayout(buffer, outTexture.image, VK_IMAGE_LAYOUT_UNDEFINED,
                  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresourceRange);
-
 
   // Change texture image layout to shader read after all mip levels have been
   // copied

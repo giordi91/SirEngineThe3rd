@@ -483,12 +483,14 @@ VkRenderPass getRenderPass(const nlohmann::json &jobj) {
   createInfo.pSubpasses = &subPass;
 
   vkCreateRenderPass(vk::LOGICAL_DEVICE, &createInfo, nullptr, &renderPass);
+  SET_DEBUG_NAME(renderPass,VK_OBJECT_TYPE_RENDER_PASS,"fuckRenderPass");
   return renderPass;
 }
 
 // TODO fix vertex info, should not be passed in should be read from RS or PSO
-PSOHandle VkPSOManager::processRasterPSO(const char* filePath, const nlohmann::json &jobj,
-                           VkPipelineVertexInputStateCreateInfo *vertexInfo) {
+PSOHandle VkPSOManager::processRasterPSO(
+    const char *filePath, const nlohmann::json &jobj,
+    VkPipelineVertexInputStateCreateInfo *vertexInfo) {
   // load root signature
   const std::string rootFile =
       getValueIfInJson(jobj, PSO_KEY_GLOBAL_ROOT, DEFAULT_STRING);
@@ -595,7 +597,7 @@ PSOHandle VkPSOManager::processRasterPSO(const char* filePath, const nlohmann::j
   // generating and storing the handle
   uint32_t index;
   PSOData &data = m_psoPool.getFreeMemoryData(index);
-  data.pso = pipeline; 
+  data.pso = pipeline;
   data.renderPass = renderPass;
   const PSOHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
   data.magicNumber = MAGIC_NUMBER_COUNTER;
@@ -659,7 +661,7 @@ void initStaticSamplers() {
                                    STATIC_SAMPLER_LAYOUT);
 }
 
-void VkPSOManager::init() {}
+void VkPSOManager::init() { vk::initStaticSamplers(); }
 
 PSOHandle VkPSOManager::loadRawPSO(const char *file) {
   auto jobj = getJsonObj(file);
@@ -675,7 +677,7 @@ PSOHandle VkPSOManager::loadRawPSO(const char *file) {
     break;
   }
   case PSOType::RASTER: {
-    return processRasterPSO(file,jobj, nullptr);
+    return processRasterPSO(file, jobj, nullptr);
     break;
   }
   case PSOType::COMPUTE: {
