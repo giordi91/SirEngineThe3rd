@@ -26,7 +26,6 @@ void VkTempLayer::onAttach() {
   globals::MAIN_CAMERA->updateCamera();
 
   // TODO move this in PSO manager
-  vk::initStaticSamplers();
 
   // load mesh
   loadMesh("../data/external/vk/lucy.obj", m_mesh);
@@ -400,7 +399,12 @@ void VkTempLayer::clear() {
   // if constexpr (!USE_PUSH) {
   vkDestroyDescriptorSetLayout(vk::LOGICAL_DEVICE, m_setLayout, nullptr);
   vkDestroyDescriptorPool(vk::LOGICAL_DEVICE, vk::DESCRIPTOR_POOL, nullptr);
+  //vkFreeMemory(vk::LOGICAL_DEVICE,m_rt.deviceMemory,nullptr);
   //}
+  vkDestroyImage(vk::LOGICAL_DEVICE, m_rt.image, nullptr);
+  vkDestroyImageView(vk::LOGICAL_DEVICE, m_rt.view, nullptr);
+  //vkFreeMemory(vk::LOGICAL_DEVICE, m_rt.deviceMemory, nullptr);
+
   destroyTexture(vk::LOGICAL_DEVICE, uvTexture);
   vkDestroyPipeline(vk::LOGICAL_DEVICE, m_pipeline, nullptr);
 }
