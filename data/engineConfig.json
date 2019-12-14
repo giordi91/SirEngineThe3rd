@@ -4,13 +4,14 @@
   "persistentAllocatorSizeInMB": 20, 
   "verboseStartup": true,
 
-  "adapterVendor":"any",
+  "adapterVendor":"AMD",
   "vendorTolerant": true,
   "adapterSelectionRule":"largestFrameBuffer",
 
   "dataSource" :  "../data",
   "startingScene":  "../data/scenes/knightBOutdoorScene.json",
-  "graphicAPI": "Vulkan",
+  "graphicAPI": "DX12",
+  "useCachedPSO" :  false,
 
   "windowTitle": "SirEngineThe3rd", 
   "windowWidth":  1280, 

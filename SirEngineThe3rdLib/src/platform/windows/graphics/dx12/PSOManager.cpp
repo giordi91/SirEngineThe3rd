@@ -51,7 +51,7 @@ void PSOManager::cleanup() {
 }
 
 D3D12_SHADER_BYTECODE getShaderByteCodeFromFullPath(const char *path) {
-  if (path == nullptr || strcmp(path,"null") ==0) {
+  if (path == nullptr || strcmp(path, "null") == 0) {
     return {nullptr, 0};
   }
   ID3D10Blob *blob =
@@ -65,10 +65,16 @@ void PSOManager::loadRawPSOInFolder(const char *directory) {
   std::vector<std::string> paths;
   listFilesInFolder(directory, paths, "json");
 
-  const char* shaderPath = frameConcatenation(globals::ENGINE_CONFIG->m_dataSourcePath , "/shaders/DX12");
+  const char *shaderPath = frameConcatenation(
+      globals::ENGINE_CONFIG->m_dataSourcePath, "/shaders/DX12");
   for (const auto &p : paths) {
 
-    PSOCompileResult result = compileRawPSO(p.c_str(),shaderPath);
+    // TODO remove temp
+    std::string skip = "../data/pso\\forwardPhongPSO.json";
+    if (p == skip) {
+      continue;
+    }
+    PSOCompileResult result = compileRawPSO(p.c_str(), shaderPath);
     insertInPSOCache(result);
   }
 }
@@ -100,8 +106,8 @@ PSOCompileResult PSOManager::loadCachedPSO(const char *path) {
     SE_CORE_ERROR(
         "Root signature manager: cannot load PS): \n {0} \n file type is {1}",
         path, getBinaryFileTypeName(static_cast<BinaryFileType>(h->fileType)));
-	assert(0);
-    return{};
+    assert(0);
+    return {};
   }
   const auto mapper = getMapperData<PSOMappedData>(data.data());
   char *ptr = data.data() + sizeof(BinaryFileHeader);
@@ -328,7 +334,8 @@ void PSOManager::recompilePSOFromShader(const char *shaderName,
   // used
   dx12::flushDx12();
 
-  const char* shaderPath = frameConcatenation(globals::ENGINE_CONFIG->m_dataSourcePath , "/shaders/DX12");
+  const char *shaderPath = frameConcatenation(
+      globals::ENGINE_CONFIG->m_dataSourcePath, "/shaders/DX12");
   for (int i = 0; i < psoCount; ++i) {
     const char *pso = (*psos)[i];
     const PSOCompileResult result = compileRawPSO(pso, shaderPath);

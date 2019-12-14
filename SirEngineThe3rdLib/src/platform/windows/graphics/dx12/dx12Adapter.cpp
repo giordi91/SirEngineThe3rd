@@ -123,6 +123,8 @@ bool getBestAdapter(const AdapterRequestConfig &config,
       SE_CORE_WARN(
           "Could not find requesed vendor adapter {0}, going for fallback",
           ADAPTER_VENDOR_NAMES[static_cast<int>(config.m_vendor)]);
+    } else {
+        return true;
     }
   }
 
