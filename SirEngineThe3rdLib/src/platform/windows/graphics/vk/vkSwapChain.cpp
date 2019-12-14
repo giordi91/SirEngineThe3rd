@@ -237,7 +237,7 @@ bool getHandlesOfSwapchainImages(VkDevice logical_device,
 }
 
 VkImageView createSwapchainImageView(const VkDevice logicalDevice,
-                                     VkImage swapchainImage) {
+                                     const VkImage swapchainImage) {
   VkImageViewCreateInfo createInfo = {VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
   createInfo.image = swapchainImage;
   createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
@@ -257,7 +257,9 @@ bool createSwapchainWithR8G8B8A8FormatAndMailboxPresentMode(
     VkFormat &imageFormat, VkSwapchainKHR &oldSwapchain,
     VkSwapchainKHR &swapchain, std::vector<VkImage> &swapchainImages,
     std::vector<VkImageView> &swapchainImageViews) {
+
   VkPresentModeKHR desiredPresentMode;
+  // TODO should support v-sync
   if (!selectDesiredPresentationMode(physicalDevice, presentationSurface,
                                      VK_PRESENT_MODE_MAILBOX_KHR,
                                      desiredPresentMode)) {
@@ -358,8 +360,9 @@ bool createSwapchainWithR8G8B8A8FormatAndMailboxPresentMode(
 
 bool createSwapchain(const VkDevice logicalDevice,
                      const VkPhysicalDevice physicalDevice,
-                     VkSurfaceKHR surface, uint32_t width, uint32_t height,
-                     VkSwapchain *oldSwapchain, VkSwapchain &outSwapchain ) {
+                     const VkSurfaceKHR surface, const uint32_t width,
+                     const uint32_t height, VkSwapchain *oldSwapchain,
+                     VkSwapchain &outSwapchain) {
 
   waitForAllSubmittedCommandsToBeFinished(logicalDevice);
   VK_CHECK(vkDeviceWaitIdle(logicalDevice));
@@ -382,15 +385,15 @@ bool createSwapchain(const VkDevice logicalDevice,
 
   // create the render pass;
   // delete old renderPass
-  //if (renderPass != VK_NULL_HANDLE) {
+  // if (renderPass != VK_NULL_HANDLE) {
   //  vkDestroyRenderPass(logicalDevice, renderPass, nullptr);
   //}
-  //renderPass = createRenderPass(logicalDevice);
+  // renderPass = createRenderPass(logicalDevice);
 
   // create the frame buffer
   const size_t count = outSwapchain.images.size();
   outSwapchain.frameBuffers.resize(count);
-  //for (size_t i = 0; i < count; ++i) {
+  // for (size_t i = 0; i < count; ++i) {
   //  outSwapchain.frameBuffers[i] = createFrameBuffer(
   //      logicalDevice, renderPass, outSwapchain.imagesView[i], width, height);
   //}
