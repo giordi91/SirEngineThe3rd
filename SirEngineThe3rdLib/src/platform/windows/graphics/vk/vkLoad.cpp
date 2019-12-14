@@ -585,7 +585,7 @@ bool createLogicalDeviceWithWsiExtensionsEnabled(
     std::vector<char const *> &desiredExtensions,
     VkPhysicalDeviceFeatures2 *desiredFeatures, VkDevice &logicalDevice) {
   desiredExtensions.emplace_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
-  desiredExtensions.emplace_back(VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME);
+  //desiredExtensions.emplace_back(VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME);
   desiredExtensions.emplace_back(VK_KHR_16BIT_STORAGE_EXTENSION_NAME);
   desiredExtensions.emplace_back(VK_KHR_8BIT_STORAGE_EXTENSION_NAME);
 
