@@ -186,8 +186,9 @@ bool initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
   SHADER_MANAGER->loadShadersInFolder(
       frameConcatenation(globals::ENGINE_CONFIG->m_dataSourcePath,
                          "/processed/shaders/DX12/rasterization"));
-  SHADER_MANAGER->loadShadersInFolder(frameConcatenation(
-      globals::ENGINE_CONFIG->m_dataSourcePath, "/processed/shaders/DX12/compute"));
+  SHADER_MANAGER->loadShadersInFolder(
+      frameConcatenation(globals::ENGINE_CONFIG->m_dataSourcePath,
+                         "/processed/shaders/DX12/compute"));
 
   ROOT_SIGNATURE_MANAGER = new RootSignatureManager();
   ROOT_SIGNATURE_MANAGER->loadSignaturesInFolder(frameConcatenation(
@@ -437,21 +438,42 @@ bool Dx12RenderingContext::initializeGraphics() {
 
 void Dx12RenderingContext::setupCameraForFrame() {
   globals::MAIN_CAMERA->updateCamera();
+  // TODO fix this hardcoded parameter
   m_camBufferCPU.vFov = 60.0f;
   m_camBufferCPU.screenWidth =
       static_cast<float>(globals::ENGINE_CONFIG->m_windowWidth);
   m_camBufferCPU.screenHeight =
       static_cast<float>(globals::ENGINE_CONFIG->m_windowHeight);
-  m_camBufferCPU.MVP = DirectX::XMMatrixTranspose(
-      globals::MAIN_CAMERA->getMVP(DirectX::XMMatrixIdentity()));
-  m_camBufferCPU.ViewMatrix = DirectX::XMMatrixTranspose(
-      globals::MAIN_CAMERA->getViewInverse(DirectX::XMMatrixIdentity()));
-  m_camBufferCPU.VPinverse = DirectX::XMMatrixTranspose(
-      globals::MAIN_CAMERA->getMVPInverse(DirectX::XMMatrixIdentity()));
-  m_camBufferCPU.perspectiveValues = globals::MAIN_CAMERA->getProjParams();
-  DirectX::XMFLOAT3 camPos = globals::MAIN_CAMERA->getPosition();
+  auto pos = globals::MAIN_CAMERA->getPosition();
   m_camBufferCPU.position =
-      DirectX::XMFLOAT4{camPos.x, camPos.y, camPos.z, 1.0f};
+      DirectX::XMFLOAT4{pos.x, pos.y, pos.z, 1.0f};
+
+  // OLD DX
+  // m_camBufferCPU.MVP = DirectX::XMMatrixTranspose(
+  //    globals::MAIN_CAMERA->getMVP(DirectX::XMMatrixIdentity()));
+  // m_camBufferCPU.ViewMatrix = DirectX::XMMatrixTranspose(
+  //    globals::MAIN_CAMERA->getViewInverse(DirectX::XMMatrixIdentity()));
+  // m_camBufferCPU.VPinverse = DirectX::XMMatrixTranspose(
+  //    globals::MAIN_CAMERA->getMVPInverse(DirectX::XMMatrixIdentity()));
+  //m_camBufferCPU.perspectiveValues = globals::MAIN_CAMERA->getProjParams();
+
+  // GLM
+  // auto t = glm::translate(glm::mat4(1.0), glm::vec3(10, 20, 30));
+  // auto ttt(glm::transpose(t));
+  // auto d = DirectX::XMMatrixTranslation(10,20,30);
+  // auto ddd = DirectX::XMMatrixTranspose(d);
+  // auto mvp =
+  // glm::transpose(globals::MAIN_CAMERA->getMVP(DirectX::XMMatrixIdentity()));
+  auto mvp =
+      glm::transpose(globals::MAIN_CAMERA->getMVP(glm::mat4(1.0)));
+  memcpy(&m_camBufferCPU.MVP, &mvp, sizeof(mvp));
+  auto view = glm::transpose(
+      globals::MAIN_CAMERA->getViewInverse(glm::mat4(1.0)));
+  memcpy(&m_camBufferCPU.ViewMatrix, &view, sizeof(view));
+  auto vpInv = glm::transpose(globals::MAIN_CAMERA->getMVPInverse(glm::mat4(1.0)));
+  memcpy(&m_camBufferCPU.VPinverse, &vpInv, sizeof(vpInv));
+  auto perspValues =  globals::MAIN_CAMERA->getProjParams();
+  memcpy(&m_camBufferCPU.perspectiveValues, &perspValues,sizeof(perspValues));
 
   globals::CONSTANT_BUFFER_MANAGER->updateConstantBufferNotBuffered(
       m_cameraHandle, &m_camBufferCPU);

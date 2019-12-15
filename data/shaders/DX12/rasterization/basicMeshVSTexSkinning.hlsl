@@ -14,6 +14,7 @@ FullMeshVertexOut VS(TexturedVertexIn12 vin, uint vid : SV_VertexID)
 	FullSkinResult skin = skinFullPoint(vid,vin);
 	
 	// Transform to homogeneous clip space.
+    //vout.PosH = mul(skin.pos, g_cameraBuffer.MVP);
     vout.PosH = mul(skin.pos, g_cameraBuffer.MVP);
 	
 	// Just pass vertex color into the pixel shader.

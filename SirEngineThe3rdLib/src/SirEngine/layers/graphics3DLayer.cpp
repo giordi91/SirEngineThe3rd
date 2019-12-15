@@ -152,9 +152,9 @@ void Graphics3DLayer::onAttach() {
   auto light = dx12::RENDERING_CONTEXT->getLightData();
   dx12::DEBUG_RENDERER->drawMatrix(light.localToWorld, 3.0f,
                                    DirectX::XMFLOAT4(1, 0, 0, 1), "");
-  dx12::DEBUG_RENDERER->drawMatrix(
-      globals::MAIN_CAMERA->getViewInverse(DirectX::XMMatrixIdentity()), 3.0f,
-      DirectX::XMFLOAT4(1, 0, 0, 1), "");
+  //dx12::DEBUG_RENDERER->drawMatrix(
+  //    globals::MAIN_CAMERA->getViewInverse(DirectX::XMMatrixIdentity()), 3.0f,
+  //    DirectX::XMFLOAT4(1, 0, 0, 1), "");
 }
 void Graphics3DLayer::onDetach() {}
 void Graphics3DLayer::onUpdate() {
