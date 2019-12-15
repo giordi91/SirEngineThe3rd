@@ -91,7 +91,7 @@ void SkinClusterManager::uploadDirtyMatrices() {
 
     AnimationPlayer* animConfig =
         globals::ANIMATION_MANAGER->getConfig(data.animHandle);
-    const DirectX::XMMATRIX *matricesDataToCopy =
+    const glm::mat4 *matricesDataToCopy =
         animConfig->getOutPose()->m_globalPose;
 
     const uint32_t jointCount = animConfig->getJointCount();

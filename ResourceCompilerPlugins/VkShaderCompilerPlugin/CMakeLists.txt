@@ -14,6 +14,7 @@ project(VkShaderCompilerPlugin)
 						${CMAKE_SOURCE_DIR}/SirEngineThe3rdLib/src
 						${CMAKE_SOURCE_DIR}/ResourceCompilerLib/src
 						${Vulkan_INCLUDE_DIRS}
+						${CMAKE_SOURCE_DIR}/vendors/glm
 	)
 
 	#lets add specific windows build definitions

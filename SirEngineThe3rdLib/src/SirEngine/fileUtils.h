@@ -1,4 +1,6 @@
 #pragma once
+#undef max
+#undef min
 #include "nlohmann/json.hpp"
 #include <exception>
 #include <filesystem>
@@ -6,9 +8,8 @@
 #include <iostream>
 #include <sstream>
 
-#if GRAPHICS_API == DX12
-#include <DirectXMath.h>
-#endif
+#include <glm/glm.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 // NOTE: requires c++17 filesystem
 inline void listFilesInFolder(const char *folderPath,
@@ -26,8 +27,6 @@ inline void listFilesInFolder(const char *folderPath,
       if (shouldFilter && !(path.extension() == _extension)) {
         continue;
       }
-
-      // auto fPath = std::string(path.native().begin(), path.native().end());
       filePaths.push_back(path.u8string());
     }
   }
@@ -69,48 +68,15 @@ inline T getValueIfInJson(const nlohmann::json &data, const std::string &key,
   return defaultValue;
 }
 
-#if GRAPHICS_API == DX12
+
 template <>
-inline DirectX::XMFLOAT4 getValueIfInJson(const nlohmann::json &data,
-                                          const std::string &key,
-                                          const DirectX::XMFLOAT4 &defValue) {
-  if (data.find(key) != data.end()) {
-    auto &vec = data[key];
-    return DirectX::XMFLOAT4(vec[0].get<float>(), vec[1].get<float>(),
-                             vec[2].get<float>(), vec[3].get<float>());
-  }
-  return defValue;
-}
-template <>
-inline DirectX::XMVECTOR getValueIfInJson(const nlohmann::json &data,
-                                          const std::string &key,
-                                          const DirectX::XMVECTOR &defValue) {
-  if (data.find(key) != data.end()) {
-    auto &vec = data[key];
-    return DirectX::XMVectorSet(vec[0].get<float>(), vec[1].get<float>(),
-                                vec[2].get<float>(), vec[3].get<float>());
-  }
-  return defValue;
-}
-template <>
-inline DirectX::XMFLOAT3 getValueIfInJson(const nlohmann::json &data,
-                                          const std::string &key,
-                                          const DirectX::XMFLOAT3 &defValue) {
-  if (data.find(key) != data.end()) {
-    auto &vec = data[key];
-    return DirectX::XMFLOAT3(vec[0].get<float>(), vec[1].get<float>(),
-                             vec[2].get<float>());
-  }
-  return defValue;
-}
-template <>
-inline DirectX::XMMATRIX
+inline glm::mat4 
 getValueIfInJson(const nlohmann::json &data, const std::string &key,
-                 const DirectX::XMMATRIX &default_value) {
+                 const glm::mat4 &default_value) {
 
   if (data.find(key) != data.end()) {
     auto &mat = data[key];
-    return DirectX::XMMATRIX(
+    return glm::mat4(
         mat[0].get<float>(), mat[1].get<float>(), mat[2].get<float>(),
         mat[3].get<float>(), mat[4].get<float>(), mat[5].get<float>(),
         mat[6].get<float>(), mat[7].get<float>(), mat[8].get<float>(),
@@ -120,7 +86,42 @@ getValueIfInJson(const nlohmann::json &data, const std::string &key,
   }
   return default_value;
 }
-#endif
+template <>
+inline glm::vec4 getValueIfInJson(const nlohmann::json &data,
+                                          const std::string &key,
+                                          const glm::vec4 &defValue) {
+  if (data.find(key) != data.end()) {
+    auto &vec = data[key];
+    return glm::vec4(vec[0].get<float>(), vec[1].get<float>(),
+                             vec[2].get<float>(), vec[3].get<float>());
+  }
+  return defValue;
+}
+
+template <>
+inline glm::quat getValueIfInJson(const nlohmann::json &data,
+                                          const std::string &key,
+                                          const glm::quat &defValue) {
+  if (data.find(key) != data.end()) {
+    auto &vec = data[key];
+    //NOTE: glm quaternion wants first the W component then xyz
+    return glm::quat(vec[3].get<float>(), vec[0].get<float>(),
+                             vec[1].get<float>(), vec[2].get<float>());
+  }
+  return defValue;
+}
+
+template <>
+inline glm::vec3 getValueIfInJson(const nlohmann::json &data,
+                                          const std::string &key,
+                                          const glm::vec3 &defValue) {
+  if (data.find(key) != data.end()) {
+    auto &vec = data[key];
+    return glm::vec3(vec[0].get<float>(), vec[1].get<float>(),
+                             vec[2].get<float>());
+  }
+  return defValue;
+}
 
 inline nlohmann::json getJsonObj(std::string path) {
 

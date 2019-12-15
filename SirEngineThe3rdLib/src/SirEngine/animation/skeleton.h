@@ -1,12 +1,13 @@
 #pragma once
 #include "SirEngine/globals.h"
 #include "SirEngine/memory/resizableVector.h"
-#include <DirectXMath.h>
+#include <glm/glm.hpp>
+#include <glm/gtx/quaternion.hpp>
 namespace SirEngine {
 
 struct JointPose {
-  DirectX::XMVECTOR m_rot;
-  DirectX::XMFLOAT3 m_trans;
+  glm::quat m_rot;
+  glm::vec3 m_trans;
   float m_scale; // uniform scale only for now not included
 };
 
@@ -18,7 +19,7 @@ struct Skeleton {
         m_names(PREALLOCATION_SIZE, allocator),
         m_parentIds(PREALLOCATION_SIZE, allocator), m_name(nullptr){};
   uint32_t m_jointCount;
-  ResizableVector<DirectX::XMMATRIX> m_jointsWolrdInv;
+  ResizableVector<glm::mat4> m_jointsWolrdInv;
   ResizableVector<const char *> m_names;
   ResizableVector<int> m_parentIds;
   const char *m_name;
@@ -34,10 +35,10 @@ struct SkeletonPose {
   JointPose *m_localPose;
   // this is the pose ready to be uploaded to the skinning shader, each matrix
   // is pre-multiplied by the bind matrix
-  DirectX::XMMATRIX *m_globalPose;
+  glm::mat4 *m_globalPose;
   // those are the world matrices not multiplied by the bind matrix, useful for
   // debug drawing etc
-  DirectX::XMMATRIX *m_worldMat;
+  glm::mat4 *m_worldMat;
 
   /*
    * This functions will generates a global pose for all the bones,
@@ -50,7 +51,7 @@ struct SkeletonPose {
    * allocator, allocating and freeing from multiple threads will make a mess
    * @Note : not thread safe
    */
-  void updateGlobalFromLocal(DirectX::XMMATRIX transform) const;
+  void updateGlobalFromLocal(glm::mat4 transform) const;
 };
 
 } // namespace SirEngine

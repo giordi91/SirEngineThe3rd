@@ -40,7 +40,8 @@ bool AnimationClip::initialize(const char *path) {
          binaryData + sizeof(BinaryFileHeader) + mapper->nameSizeInByte +
              mapper->posesSizeInByte,
          mapper->keyValueSizeInByte);
-  m_metadataCount = mapper->keyValueSizeInByte / (sizeof(AnimationMetadataKey));
+  m_metadataCount = static_cast<int>(mapper->keyValueSizeInByte /
+                                     (sizeof(AnimationMetadataKey)));
 
   return true;
 }
@@ -85,15 +86,4 @@ int AnimationClip::findMetadataFrameFromGivenFrame(
   // if that is the case we return it
   return (bestNegative != -1) & allowWrapAround ? bestNegative : -1;
 }
-
-inline DirectX::XMFLOAT3 lerp3(const DirectX::XMFLOAT3 &v1,
-                               const DirectX::XMFLOAT3 &v2,
-                               const float amount) {
-  return DirectX::XMFLOAT3{
-      ((1.0f - amount) * v1.x) + (amount * v2.x),
-      ((1.0f - amount) * v1.y) + (amount * v2.y),
-      ((1.0f - amount) * v1.z) + (amount * v2.z),
-  };
-}
-
 } // namespace SirEngine

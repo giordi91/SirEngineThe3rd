@@ -1,6 +1,4 @@
 #pragma once
-#include <DirectXMath.h>
-#include <memory>
 #include "tinyobjloader/tiny_obj_loader.h"
 
 struct Model {

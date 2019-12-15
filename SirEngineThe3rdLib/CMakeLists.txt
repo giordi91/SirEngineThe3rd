@@ -37,14 +37,20 @@ project(SirEngineThe3rdLib)
 
 
     message (STATUS ${CMAKE_CURRENT_SOURCE_DIR})
+
     include_directories(
 						${CMAKE_SOURCE_DIR}/builtDependencies/includes
 						${CMAKE_CURRENT_SOURCE_DIR}/src
 						${Vulkan_INCLUDE_DIRS}
-						"../vendors/glm/"
 						"../vendors/meshoptimizer/src/"
-						"../vendors/gli"
 	)
+
+	#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /experimental:external  /external:I ${CMAKE_SOURCE_DIR}/vendors/glm /external:W0"  )
+
+	ENABLE_SYSTEM_HEADERS()
+	ADD_EXTERNAL_HEADER(${CMAKE_SOURCE_DIR}/vendors/glm)
+	ADD_EXTERNAL_HEADER(${CMAKE_SOURCE_DIR}/vendors/gli)
+	FINALIZE_EXTERNAL_HEADER()
 
 	if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 		add_compile_options(/wd4251 /wd4275)

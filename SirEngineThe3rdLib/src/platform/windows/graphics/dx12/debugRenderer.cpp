@@ -264,43 +264,41 @@ DebugDrawHandle DebugRenderer::drawSkeleton(Skeleton *skeleton,
                                             const glm::vec4 color,
                                             const float pointSize) {
 
-  const ResizableVector<DirectX::XMMATRIX> &joints = skeleton->m_jointsWolrdInv;
+  const ResizableVector<glm::mat4> &joints = skeleton->m_jointsWolrdInv;
   // first we need to convert the skeleton to points we can actually render
-  auto *points =
-      reinterpret_cast<DirectX::XMFLOAT3 *>(globals::FRAME_ALLOCATOR->allocate(
-          sizeof(DirectX::XMFLOAT3) * joints.size()));
+  auto *points = reinterpret_cast<glm::vec3 *>(
+      globals::FRAME_ALLOCATOR->allocate(sizeof(glm::vec3) * joints.size()));
   auto *lines =
-      reinterpret_cast<DirectX::XMFLOAT3 *>(globals::FRAME_ALLOCATOR->allocate(
-          sizeof(DirectX::XMFLOAT3) * joints.size() * 2));
+      reinterpret_cast<glm::vec3 *>(globals::FRAME_ALLOCATOR->allocate(
+          sizeof(glm::vec3) * joints.size() * 2));
 
   const ResizableVector<int> &parentIds = skeleton->m_parentIds;
   uint32_t lineCounter = 0;
   for (uint32_t i = 0; i < joints.size(); ++i) {
-    const DirectX::XMMATRIX inv = joints[i];
-    const DirectX::XMMATRIX mat = DirectX::XMMatrixInverse(nullptr, inv);
-    DirectX::XMVECTOR pos;
-    DirectX::XMVECTOR scale;
-    DirectX::XMVECTOR rot;
-    DirectX::XMMatrixDecompose(&scale, &rot, &pos, mat);
-    points[i] =
-        DirectX::XMFLOAT3{pos.m128_f32[0], pos.m128_f32[1], pos.m128_f32[2]};
+    const glm::mat4 &inv = joints[i];
+    const glm::mat4 mat = glm::inverse(inv);
+
+    glm::vec4 pos = mat[3];
+    // DirectX::XMVECTOR scale;
+    // DirectX::XMVECTOR rot;
+    // DirectX::XMMatrixDecompose(&scale, &rot, &pos, mat);
+    points[i] = glm::vec3(pos);
 
     if (parentIds[i] != -1) {
 
       // here we add a line from the parent to the children, might do a more
       // elaborate joint drawing one day
       lines[lineCounter] = points[parentIds[i]];
-      lines[lineCounter + 1] =
-          DirectX::XMFLOAT3{pos.m128_f32[0], pos.m128_f32[1], pos.m128_f32[2]};
+      lines[lineCounter + 1] = glm::vec3(pos);
       lineCounter += 2;
     }
   }
   const DebugDrawHandle pointsHandle = drawPointsUniformColor(
-      &points[0].x, joints.size() * sizeof(DirectX::XMFLOAT3), color, pointSize,
+      &points[0].x, joints.size() * sizeof(glm::vec3), color, pointSize,
       skeleton->m_name);
 
   const DebugDrawHandle linesHandle = drawLinesUniformColor(
-      &lines[0].x, lineCounter * sizeof(DirectX::XMFLOAT3), color, pointSize,
+      &lines[0].x, lineCounter * sizeof(glm::vec3), color, pointSize,
       skeleton->m_name);
 
   // lets prepare the compound handle
@@ -328,34 +326,29 @@ DebugDrawHandle DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
                                                     const glm::vec4 color,
                                                     float pointSize) {
 
-  const DirectX::XMMATRIX *pose = state->getOutPose()->m_worldMat;
+  const glm::mat4 *pose = state->getOutPose()->m_worldMat;
   const uint32_t jointCount = state->getOutPose()->m_skeleton->m_jointCount;
 
   auto *points =
-      reinterpret_cast<DirectX::XMFLOAT3 *>(globals::FRAME_ALLOCATOR->allocate(
-          sizeof(DirectX::XMFLOAT3) * jointCount));
+      reinterpret_cast<glm::vec3 *>(globals::FRAME_ALLOCATOR->allocate(
+          sizeof(glm::vec3) * jointCount));
   auto *lines =
-      reinterpret_cast<DirectX::XMFLOAT3 *>(globals::FRAME_ALLOCATOR->allocate(
-          sizeof(DirectX::XMFLOAT3) * jointCount * 2));
+      reinterpret_cast<glm::vec3 *>(globals::FRAME_ALLOCATOR->allocate(
+          sizeof(glm::vec3) * jointCount * 2));
 
   uint32_t lineCounter = 0;
 
   for (uint32_t i = 0; i < jointCount; ++i) {
-    const DirectX::XMMATRIX mat = pose[i];
-    DirectX::XMVECTOR pos;
-    DirectX::XMVECTOR scale;
-    DirectX::XMVECTOR rot;
-    DirectX::XMMatrixDecompose(&scale, &rot, &pos, mat);
-    points[i] =
-        DirectX::XMFLOAT3{pos.m128_f32[0], pos.m128_f32[1], pos.m128_f32[2]};
+    const glm::mat4 mat = pose[i];
+    glm::vec4 pos = mat[3];
+    points[i] =glm::vec3(pos);
 
     const int parentId = state->getOutPose()->m_skeleton->m_parentIds[i];
     if (parentId != -1) {
       // here we add a line from the parent to the children, might do a more
       // elaborate joint drawing one day
       lines[lineCounter] = points[parentId];
-      lines[lineCounter + 1] =
-          DirectX::XMFLOAT3{pos.m128_f32[0], pos.m128_f32[1], pos.m128_f32[2]};
+      lines[lineCounter + 1] =glm::vec3(pos);
       lineCounter += 2;
     }
   }
@@ -380,7 +373,7 @@ DebugDrawHandle DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
     assert(foundPoint->second.compoundCount == 0);
 
     const DebugTracker &pointTracker = foundPoint->second;
-    assert(pointTracker.sizeInBtye == (sizeof(DirectX::XMFLOAT3) * jointCount));
+    assert(pointTracker.sizeInBtye == (sizeof(glm::vec3) * jointCount));
     memcpy(pointTracker.mappedData, points, pointTracker.sizeInBtye);
 
     const auto foundLines = m_trackers.find(linesHandle.handle);
@@ -388,7 +381,7 @@ DebugDrawHandle DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
     assert(foundLines->second.compoundCount == 0);
 
     const DebugTracker &lineTracker = foundLines->second;
-    assert(lineTracker.sizeInBtye == (sizeof(DirectX::XMFLOAT3) * lineCounter));
+    assert(lineTracker.sizeInBtye == (sizeof(glm::vec3) * lineCounter));
     memcpy(lineTracker.mappedData, lines, lineTracker.sizeInBtye);
 
     // data is updated we are good to go, returning same handle
@@ -397,11 +390,11 @@ DebugDrawHandle DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
 
   } else {
     DebugDrawHandle pointsHandle = drawPointsUniformColor(
-        &points[0].x, jointCount * sizeof(DirectX::XMFLOAT3), color, pointSize,
+        &points[0].x, jointCount * sizeof(glm::vec3), color, pointSize,
         state->getOutPose()->m_skeleton->m_name);
 
     DebugDrawHandle linesHandle = drawLinesUniformColor(
-        &lines[0].x, lineCounter * sizeof(DirectX::XMFLOAT3), color, pointSize,
+        &lines[0].x, lineCounter * sizeof(glm::vec3), color, pointSize,
         state->getOutPose()->m_skeleton->m_name);
 
     // lets prepare the compound handle
@@ -535,13 +528,6 @@ inline int push3toVec(float *data, float x, float y, float z, int counter) {
 
   return counter;
 }
-inline int push3toVec(float *data, const DirectX::XMFLOAT3 v, int counter) {
-  data[counter++] = v.x;
-  data[counter++] = v.y;
-  data[counter++] = v.z;
-
-  return counter;
-}
 inline int push3toVec(float *data, const glm::vec4 v, int counter) {
   data[counter++] = v.x;
   data[counter++] = v.y;
@@ -553,13 +539,6 @@ inline int push3toVec(float *data, const glm::vec3 v, int counter) {
   data[counter++] = v.x;
   data[counter++] = v.y;
   data[counter++] = v.z;
-
-  return counter;
-}
-inline int push3toVec(float *data, DirectX::XMVECTOR v, int counter) {
-  data[counter++] = v.m128_f32[0];
-  data[counter++] = v.m128_f32[1];
-  data[counter++] = v.m128_f32[2];
 
   return counter;
 }
@@ -590,7 +569,7 @@ DebugDrawHandle DebugRenderer::drawBoundingBoxes(BoundingBox *data, int count,
   int totalSize = 3 * count * 12 * 2; // here 3 is the xmfloat3
 
   auto *points = reinterpret_cast<float *>(globals::FRAME_ALLOCATOR->allocate(
-      sizeof(DirectX::XMFLOAT3) * count * 12 * 2));
+      sizeof(glm::vec3) * count * 12 * 2));
   int counter = 0;
   for (int i = 0; i < count; ++i) {
 
@@ -613,8 +592,8 @@ DebugDrawHandle DebugRenderer::drawBoundingBoxes(BoundingBox *data, int count,
     counter = push3toVec(points, minP.x, maxP.y, maxP.z, counter);
     assert(counter <= totalSize);
   }
-  drawLinesUniformColor(points, totalSize * sizeof(float), color, static_cast<float>(totalSize),
-                        debugName);
+  drawLinesUniformColor(points, totalSize * sizeof(float), color,
+                        static_cast<float>(totalSize), debugName);
 
   // this is not compound;
   const int compoundBit = 0;
@@ -625,15 +604,15 @@ DebugDrawHandle DebugRenderer::drawBoundingBoxes(BoundingBox *data, int count,
 }
 
 DebugDrawHandle DebugRenderer::drawAnimatedBoundingBoxes(
-    DebugDrawHandle handle, BoundingBox *data, int count,
-    glm::vec4 color, const char *debugName) {
+    DebugDrawHandle handle, BoundingBox *data, int count, glm::vec4 color,
+    const char *debugName) {
   // first get AABB data
   // 12 is the number of lines needed for the AABB, 4 top, 4 bottom, 4 vertical
   // two is because we need two points per line, we are not doing trianglestrip
   int totalSize = 3 * count * 12 * 2; // here 3 is the xmfloat3
 
   auto *points = reinterpret_cast<float *>(globals::FRAME_ALLOCATOR->allocate(
-      sizeof(DirectX::XMFLOAT3) * count * 12 * 2));
+      sizeof(glm::vec3) * count * 12 * 2));
   int counter = 0;
   for (int i = 0; i < count; ++i) {
 
@@ -670,8 +649,9 @@ DebugDrawHandle DebugRenderer::drawAnimatedBoundingBoxes(
     return handle;
 
   } else {
-    const DebugDrawHandle outHandle = drawLinesUniformColor(
-        points, totalSize * sizeof(float), color, static_cast<float>(totalSize), debugName);
+    const DebugDrawHandle outHandle =
+        drawLinesUniformColor(points, totalSize * sizeof(float), color,
+                              static_cast<float>(totalSize), debugName);
 
     return outHandle;
   }
@@ -686,7 +666,7 @@ DebugDrawHandle DebugRenderer::drawAnimatedBoundingBoxFromFullPoints(
   const int totalSize = 3 * count * 12 * 2; // here 3 is the xmfloat3
 
   auto *points = reinterpret_cast<float *>(globals::FRAME_ALLOCATOR->allocate(
-      sizeof(DirectX::XMFLOAT3) * count * 12 * 2));
+      sizeof(glm::vec3) * count * 12 * 2));
   int counter = 0;
 
   // draw vertical lines
@@ -730,8 +710,9 @@ DebugDrawHandle DebugRenderer::drawAnimatedBoundingBoxFromFullPoints(
     return handle;
 
   } else {
-    const DebugDrawHandle outHandle = drawLinesUniformColor(
-        points, totalSize * sizeof(float), color, static_cast<float>(totalSize), debugName);
+    const DebugDrawHandle outHandle =
+        drawLinesUniformColor(points, totalSize * sizeof(float), color,
+                              static_cast<float>(totalSize), debugName);
 
     return outHandle;
   }
@@ -746,18 +727,18 @@ void DebugRenderer::drawMatrix(const glm::mat4 &mat, float size,
 
   int counter = 0;
   // start with z axis
-  auto scaledZ = mat[2]* (size * 2.5f);
+  auto scaledZ = mat[2] * (size * 2.5f);
   auto movedPosZ = mat[3] + scaledZ;
   counter = push3toVec(points, mat[3], counter);
   counter = push3toVec(points, movedPosZ, counter);
 
-  auto scaledX = mat[0]* size;
-  auto movedPosX = mat[3]+ scaledX;
+  auto scaledX = mat[0] * size;
+  auto movedPosX = mat[3] + scaledX;
   counter = push3toVec(points, mat[3], counter);
   counter = push3toVec(points, movedPosX, counter);
 
-  auto scaledY = (mat[1]* (size * 1.5f));
-  auto movedPosY = mat[3]+ scaledY;
+  auto scaledY = (mat[1] * (size * 1.5f));
+  auto movedPosY = mat[3] + scaledY;
   counter = push3toVec(points, mat[3], counter);
   counter = push3toVec(points, movedPosY, counter);
 
