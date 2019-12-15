@@ -410,24 +410,20 @@ bool Dx12RenderingContext::initializeGraphics() {
   m_light.lightPosition = {10.0f, 10.0f, 10.0f, 1.0f};
 
   // build a look at matrix for the light
-  auto tempView = DirectX::XMLoadFloat4(&m_light.lightDir);
-  tempView.m128_f32[3] = 0.0f;
-  const auto viewDir = DirectX::XMVector3Normalize(tempView);
-  const DirectX::XMVECTOR upVector =
-      DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0);
+  glm::vec3 lightDir = glm::normalize(glm::vec3(m_light.lightDir));
+  glm::vec3 upVector{0, 1, 0};
 
-  const auto cross = DirectX::XMVector3Cross(upVector, viewDir);
-  const auto crossNorm = DirectX::XMVector3Normalize(cross);
+  const auto cross = glm::cross(upVector, lightDir);
+  const auto crossNorm = glm::normalize(cross);
 
-  const auto newUp = DirectX::XMVector3Cross(viewDir, crossNorm);
-  const auto newUpNorm = DirectX::XMVector3Normalize(newUp);
+  const auto newUp = glm::cross(lightDir, crossNorm);
+  const auto newUpNorm = glm::normalize(newUp);
 
   m_light.localToWorld =
-      DirectX::XMMATRIX(crossNorm, newUpNorm, viewDir,
-                        DirectX::XMLoadFloat4(&m_light.lightPosition));
+      glm::mat4(glm::vec4(crossNorm, 0), glm::vec4(newUpNorm, 0),
+                glm::vec4(lightDir, 0), m_light.lightPosition);
 
-  auto det = DirectX::XMMatrixDeterminant(m_light.localToWorld);
-  m_light.worldToLocal = DirectX::XMMatrixInverse(&det, m_light.localToWorld);
+  m_light.worldToLocal = glm::inverse(m_light.localToWorld);
 
   // allocate the constant buffer
   m_lightCB = globals::CONSTANT_BUFFER_MANAGER->allocateDynamic(
@@ -445,35 +441,15 @@ void Dx12RenderingContext::setupCameraForFrame() {
   m_camBufferCPU.screenHeight =
       static_cast<float>(globals::ENGINE_CONFIG->m_windowHeight);
   auto pos = globals::MAIN_CAMERA->getPosition();
-  m_camBufferCPU.position =
-      DirectX::XMFLOAT4{pos.x, pos.y, pos.z, 1.0f};
+  m_camBufferCPU.position = glm::vec4(pos, 1.0f);
 
-  // OLD DX
-  // m_camBufferCPU.MVP = DirectX::XMMatrixTranspose(
-  //    globals::MAIN_CAMERA->getMVP(DirectX::XMMatrixIdentity()));
-  // m_camBufferCPU.ViewMatrix = DirectX::XMMatrixTranspose(
-  //    globals::MAIN_CAMERA->getViewInverse(DirectX::XMMatrixIdentity()));
-  // m_camBufferCPU.VPinverse = DirectX::XMMatrixTranspose(
-  //    globals::MAIN_CAMERA->getMVPInverse(DirectX::XMMatrixIdentity()));
-  //m_camBufferCPU.perspectiveValues = globals::MAIN_CAMERA->getProjParams();
-
-  // GLM
-  // auto t = glm::translate(glm::mat4(1.0), glm::vec3(10, 20, 30));
-  // auto ttt(glm::transpose(t));
-  // auto d = DirectX::XMMatrixTranslation(10,20,30);
-  // auto ddd = DirectX::XMMatrixTranspose(d);
-  // auto mvp =
-  // glm::transpose(globals::MAIN_CAMERA->getMVP(DirectX::XMMatrixIdentity()));
-  auto mvp =
+  m_camBufferCPU.MVP =
       glm::transpose(globals::MAIN_CAMERA->getMVP(glm::mat4(1.0)));
-  memcpy(&m_camBufferCPU.MVP, &mvp, sizeof(mvp));
-  auto view = glm::transpose(
-      globals::MAIN_CAMERA->getViewInverse(glm::mat4(1.0)));
-  memcpy(&m_camBufferCPU.ViewMatrix, &view, sizeof(view));
-  auto vpInv = glm::transpose(globals::MAIN_CAMERA->getMVPInverse(glm::mat4(1.0)));
-  memcpy(&m_camBufferCPU.VPinverse, &vpInv, sizeof(vpInv));
-  auto perspValues =  globals::MAIN_CAMERA->getProjParams();
-  memcpy(&m_camBufferCPU.perspectiveValues, &perspValues,sizeof(perspValues));
+  m_camBufferCPU.ViewMatrix =
+      glm::transpose(globals::MAIN_CAMERA->getViewInverse(glm::mat4(1.0)));
+  m_camBufferCPU.VPinverse =
+      glm::transpose(globals::MAIN_CAMERA->getMVPInverse(glm::mat4(1.0)));
+  m_camBufferCPU.perspectiveValues = globals::MAIN_CAMERA->getProjParams();
 
   globals::CONSTANT_BUFFER_MANAGER->updateConstantBufferNotBuffered(
       m_cameraHandle, &m_camBufferCPU);
@@ -539,20 +515,20 @@ void Dx12RenderingContext::updateSceneBoundingBox() {
   m_boundingBox.max.z = maxZ;
 }
 
-void expandBoundingBox(const BoundingBox &aabb, DirectX::XMFLOAT3 *points) {
+void expandBoundingBox(const BoundingBox &aabb, glm::vec3 *points) {
   points[0] = aabb.min;
   points[1] = aabb.max;
-  points[2] = DirectX::XMFLOAT3(points[0].x, points[0].y, points[1].z);
-  points[3] = DirectX::XMFLOAT3(points[0].x, points[1].y, points[0].z);
-  points[4] = DirectX::XMFLOAT3(points[1].x, points[0].y, points[0].z);
-  points[5] = DirectX::XMFLOAT3(points[0].x, points[1].y, points[1].z);
-  points[6] = DirectX::XMFLOAT3(points[1].x, points[0].y, points[1].z);
-  points[7] = DirectX::XMFLOAT3(points[1].x, points[1].y, points[0].z);
+  points[2] = glm::vec3(points[0].x, points[0].y, points[1].z);
+  points[3] = glm::vec3(points[0].x, points[1].y, points[0].z);
+  points[4] = glm::vec3(points[1].x, points[0].y, points[0].z);
+  points[5] = glm::vec3(points[0].x, points[1].y, points[1].z);
+  points[6] = glm::vec3(points[1].x, points[0].y, points[1].z);
+  points[7] = glm::vec3(points[1].x, points[1].y, points[0].z);
 }
 
 void Dx12RenderingContext::updateDirectionalLightMatrix() {
   // we need to compute the scene bounding box in light space
-  DirectX::XMFLOAT3 expanded[8];
+  glm::vec3 expanded[8];
   expandBoundingBox(m_boundingBox, expanded);
   float minX = std::numeric_limits<float>::max();
   float minY = minX;
@@ -563,25 +539,18 @@ void Dx12RenderingContext::updateDirectionalLightMatrix() {
   float maxZ = maxY;
 
   for (int i = 0; i < 8; ++i) {
-    const DirectX::XMFLOAT3 &point = expanded[i];
-    const DirectX::XMVECTOR point4 =
-        DirectX::XMVectorSet(point.x, point.y, point.z, 1.0f);
+    const glm::vec3 &point = expanded[i];
 
-    DirectX::XMVECTOR pp = DirectX::XMVectorSet(1, 1, 2, 1);
-    const auto localPointV =
-        DirectX::XMVector4Transform(point4, m_light.worldToLocal);
-
-    DirectX::XMFLOAT4 localPoint;
-    DirectX::XMStoreFloat4(&localPoint, localPointV);
+    const glm::vec4 localPointV = m_light.worldToLocal * glm::vec4(point, 1.0f);
 
     // lets us compute bounding box
-    minX = localPoint.x < minX ? localPoint.x : minX;
-    minY = localPoint.y < minY ? localPoint.y : minY;
-    minZ = localPoint.z < minZ ? localPoint.z : minZ;
+    minX = localPointV.x < minX ? localPointV.x : minX;
+    minY = localPointV.y < minY ? localPointV.y : minY;
+    minZ = localPointV.z < minZ ? localPointV.z : minZ;
 
-    maxX = localPoint.x > maxX ? localPoint.x : maxX;
-    maxY = localPoint.y > maxY ? localPoint.y : maxY;
-    maxZ = localPoint.z > maxZ ? localPoint.z : maxZ;
+    maxX = localPointV.x > maxX ? localPointV.x : maxX;
+    maxY = localPointV.y > maxY ? localPointV.y : maxY;
+    maxZ = localPointV.z > maxZ ? localPointV.z : maxZ;
   }
   BoundingBox m_lightAABB;
   m_lightAABB.min.x = minX;
@@ -595,36 +564,33 @@ void Dx12RenderingContext::updateDirectionalLightMatrix() {
   expandBoundingBox(m_lightAABB, expanded);
 
   for (int i = 0; i < 8; ++i) {
-    DirectX::XMFLOAT3 &point = expanded[i];
-    const DirectX::XMVECTOR point4 =
-        DirectX::XMVectorSet(point.x, point.y, point.z, 1.0f);
+    glm::vec3 &point = expanded[i];
+    const glm::vec4 point4 = glm::vec4(point.x, point.y, point.z, 1.0f);
 
-    auto localPointV =
-        DirectX::XMVector4Transform(point4, m_light.localToWorld);
-    point.x = localPointV.m128_f32[0];
-    point.y = localPointV.m128_f32[1];
-    point.z = localPointV.m128_f32[2];
+    auto localPointV = m_light.localToWorld * point4;
+
+    point.x = localPointV.x;
+    point.y = localPointV.y;
+    point.z = localPointV.z;
   }
 
   // we have the bounding box in light space we want to render it
   m_lightAABBHandle =
       dx12::DEBUG_RENDERER->drawAnimatedBoundingBoxFromFullPoints(
-          m_lightAABBHandle, expanded, 1, DirectX::XMFLOAT4(1, 0, 0, 1), "");
+          m_lightAABBHandle, expanded, 1, glm::vec4(1, 0, 0, 1), "");
 
   // we can now use min max to generate the projection matrix needed;
-  const DirectX::XMMATRIX ortho =
-      DirectX::XMMatrixOrthographicLH(maxX - minX, maxY - minY, maxZ, minZ);
-  m_light.projectionMatrix = ortho;
-
-  m_light.lightVP = DirectX::XMMatrixTranspose(
-      DirectX::XMMatrixMultiply(m_light.worldToLocal, ortho));
+  auto ortho =
+      getOrthoMatrix(glm::vec3(minX, minY, minZ), glm::vec3(maxX, maxY, maxZ));
+  m_light.projectionMatrix = glm::transpose(ortho);
+  m_light.lightVP = glm::transpose(ortho * m_light.worldToLocal);
 }
 
 bool Dx12RenderingContext::newFrame() { return newFrameDx12(); }
 
 bool Dx12RenderingContext::dispatchFrame() { return dispatchFrameDx12(); }
 
-bool Dx12RenderingContext::resize(uint32_t width, uint32_t height) {
+bool Dx12RenderingContext::resize(const uint32_t width, const uint32_t height) {
   return dx12::SWAP_CHAIN->resize(&dx12::CURRENT_FRAME_RESOURCE->fc, width,
                                   height);
 }
@@ -640,16 +606,6 @@ void Dx12RenderingContext::flush() {
 void Dx12RenderingContext::executeGlobalCommandList() {
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   executeCommandList(dx12::GLOBAL_COMMAND_QUEUE, currentFc);
-  // if (shouldFlush) {
-  //  flush();
-  //}
-  // if (shouldResetCommandList) {
-  //  // if the command list is open we close it and reset it
-  //  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
-  //  if (!currentFc->isListOpen) {
-  //    dx12::resetAllocatorAndList(currentFc);
-  //  }
-  //}
 }
 
 void Dx12RenderingContext::resetGlobalCommandList() {

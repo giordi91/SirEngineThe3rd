@@ -12,6 +12,7 @@ project(Tests)
 						${CMAKE_SOURCE_DIR}/SirEngineThe3rdLib/src
 						${CMAKE_SOURCE_DIR}/ResourceCompilerLib/src
 						${CMAKE_SOURCE_DIR}/builtDependencies/includes
+						${CMAKE_SOURCE_DIR}/vendors/glm
 	)
 
 	#lets add specific windows build definitions

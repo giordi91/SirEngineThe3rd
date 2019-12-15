@@ -9,7 +9,7 @@
 #include <DirectXMath.h>
 
 namespace SirEngine {
-//utility function to convert from dx -> glm and viceversa
+// utility function to convert from dx -> glm and viceversa
 glm::mat4 toGLM(const DirectX::XMMATRIX &mat) {
   glm::mat4 toReturn;
   assert(sizeof(mat) == sizeof(toReturn));
@@ -51,7 +51,19 @@ glm::mat4 getPerspectiveMatrix(const int screenWidth, const int screenHeight) {
   return temp44;
 }
 
-glm::mat4 getLookAtMatrix(const glm::vec4 pos, const glm::vec4 lookAt, const glm::vec3 upVec) {
+glm::mat4 getOrthoMatrix(const glm::vec3 minP, const glm::vec3 maxP) {
+  if (globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::DX12) {
+    auto xmat = DirectX::XMMatrixOrthographicLH(
+        maxP.x - minP.x, maxP.y - minP.y, maxP.z, minP.z);
+    return toGLM(xmat);
+  }
+
+  // NOTE: not tested!!!!
+  return glm::ortho(minP.x, maxP.x, minP.y, maxP.y, maxP.z, minP.z);
+}
+
+glm::mat4 getLookAtMatrix(const glm::vec4 pos, const glm::vec4 lookAt,
+                          const glm::vec3 upVec) {
   if (globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::DX12) {
 
     DirectX::XMVECTOR posV = DirectX::XMVectorSet(pos.x, pos.y, pos.z, pos.w);

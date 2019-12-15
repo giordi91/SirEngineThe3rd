@@ -1,10 +1,10 @@
 #pragma once
 #include "SirEngine/handle.h"
-#include "SirEngine/materialManager.h"
-#include "meshManager.h"
-#include <DirectXMath.h>
 #include <unordered_map>
 #include <vector>
+#include <glm/glm.hpp>
+#include "platform/windows/graphics/dx12/DX12.h"
+#include "SirEngine/materialManager.h"
 
 namespace SirEngine {
 
@@ -55,35 +55,35 @@ public:
   }
 
   DebugDrawHandle drawPointsUniformColor(float *data, uint32_t sizeInByte,
-                                         DirectX::XMFLOAT4 color, float size,
+                                         glm::vec4 color, float size,
                                          const char *debugName);
   DebugDrawHandle drawLinesUniformColor(float *data, uint32_t sizeInByte,
-                                        DirectX::XMFLOAT4 color, float size,
+                                        glm::vec4 color, float size,
                                         const char *debugName);
-  DebugDrawHandle drawSkeleton(Skeleton *skeleton, DirectX::XMFLOAT4 color,
+  DebugDrawHandle drawSkeleton(Skeleton *skeleton, glm::vec4 color,
                                float pointSize);
   DebugDrawHandle drawAnimatedSkeleton(DebugDrawHandle handle,
                                        AnimationPlayer *state,
-                                       DirectX::XMFLOAT4 color,
+                                       glm::vec4 color,
                                        float pointSize);
 
   void render(TextureHandle input, TextureHandle depth);
   void clearUploadRequests();
   DebugDrawHandle drawBoundingBoxes(BoundingBox *data, int count,
-                                    DirectX::XMFLOAT4 color,
+                                    glm::vec4 color,
                                     const char *debugName);
 
-  DebugDrawHandle drawAnimatedBoundingBoxes(DebugDrawHandle handle ,BoundingBox *data, int count,
-                                    DirectX::XMFLOAT4 color,
-                                    const char *debugName);
+  DebugDrawHandle drawAnimatedBoundingBoxes(DebugDrawHandle handle,
+                                            BoundingBox *data, int count,
+                                            glm::vec4 color,
+                                            const char *debugName);
 
-  DebugDrawHandle drawAnimatedBoundingBoxFromFullPoints(DebugDrawHandle handle ,DirectX::XMFLOAT3* data, int count,
-                                    DirectX::XMFLOAT4 color,
-                                    const char *debugName);
+  DebugDrawHandle drawAnimatedBoundingBoxFromFullPoints(
+      const DebugDrawHandle handle, const glm::vec3 *data, const int count,
+      const glm::vec4 color, const char *debugName);
 
-  void drawMatrix(const DirectX::XMMATRIX& mat, float size,DirectX::XMFLOAT4 color,
-                                    const char *debugName );
-	
+  void drawMatrix(const glm::mat4 &mat, float size,
+                  glm::vec4 color, const char *debugName);
 
   DebugRenderer(const DebugRenderer &) = delete;
   DebugRenderer &operator=(const DebugRenderer &) = delete;

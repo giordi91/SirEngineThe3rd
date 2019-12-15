@@ -63,10 +63,10 @@ MeshHandle MeshManager::loadMesh(const char *path, MeshRuntime *meshRuntime,
     // this needs to be replaced with a proper scene and asset management
     if (!isInternal) {
       // load bounding box
-      DirectX::XMFLOAT3 minP = {mapper->boundingBox[0], mapper->boundingBox[1],
-                                mapper->boundingBox[2]};
-      DirectX::XMFLOAT3 maxP = {mapper->boundingBox[3], mapper->boundingBox[4],
-                                mapper->boundingBox[5]};
+      glm::vec3 minP = {mapper->boundingBox[0], mapper->boundingBox[1],
+                        mapper->boundingBox[2]};
+      glm::vec3 maxP = {mapper->boundingBox[3], mapper->boundingBox[4],
+                        mapper->boundingBox[5]};
       BoundingBox box{minP, maxP};
       meshData->entityID = m_boundingBoxes.size();
       m_boundingBoxes.push_back(box);
