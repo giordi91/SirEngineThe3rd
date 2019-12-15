@@ -43,7 +43,7 @@ int convertTimeToFrames(const int64_t currentStamp, const int64_t originStamp,
 
 void LuaStatePlayer::init(AnimationManager *manager,
                           nlohmann::json &configJson) {
-  m_transform = DirectX::XMMatrixIdentity();
+  m_transform = glm::mat4(1.0f);
   const std::string empty;
   const std::string configName =
       getValueIfInJson(configJson, ANIMATION_CONFIG_NAME_KEY, empty);
@@ -183,35 +183,34 @@ void LuaStatePlayer::evaluateStateMachine() {
   lua_pop(state, 6);
 }
 
-void LuaStatePlayer::updateTransform()
-{
-	// buttons
-	int leftArrow = 37;
-	int rightArrow = 39;
-	float speed = 0.001f;
-	bool leftArrowDown = globals::INPUT->isKeyDown(leftArrow);
-	bool rightArrowDown = globals::INPUT->isKeyDown(rightArrow);
-	float spinValue = leftArrowDown ? -speed : 0.0f;
-	spinValue = rightArrowDown ? speed + spinValue : spinValue;
+void LuaStatePlayer::updateTransform() {
+  // buttons
+  int leftArrow = 37;
+  int rightArrow = 39;
+  float speed = 0.001f;
+  bool leftArrowDown = globals::INPUT->isKeyDown(leftArrow);
+  bool rightArrowDown = globals::INPUT->isKeyDown(rightArrow);
+  float spinValue = leftArrowDown ? -speed : 0.0f;
+  spinValue = rightArrowDown ? speed + spinValue : spinValue;
 
-	// move back transform
-	auto pos = m_transform.r[3];
-	auto translationMatrix = DirectX::XMMatrixTranslationFromVector(
-		DirectX::XMVectorScale(pos, -1.0f));
-	auto toSpin = DirectX::XMMatrixMultiply(m_transform, translationMatrix);
+  // move back transform
+  auto pos = m_transform[3];
+  auto translationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(-pos));
 
-	// spin
-	auto spin = DirectX::XMMatrixRotationY(spinValue);
-	m_transform = DirectX::XMMatrixMultiply(toSpin, spin);
+  auto toSpin = translationMatrix * m_transform;
 
-	// now translate using cog speed
-	auto forward = m_transform.r[2];
-	auto offsetVector = DirectX::XMVectorScale(forward, m_workingCogSpeed);
-	translationMatrix = DirectX::XMMatrixTranslationFromVector(offsetVector);
-	m_transform = DirectX::XMMatrixMultiply(m_transform, translationMatrix);
-	// add back the offset
-	translationMatrix = DirectX::XMMatrixTranslationFromVector(pos);
-	m_transform = DirectX::XMMatrixMultiply(m_transform, translationMatrix);
+  // spin
+  auto spin = glm::rotate(glm::mat4(1.0f), spinValue, glm::vec3(0, 1, 0));
+  m_transform = spin * toSpin;
+
+  // now translate using cog speed
+  auto forward = m_transform[2];
+  auto offsetVector = forward * m_workingCogSpeed;
+  translationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(offsetVector));
+  m_transform = translationMatrix * m_transform;
+  // add back the offset
+  translationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(pos));
+  m_transform = translationMatrix * m_transform;
 }
 
 void LuaStatePlayer::evaluate(const int64_t stampNS) {

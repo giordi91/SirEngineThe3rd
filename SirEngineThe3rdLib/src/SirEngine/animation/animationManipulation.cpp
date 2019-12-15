@@ -4,10 +4,10 @@
 #include "skeleton.h"
 
 namespace SirEngine {
-inline DirectX::XMFLOAT3 lerp3(const DirectX::XMFLOAT3 &v1,
-                               const DirectX::XMFLOAT3 &v2,
+inline glm::vec3 lerp3(const glm::vec3 &v1,
+                               const glm::vec3 &v2,
                                const float amount) {
-  return DirectX::XMFLOAT3{
+  return glm::vec3{
       ((1.0f - amount) * v1.x) + (amount * v2.x),
       ((1.0f - amount) * v1.y) + (amount * v2.y),
       ((1.0f - amount) * v1.z) + (amount * v2.z),
@@ -61,10 +61,10 @@ void evaluateAnim(const AnimationEvalRequest *request) {
 
     // we slerp the rotation and linearly interpolate the
     // translation
-    const DirectX::XMVECTOR rot = DirectX::XMQuaternionSlerp(
+    const glm::quat rot = glm::slerp(
         jointStart.m_rot, jointEnd.m_rot, interpolationValue);
 
-    const DirectX::XMFLOAT3 pos =
+    const glm::vec3 pos =
         lerp3(jointStart.m_trans, jointEnd.m_trans, interpolationValue);
     // the compiler should be able to optimize out this copy
     request->m_destination->m_localPose[i].m_rot = rot;
@@ -86,10 +86,10 @@ void interpolateTwoPoses(InterpolateTwoPosesRequest& request)
 
 		// we slerp the rotation and linearly interpolate the
 		// translation
-		const DirectX::XMVECTOR rot = DirectX::XMQuaternionSlerp(
+		const glm::quat rot = glm::slerp(
 			jointStart.m_rot, jointEnd.m_rot, request.factor);
 
-		const DirectX::XMFLOAT3 pos =
+		const glm::vec3 pos =
 			lerp3(jointStart.m_trans, jointEnd.m_trans, request.factor);
 		// the compiler should be able to optimize out this copy
 		request.output->m_localPose[i].m_rot = rot;

@@ -14,7 +14,7 @@ static const std::string ANIMATION_CONFIG_TYPE_SIMPLE_LOOP =
     "animationLoopPlayer";
 static const std::string ANIMATION_CONFIG_NAME_KEY = "name";
 
-AnimationLoopPlayer::AnimationLoopPlayer() : AnimationPlayer() { m_transform = DirectX::XMMatrixIdentity();}
+AnimationLoopPlayer::AnimationLoopPlayer() : AnimationPlayer() { m_transform = glm::mat4(1.0f);}
 
 AnimationLoopPlayer::~AnimationLoopPlayer() {}
 
@@ -56,10 +56,10 @@ void AnimationLoopPlayer::init(AnimationManager *manager,
   m_flags = ANIM_FLAGS::READY;
 }
 
-inline DirectX::XMFLOAT3 lerp3(const DirectX::XMFLOAT3 &v1,
-                               const DirectX::XMFLOAT3 &v2,
+inline glm::vec3 lerp3(const glm::vec3 &v1,
+                               const glm::vec3 &v2,
                                const float amount) {
-  return DirectX::XMFLOAT3{
+  return glm::vec3{
       ((1.0f - amount) * v1.x) + (amount * v2.x),
       ((1.0f - amount) * v1.y) + (amount * v2.y),
       ((1.0f - amount) * v1.z) + (amount * v2.z),
@@ -108,10 +108,10 @@ void AnimationLoopPlayer::evaluate(long long stampNS) {
 
     // we slerp the rotation and linearlly interpolate the
     // translation
-    const DirectX::XMVECTOR rot = DirectX::XMQuaternionSlerp(
+    const glm::quat rot = glm::slerp(
         jointStart.m_rot, jointEnd.m_rot, interpolationValue);
 
-    const DirectX::XMFLOAT3 pos =
+    const glm::vec3 pos =
         lerp3(jointStart.m_trans, jointEnd.m_trans, interpolationValue);
     // the compiler should be able to optimize out this copy
     m_outPose->m_localPose[i].m_rot = rot;

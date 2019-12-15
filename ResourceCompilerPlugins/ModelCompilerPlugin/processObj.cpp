@@ -10,21 +10,21 @@
 
 static const float VERTEX_DELTA = 0.00001f;
 struct VertexCompare {
-  DirectX::XMFLOAT3 p{};
-  DirectX::XMFLOAT3 n{};
-  DirectX::XMFLOAT2 uv{};
-  DirectX::XMFLOAT3 t{};
+  glm::vec3 p{};
+  glm::vec3 n{};
+  glm::vec2 uv{};
+  glm::vec3 t{};
   float pad5 = 0.0f;
 };
 
-inline int float2Compare(const DirectX::XMFLOAT2 a, const DirectX::XMFLOAT2 b) {
+inline int float2Compare(const glm::vec2 a, const glm::vec2 b) {
   // TODO fix fabs, for faster solution, if is an up/down cast to double
   bool xSame = std::fabsf(a.x - b.x) < VERTEX_DELTA;
   bool ySame = std::fabsf(a.y - b.y) < VERTEX_DELTA;
   return (xSame & ySame) ? 1 : 0;
 }
 
-inline int float3Compare(const DirectX::XMFLOAT3 a, const DirectX::XMFLOAT3 b) {
+inline int float3Compare(const glm::vec3 a, const glm::vec3 b) {
   // TODO fix fabs, for faster solution, if is an up/down cast to double
   bool xSame = std::fabsf(a.x - b.x) < VERTEX_DELTA;
   bool ySame = std::fabsf(a.y - b.y) < VERTEX_DELTA;
@@ -47,8 +47,8 @@ bool operator==(const VertexCompare &lhs, const VertexCompare &rhs) {
 const int primes[] = {73856093, 19349663, 83492791};
 
 namespace std {
-template <> struct hash<DirectX::XMFLOAT2> {
-  size_t operator()(DirectX::XMFLOAT2 const &v) const noexcept {
+template <> struct hash<glm::vec2> {
+  size_t operator()(glm::vec2 const &v) const noexcept {
     auto h1 = std::hash<float>{}(v.x);
     auto h2 = std::hash<float>{}(v.y);
 
@@ -56,8 +56,8 @@ template <> struct hash<DirectX::XMFLOAT2> {
   }
 };
 
-template <> struct hash<DirectX::XMFLOAT3> final {
-  size_t operator()(DirectX::XMFLOAT3 const &v) const noexcept {
+template <> struct hash<glm::vec3> final {
+  size_t operator()(glm::vec3 const &v) const noexcept {
     auto h1 = std::hash<float>{}(v.x);
     auto h2 = std::hash<float>{}(v.y);
     auto h3 = std::hash<float>{}(v.z);
@@ -69,10 +69,10 @@ template <> struct hash<DirectX::XMFLOAT3> final {
 
 struct HashFunc final {
   size_t operator()(const VertexCompare &k) const {
-    return std::hash<DirectX::XMFLOAT3>()(k.p) ^
-           (std::hash<DirectX::XMFLOAT3>()(k.n) << 1) ^
-           (std::hash<DirectX::XMFLOAT3>()(k.t) << 2) ^
-           (std::hash<DirectX::XMFLOAT2>()(k.uv) << 3);
+    return std::hash<glm::vec3>()(k.p) ^
+           (std::hash<glm::vec3>()(k.n) << 1) ^
+           (std::hash<glm::vec3>()(k.t) << 2) ^
+           (std::hash<glm::vec2>()(k.uv) << 3);
   }
 };
 

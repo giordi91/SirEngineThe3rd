@@ -1,9 +1,6 @@
 #pragma once
 
 #include "SirEngine/layer.h"
-// TODO TEMP
-#include "SirEngine/animation/animationManager.h"
-#include "SirEngine/handle.h"
 
 namespace SirEngine {
 class ReloadScriptsEvent;

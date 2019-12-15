@@ -1,7 +1,7 @@
 #pragma once
 #include "SirEngine/animation/animationPlayer.h"
 #include "nlohmann/json_fwd.hpp"
-#include <DirectXMath.h>
+#include <glm/glm.hpp>
 
 namespace SirEngine {
 struct SkeletonPose;
@@ -21,7 +21,7 @@ private:
   Skeleton *skeleton;
   AnimationClip *m_clip;
   float m_multiplier = 1.0f;
-  DirectX::XMMATRIX m_transform;
+  glm::mat4 m_transform;
 };
 
 } // namespace SirEngine

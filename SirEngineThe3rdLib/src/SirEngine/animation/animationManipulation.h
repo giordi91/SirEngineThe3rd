@@ -1,5 +1,5 @@
 #pragma once
-#include <DirectXMath.h>
+#include <glm/glm.hpp>
 
 namespace SirEngine {
 
@@ -43,7 +43,7 @@ struct AnimationEvalRequest {
   long long m_originTime = 0;
   float m_multiplier = 1.0f;
   bool convertToGlobals = true;
-  DirectX::XMMATRIX m_transform;
+  glm::mat4 m_transform;
 };
 
 struct InterpolateTwoPosesRequest {
@@ -51,7 +51,7 @@ struct InterpolateTwoPosesRequest {
   SkeletonPose *src;
   SkeletonPose *dest;
   SkeletonPose *output;
-  DirectX::XMMATRIX m_transform;
+  glm::mat4 m_transform;
 };
 
 struct AnimationEvalRequest;

@@ -57,14 +57,10 @@ void convertAnim(const std::string &path, AnimData &data) {
   const int posesSize = int(jObj["poses"].size());
   data.bonesPerFrame = int(jObj["bonesPerPose"]);
   data.poses.resize(posesSize * data.bonesPerFrame);
-
-  // reinterpret_cast<SirEngine::JointPose
-  // *>(globals::PERSISTENT_ALLOCATOR->allocate(
-  //     posesSize * bonesPerFrame * sizeof(SirEngine::JointPose)));
   data.frameCount = posesSize;
 
-  const DirectX::XMFLOAT3 zeroV(0, 0, 0);
-  const DirectX::XMVECTOR zeroQ = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+  const glm::vec3 zeroV(0, 0, 0);
+  const glm::quat zeroQ(0.0f, 0.0f, 0.0f, 0.0f);
 
   int poseCounter = 0;
   for (auto &pose : jObj["poses"]) {
@@ -76,14 +72,14 @@ void convertAnim(const std::string &path, AnimData &data) {
     int jointCounter = 0;
     for (auto &joint : pose) {
 
-      const DirectX::XMFLOAT3 position =
-          getValueIfInJson<DirectX::XMFLOAT3>(joint, "pos", zeroV);
+      const glm::vec3 position =
+          getValueIfInJson<glm::vec3>(joint, "pos", zeroV);
 
       // extracting joint quaternion
       // to note I export quaternion as x,y,z,w,  is initialized as
       // w,x,y,z
-      const DirectX::XMVECTOR rotation =
-          getValueIfInJson<DirectX::XMVECTOR>(joint, "quat", zeroQ);
+      auto rotation =
+          getValueIfInJson<glm::quat>(joint, "quat", zeroQ);
 
       joints[jointCounter].m_rot = rotation;
       joints[jointCounter].m_trans = position;
@@ -176,7 +172,7 @@ void convertAnim(const std::string &path, AnimData &data) {
     }
   }
   // finally lets sort all the keys
-  for (auto& keyValue : data.animationKeywordToFrame) {
+  for (auto &keyValue : data.animationKeywordToFrame) {
     std::sort(keyValue.second.begin(), keyValue.second.end());
   }
 }

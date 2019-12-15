@@ -3,7 +3,6 @@
 #include "identityManager.h"
 #include "materialManager.h"
 #include "platform/windows/graphics/dx12/meshManager.h"
-#include <DirectXMath.h>
 #include <vector>
 
 namespace SirEngine {
@@ -18,7 +17,7 @@ struct AssetDataHandle {
 };
 
 struct Renderable {
-  DirectX::XMMATRIX m_matrixRuntime;
+  glm::mat4 m_matrixRuntime;
   dx12::MeshRuntime m_meshRuntime;
   MaterialRuntime m_materialRuntime;
 };

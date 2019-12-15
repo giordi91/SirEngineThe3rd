@@ -535,10 +535,10 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   const std::string name = getFileName(path);
 
   auto jobj = getJsonObj(path);
-  DirectX::XMFLOAT4 zero{0.0f, 0.0f, 0.0f, 0.0f};
-  DirectX::XMFLOAT4 kd = getValueIfInJson(jobj, materialKeys::KD, zero);
-  DirectX::XMFLOAT4 ka = getValueIfInJson(jobj, materialKeys::KA, zero);
-  DirectX::XMFLOAT4 ks = getValueIfInJson(jobj, materialKeys::KS, zero);
+  glm::vec4 zero{0.0f, 0.0f, 0.0f, 0.0f};
+  glm::vec4 kd = getValueIfInJson(jobj, materialKeys::KD, zero);
+  glm::vec4 ka = getValueIfInJson(jobj, materialKeys::KA, zero);
+  glm::vec4 ks = getValueIfInJson(jobj, materialKeys::KS, zero);
   float zeroFloat = 0.0f;
   float oneFloat = 1.0f;
   float shininess = getValueIfInJson(jobj, materialKeys::SHINESS, zeroFloat);

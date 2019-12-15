@@ -1,7 +1,6 @@
 #pragma once
 
 #include "DXTK12/ResourceUploadBatch.h"
-#include "DirectXMath.h"
 #include "SirEngine/handle.h"
 #include "SirEngine/graphics/cpuGraphicsStructures.h"
 #include "SirEngine/memory/sparseMemoryPool.h"

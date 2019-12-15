@@ -120,14 +120,14 @@ AnimationManager::getSkeletonPose(const Skeleton *skeleton) const {
   pose->m_skeleton = skeleton;
   const uint32_t jointCount = pose->m_skeleton->m_jointCount;
   const uint32_t totalSize = sizeof(JointPose) * jointCount +
-                             (sizeof(DirectX::XMMATRIX) * jointCount) * 2;
+                             (sizeof(glm::mat4) * jointCount) * 2;
   char *memory = reinterpret_cast<char *>(
       globals::PERSISTENT_ALLOCATOR->allocate(totalSize));
   // local pose is the first pointer so we just need to cast it to correct type
   pose->m_localPose = reinterpret_cast<JointPose *>(memory);
   // the global pose is right after the local pose so we are going to shift for
   // jointCount*JointPoseSize
-  pose->m_globalPose = reinterpret_cast<DirectX::XMMATRIX *>(
+  pose->m_globalPose = reinterpret_cast<glm::mat4 *>(
       memory + (sizeof(JointPose) * jointCount));
   // finally the last array is after m_globalPose, the datatype is already of a
   // matrix so we just go and shift by the joint count

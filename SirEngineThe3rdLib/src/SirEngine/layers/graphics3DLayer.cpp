@@ -11,7 +11,6 @@
 #include "SirEngine/graphics/nodeGraph.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/debugRenderer.h"
-#include <DirectXMath.h>
 
 #include "SirEngine/events/renderGraphEvent.h"
 #include "SirEngine/events/shaderCompileEvent.h"
@@ -169,7 +168,6 @@ void Graphics3DLayer::onUpdate() {
   AnimationPlayer *player =
       globals::ANIMATION_MANAGER->getAnimationPlayer(charHandle);
   SkeletonPose *playerPose = player->getOutPose();
-  DirectX::XMMATRIX root = playerPose->m_worldMat[0];
   // TODO manipulate camera to follow
 
   // animation is up to date, we can update the scene bounding boxes
