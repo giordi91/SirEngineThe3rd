@@ -1,103 +1,94 @@
 #include "SirEngine/graphics/camera.h"
+#include "SirEngine/matrix.h"
+
+#include "glm/glm.hpp"
+#include <glm/gtx/transform.hpp>
 
 namespace SirEngine {
 
-inline DirectX::XMVECTOR splatFloat(float value) {
-  auto temp = DirectX::XMFLOAT4(value, value, value, value);
-  return XMLoadFloat4(&temp);
-}
-
-const DirectX::XMVECTOR Camera3DPivot::upVector =
-    DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0);
-const float Camera3DPivot::MOUSE_ROT_SPEED_SCALAR = 0.012f;
-const float Camera3DPivot::MOUSE_PAN_SPEED_SCALAR = 0.007f;
-const DirectX::XMVECTOR Camera3DPivot::MOUSE_ROT_SPEED_VECTOR =
-    DirectX::XMVectorSet(0.012f, 0.012f, 0.012f, 0.0f);
-const DirectX::XMVECTOR Camera3DPivot::MOUSE_PAN_SPEED_VECTOR =
-    DirectX::XMVectorSet(0.07f, 0.07f, 0.07f, 0.0f);
-
-DirectX::XMMATRIX Camera3DPivot::getMVP(DirectX::XMMATRIX modelM) {
+glm::mat4 Camera3DPivot::getMVP(const glm::mat4 modelM) const {
   const int screenW = globals::ENGINE_CONFIG->m_windowWidth;
   const int screenH = globals::ENGINE_CONFIG->m_windowHeight;
-  return XMMatrixMultiply(DirectX::XMMatrixMultiply(modelM, m_viewMatrix),
-                          getProjCamera(screenW, screenH));
+
+  const glm::mat4 projectionMatrix = getPerspectiveMatrix(screenW, screenH);
+  const glm::mat4 viewMatrix = getLookAtMatrix(posV, lookAtPosV, UP_VECTOR);
+  const glm::mat4 VP = projectionMatrix * (viewMatrix * modelM);
+  return VP;
 }
 
-DirectX::XMMATRIX Camera3DPivot::getMVPInverse(DirectX::XMMATRIX modelM) {
+glm::mat4 Camera3DPivot::getMVPInverse(const glm::mat4 modelM) const {
   const int screenW = globals::ENGINE_CONFIG->m_windowWidth;
   const int screenH = globals::ENGINE_CONFIG->m_windowHeight;
-  const auto mat = XMMatrixMultiply(DirectX::XMMatrixMultiply(modelM, m_viewMatrix),
-                              getProjCamera(screenW, screenH));
-  auto det = DirectX::XMMatrixDeterminant(mat);
-  return XMMatrixInverse(&det, mat);
-}
-DirectX::XMMATRIX Camera3DPivot::getViewInverse(DirectX::XMMATRIX modelM) {
-  auto mat = DirectX::XMMatrixMultiply(modelM, m_viewMatrix);
-  auto det = DirectX::XMMatrixDeterminant(mat);
-  return XMMatrixInverse(&det, mat);
+
+  const glm::mat4 projectionMatrix = getPerspectiveMatrix(screenW, screenH);
+  const glm::mat4 viewMatrix = getLookAtMatrix(posV, lookAtPosV, UP_VECTOR);
+  const glm::mat4 VP = projectionMatrix * viewMatrix * modelM;
+  return glm::inverse(VP);
 }
 
-void Camera3DPivot::spinCameraWorldYAxis(float angleInDegrees) {
+glm::mat4 Camera3DPivot::getViewInverse(const glm::mat4 modelM) const {
+
+  const auto viewMatrix = getLookAtMatrix(posV, lookAtPosV, UP_VECTOR);
+  return glm::inverse(viewMatrix) * modelM;
+}
+
+void Camera3DPivot::spinCameraWorldYAxis(const float angleInDegrees) {
 
   // this is a pivot camera, we want to rotate around the pivot
-  auto rotationMatrix = DirectX::XMMatrixRotationY(angleInDegrees);
+  auto rotationMatrix =
+      glm::rotate(glm::mat4(1.0), angleInDegrees * TO_RAD, UP_VECTOR);
 
   // we translate the camera near the origin, compensating for look at position
-  auto tempXPos = DirectX::XMVectorSubtract(posV, lookAtPosV);
+  auto compensatedPosition = posV - lookAtPosV;
   // next we rotate
-  tempXPos = DirectX::XMVector3TransformCoord(tempXPos, rotationMatrix);
-  // adding back the offset of the look at
-  posV = DirectX::XMVectorAdd(tempXPos, lookAtPosV);
+  compensatedPosition = rotationMatrix * compensatedPosition;
+  posV = compensatedPosition + lookAtPosV;
 }
 
 void Camera3DPivot::panCamera(float deltaX, float deltaY) {
 
-  const auto updatedLookAtV = DirectX::XMVectorSubtract(lookAtPosV, posV);
-  const auto cross = DirectX::XMVector3Cross(upVector, updatedLookAtV);
-  const auto crossNorm = DirectX::XMVector3Normalize(cross);
+  const auto updatedLookAtV = glm::vec3(lookAtPosV - posV);
+  const glm::vec3 crossV = glm::cross(UP_VECTOR, updatedLookAtV);
+  const glm::vec3 crossNorm = glm::normalize(crossV);
 
-  const auto newUp = DirectX::XMVector3Cross(crossNorm, updatedLookAtV);
-  const auto newUpNorm = DirectX::XMVector3Normalize(newUp);
+  const glm::vec3 newUp = glm::cross(crossNorm, updatedLookAtV);
+  const glm::vec3 newUpNorm = glm::normalize(newUp);
 
-  const auto finalScaleX =
-      DirectX::XMVectorMultiply(splatFloat(deltaX), MOUSE_PAN_SPEED_VECTOR);
-  posV = DirectX::XMVectorMultiplyAdd(crossNorm, finalScaleX, posV);
-  lookAtPosV = DirectX::XMVectorMultiplyAdd(crossNorm, finalScaleX, lookAtPosV);
+  const glm::vec3 finalScaleX = glm::vec3(deltaX) * MOUSE_PAN_SPEED;
+  const auto offestX = glm::vec4(crossNorm * finalScaleX, 0.0f);
 
-  const auto finalScaleY =
-      DirectX::XMVectorMultiply(splatFloat(deltaY), MOUSE_PAN_SPEED_VECTOR);
-  posV = DirectX::XMVectorMultiplyAdd(newUpNorm, finalScaleY, posV);
-  lookAtPosV = DirectX::XMVectorMultiplyAdd(newUpNorm, finalScaleY, lookAtPosV);
+  posV += offestX;
+  lookAtPosV += offestX;
+
+  const auto finalScaleY = glm::vec3(deltaY) * MOUSE_PAN_SPEED;
+  const auto offestY = glm::vec4(newUpNorm * finalScaleY, 0.0f);
+  posV += offestY;
+  lookAtPosV += offestY;
 }
 
-void Camera3DPivot::rotCamera(float deltaX, float deltaY) {
-  deltaX *= MOUSE_ROT_SPEED_SCALAR;
-  deltaY *= MOUSE_ROT_SPEED_SCALAR;
+void Camera3DPivot::rotCamera(const float deltaX, const float deltaY) {
 
-  DirectX::XMFLOAT3 lookAtView;
-  DirectX::XMStoreFloat3(&lookAtView, lookAtPosV);
-  const auto offsetForXRot =
-      DirectX::XMVectorSet(0.0f, lookAtView.y, 0.0f, 0.0f);
+  // compute a rotation matrix on the Y axis and apply transformation
+  glm::mat4 rotXMatrix =
+      glm::rotate(glm::mat4(1.0), -deltaX * MOUSE_ROT_SPEED, UP_VECTOR);
+  auto rotatedXPos = rotXMatrix * (posV - lookAtPosV);
 
-  const auto rotXMatrix = DirectX::XMMatrixRotationAxis(upVector, -deltaX);
-  auto tempXPos = DirectX::XMVector3TransformCoord(posV, rotXMatrix);
+  // getting cross to compute the rotation up and down
+  const auto crossNorm =
+      glm::normalize(glm::cross(UP_VECTOR, glm::vec3(rotatedXPos)));
 
-  // getting cross
-  const auto cross = DirectX::XMVector3Cross(upVector, tempXPos);
-  const auto crossNorm = DirectX::XMVector3Normalize(cross);
+  // getting the rotation on the cross axis and apply the transformation
+  glm::mat4 rotYMatrix =
+      glm::rotate(glm::mat4(1.0), deltaY * MOUSE_ROT_SPEED, crossNorm);
 
-  const auto rotYMatrix = DirectX::XMMatrixRotationAxis(crossNorm, deltaY);
-  tempXPos = DirectX::XMVectorSubtract(tempXPos, lookAtPosV);
-  posV = DirectX::XMVector3TransformCoord(tempXPos, rotYMatrix);
-  posV = DirectX::XMVectorAdd(posV, lookAtPosV);
+  posV = (rotYMatrix * rotatedXPos) + lookAtPosV;
+  posV.w = 1.0;
 }
 
-void Camera3DPivot::zoomCamera(float deltaX) {
-  const auto updatedLookAtV = DirectX::XMVectorSubtract(lookAtPosV, posV);
-  const auto updatedLookAtVNorm = DirectX::XMVector3Normalize(updatedLookAtV);
-  const auto finalScaleX =
-      DirectX::XMVectorMultiply(splatFloat(-deltaX), MOUSE_PAN_SPEED_VECTOR);
-  posV = DirectX::XMVectorMultiplyAdd(updatedLookAtVNorm, finalScaleX, posV);
-}
+void Camera3DPivot::zoomCamera(const float deltaX) {
 
+  const auto updatedLookAtV = glm::normalize(lookAtPosV - posV);
+  const auto delta = updatedLookAtV * (-deltaX * MOUSE_PAN_SPEED);
+  posV += delta;
+}
 } // namespace SirEngine

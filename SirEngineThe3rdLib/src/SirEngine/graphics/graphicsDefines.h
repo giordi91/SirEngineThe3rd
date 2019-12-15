@@ -24,4 +24,13 @@ struct SIR_ENGINE_API AdapterRequestConfig {
 
 enum class SHADER_TYPE { VERTEX = 0, FRAGMENT, COMPUTE, INVALID };
 enum SHADER_FLAGS { DEBUG = 1 };
+
+// angles
+static constexpr float SE_PI = 3.14159265358979323846f;
+static constexpr double SE_PI_D = 3.141592653589793238462643383279502884;
+static constexpr float TO_RAD = static_cast<float>(SE_PI_D / 180.0);
+static constexpr double TO_RAD_D = SE_PI_D / 180.0;
+static constexpr float TO_DEG = static_cast<float>(180.0 / SE_PI_D);
+static constexpr double TO_DEG_D = 180.0 / SE_PI_D;
+
 } // namespace SirEngine
