@@ -8,8 +8,7 @@
 #include "platform/windows/graphics/vk/vkShaderCompiler.h"
 
 #include "SirEngine/memory/stringPool.h"
-#include "platform/windows/graphics/dx12/PSOManager.h"
-#include <d3dcommon.h>
+
 #include <filesystem>
 
 const std::string PLUGIN_NAME = "vkShaderCompilerPlugin";
@@ -160,12 +159,13 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
   memcpy(bulkDataPtr, assetPath.c_str(), dataToWriteSizeInByte);
   bulkDataPtr += dataToWriteSizeInByte;
 
-  //NOT no compiler args for now
+  // NOT no compiler args for now
   // write down the compiler args
-  //dataToWriteSizeInByte =
-  //    static_cast<int>((wcslen(shaderArgs.compilerArgs) + 1) * sizeof(wchar_t));
-  //mapperData.compilerArgsInByte = dataToWriteSizeInByte;
-  //memcpy(bulkDataPtr, shaderArgs.compilerArgs, dataToWriteSizeInByte);
+  // dataToWriteSizeInByte =
+  //    static_cast<int>((wcslen(shaderArgs.compilerArgs) + 1) *
+  //    sizeof(wchar_t));
+  // mapperData.compilerArgsInByte = dataToWriteSizeInByte;
+  // memcpy(bulkDataPtr, shaderArgs.compilerArgs, dataToWriteSizeInByte);
 
   // preparing the binary file write request
   std::filesystem::path inp(assetPath);

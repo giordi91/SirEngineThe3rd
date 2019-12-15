@@ -12,6 +12,7 @@ project(ShaderCompilerPlugin)
 						${CMAKE_CURRENT_SOURCE_DIR}
 						${CMAKE_SOURCE_DIR}/SirEngineThe3rdLib/src
 						${CMAKE_SOURCE_DIR}/ResourceCompilerLib/src
+						${CMAKE_SOURCE_DIR}/vendors/glm
 	)
 
 	#lets add specific windows build definitions

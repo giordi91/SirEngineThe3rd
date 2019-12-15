@@ -4,6 +4,7 @@
 
 #include "SirEngine/globals.h"
 #include "SirEngine/graphics/renderingContext.h"
+#include "SirEngine/graphics/cpuGraphicsStructures.h"
 #include <cassert>
 
 namespace SirEngine {

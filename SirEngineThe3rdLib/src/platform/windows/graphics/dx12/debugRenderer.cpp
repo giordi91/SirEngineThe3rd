@@ -124,9 +124,9 @@ inline D3D12_VERTEX_BUFFER_VIEW getVertexBufferView(ID3D12Resource *buffer,
 }
 
 DebugDrawHandle DebugRenderer::drawPointsUniformColor(float *data,
-                                                      uint32_t sizeInByte,
-                                                      DirectX::XMFLOAT4 color,
-                                                      float size,
+                                                      const uint32_t sizeInByte,
+                                                      const glm::vec4 color,
+                                                      const float size,
                                                       const char *debugName) {
   BufferUploadResource upload;
   DebugPrimitive primitive;
@@ -190,10 +190,11 @@ DebugDrawHandle DebugRenderer::drawPointsUniformColor(float *data,
   return debugHandle;
 }
 
-DebugDrawHandle
-DebugRenderer::drawLinesUniformColor(float *data, const uint32_t sizeInByte,
-                                     const DirectX::XMFLOAT4 color,
-                                     const float size, const char *debugName) {
+DebugDrawHandle DebugRenderer::drawLinesUniformColor(float *data,
+                                                     const uint32_t sizeInByte,
+                                                     const glm::vec4 color,
+                                                     const float size,
+                                                     const char *debugName) {
   DebugPrimitive primitive;
 
   // allocate vertex buffer
@@ -260,7 +261,7 @@ DebugRenderer::drawLinesUniformColor(float *data, const uint32_t sizeInByte,
 }
 
 DebugDrawHandle DebugRenderer::drawSkeleton(Skeleton *skeleton,
-                                            const DirectX::XMFLOAT4 color,
+                                            const glm::vec4 color,
                                             const float pointSize) {
 
   const ResizableVector<DirectX::XMMATRIX> &joints = skeleton->m_jointsWolrdInv;
@@ -324,11 +325,11 @@ DebugDrawHandle DebugRenderer::drawSkeleton(Skeleton *skeleton,
 
 DebugDrawHandle DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
                                                     AnimationPlayer *state,
-                                                    DirectX::XMFLOAT4 color,
+                                                    const glm::vec4 color,
                                                     float pointSize) {
 
   const DirectX::XMMATRIX *pose = state->getOutPose()->m_worldMat;
-  const int jointCount = state->getOutPose()->m_skeleton->m_jointCount;
+  const uint32_t jointCount = state->getOutPose()->m_skeleton->m_jointCount;
 
   auto *points =
       reinterpret_cast<DirectX::XMFLOAT3 *>(globals::FRAME_ALLOCATOR->allocate(
@@ -534,7 +535,21 @@ inline int push3toVec(float *data, float x, float y, float z, int counter) {
 
   return counter;
 }
-inline int push3toVec(float *data, DirectX::XMFLOAT3 v, int counter) {
+inline int push3toVec(float *data, const DirectX::XMFLOAT3 v, int counter) {
+  data[counter++] = v.x;
+  data[counter++] = v.y;
+  data[counter++] = v.z;
+
+  return counter;
+}
+inline int push3toVec(float *data, const glm::vec4 v, int counter) {
+  data[counter++] = v.x;
+  data[counter++] = v.y;
+  data[counter++] = v.z;
+
+  return counter;
+}
+inline int push3toVec(float *data, const glm::vec3 v, int counter) {
   data[counter++] = v.x;
   data[counter++] = v.y;
   data[counter++] = v.z;
@@ -549,8 +564,9 @@ inline int push3toVec(float *data, DirectX::XMVECTOR v, int counter) {
   return counter;
 }
 
-int drawSquareBetweenTwoPoints(float *data, DirectX::XMFLOAT3 minP,
-                               DirectX::XMFLOAT3 maxP, float y, int counter) {
+int drawSquareBetweenTwoPoints(float *data, const glm::vec3 minP,
+                               const glm::vec3 maxP, const float y,
+                               int counter) {
   counter = push3toVec(data, minP.x, y, minP.z, counter);
   counter = push3toVec(data, maxP.x, y, minP.z, counter);
 
@@ -566,7 +582,7 @@ int drawSquareBetweenTwoPoints(float *data, DirectX::XMFLOAT3 minP,
 }
 
 DebugDrawHandle DebugRenderer::drawBoundingBoxes(BoundingBox *data, int count,
-                                                 DirectX::XMFLOAT4 color,
+                                                 const glm::vec4 color,
                                                  const char *debugName) {
 
   // 12 is the number of lines needed for the AABB, 4 top, 4 bottom, 4 vertical
@@ -597,7 +613,7 @@ DebugDrawHandle DebugRenderer::drawBoundingBoxes(BoundingBox *data, int count,
     counter = push3toVec(points, minP.x, maxP.y, maxP.z, counter);
     assert(counter <= totalSize);
   }
-  drawLinesUniformColor(points, totalSize * sizeof(float), color, totalSize,
+  drawLinesUniformColor(points, totalSize * sizeof(float), color, static_cast<float>(totalSize),
                         debugName);
 
   // this is not compound;
@@ -610,7 +626,7 @@ DebugDrawHandle DebugRenderer::drawBoundingBoxes(BoundingBox *data, int count,
 
 DebugDrawHandle DebugRenderer::drawAnimatedBoundingBoxes(
     DebugDrawHandle handle, BoundingBox *data, int count,
-    DirectX::XMFLOAT4 color, const char *debugName) {
+    glm::vec4 color, const char *debugName) {
   // first get AABB data
   // 12 is the number of lines needed for the AABB, 4 top, 4 bottom, 4 vertical
   // two is because we need two points per line, we are not doing trianglestrip
@@ -655,15 +671,15 @@ DebugDrawHandle DebugRenderer::drawAnimatedBoundingBoxes(
 
   } else {
     const DebugDrawHandle outHandle = drawLinesUniformColor(
-        points, totalSize * sizeof(float), color, totalSize, debugName);
+        points, totalSize * sizeof(float), color, static_cast<float>(totalSize), debugName);
 
     return outHandle;
   }
 }
 
 DebugDrawHandle DebugRenderer::drawAnimatedBoundingBoxFromFullPoints(
-    DebugDrawHandle handle, DirectX::XMFLOAT3 *data, int count,
-    DirectX::XMFLOAT4 color, const char *debugName) {
+    const DebugDrawHandle handle, const glm::vec3 *data, const int count,
+    const glm::vec4 color, const char *debugName) {
   // first get AABB data
   // 12 is the number of lines needed for the AABB, 4 top, 4 bottom, 4 vertical
   // two is because we need two points per line, we are not doing trianglestrip
@@ -699,7 +715,6 @@ DebugDrawHandle DebugRenderer::drawAnimatedBoundingBoxFromFullPoints(
   counter = push3toVec(points, data[4], counter);
   counter = push3toVec(points, data[7], counter);
 
-
   assert(counter <= totalSize);
 
   if (handle.isHandleValid()) {
@@ -716,14 +731,14 @@ DebugDrawHandle DebugRenderer::drawAnimatedBoundingBoxFromFullPoints(
 
   } else {
     const DebugDrawHandle outHandle = drawLinesUniformColor(
-        points, totalSize * sizeof(float), color, totalSize, debugName);
+        points, totalSize * sizeof(float), color, static_cast<float>(totalSize), debugName);
 
     return outHandle;
   }
 } // namespace SirEngine::dx12
 
-void DebugRenderer::drawMatrix(const DirectX::XMMATRIX &mat, float size,
-                               DirectX::XMFLOAT4 color, const char *debugName) {
+void DebugRenderer::drawMatrix(const glm::mat4 &mat, float size,
+                               glm::vec4 color, const char *debugName) {
   const int totalSize =
       3 * 2 * 3; // 3 axis, each with two points, 3 floats each point
   auto *points = reinterpret_cast<float *>(
@@ -731,19 +746,19 @@ void DebugRenderer::drawMatrix(const DirectX::XMMATRIX &mat, float size,
 
   int counter = 0;
   // start with z axis
-  auto scaledZ = DirectX::XMVectorScale(mat.r[2], size * 2.5f);
-  auto movedPosZ = DirectX::XMVectorAdd(mat.r[3], scaledZ);
-  counter = push3toVec(points, mat.r[3], counter);
+  auto scaledZ = mat[2]* (size * 2.5f);
+  auto movedPosZ = mat[3] + scaledZ;
+  counter = push3toVec(points, mat[3], counter);
   counter = push3toVec(points, movedPosZ, counter);
 
-  auto scaledX = DirectX::XMVectorScale(mat.r[0], size);
-  auto movedPosX = DirectX::XMVectorAdd(mat.r[3], scaledX);
-  counter = push3toVec(points, mat.r[3], counter);
+  auto scaledX = mat[0]* size;
+  auto movedPosX = mat[3]+ scaledX;
+  counter = push3toVec(points, mat[3], counter);
   counter = push3toVec(points, movedPosX, counter);
 
-  auto scaledY = DirectX::XMVectorScale(mat.r[1], size * 1.5f);
-  auto movedPosY = DirectX::XMVectorAdd(mat.r[3], scaledY);
-  counter = push3toVec(points, mat.r[3], counter);
+  auto scaledY = (mat[1]* (size * 1.5f));
+  auto movedPosY = mat[3]+ scaledY;
+  counter = push3toVec(points, mat[3], counter);
   counter = push3toVec(points, movedPosY, counter);
 
   drawLinesUniformColor(points, totalSize * sizeof(float), color, totalSize,

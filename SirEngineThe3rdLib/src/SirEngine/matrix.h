@@ -7,6 +7,7 @@ namespace SirEngine {
 // no matter the API
 // GLM is column major
 glm::mat4 getPerspectiveMatrix(const int screenWidth, const int screenHeight);
+glm::mat4 getOrthoMatrix(const glm::vec3 minP, const glm::vec3 maxP);
 glm::mat4 getLookAtMatrix(glm::vec4 pos, glm::vec4 lookAt, glm::vec3 upVec);
 
 } // namespace SirEngine

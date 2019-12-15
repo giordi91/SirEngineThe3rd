@@ -8,10 +8,10 @@ struct IDxcLibrary;
 struct IDxcIncludeHandler;
 
 namespace SirEngine {
+template class SIR_ENGINE_API ResizableVector<wchar_t *>;
 namespace dx12 {
 
 
-template class SIR_ENGINE_API ResizableVector<wchar_t *>;
 struct SIR_ENGINE_API ShaderArgs {
   ShaderArgs()
       : entryPoint(nullptr), type(nullptr), compilerArgs(nullptr),
