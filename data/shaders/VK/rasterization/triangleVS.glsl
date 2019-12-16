@@ -2,6 +2,9 @@
 
 #extension GL_EXT_shader_16bit_storage: require
 #extension GL_EXT_shader_8bit_storage: require
+#extension GL_GOOGLE_include_directive: require
+
+#include "../common/structures.glsl"
 
 struct Vertex {
   float vx, vy, vz;
@@ -13,6 +16,7 @@ layout (binding=0) buffer Vertices
 { 
 	Vertex vertices[];
 };
+//layout (binding=1) uniform CameraBuffer; 
 
 layout(location =0) out vec4 color;
 layout(location =1) out vec2 uv;

@@ -404,9 +404,10 @@ void VkTempLayer::clear() {
   vkDestroyDescriptorPool(vk::LOGICAL_DEVICE, vk::DESCRIPTOR_POOL, nullptr);
   //vkFreeMemory(vk::LOGICAL_DEVICE,m_rt.deviceMemory,nullptr);
   //}
+  //TODO render target manager?
   vkDestroyImage(vk::LOGICAL_DEVICE, m_rt.image, nullptr);
   vkDestroyImageView(vk::LOGICAL_DEVICE, m_rt.view, nullptr);
-  //vkFreeMemory(vk::LOGICAL_DEVICE, m_rt.deviceMemory, nullptr);
+  vkFreeMemory(vk::LOGICAL_DEVICE, m_rt.deviceMemory, nullptr);
 
   destroyTexture(vk::LOGICAL_DEVICE, uvTexture);
   vkDestroyPipeline(vk::LOGICAL_DEVICE, m_pipeline, nullptr);
