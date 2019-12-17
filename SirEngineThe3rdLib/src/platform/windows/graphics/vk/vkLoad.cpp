@@ -2,6 +2,7 @@
 #include "platform/windows/graphics/vk/vkLoad.h"
 #include "platform/windows/graphics/vk/volk.h"
 //#include "platform/windows/graphics/vk/VulkanFunctions.h"
+#include "SirEngine/log.h"
 #include "vk.h"
 #include <cassert>
 #include <iostream>
@@ -585,7 +586,7 @@ bool createLogicalDeviceWithWsiExtensionsEnabled(
     std::vector<char const *> &desiredExtensions,
     VkPhysicalDeviceFeatures2 *desiredFeatures, VkDevice &logicalDevice) {
   desiredExtensions.emplace_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
-  //desiredExtensions.emplace_back(VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME);
+  // desiredExtensions.emplace_back(VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME);
   desiredExtensions.emplace_back(VK_KHR_16BIT_STORAGE_EXTENSION_NAME);
   desiredExtensions.emplace_back(VK_KHR_8BIT_STORAGE_EXTENSION_NAME);
 
@@ -670,30 +671,28 @@ bool createCommandPool(const VkDevice logicalDevice,
   const VkResult result = vkCreateCommandPool(
       logicalDevice, &commandPoolCreateInfo, nullptr, &commandPool);
   if (VK_SUCCESS != result) {
-    std::cout << "Could not create command pool." << std::endl;
+    SE_CORE_ERROR("Could not allocate command pool.");
     return false;
   }
   return true;
 }
-bool allocateCommandBuffers(const VkDevice logicalDevice,
-                            const VkCommandPool commandPool,
-                            const VkCommandBufferLevel level,
-                            const uint32_t count,
-                            std::vector<VkCommandBuffer> &commandBuffers) {
+bool allocateCommandBuffer(const VkDevice logicalDevice,
+                           const VkCommandPool commandPool,
+                           const VkCommandBufferLevel level,
+                           VkCommandBuffer &commandBuffer) {
   VkCommandBufferAllocateInfo commandBufferAllocateInfo = {
       VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO, nullptr, commandPool,
-      level, count};
-
-  commandBuffers.resize(count);
+      level, 1};
 
   const VkResult result = vkAllocateCommandBuffers(
-      logicalDevice, &commandBufferAllocateInfo, commandBuffers.data());
+      logicalDevice, &commandBufferAllocateInfo, &commandBuffer);
   if (VK_SUCCESS != result) {
-    std::cout << "Could not allocate command buffers." << std::endl;
+    SE_CORE_ERROR("Could not allocate command buffer.");
     return false;
   }
   return true;
 }
+
 void setImageMemoryBarrier(
     const VkCommandBuffer commandBuffer,
     const VkPipelineStageFlags generatingStages,

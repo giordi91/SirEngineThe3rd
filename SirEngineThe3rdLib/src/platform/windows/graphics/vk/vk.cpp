@@ -19,17 +19,12 @@
 namespace SirEngine::vk {
 VkInstance INSTANCE = nullptr;
 VkSurfaceKHR SURFACE = nullptr;
-static HMODULE VULKAN_LIBRARY = nullptr;
 VkDevice LOGICAL_DEVICE = nullptr;
 VkQueue GRAPHICS_QUEUE = nullptr;
 VkQueue COMPUTE_QUEUE = nullptr;
 VkQueue PRESENTATION_QUEUE = nullptr;
 VkPhysicalDevice PHYSICAL_DEVICE = nullptr;
 VkSwapchain *SWAP_CHAIN = nullptr;
-VkSemaphore IMAGE_ACQUIRED_SEMAPHORE = nullptr;
-VkSemaphore READY_TO_PRESENT_SEMAPHORE = nullptr;
-VkCommandPool COMMAND_POOL = nullptr;
-VkCommandBuffer COMMAND_BUFFER = nullptr;
 VkDescriptorPool DESCRIPTOR_POOL = nullptr;
 ;
 VkFormat IMAGE_FORMAT = VK_FORMAT_UNDEFINED;
@@ -40,7 +35,8 @@ VkDebugUtilsMessengerEXT DEBUG_CALLBACK2 = nullptr;
 VkPSOManager *PSO_MANAGER = nullptr;
 VkShaderManager *SHADER_MANAGER = nullptr;
 VkPipelineLayoutManager *PIPELINE_LAYOUT_MANAGER = nullptr;
-extern int SWAP_CHAIN_IMAGE_COUNT =0;
+uint32_t SWAP_CHAIN_IMAGE_COUNT = 0;
+VkFrameCommand FRAME_COMMAND[PREALLOCATED_SEMAPHORE_COUNT];
 
 // TODO move this to manager
 std::vector<VkDescriptorSetLayout> LAYOUTS_TO_DELETE;
@@ -103,28 +99,32 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
                   SWAP_CHAIN, *swapchain);
   SWAP_CHAIN = swapchain;
 
-  if (!newSemaphore(LOGICAL_DEVICE, IMAGE_ACQUIRED_SEMAPHORE)) {
+  assert(SWAP_CHAIN_IMAGE_COUNT != 0);
+  assert(SWAP_CHAIN_IMAGE_COUNT <= PREALLOCATED_SEMAPHORE_COUNT);
+
+  for (uint32_t i = 0; i < SWAP_CHAIN_IMAGE_COUNT; ++i) {
+
+    if (!newSemaphore(LOGICAL_DEVICE, (FRAME_COMMAND->m_acquireSemaphore))) {
+      assert(0 && "failed to create acquire image semaphore");
+    }
+
+    if (!newSemaphore(LOGICAL_DEVICE, FRAME_COMMAND->m_renderSemaphore)) {
+      assert(0 && "failed to create render semaphore");
+    }
+
+    // Command buffers creation
+    if (!createCommandPool(
+            LOGICAL_DEVICE, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+            adapterResult.m_graphicsQueueFamilyIndex, FRAME_COMMAND->m_commandAllocator)) {
+      assert(0 && "could not create command pool");
+    }
+	if (!allocateCommandBuffer(LOGICAL_DEVICE, FRAME_COMMAND->m_commandAllocator,
+                              VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+                              FRAME_COMMAND->m_commandBuffer)) {
     assert(0);
+	}
   }
 
-  if (!newSemaphore(LOGICAL_DEVICE, READY_TO_PRESENT_SEMAPHORE)) {
-    assert(0);
-  }
-
-  // Command buffers creation
-  if (!createCommandPool(
-          LOGICAL_DEVICE, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-          adapterResult.m_graphicsQueueFamilyIndex, COMMAND_POOL)) {
-    assert(0);
-  }
-
-  std::vector<VkCommandBuffer> commandBuffers;
-  if (!allocateCommandBuffers(LOGICAL_DEVICE, COMMAND_POOL,
-                              VK_COMMAND_BUFFER_LEVEL_PRIMARY, 1,
-                              commandBuffers)) {
-    assert(0);
-  }
-  COMMAND_BUFFER = commandBuffers[0];
 
   // if constexpr (!USE_PUSH) {
   vk::createDescriptorPool(vk::LOGICAL_DEVICE, {10000, 10000}, DESCRIPTOR_POOL);
@@ -185,15 +185,16 @@ bool VkRenderingContext::initializeGraphics() {
 
 bool VkRenderingContext::newFrame() {
 
+  // TODO this need to be removed
   waitForAllSubmittedCommandsToBeFinished(LOGICAL_DEVICE);
 
   if (!acquireSwapchainImage(LOGICAL_DEVICE, SWAP_CHAIN->swapchain,
-                             IMAGE_ACQUIRED_SEMAPHORE, VK_NULL_HANDLE,
+                             FRAME_COMMAND[0].m_acquireSemaphore, VK_NULL_HANDLE,
                              globals::CURRENT_FRAME)) {
     return false;
   }
   if (!beginCommandBufferRecordingOperation(
-          COMMAND_BUFFER, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+          FRAME_COMMAND[0].m_commandBuffer, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
           nullptr)) {
     return false;
   }
@@ -208,7 +209,7 @@ bool VkRenderingContext::newFrame() {
       VK_QUEUE_FAMILY_IGNORED,
       VK_IMAGE_ASPECT_COLOR_BIT}; // this wont work if you have depth buffers
 
-  setImageMemoryBarrier(COMMAND_BUFFER, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+  setImageMemoryBarrier(FRAME_COMMAND[0].m_commandBuffer, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
                         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
                         {imageTransitionBeforeDrawing});
   return true;
@@ -225,26 +226,26 @@ bool VkRenderingContext::dispatchFrame() {
       VK_QUEUE_FAMILY_IGNORED,
       VK_QUEUE_FAMILY_IGNORED,
       VK_IMAGE_ASPECT_COLOR_BIT};
-  setImageMemoryBarrier(COMMAND_BUFFER,
+  setImageMemoryBarrier(FRAME_COMMAND[0].m_commandBuffer,
                         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
                         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
                         {imageTransitionBeforePresent});
 
-  if (!endCommandBufferRecordingOperation(COMMAND_BUFFER)) {
+  if (!endCommandBufferRecordingOperation(FRAME_COMMAND[0].m_commandBuffer)) {
     return false;
   }
 
   const WaitSemaphoreInfo waitSemaphoreInfo = {
-      IMAGE_ACQUIRED_SEMAPHORE, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT};
+      FRAME_COMMAND[0].m_acquireSemaphore, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT};
   if (!submitCommandBuffersToQueue(
-          PRESENTATION_QUEUE, {waitSemaphoreInfo}, {COMMAND_BUFFER},
-          {READY_TO_PRESENT_SEMAPHORE}, VK_NULL_HANDLE)) {
+          PRESENTATION_QUEUE, {waitSemaphoreInfo}, {FRAME_COMMAND[0].m_commandBuffer},
+          {FRAME_COMMAND[0].m_renderSemaphore}, VK_NULL_HANDLE)) {
     return false;
   }
 
   const PresentInfo presentInfo = {SWAP_CHAIN->swapchain,
                                    globals::CURRENT_FRAME};
-  bool res = presentImage(PRESENTATION_QUEUE, {READY_TO_PRESENT_SEMAPHORE},
+  bool res = presentImage(PRESENTATION_QUEUE, {FRAME_COMMAND[0].m_renderSemaphore},
                           {presentInfo});
   vkDeviceWaitIdle(LOGICAL_DEVICE);
   return res;
@@ -273,10 +274,12 @@ bool VkRenderingContext::shutdownGraphic() {
   destroyStaticSamplers();
   SHADER_MANAGER->cleanup();
   vkDestroyPipelineLayout(LOGICAL_DEVICE, PIPELINE_LAYOUT, nullptr);
-  //vkDestroyRenderPass(LOGICAL_DEVICE, RENDER_PASS, nullptr);
-  vkDestroySemaphore(LOGICAL_DEVICE, IMAGE_ACQUIRED_SEMAPHORE, nullptr);
-  vkDestroySemaphore(LOGICAL_DEVICE, READY_TO_PRESENT_SEMAPHORE, nullptr);
-  vkDestroyCommandPool(LOGICAL_DEVICE, COMMAND_POOL, nullptr);
+  // vkDestroyRenderPass(LOGICAL_DEVICE, RENDER_PASS, nullptr);
+  for (uint32_t i = 0; i < SWAP_CHAIN_IMAGE_COUNT; ++i) {
+    vkDestroySemaphore(LOGICAL_DEVICE, FRAME_COMMAND[i].m_acquireSemaphore, nullptr);
+    vkDestroySemaphore(LOGICAL_DEVICE, FRAME_COMMAND[i].m_renderSemaphore, nullptr);
+	vkDestroyCommandPool(LOGICAL_DEVICE,FRAME_COMMAND[i].m_commandAllocator , nullptr);
+  }
   vkDestroyDevice(LOGICAL_DEVICE, nullptr);
   vkDestroySurfaceKHR(INSTANCE, SURFACE, nullptr);
   // vkDestroyDebugReportCallbackEXT(INSTANCE, DEBUG_CALLBACK, nullptr);

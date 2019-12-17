@@ -311,7 +311,7 @@ bool createSwapchainWithR8G8B8A8FormatAndMailboxPresentMode(
       nullptr,
       0,
       presentationSurface,
-      numberOfImages,
+      SWAP_CHAIN_IMAGE_COUNT,
       imageFormat,
       imageColorSpace,
       imageSize,
@@ -349,8 +349,8 @@ bool createSwapchainWithR8G8B8A8FormatAndMailboxPresentMode(
     return false;
   }
   // now that we have the swap chain images we need to create the view to them
-  swapchainImageViews.resize(numberOfImages);
-  for (uint32_t i = 0; i < numberOfImages; ++i) {
+  swapchainImageViews.resize(SWAP_CHAIN_IMAGE_COUNT);
+  for (uint32_t i = 0; i < SWAP_CHAIN_IMAGE_COUNT; ++i) {
     swapchainImageViews[i] =
         createSwapchainImageView(logicalDevice, swapchainImages[i]);
   }

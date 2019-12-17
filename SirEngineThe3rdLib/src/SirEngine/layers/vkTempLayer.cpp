@@ -255,7 +255,7 @@ void VkTempLayer::onUpdate() {
   beginInfo.clearValueCount = 1;
   beginInfo.pClearValues = &clear;
 
-  vkCmdBeginRenderPass(vk::COMMAND_BUFFER, &beginInfo,
+  vkCmdBeginRenderPass(vk::FRAME_COMMAND[0].m_commandBuffer, &beginInfo,
                        VK_SUBPASS_CONTENTS_INLINE);
 
   // draw calls go here
@@ -269,9 +269,9 @@ void VkTempLayer::onUpdate() {
       {0, 0},
       {static_cast<uint32_t>(globals::ENGINE_CONFIG->m_windowWidth),
        static_cast<uint32_t>(globals::ENGINE_CONFIG->m_windowHeight)}};
-  vkCmdSetViewport(vk::COMMAND_BUFFER, 0, 1, &viewport);
-  vkCmdSetScissor(vk::COMMAND_BUFFER, 0, 1, &scissor);
-  vkCmdBindPipeline(vk::COMMAND_BUFFER, VK_PIPELINE_BIND_POINT_GRAPHICS,
+  vkCmdSetViewport(vk::FRAME_COMMAND[0].m_commandBuffer, 0, 1, &viewport);
+  vkCmdSetScissor(vk::FRAME_COMMAND[0].m_commandBuffer, 0, 1, &scissor);
+  vkCmdBindPipeline(vk::FRAME_COMMAND[0].m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                     m_pipeline);
 
   /*
@@ -288,7 +288,7 @@ void VkTempLayer::onUpdate() {
     descriptor[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     descriptor[0].pBufferInfo = &bufferInfo;
 
-    vkCmdPushDescriptorSetKHR(COMMAND_BUFFER, VK_PIPELINE_BIND_POINT_GRAPHICS,
+    vkCmdPushDescriptorSetKHR(FRAME_COMMAND[0].m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                               PIPELINE_LAYOUT, 0, ARRAYSIZE(descriptor),
                               descriptor);
   } else {
@@ -296,16 +296,16 @@ void VkTempLayer::onUpdate() {
   VkDescriptorSet sets[] = {m_meshDescriptorSet,
                             vk::STATIC_SAMPLER_DESCRIPTOR_SET};
   // multiple descriptor sets
-  vkCmdBindDescriptorSets(vk::COMMAND_BUFFER, VK_PIPELINE_BIND_POINT_GRAPHICS,
+  vkCmdBindDescriptorSets(vk::FRAME_COMMAND[0].m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
                           vk::PIPELINE_LAYOUT, 0, 2, sets, 0, nullptr);
 
-  vkCmdBindIndexBuffer(vk::COMMAND_BUFFER, m_indexBuffer.buffer, 0,
+  vkCmdBindIndexBuffer(vk::FRAME_COMMAND[0].m_commandBuffer, m_indexBuffer.buffer, 0,
                        VK_INDEX_TYPE_UINT32);
-  // vkCmdDraw(COMMAND_BUFFER, 3, 1, 0, 0);
-  vkCmdDrawIndexed(vk::COMMAND_BUFFER,
+  // vkCmdDraw(FRAME_COMMAND[0].m_commandBuffer, 3, 1, 0, 0);
+  vkCmdDrawIndexed(vk::FRAME_COMMAND[0].m_commandBuffer,
                    static_cast<uint32_t>(m_mesh.indices.size()), 1, 0, 0, 0);
 
-  vkCmdEndRenderPass(vk::COMMAND_BUFFER);
+  vkCmdEndRenderPass(vk::FRAME_COMMAND[0].m_commandBuffer);
 
   VkImageMemoryBarrier barrier[2] = {};
   barrier[0].sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -335,7 +335,7 @@ void VkTempLayer::onUpdate() {
   barrier[1].subresourceRange.levelCount = 1;
   barrier[1].subresourceRange.layerCount = 1;
 
-  vkCmdPipelineBarrier(vk::COMMAND_BUFFER, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
+  vkCmdPipelineBarrier(vk::FRAME_COMMAND[0].m_commandBuffer, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
                        VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
                        VK_DEPENDENCY_DEVICE_GROUP_BIT, 0, nullptr, 0, nullptr,
                        2, barrier);
@@ -355,7 +355,7 @@ void VkTempLayer::onUpdate() {
   region.extent.height = m_rt.height;
   region.extent.depth = 1;
 
-  vkCmdCopyImage(vk::COMMAND_BUFFER, m_rt.image,
+  vkCmdCopyImage(vk::FRAME_COMMAND[0].m_commandBuffer, m_rt.image,
                  VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                  vk::SWAP_CHAIN->images[globals::CURRENT_FRAME],
                  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
@@ -386,7 +386,7 @@ void VkTempLayer::onUpdate() {
   barrier[1].subresourceRange.levelCount = 1;
   barrier[1].subresourceRange.layerCount = 1;
 
-  vkCmdPipelineBarrier(vk::COMMAND_BUFFER, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
+  vkCmdPipelineBarrier(vk::FRAME_COMMAND[0].m_commandBuffer, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
                        VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
                        VK_DEPENDENCY_DEVICE_GROUP_BIT, 0, nullptr, 0, nullptr,
                        2, barrier);

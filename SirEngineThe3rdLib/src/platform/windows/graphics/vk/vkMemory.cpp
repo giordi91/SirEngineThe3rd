@@ -1,13 +1,14 @@
 #include "platform/windows/graphics/vk/vkMemory.h"
 #include "platform/windows/graphics/vk/vk.h"
+#include <cassert>
 
 namespace SirEngine::vk {
 
-VkCommandBuffer createCommandBuffer(const VkCommandBufferLevel level,
+VkCommandBuffer createCommandBuffer(const VkCommandPool pool ,const VkCommandBufferLevel level,
                                     const bool begin) {
   VkCommandBufferAllocateInfo cmdBufAllocateInfo = {};
   cmdBufAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-  cmdBufAllocateInfo.commandPool = vk::COMMAND_POOL;
+  cmdBufAllocateInfo.commandPool = pool;
   cmdBufAllocateInfo.level = level;
   cmdBufAllocateInfo.commandBufferCount = 1;
 
@@ -24,7 +25,7 @@ VkCommandBuffer createCommandBuffer(const VkCommandBufferLevel level,
 
   return cmdBuffer;
 }
-void flushCommandBuffer(VkCommandBuffer commandBuffer, const VkQueue queue,
+void flushCommandBuffer(VkCommandPool pool, VkCommandBuffer commandBuffer, const VkQueue queue,
                         const bool free) {
   if (commandBuffer == VK_NULL_HANDLE) {
     return;
@@ -52,7 +53,7 @@ void flushCommandBuffer(VkCommandBuffer commandBuffer, const VkQueue queue,
   vkDestroyFence(LOGICAL_DEVICE, fence, nullptr);
 
   if (free) {
-    vkFreeCommandBuffers(LOGICAL_DEVICE, COMMAND_POOL, 1, &commandBuffer);
+    vkFreeCommandBuffers(LOGICAL_DEVICE, pool, 1, &commandBuffer);
   }
 }
 

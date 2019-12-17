@@ -148,8 +148,9 @@ bool createRenderTarget(const char *name, VkFormat format, VkDevice device,
   VkMemoryRequirements memReqs;
 
   // create a command buffer separated to execute this stuff
+  //TODO fix hardcoded index
   VkCommandBuffer buffer =
-      createCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+      createCommandBuffer(FRAME_COMMAND[0].m_commandAllocator,VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
   /*
   // Create a host-visible staging buffer that contains the raw image data
@@ -263,7 +264,8 @@ bool createRenderTarget(const char *name, VkFormat format, VkDevice device,
   setImageLayout(buffer, outTexture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                  imageLayout, subresourceRange);
 
-  flushCommandBuffer(buffer, GRAPHICS_QUEUE, true);
+  //TODO fixed hardcoded index
+  flushCommandBuffer(FRAME_COMMAND[0].m_commandAllocator,buffer, GRAPHICS_QUEUE, true);
   // Clean up staging resources
 
   // Create image view
@@ -329,7 +331,7 @@ bool loadTextureFromFile(const char *name, VkFormat format, VkDevice device,
 
   // create a command buffer separated to execute this stuff
   VkCommandBuffer buffer =
-      createCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+      createCommandBuffer(FRAME_COMMAND[0].m_commandAllocator,VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
   // Create a host-visible staging buffer that contains the raw image data
   VkBuffer stagingBuffer;
@@ -445,7 +447,8 @@ bool loadTextureFromFile(const char *name, VkFormat format, VkDevice device,
   setImageLayout(buffer, outTexture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                  imageLayout, subresourceRange);
 
-  flushCommandBuffer(buffer, GRAPHICS_QUEUE, true);
+  //TODO fix hardcoded
+  flushCommandBuffer(FRAME_COMMAND[0].m_commandAllocator,buffer, GRAPHICS_QUEUE, true);
   // Clean up staging resources
   vkFreeMemory(device, stagingMemory, nullptr);
   vkDestroyBuffer(device, stagingBuffer, nullptr);

@@ -3,7 +3,6 @@
 #include <vulkan/vulkan.h>
 
 #include "SirEngine/graphics/renderingContext.h"
-#include <cassert>
 #include <vector>
 
 namespace SirEngine {
@@ -13,6 +12,17 @@ class VkShaderManager;
 class VkPipelineLayoutManager;
 struct VkSwapchain;
 
+static constexpr int PREALLOCATED_SEMAPHORE_COUNT = 4;
+struct VkFrameCommand final {
+  //this might have to change for when we go multi-threaded
+  VkCommandPool m_commandAllocator = nullptr;
+  VkCommandBuffer m_commandBuffer = nullptr;
+  bool m_isBufferOpen = false;
+  VkFence m_endOfFrameFence = nullptr;
+  VkSemaphore m_acquireSemaphore = nullptr;
+  VkSemaphore m_renderSemaphore = nullptr;
+};
+
 // runtime instances
 extern VkInstance INSTANCE;
 extern VkSurfaceKHR SURFACE;
@@ -20,10 +30,6 @@ extern VkDevice LOGICAL_DEVICE;
 extern VkQueue GRAPHICS_QUEUE;
 extern VkQueue COMPUTE_QUEUE;
 extern VkPhysicalDevice PHYSICAL_DEVICE;
-extern VkSemaphore IMAGE_ACQUIRED_SEMAPHORE;
-extern VkSemaphore READY_TO_PRESENT_SEMAPHORE;
-extern VkCommandPool COMMAND_POOL;
-extern VkCommandBuffer COMMAND_BUFFER;
 extern VkDescriptorPool DESCRIPTOR_POOL;
 extern VkFormat IMAGE_FORMAT;
 extern VkPipelineLayout PIPELINE_LAYOUT;
@@ -35,7 +41,9 @@ extern VkQueue PRESENTATION_QUEUE;
 extern VkSwapchain *SWAP_CHAIN;
 extern VkPSOManager *PSO_MANAGER;
 extern VkShaderManager *SHADER_MANAGER;
-extern VkPipelineLayoutManager* PIPELINE_LAYOUT_MANAGER;
+extern VkPipelineLayoutManager *PIPELINE_LAYOUT_MANAGER;
+extern uint32_t SWAP_CHAIN_IMAGE_COUNT;
+extern VkFrameCommand FRAME_COMMAND[PREALLOCATED_SEMAPHORE_COUNT];
 
 extern std::vector<VkDescriptorSetLayout> LAYOUTS_TO_DELETE;
 
