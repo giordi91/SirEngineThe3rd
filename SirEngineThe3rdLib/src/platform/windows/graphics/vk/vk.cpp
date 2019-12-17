@@ -40,6 +40,7 @@ VkDebugUtilsMessengerEXT DEBUG_CALLBACK2 = nullptr;
 VkPSOManager *PSO_MANAGER = nullptr;
 VkShaderManager *SHADER_MANAGER = nullptr;
 VkPipelineLayoutManager *PIPELINE_LAYOUT_MANAGER = nullptr;
+extern int SWAP_CHAIN_IMAGE_COUNT =0;
 
 // TODO move this to manager
 std::vector<VkDescriptorSetLayout> LAYOUTS_TO_DELETE;
