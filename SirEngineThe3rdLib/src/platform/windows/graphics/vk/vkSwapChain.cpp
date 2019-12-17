@@ -272,8 +272,8 @@ bool createSwapchainWithR8G8B8A8FormatAndMailboxPresentMode(
     return false;
   }
 
-  uint32_t numberOfImages;
-  if (!selectNumberOfSwapchainImages(surfaceCapabilities, numberOfImages)) {
+  if (!selectNumberOfSwapchainImages(surfaceCapabilities,
+                                     SWAP_CHAIN_IMAGE_COUNT)) {
     return false;
   }
 
