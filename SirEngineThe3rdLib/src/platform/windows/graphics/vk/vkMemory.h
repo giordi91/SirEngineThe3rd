@@ -11,10 +11,10 @@ struct Buffer {
 };
 
 // command buffers
-VkCommandBuffer createCommandBuffer(VkCommandBufferLevel level,
-                                    bool begin = false);
+VkCommandBuffer createCommandBuffer(const VkCommandPool pool ,const VkCommandBufferLevel level,
+                                    const bool begin= false);
 
-void flushCommandBuffer(VkCommandBuffer commandBuffer, const VkQueue queue,
+void flushCommandBuffer(VkCommandPool pool, VkCommandBuffer commandBuffer, const VkQueue queue,
                         const bool free);
 // buffers
 uint32_t

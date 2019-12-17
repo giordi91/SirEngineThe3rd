@@ -1,6 +1,7 @@
 #include "platform/windows/graphics/vk/vkDescriptors.h"
 #include "platform/windows/graphics/vk/vk.h"
 #include "algorithm"
+#include <cassert>
 
 #undef min
 namespace SirEngine::vk {
