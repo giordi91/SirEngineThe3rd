@@ -3,7 +3,42 @@
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
 
+
 namespace SirEngine::vk {
+
+const std::string ROOT_KEY_CONFIG = "config";
+const std::string ROOT_KEY_NAME = "name";
+const std::string ROOT_KEY_TYPE = "type";
+const std::string ROOT_KEY_DATA = "data";
+const std::string ROOT_KEY_RESOURCE = "underlyingResource";
+const std::string ROOT_KEY_NUM_DESCRIPTOR = "numDescriptors";
+const std::string ROOT_KEY_RANGES = "ranges";
+const std::string ROOT_KEY_REGISTER = "register";
+const std::string ROOT_KEY_BASE_REGISTER = "baseRegister";
+const std::string ROOT_KEY_SIZE_IN_32_BIT_VALUES = "sizeIn32BitValues";
+const std::string ROOT_KEY_VISIBILITY = "visibility";
+const std::string ROOT_KEY_FLAGS = "flags";
+const std::string ROOT_KEY_FLAGS_LOCAL = "local";
+const std::string ROOT_EMPTY = "empty";
+const std::string ROOT_DEFAULT_STRING = "";
+const std::string ROOT_KEY_STATIC_SAMPLERS = "staticSamplers";
+
+const std::unordered_map<std::string, VkDescriptorType>
+    STRING_TO_DESCRIPTOR_TYPE{
+        {"UAV", VkDescriptorType::VK_DESCRIPTOR_TYPE_STORAGE_BUFFER},
+        {"SRV-texture", VkDescriptorType::VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE},
+        {"SRV-buffer", VkDescriptorType::VK_DESCRIPTOR_TYPE_STORAGE_BUFFER},
+        {"CBV-buffer", VkDescriptorType::VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER},
+    };
+
+const std::unordered_map<std::string, VkShaderStageFlags>
+    STRING_TO_SHADER_FLAGS{
+        {"VS", VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT},
+        {"PS", VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT},
+        {"CS", VkShaderStageFlagBits::VK_SHADER_STAGE_COMPUTE_BIT},
+        {"ALL", VkShaderStageFlagBits::VK_SHADER_STAGE_ALL},
+    };
+
 VkDescriptorType getDescriptorType(const nlohmann::json &config) {
   const std::string type =
       getValueIfInJson(config, ROOT_KEY_TYPE, ROOT_DEFAULT_STRING);

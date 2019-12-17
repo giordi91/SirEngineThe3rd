@@ -47,6 +47,14 @@ void Graphics3DLayer::onAttach() {
   globals::MAIN_CAMERA->setLookAt(0, 14, 0);
   globals::MAIN_CAMERA->setPosition(0, 14, 10);
   globals::MAIN_CAMERA->updateCamera();
+  CameraManipulationConfig camConfig{
+      0.07f,
+      0.07f,
+      -0.012f,
+      0.012f,
+      -0.07f,
+  };
+  globals::MAIN_CAMERA->setManipulationMultipliers(camConfig);
 
   globals::RENDERING_CONTEXT->flush();
   globals::RENDERING_CONTEXT->resetGlobalCommandList();
@@ -151,14 +159,13 @@ void Graphics3DLayer::onAttach() {
   auto light = dx12::RENDERING_CONTEXT->getLightData();
   dx12::DEBUG_RENDERER->drawMatrix(light.localToWorld, 3.0f,
                                    glm::vec4(1, 0, 0, 1), "");
-  //dx12::DEBUG_RENDERER->drawMatrix(
+  // dx12::DEBUG_RENDERER->drawMatrix(
   //    globals::MAIN_CAMERA->getViewInverse(DirectX::XMMatrixIdentity()), 3.0f,
   //    DirectX::XMFLOAT4(1, 0, 0, 1), "");
 }
 void Graphics3DLayer::onDetach() {}
 void Graphics3DLayer::onUpdate() {
 
-  
   globals::SCRIPTING_CONTEXT->runScriptSlot(SCRIPT_CALLBACK_SLOT::PRE_ANIM);
   globals::ANIMATION_MANAGER->evaluate();
 
@@ -187,7 +194,6 @@ void Graphics3DLayer::onUpdate() {
   // making any clean up for the mesh manager if we have to
   dx12::CONSTANT_BUFFER_MANAGER->clearUpQueueFree();
   dx12::BUFFER_MANAGER->clearUploadRequests();
-
 }
 void Graphics3DLayer::onEvent(Event &event) {
   EventDispatcher dispatcher(event);

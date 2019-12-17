@@ -47,7 +47,8 @@ glm::mat4 getPerspectiveMatrix(const int screenWidth, const int screenHeight) {
   }
 
   auto m = glm::translate(glm::mat4(1.0f), glm::vec3(1, 2, 2));
-  auto temp44 = glm::perspective(fieldOfView, screenAspect, farP, nearP);
+  //auto temp44 = glm::perspective(fieldOfView, screenAspect, farP, nearP);
+  auto temp44 = glm::perspective(fieldOfView, screenAspect, nearP, farP);
   return temp44;
 }
 

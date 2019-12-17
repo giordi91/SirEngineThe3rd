@@ -20,9 +20,17 @@ void VkTempLayer::onAttach() {
   globals::MAIN_CAMERA = new Camera3DPivot();
   // globals::MAIN_CAMERA->setLookAt(0, 125, 0);
   // globals::MAIN_CAMERA->setPosition(00, 125, 60);
+  CameraManipulationConfig camConfig{
+      -0.01f,
+      0.01f,
+      -0.012f,
+      0.012f,
+      -0.07f,
+  };
+  globals::MAIN_CAMERA->setManipulationMultipliers(camConfig);
 
-  globals::MAIN_CAMERA->setLookAt(0, 14, 0);
-  globals::MAIN_CAMERA->setPosition(0, 14, 10);
+  globals::MAIN_CAMERA->setLookAt(0, 0, 0);
+  globals::MAIN_CAMERA->setPosition(0, 0, 10);
   globals::MAIN_CAMERA->updateCamera();
 
   // TODO move this in PSO manager
@@ -35,13 +43,24 @@ void VkTempLayer::onAttach() {
   vkGetPhysicalDeviceMemoryProperties(vk::PHYSICAL_DEVICE, &memoryRequirements);
   createBuffer(
       m_vertexBuffer, vk::LOGICAL_DEVICE, memoryRequirements, 128 * 1024 * 1024,
-      VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+      VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+      "meshBuffer");
+
+  createBuffer(m_cameraBuffer, vk::LOGICAL_DEVICE, memoryRequirements,
+               sizeof(CameraBuffer),
+               VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT |
+                   VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+               "cameraBuffer");
+
   createBuffer(
       m_indexBuffer, vk::LOGICAL_DEVICE, memoryRequirements, 128 * 1024 * 1024,
-      VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+      VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+      "meshIndex");
   assert(m_vertexBuffer.size >= m_mesh.vertices.size() * sizeof(vk::Vertex));
   assert(m_indexBuffer.size >= m_mesh.indices.size() * sizeof(uint32_t));
 
+  // TODO need to figure out where this memory is going and what kind of sync
+  // there should be here not happy for now
   memcpy(m_vertexBuffer.data, m_mesh.vertices.data(),
          m_mesh.vertices.size() * sizeof(vk::Vertex));
   memcpy(m_indexBuffer.data, m_mesh.indices.data(),
@@ -63,15 +82,14 @@ void VkTempLayer::onAttach() {
                       VK_FORMAT_BC1_RGBA_UNORM_BLOCK, vk::LOGICAL_DEVICE,
                       uvTexture);
 
-  vk::createRenderTarget(
-      "RT", 
-      VK_FORMAT_R8G8B8A8_UNORM, 
-      //VK_FORMAT_B8G8R8A8_UNORM, 
-      vk::LOGICAL_DEVICE, m_rt,
-      VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
-      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-      globals::ENGINE_CONFIG->m_windowWidth,
-      globals::ENGINE_CONFIG->m_windowHeight);
+  vk::createRenderTarget("RT", VK_FORMAT_R8G8B8A8_UNORM,
+                         // VK_FORMAT_B8G8R8A8_UNORM,
+                         vk::LOGICAL_DEVICE, m_rt,
+                         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
+                             VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+                         VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                         globals::ENGINE_CONFIG->m_windowWidth,
+                         globals::ENGINE_CONFIG->m_windowHeight);
 
   VkFramebufferCreateInfo createInfo = {
       VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO};
@@ -90,50 +108,32 @@ void VkTempLayer::onAttach() {
 
   // vk::PSO_MANAGER->loadRawPSO("../data/pso/forwardPhongPSO.json");
 }
-void init_sampler(VkSampler &sampler) {
-
-  VkSamplerCreateInfo samplerCreateInfo = {};
-  samplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-  samplerCreateInfo.magFilter = VK_FILTER_NEAREST;
-  samplerCreateInfo.minFilter = VK_FILTER_NEAREST;
-  samplerCreateInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
-  samplerCreateInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-  samplerCreateInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-  samplerCreateInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-  samplerCreateInfo.mipLodBias = 0.0;
-  samplerCreateInfo.anisotropyEnable = VK_FALSE;
-  samplerCreateInfo.maxAnisotropy = 1;
-  samplerCreateInfo.compareOp = VK_COMPARE_OP_NEVER;
-  samplerCreateInfo.minLod = 0.0;
-  samplerCreateInfo.maxLod = 0.0;
-  samplerCreateInfo.compareEnable = VK_FALSE;
-  samplerCreateInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-
-  /* create sampler */
-  VK_CHECK(
-      vkCreateSampler(vk::LOGICAL_DEVICE, &samplerCreateInfo, NULL, &sampler));
-}
 
 void VkTempLayer::createDescriptorLayoutAdvanced() {
 
-  constexpr int resource_count = 2;
-  VkDescriptorSetLayoutBinding resourceBinding[resource_count] = {};
+  constexpr int resourceCount = 3;
+  VkDescriptorSetLayoutBinding resourceBinding[resourceCount] = {};
   resourceBinding[0].binding = 0;
   resourceBinding[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   resourceBinding[0].descriptorCount = 1;
   resourceBinding[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
   resourceBinding[0].pImmutableSamplers = NULL;
   resourceBinding[1].binding = 1;
-  resourceBinding[1].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+  resourceBinding[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
   resourceBinding[1].descriptorCount = 1;
-  resourceBinding[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+  resourceBinding[1].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
   resourceBinding[1].pImmutableSamplers = NULL;
+  resourceBinding[2].binding = 2;
+  resourceBinding[2].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+  resourceBinding[2].descriptorCount = 1;
+  resourceBinding[2].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+  resourceBinding[2].pImmutableSamplers = NULL;
 
   VkDescriptorSetLayoutCreateInfo resourceLayoutInfo[1] = {};
   resourceLayoutInfo[0].sType =
       VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   resourceLayoutInfo[0].pNext = NULL;
-  resourceLayoutInfo[0].bindingCount = resource_count;
+  resourceLayoutInfo[0].bindingCount = resourceCount;
   resourceLayoutInfo[0].pBindings = resourceBinding;
 
   VK_CHECK(vkCreateDescriptorSetLayout(vk::LOGICAL_DEVICE, resourceLayoutInfo,
@@ -152,13 +152,15 @@ void VkTempLayer::createDescriptorLayoutAdvanced() {
                                            // so it also knows the size
   VK_CHECK(vkAllocateDescriptorSets(vk::LOGICAL_DEVICE, &allocateInfo,
                                     &m_meshDescriptorSet));
+  SET_DEBUG_NAME(m_meshDescriptorSet, VK_OBJECT_TYPE_DESCRIPTOR_SET,
+                 "meshDesscriptorSet");
 
   // Update the descriptor set with the actual descriptors matching shader
   // bindings set in the layout
   // this far we defined just what descriptor we wanted and how they were setup,
   // now we need to actually define the content of those descriptrs, the actual
   // resources
-  VkWriteDescriptorSet writeDescriptorSets[2] = {};
+  VkWriteDescriptorSet writeDescriptorSets[3] = {};
 
   // actual information of the descriptor, in this case it is our mesh buffer
   VkDescriptorBufferInfo bufferInfo = {};
@@ -166,24 +168,37 @@ void VkTempLayer::createDescriptorLayoutAdvanced() {
   bufferInfo.offset = 0;
   bufferInfo.range = m_vertexBuffer.size;
 
+  // actual information of the descriptor, in this case it is our mesh buffer
+  VkDescriptorBufferInfo bufferInfoUniform = {};
+  bufferInfoUniform.buffer = m_cameraBuffer.buffer;
+  bufferInfoUniform.offset = 0;
+  bufferInfoUniform.range = m_cameraBuffer.size;
+
   // updating descriptors, with no samplers bound
-  // Binding 0: Object matrices Uniform buffer
+  // Binding 0: Object mesh buffer
   writeDescriptorSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   writeDescriptorSets[0].dstSet = m_meshDescriptorSet;
   writeDescriptorSets[0].dstBinding = 0;
   writeDescriptorSets[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   writeDescriptorSets[0].pBufferInfo = &bufferInfo;
   writeDescriptorSets[0].descriptorCount = 1;
-
-  // Binding 1: Object texture
+  // Binding 0: Object matrices Uniform buffer
   writeDescriptorSets[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   writeDescriptorSets[1].dstSet = m_meshDescriptorSet;
   writeDescriptorSets[1].dstBinding = 1;
-  writeDescriptorSets[1].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+  writeDescriptorSets[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  writeDescriptorSets[1].pBufferInfo = &bufferInfoUniform;
+  writeDescriptorSets[1].descriptorCount = 1;
+
+  // Binding 2: Object texture
+  writeDescriptorSets[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  writeDescriptorSets[2].dstSet = m_meshDescriptorSet;
+  writeDescriptorSets[2].dstBinding = 2;
+  writeDescriptorSets[2].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
   // Images use a different descriptor strucutre, so we use pImageInfo instead
   // of pBufferInfo
-  writeDescriptorSets[1].pImageInfo = &uvTexture.descriptor;
-  writeDescriptorSets[1].descriptorCount = 1;
+  writeDescriptorSets[2].pImageInfo = &uvTexture.descriptor;
+  writeDescriptorSets[2].descriptorCount = 1;
 
   // Execute the writes to update descriptors for this set
   // Note that it's also possible to gather all writes and only run updates
@@ -197,6 +212,10 @@ void VkTempLayer::createDescriptorLayoutAdvanced() {
 
 void VkTempLayer::onDetach() {}
 void VkTempLayer::onUpdate() {
+
+  //temporary camera update
+  setupCameraForFrame();
+
   static float step = 0.01f;
   static int index = 0;
   static int counter = 0;
@@ -402,9 +421,9 @@ void VkTempLayer::clear() {
   // if constexpr (!USE_PUSH) {
   vkDestroyDescriptorSetLayout(vk::LOGICAL_DEVICE, m_setLayout, nullptr);
   vkDestroyDescriptorPool(vk::LOGICAL_DEVICE, vk::DESCRIPTOR_POOL, nullptr);
-  //vkFreeMemory(vk::LOGICAL_DEVICE,m_rt.deviceMemory,nullptr);
+  // vkFreeMemory(vk::LOGICAL_DEVICE,m_rt.deviceMemory,nullptr);
   //}
-  //TODO render target manager?
+  // TODO render target manager?
   vkDestroyImage(vk::LOGICAL_DEVICE, m_rt.image, nullptr);
   vkDestroyImageView(vk::LOGICAL_DEVICE, m_rt.view, nullptr);
   vkFreeMemory(vk::LOGICAL_DEVICE, m_rt.deviceMemory, nullptr);
@@ -572,6 +591,27 @@ bool VkTempLayer::onResizeEvent(WindowResizeEvent &e) {
   // propagate the resize to every node of the graph
   // dx12::RENDERING_GRAPH->onResizeEvent(e.getWidth(), e.getHeight());
   return true;
+}
+
+void VkTempLayer::setupCameraForFrame() {
+  globals::MAIN_CAMERA->updateCamera();
+  // TODO fix this hardcoded parameter
+  m_camBufferCPU.vFov = 60.0f;
+  m_camBufferCPU.screenWidth =
+      static_cast<float>(globals::ENGINE_CONFIG->m_windowWidth);
+  m_camBufferCPU.screenHeight =
+      static_cast<float>(globals::ENGINE_CONFIG->m_windowHeight);
+  auto pos = globals::MAIN_CAMERA->getPosition();
+  m_camBufferCPU.position = glm::vec4(pos, 1.0f);
+
+  m_camBufferCPU.MVP = globals::MAIN_CAMERA->getMVP(glm::mat4(1.0));
+  m_camBufferCPU.ViewMatrix =
+      globals::MAIN_CAMERA->getViewInverse(glm::mat4(1.0));
+  m_camBufferCPU.VPinverse =
+      globals::MAIN_CAMERA->getMVPInverse(glm::mat4(1.0));
+  m_camBufferCPU.perspectiveValues = globals::MAIN_CAMERA->getProjParams();
+
+  memcpy(m_cameraBuffer.data, &m_camBufferCPU, sizeof(m_camBufferCPU));
 }
 
 /*
