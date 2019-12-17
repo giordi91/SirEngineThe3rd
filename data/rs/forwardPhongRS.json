@@ -19,6 +19,21 @@
           }
         },
         {
+          "comment": "camera uniform",
+          "type": "descriptorTable",
+          "visibility": "VS",
+          "data": {
+            "ranges": [
+              {
+                "type": "CBV",
+                "underlyingResource": "buffer",
+                "numDescriptors": 1,
+                "baseRegister": 1
+              }
+            ]
+          }
+        },
+        {
           "comment": "albedo tex",
           "type": "descriptorTable",
           "data": {
@@ -27,7 +42,7 @@
                 "type": "SRV",
                 "underlyingResource": "texture",
                 "numDescriptors": 1,
-                "baseRegister": 1
+                "baseRegister": 2
               }
             ]
           },

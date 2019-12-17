@@ -31,7 +31,7 @@ class Texture2D;
 } // namespace dx12
 class SIR_ENGINE_API VkTempLayer final : public Layer {
 public:
-  VkTempLayer() : Layer("DX12GraphicsLayer") {}
+  VkTempLayer() : Layer("VkTempLayer") {}
   ~VkTempLayer() override = default;
 
   void onAttach() override;
@@ -50,6 +50,7 @@ private:
   bool onDebugConfigChanged(DebugRenderConfigChanged &e);
   bool onShaderCompileEvent(ShaderCompileEvent &e);
   bool onReloadScriptEvent(ReloadScriptsEvent &e);
+  void setupCameraForFrame(); 
 
   // camera event control
   bool leftDown = false;
@@ -65,6 +66,7 @@ private:
   // mesh
   vk::VkMesh m_mesh;
   vk::Buffer m_vertexBuffer;
+  vk::Buffer m_cameraBuffer;
   vk::Buffer m_indexBuffer;
   VkVertexInputBindingDescription m_stream;
   VkVertexInputAttributeDescription m_attr[3];
@@ -74,6 +76,7 @@ private:
   vk::VkTexture2D m_rt;
   VkFramebuffer m_tempFrameBuffer;
   VkRenderPass m_pass;
+  CameraBuffer m_camBufferCPU;
 
 };
 } // namespace SirEngine

@@ -6,12 +6,21 @@
 
 namespace SirEngine {
 
+struct CameraManipulationConfig {
+  float m_panMultX;
+  float m_panMultY;
+  float m_rotateMultX;
+  float m_rotateMultY;
+  float m_zoomMult;
+};
+
 class Camera3DPivot final {
 
 public:
   Camera3DPivot() = default;
   ~Camera3DPivot() = default;
 
+  void setManipulationMultipliers(const CameraManipulationConfig& config){m_config = config;};
   void panCamera(float deltaX, float deltaY);
   void rotCamera(float deltaX, float deltaY);
   void zoomCamera(float deltaX);
@@ -25,22 +34,10 @@ public:
     // m_viewMatrix = DirectX::XMMatrixLookAtLH(posV, lookAtPosV, upVector);
   }
 
-  glm::vec3 getPosition() const { return glm::vec3(posV); }
-  glm::vec3 getLookAt() const { return glm::vec3(lookAtPosV); }
+  [[nodiscard]] glm::vec3 getPosition() const { return glm::vec3(posV); }
+  [[nodiscard]] glm::vec3 getLookAt() const { return glm::vec3(lookAtPosV); }
+  [[nodiscard]] glm::vec4 getProjParams() const;
 
-  glm::vec4 getProjParams() const {
-    // preparing camera values for deferred
-    int screenW = globals::ENGINE_CONFIG->m_windowWidth;
-    int screenH = globals::ENGINE_CONFIG->m_windowHeight;
-    const auto projectionMatrix = getPerspectiveMatrix(screenW, screenH);
-
-    glm::vec4 perspValues;
-    perspValues.x = 1.0f / projectionMatrix[0][0];
-    perspValues.y = 1.0f / projectionMatrix[1][1];
-    perspValues.z = projectionMatrix[3][2];
-    perspValues.w = -projectionMatrix[2][2];
-    return perspValues;
-  }
   inline void setPosition(const float x, const float y, const float z) {
     posV = glm::vec4(x, y, z, 1.0f);
   };
@@ -51,8 +48,9 @@ public:
 private:
   // Constants
   static constexpr glm::vec3 UP_VECTOR{0.0f, 1.0f, 0.0f};
-  static constexpr float MOUSE_ROT_SPEED = 0.012f;
-  static constexpr float MOUSE_PAN_SPEED = 0.07f;
+  CameraManipulationConfig m_config{1.0f,1.0f,1.0f,1.0f,1.0f};
+  //static constexpr float MOUSE_ROT_SPEED = 0.012f;
+  //static constexpr float MOUSE_PAN_SPEED = 0.07f;
 
   glm::vec4 posV;
   glm::vec4 lookAtPosV;

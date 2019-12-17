@@ -45,6 +45,21 @@ void Camera3DPivot::spinCameraWorldYAxis(const float angleInDegrees) {
   posV = compensatedPosition + lookAtPosV;
 }
 
+glm::vec4 Camera3DPivot::getProjParams() const
+{
+	// preparing camera values for deferred
+	int screenW = globals::ENGINE_CONFIG->m_windowWidth;
+	int screenH = globals::ENGINE_CONFIG->m_windowHeight;
+	const auto projectionMatrix = getPerspectiveMatrix(screenW, screenH);
+
+	glm::vec4 perspValues;
+	perspValues.x = 1.0f / projectionMatrix[0][0];
+	perspValues.y = 1.0f / projectionMatrix[1][1];
+	perspValues.z = projectionMatrix[3][2];
+	perspValues.w = -projectionMatrix[2][2];
+	return perspValues;
+}
+
 void Camera3DPivot::panCamera(float deltaX, float deltaY) {
 
   const auto updatedLookAtV = glm::vec3(lookAtPosV - posV);
@@ -54,13 +69,13 @@ void Camera3DPivot::panCamera(float deltaX, float deltaY) {
   const glm::vec3 newUp = glm::cross(crossNorm, updatedLookAtV);
   const glm::vec3 newUpNorm = glm::normalize(newUp);
 
-  const glm::vec3 finalScaleX = glm::vec3(deltaX) * MOUSE_PAN_SPEED;
+  const glm::vec3 finalScaleX = glm::vec3(deltaX) * m_config.m_panMultX;
   const auto offestX = glm::vec4(crossNorm * finalScaleX, 0.0f);
 
   posV += offestX;
   lookAtPosV += offestX;
 
-  const auto finalScaleY = glm::vec3(deltaY) * MOUSE_PAN_SPEED;
+  const auto finalScaleY = glm::vec3(deltaY) * m_config.m_panMultY;
   const auto offestY = glm::vec4(newUpNorm * finalScaleY, 0.0f);
   posV += offestY;
   lookAtPosV += offestY;
@@ -70,7 +85,7 @@ void Camera3DPivot::rotCamera(const float deltaX, const float deltaY) {
 
   // compute a rotation matrix on the Y axis and apply transformation
   glm::mat4 rotXMatrix =
-      glm::rotate(glm::mat4(1.0), -deltaX * MOUSE_ROT_SPEED, UP_VECTOR);
+      glm::rotate(glm::mat4(1.0), deltaX * m_config.m_rotateMultX, UP_VECTOR);
   auto rotatedXPos = rotXMatrix * (posV - lookAtPosV);
 
   // getting cross to compute the rotation up and down
@@ -79,7 +94,7 @@ void Camera3DPivot::rotCamera(const float deltaX, const float deltaY) {
 
   // getting the rotation on the cross axis and apply the transformation
   glm::mat4 rotYMatrix =
-      glm::rotate(glm::mat4(1.0), deltaY * MOUSE_ROT_SPEED, crossNorm);
+      glm::rotate(glm::mat4(1.0), deltaY * m_config.m_rotateMultY, crossNorm);
 
   posV = (rotYMatrix * rotatedXPos) + lookAtPosV;
   posV.w = 1.0;
@@ -88,7 +103,7 @@ void Camera3DPivot::rotCamera(const float deltaX, const float deltaY) {
 void Camera3DPivot::zoomCamera(const float deltaX) {
 
   const auto updatedLookAtV = glm::normalize(lookAtPosV - posV);
-  const auto delta = updatedLookAtV * (-deltaX * MOUSE_PAN_SPEED);
+  const auto delta = updatedLookAtV * (deltaX * m_config.m_zoomMult);
   posV += delta;
 }
 } // namespace SirEngine

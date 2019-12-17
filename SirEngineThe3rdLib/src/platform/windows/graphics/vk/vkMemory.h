@@ -24,7 +24,7 @@ selectMemoryType(const VkPhysicalDeviceMemoryProperties &memoryProperties,
 
 void createBuffer(Buffer &buffer, const VkDevice device,
                   const VkPhysicalDeviceMemoryProperties &memoryProperties,
-                  size_t size, const VkBufferUsageFlags usage);
+                  size_t size, const VkBufferUsageFlags usage,const char* name);
 void destroyBuffer(VkDevice device, const Buffer &buffer);
 
 } // namespace SirEngine::vk

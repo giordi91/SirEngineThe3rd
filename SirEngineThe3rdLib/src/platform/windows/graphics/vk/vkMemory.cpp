@@ -74,13 +74,14 @@ selectMemoryType(const VkPhysicalDeviceMemoryProperties &memoryProperties,
 
 void createBuffer(Buffer &buffer, const VkDevice device,
                   const VkPhysicalDeviceMemoryProperties &memoryProperties,
-                  size_t size, const VkBufferUsageFlags usage) {
+                  const size_t size, const VkBufferUsageFlags usage, const char* name) {
   VkBufferCreateInfo createInfo{VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};
   createInfo.size = size;
   createInfo.usage = usage;
   createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
   // this is just a dummy handle
   VK_CHECK(vkCreateBuffer(device, &createInfo, nullptr, &buffer.buffer));
+  //SET_DEBUG_NAME(buffer.buffer,VK_OBJECT_TYPE_BUFFER,)
 
   // memory bits of this struct define the requirement of the type of memory.
   // AMD seems to have 256 mb of mapped system memory you can write directly to
@@ -109,6 +110,7 @@ void createBuffer(Buffer &buffer, const VkDevice device,
   memoryInfo.memoryTypeIndex = memoryIndex;
 
   VK_CHECK(vkAllocateMemory(device, &memoryInfo, nullptr, &buffer.memory));
+  SET_DEBUG_NAME(buffer.memory,VK_OBJECT_TYPE_DEVICE_MEMORY,name);
 
   // binding the memory to our buffer, the dummy handle we allocated previously
   vkBindBufferMemory(device, buffer.buffer, buffer.memory, 0);
