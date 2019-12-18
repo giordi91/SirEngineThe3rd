@@ -52,6 +52,8 @@ void ImguiLayer::onAttach() {
     vkinfo.PipelineCache = nullptr;
     vkinfo.DescriptorPool = vk::DESCRIPTOR_POOL;
     vkinfo.Allocator = nullptr;
+    vkinfo.ImageCount = vk::SWAP_CHAIN_IMAGE_COUNT;
+    vkinfo.MinImageCount= vk::SWAP_CHAIN_IMAGE_COUNT;
 
     VkAttachmentDescription attachment = {};
     attachment.format = vk::IMAGE_FORMAT;
