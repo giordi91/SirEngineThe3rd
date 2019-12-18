@@ -1,6 +1,9 @@
 #include "platform/windows/graphics/vk/vkSwapChain.h"
+#include "SirEngine/globals.h"
+#include "SirEngine/log.h"
 #include "platform/windows/graphics/vk/vk.h"
 #include "platform/windows/graphics/vk/vkLoad.h"
+#include <algorithm>
 #include <cassert>
 #include <iostream>
 
@@ -72,11 +75,22 @@ bool getCapabilitiesOfPresentationSurface(
 bool selectNumberOfSwapchainImages(
     VkSurfaceCapabilitiesKHR const &surfaceCapabilities,
     uint32_t &numberOfImages) {
-  numberOfImages = surfaceCapabilities.minImageCount + 1;
-  if ((surfaceCapabilities.maxImageCount > 0) &&
-      (numberOfImages > surfaceCapabilities.maxImageCount)) {
-    numberOfImages = surfaceCapabilities.maxImageCount;
+
+  // here we clamp our value of images wanted expressed in the config, such that
+  // must be least/equal than max and min, but if in range keeping our wanted
+  // value
+  uint32_t finalImageCount =
+      std::max(std::min(surfaceCapabilities.maxImageCount,
+                        globals::ENGINE_CONFIG->m_frameBufferingCoung),
+               surfaceCapabilities.minImageCount);
+  if (finalImageCount != globals::ENGINE_CONFIG->m_frameBufferingCoung) {
+    SE_CORE_WARN("Swap chain: could not create requested number of images:{0}, "
+                 "created {1} instead",
+                 globals::ENGINE_CONFIG->m_frameBufferingCoung,
+                 finalImageCount);
   }
+  numberOfImages = finalImageCount;
+
   return true;
 }
 
@@ -337,13 +351,6 @@ bool createSwapchainWithR8G8B8A8FormatAndMailboxPresentMode(
     vkDestroySwapchainKHR(logicalDevice, oldSwapchain, nullptr);
     oldSwapchain = VK_NULL_HANDLE;
   }
-
-  // if (!CreateSwapchain(logicalDevice, presentationSurface, number_of_images,
-  //                     {imageFormat, imageColorSpace}, imageSize, imageUsage,
-  //                     surfaceTransform, desired_present_mode, oldSwapchain,
-  //                     swapchain)) {
-  //  return false;
-  //}
 
   if (!getHandlesOfSwapchainImages(logicalDevice, swapchain, swapchainImages)) {
     return false;

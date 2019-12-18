@@ -16,6 +16,7 @@ static std::string CONFIG_ADAPTER_VENDOR = "adapterVendor";
 static std::string CONFIG_VENDOR_TOLERANT = "vendorTolerant";
 static std::string CONFIG_ADAPTER_SELECTION_RULE = "adapterSelectionRule";
 static std::string CONFIG_USE_CACHED_PSO = "useCachedPSO";
+static std::string CONFIG_FREAME_BUFFERING_COUNT = "frameBufferingCount";
 
 static std::string DEFAULT_STRING = "";
 static std::string DEFAULT_ADAPTER = "any";
@@ -82,7 +83,7 @@ ADAPTER_SELECTION_RULE getAdapterSelectionRule(const nlohmann::json &jobj) {
   return ADAPTER_SELECTION_RULE::LARGEST_FRAME_BUFFER;
 }
 
-void parseConfigFile(const char *path) {
+void parseConfigFile(const char *path,const EngineInitializationConfig& initConfig) {
   const nlohmann::json jobj = getJsonObj(path);
 
   constexpr int mbToBytes = 1024 * 1024;
@@ -109,8 +110,17 @@ void parseConfigFile(const char *path) {
   globals::ENGINE_CONFIG = reinterpret_cast<EngineConfig *>(
       globals::PERSISTENT_ALLOCATOR->allocate(sizeof(EngineConfig)));
 
+
   // resources
+
   EngineConfig &config = *globals::ENGINE_CONFIG;
+  config.m_stringPoolSizeInMb =
+      initConfig.stringPoolSizeInMB;
+  config.m_frameAllocatorSizeInMb =
+      initConfig.frameAllocatorSizeInMB;
+  config.m_persistentAllocatorInMb =
+      initConfig.frameAllocatorSizeInMB;
+
   config.m_dataSourcePath = persistentString(
       getValueIfInJson(jobj, CONFIG_DATA_SOURCE_KEY, DEFAULT_STRING).c_str());
   assert(config.m_dataSourcePath[0] != '\0');
@@ -138,6 +148,9 @@ void parseConfigFile(const char *path) {
   config.m_adapterVendor = getAdapterVendor(jobj);
   config.m_adapterSelectionRule = getAdapterSelectionRule(jobj);
 
+  config.m_frameBufferingCoung =
+      (getValueIfInJson(jobj, CONFIG_FREAME_BUFFERING_COUNT, 2u));
+
   assert(config.m_windowWidth != -1);
   assert(config.m_windowHeight != -1);
 }
@@ -159,6 +172,12 @@ void initializeConfigDefault() {
   globals::ENGINE_CONFIG = reinterpret_cast<EngineConfig *>(
       globals::PERSISTENT_ALLOCATOR->allocate(sizeof(EngineConfig)));
 
+  globals::ENGINE_CONFIG->m_stringPoolSizeInMb =
+      DEFAULT_ALLOCATOR_STRING_POOL_SIZE_MB;
+  globals::ENGINE_CONFIG->m_frameAllocatorSizeInMb =
+      DEFAULT_ALLOCATOR_FRAME_SIZE_MB;
+  globals::ENGINE_CONFIG->m_persistentAllocatorInMb =
+      DEFAULT_ALLOCAOTR_PERSISTENT_SIZE_MB;
   globals::ENGINE_CONFIG->m_dataSourcePath = "../data/";
   globals::ENGINE_CONFIG->m_startScenePath = "";
   globals::ENGINE_CONFIG->m_useCachedPSO = false;
@@ -176,7 +195,7 @@ void initializeConfigDefault() {
 void loadConfigFile(const EngineInitializationConfig &config) {
   const bool exists = fileExists(config.configPath);
   if (exists) {
-    parseConfigFile(config.configPath);
+    parseConfigFile(config.configPath,config);
   } else {
     initializeConfigDefault();
   }
