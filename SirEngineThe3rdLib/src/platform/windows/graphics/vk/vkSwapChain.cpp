@@ -364,7 +364,6 @@ bool createSwapchain(const VkDevice logicalDevice,
                      const uint32_t height, VkSwapchain *oldSwapchain,
                      VkSwapchain &outSwapchain) {
 
-  waitForAllSubmittedCommandsToBeFinished(logicalDevice);
   VK_CHECK(vkDeviceWaitIdle(logicalDevice));
 
   // Ready = false;

@@ -13,6 +13,7 @@ class VkPipelineLayoutManager;
 struct VkSwapchain;
 
 static constexpr int PREALLOCATED_SEMAPHORE_COUNT = 4;
+static constexpr uint32_t VK_TIMEOUT_INFINITE = std::numeric_limits<uint32_t>::max(); 
 struct VkFrameCommand final {
   //this might have to change for when we go multi-threaded
   VkCommandPool m_commandAllocator = nullptr;
@@ -43,8 +44,12 @@ extern VkPSOManager *PSO_MANAGER;
 extern VkShaderManager *SHADER_MANAGER;
 extern VkPipelineLayoutManager *PIPELINE_LAYOUT_MANAGER;
 extern uint32_t SWAP_CHAIN_IMAGE_COUNT;
+//incremented every frame and used to find the correct set of resources
+//like command buffer pool and allocators
 extern VkFrameCommand FRAME_COMMAND[PREALLOCATED_SEMAPHORE_COUNT];
+extern VkFrameCommand* CURRENT_FRAME_COMMAND;
 
+//TODO this is used anymore?
 extern std::vector<VkDescriptorSetLayout> LAYOUTS_TO_DELETE;
 
 bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
@@ -72,7 +77,7 @@ bool onResize(uint32_t width, uint32_t height);
     VK_CHECK(vkSetDebugUtilsObjectNameEXT(vk::LOGICAL_DEVICE, &debugInfo_));   \
   }
 #else
-SET_DEBUG_NAME(resource, type, name)
+#define SET_DEBUG_NAME(resource, type, name)
 #endif
 
 RenderingContext *

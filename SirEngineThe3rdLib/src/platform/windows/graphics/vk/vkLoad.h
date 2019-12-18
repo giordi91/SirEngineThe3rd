@@ -69,7 +69,6 @@ void getDeviceQueue(const VkDevice logicalDevice,
 
 bool newSemaphore(const VkDevice logicalDevice, VkSemaphore &semaphore);
 
-bool waitForAllSubmittedCommandsToBeFinished(const VkDevice logicalDevice);
 
 bool presentImage(VkQueue queue, std::vector<VkSemaphore> renderingSemaphores,
                   std::vector<PresentInfo> imagesToPresent);
@@ -113,7 +112,7 @@ struct WaitSemaphoreInfo {
 bool submitCommandBuffersToQueue(
     VkQueue queue, std::vector<WaitSemaphoreInfo> waitSemaphoreInfos,
     std::vector<VkCommandBuffer> commandBuffers,
-    std::vector<VkSemaphore> signalSemaphores, VkFence fence);
+    std::vector<VkSemaphore> signalSemaphores, VkFence& fence);
 
 VkRenderPass createRenderPass(VkDevice logicalDevice);
 VkFramebuffer createFrameBuffer(VkDevice logicalDevice, VkRenderPass renderPass,

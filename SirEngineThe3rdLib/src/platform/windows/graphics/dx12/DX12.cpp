@@ -372,6 +372,7 @@ bool dispatchFrameDx12() {
   // swap the back and front buffers
   dx12::SWAP_CHAIN->present();
   // bump the frame
+  globals::TOTAL_NUMBER_OF_FRAMES += 1;
   globals::CURRENT_FRAME = (globals::CURRENT_FRAME + 1) % FRAME_BUFFERS_COUNT;
   return true;
 }

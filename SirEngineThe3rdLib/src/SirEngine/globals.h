@@ -43,6 +43,7 @@ extern uint32_t TOTAL_NUMBER_OF_FRAMES;
 extern uint32_t CURRENT_FRAME;
 extern float MIN_DEPTH;
 extern float MAX_DEPTH;
+//TODO change this to not be a define and be driven by engine config
 #define FRAME_BUFFERS_COUNT 2
 
 // managers
