@@ -1,19 +1,26 @@
 {
+  "======pre-startup config=====": 0, 
   "stringPoolSizeInMB": 25, 
   "frameAllocatorSizeInMB": 20, 
   "persistentAllocatorSizeInMB": 20, 
   "verboseStartup": true,
 
+  "======GPU config=====": 0, 
   "adapterVendor":"AMD",
   "vendorTolerant": true,
   "adapterSelectionRule":"largestFrameBuffer",
 
+  "======project and IO data config=====": 0, 
   "dataSource" :  "../data",
   "startingScene":  "../data/scenes/knightBOutdoorScene.json",
-  "graphicAPI": "Vulkan",
-  "useCachedPSO" :  false,
 
+  "======window config=====": 0, 
   "windowTitle": "SirEngineThe3rd", 
   "windowWidth":  1280, 
-  "windowHeight": 720 
+  "windowHeight": 720,
+
+  "======graphics config=====": 0, 
+  "graphicAPI": "Vulkan",
+  "useCachedPSO" :  false,
+  "frameBufferingCount" : 3 
 }

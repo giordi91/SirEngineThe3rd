@@ -5,20 +5,31 @@ namespace SirEngine {
 
 
 struct EngineConfig {
+
+  //pre-startup config
+  int m_stringPoolSizeInMb;
+  int m_frameAllocatorSizeInMb;
+  int m_persistentAllocatorInMb;
   bool m_verboseStartup;
 
+  //GPU config
   ADAPTER_VENDOR m_adapterVendor;
   bool m_vendorTolerant;
   ADAPTER_SELECTION_RULE m_adapterSelectionRule;
 
+	//project and IO data config
   const char *m_dataSourcePath;
   const char *m_startScenePath;
-  GRAPHIC_API m_graphicsAPI;
 
+  //window config
   const char *m_windowTitle;
   int m_windowWidth;
   int m_windowHeight;
+
+  //graphics  config
+  GRAPHIC_API m_graphicsAPI;
   bool m_useCachedPSO;
+  uint32_t m_frameBufferingCoung;
 };
 
 struct EngineInitializationConfig {
@@ -29,8 +40,6 @@ struct EngineInitializationConfig {
   const char *configPath = "";
 };
 
-void parseConfigFile(const char *path, EngineConfig &config);
-void initializeConfigDefault(EngineConfig &config);
 
 void initializeEngine(const EngineInitializationConfig &config);
 
