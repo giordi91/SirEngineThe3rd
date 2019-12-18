@@ -4,6 +4,7 @@
 
 #include "SirEngine/graphics/renderingContext.h"
 #include <vector>
+#include "SirEngine/runtimeString.h"
 
 namespace SirEngine {
 namespace vk {
@@ -48,6 +49,8 @@ extern uint32_t SWAP_CHAIN_IMAGE_COUNT;
 //like command buffer pool and allocators
 extern VkFrameCommand FRAME_COMMAND[PREALLOCATED_SEMAPHORE_COUNT];
 extern VkFrameCommand* CURRENT_FRAME_COMMAND;
+extern uint32_t GRAPHICS_QUEUE_FAMILY;  
+extern uint32_t PRESENTATION_QUEUE_FAMILY;  
 
 //TODO this is used anymore?
 extern std::vector<VkDescriptorSetLayout> LAYOUTS_TO_DELETE;
@@ -73,7 +76,7 @@ bool onResize(uint32_t width, uint32_t height);
     debugInfo_.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;     \
     debugInfo_.objectHandle = (uint64_t)resource;                              \
     debugInfo_.objectType = type;                                              \
-    debugInfo_.pObjectName = name;                                             \
+    debugInfo_.pObjectName = persistentString(name);                                             \
     VK_CHECK(vkSetDebugUtilsObjectNameEXT(vk::LOGICAL_DEVICE, &debugInfo_));   \
   }
 #else

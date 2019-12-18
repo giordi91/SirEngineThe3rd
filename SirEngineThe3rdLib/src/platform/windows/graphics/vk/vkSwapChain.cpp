@@ -394,16 +394,16 @@ bool createSwapchain(const VkDevice logicalDevice,
   // if (renderPass != VK_NULL_HANDLE) {
   //  vkDestroyRenderPass(logicalDevice, renderPass, nullptr);
   //}
-  // renderPass = createRenderPass(logicalDevice);
+  outSwapchain.renderPass= createRenderPass(logicalDevice);
 
   // create the frame buffer
   const size_t count = outSwapchain.images.size();
   outSwapchain.frameBuffers.resize(count);
-  // for (size_t i = 0; i < count; ++i) {
-  //  outSwapchain.frameBuffers[i] = createFrameBuffer(
-  //      logicalDevice, renderPass, outSwapchain.imagesView[i], width, height);
-  //}
-  // createFrameBuffer(LOGICAL_DEVICE, FRAME_BUFFERS);
+   for (size_t i = 0; i < count; ++i) {
+    outSwapchain.frameBuffers[i] = createFrameBuffer(
+        logicalDevice, outSwapchain.renderPass, outSwapchain.imagesView[i], width, height);
+  }
+   //createFrameBuffer(LOGICAL_DEVICE, FRAME_BUFFERS);
 
   if (oldSwapchain != nullptr) {
     destroySwapchain(logicalDevice, oldSwapchain);

@@ -9,6 +9,7 @@ struct VkSwapchain {
   std::vector<VkImage> images;
   std::vector<VkImageView> imagesView;
   std::vector<VkFramebuffer> frameBuffers;
+  VkRenderPass renderPass;
   uint32_t width = 0;
   uint32_t height = 0;
 };

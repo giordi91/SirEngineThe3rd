@@ -38,6 +38,8 @@ VkPipelineLayoutManager *PIPELINE_LAYOUT_MANAGER = nullptr;
 uint32_t SWAP_CHAIN_IMAGE_COUNT = 0;
 VkFrameCommand FRAME_COMMAND[PREALLOCATED_SEMAPHORE_COUNT];
 VkFrameCommand *CURRENT_FRAME_COMMAND = nullptr;
+uint32_t GRAPHICS_QUEUE_FAMILY = 0;
+uint32_t PRESENTATION_QUEUE_FAMILY = 0;
 
 // TODO move this to manager
 std::vector<VkDescriptorSetLayout> LAYOUTS_TO_DELETE;
@@ -89,6 +91,9 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
     logPhysicalDevice(PHYSICAL_DEVICE);
   }
 
+  GRAPHICS_QUEUE_FAMILY = adapterResult.m_graphicsQueueFamilyIndex;
+  PRESENTATION_QUEUE_FAMILY = adapterResult.m_presentQueueFamilyIndex;
+
   getDeviceQueue(LOGICAL_DEVICE, adapterResult.m_graphicsQueueFamilyIndex, 0,
                  GRAPHICS_QUEUE);
   getDeviceQueue(LOGICAL_DEVICE, adapterResult.m_presentQueueFamilyIndex, 0,
@@ -120,10 +125,16 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
                            FRAME_COMMAND[i].m_commandAllocator)) {
       assert(0 && "could not create command pool");
     }
+      SET_DEBUG_NAME(FRAME_COMMAND[i].m_commandAllocator,
+                     VK_OBJECT_TYPE_COMMAND_POOL,
+                     frameConcatenation("commandPool", std::to_string(i).c_str()));
     if (!allocateCommandBuffer(LOGICAL_DEVICE,
                                FRAME_COMMAND[i].m_commandAllocator,
                                VK_COMMAND_BUFFER_LEVEL_PRIMARY,
                                FRAME_COMMAND[i].m_commandBuffer)) {
+      SET_DEBUG_NAME(FRAME_COMMAND[i].m_commandBuffer,
+                     VK_OBJECT_TYPE_COMMAND_BUFFER,
+                     frameConcatenation("commandBuffer", std::to_string(i).c_str()));
       assert(0);
     }
   }
@@ -192,7 +203,7 @@ void waitOnFence(VkFence fence) {
     return;
   }
   VK_CHECK(vkWaitForFences(vk::LOGICAL_DEVICE, 1, &fence, true,
-                           VK_TIMEOUT_INFINITE));
+                           200000000));
 }
 
 void resetFrameCommand(VkFrameCommand *command) {
@@ -289,7 +300,7 @@ bool VkRenderingContext::dispatchFrame() {
   bool res =
       presentImage(PRESENTATION_QUEUE,
                    {CURRENT_FRAME_COMMAND->m_renderSemaphore}, {presentInfo});
-  //vkDeviceWaitIdle(LOGICAL_DEVICE);
+  // vkDeviceWaitIdle(LOGICAL_DEVICE);
 
   // total number of frames is updated at the beginning of the frame by the
   // application
