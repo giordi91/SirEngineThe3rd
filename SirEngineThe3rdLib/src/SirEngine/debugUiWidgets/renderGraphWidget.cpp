@@ -94,9 +94,9 @@ void inline plugToolTip(const char *name) {
 void renderImguiGraph(GraphStatus *status) {
   ImVec2 winPos{globals::ENGINE_CONFIG->m_windowWidth - status->GRAPH_WIDTH,
                 globals::ENGINE_CONFIG->m_windowHeight - status->GRAPH_HEIGHT};
-  ImGui::SetNextWindowPos(winPos, ImGuiSetCond_FirstUseEver);
+  ImGui::SetNextWindowPos(winPos, ImGuiCond_FirstUseEver);
   ImGui::SetNextWindowSize(ImVec2(status->GRAPH_WIDTH, status->GRAPH_HEIGHT),
-                           ImGuiSetCond_Always);
+                           ImGuiCond_Always);
   if (!status->opened) {
     return;
   }
@@ -138,7 +138,7 @@ void renderImguiGraph(GraphStatus *status) {
   ImGui::Checkbox("Show grid", &status->show_grid);
   ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(1, 1));
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-  ImGui::PushStyleColor(ImGuiCol_ChildWindowBg, IM_COL32(60, 60, 70, 200));
+  ImGui::PushStyleColor(ImGuiCol_ChildBg, IM_COL32(60, 60, 70, 200));
   ImGui::BeginChild("scrolling_region", ImVec2(0, 0), true,
                     ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoMove);
   ImGui::PushItemWidth(120.0f);
@@ -265,7 +265,7 @@ void renderImguiGraph(GraphStatus *status) {
   draw_list->ChannelsMerge();
 
   // Open context menu
-  if (!ImGui::IsAnyItemHovered() && ImGui::IsMouseHoveringWindow() &&
+  if (!ImGui::IsAnyItemHovered() && ImGui::IsWindowHovered() &&
       ImGui::IsMouseClicked(1)) {
     status->node_selected = node_hovered_in_list = node_hovered_in_scene = -1;
     open_context_menu = true;
