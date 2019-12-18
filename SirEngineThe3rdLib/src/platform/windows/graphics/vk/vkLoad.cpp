@@ -593,15 +593,6 @@ bool createLogicalDeviceWithWsiExtensionsEnabled(
   return createLogicalDevice(physicalDevice, queueInfos, desiredExtensions,
                              desiredFeatures, logicalDevice);
 }
-bool waitForAllSubmittedCommandsToBeFinished(const VkDevice logicalDevice) {
-  const VkResult result = vkDeviceWaitIdle(logicalDevice);
-  if (VK_SUCCESS != result) {
-    std::cout << "Waiting on a device failed." << std::endl;
-    return false;
-  }
-  return true;
-}
-
 bool newSemaphore(const VkDevice logicalDevice, VkSemaphore &semaphore) {
   VkSemaphoreCreateInfo semaphoreCreateInfo = {
       VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO, nullptr, 0};
@@ -736,7 +727,7 @@ bool endCommandBufferRecordingOperation(const VkCommandBuffer commandBuffer) {
 bool submitCommandBuffersToQueue(
     VkQueue queue, std::vector<WaitSemaphoreInfo> waitSemaphoreInfos,
     std::vector<VkCommandBuffer> commandBuffers,
-    std::vector<VkSemaphore> signalSemaphores, const VkFence fence) {
+    std::vector<VkSemaphore> signalSemaphores, VkFence& fence) {
   std::vector<VkSemaphore> waitSemaphoreHandles;
   std::vector<VkPipelineStageFlags> waitSemaphoreStages;
 
