@@ -5,12 +5,17 @@
 #include "SirEngine/log.h"
 #include "imgui/imgui.h"
 #include "imguiLayer.h"
+
+// DX12
 #include "platform/windows/graphics/dx12/DX12.h"
+#include "platform/windows/graphics/dx12/TextureManagerDx12.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
+#include "platform/windows/graphics/dx12/dx12SwapChain.h"
 #include "platform/windows/graphics/dx12/imgui_impl_dx12.h"
 
-#include "platform/windows/graphics/dx12/TextureManagerDx12.h"
-#include "platform/windows/graphics/dx12/dx12SwapChain.h"
+// VK
+#include "platform/windows/graphics/vk/imgui_impl_vulkan.h"
+#include "platform/windows/graphics/vk/vk.h"
 
 #include "SirEngine/application.h"
 #include "SirEngine/events/applicationEvent.h"
@@ -21,16 +26,85 @@
 #include "SirEngine/events/scriptingEvent.h"
 #include "SirEngine/events/shaderCompileEvent.h"
 #include "SirEngine/graphics/debugAnnotations.h"
+#include "platform/windows/graphics/vk/vkSwapChain.h"
+#include "vkTempLayer.h"
 
 namespace SirEngine {
 void ImguiLayer::onAttach() {
-  // need to initialize ImGui dx12
-  dx12::DescriptorPair pair;
-  dx12::GLOBAL_CBV_SRV_UAV_HEAP->reserveDescriptor(pair);
 
-  ImGui_ImplDX12_Init(dx12::DEVICE, FRAME_BUFFERS_COUNT,
-                      DXGI_FORMAT_R8G8B8A8_UNORM, pair.cpuHandle,
-                      pair.gpuHandle);
+  if (globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::DX12) {
+
+    // need to initialize ImGui dx12
+    dx12::DescriptorPair pair;
+    dx12::GLOBAL_CBV_SRV_UAV_HEAP->reserveDescriptor(pair);
+    ImGui_ImplDX12_Init(dx12::DEVICE, FRAME_BUFFERS_COUNT,
+                        DXGI_FORMAT_R8G8B8A8_UNORM, pair.cpuHandle,
+                        pair.gpuHandle);
+  } else {
+    assert(globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::VULKAN);
+
+    ImGui_ImplVulkan_InitInfo vkinfo{};
+    vkinfo.Instance = vk::INSTANCE;
+    vkinfo.PhysicalDevice = vk::PHYSICAL_DEVICE;
+    vkinfo.Device = vk::LOGICAL_DEVICE;
+    vkinfo.QueueFamily = vk::GRAPHICS_QUEUE_FAMILY;
+    vkinfo.Queue = vk::GRAPHICS_QUEUE;
+    vkinfo.PipelineCache = nullptr;
+    vkinfo.DescriptorPool = vk::DESCRIPTOR_POOL;
+    vkinfo.Allocator = nullptr;
+
+    VkAttachmentDescription attachment = {};
+    attachment.format = vk::IMAGE_FORMAT;
+    attachment.samples = VK_SAMPLE_COUNT_1_BIT;
+    attachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    attachment.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    attachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    VkAttachmentReference color_attachment = {};
+    color_attachment.attachment = 0;
+    color_attachment.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    VkSubpassDescription subpass = {};
+    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    subpass.colorAttachmentCount = 1;
+    subpass.pColorAttachments = &color_attachment;
+    VkRenderPassCreateInfo info = {};
+    info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    info.attachmentCount = 1;
+    info.pAttachments = &attachment;
+    info.subpassCount = 1;
+    info.pSubpasses = &subpass;
+    VK_CHECK(
+        vkCreateRenderPass(vk::LOGICAL_DEVICE, &info, nullptr, &imguiPass));
+
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO &io = ImGui::GetIO();
+    (void)io;
+
+    ImGui::StyleColorsDark();
+    ImGui_ImplVulkan_Init(&vkinfo, imguiPass);
+
+    // create a command buffer separated to execute this stuff
+
+    VkCommandBufferBeginInfo beginInfo{
+        VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
+    vkBeginCommandBuffer(vk::CURRENT_FRAME_COMMAND->m_commandBuffer,
+                         &beginInfo);
+    ImGui_ImplVulkan_CreateFontsTexture(
+        vk::CURRENT_FRAME_COMMAND->m_commandBuffer);
+
+    VkSubmitInfo end_info = {};
+    end_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    end_info.commandBufferCount = 1;
+    end_info.pCommandBuffers = &vk::CURRENT_FRAME_COMMAND->m_commandBuffer;
+    VK_CHECK(vkEndCommandBuffer(vk::CURRENT_FRAME_COMMAND->m_commandBuffer));
+    VK_CHECK(vkQueueSubmit(vk::GRAPHICS_QUEUE, 1, &end_info, VK_NULL_HANDLE));
+    VK_CHECK(vkDeviceWaitIdle(vk::LOGICAL_DEVICE));
+    vkResetCommandBuffer(vk::CURRENT_FRAME_COMMAND->m_commandBuffer, 0);
+    // ImGui_ImplVulkan_DestroyFontUploadObjects();
+  }
 
   // Keyboard mapping. ImGui will use those indices to peek into the
   // io.KeysDown[] array that we will update during the application lifetime.
@@ -61,8 +135,9 @@ void ImguiLayer::onAttach() {
       reinterpret_cast<LARGE_INTEGER *>(&g_TicksPerSecond));
   ::QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER *>(&g_Time));
 
-  io.DisplaySize = ImVec2(static_cast<float>(globals::ENGINE_CONFIG->m_windowWidth),
-                          static_cast<float>(globals::ENGINE_CONFIG->m_windowHeight));
+  io.DisplaySize =
+      ImVec2(static_cast<float>(globals::ENGINE_CONFIG->m_windowWidth),
+             static_cast<float>(globals::ENGINE_CONFIG->m_windowHeight));
 
   m_renderGraph.initialize(dx12::RENDERING_GRAPH);
   m_shaderWidget.initialize();
@@ -76,88 +151,137 @@ void ImguiLayer::onUpdate() {
     return;
   }
 
-  annotateGraphicsBegin("UI Draw");
-  TextureHandle destination = dx12::SWAP_CHAIN->currentBackBufferTexture();
-  D3D12_RESOURCE_BARRIER barriers[1];
-  int counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
-      destination, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, 0);
-  if (counter) {
-    dx12::CURRENT_FRAME_RESOURCE->fc.commandList->ResourceBarrier(counter,
-                                                                  barriers);
-  }
-
-  globals::TEXTURE_MANAGER->bindBackBuffer(false);
-
-  // Read keyboard modifiers inputs
-  ImGuiIO &io = ImGui::GetIO();
-
-  // Setup time step
-  INT64 current_time;
-  ::QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER *>(&current_time));
-  io.DeltaTime = (float)(current_time - g_Time) / g_TicksPerSecond;
-  // SE_CORE_INFO("time {0}", io.DeltaTime);
-  g_Time = current_time;
-
-  // Read keyboard modifiers inputs
-  io.KeyCtrl = (::GetKeyState(VK_CONTROL) & 0x8000) != 0;
-  io.KeyShift = (::GetKeyState(VK_SHIFT) & 0x8000) != 0;
-  io.KeyAlt = (::GetKeyState(VK_MENU) & 0x8000) != 0;
-  io.KeySuper = false;
-
-  ImGui_ImplDX12_NewFrame();
-
-  IM_ASSERT(io.Fonts->IsBuilt() &&
-            "Font atlas not built! It is generally built by the renderer "
-            "back-end. Missing call to renderer _NewFrame() function? e.g. "
-            "ImGui_ImplOpenGL3_NewFrame().");
-
-  bool show_demo_window = true;
-
-  const ImVec2 pos{0, 0};
-  ImGui::NewFrame();
-  // ImGui::ShowDemoWindow(&show_demo_window);
-
-  ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
-  ImGui::Begin("Debug", &show_demo_window, ImGuiWindowFlags_MenuBar);
-  if (ImGui::BeginMenuBar()) {
-    if (ImGui::BeginMenu("Tools")) {
-      if (ImGui::MenuItem("Shader compiler", nullptr)) {
-        m_renderShaderCompiler = !m_renderShaderCompiler;
-      }
-      if (ImGui::MenuItem("Reload scripts", nullptr)) {
-        SE_CORE_INFO("reload scripts");
-        auto *event = new ReloadScriptsEvent();
-        globals::APPLICATION->queueEventForEndOfFrame(event);
-      }
-      ImGui::Separator();
-      ImGui::EndMenu();
+  if (globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::DX12) {
+    annotateGraphicsBegin("UI Draw");
+    TextureHandle destination = dx12::SWAP_CHAIN->currentBackBufferTexture();
+    D3D12_RESOURCE_BARRIER barriers[1];
+    int counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
+        destination, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, 0);
+    if (counter) {
+      dx12::CURRENT_FRAME_RESOURCE->fc.commandList->ResourceBarrier(counter,
+                                                                    barriers);
     }
-    ImGui::EndMenuBar();
-  }
+
+    globals::TEXTURE_MANAGER->bindBackBuffer(false);
+
+    // Read keyboard modifiers inputs
+    ImGuiIO &io = ImGui::GetIO();
+
+    // Setup time step
+    INT64 current_time;
+    ::QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER *>(&current_time));
+    io.DeltaTime = (float)(current_time - g_Time) / g_TicksPerSecond;
+    // SE_CORE_INFO("time {0}", io.DeltaTime);
+    g_Time = current_time;
+
+    // Read keyboard modifiers inputs
+    io.KeyCtrl = (::GetKeyState(VK_CONTROL) & 0x8000) != 0;
+    io.KeyShift = (::GetKeyState(VK_SHIFT) & 0x8000) != 0;
+    io.KeyAlt = (::GetKeyState(VK_MENU) & 0x8000) != 0;
+    io.KeySuper = false;
+
+    ImGui_ImplDX12_NewFrame();
+
+    IM_ASSERT(io.Fonts->IsBuilt() &&
+              "Font atlas not built! It is generally built by the renderer "
+              "back-end. Missing call to renderer _NewFrame() function? e.g. "
+              "ImGui_ImplOpenGL3_NewFrame().");
+
+    bool show_demo_window = true;
+
+    const ImVec2 pos{0, 0};
+    ImGui::NewFrame();
+    // ImGui::ShowDemoWindow(&show_demo_window);
+
+    ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
+    ImGui::Begin("Debug", &show_demo_window, ImGuiWindowFlags_MenuBar);
+    if (ImGui::BeginMenuBar()) {
+      if (ImGui::BeginMenu("Tools")) {
+        if (ImGui::MenuItem("Shader compiler", nullptr)) {
+          m_renderShaderCompiler = !m_renderShaderCompiler;
+        }
+        if (ImGui::MenuItem("Reload scripts", nullptr)) {
+          SE_CORE_INFO("reload scripts");
+          auto *event = new ReloadScriptsEvent();
+          globals::APPLICATION->queueEventForEndOfFrame(event);
+        }
+        ImGui::Separator();
+        ImGui::EndMenu();
+      }
+      ImGui::EndMenuBar();
+    }
 
 #if BUILD_AMD
-  if (ImGui::CollapsingHeader("HW info", ImGuiTreeNodeFlags_DefaultOpen)) {
-    m_hwInfo.render();
-  }
+    if (ImGui::CollapsingHeader("HW info", ImGuiTreeNodeFlags_DefaultOpen)) {
+      m_hwInfo.render();
+    }
 #endif
 
-  if (ImGui::CollapsingHeader("Performances", ImGuiTreeNodeFlags_DefaultOpen)) {
-    m_frameTimings.render();
-    m_memoryUsage.render();
-  }
-  if (ImGui::CollapsingHeader("Graphics", ImGuiTreeNodeFlags_DefaultOpen)) {
-    m_renderGraph.render();
-  }
-  if (m_renderShaderCompiler) {
-    m_shaderWidget.render();
-  }
+    if (ImGui::CollapsingHeader("Performances",
+                                ImGuiTreeNodeFlags_DefaultOpen)) {
+      m_frameTimings.render();
+      m_memoryUsage.render();
+    }
+    if (ImGui::CollapsingHeader("Graphics", ImGuiTreeNodeFlags_DefaultOpen)) {
+      m_renderGraph.render();
+    }
+    if (m_renderShaderCompiler) {
+      m_shaderWidget.render();
+    }
 
-  ImGui::End();
+    ImGui::End();
+    ImGui::Render();
+    ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(),
+                                  dx12::CURRENT_FRAME_RESOURCE->fc.commandList);
+    annotateGraphicsEnd();
+  } else {
+    // Read keyboard modifiers inputs
+    ImGuiIO &io = ImGui::GetIO();
+    // Setup time step
+    INT64 current_time;
+    ::QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER *>(&current_time));
+    io.DeltaTime = (float)(current_time - g_Time) / g_TicksPerSecond;
+    // SE_CORE_INFO("time {0}", io.DeltaTime);
+    g_Time = current_time;
 
-  ImGui::Render();
-  ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(),
-                                dx12::CURRENT_FRAME_RESOURCE->fc.commandList);
-  annotateGraphicsEnd();
+    // Read keyboard modifiers inputs
+    io.KeyCtrl = (::GetKeyState(VK_CONTROL) & 0x8000) != 0;
+    io.KeyShift = (::GetKeyState(VK_SHIFT) & 0x8000) != 0;
+    io.KeyAlt = (::GetKeyState(VK_MENU) & 0x8000) != 0;
+    io.KeySuper = false;
+
+    ImGui_ImplVulkan_NewFrame();
+    ImGui::NewFrame();
+    ImGui::Begin("Performance Metrics"); // Create a window called "Hello,
+                                         // world!" and append into it.
+
+    ImGui::Text("GPU Time: %.1f ms", 999999);
+
+    ImGui::Text("CPU Time: %.3f ms/frame (%.1f FPS)",
+                1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+    ImGui::Separator();
+    ImGui::Text("Swapchain Images: %d", vk::SWAP_CHAIN_IMAGE_COUNT);
+
+    ImGui::End();
+
+    ImGui::Render();
+
+    VkRenderPassBeginInfo info = {};
+    info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    info.renderPass = imguiPass;
+    info.framebuffer = vk::SWAP_CHAIN->frameBuffers[globals::CURRENT_FRAME];
+    info.renderArea.extent.width = globals::ENGINE_CONFIG->m_windowWidth;
+    info.renderArea.extent.height = globals::ENGINE_CONFIG->m_windowHeight;
+    info.clearValueCount = 0;
+    info.pClearValues = nullptr;
+    vkCmdBeginRenderPass(vk::CURRENT_FRAME_COMMAND->m_commandBuffer, &info,
+                         VK_SUBPASS_CONTENTS_INLINE);
+
+    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(),
+                                    vk::CURRENT_FRAME_COMMAND->m_commandBuffer);
+    // Submit command buffer
+    vkCmdEndRenderPass(vk::CURRENT_FRAME_COMMAND->m_commandBuffer);
+  }
 }
 
 void ImguiLayer::onEvent(Event &event) {

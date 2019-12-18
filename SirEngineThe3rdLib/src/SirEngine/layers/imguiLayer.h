@@ -7,6 +7,7 @@
 #include "SirEngine/debugUiWidgets/shaderRecompileWidget.h"
 #include "SirEngine/graphics/nodeGraph.h"
 #include "SirEngine/layer.h"
+#include <vulkan/vulkan.h>
 
 namespace SirEngine {
 class Event;
@@ -24,9 +25,7 @@ class RequestShaderCompileEvent;
 
 class SIR_ENGINE_API ImguiLayer : public Layer {
 public:
-  ImguiLayer() : Layer("ImGuiLayer"), m_renderGraph()
-  {
-  }
+  ImguiLayer() : Layer("ImGuiLayer"){}
 
   ~ImguiLayer() override = default;
 
@@ -65,5 +64,8 @@ private:
   bool m_renderShaderCompiler = false;
   // 192 is the `
   static const uint32_t TRIGGER_UI_BUTTON = 192;
+
+    // vk imgui render pass
+    VkRenderPass imguiPass;
 };
 } // namespace SirEngine

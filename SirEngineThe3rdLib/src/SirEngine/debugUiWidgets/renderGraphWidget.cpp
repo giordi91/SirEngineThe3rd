@@ -334,6 +334,10 @@ RenderGraphWidget::~RenderGraphWidget() { delete status; }
 
 void RenderGraphWidget::initialize(DependencyGraph *graph) {
   m_graph = graph;
+  if(graph == nullptr) {
+      SE_CORE_WARN("Given a null rendering graph for the imgui graph widget");
+      return;
+  }
 
   m_debugConfig.stencilValue = 1;
 
