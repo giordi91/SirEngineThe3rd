@@ -1,21 +1,18 @@
 #include "SirEngine/debugUiWidgets/memoryConsumptionWidget.h"
+#include "SirEngine/engineConfig.h"
+#include "SirEngine/globals.h"
 
-#if GRAPHIC_API == DX12
 #include "platform/windows/graphics/dx12/memoryDebug.h"
-#endif
+#include "platform/windows/graphics/vk/vkMemoryDebug.h"
 
-namespace SirEngine {
-namespace debug {
-	MemoryConsumptionWidget::MemoryConsumptionWidget()
-	{
-	}
+namespace SirEngine::debug {
+MemoryConsumptionWidget::MemoryConsumptionWidget() {}
 
-	void MemoryConsumptionWidget::render()
-	{
-#if GRAPHIC_API == DX12
-		dx12::renderImGuiMemoryWidget();
-#endif
-
-	}
-} // namespace debug
-} // namespace SirEngine
+void MemoryConsumptionWidget::render() {
+  if (globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::DX12) {
+    dx12::renderImGuiMemoryWidget();
+  } else {
+    vk::renderImGuiMemoryWidget();
+  }
+}
+} // namespace SirEngine::debug

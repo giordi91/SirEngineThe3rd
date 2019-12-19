@@ -27,30 +27,13 @@ void renderImGuiMemoryWidget() {
     return;
 
   ImGui::PushItemWidth(-1);
-  // CUSTOM WIDGET
-  // void ImDrawList::AddCircle(const ImVec2& centre, float radius, ImU32 col,
-  // int num_segments, float thickness)
-  //{
-  //    if ((col & IM_COL32_A_MASK) == 0)
-  //        return;
-  //
-  //    const float a_max = IM_PI*2.0f * ((float)num_segments - 1.0f) /
-  //    (float)num_segments; PathArcTo(centre, radius-0.5f, 0.0f, a_max,
-  //    num_segments); PathStroke(col, true, thickness);
 
-  // get gpu memory
-  DXGI_QUERY_VIDEO_MEMORY_INFO info = {};
-  dx12::ADAPTER->QueryVideoMemoryInfo(
-      0, DXGI_MEMORY_SEGMENT_GROUP_LOCAL, &info);
+  uint32_t totalMemory = getTotalGpuMemoryMB();
+  uint32_t usedMemory = getUsedGpuMemoryMB();
 
-  DXGI_ADAPTER_DESC desc;
-  SUCCEEDED(dx12::ADAPTER->GetDesc(&desc));
-
-  float totalGPUMemGB = static_cast<float>(desc.DedicatedVideoMemory) * 1e-9f;
-  float usedGPUMemInGB = static_cast<float>(info.CurrentUsage) * 1e-9f;
-  float totalGPUMemMB = static_cast<float>(desc.DedicatedVideoMemory) * 1e-6f;
-  float usedGPUMemInMB = static_cast<float>(info.CurrentUsage) * 1e-6f;
-  float ratio = usedGPUMemInGB / totalGPUMemGB;
+  float totalGPUMemMB = static_cast<float>(totalMemory) ;
+  float usedGPUMemInMB = static_cast<float>(usedMemory) ;
+  float ratio = usedGPUMemInMB / totalGPUMemMB;
 
   std::string overlay = std::to_string(ratio * 100.0f) + "%";
 
