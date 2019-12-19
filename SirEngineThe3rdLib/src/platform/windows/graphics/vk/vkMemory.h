@@ -8,6 +8,7 @@ struct Buffer {
   VkDeviceMemory memory;
   void *data;
   size_t size;
+  size_t allocationSize;
 };
 
 // command buffers

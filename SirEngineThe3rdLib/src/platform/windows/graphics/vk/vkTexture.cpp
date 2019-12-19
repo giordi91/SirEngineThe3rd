@@ -152,9 +152,8 @@ bool createRenderTarget(const char *name, VkFormat format, VkDevice device,
   VkCommandBuffer buffer =
       createCommandBuffer(CURRENT_FRAME_COMMAND->m_commandAllocator,
                           VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
-  SET_DEBUG_NAME(
-      buffer, VK_OBJECT_TYPE_COMMAND_BUFFER,
-      "frameBufferCOmmandBuffer");
+  SET_DEBUG_NAME(buffer, VK_OBJECT_TYPE_COMMAND_BUFFER,
+                 frameConcatenation(name, "CommandBufferTemp"));
 
   /*
   // Create a host-visible staging buffer that contains the raw image data
@@ -235,7 +234,7 @@ bool createRenderTarget(const char *name, VkFormat format, VkDevice device,
   }
   VK_CHECK(vkCreateImage(device, &imageCreateInfo, nullptr, &outTexture.image));
   SET_DEBUG_NAME(outTexture.image, VK_OBJECT_TYPE_IMAGE,
-                 (textureName + "Image").c_str())
+                 frameConcatenation(textureName.c_str(), "Image"));
 
   vkGetImageMemoryRequirements(device, outTexture.image, &memReqs);
 
@@ -247,7 +246,7 @@ bool createRenderTarget(const char *name, VkFormat format, VkDevice device,
   VK_CHECK(vkAllocateMemory(device, &memAllocInfo, nullptr,
                             &outTexture.deviceMemory));
   SET_DEBUG_NAME(outTexture.deviceMemory, VK_OBJECT_TYPE_DEVICE_MEMORY,
-                 (textureName + "Memory").c_str());
+                 frameConcatenation(textureName.c_str(), "Memory"));
   VK_CHECK(
       vkBindImageMemory(device, outTexture.image, outTexture.deviceMemory, 0));
 
@@ -257,21 +256,13 @@ bool createRenderTarget(const char *name, VkFormat format, VkDevice device,
   subresourceRange.levelCount = outTexture.mipLevels;
   subresourceRange.layerCount = 1;
 
-  // Image barrier for optimal image (target)
-  // Optimal image will be used as destination for the copy
-  setImageLayout(buffer, outTexture.image, VK_IMAGE_LAYOUT_UNDEFINED,
-                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresourceRange);
-
-  // Change texture image layout to shader read after all mip levels have been
-  // copied
+  // Change texture image layout to shader read after
   outTexture.imageLayout = imageLayout;
-  setImageLayout(buffer, outTexture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+  setImageLayout(buffer, outTexture.image, VK_IMAGE_LAYOUT_UNDEFINED,
                  imageLayout, subresourceRange);
 
-  // TODO fixed hardcoded index
   flushCommandBuffer(CURRENT_FRAME_COMMAND->m_commandAllocator, buffer,
                      GRAPHICS_QUEUE, true);
-  // Clean up staging resources
 
   // Create image view
   // Textures are not directly accessed by the shaders and
@@ -291,7 +282,7 @@ bool createRenderTarget(const char *name, VkFormat format, VkDevice device,
   VK_CHECK(
       vkCreateImageView(device, &viewCreateInfo, nullptr, &outTexture.view));
   SET_DEBUG_NAME(outTexture.view, VK_OBJECT_TYPE_IMAGE_VIEW,
-                 (textureName + "ImageView").c_str())
+                 frameConcatenation(textureName.c_str(), "ImageView"))
 
   // Update descriptor image info member that can be used for setting up
   // descriptor sets
@@ -526,12 +517,21 @@ bool loadTextureFromFile(const char *name, VkFormat format, VkDevice device,
   return true;
 }
 
-bool destroyTexture(const VkDevice device, const VkTexture2D texture) {
+bool destroyTexture(const VkDevice device, const VkTexture2D &texture) {
   vkDestroyImage(device, texture.image, nullptr);
   vkDestroyImageView(device, texture.view, nullptr);
   vkDestroySampler(device, texture.sampler, nullptr);
   vkFreeMemory(device, texture.deviceMemory, nullptr);
 
+  return true;
+}
+
+bool destroyFrameBuffer(const VkDevice device, const VkFramebuffer fb,
+                        const VkTexture2D &texture) {
+  vkDestroyImage(device, texture.image, nullptr);
+  vkDestroyImageView(device, texture.view, nullptr);
+  vkFreeMemory(device, texture.deviceMemory, nullptr);
+  vkDestroyFramebuffer(device, fb, nullptr);
   return true;
 }
 } // namespace SirEngine::vk

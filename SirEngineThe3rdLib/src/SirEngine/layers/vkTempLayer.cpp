@@ -21,11 +21,7 @@ void VkTempLayer::onAttach() {
   // globals::MAIN_CAMERA->setLookAt(0, 125, 0);
   // globals::MAIN_CAMERA->setPosition(00, 125, 60);
   CameraManipulationConfig camConfig{
-      -0.01f,
-      0.01f,
-      -0.012f,
-      0.012f,
-      -0.07f,
+      -0.01f, 0.01f, -0.012f, 0.012f, -0.07f,
   };
   globals::MAIN_CAMERA->setManipulationMultipliers(camConfig);
 
@@ -213,7 +209,7 @@ void VkTempLayer::createDescriptorLayoutAdvanced() {
 void VkTempLayer::onDetach() {}
 void VkTempLayer::onUpdate() {
 
-  //temporary camera update
+  // temporary camera update
   setupCameraForFrame();
 
   static float step = 0.01f;
@@ -242,8 +238,6 @@ void VkTempLayer::onUpdate() {
 
   VkRenderPassBeginInfo beginInfo = {VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};
   beginInfo.renderPass = m_pass;
-  // beginInfo.framebuffer =
-  // vk::SWAP_CHAIN->frameBuffers[globals::CURRENT_FRAME];
   beginInfo.framebuffer = m_tempFrameBuffer;
 
   // similar to a viewport mostly used on "tiled renderers" to optimize, talking
@@ -269,10 +263,10 @@ void VkTempLayer::onUpdate() {
       {0, 0},
       {static_cast<uint32_t>(globals::ENGINE_CONFIG->m_windowWidth),
        static_cast<uint32_t>(globals::ENGINE_CONFIG->m_windowHeight)}};
-  vkCmdSetViewport( vk::CURRENT_FRAME_COMMAND->m_commandBuffer, 0, 1, &viewport);
-  vkCmdSetScissor(  vk::CURRENT_FRAME_COMMAND->m_commandBuffer, 0, 1, &scissor);
-  vkCmdBindPipeline(vk::CURRENT_FRAME_COMMAND->m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                    m_pipeline);
+  vkCmdSetViewport(vk::CURRENT_FRAME_COMMAND->m_commandBuffer, 0, 1, &viewport);
+  vkCmdSetScissor(vk::CURRENT_FRAME_COMMAND->m_commandBuffer, 0, 1, &scissor);
+  vkCmdBindPipeline(vk::CURRENT_FRAME_COMMAND->m_commandBuffer,
+                    VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
 
   /*
   if constexpr (USE_PUSH) {
@@ -288,19 +282,20 @@ void VkTempLayer::onUpdate() {
     descriptor[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     descriptor[0].pBufferInfo = &bufferInfo;
 
-    vkCmdPushDescriptorSetKHR(FRAME_COMMAND[0].m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                              PIPELINE_LAYOUT, 0, ARRAYSIZE(descriptor),
+    vkCmdPushDescriptorSetKHR(FRAME_COMMAND[0].m_commandBuffer,
+  VK_PIPELINE_BIND_POINT_GRAPHICS, PIPELINE_LAYOUT, 0, ARRAYSIZE(descriptor),
                               descriptor);
   } else {
   */
   VkDescriptorSet sets[] = {m_meshDescriptorSet,
                             vk::STATIC_SAMPLER_DESCRIPTOR_SET};
   // multiple descriptor sets
-  vkCmdBindDescriptorSets(vk::CURRENT_FRAME_COMMAND->m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                          vk::PIPELINE_LAYOUT, 0, 2, sets, 0, nullptr);
+  vkCmdBindDescriptorSets(vk::CURRENT_FRAME_COMMAND->m_commandBuffer,
+                          VK_PIPELINE_BIND_POINT_GRAPHICS, vk::PIPELINE_LAYOUT,
+                          0, 2, sets, 0, nullptr);
 
-  vkCmdBindIndexBuffer(vk::CURRENT_FRAME_COMMAND->m_commandBuffer, m_indexBuffer.buffer, 0,
-                       VK_INDEX_TYPE_UINT32);
+  vkCmdBindIndexBuffer(vk::CURRENT_FRAME_COMMAND->m_commandBuffer,
+                       m_indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
   // vkCmdDraw(FRAME_COMMAND[0].m_commandBuffer, 3, 1, 0, 0);
   vkCmdDrawIndexed(vk::CURRENT_FRAME_COMMAND->m_commandBuffer,
                    static_cast<uint32_t>(m_mesh.indices.size()), 1, 0, 0, 0);
@@ -335,10 +330,10 @@ void VkTempLayer::onUpdate() {
   barrier[1].subresourceRange.levelCount = 1;
   barrier[1].subresourceRange.layerCount = 1;
 
-  vkCmdPipelineBarrier(vk::CURRENT_FRAME_COMMAND->m_commandBuffer, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
-                       VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
-                       VK_DEPENDENCY_DEVICE_GROUP_BIT, 0, nullptr, 0, nullptr,
-                       2, barrier);
+  vkCmdPipelineBarrier(
+      vk::CURRENT_FRAME_COMMAND->m_commandBuffer,
+      VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
+      VK_DEPENDENCY_DEVICE_GROUP_BIT, 0, nullptr, 0, nullptr, 2, barrier);
 
   VkImageCopy region{};
   region.dstSubresource.layerCount = 1;
@@ -386,10 +381,10 @@ void VkTempLayer::onUpdate() {
   barrier[1].subresourceRange.levelCount = 1;
   barrier[1].subresourceRange.layerCount = 1;
 
-  vkCmdPipelineBarrier(vk::CURRENT_FRAME_COMMAND->m_commandBuffer, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
-                       VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
-                       VK_DEPENDENCY_DEVICE_GROUP_BIT, 0, nullptr, 0, nullptr,
-                       2, barrier);
+  vkCmdPipelineBarrier(
+      vk::CURRENT_FRAME_COMMAND->m_commandBuffer,
+      VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
+      VK_DEPENDENCY_DEVICE_GROUP_BIT, 0, nullptr, 0, nullptr, 2, barrier);
 }
 void VkTempLayer::onEvent(Event &event) {
   EventDispatcher dispatcher(event);
@@ -415,6 +410,7 @@ void VkTempLayer::clear() {
   vkDeviceWaitIdle(vk::LOGICAL_DEVICE);
   destroyBuffer(vk::LOGICAL_DEVICE, m_vertexBuffer);
   destroyBuffer(vk::LOGICAL_DEVICE, m_indexBuffer);
+  destroyBuffer(vk::LOGICAL_DEVICE, m_cameraBuffer);
   for (auto layout : vk::LAYOUTS_TO_DELETE) {
     vkDestroyDescriptorSetLayout(vk::LOGICAL_DEVICE, layout, nullptr);
   }
@@ -424,9 +420,7 @@ void VkTempLayer::clear() {
   // vkFreeMemory(vk::LOGICAL_DEVICE,m_rt.deviceMemory,nullptr);
   //}
   // TODO render target manager?
-  vkDestroyImage(vk::LOGICAL_DEVICE, m_rt.image, nullptr);
-  vkDestroyImageView(vk::LOGICAL_DEVICE, m_rt.view, nullptr);
-  vkFreeMemory(vk::LOGICAL_DEVICE, m_rt.deviceMemory, nullptr);
+  vk::destroyFrameBuffer(vk::LOGICAL_DEVICE, m_tempFrameBuffer, m_rt);
 
   destroyTexture(vk::LOGICAL_DEVICE, uvTexture);
   vkDestroyPipeline(vk::LOGICAL_DEVICE, m_pipeline, nullptr);

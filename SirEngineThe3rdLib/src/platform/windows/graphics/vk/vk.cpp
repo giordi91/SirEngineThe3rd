@@ -87,7 +87,8 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   assert(adapterFound);
   PHYSICAL_DEVICE = adapterResult.m_physicalDevice;
   LOGICAL_DEVICE = adapterResult.m_device;
-  globals::ENGINE_CONFIG->m_selectdedAdapterVendor = adapterResult.m_foundVendor;
+  globals::ENGINE_CONFIG->m_selectdedAdapterVendor =
+      adapterResult.m_foundVendor;
   if (globals::ENGINE_CONFIG->m_verboseStartup) {
     logPhysicalDevice(PHYSICAL_DEVICE);
   }
@@ -108,16 +109,26 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
 
   assert(SWAP_CHAIN_IMAGE_COUNT != 0);
   assert(SWAP_CHAIN_IMAGE_COUNT <= PREALLOCATED_SEMAPHORE_COUNT);
+  assert(SWAP_CHAIN_IMAGE_COUNT <= 9); // used to convert easily the swap chain
+                                       // image count to char for debug name
 
+  // allocating all the per frame resources used for the render,
+  // synchronization, command pool etc
   for (uint32_t i = 0; i < SWAP_CHAIN_IMAGE_COUNT; ++i) {
 
+    char frame[2]{static_cast<char>(48 + globals::CURRENT_FRAME), '\0'};
     if (!newSemaphore(LOGICAL_DEVICE, (FRAME_COMMAND[i].m_acquireSemaphore))) {
       assert(0 && "failed to create acquire image semaphore");
     }
+    SET_DEBUG_NAME(FRAME_COMMAND[i].m_acquireSemaphore,
+                   VK_OBJECT_TYPE_SEMAPHORE,
+                   frameConcatenation("acquireSemaphore", frame));
 
     if (!newSemaphore(LOGICAL_DEVICE, FRAME_COMMAND[i].m_renderSemaphore)) {
       assert(0 && "failed to create render semaphore");
     }
+    SET_DEBUG_NAME(FRAME_COMMAND[i].m_renderSemaphore, VK_OBJECT_TYPE_SEMAPHORE,
+                   frameConcatenation("renderSemaphore", frame));
 
     // Command buffers creation
     if (!createCommandPool(LOGICAL_DEVICE,
@@ -126,16 +137,17 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
                            FRAME_COMMAND[i].m_commandAllocator)) {
       assert(0 && "could not create command pool");
     }
-      SET_DEBUG_NAME(FRAME_COMMAND[i].m_commandAllocator,
-                     VK_OBJECT_TYPE_COMMAND_POOL,
-                     frameConcatenation("commandPool", std::to_string(i).c_str()));
+    SET_DEBUG_NAME(FRAME_COMMAND[i].m_commandAllocator,
+                   VK_OBJECT_TYPE_COMMAND_POOL,
+                   frameConcatenation("commandPool", frame));
+
     if (!allocateCommandBuffer(LOGICAL_DEVICE,
                                FRAME_COMMAND[i].m_commandAllocator,
                                VK_COMMAND_BUFFER_LEVEL_PRIMARY,
                                FRAME_COMMAND[i].m_commandBuffer)) {
       SET_DEBUG_NAME(FRAME_COMMAND[i].m_commandBuffer,
                      VK_OBJECT_TYPE_COMMAND_BUFFER,
-                     frameConcatenation("commandBuffer", std::to_string(i).c_str()));
+                     frameConcatenation("commandBuffer", frame));
       assert(0);
     }
   }
@@ -203,8 +215,7 @@ void waitOnFence(VkFence fence) {
   if (fence == nullptr) {
     return;
   }
-  VK_CHECK(vkWaitForFences(vk::LOGICAL_DEVICE, 1, &fence, true,
-                           200000000));
+  VK_CHECK(vkWaitForFences(vk::LOGICAL_DEVICE, 1, &fence, true, 200000000));
 }
 
 void resetFrameCommand(VkFrameCommand *command) {
@@ -213,6 +224,11 @@ void resetFrameCommand(VkFrameCommand *command) {
     VkFenceCreateInfo create_info{VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};
     VK_CHECK(vkCreateFence(LOGICAL_DEVICE, &create_info, nullptr,
                            &command->m_endOfFrameFence));
+    assert(globals::CURRENT_FRAME <= 9);
+    // bit brute force but at least i dont need std::to_string
+    char frame[2]{static_cast<char>(48 + globals::CURRENT_FRAME), '\0'};
+    SET_DEBUG_NAME(command->m_endOfFrameFence, VK_OBJECT_TYPE_FENCE,
+                   frameConcatenation("endOfFrameFence", frame));
   }
   vkResetFences(LOGICAL_DEVICE, 1, &command->m_endOfFrameFence);
 }
@@ -342,6 +358,7 @@ bool VkRenderingContext::shutdownGraphic() {
                        nullptr);
     vkDestroyCommandPool(LOGICAL_DEVICE, FRAME_COMMAND[i].m_commandAllocator,
                          nullptr);
+    vkDestroyFence(LOGICAL_DEVICE, FRAME_COMMAND[i].m_endOfFrameFence, nullptr);
   }
   vkDestroyDevice(LOGICAL_DEVICE, nullptr);
   vkDestroySurfaceKHR(INSTANCE, SURFACE, nullptr);

@@ -27,6 +27,8 @@ bool loadTextureFromFile(
     VkImageUsageFlags imageUsageFlags = VK_IMAGE_USAGE_SAMPLED_BIT,
     VkImageLayout imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-bool destroyTexture(VkDevice device, VkTexture2D texture);
+bool destroyTexture(const VkDevice device, const VkTexture2D& texture);
+bool destroyFrameBuffer(const VkDevice device, const VkFramebuffer fb,
+                        const VkTexture2D &texture); 
 
 } // namespace vk
