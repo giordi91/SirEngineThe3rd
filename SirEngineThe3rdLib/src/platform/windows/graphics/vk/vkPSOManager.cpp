@@ -431,7 +431,7 @@ inline VkFormat convertStringToTextureFormat(const std::string &format) {
   return VK_FORMAT_UNDEFINED;
 }
 
-VkRenderPass getRenderPass(const nlohmann::json &jobj) {
+VkRenderPass getRenderPass(const nlohmann::json &jobj, const char *name) {
   const uint32_t renderTargets =
       getValueIfInJson(jobj, PSO_KEY_RENDER_TARGETS, DEFAULT_INT);
 
@@ -483,7 +483,8 @@ VkRenderPass getRenderPass(const nlohmann::json &jobj) {
   createInfo.pSubpasses = &subPass;
 
   vkCreateRenderPass(vk::LOGICAL_DEVICE, &createInfo, nullptr, &renderPass);
-  SET_DEBUG_NAME(renderPass,VK_OBJECT_TYPE_RENDER_PASS,"fuckRenderPass");
+  SET_DEBUG_NAME(renderPass, VK_OBJECT_TYPE_RENDER_PASS,
+                 frameConcatenation(name, "RenderPass"));
   return renderPass;
 }
 
@@ -547,7 +548,7 @@ PSOHandle VkPSOManager::processRasterPSO(
   assert(blendStateString == "default" &&
          "no supported blend state other than default");
 
-  VkRenderPass renderPass = getRenderPass(jobj);
+  VkRenderPass renderPass = getRenderPass(jobj, fileName.c_str());
 
   VkPipelineColorBlendAttachmentState attachState{};
   attachState.colorWriteMask =
@@ -592,6 +593,8 @@ PSOHandle VkPSOManager::processRasterPSO(
                                               &createInfo, nullptr, &pipeline);
   assert(status == VK_SUCCESS);
   assert(pipeline);
+  SET_DEBUG_NAME(pipeline, VK_OBJECT_TYPE_PIPELINE,
+                 frameConcatenation(fileName.c_str(), "Pipeline"));
 
   // all good we need to store the data
   // generating and storing the handle
@@ -662,6 +665,23 @@ void initStaticSamplers() {
 }
 
 void VkPSOManager::init() { vk::initStaticSamplers(); }
+
+void VkPSOManager::cleanup() {
+  int count = m_psoRegister.binCount();
+  for (int i = 0; i < count; ++i) {
+    if (m_psoRegisterHandle.isBinUsed(i)) {
+      const char *key = m_psoRegisterHandle.getKeyAtBin(i);
+      PSOHandle handle{};
+      m_psoRegisterHandle.get(key, handle);
+      // now that we have the handle we can get the data
+      assertMagicNumber(handle);
+      const uint32_t index = getIndexFromHandle(handle);
+      const PSOData &data = m_psoPool.getConstRef(index);
+      vkDestroyPipeline(vk::LOGICAL_DEVICE, data.pso, nullptr);
+      vkDestroyRenderPass(vk::LOGICAL_DEVICE, data.renderPass, nullptr);
+    }
+  }
+}
 
 PSOHandle VkPSOManager::loadRawPSO(const char *file) {
   auto jobj = getJsonObj(file);

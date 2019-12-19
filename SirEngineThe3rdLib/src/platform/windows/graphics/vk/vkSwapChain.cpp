@@ -391,19 +391,52 @@ bool createSwapchain(const VkDevice logicalDevice,
 
   // create the render pass;
   // delete old renderPass
-  // if (renderPass != VK_NULL_HANDLE) {
-  //  vkDestroyRenderPass(logicalDevice, renderPass, nullptr);
-  //}
-  outSwapchain.renderPass= createRenderPass(logicalDevice);
+  if (oldSwapchain != nullptr && oldSwapchain->renderPass != VK_NULL_HANDLE) {
+    vkDestroyRenderPass(logicalDevice, oldSwapchain->renderPass, nullptr);
+  }
+  // Swap chain render pass
+  VkRenderPass renderPass{};
+
+  VkAttachmentDescription attachments[1] = {};
+  attachments[0].format = vk::IMAGE_FORMAT;
+  attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
+  attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+  attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  attachments[0].initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  attachments[0].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+  // the index here, 0, refers to the index in the attachment array;
+  VkAttachmentReference attachReference{
+      0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
+
+  VkSubpassDescription subPass{};
+  subPass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+  subPass.colorAttachmentCount = 1;
+  subPass.pColorAttachments = &attachReference;
+
+  VkRenderPassCreateInfo createInfo{VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO};
+  createInfo.attachmentCount = 1;
+  createInfo.pAttachments = attachments;
+  createInfo.subpassCount = 1;
+  createInfo.pSubpasses = &subPass;
+
+  VK_CHECK(
+      vkCreateRenderPass(logicalDevice, &createInfo, nullptr, &renderPass));
+  SET_DEBUG_NAME(renderPass, VK_OBJECT_TYPE_RENDER_PASS, "swapChainRenderPass");
+
+  outSwapchain.renderPass = renderPass;
 
   // create the frame buffer
   const size_t count = outSwapchain.images.size();
   outSwapchain.frameBuffers.resize(count);
-   for (size_t i = 0; i < count; ++i) {
-    outSwapchain.frameBuffers[i] = createFrameBuffer(
-        logicalDevice, outSwapchain.renderPass, outSwapchain.imagesView[i], width, height);
+  for (size_t i = 0; i < count; ++i) {
+    outSwapchain.frameBuffers[i] =
+        createFrameBuffer(logicalDevice, outSwapchain.renderPass,
+                          outSwapchain.imagesView[i], width, height);
   }
-   //createFrameBuffer(LOGICAL_DEVICE, FRAME_BUFFERS);
+  // createFrameBuffer(LOGICAL_DEVICE, FRAME_BUFFERS);
 
   if (oldSwapchain != nullptr) {
     destroySwapchain(logicalDevice, oldSwapchain);
@@ -424,6 +457,8 @@ bool destroySwapchain(const VkDevice logicalDevice, VkSwapchain *swapchain) {
     vkDestroyFramebuffer(logicalDevice, fb, nullptr);
   }
 
+  vkDestroyRenderPass(logicalDevice, swapchain->renderPass, nullptr);
+
   vkDestroySwapchainKHR(logicalDevice, swapchain->swapchain, nullptr);
   delete swapchain;
   return true;
@@ -432,7 +467,7 @@ bool destroySwapchain(const VkDevice logicalDevice, VkSwapchain *swapchain) {
 void resizeSwapchain(const VkDevice logicalDevice,
                      const VkPhysicalDevice physicalDevice,
                      VkSurfaceKHR surface, uint32_t width, uint32_t height,
-                     VkSwapchain &outSwapchain, VkRenderPass &renderPass) {
+                     VkSwapchain &outSwapchain) {
   VkSwapchain old = outSwapchain;
   createSwapchain(logicalDevice, physicalDevice, surface, width, height, &old,
                   outSwapchain);

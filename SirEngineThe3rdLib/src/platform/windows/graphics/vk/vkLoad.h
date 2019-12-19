@@ -114,7 +114,6 @@ bool submitCommandBuffersToQueue(
     std::vector<VkCommandBuffer> commandBuffers,
     std::vector<VkSemaphore> signalSemaphores, VkFence& fence);
 
-VkRenderPass createRenderPass(VkDevice logicalDevice);
 VkFramebuffer createFrameBuffer(VkDevice logicalDevice, VkRenderPass renderPass,
                                 VkImageView imageView, uint32_t width,
                                 uint32_t height);
