@@ -22,6 +22,7 @@ Here a I will keep a chronological list of the progress:
 [0.3.0: PBR shader](#v030)  
 [0.4.0: Fully skinned character](#v040)  
 [0.5.0: Scripted character animation](#v050)  
+[0.6.0: VK port PT 1](#v060)  
 
 ## 0.1.0 <a name="v010"/>
 This version is the most basic version of the engine, but starts to put togheter the foundation of the engine:
@@ -89,6 +90,21 @@ Features:
 
 ![alt text](./images/05_moving.gif "moving")
 
+## 0.6.0 <a name="v060"/>
+The main goal of this release was beging to focus on Vulkan and AMD hardware. 
+I have started doing a lot of work to port the dx12 engine to Vulkan.
+
+* Initial code drop from stand alone vulkan viewport
+* Glsl lang compiler integration and plugin for resource compiler
+* Reading and creating Pipeline layout, RenderPass and Grapich Pipeline from json files
+* Added use of immutable samplers to emulate dx12 static samplers
+* added imgui 
+* reworked engine config to easily change between dx12/vulkan and pick adapter vendor
+* removed usage of DirectXMath in favor of GLM, reworked animation system and camera
+* working camera in VK
+* updated imgui to latest
+
+![alt text](./images/06_VK01.png "moving")
 
 
 ***Credits***
