@@ -323,6 +323,16 @@ void ImguiLayer::onEvent(Event &event) {
   dispatcher.dispatch<RequestShaderCompileEvent>(
       SE_BIND_EVENT_FN(ImguiLayer::onRequestCompileEvent));
 }
+
+void ImguiLayer::clear() {
+  if (globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::VULKAN) {
+    VK_CHECK(vkDeviceWaitIdle(vk::LOGICAL_DEVICE));
+    ImGui_ImplVulkan_Shutdown();
+    ImGui::DestroyContext();
+    vkDestroyRenderPass(vk::LOGICAL_DEVICE,imguiPass,nullptr);
+  }
+}
+
 bool ImguiLayer::onMouseButtonPressEvent(const MouseButtonPressEvent &e) const {
   ImGuiIO &io = ImGui::GetIO();
   io.MouseDown[static_cast<int>(e.getMouseButton())] = true;
