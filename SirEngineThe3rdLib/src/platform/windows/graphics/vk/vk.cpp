@@ -78,7 +78,7 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
 
   // new adapter code here
   AdapterRequestConfig adapterConfig{};
-  adapterConfig.m_vendor = globals::ENGINE_CONFIG->m_adapterVendor;
+  adapterConfig.m_vendor = globals::ENGINE_CONFIG->m_requestedAdapterVendor;
   adapterConfig.m_vendorTolerant = globals::ENGINE_CONFIG->m_vendorTolerant;
   adapterConfig.m_genericRule = globals::ENGINE_CONFIG->m_adapterSelectionRule;
 
@@ -87,6 +87,7 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   assert(adapterFound);
   PHYSICAL_DEVICE = adapterResult.m_physicalDevice;
   LOGICAL_DEVICE = adapterResult.m_device;
+  globals::ENGINE_CONFIG->m_selectdedAdapterVendor = adapterResult.m_foundVendor;
   if (globals::ENGINE_CONFIG->m_verboseStartup) {
     logPhysicalDevice(PHYSICAL_DEVICE);
   }

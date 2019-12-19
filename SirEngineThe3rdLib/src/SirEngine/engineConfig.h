@@ -13,7 +13,8 @@ struct EngineConfig {
   bool m_verboseStartup;
 
   //GPU config
-  ADAPTER_VENDOR m_adapterVendor;
+  ADAPTER_VENDOR m_requestedAdapterVendor;
+  ADAPTER_VENDOR m_selectdedAdapterVendor;
   bool m_vendorTolerant;
   ADAPTER_SELECTION_RULE m_adapterSelectionRule;
 

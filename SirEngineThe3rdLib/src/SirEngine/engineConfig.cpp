@@ -145,7 +145,7 @@ void parseConfigFile(const char *path,const EngineInitializationConfig& initConf
   config.m_vendorTolerant =
       getValueIfInJson(jobj, CONFIG_VENDOR_TOLERANT, true);
   // adapter name and rule
-  config.m_adapterVendor = getAdapterVendor(jobj);
+  config.m_requestedAdapterVendor = getAdapterVendor(jobj);
   config.m_adapterSelectionRule = getAdapterSelectionRule(jobj);
 
   config.m_frameBufferingCoung =
@@ -186,7 +186,7 @@ void initializeConfigDefault() {
   globals::ENGINE_CONFIG->m_windowWidth = 1280;
   globals::ENGINE_CONFIG->m_windowHeight = 720;
   globals::ENGINE_CONFIG->m_verboseStartup = true;
-  globals::ENGINE_CONFIG->m_adapterVendor = ADAPTER_VENDOR::ANY;
+  globals::ENGINE_CONFIG->m_requestedAdapterVendor = ADAPTER_VENDOR::ANY;
   globals::ENGINE_CONFIG->m_vendorTolerant = true;
   globals::ENGINE_CONFIG->m_adapterSelectionRule =
       ADAPTER_SELECTION_RULE::LARGEST_FRAME_BUFFER;
