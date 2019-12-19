@@ -4,7 +4,8 @@
 
 namespace SirEngine::vk {
 
-VkCommandBuffer createCommandBuffer(const VkCommandPool pool ,const VkCommandBufferLevel level,
+VkCommandBuffer createCommandBuffer(const VkCommandPool pool,
+                                    const VkCommandBufferLevel level,
                                     const bool begin) {
   VkCommandBufferAllocateInfo cmdBufAllocateInfo = {};
   cmdBufAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -25,30 +26,29 @@ VkCommandBuffer createCommandBuffer(const VkCommandPool pool ,const VkCommandBuf
 
   return cmdBuffer;
 }
-void flushCommandBuffer(VkCommandPool pool, VkCommandBuffer commandBuffer, const VkQueue queue,
-                        const bool free) {
+void flushCommandBuffer(VkCommandPool pool, VkCommandBuffer commandBuffer,
+                        const VkQueue queue, const bool free) {
   if (commandBuffer == VK_NULL_HANDLE) {
     return;
   }
 
   VK_CHECK(vkEndCommandBuffer(commandBuffer));
 
-  VkSubmitInfo submitInfo = {VK_STRUCTURE_TYPE_SUBMIT_INFO}; 
+  VkSubmitInfo submitInfo = {VK_STRUCTURE_TYPE_SUBMIT_INFO};
   submitInfo.commandBufferCount = 1;
   submitInfo.pCommandBuffers = &commandBuffer;
 
   // Create fence to ensure that the command buffer has finished executing
   VkFenceCreateInfo fenceInfo = {VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};
-  fenceInfo.flags =0;
+  fenceInfo.flags = 0;
   VkFence fence;
   VK_CHECK(vkCreateFence(LOGICAL_DEVICE, &fenceInfo, nullptr, &fence));
 
   // Submit to the queue
   VK_CHECK(vkQueueSubmit(queue, 1, &submitInfo, fence));
   // Wait for the fence to signal that command buffer has finished executing
-  
-  VK_CHECK(vkWaitForFences(LOGICAL_DEVICE, 1, &fence, VK_TRUE,100000000000
-                                  ));
+
+  VK_CHECK(vkWaitForFences(LOGICAL_DEVICE, 1, &fence, VK_TRUE, 100000000000));
 
   vkDestroyFence(LOGICAL_DEVICE, fence, nullptr);
 
@@ -75,14 +75,16 @@ selectMemoryType(const VkPhysicalDeviceMemoryProperties &memoryProperties,
 
 void createBuffer(Buffer &buffer, const VkDevice device,
                   const VkPhysicalDeviceMemoryProperties &memoryProperties,
-                  const size_t size, const VkBufferUsageFlags usage, const char* name) {
+                  const size_t size, const VkBufferUsageFlags usage,
+                  const char *name) {
+
   VkBufferCreateInfo createInfo{VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};
   createInfo.size = size;
   createInfo.usage = usage;
   createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
   // this is just a dummy handle
   VK_CHECK(vkCreateBuffer(device, &createInfo, nullptr, &buffer.buffer));
-  //SET_DEBUG_NAME(buffer.buffer,VK_OBJECT_TYPE_BUFFER,)
+  SET_DEBUG_NAME(buffer.buffer, VK_OBJECT_TYPE_BUFFER, frameConcatenation(name,"Buffer"));
 
   // memory bits of this struct define the requirement of the type of memory.
   // AMD seems to have 256 mb of mapped system memory you can write directly to
@@ -92,7 +94,8 @@ void createBuffer(Buffer &buffer, const VkDevice device,
   // allocation
   VkMemoryRequirements requirements;
   vkGetBufferMemoryRequirements(device, buffer.buffer, &requirements);
-  buffer.size = requirements.size;
+  buffer.size = size;
+  buffer.allocationSize = requirements.size;
 
   // so, HOST_VISIBLE, means we can map this buffer to host memory, this is
   // useful for when we upload memory the gpu. similar to upload_heap in dx12.
@@ -111,7 +114,7 @@ void createBuffer(Buffer &buffer, const VkDevice device,
   memoryInfo.memoryTypeIndex = memoryIndex;
 
   VK_CHECK(vkAllocateMemory(device, &memoryInfo, nullptr, &buffer.memory));
-  SET_DEBUG_NAME(buffer.memory,VK_OBJECT_TYPE_DEVICE_MEMORY,name);
+  SET_DEBUG_NAME(buffer.memory, VK_OBJECT_TYPE_DEVICE_MEMORY, frameConcatenation(name,"Memory"));
 
   // binding the memory to our buffer, the dummy handle we allocated previously
   vkBindBufferMemory(device, buffer.buffer, buffer.memory, 0);
@@ -125,4 +128,4 @@ void destroyBuffer(const VkDevice device, const Buffer &buffer) {
   vkFreeMemory(device, buffer.memory, nullptr);
   vkDestroyBuffer(device, buffer.buffer, nullptr);
 }
-} // namespace vk
+} // namespace SirEngine::vk
