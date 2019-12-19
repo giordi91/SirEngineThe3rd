@@ -69,8 +69,8 @@ Application::Application() {
   } else {
     graphicsLayer = new VkTempLayer();
     m_layerStack.pushLayer(graphicsLayer);
-    //imGuiLayer = new ImguiLayer();
-    //m_layerStack.pushLayer(imGuiLayer);
+    imGuiLayer = new ImguiLayer();
+    m_layerStack.pushLayer(imGuiLayer);
   }
   globals::APPLICATION = this;
 }

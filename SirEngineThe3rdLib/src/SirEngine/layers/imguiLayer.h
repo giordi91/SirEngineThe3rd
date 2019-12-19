@@ -33,7 +33,7 @@ public:
   void onDetach() override;
   void onUpdate() override;
   void onEvent(Event &event) override;
-  void clear() override{};
+  void clear() override;
 
 private:
   // event implementation for the layer
