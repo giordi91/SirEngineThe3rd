@@ -172,6 +172,7 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   return true;
 }
 
+
 bool acquireSwapchainImage(const VkDevice logicalDevice,
                            const VkSwapchainKHR swapchain,
                            const VkSemaphore semaphore, const VkFence fence,

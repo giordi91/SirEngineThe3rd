@@ -3,8 +3,8 @@
 #include <vulkan/vulkan.h>
 
 #include "SirEngine/graphics/renderingContext.h"
-#include <vector>
 #include "SirEngine/runtimeString.h"
+#include <vector>
 
 namespace SirEngine {
 namespace vk {
@@ -14,9 +14,10 @@ class VkPipelineLayoutManager;
 struct VkSwapchain;
 
 static constexpr int PREALLOCATED_SEMAPHORE_COUNT = 4;
-static constexpr uint32_t VK_TIMEOUT_INFINITE = std::numeric_limits<uint32_t>::max(); 
+static constexpr uint32_t VK_TIMEOUT_INFINITE =
+    std::numeric_limits<uint32_t>::max();
 struct VkFrameCommand final {
-  //this might have to change for when we go multi-threaded
+  // this might have to change for when we go multi-threaded
   VkCommandPool m_commandAllocator = nullptr;
   VkCommandBuffer m_commandBuffer = nullptr;
   bool m_isBufferOpen = false;
@@ -45,19 +46,18 @@ extern VkPSOManager *PSO_MANAGER;
 extern VkShaderManager *SHADER_MANAGER;
 extern VkPipelineLayoutManager *PIPELINE_LAYOUT_MANAGER;
 extern uint32_t SWAP_CHAIN_IMAGE_COUNT;
-//incremented every frame and used to find the correct set of resources
-//like command buffer pool and allocators
+// incremented every frame and used to find the correct set of resources
+// like command buffer pool and allocators
 extern VkFrameCommand FRAME_COMMAND[PREALLOCATED_SEMAPHORE_COUNT];
-extern VkFrameCommand* CURRENT_FRAME_COMMAND;
-extern uint32_t GRAPHICS_QUEUE_FAMILY;  
-extern uint32_t PRESENTATION_QUEUE_FAMILY;  
+extern VkFrameCommand *CURRENT_FRAME_COMMAND;
+extern uint32_t GRAPHICS_QUEUE_FAMILY;
+extern uint32_t PRESENTATION_QUEUE_FAMILY;
 
-//TODO this is used anymore?
+// TODO this is used anymore?
 extern std::vector<VkDescriptorSetLayout> LAYOUTS_TO_DELETE;
 
 bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
                           const uint32_t height);
-bool onResize(uint32_t width, uint32_t height);
 
 #define VK_CHECK(call)                                                         \
   do {                                                                         \
@@ -76,7 +76,7 @@ bool onResize(uint32_t width, uint32_t height);
     debugInfo_.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;     \
     debugInfo_.objectHandle = (uint64_t)resource;                              \
     debugInfo_.objectType = type;                                              \
-    debugInfo_.pObjectName = persistentString(name);                                             \
+    debugInfo_.pObjectName = SirEngine::persistentString(name);                \
     VK_CHECK(vkSetDebugUtilsObjectNameEXT(vk::LOGICAL_DEVICE, &debugInfo_));   \
   }
 #else

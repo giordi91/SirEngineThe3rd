@@ -1,15 +1,15 @@
 #include "platform/windows/graphics/vk/vkPSOManager.h"
+#include "platform/windows/graphics/vk/vk.h"
+#include "platform/windows/graphics/vk/vkRootSignatureManager.h"
+#include "platform/windows/graphics/vk/vkShaderManager.h"
+
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/globals.h"
-#include "SirEngine/memory/stackAllocator.h"
-#include "platform/windows/graphics/vk/vk.h"
-#include "vkRootSignatureManager.h"
-#include "vkShaderManager.h"
-#include <array>
+
 
 namespace SirEngine::vk {
 
-enum class PSOType { DXR = 0, RASTER, COMPUTE, INVALID };
+enum class PSO_TYPE { DXR = 0, RASTER, COMPUTE, INVALID };
 
 static const char *PSO_VS_SHADER_ENTRY_POINT = "main";
 static const char *PSO_PS_SHADER_ENTRY_POINT = "main";
@@ -68,10 +68,10 @@ const char *STATIC_SAMPLERS_NAMES[STATIC_SAMPLER_COUNT] = {
     "linearClampSampler", "anisotropicWrapSampler", "anisotropicClampSampler",
     "pcfSampler"};
 
-static const std::unordered_map<std::string, PSOType> STRING_TO_PSO_TYPE{
-    {PSO_KEY_TYPE_DXR, PSOType::DXR},
-    {PSO_KEY_TYPE_COMPUTE, PSOType::COMPUTE},
-    {PSO_KEY_TYPE_RASTER, PSOType::RASTER},
+static const std::unordered_map<std::string, PSO_TYPE> STRING_TO_PSO_TYPE{
+    {PSO_KEY_TYPE_DXR, PSO_TYPE::DXR},
+    {PSO_KEY_TYPE_COMPUTE, PSO_TYPE::COMPUTE},
+    {PSO_KEY_TYPE_RASTER, PSO_TYPE::RASTER},
 };
 static const std::unordered_map<std::string, VkPrimitiveTopology>
     STRING_TO_TOPOLOGY = {
@@ -255,9 +255,9 @@ void destroyStaticSamplers() {
                                nullptr);
 }
 
-PSOType convertStringPSOTypeToEnum(const char *type) {
+PSO_TYPE convertStringPSOTypeToEnum(const char *type) {
   const auto found = STRING_TO_PSO_TYPE.find(type);
-  return (found != STRING_TO_PSO_TYPE.end() ? found->second : PSOType::INVALID);
+  return (found != STRING_TO_PSO_TYPE.end() ? found->second : PSO_TYPE::INVALID);
 }
 
 void getShaderStageCreateInfo(const nlohmann::json &jobj,
@@ -689,22 +689,22 @@ PSOHandle VkPSOManager::loadRawPSO(const char *file) {
   const std::string typeString =
       getValueIfInJson(jobj, PSO_KEY_TYPE, DEFAULT_STRING);
   assert(!typeString.empty());
-  PSOType type = convertStringPSOTypeToEnum(typeString.c_str());
+  PSO_TYPE type = convertStringPSOTypeToEnum(typeString.c_str());
 
   switch (type) {
-  case PSOType::DXR: {
+  case PSO_TYPE::DXR: {
     assert(0 && "Unsupported PSO type");
     break;
   }
-  case PSOType::RASTER: {
+  case PSO_TYPE::RASTER: {
     return processRasterPSO(file, jobj, nullptr);
     break;
   }
-  case PSOType::COMPUTE: {
+  case PSO_TYPE::COMPUTE: {
     assert(0 && "Unsupported PSO type");
     break;
   }
-  case PSOType::INVALID: {
+  case PSO_TYPE::INVALID: {
     assert(0 && "Unsupported PSO type");
     break;
   }

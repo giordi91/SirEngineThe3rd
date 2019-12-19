@@ -50,7 +50,7 @@ private:
   bool onDebugConfigChanged(DebugRenderConfigChanged &e);
   bool onShaderCompileEvent(ShaderCompileEvent &e);
   bool onReloadScriptEvent(ReloadScriptsEvent &e);
-  void setupCameraForFrame(); 
+  void setupCameraForFrame();
 
   // camera event control
   bool leftDown = false;
@@ -60,6 +60,7 @@ private:
   float previousY = 0;
 
   void createDescriptorLayoutAdvanced();
+  void createRenderTargetAndFrameBuffer(int width, int height);
   // shaders
   VkPipeline m_pipeline;
 
@@ -77,6 +78,5 @@ private:
   VkFramebuffer m_tempFrameBuffer;
   VkRenderPass m_pass;
   CameraBuffer m_camBufferCPU;
-
 };
 } // namespace SirEngine
