@@ -347,10 +347,11 @@ bool createSwapchainWithR8G8B8A8FormatAndMailboxPresentMode(
     return false;
   }
 
-  if (VK_NULL_HANDLE != oldSwapchain) {
-    vkDestroySwapchainKHR(logicalDevice, oldSwapchain, nullptr);
-    oldSwapchain = VK_NULL_HANDLE;
-  }
+  //if (VK_NULL_HANDLE != oldSwapchain) {
+  //  //TODO revisit
+  //  vkDestroySwapchainKHR(logicalDevice, oldSwapchain, nullptr);
+  //  oldSwapchain = VK_NULL_HANDLE;
+  //}
 
   if (!getHandlesOfSwapchainImages(logicalDevice, swapchain, swapchainImages)) {
     return false;
@@ -389,11 +390,6 @@ bool createSwapchain(const VkDevice logicalDevice,
   outSwapchain.width = width;
   outSwapchain.height = height;
 
-  // create the render pass;
-  // delete old renderPass
-  if (oldSwapchain != nullptr && oldSwapchain->renderPass != VK_NULL_HANDLE) {
-    vkDestroyRenderPass(logicalDevice, oldSwapchain->renderPass, nullptr);
-  }
   // Swap chain render pass
   VkRenderPass renderPass{};
 

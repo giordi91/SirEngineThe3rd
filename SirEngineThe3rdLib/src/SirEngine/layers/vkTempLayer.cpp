@@ -15,6 +15,27 @@
 #include "platform/windows/graphics/vk/volk.h"
 
 namespace SirEngine {
+void VkTempLayer::createRenderTargetAndFrameBuffer(const int width,
+                                                   const int height) {
+  vk::createRenderTarget(
+      "RT", VK_FORMAT_R8G8B8A8_UNORM,
+      // VK_FORMAT_B8G8R8A8_UNORM,
+      vk::LOGICAL_DEVICE, m_rt,
+      VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, width, height);
+
+  VkFramebufferCreateInfo createInfo = {
+      VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO};
+  createInfo.renderPass = m_pass;
+  createInfo.pAttachments = &m_rt.view;
+  createInfo.attachmentCount = 1;
+  createInfo.width = m_rt.width;
+  createInfo.height = m_rt.height;
+  createInfo.layers = 1;
+
+  VK_CHECK(vkCreateFramebuffer(vk::LOGICAL_DEVICE, &createInfo, nullptr,
+                               &m_tempFrameBuffer));
+}
 
 void VkTempLayer::onAttach() {
   globals::MAIN_CAMERA = new Camera3DPivot();
@@ -78,26 +99,8 @@ void VkTempLayer::onAttach() {
                       VK_FORMAT_BC1_RGBA_UNORM_BLOCK, vk::LOGICAL_DEVICE,
                       uvTexture);
 
-  vk::createRenderTarget("RT", VK_FORMAT_R8G8B8A8_UNORM,
-                         // VK_FORMAT_B8G8R8A8_UNORM,
-                         vk::LOGICAL_DEVICE, m_rt,
-                         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
-                             VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
-                         VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                         globals::ENGINE_CONFIG->m_windowWidth,
-                         globals::ENGINE_CONFIG->m_windowHeight);
-
-  VkFramebufferCreateInfo createInfo = {
-      VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO};
-  createInfo.renderPass = m_pass;
-  createInfo.pAttachments = &m_rt.view;
-  createInfo.attachmentCount = 1;
-  createInfo.width = m_rt.width;
-  createInfo.height = m_rt.height;
-  createInfo.layers = 1;
-
-  VK_CHECK(vkCreateFramebuffer(vk::LOGICAL_DEVICE, &createInfo, nullptr,
-                               &m_tempFrameBuffer));
+  createRenderTargetAndFrameBuffer(globals::ENGINE_CONFIG->m_windowWidth,
+                                   globals::ENGINE_CONFIG->m_windowHeight);
   // if constexpr (!USE_PUSH) {
   createDescriptorLayoutAdvanced();
   //}
@@ -580,9 +583,11 @@ bool VkTempLayer::onDebugLayerEvent(DebugLayerChanged &e) {
 }*/
 
 bool VkTempLayer::onResizeEvent(WindowResizeEvent &e) {
-  assert(0);
-  // propagate the resize to every node of the graph
-  // dx12::RENDERING_GRAPH->onResizeEvent(e.getWidth(), e.getHeight());
+  // need to recreate the frame buffer, this is temporary
+  vk::destroyFrameBuffer(vk::LOGICAL_DEVICE, m_tempFrameBuffer, m_rt);
+  createRenderTargetAndFrameBuffer(globals::ENGINE_CONFIG->m_windowWidth,
+                                   globals::ENGINE_CONFIG->m_windowHeight);
+
   return true;
 }
 

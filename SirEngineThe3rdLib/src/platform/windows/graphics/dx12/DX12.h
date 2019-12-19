@@ -70,7 +70,7 @@ inline HRESULT resetCommandList(FrameCommand *command) {
   return res;
 }
 
-// should be used only at beginning of the frame
+// should be used only at the beginning of the frame
 inline HRESULT resetAllocatorAndList(FrameCommand *command) {
 
   assert(!command->isListOpen);
