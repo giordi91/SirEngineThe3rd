@@ -44,6 +44,7 @@ extern uint32_t CURRENT_FRAME;
 extern float MIN_DEPTH;
 extern float MAX_DEPTH;
 //TODO change this to not be a define and be driven by engine config
+//also needs to be in the same place for both vulkan ad dx12
 #define FRAME_BUFFERS_COUNT 2
 
 // managers

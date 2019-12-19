@@ -53,7 +53,7 @@ void ImguiLayer::onAttach() {
     vkinfo.DescriptorPool = vk::DESCRIPTOR_POOL;
     vkinfo.Allocator = nullptr;
     vkinfo.ImageCount = vk::SWAP_CHAIN_IMAGE_COUNT;
-    vkinfo.MinImageCount= vk::SWAP_CHAIN_IMAGE_COUNT;
+    vkinfo.MinImageCount = vk::SWAP_CHAIN_IMAGE_COUNT;
 
     VkAttachmentDescription attachment = {};
     attachment.format = vk::IMAGE_FORMAT;
@@ -105,7 +105,18 @@ void ImguiLayer::onAttach() {
     VK_CHECK(vkQueueSubmit(vk::GRAPHICS_QUEUE, 1, &end_info, VK_NULL_HANDLE));
     VK_CHECK(vkDeviceWaitIdle(vk::LOGICAL_DEVICE));
     vkResetCommandBuffer(vk::CURRENT_FRAME_COMMAND->m_commandBuffer, 0);
-    // ImGui_ImplVulkan_DestroyFontUploadObjects();
+    ImGui_ImplVulkan_DestroyFontUploadObjects();
+
+    ImGuiStyle &style = ImGui::GetStyle();
+    if (globals::ENGINE_CONFIG->m_selectdedAdapterVendor ==
+        ADAPTER_VENDOR::AMD) {
+      style.Colors[ImGuiCol_WindowBg] = ImVec4(0.4f, 0.0f, 0.0f, 0.75f);
+      style.Colors[ImGuiCol_TitleBgActive] = ImVec4(0.7f, 0.0f, 0.0f, 1.00f);
+    } else if (globals::ENGINE_CONFIG->m_selectdedAdapterVendor ==
+               ADAPTER_VENDOR::NVIDIA) {
+      style.Colors[ImGuiCol_WindowBg] = ImVec4(0.0f, 0.4f, 0.0f, 0.75f);
+      style.Colors[ImGuiCol_TitleBgActive] = ImVec4(0.0f, 0.7f, 0.0f, 1.00f);
+    }
   }
 
   // Keyboard mapping. ImGui will use those indices to peek into the

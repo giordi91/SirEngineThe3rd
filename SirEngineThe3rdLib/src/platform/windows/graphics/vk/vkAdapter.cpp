@@ -67,12 +67,21 @@ bool createLogicalDevice(VkPhysicalDevice physicalDevice,
   }
   volkLoadDevice(adapterResult.m_device);
 
-  // if (!loadDeviceLevelFunctions(adapterResult.m_device, deviceExtensions)) {
-  //  return false;
-  //}
-
   adapterResult.m_physicalDevice = physicalDevice;
   return true;
+}
+
+void setVendorIdOnResult(VkAdapterResult &adapterResult) {
+  VkPhysicalDeviceProperties properties;
+  vkGetPhysicalDeviceProperties(adapterResult.m_physicalDevice, &properties);
+
+  // brute force match the vendor id
+  adapterResult.m_foundVendor = static_cast<ADAPTER_VENDOR>(4);
+  for (int i = 0; i < 4; ++i) {
+    if (properties.vendorID == VENDOR_ID[i]) {
+      adapterResult.m_foundVendor = static_cast<ADAPTER_VENDOR>(i);
+    }
+  }
 }
 
 uint32_t getMaxPhysicalDeviceVRAMSizeInGB(VkPhysicalDevice physicalDevice) {
@@ -143,12 +152,15 @@ bool findSpecificVendorBestAdapter(
                                : largestFrameBuffer;
 
       if (config.m_genericRule == ADAPTER_SELECTION_RULE::FIRST_VALID) {
+		setVendorIdOnResult(adapterResult);
         return true;
       }
     }
   }
+  setVendorIdOnResult(adapterResult);
   return largestFrameBuffer != 0;
 }
+
 
 bool getBestAdapter(const AdapterRequestConfig &config,
                     VkAdapterResult &adapterResult) {
@@ -220,6 +232,8 @@ bool getBestAdapter(const AdapterRequestConfig &config,
                                : largestFrameBuffer;
 
       if (config.m_genericRule == ADAPTER_SELECTION_RULE::FIRST_VALID) {
+        // get the vendor
+        setVendorIdOnResult(adapterResult);
         return true;
       }
     }
@@ -227,7 +241,7 @@ bool getBestAdapter(const AdapterRequestConfig &config,
 
   assert(adapterResult.m_device != nullptr);
   assert(adapterResult.m_physicalDevice != nullptr);
-
+  setVendorIdOnResult(adapterResult);
   return largestFrameBuffer != 0;
 }
 

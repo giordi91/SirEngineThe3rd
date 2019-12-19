@@ -92,7 +92,7 @@ bool initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
   }
 
   AdapterRequestConfig adapterConfig{};
-  adapterConfig.m_vendor = globals::ENGINE_CONFIG->m_adapterVendor;
+  adapterConfig.m_vendor = globals::ENGINE_CONFIG->m_requestedAdapterVendor;
   adapterConfig.m_vendorTolerant = globals::ENGINE_CONFIG->m_vendorTolerant;
   adapterConfig.m_genericRule = globals::ENGINE_CONFIG->m_adapterSelectionRule;
 

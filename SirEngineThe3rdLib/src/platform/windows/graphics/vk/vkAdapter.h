@@ -10,6 +10,7 @@ struct VkAdapterResult {
   VkDevice m_device;
   uint32_t m_graphicsQueueFamilyIndex;
   uint32_t m_presentQueueFamilyIndex;
+  ADAPTER_VENDOR m_foundVendor;
 };
 
 bool getBestAdapter(const AdapterRequestConfig &config,VkAdapterResult& adapterResult);
