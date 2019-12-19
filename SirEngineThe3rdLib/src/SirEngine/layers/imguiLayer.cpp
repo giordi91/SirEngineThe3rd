@@ -176,109 +176,79 @@ void ImguiLayer::onUpdate() {
     }
 
     globals::TEXTURE_MANAGER->bindBackBuffer(false);
-
-    // Read keyboard modifiers inputs
-    ImGuiIO &io = ImGui::GetIO();
-
-    // Setup time step
-    INT64 current_time;
-    ::QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER *>(&current_time));
-    io.DeltaTime = (float)(current_time - g_Time) / g_TicksPerSecond;
-    // SE_CORE_INFO("time {0}", io.DeltaTime);
-    g_Time = current_time;
-
-    // Read keyboard modifiers inputs
-    io.KeyCtrl = (::GetKeyState(VK_CONTROL) & 0x8000) != 0;
-    io.KeyShift = (::GetKeyState(VK_SHIFT) & 0x8000) != 0;
-    io.KeyAlt = (::GetKeyState(VK_MENU) & 0x8000) != 0;
-    io.KeySuper = false;
-
     ImGui_ImplDX12_NewFrame();
+  }
 
-    IM_ASSERT(io.Fonts->IsBuilt() &&
-              "Font atlas not built! It is generally built by the renderer "
-              "back-end. Missing call to renderer _NewFrame() function? e.g. "
-              "ImGui_ImplOpenGL3_NewFrame().");
+  // Read keyboard modifiers inputs
+  ImGuiIO &io = ImGui::GetIO();
 
-    bool show_demo_window = true;
+  // Setup time step
+  INT64 current_time;
+  ::QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER *>(&current_time));
+  io.DeltaTime = (float)(current_time - g_Time) / g_TicksPerSecond;
+  // SE_CORE_INFO("time {0}", io.DeltaTime);
+  g_Time = current_time;
 
-    const ImVec2 pos{0, 0};
-    ImGui::NewFrame();
-    // ImGui::ShowDemoWindow(&show_demo_window);
+  // Read keyboard modifiers inputs
+  io.KeyCtrl = (::GetKeyState(VK_CONTROL) & 0x8000) != 0;
+  io.KeyShift = (::GetKeyState(VK_SHIFT) & 0x8000) != 0;
+  io.KeyAlt = (::GetKeyState(VK_MENU) & 0x8000) != 0;
+  io.KeySuper = false;
 
-    ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
-    ImGui::Begin("Debug", &show_demo_window, ImGuiWindowFlags_MenuBar);
-    if (ImGui::BeginMenuBar()) {
-      if (ImGui::BeginMenu("Tools")) {
-        if (ImGui::MenuItem("Shader compiler", nullptr)) {
-          m_renderShaderCompiler = !m_renderShaderCompiler;
-        }
-        if (ImGui::MenuItem("Reload scripts", nullptr)) {
-          SE_CORE_INFO("reload scripts");
-          auto *event = new ReloadScriptsEvent();
-          globals::APPLICATION->queueEventForEndOfFrame(event);
-        }
-        ImGui::Separator();
-        ImGui::EndMenu();
+  IM_ASSERT(io.Fonts->IsBuilt() &&
+            "Font atlas not built! It is generally built by the renderer "
+            "back-end. Missing call to renderer _NewFrame() function? e.g. "
+            "ImGui_ImplOpenGL3_NewFrame().");
+
+  bool showDemoWindow = true;
+
+  const ImVec2 pos{0, 0};
+  ImGui::NewFrame();
+  // ImGui::ShowDemoWindow(&show_demo_window);
+
+  ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
+  ImGui::Begin("Debug", &showDemoWindow, ImGuiWindowFlags_MenuBar);
+  if (ImGui::BeginMenuBar()) {
+    if (ImGui::BeginMenu("Tools")) {
+      if (ImGui::MenuItem("Shader compiler", nullptr)) {
+        m_renderShaderCompiler = !m_renderShaderCompiler;
       }
-      ImGui::EndMenuBar();
+      if (ImGui::MenuItem("Reload scripts", nullptr)) {
+        SE_CORE_INFO("reload scripts");
+        auto *event = new ReloadScriptsEvent();
+        globals::APPLICATION->queueEventForEndOfFrame(event);
+      }
+      ImGui::Separator();
+      ImGui::EndMenu();
     }
+    ImGui::EndMenuBar();
+  }
 
 #if BUILD_AMD
-    if (ImGui::CollapsingHeader("HW info", ImGuiTreeNodeFlags_DefaultOpen)) {
-      m_hwInfo.render();
-    }
+  if (ImGui::CollapsingHeader("HW info", ImGuiTreeNodeFlags_DefaultOpen)) {
+    m_hwInfo.render();
+  }
 #endif
 
-    if (ImGui::CollapsingHeader("Performances",
-                                ImGuiTreeNodeFlags_DefaultOpen)) {
-      m_frameTimings.render();
-      m_memoryUsage.render();
-    }
-    if (ImGui::CollapsingHeader("Graphics", ImGuiTreeNodeFlags_DefaultOpen)) {
-      m_renderGraph.render();
-    }
-    if (m_renderShaderCompiler) {
-      m_shaderWidget.render();
-    }
+  if (ImGui::CollapsingHeader("Performances", ImGuiTreeNodeFlags_DefaultOpen)) {
+    m_frameTimings.render();
+    m_memoryUsage.render();
+  }
+  // TODO TEMP DISABLE
+  if (ImGui::CollapsingHeader("Graphics", ImGuiTreeNodeFlags_DefaultOpen)) {
+    m_renderGraph.render();
+  }
+  if (m_renderShaderCompiler) {
+    m_shaderWidget.render();
+  }
+  ImGui::End();
+  ImGui::Render();
 
-    ImGui::End();
-    ImGui::Render();
+  if (globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::DX12) {
     ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(),
                                   dx12::CURRENT_FRAME_RESOURCE->fc.commandList);
     annotateGraphicsEnd();
   } else {
-    // Read keyboard modifiers inputs
-    ImGuiIO &io = ImGui::GetIO();
-    // Setup time step
-    INT64 current_time;
-    ::QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER *>(&current_time));
-    io.DeltaTime = (float)(current_time - g_Time) / g_TicksPerSecond;
-    // SE_CORE_INFO("time {0}", io.DeltaTime);
-    g_Time = current_time;
-
-    // Read keyboard modifiers inputs
-    io.KeyCtrl = (::GetKeyState(VK_CONTROL) & 0x8000) != 0;
-    io.KeyShift = (::GetKeyState(VK_SHIFT) & 0x8000) != 0;
-    io.KeyAlt = (::GetKeyState(VK_MENU) & 0x8000) != 0;
-    io.KeySuper = false;
-
-    ImGui_ImplVulkan_NewFrame();
-    ImGui::NewFrame();
-    ImGui::Begin("Performance Metrics"); // Create a window called "Hello,
-                                         // world!" and append into it.
-
-    ImGui::Text("GPU Time: %.1f ms", 999999);
-
-    ImGui::Text("CPU Time: %.3f ms/frame (%.1f FPS)",
-                1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-    ImGui::Separator();
-    ImGui::Text("Swapchain Images: %d", vk::SWAP_CHAIN_IMAGE_COUNT);
-
-    ImGui::End();
-
-    ImGui::Render();
-
     VkRenderPassBeginInfo info = {};
     info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     info.renderPass = imguiPass;
@@ -296,6 +266,56 @@ void ImguiLayer::onUpdate() {
     vkCmdEndRenderPass(vk::CURRENT_FRAME_COMMAND->m_commandBuffer);
   }
 }
+/*
+else {
+  // Read keyboard modifiers inputs
+  ImGuiIO &io = ImGui::GetIO();
+  // Setup time step
+  INT64 current_time;
+  ::QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER *>(&current_time));
+  io.DeltaTime = (float)(current_time - g_Time) / g_TicksPerSecond;
+  // SE_CORE_INFO("time {0}", io.DeltaTime);
+  g_Time = current_time;
+
+  // Read keyboard modifiers inputs
+  io.KeyCtrl = (::GetKeyState(VK_CONTROL) & 0x8000) != 0;
+  io.KeyShift = (::GetKeyState(VK_SHIFT) & 0x8000) != 0;
+  io.KeyAlt = (::GetKeyState(VK_MENU) & 0x8000) != 0;
+  io.KeySuper = false;
+
+  ImGui_ImplVulkan_NewFrame();
+  ImGui::NewFrame();
+  ImGui::Begin("Performance Metrics"); // Create a window called "Hello,
+                                       // world!" and append into it.
+
+  ImGui::Text("GPU Time: %.1f ms", 999999);
+
+  ImGui::Text("CPU Time: %.3f ms/frame (%.1f FPS)",
+              1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+  ImGui::Separator();
+  ImGui::Text("Swapchain Images: %d", vk::SWAP_CHAIN_IMAGE_COUNT);
+
+  ImGui::End();
+
+  ImGui::Render();
+
+  VkRenderPassBeginInfo info = {};
+  info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+  info.renderPass = imguiPass;
+  info.framebuffer = vk::SWAP_CHAIN->frameBuffers[globals::CURRENT_FRAME];
+  info.renderArea.extent.width = globals::ENGINE_CONFIG->m_windowWidth;
+  info.renderArea.extent.height = globals::ENGINE_CONFIG->m_windowHeight;
+  info.clearValueCount = 0;
+  info.pClearValues = nullptr;
+  vkCmdBeginRenderPass(vk::CURRENT_FRAME_COMMAND->m_commandBuffer, &info,
+                       VK_SUBPASS_CONTENTS_INLINE);
+
+  ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(),
+                                  vk::CURRENT_FRAME_COMMAND->m_commandBuffer);
+  // Submit command buffer
+  vkCmdEndRenderPass(vk::CURRENT_FRAME_COMMAND->m_commandBuffer);
+*/
+//} // namespace SirEngine
 
 void ImguiLayer::onEvent(Event &event) {
 
@@ -329,7 +349,7 @@ void ImguiLayer::clear() {
     VK_CHECK(vkDeviceWaitIdle(vk::LOGICAL_DEVICE));
     ImGui_ImplVulkan_Shutdown();
     ImGui::DestroyContext();
-    vkDestroyRenderPass(vk::LOGICAL_DEVICE,imguiPass,nullptr);
+    vkDestroyRenderPass(vk::LOGICAL_DEVICE, imguiPass, nullptr);
   }
 }
 

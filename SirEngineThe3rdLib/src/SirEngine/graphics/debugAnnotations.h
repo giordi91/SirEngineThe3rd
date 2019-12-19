@@ -1,6 +1,6 @@
 #pragma once
 #if GRAPHICS_API == DX12
-//NOTE DX12.h needs to appear before pix3.h!!!
+// NOTE DX12.h needs to appear before pix3.h!!!
 #include "platform/windows/graphics/dx12/DX12.h"
 
 #include "WinPixEventRuntime/WinPixEventRuntime/pix3.h"
@@ -9,10 +9,14 @@
 namespace SirEngine {
 
 inline void annotateGraphicsBegin(const char *name) {
-  PIXBeginEvent(dx12::CURRENT_FRAME_RESOURCE->fc.commandList, 0, name);
+  if (globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::DX12) {
+    PIXBeginEvent(dx12::CURRENT_FRAME_RESOURCE->fc.commandList, 0, name);
+  }
 }
 inline void annotateGraphicsEnd() {
-  PIXEndEvent(dx12::CURRENT_FRAME_RESOURCE->fc.commandList);
+  if (globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::DX12) {
+    PIXEndEvent(dx12::CURRENT_FRAME_RESOURCE->fc.commandList);
+  }
 }
 
 } // namespace SirEngine

@@ -534,6 +534,10 @@ void RenderGraphWidget::render() {
     globals::APPLICATION->queueEventForEndOfFrame(event);
   }
 
+  //TODO this is temporary to prevent vulkan UI to crash, there is no render graph yet
+  if(status == nullptr) {
+      return;
+  }
   const bool pressed = ImGui::Button("show render graph");
   if (pressed) {
     status->opened = !status->opened;
