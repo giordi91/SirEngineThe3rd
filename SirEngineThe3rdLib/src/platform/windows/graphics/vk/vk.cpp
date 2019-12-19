@@ -360,6 +360,12 @@ bool VkRenderingContext::shutdownGraphic() {
                          nullptr);
     vkDestroyFence(LOGICAL_DEVICE, FRAME_COMMAND[i].m_endOfFrameFence, nullptr);
   }
+
+  //clean up manager
+  PSO_MANAGER->cleanup();
+
+
+	
   vkDestroyDevice(LOGICAL_DEVICE, nullptr);
   vkDestroySurfaceKHR(INSTANCE, SURFACE, nullptr);
   // vkDestroyDebugReportCallbackEXT(INSTANCE, DEBUG_CALLBACK, nullptr);

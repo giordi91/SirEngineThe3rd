@@ -423,7 +423,6 @@ void VkTempLayer::clear() {
   vk::destroyFrameBuffer(vk::LOGICAL_DEVICE, m_tempFrameBuffer, m_rt);
 
   destroyTexture(vk::LOGICAL_DEVICE, uvTexture);
-  vkDestroyPipeline(vk::LOGICAL_DEVICE, m_pipeline, nullptr);
 }
 
 bool VkTempLayer::onMouseButtonPressEvent(MouseButtonPressEvent &e) {
