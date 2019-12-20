@@ -172,7 +172,6 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   return true;
 }
 
-
 bool acquireSwapchainImage(const VkDevice logicalDevice,
                            const VkSwapchainKHR swapchain,
                            const VkSemaphore semaphore, const VkFence fence,
@@ -362,11 +361,9 @@ bool VkRenderingContext::shutdownGraphic() {
     vkDestroyFence(LOGICAL_DEVICE, FRAME_COMMAND[i].m_endOfFrameFence, nullptr);
   }
 
-  //clean up manager
+  // clean up manager
   PSO_MANAGER->cleanup();
 
-
-	
   vkDestroyDevice(LOGICAL_DEVICE, nullptr);
   vkDestroySurfaceKHR(INSTANCE, SURFACE, nullptr);
   // vkDestroyDebugReportCallbackEXT(INSTANCE, DEBUG_CALLBACK, nullptr);
@@ -380,4 +377,16 @@ void VkRenderingContext::flush() { vkDeviceWaitIdle(LOGICAL_DEVICE); }
 void VkRenderingContext::executeGlobalCommandList() { assert(0); }
 
 void VkRenderingContext::resetGlobalCommandList() { assert(0); }
+
+void VkRenderingContext::addRenderablesToQueue(const Renderable &renderable) {
+  assert(0);
+}
+
+void VkRenderingContext::renderQueueType(const SHADER_QUEUE_FLAGS flag) {
+  assert(0);
+}
+
+void VkRenderingContext::renderMaterialType(const SHADER_QUEUE_FLAGS flag) {
+  assert(0);
+}
 } // namespace SirEngine::vk

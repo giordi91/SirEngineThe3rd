@@ -146,6 +146,9 @@ public:
   void flush() override;
   void executeGlobalCommandList() override;
   void resetGlobalCommandList() override;
+  void addRenderablesToQueue(const Renderable& renderable) override;
+  void renderQueueType(const SHADER_QUEUE_FLAGS flag) override;
+  void renderMaterialType(const SHADER_QUEUE_FLAGS flag) override;
 
 private:
   /*

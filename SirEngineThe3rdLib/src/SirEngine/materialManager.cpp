@@ -411,16 +411,14 @@ void bindShadowSkin(const MaterialRuntime &materialRuntime,
   dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.matricesBuffer, 3,
                                                 commandList);
 
-  //TODO HARDCODED stencil value might have to think of a nice way to handle this
+  // TODO HARDCODED stencil value might have to think of a nice way to handle
+  // this
   commandList->OMSetStencilRef(static_cast<uint32_t>(STENCIL_REF::CLEAR));
 }
 
-
 void MaterialManager::bindMaterial(SHADER_QUEUE_FLAGS queueFlag,
-                                   const MaterialHandle handle,
+                                   const MaterialRuntime &materialRuntime,
                                    ID3D12GraphicsCommandList2 *commandList) {
-
-  const MaterialRuntime &materialRuntime = getMaterialRuntime(handle);
   int queueFlagInt = static_cast<int>(queueFlag);
   int currentFlagId = static_cast<int>(log2(queueFlagInt & -queueFlagInt));
   const SHADER_TYPE_FLAGS type =
@@ -474,6 +472,14 @@ void MaterialManager::bindMaterial(SHADER_QUEUE_FLAGS queueFlag,
     assert(0 && "could not find material type");
   }
   }
+}
+
+void MaterialManager::bindMaterial(SHADER_QUEUE_FLAGS queueFlag,
+                                   const MaterialHandle handle,
+                                   ID3D12GraphicsCommandList2 *commandList) {
+
+  const MaterialRuntime &materialRuntime = getMaterialRuntime(handle);
+  bindMaterial(queueFlag, materialRuntime, commandList);
 }
 
 void MaterialManager::loadTypesInFolder(const char *folder) {

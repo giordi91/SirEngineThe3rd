@@ -3,6 +3,7 @@
 #include <cstdint>
 
 namespace SirEngine {
+//vendors
 enum class ADAPTER_VENDOR { NVIDIA = 0, AMD, INTEL, WARP, ANY };
 enum class ADAPTER_SELECTION_RULE { LARGEST_FRAME_BUFFER, FIRST_VALID };
 inline const char *ADAPTER_VENDOR_NAMES[]{"NVIDIA", "AMD", "INTEL", "WARP",
@@ -32,5 +33,13 @@ static constexpr float TO_RAD = static_cast<float>(SE_PI_D / 180.0);
 static constexpr double TO_RAD_D = SE_PI_D / 180.0;
 static constexpr float TO_DEG = static_cast<float>(180.0 / SE_PI_D);
 static constexpr double TO_DEG_D = 180.0 / SE_PI_D;
+
+//rendering
+enum class SHADER_QUEUE_FLAGS {
+  FORWARD = 1 << 0,
+  DEFERRED = 1 << 1,
+  SHADOW = 1 << 2,
+  DEBUG = 1 << 3,
+};
 
 } // namespace SirEngine

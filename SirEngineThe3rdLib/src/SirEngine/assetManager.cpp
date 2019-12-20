@@ -23,7 +23,6 @@ static const char *ENVIROMENT_MAP_RADIANCE_KEY = "enviromentMapRadiance";
 static const std::string DEFAULT_STRING = "";
 } // namespace AssetManagerKeys
 
-
 bool AssetManager::init() {
 
   // allocate master handle
@@ -86,8 +85,7 @@ IdentityHandle AssetManager::loadAsset(const char *path) {
     // manager or similar, or return directly a reference to shaderQueueFlags
     // only such that we don't leak dx12 symbols
     const MaterialRuntime &materialRuntime =
-        dx12::MATERIAL_MANAGER->getMaterialRuntime(
-            renderable.m_materialHandle);
+        dx12::MATERIAL_MANAGER->getMaterialRuntime(renderable.m_materialHandle);
 
     // store the renderable on each queue
     for (int i = 0; i < 4; ++i) {
@@ -97,6 +95,7 @@ IdentityHandle AssetManager::loadAsset(const char *path) {
         (*m_renderables)[flag].push_back(renderable);
       }
     }
+    globals::RENDERING_CONTEXT->addRenderablesToQueue(renderable);
   }
 
   // TODO identity handle concept is not used and is completely broken since we
