@@ -18,7 +18,7 @@ class DependencyGraph;
 
 namespace dx12 {
 class TextureManagerDx12;
-class MeshManager;
+class Dx12MeshManager;
 class Dx12Adapter;
 class DescriptorHeap;
 class Dx12SwapChain;
@@ -127,7 +127,7 @@ extern FrameResource FRAME_RESOURCES[FRAME_BUFFERS_COUNT];
 extern FrameResource *CURRENT_FRAME_RESOURCE;
 // resource managers
 extern TextureManagerDx12 *TEXTURE_MANAGER;
-extern MeshManager *MESH_MANAGER;
+extern Dx12MeshManager *MESH_MANAGER;
 extern MaterialManager *MATERIAL_MANAGER;
 extern DependencyGraph *RENDERING_GRAPH;
 extern ConstantBufferManagerDx12 *CONSTANT_BUFFER_MANAGER;

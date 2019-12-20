@@ -19,6 +19,7 @@ class AnimationManager;
 class SkinClusterManager;
 class ScriptingContext;
 class Input;
+class MeshManager;
 
 class StringPool;
 class StackAllocator;
@@ -59,6 +60,7 @@ extern SIR_ENGINE_API AnimationManager *ANIMATION_MANAGER;
 extern SkinClusterManager *SKIN_MANAGER;
 extern ScriptingContext *SCRIPTING_CONTEXT;
 extern Input *INPUT;
+extern MeshManager* MESH_MANAGER;
 
 // generic allocators
 extern SIR_ENGINE_API StringPool *STRING_POOL;

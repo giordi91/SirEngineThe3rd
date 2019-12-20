@@ -8,7 +8,7 @@
 
 namespace SirEngine::dx12 {
 
-MeshHandle MeshManager::loadMesh(const char *path, bool isInternal) {
+MeshHandle Dx12MeshManager::loadMesh(const char *path, bool isInternal) {
 
   SE_CORE_INFO("Loading mesh {0}", path);
   const bool res = fileExists(path);
@@ -16,7 +16,8 @@ MeshHandle MeshManager::loadMesh(const char *path, bool isInternal) {
   // lets check whether or not the mesh has been loaded already
   const std::string name = getFileName(path);
   MeshData *meshData;
-  MeshHandle handle;
+  MeshHandle handle{};
+
   const auto found = m_nameToHandle.find(name);
   if (found == m_nameToHandle.end()) {
     std::vector<char> binaryData;
