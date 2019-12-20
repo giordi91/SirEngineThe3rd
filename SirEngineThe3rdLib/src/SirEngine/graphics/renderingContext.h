@@ -35,6 +35,8 @@ struct Renderable {
   MaterialHandle m_materialHandle;
 };
 
+
+
 class RenderingContext {
 
 public:

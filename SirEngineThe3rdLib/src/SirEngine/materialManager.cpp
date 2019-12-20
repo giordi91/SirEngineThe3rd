@@ -157,6 +157,9 @@ void parseQueueTypeFlags(MaterialRuntime &matCpu, const nlohmann::json &jobj) {
 }
 void bindPBR(const MaterialRuntime &materialRuntime,
              ID3D12GraphicsCommandList2 *commandList) {
+
+  dx12::RENDERING_CONTEXT->bindCameraBuffer(0);
+
   commandList->SetGraphicsRootConstantBufferView(
       1, materialRuntime.cbVirtualAddress);
   commandList->SetGraphicsRootDescriptorTable(2, materialRuntime.albedo);
@@ -167,6 +170,8 @@ void bindPBR(const MaterialRuntime &materialRuntime,
 
 void bindSkinning(const MaterialRuntime &materialRuntime,
                   ID3D12GraphicsCommandList2 *commandList) {
+  dx12::RENDERING_CONTEXT->bindCameraBuffer(0);
+
   commandList->SetGraphicsRootConstantBufferView(
       1, materialRuntime.cbVirtualAddress);
   commandList->SetGraphicsRootDescriptorTable(2, materialRuntime.albedo);
@@ -204,6 +209,7 @@ void bindSkin(const MaterialRuntime &materialRuntime,
 }
 void bindSkinSkinning(const MaterialRuntime &materialRuntime,
                       ID3D12GraphicsCommandList2 *commandList) {
+  dx12::RENDERING_CONTEXT->bindCameraBuffer(0);
   commandList->SetGraphicsRootConstantBufferView(
       1, materialRuntime.cbVirtualAddress);
   commandList->SetGraphicsRootDescriptorTable(2, materialRuntime.albedo);
@@ -310,6 +316,7 @@ void bindParallaxPBR(const MaterialRuntime &materialRuntime,
 
 void bindForwardPhongAlphaCutoutSkin(const MaterialRuntime &materialRuntime,
                                      ID3D12GraphicsCommandList2 *commandList) {
+  dx12::RENDERING_CONTEXT->bindCameraBuffer(0);
   const ConstantBufferHandle lightCB = dx12::RENDERING_CONTEXT->getLightCB();
   const auto address =
       dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(lightCB);
@@ -341,6 +348,9 @@ void bindForwardPhongAlphaCutoutSkin(const MaterialRuntime &materialRuntime,
 }
 void bindHair(const MaterialRuntime &materialRuntime,
               ID3D12GraphicsCommandList2 *commandList) {
+
+  dx12::RENDERING_CONTEXT->bindCameraBuffer(0);
+
   const ConstantBufferHandle lightCB = dx12::RENDERING_CONTEXT->getLightCB();
   const auto address =
       dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(lightCB);

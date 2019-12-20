@@ -164,7 +164,7 @@ void ShaderManager::recompileShader(const char *path, const char *offsetPath,
 
 ShaderManager::~ShaderManager() { delete m_compiler; }
 
-void ShaderManager::init() {
+void ShaderManager::initialize() {
   m_metadataAllocator.initialize(METADATA_STACK_SIZE);
   m_compiler = new DXCShaderCompiler();
 }

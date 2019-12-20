@@ -37,13 +37,6 @@ GBufferPassPBR::GBufferPassPBR(GraphAllocators &allocators)
   depthBuffer.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
   depthBuffer.nodePtr = this;
   depthBuffer.name = "depth";
-
-  // lets create the plugs
-  GPlug &stream = m_inputPlugs[PLUG_INDEX(PLUGS::ASSET_STREAM)];
-  stream.plugValue = 0;
-  stream.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_CPU_BUFFER;
-  stream.nodePtr = this;
-  stream.name = "assetStream";
 }
 
 void GBufferPassPBR::initialize() {
@@ -62,17 +55,6 @@ void GBufferPassPBR::initialize() {
   m_specularBuffer = globals::TEXTURE_MANAGER->allocateRenderTexture(
       globals::ENGINE_CONFIG->m_windowWidth, globals::ENGINE_CONFIG->m_windowHeight, RenderTargetFormat::RGBA32,
       "specularBuffer");
-}
-
-inline StreamHandle getInputConnection(ResizableVector<const GPlug *> **conns) {
-  const auto conn = conns[PLUG_INDEX(GBufferPassPBR::PLUGS::ASSET_STREAM)];
-
-  // TODO not super safe to do this, might be worth improving this
-  assert(conn->size() == 1 && "too many input connections");
-  const GPlug *source = (*conn)[0];
-  const auto h = StreamHandle{source->plugValue};
-  assert(h.isHandleValid());
-  return h;
 }
 
 void GBufferPassPBR::compute() {
@@ -115,50 +97,10 @@ void GBufferPassPBR::compute() {
   auto depthDescriptor = dx12::TEXTURE_MANAGER->getRTVDx12(m_depth).cpuHandle;
   commandList->OMSetRenderTargets(3, handles, false, &depthDescriptor);
 
-  // we can now start to render our geometries, the way it works is you first
-  // access the renderable stream coming in from the node input
-  const StreamHandle streamH = getInputConnection(m_inConnections);
-  const std::unordered_map<uint32_t, std::vector<Renderable>> &renderables =
-      globals::ASSET_MANAGER->getRenderables(streamH);
-
   // the stream is a series of rendarables sorted by type, so here we loop for
   // all the renderable types and filter for the one that are tagged for the
   // deferred queue
-  for (const auto &renderableList : renderables) {
-	  const bool shouldProcess= dx12::MATERIAL_MANAGER->isQueueType(renderableList.first,
-                                            SHADER_QUEUE_FLAGS::DEFERRED);
-    if (shouldProcess) {
-
-      // now that we know the material goes in the the deferred queue we can
-      // start rendering it
-
-      // bind the corresponding RS and PSO
-      dx12::MATERIAL_MANAGER->bindRSandPSO(renderableList.first, commandList);
-      dx12::RENDERING_CONTEXT->bindCameraBuffer(0);
-
-      // this is most for debug, it will boil down to nothing in release
-      const SHADER_TYPE_FLAGS type =
-          dx12::MATERIAL_MANAGER->getTypeFlags(renderableList.first);
-      const std::string &typeName =
-          dx12::MATERIAL_MANAGER->getStringFromShaderTypeFlag(type);
-      annotateGraphicsBegin(typeName.c_str());
-
-      // looping each of the object
-      const size_t count = renderableList.second.size();
-      const Renderable *currRenderables = renderableList.second.data();
-      for (int i = 0; i < count; ++i) {
-        const Renderable &renderable = currRenderables[i];
-
-        //const uint32_t queueType = dx12::MATERIAL_MANAGER->getQueueFlags(renderableList.first);
-        // bind material data like textures etc, then render
-        dx12::MATERIAL_MANAGER->bindMaterial(SHADER_QUEUE_FLAGS::DEFERRED,renderable.m_materialHandle,
-                                             commandList);
-        dx12::MESH_MANAGER->bindMeshRuntimeAndRender(renderable.m_meshHandle,
-                                                     currentFc);
-      }
-      annotateGraphicsEnd();
-    }
-  }
+  globals::RENDERING_CONTEXT->renderQueueType(SHADER_QUEUE_FLAGS::DEFERRED);
 
   // setting the data as output
   m_outputPlugs[0].plugValue = m_geometryBuffer.handle;

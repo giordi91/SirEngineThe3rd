@@ -128,7 +128,6 @@ extern FrameResource *CURRENT_FRAME_RESOURCE;
 // resource managers
 extern TextureManagerDx12 *TEXTURE_MANAGER;
 extern MeshManager *MESH_MANAGER;
-extern IdentityManager *IDENTITY_MANAGER;
 extern MaterialManager *MATERIAL_MANAGER;
 extern DependencyGraph *RENDERING_GRAPH;
 extern ConstantBufferManagerDx12 *CONSTANT_BUFFER_MANAGER;
@@ -252,7 +251,7 @@ public:
   void resetGlobalCommandList() override;
   void addRenderablesToQueue(const Renderable& renderable) override;
   void renderQueueType(const SHADER_QUEUE_FLAGS flag) override;
-  void renderMaterialType(const SHADER_QUEUE_FLAGS flag) override;
+  void renderMaterialType(const SHADER_QUEUE_FLAGS queueFlag) override;
 
 private:
   // member variable mostly temporary

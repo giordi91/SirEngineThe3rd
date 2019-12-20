@@ -11,9 +11,8 @@ public:
   enum PLUGS {
     IN_TEXTURE = INPUT_PLUG_CODE(0),
     DEPTH_RT = INPUT_PLUG_CODE(1),
-    ASSET_STREAM = INPUT_PLUG_CODE(2),
     OUT_TEXTURE = OUTPUT_PLUG_CODE(0),
-    COUNT = 4
+    COUNT = 3
   };
 
 public:

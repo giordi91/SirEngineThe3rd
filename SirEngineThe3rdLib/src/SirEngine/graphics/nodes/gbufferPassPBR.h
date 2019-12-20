@@ -12,8 +12,7 @@ public:
     NORMALS_RT = OUTPUT_PLUG_CODE(1),
     SPECULAR_RT = OUTPUT_PLUG_CODE(2),
     DEPTH_RT = OUTPUT_PLUG_CODE(3),
-    ASSET_STREAM = INPUT_PLUG_CODE(0),
-    COUNT = 5
+    COUNT = 4
   };
 
 public:
