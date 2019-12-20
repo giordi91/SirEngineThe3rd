@@ -19,7 +19,6 @@ void VkTempLayer::createRenderTargetAndFrameBuffer(const int width,
                                                    const int height) {
   vk::createRenderTarget(
       "RT", VK_FORMAT_R8G8B8A8_UNORM,
-      // VK_FORMAT_B8G8R8A8_UNORM,
       vk::LOGICAL_DEVICE, m_rt,
       VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
       VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, width, height);

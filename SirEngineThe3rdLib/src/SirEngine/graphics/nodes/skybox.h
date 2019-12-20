@@ -1,7 +1,7 @@
 #pragma once
 
 #include "SirEngine/graphics/nodeGraph.h"
-#include "platform/windows/graphics/dx12/meshManager.h"
+#include "platform/windows/graphics/dx12/dx12MeshManager.h"
 #include <d3d12.h>
 
 namespace SirEngine {
@@ -17,7 +17,7 @@ public:
 
 public:
   SkyBoxPass(GraphAllocators &allocators);
-  virtual ~SkyBoxPass() =default ;
+  virtual ~SkyBoxPass() = default;
   virtual void initialize() override;
   virtual void compute() override;
   virtual void onResizeEvent(int screenWidth, int screenHeight) override;
@@ -25,7 +25,7 @@ public:
 private:
   ID3D12RootSignature *rs = nullptr;
   PSOHandle pso;
-  dx12::MeshRuntime m_meshRuntime;
+  MeshHandle skyboxHandle{};
 };
 
 } // namespace SirEngine

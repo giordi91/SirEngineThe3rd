@@ -128,9 +128,9 @@ void ShadowPass::compute() {
 
         // bind material data like textures etc, then render
         dx12::MATERIAL_MANAGER->bindMaterial(SHADER_QUEUE_FLAGS::SHADOW,
-                                             renderable.m_materialRuntime,
+                                             renderable.m_materialHandle,
                                              commandList);
-        dx12::MESH_MANAGER->bindMeshRuntimeAndRender(renderable.m_meshRuntime,
+        dx12::MESH_MANAGER->bindMeshRuntimeAndRender(renderable.m_meshHandle,
                                                      currentFc);
       }
       annotateGraphicsEnd();

@@ -1,8 +1,8 @@
 #pragma once
 
 #include "DXTK12/ResourceUploadBatch.h"
-#include "SirEngine/handle.h"
 #include "SirEngine/graphics/cpuGraphicsStructures.h"
+#include "SirEngine/handle.h"
 #include "SirEngine/memory/sparseMemoryPool.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/d3dx12.h"
@@ -20,7 +20,6 @@ struct MeshRuntime final {
   uint32_t indexCount;
 };
 
-
 class MeshManager final {
 private:
   struct MeshData final {
@@ -30,6 +29,7 @@ private:
     ID3D12Resource *indexBuffer;
     BufferHandle vtxBuffHandle;
     BufferHandle idxBuffHandle;
+    MeshRuntime meshRuntime;
     uint32_t indexCount;
     uint32_t vertexCount;
     uint32_t entityID; // this is an id that is used to index other data that we
@@ -61,7 +61,9 @@ public:
   // for now a bit overkill to pass both the index and the memory,
   // I could just pass the pointer at right address but for the time
   // being this will keep symmetry.
-  MeshHandle loadMesh(const char *path, MeshRuntime *meshRuntime, bool isInternal =false);
+
+  // TODO fix is internal
+  MeshHandle loadMesh(const char *path, bool isInternal = false);
 
   inline void assertMagicNumber(const MeshHandle handle) const {
 #ifdef SE_DEBUG
@@ -173,8 +175,19 @@ public:
 
     fc->commandList->DrawIndexedInstanced(meshIndexCount, 1, 0, 0, 0);
   }
-  inline void bindMeshRuntimeAndRender(const MeshRuntime &runtime,
+
+  [[nodiscard]] const MeshRuntime &getMeshRuntime(const MeshHandle &handle) const
+  {
+    assertMagicNumber(handle);
+    uint32_t index = getIndexFromHandle(handle);
+    const MeshData &data = m_meshPool.getConstRef(index);
+    return data.meshRuntime;
+  }
+
+  inline void bindMeshRuntimeAndRender(const MeshHandle &handle,
                                        FrameCommand *fc) const {
+
+    const MeshRuntime &runtime = getMeshRuntime(handle);
     bindMeshRuntimeForRender(runtime, fc);
     fc->commandList->DrawIndexedInstanced(runtime.indexCount, 1, 0, 0, 0);
   }

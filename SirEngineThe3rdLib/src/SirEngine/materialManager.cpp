@@ -140,14 +140,13 @@ void parseQueueTypeFlags(MaterialRuntime &matCpu, const nlohmann::json &jobj) {
   const auto &tjobj = jobj[materialKeys::TYPE];
   assert(qjobj.size() == tjobj.size());
 
-  // for (const auto &flag : qjobj) {
-  for (int i = 0; i < qjobj.size(); ++i) {
+  for (size_t i = 0; i < qjobj.size(); ++i) {
     uint32_t flags = 0;
     const auto stringFlag = qjobj[i].get<std::string>();
     const uint32_t currentFlag = stringToActualQueueFlag(stringFlag);
     flags |= currentFlag;
 
-    int currentFlagId = log2(currentFlag & -currentFlag);
+    int currentFlagId = static_cast<int>(log2(currentFlag & -currentFlag));
 
     const auto stringType = tjobj[i].get<std::string>();
     const uint32_t typeFlag = parseTypeFlags(stringType);
@@ -304,7 +303,9 @@ void bindParallaxPBR(const MaterialRuntime &materialRuntime,
   commandList->SetGraphicsRootDescriptorTable(10, materialRuntime.heightMap);
 
   commandList->SetGraphicsRootDescriptorTable(
-      11, dx12::TEXTURE_MANAGER->getSRVDx12(globals::DEBUG_FRAME_DATA->directionalShadow).gpuHandle);
+      11, dx12::TEXTURE_MANAGER
+              ->getSRVDx12(globals::DEBUG_FRAME_DATA->directionalShadow)
+              .gpuHandle);
 }
 
 void bindForwardPhongAlphaCutoutSkin(const MaterialRuntime &materialRuntime,
@@ -389,8 +390,7 @@ void bindHairSkin(const MaterialRuntime &materialRuntime,
 }
 
 void bindShadowSkin(const MaterialRuntime &materialRuntime,
-              ID3D12GraphicsCommandList2 *commandList)
-{
+                    ID3D12GraphicsCommandList2 *commandList) {
   const ConstantBufferHandle lightCB = dx12::RENDERING_CONTEXT->getLightCB();
   const auto address =
       dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(lightCB);
@@ -411,18 +411,18 @@ void bindShadowSkin(const MaterialRuntime &materialRuntime,
   dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.matricesBuffer, 3,
                                                 commandList);
 
-  // HARDCODED stencil value might have to think of a nice way to handle this
+  //TODO HARDCODED stencil value might have to think of a nice way to handle this
   commandList->OMSetStencilRef(static_cast<uint32_t>(STENCIL_REF::CLEAR));
-
-	
 }
 
+
 void MaterialManager::bindMaterial(SHADER_QUEUE_FLAGS queueFlag,
-                                   const MaterialRuntime &materialRuntime,
+                                   const MaterialHandle handle,
                                    ID3D12GraphicsCommandList2 *commandList) {
 
+  const MaterialRuntime &materialRuntime = getMaterialRuntime(handle);
   int queueFlagInt = static_cast<int>(queueFlag);
-  int currentFlagId = log2(queueFlagInt & -queueFlagInt);
+  int currentFlagId = static_cast<int>(log2(queueFlagInt & -queueFlagInt));
   const SHADER_TYPE_FLAGS type =
       getTypeFlags(materialRuntime.shaderQueueTypeFlags[currentFlagId]);
   switch (type) {
@@ -525,7 +525,6 @@ void MaterialManager::loadTypeFile(const char *path) {
   m_shderTypeToShaderBind[flags] = ShaderBind{rsHandle, psoHandle};
 }
 MaterialHandle MaterialManager::loadMaterial(const char *path,
-                                             MaterialRuntime *materialRuntime,
                                              const SkinHandle skinHandle) {
   // for materials we do not perform the check whether is loaded or not
   // each object is going to get it s own material copy.
@@ -688,9 +687,9 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   matCpu.cbVirtualAddress =
       dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(texHandles.cbHandle);
 
-  (*materialRuntime) = matCpu;
   m_materials[index] = mat;
   m_materialTextureHandles[index] = texHandles;
+  m_materialRuntimes[index] = matCpu;
 
   MaterialHandle handle{(MAGIC_NUMBER_COUNTER << 16) | (index)};
   ++MAGIC_NUMBER_COUNTER;

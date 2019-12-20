@@ -19,7 +19,7 @@
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/dx12Adapter.h"
 #include "platform/windows/graphics/dx12/dx12SwapChain.h"
-#include "platform/windows/graphics/dx12/meshManager.h"
+#include "platform/windows/graphics/dx12/dx12MeshManager.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
 #include "platform/windows/graphics/dx12/shaderLayout.h"
 #include "platform/windows/graphics/dx12/shaderManager.h"
@@ -179,7 +179,7 @@ bool initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
   globals::TEXTURE_MANAGER = TEXTURE_MANAGER;
   MESH_MANAGER = new MeshManager();
   globals::ASSET_MANAGER = new AssetManager();
-  globals::ASSET_MANAGER->initialize();
+  globals::ASSET_MANAGER->init();
 
   SHADER_MANAGER = new ShaderManager();
   SHADER_MANAGER->init();

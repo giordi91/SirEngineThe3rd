@@ -1,4 +1,5 @@
-#include "platform/windows/graphics/dx12/meshManager.h"
+/*
+#include "platform/windows/graphics/dx12/dx12MeshManager.h"
 
 #include "ConstantBufferManagerDx12.h"
 #include "SirEngine/binary/binaryFile.h"
@@ -100,3 +101,4 @@ MeshHandle MeshManager::loadMesh(const char *path, MeshRuntime *meshRuntime,
   return handle;
 }
 } // namespace SirEngine::dx12
+*/

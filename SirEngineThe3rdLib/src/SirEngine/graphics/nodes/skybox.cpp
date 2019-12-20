@@ -6,9 +6,9 @@
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/TextureManagerDx12.h"
-#include "platform/windows/graphics/dx12/meshManager.h"
-#include "platform/windows/graphics/dx12/rootSignatureManager.h"
+#include "platform/windows/graphics/dx12/dx12MeshManager.h"
 #include "platform/windows/graphics/dx12/dx12SwapChain.h"
+#include "platform/windows/graphics/dx12/rootSignatureManager.h"
 
 namespace SirEngine {
 static const char *SKYBOX_RS = "skybox_RS";
@@ -43,15 +43,15 @@ void SkyBoxPass::initialize() {
   rs = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(SKYBOX_RS);
   pso = dx12::PSO_MANAGER->getHandleFromName(SKYBOX_PSO);
 
-  //dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
-  //if (!dx12::CURRENT_FRAME_RESOURCE->fc.isListOpen) {
+  // dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
+  // if (!dx12::CURRENT_FRAME_RESOURCE->fc.isListOpen) {
   //  dx12::resetAllocatorAndList(&dx12::CURRENT_FRAME_RESOURCE->fc);
   //}
-  dx12::MESH_MANAGER->loadMesh("../data/processed/meshes/skybox.model",
-                               &m_meshRuntime, true);
-  //dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE,
+  skyboxHandle = dx12::MESH_MANAGER->loadMesh(
+      "../data/processed/meshes/skybox.model", true);
+  // dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE,
   //                         &dx12::CURRENT_FRAME_RESOURCE->fc);
-  //dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
+  // dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
 }
 
 inline TextureHandle getInputConnection(ResizableVector<const GPlug *> **conns,
@@ -111,7 +111,7 @@ void SkyBoxPass::compute() {
       1, dx12::TEXTURE_MANAGER->getSRVDx12(skyHandle).gpuHandle);
 
   // commandList->DrawInstanced(6, 1, 0, 0);
-  dx12::MESH_MANAGER->bindMeshRuntimeAndRender(m_meshRuntime, currentFc);
+  dx12::MESH_MANAGER->bindMeshRuntimeAndRender(skyboxHandle, currentFc);
   m_outputPlugs[0].plugValue = bufferHandle.handle;
 
   // reset normal viewport

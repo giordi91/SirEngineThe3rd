@@ -2,12 +2,12 @@
 #include "SirEngine/handle.h"
 #include "identityManager.h"
 #include "materialManager.h"
-#include "platform/windows/graphics/dx12/meshManager.h"
+#include "platform/windows/graphics/dx12/dx12MeshManager.h"
 #include <vector>
 
 namespace SirEngine {
 
-// TODO/THIS IS POSSIBLY THE MOST HORRIBLE PART OF THE ENGINE IT NEEDS REWORK
+// TODO THIS IS POSSIBLY THE MOST HORRIBLE PART OF THE ENGINE IT NEEDS REWORK
 // COMPLETELY
 
 struct AssetDataHandle {
@@ -18,16 +18,16 @@ struct AssetDataHandle {
 
 struct Renderable {
   glm::mat4 m_matrixRuntime;
-  dx12::MeshRuntime m_meshRuntime;
-  MaterialRuntime m_materialRuntime;
+  MeshHandle m_meshHandle;
+  MaterialHandle m_materialHandle;
 };
 
-enum AssetDataType { MATRICES = 1, MESHES = 2, MATERIALS = 3 };
+enum ASSET_DATA_TYPE { MATRICES = 1, MESHES = 2, MATERIALS = 3 };
 
 class AssetManager final {
 public:
-  AssetManager();
-  bool initialize();
+  AssetManager() = default;
+  bool init();
   ~AssetManager() = default;
   AssetManager(const AssetManager &) = delete;
   AssetManager &operator=(const AssetManager &) = delete;
@@ -48,21 +48,7 @@ public:
     return m_streamMapper.find(m_masterHandle.handle)->second;
   }
 
-  // handles
-  inline AssetDataHandle getStaticDataHandle(const AssetDataType type) const {
-    AssetDataHandle h{};
-    h.handle = (1 << 31) | type;
-    return h;
-  }
-  inline uint32_t getEntryPointFromHandle(const AssetDataHandle h) {
-    return h.handle & (~(1 << 31));
-  }
-  inline uint32_t getStaticDataFromHandle(const AssetDataHandle h) {
-    return ((h.handle >> 31) & 1u);
-  }
-  inline const StreamHandle getMainStreamHandle() const {
-    return m_masterHandle;
-  }
+  StreamHandle getMainStreamHandle() const { return m_masterHandle; }
 
 private:
   // constants for allocations and handles
