@@ -106,11 +106,11 @@ class MaterialManager final {
 public:
   MaterialManager() : m_idxPool(RESERVE_SIZE) {
     m_materials.resize(RESERVE_SIZE), m_materialsMagic.resize(RESERVE_SIZE),
-        m_materialTextureHandles.resize(RESERVE_SIZE);
+        m_materialTextureHandles.resize(RESERVE_SIZE),
+        m_materialRuntimes.resize(RESERVE_SIZE);
   };
   ~MaterialManager() = default;
-  void bindMaterial(SHADER_QUEUE_FLAGS queueFlag,
-                    const MaterialRuntime &materialRuntime,
+  void bindMaterial(SHADER_QUEUE_FLAGS queueFlag, const MaterialHandle handle,
                     ID3D12GraphicsCommandList2 *commandList);
   void loadTypesInFolder(const char *folder);
   void bindRSandPSO(uint32_t shaderFlags,
@@ -119,9 +119,7 @@ public:
   MaterialManager &operator=(const MaterialManager &) = delete;
 
   void init(){};
-  MaterialHandle loadMaterial(const char *path,
-                              MaterialRuntime *materialRuntime,
-                              const SkinHandle handle);
+  MaterialHandle loadMaterial(const char *path, const SkinHandle handle);
 
   inline SHADER_TYPE_FLAGS getTypeFlags(const uint32_t flags) {
     // here we are creating a mask for the fist 16 bits, then we flip it
@@ -151,7 +149,13 @@ public:
 
   const std::string &getStringFromShaderTypeFlag(SHADER_TYPE_FLAGS type);
 
+  const MaterialRuntime &getMaterialRuntime(const MaterialHandle handle) {
+    assertMagicNumber(handle);
+    uint32_t index = getIndexFromHandel(handle);
+    return m_materialRuntimes[index];
+  }
 private:
+
   inline uint32_t getIndexFromHandel(const MaterialHandle h) const {
     return h.handle & INDEX_MASK;
   }
@@ -179,6 +183,7 @@ private:
   std::vector<Material> m_materials;
   std::vector<uint16_t> m_materialsMagic;
   std::vector<MaterialDataHandles> m_materialTextureHandles;
+  std::vector<MaterialRuntime> m_materialRuntimes;
 };
 
 } // namespace SirEngine

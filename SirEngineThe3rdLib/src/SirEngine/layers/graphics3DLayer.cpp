@@ -169,14 +169,6 @@ void Graphics3DLayer::onUpdate() {
   globals::SCRIPTING_CONTEXT->runScriptSlot(SCRIPT_CALLBACK_SLOT::PRE_ANIM);
   globals::ANIMATION_MANAGER->evaluate();
 
-  // update the camera position
-  const AnimationConfigHandle charHandle =
-      globals::ANIMATION_MANAGER->getConfigHandleFromName("knightBSkin");
-  AnimationPlayer *player =
-      globals::ANIMATION_MANAGER->getAnimationPlayer(charHandle);
-  SkeletonPose *playerPose = player->getOutPose();
-  // TODO manipulate camera to follow
-
   // animation is up to date, we can update the scene bounding boxes
   dx12::RENDERING_CONTEXT->updateSceneBoundingBox();
   dx12::RENDERING_CONTEXT->updateDirectionalLightMatrix();

@@ -6,7 +6,7 @@
 #include "platform/windows/graphics/vk/vk.h"
 
 #include "platform/windows/graphics/dx12/debugRenderer.h"
-#include "platform/windows/graphics/dx12/meshManager.h"
+#include "platform/windows/graphics/dx12/dx12MeshManager.h"
 
 namespace SirEngine {
 

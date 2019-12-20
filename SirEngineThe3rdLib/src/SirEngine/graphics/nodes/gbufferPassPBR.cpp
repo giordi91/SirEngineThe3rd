@@ -151,9 +151,9 @@ void GBufferPassPBR::compute() {
 
         //const uint32_t queueType = dx12::MATERIAL_MANAGER->getQueueFlags(renderableList.first);
         // bind material data like textures etc, then render
-        dx12::MATERIAL_MANAGER->bindMaterial(SHADER_QUEUE_FLAGS::DEFERRED,renderable.m_materialRuntime,
+        dx12::MATERIAL_MANAGER->bindMaterial(SHADER_QUEUE_FLAGS::DEFERRED,renderable.m_materialHandle,
                                              commandList);
-        dx12::MESH_MANAGER->bindMeshRuntimeAndRender(renderable.m_meshRuntime,
+        dx12::MESH_MANAGER->bindMeshRuntimeAndRender(renderable.m_meshHandle,
                                                      currentFc);
       }
       annotateGraphicsEnd();

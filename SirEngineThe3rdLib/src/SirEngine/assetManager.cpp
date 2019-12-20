@@ -1,13 +1,12 @@
 #include "SirEngine/assetManager.h"
 #include "SirEngine/animation/animationManager.h"
-#include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/identityManager.h"
 #include "SirEngine/materialManager.h"
 #include "fileUtils.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/TextureManagerDx12.h"
 #include "platform/windows/graphics/dx12/bufferManagerDx12.h"
-#include "platform/windows/graphics/dx12/meshManager.h"
+#include "platform/windows/graphics/dx12/dx12MeshManager.h"
 #include "skinClusterManager.h"
 
 namespace SirEngine {
@@ -24,9 +23,8 @@ static const char *ENVIROMENT_MAP_RADIANCE_KEY = "enviromentMapRadiance";
 static const std::string DEFAULT_STRING = "";
 } // namespace AssetManagerKeys
 
-AssetManager::AssetManager() {}
 
-bool AssetManager::initialize() {
+bool AssetManager::init() {
 
   // allocate master handle
   m_masterHandle = StreamHandle{(MAGIC_NUMBER_COUNTER << 16)};
@@ -59,8 +57,8 @@ IdentityHandle AssetManager::loadAsset(const char *path) {
     assert(!materialString.empty());
 
     // lets load the mesh
-    MeshHandle mHandle = dx12::MESH_MANAGER->loadMesh(
-        meshString.c_str(), &renderable.m_meshRuntime);
+    MeshHandle mHandle = dx12::MESH_MANAGER->loadMesh(meshString.c_str());
+    renderable.m_meshHandle = mHandle;
 
     // load animation if present
     const std::string animConfigPath =
@@ -81,18 +79,20 @@ IdentityHandle AssetManager::loadAsset(const char *path) {
           globals::SKIN_MANAGER->loadSkinCluster(skinPath.c_str(), animHandle);
     }
     MaterialHandle matHandle = dx12::MATERIAL_MANAGER->loadMaterial(
-        materialString.c_str(), &renderable.m_materialRuntime, skinHandle);
-    if (skinHandle.handle == 1900550) {
-      int x = 0;
-    }
+        materialString.c_str(), skinHandle);
+    renderable.m_materialHandle = matHandle;
+
+    // TODO temporary, the registration to queues should be done by the material
+    // manager or similar, or return directly a reference to shaderQueueFlags
+    // only such that we don't leak dx12 symbols
+    const MaterialRuntime &materialRuntime =
+        dx12::MATERIAL_MANAGER->getMaterialRuntime(
+            renderable.m_materialHandle);
 
     // store the renderable on each queue
     for (int i = 0; i < 4; ++i) {
-      const uint32_t flag =
-          renderable.m_materialRuntime.shaderQueueTypeFlags[i];
-      if (flag == 1900550) {
-        int x = 0;
-      }
+      const uint32_t flag = materialRuntime.shaderQueueTypeFlags[i];
+
       if (flag != INVALID_QUEUE_TYPE_FLAGS) {
         (*m_renderables)[flag].push_back(renderable);
       }
