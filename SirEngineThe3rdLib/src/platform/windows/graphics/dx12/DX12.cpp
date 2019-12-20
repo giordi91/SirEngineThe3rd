@@ -18,11 +18,12 @@
 #include "platform/windows/graphics/dx12/debugRenderer.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/dx12Adapter.h"
-#include "platform/windows/graphics/dx12/dx12SwapChain.h"
 #include "platform/windows/graphics/dx12/dx12MeshManager.h"
+#include "platform/windows/graphics/dx12/dx12SwapChain.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
 #include "platform/windows/graphics/dx12/shaderLayout.h"
 #include "platform/windows/graphics/dx12/shaderManager.h"
+#include "SirEngine/graphics/debugAnnotations.h"
 
 #undef max
 #undef min
@@ -55,6 +56,14 @@ ShadersLayoutRegistry *SHADER_LAYOUT_REGISTRY = nullptr;
 BufferManagerDx12 *BUFFER_MANAGER = nullptr;
 DebugRenderer *DEBUG_RENDERER = nullptr;
 Dx12RenderingContext *RENDERING_CONTEXT = nullptr;
+
+struct Dx12Renderable {
+  MeshRuntime m_meshRuntime;
+  MaterialRuntime m_materialRuntime;
+};
+
+typedef std::unordered_map<uint32_t, std::vector<Dx12Renderable>>
+    Dx12RenderingQueues;
 
 void createFrameCommand(FrameCommand *fc) {
   auto result = DEVICE->CreateCommandAllocator(
@@ -246,11 +255,11 @@ bool initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
 
   return true;
 }
-void flushDx12() { flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE); }
+void flushDx12() { flushCommandQueue(GLOBAL_COMMAND_QUEUE); }
 
 bool beginHeadlessWorkDx12() {
   // here we need to check which frame resource we are going to use
-  dx12::CURRENT_FRAME_RESOURCE = &dx12::FRAME_RESOURCES[globals::CURRENT_FRAME];
+  dx12::CURRENT_FRAME_RESOURCE = &FRAME_RESOURCES[globals::CURRENT_FRAME];
 
   // check if the resource has finished rendering if not we have to wait
   if (dx12::CURRENT_FRAME_RESOURCE->fence != 0 &&
@@ -390,6 +399,7 @@ Dx12RenderingContext::Dx12RenderingContext(
     const uint32_t height)
     : RenderingContext(settings, width, height) {
   SE_CORE_INFO("Initializing a DirectX 12 context");
+  queues = new Dx12RenderingQueues();
 }
 
 bool Dx12RenderingContext::initializeGraphics() {
@@ -585,6 +595,77 @@ void Dx12RenderingContext::updateDirectionalLightMatrix() {
       getOrthoMatrix(glm::vec3(minX, minY, minZ), glm::vec3(maxX, maxY, maxZ));
   m_light.projectionMatrix = glm::transpose(ortho);
   m_light.lightVP = glm::transpose(ortho * m_light.worldToLocal);
+}
+
+void Dx12RenderingContext::addRenderablesToQueue(const Renderable &renderable) {
+  auto *typedQueues = reinterpret_cast<Dx12RenderingQueues *>(queues);
+
+  Dx12Renderable dx12Renderable{};
+
+  const MaterialRuntime &materialRuntime =
+      dx12::MATERIAL_MANAGER->getMaterialRuntime(renderable.m_materialHandle);
+  const MeshRuntime &meshRuntime =
+      dx12::MESH_MANAGER->getMeshRuntime(renderable.m_meshHandle);
+
+  dx12Renderable.m_materialRuntime = materialRuntime;
+  dx12Renderable.m_meshRuntime = meshRuntime;
+  // store the renderable on each queue
+  for (int i = 0; i < 4; ++i) {
+    const uint32_t flag = materialRuntime.shaderQueueTypeFlags[i];
+
+    if (flag != INVALID_QUEUE_TYPE_FLAGS) {
+      (*typedQueues)[flag].emplace_back(dx12Renderable);
+    }
+  }
+}
+
+void Dx12RenderingContext::renderQueueType(const SHADER_QUEUE_FLAGS queueFlag) {
+
+  const auto &typedQueues = *(reinterpret_cast<Dx12RenderingQueues *>(queues));
+
+  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
+  auto commandList = currentFc->commandList;
+
+  for (const auto &renderableList : typedQueues) {
+    if (dx12::MATERIAL_MANAGER->isQueueType(renderableList.first,
+                                            queueFlag)) {
+
+      // now that we know the material goes in the the deferred queue we can
+      // start rendering it
+
+      // bind the corresponding RS and PSO
+      dx12::MATERIAL_MANAGER->bindRSandPSO(renderableList.first, commandList);
+      // commandList->SetGraphicsRootConstantBufferView(1, lightAddress);
+      // globals::RENDERING_CONTEXT->bindCameraBuffer(0);
+      // globals::RENDERING_CONTEXT->bindLight(0);
+
+      // this is most for debug, it will boil down to nothing in release
+      const SHADER_TYPE_FLAGS type =
+          dx12::MATERIAL_MANAGER->getTypeFlags(renderableList.first);
+      const std::string &typeName =
+          dx12::MATERIAL_MANAGER->getStringFromShaderTypeFlag(type);
+      annotateGraphicsBegin(typeName.c_str());
+
+      // looping each of the object
+      const size_t count = renderableList.second.size();
+      const Dx12Renderable *currRenderables = renderableList.second.data();
+      for (size_t i = 0; i < count; ++i) {
+        const Dx12Renderable &renderable = currRenderables[i];
+
+        // bind material data like textures etc, then render
+        dx12::MATERIAL_MANAGER->bindMaterial(queueFlag,
+                                             renderable.m_materialRuntime,
+                                             commandList);
+        dx12::MESH_MANAGER->bindMeshRuntimeAndRender(renderable.m_meshRuntime,
+                                                     currentFc);
+      }
+      annotateGraphicsEnd();
+    }
+  }
+}
+
+void Dx12RenderingContext::renderMaterialType(const SHADER_QUEUE_FLAGS flag) {
+  assert(0);
 }
 
 bool Dx12RenderingContext::newFrame() { return newFrameDx12(); }

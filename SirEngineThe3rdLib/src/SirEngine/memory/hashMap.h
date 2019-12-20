@@ -1,5 +1,4 @@
 #pragma once
-#include "stringPool.h"
 #include <assert.h>
 #include <stdint.h>
 #include <string.h>

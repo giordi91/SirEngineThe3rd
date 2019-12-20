@@ -1,6 +1,7 @@
 #pragma once
 #include "SirEngine/engineConfig.h"
 #include "SirEngine/handle.h"
+#include <glm/mat4x4.hpp>
 
 namespace SirEngine {
 
@@ -28,6 +29,12 @@ struct ScreenInfo {
   uint32_t height;
 };
 
+struct Renderable {
+  glm::mat4 m_matrixRuntime;
+  MeshHandle m_meshHandle;
+  MaterialHandle m_materialHandle;
+};
+
 class RenderingContext {
 
 public:
@@ -49,6 +56,9 @@ public:
   virtual void flush() = 0;
   virtual void executeGlobalCommandList() = 0;
   virtual void resetGlobalCommandList() = 0;
+  virtual void addRenderablesToQueue(const Renderable &renderable) = 0;
+  virtual void renderQueueType(const SHADER_QUEUE_FLAGS flag) = 0;
+  virtual void renderMaterialType(const SHADER_QUEUE_FLAGS flag) = 0;
 
   inline const RenderingContextCreationSettings &getContextSettings() const {
     return m_settings;

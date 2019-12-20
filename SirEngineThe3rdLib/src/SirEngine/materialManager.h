@@ -74,13 +74,6 @@ struct Material final {
   float metallicMult;
 };
 
-enum class SHADER_QUEUE_FLAGS {
-  FORWARD = 1 << 0,
-  DEFERRED = 1 << 1,
-  SHADOW = 1 << 2,
-  DEBUG = 1 << 3,
-};
-
 enum class SHADER_TYPE_FLAGS {
   UNKNOWN = 0,
   PBR = 1,
@@ -112,6 +105,10 @@ public:
   ~MaterialManager() = default;
   void bindMaterial(SHADER_QUEUE_FLAGS queueFlag, const MaterialHandle handle,
                     ID3D12GraphicsCommandList2 *commandList);
+  void bindMaterial(SHADER_QUEUE_FLAGS queueFlag,
+                    const MaterialRuntime &runtime,
+                    ID3D12GraphicsCommandList2 *commandList);
+
   void loadTypesInFolder(const char *folder);
   void bindRSandPSO(uint32_t shaderFlags,
                     ID3D12GraphicsCommandList2 *commandList);
@@ -154,8 +151,8 @@ public:
     uint32_t index = getIndexFromHandel(handle);
     return m_materialRuntimes[index];
   }
-private:
 
+private:
   inline uint32_t getIndexFromHandel(const MaterialHandle h) const {
     return h.handle & INDEX_MASK;
   }

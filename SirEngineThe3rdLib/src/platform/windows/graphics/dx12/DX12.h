@@ -6,6 +6,8 @@
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/graphics/cpuGraphicsStructures.h"
 #include <cassert>
+#include "SirEngine/memory/hashMap.h"
+#include "SirEngine/memory/resizableVector.h"
 
 namespace SirEngine {
 class IdentityManager;
@@ -248,6 +250,9 @@ public:
   void flush() override;
   void executeGlobalCommandList() override;
   void resetGlobalCommandList() override;
+  void addRenderablesToQueue(const Renderable& renderable) override;
+  void renderQueueType(const SHADER_QUEUE_FLAGS flag) override;
+  void renderMaterialType(const SHADER_QUEUE_FLAGS flag) override;
 
 private:
   // member variable mostly temporary
@@ -262,7 +267,17 @@ private:
   TextureHandle m_brdfHandle;
   BoundingBox m_boundingBox;
   DebugDrawHandle m_lightAABBHandle{};
+
+  //TODO possibly find a better way to handle this don't want to leak the std map type out
+  //I cannot use my hash map because is quite basic and does not deal with complex datatypes that needs
+  //to be constructed, meaning would be hard to put in a ResizableVector as value so for now we don't deal with
+  //this
+  void* queues;
+	
 };
 
+
+
+	
 } // namespace dx12
 } // namespace SirEngine

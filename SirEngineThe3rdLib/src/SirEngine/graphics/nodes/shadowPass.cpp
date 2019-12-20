@@ -5,9 +5,9 @@
 #include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/PSOManager.h"
+#include "platform/windows/graphics/dx12/dx12SwapChain.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
 #include "platform/windows/graphics/dx12/textureManagerDx12.h"
-#include "platform/windows/graphics/dx12/dx12SwapChain.h"
 
 namespace SirEngine {
 ShadowPass::ShadowPass(GraphAllocators &allocators)
@@ -67,77 +67,22 @@ void ShadowPass::compute() {
 
   // now that they are in the right state we are going to clear them
   globals::TEXTURE_MANAGER->clearDepth(m_shadow, 0.0f);
-  // float color[4] = {0.0f, 0.0f, 0.0f, 1.0f};
-  // globals::TEXTURE_MANAGER->clearRT(m_geometryBuffer, color);
-  // globals::TEXTURE_MANAGER->clearRT(m_normalBuffer, color);
-  // globals::TEXTURE_MANAGER->clearRT(m_specularBuffer, color);
-
-  // finally we can bind the buffers
 
   auto depthDescriptor = dx12::TEXTURE_MANAGER->getRTVDx12(m_shadow).cpuHandle;
   commandList->OMSetRenderTargets(0, nullptr, false, &depthDescriptor);
 
-  // we can now start to render our geometries, the way it works is you first
-  // access the renderable stream coming in from the node input
-  const StreamHandle streamH = getInputConnectionX(m_inConnections);
-  const std::unordered_map<uint32_t, std::vector<Renderable>> &renderables =
-      globals::ASSET_MANAGER->getRenderables(streamH);
-
-  ConstantBufferHandle lightCB;
-  D3D12_GPU_VIRTUAL_ADDRESS lightAddress;
-  lightCB = dx12::RENDERING_CONTEXT->getLightCB();
-  lightAddress = dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(lightCB);
-
   // Set the viewport and scissor rect.  This needs to be reset whenever the
   // command list is reset.
-  auto viewport= D3D12_VIEWPORT{0.0f, 0.0f, shadowSize, shadowSize, 0.0f, 1.0f};
+  auto viewport =
+      D3D12_VIEWPORT{0.0f, 0.0f, shadowSize, shadowSize, 0.0f, 1.0f};
 
-  D3D12_RECT scissorRect {0, 0, shadowSize, shadowSize};
+  D3D12_RECT scissorRect{0, 0, shadowSize, shadowSize};
   commandList->RSSetViewports(1, &viewport);
   commandList->RSSetScissorRects(1, &scissorRect);
-  // globals::RENDERING_CONTEXT->bindCameraBuffer(0);
 
-  // the stream is a series of rendarables sorted by type, so here we loop for
-  // all the renderable types and filter for the one that are tagged for the
-  // deferred queue
-  for (const auto &renderableList : renderables) {
-    if (dx12::MATERIAL_MANAGER->isQueueType(renderableList.first,
-                                            SHADER_QUEUE_FLAGS::SHADOW)) {
+  globals::RENDERING_CONTEXT->renderQueueType(SHADER_QUEUE_FLAGS::SHADOW);
 
-      // now that we know the material goes in the the deferred queue we can
-      // start rendering it
-
-      // bind the corresponding RS and PSO
-      dx12::MATERIAL_MANAGER->bindRSandPSO(renderableList.first, commandList);
-      //commandList->SetGraphicsRootConstantBufferView(1, lightAddress);
-      // globals::RENDERING_CONTEXT->bindCameraBuffer(0);
-      // globals::RENDERING_CONTEXT->bindLight(0);
-
-      // this is most for debug, it will boil down to nothing in release
-      const SHADER_TYPE_FLAGS type =
-          dx12::MATERIAL_MANAGER->getTypeFlags(renderableList.first);
-      const std::string &typeName =
-          dx12::MATERIAL_MANAGER->getStringFromShaderTypeFlag(type);
-      annotateGraphicsBegin(typeName.c_str());
-
-      // looping each of the object
-      const size_t count = renderableList.second.size();
-      const Renderable *currRenderables = renderableList.second.data();
-      for (int i = 0; i < count; ++i) {
-        const Renderable &renderable = currRenderables[i];
-
-        // bind material data like textures etc, then render
-        dx12::MATERIAL_MANAGER->bindMaterial(SHADER_QUEUE_FLAGS::SHADOW,
-                                             renderable.m_materialHandle,
-                                             commandList);
-        dx12::MESH_MANAGER->bindMeshRuntimeAndRender(renderable.m_meshHandle,
-                                                     currentFc);
-      }
-      annotateGraphicsEnd();
-    }
-  }
-
-  //TODO remove this each draw call should set its own
+  // TODO remove this each draw call should set its own
   // Set the viewport and scissor rect.  This needs to be reset whenever the
   // command list is reset.
   commandList->RSSetViewports(1, dx12::SWAP_CHAIN->getViewport());

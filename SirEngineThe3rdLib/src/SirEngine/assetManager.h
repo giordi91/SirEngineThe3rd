@@ -16,11 +16,6 @@ struct AssetDataHandle {
   };
 };
 
-struct Renderable {
-  glm::mat4 m_matrixRuntime;
-  MeshHandle m_meshHandle;
-  MaterialHandle m_materialHandle;
-};
 
 enum ASSET_DATA_TYPE { MATRICES = 1, MESHES = 2, MATERIALS = 3 };
 

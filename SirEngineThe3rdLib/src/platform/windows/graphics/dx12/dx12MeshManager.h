@@ -176,20 +176,25 @@ public:
     fc->commandList->DrawIndexedInstanced(meshIndexCount, 1, 0, 0, 0);
   }
 
-  [[nodiscard]] const MeshRuntime &getMeshRuntime(const MeshHandle &handle) const
-  {
+  [[nodiscard]] const MeshRuntime &
+  getMeshRuntime(const MeshHandle &handle) const {
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
     const MeshData &data = m_meshPool.getConstRef(index);
     return data.meshRuntime;
   }
 
+  inline void bindMeshRuntimeAndRender(const MeshRuntime &runtime,
+                                       FrameCommand *fc) const {
+    bindMeshRuntimeForRender(runtime, fc);
+    fc->commandList->DrawIndexedInstanced(runtime.indexCount, 1, 0, 0, 0);
+  }
+
   inline void bindMeshRuntimeAndRender(const MeshHandle &handle,
                                        FrameCommand *fc) const {
 
     const MeshRuntime &runtime = getMeshRuntime(handle);
-    bindMeshRuntimeForRender(runtime, fc);
-    fc->commandList->DrawIndexedInstanced(runtime.indexCount, 1, 0, 0, 0);
+    bindMeshRuntimeAndRender(runtime, fc);
   }
 
 private:
