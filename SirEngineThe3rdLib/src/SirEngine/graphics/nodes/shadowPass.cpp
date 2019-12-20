@@ -1,5 +1,4 @@
 #include "SirEngine/graphics/nodes/shadowPass.h"
-#include "SirEngine/assetManager.h"
 #include "SirEngine/graphics/debugAnnotations.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
@@ -22,29 +21,11 @@ ShadowPass::ShadowPass(GraphAllocators &allocators)
   geometryBuffer.nodePtr = this;
   geometryBuffer.name = "shadowRT";
 
-  // lets create the plugs
-  GPlug &stream = m_inputPlugs[PLUG_INDEX(PLUGS::ASSET_STREAM)];
-  stream.plugValue = 0;
-  stream.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_CPU_BUFFER;
-  stream.nodePtr = this;
-  stream.name = "assetStream";
 }
 
 void ShadowPass::initialize() {
   m_shadow = dx12::TEXTURE_MANAGER->createDepthTexture("directionalShadow",
                                                        shadowSize, shadowSize);
-}
-
-inline StreamHandle
-getInputConnectionX(ResizableVector<const GPlug *> **conns) {
-  const auto conn = conns[PLUG_INDEX(ShadowPass::PLUGS::ASSET_STREAM)];
-
-  // TODO not super safe to do this, might be worth improving this
-  assert(conn->size() == 1 && "too many input connections");
-  const GPlug *source = (*conn)[0];
-  const auto h = StreamHandle{source->plugValue};
-  assert(h.isHandleValid());
-  return h;
 }
 
 void ShadowPass::compute() {

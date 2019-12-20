@@ -13,6 +13,11 @@ template <typename T> inline uint32_t getMagicFromHandle(const T h) {
   return (h.handle & STANDARD_MAGIC_NUMBER_MASK) >> 16;
 }
 
+struct AssetDataHandle final {
+  uint32_t handle;
+  [[nodiscard]] bool isHandleValid() const { return handle != 0; }
+};
+
 struct MaterialHandle final {
   uint32_t handle;
   [[nodiscard]] bool isHandleValid() const { return handle != 0; }
@@ -66,6 +71,6 @@ struct SkinHandle {
 
 struct ScriptHandle {
   uint32_t handle;
-  bool isHandleValid() const { return handle != 0; }
+  [[nodiscard]] bool isHandleValid() const { return handle != 0; }
 };
 } // namespace SirEngine

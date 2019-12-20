@@ -9,8 +9,7 @@ class ShadowPass final : public GNode {
 public:
   enum PLUGS {
     DIRECTIONAL_SHADOW_RT = OUTPUT_PLUG_CODE(0),
-    ASSET_STREAM = INPUT_PLUG_CODE(0),
-    COUNT = 2
+    COUNT = 1
   };
 
 public:

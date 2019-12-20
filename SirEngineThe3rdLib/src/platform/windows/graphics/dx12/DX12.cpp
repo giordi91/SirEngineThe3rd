@@ -5,7 +5,6 @@
 #include "SirEngine/engineConfig.h"
 #include "SirEngine/graphics/camera.h"
 #include "SirEngine/graphics/renderingContext.h"
-#include "SirEngine/identityManager.h"
 #include "SirEngine/log.h"
 #include "SirEngine/materialManager.h"
 #include "SirEngine/memory/stringPool.h"
@@ -45,7 +44,6 @@ FrameResource FRAME_RESOURCES[FRAME_BUFFERS_COUNT];
 FrameResource *CURRENT_FRAME_RESOURCE = nullptr;
 TextureManagerDx12 *TEXTURE_MANAGER = nullptr;
 MeshManager *MESH_MANAGER = nullptr;
-IdentityManager *IDENTITY_MANAGER = nullptr;
 MaterialManager *MATERIAL_MANAGER = nullptr;
 DependencyGraph *RENDERING_GRAPH = nullptr;
 ConstantBufferManagerDx12 *CONSTANT_BUFFER_MANAGER = nullptr;
@@ -173,8 +171,6 @@ bool initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
 
   // initialize the managers
   // TODO add initialize to all managers for consistency and symmetry
-  IDENTITY_MANAGER = new IdentityManager();
-  IDENTITY_MANAGER->initialize();
   CONSTANT_BUFFER_MANAGER = new ConstantBufferManagerDx12();
   CONSTANT_BUFFER_MANAGER->initialize();
 
@@ -188,10 +184,10 @@ bool initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
   globals::TEXTURE_MANAGER = TEXTURE_MANAGER;
   MESH_MANAGER = new MeshManager();
   globals::ASSET_MANAGER = new AssetManager();
-  globals::ASSET_MANAGER->init();
+  globals::ASSET_MANAGER->initialize();
 
   SHADER_MANAGER = new ShaderManager();
-  SHADER_MANAGER->init();
+  SHADER_MANAGER->initialize();
   SHADER_MANAGER->loadShadersInFolder(
       frameConcatenation(globals::ENGINE_CONFIG->m_dataSourcePath,
                          "/processed/shaders/DX12/rasterization"));
@@ -637,7 +633,6 @@ void Dx12RenderingContext::renderQueueType(const SHADER_QUEUE_FLAGS queueFlag) {
       dx12::MATERIAL_MANAGER->bindRSandPSO(renderableList.first, commandList);
       // commandList->SetGraphicsRootConstantBufferView(1, lightAddress);
       // globals::RENDERING_CONTEXT->bindCameraBuffer(0);
-      // globals::RENDERING_CONTEXT->bindLight(0);
 
       // this is most for debug, it will boil down to nothing in release
       const SHADER_TYPE_FLAGS type =

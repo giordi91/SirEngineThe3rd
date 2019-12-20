@@ -15,7 +15,6 @@
 #include "SirEngine/events/renderGraphEvent.h"
 #include "SirEngine/events/shaderCompileEvent.h"
 #include "SirEngine/graphics/nodes/FinalBlitNode.h"
-#include "SirEngine/graphics/nodes/assetManagerNode.h"
 #include "SirEngine/graphics/nodes/debugDrawNode.h"
 #include "SirEngine/graphics/nodes/deferredLighting.h"
 #include "SirEngine/graphics/nodes/framePassDebugNode.h"
@@ -66,11 +65,9 @@ void Graphics3DLayer::onAttach() {
   alloc =
       new GraphAllocators{globals::STRING_POOL, globals::PERSISTENT_ALLOCATOR};
   dx12::RENDERING_GRAPH = new DependencyGraph();
-  const auto assetNode = new AssetManagerNode(*alloc);
   const auto finalBlit = new FinalBlitNode(*alloc);
   const auto simpleForward = new SimpleForward(*alloc);
   auto postProcess = new PostProcessStack(*alloc);
-  // auto gbufferPass = new GBufferPass("GBufferPass");
   const auto gbufferPass = new GBufferPassPBR(*alloc);
   const auto lighting = new DeferredLightingPass(*alloc);
   // auto sky = new ProceduralSkyBoxPass("Procedural Sky");
@@ -84,7 +81,6 @@ void Graphics3DLayer::onAttach() {
   postProcess->initialize();
 
   // temporary graph for testing
-  dx12::RENDERING_GRAPH->addNode(assetNode);
   dx12::RENDERING_GRAPH->addNode(finalBlit);
   dx12::RENDERING_GRAPH->addNode(gbufferPass);
   dx12::RENDERING_GRAPH->addNode(lighting);
@@ -95,12 +91,6 @@ void Graphics3DLayer::onAttach() {
   dx12::RENDERING_GRAPH->addNode(shadowPass);
   dx12::RENDERING_GRAPH->setFinalNode(finalBlit);
 
-  dx12::RENDERING_GRAPH->connectNodes(assetNode, AssetManagerNode::ASSET_STREAM,
-                                      gbufferPass,
-                                      GBufferPassPBR::ASSET_STREAM);
-
-  dx12::RENDERING_GRAPH->connectNodes(assetNode, AssetManagerNode::ASSET_STREAM,
-                                      shadowPass, ShadowPass::ASSET_STREAM);
 
   dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::GEOMETRY_RT,
                                       lighting,
@@ -130,9 +120,6 @@ void Graphics3DLayer::onAttach() {
   dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::DEPTH_RT,
                                       simpleForward, SimpleForward::DEPTH_RT);
 
-  dx12::RENDERING_GRAPH->connectNodes(assetNode, AssetManagerNode::ASSET_STREAM,
-                                      simpleForward,
-                                      SimpleForward::ASSET_STREAM);
   dx12::RENDERING_GRAPH->connectNodes(simpleForward, SimpleForward::OUT_TEXTURE,
                                       postProcess,
                                       PostProcessStack::IN_TEXTURE);

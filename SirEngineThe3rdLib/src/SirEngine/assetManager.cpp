@@ -1,6 +1,5 @@
 #include "SirEngine/assetManager.h"
 #include "SirEngine/animation/animationManager.h"
-#include "SirEngine/identityManager.h"
 #include "SirEngine/materialManager.h"
 #include "fileUtils.h"
 #include "platform/windows/graphics/dx12/DX12.h"
@@ -23,16 +22,8 @@ static const char *ENVIROMENT_MAP_RADIANCE_KEY = "enviromentMapRadiance";
 static const std::string DEFAULT_STRING = "";
 } // namespace AssetManagerKeys
 
-bool AssetManager::init() {
 
-  // allocate master handle
-  m_masterHandle = StreamHandle{(MAGIC_NUMBER_COUNTER << 16)};
-  m_renderables = &m_streamMapper[m_masterHandle.handle];
-
-  return true;
-}
-
-IdentityHandle AssetManager::loadAsset(const char *path) {
+AssetDataHandle AssetManager::loadAsset(const char *path) {
   auto jobj = getJsonObj(path);
 
   const std::string assetName = getFileName(path);
@@ -81,26 +72,13 @@ IdentityHandle AssetManager::loadAsset(const char *path) {
         materialString.c_str(), skinHandle);
     renderable.m_materialHandle = matHandle;
 
-    // TODO temporary, the registration to queues should be done by the material
-    // manager or similar, or return directly a reference to shaderQueueFlags
-    // only such that we don't leak dx12 symbols
-    const MaterialRuntime &materialRuntime =
-        dx12::MATERIAL_MANAGER->getMaterialRuntime(renderable.m_materialHandle);
-
-    // store the renderable on each queue
-    for (int i = 0; i < 4; ++i) {
-      const uint32_t flag = materialRuntime.shaderQueueTypeFlags[i];
-
-      if (flag != INVALID_QUEUE_TYPE_FLAGS) {
-        (*m_renderables)[flag].push_back(renderable);
-      }
-    }
     globals::RENDERING_CONTEXT->addRenderablesToQueue(renderable);
   }
 
-  // TODO identity handle concept is not used and is completely broken since we
-  // introduced the sub assets, needs to be fixed or removed
-  return IdentityHandle{};
+  // not currently using this handle, need a way to identify assets, for now the
+  // engine has no concept of asset, in the meaning of a conglomerate of
+  // data,meshes,textures,animations and so on
+  return AssetDataHandle{};
 }
 
 void AssetManager::loadScene(const char *path) {
