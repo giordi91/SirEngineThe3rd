@@ -4,6 +4,7 @@
 #include "SirEngine/assetManager.h"
 #include "SirEngine/engineConfig.h"
 #include "SirEngine/graphics/camera.h"
+#include "SirEngine/graphics/debugAnnotations.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/log.h"
 #include "SirEngine/materialManager.h"
@@ -22,7 +23,6 @@
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
 #include "platform/windows/graphics/dx12/shaderLayout.h"
 #include "platform/windows/graphics/dx12/shaderManager.h"
-#include "SirEngine/graphics/debugAnnotations.h"
 
 #undef max
 #undef min
@@ -43,7 +43,7 @@ Dx12SwapChain *SWAP_CHAIN = nullptr;
 FrameResource FRAME_RESOURCES[FRAME_BUFFERS_COUNT];
 FrameResource *CURRENT_FRAME_RESOURCE = nullptr;
 TextureManagerDx12 *TEXTURE_MANAGER = nullptr;
-MeshManager *MESH_MANAGER = nullptr;
+Dx12MeshManager *MESH_MANAGER = nullptr;
 MaterialManager *MATERIAL_MANAGER = nullptr;
 DependencyGraph *RENDERING_GRAPH = nullptr;
 ConstantBufferManagerDx12 *CONSTANT_BUFFER_MANAGER = nullptr;
@@ -182,7 +182,8 @@ bool initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
   TEXTURE_MANAGER = new TextureManagerDx12();
   TEXTURE_MANAGER->initialize();
   globals::TEXTURE_MANAGER = TEXTURE_MANAGER;
-  MESH_MANAGER = new MeshManager();
+  dx12::MESH_MANAGER = new Dx12MeshManager();
+  globals::MESH_MANAGER = dx12::MESH_MANAGER;
   globals::ASSET_MANAGER = new AssetManager();
   globals::ASSET_MANAGER->initialize();
 
@@ -485,8 +486,8 @@ void Dx12RenderingContext::bindCameraBufferCompute(const int index) const {
 }
 
 void Dx12RenderingContext::updateSceneBoundingBox() {
-  const auto &boxes = dx12::MESH_MANAGER->getBoundingBoxes();
-  const int boxesCount = static_cast<int>(boxes.size());
+  uint32_t boxesCount = 0;
+  const BoundingBox *boxes = dx12::MESH_MANAGER->getBoundingBoxes(boxesCount);
   float minX = std::numeric_limits<float>::max();
   float minY = minX;
   float minZ = minY;
@@ -623,8 +624,7 @@ void Dx12RenderingContext::renderQueueType(const SHADER_QUEUE_FLAGS queueFlag) {
   auto commandList = currentFc->commandList;
 
   for (const auto &renderableList : typedQueues) {
-    if (dx12::MATERIAL_MANAGER->isQueueType(renderableList.first,
-                                            queueFlag)) {
+    if (dx12::MATERIAL_MANAGER->isQueueType(renderableList.first, queueFlag)) {
 
       // now that we know the material goes in the the deferred queue we can
       // start rendering it
@@ -648,9 +648,8 @@ void Dx12RenderingContext::renderQueueType(const SHADER_QUEUE_FLAGS queueFlag) {
         const Dx12Renderable &renderable = currRenderables[i];
 
         // bind material data like textures etc, then render
-        dx12::MATERIAL_MANAGER->bindMaterial(queueFlag,
-                                             renderable.m_materialRuntime,
-                                             commandList);
+        dx12::MATERIAL_MANAGER->bindMaterial(
+            queueFlag, renderable.m_materialRuntime, commandList);
         dx12::MESH_MANAGER->bindMeshRuntimeAndRender(renderable.m_meshRuntime,
                                                      currentFc);
       }

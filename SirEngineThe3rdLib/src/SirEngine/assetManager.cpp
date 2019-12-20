@@ -5,8 +5,8 @@
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/TextureManagerDx12.h"
 #include "platform/windows/graphics/dx12/bufferManagerDx12.h"
-#include "platform/windows/graphics/dx12/dx12MeshManager.h"
 #include "skinClusterManager.h"
+#include "SirEngine/meshManager.h"
 
 namespace SirEngine {
 namespace AssetManagerKeys {
@@ -22,7 +22,6 @@ static const char *ENVIROMENT_MAP_RADIANCE_KEY = "enviromentMapRadiance";
 static const std::string DEFAULT_STRING = "";
 } // namespace AssetManagerKeys
 
-
 AssetDataHandle AssetManager::loadAsset(const char *path) {
   auto jobj = getJsonObj(path);
 
@@ -34,7 +33,7 @@ AssetDataHandle AssetManager::loadAsset(const char *path) {
 
   for (auto &subAsset : subAssetsJ) {
 
-    Renderable renderable;
+    Renderable renderable{};
     // get the mesh
     const std::string meshString = getValueIfInJson(
         subAsset, AssetManagerKeys::MESH_KEY, AssetManagerKeys::DEFAULT_STRING);
@@ -47,7 +46,7 @@ AssetDataHandle AssetManager::loadAsset(const char *path) {
     assert(!materialString.empty());
 
     // lets load the mesh
-    MeshHandle mHandle = dx12::MESH_MANAGER->loadMesh(meshString.c_str());
+    MeshHandle mHandle = globals::MESH_MANAGER->loadMesh(meshString.c_str());
     renderable.m_meshHandle = mHandle;
 
     // load animation if present

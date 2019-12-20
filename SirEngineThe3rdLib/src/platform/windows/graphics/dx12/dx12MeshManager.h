@@ -4,6 +4,7 @@
 #include "SirEngine/graphics/cpuGraphicsStructures.h"
 #include "SirEngine/handle.h"
 #include "SirEngine/memory/sparseMemoryPool.h"
+#include "SirEngine/meshManager.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/d3dx12.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
@@ -20,7 +21,7 @@ struct MeshRuntime final {
   uint32_t indexCount;
 };
 
-class MeshManager final {
+class Dx12MeshManager final : public MeshManager {
 private:
   struct MeshData final {
     uint32_t magicNumber : 16;
@@ -43,11 +44,11 @@ private:
   };
 
 public:
-  MeshManager() : m_meshPool(RESERVE_SIZE), batch(dx12::DEVICE) {
+  Dx12MeshManager() : m_meshPool(RESERVE_SIZE), batch(dx12::DEVICE) {
     m_nameToHandle.reserve(RESERVE_SIZE);
     m_uploadRequests.reserve(RESERVE_SIZE);
   }
-  ~MeshManager() { // assert(m_meshPool.assertEverythingDealloc());
+  virtual ~Dx12MeshManager() { // assert(m_meshPool.assertEverythingDealloc());
   }
 
   inline uint32_t getIndexCount(const MeshHandle &handle) const {
@@ -56,14 +57,14 @@ public:
     const MeshData &data = m_meshPool.getConstRef(index);
     return data.indexCount;
   }
-  MeshManager(const MeshManager &) = delete;
-  MeshManager &operator=(const MeshManager &) = delete;
+  Dx12MeshManager(const Dx12MeshManager &) = delete;
+  Dx12MeshManager &operator=(const Dx12MeshManager &) = delete;
   // for now a bit overkill to pass both the index and the memory,
   // I could just pass the pointer at right address but for the time
   // being this will keep symmetry.
 
   // TODO fix is internal
-  MeshHandle loadMesh(const char *path, bool isInternal = false);
+  MeshHandle loadMesh(const char *path, bool isInternal = false) override;
 
   inline void assertMagicNumber(const MeshHandle handle) const {
 #ifdef SE_DEBUG
@@ -148,8 +149,9 @@ public:
     m_meshPool.free(index);
   }
 
-  inline const std::vector<BoundingBox> &getBoundingBoxes() {
-    return m_boundingBoxes;
+  const BoundingBox *getBoundingBoxes(uint32_t &outSize) const override {
+    outSize = static_cast<uint32_t>(m_boundingBoxes.size());
+    return m_boundingBoxes.data();
   }
 
   inline void bindMeshForRender(const MeshHandle handle,
