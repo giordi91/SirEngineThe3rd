@@ -1,8 +1,8 @@
 #pragma once
 #include <chrono>
 
-typedef std::chrono::time_point<std::chrono::high_resolution_clock> high_res_time_point;
 namespace SirEngine {
+typedef std::chrono::time_point<std::chrono::high_resolution_clock> high_res_time_point;
 /*
 the clock class is used internally in the game for sampling time, luckily in
 C++ 11 we get a cross platform way to access high resolution time with the

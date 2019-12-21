@@ -22,10 +22,6 @@ void compileAnim(const char *in, const char *out) {
 
 TEST_CASE("animation key 1", "[animation]") {
 
-  // initialize memory pools and loggers
-  SirEngine::StringPool stringPool(1024);
-  SirEngine::globals::STRING_POOL = &stringPool;
-  SirEngine::Log::init();
 
   PluginRegistry::init();
   PluginRegistry *registry = PluginRegistry::getInstance();
@@ -34,15 +30,10 @@ TEST_CASE("animation key 1", "[animation]") {
   // would
   compileAnim("../testData/idle1.json", "../testData/idle1.clip");
 
-  SirEngine::Log::free();
 }
 
 TEST_CASE("animation no data", "[animation]") {
 
-  // initialize memory pools and loggers
-  SirEngine::StringPool stringPool(1024);
-  SirEngine::globals::STRING_POOL = &stringPool;
-  SirEngine::Log::init();
 
   PluginRegistry::init();
   PluginRegistry *registry = PluginRegistry::getInstance();
@@ -51,15 +42,10 @@ TEST_CASE("animation no data", "[animation]") {
   // would
   compileAnim("../testData/noMetaAnim.json", "../testData/noMetaAnim.clip");
 
-  SirEngine::Log::free();
 }
 
 TEST_CASE("animation knight", "[animation]") {
 
-  // initialize memory pools and loggers
-  SirEngine::StringPool stringPool(1024);
-  SirEngine::globals::STRING_POOL = &stringPool;
-  SirEngine::Log::init();
 
   PluginRegistry::init();
   PluginRegistry *registry = PluginRegistry::getInstance();
@@ -68,20 +54,9 @@ TEST_CASE("animation knight", "[animation]") {
   // would
   compileAnim("../testData/knightBIdle.json", "../testData/knightBIdle.clip");
 
-  SirEngine::Log::free();
 }
 
 TEST_CASE("animation key 1 read", "[animation]") {
-
-  // initialize memory pools and loggers
-
-  SirEngine::StringPool stringPool(1024 * 1024 * 20);
-  SirEngine::ThreeSizesPool pool(1024 * 1024 * 20);
-  SirEngine::globals::STRING_POOL = &stringPool;
-  SirEngine::globals::PERSISTENT_ALLOCATOR = &pool;
-
-  SirEngine::Log::init();
-
 
   PluginRegistry::init();
   PluginRegistry *registry = PluginRegistry::getInstance();
@@ -103,16 +78,8 @@ TEST_CASE("animation key 1 read", "[animation]") {
   REQUIRE(clip->findFirstMetadataFrame(
               SirEngine::ANIM_CLIP_KEYWORDS::R_FOOT_DOWN) == 1);
 
-  SirEngine::Log::free();
 }
 TEST_CASE("animation key 2 read", "[animation]") {
-
-  // initialize memory pools and loggers
-  SirEngine::StringPool stringPool(1024 * 1024 * 20);
-  SirEngine::ThreeSizesPool pool(1024 * 1024 * 20);
-  SirEngine::globals::STRING_POOL = &stringPool;
-  SirEngine::globals::PERSISTENT_ALLOCATOR = &pool;
-  SirEngine::Log::init();
 
   PluginRegistry::init();
   PluginRegistry *registry = PluginRegistry::getInstance();
@@ -135,16 +102,9 @@ TEST_CASE("animation key 2 read", "[animation]") {
   REQUIRE(clip->findFirstMetadataFrame(
               SirEngine::ANIM_CLIP_KEYWORDS::R_FOOT_DOWN) == 10);
 
-  SirEngine::Log::free();
 }
 
 TEST_CASE("animation key 2 read from frame", "[animation]") {
-  // initialize memory pools and loggers
-  SirEngine::StringPool stringPool(1024 * 1024 * 20);
-  SirEngine::ThreeSizesPool pool(1024 * 1024 * 20);
-  SirEngine::globals::STRING_POOL = &stringPool;
-  SirEngine::globals::PERSISTENT_ALLOCATOR = &pool;
-  SirEngine::Log::init();
 
   PluginRegistry::init();
   PluginRegistry *registry = PluginRegistry::getInstance();
@@ -187,16 +147,9 @@ TEST_CASE("animation key 2 read from frame", "[animation]") {
       SirEngine::ANIM_CLIP_KEYWORDS::L_FOOT_DOWN, 35);
   REQUIRE(resultFrame == 30);
 
-  SirEngine::Log::free();
 }
 
 TEST_CASE("animation key 3 read from frame", "[animation]") {
-  // initialize memory pools and loggers
-  SirEngine::StringPool stringPool(1024 * 1024 * 20);
-  SirEngine::ThreeSizesPool pool(1024 * 1024 * 20);
-  SirEngine::globals::STRING_POOL = &stringPool;
-  SirEngine::globals::PERSISTENT_ALLOCATOR = &pool;
-  SirEngine::Log::init();
 
   PluginRegistry::init();
   PluginRegistry *registry = PluginRegistry::getInstance();
@@ -250,5 +203,4 @@ TEST_CASE("animation key 3 read from frame", "[animation]") {
       SirEngine::ANIM_CLIP_KEYWORDS::L_FOOT_DOWN, 9);
   REQUIRE(resultFrame == 9);
 
-  SirEngine::Log::free();
 }
