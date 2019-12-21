@@ -1,5 +1,3 @@
-#define CATCH_CONFIG_MAIN // This tells Catch to provide a main() - only do
-                          // this in one cpp file
 #include "SirEngine/argsUtils.h"
 #include "catch/catch.hpp"
 
@@ -174,10 +172,6 @@ TEST_CASE("get ready compiler args", "[argsSplit]") {
   // pluging args are passed removed of the extra quotes
   // here is to test if the cargs are parsed properly
 
-  SirEngine::globals::STRING_POOL =
-      new SirEngine::StringPool(2 << 22); // 4 megabyte allocation
-  SirEngine::globals::FRAME_ALLOCATOR = new SirEngine::StackAllocator();
-  SirEngine::globals::FRAME_ALLOCATOR->initialize(2 << 22);
   const std::string inargs = "/D AMD";
   SirEngine::ResizableVector<wchar_t *> splitCompilerArgsListPointers(20);
   splitCompilerArgs(inargs, splitCompilerArgsListPointers);
@@ -187,7 +181,4 @@ TEST_CASE("get ready compiler args", "[argsSplit]") {
   // us room in the future for shader variants if we ever want them
   // REQUIRE(splitCompilerArgsList[0] == std::wstring(L"/D AMD"));
   REQUIRE(wcscmp(splitCompilerArgsListPointers[0], L"/D AMD") == 0);
-  // release memory
-  delete SirEngine::globals::STRING_POOL;
-  delete SirEngine::globals::FRAME_ALLOCATOR;
 }
