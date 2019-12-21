@@ -8,7 +8,7 @@
 #include "SirEngine/materialManager.h"
 #include "SirEngine/memory/stringPool.h"
 #include "SirEngine/runtimeString.h"
-#include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
+#include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/TextureManagerDx12.h"

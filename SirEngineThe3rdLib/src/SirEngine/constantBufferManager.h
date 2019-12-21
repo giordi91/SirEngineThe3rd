@@ -5,14 +5,26 @@ namespace SirEngine {
 
 class ConstantBufferManager {
 public:
+  enum CONSTANT_BUFFER_FLAGS {
+    NONE = 0,
+    BUFFERED = 1,
+    SINGLE_ALLOCATION = 2,
+    HEAP_ALLOCATION = 4
+  };
+
+public:
   ConstantBufferManager() = default;
   virtual ~ConstantBufferManager() = default;
   ConstantBufferManager(const ConstantBufferManager &) = delete;
   ConstantBufferManager &operator=(const ConstantBufferManager &) = delete;
 
   virtual bool free(ConstantBufferHandle handle) = 0;
+  // TODO legacy call needs to be changed
   virtual ConstantBufferHandle allocateDynamic(uint32_t sizeInBytes,
                                                void *data = nullptr) = 0;
+
+  virtual ConstantBufferHandle
+  allocate(uint32_t sizeInBytes, uint32_t flags = 0, void *data = nullptr) = 0;
   virtual void
   updateConstantBufferNotBuffered(const ConstantBufferHandle handle,
                                   void *dataToUpload) = 0;
@@ -21,14 +33,6 @@ public:
                                             void *dataToUpload) = 0;
 
   virtual void processBufferedData() = 0;
-
-protected:
-  inline uint32_t getIndexFromHandle(const ConstantBufferHandle h) const {
-    return h.handle & INDEX_MASK;
-  }
-  inline uint16_t getMagicFromHandle(const ConstantBufferHandle h) const {
-    return static_cast<uint16_t>((h.handle & MAGIC_NUMBER_MASK) >> 16);
-  }
 
 protected:
   static const uint32_t INDEX_MASK = (1 << 16) - 1;

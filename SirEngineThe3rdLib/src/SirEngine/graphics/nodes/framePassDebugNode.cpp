@@ -2,7 +2,7 @@
 #include "SirEngine/graphics/debugAnnotations.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/handle.h"
-#include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
+#include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
 #include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/TextureManagerDx12.h"
 #include "platform/windows/graphics/dx12/bufferManagerDx12.h"

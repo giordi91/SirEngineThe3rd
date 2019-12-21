@@ -54,7 +54,9 @@ project(SirEngineThe3rdLib)
 	FINALIZE_EXTERNAL_HEADER()
 
 	if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-		add_compile_options(/wd4251 /wd4275)
+		#LNK4099 is for missing pbd of the compiled dependencies, I won't debug them so i don't add them
+		# to git to save space
+		add_compile_options(/wd4251 /wd4275 /wd4099)
 	endif()
 
 	#lets add specific windows build definitions

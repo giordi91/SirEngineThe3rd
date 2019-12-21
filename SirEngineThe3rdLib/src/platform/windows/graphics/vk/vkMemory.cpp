@@ -119,7 +119,7 @@ void createBuffer(Buffer &buffer, const VkDevice device,
   // binding the memory to our buffer, the dummy handle we allocated previously
   vkBindBufferMemory(device, buffer.buffer, buffer.memory, 0);
 
-  // now we map memory so we get a poniter we can write teo
+  // now we map memory so we get a pointer we can write to
   VK_CHECK(vkMapMemory(device, buffer.memory, 0, buffer.size, 0, &buffer.data));
 
 } // namespace vk

@@ -1,7 +1,7 @@
 #include "renderingContext.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/graphics/camera.h"
-#include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
+#include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/vk/vk.h"
 

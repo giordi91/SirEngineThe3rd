@@ -1,14 +1,14 @@
-#include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
+#include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
 #include "d3dx12.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 
 namespace SirEngine::dx12 {
 
-void ConstantBufferManagerDx12::initialize() {
+void Dx12ConstantBufferManager::initialize() {
   m_randomAlloc.initialize(4096, 20);
 }
 
-void ConstantBufferManagerDx12::clearUpQueueFree() {
+void Dx12ConstantBufferManager::clearUpQueueFree() {
 
   const uint64_t id = GLOBAL_FENCE->GetCompletedValue();
   const auto count = static_cast<int>(m_bufferToFree.size()) - 1;
@@ -47,7 +47,7 @@ void ConstantBufferManagerDx12::clearUpQueueFree() {
   }
 }
 
-bool ConstantBufferManagerDx12::free(ConstantBufferHandle handle) {
+bool Dx12ConstantBufferManager::free(ConstantBufferHandle handle) {
   // here we insert a fence so that we know when will be safe to delete
   // making sure the resource has not been de-allocated
   assertMagicNumber(handle);
@@ -63,7 +63,7 @@ bool ConstantBufferManagerDx12::free(ConstantBufferHandle handle) {
 }
 
 ConstantBufferHandle
-ConstantBufferManagerDx12::allocateDynamic(const uint32_t sizeInBytes,
+Dx12ConstantBufferManager::allocateDynamic(const uint32_t sizeInBytes,
                                            void *inputData) {
 
   // allocate dynamics takes into account we could have multiple frame in
@@ -114,7 +114,7 @@ ConstantBufferManagerDx12::allocateDynamic(const uint32_t sizeInBytes,
   return handle;
 }
 
-void ConstantBufferManagerDx12::updateConstantBufferNotBuffered(
+void Dx12ConstantBufferManager::updateConstantBufferNotBuffered(
     const ConstantBufferHandle handle, void *dataToUpload) {
   assertMagicNumber(handle);
   const uint32_t index = getIndexFromHandle(handle);
@@ -125,7 +125,7 @@ void ConstantBufferManagerDx12::updateConstantBufferNotBuffered(
   memcpy(data.mappedData, dataToUpload, data.size);
 }
 
-void ConstantBufferManagerDx12::updateConstantBufferBuffered(
+void Dx12ConstantBufferManager::updateConstantBufferBuffered(
     const ConstantBufferHandle handle, void *dataToUpload) {
 
   // check if we have any other request for this buffer if so we clear it
@@ -157,7 +157,7 @@ void ConstantBufferManagerDx12::updateConstantBufferBuffered(
   m_bufferedRequests[handle.handle] = buffRequest;
 }
 
-void ConstantBufferManagerDx12::processBufferedData() {
+void Dx12ConstantBufferManager::processBufferedData() {
   std::vector<int> processedIdxs;
   const int bufferedRequests = static_cast<int>(m_bufferedRequests.size());
   processedIdxs.reserve(bufferedRequests);

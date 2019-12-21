@@ -11,7 +11,7 @@
 #include "SirEngine/memory/stringPool.h"
 #include "SirEngine/runtimeString.h"
 #include "SirEngine/skinClusterManager.h"
-#include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
+#include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
 #include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/TextureManagerDx12.h"
 #include "platform/windows/graphics/dx12/bufferManagerDx12.h"
@@ -46,7 +46,7 @@ TextureManagerDx12 *TEXTURE_MANAGER = nullptr;
 Dx12MeshManager *MESH_MANAGER = nullptr;
 MaterialManager *MATERIAL_MANAGER = nullptr;
 DependencyGraph *RENDERING_GRAPH = nullptr;
-ConstantBufferManagerDx12 *CONSTANT_BUFFER_MANAGER = nullptr;
+Dx12ConstantBufferManager *CONSTANT_BUFFER_MANAGER = nullptr;
 ShaderManager *SHADER_MANAGER = nullptr;
 PSOManager *PSO_MANAGER = nullptr;
 RootSignatureManager *ROOT_SIGNATURE_MANAGER = nullptr;
@@ -171,7 +171,7 @@ bool initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
 
   // initialize the managers
   // TODO add initialize to all managers for consistency and symmetry
-  CONSTANT_BUFFER_MANAGER = new ConstantBufferManagerDx12();
+  CONSTANT_BUFFER_MANAGER = new Dx12ConstantBufferManager();
   CONSTANT_BUFFER_MANAGER->initialize();
 
   BUFFER_MANAGER = new BufferManagerDx12();
