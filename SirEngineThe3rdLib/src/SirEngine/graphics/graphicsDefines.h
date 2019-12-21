@@ -42,4 +42,6 @@ enum class SHADER_QUEUE_FLAGS {
   DEBUG = 1 << 3,
 };
 
+static constexpr uint64_t MB_TO_BYTE = 1024*1024;
+
 } // namespace SirEngine

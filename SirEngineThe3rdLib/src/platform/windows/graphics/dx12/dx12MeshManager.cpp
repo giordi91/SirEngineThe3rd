@@ -1,6 +1,6 @@
 #include "platform/windows/graphics/dx12/dx12MeshManager.h"
 
-#include "ConstantBufferManagerDx12.h"
+#include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
 #include "SirEngine/binary/binaryFile.h"
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"

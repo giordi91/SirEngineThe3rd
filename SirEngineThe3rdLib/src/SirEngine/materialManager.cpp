@@ -11,7 +11,7 @@
 #include "skinClusterManager.h"
 
 #if GRAPHICS_API == DX12
-#include "platform/windows/graphics/dx12/ConstantBufferManagerDx12.h"
+#include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
 #endif
 
 namespace materialKeys {

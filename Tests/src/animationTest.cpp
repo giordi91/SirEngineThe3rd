@@ -74,6 +74,12 @@ TEST_CASE("animation knight", "[animation]") {
 TEST_CASE("animation key 1 read", "[animation]") {
 
   // initialize memory pools and loggers
+
+  SirEngine::StringPool stringPool(1024 * 1024 * 20);
+  SirEngine::ThreeSizesPool pool(1024 * 1024 * 20);
+  SirEngine::globals::STRING_POOL = &stringPool;
+  SirEngine::globals::PERSISTENT_ALLOCATOR = &pool;
+
   SirEngine::Log::init();
 
 
@@ -83,11 +89,6 @@ TEST_CASE("animation key 1 read", "[animation]") {
   // compiling animation clip on the fly, then we read it back as the engine
   // would
   compileAnim("../testData/idle1.json", "../testData/idle1.clip");
-
-  SirEngine::StringPool stringPool(1024 * 1024 * 20);
-  SirEngine::ThreeSizesPool pool(1024 * 1024 * 20);
-  SirEngine::globals::STRING_POOL = &stringPool;
-  SirEngine::globals::PERSISTENT_ALLOCATOR = &pool;
   SirEngine::AnimationManager animManager;
   animManager.init();
   SirEngine::globals::ANIMATION_MANAGER = &animManager;
@@ -107,6 +108,10 @@ TEST_CASE("animation key 1 read", "[animation]") {
 TEST_CASE("animation key 2 read", "[animation]") {
 
   // initialize memory pools and loggers
+  SirEngine::StringPool stringPool(1024 * 1024 * 20);
+  SirEngine::ThreeSizesPool pool(1024 * 1024 * 20);
+  SirEngine::globals::STRING_POOL = &stringPool;
+  SirEngine::globals::PERSISTENT_ALLOCATOR = &pool;
   SirEngine::Log::init();
 
   PluginRegistry::init();
@@ -116,10 +121,6 @@ TEST_CASE("animation key 2 read", "[animation]") {
   // would
   compileAnim("../testData/idle2.json", "../testData/idle2.clip");
 
-  SirEngine::StringPool stringPool(1024 * 1024 * 20);
-  SirEngine::ThreeSizesPool pool(1024 * 1024 * 20);
-  SirEngine::globals::STRING_POOL = &stringPool;
-  SirEngine::globals::PERSISTENT_ALLOCATOR = &pool;
   SirEngine::AnimationManager animManager;
   animManager.init();
   SirEngine::globals::ANIMATION_MANAGER = &animManager;
@@ -139,6 +140,10 @@ TEST_CASE("animation key 2 read", "[animation]") {
 
 TEST_CASE("animation key 2 read from frame", "[animation]") {
   // initialize memory pools and loggers
+  SirEngine::StringPool stringPool(1024 * 1024 * 20);
+  SirEngine::ThreeSizesPool pool(1024 * 1024 * 20);
+  SirEngine::globals::STRING_POOL = &stringPool;
+  SirEngine::globals::PERSISTENT_ALLOCATOR = &pool;
   SirEngine::Log::init();
 
   PluginRegistry::init();
@@ -148,10 +153,6 @@ TEST_CASE("animation key 2 read from frame", "[animation]") {
   // would
   compileAnim("../testData/idle2.json", "../testData/idle2.clip");
 
-  SirEngine::StringPool stringPool(1024 * 1024 * 20);
-  SirEngine::ThreeSizesPool pool(1024 * 1024 * 20);
-  SirEngine::globals::STRING_POOL = &stringPool;
-  SirEngine::globals::PERSISTENT_ALLOCATOR = &pool;
   SirEngine::AnimationManager animManager;
   animManager.init();
   SirEngine::globals::ANIMATION_MANAGER = &animManager;
@@ -191,6 +192,10 @@ TEST_CASE("animation key 2 read from frame", "[animation]") {
 
 TEST_CASE("animation key 3 read from frame", "[animation]") {
   // initialize memory pools and loggers
+  SirEngine::StringPool stringPool(1024 * 1024 * 20);
+  SirEngine::ThreeSizesPool pool(1024 * 1024 * 20);
+  SirEngine::globals::STRING_POOL = &stringPool;
+  SirEngine::globals::PERSISTENT_ALLOCATOR = &pool;
   SirEngine::Log::init();
 
   PluginRegistry::init();
@@ -200,10 +205,6 @@ TEST_CASE("animation key 3 read from frame", "[animation]") {
   // would
   compileAnim("../testData/knightBWalk.json", "../testData/knightBWalk.clip");
 
-  SirEngine::StringPool stringPool(1024 * 1024 * 20);
-  SirEngine::ThreeSizesPool pool(1024 * 1024 * 20);
-  SirEngine::globals::STRING_POOL = &stringPool;
-  SirEngine::globals::PERSISTENT_ALLOCATOR = &pool;
   SirEngine::AnimationManager animManager;
   animManager.init();
   SirEngine::globals::ANIMATION_MANAGER = &animManager;

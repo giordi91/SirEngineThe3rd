@@ -10,19 +10,24 @@
 
 namespace SirEngine::dx12 {
 
-class ConstantBufferManagerDx12 final : public ConstantBufferManager {
+class Dx12ConstantBufferManager final : public ConstantBufferManager {
 public:
-  ConstantBufferManagerDx12() : m_dynamicStorage(RESERVE_SIZE){} 
-  virtual ~ConstantBufferManagerDx12() = default;
+  Dx12ConstantBufferManager() : m_dynamicStorage(RESERVE_SIZE) {}
+  virtual ~Dx12ConstantBufferManager() = default;
   void initialize();
   void clearUpQueueFree();
   // deleted method to avoid copy, you can still move it though
-  ConstantBufferManagerDx12(const ConstantBufferManagerDx12 &) = delete;
-  ConstantBufferManagerDx12 &
-  operator=(const ConstantBufferManagerDx12 &) = delete;
+  Dx12ConstantBufferManager(const Dx12ConstantBufferManager &) = delete;
+  Dx12ConstantBufferManager &
+  operator=(const Dx12ConstantBufferManager &) = delete;
 
-  virtual ConstantBufferHandle allocateDynamic(uint32_t sizeInBytes,
-                                               void *data = nullptr) override;
+  ConstantBufferHandle allocateDynamic(uint32_t sizeInBytes,
+                                       void *data = nullptr) override;
+  ConstantBufferHandle allocate(uint32_t sizeInBytes, uint32_t flags = 0,
+                                void *data = nullptr) override {
+    assert(0);
+    return{};
+  };
 
   bool free(ConstantBufferHandle handle) override;
 
@@ -39,7 +44,8 @@ public:
   getVirtualAddress(const ConstantBufferHandle handle) {
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
-    return m_dynamicStorage[index].cbData[globals::CURRENT_FRAME]
+    return m_dynamicStorage[index]
+        .cbData[globals::CURRENT_FRAME]
         .resource->GetGPUVirtualAddress();
   }
 
@@ -59,7 +65,7 @@ private:
     ConstantBufferHandle handle;
     RandomSizeAllocationHandle dataAllocHandle;
     int counter = 0;
-	int poolIndex;
+    int poolIndex;
   };
 
   struct ConstantBufferData final {
@@ -83,7 +89,8 @@ private:
   inline void assertMagicNumber(const ConstantBufferHandle handle) {
     uint32_t magic = getMagicFromHandle(handle);
     uint32_t idx = getIndexFromHandle(handle);
-    assert(m_dynamicStorage[idx].cbData[globals::CURRENT_FRAME].magicNumber == magic &&
+    assert(m_dynamicStorage[idx].cbData[globals::CURRENT_FRAME].magicNumber ==
+               magic &&
            "invalid magic handle for constant buffer");
   }
   inline void mapConstantBuffer(ConstantBufferData &data) const {
@@ -98,7 +105,7 @@ private:
   inline void unmapConstantBuffer(ConstantBufferData &data) const {
     if (data.mapped) {
       data.mapped = false;
-      data.resource->Unmap(0,nullptr);
+      data.resource->Unmap(0, nullptr);
     } else {
       SE_CORE_WARN("Tried to unmap an already mapped buffer");
     }
