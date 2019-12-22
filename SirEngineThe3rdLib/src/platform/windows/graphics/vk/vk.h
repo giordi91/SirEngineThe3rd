@@ -11,6 +11,7 @@ namespace vk {
 class VkPSOManager;
 class VkShaderManager;
 class VkPipelineLayoutManager;
+class VkConstantBufferManager;
 struct VkSwapchain;
 
 static constexpr int PREALLOCATED_SEMAPHORE_COUNT = 4;
@@ -45,6 +46,7 @@ extern VkSwapchain *SWAP_CHAIN;
 extern VkPSOManager *PSO_MANAGER;
 extern VkShaderManager *SHADER_MANAGER;
 extern VkPipelineLayoutManager *PIPELINE_LAYOUT_MANAGER;
+extern VkConstantBufferManager* CONSTANT_BUFFER_MANAGER;
 extern uint32_t SWAP_CHAIN_IMAGE_COUNT;
 // incremented every frame and used to find the correct set of resources
 // like command buffer pool and allocators
@@ -52,9 +54,6 @@ extern VkFrameCommand FRAME_COMMAND[PREALLOCATED_SEMAPHORE_COUNT];
 extern VkFrameCommand *CURRENT_FRAME_COMMAND;
 extern uint32_t GRAPHICS_QUEUE_FAMILY;
 extern uint32_t PRESENTATION_QUEUE_FAMILY;
-
-// TODO this is used anymore?
-extern std::vector<VkDescriptorSetLayout> LAYOUTS_TO_DELETE;
 
 bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
                           const uint32_t height);

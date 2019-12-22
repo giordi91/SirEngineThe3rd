@@ -664,7 +664,7 @@ void initStaticSamplers() {
                                    STATIC_SAMPLER_LAYOUT);
 }
 
-void VkPSOManager::init() { vk::initStaticSamplers(); }
+void VkPSOManager::initialize() { vk::initStaticSamplers(); }
 
 void VkPSOManager::cleanup() {
   int count = m_psoRegister.binCount();

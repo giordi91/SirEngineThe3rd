@@ -73,10 +73,9 @@ selectMemoryType(const VkPhysicalDeviceMemoryProperties &memoryProperties,
   return ~0u;
 }
 
-void createBuffer(Buffer &buffer, const VkDevice device,
-                  const VkPhysicalDeviceMemoryProperties &memoryProperties,
-                  const size_t size, const VkBufferUsageFlags usage,
-                  const char *name) {
+void createBuffer(Buffer &buffer, const VkDevice device, const size_t size,
+                  const VkBufferUsageFlags usage,
+                  const VkMemoryPropertyFlags memoryFlags, const char *name) {
 
   VkBufferCreateInfo createInfo{VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};
   createInfo.size = size;
@@ -84,7 +83,8 @@ void createBuffer(Buffer &buffer, const VkDevice device,
   createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
   // this is just a dummy handle
   VK_CHECK(vkCreateBuffer(device, &createInfo, nullptr, &buffer.buffer));
-  SET_DEBUG_NAME(buffer.buffer, VK_OBJECT_TYPE_BUFFER, frameConcatenation(name,"Buffer"));
+  SET_DEBUG_NAME(buffer.buffer, VK_OBJECT_TYPE_BUFFER,
+                 frameConcatenation(name, "Buffer"));
 
   // memory bits of this struct define the requirement of the type of memory.
   // AMD seems to have 256 mb of mapped system memory you can write directly to
@@ -97,6 +97,8 @@ void createBuffer(Buffer &buffer, const VkDevice device,
   buffer.size = size;
   buffer.allocationSize = requirements.size;
 
+  VkPhysicalDeviceMemoryProperties memoryProperties;
+  vkGetPhysicalDeviceMemoryProperties(vk::PHYSICAL_DEVICE, &memoryProperties);
   // so, HOST_VISIBLE, means we can map this buffer to host memory, this is
   // useful for when we upload memory the gpu. similar to upload_heap in dx12.
   // Now in reality we should then copy this memory from gpu memory mapped
@@ -104,8 +106,7 @@ void createBuffer(Buffer &buffer, const VkDevice device,
   // access
   const uint32_t memoryIndex =
       selectMemoryType(memoryProperties, requirements.memoryTypeBits,
-                       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                           VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+                       memoryFlags);
 
   assert(memoryIndex != ~0u);
 
@@ -114,7 +115,8 @@ void createBuffer(Buffer &buffer, const VkDevice device,
   memoryInfo.memoryTypeIndex = memoryIndex;
 
   VK_CHECK(vkAllocateMemory(device, &memoryInfo, nullptr, &buffer.memory));
-  SET_DEBUG_NAME(buffer.memory, VK_OBJECT_TYPE_DEVICE_MEMORY, frameConcatenation(name,"Memory"));
+  SET_DEBUG_NAME(buffer.memory, VK_OBJECT_TYPE_DEVICE_MEMORY,
+                 frameConcatenation(name, "Memory"));
 
   // binding the memory to our buffer, the dummy handle we allocated previously
   vkBindBufferMemory(device, buffer.buffer, buffer.memory, 0);

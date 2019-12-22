@@ -9,7 +9,8 @@ public:
     NONE = 0,
     BUFFERED = 1,
     SINGLE_ALLOCATION = 2,
-    HEAP_ALLOCATION = 4
+    HEAP_ALLOCATION = 4,
+    UPDATED_EVERY_FRAME = 8 
   };
 
 public:
@@ -18,6 +19,8 @@ public:
   ConstantBufferManager(const ConstantBufferManager &) = delete;
   ConstantBufferManager &operator=(const ConstantBufferManager &) = delete;
 
+  virtual void initialize() = 0;
+  virtual void cleanup() = 0;
   virtual bool free(ConstantBufferHandle handle) = 0;
   // TODO legacy call needs to be changed
   virtual ConstantBufferHandle allocateDynamic(uint32_t sizeInBytes,
@@ -25,6 +28,7 @@ public:
 
   virtual ConstantBufferHandle
   allocate(uint32_t sizeInBytes, uint32_t flags = 0, void *data = nullptr) = 0;
+  virtual void update(ConstantBufferHandle handle , void* data) =0;
   virtual void
   updateConstantBufferNotBuffered(const ConstantBufferHandle handle,
                                   void *dataToUpload) = 0;

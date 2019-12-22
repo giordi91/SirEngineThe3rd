@@ -125,7 +125,7 @@ void VkShaderManager::recompileShader(const char *path, const char *offsetPath,
 
 VkShaderManager::~VkShaderManager() { delete m_compiler; }
 
-void VkShaderManager::init() {
+void VkShaderManager::initialize() {
   m_metadataAllocator.initialize(METADATA_STACK_SIZE);
   m_compiler = new VkShaderCompiler();
 }
