@@ -345,7 +345,7 @@ void getRasterInfo(const nlohmann::json jobj,
     rasterInfo.polygonMode = VK_POLYGON_MODE_FILL;
     rasterInfo.cullMode = VK_CULL_MODE_BACK_BIT;
     rasterInfo.lineWidth = 1.0f; // even if we don't use it must be specified
-    rasterInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
+    rasterInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
     return;
   }
   // if we are here means we have a custom state
