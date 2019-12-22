@@ -67,7 +67,6 @@ private:
   // mesh
   vk::VkMesh m_mesh;
   vk::Buffer m_vertexBuffer;
-  vk::Buffer m_cameraBuffer;
   vk::Buffer m_indexBuffer;
   VkVertexInputBindingDescription m_stream;
   VkVertexInputAttributeDescription m_attr[3];

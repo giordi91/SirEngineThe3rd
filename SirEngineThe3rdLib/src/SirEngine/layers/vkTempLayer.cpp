@@ -70,11 +70,6 @@ void VkTempLayer::onAttach() {
   VkMemoryPropertyFlags memoryFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                                       VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 
-  createBuffer(m_cameraBuffer, vk::LOGICAL_DEVICE, sizeof(CameraBuffer),
-               VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT |
-                   VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-               memoryFlags, "cameraBuffer");
-
   createBuffer(m_vertexBuffer, vk::LOGICAL_DEVICE, 128 * 1024 * 1024, meshUsage,
                memoryFlags, "meshBuffer");
 
@@ -426,7 +421,6 @@ void VkTempLayer::clear() {
   vkDeviceWaitIdle(vk::LOGICAL_DEVICE);
   destroyBuffer(vk::LOGICAL_DEVICE, m_vertexBuffer);
   destroyBuffer(vk::LOGICAL_DEVICE, m_indexBuffer);
-  destroyBuffer(vk::LOGICAL_DEVICE, m_cameraBuffer);
   // if constexpr (!USE_PUSH) {
   vkDestroyDescriptorSetLayout(vk::LOGICAL_DEVICE, m_setLayout, nullptr);
   vkDestroyDescriptorPool(vk::LOGICAL_DEVICE, vk::DESCRIPTOR_POOL, nullptr);

@@ -310,29 +310,30 @@ void VkConstantBufferManager::processBufferedData() {
   */
 }
 
-void VkConstantBufferManager::bindConstantBuffer(ConstantBufferHandle handle,VkDescriptorBufferInfo& bufferInfo, uint32_t bindingIdx,
-	VkWriteDescriptorSet* set,VkDescriptorSet descSet )
-{
+void VkConstantBufferManager::bindConstantBuffer(
+    const ConstantBufferHandle handle, VkDescriptorBufferInfo &bufferInfo,
+    const uint32_t bindingIdx, VkWriteDescriptorSet *set,
+    const VkDescriptorSet descSet) {
+
   assertMagicNumber(handle);
   uint32_t idx = getIndexFromHandle(handle);
   const ConstantBufferData &buffData = m_allocInfoStorage.getConstRef(idx);
-  const Slab& slab = m_perFrameSlabs[globals::CURRENT_FRAME][buffData.m_slabIdx];
-  
+  const Slab &slab =
+      m_perFrameSlabs[globals::CURRENT_FRAME][buffData.m_slabIdx];
 
   // actual information of the descriptor, in this case it is our mesh buffer
   bufferInfo.buffer = slab.m_buffer.buffer;
   bufferInfo.offset = buffData.m_range.m_offset;
   bufferInfo.range = buffData.m_range.m_size;
 
-  VkWriteDescriptorSet& correctSet = set[bindingIdx];
-  
+  VkWriteDescriptorSet &correctSet = set[bindingIdx];
+
   correctSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   correctSet.dstSet = descSet;
   correctSet.dstBinding = 1;
   correctSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
   correctSet.pBufferInfo = &bufferInfo;
   correctSet.descriptorCount = 1;
-
 }
 
 void VkConstantBufferManager::allocateSlab() {
