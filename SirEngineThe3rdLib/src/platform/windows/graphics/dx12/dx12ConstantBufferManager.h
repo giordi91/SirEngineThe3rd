@@ -14,7 +14,8 @@ class Dx12ConstantBufferManager final : public ConstantBufferManager {
 public:
   Dx12ConstantBufferManager() : m_dynamicStorage(RESERVE_SIZE) {}
   virtual ~Dx12ConstantBufferManager() = default;
-  void initialize();
+  void initialize() override;
+  void cleanup() override;
   void clearUpQueueFree();
   // deleted method to avoid copy, you can still move it though
   Dx12ConstantBufferManager(const Dx12ConstantBufferManager &) = delete;
@@ -26,8 +27,9 @@ public:
   ConstantBufferHandle allocate(uint32_t sizeInBytes, uint32_t flags = 0,
                                 void *data = nullptr) override {
     assert(0);
-    return{};
+    return {};
   };
+  void update(ConstantBufferHandle handle, void *data) override { assert(0); }
 
   bool free(ConstantBufferHandle handle) override;
 
@@ -109,7 +111,10 @@ private:
     } else {
       SE_CORE_WARN("Tried to unmap an already mapped buffer");
     }
-  };
+  }
+
+private:
+  ;
 
 private:
   // std::vector<ConstantBufferData> m_dynamicStorage[FRAME_BUFFERS_COUNT];

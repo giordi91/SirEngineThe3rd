@@ -2,7 +2,8 @@
 
 namespace SirEngine {
 BufferRangeHandle
-LinearBufferManage::allocate(const uint64_t allocSizeInBytes) {
+LinearBufferManager::allocate(const uint64_t allocSizeInBytes) {
+
   uint64_t newStackPointer = allocSizeInBytes + m_stackPointer;
   bool allocationFits = newStackPointer < m_bufferSizeInBytes;
   bool hasFreeAllocations = m_freeAllocations.size() != 0;
@@ -52,7 +53,7 @@ LinearBufferManage::allocate(const uint64_t allocSizeInBytes) {
   return handle;
 }
 
-void LinearBufferManage::free(const BufferRangeHandle handle) {
+void LinearBufferManager::free(const BufferRangeHandle handle) {
   assertMagicNumber(handle);
   uint32_t idx = getIndexFromHandle(handle);
   assert(idx < m_allocations.size());
@@ -64,4 +65,5 @@ void LinearBufferManage::free(const BufferRangeHandle handle) {
   m_freeAllocations.pushBack(tracker);
   m_allocCount -= 1;
 }
+
 } // namespace SirEngine

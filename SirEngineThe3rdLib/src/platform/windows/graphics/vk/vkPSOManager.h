@@ -47,7 +47,7 @@ public:
 
   VkPSOManager(const VkPSOManager &) = delete;
   VkPSOManager &operator=(const VkPSOManager &) = delete;
-  void init();
+  void initialize();
   void cleanup();
   void loadRawPSOInFolder(const char *directory);
   void loadCachedPSOInFolder(const char *directory);

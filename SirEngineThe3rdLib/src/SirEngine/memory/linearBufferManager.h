@@ -31,12 +31,12 @@ struct BufferRangeTracker {
  * know which part is free, usable , make sub allocations and so on.
  */
 template class SIR_ENGINE_API ResizableVector<BufferRangeTracker>;
-class SIR_ENGINE_API LinearBufferManage {
+class SIR_ENGINE_API LinearBufferManager {
 public:
   static constexpr uint32_t DEFAULT_ALLOCATION_RESERVE = 64;
 
 public:
-  explicit LinearBufferManage(
+  explicit LinearBufferManager(
       const uint64_t bufferSizeInBytes,
       const uint32_t preAlloc = DEFAULT_ALLOCATION_RESERVE)
       : m_bufferSizeInBytes(bufferSizeInBytes), m_allocations(preAlloc),
@@ -60,6 +60,26 @@ public:
     uint32_t idx = getIndexFromHandle(handle);
     assert(idx < m_allocations.size());
     return m_allocations[idx].m_range;
+  }
+
+  bool canAllocate(uint32_t allocSizeInBytes) const {
+    uint64_t newStackPointer = allocSizeInBytes + m_stackPointer;
+    bool allocationFits = newStackPointer < m_bufferSizeInBytes;
+    bool hasFreeAllocations = m_freeAllocations.size() != 0;
+    // return (!allocationFits) & (!hasFreeAllocations);
+    if (allocationFits) {
+      return true;
+    }
+    // if here alloc does not free need to search
+    // let us first check if there are free allocations
+    uint32_t count = m_freeAllocations.size();
+    for (uint32_t i = 0; i < count; ++i) {
+      BufferRangeTracker &range = m_freeAllocations[i];
+      if (allocSizeInBytes <= range.m_actualAllocSize) {
+          return true;
+      }
+    }
+    return false;
   }
 
 private:

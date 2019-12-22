@@ -15,6 +15,7 @@
 #include "platform/windows/graphics/vk/vkSwapChain.h"
 #include "vkDescriptors.h"
 #include "vkRootSignatureManager.h"
+#include "vkConstantBufferManager.h"
 
 namespace SirEngine::vk {
 VkInstance INSTANCE = nullptr;
@@ -34,6 +35,7 @@ VkDebugUtilsMessengerEXT DEBUG_CALLBACK2 = nullptr;
 
 VkPSOManager *PSO_MANAGER = nullptr;
 VkShaderManager *SHADER_MANAGER = nullptr;
+VkConstantBufferManager* CONSTANT_BUFFER_MANAGER = nullptr;
 VkPipelineLayoutManager *PIPELINE_LAYOUT_MANAGER = nullptr;
 uint32_t SWAP_CHAIN_IMAGE_COUNT = 0;
 VkFrameCommand FRAME_COMMAND[PREALLOCATED_SEMAPHORE_COUNT];
@@ -41,8 +43,6 @@ VkFrameCommand *CURRENT_FRAME_COMMAND = nullptr;
 uint32_t GRAPHICS_QUEUE_FAMILY = 0;
 uint32_t PRESENTATION_QUEUE_FAMILY = 0;
 
-// TODO move this to manager
-std::vector<VkDescriptorSetLayout> LAYOUTS_TO_DELETE;
 
 bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
                           const uint32_t height) {
@@ -159,7 +159,7 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   //}
 
   SHADER_MANAGER = new VkShaderManager();
-  SHADER_MANAGER->init();
+  SHADER_MANAGER->initialize();
   SHADER_MANAGER->loadShadersInFolder(
       frameConcatenation(globals::ENGINE_CONFIG->m_dataSourcePath,
                          "/processed/shaders/VK/rasterization"));
@@ -167,7 +167,11 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   PIPELINE_LAYOUT_MANAGER->init();
 
   PSO_MANAGER = new VkPSOManager();
-  PSO_MANAGER->init();
+  PSO_MANAGER->initialize();
+
+  CONSTANT_BUFFER_MANAGER = new VkConstantBufferManager();
+  CONSTANT_BUFFER_MANAGER->initialize();
+  globals::CONSTANT_BUFFER_MANAGER = CONSTANT_BUFFER_MANAGER;
 
   return true;
 }
@@ -349,6 +353,7 @@ bool VkRenderingContext::shutdownGraphic() {
 
   destroyStaticSamplers();
   SHADER_MANAGER->cleanup();
+  CONSTANT_BUFFER_MANAGER->cleanup();
   vkDestroyPipelineLayout(LOGICAL_DEVICE, PIPELINE_LAYOUT, nullptr);
   // vkDestroyRenderPass(LOGICAL_DEVICE, RENDER_PASS, nullptr);
   for (uint32_t i = 0; i < SWAP_CHAIN_IMAGE_COUNT; ++i) {

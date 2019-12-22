@@ -1,4 +1,5 @@
 #include "SirEngine/application.h"
+#include "SirEngine/constantBufferManager.h"
 #include "SirEngine/events/debugEvent.h"
 #include "SirEngine/events/mouseEvent.h"
 #include "SirEngine/globals.h"
@@ -7,6 +8,7 @@
 #include "SirEngine/engineConfig.h"
 #include "SirEngine/layers/vkTempLayer.h"
 #include "platform/windows/graphics/vk/vk.h"
+#include "platform/windows/graphics/vk/vkConstantBufferManager.h"
 #include "platform/windows/graphics/vk/vkDescriptors.h"
 #include "platform/windows/graphics/vk/vkLoad.h"
 #include "platform/windows/graphics/vk/vkPSOManager.h"
@@ -18,8 +20,7 @@ namespace SirEngine {
 void VkTempLayer::createRenderTargetAndFrameBuffer(const int width,
                                                    const int height) {
   vk::createRenderTarget(
-      "RT", VK_FORMAT_R8G8B8A8_UNORM,
-      vk::LOGICAL_DEVICE, m_rt,
+      "RT", VK_FORMAT_R8G8B8A8_UNORM, vk::LOGICAL_DEVICE, m_rt,
       VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
       VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, width, height);
 
@@ -57,21 +58,30 @@ void VkTempLayer::onAttach() {
   // allocate memory buffer for the mesh
   VkPhysicalDeviceMemoryProperties memoryRequirements;
   vkGetPhysicalDeviceMemoryProperties(vk::PHYSICAL_DEVICE, &memoryRequirements);
-  createBuffer(
-      m_vertexBuffer, vk::LOGICAL_DEVICE, memoryRequirements, 128 * 1024 * 1024,
-      VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-      "meshBuffer");
 
-  createBuffer(m_cameraBuffer, vk::LOGICAL_DEVICE, memoryRequirements,
-               sizeof(CameraBuffer),
+  m_cameraBufferHandle = globals::CONSTANT_BUFFER_MANAGER->allocate(
+      sizeof(CameraBuffer),
+      ConstantBufferManager::CONSTANT_BUFFER_FLAGS::BUFFERED |
+          ConstantBufferManager::CONSTANT_BUFFER_FLAGS::UPDATED_EVERY_FRAME,
+      nullptr);
+
+  VkBufferUsageFlags meshUsage =
+      VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+  VkMemoryPropertyFlags memoryFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                                      VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+
+  createBuffer(m_cameraBuffer, vk::LOGICAL_DEVICE, sizeof(CameraBuffer),
                VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT |
                    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-               "cameraBuffer");
+               memoryFlags, "cameraBuffer");
 
-  createBuffer(
-      m_indexBuffer, vk::LOGICAL_DEVICE, memoryRequirements, 128 * 1024 * 1024,
-      VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-      "meshIndex");
+  createBuffer(m_vertexBuffer, vk::LOGICAL_DEVICE, 128 * 1024 * 1024, meshUsage,
+               memoryFlags, "meshBuffer");
+
+  createBuffer(m_indexBuffer, vk::LOGICAL_DEVICE, 128 * 1024 * 1024,
+               VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
+                   VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+               memoryFlags, "meshIndex");
   assert(m_vertexBuffer.size >= m_mesh.vertices.size() * sizeof(vk::Vertex));
   assert(m_indexBuffer.size >= m_mesh.indices.size() * sizeof(uint32_t));
 
@@ -168,9 +178,9 @@ void VkTempLayer::createDescriptorLayoutAdvanced() {
 
   // actual information of the descriptor, in this case it is our mesh buffer
   VkDescriptorBufferInfo bufferInfoUniform = {};
-  bufferInfoUniform.buffer = m_cameraBuffer.buffer;
-  bufferInfoUniform.offset = 0;
-  bufferInfoUniform.range = m_cameraBuffer.size;
+  // bufferInfoUniform.buffer = m_cameraBuffer.buffer;
+  // bufferInfoUniform.offset = 0;
+  // bufferInfoUniform.range = m_cameraBuffer.size;
 
   // updating descriptors, with no samplers bound
   // Binding 0: Object mesh buffer
@@ -180,13 +190,17 @@ void VkTempLayer::createDescriptorLayoutAdvanced() {
   writeDescriptorSets[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   writeDescriptorSets[0].pBufferInfo = &bufferInfo;
   writeDescriptorSets[0].descriptorCount = 1;
-  // Binding 0: Object matrices Uniform buffer
-  writeDescriptorSets[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  writeDescriptorSets[1].dstSet = m_meshDescriptorSet;
-  writeDescriptorSets[1].dstBinding = 1;
-  writeDescriptorSets[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  writeDescriptorSets[1].pBufferInfo = &bufferInfoUniform;
-  writeDescriptorSets[1].descriptorCount = 1;
+
+  vk::CONSTANT_BUFFER_MANAGER->bindConstantBuffer(
+      m_cameraBufferHandle, bufferInfoUniform, 1, writeDescriptorSets,
+      m_meshDescriptorSet);
+  //// Binding 0: Object matrices Uniform buffer
+  // writeDescriptorSets[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  // writeDescriptorSets[1].dstSet = m_meshDescriptorSet;
+  // writeDescriptorSets[1].dstBinding = 1;
+  // writeDescriptorSets[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  // writeDescriptorSets[1].pBufferInfo = &bufferInfoUniform;
+  // writeDescriptorSets[1].descriptorCount = 1;
 
   // Binding 2: Object texture
   writeDescriptorSets[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -413,9 +427,6 @@ void VkTempLayer::clear() {
   destroyBuffer(vk::LOGICAL_DEVICE, m_vertexBuffer);
   destroyBuffer(vk::LOGICAL_DEVICE, m_indexBuffer);
   destroyBuffer(vk::LOGICAL_DEVICE, m_cameraBuffer);
-  for (auto layout : vk::LAYOUTS_TO_DELETE) {
-    vkDestroyDescriptorSetLayout(vk::LOGICAL_DEVICE, layout, nullptr);
-  }
   // if constexpr (!USE_PUSH) {
   vkDestroyDescriptorSetLayout(vk::LOGICAL_DEVICE, m_setLayout, nullptr);
   vkDestroyDescriptorPool(vk::LOGICAL_DEVICE, vk::DESCRIPTOR_POOL, nullptr);
@@ -608,7 +619,9 @@ void VkTempLayer::setupCameraForFrame() {
       globals::MAIN_CAMERA->getMVPInverse(glm::mat4(1.0));
   m_camBufferCPU.perspectiveValues = globals::MAIN_CAMERA->getProjParams();
 
-  memcpy(m_cameraBuffer.data, &m_camBufferCPU, sizeof(m_camBufferCPU));
+  // memcpy(m_cameraBuffer.data, &m_camBufferCPU, sizeof(m_camBufferCPU));
+  globals::CONSTANT_BUFFER_MANAGER->update(m_cameraBufferHandle,
+                                           &m_camBufferCPU);
 }
 
 /*

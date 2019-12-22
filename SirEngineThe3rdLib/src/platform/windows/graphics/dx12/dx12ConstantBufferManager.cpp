@@ -8,6 +8,11 @@ void Dx12ConstantBufferManager::initialize() {
   m_randomAlloc.initialize(4096, 20);
 }
 
+void Dx12ConstantBufferManager::cleanup()
+{
+    //TODO do proper cleanup
+}
+
 void Dx12ConstantBufferManager::clearUpQueueFree() {
 
   const uint64_t id = GLOBAL_FENCE->GetCompletedValue();

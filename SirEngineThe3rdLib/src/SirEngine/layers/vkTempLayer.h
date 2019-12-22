@@ -78,5 +78,6 @@ private:
   VkFramebuffer m_tempFrameBuffer;
   VkRenderPass m_pass;
   CameraBuffer m_camBufferCPU;
+  ConstantBufferHandle m_cameraBufferHandle;
 };
 } // namespace SirEngine
