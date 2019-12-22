@@ -54,6 +54,10 @@ public:
     return m_freeAllocations.size();
   }
 
+  [[nodiscard]] const ResizableVector<BufferRangeTracker>* getAllocations() const {
+    return &m_allocations;
+  }
+
   [[nodiscard]] BufferRange
   getBufferRange(const BufferRangeHandle handle) const {
     assertMagicNumber(handle);
@@ -76,7 +80,7 @@ public:
     for (uint32_t i = 0; i < count; ++i) {
       BufferRangeTracker &range = m_freeAllocations[i];
       if (allocSizeInBytes <= range.m_actualAllocSize) {
-          return true;
+        return true;
       }
     }
     return false;

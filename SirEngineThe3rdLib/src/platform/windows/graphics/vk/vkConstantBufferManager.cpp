@@ -1,6 +1,7 @@
 #include "platform/windows/graphics/vk/vkConstantBufferManager.h"
 #include "platform/windows/graphics/vk/vk.h"
 #include "vkMemory.h"
+#include <random>
 
 namespace SirEngine::vk {
 
@@ -334,6 +335,11 @@ void VkConstantBufferManager::bindConstantBuffer(
   correctSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
   correctSet.pBufferInfo = &bufferInfo;
   correctSet.descriptorCount = 1;
+}
+
+const ResizableVector<BufferRangeTracker>* VkConstantBufferManager::getAllocations() const
+{
+    return m_perFrameSlabs[0]->m_slabTracker.getAllocations();
 }
 
 void VkConstantBufferManager::allocateSlab() {

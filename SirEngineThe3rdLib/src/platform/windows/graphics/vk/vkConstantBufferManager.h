@@ -55,19 +55,26 @@ public:
   // any buffered constant buffer will be dealt with
   virtual void processBufferedData() override;
 
-  void bindConstantBuffer(ConstantBufferHandle handle,VkDescriptorBufferInfo& bufferInfo, uint32_t bindingIdx,
-	VkWriteDescriptorSet* set,VkDescriptorSet descSet );
+  void bindConstantBuffer(ConstantBufferHandle handle,
+                          VkDescriptorBufferInfo &bufferInfo,
+                          uint32_t bindingIdx, VkWriteDescriptorSet *set,
+                          VkDescriptorSet descSet);
+
+  const ResizableVector<BufferRangeTracker> *getAllocations() const;
 
 private:
   ConstantBufferHandle allocBuffered(uint32_t sizeInBytes, const uint32_t flags,
                                      void *data);
 
-  struct ConstantBufferedData {
-    ConstantBufferHandle handle;
-    RandomSizeAllocationHandle dataAllocHandle;
-    int counter = 0;
-    int poolIndex;
-  };
+  // struct ConstantBufferedData {
+  //  ConstantBufferHandle handle;
+  //  RandomSizeAllocationHandle dataAllocHandle;
+  //  int counter = 0;
+  //  int poolIndex;
+  //};
+  // struct ConstantBufferDataDynamic {
+  //  ConstantBufferData cbData[FRAME_BUFFERS_COUNT];
+  //};
 
   struct ConstantBufferData final {
     BufferRangeHandle m_rangeHandle;
@@ -75,10 +82,6 @@ private:
     uint32_t m_flags;
     uint32_t m_magicNumber : 16;
     uint32_t m_slabIdx : 16;
-  };
-
-  struct ConstantBufferDataDynamic {
-    ConstantBufferData cbData[FRAME_BUFFERS_COUNT];
   };
 
 private:
@@ -99,7 +102,7 @@ private:
   static const uint32_t RESERVE_SIZE = 400;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
   RandomSizeAllocator m_randomAlloc;
-  std::unordered_map<uint32_t, ConstantBufferedData> m_bufferedRequests;
+  // std::unordered_map<uint32_t, ConstantBufferedData> m_bufferedRequests;
   std::vector<uint32_t> m_bufferToFree;
 
   Slab *m_slabs = nullptr;

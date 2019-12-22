@@ -42,7 +42,7 @@ void VkTempLayer::onAttach() {
   // globals::MAIN_CAMERA->setLookAt(0, 125, 0);
   // globals::MAIN_CAMERA->setPosition(00, 125, 60);
   CameraManipulationConfig camConfig{
-      -0.01f, 0.01f, -0.012f, 0.012f, -0.07f,
+      -0.01f, 0.01f, 0.012f, 0.012f, -0.07f,
   };
   globals::MAIN_CAMERA->setManipulationMultipliers(camConfig);
 
@@ -58,6 +58,25 @@ void VkTempLayer::onAttach() {
   // allocate memory buffer for the mesh
   VkPhysicalDeviceMemoryProperties memoryRequirements;
   vkGetPhysicalDeviceMemoryProperties(vk::PHYSICAL_DEVICE, &memoryRequirements);
+
+  //dummy
+globals::CONSTANT_BUFFER_MANAGER->allocate(
+      6*MB_TO_BYTE,
+      ConstantBufferManager::CONSTANT_BUFFER_FLAGS::BUFFERED |
+          ConstantBufferManager::CONSTANT_BUFFER_FLAGS::UPDATED_EVERY_FRAME,
+      nullptr);
+globals::CONSTANT_BUFFER_MANAGER->allocate(
+      1024,
+      ConstantBufferManager::CONSTANT_BUFFER_FLAGS::BUFFERED |
+          ConstantBufferManager::CONSTANT_BUFFER_FLAGS::UPDATED_EVERY_FRAME,
+      nullptr);
+globals::CONSTANT_BUFFER_MANAGER->allocate(
+      1024*4,
+      ConstantBufferManager::CONSTANT_BUFFER_FLAGS::BUFFERED |
+          ConstantBufferManager::CONSTANT_BUFFER_FLAGS::UPDATED_EVERY_FRAME,
+      nullptr);
+
+
 
   m_cameraBufferHandle = globals::CONSTANT_BUFFER_MANAGER->allocate(
       sizeof(CameraBuffer),
@@ -77,6 +96,21 @@ void VkTempLayer::onAttach() {
                VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
                    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                memoryFlags, "meshIndex");
+
+globals::CONSTANT_BUFFER_MANAGER->allocate(
+      1*MB_TO_BYTE,
+      ConstantBufferManager::CONSTANT_BUFFER_FLAGS::BUFFERED |
+          ConstantBufferManager::CONSTANT_BUFFER_FLAGS::UPDATED_EVERY_FRAME,
+      nullptr);
+globals::CONSTANT_BUFFER_MANAGER->allocate( 2*MB_TO_BYTE,
+      ConstantBufferManager::CONSTANT_BUFFER_FLAGS::BUFFERED |
+          ConstantBufferManager::CONSTANT_BUFFER_FLAGS::UPDATED_EVERY_FRAME,
+      nullptr);
+globals::CONSTANT_BUFFER_MANAGER->allocate( 4*MB_TO_BYTE,
+      ConstantBufferManager::CONSTANT_BUFFER_FLAGS::BUFFERED |
+          ConstantBufferManager::CONSTANT_BUFFER_FLAGS::UPDATED_EVERY_FRAME,
+      nullptr);
+
   assert(m_vertexBuffer.size >= m_mesh.vertices.size() * sizeof(vk::Vertex));
   assert(m_indexBuffer.size >= m_mesh.indices.size() * sizeof(uint32_t));
 
@@ -227,20 +261,20 @@ void VkTempLayer::onUpdate() {
   static int index = 0;
   static int counter = 0;
 
-  static VkClearColorValue color{0, 0, 0, 1};
-  color.float32[index] += 1.0f / 256.0f;
-  counter++;
-  if (counter == 255) {
-    index += 1;
-    counter = 0;
-  }
-  if (index == 3) {
-    counter = 0;
-    index = 0;
-    color.uint32[0] = 0;
-    color.uint32[1] = 0;
-    color.uint32[2] = 0;
-  }
+  static VkClearColorValue color{0.4, 0.4, 0.4, 1};
+  //color.float32[index] += 1.0f / 256.0f;
+  //counter++;
+  //if (counter == 255) {
+  //  index += 1;
+  //  counter = 0;
+  //}
+  //if (index == 3) {
+  //  counter = 0;
+  //  index = 0;
+  //  color.uint32[0] = 0;
+  //  color.uint32[1] = 0;
+  //  color.uint32[2] = 0;
+  //}
 
   // lets us start a render pass
 

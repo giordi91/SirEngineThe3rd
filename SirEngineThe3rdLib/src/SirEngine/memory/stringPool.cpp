@@ -204,7 +204,7 @@ const char* StringPool::concatenateFrame(const char* first, const char* second,
 
   // make the allocation
   char* newChar =
-      reinterpret_cast<char*>(m_pool.allocate(totalLen, allocFlags));
+      reinterpret_cast<char*>(m_stackAllocator.allocate(totalLen ));
   // do the memcpy
   memcpy(newChar, first, firstLen);
   if (joinerLen != 0) {
