@@ -63,4 +63,5 @@ endif(${BUILD_VULKAN})
 
 add_subdirectory(vendors/meshoptimizer)
 add_subdirectory(Tests)
+add_subdirectory(Tools/pointScatter/cpp)
 
