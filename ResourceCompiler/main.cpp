@@ -33,7 +33,7 @@ std::string getExecutablePath() {
 }
 
 inline std::string getPluginsArgs(const cxxopts::ParseResult &result) {
-  const std::string &args = result["pluginArgs"].as<std::string>();
+  const auto&args = result["pluginArgs"].as<std::string>();
   // lest smake sure it does not start or ends with a quote
   int start = 0;
   int end = static_cast<int>(args.length() - 1);
