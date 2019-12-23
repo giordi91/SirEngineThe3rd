@@ -58,7 +58,7 @@ void LinearBufferManager::free(const BufferRangeHandle handle) {
   uint32_t idx = getIndexFromHandle(handle);
   assert(idx < m_allocations.size());
 
-  BufferRangeTracker tracker = m_allocations[idx];
+  BufferRangeTracker& tracker = m_allocations[idx];
   // this invalidate the tracker
   tracker.m_range.m_size = 0;
   assert(tracker.m_range.isValid() == false);

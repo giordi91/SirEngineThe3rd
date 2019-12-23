@@ -65,7 +65,7 @@ globals::CONSTANT_BUFFER_MANAGER->allocate(
       ConstantBufferManager::CONSTANT_BUFFER_FLAGS::BUFFERED |
           ConstantBufferManager::CONSTANT_BUFFER_FLAGS::UPDATED_EVERY_FRAME,
       nullptr);
-globals::CONSTANT_BUFFER_MANAGER->allocate(
+auto toDelete = globals::CONSTANT_BUFFER_MANAGER->allocate(
       1024,
       ConstantBufferManager::CONSTANT_BUFFER_FLAGS::BUFFERED |
           ConstantBufferManager::CONSTANT_BUFFER_FLAGS::UPDATED_EVERY_FRAME,
@@ -83,6 +83,9 @@ globals::CONSTANT_BUFFER_MANAGER->allocate(
       ConstantBufferManager::CONSTANT_BUFFER_FLAGS::BUFFERED |
           ConstantBufferManager::CONSTANT_BUFFER_FLAGS::UPDATED_EVERY_FRAME,
       nullptr);
+
+  globals::CONSTANT_BUFFER_MANAGER->free(toDelete);
+	
 
   VkBufferUsageFlags meshUsage =
       VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
@@ -102,7 +105,7 @@ globals::CONSTANT_BUFFER_MANAGER->allocate(
       ConstantBufferManager::CONSTANT_BUFFER_FLAGS::BUFFERED |
           ConstantBufferManager::CONSTANT_BUFFER_FLAGS::UPDATED_EVERY_FRAME,
       nullptr);
-globals::CONSTANT_BUFFER_MANAGER->allocate( 2*MB_TO_BYTE,
+auto toDelete2 = globals::CONSTANT_BUFFER_MANAGER->allocate( 2*MB_TO_BYTE,
       ConstantBufferManager::CONSTANT_BUFFER_FLAGS::BUFFERED |
           ConstantBufferManager::CONSTANT_BUFFER_FLAGS::UPDATED_EVERY_FRAME,
       nullptr);
@@ -110,6 +113,8 @@ globals::CONSTANT_BUFFER_MANAGER->allocate( 4*MB_TO_BYTE,
       ConstantBufferManager::CONSTANT_BUFFER_FLAGS::BUFFERED |
           ConstantBufferManager::CONSTANT_BUFFER_FLAGS::UPDATED_EVERY_FRAME,
       nullptr);
+
+  globals::CONSTANT_BUFFER_MANAGER->free(toDelete2);
 
   assert(m_vertexBuffer.size >= m_mesh.vertices.size() * sizeof(vk::Vertex));
   assert(m_indexBuffer.size >= m_mesh.indices.size() * sizeof(uint32_t));
