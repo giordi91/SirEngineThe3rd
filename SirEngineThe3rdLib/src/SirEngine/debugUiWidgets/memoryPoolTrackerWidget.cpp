@@ -150,7 +150,7 @@ void renderMemoryPoolTracker(
   }
 
   std::stringstream stream;
-  stream << std::fixed << std::setprecision(2) << "Pool Size: " << range
+  stream << std::fixed << std::setprecision(2) << "Pool Size: " << range*BYTE_TO_MB
          << "MB\n"
          << "Allocation count: " << info.m_allocationCount
          << ".\nFree allocations: " << info.m_freeAllocations
