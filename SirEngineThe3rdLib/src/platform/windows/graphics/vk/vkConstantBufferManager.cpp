@@ -80,21 +80,29 @@ void VkConstantBufferManager::clearUpQueueFree() {
   }
   */
 }
+inline bool
+isFlagSet(const uint32_t flags,
+          const ConstantBufferManager::CONSTANT_BUFFER_FLAGS toCheck) {
+  return (flags & toCheck) > 0;
+}
 
 bool VkConstantBufferManager::free(const ConstantBufferHandle handle) {
-  /*
-// here we insert a fence so that we know when will be safe to delete
-// making sure the resource has not been de-allocated
-assertMagicNumber(handle);
-const uint32_t index = getIndexFromHandle(handle);
-const uint64_t fence = dx12::insertFenceToGlobalQueue();
-for (int i = 0; i < FRAME_BUFFERS_COUNT; ++i) {
-  m_dynamicStorage[index].cbData[i].fence = fence;
-}
-m_bufferToFree.push_back(handle.handle);
-// now we can set the index ready to be freed in the queue
 
-*/
+  assertMagicNumber(handle);
+  uint32_t idx = getIndexFromHandle(handle);
+  const ConstantBufferData &buffData = m_allocInfoStorage.getConstRef(idx);
+
+  bool isBuffered = isFlagSet(buffData.m_flags,
+                                             CONSTANT_BUFFER_FLAGS::BUFFERED);
+  int slabIdx = buffData.m_slabIdx;
+  assert(isBuffered);
+  // first let us free the tracker
+  for (int i = 0; i < vk::SWAP_CHAIN_IMAGE_COUNT; ++i) {
+    m_perFrameSlabs[i][slabIdx].m_slabTracker.free(buffData.m_rangeHandle);
+  }
+  // next we just need to free the pool
+  m_allocInfoStorage.free(idx);
+
   return false;
 }
 
@@ -103,11 +111,6 @@ VkConstantBufferManager::allocateDynamic(const uint32_t sizeInBytes,
                                          void *inputData) {
 
   return {};
-}
-inline bool
-isFlagSet(const uint32_t flags,
-          const ConstantBufferManager::CONSTANT_BUFFER_FLAGS toCheck) {
-  return (flags & toCheck) > 0;
 }
 
 inline uint32_t padTo32BytesMultiple(const uint32_t size) {
@@ -337,9 +340,9 @@ void VkConstantBufferManager::bindConstantBuffer(
   correctSet.descriptorCount = 1;
 }
 
-const ResizableVector<BufferRangeTracker>* VkConstantBufferManager::getAllocations() const
-{
-    return m_perFrameSlabs[0]->m_slabTracker.getAllocations();
+const ResizableVector<BufferRangeTracker> *
+VkConstantBufferManager::getAllocations() const {
+  return m_perFrameSlabs[0]->m_slabTracker.getAllocations();
 }
 
 void VkConstantBufferManager::allocateSlab() {
