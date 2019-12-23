@@ -18,7 +18,7 @@ class VkConstantBufferManager final : public ConstantBufferManager {
   struct Slab {
     Slab() : m_slabTracker(SLAB_ALLOCATION_IN_MB * MB_TO_BYTE){};
     LinearBufferManager m_slabTracker;
-    vk::Buffer m_buffer;
+    vk::Buffer m_buffer{};
   };
 
 public:
@@ -60,7 +60,8 @@ public:
                           uint32_t bindingIdx, VkWriteDescriptorSet *set,
                           VkDescriptorSet descSet);
 
-  const ResizableVector<BufferRangeTracker> *getAllocations() const;
+  [[nodiscard]] const ResizableVector<BufferRangeTracker> *
+  getAllocations() const;
 
 private:
   ConstantBufferHandle allocBuffered(uint32_t sizeInBytes, const uint32_t flags,

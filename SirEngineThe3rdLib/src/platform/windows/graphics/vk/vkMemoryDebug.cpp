@@ -44,8 +44,9 @@ void updateDXAdapter() {
   }
 }
 uint32_t getTotalGpuMemoryInMB() {
-  DXGI_ADAPTER_DESC desc;
-  assert(SUCCEEDED(DXGI_ADAPTER->GetDesc(&desc)));
+  DXGI_ADAPTER_DESC desc{};
+  bool res = SUCCEEDED(DXGI_ADAPTER->GetDesc(&desc));
+  assert(res);
   return static_cast<uint32_t>(desc.DedicatedVideoMemory * 1e-6f);
 }
 
