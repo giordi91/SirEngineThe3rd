@@ -4,21 +4,6 @@
       "staticSamplersVisibility": ["PS"],
       "config": [
         {
-          "comment": "vertex buffer bound as storage buffer",
-          "type": "descriptorTable",
-          "visibility": "VS",
-          "data": {
-            "ranges": [
-              {
-                "type": "SRV",
-                "underlyingResource": "buffer",
-                "numDescriptors": 1,
-                "baseRegister": 0
-              }
-            ]
-          }
-        },
-        {
           "comment": "camera uniform",
           "type": "descriptorTable",
           "visibility": "VS",
@@ -28,7 +13,52 @@
                 "type": "CBV",
                 "underlyingResource": "buffer",
                 "numDescriptors": 1,
+                "baseRegister": 0
+              }
+            ]
+          }
+        },
+        {
+          "comment": "vertex buffer bound as storage buffer/ positions",
+          "type": "descriptorTable",
+          "visibility": "VS",
+          "data": {
+            "ranges": [
+              {
+                "type": "SRV",
+                "underlyingResource": "buffer",
+                "numDescriptors": 1,
                 "baseRegister": 1
+              }
+            ]
+          }
+        },
+        {
+          "comment": "vertex buffer bound as storage buffer/ normals",
+          "type": "descriptorTable",
+          "visibility": "VS",
+          "data": {
+            "ranges": [
+              {
+                "type": "SRV",
+                "underlyingResource": "buffer",
+                "numDescriptors": 1,
+                "baseRegister": 2
+              }
+            ]
+          }
+        },
+        {
+          "comment": "vertex buffer bound as storage buffer/ uvs",
+          "type": "descriptorTable",
+          "visibility": "VS",
+          "data": {
+            "ranges": [
+              {
+                "type": "SRV",
+                "underlyingResource": "buffer",
+                "numDescriptors": 1,
+                "baseRegister": 3
               }
             ]
           }
@@ -42,7 +72,7 @@
                 "type": "SRV",
                 "underlyingResource": "texture",
                 "numDescriptors": 1,
-                "baseRegister": 2
+                "baseRegister": 4
               }
             ]
           },

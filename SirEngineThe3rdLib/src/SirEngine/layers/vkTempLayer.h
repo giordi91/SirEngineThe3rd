@@ -70,6 +70,7 @@ private:
   vk::Buffer m_vertexBuffer;
   vk::Buffer m_vertexBufferD;
   vk::Buffer m_indexBuffer;
+  vk::Buffer m_indexBufferD;
   VkVertexInputBindingDescription m_stream;
   VkVertexInputAttributeDescription m_attr[3];
   VkDescriptorSetLayout m_setLayout;
