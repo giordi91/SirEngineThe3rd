@@ -14,5 +14,6 @@ struct VkMesh {
 };
 
 bool loadMesh(const char *path, VkMesh &outMesh);
+bool loadMeshDeInterleaved(const char *path, VkMesh &outMesh); 
 
 } // namespace vk
