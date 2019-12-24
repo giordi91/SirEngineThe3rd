@@ -51,7 +51,6 @@ void VkTempLayer::onAttach() {
   globals::MAIN_CAMERA->updateCamera();
 
   // load mesh
-  loadMesh("../data/external/vk/lucy.obj", m_mesh);
   loadMeshDeInterleaved("../data/external/vk/lucy.obj", m_meshD);
 
   // allocate memory buffer for the mesh
@@ -69,14 +68,8 @@ void VkTempLayer::onAttach() {
   VkMemoryPropertyFlags memoryFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                                       VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 
-  createBuffer(m_vertexBuffer, vk::LOGICAL_DEVICE, 128 * 1024 * 1024, meshUsage,
-               memoryFlags, "meshBuffer");
 
-  createBuffer(m_indexBuffer, vk::LOGICAL_DEVICE, 128 * 1024 * 1024,
-               VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
-                   VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-               memoryFlags, "meshIndex");
-
+  //TODO to proper allocation here
   createBuffer(m_vertexBufferD, vk::LOGICAL_DEVICE, 128 * 1024 * 1024,
                meshUsage, memoryFlags, "meshBufferD");
   createBuffer(m_indexBufferD, vk::LOGICAL_DEVICE, 128 * 1024 * 1024,
@@ -84,31 +77,14 @@ void VkTempLayer::onAttach() {
                    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                memoryFlags, "meshIndexD");
 
-
-  assert(m_vertexBuffer.size >= m_mesh.vertices.size() * sizeof(vk::Vertex));
-  assert(m_indexBuffer.size >= m_mesh.indices.size() * sizeof(uint32_t));
-  assert(m_vertexBufferD.size >= m_meshD.vertices.size() * sizeof(vk::Vertex));
-  assert(m_indexBufferD.size >= m_meshD.indices.size() * sizeof(uint32_t));
-
   // TODO need to figure out where this memory is going and what kind of sync
   // there should be here not happy for now
-  memcpy(m_vertexBuffer.data, m_mesh.vertices.data(),
-         m_mesh.vertices.size() * sizeof(vk::Vertex));
-  memcpy(m_vertexBufferD.data, m_meshD.vertices.data(),
-         m_meshD.vertices.size() * sizeof(vk::Vertex));
+  memcpy(m_vertexBufferD.data, m_meshD.m_vertices.data(),
+         m_meshD.m_vertices.size() * sizeof(float));
 
-  memcpy(m_indexBuffer.data, m_mesh.indices.data(),
-         m_mesh.indices.size() * sizeof(uint32_t));
-  memcpy(m_indexBufferD.data, m_meshD.indices.data(),
-         m_meshD.indices.size() * sizeof(uint32_t));
+  memcpy(m_indexBufferD.data, m_meshD.m_indices.data(),
+         m_meshD.m_indices.size() * sizeof(uint32_t));
 
-  SET_DEBUG_NAME(m_vertexBuffer.buffer, VK_OBJECT_TYPE_BUFFER, "vertex buffer");
-  SET_DEBUG_NAME(m_indexBuffer.buffer, VK_OBJECT_TYPE_BUFFER, "index buffer");
-
-  // m_pipeline =
-  //    vk::createGraphicsPipeline("../data/pso/forwardPhongPSO.json",
-  //                               vk::LOGICAL_DEVICE, vk::RENDER_PASS,
-  //                               nullptr);
   const PSOHandle handle =
       vk::PSO_MANAGER->loadRawPSO("../data/pso/forwardPhongPSO.json");
   m_pipeline = vk::PSO_MANAGER->getPipelineFromHandle(handle);
@@ -195,23 +171,19 @@ void VkTempLayer::createDescriptorLayoutAdvanced() {
   // actual information of the descriptor, in this case it is our mesh buffer
   VkDescriptorBufferInfo bufferInfoP = {};
   bufferInfoP.buffer = m_vertexBufferD.buffer;
-  bufferInfoP.offset = 0;
-  bufferInfoP.range = m_meshD.vertices.size()*sizeof(float)*3;
+  bufferInfoP.offset = m_meshD.m_positions.offset;
+  bufferInfoP.range = m_meshD.m_positions.size;
   VkDescriptorBufferInfo bufferInfoN = {};
   bufferInfoN.buffer = m_vertexBufferD.buffer;
-  bufferInfoN.offset = m_meshD.vertices.size()*sizeof(float)*3;
-  bufferInfoN.range = m_meshD.vertices.size()*sizeof(float);
+  bufferInfoN.offset = m_meshD.m_normals.offset;
+  bufferInfoN.range = m_meshD.m_normals.size;
   VkDescriptorBufferInfo bufferInfoUV = {};
   bufferInfoUV.buffer = m_vertexBufferD.buffer;
-  bufferInfoUV.offset = m_meshD.vertices.size()*sizeof(float)*4;
-  bufferInfoUV.range = m_meshD.vertices.size()*sizeof(float)*2;
+  bufferInfoUV.offset = m_meshD.m_uv.offset;
+  bufferInfoUV.range = m_meshD.m_uv.size;
 
   // actual information of the descriptor, in this case it is our mesh buffer
   VkDescriptorBufferInfo bufferInfoUniform = {};
-  // bufferInfoUniform.buffer = m_cameraBuffer.buffer;
-  // bufferInfoUniform.offset = 0;
-  // bufferInfoUniform.range = m_cameraBuffer.size;
-
   vk::CONSTANT_BUFFER_MANAGER->bindConstantBuffer(
       m_cameraBufferHandle, bufferInfoUniform, 0, writeDescriptorSets,
       m_meshDescriptorSet);
@@ -359,8 +331,7 @@ void VkTempLayer::onUpdate() {
                        m_indexBufferD.buffer, 0, VK_INDEX_TYPE_UINT32);
   // vkCmdDraw(FRAME_COMMAND[0].m_commandBuffer, 3, 1, 0, 0);
   vkCmdDrawIndexed(vk::CURRENT_FRAME_COMMAND->m_commandBuffer,
-                   //static_cast<uint32_t>(m_meshD.indices.size()), 1, 0, 0, 0);
-                   static_cast<uint32_t>(6), 1, 0, 0, 0);
+                   static_cast<uint32_t>(m_meshD.m_indices.size()), 1, 0, 0, 0);
 
   vkCmdEndRenderPass(vk::CURRENT_FRAME_COMMAND->m_commandBuffer);
 
@@ -470,8 +441,8 @@ void VkTempLayer::onEvent(Event &event) {
 
 void VkTempLayer::clear() {
   vkDeviceWaitIdle(vk::LOGICAL_DEVICE);
-  destroyBuffer(vk::LOGICAL_DEVICE, m_vertexBuffer);
-  destroyBuffer(vk::LOGICAL_DEVICE, m_indexBuffer);
+  destroyBuffer(vk::LOGICAL_DEVICE, m_vertexBufferD);
+  destroyBuffer(vk::LOGICAL_DEVICE, m_indexBufferD);
   // if constexpr (!USE_PUSH) {
   vkDestroyDescriptorSetLayout(vk::LOGICAL_DEVICE, m_setLayout, nullptr);
   vkDestroyDescriptorPool(vk::LOGICAL_DEVICE, vk::DESCRIPTOR_POOL, nullptr);

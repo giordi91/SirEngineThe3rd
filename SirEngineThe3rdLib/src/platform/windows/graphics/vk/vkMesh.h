@@ -3,17 +3,20 @@
 
 namespace SirEngine::vk {
 
-struct Vertex {
-  float vx, vy, vz;
-  uint8_t nx, ny, nz,wz;
-  float tu, tv;
+struct AttributeRange {
+  uint64_t size;
+  uint64_t offset;
 };
+
 struct VkMesh {
-  std::vector<Vertex> vertices;
-  std::vector<uint32_t> indices;
+  std::vector<float> m_vertices;
+  std::vector<uint32_t> m_indices;
+  uint32_t m_vertexCount;
+  AttributeRange m_positions;
+  AttributeRange m_normals;
+  AttributeRange m_uv;
 };
 
-bool loadMesh(const char *path, VkMesh &outMesh);
-bool loadMeshDeInterleaved(const char *path, VkMesh &outMesh); 
+bool loadMeshDeInterleaved(const char *path, VkMesh &outMesh);
 
-} // namespace vk
+} // namespace SirEngine::vk
