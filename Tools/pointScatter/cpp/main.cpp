@@ -70,6 +70,9 @@ int main(int argc, char **argv) {
 
   std::vector<std::vector<std::array<double, 2>>> finalPoints;
 
+  std::chrono::high_resolution_clock::time_point begin = std::chrono::steady_clock::now();
+
+
   std::mutex m;
 #pragma omp parallel for
   for (int t = 0; t < config.m_tileCount; ++t) {
@@ -143,4 +146,6 @@ int main(int argc, char **argv) {
   std::ofstream out(config.m_outPath);
   out << j.dump(4);
   out.close();
+std::chrono::high_resolution_clock::time_point end = std::chrono::steady_clock::now();
+std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::seconds>(end - begin).count() << "[s]" << std::endl;
 }
