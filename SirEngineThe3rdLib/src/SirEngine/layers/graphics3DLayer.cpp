@@ -83,57 +83,59 @@ void Graphics3DLayer::onAttach() {
   // temporary graph for testing
   dx12::RENDERING_GRAPH->addNode(finalBlit);
   dx12::RENDERING_GRAPH->addNode(gbufferPass);
-  dx12::RENDERING_GRAPH->addNode(lighting);
-  dx12::RENDERING_GRAPH->addNode(sky);
-  dx12::RENDERING_GRAPH->addNode(simpleForward);
-  dx12::RENDERING_GRAPH->addNode(postProcess);
-  dx12::RENDERING_GRAPH->addNode(debugDraw);
-  dx12::RENDERING_GRAPH->addNode(shadowPass);
+  //dx12::RENDERING_GRAPH->addNode(lighting);
+  //dx12::RENDERING_GRAPH->addNode(sky);
+  //dx12::RENDERING_GRAPH->addNode(simpleForward);
+  //dx12::RENDERING_GRAPH->addNode(postProcess);
+  //dx12::RENDERING_GRAPH->addNode(debugDraw);
+  //dx12::RENDERING_GRAPH->addNode(shadowPass);
   dx12::RENDERING_GRAPH->setFinalNode(finalBlit);
 
 
+  //dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::GEOMETRY_RT,
+  //                                    lighting,
+  //                                    DeferredLightingPass::GEOMETRY_RT);
+  //dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::NORMALS_RT,
+  //                                    lighting,
+  //                                    DeferredLightingPass::NORMALS_RT);
+  //dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::SPECULAR_RT,
+  //                                    lighting,
+  //                                    DeferredLightingPass::SPECULAR_RT);
+  //dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::DEPTH_RT,
+  //                                    lighting, DeferredLightingPass::DEPTH_RT);
+
+  //dx12::RENDERING_GRAPH->connectNodes(
+  //    shadowPass, ShadowPass::DIRECTIONAL_SHADOW_RT, lighting,
+  //    DeferredLightingPass::DIRECTIONAL_SHADOW_RT);
+
+  //dx12::RENDERING_GRAPH->connectNodes(
+  //    lighting, DeferredLightingPass::LIGHTING_RT, sky, SkyBoxPass::IN_TEXTURE);
+
+  //dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::DEPTH_RT,
+  //                                    sky, SkyBoxPass::DEPTH);
+
+  //// connecting forward
+  //dx12::RENDERING_GRAPH->connectNodes(sky, SkyBoxPass::OUT_TEX, simpleForward,
+  //                                    SimpleForward::IN_TEXTURE);
+  //dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::DEPTH_RT,
+  //                                    simpleForward, SimpleForward::DEPTH_RT);
+
+  //dx12::RENDERING_GRAPH->connectNodes(simpleForward, SimpleForward::OUT_TEXTURE,
+  //                                    postProcess,
+  //                                    PostProcessStack::IN_TEXTURE);
+
+  //dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::DEPTH_RT,
+  //                                    postProcess, PostProcessStack::DEPTH_RT);
+
+  //dx12::RENDERING_GRAPH->connectNodes(postProcess,
+  //                                    PostProcessStack::OUT_TEXTURE, debugDraw,
+  //                                    DebugDrawNode::IN_TEXTURE);
+  //dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::DEPTH_RT,
+  //                                    debugDraw, DebugDrawNode::DEPTH_RT);
+
+  //dx12::RENDERING_GRAPH->connectNodes(debugDraw, DebugDrawNode::OUT_TEXTURE,
+  //                                    finalBlit, FinalBlitNode::IN_TEXTURE);
   dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::GEOMETRY_RT,
-                                      lighting,
-                                      DeferredLightingPass::GEOMETRY_RT);
-  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::NORMALS_RT,
-                                      lighting,
-                                      DeferredLightingPass::NORMALS_RT);
-  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::SPECULAR_RT,
-                                      lighting,
-                                      DeferredLightingPass::SPECULAR_RT);
-  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::DEPTH_RT,
-                                      lighting, DeferredLightingPass::DEPTH_RT);
-
-  dx12::RENDERING_GRAPH->connectNodes(
-      shadowPass, ShadowPass::DIRECTIONAL_SHADOW_RT, lighting,
-      DeferredLightingPass::DIRECTIONAL_SHADOW_RT);
-
-  dx12::RENDERING_GRAPH->connectNodes(
-      lighting, DeferredLightingPass::LIGHTING_RT, sky, SkyBoxPass::IN_TEXTURE);
-
-  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::DEPTH_RT,
-                                      sky, SkyBoxPass::DEPTH);
-
-  // connecting forward
-  dx12::RENDERING_GRAPH->connectNodes(sky, SkyBoxPass::OUT_TEX, simpleForward,
-                                      SimpleForward::IN_TEXTURE);
-  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::DEPTH_RT,
-                                      simpleForward, SimpleForward::DEPTH_RT);
-
-  dx12::RENDERING_GRAPH->connectNodes(simpleForward, SimpleForward::OUT_TEXTURE,
-                                      postProcess,
-                                      PostProcessStack::IN_TEXTURE);
-
-  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::DEPTH_RT,
-                                      postProcess, PostProcessStack::DEPTH_RT);
-
-  dx12::RENDERING_GRAPH->connectNodes(postProcess,
-                                      PostProcessStack::OUT_TEXTURE, debugDraw,
-                                      DebugDrawNode::IN_TEXTURE);
-  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::DEPTH_RT,
-                                      debugDraw, DebugDrawNode::DEPTH_RT);
-
-  dx12::RENDERING_GRAPH->connectNodes(debugDraw, DebugDrawNode::OUT_TEXTURE,
                                       finalBlit, FinalBlitNode::IN_TEXTURE);
 
   dx12::RENDERING_GRAPH->finalizeGraph();

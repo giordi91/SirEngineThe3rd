@@ -91,7 +91,10 @@ struct ModelMapperData final {
   uint32_t vertexDataSizeInByte = 0;
   uint32_t indexDataSizeInByte = 0;
   uint32_t strideInByte = 0;
-  float boundingBox[6];
+  float boundingBox[6]{};
+  uint32_t vertexCount=0;
+  //This should be a series of flag
+  uint32_t interleaved=0;
 };
 
 struct ShaderMapperData final {

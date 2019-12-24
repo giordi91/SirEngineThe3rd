@@ -54,6 +54,7 @@ bool processModel(const std::string &assetPath, const std::string &outputPath,
                   outputPath);
   }
 
+  /*
   // loading the obj
   tinyobj::attrib_t attr;
   std::vector<tinyobj::shape_t> shapes;
@@ -67,11 +68,15 @@ bool processModel(const std::string &assetPath, const std::string &outputPath,
     SE_CORE_ERROR("Error in parsing obj file {0}", assetPath);
     return false;
   }
+  */
 
   // processing the model so that is ready for the GPU
   Model model;
   SkinData finalSkinData;
-  convertObj(attr, shapes[0], model, finalSkinData, tangentsPath, skinPath);
+  // convertObj(attr, shapes[0], model, finalSkinData, tangentsPath, skinPath);
+  bool objLoadResult = convertObj(assetPath.c_str(), tangentsPath.c_str(),
+                                  skinPath.c_str(), finalSkinData, model);
+  assert(objLoadResult);
 
   // writing binary file
   BinaryFileWriteRequest request;
@@ -83,6 +88,8 @@ bool processModel(const std::string &assetPath, const std::string &outputPath,
   const std::string fileName = inp.stem().string();
   request.outPath = outputPath.c_str();
 
+  /*
+  //OLD WAY
   // need to merge indices and vertices
   std::vector<float> data;
   uint32_t stride = 12;
@@ -114,10 +121,47 @@ bool processModel(const std::string &assetPath, const std::string &outputPath,
 
   SE_CORE_INFO("Model successfully compiled ---> {0}", outputPath);
 
+  */
+
+  std::vector<float> data;
+  uint32_t stride = 12;
+  // uint32_t floatVertexCount = static_cast<uint32_t>(model.vertexCount) *
+  // stride;
+  uint32_t floatVertexCount = static_cast<uint32_t>(model.vertices.size());
+  size_t indicesCount = model.indices.size();
+  size_t totalSizeFloat = floatVertexCount + indicesCount;
+  size_t totalSizeByte = totalSizeFloat * sizeof(float);
+
+  data.resize(totalSizeFloat);
+  memcpy(data.data(), model.vertices.data(), floatVertexCount * sizeof(float));
+  // stride is in float being data a float ptr
+  memcpy(data.data() + floatVertexCount, model.indices.data(),
+         indicesCount * sizeof(float));
+  request.bulkData = data.data();
+  request.bulkDataSizeInByte = totalSizeByte;
+
+  ModelMapperData mapperData;
+  mapperData.indexDataSizeInByte =
+      static_cast<unsigned int>(indicesCount * sizeof(float));
+  mapperData.vertexDataSizeInByte = floatVertexCount * sizeof(float);
+  mapperData.strideInByte = stride * sizeof(float);
+  mapperData.vertexCount = model.vertexCount;
+  mapperData.interleaved = false;
+  request.mapperData = &mapperData;
+  request.mapperDataSizeInByte = sizeof(ModelMapperData);
+  for (int i = 0; i < 6; ++i) {
+    mapperData.boundingBox[i] = model.boundingBox[i];
+  }
+
+  writeBinaryFile(request);
+
+  SE_CORE_INFO("Model successfully compiled ---> {0}", outputPath);
+
   // if there is a skin data we need to save it aswell
   if (skinPath.empty()) {
     return true;
   }
+
   // writing binary file
   BinaryFileWriteRequest skinRequest;
   skinRequest.fileType = BinaryFileType::SKIN;

@@ -185,13 +185,20 @@ void bindSkinning(const MaterialRuntime &materialRuntime,
   // now we have both static buffers, influences and weights
   // dx12::BUFFER_MANAGER->bindBufferAsSRVDescriptorTable(data.influencesBuffer,6,commandList);
 
+  // binding skinning data
   dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.influencesBuffer, 6,
                                                 commandList);
   dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.weightsBuffer, 7,
                                                 commandList);
-  // binding skinning data
   dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.matricesBuffer, 8,
                                                 commandList);
+
+  //bind mesh data
+
+  //dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(.matricesBuffer, 8,
+  //                                              commandList);
+
+	
 }
 void bindSkin(const MaterialRuntime &materialRuntime,
               ID3D12GraphicsCommandList2 *commandList) {

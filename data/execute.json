@@ -1,7 +1,11 @@
 {
   "commands": [
-      "-p ../data/shaders/VK/rasterization/triangleVS.glsl -o ../data/processed/shaders/VK/rasterization/triangleVS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \"",
-      "-p ../data/shaders/VK/rasterization/trianglePS.glsl -o ../data/processed/shaders/VK/rasterization/trianglePS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d \"",
-      "-p ../data/external/meshes/lucy.obj -o ../data/processed/meshes/lucy.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/lucy.tangents \""
+    "-p ../data/shaders/VK/rasterization/triangleVS.glsl -o ../data/processed/shaders/VK/rasterization/triangleVS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \"",
+    "-p ../data/shaders/VK/rasterization/trianglePS.glsl -o ../data/processed/shaders/VK/rasterization/trianglePS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d \"",
+    "-p ../data/external/meshes/knightB/jacket.obj -o ../data/processed/meshes/knightB/jacket.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/jacket.tangents --skin ../data/external/animation/exported/skin/knightBJacketSkin.json \"",
+    "-p ../data/rs/gbufferPBRSkinningRS.json -o ../data/processed/rs/gbufferPBRSkinningRS.root --pluginName rootSignatureCompilerPlugin"
+  ],
+  "t": [
+    "-p ../data/external/meshes/lucy.obj -o ../data/processed/meshes/lucy.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/lucy.tangents  \""
   ]
 }

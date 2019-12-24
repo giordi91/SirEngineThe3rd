@@ -3,11 +3,18 @@
 
 struct Model {
   std::vector<float> vertices;
-  std::vector<int> indices;
+  std::vector<uint32_t> indices;
   int strideInByte;
   int vertexCount;
   int triangleCount;
   float boundingBox[6];
+};
+
+struct Vertex {
+  float vx, vy, vz;
+  float nx, ny, nz;
+  float u, v;
+  float tx,ty,tz,tw;
 };
 
 struct SkinData {
@@ -16,5 +23,8 @@ struct SkinData {
 };
 
 void convertObj(const tinyobj::attrib_t &attr, const tinyobj::shape_t &shape,
-                Model &model,SkinData& finalSkinData, const std::string &tangentsPath,
-                const std::string &skinPath);
+                Model &model, SkinData &finalSkinData,
+                const std::string &tangentsPath, const std::string &skinPath);
+
+bool convertObj(const char *path, const char *tangentsPath,
+                const char *skinPath, SkinData& finalSkinData, Model &model);
