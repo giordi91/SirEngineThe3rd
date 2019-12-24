@@ -17,7 +17,6 @@ FullMeshVertexOut VS(TexturedVertexIn12 vin, uint vid : SV_VertexID)
     FullMeshVertexOut vout;
 	FullSkinResult skin = skinFullPoint(vid,vin);
 	
-    /*
 	// Transform to homogeneous clip space.
     //vout.PosH = mul(skin.pos, g_cameraBuffer.MVP);
     vout.PosH = mul(skin.pos, g_cameraBuffer.MVP);
@@ -28,24 +27,4 @@ FullMeshVertexOut VS(TexturedVertexIn12 vin, uint vid : SV_VertexID)
     vout.tangent = normalize(skin.tan);
     vout.worldPos = float4(vin.PosL, 1.0f);
     return vout;
-    */
-
-    float4 p = g_positions[vid];
-    vout.PosH = mul(p, g_cameraBuffer.MVP);
-    vout.Normal = normalize(g_normals[vid]);
-    vout.uv= g_uvs[vid];
-    vout.tangent= g_tangents[vid];
-    vout.worldPos = p;
-    return vout;
-
-
-    /*
-    float4 p = g_positions[0];
-    vout.PosH = mul(p, g_cameraBuffer.MVP);
-    vout.Normal = float3(0, 0, 0);
-    vout.uv = float2(0, 0);
-    vout.tangent = float3(0, 0, 0);
-    vout.worldPos = p;
-    return vout;
-    */
 }

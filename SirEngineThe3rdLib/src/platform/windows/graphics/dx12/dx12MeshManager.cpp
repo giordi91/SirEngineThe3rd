@@ -1,10 +1,10 @@
 #include "platform/windows/graphics/dx12/dx12MeshManager.h"
 
-#include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
 #include "SirEngine/binary/binaryFile.h"
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
 #include "bufferManagerDx12.h"
+#include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
 
 namespace SirEngine::dx12 {
 
@@ -45,7 +45,6 @@ MeshHandle Dx12MeshManager::loadMesh(const char *path, bool isInternal) {
     meshData->indexCount = indexCount;
     meshData->vertexCount = vertexCount;
     meshData->stride = stride;
-    MeshUploadResource upload;
 
     uint32_t totalSize = vertexCount * stride * sizeof(float);
     meshData->vtxBuffHandle = dx12::BUFFER_MANAGER->allocate(
@@ -72,10 +71,6 @@ MeshHandle Dx12MeshManager::loadMesh(const char *path, bool isInternal) {
       m_boundingBoxes.push_back(box);
     }
 
-    // set a signal for the resource.
-    upload.fence = dx12::insertFenceToGlobalQueue();
-    // m_uploadRequests.push_back(upload);
-
     // data is now loaded need to create handle etc
     handle = MeshHandle{(MAGIC_NUMBER_COUNTER << 16) | index};
     meshData->magicNumber = MAGIC_NUMBER_COUNTER;
@@ -85,11 +80,39 @@ MeshHandle Dx12MeshManager::loadMesh(const char *path, bool isInternal) {
     meshRuntime.indexCount = meshData->indexCount;
     meshRuntime.vview = getVertexBufferView(handle);
     meshRuntime.iview = getIndexBufferView(handle);
-    meshData->meshRuntime = meshRuntime;
 
     // storing the handle and increasing the magic count
     m_nameToHandle[name] = handle;
     ++MAGIC_NUMBER_COUNTER;
+
+    // new stuff
+    int newVertexCount = mapper->vertexCount;
+
+    int positionSize = newVertexCount * 4 * sizeof(float);
+    float *ptr = vertexData;
+
+    BufferHandle positionsHandle = dx12::BUFFER_MANAGER->allocate(
+        positionSize, ptr, "", positionSize, sizeof(float), false);
+    ptr += newVertexCount * 4;
+    BufferHandle normalsHandle = dx12::BUFFER_MANAGER->allocate(
+        positionSize, ptr, "", positionSize, sizeof(float), false);
+    ptr += newVertexCount * 4;
+    BufferHandle uvHandle = dx12::BUFFER_MANAGER->allocate(
+        totalSize, ptr, "", positionSize, sizeof(float), false);
+    ptr += newVertexCount * 2;
+    BufferHandle tangents = dx12::BUFFER_MANAGER->allocate(
+        positionSize, ptr, "", positionSize, sizeof(float), false);
+
+    meshRuntime.positions = positionsHandle;
+    meshRuntime.normals = normalsHandle;
+    meshRuntime.uv = uvHandle;
+    meshRuntime.tangents = tangents;
+
+    meshData->meshRuntime = meshRuntime;
+    // BufferHandle influecesHandle = globals::BUFFER_MANAGER->allocate(
+    //    mapper->jointsSizeInByte, joints, "",
+    //    mapper->jointsSizeInByte / sizeof(int), sizeof(int), false);
+
   } else {
     SE_CORE_INFO("Mesh already loaded, returning handle:{0}", name);
     // we already loaded the mesh so we can just get the handle and index data

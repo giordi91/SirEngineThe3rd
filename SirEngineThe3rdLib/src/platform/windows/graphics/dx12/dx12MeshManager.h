@@ -5,6 +5,7 @@
 #include "SirEngine/handle.h"
 #include "SirEngine/memory/sparseMemoryPool.h"
 #include "SirEngine/meshManager.h"
+#include "bufferManagerDx12.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/d3dx12.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
@@ -17,6 +18,10 @@ struct MeshRuntime final {
   D3D12_VERTEX_BUFFER_VIEW vview;
   D3D12_INDEX_BUFFER_VIEW iview;
   uint32_t indexCount;
+  BufferHandle positions;
+  BufferHandle normals;
+  BufferHandle uv;
+  BufferHandle tangents;
 };
 
 class Dx12MeshManager final : public MeshManager {
@@ -187,6 +192,14 @@ public:
   inline void bindMeshRuntimeAndRender(const MeshRuntime &runtime,
                                        FrameCommand *fc) const {
     bindMeshRuntimeForRender(runtime, fc);
+    dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(runtime.positions, 9,
+                                                  fc->commandList);
+    dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(runtime.normals, 10,
+                                                  fc->commandList);
+    dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(runtime.uv, 11,
+                                                  fc->commandList);
+    dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(runtime.tangents, 12,
+                                                  fc->commandList);
     fc->commandList->DrawIndexedInstanced(runtime.indexCount, 1, 0, 0, 0);
   }
 

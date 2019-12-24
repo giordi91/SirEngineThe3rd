@@ -3,10 +3,18 @@
 #include "processObj.h"
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
+
+#include "meshoptimizer.h"
 #include <DirectXMath.h>
 #include <limits>
 #include <unordered_map>
 #include <vector>
+
+#ifndef _CRT_SECURE_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+#define FAST_OBJ_IMPLEMENTATION
+#include "fast_obj.h"
 
 static const float VERTEX_DELTA = 0.00001f;
 struct VertexCompare {
@@ -69,8 +77,7 @@ template <> struct hash<glm::vec3> final {
 
 struct HashFunc final {
   size_t operator()(const VertexCompare &k) const {
-    return std::hash<glm::vec3>()(k.p) ^
-           (std::hash<glm::vec3>()(k.n) << 1) ^
+    return std::hash<glm::vec3>()(k.p) ^ (std::hash<glm::vec3>()(k.n) << 1) ^
            (std::hash<glm::vec3>()(k.t) << 2) ^
            (std::hash<glm::vec2>()(k.uv) << 3);
   }
@@ -270,6 +277,7 @@ void convertObj(const tinyobj::attrib_t &attr, const tinyobj::shape_t &shape,
   float maxY = maxX;
   float maxZ = maxY;
 
+  int cm = 0;
   for (size_t f = 0; f < shape.mesh.num_face_vertices.size(); f++) {
     size_t fv = shape.mesh.num_face_vertices[f];
     assert(fv == 3);
@@ -308,6 +316,11 @@ void convertObj(const tinyobj::attrib_t &attr, const tinyobj::shape_t &shape,
       c.t.x = tangents[3u * idx.vertex_index + 0u];
       c.t.y = tangents[3u * idx.vertex_index + 1u];
       c.t.z = tangents[3u * idx.vertex_index + 2u];
+
+      int subc = 3u * idx.vertex_index + 2u;
+      if (subc > cm) {
+        cm = subc;
+      }
 
       // if the vertex is not in the map, it means is unique
       // and needs to be added and is a valid vertex in the vertex buffer
@@ -352,4 +365,348 @@ void convertObj(const tinyobj::attrib_t &attr, const tinyobj::shape_t &shape,
   model.boundingBox[3] = maxX;
   model.boundingBox[4] = maxY;
   model.boundingBox[5] = maxZ;
+}
+
+bool convertObj(const char *path, const char *tangentsPath,
+                const char *skinPath, SkinData &finalSkinData, Model &model) {
+  /*
+  fastObjMesh *obj = fast_obj_read(path);
+  if (!obj) {
+    printf("Error loading %s: file not found\n", path);
+    return false;
+  }
+  // here we need to process a model which has tangents
+  std::vector<float> tangents = loadTangents(tangentsPath);
+
+  SkinData skinData;
+  bool hasSkin = loadSkin(skinPath, skinData);
+  if (hasSkin) {
+    // finalSkinData.jnts.reserve(skinData.jnts.size());
+    // finalSkinData.weights.reserve(skinData.weights.size());
+  }
+
+  size_t totalIndices = 0;
+
+  for (unsigned int i = 0; i < obj->face_count; ++i)
+    totalIndices += 3 * (obj->face_vertices[i] - 2);
+
+  std::vector<Vertex> vertices(totalIndices);
+
+  size_t vertexOffset = 0;
+  size_t indexOffset = 0;
+
+  float minX = std::numeric_limits<float>::max();
+  float minY = minX;
+  float minZ = minY;
+
+  float maxX = std::numeric_limits<float>::min();
+  float maxY = maxX;
+  float maxZ = maxY;
+
+  int cm = 0;
+  for (unsigned int i = 0; i < obj->face_count; ++i) {
+    for (unsigned int j = 0; j < obj->face_vertices[i]; ++j) {
+      fastObjIndex gi = obj->indices[indexOffset + j];
+      float px = obj->positions[gi.p * 3 + 0];
+      float py = obj->positions[gi.p * 3 + 1];
+      float pz = obj->positions[gi.p * 3 + 2];
+
+      // lets us compute bounding box
+      minX = px < minX ? px : minX;
+      minY = py < minY ? py : minY;
+      minZ = pz < minZ ? pz : minZ;
+
+      maxX = px > maxX ? px : maxX;
+      maxY = py > maxY ? py : maxY;
+      maxZ = pz > maxZ ? pz : maxZ;
+
+      float nx = obj->normals[gi.n * 3 + 0];
+      float ny = obj->normals[gi.n * 3 + 1];
+      float nz = obj->normals[gi.n * 3 + 2];
+
+      //float tx = tangents[gi.p * 3 + 0];
+      //float ty = tangents[gi.p * 3 + 1];
+      //float tz = tangents[gi.p * 3 + 2];
+      int c = gi.p * 3 + 2;
+      if(c > cm) {
+          cm = c;
+      }
+
+      float tx = 0;
+      float ty = 0;
+      float tz = 0;
+
+      Vertex v = {px,
+                  py,
+                  pz,
+                  nx,
+                  ny,
+                  nz,
+                  obj->texcoords[gi.t * 2 + 0],
+                  obj->texcoords[gi.t * 2 + 1],
+                  tx,
+                  ty,
+                  tz
+
+      };
+
+      // triangulate polygon on the fly; offset-3 is always the first polygon
+      // vertex
+      if (j >= 3) {
+        vertices[vertexOffset + 0] = vertices[vertexOffset - 3];
+        vertices[vertexOffset + 1] = vertices[vertexOffset - 1];
+        vertexOffset += 2;
+      }
+
+      vertices[vertexOffset] = v;
+      vertexOffset++;
+    }
+
+    indexOffset += obj->face_vertices[i];
+  }
+
+  model.triangleCount = obj->face_count;
+  model.boundingBox[0] = minX;
+  model.boundingBox[1] = minY;
+  model.boundingBox[2] = minZ;
+  model.boundingBox[3] = maxX;
+  model.boundingBox[4] = maxY;
+  model.boundingBox[5] = maxZ;
+
+  fast_obj_destroy(obj);
+  */
+  // loading the obj
+  tinyobj::attrib_t attr;
+  std::vector<tinyobj::shape_t> shapes;
+  std::vector<tinyobj::material_t> materials;
+
+  std::string warn;
+  std::string err;
+  bool ret = tinyobj::LoadObj(&attr, &shapes, &materials, &warn, &err, path);
+  if (!ret) {
+    SE_CORE_ERROR("Error in parsing obj file {0}", path);
+    return false;
+  }
+
+  // here we need to process a model which has tangents
+  std::vector<float> tangents = loadTangents(tangentsPath);
+  SkinData skinData;
+  bool hasSkin = loadSkin(skinPath, skinData);
+  if (hasSkin) {
+    finalSkinData.jnts.reserve(skinData.jnts.size());
+    finalSkinData.weights.reserve(skinData.weights.size());
+  }
+
+  // how it works:
+  // first of all we need  to iterate over all the geometry, we expand all
+  // the auxiliary indices, meaning uv,normals etc indices, and we expand
+  // that into a vertex structure that we track with the vertex buffer
+  // index. every vertex we add it to a struct, so we know how many faces
+  // use the vertex, or how many faces share a vertex.
+
+  std::unordered_map<VertexCompare, uint32_t, HashFunc, EqualsFunc>
+      uniqueVertices = {};
+  std::vector<int> indices;
+  std::vector<VertexCompare> vertexData;
+
+  // Loop over faces(polygon)
+  size_t indexOffset = 0;
+  int indexCount = 0;
+
+  float minX = std::numeric_limits<float>::max();
+  float minY = minX;
+  float minZ = minY;
+
+  float maxX = std::numeric_limits<float>::min();
+  float maxY = maxX;
+  float maxZ = maxY;
+
+  int cm = 0;
+  for (size_t f = 0; f < shapes[0].mesh.num_face_vertices.size(); f++) {
+    size_t fv = shapes[0].mesh.num_face_vertices[f];
+    assert(fv == 3);
+
+    // Loop over vertices in the face.
+    for (size_t v = 0; v < fv; v++) {
+      // access to vertex
+      tinyobj::index_t idx = shapes[0].mesh.indices[indexOffset + v];
+      VertexCompare c;
+      c.p.x = attr.vertices[3u * idx.vertex_index + 0u];
+      c.p.y = attr.vertices[3u * idx.vertex_index + 1u];
+      c.p.z = attr.vertices[3u * idx.vertex_index + 2u];
+      c.n.x = attr.normals[3u * idx.normal_index + 0u];
+      c.n.y = attr.normals[3u * idx.normal_index + 1u];
+      c.n.z = attr.normals[3u * idx.normal_index + 2u];
+
+      // lets us compute bounding box
+      minX = c.p.x < minX ? c.p.x : minX;
+      minY = c.p.y < minY ? c.p.y : minY;
+      minZ = c.p.z < minZ ? c.p.z : minZ;
+
+      maxX = c.p.x > maxX ? c.p.x : maxX;
+      maxY = c.p.y > maxY ? c.p.y : maxY;
+      maxZ = c.p.z > maxZ ? c.p.z : maxZ;
+
+      // we had cases where the UV index was -1!! so let us check against that
+      float texU = idx.texcoord_index < 0
+                       ? 0.0f
+                       : attr.texcoords[2 * idx.texcoord_index + 0];
+      float texV = idx.texcoord_index < 0
+                       ? 0.0f
+                       : attr.texcoords[2 * idx.texcoord_index + 1];
+      float mod = 1.0f;
+      c.uv.x = std::modf(texU, &mod);
+      c.uv.y = std::modf(texV, &mod);
+      c.t.x = tangents[3u * idx.vertex_index + 0u];
+      c.t.y = tangents[3u * idx.vertex_index + 1u];
+      c.t.z = tangents[3u * idx.vertex_index + 2u];
+
+      int subc = 3u * idx.vertex_index + 2u;
+      if (subc > cm) {
+        cm = subc;
+      }
+
+      // if the vertex is not in the map, it means is unique
+      // and needs to be added and is a valid vertex in the vertex buffer
+      if (uniqueVertices.count(c) == 0) {
+        uniqueVertices[c] = indexCount;
+        vertexData.push_back(c);
+        // need to push the skin if we have one
+        if (hasSkin) {
+          for (int subI = 0; subI < VERTEX_INFLUENCE_COUNT; ++subI) {
+            int id = (VERTEX_INFLUENCE_COUNT * idx.vertex_index) + subI;
+            finalSkinData.jnts.push_back(skinData.jnts[id]);
+            finalSkinData.weights.push_back(skinData.weights[id]);
+          }
+        }
+        // incrementing the counter
+        ++indexCount;
+      }
+
+      indices.push_back(uniqueVertices[c]);
+    }
+    indexOffset += fv;
+  }
+
+  int finalIndexCount = indices.size();
+  // need to de-interleave the data
+  // TODO bruteforce, will fix later
+  std::vector<float> positions;
+  std::vector<float> normals;
+  std::vector<float> uv;
+  std::vector<float> tans;
+
+  int vc = vertexData.size();
+  for (int i = 0; i < vc; ++i) {
+    const VertexCompare &cmp = vertexData[i];
+    positions.push_back(cmp.p.x);
+    positions.push_back(cmp.p.y);
+    positions.push_back(cmp.p.z);
+    positions.push_back(1.0f);
+
+    normals.push_back(cmp.n.x);
+    normals.push_back(cmp.n.y);
+    normals.push_back(cmp.n.z);
+    normals.push_back(0.0f);
+
+    uv.push_back(cmp.uv.x);
+    uv.push_back(cmp.uv.y);
+
+    tangents.push_back(cmp.t.x);
+    tangents.push_back(cmp.t.y);
+    tangents.push_back(cmp.t.z);
+    tangents.push_back(0.0f);
+  }
+
+  // model is loaded, lets copy data to output struct
+  size_t indicesCount = indices.size();
+  size_t vertexCompareCount = vertexData.size();
+  uint32_t stride = 12;
+
+  model.indices.resize(indicesCount);
+  // model.vertices.resize(vertexCompareCount * stride);
+  model.vertices.reserve(vertexCompareCount * stride);
+  model.vertexCount = static_cast<int>(vertexCompareCount);
+  model.strideInByte = sizeof(float) * stride;
+  model.triangleCount =
+      static_cast<int>(shapes[0].mesh.num_face_vertices.size());
+
+  // memcpy(model.vertices.data(), vertexData.data(),
+  //       vertexCompareCount * stride * sizeof(float));
+  memcpy(model.indices.data(), indices.data(), indicesCount * sizeof(float));
+  model.vertices.insert(model.vertices.end(), positions.begin(),
+                        positions.end());
+  model.vertices.insert(model.vertices.end(), normals.begin(), normals.end());
+  model.vertices.insert(model.vertices.end(), uv.begin(), uv.end());
+  model.vertices.insert(model.vertices.end(), tangents.begin(), tangents.end());
+
+  model.boundingBox[0] = minX;
+  model.boundingBox[1] = minY;
+  model.boundingBox[2] = minZ;
+  model.boundingBox[3] = maxX;
+  model.boundingBox[4] = maxY;
+  model.boundingBox[5] = maxZ;
+
+  // if (!hasSkin) {
+
+  //  std::vector<unsigned int> remap(totalIndices);
+
+  //  const size_t totalVertices =
+  //      meshopt_generateVertexRemap(&remap[0], NULL, totalIndices,
+  //      &vertices[0],
+  //                                  totalIndices, sizeof(Vertex));
+
+  //  model.indices.resize(totalIndices);
+  //  meshopt_remapIndexBuffer(&model.indices[0], NULL, totalIndices,
+  //  &remap[0]);
+
+  //  // 12 floats total
+  //  // 3 pos
+  //  // 3 normals
+  //  // 2 uvs
+  //  // 4 tangents
+  //  model.vertices.resize(totalVertices * 12);
+  //  meshopt_remapVertexBuffer(&model.vertices[0], &vertices[0], totalIndices,
+  //                            sizeof(Vertex), &remap[0]);
+  //  model.strideInByte = 12 * sizeof(float);
+  //} else {
+  //  // we need to deal with the skin cluster
+  //  meshopt_Stream streams[] = {
+  //      {&vertices[0], sizeof(Vertex), sizeof(Vertex)},
+  //      {&skinData.jnts[0], sizeof(int) * VERTEX_INFLUENCE_COUNT,
+  //       sizeof(float) * VERTEX_INFLUENCE_COUNT},
+  //      {&skinData.weights[0], sizeof(float) * VERTEX_INFLUENCE_COUNT,
+  //       sizeof(float) * VERTEX_INFLUENCE_COUNT},
+  //  };
+
+  //  std::vector<unsigned int> remap(totalIndices);
+
+  //  const size_t totalVertices = meshopt_generateVertexRemapMulti(
+  //      &remap[0], NULL, totalIndices, totalIndices, streams, 3);
+
+  //  model.indices.resize(totalIndices);
+  //  meshopt_remapIndexBuffer(&model.indices[0], NULL, totalIndices,
+  //  &remap[0]);
+
+  //  // 12 floats total
+  //  // 3 pos
+  //  // 3 normals
+  //  // 2 uvs
+  //  // 4 tangents
+  //  model.vertices.resize(totalVertices * 12);
+  //  meshopt_remapVertexBuffer(&model.vertices[0], &vertices[0], totalIndices,
+  //                            sizeof(Vertex), &remap[0]);
+  //  model.strideInByte = 12 * sizeof(float);
+
+  //  // reorganize the skin
+  //  finalSkinData.jnts.resize(totalVertices * VERTEX_INFLUENCE_COUNT);
+  //  finalSkinData.weights.reserve(totalVertices * VERTEX_INFLUENCE_COUNT);
+  //  meshopt_remapVertexBuffer(&finalSkinData.jnts, &skinData.jnts,
+  //  totalIndices,
+  //                            sizeof(int) * VERTEX_INFLUENCE_COUNT,
+  //                            &remap[0]);
+  //  meshopt_remapVertexBuffer(
+  //      &finalSkinData.weights, &skinData.weights, totalIndices,
+  //      sizeof(float) * VERTEX_INFLUENCE_COUNT, &remap[0]);
+  //}
 }

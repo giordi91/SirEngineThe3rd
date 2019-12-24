@@ -61,7 +61,11 @@ public:
 
   inline PSOHandle getHandleFromName(const char *name) const {
 
-    assert(m_psoRegisterHandle.containsKey(name));
+    //assert(m_psoRegisterHandle.containsKey(name));
+    bool r = m_psoRegisterHandle.containsKey(name);
+    if( !r) {
+        return{};
+    }
     PSOHandle value{};
     m_psoRegisterHandle.get(name, value);
     return value;
