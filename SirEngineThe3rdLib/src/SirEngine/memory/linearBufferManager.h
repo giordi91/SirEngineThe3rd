@@ -66,11 +66,9 @@ public:
     return m_allocations[idx].m_range;
   }
 
-  bool canAllocate(uint32_t allocSizeInBytes) const {
+  [[nodiscard]] bool canAllocate(uint32_t allocSizeInBytes) const {
     uint64_t newStackPointer = allocSizeInBytes + m_stackPointer;
     bool allocationFits = newStackPointer < m_bufferSizeInBytes;
-    bool hasFreeAllocations = m_freeAllocations.size() != 0;
-    // return (!allocationFits) & (!hasFreeAllocations);
     if (allocationFits) {
       return true;
     }

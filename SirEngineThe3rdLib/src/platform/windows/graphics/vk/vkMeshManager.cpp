@@ -1,51 +1,47 @@
-/*
-#include "platform/windows/graphics/dx12/dx12MeshManager.h"
+#include "platform/windows/graphics/vk/vkMeshManager.h"
 
-#include "ConstantBufferManagerDx12.h"
 #include "SirEngine/binary/binaryFile.h"
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
-#include "bufferManagerDx12.h"
 
-namespace SirEngine::dx12 {
+namespace SirEngine::vk {
 
-MeshHandle MeshManager::loadMesh(const char *path, MeshRuntime *meshRuntime,
-                                 bool isInternal) {
+MeshHandle VkMeshManager::loadMesh(const char *path, bool isInternal) {
 
-  SE_CORE_INFO("Loading mesh {0}", path);
-  const bool res = fileExists(path);
-  assert(res);
-  // lets check whether or not the mesh has been loaded already
-  const std::string name = getFileName(path);
-  MeshData *meshData;
-  MeshHandle handle;
-  const auto found = m_nameToHandle.find(name);
-  if (found == m_nameToHandle.end()) {
-    std::vector<char> binaryData;
-    readAllBytes(path, binaryData);
+  /*
+SE_CORE_INFO("Loading mesh {0}", path);
+const bool res = fileExists(path);
+assert(res);
+// lets check whether or not the mesh has been loaded already
+const std::string name = getFileName(path);
+MeshHandle handle;
+const auto found = m_nameToHandle.find(name);
+if (found == m_nameToHandle.end()) {
+  std::vector<char> binaryData;
+  readAllBytes(path, binaryData);
 
-    const auto mapper = getMapperData<ModelMapperData>(binaryData.data());
+  const auto mapper = getMapperData<ModelMapperData>(binaryData.data());
 
-    const uint32_t stride = mapper->strideInByte / sizeof(float);
-    // creating the buffers
-    const uint32_t vertexCount =
-        mapper->vertexDataSizeInByte / mapper->strideInByte;
-    const uint32_t indexCount = mapper->indexDataSizeInByte / sizeof(int);
+  const uint32_t stride = mapper->strideInByte / sizeof(float);
+  // creating the buffers
+  const uint32_t vertexCount =
+      mapper->vertexDataSizeInByte / mapper->strideInByte;
+  const uint32_t indexCount = mapper->indexDataSizeInByte / sizeof(int);
 
-    // lets get the vertex data
-    auto *vertexData =
-        reinterpret_cast<float *>(binaryData.data() + sizeof(BinaryFileHeader));
-    auto *indexData =
-        reinterpret_cast<int *>(binaryData.data() + sizeof(BinaryFileHeader) +
-                                mapper->vertexDataSizeInByte);
+  // lets get the vertex data
+  auto *vertexData =
+      reinterpret_cast<float *>(binaryData.data() + sizeof(BinaryFileHeader));
+  auto *indexData =
+      reinterpret_cast<int *>(binaryData.data() + sizeof(BinaryFileHeader) +
+                              mapper->vertexDataSizeInByte);
 
-    // upload the data on the GPU
-    uint32_t index;
+  // upload the data on the GPU
+  uint32_t index;
 
-    meshData = &m_meshPool.getFreeMemoryData(index);
-    meshData->indexCount = indexCount;
-    meshData->vertexCount = vertexCount;
-    meshData->stride = stride;
+  MeshData* meshData = &m_meshPool.getFreeMemoryData(index);
+  meshData->indexCount = indexCount;
+  meshData->vertexCount = vertexCount;
+  meshData->stride = stride;
     MeshUploadResource upload;
 
     uint32_t totalSize = vertexCount * stride * sizeof(float);
@@ -56,8 +52,8 @@ MeshHandle MeshManager::loadMesh(const char *path, MeshRuntime *meshRuntime,
 
     totalSize = indexCount * sizeof(int);
     meshData->idxBuffHandle = dx12::BUFFER_MANAGER->allocate(
-        totalSize, indexData, "", totalSize / sizeof(int), sizeof(int), false);
-    meshData->indexBuffer =
+        totalSize, indexData, "", totalSize / sizeof(int), sizeof(int),
+  false); meshData->indexBuffer =
         dx12::BUFFER_MANAGER->getNativeBuffer(meshData->idxBuffHandle);
 
     // TODO if is an internal mesh we don't want to go in the bounding box
@@ -98,7 +94,7 @@ MeshHandle MeshManager::loadMesh(const char *path, MeshRuntime *meshRuntime,
   meshRuntime->vview = getVertexBufferView(handle);
   meshRuntime->iview = getIndexBufferView(handle);
 
-  return handle;
+  */
+  return {};
 }
-} // namespace SirEngine::dx12
-*/
+} // namespace SirEngine::vk

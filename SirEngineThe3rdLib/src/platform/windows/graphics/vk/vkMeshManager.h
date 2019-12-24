@@ -1,34 +1,32 @@
 #pragma once
 
-/*
-#include "DXTK12/ResourceUploadBatch.h"
-#include "SirEngine/handle.h"
 #include "SirEngine/graphics/cpuGraphicsStructures.h"
+#include "SirEngine/handle.h"
 #include "SirEngine/memory/sparseMemoryPool.h"
-#include "platform/windows/graphics/dx12/DX12.h"
-#include "platform/windows/graphics/dx12/d3dx12.h"
-#include "platform/windows/graphics/dx12/descriptorHeap.h"
+#include "SirEngine/meshManager.h"
+#include "platform/windows/graphics/vk/vkMemory.h"
+#include <unordered_map>
 #include <vector>
 
-namespace SirEngine {
-namespace dx12 {
+namespace SirEngine::vk {
 
+/*
 struct MeshRuntime final {
 #if GRAPHICS_API == DX12
-  D3D12_VERTEX_BUFFER_VIEW vview;
-  D3D12_INDEX_BUFFER_VIEW iview;
+D3D12_VERTEX_BUFFER_VIEW vview;
+D3D12_INDEX_BUFFER_VIEW iview;
 #endif
-  uint32_t indexCount;
+uint32_t indexCount;
 };
+*/
 
-
-class MeshManager final {
+class VkMeshManager final : public MeshManager {
 private:
   struct MeshData final {
     uint32_t magicNumber : 16;
     uint32_t stride : 16;
-    ID3D12Resource *vertexBuffer;
-    ID3D12Resource *indexBuffer;
+    vk::Buffer vertexBuffer;
+    // ID3D12Resource *indexBuffer;
     BufferHandle vtxBuffHandle;
     BufferHandle idxBuffHandle;
     uint32_t indexCount;
@@ -38,17 +36,17 @@ private:
   };
 
   struct MeshUploadResource final {
-    ID3D12Resource *uploadVertexBuffer = nullptr;
-    ID3D12Resource *uploadIndexBuffer = nullptr;
+    // ID3D12Resource *uploadVertexBuffer = nullptr;
+    // ID3D12Resource *uploadIndexBuffer = nullptr;
     UINT64 fence = 0;
   };
 
 public:
-  MeshManager() : m_meshPool(RESERVE_SIZE), batch(dx12::DEVICE) {
+  VkMeshManager() : m_meshPool(RESERVE_SIZE) {
     m_nameToHandle.reserve(RESERVE_SIZE);
     m_uploadRequests.reserve(RESERVE_SIZE);
   }
-  ~MeshManager() { // assert(m_meshPool.assertEverythingDealloc());
+  ~VkMeshManager() { // assert(m_meshPool.assertEverythingDealloc());
   }
 
   inline uint32_t getIndexCount(const MeshHandle &handle) const {
@@ -57,13 +55,14 @@ public:
     const MeshData &data = m_meshPool.getConstRef(index);
     return data.indexCount;
   }
-  MeshManager(const MeshManager &) = delete;
-  MeshManager &operator=(const MeshManager &) = delete;
+  VkMeshManager(const VkMeshManager &) = delete;
+  VkMeshManager &operator=(const VkMeshManager &) = delete;
   // for now a bit overkill to pass both the index and the memory,
   // I could just pass the pointer at right address but for the time
   // being this will keep symmetry.
-  MeshHandle loadMesh(const char *path, MeshRuntime *meshRuntime, bool isInternal =false);
+  MeshHandle loadMesh(const char *path, bool isInternal = false) override;
 
+private:
   inline void assertMagicNumber(const MeshHandle handle) const {
 #ifdef SE_DEBUG
     uint32_t magic = getMagicFromHandle(handle);
@@ -71,60 +70,6 @@ public:
     assert(m_meshPool.getConstRef(idx).magicNumber == magic &&
            "invalid magic handle for constant buffer");
 #endif
-  }
-  inline uint32_t getIndexFromHandle(MeshHandle h) const {
-    return h.handle & INDEX_MASK;
-  }
-  inline uint32_t getMagicFromHandle(MeshHandle h) const {
-    return (h.handle & MAGIC_NUMBER_MASK) >> 16;
-  }
-
-  DescriptorPair getSRVVertexBuffer(MeshHandle handle) const {
-    assertMagicNumber(handle);
-    uint32_t index = getIndexFromHandle(handle);
-    const MeshData &data = m_meshPool.getConstRef(index);
-    DescriptorPair pair;
-    dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferSRV(
-        pair, data.vertexBuffer, data.vertexCount, data.stride);
-    return pair;
-  }
-  DescriptorPair getSRVIndexBuffer(MeshHandle handle) const {
-    assertMagicNumber(handle);
-    uint32_t index = getIndexFromHandle(handle);
-    const MeshData &data = m_meshPool.getConstRef(index);
-    DescriptorPair pair;
-    dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferSRV(
-        pair, data.indexBuffer, data.indexCount, sizeof(int));
-    return pair;
-  }
-  inline D3D12_VERTEX_BUFFER_VIEW getVertexBufferView(MeshHandle handle) const {
-    assertMagicNumber(handle);
-    uint32_t index = getIndexFromHandle(handle);
-    const MeshData &data = m_meshPool.getConstRef(index);
-
-    D3D12_VERTEX_BUFFER_VIEW vbv;
-    vbv.BufferLocation = data.vertexBuffer->GetGPUVirtualAddress();
-    vbv.StrideInBytes = data.stride * sizeof(float);
-    vbv.SizeInBytes = vbv.StrideInBytes * (data.vertexCount);
-    return vbv;
-  }
-
-  inline D3D12_INDEX_BUFFER_VIEW getIndexBufferView(MeshHandle handle) const {
-    assertMagicNumber(handle);
-    uint32_t index = getIndexFromHandle(handle);
-    const MeshData &data = m_meshPool.getConstRef(index);
-
-    D3D12_INDEX_BUFFER_VIEW ibv;
-    ibv.BufferLocation = data.indexBuffer->GetGPUVirtualAddress();
-    ibv.Format = DXGI_FORMAT_R32_UINT;
-    ibv.SizeInBytes = data.indexCount * sizeof(int);
-    return ibv;
-  }
-
-  void freeSRV(MeshHandle handle, DescriptorPair pair) const {
-    assertMagicNumber(handle);
-    assert(pair.type == DescriptorType::SRV);
-    dx12::GLOBAL_CBV_SRV_UAV_HEAP->freeDescriptor(pair);
   }
   inline MeshHandle getHandleFromName(const char *name) {
     auto found = m_nameToHandle.find(name);
@@ -134,23 +79,26 @@ public:
     return MeshHandle{0};
   }
 
-  void free(const MeshHandle handle) {
-    assertMagicNumber(handle);
-    uint32_t index = getIndexFromHandle(handle);
-    MeshData &data = m_meshPool[index];
-    // releasing the texture;
-    data.vertexBuffer->Release();
-    data.indexBuffer->Release();
-    // invalidating magic number
-    data.magicNumber = 0;
-    // adding the index to the free list
-    m_meshPool.free(index);
+  void free(const MeshHandle handle) override {
+    /*
+  assertMagicNumber(handle);
+  uint32_t index = getIndexFromHandle(handle);
+  MeshData &data = m_meshPool[index];
+  // releasing the texture;
+  data.vertexBuffer->Release();
+  data.indexBuffer->Release();
+  // invalidating magic number
+  data.magicNumber = 0;
+  // adding the index to the free list
+  m_meshPool.free(index);
+  */
   }
 
   inline const std::vector<BoundingBox> &getBoundingBoxes() {
     return m_boundingBoxes;
   }
 
+  /*
   inline void bindMeshForRender(const MeshHandle handle,
                                 FrameCommand *fc) const {
     auto vview = getVertexBufferView(handle);
@@ -179,20 +127,16 @@ public:
     bindMeshRuntimeForRender(runtime, fc);
     fc->commandList->DrawIndexedInstanced(runtime.indexCount, 1, 0, 0, 0);
   }
+  */
 
 private:
   SparseMemoryPool<MeshData> m_meshPool;
 
   std::unordered_map<std::string, MeshHandle> m_nameToHandle;
-  static const uint32_t INDEX_MASK = (1 << 16) - 1;
-  static const uint32_t MAGIC_NUMBER_MASK = ~INDEX_MASK;
   static const uint32_t RESERVE_SIZE = 200;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
-  DirectX::ResourceUploadBatch batch;
   std::vector<MeshUploadResource> m_uploadRequests;
   std::vector<BoundingBox> m_boundingBoxes;
 };
 
-} // namespace dx12
-} // namespace SirEngine
-*/
+} // namespace SirEngine::vk

@@ -50,42 +50,19 @@ void VkTempLayer::onAttach() {
   globals::MAIN_CAMERA->setPosition(0, 0, 10);
   globals::MAIN_CAMERA->updateCamera();
 
-  // TODO move this in PSO manager
-
   // load mesh
   loadMesh("../data/external/vk/lucy.obj", m_mesh);
+  loadMeshDeInterleaved("../data/external/vk/lucy.obj", m_meshD);
 
   // allocate memory buffer for the mesh
   VkPhysicalDeviceMemoryProperties memoryRequirements;
   vkGetPhysicalDeviceMemoryProperties(vk::PHYSICAL_DEVICE, &memoryRequirements);
-
-  //dummy
-globals::CONSTANT_BUFFER_MANAGER->allocate(
-      6*MB_TO_BYTE,
-      ConstantBufferManager::CONSTANT_BUFFER_FLAGS::BUFFERED |
-          ConstantBufferManager::CONSTANT_BUFFER_FLAGS::UPDATED_EVERY_FRAME,
-      nullptr);
-auto toDelete = globals::CONSTANT_BUFFER_MANAGER->allocate(
-      1024,
-      ConstantBufferManager::CONSTANT_BUFFER_FLAGS::BUFFERED |
-          ConstantBufferManager::CONSTANT_BUFFER_FLAGS::UPDATED_EVERY_FRAME,
-      nullptr);
-globals::CONSTANT_BUFFER_MANAGER->allocate(
-      1024*4,
-      ConstantBufferManager::CONSTANT_BUFFER_FLAGS::BUFFERED |
-          ConstantBufferManager::CONSTANT_BUFFER_FLAGS::UPDATED_EVERY_FRAME,
-      nullptr);
-
-
 
   m_cameraBufferHandle = globals::CONSTANT_BUFFER_MANAGER->allocate(
       sizeof(CameraBuffer),
       ConstantBufferManager::CONSTANT_BUFFER_FLAGS::BUFFERED |
           ConstantBufferManager::CONSTANT_BUFFER_FLAGS::UPDATED_EVERY_FRAME,
       nullptr);
-
-  globals::CONSTANT_BUFFER_MANAGER->free(toDelete);
-	
 
   VkBufferUsageFlags meshUsage =
       VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
@@ -100,21 +77,9 @@ globals::CONSTANT_BUFFER_MANAGER->allocate(
                    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                memoryFlags, "meshIndex");
 
-globals::CONSTANT_BUFFER_MANAGER->allocate(
-      1*MB_TO_BYTE,
-      ConstantBufferManager::CONSTANT_BUFFER_FLAGS::BUFFERED |
-          ConstantBufferManager::CONSTANT_BUFFER_FLAGS::UPDATED_EVERY_FRAME,
-      nullptr);
-auto toDelete2 = globals::CONSTANT_BUFFER_MANAGER->allocate( 2*MB_TO_BYTE,
-      ConstantBufferManager::CONSTANT_BUFFER_FLAGS::BUFFERED |
-          ConstantBufferManager::CONSTANT_BUFFER_FLAGS::UPDATED_EVERY_FRAME,
-      nullptr);
-globals::CONSTANT_BUFFER_MANAGER->allocate( 4*MB_TO_BYTE,
-      ConstantBufferManager::CONSTANT_BUFFER_FLAGS::BUFFERED |
-          ConstantBufferManager::CONSTANT_BUFFER_FLAGS::UPDATED_EVERY_FRAME,
-      nullptr);
+  createBuffer(m_vertexBufferD, vk::LOGICAL_DEVICE, 128 * 1024 * 1024, meshUsage,
+               memoryFlags, "meshBufferD");
 
-  globals::CONSTANT_BUFFER_MANAGER->free(toDelete2);
 
   assert(m_vertexBuffer.size >= m_mesh.vertices.size() * sizeof(vk::Vertex));
   assert(m_indexBuffer.size >= m_mesh.indices.size() * sizeof(uint32_t));
@@ -123,6 +88,8 @@ globals::CONSTANT_BUFFER_MANAGER->allocate( 4*MB_TO_BYTE,
   // there should be here not happy for now
   memcpy(m_vertexBuffer.data, m_mesh.vertices.data(),
          m_mesh.vertices.size() * sizeof(vk::Vertex));
+  memcpy(m_vertexBufferD.data, m_mesh.vertices.data(),
+         m_meshD.vertices.size() * sizeof(vk::Vertex));
   memcpy(m_indexBuffer.data, m_mesh.indices.data(),
          m_mesh.indices.size() * sizeof(uint32_t));
 
@@ -267,13 +234,13 @@ void VkTempLayer::onUpdate() {
   static int counter = 0;
 
   static VkClearColorValue color{0.4, 0.4, 0.4, 1};
-  //color.float32[index] += 1.0f / 256.0f;
-  //counter++;
-  //if (counter == 255) {
+  // color.float32[index] += 1.0f / 256.0f;
+  // counter++;
+  // if (counter == 255) {
   //  index += 1;
   //  counter = 0;
   //}
-  //if (index == 3) {
+  // if (index == 3) {
   //  counter = 0;
   //  index = 0;
   //  color.uint32[0] = 0;
