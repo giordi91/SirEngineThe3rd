@@ -334,7 +334,7 @@ void VkConstantBufferManager::bindConstantBuffer(
 
   correctSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   correctSet.dstSet = descSet;
-  correctSet.dstBinding = 1;
+  correctSet.dstBinding = bindingIdx;
   correctSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
   correctSet.pBufferInfo = &bufferInfo;
   correctSet.descriptorCount = 1;

@@ -77,21 +77,30 @@ void VkTempLayer::onAttach() {
                    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                memoryFlags, "meshIndex");
 
-  createBuffer(m_vertexBufferD, vk::LOGICAL_DEVICE, 128 * 1024 * 1024, meshUsage,
-               memoryFlags, "meshBufferD");
+  createBuffer(m_vertexBufferD, vk::LOGICAL_DEVICE, 128 * 1024 * 1024,
+               meshUsage, memoryFlags, "meshBufferD");
+  createBuffer(m_indexBufferD, vk::LOGICAL_DEVICE, 128 * 1024 * 1024,
+               VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
+                   VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+               memoryFlags, "meshIndexD");
 
 
   assert(m_vertexBuffer.size >= m_mesh.vertices.size() * sizeof(vk::Vertex));
   assert(m_indexBuffer.size >= m_mesh.indices.size() * sizeof(uint32_t));
+  assert(m_vertexBufferD.size >= m_meshD.vertices.size() * sizeof(vk::Vertex));
+  assert(m_indexBufferD.size >= m_meshD.indices.size() * sizeof(uint32_t));
 
   // TODO need to figure out where this memory is going and what kind of sync
   // there should be here not happy for now
   memcpy(m_vertexBuffer.data, m_mesh.vertices.data(),
          m_mesh.vertices.size() * sizeof(vk::Vertex));
-  memcpy(m_vertexBufferD.data, m_mesh.vertices.data(),
+  memcpy(m_vertexBufferD.data, m_meshD.vertices.data(),
          m_meshD.vertices.size() * sizeof(vk::Vertex));
+
   memcpy(m_indexBuffer.data, m_mesh.indices.data(),
          m_mesh.indices.size() * sizeof(uint32_t));
+  memcpy(m_indexBufferD.data, m_meshD.indices.data(),
+         m_meshD.indices.size() * sizeof(uint32_t));
 
   SET_DEBUG_NAME(m_vertexBuffer.buffer, VK_OBJECT_TYPE_BUFFER, "vertex buffer");
   SET_DEBUG_NAME(m_indexBuffer.buffer, VK_OBJECT_TYPE_BUFFER, "index buffer");
@@ -120,23 +129,35 @@ void VkTempLayer::onAttach() {
 
 void VkTempLayer::createDescriptorLayoutAdvanced() {
 
-  constexpr int resourceCount = 3;
+  constexpr int resourceCount = 5;
   VkDescriptorSetLayoutBinding resourceBinding[resourceCount] = {};
-  resourceBinding[0].binding = 0;
-  resourceBinding[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  resourceBinding[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
   resourceBinding[0].descriptorCount = 1;
   resourceBinding[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
   resourceBinding[0].pImmutableSamplers = NULL;
+  resourceBinding[0].binding = 0;
+
   resourceBinding[1].binding = 1;
-  resourceBinding[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  resourceBinding[1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   resourceBinding[1].descriptorCount = 1;
   resourceBinding[1].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
   resourceBinding[1].pImmutableSamplers = NULL;
   resourceBinding[2].binding = 2;
-  resourceBinding[2].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+  resourceBinding[2].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   resourceBinding[2].descriptorCount = 1;
-  resourceBinding[2].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+  resourceBinding[2].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
   resourceBinding[2].pImmutableSamplers = NULL;
+  resourceBinding[3].binding = 3;
+  resourceBinding[3].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  resourceBinding[3].descriptorCount = 1;
+  resourceBinding[3].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+  resourceBinding[3].pImmutableSamplers = NULL;
+
+  resourceBinding[4].binding = 4;
+  resourceBinding[4].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+  resourceBinding[4].descriptorCount = 1;
+  resourceBinding[4].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+  resourceBinding[4].pImmutableSamplers = NULL;
 
   VkDescriptorSetLayoutCreateInfo resourceLayoutInfo[1] = {};
   resourceLayoutInfo[0].sType =
@@ -169,13 +190,21 @@ void VkTempLayer::createDescriptorLayoutAdvanced() {
   // this far we defined just what descriptor we wanted and how they were setup,
   // now we need to actually define the content of those descriptrs, the actual
   // resources
-  VkWriteDescriptorSet writeDescriptorSets[3] = {};
+  VkWriteDescriptorSet writeDescriptorSets[5] = {};
 
   // actual information of the descriptor, in this case it is our mesh buffer
-  VkDescriptorBufferInfo bufferInfo = {};
-  bufferInfo.buffer = m_vertexBuffer.buffer;
-  bufferInfo.offset = 0;
-  bufferInfo.range = m_vertexBuffer.size;
+  VkDescriptorBufferInfo bufferInfoP = {};
+  bufferInfoP.buffer = m_vertexBufferD.buffer;
+  bufferInfoP.offset = 0;
+  bufferInfoP.range = m_meshD.vertices.size()*sizeof(float)*3;
+  VkDescriptorBufferInfo bufferInfoN = {};
+  bufferInfoN.buffer = m_vertexBufferD.buffer;
+  bufferInfoN.offset = m_meshD.vertices.size()*sizeof(float)*3;
+  bufferInfoN.range = m_meshD.vertices.size()*sizeof(float);
+  VkDescriptorBufferInfo bufferInfoUV = {};
+  bufferInfoUV.buffer = m_vertexBufferD.buffer;
+  bufferInfoUV.offset = m_meshD.vertices.size()*sizeof(float)*4;
+  bufferInfoUV.range = m_meshD.vertices.size()*sizeof(float)*2;
 
   // actual information of the descriptor, in this case it is our mesh buffer
   VkDescriptorBufferInfo bufferInfoUniform = {};
@@ -183,18 +212,33 @@ void VkTempLayer::createDescriptorLayoutAdvanced() {
   // bufferInfoUniform.offset = 0;
   // bufferInfoUniform.range = m_cameraBuffer.size;
 
+  vk::CONSTANT_BUFFER_MANAGER->bindConstantBuffer(
+      m_cameraBufferHandle, bufferInfoUniform, 0, writeDescriptorSets,
+      m_meshDescriptorSet);
+
   // updating descriptors, with no samplers bound
   // Binding 0: Object mesh buffer
-  writeDescriptorSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  writeDescriptorSets[0].dstSet = m_meshDescriptorSet;
-  writeDescriptorSets[0].dstBinding = 0;
-  writeDescriptorSets[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  writeDescriptorSets[0].pBufferInfo = &bufferInfo;
-  writeDescriptorSets[0].descriptorCount = 1;
+  writeDescriptorSets[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  writeDescriptorSets[1].dstSet = m_meshDescriptorSet;
+  writeDescriptorSets[1].dstBinding = 1;
+  writeDescriptorSets[1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  writeDescriptorSets[1].pBufferInfo = &bufferInfoP;
+  writeDescriptorSets[1].descriptorCount = 1;
 
-  vk::CONSTANT_BUFFER_MANAGER->bindConstantBuffer(
-      m_cameraBufferHandle, bufferInfoUniform, 1, writeDescriptorSets,
-      m_meshDescriptorSet);
+  writeDescriptorSets[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  writeDescriptorSets[2].dstSet = m_meshDescriptorSet;
+  writeDescriptorSets[2].dstBinding = 2;
+  writeDescriptorSets[2].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  writeDescriptorSets[2].pBufferInfo = &bufferInfoN;
+  writeDescriptorSets[2].descriptorCount = 1;
+
+  writeDescriptorSets[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  writeDescriptorSets[3].dstSet = m_meshDescriptorSet;
+  writeDescriptorSets[3].dstBinding = 3;
+  writeDescriptorSets[3].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  writeDescriptorSets[3].pBufferInfo = &bufferInfoUV;
+  writeDescriptorSets[3].descriptorCount = 1;
+
   //// Binding 0: Object matrices Uniform buffer
   // writeDescriptorSets[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   // writeDescriptorSets[1].dstSet = m_meshDescriptorSet;
@@ -204,14 +248,14 @@ void VkTempLayer::createDescriptorLayoutAdvanced() {
   // writeDescriptorSets[1].descriptorCount = 1;
 
   // Binding 2: Object texture
-  writeDescriptorSets[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  writeDescriptorSets[2].dstSet = m_meshDescriptorSet;
-  writeDescriptorSets[2].dstBinding = 2;
-  writeDescriptorSets[2].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+  writeDescriptorSets[4].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  writeDescriptorSets[4].dstSet = m_meshDescriptorSet;
+  writeDescriptorSets[4].dstBinding = 4;
+  writeDescriptorSets[4].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
   // Images use a different descriptor strucutre, so we use pImageInfo instead
   // of pBufferInfo
-  writeDescriptorSets[2].pImageInfo = &uvTexture.descriptor;
-  writeDescriptorSets[2].descriptorCount = 1;
+  writeDescriptorSets[4].pImageInfo = &uvTexture.descriptor;
+  writeDescriptorSets[4].descriptorCount = 1;
 
   // Execute the writes to update descriptors for this set
   // Note that it's also possible to gather all writes and only run updates
@@ -312,10 +356,11 @@ void VkTempLayer::onUpdate() {
                           0, 2, sets, 0, nullptr);
 
   vkCmdBindIndexBuffer(vk::CURRENT_FRAME_COMMAND->m_commandBuffer,
-                       m_indexBuffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+                       m_indexBufferD.buffer, 0, VK_INDEX_TYPE_UINT32);
   // vkCmdDraw(FRAME_COMMAND[0].m_commandBuffer, 3, 1, 0, 0);
   vkCmdDrawIndexed(vk::CURRENT_FRAME_COMMAND->m_commandBuffer,
-                   static_cast<uint32_t>(m_mesh.indices.size()), 1, 0, 0, 0);
+                   //static_cast<uint32_t>(m_meshD.indices.size()), 1, 0, 0, 0);
+                   static_cast<uint32_t>(6), 1, 0, 0, 0);
 
   vkCmdEndRenderPass(vk::CURRENT_FRAME_COMMAND->m_commandBuffer);
 
