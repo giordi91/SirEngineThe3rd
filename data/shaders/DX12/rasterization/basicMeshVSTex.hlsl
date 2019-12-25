@@ -4,7 +4,7 @@
 ConstantBuffer<CameraBuffer> g_cameraBuffer : register(b0);
 
 
-FullMeshVertexOut VS(TexturedVertexIn12 vin)
+FullMeshVertexOut VS( uint vid : SV_VertexID)
 {
 	FullMeshVertexOut vout;
 	

@@ -18,9 +18,6 @@ SamplerState gsamLinearWrap : register(s2);
 SamplerState gsamLinearClamp : register(s3);
 SamplerState gsamAnisotropicWrap : register(s4);
 SamplerState gsamAnisotropicClamp : register(s5);
-TextureCube skyboxIrradianceTexture : register(t4);
-TextureCube skyboxRadianceTexture : register(t5);
-Texture2D brdfTexture : register(t6);
 
 float4 PS(FullMeshVertexOut input) : SV_Target
 {
