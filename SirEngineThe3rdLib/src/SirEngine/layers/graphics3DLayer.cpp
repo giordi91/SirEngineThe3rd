@@ -85,7 +85,7 @@ void Graphics3DLayer::onAttach() {
   dx12::RENDERING_GRAPH->addNode(gbufferPass);
   dx12::RENDERING_GRAPH->addNode(lighting);
   dx12::RENDERING_GRAPH->addNode(sky);
-  //dx12::RENDERING_GRAPH->addNode(simpleForward);
+  dx12::RENDERING_GRAPH->addNode(simpleForward);
   //dx12::RENDERING_GRAPH->addNode(postProcess);
   //dx12::RENDERING_GRAPH->addNode(debugDraw);
   dx12::RENDERING_GRAPH->addNode(shadowPass);
@@ -114,11 +114,11 @@ void Graphics3DLayer::onAttach() {
   dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::DEPTH_RT,
                                       sky, SkyBoxPass::DEPTH);
 
-  //// connecting forward
-  //dx12::RENDERING_GRAPH->connectNodes(sky, SkyBoxPass::OUT_TEX, simpleForward,
-  //                                    SimpleForward::IN_TEXTURE);
-  //dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::DEPTH_RT,
-  //                                    simpleForward, SimpleForward::DEPTH_RT);
+  // connecting forward
+  dx12::RENDERING_GRAPH->connectNodes(sky, SkyBoxPass::OUT_TEX, simpleForward,
+                                      SimpleForward::IN_TEXTURE);
+  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::DEPTH_RT,
+                                      simpleForward, SimpleForward::DEPTH_RT);
 
   //dx12::RENDERING_GRAPH->connectNodes(simpleForward, SimpleForward::OUT_TEXTURE,
   //                                    postProcess,
@@ -135,7 +135,7 @@ void Graphics3DLayer::onAttach() {
 
   //dx12::RENDERING_GRAPH->connectNodes(debugDraw, DebugDrawNode::OUT_TEXTURE,
   //                                    finalBlit, FinalBlitNode::IN_TEXTURE);
-  dx12::RENDERING_GRAPH->connectNodes(sky, SkyBoxPass::OUT_TEX,
+  dx12::RENDERING_GRAPH->connectNodes(simpleForward, SimpleForward::OUT_TEXTURE,
                                       finalBlit, FinalBlitNode::IN_TEXTURE);
 
   dx12::RENDERING_GRAPH->finalizeGraph();

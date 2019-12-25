@@ -352,6 +352,9 @@ void bindForwardPhongAlphaCutoutSkin(const MaterialRuntime &materialRuntime,
   // binding skinning data
   dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.matricesBuffer, 8,
                                                 commandList);
+  dx12::MESH_MANAGER->bindMesh(materialRuntime.meshHandle, commandList,
+                               MeshAttributeFlags::ALL, 9);
+
 
   // HARDCODED stencil value might have to think of a nice way to handle this
   commandList->OMSetStencilRef(static_cast<uint32_t>(STENCIL_REF::CLEAR));
@@ -404,6 +407,9 @@ void bindHairSkin(const MaterialRuntime &materialRuntime,
   // binding skinning matrices
   dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.matricesBuffer, 9,
                                                 commandList);
+
+  dx12::MESH_MANAGER->bindMesh(materialRuntime.meshHandle, commandList,
+                               MeshAttributeFlags::ALL, 10);
 
   // HARDCODED stencil value might have to think of a nice way to handle this
   commandList->OMSetStencilRef(static_cast<uint32_t>(STENCIL_REF::CLEAR));
