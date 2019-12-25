@@ -35,7 +35,7 @@ public:
   void bindBuffer(BufferHandle handle, int slot,
                   ID3D12GraphicsCommandList2 *commandList) const;
   void bindBufferAsSRVGraphics(BufferHandle handle, int slot,
-                               ID3D12GraphicsCommandList2 *commandList) const;
+                               ID3D12GraphicsCommandList2 *commandList, uint32_t offset=0) const;
 
   BufferHandle getBufferFromName(const std::string &name) const {
     const auto found = m_nameToHandle.find(name);

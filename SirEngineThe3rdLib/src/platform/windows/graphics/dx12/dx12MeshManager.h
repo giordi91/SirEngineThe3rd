@@ -18,10 +18,11 @@ struct MeshRuntime final {
   D3D12_VERTEX_BUFFER_VIEW vview;
   D3D12_INDEX_BUFFER_VIEW iview;
   uint32_t indexCount;
-  BufferHandle positions;
-  BufferHandle normals;
-  BufferHandle uv;
-  BufferHandle tangents;
+  BufferHandle bufferHandle;
+  MemoryRange positionRange;
+  MemoryRange normalsRange;
+  MemoryRange uvRange;
+  MemoryRange tangentsRange;
 };
 
 class Dx12MeshManager final : public MeshManager {
@@ -192,14 +193,15 @@ public:
   inline void bindMeshRuntimeAndRender(const MeshRuntime &runtime,
                                        FrameCommand *fc) const {
     bindMeshRuntimeForRender(runtime, fc);
-    dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(runtime.positions, 9,
-                                                  fc->commandList);
-    dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(runtime.normals, 10,
-                                                  fc->commandList);
-    dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(runtime.uv, 11,
-                                                  fc->commandList);
-    dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(runtime.tangents, 12,
-                                                  fc->commandList);
+
+    dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(runtime.bufferHandle, 9,
+                                                  fc->commandList, runtime.positionRange.m_offset);
+    dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(runtime.bufferHandle, 10,
+                                                  fc->commandList,runtime.normalsRange.m_offset);
+    dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(runtime.bufferHandle, 11,
+                                                  fc->commandList, runtime.uvRange.m_offset);
+    dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(runtime.bufferHandle, 12,
+                                                  fc->commandList,runtime.tangentsRange.m_offset);
     fc->commandList->DrawIndexedInstanced(runtime.indexCount, 1, 0, 0, 0);
   }
 
