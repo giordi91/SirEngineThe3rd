@@ -2,13 +2,14 @@
 #include "../common/vertexDefinitions.hlsl"
 
 ConstantBuffer<CameraBuffer> g_cameraBuffer : register(b0);
+StructuredBuffer<float4> g_positions: register(t8);
 
-PositionOnlyVertexOut VS(PositionOnlyVertexIn  vin)
+PositionOnlyVertexOut VS(uint vid : SV_VertexID)
 {
 	PositionOnlyVertexOut vout;
 	
 	// Transform to homogeneous clip space.
-	vout.pos = mul(float4(vin.pos,1.0f) , g_cameraBuffer.MVP);
+	vout.pos = mul(g_positions[vid] , g_cameraBuffer.MVP);
 	
     return vout;
 }

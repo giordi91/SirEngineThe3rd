@@ -19,7 +19,6 @@ struct DebugPrimitive {
   // slow I know but for the time being will get the job done
   ConstantBufferHandle cbHandle;
   ID3D12Resource *buffer;
-  D3D12_VERTEX_BUFFER_VIEW bufferView;
   int primitiveToRender;
   PRIMITIVE_TYPE primitiveType;
   DescriptorPair srv;

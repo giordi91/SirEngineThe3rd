@@ -86,8 +86,8 @@ void Graphics3DLayer::onAttach() {
   dx12::RENDERING_GRAPH->addNode(lighting);
   dx12::RENDERING_GRAPH->addNode(sky);
   dx12::RENDERING_GRAPH->addNode(simpleForward);
-  //dx12::RENDERING_GRAPH->addNode(postProcess);
-  //dx12::RENDERING_GRAPH->addNode(debugDraw);
+  dx12::RENDERING_GRAPH->addNode(postProcess);
+  dx12::RENDERING_GRAPH->addNode(debugDraw);
   dx12::RENDERING_GRAPH->addNode(shadowPass);
   dx12::RENDERING_GRAPH->setFinalNode(finalBlit);
 
@@ -120,22 +120,21 @@ void Graphics3DLayer::onAttach() {
   dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::DEPTH_RT,
                                       simpleForward, SimpleForward::DEPTH_RT);
 
-  //dx12::RENDERING_GRAPH->connectNodes(simpleForward, SimpleForward::OUT_TEXTURE,
-  //                                    postProcess,
-  //                                    PostProcessStack::IN_TEXTURE);
-
-  //dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::DEPTH_RT,
-  //                                    postProcess, PostProcessStack::DEPTH_RT);
-
-  //dx12::RENDERING_GRAPH->connectNodes(postProcess,
-  //                                    PostProcessStack::OUT_TEXTURE, debugDraw,
-  //                                    DebugDrawNode::IN_TEXTURE);
-  //dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::DEPTH_RT,
-  //                                    debugDraw, DebugDrawNode::DEPTH_RT);
-
-  //dx12::RENDERING_GRAPH->connectNodes(debugDraw, DebugDrawNode::OUT_TEXTURE,
-  //                                    finalBlit, FinalBlitNode::IN_TEXTURE);
   dx12::RENDERING_GRAPH->connectNodes(simpleForward, SimpleForward::OUT_TEXTURE,
+                                      postProcess,
+                                      PostProcessStack::IN_TEXTURE);
+
+  //TODO shouldn't this be the depth ouf of the forward? or forward does not modify depth? investigate
+  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::DEPTH_RT,
+                                      postProcess, PostProcessStack::DEPTH_RT);
+
+  dx12::RENDERING_GRAPH->connectNodes(postProcess,
+                                      PostProcessStack::OUT_TEXTURE, debugDraw,
+                                      DebugDrawNode::IN_TEXTURE);
+  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::DEPTH_RT,
+                                      debugDraw, DebugDrawNode::DEPTH_RT);
+
+  dx12::RENDERING_GRAPH->connectNodes(debugDraw, DebugDrawNode::OUT_TEXTURE,
                                       finalBlit, FinalBlitNode::IN_TEXTURE);
 
   dx12::RENDERING_GRAPH->finalizeGraph();
@@ -148,6 +147,10 @@ void Graphics3DLayer::onAttach() {
   auto light = dx12::RENDERING_CONTEXT->getLightData();
   dx12::DEBUG_RENDERER->drawMatrix(light.localToWorld, 3.0f,
                                    glm::vec4(1, 0, 0, 1), "");
+
+  uint32_t bbcount;
+  auto data =dx12::MESH_MANAGER->getBoundingBoxes(bbcount);
+  dx12::DEBUG_RENDERER->drawBoundingBoxes((BoundingBox*)data,bbcount,glm::vec4(1,0,0,1),"");
   // dx12::DEBUG_RENDERER->drawMatrix(
   //    globals::MAIN_CAMERA->getViewInverse(DirectX::XMMatrixIdentity()), 3.0f,
   //    DirectX::XMFLOAT4(1, 0, 0, 1), "");

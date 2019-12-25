@@ -7,6 +7,7 @@
 #include "nlohmann/json_fwd.hpp"
 #include "platform/windows/graphics/dx12/PSOCompile.h"
 #include "platform/windows/graphics/dx12/d3dx12.h"
+#include "SirEngine/log.h"
 
 namespace SirEngine::dx12 {
 class RootSignatureManager;
@@ -65,6 +66,7 @@ public:
     bool r = m_psoRegisterHandle.containsKey(name);
     if( !r) {
         //assert(0);
+        SE_CORE_ERROR("Could not find PSO {0}",name);
         return{};
     }
     PSOHandle value{};
