@@ -24,7 +24,6 @@
     "-p ../data/external/animation/exported/clip/knightBIdle.json -o ../data/processed/clip/knightB/knightBIdle.clip --pluginName animationCompilerPlugin",
     "-p ../data/external/animation/exported/clip/knightBWalk.json -o ../data/processed/clip/knightB/knightBWalk.clip --pluginName animationCompilerPlugin",
 
-    "-p ../data/shaders/DX12/rasterization/meshPositionOnlyVS.hlsl -o ../data/processed/shaders/DX12/rasterization/meshPositionOnlyVS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t vs_6_2  -e VS -d \"",
     "-p ../data/shaders/DX12/rasterization/basicMeshPSTex.hlsl -o ../data/processed/shaders/DX12/rasterization/basicMeshPSTex.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
     "-p ../data/shaders/DX12/rasterization/basicMeshVSTex.hlsl -o ../data/processed/shaders/DX12/rasterization/basicMeshVSTex.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t vs_6_2  -e VS -d \"",
     "-p ../data/shaders/DX12/rasterization/basicMeshVSTexSkinning.hlsl -o ../data/processed/shaders/DX12/rasterization/basicMeshVSTexSkinning.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t vs_6_2  -e VS -d \"",
