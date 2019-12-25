@@ -23,16 +23,16 @@
       "material": "../data/materials/knightBPlatesSkin.json",
       "skin": "../data/processed/meshes/knightB/plates.skin",
       "animConfig": "../data/external/animation/exported/clip/knightBLuaStateConfig.json"
-    }
-  ],
-  "removed": [
-    
+    },
     {
       "mesh": "../data/processed/meshes/knightB/face.model",
       "material": "../data/materials/knightBFaceSkin.json",
       "skin": "../data/processed/meshes/knightB/face.skin",
       "animConfig": "../data/external/animation/exported/clip/knightBLuaStateConfig.json"
-    },
+    }
+  ],
+  "removed": [
+    
     {
       "mesh": "../data/processed/meshes/knightB/eyeNew.model",
       "material": "../data/materials/eyeMaterialSkin.json",

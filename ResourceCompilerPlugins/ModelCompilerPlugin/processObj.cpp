@@ -596,13 +596,6 @@ bool convertObj(const char *path, const char *tangentsPath,
   }
 
   int finalIndexCount = indices.size();
-  // need to de-interleave the data
-  // TODO brute force, will fix later
-  std::vector<float> positions;
-  std::vector<float> normals;
-  std::vector<float> uv;
-  std::vector<float> tans;
-
   // lets compute all the offsets
   uint32_t alignRequirement = sizeof(float) * 4;
   uint64_t pointSizeInByte = vertexData.size() * sizeof(float) * 4;
@@ -619,7 +612,7 @@ bool convertObj(const char *path, const char *tangentsPath,
   uint64_t tangentsPointerOffset = 0;
   uint64_t tangentsOffsetByte =
       alignSize( uvOffsetByte + uvSize, alignRequirement,
-                tangentsOffsetByte);
+                tangentsPointerOffset);
 
   uint64_t totalRequiredAligmentBytes =
       normalPointerOffset + uvPointerOffset + tangentsPointerOffset;
