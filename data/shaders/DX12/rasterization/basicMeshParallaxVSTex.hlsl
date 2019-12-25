@@ -2,23 +2,28 @@
 #include "../common/vertexDefinitions.hlsl"
 
 ConstantBuffer<CameraBuffer> g_cameraBuffer : register(b0);
+StructuredBuffer<float4> g_positions : register(t9);
+StructuredBuffer<float4> g_normals : register(t10);
+StructuredBuffer<float2> g_uvs : register(t11);
+StructuredBuffer<float4> g_tangents : register(t12);
 
-FullMeshParallaxVertexOut VS(TexturedVertexIn12 vin)
+FullMeshParallaxVertexOut VS(uint vid : SV_VertexID)
 {
     FullMeshParallaxVertexOut vout;
 	
+    float4 p = g_positions[vid];
 	// Transform to homogeneous clip space.
-    vout.PosH = mul(float4(vin.PosL, 1.0f), g_cameraBuffer.MVP);
+    vout.PosH = mul(p, g_cameraBuffer.MVP);
 	
 	// Just pass vertex color into the pixel shader.
-    vout.Normal = vin.Normal;
-    vout.uv = vin.uvs.xy;
-    vout.tangent = vin.tangents.xyz;
-    vout.worldPos = float4(vin.PosL, 1.0f);
+    vout.Normal = g_normals[vid].xyz;
+    vout.uv = g_uvs[vid];
+    vout.tangent = g_tangents[vid];
+    vout.worldPos = p;
 
-    float3 N = normalize(vin.Normal.xyz);
-    float3 T = normalize(vin.tangents.xyz);
-    float3 B = normalize(cross( N,T));
+    float3 N = normalize(vout.Normal);
+    float3 T = normalize(vout.tangent);
+    float3 B = normalize(cross(N, T));
     float3x3 NTB = transpose(float3x3(T, B, N));
 
     //extra data needed for compute view direction in tangent space

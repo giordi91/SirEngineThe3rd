@@ -286,6 +286,7 @@ void bindForwardPhongAlphaCutout(const MaterialRuntime &materialRuntime,
   commandList->SetGraphicsRootDescriptorTable(4, materialRuntime.normal);
   commandList->SetGraphicsRootDescriptorTable(5, materialRuntime.separateAlpha);
   // HARDCODED stencil value might have to think of a nice way to handle this
+
   commandList->OMSetStencilRef(static_cast<uint32_t>(STENCIL_REF::CLEAR));
 }
 
@@ -294,6 +295,8 @@ void bindParallaxPBR(const MaterialRuntime &materialRuntime,
   const ConstantBufferHandle lightCB = dx12::RENDERING_CONTEXT->getLightCB();
   const auto address =
       dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(lightCB);
+
+  dx12::RENDERING_CONTEXT->bindCameraBuffer(0);
 
   commandList->SetGraphicsRootConstantBufferView(1, address);
   commandList->SetGraphicsRootConstantBufferView(
@@ -322,6 +325,8 @@ void bindParallaxPBR(const MaterialRuntime &materialRuntime,
       11, dx12::TEXTURE_MANAGER
               ->getSRVDx12(globals::DEBUG_FRAME_DATA->directionalShadow)
               .gpuHandle);
+  dx12::MESH_MANAGER->bindMesh(materialRuntime.meshHandle, commandList,
+                               MeshAttributeFlags::ALL, 12);
 }
 
 void bindForwardPhongAlphaCutoutSkin(const MaterialRuntime &materialRuntime,
