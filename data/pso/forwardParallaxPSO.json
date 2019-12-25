@@ -1,6 +1,6 @@
 {
   "type": "RASTER",
-  "inputLayout": "fullMesh",
+  "inputLayout": "deferredNull",
   "globalRootSignature": "../data/rs/forwardParallaxRS.json",
   "VS": "basicMeshParallaxVSTex",
   "PS": "basicMeshForwardParallaxPS",

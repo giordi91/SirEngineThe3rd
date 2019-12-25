@@ -47,16 +47,11 @@
       "material": "../data/materials/knightBHairMaterialSkin.json",
       "skin": "../data/processed/meshes/knightB/hair.skin",
       "animConfig": "../data/external/animation/exported/clip/knightBLuaStateConfig.json"
-    }
-  ],
-  "removed": [
-    
+    },
     {
       "mesh": "../data/processed/meshes/flatGround/flatGround.model",
       "material": "../data/materials/brickMaterial.json"
     }
-
-
 
   ]
 }
