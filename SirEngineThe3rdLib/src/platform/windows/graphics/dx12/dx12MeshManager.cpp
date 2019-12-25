@@ -80,6 +80,10 @@ MeshHandle Dx12MeshManager::loadMesh(const char *path, bool isInternal) {
     meshRuntime.indexCount = meshData->indexCount;
     meshRuntime.vview = getVertexBufferView(handle);
     meshRuntime.iview = getIndexBufferView(handle);
+    meshRuntime.positionRange = mapper->positionRange;
+    meshRuntime.normalsRange = mapper->normalsRange;
+    meshRuntime.uvRange = mapper->uvRange;
+    meshRuntime.tangentsRange = mapper->tangentsRange;
 
     // storing the handle and increasing the magic count
     m_nameToHandle[name] = handle;
@@ -91,6 +95,10 @@ MeshHandle Dx12MeshManager::loadMesh(const char *path, bool isInternal) {
     int positionSize = newVertexCount * 4 * sizeof(float);
     auto *ptr = (char *)vertexData;
 
+    BufferHandle positionsHandle = dx12::BUFFER_MANAGER->allocate(
+        mapper->vertexDataSizeInByte, vertexData, "",
+        mapper->vertexDataSizeInByte / 4, sizeof(float), false);
+    /*
     BufferHandle positionsHandle = dx12::BUFFER_MANAGER->allocate(
         mapper->positionRange.m_size, ptr + mapper->positionRange.m_offset, "",
         mapper->vertexCount * 4, sizeof(float),
@@ -105,11 +113,12 @@ MeshHandle Dx12MeshManager::loadMesh(const char *path, bool isInternal) {
     BufferHandle tangents = dx12::BUFFER_MANAGER->allocate(
         mapper->tangentsRange.m_size, ptr + mapper->tangentsRange.m_offset, "",
         mapper->vertexCount * 4, sizeof(float), false);
+        */
 
-    meshRuntime.positions = positionsHandle;
-    meshRuntime.normals = normalsHandle;
-    meshRuntime.uv = uvHandle;
-    meshRuntime.tangents = tangents;
+    meshRuntime.bufferHandle = positionsHandle;
+    // meshRuntime.normals = normalsHandle;
+    // meshRuntime.uv = uvHandle;
+    // meshRuntime.tangents = tangents;
 
     meshData->meshRuntime = meshRuntime;
     // BufferHandle influecesHandle = globals::BUFFER_MANAGER->allocate(

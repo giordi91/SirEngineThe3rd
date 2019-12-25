@@ -1,8 +1,8 @@
 #include "platform/windows/graphics/dx12/bufferManagerDx12.h"
-#include "platform/windows/graphics/dx12/DX12.h"
-#include <cassert>
 #include "SirEngine/log.h"
 #include "SirEngine/runtimeString.h"
+#include "platform/windows/graphics/dx12/DX12.h"
+#include <cassert>
 
 namespace SirEngine::dx12 {
 ID3D12Resource *
@@ -30,7 +30,8 @@ void BufferManagerDx12::free(const BufferHandle handle) {
 
 BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInByte,
                                          void *initData, const char *name,
-                                         const int numElements, const int elementSize,
+                                         const int numElements,
+                                         const int elementSize,
                                          const bool isUAV) {
   ID3D12Resource *buffer = nullptr;
   ID3D12Resource *uploadBuffer = nullptr;
@@ -143,7 +144,7 @@ BufferHandle BufferManagerDx12::allocateUpload(const uint32_t sizeInByte,
   data.magicNumber = MAGIC_NUMBER_COUNTER;
   data.data = uploadBuffer;
   data.state = D3D12_RESOURCE_STATE_GENERIC_READ;
-  data.type =  BufferType::SRV;
+  data.type = BufferType::SRV;
 
   HRESULT mapResult = uploadBuffer->Map(0, nullptr, &data.mappedData);
   assert(SUCCEEDED(mapResult));
@@ -159,7 +160,7 @@ void BufferManagerDx12::bindBuffer(
   uint32_t index = getIndexFromHandle(handle);
   const BufferData &data = m_bufferPool.getConstRef(index);
 
-  //TODO FIX THIS, this never worked LOL
+  // TODO FIX THIS, this never worked LOL
   D3D12_GPU_DESCRIPTOR_HANDLE toBind =
       data.type == BufferType::UAV ? data.uav.gpuHandle : data.srv.gpuHandle;
   // commandList->SetComputeRootDescriptorTable(slot, toBind);
@@ -168,27 +169,26 @@ void BufferManagerDx12::bindBuffer(
 }
 void BufferManagerDx12::bindBufferAsSRVGraphics(
     const BufferHandle handle, const int slot,
-    ID3D12GraphicsCommandList2 *commandList) const {
+    ID3D12GraphicsCommandList2 *commandList, uint32_t offset) const {
   assertMagicNumber(handle);
   uint32_t index = getIndexFromHandle(handle);
   const BufferData &data = m_bufferPool.getConstRef(index);
 
   commandList->SetGraphicsRootShaderResourceView(
-      slot, data.data->GetGPUVirtualAddress());
+      slot, data.data->GetGPUVirtualAddress() + offset);
 }
 
-void BufferManagerDx12::clearUploadRequests()
-{
+void BufferManagerDx12::clearUploadRequests() {
 
   const auto id = GLOBAL_FENCE->GetCompletedValue();
   const int requestSize = static_cast<int>(m_uploadRequests.size()) - 1;
   int stackTopIdx = requestSize;
   for (int i = requestSize; i >= 0; --i) {
-    UploadRequest&upload = m_uploadRequests[i];
+    UploadRequest &upload = m_uploadRequests[i];
     if (upload.fence < id) {
       // we can free the memory
-		upload.uploadBuffer->Release();
-		SE_CORE_INFO("Freed buffer upload with fence {0}", upload.fence);
+      upload.uploadBuffer->Release();
+      SE_CORE_INFO("Freed buffer upload with fence {0}", upload.fence);
       if (stackTopIdx != i) {
         // lets copy
         m_uploadRequests[i] = m_uploadRequests[stackTopIdx];
