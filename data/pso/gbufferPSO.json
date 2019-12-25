@@ -1,6 +1,6 @@
 {
   "type": "RASTER",
-  "inputLayout": "fullMesh",
+  "inputLayout": "deferredNull",
   "globalRootSignature": "../data/rs/gbufferRS.json",
   "VS": "basicMeshVSTex",
   "PS": "basicMeshGBufferPS",
