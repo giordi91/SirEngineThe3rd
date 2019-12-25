@@ -12,10 +12,11 @@ StructuredBuffer<float4> g_tangents: register(t11);
 
 #include "../common/skinning.hlsl"
 
-FullMeshVertexOut VS(TexturedVertexIn12 vin, uint vid : SV_VertexID)
+FullMeshVertexOut VS(uint vid : SV_VertexID)
 {
     FullMeshVertexOut vout;
-	FullSkinResult skin = skinFullPoint(vid,g_positions[vid],g_normals[vid].xyz,g_tangents[vid].xyz);
+    float4 pos = g_positions[vid];
+	FullSkinResult skin = skinFullPoint(vid,pos,g_normals[vid].xyz,g_tangents[vid].xyz);
 	
 	// Transform to homogeneous clip space.
     //vout.PosH = mul(skin.pos, g_cameraBuffer.MVP);
@@ -25,27 +26,6 @@ FullMeshVertexOut VS(TexturedVertexIn12 vin, uint vid : SV_VertexID)
     vout.Normal = normalize(skin.normal);
     vout.uv = g_uvs[vid];
     vout.tangent = normalize(skin.tan);
-    vout.worldPos = float4(vin.PosL, 1.0f);
+    vout.worldPos = pos;
     return vout;
-
-/*
-    float4 p = g_positions[vid];
-    vout.PosH = mul(p, g_cameraBuffer.MVP);
-    vout.Normal = normalize(g_normals[vid]);
-    vout.uv= g_uvs[vid];
-    vout.tangent= g_tangents[vid];
-    vout.worldPos = p;
-    return vout;
-*/
-
-
-    /*
-    float4 p = g_positions[0];
-    vout.PosH = mul(p, g_cameraBuffer.MVP);
-    vout.Normal = float3(0, 0, 0);
-    vout.uv = float2(0, 0);
-    vout.tangent = float3(0, 0, 0);
-    vout.worldPos = p;
-    return vout;
-    */
 }

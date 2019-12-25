@@ -15,7 +15,6 @@ namespace SirEngine {
 namespace dx12 {
 
 struct MeshRuntime final {
-  D3D12_VERTEX_BUFFER_VIEW vview;
   D3D12_INDEX_BUFFER_VIEW iview;
   uint32_t indexCount;
   BufferHandle bufferHandle;
@@ -30,9 +29,7 @@ private:
   struct MeshData final {
     uint32_t magicNumber : 16;
     uint32_t stride : 16;
-    ID3D12Resource *vertexBuffer;
     ID3D12Resource *indexBuffer;
-    BufferHandle vtxBuffHandle;
     BufferHandle idxBuffHandle;
     MeshRuntime meshRuntime;
     uint32_t indexCount;
@@ -41,59 +38,19 @@ private:
                        // are starting to split, for example bounding box;
   };
 
-  struct MeshUploadResource final {
-    ID3D12Resource *uploadVertexBuffer = nullptr;
-    ID3D12Resource *uploadIndexBuffer = nullptr;
-    UINT64 fence = 0;
-  };
-
 public:
   Dx12MeshManager() : m_meshPool(RESERVE_SIZE), batch(dx12::DEVICE) {
     m_nameToHandle.reserve(RESERVE_SIZE);
-    m_uploadRequests.reserve(RESERVE_SIZE);
   }
   virtual ~Dx12MeshManager() { // assert(m_meshPool.assertEverythingDealloc());
   }
 
-  inline uint32_t getIndexCount(const MeshHandle &handle) const {
-    assertMagicNumber(handle);
-    uint32_t index = getIndexFromHandle(handle);
-    const MeshData &data = m_meshPool.getConstRef(index);
-    return data.indexCount;
-  }
   Dx12MeshManager(const Dx12MeshManager &) = delete;
   Dx12MeshManager &operator=(const Dx12MeshManager &) = delete;
-  // for now a bit overkill to pass both the index and the memory,
-  // I could just pass the pointer at right address but for the time
-  // being this will keep symmetry.
 
   // TODO fix is internal
   MeshHandle loadMesh(const char *path, bool isInternal = false) override;
 
-  inline void assertMagicNumber(const MeshHandle handle) const {
-#ifdef SE_DEBUG
-    uint32_t magic = getMagicFromHandle(handle);
-    uint32_t idx = getIndexFromHandle(handle);
-    assert(m_meshPool.getConstRef(idx).magicNumber == magic &&
-           "invalid magic handle for constant buffer");
-#endif
-  }
-  inline uint32_t getIndexFromHandle(MeshHandle h) const {
-    return h.handle & INDEX_MASK;
-  }
-  inline uint32_t getMagicFromHandle(MeshHandle h) const {
-    return (h.handle & MAGIC_NUMBER_MASK) >> 16;
-  }
-
-  DescriptorPair getSRVVertexBuffer(MeshHandle handle) const {
-    assertMagicNumber(handle);
-    uint32_t index = getIndexFromHandle(handle);
-    const MeshData &data = m_meshPool.getConstRef(index);
-    DescriptorPair pair;
-    dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferSRV(
-        pair, data.vertexBuffer, data.vertexCount, data.stride);
-    return pair;
-  }
   DescriptorPair getSRVIndexBuffer(MeshHandle handle) const {
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
@@ -102,17 +59,6 @@ public:
     dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferSRV(
         pair, data.indexBuffer, data.indexCount, sizeof(int));
     return pair;
-  }
-  inline D3D12_VERTEX_BUFFER_VIEW getVertexBufferView(MeshHandle handle) const {
-    assertMagicNumber(handle);
-    uint32_t index = getIndexFromHandle(handle);
-    const MeshData &data = m_meshPool.getConstRef(index);
-
-    D3D12_VERTEX_BUFFER_VIEW vbv;
-    vbv.BufferLocation = data.vertexBuffer->GetGPUVirtualAddress();
-    vbv.StrideInBytes = data.stride * sizeof(float);
-    vbv.SizeInBytes = vbv.StrideInBytes * (data.vertexCount);
-    return vbv;
   }
 
   inline D3D12_INDEX_BUFFER_VIEW getIndexBufferView(MeshHandle handle) const {
@@ -145,7 +91,6 @@ public:
     uint32_t index = getIndexFromHandle(handle);
     MeshData &data = m_meshPool[index];
     // releasing the texture;
-    data.vertexBuffer->Release();
     data.indexBuffer->Release();
     // invalidating magic number
     data.magicNumber = 0;
@@ -158,28 +103,11 @@ public:
     return m_boundingBoxes.data();
   }
 
-  inline void bindMeshForRender(const MeshHandle handle,
-                                FrameCommand *fc) const {
-    auto vview = getVertexBufferView(handle);
-    auto iview = getIndexBufferView(handle);
-    fc->commandList->IASetIndexBuffer(&iview);
-    fc->commandList->IASetVertexBuffers(0, 1, &vview);
-    fc->commandList->IASetPrimitiveTopology(
-        D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-  }
   inline void bindMeshRuntimeForRender(const MeshRuntime &runtime,
                                        FrameCommand *fc) const {
     fc->commandList->IASetIndexBuffer(&runtime.iview);
-    fc->commandList->IASetVertexBuffers(0, 1, &runtime.vview);
     fc->commandList->IASetPrimitiveTopology(
         D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-  }
-  inline void bindMeshAndRender(const MeshHandle handle,
-                                FrameCommand *fc) const {
-    bindMeshForRender(handle, fc);
-    uint32_t meshIndexCount = getIndexCount(handle);
-
-    fc->commandList->DrawIndexedInstanced(meshIndexCount, 1, 0, 0, 0);
   }
 
   [[nodiscard]] const MeshRuntime &
@@ -194,14 +122,17 @@ public:
                                        FrameCommand *fc) const {
     bindMeshRuntimeForRender(runtime, fc);
 
-    dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(runtime.bufferHandle, 9,
-                                                  fc->commandList, runtime.positionRange.m_offset);
-    dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(runtime.bufferHandle, 10,
-                                                  fc->commandList,runtime.normalsRange.m_offset);
-    dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(runtime.bufferHandle, 11,
-                                                  fc->commandList, runtime.uvRange.m_offset);
-    dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(runtime.bufferHandle, 12,
-                                                  fc->commandList,runtime.tangentsRange.m_offset);
+    dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(
+        runtime.bufferHandle, 9, fc->commandList,
+        runtime.positionRange.m_offset);
+    dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(
+        runtime.bufferHandle, 10, fc->commandList,
+        runtime.normalsRange.m_offset);
+    dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(
+        runtime.bufferHandle, 11, fc->commandList, runtime.uvRange.m_offset);
+    dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(
+        runtime.bufferHandle, 12, fc->commandList,
+        runtime.tangentsRange.m_offset);
     fc->commandList->DrawIndexedInstanced(runtime.indexCount, 1, 0, 0, 0);
   }
 
@@ -213,15 +144,22 @@ public:
   }
 
 private:
+  inline void assertMagicNumber(const MeshHandle handle) const {
+#ifdef SE_DEBUG
+    uint32_t magic = getMagicFromHandle(handle);
+    uint32_t idx = getIndexFromHandle(handle);
+    assert(m_meshPool.getConstRef(idx).magicNumber == magic &&
+           "invalid magic handle for constant buffer");
+#endif
+  }
+
+private:
   SparseMemoryPool<MeshData> m_meshPool;
 
   std::unordered_map<std::string, MeshHandle> m_nameToHandle;
-  static const uint32_t INDEX_MASK = (1 << 16) - 1;
-  static const uint32_t MAGIC_NUMBER_MASK = ~INDEX_MASK;
   static const uint32_t RESERVE_SIZE = 200;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
   DirectX::ResourceUploadBatch batch;
-  std::vector<MeshUploadResource> m_uploadRequests;
   std::vector<BoundingBox> m_boundingBoxes;
 };
 
