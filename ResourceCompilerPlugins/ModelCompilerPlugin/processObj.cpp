@@ -656,23 +656,23 @@ bool convertObj(const char *path, const char *tangentsPath,
   int vc = vertexData.size();
   for (int i = 0; i < vc; ++i) {
     const VertexCompare &cmp = vertexData[i];
-    model.vertices[posOffset + 0] = cmp.p.x;
-    model.vertices[posOffset + 1] = cmp.p.y;
-    model.vertices[posOffset + 2] = cmp.p.z;
-    model.vertices[posOffset + 3] = 1.0f;
+    model.vertices[posOffset + 0u] = cmp.p.x;
+    model.vertices[posOffset + 1u] = cmp.p.y;
+    model.vertices[posOffset + 2u] = cmp.p.z;
+    model.vertices[posOffset + 3u] = 1.0f;
 
-    model.vertices[normalsOffset + 0] = cmp.n.x;
-    model.vertices[normalsOffset + 1] = cmp.n.y;
-    model.vertices[normalsOffset + 2] = cmp.n.z;
-    model.vertices[normalsOffset + 3] = 0.0f;
+    model.vertices[normalsOffset + 0u] = cmp.n.x;
+    model.vertices[normalsOffset + 1u] = cmp.n.y;
+    model.vertices[normalsOffset + 2u] = cmp.n.z;
+    model.vertices[normalsOffset + 3u] = 0.0f;
 
-    model.vertices[uvOffset + 0] = cmp.uv.x;
-    model.vertices[uvOffset + 1] = cmp.uv.y;
+    model.vertices[uvOffset + 0u] = cmp.uv.x;
+    model.vertices[uvOffset + 1u] = cmp.uv.y;
 
-    model.vertices[tanOffset + 0] = cmp.t.x;
-    model.vertices[tanOffset + 1] = cmp.t.y;
-    model.vertices[tanOffset + 2] = cmp.t.z;
-    model.vertices[tanOffset + 3] = 0.0f;
+    model.vertices[tanOffset + 0u] = cmp.t.x;
+    model.vertices[tanOffset + 1u] = cmp.t.y;
+    model.vertices[tanOffset + 2u] = cmp.t.z;
+    model.vertices[tanOffset + 3u] = 0.0f;
 
     posOffset += 4;
     normalsOffset += 4;

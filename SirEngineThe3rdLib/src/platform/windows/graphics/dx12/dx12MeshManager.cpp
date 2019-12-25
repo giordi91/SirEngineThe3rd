@@ -25,10 +25,6 @@ MeshHandle Dx12MeshManager::loadMesh(const char *path, bool isInternal) {
 
     const auto mapper = getMapperData<ModelMapperData>(binaryData.data());
 
-    // const uint32_t stride = mapper->strideInByte / sizeof(float);
-    //// creating the buffers
-    // const uint32_t vertexCount =
-    //    mapper->vertexDataSizeInByte / mapper->strideInByte;
     const uint32_t indexCount = mapper->indexDataSizeInByte / sizeof(int);
 
     // lets get the vertex data
@@ -44,15 +40,8 @@ MeshHandle Dx12MeshManager::loadMesh(const char *path, bool isInternal) {
     meshData = &m_meshPool.getFreeMemoryData(index);
     meshData->indexCount = indexCount;
     meshData->vertexCount = mapper->vertexCount;
-    // meshData->stride = mapp;
 
-    uint32_t totalSize = mapper->vertexDataSizeInByte;
-    meshData->vtxBuffHandle = dx12::BUFFER_MANAGER->allocate(
-        totalSize, vertexData, "", totalSize, sizeof(float), false);
-    meshData->vertexBuffer =
-        dx12::BUFFER_MANAGER->getNativeBuffer(meshData->vtxBuffHandle);
-
-    totalSize = indexCount * sizeof(int);
+    uint32_t totalSize = indexCount * sizeof(int);
     meshData->idxBuffHandle = dx12::BUFFER_MANAGER->allocate(
         totalSize, indexData, "", totalSize / sizeof(int), sizeof(int), false);
     meshData->indexBuffer =
@@ -78,7 +67,6 @@ MeshHandle Dx12MeshManager::loadMesh(const char *path, bool isInternal) {
     // build the runtime mesh
     MeshRuntime meshRuntime{};
     meshRuntime.indexCount = meshData->indexCount;
-    meshRuntime.vview = getVertexBufferView(handle);
     meshRuntime.iview = getIndexBufferView(handle);
     meshRuntime.positionRange = mapper->positionRange;
     meshRuntime.normalsRange = mapper->normalsRange;
@@ -98,32 +86,10 @@ MeshHandle Dx12MeshManager::loadMesh(const char *path, bool isInternal) {
     BufferHandle positionsHandle = dx12::BUFFER_MANAGER->allocate(
         mapper->vertexDataSizeInByte, vertexData, "",
         mapper->vertexDataSizeInByte / 4, sizeof(float), false);
-    /*
-    BufferHandle positionsHandle = dx12::BUFFER_MANAGER->allocate(
-        mapper->positionRange.m_size, ptr + mapper->positionRange.m_offset, "",
-        mapper->vertexCount * 4, sizeof(float),
-        false);
-    BufferHandle normalsHandle = dx12::BUFFER_MANAGER->allocate(
-        mapper->normalsRange.m_size, ptr + mapper->normalsRange.m_offset, "",
-        mapper->vertexCount * 4, sizeof(float),
-        false);
-    BufferHandle uvHandle = dx12::BUFFER_MANAGER->allocate(
-        mapper->uvRange.m_size, ptr + mapper->uvRange.m_offset, "",
-        mapper->vertexCount * 3, sizeof(float), false);
-    BufferHandle tangents = dx12::BUFFER_MANAGER->allocate(
-        mapper->tangentsRange.m_size, ptr + mapper->tangentsRange.m_offset, "",
-        mapper->vertexCount * 4, sizeof(float), false);
-        */
 
-    meshRuntime.bufferHandle = positionsHandle;
-    // meshRuntime.normals = normalsHandle;
-    // meshRuntime.uv = uvHandle;
-    // meshRuntime.tangents = tangents;
+    meshRuntime.bufferHandle= positionsHandle;
 
     meshData->meshRuntime = meshRuntime;
-    // BufferHandle influecesHandle = globals::BUFFER_MANAGER->allocate(
-    //    mapper->jointsSizeInByte, joints, "",
-    //    mapper->jointsSizeInByte / sizeof(int), sizeof(int), false);
 
   } else {
     SE_CORE_INFO("Mesh already loaded, returning handle:{0}", name);
