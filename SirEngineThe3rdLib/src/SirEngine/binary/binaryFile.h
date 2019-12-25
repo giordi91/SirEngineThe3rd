@@ -1,6 +1,7 @@
 #pragma once
 #include "SirEngine/core.h"
 #include "SirEngine/fileUtils.h"
+#include "SirEngine/graphics/graphicsDefines.h"
 
 struct BinaryFileHeader {
   unsigned int fileType = 0;
@@ -90,11 +91,15 @@ inline std::string getBinaryFileTypeName(const BinaryFileType type) {
 struct ModelMapperData final {
   uint32_t vertexDataSizeInByte = 0;
   uint32_t indexDataSizeInByte = 0;
-  uint32_t strideInByte = 0;
+  uint32_t vertexCount = 0;
+  uint32_t indexCount = 0;
+  SirEngine::MemoryRange positionRange;
+  SirEngine::MemoryRange normalsRange;
+  SirEngine::MemoryRange uvRange;
+  SirEngine::MemoryRange tangentsRange;
   float boundingBox[6]{};
-  uint32_t vertexCount=0;
-  //This should be a series of flag
-  uint32_t interleaved=0;
+  // This should be a series of flag
+  uint32_t flags;
 };
 
 struct ShaderMapperData final {
@@ -111,7 +116,7 @@ struct VkShaderMapperData final {
   uint32_t entryPointInByte = 0;
   uint32_t pathSizeInByte = 0;
   uint32_t compilerArgsInByte = 0;
-  uint32_t type=0;
+  uint32_t type = 0;
 };
 
 struct RootSignatureMappedData final {
