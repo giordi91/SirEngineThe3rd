@@ -1,6 +1,6 @@
 {
   "type": "RASTER",
-  "inputLayout": "positionOnly",
+  "inputLayout": "deferredNull",
   "globalRootSignature": "../data/rs/debugDrawLinesSingleColorRS.json",
   "VS": "positionOnlyVS",
   "PS": "basicColorPS",

@@ -8,10 +8,10 @@
 #include "SirEngine/materialManager.h"
 #include "SirEngine/memory/stringPool.h"
 #include "SirEngine/runtimeString.h"
-#include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/TextureManagerDx12.h"
+#include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
 
 namespace SirEngine::dx12 {
@@ -128,6 +128,9 @@ DebugDrawHandle DebugRenderer::drawPointsUniformColor(float *data,
                                                       const glm::vec4 color,
                                                       const float size,
                                                       const char *debugName) {
+  //TODO : next time we draw points, we need to fix the code to go from vec3 to vec4 and
+  //to bind mesh separately, as buffer and read manually, not input assembler a anymore
+  assert(0);
   BufferUploadResource upload;
   DebugPrimitive primitive;
   void *mappedData;
@@ -135,19 +138,9 @@ DebugDrawHandle DebugRenderer::drawPointsUniformColor(float *data,
   assert((sizeInByte % (sizeof(float) * 3)) == 0);
   const uint32_t elementCount = sizeInByte / (sizeof(float) * 3);
 
-  // primitive.buffer = createDefaultBuffer(
-  //    dx12::DEVICE, dx12::CURRENT_FRAME_RESOURCE->fc.commandList, data,
-  //    sizeInByte, &upload.uploadBuffer);
+  //TODO fix this, should use normal buffer manager
   primitive.buffer = allocateUploadBuffer(
       dx12::DEVICE, data, sizeInByte, &mappedData, frameConvertWide(debugName));
-
-  /*
-  // set a signal for the resource.
-  upload.fence = dx12::insertFenceToGlobalQueue();
-  m_uploadRequests.push_back(upload);
-  */
-  primitive.bufferView =
-      getVertexBufferView(primitive.buffer, sizeof(float) * 3, sizeInByte);
 
   dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferSRV(
       primitive.srv, primitive.buffer, elementCount, sizeof(float) * 3);
@@ -201,23 +194,10 @@ DebugDrawHandle DebugRenderer::drawLinesUniformColor(float *data,
   assert((sizeInByte % (sizeof(float) * 3)) == 0);
   const uint32_t elementCount = sizeInByte / (sizeof(float) * 3);
 
-  /*
-  BufferUploadResource upload;
-  primitive.buffer = createDefaultBuffer(
-      dx12::DEVICE, dx12::CURRENT_FRAME_RESOURCE->fc.commandList, data,
-      sizeInByte, &upload.uploadBuffer);
-          */
   void *mappedData;
   primitive.buffer = allocateUploadBuffer(
       dx12::DEVICE, data, sizeInByte, &mappedData, frameConvertWide(debugName));
-  /*
-  // set a signal for the resource.
-  upload.fence = dx12::insertFenceToGlobalQueue();
-  m_uploadRequests.push_back(upload);
-  */
 
-  primitive.bufferView =
-      getVertexBufferView(primitive.buffer, sizeof(float) * 3, sizeInByte);
 
   dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferSRV(
       primitive.srv, primitive.buffer, elementCount, sizeof(float) * 3);
@@ -293,13 +273,13 @@ DebugDrawHandle DebugRenderer::drawSkeleton(Skeleton *skeleton,
       lineCounter += 2;
     }
   }
-  const DebugDrawHandle pointsHandle = drawPointsUniformColor(
-      &points[0].x, joints.size() * sizeof(glm::vec3), color, pointSize,
-      skeleton->m_name);
+  const DebugDrawHandle pointsHandle =
+      drawPointsUniformColor(&points[0].x, joints.size() * sizeof(glm::vec3),
+                             color, pointSize, skeleton->m_name);
 
-  const DebugDrawHandle linesHandle = drawLinesUniformColor(
-      &lines[0].x, lineCounter * sizeof(glm::vec3), color, pointSize,
-      skeleton->m_name);
+  const DebugDrawHandle linesHandle =
+      drawLinesUniformColor(&lines[0].x, lineCounter * sizeof(glm::vec3), color,
+                            pointSize, skeleton->m_name);
 
   // lets prepare the compound handle
   // there are two items only lines and points and the points is the first
@@ -329,26 +309,24 @@ DebugDrawHandle DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
   const glm::mat4 *pose = state->getOutPose()->m_worldMat;
   const uint32_t jointCount = state->getOutPose()->m_skeleton->m_jointCount;
 
-  auto *points =
-      reinterpret_cast<glm::vec3 *>(globals::FRAME_ALLOCATOR->allocate(
-          sizeof(glm::vec3) * jointCount));
-  auto *lines =
-      reinterpret_cast<glm::vec3 *>(globals::FRAME_ALLOCATOR->allocate(
-          sizeof(glm::vec3) * jointCount * 2));
+  auto *points = reinterpret_cast<glm::vec3 *>(
+      globals::FRAME_ALLOCATOR->allocate(sizeof(glm::vec3) * jointCount));
+  auto *lines = reinterpret_cast<glm::vec3 *>(
+      globals::FRAME_ALLOCATOR->allocate(sizeof(glm::vec3) * jointCount * 2));
 
   uint32_t lineCounter = 0;
 
   for (uint32_t i = 0; i < jointCount; ++i) {
     const glm::mat4 mat = pose[i];
     glm::vec4 pos = mat[3];
-    points[i] =glm::vec3(pos);
+    points[i] = glm::vec3(pos);
 
     const int parentId = state->getOutPose()->m_skeleton->m_parentIds[i];
     if (parentId != -1) {
       // here we add a line from the parent to the children, might do a more
       // elaborate joint drawing one day
       lines[lineCounter] = points[parentId];
-      lines[lineCounter + 1] =glm::vec3(pos);
+      lines[lineCounter + 1] = glm::vec3(pos);
       lineCounter += 2;
     }
   }
@@ -478,10 +456,12 @@ void DebugRenderer::renderQueue(
         currentFc->commandList->IASetPrimitiveTopology(
             D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
       } else {
-        currentFc->commandList->IASetVertexBuffers(0, 1, &prim.bufferView);
+        // currentFc->commandList->IASetVertexBuffers(0, 1, &prim.bufferView);
         currentFc->commandList->IASetPrimitiveTopology(
             D3D_PRIMITIVE_TOPOLOGY_LINELIST);
       }
+      commandList->SetGraphicsRootShaderResourceView(
+          2, prim.buffer->GetGPUVirtualAddress());
 
       currentFc->commandList->DrawInstanced(prim.primitiveToRender, 1, 0, 0);
     }
@@ -528,6 +508,14 @@ inline int push3toVec(float *data, float x, float y, float z, int counter) {
 
   return counter;
 }
+inline int push4toVec(float *data, float x, float y, float z, int counter) {
+  data[counter++] = x;
+  data[counter++] = y;
+  data[counter++] = z;
+  data[counter++] = 1.0f;
+
+  return counter;
+}
 inline int push3toVec(float *data, const glm::vec4 v, int counter) {
   data[counter++] = v.x;
   data[counter++] = v.y;
@@ -542,21 +530,28 @@ inline int push3toVec(float *data, const glm::vec3 v, int counter) {
 
   return counter;
 }
+inline int push4toVec(float *data, const glm::vec3 v, int counter) {
+  data[counter++] = v.x;
+  data[counter++] = v.y;
+  data[counter++] = v.z;
+  data[counter++] = 1.0f;
 
+  return counter;
+}
 int drawSquareBetweenTwoPoints(float *data, const glm::vec3 minP,
                                const glm::vec3 maxP, const float y,
                                int counter) {
-  counter = push3toVec(data, minP.x, y, minP.z, counter);
-  counter = push3toVec(data, maxP.x, y, minP.z, counter);
+  counter = push4toVec(data, minP.x, y, minP.z, counter);
+  counter = push4toVec(data, maxP.x, y, minP.z, counter);
 
-  counter = push3toVec(data, maxP.x, y, minP.z, counter);
-  counter = push3toVec(data, maxP.x, y, maxP.z, counter);
+  counter = push4toVec(data, maxP.x, y, minP.z, counter);
+  counter = push4toVec(data, maxP.x, y, maxP.z, counter);
 
-  counter = push3toVec(data, maxP.x, y, maxP.z, counter);
-  counter = push3toVec(data, minP.x, y, maxP.z, counter);
+  counter = push4toVec(data, maxP.x, y, maxP.z, counter);
+  counter = push4toVec(data, minP.x, y, maxP.z, counter);
 
-  counter = push3toVec(data, minP.x, y, maxP.z, counter);
-  counter = push3toVec(data, minP.x, y, minP.z, counter);
+  counter = push4toVec(data, minP.x, y, maxP.z, counter);
+  counter = push4toVec(data, minP.x, y, minP.z, counter);
   return counter;
 }
 
@@ -566,10 +561,10 @@ DebugDrawHandle DebugRenderer::drawBoundingBoxes(BoundingBox *data, int count,
 
   // 12 is the number of lines needed for the AABB, 4 top, 4 bottom, 4 vertical
   // two is because we need two points per line, we are not doing trianglestrip
-  int totalSize = 3 * count * 12 * 2; // here 3 is the xmfloat3
+  int totalSize = 4 * count * 12 * 2; // here 4 is the xmfloat4
 
-  auto *points = reinterpret_cast<float *>(globals::FRAME_ALLOCATOR->allocate(
-      sizeof(glm::vec3) * count * 12 * 2));
+  auto *points = reinterpret_cast<float *>(
+      globals::FRAME_ALLOCATOR->allocate(sizeof(glm::vec4) * count * 12 * 2));
   int counter = 0;
   for (int i = 0; i < count; ++i) {
 
@@ -580,16 +575,16 @@ DebugDrawHandle DebugRenderer::drawBoundingBoxes(BoundingBox *data, int count,
     counter = drawSquareBetweenTwoPoints(points, minP, maxP, maxP.y, counter);
 
     // draw vertical lines
-    counter = push3toVec(points, minP, counter);
-    counter = push3toVec(points, minP.x, maxP.y, minP.z, counter);
-    counter = push3toVec(points, maxP.x, minP.y, minP.z, counter);
-    counter = push3toVec(points, maxP.x, maxP.y, minP.z, counter);
+    counter = push4toVec(points, minP, counter);
+    counter = push4toVec(points, minP.x, maxP.y, minP.z, counter);
+    counter = push4toVec(points, maxP.x, minP.y, minP.z, counter);
+    counter = push4toVec(points, maxP.x, maxP.y, minP.z, counter);
 
-    counter = push3toVec(points, maxP.x, minP.y, maxP.z, counter);
-    counter = push3toVec(points, maxP.x, maxP.y, maxP.z, counter);
+    counter = push4toVec(points, maxP.x, minP.y, maxP.z, counter);
+    counter = push4toVec(points, maxP.x, maxP.y, maxP.z, counter);
 
-    counter = push3toVec(points, minP.x, minP.y, maxP.z, counter);
-    counter = push3toVec(points, minP.x, maxP.y, maxP.z, counter);
+    counter = push4toVec(points, minP.x, minP.y, maxP.z, counter);
+    counter = push4toVec(points, minP.x, maxP.y, maxP.z, counter);
     assert(counter <= totalSize);
   }
   drawLinesUniformColor(points, totalSize * sizeof(float), color,
@@ -611,8 +606,8 @@ DebugDrawHandle DebugRenderer::drawAnimatedBoundingBoxes(
   // two is because we need two points per line, we are not doing trianglestrip
   int totalSize = 3 * count * 12 * 2; // here 3 is the xmfloat3
 
-  auto *points = reinterpret_cast<float *>(globals::FRAME_ALLOCATOR->allocate(
-      sizeof(glm::vec3) * count * 12 * 2));
+  auto *points = reinterpret_cast<float *>(
+      globals::FRAME_ALLOCATOR->allocate(sizeof(glm::vec3) * count * 12 * 2));
   int counter = 0;
   for (int i = 0; i < count; ++i) {
 
@@ -663,37 +658,37 @@ DebugDrawHandle DebugRenderer::drawAnimatedBoundingBoxFromFullPoints(
   // first get AABB data
   // 12 is the number of lines needed for the AABB, 4 top, 4 bottom, 4 vertical
   // two is because we need two points per line, we are not doing trianglestrip
-  const int totalSize = 3 * count * 12 * 2; // here 3 is the xmfloat3
+  const int totalSize = 4 * count * 12 * 2; // here 4 is the xmfloat3
 
-  auto *points = reinterpret_cast<float *>(globals::FRAME_ALLOCATOR->allocate(
-      sizeof(glm::vec3) * count * 12 * 2));
+  auto *points = reinterpret_cast<float *>(
+      globals::FRAME_ALLOCATOR->allocate(sizeof(glm::vec4) * count * 12 * 2));
   int counter = 0;
 
   // draw vertical lines
-  counter = push3toVec(points, data[0], counter);
-  counter = push3toVec(points, data[2], counter);
-  counter = push3toVec(points, data[0], counter);
-  counter = push3toVec(points, data[3], counter);
-  counter = push3toVec(points, data[0], counter);
-  counter = push3toVec(points, data[4], counter);
-  counter = push3toVec(points, data[2], counter);
-  counter = push3toVec(points, data[6], counter);
-  counter = push3toVec(points, data[4], counter);
-  counter = push3toVec(points, data[6], counter);
-  counter = push3toVec(points, data[2], counter);
-  counter = push3toVec(points, data[5], counter);
-  counter = push3toVec(points, data[3], counter);
-  counter = push3toVec(points, data[7], counter);
-  counter = push3toVec(points, data[3], counter);
-  counter = push3toVec(points, data[5], counter);
-  counter = push3toVec(points, data[1], counter);
-  counter = push3toVec(points, data[6], counter);
-  counter = push3toVec(points, data[1], counter);
-  counter = push3toVec(points, data[5], counter);
-  counter = push3toVec(points, data[1], counter);
-  counter = push3toVec(points, data[7], counter);
-  counter = push3toVec(points, data[4], counter);
-  counter = push3toVec(points, data[7], counter);
+  counter = push4toVec(points, data[0], counter);
+  counter = push4toVec(points, data[2], counter);
+  counter = push4toVec(points, data[0], counter);
+  counter = push4toVec(points, data[3], counter);
+  counter = push4toVec(points, data[0], counter);
+  counter = push4toVec(points, data[4], counter);
+  counter = push4toVec(points, data[2], counter);
+  counter = push4toVec(points, data[6], counter);
+  counter = push4toVec(points, data[4], counter);
+  counter = push4toVec(points, data[6], counter);
+  counter = push4toVec(points, data[2], counter);
+  counter = push4toVec(points, data[5], counter);
+  counter = push4toVec(points, data[3], counter);
+  counter = push4toVec(points, data[7], counter);
+  counter = push4toVec(points, data[3], counter);
+  counter = push4toVec(points, data[5], counter);
+  counter = push4toVec(points, data[1], counter);
+  counter = push4toVec(points, data[6], counter);
+  counter = push4toVec(points, data[1], counter);
+  counter = push4toVec(points, data[5], counter);
+  counter = push4toVec(points, data[1], counter);
+  counter = push4toVec(points, data[7], counter);
+  counter = push4toVec(points, data[4], counter);
+  counter = push4toVec(points, data[7], counter);
 
   assert(counter <= totalSize);
 
@@ -721,7 +716,7 @@ DebugDrawHandle DebugRenderer::drawAnimatedBoundingBoxFromFullPoints(
 void DebugRenderer::drawMatrix(const glm::mat4 &mat, float size,
                                glm::vec4 color, const char *debugName) {
   const int totalSize =
-      3 * 2 * 3; // 3 axis, each with two points, 3 floats each point
+      4 * 2 * 3; // 3 axis, each with two points, 4 floats each point
   auto *points = reinterpret_cast<float *>(
       globals::FRAME_ALLOCATOR->allocate(sizeof(float) * totalSize));
 
@@ -729,18 +724,18 @@ void DebugRenderer::drawMatrix(const glm::mat4 &mat, float size,
   // start with z axis
   auto scaledZ = mat[2] * (size * 2.5f);
   auto movedPosZ = mat[3] + scaledZ;
-  counter = push3toVec(points, mat[3], counter);
-  counter = push3toVec(points, movedPosZ, counter);
+  counter = push4toVec(points, mat[3], counter);
+  counter = push4toVec(points, movedPosZ, counter);
 
   auto scaledX = mat[0] * size;
   auto movedPosX = mat[3] + scaledX;
-  counter = push3toVec(points, mat[3], counter);
-  counter = push3toVec(points, movedPosX, counter);
+  counter = push4toVec(points, mat[3], counter);
+  counter = push4toVec(points, movedPosX, counter);
 
   auto scaledY = (mat[1] * (size * 1.5f));
   auto movedPosY = mat[3] + scaledY;
-  counter = push3toVec(points, mat[3], counter);
-  counter = push3toVec(points, movedPosY, counter);
+  counter = push4toVec(points, mat[3], counter);
+  counter = push4toVec(points, movedPosY, counter);
 
   drawLinesUniformColor(points, totalSize * sizeof(float), color, totalSize,
                         debugName);
