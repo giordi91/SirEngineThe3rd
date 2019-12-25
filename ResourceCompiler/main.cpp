@@ -88,6 +88,7 @@ void executeFile(const cxxopts::ParseResult &result) {
   // lets check for the  commands
   if (jobj.find("commands") != jobj.end()) {
     const nlohmann::json &commandsj = jobj["commands"];
+
     for (auto &command : commandsj) {
       // we now have the command as a string we need to tokenize it
       const std::string cs = command.get<std::string>();

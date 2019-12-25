@@ -1,26 +1,52 @@
 {
-        "type": "RASTER",
-      "config": [
-        {
-          "type": "descriptorTable",
-          "data": {
-            "numberDescriptor": "1",
-            "baseRegister": 0,
-            "ranges": [
-              {
-                "type": "CBV",
-                "numDescriptors": 1,
-                "baseRegister": 0
-              }
-            ]
-          },
-          "visibility": "ALL"
-        },
-        {
-          "type": "CBV",
-          "data": { "baseRegister": 1 },
-          "visibility": "ALL"
-        }
-      ],
-      "flags": ["D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT"]
+  "type": "RASTER",
+  "config": [
+    {
+      "type": "descriptorTable",
+      "data": {
+        "numberDescriptor": "1",
+        "baseRegister": 0,
+        "ranges": [
+          {
+            "type": "CBV",
+            "numDescriptors": 1,
+            "baseRegister": 0
+          }
+        ]
+      },
+      "visibility": "ALL"
+    },
+    {
+      "type": "CBV",
+      "data": { "baseRegister": 1 },
+      "visibility": "ALL"
+    },
+    {
+      "comment": "positions",
+      "type": "SRV",
+      "data": { "baseRegister": 8 },
+      "visibility": "ALL"
+    },
+    {
+      "comment": "normals",
+      "type": "SRV",
+      "data": { "baseRegister": 9 },
+      "visibility": "ALL"
+    },
+    {
+      "comment": "uv",
+      "type": "SRV",
+      "data": { "baseRegister": 10 },
+      "visibility": "ALL"
+    },
+    {
+      "comment": "tangents",
+      "type": "SRV",
+      "data": { "baseRegister": 11 },
+      "visibility": "ALL"
+    }
+
+
+  ]
+
 }
