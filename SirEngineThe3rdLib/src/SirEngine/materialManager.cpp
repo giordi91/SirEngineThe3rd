@@ -7,6 +7,7 @@
 #include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/TextureManagerDx12.h"
 #include "platform/windows/graphics/dx12/bufferManagerDx12.h"
+#include "platform/windows/graphics/dx12/dx12MeshManager.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
 #include "skinClusterManager.h"
 
@@ -193,12 +194,12 @@ void bindSkinning(const MaterialRuntime &materialRuntime,
   dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.matricesBuffer, 8,
                                                 commandList);
 
-  //bind mesh data
+  dx12::MESH_MANAGER->bindMesh(materialRuntime.meshHandle, commandList,
+                               MeshAttributeFlags::ALL, 9);
+  // bind mesh data
 
-  //dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(.matricesBuffer, 8,
+  // dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(.matricesBuffer, 8,
   //                                              commandList);
-
-	
 }
 void bindSkin(const MaterialRuntime &materialRuntime,
               ID3D12GraphicsCommandList2 *commandList) {
@@ -428,6 +429,9 @@ void bindShadowSkin(const MaterialRuntime &materialRuntime,
   dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.matricesBuffer, 3,
                                                 commandList);
 
+
+  dx12::MESH_MANAGER->bindMesh(materialRuntime.meshHandle, commandList,
+                               MeshAttributeFlags::POSITIONS, 4);
   // TODO HARDCODED stencil value might have to think of a nice way to handle
   // this
   commandList->OMSetStencilRef(static_cast<uint32_t>(STENCIL_REF::CLEAR));
@@ -548,6 +552,7 @@ void MaterialManager::loadTypeFile(const char *path) {
   m_shderTypeToShaderBind[flags] = ShaderBind{rsHandle, psoHandle};
 }
 MaterialHandle MaterialManager::loadMaterial(const char *path,
+                                             const MeshHandle meshHandle,
                                              const SkinHandle skinHandle) {
   // for materials we do not perform the check whether is loaded or not
   // each object is going to get it s own material copy.
@@ -697,6 +702,7 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   matCpu.ao = texHandles.aoSrv.gpuHandle;
   matCpu.skinHandle = skinHandle;
   matCpu.heightMap = texHandles.heightSrv.gpuHandle;
+  matCpu.meshHandle = meshHandle;
   parseQueueTypeFlags(matCpu, jobj);
 
   // we need to allocate  constant buffer

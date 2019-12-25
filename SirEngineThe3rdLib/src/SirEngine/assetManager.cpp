@@ -68,7 +68,7 @@ AssetDataHandle AssetManager::loadAsset(const char *path) {
           globals::SKIN_MANAGER->loadSkinCluster(skinPath.c_str(), animHandle);
     }
     MaterialHandle matHandle = dx12::MATERIAL_MANAGER->loadMaterial(
-        materialString.c_str(), skinHandle);
+        materialString.c_str(), mHandle,skinHandle);
     renderable.m_materialHandle = matHandle;
 
     globals::RENDERING_CONTEXT->addRenderablesToQueue(renderable);

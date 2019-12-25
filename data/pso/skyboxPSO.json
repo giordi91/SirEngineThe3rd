@@ -1,6 +1,6 @@
 {
   "type": "RASTER",
-  "inputLayout": "fullMesh",
+  "inputLayout": "deferredNull",
   "globalRootSignature": "../data/rs/skybox_RS.json",
   "VS": "skyboxVS",
   "PS": "skyboxPS",

@@ -117,10 +117,54 @@ public:
     const MeshData &data = m_meshPool.getConstRef(index);
     return data.meshRuntime;
   }
+  void bindMeshRuntimeAndRenderPosOnly(const MeshRuntime &meshRuntime,
+                                       FrameCommand *currentFc) {
+    bindMeshRuntimeForRender(meshRuntime, currentFc);
+
+    dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(
+        meshRuntime.bufferHandle, 4, currentFc->commandList,
+        meshRuntime.positionRange.m_offset);
+  }
+  void render(const MeshRuntime &meshRuntime, FrameCommand *currentFc) {
+    currentFc->commandList->DrawIndexedInstanced(meshRuntime.indexCount, 1, 0,
+                                                 0, 0);
+  }
+  void render(const MeshHandle handle, FrameCommand *currentFc) {
+    const MeshRuntime &runtime = getMeshRuntime(handle);
+    currentFc->commandList->DrawIndexedInstanced(runtime.indexCount, 1, 0,
+                                                 0, 0);
+  }
+
+  inline void bindMesh(MeshHandle handle, ID3D12GraphicsCommandList2 *commandList, uint32_t flags,
+                       uint32_t startIndex) {
+    const MeshRuntime &runtime = getMeshRuntime(handle);
+    if ((flags & MeshAttributeFlags::POSITIONS) > 0) {
+      dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(
+          runtime.bufferHandle, startIndex + 0, commandList,
+          runtime.positionRange.m_offset);
+    }
+    if ((flags & MeshAttributeFlags::NORMALS) > 0) {
+      dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(
+          runtime.bufferHandle, startIndex + 1, commandList,
+          runtime.normalsRange.m_offset);
+    }
+    if ((flags & MeshAttributeFlags::UV) > 0) {
+      dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(
+          runtime.bufferHandle, startIndex + 2, commandList,
+          runtime.uvRange.m_offset);
+    }
+    if ((flags & MeshAttributeFlags::TANGENTS) > 0) {
+      dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(
+          runtime.bufferHandle, startIndex + 3, commandList,
+          runtime.tangentsRange.m_offset);
+    }
+    commandList->IASetIndexBuffer(&runtime.iview);
+    commandList->IASetPrimitiveTopology(
+        D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+  }
 
   inline void bindMeshRuntimeAndRender(const MeshRuntime &runtime,
                                        FrameCommand *fc) const {
-    bindMeshRuntimeForRender(runtime, fc);
 
     dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(
         runtime.bufferHandle, 9, fc->commandList,

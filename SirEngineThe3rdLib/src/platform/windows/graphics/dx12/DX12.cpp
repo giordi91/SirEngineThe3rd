@@ -11,13 +11,13 @@
 #include "SirEngine/memory/stringPool.h"
 #include "SirEngine/runtimeString.h"
 #include "SirEngine/skinClusterManager.h"
-#include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
 #include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/TextureManagerDx12.h"
 #include "platform/windows/graphics/dx12/bufferManagerDx12.h"
 #include "platform/windows/graphics/dx12/debugRenderer.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/dx12Adapter.h"
+#include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
 #include "platform/windows/graphics/dx12/dx12MeshManager.h"
 #include "platform/windows/graphics/dx12/dx12SwapChain.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
@@ -650,8 +650,17 @@ void Dx12RenderingContext::renderQueueType(const SHADER_QUEUE_FLAGS queueFlag) {
         // bind material data like textures etc, then render
         dx12::MATERIAL_MANAGER->bindMaterial(
             queueFlag, renderable.m_materialRuntime, commandList);
-        dx12::MESH_MANAGER->bindMeshRuntimeAndRender(renderable.m_meshRuntime,
-                                                     currentFc);
+
+        dx12::MESH_MANAGER->render(
+            renderable.m_meshRuntime, currentFc);
+
+        // if(SHADER_QUEUE_FLAGS::SHADOW == queueFlag) {
+        //	dx12::MESH_MANAGER->bindMeshRuntimeAndRenderPosOnly(renderable.m_meshRuntime,
+        //												 currentFc);
+        //} else {
+        //	dx12::MESH_MANAGER->bindMeshRuntimeAndRender(renderable.m_meshRuntime,
+        //												 currentFc);
+        //}
       }
       annotateGraphicsEnd();
     }

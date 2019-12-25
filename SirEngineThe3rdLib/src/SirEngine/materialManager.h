@@ -34,6 +34,7 @@ struct MaterialRuntime final {
       INVALID_QUEUE_TYPE_FLAGS, INVALID_QUEUE_TYPE_FLAGS,
       INVALID_QUEUE_TYPE_FLAGS, INVALID_QUEUE_TYPE_FLAGS};
   SkinHandle skinHandle;
+  MeshHandle meshHandle;
 };
 struct MaterialDataHandles {
   TextureHandle albedo;
@@ -116,7 +117,8 @@ public:
   MaterialManager &operator=(const MaterialManager &) = delete;
 
   void init(){};
-  MaterialHandle loadMaterial(const char *path, const SkinHandle handle);
+  MaterialHandle loadMaterial(const char *path, const MeshHandle meshHandle,
+                              const SkinHandle skinHandle);
 
   inline SHADER_TYPE_FLAGS getTypeFlags(const uint32_t flags) {
     // here we are creating a mask for the fist 16 bits, then we flip it
