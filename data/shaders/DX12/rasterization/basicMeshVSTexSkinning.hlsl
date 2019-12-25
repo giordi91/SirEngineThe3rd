@@ -15,21 +15,20 @@ StructuredBuffer<float4> g_tangents: register(t11);
 FullMeshVertexOut VS(TexturedVertexIn12 vin, uint vid : SV_VertexID)
 {
     FullMeshVertexOut vout;
-	FullSkinResult skin = skinFullPoint(vid,vin);
+	FullSkinResult skin = skinFullPoint(vid,g_positions[vid],g_normals[vid].xyz,g_tangents[vid].xyz);
 	
-    /*
 	// Transform to homogeneous clip space.
     //vout.PosH = mul(skin.pos, g_cameraBuffer.MVP);
     vout.PosH = mul(skin.pos, g_cameraBuffer.MVP);
 	
 	// Just pass vertex color into the pixel shader.
     vout.Normal = normalize(skin.normal);
-    vout.uv = vin.uvs.xy;
+    vout.uv = g_uvs[vid];
     vout.tangent = normalize(skin.tan);
     vout.worldPos = float4(vin.PosL, 1.0f);
     return vout;
-    */
 
+/*
     float4 p = g_positions[vid];
     vout.PosH = mul(p, g_cameraBuffer.MVP);
     vout.Normal = normalize(g_normals[vid]);
@@ -37,6 +36,7 @@ FullMeshVertexOut VS(TexturedVertexIn12 vin, uint vid : SV_VertexID)
     vout.tangent= g_tangents[vid];
     vout.worldPos = p;
     return vout;
+*/
 
 
     /*
