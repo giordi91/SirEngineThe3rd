@@ -111,7 +111,9 @@ void SkyBoxPass::compute() {
       1, dx12::TEXTURE_MANAGER->getSRVDx12(skyHandle).gpuHandle);
 
   // commandList->DrawInstanced(6, 1, 0, 0);
-  dx12::MESH_MANAGER->bindMeshRuntimeAndRender(skyboxHandle, currentFc);
+  //dx12::MESH_MANAGER->bindMeshRuntimeAndRender(skyboxHandle, currentFc);
+  dx12::MESH_MANAGER->bindMesh(skyboxHandle, currentFc->commandList,MeshAttributeFlags::POSITIONS,2);
+  dx12::MESH_MANAGER->render(skyboxHandle, currentFc);
   m_outputPlugs[0].plugValue = bufferHandle.handle;
 
   // reset normal viewport

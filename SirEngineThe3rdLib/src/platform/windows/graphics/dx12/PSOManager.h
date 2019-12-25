@@ -64,6 +64,7 @@ public:
     //assert(m_psoRegisterHandle.containsKey(name));
     bool r = m_psoRegisterHandle.containsKey(name);
     if( !r) {
+        //assert(0);
         return{};
     }
     PSOHandle value{};
