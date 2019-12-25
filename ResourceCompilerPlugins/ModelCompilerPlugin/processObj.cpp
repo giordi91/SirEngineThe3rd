@@ -16,6 +16,13 @@
 #define FAST_OBJ_IMPLEMENTATION
 #include "fast_obj.h"
 
+uint64_t alignSize(const uint64_t sizeInBytes, const uint64_t boundaryInByte,
+                   uint64_t &offset) {
+  uint64_t modulus = sizeInBytes % boundaryInByte;
+  offset = modulus;
+  return sizeInBytes + modulus;
+}
+
 static const float VERTEX_DELTA = 0.00001f;
 struct VertexCompare {
   glm::vec3 p{};
@@ -227,7 +234,7 @@ void convertObjNoTangents(const tinyobj::attrib_t &attr,
   model.indices.resize(indicesCount);
   model.vertices.resize(vertexCompareCount * stride);
   model.vertexCount = static_cast<int>(vertexCompareCount);
-  model.strideInByte = sizeof(float) * stride;
+  // model.strideInByte = sizeof(float) * stride;
   model.triangleCount = static_cast<int>(shape.mesh.num_face_vertices.size());
 
   memcpy(model.vertices.data(), vertexData.data(),
@@ -352,7 +359,7 @@ void convertObj(const tinyobj::attrib_t &attr, const tinyobj::shape_t &shape,
   model.indices.resize(indicesCount);
   model.vertices.resize(vertexCompareCount * stride);
   model.vertexCount = static_cast<int>(vertexCompareCount);
-  model.strideInByte = sizeof(float) * stride;
+  // model.strideInByte = sizeof(float) * stride;
   model.triangleCount = static_cast<int>(shape.mesh.num_face_vertices.size());
 
   memcpy(model.vertices.data(), vertexData.data(),
@@ -590,55 +597,133 @@ bool convertObj(const char *path, const char *tangentsPath,
 
   int finalIndexCount = indices.size();
   // need to de-interleave the data
-  // TODO bruteforce, will fix later
+  // TODO brute force, will fix later
   std::vector<float> positions;
   std::vector<float> normals;
   std::vector<float> uv;
   std::vector<float> tans;
 
+  // lets compute all the offsets
+  uint32_t alignRequirement = sizeof(float) * 4;
+  uint64_t pointSizeInByte = vertexData.size() * sizeof(float) * 4;
+  uint64_t normalPointerOffset = 0;
+  uint64_t normalsOffsetByte =
+      alignSize(pointSizeInByte, alignRequirement, normalPointerOffset);
+
+  uint64_t normalsSize = vertexData.size() * sizeof(float) * 4;
+  uint64_t uvPointerOffset = 0;
+  uint64_t uvOffsetByte =
+      alignSize(normalsOffsetByte +normalsSize, alignRequirement, uvPointerOffset);
+
+  uint64_t uvSize = vertexData.size() * sizeof(float) * 2;
+  uint64_t tangentsPointerOffset = 0;
+  uint64_t tangentsOffsetByte =
+      alignSize( uvOffsetByte + uvSize, alignRequirement,
+                tangentsOffsetByte);
+
+  uint64_t totalRequiredAligmentBytes =
+      normalPointerOffset + uvPointerOffset + tangentsPointerOffset;
+  uint64_t totalRequiredAligmentFloats = totalRequiredAligmentBytes / 4;
+
+  model.positionRange.m_offset = 0;
+  model.positionRange.m_size = pointSizeInByte;
+  model.normalsRange.m_offset = normalsOffsetByte;
+  model.normalsRange.m_size = normalsSize;
+  model.uvRange.m_offset = uvOffsetByte;
+  model.uvRange.m_size = uvSize;
+  model.tangentsRange.m_offset = tangentsOffsetByte;
+  model.tangentsRange.m_size = vertexData.size() * sizeof(float) * 4;
+
+  // positions : vec4
+  // normals : vec4
+  // uvs : vec2
+  // tangents vec4
+  uint64_t floatsPerVertex = 4 + 4 + 2 + 4;
+  uint64_t totalRequiredMemoryInFloats =
+      vertexData.size() * floatsPerVertex + totalRequiredAligmentFloats;
+
+  model.vertices.resize(totalRequiredMemoryInFloats);
+  // float* posPtr = model.vertices.data();
+  ////offset is in bytes so we need to devide by four, our pointer is in floats
+  // float* normalsPtr = posPtr + (model.normalsRange.m_offset/4);
+  // float* uvPtr = posPtr + (model.normalsRange.m_offset/4);
+  // we are using vectors.... at least lets get the range safety
+  uint32_t posOffset = 0;
+  uint32_t normalsOffset = model.normalsRange.m_offset / 4;
+  uint32_t uvOffset = model.uvRange.m_offset / 4;
+  uint32_t tanOffset = model.tangentsRange.m_offset / 4;
+
   int vc = vertexData.size();
   for (int i = 0; i < vc; ++i) {
     const VertexCompare &cmp = vertexData[i];
-    positions.push_back(cmp.p.x);
-    positions.push_back(cmp.p.y);
-    positions.push_back(cmp.p.z);
-    positions.push_back(1.0f);
+    model.vertices[posOffset + 0] = cmp.p.x;
+    model.vertices[posOffset + 1] = cmp.p.y;
+    model.vertices[posOffset + 2] = cmp.p.z;
+    model.vertices[posOffset + 3] = 1.0f;
 
-    normals.push_back(cmp.n.x);
-    normals.push_back(cmp.n.y);
-    normals.push_back(cmp.n.z);
-    normals.push_back(0.0f);
+    model.vertices[normalsOffset + 0] = cmp.n.x;
+    model.vertices[normalsOffset + 1] = cmp.n.y;
+    model.vertices[normalsOffset + 2] = cmp.n.z;
+    model.vertices[normalsOffset + 3] = 0.0f;
 
-    uv.push_back(cmp.uv.x);
-    uv.push_back(cmp.uv.y);
+    model.vertices[uvOffset + 0] = cmp.uv.x;
+    model.vertices[uvOffset + 1] = cmp.uv.y;
 
-    tangents.push_back(cmp.t.x);
-    tangents.push_back(cmp.t.y);
-    tangents.push_back(cmp.t.z);
-    tangents.push_back(0.0f);
+    model.vertices[tanOffset + 0] = cmp.t.x;
+    model.vertices[tanOffset + 1] = cmp.t.y;
+    model.vertices[tanOffset + 2] = cmp.t.z;
+    model.vertices[tanOffset + 3] = 0.0f;
+
+    posOffset += 4;
+    normalsOffset += 4;
+    uvOffset += 2;
+    tanOffset += 4;
   }
+
+  // int vc = vertexData.size();
+  // for (int i = 0; i < vc; ++i) {
+  //  const VertexCompare &cmp = vertexData[i];
+  //  positions.push_back(cmp.p.x);
+  //  positions.push_back(cmp.p.y);
+  //  positions.push_back(cmp.p.z);
+  //  positions.push_back(1.0f);
+
+  //  normals.push_back(cmp.n.x);
+  //  normals.push_back(cmp.n.y);
+  //  normals.push_back(cmp.n.z);
+  //  normals.push_back(0.0f);
+
+  //  uv.push_back(cmp.uv.x);
+  //  uv.push_back(cmp.uv.y);
+
+  //  tangents.push_back(cmp.t.x);
+  //  tangents.push_back(cmp.t.y);
+  //  tangents.push_back(cmp.t.z);
+  //  tangents.push_back(0.0f);
+  //}
 
   // model is loaded, lets copy data to output struct
   size_t indicesCount = indices.size();
-  size_t vertexCompareCount = vertexData.size();
-  uint32_t stride = 12;
+  // size_t vertexCompareCount = vertexData.size();
+  // uint32_t stride = 12;
 
   model.indices.resize(indicesCount);
   // model.vertices.resize(vertexCompareCount * stride);
-  model.vertices.reserve(vertexCompareCount * stride);
-  model.vertexCount = static_cast<int>(vertexCompareCount);
-  model.strideInByte = sizeof(float) * stride;
+  model.vertexCount = static_cast<int>(vertexData.size());
   model.triangleCount =
       static_cast<int>(shapes[0].mesh.num_face_vertices.size());
+  model.indexCount = indicesCount;
+  model.vertexCount = vertexData.size();
+  model.flags = 0;
 
-  // memcpy(model.vertices.data(), vertexData.data(),
-  //       vertexCompareCount * stride * sizeof(float));
   memcpy(model.indices.data(), indices.data(), indicesCount * sizeof(float));
+  /*
   model.vertices.insert(model.vertices.end(), positions.begin(),
                         positions.end());
   model.vertices.insert(model.vertices.end(), normals.begin(), normals.end());
   model.vertices.insert(model.vertices.end(), uv.begin(), uv.end());
   model.vertices.insert(model.vertices.end(), tangents.begin(), tangents.end());
+  */
 
   model.boundingBox[0] = minX;
   model.boundingBox[1] = minY;
@@ -647,6 +732,8 @@ bool convertObj(const char *path, const char *tangentsPath,
   model.boundingBox[4] = maxY;
   model.boundingBox[5] = maxZ;
 
+  // TODO using fast obj and mesh optimizer, need to get back to this once I
+  // fixed the bug
   // if (!hasSkin) {
 
   //  std::vector<unsigned int> remap(totalIndices);

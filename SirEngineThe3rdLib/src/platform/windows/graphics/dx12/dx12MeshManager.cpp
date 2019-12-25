@@ -25,10 +25,10 @@ MeshHandle Dx12MeshManager::loadMesh(const char *path, bool isInternal) {
 
     const auto mapper = getMapperData<ModelMapperData>(binaryData.data());
 
-    const uint32_t stride = mapper->strideInByte / sizeof(float);
-    // creating the buffers
-    const uint32_t vertexCount =
-        mapper->vertexDataSizeInByte / mapper->strideInByte;
+    // const uint32_t stride = mapper->strideInByte / sizeof(float);
+    //// creating the buffers
+    // const uint32_t vertexCount =
+    //    mapper->vertexDataSizeInByte / mapper->strideInByte;
     const uint32_t indexCount = mapper->indexDataSizeInByte / sizeof(int);
 
     // lets get the vertex data
@@ -43,10 +43,10 @@ MeshHandle Dx12MeshManager::loadMesh(const char *path, bool isInternal) {
 
     meshData = &m_meshPool.getFreeMemoryData(index);
     meshData->indexCount = indexCount;
-    meshData->vertexCount = vertexCount;
-    meshData->stride = stride;
+    meshData->vertexCount = mapper->vertexCount;
+    // meshData->stride = mapp;
 
-    uint32_t totalSize = vertexCount * stride * sizeof(float);
+    uint32_t totalSize = mapper->vertexDataSizeInByte;
     meshData->vtxBuffHandle = dx12::BUFFER_MANAGER->allocate(
         totalSize, vertexData, "", totalSize, sizeof(float), false);
     meshData->vertexBuffer =
@@ -89,19 +89,22 @@ MeshHandle Dx12MeshManager::loadMesh(const char *path, bool isInternal) {
     int newVertexCount = mapper->vertexCount;
 
     int positionSize = newVertexCount * 4 * sizeof(float);
-    float *ptr = vertexData;
+    auto *ptr = (char *)vertexData;
 
     BufferHandle positionsHandle = dx12::BUFFER_MANAGER->allocate(
-        positionSize, ptr, "", positionSize, sizeof(float), false);
-    ptr += newVertexCount * 4;
+        mapper->positionRange.m_size, ptr + mapper->positionRange.m_offset, "",
+        mapper->vertexCount * 4, sizeof(float),
+        false);
     BufferHandle normalsHandle = dx12::BUFFER_MANAGER->allocate(
-        positionSize, ptr, "", positionSize, sizeof(float), false);
-    ptr += newVertexCount * 4;
+        mapper->normalsRange.m_size, ptr + mapper->normalsRange.m_offset, "",
+        mapper->vertexCount * 4, sizeof(float),
+        false);
     BufferHandle uvHandle = dx12::BUFFER_MANAGER->allocate(
-        totalSize, ptr, "", positionSize, sizeof(float), false);
-    ptr += newVertexCount * 2;
+        mapper->uvRange.m_size, ptr + mapper->uvRange.m_offset, "",
+        mapper->vertexCount * 3, sizeof(float), false);
     BufferHandle tangents = dx12::BUFFER_MANAGER->allocate(
-        positionSize, ptr, "", positionSize, sizeof(float), false);
+        mapper->tangentsRange.m_size, ptr + mapper->tangentsRange.m_offset, "",
+        mapper->vertexCount * 4, sizeof(float), false);
 
     meshRuntime.positions = positionsHandle;
     meshRuntime.normals = normalsHandle;
