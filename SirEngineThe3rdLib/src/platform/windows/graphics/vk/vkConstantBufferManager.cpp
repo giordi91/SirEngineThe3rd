@@ -92,10 +92,7 @@ bool VkConstantBufferManager::free(const ConstantBufferHandle handle) {
   uint32_t idx = getIndexFromHandle(handle);
   const ConstantBufferData &buffData = m_allocInfoStorage.getConstRef(idx);
 
-  bool isBuffered = isFlagSet(buffData.m_flags,
-                                             CONSTANT_BUFFER_FLAGS::BUFFERED);
   int slabIdx = buffData.m_slabIdx;
-  assert(isBuffered);
   // first let us free the tracker
   for (int i = 0; i < vk::SWAP_CHAIN_IMAGE_COUNT; ++i) {
     m_perFrameSlabs[i][slabIdx].m_slabTracker.free(buffData.m_rangeHandle);
@@ -113,7 +110,7 @@ VkConstantBufferManager::allocateDynamic(const uint32_t sizeInBytes,
   return {};
 }
 
-inline uint32_t padTo32BytesMultiple(const uint32_t size) {
+inline uint32_t padTo256BytesMultiple(const uint32_t size) {
   return size % 32 != 0 ? (size / 32 + 1) * 32 : size;
 }
 
@@ -144,10 +141,12 @@ int VkConstantBufferManager::getFreeSlabIndex(uint32_t allocSize) {
   assert(0 && "cannot allocate any more slab for uniform data");
   return -1;
 }
-ConstantBufferHandle
-VkConstantBufferManager::allocBuffered(const uint32_t sizeInBytes,
-                                       const uint32_t flags, void *data) {
-  uint32_t allocSize = padTo32BytesMultiple(sizeInBytes);
+
+SirEngine::ConstantBufferHandle
+VkConstantBufferManager::allocate(const uint32_t sizeInBytes,
+                                  const uint32_t flags, void *data) {
+
+  uint32_t allocSize = padTo256BytesMultiple(sizeInBytes);
 
   // search the slabs, slabs per frame are exactly identical, searching one will
   // yield the same result of searching all of them
@@ -201,26 +200,11 @@ VkConstantBufferManager::allocBuffered(const uint32_t sizeInBytes,
   return outHandle;
 }
 
-SirEngine::ConstantBufferHandle
-VkConstantBufferManager::allocate(const uint32_t sizeInBytes,
-                                  const uint32_t flags, void *data) {
-
-  bool isBuffered =
-      SirEngine::vk::isFlagSet(flags, CONSTANT_BUFFER_FLAGS::BUFFERED);
-  // not yet implemented not buffered data, aka static data
-  assert(isBuffered == true);
-  return allocBuffered(sizeInBytes, flags, data);
-}
-
 void VkConstantBufferManager::update(const ConstantBufferHandle handle,
                                      void *data) {
   assertMagicNumber(handle);
   uint32_t idx = getIndexFromHandle(handle);
   const ConstantBufferData &buffData = m_allocInfoStorage.getConstRef(idx);
-
-  bool isBuffered = isFlagSet(buffData.m_flags, BUFFERED);
-  // for now supporting only buffered
-  assert(isBuffered == true);
 
   bool updatedEveryFrame = isFlagSet(buffData.m_flags, UPDATED_EVERY_FRAME);
 
@@ -235,7 +219,7 @@ void VkConstantBufferManager::update(const ConstantBufferHandle handle,
     return;
   }
 
-  bool submitBufferedRequest = !updatedEveryFrame && isBuffered;
+  bool submitBufferedRequest = !updatedEveryFrame;
   if (submitBufferedRequest) {
     // we need to do the proper
     assert(0);

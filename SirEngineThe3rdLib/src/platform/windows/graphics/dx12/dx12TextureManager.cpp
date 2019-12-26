@@ -1,4 +1,4 @@
-#include "platform/windows/graphics/dx12/TextureManagerDx12.h"
+#include "platform/windows/graphics/dx12/dx12TextureManager.h"
 #include <DXTK12/DDSTextureLoader.h>
 #include <platform/windows/graphics/dx12/dx12SwapChain.h>
 #include "SirEngine/fileUtils.h"

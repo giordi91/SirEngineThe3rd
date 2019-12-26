@@ -7,9 +7,8 @@
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/log.h"
-#include "SirEngine/memory/stackAllocator.h"
 #include "platform/windows/graphics/dx12/DX12.h"
-#include "platform/windows/graphics/dx12/bufferManagerDx12.h"
+#include "platform/windows/graphics/dx12/dx12BufferManager.h"
 #include "SirEngine/animation/animationPlayer.h"
 
 namespace SirEngine {

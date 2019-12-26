@@ -8,6 +8,7 @@
 #include "SirEngine/engineConfig.h"
 #include "SirEngine/layers/vkTempLayer.h"
 #include "platform/windows/graphics/vk/vk.h"
+#include "platform/windows/graphics/vk/vkBufferManager.h"
 #include "platform/windows/graphics/vk/vkConstantBufferManager.h"
 #include "platform/windows/graphics/vk/vkDescriptors.h"
 #include "platform/windows/graphics/vk/vkLoad.h"
@@ -59,8 +60,7 @@ void VkTempLayer::onAttach() {
 
   m_cameraBufferHandle = globals::CONSTANT_BUFFER_MANAGER->allocate(
       sizeof(CameraBuffer),
-      ConstantBufferManager::CONSTANT_BUFFER_FLAGS::BUFFERED |
-          ConstantBufferManager::CONSTANT_BUFFER_FLAGS::UPDATED_EVERY_FRAME,
+      ConstantBufferManager::CONSTANT_BUFFER_FLAGS::UPDATED_EVERY_FRAME,
       nullptr);
 
   VkBufferUsageFlags meshUsage =
@@ -68,22 +68,18 @@ void VkTempLayer::onAttach() {
   VkMemoryPropertyFlags memoryFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                                       VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 
+  m_indexBufferHandle = vk::BUFFER_MANAGER->allocate(
+      m_meshD.m_indices.size() * sizeof(int), m_meshD.m_indices.data(),
+      "meshIndex", m_meshD.m_indices.size(), sizeof(int),
+      BufferManager::BUFFER_FLAGS::INDEX_BUFFER);
 
-  //TODO to proper allocation here
-  createBuffer(m_vertexBufferD, vk::LOGICAL_DEVICE, 128 * 1024 * 1024,
-               meshUsage, memoryFlags, "meshBufferD");
-  createBuffer(m_indexBufferD, vk::LOGICAL_DEVICE, 128 * 1024 * 1024,
-               VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
-                   VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-               memoryFlags, "meshIndexD");
+  m_vertexBufferHandle = vk::BUFFER_MANAGER->allocate(
+      m_meshD.m_vertices.size() * sizeof(float), m_meshD.m_vertices.data(),
+      "meshVertex", m_meshD.m_vertices.size(), sizeof(int),
+      BufferManager::BUFFER_FLAGS::VERTEX_BUFFER);
 
-  // TODO need to figure out where this memory is going and what kind of sync
-  // there should be here not happy for now
-  memcpy(m_vertexBufferD.data, m_meshD.m_vertices.data(),
-         m_meshD.m_vertices.size() * sizeof(float));
-
-  memcpy(m_indexBufferD.data, m_meshD.m_indices.data(),
-         m_meshD.m_indices.size() * sizeof(uint32_t));
+  m_vertexBufferD = vk::BUFFER_MANAGER->getBuffer(m_vertexBufferHandle);
+  m_indexBufferD = vk::BUFFER_MANAGER->getBuffer(m_indexBufferHandle);
 
   const PSOHandle handle =
       vk::PSO_MANAGER->loadRawPSO("../data/pso/forwardPhongPSO.json");
@@ -99,8 +95,6 @@ void VkTempLayer::onAttach() {
   // if constexpr (!USE_PUSH) {
   createDescriptorLayoutAdvanced();
   //}
-
-  // vk::PSO_MANAGER->loadRawPSO("../data/pso/forwardPhongPSO.json");
 }
 
 void VkTempLayer::createDescriptorLayoutAdvanced() {
@@ -441,8 +435,9 @@ void VkTempLayer::onEvent(Event &event) {
 
 void VkTempLayer::clear() {
   vkDeviceWaitIdle(vk::LOGICAL_DEVICE);
-  destroyBuffer(vk::LOGICAL_DEVICE, m_vertexBufferD);
-  destroyBuffer(vk::LOGICAL_DEVICE, m_indexBufferD);
+  vk::BUFFER_MANAGER->free(m_vertexBufferHandle);
+  vk::BUFFER_MANAGER->free(m_indexBufferHandle);
+
   // if constexpr (!USE_PUSH) {
   vkDestroyDescriptorSetLayout(vk::LOGICAL_DEVICE, m_setLayout, nullptr);
   vkDestroyDescriptorPool(vk::LOGICAL_DEVICE, vk::DESCRIPTOR_POOL, nullptr);

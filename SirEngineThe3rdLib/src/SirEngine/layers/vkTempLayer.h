@@ -68,6 +68,8 @@ private:
   vk::VkMesh m_meshD;
   vk::Buffer m_vertexBufferD;
   vk::Buffer m_indexBufferD;
+  BufferHandle m_indexBufferHandle;
+  BufferHandle m_vertexBufferHandle;
   VkVertexInputBindingDescription m_stream;
   VkVertexInputAttributeDescription m_attr[3];
   VkDescriptorSetLayout m_setLayout;

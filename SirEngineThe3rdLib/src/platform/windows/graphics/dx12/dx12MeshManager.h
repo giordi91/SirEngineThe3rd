@@ -5,8 +5,8 @@
 #include "SirEngine/handle.h"
 #include "SirEngine/memory/sparseMemoryPool.h"
 #include "SirEngine/meshManager.h"
-#include "bufferManagerDx12.h"
 #include "platform/windows/graphics/dx12/DX12.h"
+#include "platform/windows/graphics/dx12/dx12BufferManager.h"
 #include "platform/windows/graphics/dx12/d3dx12.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include <vector>

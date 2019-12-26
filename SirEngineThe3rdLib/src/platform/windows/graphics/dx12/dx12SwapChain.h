@@ -1,6 +1,6 @@
 #pragma once
 #include "platform/windows/graphics/dx12/DX12.h"
-#include "platform/windows/graphics/dx12/TextureManagerDx12.h"
+#include "platform/windows/graphics/dx12/dx12TextureManager.h"
 #include <dxgi1_4.h>
 
 namespace SirEngine {

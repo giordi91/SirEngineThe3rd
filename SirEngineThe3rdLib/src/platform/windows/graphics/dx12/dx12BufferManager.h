@@ -10,32 +10,35 @@
 namespace SirEngine {
 namespace dx12 {
 class BufferManagerDx12 final : public BufferManager {
-	struct UploadRequest
-	{
-		ID3D12Resource* uploadBuffer;
-		uint64_t fence;
-	};
+  struct UploadRequest {
+    ID3D12Resource *uploadBuffer;
+    uint64_t fence;
+  };
 
 public:
   BufferManagerDx12() : m_bufferPool(RESERVE_SIZE){};
 
   virtual ~BufferManagerDx12() = default;
-	ID3D12Resource* getNativeBuffer(const BufferHandle bufferHandle);
-	BufferManagerDx12(const BufferManagerDx12 &) = delete;
+  ID3D12Resource *getNativeBuffer(const BufferHandle bufferHandle);
+  BufferManagerDx12(const BufferManagerDx12 &) = delete;
   BufferManagerDx12 &operator=(const BufferManagerDx12 &) = delete;
   void free(const BufferHandle handle) override;
   // this function only exists to have api consistency
-  void initialize(){};
+
+  void initialize() override{};
+  void cleanup() override{};
 
   BufferHandle allocate(const uint32_t sizeInByte, void *initData,
                         const char *name, int numElements, int elementSize,
-                        bool isUAV) override;
-  BufferHandle allocateUpload(const uint32_t sizeInByte, const char *name ) override;
+                        uint32_t flags) override;
+  BufferHandle allocateUpload(const uint32_t sizeInByte,
+                              const char *name) override;
 
   void bindBuffer(BufferHandle handle, int slot,
                   ID3D12GraphicsCommandList2 *commandList) const;
   void bindBufferAsSRVGraphics(BufferHandle handle, int slot,
-                               ID3D12GraphicsCommandList2 *commandList, uint32_t offset=0) const;
+                               ID3D12GraphicsCommandList2 *commandList,
+                               uint32_t offset = 0) const;
 
   BufferHandle getBufferFromName(const std::string &name) const {
     const auto found = m_nameToHandle.find(name);
@@ -45,12 +48,11 @@ public:
 
     return BufferHandle{0};
   }
-  inline void* getMappedData(const BufferHandle& handle)const
-  {
+  inline void *getMappedData(const BufferHandle &handle) const {
     assertMagicNumber(handle);
     const uint32_t index = getIndexFromHandle(handle);
     const BufferData &data = m_bufferPool.getConstRef(index);
-	return data.mappedData;
+    return data.mappedData;
   }
 
   inline int bufferUAVTransition(const BufferHandle handle,
@@ -92,12 +94,6 @@ public:
   //  return BufferHandle{0};
   //}
 private:
-  inline uint32_t getIndexFromHandle(const BufferHandle h) const {
-    return h.handle & INDEX_MASK;
-  }
-  inline uint32_t getMagicFromHandle(const BufferHandle h) const {
-    return (h.handle & MAGIC_NUMBER_MASK) >> 16;
-  }
   inline void assertMagicNumber(const BufferHandle handle) const {
     uint32_t magic = getMagicFromHandle(handle);
     uint32_t idx = getIndexFromHandle(handle);
@@ -113,13 +109,14 @@ private:
     uint32_t magicNumber;
     DescriptorPair srv;
     DescriptorPair uav;
-	void* mappedData = nullptr;
+    void *mappedData = nullptr;
   };
 
   static const int RESERVE_SIZE = 200;
   SparseMemoryPool<BufferData> m_bufferPool;
   std::unordered_map<std::string, BufferHandle> m_nameToHandle;
   std::vector<UploadRequest> m_uploadRequests;
+  uint32_t MAGIC_NUMBER_COUNTER = 1;
 };
 } // namespace dx12
 } // namespace SirEngine

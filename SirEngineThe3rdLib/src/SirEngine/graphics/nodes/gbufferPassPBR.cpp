@@ -1,18 +1,16 @@
 #include "SirEngine/graphics/nodes/gbufferPassPBR.h"
-#include "SirEngine/assetManager.h"
 #include "SirEngine/graphics/debugAnnotations.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/PSOManager.h"
-#include "platform/windows/graphics/dx12/rootSignatureManager.h"
-#include "platform/windows/graphics/dx12/textureManagerDx12.h"
+#include "platform/windows/graphics/dx12/dx12TextureManager.h"
 
 namespace SirEngine {
 GBufferPassPBR::GBufferPassPBR(GraphAllocators &allocators)
     : GNode("GBufferPassPBR", "GBufferPassPBR", allocators) {
 
-  defaultInitializePlugsAndConnections(1, 4);
+  defaultInitializePlugsAndConnections(0, 4);
   // lets create the plugs
   GPlug &geometryBuffer = m_outputPlugs[PLUG_INDEX(PLUGS::GEOMETRY_RT)];
   geometryBuffer.plugValue = 0;

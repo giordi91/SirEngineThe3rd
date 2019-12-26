@@ -1,4 +1,4 @@
-#include "platform/windows/graphics/dx12/bufferManagerDx12.h"
+#include "platform/windows/graphics/dx12/dx12BufferManager.h"
 #include "SirEngine/log.h"
 #include "SirEngine/runtimeString.h"
 #include "platform/windows/graphics/dx12/DX12.h"
@@ -28,26 +28,28 @@ void BufferManagerDx12::free(const BufferHandle handle) {
   }
 }
 
-BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInByte,
+BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInBytes,
                                          void *initData, const char *name,
                                          const int numElements,
                                          const int elementSize,
-                                         const bool isUAV) {
+                                         const uint32_t flags) {
   ID3D12Resource *buffer = nullptr;
   ID3D12Resource *uploadBuffer = nullptr;
 
   // must be at least 256 bytes
   uint32_t actualSize =
-      sizeInByte % 256 == 0 ? sizeInByte : ((sizeInByte / 256) + 1) * 256;
+      sizeInBytes % 256 == 0 ? sizeInBytes : ((sizeInBytes / 256) + 1) * 256;
+
+  const bool isUav = (flags & BUFFER_FLAGS::RANDOM_WRITE) > 0;
 
   auto heap = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
   auto bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(
-      actualSize, isUAV ? D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS
+      actualSize, isUav ? D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS
                         : D3D12_RESOURCE_FLAG_NONE);
   // Create the actual default buffer resource.
   HRESULT res = dx12::DEVICE->CreateCommittedResource(
       &heap, D3D12_HEAP_FLAG_NONE, &bufferDesc,
-      isUAV ? D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+      isUav ? D3D12_RESOURCE_STATE_UNORDERED_ACCESS
             : D3D12_RESOURCE_STATE_COMMON,
       nullptr, IID_PPV_ARGS(&buffer));
   assert(SUCCEEDED(res));
@@ -102,7 +104,7 @@ BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInByte,
   uint32_t index;
   BufferData &data = m_bufferPool.getFreeMemoryData(index);
 
-  if (isUAV) {
+  if (isUav) {
     // lets create the decriptor
     dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferUAV(data.uav, data.data,
                                                    numElements, elementSize);
@@ -114,13 +116,15 @@ BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInByte,
   BufferHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
   data.magicNumber = MAGIC_NUMBER_COUNTER;
   data.data = buffer;
-  data.state = isUAV ? D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+  data.state = isUav ? D3D12_RESOURCE_STATE_UNORDERED_ACCESS
                      : D3D12_RESOURCE_STATE_GENERIC_READ;
-  data.type = isUAV ? BufferType::UAV : BufferType::SRV;
+  data.type = isUav ? BufferType::UAV : BufferType::SRV;
 
   return handle;
 }
 
+//TODO this is bad practice, this is used for the matrices of skin cluster, and copied every
+//frame, this should be buffered!
 BufferHandle BufferManagerDx12::allocateUpload(const uint32_t sizeInByte,
                                                const char *name) {
   uint32_t actualSize =
