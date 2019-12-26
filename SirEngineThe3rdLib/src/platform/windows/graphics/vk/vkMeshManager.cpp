@@ -3,58 +3,64 @@
 #include "SirEngine/binary/binaryFile.h"
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
+#include "platform/windows/graphics/vk/vk.h"
+#include "platform/windows/graphics/vk/vkBufferManager.h"
 
 namespace SirEngine::vk {
+vk::Buffer VkMeshManager::getVertexBuffer(const MeshHandle &handle) {
+  assertMagicNumber(handle);
+  uint32_t index = getIndexFromHandle(handle);
+  const MeshData &data = m_meshPool.getConstRef(index);
+  return vk::BUFFER_MANAGER->getBufferData(data.vtxBuffHandle);
+}
+
+vk::Buffer VkMeshManager::getIndexBuffer(const MeshHandle &handle) {
+  assertMagicNumber(handle);
+  uint32_t index = getIndexFromHandle(handle);
+  const MeshData &data = m_meshPool.getConstRef(index);
+  return vk::BUFFER_MANAGER->getBufferData(data.idxBuffHandle);
+}
 
 MeshHandle VkMeshManager::loadMesh(const char *path, bool isInternal) {
 
-  /*
-SE_CORE_INFO("Loading mesh {0}", path);
-const bool res = fileExists(path);
-assert(res);
-// lets check whether or not the mesh has been loaded already
-const std::string name = getFileName(path);
-MeshHandle handle;
-const auto found = m_nameToHandle.find(name);
-if (found == m_nameToHandle.end()) {
-  std::vector<char> binaryData;
-  readAllBytes(path, binaryData);
+  SE_CORE_INFO("Loading mesh {0}", path);
+  const bool res = fileExists(path);
+  assert(res);
+  // lets check whether or not the mesh has been loaded already
+  const std::string name = getFileName(path);
+  MeshData *meshData;
+  MeshHandle handle{};
 
-  const auto mapper = getMapperData<ModelMapperData>(binaryData.data());
+  const auto found = m_nameToHandle.find(name);
+  if (found == m_nameToHandle.end()) {
+    std::vector<char> binaryData;
+    readAllBytes(path, binaryData);
 
-  const uint32_t stride = mapper->strideInByte / sizeof(float);
-  // creating the buffers
-  const uint32_t vertexCount =
-      mapper->vertexDataSizeInByte / mapper->strideInByte;
-  const uint32_t indexCount = mapper->indexDataSizeInByte / sizeof(int);
+    const auto mapper = getMapperData<ModelMapperData>(binaryData.data());
 
-  // lets get the vertex data
-  auto *vertexData =
-      reinterpret_cast<float *>(binaryData.data() + sizeof(BinaryFileHeader));
-  auto *indexData =
-      reinterpret_cast<int *>(binaryData.data() + sizeof(BinaryFileHeader) +
-                              mapper->vertexDataSizeInByte);
+    const uint32_t indexCount = mapper->indexDataSizeInByte / sizeof(int);
 
-  // upload the data on the GPU
-  uint32_t index;
+    // lets get the vertex data
+    auto *vertexData =
+        reinterpret_cast<float *>(binaryData.data() + sizeof(BinaryFileHeader));
+    auto *indexData =
+        reinterpret_cast<int *>(binaryData.data() + sizeof(BinaryFileHeader) +
+                                mapper->vertexDataSizeInByte);
 
-  MeshData* meshData = &m_meshPool.getFreeMemoryData(index);
-  meshData->indexCount = indexCount;
-  meshData->vertexCount = vertexCount;
-  meshData->stride = stride;
-    MeshUploadResource upload;
+    // upload the data on the GPU
+    uint32_t index;
 
-    uint32_t totalSize = vertexCount * stride * sizeof(float);
-    meshData->vtxBuffHandle = dx12::BUFFER_MANAGER->allocate(
-        totalSize, vertexData, "", totalSize, sizeof(float), false);
-    meshData->vertexBuffer =
-        dx12::BUFFER_MANAGER->getNativeBuffer(meshData->vtxBuffHandle);
+    meshData = &m_meshPool.getFreeMemoryData(index);
+    meshData->indexCount = indexCount;
+    meshData->vertexCount = mapper->vertexCount;
 
-    totalSize = indexCount * sizeof(int);
-    meshData->idxBuffHandle = dx12::BUFFER_MANAGER->allocate(
+    uint32_t totalSize = indexCount * sizeof(int);
+    meshData->idxBuffHandle = vk::BUFFER_MANAGER->allocate(
         totalSize, indexData, "", totalSize / sizeof(int), sizeof(int),
-  false); meshData->indexBuffer =
-        dx12::BUFFER_MANAGER->getNativeBuffer(meshData->idxBuffHandle);
+        BufferManager::BUFFER_FLAGS::INDEX_BUFFER);
+
+    meshData->indexBuffer =
+        vk::BUFFER_MANAGER->getNativeBuffer(meshData->idxBuffHandle);
 
     // TODO if is an internal mesh we don't want to go in the bounding box
     // this needs to be replaced with a proper scene and asset management
@@ -69,17 +75,42 @@ if (found == m_nameToHandle.end()) {
       m_boundingBoxes.push_back(box);
     }
 
-    // set a signal for the resource.
-    upload.fence = dx12::insertFenceToGlobalQueue();
-    // m_uploadRequests.push_back(upload);
-
     // data is now loaded need to create handle etc
     handle = MeshHandle{(MAGIC_NUMBER_COUNTER << 16) | index};
     meshData->magicNumber = MAGIC_NUMBER_COUNTER;
 
+    // build the runtime mesh
+    VkMeshRuntime meshRuntime{};
+    meshRuntime.indexCount = meshData->indexCount;
+    meshRuntime.indexBuffer = meshData->indexBuffer;
+    meshRuntime.vertexBuffer = meshData->vertexBuffer;
+    meshRuntime.positionRange = mapper->positionRange;
+    meshRuntime.normalsRange = mapper->normalsRange;
+    meshRuntime.uvRange = mapper->uvRange;
+    meshRuntime.tangentsRange = mapper->tangentsRange;
+
     // storing the handle and increasing the magic count
     m_nameToHandle[name] = handle;
     ++MAGIC_NUMBER_COUNTER;
+
+    // new stuff
+    int newVertexCount = mapper->vertexCount;
+
+    int positionSize = newVertexCount * 4 * sizeof(float);
+    auto *ptr = (char *)vertexData;
+
+    BufferHandle positionsHandle = vk::BUFFER_MANAGER->allocate(
+        mapper->vertexDataSizeInByte, vertexData, "",
+        mapper->vertexDataSizeInByte / 4, sizeof(float),
+        BufferManager::BUFFER_FLAGS::VERTEX_BUFFER);
+    meshData->vtxBuffHandle = positionsHandle;
+
+    meshRuntime.vertexBuffer =
+        vk::BUFFER_MANAGER->getNativeBuffer(meshData->vtxBuffHandle);
+    meshData->vertexBuffer = meshRuntime.vertexBuffer;
+
+    meshData->meshRuntime = meshRuntime;
+
   } else {
     SE_CORE_INFO("Mesh already loaded, returning handle:{0}", name);
     // we already loaded the mesh so we can just get the handle and index data
@@ -88,13 +119,62 @@ if (found == m_nameToHandle.end()) {
     handle = found->second;
   }
 
-  // build the runtime mesh
-  // MeshRuntime &runM = runtimeMemory[runtimeIndex];
-  meshRuntime->indexCount = meshData->indexCount;
-  meshRuntime->vview = getVertexBufferView(handle);
-  meshRuntime->iview = getIndexBufferView(handle);
+  return handle;
+}
 
-  */
-  return {};
+void VkMeshManager::bindMesh(MeshHandle handle, VkWriteDescriptorSet *set,
+                             VkDescriptorSet descriptorSet,
+                             VkDescriptorBufferInfo *info) {
+  uint32_t magic = getMagicFromHandle(handle);
+  uint32_t idx = getIndexFromHandle(handle);
+  const MeshData &data = m_meshPool.getConstRef(idx);
+
+  // actual information of the descriptor, in this case it is our mesh buffer
+  info[0].buffer = data.vertexBuffer;
+  info[0].offset = data.meshRuntime.positionRange.m_offset;
+  info[0].range = data.meshRuntime.positionRange.m_size;
+  VkDescriptorBufferInfo bufferInfoN = {};
+  info[1].buffer = data.vertexBuffer;
+  info[1].offset = data.meshRuntime.normalsRange.m_offset;
+  info[1].range = data.meshRuntime.normalsRange.m_size;
+  VkDescriptorBufferInfo bufferInfoUV = {};
+  info[2].buffer = data.vertexBuffer;
+  info[2].offset = data.meshRuntime.uvRange.m_offset;
+  info[2].range = data.meshRuntime.uvRange.m_size;
+
+  // Binding 0: Object mesh buffer
+  set[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  set[1].dstSet = descriptorSet;
+  set[1].dstBinding = 1;
+  set[1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  set[1].pBufferInfo = &info[0];
+  set[1].descriptorCount = 1;
+
+  set[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  set[2].dstSet = descriptorSet;
+  set[2].dstBinding = 2;
+  set[2].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  set[2].pBufferInfo = &info[1];
+  set[2].descriptorCount = 1;
+
+  set[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  set[3].dstSet = descriptorSet;
+  set[3].dstBinding = 3;
+  set[3].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  set[3].pBufferInfo = &info[2];
+  set[3].descriptorCount = 1;
+}
+
+void VkMeshManager::free(const MeshHandle handle)
+{
+	assertMagicNumber(handle);
+	uint32_t index = getIndexFromHandle(handle);
+	MeshData& data = m_meshPool[index];
+	vk::BUFFER_MANAGER->free(data.vtxBuffHandle);
+	vk::BUFFER_MANAGER->free(data.idxBuffHandle);
+	// invalidating magic number
+	data.magicNumber = 0;
+	// adding the index to the free list
+	m_meshPool.free(index);
 }
 } // namespace SirEngine::vk

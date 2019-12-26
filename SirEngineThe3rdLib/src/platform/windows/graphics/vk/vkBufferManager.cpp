@@ -45,9 +45,7 @@ BufferHandle VkBufferManager::allocate(const uint32_t sizeInBytes,
   uint32_t usage = isRandomWrite ? VK_BUFFER_USAGE_STORAGE_BUFFER_BIT : 0;
   usage |= isIndex ? VK_BUFFER_USAGE_INDEX_BUFFER_BIT : 0;
   usage |= isIndirectBuffer ? VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT : 0;
-  usage |= isVertexBuffer ? VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
-                                VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
-                          : 0;
+  usage |= isVertexBuffer ? VK_BUFFER_USAGE_STORAGE_BUFFER_BIT : 0;
 
   VkBufferCreateInfo createInfo{VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};
   createInfo.size = sizeInBytes;

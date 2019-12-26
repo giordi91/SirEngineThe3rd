@@ -9,6 +9,7 @@
 namespace SirEngine {
 namespace vk {
 class VkBufferManager;
+class VkMeshManager;
 class VkPSOManager;
 class VkShaderManager;
 class VkPipelineLayoutManager;
@@ -49,6 +50,7 @@ extern VkShaderManager *SHADER_MANAGER;
 extern VkPipelineLayoutManager *PIPELINE_LAYOUT_MANAGER;
 extern VkConstantBufferManager *CONSTANT_BUFFER_MANAGER;
 extern VkBufferManager *BUFFER_MANAGER;
+extern VkMeshManager* MESH_MANAGER;
 extern uint32_t SWAP_CHAIN_IMAGE_COUNT;
 // incremented every frame and used to find the correct set of resources
 // like command buffer pool and allocators

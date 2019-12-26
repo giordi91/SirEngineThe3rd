@@ -7,6 +7,7 @@
 #include "platform/windows/graphics/vk/vkMemory.h"
 #include "platform/windows/graphics/vk/vkMesh.h"
 #include "platform/windows/graphics/vk/vkTexture.h"
+#include "platform/windows/graphics/vk/vkMeshManager.h"
 
 namespace SirEngine {
 namespace vk {
@@ -65,11 +66,7 @@ private:
   VkPipeline m_pipeline;
 
   // mesh
-  vk::VkMesh m_meshD;
-  vk::Buffer m_vertexBufferD;
-  vk::Buffer m_indexBufferD;
-  BufferHandle m_indexBufferHandle;
-  BufferHandle m_vertexBufferHandle;
+  MeshHandle meshHandle;
   VkVertexInputBindingDescription m_stream;
   VkVertexInputAttributeDescription m_attr[3];
   VkDescriptorSetLayout m_setLayout;
