@@ -17,6 +17,7 @@
 #include "platform/windows/graphics/vk/vkRootSignatureManager.h"
 #include "platform/windows/graphics/vk/vkShaderManager.h"
 #include "platform/windows/graphics/vk/vkSwapChain.h"
+#include "vkMeshManager.h"
 
 namespace SirEngine::vk {
 VkInstance INSTANCE = nullptr;
@@ -28,7 +29,7 @@ VkQueue PRESENTATION_QUEUE = nullptr;
 VkPhysicalDevice PHYSICAL_DEVICE = nullptr;
 VkSwapchain *SWAP_CHAIN = nullptr;
 VkDescriptorPool DESCRIPTOR_POOL = nullptr;
-;
+
 VkFormat IMAGE_FORMAT = VK_FORMAT_UNDEFINED;
 VkPipelineLayout PIPELINE_LAYOUT = nullptr;
 VkDebugReportCallbackEXT DEBUG_CALLBACK = nullptr;
@@ -39,6 +40,7 @@ VkShaderManager *SHADER_MANAGER = nullptr;
 VkConstantBufferManager *CONSTANT_BUFFER_MANAGER = nullptr;
 VkPipelineLayoutManager *PIPELINE_LAYOUT_MANAGER = nullptr;
 VkBufferManager *BUFFER_MANAGER = nullptr;
+VkMeshManager *MESH_MANAGER = nullptr;
 uint32_t SWAP_CHAIN_IMAGE_COUNT = 0;
 VkFrameCommand FRAME_COMMAND[PREALLOCATED_SEMAPHORE_COUNT];
 VkFrameCommand *CURRENT_FRAME_COMMAND = nullptr;
@@ -177,6 +179,10 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   BUFFER_MANAGER = new VkBufferManager();
   BUFFER_MANAGER->initialize();
   globals::BUFFER_MANAGER = BUFFER_MANAGER;
+
+  MESH_MANAGER = new VkMeshManager();
+  //MESH_MANAGER->initialize();
+  globals::MESH_MANAGER = MESH_MANAGER;
 
   return true;
 }

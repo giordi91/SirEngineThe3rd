@@ -1,28 +1,6 @@
 {
   "commands": [
-    "-p ../data/rs/forwardParallaxRS.json -o ../data/processed/rs/forwardParallaxRS.root --pluginName rootSignatureCompilerPlugin",
-    "-p ../data/external/meshes/flatGround/flatGround.obj -o ../data/processed/meshes/flatGround/flatGround.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/flatGround/flatGround.tangents\"",
-    "-p ../data/rs/debugDrawLinesSingleColorRS.json -o ../data/processed/rs/debugDrawLinesSingleColorRS.root --pluginName rootSignatureCompilerPlugin",
-    "-p ../data/rs/hairSkinRS.json -o ../data/processed/rs/hairSkinRS.root --pluginName rootSignatureCompilerPlugin",
-    "-p ../data/rs/forwardPhongAlphaCutoutSkinRS.json -o ../data/processed/rs/forwardPhongAlphaCutoutSkinRS.root --pluginName rootSignatureCompilerPlugin",
-    "-p ../data/external/meshes/knightB/face.obj -o ../data/processed/meshes/knightB/face.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/face.tangents --skin ../data/external/animation/exported/skin/knightBFaceSkin.json \"",
-    "-p ../data/shaders/VK/rasterization/triangleVS.glsl -o ../data/processed/shaders/VK/rasterization/triangleVS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \"",
-    "-p ../data/shaders/VK/rasterization/trianglePS.glsl -o ../data/processed/shaders/VK/rasterization/trianglePS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d \"",
-    "-p ../data/external/meshes/knightB/jacket.obj -o ../data/processed/meshes/knightB/jacket.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/jacket.tangents --skin ../data/external/animation/exported/skin/knightBJacketSkin.json \"",
-    "-p ../data/rs/gbufferPBRSkinningRS.json -o ../data/processed/rs/gbufferPBRSkinningRS.root --pluginName rootSignatureCompilerPlugin",
-    "-p ../data/rs/shadowSkinClusterRS.json -o ../data/processed/rs/shadowSkinClusterRS.root --pluginName rootSignatureCompilerPlugin",
-    "-p ../data/external/meshes/knightB/pants.obj -o ../data/processed/meshes/knightB/pants.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/pants.tangents --skin ../data/external/animation/exported/skin/knightBPantsSkin.json\"",
-    "-p ../data/external/meshes/knightB/belt.obj -o ../data/processed/meshes/knightB/belt.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/belt.tangents --skin ../data/external/animation/exported/skin/knightBBeltsSkin.json\"",
-    "-p ../data/external/meshes/knightB/plates.obj -o ../data/processed/meshes/knightB/plates.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/plates.tangents --skin ../data/external/animation/exported/skin/knightBPlatesSkin.json\"",
-    "-p ../data/rs/skybox_RS.json -o ../data/processed/rs/skybox_RS.root --pluginName rootSignatureCompilerPlugin",
-    "-p ../data/meshes/skybox.obj -o ../data/processed/meshes/skybox.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/meshes/skybox.tangents\"",
-    "-p ../data/rs/gbufferPBRSkinSkinningRS.json -o ../data/processed/rs/gbufferPBRSkinSkinningRS.root --pluginName rootSignatureCompilerPlugin",
-    "-p ../data/external/meshes/knightB/eyeNew.obj -o ../data/processed/meshes/knightB/eyeNew.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/eyeNew.tangents --skin ../data/external/animation/exported/skin/knightBEyeSkin.json\"",
-    "-p ../data/external/meshes/knightB/hair.obj -o ../data/processed/meshes/knightB/hair.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/hair.tangents --skin ../data/external/animation/exported/skin/knightBHairSkin.json\"",
-    "-p ../data/external/meshes/knightB/eyeLashes.obj -o ../data/processed/meshes/knightB/eyeLashes.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/eyeLashes.tangents --skin ../data/external/animation/exported/skin/knightBLashesSkin.json \""
 
-  ],
-  "t": [
     "-p ../data/external/meshes/lucy.obj -o ../data/processed/meshes/lucy.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/lucy.tangents  \""
   ]
 }

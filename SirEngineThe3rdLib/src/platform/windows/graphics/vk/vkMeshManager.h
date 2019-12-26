@@ -1,40 +1,42 @@
 #pragma once
 
 #include "SirEngine/graphics/cpuGraphicsStructures.h"
+#include "SirEngine/graphics/graphicsDefines.h"
 #include "SirEngine/handle.h"
 #include "SirEngine/memory/sparseMemoryPool.h"
 #include "SirEngine/meshManager.h"
 #include "platform/windows/graphics/vk/vkMemory.h"
+#include "platform/windows/graphics/vk/volk.h"
 #include <unordered_map>
 #include <vector>
 
 namespace SirEngine::vk {
 
-/*
-struct MeshRuntime final {
-#if GRAPHICS_API == DX12
-D3D12_VERTEX_BUFFER_VIEW vview;
-D3D12_INDEX_BUFFER_VIEW iview;
-#endif
-uint32_t indexCount;
+struct VkMeshRuntime final {
+  VkBuffer vertexBuffer;
+  VkBuffer indexBuffer;
+  uint32_t indexCount;
+  MemoryRange positionRange;
+  MemoryRange normalsRange;
+  MemoryRange uvRange;
+  MemoryRange tangentsRange;
 };
-*/
 
+struct MeshData final {
+  uint32_t magicNumber : 16;
+  uint32_t stride : 16;
+  VkBuffer vertexBuffer;
+  VkBuffer indexBuffer;
+  BufferHandle vtxBuffHandle;
+  BufferHandle idxBuffHandle;
+  uint32_t indexCount;
+  uint32_t vertexCount;
+  uint32_t entityID; // this is an id that is used to index other data that we
+                     // are starting to split, for example bounding box;
+  VkMeshRuntime meshRuntime;
+};
 class VkMeshManager final : public MeshManager {
 private:
-  struct MeshData final {
-    uint32_t magicNumber : 16;
-    uint32_t stride : 16;
-    vk::Buffer vertexBuffer;
-    // ID3D12Resource *indexBuffer;
-    BufferHandle vtxBuffHandle;
-    BufferHandle idxBuffHandle;
-    uint32_t indexCount;
-    uint32_t vertexCount;
-    uint32_t entityID; // this is an id that is used to index other data that we
-                       // are starting to split, for example bounding box;
-  };
-
   struct MeshUploadResource final {
     // ID3D12Resource *uploadVertexBuffer = nullptr;
     // ID3D12Resource *uploadIndexBuffer = nullptr;
@@ -55,12 +57,40 @@ public:
     const MeshData &data = m_meshPool.getConstRef(index);
     return data.indexCount;
   }
+
+  vk::Buffer getVertexBuffer(const MeshHandle &handle);
+  vk::Buffer getIndexBuffer(const MeshHandle &handle);
+  const MeshData &getMeshData(const MeshHandle &handle) {
+    assertMagicNumber(handle);
+    uint32_t index = getIndexFromHandle(handle);
+    return m_meshPool.getConstRef(index);
+  }
+
   VkMeshManager(const VkMeshManager &) = delete;
   VkMeshManager &operator=(const VkMeshManager &) = delete;
   // for now a bit overkill to pass both the index and the memory,
   // I could just pass the pointer at right address but for the time
   // being this will keep symmetry.
   MeshHandle loadMesh(const char *path, bool isInternal = false) override;
+  const BoundingBox *getBoundingBoxes(uint32_t &outSize) const override {
+    assert(0);
+    return nullptr;
+  };
+  void bindMesh(MeshHandle handle, VkWriteDescriptorSet *set,
+                VkDescriptorSet descriptorSet, VkDescriptorBufferInfo *info);
+
+  inline void renderMesh(MeshHandle handle,
+                         VkCommandBuffer commandBuffer) const {
+    assertMagicNumber(handle);
+    uint32_t index = getIndexFromHandle(handle);
+    const MeshData &data = m_meshPool.getConstRef(index);
+
+    vkCmdBindIndexBuffer(commandBuffer, data.indexBuffer, 0,
+                         VK_INDEX_TYPE_UINT32);
+    vkCmdDrawIndexed(commandBuffer, data.indexCount, 1, 0, 0, 0);
+  };
+
+  void free(const MeshHandle handle) override;
 
 private:
   inline void assertMagicNumber(const MeshHandle handle) const {
@@ -79,20 +109,6 @@ private:
     return MeshHandle{0};
   }
 
-  void free(const MeshHandle handle) override {
-    /*
-  assertMagicNumber(handle);
-  uint32_t index = getIndexFromHandle(handle);
-  MeshData &data = m_meshPool[index];
-  // releasing the texture;
-  data.vertexBuffer->Release();
-  data.indexBuffer->Release();
-  // invalidating magic number
-  data.magicNumber = 0;
-  // adding the index to the free list
-  m_meshPool.free(index);
-  */
-  }
 
   inline const std::vector<BoundingBox> &getBoundingBoxes() {
     return m_boundingBoxes;

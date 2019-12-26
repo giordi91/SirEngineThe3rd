@@ -19,6 +19,7 @@ public:
 public:
   VkBufferManager() : BufferManager(), m_bufferStorage(RESERVE_SIZE) {}
   virtual ~VkBufferManager() = default;
+  
 
   // deleted method to avoid copy, you can still move it though
   VkBufferManager(const VkBufferManager &) = delete;
@@ -38,10 +39,17 @@ public:
     return {};
   };
 
-  const vk::Buffer &getBuffer(const BufferHandle handle) const {
+  const vk::Buffer &getBufferData(const BufferHandle handle) const {
     assertMagicNumber(handle);
     uint32_t idx = getIndexFromHandle(handle);
     return m_bufferStorage.getConstRef(idx);
+  }
+
+  VkBuffer getNativeBuffer(const BufferHandle& handle )const 
+  {
+    assertMagicNumber(handle);
+    uint32_t idx = getIndexFromHandle(handle);
+    return m_bufferStorage.getConstRef(idx).buffer;
   }
 
 private:
