@@ -8,6 +8,7 @@
 
 namespace SirEngine {
 namespace vk {
+class VkBufferManager;
 class VkPSOManager;
 class VkShaderManager;
 class VkPipelineLayoutManager;
@@ -46,7 +47,8 @@ extern VkSwapchain *SWAP_CHAIN;
 extern VkPSOManager *PSO_MANAGER;
 extern VkShaderManager *SHADER_MANAGER;
 extern VkPipelineLayoutManager *PIPELINE_LAYOUT_MANAGER;
-extern VkConstantBufferManager* CONSTANT_BUFFER_MANAGER;
+extern VkConstantBufferManager *CONSTANT_BUFFER_MANAGER;
+extern VkBufferManager *BUFFER_MANAGER;
 extern uint32_t SWAP_CHAIN_IMAGE_COUNT;
 // incremented every frame and used to find the correct set of resources
 // like command buffer pool and allocators
@@ -145,7 +147,7 @@ public:
   void flush() override;
   void executeGlobalCommandList() override;
   void resetGlobalCommandList() override;
-  void addRenderablesToQueue(const Renderable& renderable) override;
+  void addRenderablesToQueue(const Renderable &renderable) override;
   void renderQueueType(const SHADER_QUEUE_FLAGS flag) override;
   void renderMaterialType(const SHADER_QUEUE_FLAGS flag) override;
 

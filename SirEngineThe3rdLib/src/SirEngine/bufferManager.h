@@ -3,7 +3,18 @@
 #include "SirEngine/handle.h"
 
 namespace SirEngine {
+
 class BufferManager {
+public:
+  enum BUFFER_FLAGS {
+    RANDOM_WRITE = 1,
+    INDEX_BUFFER = 2,
+    INDIRECT_BUFFER = 4,
+    VERTEX_BUFFER = 8,
+    BUFFERED = 16,
+    UPDATED_EVERY_FRAME =32 
+  };
+
 public:
   BufferManager() = default;
 
@@ -11,24 +22,16 @@ public:
   BufferManager(const BufferManager &) = delete;
   BufferManager &operator=(const BufferManager &) = delete;
 
+  virtual void initialize() = 0;
+  virtual void cleanup() = 0;
+
   virtual void free(const BufferHandle handle) = 0;
-  virtual BufferHandle allocate(const uint32_t sizeInByte,void *initData, const char *name,
-                                 int numElements, int elementSize,bool isUAV) = 0;
-  virtual BufferHandle allocateUpload(const uint32_t sizeInByte, const char *name ) = 0;
+  virtual BufferHandle allocate(const uint32_t sizeInBytes, void *initData,
+                                const char *name, int numElements,
+                                int elementSize, uint32_t flags) = 0;
+  virtual BufferHandle allocateUpload(const uint32_t sizeInByte,
+                                      const char *name) = 0;
 
-  //virtual void bindBuffer(BufferHandle handle, int slot) = 0;
-protected:
-  inline uint32_t getIndexFromHandle(const BufferHandle h) const {
-    return h.handle & INDEX_MASK;
-  }
-  inline uint32_t getMagicFromHandle(const BufferHandle h) const {
-    return (h.handle & MAGIC_NUMBER_MASK) >> 16;
-  }
-
-protected:
-  static const uint32_t INDEX_MASK = (1 << 16) - 1;
-  static const uint32_t MAGIC_NUMBER_MASK = ~INDEX_MASK;
-  uint32_t MAGIC_NUMBER_COUNTER = 1;
 };
 
 } // namespace SirEngine

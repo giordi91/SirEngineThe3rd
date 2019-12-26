@@ -1,4 +1,6 @@
 #pragma once
+#include "platform/windows/graphics/vk/volk.h"
+
 #include "SirEngine/constantBufferManager.h"
 #include "SirEngine/graphics/graphicsDefines.h"
 #include "SirEngine/handle.h"
@@ -6,9 +8,7 @@
 #include "SirEngine/memory/linearBufferManager.h"
 #include "SirEngine/memory/randomSizeAllocator.h"
 #include "SirEngine/memory/sparseMemoryPool.h"
-#include "platform/windows/graphics/vk/volk.h"
 #include "vkMemory.h"
-#include <unordered_map>
 #include <vector>
 
 namespace SirEngine::vk {
@@ -64,9 +64,6 @@ public:
   getAllocations() const;
 
 private:
-  ConstantBufferHandle allocBuffered(uint32_t sizeInBytes, const uint32_t flags,
-                                     void *data);
-
   // struct ConstantBufferedData {
   //  ConstantBufferHandle handle;
   //  RandomSizeAllocationHandle dataAllocHandle;

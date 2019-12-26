@@ -9,6 +9,7 @@ struct Buffer {
   void *data;
   size_t size;
   size_t allocationSize;
+  uint32_t m_magicNumber;
 };
 
 // command buffers

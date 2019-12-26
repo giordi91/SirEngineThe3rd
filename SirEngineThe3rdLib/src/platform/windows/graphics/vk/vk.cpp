@@ -9,13 +9,14 @@
 #include "SirEngine/runtimeString.h"
 #include "platform/windows/graphics/vk/vk.h"
 #include "platform/windows/graphics/vk/vkAdapter.h"
+#include "platform/windows/graphics/vk/vkBufferManager.h"
+#include "platform/windows/graphics/vk/vkConstantBufferManager.h"
+#include "platform/windows/graphics/vk/vkDescriptors.h"
 #include "platform/windows/graphics/vk/vkLoad.h"
 #include "platform/windows/graphics/vk/vkPSOManager.h"
+#include "platform/windows/graphics/vk/vkRootSignatureManager.h"
 #include "platform/windows/graphics/vk/vkShaderManager.h"
 #include "platform/windows/graphics/vk/vkSwapChain.h"
-#include "vkDescriptors.h"
-#include "vkRootSignatureManager.h"
-#include "vkConstantBufferManager.h"
 
 namespace SirEngine::vk {
 VkInstance INSTANCE = nullptr;
@@ -35,14 +36,14 @@ VkDebugUtilsMessengerEXT DEBUG_CALLBACK2 = nullptr;
 
 VkPSOManager *PSO_MANAGER = nullptr;
 VkShaderManager *SHADER_MANAGER = nullptr;
-VkConstantBufferManager* CONSTANT_BUFFER_MANAGER = nullptr;
+VkConstantBufferManager *CONSTANT_BUFFER_MANAGER = nullptr;
 VkPipelineLayoutManager *PIPELINE_LAYOUT_MANAGER = nullptr;
+VkBufferManager *BUFFER_MANAGER = nullptr;
 uint32_t SWAP_CHAIN_IMAGE_COUNT = 0;
 VkFrameCommand FRAME_COMMAND[PREALLOCATED_SEMAPHORE_COUNT];
 VkFrameCommand *CURRENT_FRAME_COMMAND = nullptr;
 uint32_t GRAPHICS_QUEUE_FAMILY = 0;
 uint32_t PRESENTATION_QUEUE_FAMILY = 0;
-
 
 bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
                           const uint32_t height) {
@@ -172,6 +173,10 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   CONSTANT_BUFFER_MANAGER = new VkConstantBufferManager();
   CONSTANT_BUFFER_MANAGER->initialize();
   globals::CONSTANT_BUFFER_MANAGER = CONSTANT_BUFFER_MANAGER;
+
+  BUFFER_MANAGER = new VkBufferManager();
+  BUFFER_MANAGER->initialize();
+  globals::BUFFER_MANAGER = BUFFER_MANAGER;
 
   return true;
 }

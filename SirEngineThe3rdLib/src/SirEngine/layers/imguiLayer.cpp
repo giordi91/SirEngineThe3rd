@@ -8,7 +8,7 @@
 
 // DX12
 #include "platform/windows/graphics/dx12/DX12.h"
-#include "platform/windows/graphics/dx12/TextureManagerDx12.h"
+#include "platform/windows/graphics/dx12/dx12TextureManager.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/dx12SwapChain.h"
 #include "platform/windows/graphics/dx12/imgui_impl_dx12.h"

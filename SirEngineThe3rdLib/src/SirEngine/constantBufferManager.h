@@ -7,10 +7,7 @@ class ConstantBufferManager {
 public:
   enum CONSTANT_BUFFER_FLAGS {
     NONE = 0,
-    BUFFERED = 1,
-    SINGLE_ALLOCATION = 2,
-    HEAP_ALLOCATION = 4,
-    UPDATED_EVERY_FRAME = 8 
+    UPDATED_EVERY_FRAME = 2,
   };
 
 public:
@@ -39,9 +36,6 @@ public:
   virtual void processBufferedData() = 0;
 
 protected:
-  static const uint32_t INDEX_MASK = (1 << 16) - 1;
-  static const uint32_t MAGIC_NUMBER_MASK = ~INDEX_MASK;
-  static const uint32_t RESERVE_SIZE = 200;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
 };
 

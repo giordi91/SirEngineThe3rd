@@ -5,14 +5,13 @@
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/dx12SwapChain.h"
-#include "platform/windows/graphics/dx12/rootSignatureManager.h"
-#include "platform/windows/graphics/dx12/textureManagerDx12.h"
+#include "platform/windows/graphics/dx12/dx12TextureManager.h"
 
 namespace SirEngine {
 ShadowPass::ShadowPass(GraphAllocators &allocators)
     : GNode("ShadowPass", "ShadowPass", allocators) {
 
-  defaultInitializePlugsAndConnections(1, 4);
+  defaultInitializePlugsAndConnections(0, 1);
   // lets create the plugs
   GPlug &geometryBuffer =
       m_outputPlugs[PLUG_INDEX(PLUGS::DIRECTIONAL_SHADOW_RT)];
