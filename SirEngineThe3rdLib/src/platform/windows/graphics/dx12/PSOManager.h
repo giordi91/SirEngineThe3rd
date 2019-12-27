@@ -15,7 +15,7 @@ class ShaderManager;
 class ShadersLayoutRegistry;
 
 // TODO make it not copyable assignable
-class PSOManager final {
+class Dx12PSOManager final {
 
   struct PSOData {
     ID3D12PipelineState *pso;
@@ -23,13 +23,13 @@ class PSOManager final {
   };
 
 public:
-  PSOManager()
+  Dx12PSOManager()
       : m_psoDXRRegister(RESERVE_SIZE), m_psoRegister(RESERVE_SIZE),
         m_psoRegisterHandle(RESERVE_SIZE), m_shaderToPSOFile(RESERVE_SIZE),
         m_psoPool(RESERVE_SIZE){};
-  ~PSOManager() = default;
-  PSOManager(const PSOManager &) = delete;
-  PSOManager &operator=(const PSOManager &) = delete;
+  ~Dx12PSOManager() = default;
+  Dx12PSOManager(const Dx12PSOManager &) = delete;
+  Dx12PSOManager &operator=(const Dx12PSOManager &) = delete;
 
   void init(D3D12DeviceType *device, SirEngine::dx12::ShadersLayoutRegistry *,
             SirEngine::dx12::RootSignatureManager *,

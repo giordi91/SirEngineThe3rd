@@ -3,9 +3,9 @@
 #include "fileUtils.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "SirEngine/textureManager.h"
-#include "platform/windows/graphics/dx12/dx12MaterialManager.h"
-#include "skinClusterManager.h"
+#include "SirEngine/skinClusterManager.h"
 #include "SirEngine/meshManager.h"
+#include "SirEngine/materialManager.h"
 
 namespace SirEngine {
 namespace AssetManagerKeys {
@@ -66,7 +66,7 @@ AssetDataHandle AssetManager::loadAsset(const char *path) {
       skinHandle =
           globals::SKIN_MANAGER->loadSkinCluster(skinPath.c_str(), animHandle);
     }
-    MaterialHandle matHandle = dx12::MATERIAL_MANAGER->loadMaterial(
+    MaterialHandle matHandle = globals::MATERIAL_MANAGER->loadMaterial(
         materialString.c_str(), mHandle,skinHandle);
     renderable.m_materialHandle = matHandle;
 

@@ -48,7 +48,7 @@ Dx12MaterialManager *MATERIAL_MANAGER = nullptr;
 DependencyGraph *RENDERING_GRAPH = nullptr;
 Dx12ConstantBufferManager *CONSTANT_BUFFER_MANAGER = nullptr;
 ShaderManager *SHADER_MANAGER = nullptr;
-PSOManager *PSO_MANAGER = nullptr;
+Dx12PSOManager *PSO_MANAGER = nullptr;
 RootSignatureManager *ROOT_SIGNATURE_MANAGER = nullptr;
 ShadersLayoutRegistry *SHADER_LAYOUT_REGISTRY = nullptr;
 BufferManagerDx12 *BUFFER_MANAGER = nullptr;
@@ -202,7 +202,7 @@ bool initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
 
   SHADER_LAYOUT_REGISTRY = new dx12::ShadersLayoutRegistry();
 
-  PSO_MANAGER = new PSOManager();
+  PSO_MANAGER = new Dx12PSOManager();
   PSO_MANAGER->init(dx12::DEVICE, SHADER_LAYOUT_REGISTRY,
                     ROOT_SIGNATURE_MANAGER, dx12::SHADER_MANAGER);
 
@@ -217,10 +217,10 @@ bool initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
   // mesh manager needs to load after pso and RS since it initialize material
   // types
   MATERIAL_MANAGER = new Dx12MaterialManager();
-
   MATERIAL_MANAGER->inititialize();
   MATERIAL_MANAGER->loadTypesInFolder(frameConcatenation(
       globals::ENGINE_CONFIG->m_dataSourcePath, "/materials/types"));
+  globals::MATERIAL_MANAGER = MATERIAL_MANAGER;
 
   DEBUG_RENDERER = new DebugRenderer();
   DEBUG_RENDERER->init();

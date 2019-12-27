@@ -26,7 +26,7 @@ static const std::string PSO_KEY_SHADER_NAME = "shaderName";
 static const std::string PSO_KEY_VS_SHADER = "VS";
 static const std::string PSO_KEY_PS_SHADER = "PS";
 
-void PSOManager::init(D3D12DeviceType *device,
+void Dx12PSOManager::init(D3D12DeviceType *device,
                       SirEngine::dx12::ShadersLayoutRegistry *registry,
                       SirEngine::dx12::RootSignatureManager *root,
                       SirEngine::dx12::ShaderManager *shader) {
@@ -35,7 +35,7 @@ void PSOManager::init(D3D12DeviceType *device,
   shaderManager = shader;
   layoutManger = registry;
 }
-void PSOManager::cleanup() {
+void Dx12PSOManager::cleanup() {
   // TODO need to be able to iterate hash map even if not ideal;
   // or I cannot free the pso
 
@@ -61,7 +61,7 @@ D3D12_SHADER_BYTECODE getShaderByteCodeFromFullPath(const char *path) {
   return {blob->GetBufferPointer(), blob->GetBufferSize()};
 }
 
-void PSOManager::loadRawPSOInFolder(const char *directory) {
+void Dx12PSOManager::loadRawPSOInFolder(const char *directory) {
   std::vector<std::string> paths;
   listFilesInFolder(directory, paths, "json");
 
@@ -78,7 +78,7 @@ void PSOManager::loadRawPSOInFolder(const char *directory) {
     insertInPSOCache(result);
   }
 }
-void PSOManager::loadCachedPSOInFolder(const char *directory) {
+void Dx12PSOManager::loadCachedPSOInFolder(const char *directory) {
   std::vector<std::string> paths;
   listFilesInFolder(directory, paths, "pso");
 
@@ -89,7 +89,7 @@ void PSOManager::loadCachedPSOInFolder(const char *directory) {
   }
 }
 
-PSOCompileResult PSOManager::loadCachedPSO(const char *path) {
+PSOCompileResult Dx12PSOManager::loadCachedPSO(const char *path) {
   const auto expPath = std::filesystem::path(path);
   const std::string name = expPath.stem().string();
 
@@ -193,7 +193,7 @@ PSOCompileResult PSOManager::loadCachedPSO(const char *path) {
   return result;
 }
 
-void PSOManager::updatePSOCache(const char *name, ID3D12PipelineState *pso) {
+void Dx12PSOManager::updatePSOCache(const char *name, ID3D12PipelineState *pso) {
   assert(m_psoRegisterHandle.containsKey(name));
   PSOHandle handle;
   m_psoRegisterHandle.get(name, handle);
@@ -204,7 +204,7 @@ void PSOManager::updatePSOCache(const char *name, ID3D12PipelineState *pso) {
   data.pso = pso;
 }
 
-void PSOManager::insertInPSOCache(const PSOCompileResult &result) {
+void Dx12PSOManager::insertInPSOCache(const PSOCompileResult &result) {
   switch (result.psoType) {
   case PSOType::DXR:
     break;
@@ -271,7 +271,7 @@ void PSOManager::insertInPSOCache(const PSOCompileResult &result) {
   }
 }
 
-void PSOManager::recompilePSOFromShader(const char *shaderName,
+void Dx12PSOManager::recompilePSOFromShader(const char *shaderName,
                                         const char *offsetPath) {
   // clearing the log
   compileLog = "";
@@ -355,7 +355,7 @@ void PSOManager::recompilePSOFromShader(const char *shaderName,
   globals::APPLICATION->queueEventForEndOfFrame(e);
 }
 
-void PSOManager::printStateObjectDesc(const D3D12_STATE_OBJECT_DESC *desc) {
+void Dx12PSOManager::printStateObjectDesc(const D3D12_STATE_OBJECT_DESC *desc) {
   std::wstringstream wstr;
   wstr << L"\n";
   wstr << L"-----------------------------------------------------------------"

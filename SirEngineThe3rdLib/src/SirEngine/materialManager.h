@@ -10,6 +10,19 @@ struct ShaderBind {
   PSOHandle pso;
 };
 
+struct MaterialDataHandles {
+  TextureHandle albedo;
+  TextureHandle normal;
+  TextureHandle metallic;
+  TextureHandle roughness;
+  TextureHandle thickness;
+  TextureHandle separateAlpha;
+  TextureHandle ao;
+  TextureHandle height;
+  ConstantBufferHandle cbHandle;
+  SkinHandle skinHandle;
+};
+
 enum class STENCIL_REF { CLEAR = 0, SSSSS = 1 };
 #define INVALID_QUEUE_TYPE_FLAGS 0xFFFFFFFF
 
@@ -56,6 +69,15 @@ enum class SHADER_TYPE_FLAGS {
 };
 
 class MaterialManager {
+protected:
+  struct PrelinaryMaterialParse {
+    Material mat;
+    MaterialDataHandles handles;
+    uint32_t shaderQueueTypeFlags[4] = {
+        INVALID_QUEUE_TYPE_FLAGS, INVALID_QUEUE_TYPE_FLAGS,
+        INVALID_QUEUE_TYPE_FLAGS, INVALID_QUEUE_TYPE_FLAGS};
+  };
+
 public:
   MaterialManager() = default;
   virtual ~MaterialManager() = default;
@@ -66,6 +88,7 @@ public:
 
   virtual void inititialize() = 0;
   virtual void cleanup() = 0;
+
   virtual MaterialHandle loadMaterial(const char *path,
                                       const MeshHandle meshHandle,
                                       const SkinHandle skinHandle) = 0;
@@ -96,7 +119,12 @@ public:
     return (queueFlags & static_cast<uint32_t>(queue)) > 0;
   }
 
-  const char* getStringFromShaderTypeFlag(SHADER_TYPE_FLAGS type);
+  const char *getStringFromShaderTypeFlag(SHADER_TYPE_FLAGS type);
+
+protected:
+  PrelinaryMaterialParse parseMaterial(const char *path,
+                                       const MeshHandle meshHandle,
+                                       const SkinHandle skinHandle);
 };
 
 } // namespace SirEngine
