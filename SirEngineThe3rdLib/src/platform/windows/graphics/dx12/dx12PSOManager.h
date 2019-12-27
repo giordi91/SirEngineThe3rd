@@ -1,21 +1,21 @@
 #pragma once
 
 #include "DX12.h"
+#include "SirEngine/PSOManager.h"
 #include "SirEngine/memory/resizableVector.h"
 #include "SirEngine/memory/sparseMemoryPool.h"
 #include "SirEngine/memory/stringHashMap.h"
-#include "nlohmann/json_fwd.hpp"
 #include "platform/windows/graphics/dx12/PSOCompile.h"
 #include "platform/windows/graphics/dx12/d3dx12.h"
-#include "SirEngine/log.h"
+
+#include "nlohmann/json_fwd.hpp"
 
 namespace SirEngine::dx12 {
 class RootSignatureManager;
 class ShaderManager;
-class ShadersLayoutRegistry;
 
 // TODO make it not copyable assignable
-class Dx12PSOManager final {
+class Dx12PSOManager final : public PSOManager {
 
   struct PSOData {
     ID3D12PipelineState *pso;
@@ -30,22 +30,13 @@ public:
   ~Dx12PSOManager() = default;
   Dx12PSOManager(const Dx12PSOManager &) = delete;
   Dx12PSOManager &operator=(const Dx12PSOManager &) = delete;
+  Dx12PSOManager(Dx12PSOManager &&) = delete;
+  Dx12PSOManager &operator=(Dx12PSOManager &&) = delete;
 
-  void init();
-  void cleanup();
-  void loadRawPSOInFolder(const char *directory);
-  void loadCachedPSOInFolder(const char *directory);
-
-  // debugging function to be able to print to console the composition of a
-  // state object
-  static void printStateObjectDesc(const D3D12_STATE_OBJECT_DESC *desc);
-  inline ID3D12PipelineState *getComputePSOByName(const char *name) const {
-    const PSOHandle handle = getHandleFromName(name);
-    assertMagicNumber(handle);
-    const uint32_t index = getIndexFromHandle(handle);
-    const PSOData &data = m_psoPool.getConstRef(index);
-    return data.pso;
-  }
+  void initialize() override{};
+  void cleanup() override;
+  void loadRawPSOInFolder(const char *directory) override;
+  void loadCachedPSOInFolder(const char *directory)override;
 
   void recompilePSOFromShader(const char *shaderName,
                               const char *getOffsetPath);
@@ -58,19 +49,7 @@ public:
     commandList->SetPipelineState(data.pso);
   }
 
-  inline PSOHandle getHandleFromName(const char *name) const {
-
-    //assert(m_psoRegisterHandle.containsKey(name));
-    bool r = m_psoRegisterHandle.containsKey(name);
-    if( !r) {
-        //assert(0);
-        SE_CORE_ERROR("Could not find PSO {0}",name);
-        return{};
-    }
-    PSOHandle value{};
-    m_psoRegisterHandle.get(name, value);
-    return value;
-  }
+  PSOHandle getHandleFromName(const char *name) const override;
 
 private:
   // PSOCompileResult processComputePSO(nlohmann::json &jobj,
@@ -78,22 +57,26 @@ private:
   // PSOCompileResult processRasterPSO(nlohmann::json &jobj,
   //                                  const std::string &path);
 
+  // debugging function to be able to print to console the composition of a
+  // state object
+  static void printStateObjectDesc(const D3D12_STATE_OBJECT_DESC *desc);
+  inline ID3D12PipelineState *getComputePSOByName(const char *name) const {
+    const PSOHandle handle = getHandleFromName(name);
+    assertMagicNumber(handle);
+    const uint32_t index = getIndexFromHandle(handle);
+    const PSOData &data = m_psoPool.getConstRef(index);
+    return data.pso;
+  }
+
   void processGlobalRootSignature(nlohmann::json &jobj,
                                   CD3DX12_STATE_OBJECT_DESC &pipe) const;
   void processPipelineConfig(nlohmann::json &jobj,
                              CD3DX12_STATE_OBJECT_DESC &pipe) const;
   PSOCompileResult loadCachedPSO(const char *path);
 
-private:
   void updatePSOCache(const char *name, ID3D12PipelineState *pso);
   void insertInPSOCache(const PSOCompileResult &result);
 
-  inline uint32_t getIndexFromHandle(const PSOHandle h) const {
-    return h.handle & INDEX_MASK;
-  }
-  inline uint32_t getMagicFromHandle(const PSOHandle h) const {
-    return (h.handle & MAGIC_NUMBER_MASK) >> 16;
-  }
   inline void assertMagicNumber(const PSOHandle handle) const {
     const uint32_t magic = getMagicFromHandle(handle);
     const uint32_t idx = getIndexFromHandle(handle);

@@ -6,7 +6,7 @@ TEST_CASE("Random size allocator simple allocation", "[memory]") {
   SirEngine::RandomSizeAllocator alloc;
   alloc.initialize(256);
   SirEngine::RandomSizeAllocationHandle mem = alloc.allocate(16);
-  SirEngine::uchar *ptr = alloc.getPointer(mem);
+  char *ptr = alloc.getPointer(mem);
   REQUIRE(ptr == alloc.getStartPtr());
   REQUIRE(alloc.getUnfragmentedPtr() == (ptr + 16));
 }
@@ -33,7 +33,7 @@ TEST_CASE("Random size allocator multiple allocations", "[memory]") {
   REQUIRE(alloc.getStartPtr() + (112) == alloc.getUnfragmentedPtr());
 
   // now we performs a deallocation
-  SirEngine::uchar *mem2ptr = alloc.getPointer(mem2);
+  char *mem2ptr = alloc.getPointer(mem2);
   alloc.freeAllocation(mem2);
   REQUIRE(alloc.getStartPtr() + (112) == alloc.getUnfragmentedPtr());
   REQUIRE(alloc.getFreeBlocksCount() == 1);
@@ -46,13 +46,13 @@ TEST_CASE("Random size allocator multiple allocations", "[memory]") {
   REQUIRE(newMem2.dataSize == 12);
 
   // do a couple more de-alloc
-  SirEngine::uchar *mem3ptr = alloc.getPointer(mem3);
+  char *mem3ptr = alloc.getPointer(mem3);
   alloc.freeAllocation(mem3);
   REQUIRE(alloc.getStartPtr() + (112) == alloc.getUnfragmentedPtr());
-  SirEngine::uchar *mem5ptr = alloc.getPointer(mem5);
+  char *mem5ptr = alloc.getPointer(mem5);
   alloc.freeAllocation(mem5);
   REQUIRE(alloc.getStartPtr() + (112) == alloc.getUnfragmentedPtr());
-  SirEngine::uchar *mem4ptr = alloc.getPointer(mem4);
+  char *mem4ptr = alloc.getPointer(mem4);
   alloc.freeAllocation(mem4);
   REQUIRE(alloc.getStartPtr() + (112) == alloc.getUnfragmentedPtr());
 

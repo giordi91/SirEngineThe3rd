@@ -25,7 +25,6 @@ static const std::string PSO_KEY_SHADER_NAME = "shaderName";
 static const std::string PSO_KEY_VS_SHADER = "VS";
 static const std::string PSO_KEY_PS_SHADER = "PS";
 
-void Dx12PSOManager::init() {}
 void Dx12PSOManager::cleanup() {
   // TODO need to be able to iterate hash map even if not ideal;
   // or I cannot free the pso
@@ -343,6 +342,21 @@ void Dx12PSOManager::recompilePSOFromShader(const char *shaderName,
   ShaderCompileResultEvent *e =
       new ShaderCompileResultEvent(compileLog.c_str());
   globals::APPLICATION->queueEventForEndOfFrame(e);
+}
+
+PSOHandle Dx12PSOManager::getHandleFromName(const char* name) const
+{
+	//assert(m_psoRegisterHandle.containsKey(name));
+	bool r = m_psoRegisterHandle.containsKey(name);
+	if (!r)
+	{
+		//assert(0);
+		SE_CORE_ERROR("Could not find PSO {0}", name);
+		return {};
+	}
+	PSOHandle value{};
+	m_psoRegisterHandle.get(name, value);
+	return value;
 }
 
 void Dx12PSOManager::printStateObjectDesc(const D3D12_STATE_OBJECT_DESC *desc) {

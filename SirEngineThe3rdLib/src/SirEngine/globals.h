@@ -3,7 +3,6 @@
 #include "clock.h"
 #include "core.h"
 
-struct D3D12_VIEWPORT;
 namespace SirEngine {
 
 struct EngineConfig;
@@ -20,6 +19,7 @@ class SkinClusterManager;
 class ScriptingContext;
 class Input;
 class MeshManager;
+class PSOManager;
 
 class StringPool;
 class StackAllocator;
@@ -44,8 +44,8 @@ extern uint32_t TOTAL_NUMBER_OF_FRAMES;
 extern uint32_t CURRENT_FRAME;
 extern float MIN_DEPTH;
 extern float MAX_DEPTH;
-//TODO change this to not be a define and be driven by engine config
-//also needs to be in the same place for both Vulkan ad dx12
+// TODO change this to not be a define and be driven by engine config
+// also needs to be in the same place for both Vulkan ad dx12
 #define FRAME_BUFFERS_COUNT 2
 
 // managers
@@ -60,8 +60,9 @@ extern SIR_ENGINE_API AnimationManager *ANIMATION_MANAGER;
 extern SkinClusterManager *SKIN_MANAGER;
 extern ScriptingContext *SCRIPTING_CONTEXT;
 extern Input *INPUT;
-extern MeshManager* MESH_MANAGER;
-extern MaterialManager* MATERIAL_MANAGER;
+extern MeshManager *MESH_MANAGER;
+extern MaterialManager *MATERIAL_MANAGER;
+extern PSOManager *PSO_MANAGER;
 
 // generic allocators
 extern SIR_ENGINE_API StringPool *STRING_POOL;
@@ -69,10 +70,7 @@ extern SIR_ENGINE_API StackAllocator *FRAME_ALLOCATOR;
 extern SIR_ENGINE_API ThreeSizesPool *PERSISTENT_ALLOCATOR;
 
 // config
-//extern D3D12_VIEWPORT CURRENT_VIEWPORT;
 extern EngineConfig *ENGINE_CONFIG;
 
-
 } // namespace globals
-typedef unsigned char uchar;
 } // namespace SirEngine

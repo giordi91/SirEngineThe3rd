@@ -2,7 +2,6 @@
 #include <SirEngine/memory/stringPool.h>
 #include <SirEngine/memory/threeSizesPool.h>
 #include <cstdint>
-#include <d3d12.h>
 #include "engineConfig.h"
 
 namespace SirEngine::globals {
@@ -26,6 +25,7 @@ ScriptingContext *SCRIPTING_CONTEXT = nullptr;
 Input *INPUT = nullptr;
 MeshManager* MESH_MANAGER = nullptr;
 MaterialManager* MATERIAL_MANAGER = nullptr;
+PSOManager* PSO_MANAGER = nullptr;
 
 
 // generic allocators

@@ -168,7 +168,7 @@ void Dx12ConstantBufferManager::processBufferedData() {
   processedIdxs.reserve(bufferedRequests);
 
   for (auto &handle : m_bufferedRequests) {
-    uchar *ptr = m_randomAlloc.getPointer(handle.second.dataAllocHandle);
+    char *ptr = m_randomAlloc.getPointer(handle.second.dataAllocHandle);
     updateConstantBufferNotBuffered(handle.second.handle, ptr);
     handle.second.counter -= 1;
     if (handle.second.counter == 0) {

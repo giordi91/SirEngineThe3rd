@@ -15,7 +15,7 @@ class RandomSizeAllocator final {
   static const int DEBUG_VALUE = 0xBEEFBAAD;
 
 private:
-  void set32BitMem(uchar *ptr, int sizeInBtye, int value) {
+  void set32BitMem(char *ptr, int sizeInBtye, int value) {
     int sizeInInt32 = sizeInBtye/ 4;
     uint32_t *uintptr = reinterpret_cast<uint32_t *>(ptr);
     for (int i = 0; i < sizeInInt32; ++i) {
@@ -28,7 +28,7 @@ public:
   void initialize(const uint32_t totalSizeInByte,
                   const int reservedAllocations = 20) {
 
-    m_memory = new uchar[totalSizeInByte];
+    m_memory = new char[totalSizeInByte];
     m_unfragmentedPtr = m_memory;
     m_end = m_memory + totalSizeInByte;
     m_allocations.reserve(reservedAllocations);
@@ -73,7 +73,7 @@ public:
 #endif
     return toReturnHandle;
   }
-  inline uchar *getPointer(const RandomSizeAllocationHandle handle) const {
+  inline char *getPointer(const RandomSizeAllocationHandle handle) const {
     assert((m_memory + handle.offset + handle.allocSize) < m_end);
     return m_memory + handle.offset;
   }
@@ -84,28 +84,28 @@ public:
 #endif
   }
   inline void tagMemoryAsFreed(const RandomSizeAllocationHandle handle) {
-    uchar *ptr = getPointer(handle);
+    char *ptr = getPointer(handle);
     assert((reinterpret_cast<int *>(ptr)[0] != DEBUG_VALUE));
 	set32BitMem(ptr,handle.allocSize,DEBUG_VALUE);
   }
 
-  inline const uchar *getStartPtr() const { return m_memory; };
-  inline const uchar *getUnfragmentedPtr() const { return m_unfragmentedPtr; };
+  inline const char *getStartPtr() const { return m_memory; };
+  inline const char *getUnfragmentedPtr() const { return m_unfragmentedPtr; };
 
   inline void
   assertMemoryIsNotAllocated(const RandomSizeAllocationHandle handle) const {
     // simple check on the first int, might want to check the whole allocation
     // in the future although might be fairly heavy check
-    uchar *ptr = getPointer(handle);
+    char *ptr = getPointer(handle);
     assert((reinterpret_cast<int *>(ptr)[0] == static_cast<int>(DEBUG_VALUE)));
   }
   inline int getFreeBlocksCount() const
   {return static_cast<int>(m_allocations.size());}
 
 private:
-  uchar *m_memory = nullptr;
-  uchar *m_unfragmentedPtr = nullptr;
-  uchar *m_end = nullptr;
+  char *m_memory = nullptr;
+  char *m_unfragmentedPtr = nullptr;
+  char *m_end = nullptr;
   std::vector<RandomSizeAllocationHandle> m_allocations;
 };
 } // namespace SirEngine
