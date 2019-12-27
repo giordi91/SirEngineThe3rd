@@ -3,12 +3,12 @@
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/skinClusterManager.h"
 #include "nlohmann/json.hpp"
-#include "platform/windows/graphics/dx12/Dx12PSOManager.h"
 #include "platform/windows/graphics/dx12/dx12BufferManager.h"
 #include "platform/windows/graphics/dx12/dx12MeshManager.h"
 #include "platform/windows/graphics/dx12/dx12TextureManager.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
 #include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
+#include "platform/windows/graphics/dx12/dx12PSOManager.h"
 
 
 namespace SirEngine {
@@ -459,7 +459,7 @@ void Dx12MaterialManager::loadTypeFile(const char *path) {
 
   // get the handles
   const PSOHandle psoHandle =
-      dx12::PSO_MANAGER->getHandleFromName(psoString.c_str());
+      globals::PSO_MANAGER->getHandleFromName(psoString.c_str());
   const RSHandle rsHandle =
       dx12::ROOT_SIGNATURE_MANAGER->getHandleFromName(rsString.c_str());
 

@@ -10,7 +10,6 @@
 #include "SirEngine/memory/stringPool.h"
 #include "SirEngine/runtimeString.h"
 #include "SirEngine/skinClusterManager.h"
-#include "platform/windows/graphics/dx12/dx12PSOManager.h"
 #include "platform/windows/graphics/dx12/debugRenderer.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/dx12Adapter.h"
@@ -18,6 +17,7 @@
 #include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
 #include "platform/windows/graphics/dx12/dx12MaterialManager.h"
 #include "platform/windows/graphics/dx12/dx12MeshManager.h"
+#include "platform/windows/graphics/dx12/dx12PSOManager.h"
 #include "platform/windows/graphics/dx12/dx12SwapChain.h"
 #include "platform/windows/graphics/dx12/dx12TextureManager.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
@@ -198,9 +198,9 @@ bool initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
   ROOT_SIGNATURE_MANAGER->loadSignaturesInFolder(frameConcatenation(
       globals::ENGINE_CONFIG->m_dataSourcePath, "/processed/rs"));
 
-
   PSO_MANAGER = new Dx12PSOManager();
-  PSO_MANAGER->init();
+  PSO_MANAGER->initialize();
+  globals::PSO_MANAGER = PSO_MANAGER;
 
   if (globals::ENGINE_CONFIG->m_useCachedPSO) {
     PSO_MANAGER->loadCachedPSOInFolder(frameConcatenation(

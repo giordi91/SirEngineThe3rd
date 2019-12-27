@@ -73,7 +73,7 @@ private:
   struct ConstantBufferData final {
     // we are using one byte for the mapped flag and 31 bytes for the
     // the actual data size, we can't have buffers that big anyway
-    uchar *mappedData = nullptr;
+    char *mappedData = nullptr;
     ID3D12Resource *resource = nullptr;
     uint64_t fence = 0;
     bool mapped : 1;
