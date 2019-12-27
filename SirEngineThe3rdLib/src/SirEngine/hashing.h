@@ -9,6 +9,13 @@ inline uint32_t hashUint32(const uint32_t &value) {
   x = (x >> 16) ^ x;
   return x;
 };
+inline uint32_t hashUint16(const uint16_t &value) {
+  uint32_t x = value;
+  x = ((x >> 16) ^ x) * 0x119de1f3;
+  x = ((x >> 16) ^ x) * 0x119de1f3;
+  x = (x >> 16) ^ x;
+  return x;
+};
 
 inline uint32_t hashUint64(const uint64_t &value) {
   // https://gist.github.com/badboy/6267743
