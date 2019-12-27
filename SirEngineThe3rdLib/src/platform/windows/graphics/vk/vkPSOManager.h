@@ -1,10 +1,12 @@
 #pragma once
 
+#include "SirEngine/PSOManager.h"
 #include "SirEngine/handle.h"
 #include "SirEngine/memory/resizableVector.h"
 #include "SirEngine/memory/sparseMemoryPool.h"
 #include "SirEngine/memory/stringHashMap.h"
 #include "platform/windows/graphics/vk/volk.h"
+
 #include <nlohmann/json_fwd.hpp>
 
 #include <cassert>
@@ -31,7 +33,7 @@ void createStaticSamplerDescriptorSet(VkDescriptorPool &pool,
 void destroyStaticSamplers();
 
 // TODO make it not copyable assignable
-class VkPSOManager final {
+class VkPSOManager final : public PSOManager {
 
   struct PSOData {
     VkPipeline pso;
@@ -41,20 +43,21 @@ class VkPSOManager final {
 
 public:
   VkPSOManager()
-      : m_psoRegister(RESERVE_SIZE), m_psoRegisterHandle(RESERVE_SIZE),
-        m_shaderToPSOFile(RESERVE_SIZE), m_psoPool(RESERVE_SIZE){};
-  ~VkPSOManager() = default;
+      : PSOManager(), m_psoRegister(RESERVE_SIZE),
+        m_psoRegisterHandle(RESERVE_SIZE), m_shaderToPSOFile(RESERVE_SIZE),
+        m_psoPool(RESERVE_SIZE){};
+  virtual ~VkPSOManager() = default;
 
   VkPSOManager(const VkPSOManager &) = delete;
   VkPSOManager &operator=(const VkPSOManager &) = delete;
-  void initialize();
-  void cleanup();
-  void loadRawPSOInFolder(const char *directory);
-  void loadCachedPSOInFolder(const char *directory);
+  void initialize() override;
+  void cleanup() override;
+  void loadRawPSOInFolder(const char *directory) override;
+  void loadCachedPSOInFolder(const char *directory) override;
   PSOHandle loadRawPSO(const char *file);
 
   void recompilePSOFromShader(const char *shaderName,
-                              const char *getOffsetPath);
+                              const char *getOffsetPath) override;
   inline void bindPSO(const PSOHandle handle,
                       VkCommandBuffer *commandList) const {
 

@@ -46,7 +46,7 @@ struct MaterialData {
 class Dx12MaterialManager final : public MaterialManager {
 public:
   Dx12MaterialManager()
-      : MaterialManager(), m_shderTypeToShaderBind(RESERVE_SIZE),
+      : MaterialManager(RESERVE_SIZE),
         m_nameToHandle(RESERVE_SIZE), m_materialTextureHandles(RESERVE_SIZE){};
   ~Dx12MaterialManager() = default;
   void inititialize() override{};
@@ -57,7 +57,6 @@ public:
                     const Dx12MaterialRuntime &runtime,
                     ID3D12GraphicsCommandList2 *commandList);
 
-  void loadTypesInFolder(const char *folder);
   void bindRSandPSO(uint32_t shaderFlags,
                     ID3D12GraphicsCommandList2 *commandList);
   Dx12MaterialManager(const Dx12MaterialManager &) = delete;
@@ -82,10 +81,7 @@ private:
   void loadTypeFile(const char *path);
 
 private:
-  // TODO let's remove this std maps
-  // std::unordered_map<uint16_t, ShaderBind> m_shderTypeToShaderBind;
-  // std::unordered_map<std::string, MaterialHandle> m_nameToHandle;
-  HashMap<uint16_t, ShaderBind, hashUint16> m_shderTypeToShaderBind;
+
   HashMap<const char *, MaterialHandle, hashString32> m_nameToHandle;
   static const uint32_t INDEX_MASK = (1 << 16) - 1;
   static const uint32_t MAGIC_NUMBER_MASK = ~INDEX_MASK;

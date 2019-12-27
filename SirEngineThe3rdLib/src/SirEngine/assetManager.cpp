@@ -1,11 +1,11 @@
 #include "SirEngine/assetManager.h"
 #include "SirEngine/animation/animationManager.h"
 #include "fileUtils.h"
-#include "platform/windows/graphics/dx12/DX12.h"
 #include "SirEngine/textureManager.h"
 #include "SirEngine/skinClusterManager.h"
 #include "SirEngine/meshManager.h"
 #include "SirEngine/materialManager.h"
+#include "graphics/renderingContext.h"
 
 namespace SirEngine {
 namespace AssetManagerKeys {
@@ -117,14 +117,14 @@ void AssetManager::loadScene(const char *path) {
       globals::TEXTURE_MANAGER->loadTexture(enviromentMapRadianceString.c_str(),
                                             true);
 
-  dx12::RENDERING_CONTEXT->setEnviromentMap(enviromentMapHandle);
-  dx12::RENDERING_CONTEXT->setEnviromentMapIrradiance(
+  globals::RENDERING_CONTEXT->setEnviromentMap(enviromentMapHandle);
+  globals::RENDERING_CONTEXT->setEnviromentMapIrradiance(
       enviromentMapIrradianceHandle);
-  dx12::RENDERING_CONTEXT->setEnviromentMapRadiance(
+  globals::RENDERING_CONTEXT->setEnviromentMapRadiance(
       enviromentMapRadianceHandle);
 
   TextureHandle brdfHandle = globals::TEXTURE_MANAGER->loadTexture(
       "../data/processed/textures/brdf.texture");
-  dx12::RENDERING_CONTEXT->setBrdfHandle(brdfHandle);
+  globals::RENDERING_CONTEXT->setBrdfHandle(brdfHandle);
 }
 } // namespace SirEngine

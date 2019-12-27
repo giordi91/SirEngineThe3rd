@@ -4,7 +4,7 @@
 
 namespace SirEngine {
 namespace dx12 {
-class RootSignatureManager;
+class Dx12RootSignatureManager;
 class Dx12PSOManager;
 struct FrameResource;
 class Dx12TextureManager;
@@ -31,7 +31,7 @@ public:
   void flushAllOperation();
 
   // temporary DX12 calls
-  dx12::RootSignatureManager *getRootSignatureManager();
+  dx12::Dx12RootSignatureManager *getRootSignatureManager();
   dx12::Dx12PSOManager *getPSOManager();
   dx12::Dx12TextureManager *getTextureManager();
   dx12::FrameResource *getFrameResource();

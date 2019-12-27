@@ -1,7 +1,9 @@
 #pragma once
 
+#include "SirEngine/graphics/graphicsDefines.h"
 #include "SirEngine/handle.h"
-#include "graphics/graphicsDefines.h"
+#include "SirEngine/hashing.h"
+#include "SirEngine/memory/hashMap.h"
 
 namespace SirEngine {
 
@@ -79,7 +81,8 @@ protected:
   };
 
 public:
-  MaterialManager() = default;
+  MaterialManager(const uint32_t reserveSize)
+      : m_shderTypeToShaderBind(reserveSize){};
   virtual ~MaterialManager() = default;
 
   void loadTypesInFolder(const char *folder);
@@ -125,6 +128,10 @@ protected:
   PrelinaryMaterialParse parseMaterial(const char *path,
                                        const MeshHandle meshHandle,
                                        const SkinHandle skinHandle);
+  void loadTypeFile(const char *path);
+
+protected:
+  HashMap<uint16_t, ShaderBind, hashUint16> m_shderTypeToShaderBind;
 };
 
 } // namespace SirEngine

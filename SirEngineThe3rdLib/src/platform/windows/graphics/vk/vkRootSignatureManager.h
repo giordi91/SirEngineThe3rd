@@ -1,19 +1,17 @@
 #pragma once
 #include "SirEngine/handle.h"
 #include "SirEngine/hashing.h"
-#include "SirEngine/memory/SparseMemoryPool.h"
+#include "SirEngine/memory/sparseMemoryPool.h"
 #include "SirEngine/memory/stringHashMap.h"
-#include "volk.h"
-#include <cassert>
-#include "SirEngine/fileUtils.h"
+#include "SirEngine/rootSignatureManager.h"
+
 #include "vk.h"
+
+#include <cassert>
 
 namespace SirEngine::vk {
 
-
-enum class ROOT_FILE_TYPE { RASTER = 0, COMPUTE = 1, DXR = 2, NULL_TYPE };
-
-class VkPipelineLayoutManager final {
+class VkPipelineLayoutManager final : public RootSignatureManager {
 
 public:
   VkPipelineLayoutManager()
@@ -21,10 +19,12 @@ public:
   VkPipelineLayoutManager(const VkPipelineLayoutManager &) = delete;
   VkPipelineLayoutManager &operator=(const VkPipelineLayoutManager &) = delete;
   ~VkPipelineLayoutManager() = default;
-  void cleanup();
-  void loadSignaturesInFolder(const char *directory);
-  void loadSignatureBinaryFile(const char *file);
-  RSHandle loadSignatureFile(const char *file, VkDescriptorSetLayout samplersLayout);
+  void initialize() override{};
+  void cleanup() override{};
+  void loadSignaturesInFolder(const char *directory) override;
+  void loadSignatureBinaryFile(const char *file) override;
+  RSHandle loadSignatureFile(const char *file,
+                             VkDescriptorSetLayout samplersLayout);
 
   inline VkPipelineLayout getLayoutFromName(const char *name) const {
 
@@ -52,14 +52,14 @@ public:
     // commandList->SetGraphicsLayout(data.rs);
   }
 
-  inline RSHandle getHandleFromName(const char *name) const {
+  RSHandle getHandleFromName(const char *name) const override {
     assert(m_rootRegister.containsKey(name));
     RSHandle value;
     m_rootRegister.get(name, value);
     return value;
   }
 
-  //mostly to keep API uniform
+  // mostly to keep API uniform
   void init(){};
 
 private:
@@ -91,6 +91,5 @@ private:
   static const uint32_t INDEX_MASK = (1 << 16) - 1;
   static const uint32_t MAGIC_NUMBER_MASK = ~INDEX_MASK;
 };
-
 
 } // namespace SirEngine::vk

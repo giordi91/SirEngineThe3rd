@@ -20,6 +20,7 @@ class ScriptingContext;
 class Input;
 class MeshManager;
 class PSOManager;
+class RootSignatureManager;
 
 class StringPool;
 class StackAllocator;
@@ -63,6 +64,7 @@ extern Input *INPUT;
 extern MeshManager *MESH_MANAGER;
 extern MaterialManager *MATERIAL_MANAGER;
 extern PSOManager *PSO_MANAGER;
+extern RootSignatureManager* ROOT_SIGNATURE_MANAGER;
 
 // generic allocators
 extern SIR_ENGINE_API StringPool *STRING_POOL;

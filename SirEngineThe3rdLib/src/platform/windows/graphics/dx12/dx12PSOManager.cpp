@@ -4,7 +4,7 @@
 #include "nlohmann/json.hpp"
 #include <d3d12.h>
 
-#include "platform/windows/graphics/dx12/rootSignatureManager.h"
+#include "platform/windows/graphics/dx12/dx12RootSignatureManager.h"
 #include "platform/windows/graphics/dx12/shaderManager.h"
 
 #include <iostream>

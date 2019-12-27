@@ -3,7 +3,6 @@
 
 namespace SirEngine {
 
-
 class AssetManager final {
 public:
   AssetManager() = default;
@@ -15,6 +14,5 @@ public:
   // assets
   AssetDataHandle loadAsset(const char *path);
   void loadScene(const char *path);
-
 };
 } // namespace SirEngine

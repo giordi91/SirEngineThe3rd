@@ -74,6 +74,16 @@ VkShaderStageFlags getVisibilityFlags(const nlohmann::json &jobj) {
   return 0;
 }
 
+void VkPipelineLayoutManager::loadSignaturesInFolder(const char* directory)
+{
+    assert(0);
+}
+
+void VkPipelineLayoutManager::loadSignatureBinaryFile(const char* file)
+{
+    assert(0);
+}
+
 RSHandle VkPipelineLayoutManager::loadSignatureFile(
     const char *file, VkDescriptorSetLayout samplersLayout) {
   auto jobj = getJsonObj(file);

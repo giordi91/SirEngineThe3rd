@@ -2,9 +2,6 @@
 #include "SirEngine/handle.h"
 
 namespace SirEngine {
-class RootSignatureManager;
-class ShaderManager;
-class ShadersLayoutRegistry;
 
 class PSOManager {
 

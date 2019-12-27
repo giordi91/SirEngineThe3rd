@@ -24,7 +24,7 @@ class DescriptorHeap;
 class Dx12SwapChain;
 class Dx12ConstantBufferManager;
 class ShaderManager;
-class RootSignatureManager;
+class Dx12RootSignatureManager;
 class ShadersLayoutRegistry;
 class Dx12PSOManager;
 class BufferManagerDx12;
@@ -132,7 +132,7 @@ extern Dx12MaterialManager *MATERIAL_MANAGER;
 extern DependencyGraph *RENDERING_GRAPH;
 extern Dx12ConstantBufferManager *CONSTANT_BUFFER_MANAGER;
 extern ShaderManager *SHADER_MANAGER;
-extern RootSignatureManager *ROOT_SIGNATURE_MANAGER;
+extern Dx12RootSignatureManager *ROOT_SIGNATURE_MANAGER;
 extern Dx12PSOManager *PSO_MANAGER;
 extern BufferManagerDx12 *BUFFER_MANAGER;
 extern DebugRenderer *DEBUG_RENDERER;
@@ -209,37 +209,6 @@ public:
   void updateSceneBoundingBox();
   void updateDirectionalLightMatrix();
 
-  inline void setEnviromentMap(const TextureHandle enviromentMapHandle) {
-    m_enviromentMapHandle = enviromentMapHandle;
-  }
-
-  inline void setEnviromentMapIrradiance(
-      const TextureHandle enviromentMapIrradianceHandle) {
-    m_enviromentMapIrradianceHandle = enviromentMapIrradianceHandle;
-  }
-
-  inline const DirectionalLightData &getLightData() const { return m_light; };
-  inline void
-  setEnviromentMapRadiance(const TextureHandle enviromentMapRadianceHandle) {
-    m_enviromentMapRadianceHandle = enviromentMapRadianceHandle;
-  };
-  inline TextureHandle getEnviromentMapHandle() const {
-    return m_enviromentMapHandle;
-  }
-  inline TextureHandle getEnviromentMapIrradianceHandle() const {
-    return m_enviromentMapIrradianceHandle;
-  }
-  inline TextureHandle getEnviromentMapRadianceHandle() const {
-    return m_enviromentMapRadianceHandle;
-  }
-  inline void setBrdfHandle(const TextureHandle handle) {
-    m_brdfHandle = handle;
-  }
-  inline TextureHandle getBrdfHandle() const { return m_brdfHandle; }
-
-  inline ConstantBufferHandle getLightCB() const { return m_lightCB; }
-  inline BoundingBox getBoundingBox() const { return m_boundingBox; }
-
   bool newFrame() override;
   bool dispatchFrame() override;
   bool resize(uint32_t width, uint32_t height) override;
@@ -257,13 +226,6 @@ private:
   CameraBuffer m_camBufferCPU{};
   ConstantBufferHandle m_cameraHandle{};
   ConstantBufferHandle m_lightBuffer{};
-  ConstantBufferHandle m_lightCB{};
-  DirectionalLightData m_light;
-  TextureHandle m_enviromentMapHandle;
-  TextureHandle m_enviromentMapIrradianceHandle;
-  TextureHandle m_enviromentMapRadianceHandle;
-  TextureHandle m_brdfHandle;
-  BoundingBox m_boundingBox;
   DebugDrawHandle m_lightAABBHandle{};
 
   //TODO possibly find a better way to handle this don't want to leak the std map type out
@@ -271,7 +233,6 @@ private:
   //to be constructed, meaning would be hard to put in a ResizableVector as value so for now we don't deal with
   //this
   void* queues;
-	
 };
 
 

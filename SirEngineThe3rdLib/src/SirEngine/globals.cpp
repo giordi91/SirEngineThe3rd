@@ -1,8 +1,8 @@
 #include "SirEngine/globals.h"
+#include "engineConfig.h"
 #include <SirEngine/memory/stringPool.h>
 #include <SirEngine/memory/threeSizesPool.h>
 #include <cstdint>
-#include "engineConfig.h"
 
 namespace SirEngine::globals {
 Camera3DPivot *MAIN_CAMERA = nullptr;
@@ -23,10 +23,10 @@ AnimationManager *ANIMATION_MANAGER = nullptr;
 SkinClusterManager *SKIN_MANAGER = nullptr;
 ScriptingContext *SCRIPTING_CONTEXT = nullptr;
 Input *INPUT = nullptr;
-MeshManager* MESH_MANAGER = nullptr;
-MaterialManager* MATERIAL_MANAGER = nullptr;
-PSOManager* PSO_MANAGER = nullptr;
-
+MeshManager *MESH_MANAGER = nullptr;
+MaterialManager *MATERIAL_MANAGER = nullptr;
+PSOManager *PSO_MANAGER = nullptr;
+RootSignatureManager *ROOT_SIGNATURE_MANAGER = nullptr;
 
 // generic allocators
 StringPool *STRING_POOL = nullptr;
