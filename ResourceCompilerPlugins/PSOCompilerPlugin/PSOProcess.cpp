@@ -6,8 +6,6 @@
 #include "platform/windows/graphics/dx12/dx12Adapter.h"
 #include "platform/windows/graphics/dx12/shaderLayout.h"
 #include <cassert>
-#include <string>
-#include <unordered_map>
 
 SirEngine::dx12::PSOCompileResult processPSO(const char *path, const char* shaderPath) {
 
