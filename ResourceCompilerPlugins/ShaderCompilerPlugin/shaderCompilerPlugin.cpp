@@ -8,7 +8,6 @@
 #include "platform/windows/graphics/dx12/shaderCompiler.h"
 
 #include "SirEngine/memory/stringPool.h"
-#include "platform/windows/graphics/dx12/PSOManager.h"
 #include <d3dcommon.h>
 #include <filesystem>
 

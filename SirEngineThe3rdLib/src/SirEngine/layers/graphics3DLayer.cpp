@@ -28,7 +28,7 @@
 
 #include "SirEngine/skinClusterManager.h"
 #include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
-#include "platform/windows/graphics/dx12/PSOManager.h"
+#include "platform/windows/graphics/dx12/Dx12PSOManager.h"
 #include "platform/windows/graphics/dx12/dx12BufferManager.h"
 
 #include "SirEngine/engineConfig.h"

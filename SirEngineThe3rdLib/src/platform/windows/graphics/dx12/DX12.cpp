@@ -10,7 +10,7 @@
 #include "SirEngine/memory/stringPool.h"
 #include "SirEngine/runtimeString.h"
 #include "SirEngine/skinClusterManager.h"
-#include "platform/windows/graphics/dx12/PSOManager.h"
+#include "platform/windows/graphics/dx12/dx12PSOManager.h"
 #include "platform/windows/graphics/dx12/debugRenderer.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/dx12Adapter.h"

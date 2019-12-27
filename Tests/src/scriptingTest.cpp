@@ -1,7 +1,6 @@
 #include "SirEngine/log.h"
 #include "SirEngine/scripting/scriptingContext.h"
 #include "catch/catch.hpp"
-#include "platform/windows/graphics/dx12/PSOManager.h"
 
 TEST_CASE("scripting init", "[scripting]") {
 

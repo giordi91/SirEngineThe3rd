@@ -3,7 +3,7 @@
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/skinClusterManager.h"
 #include "nlohmann/json.hpp"
-#include "platform/windows/graphics/dx12/PSOManager.h"
+#include "platform/windows/graphics/dx12/Dx12PSOManager.h"
 #include "platform/windows/graphics/dx12/dx12BufferManager.h"
 #include "platform/windows/graphics/dx12/dx12MeshManager.h"
 #include "platform/windows/graphics/dx12/dx12TextureManager.h"
