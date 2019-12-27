@@ -15,6 +15,7 @@
 #include "platform/windows/graphics/vk/vkPSOManager.h"
 #include "platform/windows/graphics/vk/vkShaderManager.h"
 #include "platform/windows/graphics/vk/vkSwapChain.h"
+#include "platform/windows/graphics/vk/vkTextureManager.h"
 #include "platform/windows/graphics/vk/volk.h"
 
 namespace SirEngine {
@@ -69,9 +70,8 @@ void VkTempLayer::onAttach() {
   m_pipeline = vk::PSO_MANAGER->getPipelineFromHandle(handle);
   m_pass = vk::PSO_MANAGER->getRenderPassFromHandle(handle);
 
-  loadTextureFromFile("../data/external/vk/uv.DDS",
-                      VK_FORMAT_BC1_RGBA_UNORM_BLOCK, vk::LOGICAL_DEVICE,
-                      uvTexture);
+  textureHandle = vk::TEXTURE_MANAGER->loadTexture(
+      "../data/processed/textures/knightB/jacket_A.texture", false);
 
   createRenderTargetAndFrameBuffer(globals::ENGINE_CONFIG->m_windowWidth,
                                    globals::ENGINE_CONFIG->m_windowHeight);
@@ -151,18 +151,20 @@ void VkTempLayer::createDescriptorLayoutAdvanced() {
       m_cameraBufferHandle, bufferInfoUniform, 0, writeDescriptorSets,
       m_meshDescriptorSet);
 
-  VkDescriptorBufferInfo bufferInfo[3]={};
-  vk::MESH_MANAGER->bindMesh(meshHandle,writeDescriptorSets,m_meshDescriptorSet, bufferInfo);
+  VkDescriptorBufferInfo bufferInfo[3] = {};
+  vk::MESH_MANAGER->bindMesh(meshHandle, writeDescriptorSets,
+                             m_meshDescriptorSet, bufferInfo);
 
-  // Binding 2: Object texture
-  writeDescriptorSets[4].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  writeDescriptorSets[4].dstSet = m_meshDescriptorSet;
-  writeDescriptorSets[4].dstBinding = 4;
-  writeDescriptorSets[4].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-  // Images use a different descriptor strucutre, so we use pImageInfo instead
-  // of pBufferInfo
-  writeDescriptorSets[4].pImageInfo = &uvTexture.descriptor;
-  writeDescriptorSets[4].descriptorCount = 1;
+  vk::TEXTURE_MANAGER->bindTexture(textureHandle,&writeDescriptorSets[4],m_meshDescriptorSet );
+  //// Binding 2: Object texture
+  //writeDescriptorSets[4].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  //writeDescriptorSets[4].dstSet = m_meshDescriptorSet;
+  //writeDescriptorSets[4].dstBinding = 4;
+  //writeDescriptorSets[4].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+  //// Images use a different descriptor strucutre, so we use pImageInfo instead
+  //// of pBufferInfo
+  //writeDescriptorSets[4].pImageInfo = &uvTexture.descriptor;
+  //writeDescriptorSets[4].descriptorCount = 1;
 
   // Execute the writes to update descriptors for this set
   // Note that it's also possible to gather all writes and only run updates
@@ -261,7 +263,8 @@ void VkTempLayer::onUpdate() {
                           VK_PIPELINE_BIND_POINT_GRAPHICS, vk::PIPELINE_LAYOUT,
                           0, 2, sets, 0, nullptr);
 
-  vk::MESH_MANAGER->renderMesh(meshHandle,vk::CURRENT_FRAME_COMMAND->m_commandBuffer);
+  vk::MESH_MANAGER->renderMesh(meshHandle,
+                               vk::CURRENT_FRAME_COMMAND->m_commandBuffer);
 
   vkCmdEndRenderPass(vk::CURRENT_FRAME_COMMAND->m_commandBuffer);
 
@@ -371,8 +374,8 @@ void VkTempLayer::onEvent(Event &event) {
 
 void VkTempLayer::clear() {
   vkDeviceWaitIdle(vk::LOGICAL_DEVICE);
-  //vk::BUFFER_MANAGER->free(m_vertexBufferHandle);
-  //vk::BUFFER_MANAGER->free(m_indexBufferHandle);
+  // vk::BUFFER_MANAGER->free(m_vertexBufferHandle);
+  // vk::BUFFER_MANAGER->free(m_indexBufferHandle);
   vk::MESH_MANAGER->free(meshHandle);
 
   // if constexpr (!USE_PUSH) {
@@ -382,8 +385,8 @@ void VkTempLayer::clear() {
   //}
   // TODO render target manager?
   vk::destroyFrameBuffer(vk::LOGICAL_DEVICE, m_tempFrameBuffer, m_rt);
+  vk::TEXTURE_MANAGER->free(textureHandle);
 
-  destroyTexture(vk::LOGICAL_DEVICE, uvTexture);
 }
 
 bool VkTempLayer::onMouseButtonPressEvent(MouseButtonPressEvent &e) {

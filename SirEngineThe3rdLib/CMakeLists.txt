@@ -44,6 +44,7 @@ project(SirEngineThe3rdLib)
 						${Vulkan_INCLUDE_DIRS}
 						"../vendors/meshoptimizer/src/"
 						${CMAKE_SOURCE_DIR}/vendors/glm
+						${CMAKE_SOURCE_DIR}/vendors/gli
 	)
 
 	#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /experimental:external  /external:I ${CMAKE_SOURCE_DIR}/vendors/glm /external:W0"  )

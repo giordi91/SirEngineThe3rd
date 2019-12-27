@@ -64,15 +64,16 @@ private:
 
   // mesh
   MeshHandle meshHandle;
+  TextureHandle textureHandle;
+  CameraBuffer m_camBufferCPU;
+  ConstantBufferHandle m_cameraBufferHandle;
+
   VkVertexInputBindingDescription m_stream;
   VkVertexInputAttributeDescription m_attr[3];
   VkDescriptorSetLayout m_setLayout;
   VkDescriptorSet m_meshDescriptorSet;
-  vk::VkTexture2D uvTexture;
   vk::VkTexture2D m_rt;
   VkFramebuffer m_tempFrameBuffer;
   VkRenderPass m_pass;
-  CameraBuffer m_camBufferCPU;
-  ConstantBufferHandle m_cameraBufferHandle;
 };
 } // namespace SirEngine

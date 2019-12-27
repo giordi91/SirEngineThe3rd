@@ -10,7 +10,6 @@ struct VkTexture2D {
   VkImage image;
   VkDeviceMemory deviceMemory;
   VkImageLayout imageLayout;
-  VkSampler sampler;
   VkImageView view;
   VkDescriptorImageInfo descriptor{};
   VkDescriptorImageInfo samplerOnly{};

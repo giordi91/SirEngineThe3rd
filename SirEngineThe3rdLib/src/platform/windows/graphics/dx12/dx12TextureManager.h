@@ -12,7 +12,7 @@
 namespace SirEngine {
 namespace dx12 {
 
-class SIR_ENGINE_API TextureManagerDx12 final : public TextureManager {
+class SIR_ENGINE_API Dx12TextureManager final : public TextureManager {
   struct TextureData final {
     uint32_t magicNumber;
     ID3D12Resource *resource;
@@ -26,12 +26,12 @@ class SIR_ENGINE_API TextureManagerDx12 final : public TextureManager {
   };
 
 public:
-  TextureManagerDx12() : batch(dx12::DEVICE), m_texturePool(RESERVE_SIZE) {
+  Dx12TextureManager() : batch(dx12::DEVICE), m_texturePool(RESERVE_SIZE) {
     m_nameToHandle.reserve(RESERVE_SIZE);
   }
-  ~TextureManagerDx12();
-  TextureManagerDx12(const TextureManagerDx12 &) = delete;
-  TextureManagerDx12 &operator=(const TextureManagerDx12 &) = delete;
+  ~Dx12TextureManager();
+  Dx12TextureManager(const Dx12TextureManager &) = delete;
+  Dx12TextureManager &operator=(const Dx12TextureManager &) = delete;
   void loadLegacy(const std::string &path);
   virtual TextureHandle loadTexture(const char *path,
                                     bool cubeMap = false) override;
@@ -57,7 +57,8 @@ public:
   virtual void clearRT(const TextureHandle handle,
                        const float color[4]) override;
 
-  void initialize();
+  void initialize() override;
+  void cleanup() override;
   inline TextureHandle getWhiteTexture() const { return m_whiteTexture; }
   // dx12 methods
   TextureHandle initializeFromResourceDx12(ID3D12Resource *resource,

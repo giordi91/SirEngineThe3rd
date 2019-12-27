@@ -42,7 +42,7 @@ ID3D12Fence *GLOBAL_FENCE = nullptr;
 Dx12SwapChain *SWAP_CHAIN = nullptr;
 FrameResource FRAME_RESOURCES[FRAME_BUFFERS_COUNT];
 FrameResource *CURRENT_FRAME_RESOURCE = nullptr;
-TextureManagerDx12 *TEXTURE_MANAGER = nullptr;
+Dx12TextureManager *TEXTURE_MANAGER = nullptr;
 Dx12MeshManager *MESH_MANAGER = nullptr;
 MaterialManager *MATERIAL_MANAGER = nullptr;
 DependencyGraph *RENDERING_GRAPH = nullptr;
@@ -179,7 +179,7 @@ bool initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
 
   globals::CONSTANT_BUFFER_MANAGER = CONSTANT_BUFFER_MANAGER;
   globals::BUFFER_MANAGER = BUFFER_MANAGER;
-  TEXTURE_MANAGER = new TextureManagerDx12();
+  TEXTURE_MANAGER = new Dx12TextureManager();
   TEXTURE_MANAGER->initialize();
   globals::TEXTURE_MANAGER = TEXTURE_MANAGER;
   dx12::MESH_MANAGER = new Dx12MeshManager();

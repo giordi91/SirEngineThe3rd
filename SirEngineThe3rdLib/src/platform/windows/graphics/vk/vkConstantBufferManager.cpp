@@ -5,21 +5,6 @@
 
 namespace SirEngine::vk {
 
-inline uint32_t
-selectMemoryType(const VkPhysicalDeviceMemoryProperties &memoryProperties,
-                 const uint32_t memoryTypeBits,
-                 const VkMemoryPropertyFlags flags) {
-  for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; ++i) {
-    uint32_t matchMemoryType = (memoryTypeBits & (1 << i)) != 0;
-    uint32_t matchWantedFlags =
-        (memoryProperties.memoryTypes[i].propertyFlags & flags) == flags;
-    if (matchMemoryType && (matchWantedFlags)) {
-      return i;
-    }
-  }
-  assert(!"No compatible memory type found");
-  return ~0u;
-}
 
 void VkConstantBufferManager::initialize() {
   m_randomAlloc.initialize(4096, 20);
