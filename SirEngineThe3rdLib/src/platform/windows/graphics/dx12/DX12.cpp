@@ -21,7 +21,6 @@
 #include "platform/windows/graphics/dx12/dx12SwapChain.h"
 #include "platform/windows/graphics/dx12/dx12TextureManager.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
-#include "platform/windows/graphics/dx12/shaderLayout.h"
 #include "platform/windows/graphics/dx12/shaderManager.h"
 
 #undef max
@@ -50,7 +49,6 @@ Dx12ConstantBufferManager *CONSTANT_BUFFER_MANAGER = nullptr;
 ShaderManager *SHADER_MANAGER = nullptr;
 Dx12PSOManager *PSO_MANAGER = nullptr;
 RootSignatureManager *ROOT_SIGNATURE_MANAGER = nullptr;
-ShadersLayoutRegistry *SHADER_LAYOUT_REGISTRY = nullptr;
 BufferManagerDx12 *BUFFER_MANAGER = nullptr;
 DebugRenderer *DEBUG_RENDERER = nullptr;
 Dx12RenderingContext *RENDERING_CONTEXT = nullptr;
@@ -200,11 +198,9 @@ bool initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
   ROOT_SIGNATURE_MANAGER->loadSignaturesInFolder(frameConcatenation(
       globals::ENGINE_CONFIG->m_dataSourcePath, "/processed/rs"));
 
-  SHADER_LAYOUT_REGISTRY = new dx12::ShadersLayoutRegistry();
 
   PSO_MANAGER = new Dx12PSOManager();
-  PSO_MANAGER->init(dx12::DEVICE, SHADER_LAYOUT_REGISTRY,
-                    ROOT_SIGNATURE_MANAGER, dx12::SHADER_MANAGER);
+  PSO_MANAGER->init();
 
   if (globals::ENGINE_CONFIG->m_useCachedPSO) {
     PSO_MANAGER->loadCachedPSOInFolder(frameConcatenation(

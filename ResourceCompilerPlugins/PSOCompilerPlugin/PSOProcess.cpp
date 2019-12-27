@@ -4,7 +4,6 @@
 #include "platform/windows/graphics/dx12/PSOCompile.h"
 #include "platform/windows/graphics/dx12/d3dx12.h"
 #include "platform/windows/graphics/dx12/dx12Adapter.h"
-#include "platform/windows/graphics/dx12/shaderLayout.h"
 #include <cassert>
 
 SirEngine::dx12::PSOCompileResult processPSO(const char *path, const char* shaderPath) {
@@ -54,14 +53,10 @@ SirEngine::dx12::PSOCompileResult processPSO(const char *path, const char* shade
   assert(featureLevels.MaxSupportedFeatureLevel == D3D_FEATURE_LEVEL_12_1);
   assert(SUCCEEDED(r));
 
-  SirEngine::dx12::SHADER_LAYOUT_REGISTRY =
-      new SirEngine::dx12::ShadersLayoutRegistry();
-
   // COMPILING
   SirEngine::dx12::PSOCompileResult buildResult =
       SirEngine::dx12::compileRawPSO(path, shaderPath);
   //cleanup 
-  delete SirEngine::dx12::SHADER_LAYOUT_REGISTRY;
   adapterResult.m_device->Release();
   adapterResult.m_physicalDevice->Release();
   DXGI_FACTORY->Release();
