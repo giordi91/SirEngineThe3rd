@@ -25,6 +25,7 @@ SkinClusterManager *SKIN_MANAGER = nullptr;
 ScriptingContext *SCRIPTING_CONTEXT = nullptr;
 Input *INPUT = nullptr;
 MeshManager* MESH_MANAGER = nullptr;
+MaterialManager* MATERIAL_MANAGER = nullptr;
 
 
 // generic allocators

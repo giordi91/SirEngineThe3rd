@@ -101,12 +101,6 @@ private:
   // void updatePSOCache(const char *name, ID3D12PipelineState *pso);
   // void insertInPSOCache(const PSOCompileResult &result);
 
-  inline uint32_t getIndexFromHandle(const PSOHandle h) const {
-    return h.handle & INDEX_MASK;
-  }
-  inline uint32_t getMagicFromHandle(const PSOHandle h) const {
-    return (h.handle & MAGIC_NUMBER_MASK) >> 16;
-  }
   inline void assertMagicNumber(const PSOHandle handle) const {
     const uint32_t magic = getMagicFromHandle(handle);
     const uint32_t idx = getIndexFromHandle(handle);

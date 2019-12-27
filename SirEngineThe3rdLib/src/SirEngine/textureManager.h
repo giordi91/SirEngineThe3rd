@@ -23,8 +23,8 @@ public:
   TextureManager(const TextureManager &) = delete;
   TextureManager &operator=(const TextureManager &) = delete;
 
-  virtual void initialize() =0;
-  virtual void cleanup() =0;
+  virtual void initialize() = 0;
+  virtual void cleanup() = 0;
   virtual TextureHandle loadTexture(const char *path, bool cubeMap = false) = 0;
   virtual void free(const TextureHandle handle) = 0;
   virtual TextureHandle allocateRenderTexture(uint32_t width, uint32_t height,
@@ -42,6 +42,7 @@ public:
   virtual void bindBackBuffer(bool bindBackBufferDepth) = 0;
   virtual void clearDepth(const TextureHandle depth, float value = 1.0f) = 0;
   virtual void clearRT(const TextureHandle handle, const float color[4]) = 0;
+  virtual TextureHandle getWhiteTexture() const = 0;
 
   inline TextureHandle getHandleFromName(const char *name) {
     auto found = m_nameToHandle.find(name);

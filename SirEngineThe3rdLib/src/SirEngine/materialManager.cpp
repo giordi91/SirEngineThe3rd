@@ -1,10 +1,12 @@
 #include "SirEngine/materialManager.h"
+#include "SirEngine/textureManager.h"
+#include "fileUtils.h"
+#include "globals.h"
 #include <cassert>
 #include <string>
 #include <unordered_map>
 
 namespace SirEngine {
-/*
 namespace materialKeys {
 static const char *KD = "kd";
 static const char *KS = "ks";
@@ -22,9 +24,6 @@ static const char *METALLIC_MULT = "metallicMult";
 static const char *THICKNESS = "thickness";
 static const char *QUEUE = "queue";
 static const char *TYPE = "type";
-static const std::string DEFAULT_STRING = "";
-static const char *RS_KEY = "rs";
-static const char *PSO_KEY = "pso";
 
 static const std::unordered_map<std::string, SirEngine::SHADER_QUEUE_FLAGS>
     STRING_TO_QUEUE_FLAG{
@@ -92,6 +91,185 @@ static const std::unordered_map<SirEngine::SHADER_TYPE_FLAGS, std::string>
 
 } // namespace materialKeys
 
+inline uint32_t stringToActualQueueFlag(const std::string &flag) {
+  const auto found = materialKeys::STRING_TO_QUEUE_FLAG.find(flag);
+  if (found != materialKeys::STRING_TO_QUEUE_FLAG.end()) {
+    return static_cast<uint32_t>(found->second);
+  }
+  assert(0 && "could not map requested queue flag");
+  return 0;
+}
+inline uint16_t stringToActualTypeFlag(const std::string &flag) {
+  const auto found = materialKeys::STRING_TO_TYPE_FLAGS.find(flag);
+  if (found != materialKeys::STRING_TO_TYPE_FLAGS.end()) {
+    return static_cast<uint16_t>(found->second);
+  }
+  assert(0 && "could not map requested type flag");
+  return 0;
+}
+
+static uint16_t parseTypeFlags(const std::string &stringType) {
+  const uint16_t typeFlag = stringToActualTypeFlag(stringType);
+  return typeFlag;
+}
+
+static void parseQueueTypeFlags(uint32_t *outFlags, const nlohmann::json &jobj) {
+  if (jobj.find(materialKeys::QUEUE) == jobj.end()) {
+    assert(0 && "cannot find queue flags in material");
+    return;
+  }
+  if (jobj.find(materialKeys::TYPE) == jobj.end()) {
+    assert(0 && "cannot find types in material");
+    return;
+  }
+
+  // extract the queue flags, that flag is a bit field for an
+  // uint16, which is merged with the material type which
+  // is a normal increasing uint16
+  const auto &qjobj = jobj[materialKeys::QUEUE];
+  const auto &tjobj = jobj[materialKeys::TYPE];
+  assert(qjobj.size() == tjobj.size());
+
+  for (size_t i = 0; i < qjobj.size(); ++i) {
+    uint32_t flags = 0;
+    const auto stringFlag = qjobj[i].get<std::string>();
+    const uint32_t currentFlag = stringToActualQueueFlag(stringFlag);
+    flags |= currentFlag;
+
+    int currentFlagId = static_cast<int>(log2(currentFlag & -currentFlag));
+
+    const auto stringType = tjobj[i].get<std::string>();
+    const uint32_t typeFlag = parseTypeFlags(stringType);
+    flags = typeFlag << 16 | flags;
+
+    outFlags[currentFlagId] = flags;
+  }
+}
+
+MaterialManager::PrelinaryMaterialParse
+MaterialManager::parseMaterial(const char *path, const MeshHandle meshHandle,
+                               const SkinHandle skinHandle) {
+  // for materials we do not perform the check whether is loaded or not
+  // each object is going to get it s own material copy.
+  // if that starts to be an issue we will add extra logic to deal with this.
+  assert(fileExists(path));
+  const std::string name = getFileName(path);
+
+  auto jobj = getJsonObj(path);
+  glm::vec4 zero{0.0f, 0.0f, 0.0f, 0.0f};
+  glm::vec4 kd = getValueIfInJson(jobj, materialKeys::KD, zero);
+  glm::vec4 ka = getValueIfInJson(jobj, materialKeys::KA, zero);
+  glm::vec4 ks = getValueIfInJson(jobj, materialKeys::KS, zero);
+  float zeroFloat = 0.0f;
+  float oneFloat = 1.0f;
+  float shininess = getValueIfInJson(jobj, materialKeys::SHINESS, zeroFloat);
+  float roughnessMult =
+      getValueIfInJson(jobj, materialKeys::ROUGHNESS_MULT, oneFloat);
+  float metallicMult =
+      getValueIfInJson(jobj, materialKeys::METALLIC_MULT, oneFloat);
+
+  const std::string empty;
+  const std::string albedoName =
+      getValueIfInJson(jobj, materialKeys::ALBEDO, empty);
+  const std::string normalName =
+      getValueIfInJson(jobj, materialKeys::NORMAL, empty);
+  const std::string metallicName =
+      getValueIfInJson(jobj, materialKeys::METALLIC, empty);
+  const std::string roughnessName =
+      getValueIfInJson(jobj, materialKeys::ROUGHNESS, empty);
+  const std::string thicknessName =
+      getValueIfInJson(jobj, materialKeys::THICKNESS, empty);
+  const std::string separateAlphaName =
+      getValueIfInJson(jobj, materialKeys::SEPARATE_ALPHA, empty);
+  const std::string heightName =
+      getValueIfInJson(jobj, materialKeys::HEIGHT, empty);
+  const std::string aoName = getValueIfInJson(jobj, materialKeys::AO, empty);
+
+  TextureHandle albedoTex{0};
+  TextureHandle normalTex{0};
+  TextureHandle metallicTex{0};
+  TextureHandle roughnessTex{0};
+  TextureHandle thicknessTex{0};
+  TextureHandle separateAlphaTex{0};
+  TextureHandle heightTex{0};
+  TextureHandle aoTex{0};
+
+  if (!albedoName.empty()) {
+    albedoTex = globals::TEXTURE_MANAGER->loadTexture(albedoName.c_str());
+  } else {
+    albedoTex = globals::TEXTURE_MANAGER->getWhiteTexture();
+  }
+  if (!normalName.empty()) {
+    normalTex = globals::TEXTURE_MANAGER->loadTexture(normalName.c_str());
+  } else {
+    normalTex = globals::TEXTURE_MANAGER->getWhiteTexture();
+  }
+  if (!metallicName.empty()) {
+    metallicTex = globals::TEXTURE_MANAGER->loadTexture(metallicName.c_str());
+  } else {
+    metallicTex = globals::TEXTURE_MANAGER->getWhiteTexture();
+  }
+  if (!roughnessName.empty()) {
+    roughnessTex = globals::TEXTURE_MANAGER->loadTexture(roughnessName.c_str());
+  } else {
+    roughnessTex = globals::TEXTURE_MANAGER->getWhiteTexture();
+  }
+  if (!thicknessName.empty()) {
+    thicknessTex = globals::TEXTURE_MANAGER->loadTexture(thicknessName.c_str());
+  } else {
+    thicknessTex = globals::TEXTURE_MANAGER->getWhiteTexture();
+  }
+  if (!separateAlphaName.empty()) {
+    separateAlphaTex =
+        globals::TEXTURE_MANAGER->loadTexture(separateAlphaName.c_str());
+  } else {
+    separateAlphaTex = globals::TEXTURE_MANAGER->getWhiteTexture();
+  }
+  if (!aoName.empty()) {
+    aoTex = globals::TEXTURE_MANAGER->loadTexture(aoName.c_str());
+  } else {
+    aoTex = globals::TEXTURE_MANAGER->getWhiteTexture();
+  }
+  if (!heightName.empty()) {
+    heightTex = globals::TEXTURE_MANAGER->loadTexture(heightName.c_str());
+  } else {
+    heightTex = globals::TEXTURE_MANAGER->getWhiteTexture();
+  }
+
+  Material mat{};
+  mat.kDR = kd.x;
+  mat.kDG = kd.y;
+  mat.kDB = kd.z;
+  mat.kAR = ka.x;
+  mat.kAG = ka.y;
+  mat.kAB = ka.z;
+  mat.kSR = ks.x;
+  mat.kSG = ks.y;
+  mat.kSB = ks.z;
+  mat.shiness = shininess;
+  mat.roughnessMult = roughnessMult;
+  mat.metallicMult = metallicMult;
+
+  MaterialDataHandles texHandles{};
+  texHandles.albedo = albedoTex;
+  texHandles.normal = normalTex;
+  texHandles.metallic = metallicTex;
+  texHandles.roughness = roughnessTex;
+  texHandles.thickness = thicknessTex;
+  texHandles.separateAlpha = separateAlphaTex;
+  texHandles.ao = aoTex;
+  texHandles.skinHandle = skinHandle;
+  texHandles.height = heightTex;
+
+  uint32_t shaderQueueTypeFlags;
+  PrelinaryMaterialParse toReturn;
+  toReturn.mat = mat;
+  toReturn.handles = texHandles;
+  parseQueueTypeFlags(toReturn.shaderQueueTypeFlags,jobj);
+
+  return toReturn;
+}
+
 const char *
 MaterialManager::getStringFromShaderTypeFlag(const SHADER_TYPE_FLAGS type) {
   const auto found = materialKeys::TYPE_FLAGS_TO_STRING.find(type);
@@ -104,5 +282,5 @@ MaterialManager::getStringFromShaderTypeFlag(const SHADER_TYPE_FLAGS type) {
       materialKeys::TYPE_FLAGS_TO_STRING.find(SHADER_TYPE_FLAGS::UNKNOWN);
   return unknown->second.c_str();
 }
-*/
+
 } // namespace SirEngine

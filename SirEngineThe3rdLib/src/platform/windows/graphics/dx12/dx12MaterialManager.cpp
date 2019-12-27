@@ -8,38 +8,16 @@
 #include "platform/windows/graphics/dx12/dx12MeshManager.h"
 #include "platform/windows/graphics/dx12/dx12TextureManager.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
-
-#if GRAPHICS_API == DX12
 #include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
-#endif
 
-namespace materialKeys {
-static const char *KD = "kd";
-static const char *KS = "ks";
-static const char *KA = "ka";
-static const char *SHINESS = "shiness";
-static const char *ALBEDO = "albedo";
-static const char *NORMAL = "normal";
-static const char *METALLIC = "metallic";
-static const char *ROUGHNESS = "roughness";
-static const char *HEIGHT = "height";
-static const char *AO = "ao";
-static const char *SEPARATE_ALPHA = "separateAlpha";
-static const char *ROUGHNESS_MULT = "roughnessMult";
-static const char *METALLIC_MULT = "metallicMult";
-static const char *THICKNESS = "thickness";
-static const char *QUEUE = "queue";
-static const char *TYPE = "type";
-static const std::string DEFAULT_STRING = "";
+
+namespace SirEngine {
+
 static const char *RS_KEY = "rs";
 static const char *PSO_KEY = "pso";
+static const std::string DEFAULT_STRING = "";
+static const char *TYPE = "type";
 
-static const std::unordered_map<std::string, SirEngine::SHADER_QUEUE_FLAGS>
-    STRING_TO_QUEUE_FLAG{
-        {"forward", SirEngine::SHADER_QUEUE_FLAGS::FORWARD},
-        {"deferred", SirEngine::SHADER_QUEUE_FLAGS::DEFERRED},
-        {"shadow", SirEngine::SHADER_QUEUE_FLAGS::SHADOW},
-    };
 static const std::unordered_map<std::string, SirEngine::SHADER_TYPE_FLAGS>
     STRING_TO_TYPE_FLAGS{
         {"pbr", SirEngine::SHADER_TYPE_FLAGS::PBR},
@@ -69,93 +47,21 @@ static const std::unordered_map<std::string, SirEngine::SHADER_TYPE_FLAGS>
         {"shadowSkinCluster",
          SirEngine::SHADER_TYPE_FLAGS::SHADOW_SKIN_CLUSTER},
     };
-static const std::unordered_map<SirEngine::SHADER_TYPE_FLAGS, std::string>
-    TYPE_FLAGS_TO_STRING{
-        {SirEngine::SHADER_TYPE_FLAGS::PBR, "pbr"},
-        {SirEngine::SHADER_TYPE_FLAGS::FORWARD_PBR, "forwardPbr"},
-        {SirEngine::SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT,
-         "forwardPhongAlphaCutout"},
-        {SirEngine::SHADER_TYPE_FLAGS::SKIN, "skin"},
-        {SirEngine::SHADER_TYPE_FLAGS::HAIR, "hair"},
-        {SirEngine::SHADER_TYPE_FLAGS::HAIRSKIN, "hairSkin"},
-        {SirEngine::SHADER_TYPE_FLAGS::DEBUG_LINES_COLORS, "debugLinesColors"},
-        {SirEngine::SHADER_TYPE_FLAGS::DEBUG_LINES_SINGLE_COLOR,
-         "debugLinesSingleColor"},
-        {SirEngine::SHADER_TYPE_FLAGS::DEBUG_POINTS_COLORS,
-         "debugPointsColors"},
-        {SirEngine::SHADER_TYPE_FLAGS::DEBUG_POINTS_SINGLE_COLOR,
-         "debugPointsSingleColor"},
-        {SirEngine::SHADER_TYPE_FLAGS::DEBUG_TRIANGLE_COLORS,
-         "debugTrianglesColors"},
-        {SirEngine::SHADER_TYPE_FLAGS::DEBUG_TRIANGLE_SINGLE_COLOR,
-         "debugTrianglesSingleColor"},
-        {SirEngine::SHADER_TYPE_FLAGS::SKINCLUSTER, "skinCluster"},
-        {SirEngine::SHADER_TYPE_FLAGS::SKINSKINCLUSTER, "skinSkinCluster"},
-        {SirEngine::SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT_SKIN,
-         "forwardPhongAlphaCutoutSkin"},
-        {SirEngine::SHADER_TYPE_FLAGS::FORWARD_PARALLAX, "forwardParallax"},
-        {SirEngine::SHADER_TYPE_FLAGS::SHADOW_SKIN_CLUSTER,
-         "shadowSkinCluster"},
-    };
 
-} // namespace materialKeys
-
-namespace SirEngine {
-inline uint32_t stringToActualQueueFlag(const std::string &flag) {
-  const auto found = materialKeys::STRING_TO_QUEUE_FLAG.find(flag);
-  if (found != materialKeys::STRING_TO_QUEUE_FLAG.end()) {
-    return static_cast<uint32_t>(found->second);
-  }
-  assert(0 && "could not map requested queue flag");
-  return 0;
-}
 inline uint16_t stringToActualTypeFlag(const std::string &flag) {
-  const auto found = materialKeys::STRING_TO_TYPE_FLAGS.find(flag);
-  if (found != materialKeys::STRING_TO_TYPE_FLAGS.end()) {
+  const auto found = STRING_TO_TYPE_FLAGS.find(flag);
+  if (found != STRING_TO_TYPE_FLAGS.end()) {
     return static_cast<uint16_t>(found->second);
   }
   assert(0 && "could not map requested type flag");
   return 0;
 }
 
-uint16_t parseTypeFlags(const std::string &stringType) {
+static uint16_t parseTypeFlags(const std::string &stringType) {
   const uint16_t typeFlag = stringToActualTypeFlag(stringType);
   return typeFlag;
 }
-
-void parseQueueTypeFlags(Dx12MaterialRuntime &matCpu,
-                         const nlohmann::json &jobj) {
-  if (jobj.find(materialKeys::QUEUE) == jobj.end()) {
-    assert(0 && "cannot find queue flags in material");
-    return;
-  }
-  if (jobj.find(materialKeys::TYPE) == jobj.end()) {
-    assert(0 && "cannot find types in material");
-    return;
-  }
-
-  // extract the queue flags, that flag is a bit field for an
-  // uint16, which is merged with the material type which
-  // is a normal increasing uint16
-  const auto &qjobj = jobj[materialKeys::QUEUE];
-  const auto &tjobj = jobj[materialKeys::TYPE];
-  assert(qjobj.size() == tjobj.size());
-
-  for (size_t i = 0; i < qjobj.size(); ++i) {
-    uint32_t flags = 0;
-    const auto stringFlag = qjobj[i].get<std::string>();
-    const uint32_t currentFlag = stringToActualQueueFlag(stringFlag);
-    flags |= currentFlag;
-
-    int currentFlagId = static_cast<int>(log2(currentFlag & -currentFlag));
-
-    const auto stringType = tjobj[i].get<std::string>();
-    const uint32_t typeFlag = parseTypeFlags(stringType);
-    flags = typeFlag << 16 | flags;
-
-    matCpu.shaderQueueTypeFlags[currentFlagId] = flags;
-  }
-}
+	
 void bindPBR(const Dx12MaterialRuntime &materialRuntime,
              ID3D12GraphicsCommandList2 *commandList) {
 
@@ -543,10 +449,10 @@ void Dx12MaterialManager::loadTypeFile(const char *path) {
   const auto jObj = getJsonObj(path);
   SE_CORE_INFO("[Engine]: Loading Material Type from: {0}", path);
 
-  const std::string rsString = getValueIfInJson(jObj, materialKeys::RS_KEY,
-                                                materialKeys::DEFAULT_STRING);
-  const std::string psoString = getValueIfInJson(jObj, materialKeys::PSO_KEY,
-                                                 materialKeys::DEFAULT_STRING);
+  const std::string rsString = getValueIfInJson(jObj, RS_KEY,
+                                                DEFAULT_STRING);
+  const std::string psoString = getValueIfInJson(jObj, PSO_KEY,
+                                                 DEFAULT_STRING);
 
   assert(!rsString.empty() && "root signature is emtpy in material type");
   assert(!psoString.empty() && "pso  is emtpy in material type");
@@ -559,153 +465,51 @@ void Dx12MaterialManager::loadTypeFile(const char *path) {
 
   std::string name = getFileName(path);
 
-  const std::string type = jObj[materialKeys::TYPE].get<std::string>();
+  const std::string type = jObj[TYPE].get<std::string>();
   const uint16_t flags = parseTypeFlags(type);
   m_shderTypeToShaderBind.insert(flags, ShaderBind{rsHandle, psoHandle});
 }
 MaterialHandle Dx12MaterialManager::loadMaterial(const char *path,
                                                  const MeshHandle meshHandle,
                                                  const SkinHandle skinHandle) {
-  // for materials we do not perform the check whether is loaded or not
-  // each object is going to get it s own material copy.
-  // if that starts to be an issue we will add extra logic to deal with this.
-  assert(fileExists(path));
-  const std::string name = getFileName(path);
-
-  auto jobj = getJsonObj(path);
-  glm::vec4 zero{0.0f, 0.0f, 0.0f, 0.0f};
-  glm::vec4 kd = getValueIfInJson(jobj, materialKeys::KD, zero);
-  glm::vec4 ka = getValueIfInJson(jobj, materialKeys::KA, zero);
-  glm::vec4 ks = getValueIfInJson(jobj, materialKeys::KS, zero);
-  float zeroFloat = 0.0f;
-  float oneFloat = 1.0f;
-  float shininess = getValueIfInJson(jobj, materialKeys::SHINESS, zeroFloat);
-  float roughnessMult =
-      getValueIfInJson(jobj, materialKeys::ROUGHNESS_MULT, oneFloat);
-  float metallicMult =
-      getValueIfInJson(jobj, materialKeys::METALLIC_MULT, oneFloat);
-
-  const std::string empty;
-  const std::string albedoName =
-      getValueIfInJson(jobj, materialKeys::ALBEDO, empty);
-  const std::string normalName =
-      getValueIfInJson(jobj, materialKeys::NORMAL, empty);
-  const std::string metallicName =
-      getValueIfInJson(jobj, materialKeys::METALLIC, empty);
-  const std::string roughnessName =
-      getValueIfInJson(jobj, materialKeys::ROUGHNESS, empty);
-  const std::string thicknessName =
-      getValueIfInJson(jobj, materialKeys::THICKNESS, empty);
-  const std::string separateAlphaName =
-      getValueIfInJson(jobj, materialKeys::SEPARATE_ALPHA, empty);
-  const std::string heightName =
-      getValueIfInJson(jobj, materialKeys::HEIGHT, empty);
-  const std::string aoName = getValueIfInJson(jobj, materialKeys::AO, empty);
-
-  TextureHandle albedoTex{0};
-  TextureHandle normalTex{0};
-  TextureHandle metallicTex{0};
-  TextureHandle roughnessTex{0};
-  TextureHandle thicknessTex{0};
-  TextureHandle separateAlphaTex{0};
-  TextureHandle heightTex{0};
-  TextureHandle aoTex{0};
-
-  if (!albedoName.empty()) {
-    albedoTex = dx12::TEXTURE_MANAGER->loadTexture(albedoName.c_str());
-  } else {
-    albedoTex = dx12::TEXTURE_MANAGER->getWhiteTexture();
-  }
-  if (!normalName.empty()) {
-    normalTex = dx12::TEXTURE_MANAGER->loadTexture(normalName.c_str());
-  } else {
-    normalTex = dx12::TEXTURE_MANAGER->getWhiteTexture();
-  }
-  if (!metallicName.empty()) {
-    metallicTex = dx12::TEXTURE_MANAGER->loadTexture(metallicName.c_str());
-  } else {
-    metallicTex = dx12::TEXTURE_MANAGER->getWhiteTexture();
-  }
-  if (!roughnessName.empty()) {
-    roughnessTex = dx12::TEXTURE_MANAGER->loadTexture(roughnessName.c_str());
-  } else {
-    roughnessTex = dx12::TEXTURE_MANAGER->getWhiteTexture();
-  }
-  if (!thicknessName.empty()) {
-    thicknessTex = dx12::TEXTURE_MANAGER->loadTexture(thicknessName.c_str());
-  } else {
-    thicknessTex = dx12::TEXTURE_MANAGER->getWhiteTexture();
-  }
-  if (!separateAlphaName.empty()) {
-    separateAlphaTex =
-        dx12::TEXTURE_MANAGER->loadTexture(separateAlphaName.c_str());
-  } else {
-    separateAlphaTex = dx12::TEXTURE_MANAGER->getWhiteTexture();
-  }
-  if (!aoName.empty()) {
-    aoTex = dx12::TEXTURE_MANAGER->loadTexture(aoName.c_str());
-  } else {
-    aoTex = dx12::TEXTURE_MANAGER->getWhiteTexture();
-  }
-  if (!heightName.empty()) {
-    heightTex = dx12::TEXTURE_MANAGER->loadTexture(heightName.c_str());
-  } else {
-    heightTex = dx12::TEXTURE_MANAGER->getWhiteTexture();
-  }
-
-  Material mat{};
-  mat.kDR = kd.x;
-  mat.kDG = kd.y;
-  mat.kDB = kd.z;
-  mat.kAR = ka.x;
-  mat.kAG = ka.y;
-  mat.kAB = ka.z;
-  mat.kSR = ks.x;
-  mat.kSG = ks.y;
-  mat.kSB = ks.z;
-  mat.shiness = shininess;
-  mat.roughnessMult = roughnessMult;
-  mat.metallicMult = metallicMult;
-
-  MaterialDataHandles texHandles{};
-  texHandles.albedo = albedoTex;
-  texHandles.normal = normalTex;
-  texHandles.metallic = metallicTex;
-  texHandles.roughness = roughnessTex;
-  texHandles.thickness = thicknessTex;
-  texHandles.separateAlpha = separateAlphaTex;
-  texHandles.ao = aoTex;
-  texHandles.skinHandle = skinHandle;
-  texHandles.height = heightTex;
+  PrelinaryMaterialParse parse = parseMaterial(path, meshHandle, skinHandle);
 
   uint32_t index;
   MaterialData &materialData =
       m_materialTextureHandles.getFreeMemoryData(index);
 
-  if (albedoTex.handle != 0) {
-    materialData.albedoSrv = dx12::TEXTURE_MANAGER->getSRVDx12(albedoTex);
+  materialData.m_material = parse.mat;
+  materialData.handles = parse.handles;
+
+  const MaterialDataHandles &handles = materialData.handles;
+
+  if (handles.albedo.handle != 0) {
+    materialData.albedoSrv = dx12::TEXTURE_MANAGER->getSRVDx12(handles.albedo);
   }
-  if (normalTex.handle != 0) {
-    materialData.normalSrv = dx12::TEXTURE_MANAGER->getSRVDx12(normalTex);
+  if (handles.normal.handle != 0) {
+    materialData.normalSrv = dx12::TEXTURE_MANAGER->getSRVDx12(handles.normal);
   }
-  if (metallicTex.handle != 0) {
-    materialData.metallicSrv = dx12::TEXTURE_MANAGER->getSRVDx12(metallicTex);
+  if (handles.metallic.handle != 0) {
+    materialData.metallicSrv =
+        dx12::TEXTURE_MANAGER->getSRVDx12(handles.metallic);
   }
-  if (roughnessTex.handle != 0) {
-    materialData.roughnessSrv = dx12::TEXTURE_MANAGER->getSRVDx12(roughnessTex);
+  if (handles.roughness.handle != 0) {
+    materialData.roughnessSrv =
+        dx12::TEXTURE_MANAGER->getSRVDx12(handles.roughness);
   }
-  if (thicknessTex.handle != 0) {
-    materialData.thicknessSrv = dx12::TEXTURE_MANAGER->getSRVDx12(thicknessTex);
+  if (handles.thickness.handle != 0) {
+    materialData.thicknessSrv =
+        dx12::TEXTURE_MANAGER->getSRVDx12(handles.thickness);
   }
-  if (separateAlphaTex.handle != 0) {
+  if (handles.separateAlpha.handle != 0) {
     materialData.separateAlphaSrv =
-        dx12::TEXTURE_MANAGER->getSRVDx12(separateAlphaTex);
+        dx12::TEXTURE_MANAGER->getSRVDx12(handles.separateAlpha);
   }
-  if (aoTex.handle != 0) {
-    materialData.aoSrv = dx12::TEXTURE_MANAGER->getSRVDx12(aoTex);
+  if (handles.ao.handle != 0) {
+    materialData.aoSrv = dx12::TEXTURE_MANAGER->getSRVDx12(handles.ao);
   }
-  if (heightTex.handle != 0) {
-    materialData.heightSrv = dx12::TEXTURE_MANAGER->getSRVDx12(heightTex);
+  if (handles.height.handle != 0) {
+    materialData.heightSrv = dx12::TEXTURE_MANAGER->getSRVDx12(handles.height);
   }
   Dx12MaterialRuntime matCpu{};
   matCpu.albedo = materialData.albedoSrv.gpuHandle;
@@ -718,38 +522,28 @@ MaterialHandle Dx12MaterialManager::loadMaterial(const char *path,
   matCpu.skinHandle = skinHandle;
   matCpu.heightMap = materialData.heightSrv.gpuHandle;
   matCpu.meshHandle = meshHandle;
-  parseQueueTypeFlags(matCpu, jobj);
+
+  memcpy(&matCpu.shaderQueueTypeFlags, parse.shaderQueueTypeFlags,sizeof(uint32_t)*4);
+
 
   // we need to allocate  constant buffer
   // TODO should this be static constant buffer? investigate
-  texHandles.cbHandle =
-      globals::CONSTANT_BUFFER_MANAGER->allocateDynamic(sizeof(Material), &mat);
+  materialData.handles.cbHandle =
+      globals::CONSTANT_BUFFER_MANAGER->allocateDynamic(sizeof(Material), &parse.mat);
 
   matCpu.cbVirtualAddress =
-      dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(texHandles.cbHandle);
+      dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(materialData.handles.cbHandle);
 
-  materialData.handles = texHandles;
   materialData.magicNumber = MAGIC_NUMBER_COUNTER++;
   materialData.m_materialRuntime = matCpu;
 
   MaterialHandle handle{(materialData.magicNumber << 16) | (index)};
 
+  const std::string name =getFileName(path);
   m_nameToHandle.insert(name.c_str(), handle);
 
   return handle;
 }
 
-const char *
-Dx12MaterialManager::getStringFromShaderTypeFlag(const SHADER_TYPE_FLAGS type) {
-  const auto found = materialKeys::TYPE_FLAGS_TO_STRING.find(type);
-  if (found != materialKeys::TYPE_FLAGS_TO_STRING.end()) {
-    return found->second.c_str();
-  }
-
-  assert(0 && "Could not find flag");
-  const auto unknown =
-      materialKeys::TYPE_FLAGS_TO_STRING.find(SHADER_TYPE_FLAGS::UNKNOWN);
-  return unknown->second.c_str();
-}
 
 } // namespace SirEngine

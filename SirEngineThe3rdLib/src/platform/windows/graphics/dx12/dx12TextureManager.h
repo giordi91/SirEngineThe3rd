@@ -59,7 +59,7 @@ public:
 
   void initialize() override;
   void cleanup() override;
-  inline TextureHandle getWhiteTexture() const { return m_whiteTexture; }
+  TextureHandle getWhiteTexture() const override { return m_whiteTexture; }
   // dx12 methods
   TextureHandle initializeFromResourceDx12(ID3D12Resource *resource,
                                            const char *name,
