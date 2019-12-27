@@ -1,0 +1,8 @@
+{
+"assets": [ "../data/assets/tempAsset.json" ],
+"enviromentMap" :"../data/external/textures/newportCube.texture",
+"enviromentMapIrradiance" :"../data/external/textures/newportCubeIrradiance.texture",
+"enviromentMapRadiance" :"../data/external/textures/newportCubeRadiance.texture"
+}
+
+

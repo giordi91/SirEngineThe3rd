@@ -1,0 +1,54 @@
+{
+  "subAssets": [
+    {
+      "mesh": "../data/processed/meshes/knightB/jacket.model",
+      "material": "../data/materials/knightBJacket.json"
+    }
+  ]
+  ,"t": [
+    {
+      "mesh": "../data/processed/meshes/knightB/pants.model",
+      "material": "../data/materials/knightBPants.json"
+    },
+    {
+      "mesh": "../data/processed/meshes/knightB/plates.model",
+      "material": "../data/materials/knightBPlates.json"
+    },
+    {
+      "mesh": "../data/processed/meshes/knightB/belt.model",
+      "material": "../data/materials/knightBBelt.json"
+    },
+    {
+      "mesh": "../data/processed/meshes/knightB/sword.model",
+      "material": "../data/materials/knightBSword.json"
+    },
+    {
+      "mesh": "../data/processed/meshes/knightB/cape.model",
+      "material": "../data/materials/knightBCape.json"
+    },
+    {
+      "mesh": "../data/processed/meshes/knightB/face.model",
+      "material": "../data/materials/knightBFace.json"
+    },
+    {
+      "mesh": "../data/processed/meshes/flatGround/flatGround.model",
+      "material": "../data/materials/flatGround.json"
+    },
+    {
+      "mesh": "../data/processed/meshes/knightB/eyeNew.model",
+      "material": "../data/materials/eyeMaterial.json"
+    },
+    {
+      "mesh": "../data/processed/meshes/knightB/eyeLashes.model",
+      "material": "../data/materials/knightBEyeLashesMaterial.json"
+    },
+    {
+      "mesh": "../data/processed/meshes/pSphere1.model",
+      "material": "../data/materials/sphereForwardMaterial.json"
+    },
+    {
+      "mesh": "../data/processed/meshes/knightB/hair.model",
+      "material": "../data/materials/knightBHairMaterial.json"
+    }
+  ]
+}

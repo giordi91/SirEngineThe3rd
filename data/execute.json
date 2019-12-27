@@ -1,7 +1,7 @@
 {
   "commands": [
-    "-p ../data/shaders/VK/rasterization/triangleVS.glsl -o ../data/processed/shaders/VK/rasterization/triangleVS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \"",
-    "-p ../data/shaders/VK/rasterization/trianglePS.glsl -o ../data/processed/shaders/VK/rasterization/trianglePS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d \""
+    "-p ../data/shaders/VK/rasterization/forwardPhongVS.glsl -o ../data/processed/shaders/VK/rasterization/forwardPhongVS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \"",
+    "-p ../data/shaders/VK/rasterization/forwardPhongPS.glsl -o ../data/processed/shaders/VK/rasterization/forwardPhongPS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d \""
  
   ]
 }
