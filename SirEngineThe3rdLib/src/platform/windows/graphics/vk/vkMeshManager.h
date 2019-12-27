@@ -79,8 +79,8 @@ public:
   void bindMesh(MeshHandle handle, VkWriteDescriptorSet *set,
                 VkDescriptorSet descriptorSet, VkDescriptorBufferInfo *info);
 
-  inline void renderMesh(MeshHandle handle,
-                         VkCommandBuffer commandBuffer) const {
+  inline void renderMesh(const MeshHandle handle,
+                         const VkCommandBuffer commandBuffer) const {
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
     const MeshData &data = m_meshPool.getConstRef(index);

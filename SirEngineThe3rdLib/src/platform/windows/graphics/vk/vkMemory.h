@@ -18,15 +18,6 @@ VkCommandBuffer createCommandBuffer(const VkCommandPool pool ,const VkCommandBuf
 
 void flushCommandBuffer(VkCommandPool pool, VkCommandBuffer commandBuffer, const VkQueue queue,
                         const bool free);
-// buffers
-uint32_t
-selectMemoryType(const VkPhysicalDeviceMemoryProperties &memoryProperties,
-                 const uint32_t memoryTypeBits,
-                 const VkMemoryPropertyFlags flags);
 
-void createBuffer(Buffer &buffer, const VkDevice device, const size_t size,
-                  const VkBufferUsageFlags usage,
-                  const VkMemoryPropertyFlags memoryFlags, const char *name);
-void destroyBuffer(VkDevice device, const Buffer &buffer);
 
 } // namespace SirEngine::vk

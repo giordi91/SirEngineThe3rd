@@ -124,6 +124,22 @@ void setImageLayout(
                        nullptr, 1, &imageMemoryBarrier);
 }
 
+static uint32_t
+selectMemoryType(const VkPhysicalDeviceMemoryProperties &memoryProperties,
+                 const uint32_t memoryTypeBits,
+                 const VkMemoryPropertyFlags flags) {
+  for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; ++i) {
+    uint32_t matchMemoryType = (memoryTypeBits & (1 << i)) != 0;
+    uint32_t matchWantedFlags =
+        (memoryProperties.memoryTypes[i].propertyFlags & flags) == flags;
+    if (matchMemoryType && (matchWantedFlags)) {
+      return i;
+    }
+  }
+  assert(!"No compatible memory type found");
+  return ~0u;
+}
+
 bool createRenderTarget(const char *name, VkFormat format, VkDevice device,
                         VkTexture2D &outTexture,
                         VkImageUsageFlags imageUsageFlags,
