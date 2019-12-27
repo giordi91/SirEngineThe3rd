@@ -23,7 +23,7 @@ dx12::RootSignatureManager *HeadlessClient::getRootSignatureManager() {
 
 dx12::PSOManager *HeadlessClient::getPSOManager() { return dx12::PSO_MANAGER; }
 
-dx12::TextureManagerDx12 *HeadlessClient::getTextureManager() {
+dx12::Dx12TextureManager *HeadlessClient::getTextureManager() {
   return dx12::TEXTURE_MANAGER;
 }
 

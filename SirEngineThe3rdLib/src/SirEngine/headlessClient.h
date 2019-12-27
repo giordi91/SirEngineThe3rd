@@ -7,7 +7,7 @@ namespace dx12 {
 class RootSignatureManager;
 class PSOManager;
 struct FrameResource;
-class TextureManagerDx12;
+class Dx12TextureManager;
 class DescriptorHeap;
 } // namespace dx12
 
@@ -33,7 +33,7 @@ public:
   // temporary DX12 calls
   dx12::RootSignatureManager *getRootSignatureManager();
   dx12::PSOManager *getPSOManager();
-  dx12::TextureManagerDx12 *getTextureManager();
+  dx12::Dx12TextureManager *getTextureManager();
   dx12::FrameResource *getFrameResource();
   dx12::DescriptorHeap *getCbvSrvUavHeap();
   ID3D12Device *getDevice();

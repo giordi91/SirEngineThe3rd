@@ -12,6 +12,7 @@ class VkBufferManager;
 class VkMeshManager;
 class VkPSOManager;
 class VkShaderManager;
+class VkTextureManager;
 class VkPipelineLayoutManager;
 class VkConstantBufferManager;
 struct VkSwapchain;
@@ -51,6 +52,7 @@ extern VkPipelineLayoutManager *PIPELINE_LAYOUT_MANAGER;
 extern VkConstantBufferManager *CONSTANT_BUFFER_MANAGER;
 extern VkBufferManager *BUFFER_MANAGER;
 extern VkMeshManager* MESH_MANAGER;
+extern VkTextureManager* TEXTURE_MANAGER;
 extern uint32_t SWAP_CHAIN_IMAGE_COUNT;
 // incremented every frame and used to find the correct set of resources
 // like command buffer pool and allocators
@@ -58,6 +60,22 @@ extern VkFrameCommand FRAME_COMMAND[PREALLOCATED_SEMAPHORE_COUNT];
 extern VkFrameCommand *CURRENT_FRAME_COMMAND;
 extern uint32_t GRAPHICS_QUEUE_FAMILY;
 extern uint32_t PRESENTATION_QUEUE_FAMILY;
+
+inline uint32_t
+selectMemoryType(const VkPhysicalDeviceMemoryProperties &memoryProperties,
+                 const uint32_t memoryTypeBits,
+                 const VkMemoryPropertyFlags flags) {
+  for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; ++i) {
+    uint32_t matchMemoryType = (memoryTypeBits & (1 << i)) != 0;
+    uint32_t matchWantedFlags =
+        (memoryProperties.memoryTypes[i].propertyFlags & flags) == flags;
+    if (matchMemoryType && (matchWantedFlags)) {
+      return i;
+    }
+  }
+  assert(!"No compatible memory type found");
+  return ~0u;
+}
 
 bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
                           const uint32_t height);

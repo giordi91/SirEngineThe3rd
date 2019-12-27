@@ -124,21 +124,6 @@ void setImageLayout(
                        nullptr, 1, &imageMemoryBarrier);
 }
 
-static uint32_t
-selectMemoryType(const VkPhysicalDeviceMemoryProperties &memoryProperties,
-                 const uint32_t memoryTypeBits,
-                 const VkMemoryPropertyFlags flags) {
-  for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; ++i) {
-    uint32_t matchMemoryType = (memoryTypeBits & (1 << i)) != 0;
-    uint32_t matchWantedFlags =
-        (memoryProperties.memoryTypes[i].propertyFlags & flags) == flags;
-    if (matchMemoryType && (matchWantedFlags)) {
-      return i;
-    }
-  }
-  assert(!"No compatible memory type found");
-  return ~0u;
-}
 
 bool createRenderTarget(const char *name, VkFormat format, VkDevice device,
                         VkTexture2D &outTexture,
@@ -468,35 +453,6 @@ bool loadTextureFromFile(const char *name, VkFormat format, VkDevice device,
   vkFreeMemory(device, stagingMemory, nullptr);
   vkDestroyBuffer(device, stagingBuffer, nullptr);
 
-  // Create a defaultsampler
-  VkSamplerCreateInfo samplerCreateInfo = {};
-  samplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-  samplerCreateInfo.magFilter = VK_FILTER_LINEAR;
-  samplerCreateInfo.minFilter = VK_FILTER_LINEAR;
-  samplerCreateInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-  samplerCreateInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-  samplerCreateInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-  samplerCreateInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-  samplerCreateInfo.mipLodBias = 0.0f;
-  samplerCreateInfo.compareOp = VK_COMPARE_OP_NEVER;
-  samplerCreateInfo.minLod = 0.0f;
-  // Max level-of-detail should match mip level count
-  samplerCreateInfo.maxLod = static_cast<float>(outTexture.mipLevels);
-  // Only enable anisotropic filtering if enabled on the devicec
-  samplerCreateInfo.maxAnisotropy = 1.0f;
-  // device->enabledFeatures.samplerAnisotropy
-  //    ? device->properties.limits.maxSamplerAnisotropy
-  //    : 1.0f;
-  samplerCreateInfo.anisotropyEnable = false;
-  // device->enabledFeatures.samplerAnisotropy;
-  samplerCreateInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-  VK_CHECK(vkCreateSampler(device, &samplerCreateInfo, nullptr,
-                           &outTexture.sampler));
-
-  // NOTE THIS NAME IS  TRASH needs to survive the whole life cycle
-  auto samplerName = (textureName + "Sampler");
-  SET_DEBUG_NAME(outTexture.sampler, VK_OBJECT_TYPE_SAMPLER,
-                 samplerName.c_str())
 
   // Create image view
   // Textures are not directly accessed by the shaders and
@@ -528,15 +484,12 @@ bool loadTextureFromFile(const char *name, VkFormat format, VkDevice device,
   outTexture.descriptor.imageView = outTexture.view;
   outTexture.descriptor.imageLayout = imageLayout;
 
-  outTexture.samplerOnly.sampler = outTexture.sampler;
-
   return true;
 }
 
 bool destroyTexture(const VkDevice device, const VkTexture2D &texture) {
   vkDestroyImage(device, texture.image, nullptr);
   vkDestroyImageView(device, texture.view, nullptr);
-  vkDestroySampler(device, texture.sampler, nullptr);
   vkFreeMemory(device, texture.deviceMemory, nullptr);
 
   return true;
@@ -551,3 +504,37 @@ bool destroyFrameBuffer(const VkDevice device, const VkFramebuffer fb,
   return true;
 }
 } // namespace SirEngine::vk
+/*
+ * temp sampler code
+ *
+ 
+  // Create a defaultsampler
+  VkSamplerCreateInfo samplerCreateInfo = {};
+  samplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+  samplerCreateInfo.magFilter = VK_FILTER_LINEAR;
+  samplerCreateInfo.minFilter = VK_FILTER_LINEAR;
+  samplerCreateInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+  samplerCreateInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+  samplerCreateInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+  samplerCreateInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+  samplerCreateInfo.mipLodBias = 0.0f;
+  samplerCreateInfo.compareOp = VK_COMPARE_OP_NEVER;
+  samplerCreateInfo.minLod = 0.0f;
+  // Max level-of-detail should match mip level count
+  samplerCreateInfo.maxLod = static_cast<float>(outTexture.mipLevels);
+  // Only enable anisotropic filtering if enabled on the devicec
+  samplerCreateInfo.maxAnisotropy = 1.0f;
+  // device->enabledFeatures.samplerAnisotropy
+  //    ? device->properties.limits.maxSamplerAnisotropy
+  //    : 1.0f;
+  samplerCreateInfo.anisotropyEnable = false;
+  // device->enabledFeatures.samplerAnisotropy;
+  samplerCreateInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+  VK_CHECK(vkCreateSampler(device, &samplerCreateInfo, nullptr,
+                           &outTexture.sampler));
+
+  // NOTE THIS NAME IS  TRASH needs to survive the whole life cycle
+  auto samplerName = (textureName + "Sampler");
+  SET_DEBUG_NAME(outTexture.sampler, VK_OBJECT_TYPE_SAMPLER,
+                 samplerName.c_str())
+ */

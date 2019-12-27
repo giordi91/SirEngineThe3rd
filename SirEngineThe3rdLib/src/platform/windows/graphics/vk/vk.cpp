@@ -18,6 +18,7 @@
 #include "platform/windows/graphics/vk/vkShaderManager.h"
 #include "platform/windows/graphics/vk/vkSwapChain.h"
 #include "vkMeshManager.h"
+#include "vkTextureManager.h"
 
 namespace SirEngine::vk {
 VkInstance INSTANCE = nullptr;
@@ -41,6 +42,7 @@ VkConstantBufferManager *CONSTANT_BUFFER_MANAGER = nullptr;
 VkPipelineLayoutManager *PIPELINE_LAYOUT_MANAGER = nullptr;
 VkBufferManager *BUFFER_MANAGER = nullptr;
 VkMeshManager *MESH_MANAGER = nullptr;
+VkTextureManager *TEXTURE_MANAGER = nullptr;
 uint32_t SWAP_CHAIN_IMAGE_COUNT = 0;
 VkFrameCommand FRAME_COMMAND[PREALLOCATED_SEMAPHORE_COUNT];
 VkFrameCommand *CURRENT_FRAME_COMMAND = nullptr;
@@ -181,8 +183,12 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   globals::BUFFER_MANAGER = BUFFER_MANAGER;
 
   MESH_MANAGER = new VkMeshManager();
-  //MESH_MANAGER->initialize();
+  // MESH_MANAGER->initialize();
   globals::MESH_MANAGER = MESH_MANAGER;
+
+  TEXTURE_MANAGER = new VkTextureManager();
+  TEXTURE_MANAGER->initialize();
+  globals::TEXTURE_MANAGER = TEXTURE_MANAGER;
 
   return true;
 }
@@ -332,8 +338,6 @@ bool VkRenderingContext::dispatchFrame() {
   bool res =
       presentImage(PRESENTATION_QUEUE,
                    {CURRENT_FRAME_COMMAND->m_renderSemaphore}, {presentInfo});
-  // vkDeviceWaitIdle(LOGICAL_DEVICE);
-
   // total number of frames is updated at the beginning of the frame by the
   // application
   globals::CURRENT_FRAME =
@@ -379,6 +383,7 @@ bool VkRenderingContext::shutdownGraphic() {
 
   // clean up manager
   PSO_MANAGER->cleanup();
+  TEXTURE_MANAGER->cleanup();
 
   vkDestroyDevice(LOGICAL_DEVICE, nullptr);
   vkDestroySurfaceKHR(INSTANCE, SURFACE, nullptr);

@@ -10,6 +10,7 @@ layout (location = 1) in vec2 inUV;
 
 void PS()
 {
-   outputColor = texture (sampler2D (colorTexture, colorSampler[2]), inUV);
+   vec2 uv = vec2(inUV.x,1.0f - inUV.y);
+   outputColor = texture (sampler2D (colorTexture, colorSampler[2]), uv);
    //outputColor = color;
 }

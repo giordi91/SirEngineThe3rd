@@ -1,8 +1,8 @@
 #include "platform/windows/graphics/dx12/dx12TextureManager.h"
-#include <DXTK12/DDSTextureLoader.h>
-#include <platform/windows/graphics/dx12/dx12SwapChain.h>
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
+#include <DXTK12/DDSTextureLoader.h>
+#include <platform/windows/graphics/dx12/dx12SwapChain.h>
 
 namespace SirEngine::dx12 {
 
@@ -26,15 +26,15 @@ static std::unordered_map<RenderTargetFormat, DXGI_FORMAT>
          DXGI_FORMAT_R16G16B16A16_FLOAT},
         {RenderTargetFormat::BC1_UNORM, DXGI_FORMAT_BC1_UNORM}};
 
-TextureManagerDx12::~TextureManagerDx12() {
+Dx12TextureManager::~Dx12TextureManager() {
   // assert(m_texturePool.assertEverythingDealloc());
 }
 
-void TextureManagerDx12::loadLegacy(const std::string &) {
+void Dx12TextureManager::loadLegacy(const std::string &) {
   assert(0 && "legacy not yet supported");
 }
 
-TextureHandle TextureManagerDx12::loadTexture(const char *path,
+TextureHandle Dx12TextureManager::loadTexture(const char *path,
                                               const bool cubeMap) {
   const bool res = fileExists(path);
   assert(res);
@@ -102,7 +102,7 @@ TextureHandle TextureManagerDx12::loadTexture(const char *path,
   return found->second;
 }
 
-TextureHandle TextureManagerDx12::initializeFromResourceDx12(
+TextureHandle Dx12TextureManager::initializeFromResourceDx12(
     ID3D12Resource *resource, const char *name,
     const D3D12_RESOURCE_STATES state) {
   // since we are passing one resource, by definition the resource is static
@@ -126,9 +126,10 @@ TextureHandle TextureManagerDx12::initializeFromResourceDx12(
   return handle;
 }
 
-TextureHandle TextureManagerDx12::createDepthTexture(
-    const char *name, const uint32_t width, const uint32_t height,
-    const D3D12_RESOURCE_STATES state) {
+TextureHandle
+Dx12TextureManager::createDepthTexture(const char *name, const uint32_t width,
+                                       const uint32_t height,
+                                       const D3D12_RESOURCE_STATES state) {
   const bool m_4xMsaaState = false;
 
   // Create the depth/stencil buffer and view.
@@ -191,8 +192,10 @@ TextureHandle TextureManagerDx12::createDepthTexture(
   dx12::createDSV(dx12::GLOBAL_DSV_HEAP, m_texturePool[index].resource,
                   data.rtsrv, DXGI_FORMAT_D32_FLOAT_S8X24_UINT);
 
-  dx12::createDSV(dx12::GLOBAL_DSV_HEAP, m_texturePool[index].resource,
-                  data.dsvStencil, DXGI_FORMAT_D32_FLOAT_S8X24_UINT ,(D3D12_DSV_FLAG_READ_ONLY_DEPTH | D3D12_DSV_FLAG_READ_ONLY_STENCIL));
+  dx12::createDSV(
+      dx12::GLOBAL_DSV_HEAP, m_texturePool[index].resource, data.dsvStencil,
+      DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
+      (D3D12_DSV_FLAG_READ_ONLY_DEPTH | D3D12_DSV_FLAG_READ_ONLY_STENCIL));
 
   dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DSRV(
       data.srv, data.resource, DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS);
@@ -202,8 +205,8 @@ TextureHandle TextureManagerDx12::createDepthTexture(
   return handle;
 }
 
-DescriptorPair TextureManagerDx12::getSrvStencilDx12(
-    const TextureHandle handle) {
+DescriptorPair
+Dx12TextureManager::getSrvStencilDx12(const TextureHandle handle) {
   {
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
@@ -220,7 +223,7 @@ DescriptorPair TextureManagerDx12::getSrvStencilDx12(
   }
 }
 
-void TextureManagerDx12::free(const TextureHandle handle) {
+void Dx12TextureManager::free(const TextureHandle handle) {
   assertMagicNumber(handle);
   uint32_t index = getIndexFromHandle(handle);
   TextureData &data = m_texturePool[index];
@@ -275,7 +278,7 @@ inline DXGI_FORMAT convertToDXGIFormat(const RenderTargetFormat format) {
   return DXGI_FORMAT_UNKNOWN;
 }
 
-auto TextureManagerDx12::allocateRenderTexture(const uint32_t width,
+auto Dx12TextureManager::allocateRenderTexture(const uint32_t width,
                                                const uint32_t height,
                                                const RenderTargetFormat format,
                                                const char *name,
@@ -331,10 +334,11 @@ auto TextureManagerDx12::allocateRenderTexture(const uint32_t width,
   return handle;
 }
 
-TextureHandle TextureManagerDx12::allocateTexture(
-    const uint32_t width, const uint32_t height,
-    const RenderTargetFormat format, const char *name, const bool mips,
-    const bool allowWrite) {
+TextureHandle
+Dx12TextureManager::allocateTexture(const uint32_t width, const uint32_t height,
+                                    const RenderTargetFormat format,
+                                    const char *name, const bool mips,
+                                    const bool allowWrite) {
   // convert SirEngine format to dx12 format
   const DXGI_FORMAT actualFormat = convertToDXGIFormat(format);
 
@@ -381,7 +385,7 @@ TextureHandle TextureManagerDx12::allocateTexture(
   return handle;
 }
 
-void TextureManagerDx12::bindRenderTarget(const TextureHandle handle,
+void Dx12TextureManager::bindRenderTarget(const TextureHandle handle,
                                           const TextureHandle depth) {
   assertMagicNumber(handle);
   const uint32_t index = getIndexFromHandle(handle);
@@ -405,7 +409,7 @@ void TextureManagerDx12::bindRenderTarget(const TextureHandle handle,
   commandList->OMSetRenderTargets(1, handles, true, depthDesc);
 }
 
-void TextureManagerDx12::bindRenderTargetStencil(TextureHandle handle,
+void Dx12TextureManager::bindRenderTargetStencil(TextureHandle handle,
                                                  TextureHandle depth) {
   assertMagicNumber(handle);
   const uint32_t index = getIndexFromHandle(handle);
@@ -429,7 +433,7 @@ void TextureManagerDx12::bindRenderTargetStencil(TextureHandle handle,
   commandList->OMSetRenderTargets(1, handles, true, depthDesc);
 }
 
-void TextureManagerDx12::copyTexture(const TextureHandle source,
+void Dx12TextureManager::copyTexture(const TextureHandle source,
                                      const TextureHandle destination) {
   assertMagicNumber(source);
   assertMagicNumber(destination);
@@ -466,7 +470,7 @@ void TextureManagerDx12::copyTexture(const TextureHandle source,
   commandList->CopyResource(destData.resource, sourceData.resource);
 }
 
-void TextureManagerDx12::bindBackBuffer(bool bindBackBufferDepth) {
+void Dx12TextureManager::bindBackBuffer(bool bindBackBufferDepth) {
   auto back = dx12::SWAP_CHAIN->currentBackBufferView();
   auto depth = dx12::SWAP_CHAIN->getDepthCPUDescriptor();
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
@@ -476,7 +480,7 @@ void TextureManagerDx12::bindBackBuffer(bool bindBackBufferDepth) {
   ;
 }
 
-void TextureManagerDx12::clearDepth(const TextureHandle depth,
+void Dx12TextureManager::clearDepth(const TextureHandle depth,
                                     const float value) {
   assertMagicNumber(depth);
   const uint32_t index = getIndexFromHandle(depth);
@@ -488,7 +492,7 @@ void TextureManagerDx12::clearDepth(const TextureHandle depth,
       value, 0, 0, nullptr);
 }
 
-void TextureManagerDx12::clearRT(const TextureHandle handle,
+void Dx12TextureManager::clearRT(const TextureHandle handle,
                                  const float color[4]) {
   assertMagicNumber(handle);
   const uint32_t index = getIndexFromHandle(handle);
@@ -499,7 +503,16 @@ void TextureManagerDx12::clearRT(const TextureHandle handle,
       data.rtsrv.cpuHandle, color, 0, nullptr);
 }
 
-void TextureManagerDx12::initialize() {
+void Dx12TextureManager::initialize() {
   m_whiteTexture = loadTexture(WHITE_TEXTURE_PATH, false);
 }
-}  // namespace SirEngine::dx12
+
+void Dx12TextureManager::cleanup() {
+  assertMagicNumber(m_whiteTexture);
+  const uint32_t index = getIndexFromHandle(m_whiteTexture);
+  const TextureData &data = m_texturePool.getConstRef(index);
+  //TODO check what other view/resourcess need to be released
+  data.resource->Release();
+
+}
+} // namespace SirEngine::dx12
