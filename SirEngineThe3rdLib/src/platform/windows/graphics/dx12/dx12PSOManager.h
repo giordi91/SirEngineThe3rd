@@ -11,10 +11,7 @@
 #include "nlohmann/json_fwd.hpp"
 
 namespace SirEngine::dx12 {
-class RootSignatureManager;
-class ShaderManager;
 
-// TODO make it not copyable assignable
 class Dx12PSOManager final : public PSOManager {
 
   struct PSOData {
@@ -24,10 +21,10 @@ class Dx12PSOManager final : public PSOManager {
 
 public:
   Dx12PSOManager()
-      : m_psoDXRRegister(RESERVE_SIZE), m_psoRegister(RESERVE_SIZE),
-        m_psoRegisterHandle(RESERVE_SIZE), m_shaderToPSOFile(RESERVE_SIZE),
-        m_psoPool(RESERVE_SIZE){};
-  ~Dx12PSOManager() = default;
+      : PSOManager(), m_psoDXRRegister(RESERVE_SIZE),
+        m_psoRegister(RESERVE_SIZE), m_psoRegisterHandle(RESERVE_SIZE),
+        m_shaderToPSOFile(RESERVE_SIZE), m_psoPool(RESERVE_SIZE){};
+  virtual ~Dx12PSOManager() = default;
   Dx12PSOManager(const Dx12PSOManager &) = delete;
   Dx12PSOManager &operator=(const Dx12PSOManager &) = delete;
   Dx12PSOManager(Dx12PSOManager &&) = delete;
@@ -36,7 +33,7 @@ public:
   void initialize() override{};
   void cleanup() override;
   void loadRawPSOInFolder(const char *directory) override;
-  void loadCachedPSOInFolder(const char *directory)override;
+  void loadCachedPSOInFolder(const char *directory) override;
 
   void recompilePSOFromShader(const char *shaderName,
                               const char *getOffsetPath);

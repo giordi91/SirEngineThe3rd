@@ -1,26 +1,33 @@
 #pragma once
-#include "DX12.h"
+
+#include "SirEngine/rootSignatureManager.h"
+
 #include "SirEngine/handle.h"
 #include "SirEngine/hashing.h"
-#include "SirEngine/memory/SparseMemoryPool.h"
+#include "SirEngine/memory/sparseMemoryPool.h"
 #include "SirEngine/memory/stringHashMap.h"
+
+#include <d3d12.h>
+
 #include <cassert>
 
-namespace SirEngine::dx12 {
+namespace SirEngine {
+namespace dx12 {
 
-enum class ROOT_FILE_TYPE { RASTER = 0, COMPUTE = 1, DXR = 2, NULL_TYPE };
-
-class RootSignatureManager final {
+class Dx12RootSignatureManager final: public RootSignatureManager {
 
 public:
-  RootSignatureManager()
-      : m_rootRegister(RESERVE_SIZE), m_rsPool(RESERVE_SIZE){};
-  RootSignatureManager(const RootSignatureManager &) = delete;
-  RootSignatureManager &operator=(const RootSignatureManager &) = delete;
-  ~RootSignatureManager() = default;
-  void cleanup();
-  void loadSignaturesInFolder(const char *directory);
-  void loadSignatureBinaryFile(const char *file);
+  Dx12RootSignatureManager()
+      :  m_rootRegister(RESERVE_SIZE),
+        m_rsPool(RESERVE_SIZE){};
+  Dx12RootSignatureManager(const Dx12RootSignatureManager &) = delete;
+  Dx12RootSignatureManager &
+  operator=(const Dx12RootSignatureManager &) = delete;
+  ~Dx12RootSignatureManager() = default;
+  void initialize() {};
+  void cleanup() ;
+  void loadSignaturesInFolder(const char *directory) ;
+  void loadSignatureBinaryFile(const char *file) ;
 
   inline ID3D12RootSignature *getRootSignatureFromName(const char *name) const {
 
@@ -48,7 +55,7 @@ public:
     commandList->SetGraphicsRootSignature(data.rs);
   }
 
-  inline RSHandle getHandleFromName(const char *name) const {
+  RSHandle getHandleFromName(const char *name) const {
     assert(m_rootRegister.containsKey(name));
     RSHandle value;
     m_rootRegister.get(name, value);
@@ -56,12 +63,6 @@ public:
   }
 
 private:
-  inline uint32_t getIndexFromHandle(const RSHandle h) const {
-    return h.handle & INDEX_MASK;
-  }
-  inline uint32_t getMagicFromHandle(const RSHandle h) const {
-    return (h.handle & MAGIC_NUMBER_MASK) >> 16;
-  }
   inline void assertMagicNumber(const RSHandle handle) const {
     const uint32_t magic = getMagicFromHandle(handle);
     const uint32_t idx = getIndexFromHandle(handle);
@@ -77,11 +78,9 @@ private:
   };
 
   HashMap<const char *, RSHandle, hashString32> m_rootRegister;
-  // handles
   SparseMemoryPool<RSData> m_rsPool;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
   static const uint32_t RESERVE_SIZE = 400;
-  static const uint32_t INDEX_MASK = (1 << 16) - 1;
-  static const uint32_t MAGIC_NUMBER_MASK = ~INDEX_MASK;
 };
-} // namespace SirEngine::dx12
+} // namespace dx12
+} // namespace SirEngine

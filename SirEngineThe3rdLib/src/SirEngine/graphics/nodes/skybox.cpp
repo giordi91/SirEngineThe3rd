@@ -8,7 +8,7 @@
 #include "platform/windows/graphics/dx12/dx12TextureManager.h"
 #include "platform/windows/graphics/dx12/dx12MeshManager.h"
 #include "platform/windows/graphics/dx12/dx12SwapChain.h"
-#include "platform/windows/graphics/dx12/rootSignatureManager.h"
+#include "platform/windows/graphics/dx12/dx12RootSignatureManager.h"
 
 namespace SirEngine {
 static const char *SKYBOX_RS = "skybox_RS";

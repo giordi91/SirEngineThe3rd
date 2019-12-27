@@ -7,7 +7,7 @@
 #include "platform/windows/graphics/dx12/dx12TextureManager.h"
 #include "platform/windows/graphics/dx12/dx12BufferManager.h"
 #include "platform/windows/graphics/dx12/debugRenderer.h"
-#include "platform/windows/graphics/dx12/rootSignatureManager.h"
+#include "platform/windows/graphics/dx12/dx12RootSignatureManager.h"
 
 namespace SirEngine {
 

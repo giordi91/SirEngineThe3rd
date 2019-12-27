@@ -17,7 +17,7 @@ void HeadlessClient::endWork() { //graphics::endHeadlessWork();
 void HeadlessClient::flushAllOperation() { //graphics::flush();
 	}
 
-dx12::RootSignatureManager *HeadlessClient::getRootSignatureManager() {
+dx12::Dx12RootSignatureManager *HeadlessClient::getRootSignatureManager() {
   return dx12::ROOT_SIGNATURE_MANAGER;
 }
 

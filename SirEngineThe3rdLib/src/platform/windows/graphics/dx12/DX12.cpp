@@ -18,9 +18,9 @@
 #include "platform/windows/graphics/dx12/dx12MaterialManager.h"
 #include "platform/windows/graphics/dx12/dx12MeshManager.h"
 #include "platform/windows/graphics/dx12/dx12PSOManager.h"
+#include "platform/windows/graphics/dx12/dx12RootSignatureManager.h"
 #include "platform/windows/graphics/dx12/dx12SwapChain.h"
 #include "platform/windows/graphics/dx12/dx12TextureManager.h"
-#include "platform/windows/graphics/dx12/rootSignatureManager.h"
 #include "platform/windows/graphics/dx12/shaderManager.h"
 
 #undef max
@@ -48,7 +48,7 @@ DependencyGraph *RENDERING_GRAPH = nullptr;
 Dx12ConstantBufferManager *CONSTANT_BUFFER_MANAGER = nullptr;
 ShaderManager *SHADER_MANAGER = nullptr;
 Dx12PSOManager *PSO_MANAGER = nullptr;
-RootSignatureManager *ROOT_SIGNATURE_MANAGER = nullptr;
+Dx12RootSignatureManager *ROOT_SIGNATURE_MANAGER = nullptr;
 BufferManagerDx12 *BUFFER_MANAGER = nullptr;
 DebugRenderer *DEBUG_RENDERER = nullptr;
 Dx12RenderingContext *RENDERING_CONTEXT = nullptr;
@@ -194,9 +194,10 @@ bool initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
       frameConcatenation(globals::ENGINE_CONFIG->m_dataSourcePath,
                          "/processed/shaders/DX12/compute"));
 
-  ROOT_SIGNATURE_MANAGER = new RootSignatureManager();
+  ROOT_SIGNATURE_MANAGER = new Dx12RootSignatureManager();
   ROOT_SIGNATURE_MANAGER->loadSignaturesInFolder(frameConcatenation(
       globals::ENGINE_CONFIG->m_dataSourcePath, "/processed/rs"));
+  globals::ROOT_SIGNATURE_MANAGER = ROOT_SIGNATURE_MANAGER;
 
   PSO_MANAGER = new Dx12PSOManager();
   PSO_MANAGER->initialize();

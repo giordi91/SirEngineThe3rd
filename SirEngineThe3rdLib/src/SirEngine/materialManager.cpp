@@ -1,7 +1,11 @@
 #include "SirEngine/materialManager.h"
 #include "SirEngine/textureManager.h"
-#include "fileUtils.h"
-#include "globals.h"
+#include "SirEngine/PSOManager.h"
+#include "SirEngine/rootSignatureManager.h"
+#include "SirEngine/fileUtils.h"
+#include "SirEngine/globals.h"
+#include "SirEngine/log.h"
+
 #include <cassert>
 #include <string>
 #include <unordered_map>
@@ -24,6 +28,9 @@ static const char *METALLIC_MULT = "metallicMult";
 static const char *THICKNESS = "thickness";
 static const char *QUEUE = "queue";
 static const char *TYPE = "type";
+static const char *RS_KEY = "rs";
+static const char *PSO_KEY = "pso";
+static const std::string DEFAULT_STRING = "";
 
 static const std::unordered_map<std::string, SirEngine::SHADER_QUEUE_FLAGS>
     STRING_TO_QUEUE_FLAG{
@@ -281,6 +288,39 @@ MaterialManager::getStringFromShaderTypeFlag(const SHADER_TYPE_FLAGS type) {
   const auto unknown =
       materialKeys::TYPE_FLAGS_TO_STRING.find(SHADER_TYPE_FLAGS::UNKNOWN);
   return unknown->second.c_str();
+}
+void MaterialManager::loadTypeFile(const char *path) {
+  const auto jObj = getJsonObj(path);
+  SE_CORE_INFO("[Engine]: Loading Material Type from: {0}", path);
+
+  const std::string rsString = getValueIfInJson(jObj, materialKeys::RS_KEY,
+                                                materialKeys::DEFAULT_STRING);
+  const std::string psoString = getValueIfInJson(jObj, materialKeys::PSO_KEY,
+                                                 materialKeys::DEFAULT_STRING);
+
+  assert(!rsString.empty() && "root signature is emtpy in material type");
+  assert(!psoString.empty() && "pso  is emtpy in material type");
+
+  // get the handles
+  const PSOHandle psoHandle =
+      globals::PSO_MANAGER->getHandleFromName(psoString.c_str());
+  const RSHandle rsHandle =
+      globals::ROOT_SIGNATURE_MANAGER->getHandleFromName(rsString.c_str());
+
+  std::string name = getFileName(path);
+
+  const std::string type = jObj[materialKeys::TYPE].get<std::string>();
+  const uint16_t flags = parseTypeFlags(type);
+  m_shderTypeToShaderBind.insert(flags, ShaderBind{rsHandle, psoHandle});
+}
+
+void MaterialManager::loadTypesInFolder(const char *folder) {
+  std::vector<std::string> paths;
+  listFilesInFolder(folder, paths, "json");
+
+  for (const auto &p : paths) {
+    loadTypeFile(p.c_str());
+  }
 }
 
 } // namespace SirEngine

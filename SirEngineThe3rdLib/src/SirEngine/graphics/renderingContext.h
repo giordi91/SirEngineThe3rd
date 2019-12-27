@@ -1,5 +1,6 @@
 #pragma once
 #include "SirEngine/engineConfig.h"
+#include "SirEngine/graphics/cpuGraphicsStructures.h"
 #include "SirEngine/handle.h"
 #include <glm/mat4x4.hpp>
 
@@ -35,8 +36,6 @@ struct Renderable {
   MaterialHandle m_materialHandle;
 };
 
-
-
 class RenderingContext {
 
 public:
@@ -67,6 +66,38 @@ public:
   }
   inline ScreenInfo getScreenInfo() const { return m_screenInfo; }
 
+  // TODO texture setter and getter, need to find a better way to do it
+  inline void setEnviromentMap(const TextureHandle enviromentMapHandle) {
+    m_enviromentMapHandle = enviromentMapHandle;
+  }
+
+  inline void setEnviromentMapIrradiance(
+      const TextureHandle enviromentMapIrradianceHandle) {
+    m_enviromentMapIrradianceHandle = enviromentMapIrradianceHandle;
+  }
+
+  inline const DirectionalLightData &getLightData() const { return m_light; };
+  inline void
+  setEnviromentMapRadiance(const TextureHandle enviromentMapRadianceHandle) {
+    m_enviromentMapRadianceHandle = enviromentMapRadianceHandle;
+  };
+  inline TextureHandle getEnviromentMapHandle() const {
+    return m_enviromentMapHandle;
+  }
+  inline TextureHandle getEnviromentMapIrradianceHandle() const {
+    return m_enviromentMapIrradianceHandle;
+  }
+  inline TextureHandle getEnviromentMapRadianceHandle() const {
+    return m_enviromentMapRadianceHandle;
+  }
+  inline void setBrdfHandle(const TextureHandle handle) {
+    m_brdfHandle = handle;
+  }
+  inline TextureHandle getBrdfHandle() const { return m_brdfHandle; }
+
+  inline ConstantBufferHandle getLightCB() const { return m_lightCB; }
+  inline BoundingBox getBoundingBox() const { return m_boundingBox; }
+
 protected:
   // Anonymous parameters are width and height, removed the name to mute the
   // visual studio warning
@@ -77,8 +108,17 @@ protected:
     m_screenInfo.width = width;
     m_screenInfo.height = height;
   };
+
+protected:
   RenderingContextCreationSettings m_settings;
   ScreenInfo m_screenInfo;
+  TextureHandle m_enviromentMapHandle;
+  TextureHandle m_enviromentMapIrradianceHandle;
+  TextureHandle m_enviromentMapRadianceHandle;
+  TextureHandle m_brdfHandle;
+  BoundingBox m_boundingBox;
+  ConstantBufferHandle m_lightCB{};
+  DirectionalLightData m_light;
 };
 
 } // namespace SirEngine

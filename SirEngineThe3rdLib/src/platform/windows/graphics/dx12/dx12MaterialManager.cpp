@@ -6,17 +6,13 @@
 #include "platform/windows/graphics/dx12/dx12BufferManager.h"
 #include "platform/windows/graphics/dx12/dx12MeshManager.h"
 #include "platform/windows/graphics/dx12/dx12TextureManager.h"
-#include "platform/windows/graphics/dx12/rootSignatureManager.h"
+#include "platform/windows/graphics/dx12/dx12RootSignatureManager.h"
 #include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
 #include "platform/windows/graphics/dx12/dx12PSOManager.h"
 
 
 namespace SirEngine {
 
-static const char *RS_KEY = "rs";
-static const char *PSO_KEY = "pso";
-static const std::string DEFAULT_STRING = "";
-static const char *TYPE = "type";
 
 static const std::unordered_map<std::string, SirEngine::SHADER_TYPE_FLAGS>
     STRING_TO_TYPE_FLAGS{
@@ -420,14 +416,6 @@ void Dx12MaterialManager::bindMaterial(
   bindMaterial(queueFlag, materialRuntime, commandList);
 }
 
-void Dx12MaterialManager::loadTypesInFolder(const char *folder) {
-  std::vector<std::string> paths;
-  listFilesInFolder(folder, paths, "json");
-
-  for (const auto &p : paths) {
-    loadTypeFile(p.c_str());
-  }
-}
 
 void Dx12MaterialManager::bindRSandPSO(
     const uint32_t shaderFlags, ID3D12GraphicsCommandList2 *commandList) {
@@ -445,30 +433,6 @@ void Dx12MaterialManager::bindRSandPSO(
   assert(0 && "Could not find requested shader type for PSO /RS bind");
 }
 
-void Dx12MaterialManager::loadTypeFile(const char *path) {
-  const auto jObj = getJsonObj(path);
-  SE_CORE_INFO("[Engine]: Loading Material Type from: {0}", path);
-
-  const std::string rsString = getValueIfInJson(jObj, RS_KEY,
-                                                DEFAULT_STRING);
-  const std::string psoString = getValueIfInJson(jObj, PSO_KEY,
-                                                 DEFAULT_STRING);
-
-  assert(!rsString.empty() && "root signature is emtpy in material type");
-  assert(!psoString.empty() && "pso  is emtpy in material type");
-
-  // get the handles
-  const PSOHandle psoHandle =
-      globals::PSO_MANAGER->getHandleFromName(psoString.c_str());
-  const RSHandle rsHandle =
-      dx12::ROOT_SIGNATURE_MANAGER->getHandleFromName(rsString.c_str());
-
-  std::string name = getFileName(path);
-
-  const std::string type = jObj[TYPE].get<std::string>();
-  const uint16_t flags = parseTypeFlags(type);
-  m_shderTypeToShaderBind.insert(flags, ShaderBind{rsHandle, psoHandle});
-}
 MaterialHandle Dx12MaterialManager::loadMaterial(const char *path,
                                                  const MeshHandle meshHandle,
                                                  const SkinHandle skinHandle) {

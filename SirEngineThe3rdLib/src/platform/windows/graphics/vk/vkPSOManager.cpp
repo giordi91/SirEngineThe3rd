@@ -6,7 +6,6 @@
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/globals.h"
 
-
 namespace SirEngine::vk {
 
 enum class PSO_TYPE { DXR = 0, RASTER, COMPUTE, INVALID };
@@ -257,7 +256,8 @@ void destroyStaticSamplers() {
 
 PSO_TYPE convertStringPSOTypeToEnum(const char *type) {
   const auto found = STRING_TO_PSO_TYPE.find(type);
-  return (found != STRING_TO_PSO_TYPE.end() ? found->second : PSO_TYPE::INVALID);
+  return (found != STRING_TO_PSO_TYPE.end() ? found->second
+                                            : PSO_TYPE::INVALID);
 }
 
 void getShaderStageCreateInfo(const nlohmann::json &jobj,
@@ -683,6 +683,10 @@ void VkPSOManager::cleanup() {
   }
 }
 
+void VkPSOManager::loadRawPSOInFolder(const char *directory) { assert(0); }
+
+void VkPSOManager::loadCachedPSOInFolder(const char *directory) { assert(0); }
+
 PSOHandle VkPSOManager::loadRawPSO(const char *file) {
   auto jobj = getJsonObj(file);
 
@@ -711,5 +715,10 @@ PSOHandle VkPSOManager::loadRawPSO(const char *file) {
   default:;
   }
   return {};
+}
+
+void VkPSOManager::recompilePSOFromShader(const char* shaderName, const char* getOffsetPath)
+{
+    assert(0);
 }
 } // namespace SirEngine::vk

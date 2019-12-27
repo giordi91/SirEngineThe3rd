@@ -3,6 +3,7 @@
 #include "volk.h"
 
 #include "SirEngine/Window.h"
+#include "SirEngine/assetManager.h"
 #include "SirEngine/engineConfig.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/log.h"
@@ -19,7 +20,6 @@
 #include "platform/windows/graphics/vk/vkSwapChain.h"
 #include "vkMeshManager.h"
 #include "vkTextureManager.h"
-#include "SirEngine/assetManager.h"
 
 namespace SirEngine::vk {
 VkInstance INSTANCE = nullptr;
@@ -171,9 +171,11 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
                          "/processed/shaders/VK/rasterization"));
   PIPELINE_LAYOUT_MANAGER = new VkPipelineLayoutManager();
   PIPELINE_LAYOUT_MANAGER->init();
+  globals::ROOT_SIGNATURE_MANAGER = PIPELINE_LAYOUT_MANAGER;
 
   PSO_MANAGER = new VkPSOManager();
   PSO_MANAGER->initialize();
+  globals::PSO_MANAGER = PSO_MANAGER;
 
   CONSTANT_BUFFER_MANAGER = new VkConstantBufferManager();
   CONSTANT_BUFFER_MANAGER->initialize();

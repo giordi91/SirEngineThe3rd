@@ -1,16 +1,17 @@
-#include "platform/windows/graphics/dx12/rootSignatureManager.h"
+
+#include "platform/windows/graphics/dx12/dx12RootSignatureManager.h"
 #include "SirEngine/binary/binaryFile.h"
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/d3dx12.h"
-#include <d3d12.h>
+
 #include <d3dcompiler.h>
 
 namespace SirEngine {
 namespace dx12 {
 
-void RootSignatureManager::cleanup() {
+void Dx12RootSignatureManager::cleanup() {
   // cleanup the allocated root signatures
   //for (const auto& it : m_rootRegister) {
   //    getRootSignatureFromHandle(it.second)->Release();
@@ -18,7 +19,7 @@ void RootSignatureManager::cleanup() {
   //m_rootRegister.clear();
 }
 
-void RootSignatureManager::loadSignatureBinaryFile(const char *file) {
+void Dx12RootSignatureManager::loadSignatureBinaryFile(const char *file) {
 
   // check the file exists and read all the binary data out of the file
   const auto expPath = std::filesystem::path(file);
@@ -70,7 +71,7 @@ void RootSignatureManager::loadSignatureBinaryFile(const char *file) {
   }
 }
 
-void RootSignatureManager::loadSignaturesInFolder(const char *directory) {
+void Dx12RootSignatureManager::loadSignaturesInFolder(const char *directory) {
 
   std::vector<std::string> paths;
   listFilesInFolder(directory, paths, "root");
