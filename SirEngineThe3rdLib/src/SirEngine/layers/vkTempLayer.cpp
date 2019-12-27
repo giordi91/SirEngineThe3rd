@@ -17,6 +17,7 @@
 #include "platform/windows/graphics/vk/vkSwapChain.h"
 #include "platform/windows/graphics/vk/vkTextureManager.h"
 #include "platform/windows/graphics/vk/volk.h"
+#include "SirEngine/assetManager.h"
 
 namespace SirEngine {
 void VkTempLayer::createRenderTargetAndFrameBuffer(const int width,
@@ -37,6 +38,9 @@ void VkTempLayer::createRenderTargetAndFrameBuffer(const int width,
 
   VK_CHECK(vkCreateFramebuffer(vk::LOGICAL_DEVICE, &createInfo, nullptr,
                                &m_tempFrameBuffer));
+
+  //globals::ASSET_MANAGER->loadScene(globals::ENGINE_CONFIG->m_startScenePath);
+  //globals::ASSET_MANAGER->loadScene("../data/scenes/tempScene.json");
 }
 
 void VkTempLayer::onAttach() {

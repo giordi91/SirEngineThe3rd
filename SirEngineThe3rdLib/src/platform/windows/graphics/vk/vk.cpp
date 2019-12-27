@@ -19,6 +19,7 @@
 #include "platform/windows/graphics/vk/vkSwapChain.h"
 #include "vkMeshManager.h"
 #include "vkTextureManager.h"
+#include "SirEngine/assetManager.h"
 
 namespace SirEngine::vk {
 VkInstance INSTANCE = nullptr;
@@ -189,6 +190,9 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   TEXTURE_MANAGER = new VkTextureManager();
   TEXTURE_MANAGER->initialize();
   globals::TEXTURE_MANAGER = TEXTURE_MANAGER;
+
+  globals::ASSET_MANAGER = new AssetManager();
+  globals::ASSET_MANAGER->initialize();
 
   return true;
 }

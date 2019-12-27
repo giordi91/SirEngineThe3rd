@@ -1,0 +1,5 @@
+{
+  "pso" :  "forwardPhongPSO", 
+  "rs"  :  "forwardPhongRS",
+  "type" : "forwardPhong"
+}
