@@ -139,8 +139,8 @@ void renderMemoryPoolTracker(
     ImRect innerBB(minB, maxB);
     ImGui::RenderRectFilledRangeH(
         window->DrawList, bb, ImGui::GetColorU32(COLORS[i]),
-        clusteredAllocs[i].m_offset / range,
-        (clusteredAllocs[i].m_offset + clusteredAllocs[i].m_size) / range,
+        static_cast<float>(clusteredAllocs[i].m_offset / range),
+        static_cast<float>((clusteredAllocs[i].m_offset + clusteredAllocs[i].m_size) / range),
         style.FrameRounding);
 
     const bool hovered = ImGui::ItemHoverable(bb, id);

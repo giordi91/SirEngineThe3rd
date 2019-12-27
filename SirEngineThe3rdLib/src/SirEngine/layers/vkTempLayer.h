@@ -1,13 +1,10 @@
 #pragma once
-#include "platform/windows/graphics/vk/volk.h"
 #include <vulkan/vulkan.h>
 
 #include "SirEngine/handle.h"
 #include "SirEngine/layer.h"
-#include "platform/windows/graphics/vk/vkMemory.h"
-#include "platform/windows/graphics/vk/vkMesh.h"
-#include "platform/windows/graphics/vk/vkTexture.h"
 #include "platform/windows/graphics/vk/vkMeshManager.h"
+#include "platform/windows/graphics/vk/vkTexture.h"
 
 namespace SirEngine {
 namespace vk {

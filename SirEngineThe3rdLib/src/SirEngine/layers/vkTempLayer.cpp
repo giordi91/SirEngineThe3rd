@@ -8,7 +8,6 @@
 #include "SirEngine/engineConfig.h"
 #include "SirEngine/layers/vkTempLayer.h"
 #include "platform/windows/graphics/vk/vk.h"
-#include "platform/windows/graphics/vk/vkBufferManager.h"
 #include "platform/windows/graphics/vk/vkConstantBufferManager.h"
 #include "platform/windows/graphics/vk/vkDescriptors.h"
 #include "platform/windows/graphics/vk/vkLoad.h"
@@ -142,39 +141,9 @@ void VkTempLayer::createDescriptorLayoutAdvanced() {
   // Update the descriptor set with the actual descriptors matching shader
   // bindings set in the layout
   // this far we defined just what descriptor we wanted and how they were setup,
-  // now we need to actually define the content of those descriptrs, the actual
+  // now we need to actually define the content of those descriptors, the actual
   // resources
   VkWriteDescriptorSet writeDescriptorSets[5] = {};
-
-  // actual information of the descriptor, in this case it is our mesh buffer
-  //VkDescriptorBufferInfo bufferInfoP = {};
-  //bufferInfoP.buffer = m_vertexBufferD.buffer;
-  //bufferInfoP.offset = m_meshD.m_positions.offset;
-  //bufferInfoP.range = m_meshD.m_positions.size;
-  //VkDescriptorBufferInfo bufferInfoN = {};
-  //bufferInfoN.buffer = m_vertexBufferD.buffer;
-  //bufferInfoN.offset = m_meshD.m_normals.offset;
-  //bufferInfoN.range = m_meshD.m_normals.size;
-  //VkDescriptorBufferInfo bufferInfoUV = {};
-  //bufferInfoUV.buffer = m_vertexBufferD.buffer;
-  //bufferInfoUV.offset = m_meshD.m_uv.offset;
-  //bufferInfoUV.range = m_meshD.m_uv.size;
-
-  /*
-  VkDescriptorBufferInfo bufferInfoP = {};
-  bufferInfoP.buffer = m_newVtxBuffer.buffer;
-  bufferInfoP.offset = md.meshRuntime.positionRange.m_offset;
-  bufferInfoP.range = md.meshRuntime.positionRange.m_size;
-  VkDescriptorBufferInfo bufferInfoN = {};
-  bufferInfoN.buffer = m_newVtxBuffer.buffer;
-  bufferInfoN.offset = md.meshRuntime.normalsRange.m_offset;
-  bufferInfoN.range = md.meshRuntime.normalsRange.m_size;
-  VkDescriptorBufferInfo bufferInfoUV = {};
-  bufferInfoUV.buffer = m_newVtxBuffer.buffer;
-  bufferInfoUV.offset = md.meshRuntime.normalsRange.m_offset;
-  bufferInfoUV.range = md.meshRuntime.uvRange.m_size;
-  */
-
 
   // actual information of the descriptor, in this case it is our mesh buffer
   VkDescriptorBufferInfo bufferInfoUniform = {};
@@ -182,42 +151,8 @@ void VkTempLayer::createDescriptorLayoutAdvanced() {
       m_cameraBufferHandle, bufferInfoUniform, 0, writeDescriptorSets,
       m_meshDescriptorSet);
 
-  /*
-  // vk::MESH_MANAGER->bindMesh(meshHandle,&writeDescriptorSets[1],m_meshDescriptorSet);
-  // updating descriptors, with no samplers bound
-  // Binding 0: Object mesh buffer
-  writeDescriptorSets[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  writeDescriptorSets[1].dstSet = m_meshDescriptorSet;
-  writeDescriptorSets[1].dstBinding = 1;
-  writeDescriptorSets[1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  writeDescriptorSets[1].pBufferInfo = &bufferInfoP;
-  writeDescriptorSets[1].descriptorCount = 1;
-
-  writeDescriptorSets[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  writeDescriptorSets[2].dstSet = m_meshDescriptorSet;
-  writeDescriptorSets[2].dstBinding = 2;
-  writeDescriptorSets[2].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  writeDescriptorSets[2].pBufferInfo = &bufferInfoN;
-  writeDescriptorSets[2].descriptorCount = 1;
-
-  writeDescriptorSets[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  writeDescriptorSets[3].dstSet = m_meshDescriptorSet;
-  writeDescriptorSets[3].dstBinding = 3;
-  writeDescriptorSets[3].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  writeDescriptorSets[3].pBufferInfo = &bufferInfoUV;
-  writeDescriptorSets[3].descriptorCount = 1;
-  */
-
   VkDescriptorBufferInfo bufferInfo[3]={};
   vk::MESH_MANAGER->bindMesh(meshHandle,writeDescriptorSets,m_meshDescriptorSet, bufferInfo);
-
-  //// Binding 0: Object matrices Uniform buffer
-  // writeDescriptorSets[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  // writeDescriptorSets[1].dstSet = m_meshDescriptorSet;
-  // writeDescriptorSets[1].dstBinding = 1;
-  // writeDescriptorSets[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  // writeDescriptorSets[1].pBufferInfo = &bufferInfoUniform;
-  // writeDescriptorSets[1].descriptorCount = 1;
 
   // Binding 2: Object texture
   writeDescriptorSets[4].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -234,7 +169,6 @@ void VkTempLayer::createDescriptorLayoutAdvanced() {
   // once, even for multiple sets This is possible because each
   // VkWriteDescriptorSet also contains the destination set to be updated
   // For simplicity we will update once per set instead
-  // vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, ARRAYSIZE(writeDescriptorSets),
   vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, ARRAYSIZE(writeDescriptorSets),
                          writeDescriptorSets, 0, nullptr);
 }
