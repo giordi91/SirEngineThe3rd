@@ -4,7 +4,7 @@
 #include <vector>
 #include <glm/glm.hpp>
 #include "platform/windows/graphics/dx12/DX12.h"
-#include "SirEngine/materialManager.h"
+#include "platform/windows/graphics/dx12/dx12MaterialManager.h"
 
 namespace SirEngine {
 

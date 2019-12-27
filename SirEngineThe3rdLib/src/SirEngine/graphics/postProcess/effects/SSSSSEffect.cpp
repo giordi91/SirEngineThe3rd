@@ -5,9 +5,9 @@
 #include "platform/windows/graphics/dx12/PSOManager.h"
 #include "platform/windows/graphics/dx12/dx12TextureManager.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
+#include "platform/windows/graphics/dx12/dx12MaterialManager.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/graphics/debugAnnotations.h"
-#include "SirEngine/materialManager.h"
 
 namespace SirEngine {
 static const char *SSSSS_RS = "SSSSSEffect_RS";

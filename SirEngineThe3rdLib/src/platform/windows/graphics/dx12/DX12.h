@@ -13,7 +13,7 @@ namespace SirEngine {
 class IdentityManager;
 class BaseWindow;
 class AssetManager;
-class MaterialManager;
+class Dx12MaterialManager;
 class DependencyGraph;
 
 namespace dx12 {
@@ -128,7 +128,7 @@ extern FrameResource *CURRENT_FRAME_RESOURCE;
 // resource managers
 extern Dx12TextureManager *TEXTURE_MANAGER;
 extern Dx12MeshManager *MESH_MANAGER;
-extern MaterialManager *MATERIAL_MANAGER;
+extern Dx12MaterialManager *MATERIAL_MANAGER;
 extern DependencyGraph *RENDERING_GRAPH;
 extern Dx12ConstantBufferManager *CONSTANT_BUFFER_MANAGER;
 extern ShaderManager *SHADER_MANAGER;

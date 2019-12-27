@@ -5,7 +5,6 @@
 #include "SirEngine/graphics/cpuGraphicsStructures.h"
 #include "SirEngine/graphics/debugAnnotations.h"
 #include "SirEngine/graphics/renderingContext.h"
-#include "SirEngine/materialManager.h"
 #include "SirEngine/memory/stringPool.h"
 #include "SirEngine/runtimeString.h"
 #include "platform/windows/graphics/dx12/DX12.h"
@@ -13,6 +12,7 @@
 #include "platform/windows/graphics/dx12/dx12TextureManager.h"
 #include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
+#include "platform/windows/graphics/dx12/dx12MaterialManager.h"
 
 namespace SirEngine::dx12 {
 void DebugRenderer::init() {

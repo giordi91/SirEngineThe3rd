@@ -7,19 +7,19 @@
 #include "SirEngine/graphics/debugAnnotations.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/log.h"
-#include "SirEngine/materialManager.h"
 #include "SirEngine/memory/stringPool.h"
 #include "SirEngine/runtimeString.h"
 #include "SirEngine/skinClusterManager.h"
 #include "platform/windows/graphics/dx12/PSOManager.h"
-#include "platform/windows/graphics/dx12/dx12TextureManager.h"
-#include "platform/windows/graphics/dx12/dx12BufferManager.h"
 #include "platform/windows/graphics/dx12/debugRenderer.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/dx12Adapter.h"
+#include "platform/windows/graphics/dx12/dx12BufferManager.h"
 #include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
+#include "platform/windows/graphics/dx12/dx12MaterialManager.h"
 #include "platform/windows/graphics/dx12/dx12MeshManager.h"
 #include "platform/windows/graphics/dx12/dx12SwapChain.h"
+#include "platform/windows/graphics/dx12/dx12TextureManager.h"
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
 #include "platform/windows/graphics/dx12/shaderLayout.h"
 #include "platform/windows/graphics/dx12/shaderManager.h"
@@ -44,7 +44,7 @@ FrameResource FRAME_RESOURCES[FRAME_BUFFERS_COUNT];
 FrameResource *CURRENT_FRAME_RESOURCE = nullptr;
 Dx12TextureManager *TEXTURE_MANAGER = nullptr;
 Dx12MeshManager *MESH_MANAGER = nullptr;
-MaterialManager *MATERIAL_MANAGER = nullptr;
+Dx12MaterialManager *MATERIAL_MANAGER = nullptr;
 DependencyGraph *RENDERING_GRAPH = nullptr;
 Dx12ConstantBufferManager *CONSTANT_BUFFER_MANAGER = nullptr;
 ShaderManager *SHADER_MANAGER = nullptr;
@@ -57,7 +57,7 @@ Dx12RenderingContext *RENDERING_CONTEXT = nullptr;
 
 struct Dx12Renderable {
   MeshRuntime m_meshRuntime;
-  MaterialRuntime m_materialRuntime;
+  Dx12MaterialRuntime m_materialRuntime;
 };
 
 typedef std::unordered_map<uint32_t, std::vector<Dx12Renderable>>
@@ -216,9 +216,9 @@ bool initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
 
   // mesh manager needs to load after pso and RS since it initialize material
   // types
-  MATERIAL_MANAGER = new MaterialManager();
+  MATERIAL_MANAGER = new Dx12MaterialManager();
 
-  MATERIAL_MANAGER->init();
+  MATERIAL_MANAGER->inititialize();
   MATERIAL_MANAGER->loadTypesInFolder(frameConcatenation(
       globals::ENGINE_CONFIG->m_dataSourcePath, "/materials/types"));
 
@@ -599,7 +599,7 @@ void Dx12RenderingContext::addRenderablesToQueue(const Renderable &renderable) {
 
   Dx12Renderable dx12Renderable{};
 
-  const MaterialRuntime &materialRuntime =
+  const Dx12MaterialRuntime &materialRuntime =
       dx12::MATERIAL_MANAGER->getMaterialRuntime(renderable.m_materialHandle);
   const MeshRuntime &meshRuntime =
       dx12::MESH_MANAGER->getMeshRuntime(renderable.m_meshHandle);
@@ -651,8 +651,7 @@ void Dx12RenderingContext::renderQueueType(const SHADER_QUEUE_FLAGS queueFlag) {
         dx12::MATERIAL_MANAGER->bindMaterial(
             queueFlag, renderable.m_materialRuntime, commandList);
 
-        dx12::MESH_MANAGER->render(
-            renderable.m_meshRuntime, currentFc);
+        dx12::MESH_MANAGER->render(renderable.m_meshRuntime, currentFc);
 
         // if(SHADER_QUEUE_FLAGS::SHADOW == queueFlag) {
         //	dx12::MESH_MANAGER->bindMeshRuntimeAndRenderPosOnly(renderable.m_meshRuntime,
