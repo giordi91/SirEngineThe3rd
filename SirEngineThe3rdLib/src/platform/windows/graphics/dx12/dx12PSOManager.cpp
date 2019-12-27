@@ -5,7 +5,6 @@
 #include <d3d12.h>
 
 #include "platform/windows/graphics/dx12/rootSignatureManager.h"
-#include "platform/windows/graphics/dx12/shaderLayout.h"
 #include "platform/windows/graphics/dx12/shaderManager.h"
 
 #include <iostream>
@@ -26,15 +25,7 @@ static const std::string PSO_KEY_SHADER_NAME = "shaderName";
 static const std::string PSO_KEY_VS_SHADER = "VS";
 static const std::string PSO_KEY_PS_SHADER = "PS";
 
-void Dx12PSOManager::init(D3D12DeviceType *device,
-                      SirEngine::dx12::ShadersLayoutRegistry *registry,
-                      SirEngine::dx12::RootSignatureManager *root,
-                      SirEngine::dx12::ShaderManager *shader) {
-  m_dxrDevice = device;
-  rs_manager = root;
-  shaderManager = shader;
-  layoutManger = registry;
-}
+void Dx12PSOManager::init() {}
 void Dx12PSOManager::cleanup() {
   // TODO need to be able to iterate hash map even if not ideal;
   // or I cannot free the pso
@@ -125,7 +116,6 @@ PSOCompileResult Dx12PSOManager::loadCachedPSO(const char *path) {
   ptrOffset += mapper->psShaderNameSize;
   char *csPath = mapper->csShaderNameSize == 0 ? nullptr : ptrOffset;
   ptrOffset += mapper->csShaderNameSize;
-  char *inputLayout = mapper->inputLayoutSize == 0 ? nullptr : ptrOffset;
   ptrOffset += mapper->inputLayoutSize;
   char *rootSignature = mapper->rootSignatureSize == 0 ? nullptr : ptrOffset;
   ptrOffset += mapper->rootSignatureSize;
@@ -145,9 +135,7 @@ PSOCompileResult Dx12PSOManager::loadCachedPSO(const char *path) {
     desc->VS = getShaderByteCodeFromFullPath(vsPath);
     desc->PS = getShaderByteCodeFromFullPath(psPath);
 
-    SirEngine::dx12::LayoutHandle layout =
-        dx12::SHADER_LAYOUT_REGISTRY->getShaderLayoutFromName(inputLayout);
-    desc->InputLayout = {layout.layout, static_cast<UINT>(layout.size)};
+    desc->InputLayout = {nullptr, 0};
     ID3D12RootSignature *root =
         dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(
             getFileName(rootSignature).c_str());
@@ -193,7 +181,8 @@ PSOCompileResult Dx12PSOManager::loadCachedPSO(const char *path) {
   return result;
 }
 
-void Dx12PSOManager::updatePSOCache(const char *name, ID3D12PipelineState *pso) {
+void Dx12PSOManager::updatePSOCache(const char *name,
+                                    ID3D12PipelineState *pso) {
   assert(m_psoRegisterHandle.containsKey(name));
   PSOHandle handle;
   m_psoRegisterHandle.get(name, handle);
@@ -272,7 +261,7 @@ void Dx12PSOManager::insertInPSOCache(const PSOCompileResult &result) {
 }
 
 void Dx12PSOManager::recompilePSOFromShader(const char *shaderName,
-                                        const char *offsetPath) {
+                                            const char *offsetPath) {
   // clearing the log
   compileLog = "";
   ResizableVector<const char *> *psos;
@@ -326,7 +315,8 @@ void Dx12PSOManager::recompilePSOFromShader(const char *shaderName,
 
   // recompile all the shaders involved
   for (auto &shader : shadersToRecompile) {
-    shaderManager->recompileShader(shader.c_str(), offsetPath, &compileLog);
+    dx12::SHADER_MANAGER->recompileShader(shader.c_str(), offsetPath,
+                                          &compileLog);
   }
 
   // now that all shaders are recompiled we can recompile the pso

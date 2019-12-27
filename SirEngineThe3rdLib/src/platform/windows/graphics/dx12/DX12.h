@@ -134,7 +134,6 @@ extern Dx12ConstantBufferManager *CONSTANT_BUFFER_MANAGER;
 extern ShaderManager *SHADER_MANAGER;
 extern RootSignatureManager *ROOT_SIGNATURE_MANAGER;
 extern Dx12PSOManager *PSO_MANAGER;
-extern SIR_ENGINE_API ShadersLayoutRegistry *SHADER_LAYOUT_REGISTRY;
 extern BufferManagerDx12 *BUFFER_MANAGER;
 extern DebugRenderer *DEBUG_RENDERER;
 extern Dx12RenderingContext *RENDERING_CONTEXT;

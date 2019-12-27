@@ -31,9 +31,7 @@ public:
   Dx12PSOManager(const Dx12PSOManager &) = delete;
   Dx12PSOManager &operator=(const Dx12PSOManager &) = delete;
 
-  void init(D3D12DeviceType *device, SirEngine::dx12::ShadersLayoutRegistry *,
-            SirEngine::dx12::RootSignatureManager *,
-            SirEngine::dx12::ShaderManager *);
+  void init();
   void cleanup();
   void loadRawPSOInFolder(const char *directory);
   void loadCachedPSOInFolder(const char *directory);
@@ -113,10 +111,6 @@ private:
 
   HashMap<const char *, ResizableVector<const char *> *, hashString32>
       m_shaderToPSOFile;
-
-  ShadersLayoutRegistry *layoutManger = nullptr;
-  RootSignatureManager *rs_manager = nullptr;
-  ShaderManager *shaderManager = nullptr;
 
   // this is only used for the hot recompilation
   std::string compileLog;

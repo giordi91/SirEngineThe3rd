@@ -7,7 +7,6 @@
 #include "platform/windows/graphics/dx12/dxgiFormatsDefine.h"
 #include "rootSignatureCompile.h"
 #include "shaderCompiler.h"
-#include "shaderLayout.h"
 
 namespace SirEngine::dx12 {
 static const std::string PSO_KEY_GLOBAL_ROOT = "globalRootSignature";
@@ -316,8 +315,6 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj, const char *path,
   // find the input layout
   const std::string layoutString =
       getValueIfInJson(jobj, PSO_KEY_INPUT_LAYOUT, DEFAULT_STRING);
-  SirEngine::dx12::LayoutHandle layout =
-      dx12::SHADER_LAYOUT_REGISTRY->getShaderLayoutFromName(layoutString);
 
   const std::string rootSignatureString =
       getValueIfInJson(jobj, PSO_KEY_GLOBAL_ROOT, DEFAULT_STRING);
@@ -407,7 +404,8 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj, const char *path,
   auto *psoDesc = new D3D12_GRAPHICS_PIPELINE_STATE_DESC();
   ID3D12PipelineState *pso = nullptr;
   ZeroMemory(psoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
-  psoDesc->InputLayout = {layout.layout, static_cast<UINT>(layout.size)};
+  //NOTE: we are not using input assembler at all
+  psoDesc->InputLayout = {nullptr, 0};
   psoDesc->pRootSignature = rootSignature;
   psoDesc->VS = {reinterpret_cast<BYTE *>(vs->GetBufferPointer()),
                  vs->GetBufferSize()};

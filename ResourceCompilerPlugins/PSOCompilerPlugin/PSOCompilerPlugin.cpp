@@ -6,8 +6,6 @@
 
 #include "SirEngine/argsUtils.h"
 #include "SirEngine/binary/binaryFile.h"
-#include "platform/windows/graphics/dx12/dx12Adapter.h"
-#include "platform/windows/graphics/dx12/shaderLayout.h"
 
 const std::string PLUGIN_NAME = "PSOCompilerPlugin";
 const unsigned int VERSION_MAJOR = 0;
