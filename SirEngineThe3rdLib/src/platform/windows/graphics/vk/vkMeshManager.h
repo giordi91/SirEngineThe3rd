@@ -76,8 +76,6 @@ public:
     assert(0);
     return nullptr;
   };
-  void bindMesh(MeshHandle handle, VkWriteDescriptorSet *set,
-                VkDescriptorSet descriptorSet, VkDescriptorBufferInfo *info);
 
   inline void renderMesh(const MeshHandle handle,
                          const VkCommandBuffer commandBuffer) const {
@@ -91,6 +89,15 @@ public:
   };
 
   void free(const MeshHandle handle) override;
+  // vk methods
+  VkMeshRuntime getMeshRuntime(const MeshHandle &handle) const {
+    assertMagicNumber(handle);
+    uint32_t index = getIndexFromHandle(handle);
+    const MeshData &data = m_meshPool.getConstRef(index);
+    return data.meshRuntime;
+  };
+  void bindMesh(MeshHandle handle, VkWriteDescriptorSet *set,
+                VkDescriptorSet descriptorSet, VkDescriptorBufferInfo *info);
 
 private:
   inline void assertMagicNumber(const MeshHandle handle) const {
@@ -108,7 +115,6 @@ private:
     }
     return MeshHandle{0};
   }
-
 
   inline const std::vector<BoundingBox> &getBoundingBoxes() {
     return m_boundingBoxes;

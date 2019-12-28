@@ -175,6 +175,7 @@ public:
   void renderMaterialType(const SHADER_QUEUE_FLAGS flag) override;
 
 private:
+    void* queues = nullptr;
   /*
 // member variable mostly temporary
 CameraBuffer m_camBufferCPU{};

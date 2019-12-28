@@ -87,7 +87,7 @@ private:
   bool loadTextureFromFile(const char *name, VkFormat format, VkDevice device,
                            VkTexture2DTemp &outTexture,
                            VkImageUsageFlags imageUsageFlags,
-                           VkImageLayout imageLayout);
+                           VkImageLayout imageLayout, bool isCube =false) const;
   inline void assertMagicNumber(const TextureHandle handle) const {
     const uint32_t magic = getMagicFromHandle(handle);
     const uint32_t idx = getIndexFromHandle(handle);

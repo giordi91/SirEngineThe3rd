@@ -54,7 +54,7 @@ DebugRenderer *DEBUG_RENDERER = nullptr;
 Dx12RenderingContext *RENDERING_CONTEXT = nullptr;
 
 struct Dx12Renderable {
-  MeshRuntime m_meshRuntime;
+  Dx12MeshRuntime m_meshRuntime;
   Dx12MaterialRuntime m_materialRuntime;
 };
 
@@ -598,7 +598,7 @@ void Dx12RenderingContext::addRenderablesToQueue(const Renderable &renderable) {
 
   const Dx12MaterialRuntime &materialRuntime =
       dx12::MATERIAL_MANAGER->getMaterialRuntime(renderable.m_materialHandle);
-  const MeshRuntime &meshRuntime =
+  const Dx12MeshRuntime &meshRuntime =
       dx12::MESH_MANAGER->getMeshRuntime(renderable.m_meshHandle);
 
   dx12Renderable.m_materialRuntime = materialRuntime;
