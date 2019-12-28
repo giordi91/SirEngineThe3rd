@@ -11,7 +11,7 @@
 #include "platform/windows/graphics/dx12/dx12PSOManager.h"
 
 
-namespace SirEngine {
+namespace SirEngine::dx12 {
 
 
 static const std::unordered_map<std::string, SirEngine::SHADER_TYPE_FLAGS>

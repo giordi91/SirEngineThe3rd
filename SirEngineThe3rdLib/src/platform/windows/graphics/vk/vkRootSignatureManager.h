@@ -43,7 +43,7 @@ public:
   }
 
   inline void bindGraphicsRS(const RSHandle handle,
-                             VkCommandBuffer *commandList) const {
+                             VkCommandBuffer commandList) const {
 
     assertMagicNumber(handle);
     const uint32_t index = getIndexFromHandle(handle);

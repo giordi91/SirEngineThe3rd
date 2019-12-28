@@ -6,20 +6,19 @@
 #include "SirEngine/memory/stringHashMap.h"
 #include <cassert>
 
-#include "platform/windows/graphics/dx12/descriptorHeap.h"
+#include "platform/windows/graphics/vk/volk.h"
+namespace SirEngine::vk {
 
-namespace SirEngine::dx12 {
-
-struct Dx12MaterialRuntime final {
-  D3D12_GPU_VIRTUAL_ADDRESS cbVirtualAddress;
-  D3D12_GPU_DESCRIPTOR_HANDLE albedo;
-  D3D12_GPU_DESCRIPTOR_HANDLE normal;
-  D3D12_GPU_DESCRIPTOR_HANDLE metallic;
-  D3D12_GPU_DESCRIPTOR_HANDLE roughness;
-  D3D12_GPU_DESCRIPTOR_HANDLE thickness;
-  D3D12_GPU_DESCRIPTOR_HANDLE separateAlpha;
-  D3D12_GPU_DESCRIPTOR_HANDLE heightMap;
-  D3D12_GPU_DESCRIPTOR_HANDLE ao;
+struct VkMaterialRuntime final {
+  VkDescriptorBufferInfo cbVirtualAddress;
+  VkDescriptorImageInfo albedo;
+  VkDescriptorImageInfo normal;
+  VkDescriptorImageInfo metallic;
+  VkDescriptorImageInfo roughness;
+  VkDescriptorImageInfo thickness;
+  VkDescriptorImageInfo separateAlpha;
+  VkDescriptorImageInfo heightMap;
+  VkDescriptorImageInfo ao;
   uint32_t shaderQueueTypeFlags[4] = {
       INVALID_QUEUE_TYPE_FLAGS, INVALID_QUEUE_TYPE_FLAGS,
       INVALID_QUEUE_TYPE_FLAGS, INVALID_QUEUE_TYPE_FLAGS};
@@ -27,45 +26,35 @@ struct Dx12MaterialRuntime final {
   MeshHandle meshHandle;
 };
 
-
 struct MaterialData {
   MaterialDataHandles handles;
-  dx12::DescriptorPair albedoSrv;
-  dx12::DescriptorPair normalSrv;
-  dx12::DescriptorPair metallicSrv;
-  dx12::DescriptorPair roughnessSrv;
-  dx12::DescriptorPair thicknessSrv;
-  dx12::DescriptorPair separateAlphaSrv;
-  dx12::DescriptorPair aoSrv;
-  dx12::DescriptorPair heightSrv;
   uint32_t magicNumber;
   Material m_material;
-  Dx12MaterialRuntime m_materialRuntime;
+  VkMaterialRuntime m_materialRuntime;
 };
 
-class Dx12MaterialManager final : public MaterialManager {
+class VkMaterialManager final : public MaterialManager {
 public:
-  Dx12MaterialManager()
-      : MaterialManager(RESERVE_SIZE),
-        m_nameToHandle(RESERVE_SIZE), m_materialTextureHandles(RESERVE_SIZE){};
-  ~Dx12MaterialManager() = default;
+  VkMaterialManager()
+      : MaterialManager(RESERVE_SIZE), m_nameToHandle(RESERVE_SIZE),
+        m_materialTextureHandles(RESERVE_SIZE){};
+  ~VkMaterialManager() = default;
   void inititialize() override{};
   void cleanup() override{};
   void bindMaterial(SHADER_QUEUE_FLAGS queueFlag, const MaterialHandle handle,
-                    ID3D12GraphicsCommandList2 *commandList);
+                    VkCommandBuffer commandList);
   void bindMaterial(SHADER_QUEUE_FLAGS queueFlag,
-                    const Dx12MaterialRuntime &runtime,
-                    ID3D12GraphicsCommandList2 *commandList);
+                    const VkMaterialRuntime &materialRuntime,
+                    VkCommandBuffer commandList);
 
-  void bindRSandPSO(uint32_t shaderFlags,
-                    ID3D12GraphicsCommandList2 *commandList);
-  Dx12MaterialManager(const Dx12MaterialManager &) = delete;
-  Dx12MaterialManager &operator=(const Dx12MaterialManager &) = delete;
+  void bindRSandPSO(uint32_t shaderFlags, VkCommandBuffer commandList);
+  VkMaterialManager(const VkMaterialManager &) = delete;
+  VkMaterialManager &operator=(const VkMaterialManager &) = delete;
 
   MaterialHandle loadMaterial(const char *path, const MeshHandle meshHandle,
                               const SkinHandle skinHandle);
 
-  const Dx12MaterialRuntime &getMaterialRuntime(const MaterialHandle handle) {
+  const VkMaterialRuntime &getMaterialRuntime(const MaterialHandle handle) {
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
     return m_materialTextureHandles.getConstRef(index).m_materialRuntime;
@@ -81,7 +70,6 @@ private:
   void loadTypeFile(const char *path);
 
 private:
-
   HashMap<const char *, MaterialHandle, hashString32> m_nameToHandle;
   static const uint32_t RESERVE_SIZE = 200;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
@@ -89,4 +77,4 @@ private:
   SparseMemoryPool<MaterialData> m_materialTextureHandles;
 };
 
-} // namespace SirEngine
+} // namespace SirEngine::vk

@@ -40,7 +40,7 @@ void VkTempLayer::createRenderTargetAndFrameBuffer(const int width,
                                &m_tempFrameBuffer));
 
   //globals::ASSET_MANAGER->loadScene(globals::ENGINE_CONFIG->m_startScenePath);
-  //globals::ASSET_MANAGER->loadScene("../data/scenes/tempScene.json");
+  globals::ASSET_MANAGER->loadScene("../data/scenes/tempScene.json");
 }
 
 void VkTempLayer::onAttach() {

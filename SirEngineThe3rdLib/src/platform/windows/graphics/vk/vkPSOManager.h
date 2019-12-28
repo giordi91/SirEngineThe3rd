@@ -59,7 +59,7 @@ public:
   void recompilePSOFromShader(const char *shaderName,
                               const char *getOffsetPath) override;
   inline void bindPSO(const PSOHandle handle,
-                      VkCommandBuffer *commandList) const {
+                      VkCommandBuffer commandList) const {
 
     assert(0);
     // assertMagicNumber(handle);

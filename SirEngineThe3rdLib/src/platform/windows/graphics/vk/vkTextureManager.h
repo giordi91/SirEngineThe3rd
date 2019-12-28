@@ -74,6 +74,15 @@ public:
     writeDescriptorSets[0].descriptorCount = 1;
   };
 
+  inline VkDescriptorImageInfo getTextureDescriptor(const TextureHandle handle)const
+  {
+    assertMagicNumber(handle);
+    const uint32_t idx = getIndexFromHandle(handle);
+    const auto &data = m_texturePool.getConstRef(idx);
+    return data.descriptor;
+  }
+	
+
 private:
   bool loadTextureFromFile(const char *name, VkFormat format, VkDevice device,
                            VkTexture2DTemp &outTexture,

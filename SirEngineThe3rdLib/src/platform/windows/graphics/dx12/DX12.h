@@ -6,14 +6,11 @@
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/graphics/cpuGraphicsStructures.h"
 #include <cassert>
-#include "SirEngine/memory/hashMap.h"
-#include "SirEngine/memory/resizableVector.h"
 
 namespace SirEngine {
 class IdentityManager;
 class BaseWindow;
 class AssetManager;
-class Dx12MaterialManager;
 class DependencyGraph;
 
 namespace dx12 {
@@ -30,6 +27,7 @@ class Dx12PSOManager;
 class BufferManagerDx12;
 class DebugRenderer;
 class Dx12RenderingContext;
+class Dx12MaterialManager;
 
 enum class DescriptorType {
   NONE = 0,
