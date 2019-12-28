@@ -15,7 +15,9 @@ class VkShaderManager;
 class VkTextureManager;
 class VkPipelineLayoutManager;
 class VkConstantBufferManager;
+class VkMaterialManager;
 struct VkSwapchain;
+
 
 static constexpr int PREALLOCATED_SEMAPHORE_COUNT = 4;
 static constexpr uint32_t VK_TIMEOUT_INFINITE =
@@ -53,6 +55,7 @@ extern VkConstantBufferManager *CONSTANT_BUFFER_MANAGER;
 extern VkBufferManager *BUFFER_MANAGER;
 extern VkMeshManager* MESH_MANAGER;
 extern VkTextureManager* TEXTURE_MANAGER;
+extern VkMaterialManager * MATERIAL_MANAGER;
 extern uint32_t SWAP_CHAIN_IMAGE_COUNT;
 // incremented every frame and used to find the correct set of resources
 // like command buffer pool and allocators

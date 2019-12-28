@@ -20,6 +20,7 @@
 #include "platform/windows/graphics/vk/vkSwapChain.h"
 #include "vkMeshManager.h"
 #include "vkTextureManager.h"
+#include "vkMaterialManager.h"
 
 namespace SirEngine::vk {
 VkInstance INSTANCE = nullptr;
@@ -44,6 +45,7 @@ VkPipelineLayoutManager *PIPELINE_LAYOUT_MANAGER = nullptr;
 VkBufferManager *BUFFER_MANAGER = nullptr;
 VkMeshManager *MESH_MANAGER = nullptr;
 VkTextureManager *TEXTURE_MANAGER = nullptr;
+VkMaterialManager * MATERIAL_MANAGER = nullptr;
 uint32_t SWAP_CHAIN_IMAGE_COUNT = 0;
 VkFrameCommand FRAME_COMMAND[PREALLOCATED_SEMAPHORE_COUNT];
 VkFrameCommand *CURRENT_FRAME_COMMAND = nullptr;
@@ -151,11 +153,11 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
                                FRAME_COMMAND[i].m_commandAllocator,
                                VK_COMMAND_BUFFER_LEVEL_PRIMARY,
                                FRAME_COMMAND[i].m_commandBuffer)) {
+      assert(0);
+    }
       SET_DEBUG_NAME(FRAME_COMMAND[i].m_commandBuffer,
                      VK_OBJECT_TYPE_COMMAND_BUFFER,
                      frameConcatenation("commandBuffer", frame));
-      assert(0);
-    }
   }
 
   CURRENT_FRAME_COMMAND = &FRAME_COMMAND[0];
@@ -192,6 +194,10 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   TEXTURE_MANAGER = new VkTextureManager();
   TEXTURE_MANAGER->initialize();
   globals::TEXTURE_MANAGER = TEXTURE_MANAGER;
+
+  MATERIAL_MANAGER = new VkMaterialManager();
+  MATERIAL_MANAGER->inititialize();
+  globals::MATERIAL_MANAGER= MATERIAL_MANAGER;
 
   globals::ASSET_MANAGER = new AssetManager();
   globals::ASSET_MANAGER->initialize();

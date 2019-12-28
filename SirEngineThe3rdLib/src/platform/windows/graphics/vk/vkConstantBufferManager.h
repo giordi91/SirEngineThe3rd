@@ -55,10 +55,26 @@ public:
   // any buffered constant buffer will be dealt with
   virtual void processBufferedData() override;
 
+  // vk methods
   void bindConstantBuffer(ConstantBufferHandle handle,
                           VkDescriptorBufferInfo &bufferInfo,
                           uint32_t bindingIdx, VkWriteDescriptorSet *set,
                           VkDescriptorSet descSet);
+  inline VkDescriptorBufferInfo
+  getBufferDescriptor(const ConstantBufferHandle &handle) const {
+    assertMagicNumber(handle);
+    uint32_t idx = getIndexFromHandle(handle);
+    const ConstantBufferData &buffData = m_allocInfoStorage.getConstRef(idx);
+    const Slab &slab =
+        m_perFrameSlabs[globals::CURRENT_FRAME][buffData.m_slabIdx];
+
+    // actual information of the descriptor, in this case it is our mesh buffer
+    VkDescriptorBufferInfo bufferInfo;
+    bufferInfo.buffer = slab.m_buffer.buffer;
+    bufferInfo.offset = buffData.m_range.m_offset;
+    bufferInfo.range = buffData.m_range.m_size;
+    return bufferInfo;
+  }
 
   [[nodiscard]] const ResizableVector<BufferRangeTracker> *
   getAllocations() const;
@@ -86,10 +102,10 @@ private:
   void allocateSlab();
   int getFreeSlabIndex(uint32_t allocSize);
 
-  inline void assertMagicNumber(const ConstantBufferHandle handle) {
+  inline void assertMagicNumber(const ConstantBufferHandle handle) const {
     uint32_t magic = getMagicFromHandle(handle);
     uint32_t idx = getIndexFromHandle(handle);
-    assert(m_allocInfoStorage[idx].m_magicNumber == magic &&
+    assert(m_allocInfoStorage.getConstRef(idx).m_magicNumber == magic &&
            "invalid magic handle for constant buffer");
   }
 
