@@ -113,6 +113,7 @@ ConstantBufferHandle
 VkConstantBufferManager::allocateDynamic(const uint32_t sizeInBytes,
                                          void *inputData) {
 
+  assert(0);
   return {};
 }
 

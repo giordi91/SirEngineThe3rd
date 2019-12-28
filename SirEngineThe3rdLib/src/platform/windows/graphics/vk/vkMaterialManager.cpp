@@ -448,9 +448,8 @@ MaterialHandle VkMaterialManager::loadMaterial(const char *path,
   memcpy(&matCpu.shaderQueueTypeFlags, parse.shaderQueueTypeFlags,
          sizeof(uint32_t) * 4);
 
-  materialData.handles.cbHandle =
-      globals::CONSTANT_BUFFER_MANAGER->allocateDynamic(sizeof(Material),
-                                                        &parse.mat);
+  materialData.handles.cbHandle = globals::CONSTANT_BUFFER_MANAGER->allocate(
+      sizeof(Material), 0, &parse.mat);
 
   matCpu.cbVirtualAddress = vk::CONSTANT_BUFFER_MANAGER->getBufferDescriptor(
       materialData.handles.cbHandle);

@@ -14,7 +14,7 @@
 namespace SirEngine {
 namespace dx12 {
 
-struct MeshRuntime final {
+struct Dx12MeshRuntime final {
   D3D12_INDEX_BUFFER_VIEW iview;
   uint32_t indexCount;
   BufferHandle bufferHandle;
@@ -31,7 +31,7 @@ private:
     uint32_t stride : 16;
     ID3D12Resource *indexBuffer;
     BufferHandle idxBuffHandle;
-    MeshRuntime meshRuntime;
+    Dx12MeshRuntime meshRuntime;
     uint32_t indexCount;
     uint32_t vertexCount;
     uint32_t entityID; // this is an id that is used to index other data that we
@@ -103,21 +103,21 @@ public:
     return m_boundingBoxes.data();
   }
 
-  inline void bindMeshRuntimeForRender(const MeshRuntime &runtime,
+  inline void bindMeshRuntimeForRender(const Dx12MeshRuntime &runtime,
                                        FrameCommand *fc) const {
     fc->commandList->IASetIndexBuffer(&runtime.iview);
     fc->commandList->IASetPrimitiveTopology(
         D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
   }
 
-  [[nodiscard]] const MeshRuntime &
+  [[nodiscard]] const Dx12MeshRuntime &
   getMeshRuntime(const MeshHandle &handle) const {
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
     const MeshData &data = m_meshPool.getConstRef(index);
     return data.meshRuntime;
   }
-  void bindMeshRuntimeAndRenderPosOnly(const MeshRuntime &meshRuntime,
+  void bindMeshRuntimeAndRenderPosOnly(const Dx12MeshRuntime &meshRuntime,
                                        FrameCommand *currentFc) {
     bindMeshRuntimeForRender(meshRuntime, currentFc);
 
@@ -125,19 +125,19 @@ public:
         meshRuntime.bufferHandle, 4, currentFc->commandList,
         meshRuntime.positionRange.m_offset);
   }
-  void render(const MeshRuntime &meshRuntime, FrameCommand *currentFc) {
+  void render(const Dx12MeshRuntime &meshRuntime, FrameCommand *currentFc) {
     currentFc->commandList->DrawIndexedInstanced(meshRuntime.indexCount, 1, 0,
                                                  0, 0);
   }
   void render(const MeshHandle handle, FrameCommand *currentFc) {
-    const MeshRuntime &runtime = getMeshRuntime(handle);
+    const Dx12MeshRuntime &runtime = getMeshRuntime(handle);
     currentFc->commandList->DrawIndexedInstanced(runtime.indexCount, 1, 0,
                                                  0, 0);
   }
 
   inline void bindMesh(MeshHandle handle, ID3D12GraphicsCommandList2 *commandList, uint32_t flags,
                        uint32_t startIndex) {
-    const MeshRuntime &runtime = getMeshRuntime(handle);
+    const Dx12MeshRuntime &runtime = getMeshRuntime(handle);
     if ((flags & MeshAttributeFlags::POSITIONS) > 0) {
       dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(
           runtime.bufferHandle, startIndex + 0, commandList,
@@ -163,7 +163,7 @@ public:
         D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
   }
 
-  inline void bindMeshRuntimeAndRender(const MeshRuntime &runtime,
+  inline void bindMeshRuntimeAndRender(const Dx12MeshRuntime &runtime,
                                        FrameCommand *fc) const {
 
     dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(
@@ -183,7 +183,7 @@ public:
   inline void bindMeshRuntimeAndRender(const MeshHandle &handle,
                                        FrameCommand *fc) const {
 
-    const MeshRuntime &runtime = getMeshRuntime(handle);
+    const Dx12MeshRuntime &runtime = getMeshRuntime(handle);
     bindMeshRuntimeAndRender(runtime, fc);
   }
 

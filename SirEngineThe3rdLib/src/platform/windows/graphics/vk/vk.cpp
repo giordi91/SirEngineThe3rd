@@ -18,9 +18,9 @@
 #include "platform/windows/graphics/vk/vkRootSignatureManager.h"
 #include "platform/windows/graphics/vk/vkShaderManager.h"
 #include "platform/windows/graphics/vk/vkSwapChain.h"
+#include "vkMaterialManager.h"
 #include "vkMeshManager.h"
 #include "vkTextureManager.h"
-#include "vkMaterialManager.h"
 
 namespace SirEngine::vk {
 VkInstance INSTANCE = nullptr;
@@ -45,12 +45,20 @@ VkPipelineLayoutManager *PIPELINE_LAYOUT_MANAGER = nullptr;
 VkBufferManager *BUFFER_MANAGER = nullptr;
 VkMeshManager *MESH_MANAGER = nullptr;
 VkTextureManager *TEXTURE_MANAGER = nullptr;
-VkMaterialManager * MATERIAL_MANAGER = nullptr;
+VkMaterialManager *MATERIAL_MANAGER = nullptr;
 uint32_t SWAP_CHAIN_IMAGE_COUNT = 0;
 VkFrameCommand FRAME_COMMAND[PREALLOCATED_SEMAPHORE_COUNT];
 VkFrameCommand *CURRENT_FRAME_COMMAND = nullptr;
 uint32_t GRAPHICS_QUEUE_FAMILY = 0;
 uint32_t PRESENTATION_QUEUE_FAMILY = 0;
+
+struct VkRenderable {
+  VkMeshRuntime m_meshRuntime;
+  VkMaterialRuntime m_materialRuntime;
+};
+
+typedef std::unordered_map<uint32_t, std::vector<VkRenderable>>
+    Dx12RenderingQueues;
 
 bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
                           const uint32_t height) {
@@ -155,9 +163,9 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
                                FRAME_COMMAND[i].m_commandBuffer)) {
       assert(0);
     }
-      SET_DEBUG_NAME(FRAME_COMMAND[i].m_commandBuffer,
-                     VK_OBJECT_TYPE_COMMAND_BUFFER,
-                     frameConcatenation("commandBuffer", frame));
+    SET_DEBUG_NAME(FRAME_COMMAND[i].m_commandBuffer,
+                   VK_OBJECT_TYPE_COMMAND_BUFFER,
+                   frameConcatenation("commandBuffer", frame));
   }
 
   CURRENT_FRAME_COMMAND = &FRAME_COMMAND[0];
@@ -197,7 +205,7 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
 
   MATERIAL_MANAGER = new VkMaterialManager();
   MATERIAL_MANAGER->inititialize();
-  globals::MATERIAL_MANAGER= MATERIAL_MANAGER;
+  globals::MATERIAL_MANAGER = MATERIAL_MANAGER;
 
   globals::ASSET_MANAGER = new AssetManager();
   globals::ASSET_MANAGER->initialize();
@@ -227,10 +235,11 @@ createVkRenderingContext(const RenderingContextCreationSettings &settings,
 }
 
 VkRenderingContext::VkRenderingContext(
-    const RenderingContextCreationSettings &settings, uint32_t width,
-    uint32_t height)
+    const RenderingContextCreationSettings &settings, const uint32_t width,
+    const uint32_t height)
     : RenderingContext(settings, width, height) {
   SE_CORE_INFO("Initializing a Vulkan context");
+  queues = new Dx12RenderingQueues();
 }
 
 void setDebugNameImpl() {}
@@ -412,7 +421,25 @@ void VkRenderingContext::executeGlobalCommandList() { assert(0); }
 void VkRenderingContext::resetGlobalCommandList() { assert(0); }
 
 void VkRenderingContext::addRenderablesToQueue(const Renderable &renderable) {
-  assert(0);
+  auto *typedQueues = reinterpret_cast<Dx12RenderingQueues *>(queues);
+
+  VkRenderable vkRenderable{};
+
+  const VkMaterialRuntime &materialRuntime =
+      vk::MATERIAL_MANAGER->getMaterialRuntime(renderable.m_materialHandle);
+  const VkMeshRuntime &meshRuntime =
+      vk::MESH_MANAGER->getMeshRuntime(renderable.m_meshHandle);
+
+  vkRenderable.m_materialRuntime = materialRuntime;
+  vkRenderable.m_meshRuntime = meshRuntime;
+  // store the renderable on each queue
+  for (int i = 0; i < 4; ++i) {
+    const uint32_t flag = materialRuntime.shaderQueueTypeFlags[i];
+
+    if (flag != INVALID_QUEUE_TYPE_FLAGS) {
+      (*typedQueues)[flag].emplace_back(vkRenderable);
+    }
+  }
 }
 
 void VkRenderingContext::renderQueueType(const SHADER_QUEUE_FLAGS flag) {

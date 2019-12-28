@@ -65,7 +65,7 @@ MeshHandle Dx12MeshManager::loadMesh(const char *path, bool isInternal) {
     meshData->magicNumber = MAGIC_NUMBER_COUNTER;
 
     // build the runtime mesh
-    MeshRuntime meshRuntime{};
+    Dx12MeshRuntime meshRuntime{};
     meshRuntime.indexCount = meshData->indexCount;
     meshRuntime.iview = getIndexBufferView(handle);
     meshRuntime.positionRange = mapper->positionRange;
