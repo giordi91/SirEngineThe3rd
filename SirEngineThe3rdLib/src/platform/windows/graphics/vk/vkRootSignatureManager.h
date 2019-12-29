@@ -24,7 +24,8 @@ public:
   void loadSignaturesInFolder(const char *directory) override;
   void loadSignatureBinaryFile(const char *file) override;
   RSHandle loadSignatureFile(const char *file,
-                             VkDescriptorSetLayout samplersLayout);
+                             const VkDescriptorSetLayout perFrameLayout,
+                             const VkDescriptorSetLayout samplersLayout);
 
   inline VkPipelineLayout getLayoutFromName(const char *name) const {
 

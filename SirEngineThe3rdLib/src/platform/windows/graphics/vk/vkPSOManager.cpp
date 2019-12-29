@@ -56,6 +56,8 @@ VkSampler STATIC_SAMPLERS[STATIC_SAMPLER_COUNT];
 VkDescriptorImageInfo STATIC_SAMPLERS_INFO[STATIC_SAMPLER_COUNT];
 VkDescriptorSetLayout STATIC_SAMPLER_LAYOUT;
 VkDescriptorSet STATIC_SAMPLER_DESCRIPTOR_SET;
+VkDescriptorSetLayout PER_FRAME_LAYOUT = nullptr;
+VkDescriptorSet *PER_FRAME_DESCRIPTOR_SET = nullptr;
 
 void assertInJson(const nlohmann::json &jobj, const std::string &key) {
   const auto found = jobj.find(key);
@@ -207,6 +209,56 @@ getStaticSamplersCreateInfo() {
 
   return {pointWrap,       pointClamp,       linearWrap,    linearClamp,
           anisotropicWrap, anisotropicClamp, shadowPCFClamp};
+}
+
+void createPerFrameDataDescriptorSet(VkDescriptorPool &pool,
+                                     VkDescriptorSet **outSet,
+                                     VkDescriptorSetLayout& layout) {
+  // here we are are creating the layout, but we are using static samplers
+  // so we are passing immutable samplers directly in the layout that
+  // gets built in the graphics pipeline
+  VkDescriptorSetLayoutBinding resourceBinding[1] = {};
+  resourceBinding[0].binding = 0;
+  resourceBinding[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  resourceBinding[0].descriptorCount = 1;
+  resourceBinding[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT |
+                                  VK_SHADER_STAGE_FRAGMENT_BIT |
+                                  VK_SHADER_STAGE_COMPUTE_BIT;
+  resourceBinding[0].pImmutableSamplers = nullptr;
+
+  VkDescriptorSetLayoutCreateInfo resourceLayoutInfo[1] = {};
+  resourceLayoutInfo[0].sType =
+      VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+  resourceLayoutInfo[0].pNext = NULL;
+  resourceLayoutInfo[0].bindingCount = 1;
+  resourceLayoutInfo[0].pBindings = resourceBinding;
+
+  VK_CHECK(vkCreateDescriptorSetLayout(vk::LOGICAL_DEVICE, resourceLayoutInfo,
+                                       NULL, &layout));
+  SET_DEBUG_NAME(layout, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT,
+                 "perFrameDataDescriptorSetLayout");
+
+  // we need to allocate as many as swap chain back buffers
+  uint32_t count = vk::SWAP_CHAIN_IMAGE_COUNT;
+  *(outSet) = reinterpret_cast<VkDescriptorSet *>(
+      globals::PERSISTENT_ALLOCATOR->allocate(sizeof(VkDescriptorSet) * count));
+  char countStr[2];
+  assert(count <= 9);
+  countStr[0] = static_cast<char>(count + 48);
+  countStr[1] = '\0';
+  for (int i = 0; i < count; ++i) {
+    countStr[0] = static_cast<char>(i + 48);
+    VkDescriptorSetAllocateInfo allocateInfo{};
+    allocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    allocateInfo.descriptorPool = pool;
+    allocateInfo.descriptorSetCount = 1;
+    allocateInfo.pSetLayouts = &layout; // the layout we defined for the
+                                        // set, so it also knows the size
+    VK_CHECK(vkAllocateDescriptorSets(vk::LOGICAL_DEVICE, &allocateInfo,
+                                      &(*outSet)[i]));
+    SET_DEBUG_NAME((*outSet)[i], VK_OBJECT_TYPE_DESCRIPTOR_SET,
+                   frameConcatenation("perFrameDataDescriptorSet", countStr));
+  }
 }
 
 void createStaticSamplerDescriptorSet(VkDescriptorPool &pool,
@@ -500,7 +552,7 @@ PSOHandle VkPSOManager::processRasterPSO(
   const std::string fileName = getFileName(filePath);
 
   RSHandle layoutHandle = vk::PIPELINE_LAYOUT_MANAGER->loadSignatureFile(
-      rootFile.c_str(), vk::STATIC_SAMPLER_LAYOUT);
+      rootFile.c_str(), vk::PER_FRAME_LAYOUT, vk::STATIC_SAMPLER_LAYOUT);
   // TODO fix this should not be global anymore
   vk::PIPELINE_LAYOUT =
       vk::PIPELINE_LAYOUT_MANAGER->getLayoutFromHandle(layoutHandle);
@@ -664,7 +716,16 @@ void initStaticSamplers() {
                                    STATIC_SAMPLER_LAYOUT);
 }
 
-void VkPSOManager::initialize() { vk::initStaticSamplers(); }
+void initPerFrameDataDescriptor() {
+  createPerFrameDataDescriptorSet(vk::DESCRIPTOR_POOL,
+                                  &PER_FRAME_DESCRIPTOR_SET, PER_FRAME_LAYOUT);
+};
+
+void VkPSOManager::initialize() {
+
+  vk::initPerFrameDataDescriptor();
+  vk::initStaticSamplers();
+}
 
 void VkPSOManager::cleanup() {
   int count = m_psoRegister.binCount();
@@ -717,8 +778,8 @@ PSOHandle VkPSOManager::loadRawPSO(const char *file) {
   return {};
 }
 
-void VkPSOManager::recompilePSOFromShader(const char* shaderName, const char* getOffsetPath)
-{
-    assert(0);
+void VkPSOManager::recompilePSOFromShader(const char *shaderName,
+                                          const char *getOffsetPath) {
+  assert(0);
 }
 } // namespace SirEngine::vk

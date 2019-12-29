@@ -13,6 +13,12 @@ struct CameraBuffer {
   float padding;
 };
 
+//this struct should hold all the data that changes once per frame or less
+struct FrameData
+{
+    CameraBuffer m_camera;
+};
+
 struct DirectionalLightData {
   mat4 projectionMatrix;
   mat4 lightVP;

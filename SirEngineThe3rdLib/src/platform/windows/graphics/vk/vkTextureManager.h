@@ -61,14 +61,14 @@ public:
   // vk methods
   void bindTexture(const TextureHandle &handle,
                    VkWriteDescriptorSet *writeDescriptorSets,
-                   VkDescriptorSet descriptorSet) {
+                   VkDescriptorSet descriptorSet, uint32_t bindSlot) {
     assertMagicNumber(handle);
     const uint32_t idx = getIndexFromHandle(handle);
     const auto &data = m_texturePool.getConstRef(idx);
 
     writeDescriptorSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writeDescriptorSets[0].dstSet = descriptorSet;
-    writeDescriptorSets[0].dstBinding = 4;
+    writeDescriptorSets[0].dstBinding = bindSlot;
     writeDescriptorSets[0].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
     writeDescriptorSets[0].pImageInfo = &data.descriptor;
     writeDescriptorSets[0].descriptorCount = 1;

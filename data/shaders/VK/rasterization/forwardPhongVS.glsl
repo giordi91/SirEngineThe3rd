@@ -17,26 +17,26 @@
 //{ 
 //	Vertex vertices[];
 //};
+layout (set=0,binding=0) uniform InputData 
+{
+	CameraBuffer cameraBuffer;
+}; 
 
-struct Normal{uint8_t nx, ny, nz, nw;};
+struct normal{uint8_t nx, ny, nz, nw;};
 
-layout (binding=1) buffer vertices
+layout (set=1,binding=0) buffer vertices
 {
 	vec4 p[];
 };
-layout (binding=2) buffer normals 
+layout (set=1,binding=1) buffer normals 
 {
-	Normal n[];
+	normal n[];
 };
-layout (binding=3) buffer uvs 
+layout (set=1,binding=2) buffer uvs 
 {
 	vec2 uv[];
 };
 
-layout (binding=0) uniform InputData 
-{
-	CameraBuffer cameraBuffer;
-}; 
 
 layout(location =0) out vec4 color;
 layout(location =1) out vec2 outUV;

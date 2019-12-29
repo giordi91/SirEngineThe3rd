@@ -1,6 +1,7 @@
 #ifndef STRUCTURES_HLSL
 #define STRUCTURES_HLSL
 
+
 struct CameraBuffer {
   float4x4 MVP;
   float4x4 ViewMatrix;
@@ -11,6 +12,12 @@ struct CameraBuffer {
   float screenWidth;
   float screenHeight;
   float padding;
+};
+
+//this struct should hold all the data that changes once per frame or less
+struct FrameData
+{
+    CameraBuffer m_camera;
 };
 
 struct DirectionalLightData {

@@ -5,6 +5,7 @@
 #include "SirEngine/globals.h"
 #include "SirEngine/graphics/camera.h"
 
+#include "SirEngine/assetManager.h"
 #include "SirEngine/engineConfig.h"
 #include "SirEngine/layers/vkTempLayer.h"
 #include "platform/windows/graphics/vk/vk.h"
@@ -17,7 +18,6 @@
 #include "platform/windows/graphics/vk/vkSwapChain.h"
 #include "platform/windows/graphics/vk/vkTextureManager.h"
 #include "platform/windows/graphics/vk/volk.h"
-#include "SirEngine/assetManager.h"
 
 namespace SirEngine {
 void VkTempLayer::createRenderTargetAndFrameBuffer(const int width,
@@ -38,7 +38,6 @@ void VkTempLayer::createRenderTargetAndFrameBuffer(const int width,
 
   VK_CHECK(vkCreateFramebuffer(vk::LOGICAL_DEVICE, &createInfo, nullptr,
                                &m_tempFrameBuffer));
-
 }
 
 void VkTempLayer::onAttach() {
@@ -54,7 +53,7 @@ void VkTempLayer::onAttach() {
   globals::MAIN_CAMERA->setPosition(0, 15, 15);
   globals::MAIN_CAMERA->updateCamera();
 
-  //globals::ASSET_MANAGER->loadScene(globals::ENGINE_CONFIG->m_startScenePath);
+  // globals::ASSET_MANAGER->loadScene(globals::ENGINE_CONFIG->m_startScenePath);
   globals::ASSET_MANAGER->loadScene("../data/scenes/tempScene.json");
   // load mesh
   meshHandle = globals::MESH_MANAGER->loadMesh(
@@ -63,11 +62,6 @@ void VkTempLayer::onAttach() {
   // allocate memory buffer for the mesh
   VkPhysicalDeviceMemoryProperties memoryRequirements;
   vkGetPhysicalDeviceMemoryProperties(vk::PHYSICAL_DEVICE, &memoryRequirements);
-
-  m_cameraBufferHandle = globals::CONSTANT_BUFFER_MANAGER->allocate(
-      sizeof(CameraBuffer),
-      ConstantBufferManager::CONSTANT_BUFFER_FLAGS::UPDATED_EVERY_FRAME,
-      nullptr);
 
   const PSOHandle handle =
       vk::PSO_MANAGER->loadRawPSO("../data/pso/forwardPhongPSO.json");
@@ -91,14 +85,14 @@ void VkTempLayer::onAttach() {
 
 void VkTempLayer::createDescriptorLayoutAdvanced() {
 
-  constexpr int resourceCount = 5;
+  constexpr int resourceCount = 4;
   VkDescriptorSetLayoutBinding resourceBinding[resourceCount] = {};
-  resourceBinding[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+
+  resourceBinding[0].binding = 0;
+  resourceBinding[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   resourceBinding[0].descriptorCount = 1;
   resourceBinding[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
   resourceBinding[0].pImmutableSamplers = NULL;
-  resourceBinding[0].binding = 0;
-
   resourceBinding[1].binding = 1;
   resourceBinding[1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   resourceBinding[1].descriptorCount = 1;
@@ -109,17 +103,12 @@ void VkTempLayer::createDescriptorLayoutAdvanced() {
   resourceBinding[2].descriptorCount = 1;
   resourceBinding[2].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
   resourceBinding[2].pImmutableSamplers = NULL;
-  resourceBinding[3].binding = 3;
-  resourceBinding[3].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  resourceBinding[3].descriptorCount = 1;
-  resourceBinding[3].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-  resourceBinding[3].pImmutableSamplers = NULL;
 
-  resourceBinding[4].binding = 4;
-  resourceBinding[4].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-  resourceBinding[4].descriptorCount = 1;
-  resourceBinding[4].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-  resourceBinding[4].pImmutableSamplers = NULL;
+  resourceBinding[3].binding = 3;
+  resourceBinding[3].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+  resourceBinding[3].descriptorCount = 1;
+  resourceBinding[3].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+  resourceBinding[3].pImmutableSamplers = NULL;
 
   VkDescriptorSetLayoutCreateInfo resourceLayoutInfo[1] = {};
   resourceLayoutInfo[0].sType =
@@ -152,28 +141,29 @@ void VkTempLayer::createDescriptorLayoutAdvanced() {
   // this far we defined just what descriptor we wanted and how they were setup,
   // now we need to actually define the content of those descriptors, the actual
   // resources
-  VkWriteDescriptorSet writeDescriptorSets[5] = {};
+  VkWriteDescriptorSet writeDescriptorSets[4] = {};
 
-  // actual information of the descriptor, in this case it is our mesh buffer
-  VkDescriptorBufferInfo bufferInfoUniform = {};
-  vk::CONSTANT_BUFFER_MANAGER->bindConstantBuffer(
-      m_cameraBufferHandle, bufferInfoUniform, 0, writeDescriptorSets,
-      m_meshDescriptorSet);
+  //// actual information of the descriptor, in this case it is our mesh buffer
+  // VkDescriptorBufferInfo bufferInfoUniform = {};
+  // vk::CONSTANT_BUFFER_MANAGER->bindConstantBuffer(
+  //    m_cameraBufferHandle, bufferInfoUniform, 0, writeDescriptorSets,
+  //    m_meshDescriptorSet);
 
   VkDescriptorBufferInfo bufferInfo[3] = {};
   vk::MESH_MANAGER->bindMesh(meshHandle, writeDescriptorSets,
                              m_meshDescriptorSet, bufferInfo);
 
-  vk::TEXTURE_MANAGER->bindTexture(textureHandle,&writeDescriptorSets[4],m_meshDescriptorSet );
+  vk::TEXTURE_MANAGER->bindTexture(textureHandle, &writeDescriptorSets[3],
+                                   m_meshDescriptorSet, 3);
   //// Binding 2: Object texture
-  //writeDescriptorSets[4].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  //writeDescriptorSets[4].dstSet = m_meshDescriptorSet;
-  //writeDescriptorSets[4].dstBinding = 4;
-  //writeDescriptorSets[4].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+  // writeDescriptorSets[4].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  // writeDescriptorSets[4].dstSet = m_meshDescriptorSet;
+  // writeDescriptorSets[4].dstBinding = 4;
+  // writeDescriptorSets[4].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
   //// Images use a different descriptor strucutre, so we use pImageInfo instead
   //// of pBufferInfo
-  //writeDescriptorSets[4].pImageInfo = &uvTexture.descriptor;
-  //writeDescriptorSets[4].descriptorCount = 1;
+  // writeDescriptorSets[4].pImageInfo = &uvTexture.descriptor;
+  // writeDescriptorSets[4].descriptorCount = 1;
 
   // Execute the writes to update descriptors for this set
   // Note that it's also possible to gather all writes and only run updates
@@ -181,18 +171,16 @@ void VkTempLayer::createDescriptorLayoutAdvanced() {
   // VkWriteDescriptorSet also contains the destination set to be updated
   // For simplicity we will update once per set instead
 
-  //partial descriptor sets can be done, if necessary
-  //vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, ARRAYSIZE(writeDescriptorSets),
+  // partial descriptor sets can be done, if necessary
+  // vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, ARRAYSIZE(writeDescriptorSets),
   //                       writeDescriptorSets, 0, nullptr);
-  //object one off update
-  vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, 4,
-                         &writeDescriptorSets[1], 0, nullptr);
-
+  // object one off update
+  vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, 4, &writeDescriptorSets[0], 0,
+                         nullptr);
 }
 
 void VkTempLayer::onDetach() {}
 void VkTempLayer::onUpdate() {
-
 
   globals::RENDERING_CONTEXT->setupCameraForFrame();
 
@@ -271,12 +259,13 @@ void VkTempLayer::onUpdate() {
                               descriptor);
   } else {
   */
-  VkDescriptorSet sets[] = {m_meshDescriptorSet,
-                            vk::STATIC_SAMPLER_DESCRIPTOR_SET};
+  VkDescriptorSet sets[] = {
+      vk::PER_FRAME_DESCRIPTOR_SET[globals::CURRENT_FRAME], m_meshDescriptorSet,
+      vk::STATIC_SAMPLER_DESCRIPTOR_SET};
   // multiple descriptor sets
   vkCmdBindDescriptorSets(vk::CURRENT_FRAME_COMMAND->m_commandBuffer,
                           VK_PIPELINE_BIND_POINT_GRAPHICS, vk::PIPELINE_LAYOUT,
-                          0, 2, sets, 0, nullptr);
+                          0, 3, sets, 0, nullptr);
 
   vk::MESH_MANAGER->renderMesh(meshHandle,
                                vk::CURRENT_FRAME_COMMAND->m_commandBuffer);
@@ -401,7 +390,6 @@ void VkTempLayer::clear() {
   // TODO render target manager?
   vk::destroyFrameBuffer(vk::LOGICAL_DEVICE, m_tempFrameBuffer, m_rt);
   vk::TEXTURE_MANAGER->free(textureHandle);
-
 }
 
 bool VkTempLayer::onMouseButtonPressEvent(MouseButtonPressEvent &e) {
@@ -567,8 +555,7 @@ bool VkTempLayer::onResizeEvent(WindowResizeEvent &e) {
   return true;
 }
 
-void VkTempLayer::setupCameraForFrame() {
-}
+void VkTempLayer::setupCameraForFrame() {}
 
 /*
 bool VkTempLayer::onDebugConfigChanged(DebugRenderConfigChanged &e) {
