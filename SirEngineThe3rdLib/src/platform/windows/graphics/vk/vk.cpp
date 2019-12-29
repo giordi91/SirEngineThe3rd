@@ -21,6 +21,7 @@
 #include "vkMaterialManager.h"
 #include "vkMeshManager.h"
 #include "vkTextureManager.h"
+#include "SirEngine/graphics/camera.h"
 
 namespace SirEngine::vk {
 VkInstance INSTANCE = nullptr;
@@ -253,6 +254,40 @@ bool VkRenderingContext::initializeGraphics() {
   return result;
 }
 
+void VkRenderingContext::setupCameraForFrame()
+{
+  globals::MAIN_CAMERA->updateCamera();
+  // TODO fix this hardcoded parameter
+  m_camBufferCPU.vFov = 60.0f;
+  m_camBufferCPU.screenWidth =
+      static_cast<float>(globals::ENGINE_CONFIG->m_windowWidth);
+  m_camBufferCPU.screenHeight =
+      static_cast<float>(globals::ENGINE_CONFIG->m_windowHeight);
+  auto pos = globals::MAIN_CAMERA->getPosition();
+  m_camBufferCPU.position = glm::vec4(pos, 1.0f);
+
+  m_camBufferCPU.MVP = globals::MAIN_CAMERA->getMVP(glm::mat4(1.0));
+  m_camBufferCPU.ViewMatrix =
+      globals::MAIN_CAMERA->getViewInverse(glm::mat4(1.0));
+  m_camBufferCPU.VPinverse =
+      globals::MAIN_CAMERA->getMVPInverse(glm::mat4(1.0));
+  m_camBufferCPU.perspectiveValues = globals::MAIN_CAMERA->getProjParams();
+
+  // memcpy(m_cameraBuffer.data, &m_camBufferCPU, sizeof(m_camBufferCPU));
+  globals::CONSTANT_BUFFER_MANAGER->update(m_cameraHandle,
+                                           &m_camBufferCPU);
+
+  VkWriteDescriptorSet writeDescriptorSets = {};
+  VkDescriptorBufferInfo bufferInfoUniform = {};
+  //vk::CONSTANT_BUFFER_MANAGER->bindConstantBuffer(
+  //    m_cameraHandle, bufferInfoUniform, 0, &writeDescriptorSets,
+  //    m_meshDescriptorSet);
+  ////camera update
+  //vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, 1,
+  //                       &writeDescriptorSets[0], 0, nullptr);
+
+}
+
 void waitOnFence(VkFence fence) {
   if (fence == nullptr) {
     return;
@@ -400,6 +435,19 @@ bool VkRenderingContext::shutdownGraphic() {
     vkDestroyCommandPool(LOGICAL_DEVICE, FRAME_COMMAND[i].m_commandAllocator,
                          nullptr);
     vkDestroyFence(LOGICAL_DEVICE, FRAME_COMMAND[i].m_endOfFrameFence, nullptr);
+  }
+  // destroying environment texture handles
+  if (m_enviromentMapHandle.isHandleValid()) {
+    vk::TEXTURE_MANAGER->free(m_enviromentMapHandle);
+  }
+  if (m_enviromentMapIrradianceHandle.isHandleValid()) {
+    vk::TEXTURE_MANAGER->free(m_enviromentMapIrradianceHandle);
+  }
+  if (m_enviromentMapRadianceHandle.isHandleValid()) {
+    vk::TEXTURE_MANAGER->free(m_enviromentMapRadianceHandle);
+  }
+  if (m_brdfHandle.isHandleValid()) {
+    vk::TEXTURE_MANAGER->free(m_brdfHandle);
   }
 
   // clean up manager

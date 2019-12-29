@@ -53,17 +53,7 @@ public:
   }
 
 protected:
-  inline uint32_t getIndexFromHandle(const TextureHandle h) const {
-    return h.handle & INDEX_MASK;
-  }
-  inline uint32_t getMagicFromHandle(const TextureHandle h) const {
-    return (h.handle & MAGIC_NUMBER_MASK) >> 16;
-  }
-
-protected:
   std::unordered_map<std::string, TextureHandle> m_nameToHandle;
-  static const uint32_t INDEX_MASK = (1 << 16) - 1;
-  static const uint32_t MAGIC_NUMBER_MASK = ~INDEX_MASK;
   static const uint32_t RESERVE_SIZE = 200;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
 };

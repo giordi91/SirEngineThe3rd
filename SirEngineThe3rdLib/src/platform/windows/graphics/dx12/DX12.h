@@ -200,7 +200,7 @@ public:
 
   bool initializeGraphics() override;
 
-  void setupCameraForFrame();
+  void setupCameraForFrame() override;
   void setupLightingForFrame();
   void bindCameraBuffer(int index) const;
   void bindCameraBufferCompute(int index) const;

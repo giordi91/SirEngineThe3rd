@@ -2,11 +2,11 @@
 
 #include "SirEngine/graphics/nodeGraph.h"
 #include "SirEngine/handle.h"
-#include <d3d12.h>
+#include "platform/windows/graphics/vk/volk.h"
 
 namespace SirEngine {
 
-class SimpleForward final : public GNode {
+class VkSimpleForward final : public GNode {
 public:
   enum PLUGS {
     IN_TEXTURE = INPUT_PLUG_CODE(0),
@@ -16,15 +16,16 @@ public:
   };
 
 public:
-  explicit SimpleForward(GraphAllocators &allocators);
-  virtual ~SimpleForward() { clear(); };
+  explicit VkSimpleForward(GraphAllocators &allocators);
+  virtual ~VkSimpleForward() { clear(); };
   virtual void initialize() override;
   virtual void compute() override;
   virtual void onResizeEvent(int screenWidth, int screenHeight) override;
 
 private:
-  ID3D12RootSignature *rs = nullptr;
-  PSOHandle pso;
+  PSOHandle m_psoHandle;
+  VkPipeline m_pipeline;
+  VkRenderPass m_pass;
 };
 
 } // namespace SirEngine
