@@ -54,7 +54,8 @@ public:
     return m_freeAllocations.size();
   }
 
-  [[nodiscard]] const ResizableVector<BufferRangeTracker>* getAllocations() const {
+  [[nodiscard]] const ResizableVector<BufferRangeTracker> *
+  getAllocations() const {
     return &m_allocations;
   }
 
@@ -88,8 +89,8 @@ private:
   inline void assertMagicNumber(const BufferRangeHandle handle) const {
     uint32_t magic = getMagicFromHandle(handle);
     uint32_t idx = getIndexFromHandle(handle);
-    assert(m_allocations[idx].m_magicNumber == magic &&
-           "invalid magic handle for buffer tracker");
+    uint32_t storedMagic = m_allocations[idx].m_magicNumber;
+    assert(storedMagic == magic && "invalid magic handle for buffer tracker");
   }
 
   static uint32_t getIndexFromHandle(const BufferRangeHandle h) {

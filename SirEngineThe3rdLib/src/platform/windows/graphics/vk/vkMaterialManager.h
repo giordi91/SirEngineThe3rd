@@ -25,6 +25,7 @@ struct VkMaterialRuntime final {
   SkinHandle skinHandle;
   MeshHandle meshHandle;
   DescriptorHandle descriptorHandles[4]{{}, {}, {}, {}};
+  VkPipelineLayout layouts[4]{nullptr,nullptr,nullptr,nullptr};
 };
 
 struct MaterialData {
@@ -47,7 +48,8 @@ public:
   void bindMaterial(SHADER_QUEUE_FLAGS queueFlag,
                     const VkMaterialRuntime &materialRuntime,
                     VkCommandBuffer commandList);
-  void updateMaterial(SHADER_QUEUE_FLAGS queueFlag, MaterialHandle handle, VkCommandBuffer commandList);
+  void updateMaterial(SHADER_QUEUE_FLAGS queueFlag, MaterialHandle handle,
+                      VkCommandBuffer commandList);
 
   void bindRSandPSO(uint32_t shaderFlags, VkCommandBuffer commandList);
   VkMaterialManager(const VkMaterialManager &) = delete;
@@ -56,11 +58,16 @@ public:
   MaterialHandle loadMaterial(const char *path, const MeshHandle meshHandle,
                               const SkinHandle skinHandle);
 
+  // vk methods
   const VkMaterialRuntime &getMaterialRuntime(const MaterialHandle handle) {
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
     return m_materialTextureHandles.getConstRef(index).m_materialRuntime;
   }
+
+  // called only on shutdown, main goal is to release GPU resources to
+  // ease up the validation layer
+  void releaseAllMaterialsAndRelatedResources();
 
 private:
   inline void assertMagicNumber(const MaterialHandle handle) {

@@ -151,17 +151,17 @@ void bindForwardPhong(uint32_t queueId,
                       const VkMaterialRuntime &materialRuntime,
                       VkCommandBuffer commandList) {
 
-  DescriptorHandle setHandle = materialRuntime.descriptorHandles[queueId];
-  VkDescriptorSet descriptorSet =
-      vk::DESCRIPTOR_MANAGER->getDescriptorSet(setHandle);
+  assert(0);
+  // DescriptorHandle setHandle = materialRuntime.descriptorHandles[queueId];
+  // VkDescriptorSet descriptorSet =
+  //    vk::DESCRIPTOR_MANAGER->getDescriptorSet(setHandle);
 
-  VkDescriptorSet sets[] = {
-      vk::PER_FRAME_DESCRIPTOR_SET[globals::CURRENT_FRAME], descriptorSet,
-      vk::STATIC_SAMPLER_DESCRIPTOR_SET};
-  // multiple descriptor sets
-  vkCmdBindDescriptorSets(commandList,
-                          VK_PIPELINE_BIND_POINT_GRAPHICS, vk::PIPELINE_LAYOUT,
-                          0, 3, sets, 0, nullptr);
+  // VkDescriptorSet sets[] = {
+  //    vk::PER_FRAME_DESCRIPTOR_SET[globals::CURRENT_FRAME], descriptorSet,
+  //    vk::STATIC_SAMPLER_DESCRIPTOR_SET};
+  //// multiple descriptor sets
+  // vkCmdBindDescriptorSets(commandList, VK_PIPELINE_BIND_POINT_GRAPHICS,
+  //                        vk::PIPELINE_LAYOUT, 0, 3, sets, 0, nullptr);
 }
 void bindForwardPBR(const VkMaterialRuntime &materialRuntime,
                     VkCommandBuffer commandList) {
@@ -399,9 +399,8 @@ void VkMaterialManager::bindMaterial(SHADER_QUEUE_FLAGS queueFlag,
       vk::PER_FRAME_DESCRIPTOR_SET[globals::CURRENT_FRAME], descriptorSet,
       vk::STATIC_SAMPLER_DESCRIPTOR_SET};
   // multiple descriptor sets
-  vkCmdBindDescriptorSets(commandList,
-                          VK_PIPELINE_BIND_POINT_GRAPHICS, vk::PIPELINE_LAYOUT,
-                          0, 3, sets, 0, nullptr);
+  vkCmdBindDescriptorSets(commandList, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                          materialRuntime.layouts[currentFlagId], 0, 3, sets, 0, nullptr);
   /*
   switch (type) {
   case (SHADER_TYPE_FLAGS::PBR): {
@@ -560,11 +559,12 @@ void VkMaterialManager::bindRSandPSO(const uint32_t shaderFlags,
   ShaderBind bind;
   bool found = m_shderTypeToShaderBind.get(typeFlags, bind);
   if (found) {
-    //vk::PIPELINE_LAYOUT_MANAGER->bindGraphicsRS(bind.rs, commandList);
+    // vk::PIPELINE_LAYOUT_MANAGER->bindGraphicsRS(bind.rs, commandList);
     vk::PSO_MANAGER->bindPSO(bind.pso, commandList);
-    return;
+    return; 
   }
   assert(0 && "Could not find requested shader type for PSO /RS bind");
+  return;
 }
 
 inline VkDescriptorImageInfo getDescriptor(const TextureHandle handle) {
@@ -643,6 +643,7 @@ MaterialHandle VkMaterialManager::loadMaterial(const char *path,
         vk::DESCRIPTOR_MANAGER->allocate(bind.rs, flags, descriptorName);
 
     materialData.m_materialRuntime.descriptorHandles[i] = descriptorHandle;
+    materialData.m_materialRuntime.layouts[i] = vk::PIPELINE_LAYOUT_MANAGER->getLayoutFromHandle(bind.rs);
 
     if (parse.isStatic) {
       // it is static lets bind the material right away
@@ -654,4 +655,43 @@ MaterialHandle VkMaterialManager::loadMaterial(const char *path,
   return handle;
 }
 
+inline void freeTextureIfNeeded(const TextureHandle handle) {
+  if (handle.isHandleValid()) {
+    vk::TEXTURE_MANAGER->free(handle);
+  }
+}
+
+void VkMaterialManager::releaseAllMaterialsAndRelatedResources() {
+  int count = m_nameToHandle.binCount();
+  for (int i = 0; i < count; ++i) {
+    if (m_nameToHandle.isBinUsed(i)) {
+      const char *key = m_nameToHandle.getKeyAtBin(i);
+      MaterialHandle value = m_nameToHandle.getValueAtBin(i);
+
+      // now that we have the handle we can get the data
+      assertMagicNumber(value);
+      const uint32_t index = getIndexFromHandle(value);
+      const MaterialData &data = m_materialTextureHandles.getConstRef(index);
+      freeTextureIfNeeded(data.handles.albedo);
+      freeTextureIfNeeded(data.handles.normal);
+      freeTextureIfNeeded(data.handles.metallic);
+      freeTextureIfNeeded(data.handles.roughness);
+      freeTextureIfNeeded(data.handles.thickness);
+      freeTextureIfNeeded(data.handles.separateAlpha);
+      freeTextureIfNeeded(data.handles.ao);
+      freeTextureIfNeeded(data.handles.height);
+
+      // NOTE constant buffers don't need to be free singularly since the
+      // rendering context will allocate in bulk
+
+      if (data.handles.skinHandle.isHandleValid()) {
+        // do not free this yet, need to figure out how
+        assert(0);
+        // globals::SKIN_MANAGER->free(data.handles.skinHandle);
+      }
+
+      vk::MESH_MANAGER->free(data.m_materialRuntime.meshHandle);
+    }
+  }
+}
 } // namespace SirEngine::vk

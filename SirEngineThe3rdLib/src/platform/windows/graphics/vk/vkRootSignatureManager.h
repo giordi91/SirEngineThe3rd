@@ -20,7 +20,7 @@ public:
   VkPipelineLayoutManager &operator=(const VkPipelineLayoutManager &) = delete;
   ~VkPipelineLayoutManager() = default;
   void initialize() override{};
-  void cleanup() override{};
+  void cleanup() override;
   void loadSignaturesInFolder(const char *directory) override;
   void loadSignatureBinaryFile(const char *file) override;
   RSHandle loadSignatureFile(const char *file,
@@ -30,13 +30,6 @@ public:
   inline VkPipelineLayout getLayoutFromName(const char *name) const {
 
     const RSHandle handle = getHandleFromName(name);
-    assertMagicNumber(handle);
-    const uint32_t index = getIndexFromHandle(handle);
-    const LayoutData &data = m_rsPool.getConstRef(index);
-    return data.layout;
-  }
-  inline VkPipelineLayout getLayoutFromHandle(const RSHandle handle) const {
-
     assertMagicNumber(handle);
     const uint32_t index = getIndexFromHandle(handle);
     const LayoutData &data = m_rsPool.getConstRef(index);
@@ -53,14 +46,21 @@ public:
     // commandList->SetGraphicsLayout(data.rs);
   }
 
-  RSHandle getHandleFromName(const char* name) const override;
+  RSHandle getHandleFromName(const char *name) const override;
 
-  VkDescriptorSetLayout getDescriptorSetLayoutFromHandle(RSHandle handle) const
-  {
+  VkDescriptorSetLayout
+  getDescriptorSetLayoutFromHandle(RSHandle handle) const {
     assertMagicNumber(handle);
     const uint32_t index = getIndexFromHandle(handle);
     const LayoutData &data = m_rsPool.getConstRef(index);
     return data.descriptorSetLayout;
+  }
+  inline VkPipelineLayout getLayoutFromHandle(const RSHandle handle) const {
+
+    assertMagicNumber(handle);
+    const uint32_t index = getIndexFromHandle(handle);
+    const LayoutData &data = m_rsPool.getConstRef(index);
+    return data.layout;
   }
 
   // mostly to keep API uniform

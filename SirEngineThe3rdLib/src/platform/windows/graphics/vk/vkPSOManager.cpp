@@ -566,7 +566,7 @@ PSOHandle VkPSOManager::processRasterPSO(
   RSHandle layoutHandle = vk::PIPELINE_LAYOUT_MANAGER->loadSignatureFile(
       rootFile.c_str(), vk::PER_FRAME_LAYOUT, vk::STATIC_SAMPLER_LAYOUT);
   // TODO fix this should not be global anymore
-  vk::PIPELINE_LAYOUT =
+  auto layout =
       vk::PIPELINE_LAYOUT_MANAGER->getLayoutFromHandle(layoutHandle);
 
   // load shader stage
@@ -650,7 +650,7 @@ PSOHandle VkPSOManager::processRasterPSO(
   createInfo.pColorBlendState = &blendState;
   createInfo.pDynamicState = &dynamicState;
   createInfo.renderPass = renderPass;
-  createInfo.layout = PIPELINE_LAYOUT;
+  createInfo.layout = layout;
 
   VkPipeline pipeline = nullptr;
   VkResult status = vkCreateGraphicsPipelines(vk::LOGICAL_DEVICE, nullptr, 1,
@@ -755,6 +755,8 @@ void VkPSOManager::cleanup() {
       vkDestroyRenderPass(vk::LOGICAL_DEVICE, data.renderPass, nullptr);
     }
   }
+
+  vkDestroyDescriptorSetLayout(vk::LOGICAL_DEVICE,PER_FRAME_LAYOUT,nullptr);
 }
 
 void VkPSOManager::loadRawPSOInFolder(const char *directory) { assert(0); }
@@ -762,6 +764,17 @@ void VkPSOManager::loadRawPSOInFolder(const char *directory) { assert(0); }
 void VkPSOManager::loadCachedPSOInFolder(const char *directory) { assert(0); }
 
 PSOHandle VkPSOManager::loadRawPSO(const char *file) {
+
+  const std::string fileName = getFileName(file);
+  PSOHandle handle;
+  bool result = 
+  m_psoRegisterHandle.get(fileName.c_str(),handle);
+  if(result) {
+      return handle;
+  }
+
+  
+	
   auto jobj = getJsonObj(file);
 
   const std::string typeString =

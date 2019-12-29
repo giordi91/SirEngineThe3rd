@@ -487,7 +487,6 @@ bool VkTextureManager::loadTextureFromFile(const char *name, VkFormat format,
 
     vkGetImageMemoryRequirements(device, outTexture.image, &memReqs);
 
-
     memAllocInfo.allocationSize = memReqs.size;
 
     memAllocInfo.memoryTypeIndex =
@@ -640,6 +639,13 @@ TextureHandle VkTextureManager::loadTexture(const char *path,
 }
 
 void VkTextureManager::free(const TextureHandle handle) {
+
+  // by default if a texture is not present will get the white handle
+  // to keep the asset destruction streamlined, we allow to pass
+  // in the white texture, but ignore it
+  if (handle.handle == m_whiteTexture.handle) {
+    return;
+  }
   assertMagicNumber(handle);
   uint32_t index = getIndexFromHandle(handle);
   VkTexture2DTemp &data = m_texturePool[index];
@@ -898,5 +904,14 @@ void VkTextureManager::initialize() {
   m_whiteTexture = loadTexture(WHITE_TEXTURE_PATH, false);
 }
 
-void VkTextureManager::cleanup() { free(m_whiteTexture); }
+void VkTextureManager::cleanup() {
+  assertMagicNumber(m_whiteTexture);
+  uint32_t index = getIndexFromHandle(m_whiteTexture);
+  VkTexture2DTemp &data = m_texturePool[index];
+
+  // releasing the texture data and objects;
+  vkDestroyImage(vk::LOGICAL_DEVICE, data.image, nullptr);
+  vkDestroyImageView(vk::LOGICAL_DEVICE, data.view, nullptr);
+  vkFreeMemory(vk::LOGICAL_DEVICE, data.deviceMemory, nullptr);
+}
 } // namespace SirEngine::vk
