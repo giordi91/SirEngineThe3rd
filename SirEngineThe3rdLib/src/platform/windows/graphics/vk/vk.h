@@ -18,7 +18,6 @@ class VkConstantBufferManager;
 class VkMaterialManager;
 struct VkSwapchain;
 
-
 static constexpr int PREALLOCATED_SEMAPHORE_COUNT = 4;
 static constexpr uint32_t VK_TIMEOUT_INFINITE =
     std::numeric_limits<uint32_t>::max();
@@ -53,9 +52,9 @@ extern VkShaderManager *SHADER_MANAGER;
 extern VkPipelineLayoutManager *PIPELINE_LAYOUT_MANAGER;
 extern VkConstantBufferManager *CONSTANT_BUFFER_MANAGER;
 extern VkBufferManager *BUFFER_MANAGER;
-extern VkMeshManager* MESH_MANAGER;
-extern VkTextureManager* TEXTURE_MANAGER;
-extern VkMaterialManager * MATERIAL_MANAGER;
+extern VkMeshManager *MESH_MANAGER;
+extern VkTextureManager *TEXTURE_MANAGER;
+extern VkMaterialManager *MATERIAL_MANAGER;
 extern uint32_t SWAP_CHAIN_IMAGE_COUNT;
 // incremented every frame and used to find the correct set of resources
 // like command buffer pool and allocators
@@ -122,7 +121,7 @@ public:
 
   bool initializeGraphics() override;
 
-  void setupCameraForFrame();
+  void setupCameraForFrame() override;
   void setupLightingForFrame();
   void bindCameraBuffer(int index) const;
   void bindCameraBufferCompute(int index) const;
@@ -175,11 +174,11 @@ public:
   void renderMaterialType(const SHADER_QUEUE_FLAGS flag) override;
 
 private:
-    void* queues = nullptr;
+  void *queues = nullptr;
+  ConstantBufferHandle m_cameraHandle{};
+  CameraBuffer m_camBufferCPU{};
   /*
 // member variable mostly temporary
-CameraBuffer m_camBufferCPU{};
-ConstantBufferHandle m_cameraHandle{};
 ConstantBufferHandle m_lightBuffer{};
 ConstantBufferHandle m_lightCB{};
 DirectionalLightData m_light;

@@ -61,6 +61,8 @@ public:
   virtual void renderQueueType(const SHADER_QUEUE_FLAGS flag) = 0;
   virtual void renderMaterialType(const SHADER_QUEUE_FLAGS flag) = 0;
 
+  virtual void setupCameraForFrame() = 0;
+
   inline const RenderingContextCreationSettings &getContextSettings() const {
     return m_settings;
   }
@@ -111,14 +113,14 @@ protected:
 
 protected:
   RenderingContextCreationSettings m_settings;
-  ScreenInfo m_screenInfo;
-  TextureHandle m_enviromentMapHandle;
-  TextureHandle m_enviromentMapIrradianceHandle;
-  TextureHandle m_enviromentMapRadianceHandle;
-  TextureHandle m_brdfHandle;
-  BoundingBox m_boundingBox;
+  ScreenInfo m_screenInfo{};
+  TextureHandle m_enviromentMapHandle{};
+  TextureHandle m_enviromentMapIrradianceHandle{};
+  TextureHandle m_enviromentMapRadianceHandle{};
+  TextureHandle m_brdfHandle{};
+  BoundingBox m_boundingBox{};
   ConstantBufferHandle m_lightCB{};
-  DirectionalLightData m_light;
+  DirectionalLightData m_light{};
 };
 
 } // namespace SirEngine

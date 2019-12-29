@@ -41,8 +41,6 @@ SimpleForward::SimpleForward(GraphAllocators &allocators)
 }
 
 void SimpleForward::initialize() {
-  m_brdfHandle = globals::TEXTURE_MANAGER->loadTexture(
-      "../data/processed/textures/brdf.texture");
 }
 
 void SimpleForward::compute() {

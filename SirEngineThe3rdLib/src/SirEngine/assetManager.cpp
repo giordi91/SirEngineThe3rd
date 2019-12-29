@@ -1,11 +1,12 @@
 #include "SirEngine/assetManager.h"
 #include "SirEngine/animation/animationManager.h"
-#include "fileUtils.h"
-#include "SirEngine/textureManager.h"
-#include "SirEngine/skinClusterManager.h"
-#include "SirEngine/meshManager.h"
+#include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/materialManager.h"
-#include "graphics/renderingContext.h"
+#include "SirEngine/meshManager.h"
+#include "SirEngine/runtimeString.h"
+#include "SirEngine/skinClusterManager.h"
+#include "SirEngine/textureManager.h"
+#include "fileUtils.h"
 
 namespace SirEngine {
 namespace AssetManagerKeys {
@@ -21,6 +22,11 @@ static const char *ENVIROMENT_MAP_RADIANCE_KEY = "enviromentMapRadiance";
 static const std::string DEFAULT_STRING = "";
 } // namespace AssetManagerKeys
 
+void AssetManager::cleanup()
+{
+
+}
+
 AssetDataHandle AssetManager::loadAsset(const char *path) {
   auto jobj = getJsonObj(path);
 
@@ -30,13 +36,35 @@ AssetDataHandle AssetManager::loadAsset(const char *path) {
   assert(jobj.find(AssetManagerKeys::SUB_ASSETS_KEY) != jobj.end());
   auto subAssetsJ = jobj[AssetManagerKeys::SUB_ASSETS_KEY];
 
+  uint32_t subAssetCount = subAssetsJ.size();
+  uint32_t assetIdx;
+  AssetData &assetData = m_assetDatabase.getFreeMemoryData(assetIdx);
+  assetData.m_subAssets = reinterpret_cast<AssetDataHandle *>(
+      globals::PERSISTENT_ALLOCATOR->allocate(sizeof(AssetDataHandle) *
+                                              subAssetCount));
+  assetData.magicNumber = MAGIC_NUMBER_COUNTER++;
+  assetData.name = persistentString(assetName.c_str());
+  AssetDataHandle assetHandle = {assetData.magicNumber << 16 | assetIdx};
+
+  uint32_t assetCounter = 0;
   for (auto &subAsset : subAssetsJ) {
+
+    uint32_t subAssetIdx;
+    AssetData &subAssetData = m_assetDatabase.getFreeMemoryData(subAssetIdx);
+    subAssetData.m_subAssets = nullptr; 
+    subAssetData.magicNumber = MAGIC_NUMBER_COUNTER++;
+    AssetDataHandle subAssetHandle = {assetData.magicNumber << 16 | subAssetIdx};
 
     Renderable renderable{};
     // get the mesh
     const std::string meshString = getValueIfInJson(
         subAsset, AssetManagerKeys::MESH_KEY, AssetManagerKeys::DEFAULT_STRING);
     assert(!meshString.empty());
+
+    //TODO using mesh string as asset name, should have a proper name and then keep track of what it contains
+  	//for now this will do
+    assetData.name = persistentString(meshString.c_str());
+
 
     // get material
     const std::string materialString =
@@ -67,29 +95,43 @@ AssetDataHandle AssetManager::loadAsset(const char *path) {
           globals::SKIN_MANAGER->loadSkinCluster(skinPath.c_str(), animHandle);
     }
     MaterialHandle matHandle = globals::MATERIAL_MANAGER->loadMaterial(
-        materialString.c_str(), mHandle,skinHandle);
+        materialString.c_str(), mHandle, skinHandle);
     renderable.m_materialHandle = matHandle;
 
     globals::RENDERING_CONTEXT->addRenderablesToQueue(renderable);
+
+    // create a handle
+    assetData.m_subAssets[assetCounter++] = subAssetHandle;
   }
 
   // not currently using this handle, need a way to identify assets, for now the
   // engine has no concept of asset, in the meaning of a conglomerate of
   // data,meshes,textures,animations and so on
-  return AssetDataHandle{};
+  return assetHandle;
 }
 
-void AssetManager::loadScene(const char *path) {
+AssetDataHandle AssetManager::loadScene(const char *path) {
   const auto jobj = getJsonObj(path);
   assert(jobj.find(AssetManagerKeys::ASSETS_KEY) != jobj.end());
 
   // load all the assets
   auto assetsJ = jobj[AssetManagerKeys::ASSETS_KEY];
+  uint32_t subAssetCount = assetsJ.size();
+  uint32_t assetIdx;
+  AssetData &assetData = m_assetDatabase.getFreeMemoryData(assetIdx);
+  assetData.m_subAssets = reinterpret_cast<AssetDataHandle *>(
+      globals::PERSISTENT_ALLOCATOR->allocate(sizeof(AssetDataHandle) *
+                                              subAssetCount));
+  assetData.magicNumber = MAGIC_NUMBER_COUNTER++;
+  assetData.name = persistentString(path);
+  AssetDataHandle assetHandle = {assetData.magicNumber << 16 | assetIdx};
+
+  int assetCounter = 0;
   for (const auto &asset : assetsJ) {
     // should I keep track of the assets?
     // I suppose I should but for now there is not the use case
     const auto assetPath = asset.get<std::string>();
-    loadAsset(assetPath.c_str());
+    assetData.m_subAssets[assetCounter++] = loadAsset(assetPath.c_str());
   }
 
   // load the env map
@@ -126,5 +168,7 @@ void AssetManager::loadScene(const char *path) {
   TextureHandle brdfHandle = globals::TEXTURE_MANAGER->loadTexture(
       "../data/processed/textures/brdf.texture");
   globals::RENDERING_CONTEXT->setBrdfHandle(brdfHandle);
+
+  return assetHandle;
 }
 } // namespace SirEngine

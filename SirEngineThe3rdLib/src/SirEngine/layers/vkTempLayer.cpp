@@ -39,8 +39,6 @@ void VkTempLayer::createRenderTargetAndFrameBuffer(const int width,
   VK_CHECK(vkCreateFramebuffer(vk::LOGICAL_DEVICE, &createInfo, nullptr,
                                &m_tempFrameBuffer));
 
-  //globals::ASSET_MANAGER->loadScene(globals::ENGINE_CONFIG->m_startScenePath);
-  globals::ASSET_MANAGER->loadScene("../data/scenes/tempScene.json");
 }
 
 void VkTempLayer::onAttach() {
@@ -56,6 +54,8 @@ void VkTempLayer::onAttach() {
   globals::MAIN_CAMERA->setPosition(0, 15, 15);
   globals::MAIN_CAMERA->updateCamera();
 
+  //globals::ASSET_MANAGER->loadScene(globals::ENGINE_CONFIG->m_startScenePath);
+  globals::ASSET_MANAGER->loadScene("../data/scenes/tempScene.json");
   // load mesh
   meshHandle = globals::MESH_MANAGER->loadMesh(
       "../data/processed/meshes/knightB/jacket.model");
@@ -82,6 +82,11 @@ void VkTempLayer::onAttach() {
   // if constexpr (!USE_PUSH) {
   createDescriptorLayoutAdvanced();
   //}
+
+  alloc =
+      new GraphAllocators{globals::STRING_POOL, globals::PERSISTENT_ALLOCATOR};
+  m_forward = new VkSimpleForward(*alloc);
+  m_forward->initialize();
 }
 
 void VkTempLayer::createDescriptorLayoutAdvanced() {
@@ -175,15 +180,21 @@ void VkTempLayer::createDescriptorLayoutAdvanced() {
   // once, even for multiple sets This is possible because each
   // VkWriteDescriptorSet also contains the destination set to be updated
   // For simplicity we will update once per set instead
-  vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, ARRAYSIZE(writeDescriptorSets),
-                         writeDescriptorSets, 0, nullptr);
+
+  //partial descriptor sets can be done, if necessary
+  //vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, ARRAYSIZE(writeDescriptorSets),
+  //                       writeDescriptorSets, 0, nullptr);
+  //object one off update
+  vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, 4,
+                         &writeDescriptorSets[1], 0, nullptr);
+
 }
 
 void VkTempLayer::onDetach() {}
 void VkTempLayer::onUpdate() {
 
-  // temporary camera update
-  setupCameraForFrame();
+
+  globals::RENDERING_CONTEXT->setupCameraForFrame();
 
   static float step = 0.01f;
   static int index = 0;
@@ -557,26 +568,6 @@ bool VkTempLayer::onResizeEvent(WindowResizeEvent &e) {
 }
 
 void VkTempLayer::setupCameraForFrame() {
-  globals::MAIN_CAMERA->updateCamera();
-  // TODO fix this hardcoded parameter
-  m_camBufferCPU.vFov = 60.0f;
-  m_camBufferCPU.screenWidth =
-      static_cast<float>(globals::ENGINE_CONFIG->m_windowWidth);
-  m_camBufferCPU.screenHeight =
-      static_cast<float>(globals::ENGINE_CONFIG->m_windowHeight);
-  auto pos = globals::MAIN_CAMERA->getPosition();
-  m_camBufferCPU.position = glm::vec4(pos, 1.0f);
-
-  m_camBufferCPU.MVP = globals::MAIN_CAMERA->getMVP(glm::mat4(1.0));
-  m_camBufferCPU.ViewMatrix =
-      globals::MAIN_CAMERA->getViewInverse(glm::mat4(1.0));
-  m_camBufferCPU.VPinverse =
-      globals::MAIN_CAMERA->getMVPInverse(glm::mat4(1.0));
-  m_camBufferCPU.perspectiveValues = globals::MAIN_CAMERA->getProjParams();
-
-  // memcpy(m_cameraBuffer.data, &m_camBufferCPU, sizeof(m_camBufferCPU));
-  globals::CONSTANT_BUFFER_MANAGER->update(m_cameraBufferHandle,
-                                           &m_camBufferCPU);
 }
 
 /*

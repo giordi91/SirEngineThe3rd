@@ -5,6 +5,7 @@
 #include "SirEngine/layer.h"
 #include "platform/windows/graphics/vk/vkMeshManager.h"
 #include "platform/windows/graphics/vk/vkTexture.h"
+#include "SirEngine/graphics/nodes/vkSimpleForward.h"
 
 namespace SirEngine {
 namespace vk {
@@ -75,5 +76,8 @@ private:
   vk::VkTexture2D m_rt;
   VkFramebuffer m_tempFrameBuffer;
   VkRenderPass m_pass;
+  VkSimpleForward* m_forward;
+  // TODO temp
+  GraphAllocators *alloc;
 };
 } // namespace SirEngine
