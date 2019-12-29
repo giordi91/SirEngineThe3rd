@@ -654,6 +654,7 @@ PSOHandle VkPSOManager::processRasterPSO(
   PSOData &data = m_psoPool.getFreeMemoryData(index);
   data.pso = pipeline;
   data.renderPass = renderPass;
+  data.rootSignature = layoutHandle; 
   const PSOHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
   data.magicNumber = MAGIC_NUMBER_COUNTER;
   m_psoRegisterHandle.insert(fileName.c_str(), handle);

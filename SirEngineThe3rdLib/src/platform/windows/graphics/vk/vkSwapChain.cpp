@@ -275,8 +275,8 @@ bool createSwapchainWithR8G8B8A8FormatAndMailboxPresentMode(
   VkPresentModeKHR desiredPresentMode;
   // TODO should support v-sync
   if (!selectDesiredPresentationMode(physicalDevice, presentationSurface,
-                                     //VK_PRESENT_MODE_IMMEDIATE_KHR,
-                                     VK_PRESENT_MODE_FIFO_KHR,
+                                     VK_PRESENT_MODE_IMMEDIATE_KHR,
+                                     //VK_PRESENT_MODE_FIFO_KHR,
                                      desiredPresentMode)) {
     return false;
   }
