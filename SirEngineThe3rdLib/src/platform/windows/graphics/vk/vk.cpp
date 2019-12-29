@@ -19,6 +19,7 @@
 #include "platform/windows/graphics/vk/vkRootSignatureManager.h"
 #include "platform/windows/graphics/vk/vkShaderManager.h"
 #include "platform/windows/graphics/vk/vkSwapChain.h"
+#include "vkDescriptorManager.h"
 #include "vkMaterialManager.h"
 #include "vkMeshManager.h"
 #include "vkTextureManager.h"
@@ -47,6 +48,7 @@ VkBufferManager *BUFFER_MANAGER = nullptr;
 VkMeshManager *MESH_MANAGER = nullptr;
 VkTextureManager *TEXTURE_MANAGER = nullptr;
 VkMaterialManager *MATERIAL_MANAGER = nullptr;
+VkDescriptorManager *DESCRIPTOR_MANAGER = nullptr;
 uint32_t SWAP_CHAIN_IMAGE_COUNT = 0;
 VkFrameCommand FRAME_COMMAND[PREALLOCATED_SEMAPHORE_COUNT];
 VkFrameCommand *CURRENT_FRAME_COMMAND = nullptr;
@@ -203,6 +205,9 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   TEXTURE_MANAGER = new VkTextureManager();
   TEXTURE_MANAGER->initialize();
   globals::TEXTURE_MANAGER = TEXTURE_MANAGER;
+
+  DESCRIPTOR_MANAGER = new VkDescriptorManager();
+  DESCRIPTOR_MANAGER->initialize();
 
   MATERIAL_MANAGER = new VkMaterialManager();
   MATERIAL_MANAGER->inititialize();

@@ -30,6 +30,7 @@ static const char *QUEUE = "queue";
 static const char *TYPE = "type";
 static const char *RS_KEY = "rs";
 static const char *PSO_KEY = "pso";
+static const char *IS_STATIC_KEY= "isStatic";
 static const std::string DEFAULT_STRING = "";
 
 static const std::unordered_map<std::string, SirEngine::SHADER_QUEUE_FLAGS>
@@ -174,6 +175,8 @@ MaterialManager::parseMaterial(const char *path, const MeshHandle meshHandle,
       getValueIfInJson(jobj, materialKeys::ROUGHNESS_MULT, oneFloat);
   float metallicMult =
       getValueIfInJson(jobj, materialKeys::METALLIC_MULT, oneFloat);
+  bool isStatic=
+      getValueIfInJson(jobj, materialKeys::IS_STATIC_KEY, false);
 
   const std::string empty;
   const std::string albedoName =
@@ -272,6 +275,7 @@ MaterialManager::parseMaterial(const char *path, const MeshHandle meshHandle,
   PrelinaryMaterialParse toReturn;
   toReturn.mat = mat;
   toReturn.handles = texHandles;
+  toReturn.isStatic = isStatic;
   parseQueueTypeFlags(toReturn.shaderQueueTypeFlags,jobj);
 
   return toReturn;

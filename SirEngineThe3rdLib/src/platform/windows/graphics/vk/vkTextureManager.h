@@ -73,21 +73,33 @@ public:
     writeDescriptorSets[0].pImageInfo = &data.descriptor;
     writeDescriptorSets[0].descriptorCount = 1;
   };
+  void bindTexture(const VkDescriptorImageInfo &info,
+                   VkWriteDescriptorSet *writeDescriptorSets,
+                   const VkDescriptorSet descriptorSet,
+                   const uint32_t bindSlot) {
 
-  inline VkDescriptorImageInfo getTextureDescriptor(const TextureHandle handle)const
-  {
+    writeDescriptorSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    writeDescriptorSets[0].dstSet = descriptorSet;
+    writeDescriptorSets[0].dstBinding = bindSlot;
+    writeDescriptorSets[0].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+    writeDescriptorSets[0].pImageInfo = &info;
+    writeDescriptorSets[0].descriptorCount = 1;
+  };
+
+  inline VkDescriptorImageInfo
+  getTextureDescriptor(const TextureHandle handle) const {
     assertMagicNumber(handle);
     const uint32_t idx = getIndexFromHandle(handle);
     const auto &data = m_texturePool.getConstRef(idx);
     return data.descriptor;
   }
-	
 
 private:
   bool loadTextureFromFile(const char *name, VkFormat format, VkDevice device,
                            VkTexture2DTemp &outTexture,
                            VkImageUsageFlags imageUsageFlags,
-                           VkImageLayout imageLayout, bool isCube =false) const;
+                           VkImageLayout imageLayout,
+                           bool isCube = false) const;
   inline void assertMagicNumber(const TextureHandle handle) const {
     const uint32_t magic = getMagicFromHandle(handle);
     const uint32_t idx = getIndexFromHandle(handle);

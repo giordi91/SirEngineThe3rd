@@ -74,4 +74,9 @@ struct ScriptHandle {
   [[nodiscard]] bool isHandleValid() const { return handle != 0; }
 };
 
+struct DescriptorHandle {
+  uint32_t handle;
+  [[nodiscard]] bool isHandleValid() const { return handle != 0; }
+};
+
 } // namespace SirEngine

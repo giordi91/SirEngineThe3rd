@@ -9,9 +9,9 @@
 
 #include <nlohmann/json_fwd.hpp>
 
+#include "vkRootSignatureManager.h"
 #include <cassert>
 #include <string>
-#include "vkRootSignatureManager.h"
 
 namespace SirEngine::vk {
 
@@ -23,7 +23,7 @@ extern VkDescriptorSet
     STATIC_SAMPLER_DESCRIPTOR_SET; // used in case you want to manually update
                                    // the samplers and not bound them as static
 extern VkDescriptorSetLayout PER_FRAME_LAYOUT;
-extern VkDescriptorSet* PER_FRAME_DESCRIPTOR_SET;
+extern VkDescriptorSet *PER_FRAME_DESCRIPTOR_SET;
 
 // VkPipeline
 // createGraphicsPipeline(const char *psoPath, VkDevice logicalDevice,
@@ -54,6 +54,8 @@ public:
 
   VkPSOManager(const VkPSOManager &) = delete;
   VkPSOManager &operator=(const VkPSOManager &) = delete;
+  VkPSOManager(VkPSOManager &&) = delete;
+  VkPSOManager &operator=(VkPSOManager &&) = delete;
   void initialize() override;
   void cleanup() override;
   void loadRawPSOInFolder(const char *directory) override;
@@ -140,7 +142,5 @@ private:
   SparseMemoryPool<PSOData> m_psoPool;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
   static const uint32_t RESERVE_SIZE = 400;
-  static const uint32_t INDEX_MASK = (1 << 16) - 1;
-  static const uint32_t MAGIC_NUMBER_MASK = ~INDEX_MASK;
 }; // namespace SirEngine::vk
 } // namespace SirEngine::vk

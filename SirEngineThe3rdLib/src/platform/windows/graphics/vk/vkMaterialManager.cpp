@@ -7,6 +7,8 @@
 #include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
 #include "vk.h"
 #include "vkConstantBufferManager.h"
+#include "vkDescriptorManager.h"
+#include "vkMeshManager.h"
 #include "vkPSOManager.h"
 #include "vkRootSignatureManager.h"
 #include "vkTextureManager.h"
@@ -110,6 +112,46 @@ dx12::MESH_MANAGER->bindMesh(materialRuntime.meshHandle, commandList,
 // HARDCODED stencil value might have to think of a nice way to handle this
 commandList->OMSetStencilRef(static_cast<uint32_t>(STENCIL_REF::SSSSS));
 */
+}
+void updateForwardPhong(SHADER_QUEUE_FLAGS queueFlag,
+                        const MaterialHandle handle,
+                        VkMaterialManager *manager) {
+
+  const VkMaterialRuntime &materialRuntime =
+      manager->getMaterialRuntime(handle);
+  // Update the descriptor set with the actual descriptors matching shader
+  // bindings set in the layout
+  // this far we defined just what descriptor we wanted and how they were setup,
+  // now we need to actually define the content of those descriptors, the actual
+  // resources
+
+  int queueFlagInt = static_cast<int>(queueFlag);
+  DescriptorHandle setHandle = materialRuntime.descriptorHandles[queueFlagInt];
+  VkDescriptorSet descriptorSet =
+      vk::DESCRIPTOR_MANAGER->getDescriptorSet(setHandle);
+
+  VkWriteDescriptorSet writeDescriptorSets[4] = {};
+
+  VkDescriptorBufferInfo bufferInfo[3] = {};
+  vk::MESH_MANAGER->bindMesh(materialRuntime.meshHandle, writeDescriptorSets,
+                             descriptorSet, bufferInfo);
+  // root, bufferInfo);
+
+  vk::TEXTURE_MANAGER->bindTexture(materialRuntime.albedo,
+                                   &writeDescriptorSets[3], descriptorSet, 3);
+
+  // Execute the writes to update descriptors for this set
+  // Note that it's also possible to gather all writes and only run updates
+  // once, even for multiple sets This is possible because each
+  // VkWriteDescriptorSet also contains the destination set to be updated
+  // For simplicity we will update once per set instead
+  // object one off update
+  vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, 4, &writeDescriptorSets[0], 0,
+                         nullptr);
+}
+void bindForwardPhong(const VkMaterialRuntime &materialRuntime,
+                      VkCommandBuffer commandList) {
+  assert(0);
 }
 void bindForwardPBR(const VkMaterialRuntime &materialRuntime,
                     VkCommandBuffer commandList) {
@@ -340,47 +382,135 @@ void VkMaterialManager::bindMaterial(SHADER_QUEUE_FLAGS queueFlag,
       getTypeFlags(materialRuntime.shaderQueueTypeFlags[currentFlagId]);
   switch (type) {
   case (SHADER_TYPE_FLAGS::PBR): {
+    assert(0);
     bindPBR(materialRuntime, commandList);
     break;
   }
   case (SHADER_TYPE_FLAGS::SKIN): {
+    assert(0);
     bindSkin(materialRuntime, commandList);
     break;
   }
   case (SHADER_TYPE_FLAGS::FORWARD_PBR): {
+    assert(0);
     bindForwardPBR(materialRuntime, commandList);
     break;
   }
   case (SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT): {
+    assert(0);
     bindForwardPhongAlphaCutout(materialRuntime, commandList);
     break;
   }
   case (SHADER_TYPE_FLAGS::HAIR): {
+    assert(0);
     bindHair(materialRuntime, commandList);
     break;
   }
   case (SHADER_TYPE_FLAGS::SKINCLUSTER): {
+    assert(0);
     bindSkinning(materialRuntime, commandList);
     break;
   }
   case (SHADER_TYPE_FLAGS::SKINSKINCLUSTER): {
+    assert(0);
     bindSkinSkinning(materialRuntime, commandList);
     break;
   }
   case (SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT_SKIN): {
+    assert(0);
     bindForwardPhongAlphaCutoutSkin(materialRuntime, commandList);
     break;
   }
   case (SHADER_TYPE_FLAGS::HAIRSKIN): {
+    assert(0);
     bindHairSkin(materialRuntime, commandList);
     break;
   }
   case (SHADER_TYPE_FLAGS::FORWARD_PARALLAX): {
+    assert(0);
     bindParallaxPBR(materialRuntime, commandList);
     break;
   }
   case (SHADER_TYPE_FLAGS::SHADOW_SKIN_CLUSTER): {
+    assert(0);
     bindShadowSkin(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::FORWARD_PHONG): {
+    bindForwardPhong(materialRuntime, commandList);
+    break;
+  }
+  default: {
+    assert(0 && "could not find material type");
+  }
+  }
+}
+void VkMaterialManager::updateMaterial(SHADER_QUEUE_FLAGS queueFlag,
+                                       const MaterialHandle handle,
+                                       VkCommandBuffer commandList) {
+  const VkMaterialRuntime &materialRuntime = getMaterialRuntime(handle);
+  int queueFlagInt = static_cast<int>(queueFlag);
+  int currentFlagId = static_cast<int>(log2(queueFlagInt & -queueFlagInt));
+  const SHADER_TYPE_FLAGS type =
+      getTypeFlags(materialRuntime.shaderQueueTypeFlags[currentFlagId]);
+  switch (type) {
+  case (SHADER_TYPE_FLAGS::PBR): {
+    assert(0);
+    bindPBR(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::SKIN): {
+    assert(0);
+    bindSkin(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::FORWARD_PBR): {
+    assert(0);
+    bindForwardPBR(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT): {
+    assert(0);
+    bindForwardPhongAlphaCutout(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::HAIR): {
+    assert(0);
+    bindHair(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::SKINCLUSTER): {
+    assert(0);
+    bindSkinning(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::SKINSKINCLUSTER): {
+    assert(0);
+    bindSkinSkinning(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT_SKIN): {
+    assert(0);
+    bindForwardPhongAlphaCutoutSkin(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::HAIRSKIN): {
+    assert(0);
+    bindHairSkin(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::FORWARD_PARALLAX): {
+    assert(0);
+    bindParallaxPBR(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::SHADOW_SKIN_CLUSTER): {
+    assert(0);
+    bindShadowSkin(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::FORWARD_PHONG): {
+    updateForwardPhong(queueFlag, handle, this);
     break;
   }
   default: {
@@ -457,10 +587,45 @@ MaterialHandle VkMaterialManager::loadMaterial(const char *path,
   materialData.magicNumber = MAGIC_NUMBER_COUNTER++;
   materialData.m_materialRuntime = matCpu;
 
-  MaterialHandle handle{(materialData.magicNumber << 16) | (index)};
-
   const std::string name = getFileName(path);
+  MaterialHandle handle{(materialData.magicNumber << 16) | (index)};
   m_nameToHandle.insert(name.c_str(), handle);
+
+  // allocate the descriptor set
+  constexpr auto mask = static_cast<uint32_t>(~((1 << 16) - 1));
+
+  // looping the queues
+  for (int i = 0; i < 4; ++i) {
+    uint32_t queue = matCpu.shaderQueueTypeFlags[i];
+    if (queue == INVALID_QUEUE_TYPE_FLAGS) {
+      continue;
+    }
+    const auto typeFlags = static_cast<uint16_t>((queue & mask) >> 16);
+    ShaderBind bind{};
+    bool found = m_shderTypeToShaderBind.get(typeFlags, bind);
+
+    if (!found) {
+      assert(0 && "could not find needed root signature");
+    }
+    uint32_t flags =
+        parse.isStatic ? 0 : VkDescriptorManager::DESCRIPTOR_FLAGS::BUFFERED;
+
+    const char *shaderTypeName =
+        getStringFromShaderTypeFlag(static_cast<SHADER_TYPE_FLAGS>(typeFlags));
+    const char *descriptorName =
+        frameConcatenation(name.c_str(), shaderTypeName, "-");
+    DescriptorHandle descriptorHandle =
+        vk::DESCRIPTOR_MANAGER->allocate(bind.rs, flags, descriptorName);
+
+    materialData.m_materialRuntime.descriptorHandles[i] = descriptorHandle;
+
+    if (parse.isStatic) {
+      // it is static lets bind the material right away
+      updateMaterial(static_cast<SHADER_QUEUE_FLAGS>(getQueueFlags(queue)),
+                     handle, vk::CURRENT_FRAME_COMMAND->m_commandBuffer);
+    }
+  }
+
   return handle;
 }
 
