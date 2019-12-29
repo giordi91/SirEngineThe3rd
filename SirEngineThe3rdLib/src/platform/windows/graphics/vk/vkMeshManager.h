@@ -87,6 +87,13 @@ public:
                          VK_INDEX_TYPE_UINT32);
     vkCmdDrawIndexed(commandBuffer, data.indexCount, 1, 0, 0, 0);
   };
+  inline void renderMesh(const VkMeshRuntime runtime,
+                         const VkCommandBuffer commandBuffer) const {
+
+    vkCmdBindIndexBuffer(commandBuffer, runtime.indexBuffer, 0,
+                         VK_INDEX_TYPE_UINT32);
+    vkCmdDrawIndexed(commandBuffer, runtime.indexCount, 1, 0, 0, 0);
+  };
 
   void free(const MeshHandle handle) override;
   // vk methods

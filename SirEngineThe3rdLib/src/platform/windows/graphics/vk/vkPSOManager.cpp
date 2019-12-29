@@ -5,6 +5,7 @@
 
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/globals.h"
+#include "SirEngine/log.h"
 
 namespace SirEngine::vk {
 
@@ -540,7 +541,18 @@ VkRenderPass getRenderPass(const nlohmann::json &jobj, const char *name) {
   return renderPass;
 }
 
-// TODO fix vertex info, should not be passed in should be read from RS or PSO
+PSOHandle VkPSOManager::getHandleFromName(const char* name) const
+{
+	bool found = m_psoRegisterHandle.containsKey(name);
+	//assert(found);
+	if (!found)
+	{
+		SE_CORE_ERROR("could not find PSO handle for name {0}", 0);
+	}
+	PSOHandle value{};
+	m_psoRegisterHandle.get(name, value);
+	return value;
+} // TODO fix vertex info, should not be passed in should be read from RS or PSO
 PSOHandle VkPSOManager::processRasterPSO(
     const char *filePath, const nlohmann::json &jobj,
     VkPipelineVertexInputStateCreateInfo *vertexInfo) {

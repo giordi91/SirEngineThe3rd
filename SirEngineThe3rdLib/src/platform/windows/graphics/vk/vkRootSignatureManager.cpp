@@ -174,4 +174,14 @@ RSHandle VkPipelineLayoutManager::loadSignatureFile(
   return handle;
 }
 
+RSHandle VkPipelineLayoutManager::getHandleFromName(const char *name) const {
+  bool found = m_rootRegister.containsKey(name);
+  // assert();
+  if (!found) {
+    SE_CORE_ERROR("could not find RS handle for {0}", name);
+  }
+  RSHandle value;
+  m_rootRegister.get(name, value);
+  return value;
+}
 } // namespace SirEngine::vk

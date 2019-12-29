@@ -23,8 +23,6 @@ public:
   virtual void onResizeEvent(int screenWidth, int screenHeight) override;
 
 private:
-  PSOHandle m_psoHandle;
-  VkPipeline m_pipeline;
   VkRenderPass m_pass;
 };
 

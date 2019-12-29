@@ -67,10 +67,11 @@ public:
   inline void bindPSO(const PSOHandle handle,
                       VkCommandBuffer commandList) const {
 
-    assert(0);
-    // assertMagicNumber(handle);
-    // const uint32_t index = getIndexFromHandle(handle);
-    // const PSOData &data = m_psoPool.getConstRef(index);
+    assertMagicNumber(handle);
+    const uint32_t index = getIndexFromHandle(handle);
+    const PSOData &data = m_psoPool.getConstRef(index);
+    vkCmdBindPipeline(commandList,
+                      VK_PIPELINE_BIND_POINT_GRAPHICS, data.pso);
     // commandList->SetPipelineState(data.pso);
   }
   inline VkPipeline getPipelineFromHandle(const PSOHandle handle) const {
@@ -92,13 +93,7 @@ public:
     return data.rootSignature;
   }
 
-  inline PSOHandle getHandleFromName(const char *name) const {
-
-    assert(m_psoRegisterHandle.containsKey(name));
-    PSOHandle value{};
-    m_psoRegisterHandle.get(name, value);
-    return value;
-  }
+  PSOHandle getHandleFromName(const char *name) const override;
 
 private:
   // PSOCompileResult processComputePSO(nlohmann::json &jobj,
