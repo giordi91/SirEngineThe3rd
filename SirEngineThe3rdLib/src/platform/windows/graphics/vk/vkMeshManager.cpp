@@ -143,26 +143,26 @@ void VkMeshManager::bindMesh(MeshHandle handle, VkWriteDescriptorSet *set,
   info[2].range = data.meshRuntime.uvRange.m_size;
 
   // Binding 0: Object mesh buffer
+  set[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  set[0].dstSet = descriptorSet;
+  set[0].dstBinding = 0;
+  set[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  set[0].pBufferInfo = &info[0];
+  set[0].descriptorCount = 1;
+
   set[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   set[1].dstSet = descriptorSet;
   set[1].dstBinding = 1;
   set[1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  set[1].pBufferInfo = &info[0];
+  set[1].pBufferInfo = &info[1];
   set[1].descriptorCount = 1;
 
   set[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   set[2].dstSet = descriptorSet;
   set[2].dstBinding = 2;
   set[2].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  set[2].pBufferInfo = &info[1];
+  set[2].pBufferInfo = &info[2];
   set[2].descriptorCount = 1;
-
-  set[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  set[3].dstSet = descriptorSet;
-  set[3].dstBinding = 3;
-  set[3].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  set[3].pBufferInfo = &info[2];
-  set[3].descriptorCount = 1;
 }
 
 void VkMeshManager::free(const MeshHandle handle)

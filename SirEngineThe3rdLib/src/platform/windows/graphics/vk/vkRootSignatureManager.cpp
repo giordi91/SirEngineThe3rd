@@ -3,7 +3,6 @@
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
 
-
 namespace SirEngine::vk {
 
 const std::string ROOT_KEY_CONFIG = "config";
@@ -13,6 +12,7 @@ const std::string ROOT_KEY_DATA = "data";
 const std::string ROOT_KEY_RESOURCE = "underlyingResource";
 const std::string ROOT_KEY_NUM_DESCRIPTOR = "numDescriptors";
 const std::string ROOT_KEY_RANGES = "ranges";
+const std::string ROOT_KEY_SET = "sets";
 const std::string ROOT_KEY_REGISTER = "register";
 const std::string ROOT_KEY_BASE_REGISTER = "baseRegister";
 const std::string ROOT_KEY_SIZE_IN_32_BIT_VALUES = "sizeIn32BitValues";
@@ -74,18 +74,17 @@ VkShaderStageFlags getVisibilityFlags(const nlohmann::json &jobj) {
   return 0;
 }
 
-void VkPipelineLayoutManager::loadSignaturesInFolder(const char* directory)
-{
-    assert(0);
+void VkPipelineLayoutManager::loadSignaturesInFolder(const char *directory) {
+  assert(0);
 }
 
-void VkPipelineLayoutManager::loadSignatureBinaryFile(const char* file)
-{
-    assert(0);
+void VkPipelineLayoutManager::loadSignatureBinaryFile(const char *file) {
+  assert(0);
 }
 
 RSHandle VkPipelineLayoutManager::loadSignatureFile(
-    const char *file, VkDescriptorSetLayout samplersLayout) {
+    const char *file, const VkDescriptorSetLayout perFrameLayout,
+    const VkDescriptorSetLayout samplersLayout) {
   auto jobj = getJsonObj(file);
 
   const std::string name = getFileName(file);
@@ -106,6 +105,14 @@ RSHandle VkPipelineLayoutManager::loadSignatureFile(
       globals::FRAME_ALLOCATOR->allocate(allocSize));
   // zeroing out
   memset(bindings, 0, allocSize);
+
+  // we support at most 3 descriptor set
+  // 0 = per frame data
+  // 1 = per object data
+  // 2 = static samplers
+  // everything in the bindings will be for set 1, the object
+  // the per  frame data is defined by the engine and will be a different
+  // descriptor set
 
   for (int i = 0; i < configLen; ++i) {
     const auto &currentConfigJ = config[i];
@@ -146,8 +153,9 @@ RSHandle VkPipelineLayoutManager::loadSignatureFile(
       getValueIfInJson(jobj, ROOT_KEY_STATIC_SAMPLERS, false);
   // always allocating two layouts, and dynamically changing how many layouts we
   // use depending on user config
-  VkDescriptorSetLayout layouts[2] = {descriptorLayout, samplersLayout};
-  layoutInfo.setLayoutCount = 1 + (useStaticSamplers ? 1 : 0);
+  VkDescriptorSetLayout layouts[3] = {perFrameLayout, descriptorLayout,
+                                      samplersLayout};
+  layoutInfo.setLayoutCount = 2 + (useStaticSamplers ? 1 : 0);
   layoutInfo.pSetLayouts = layouts;
 
   // generate the handle
@@ -163,8 +171,8 @@ RSHandle VkPipelineLayoutManager::loadSignatureFile(
   ++MAGIC_NUMBER_COUNTER;
 
   // cleanup
-  //descriptor layout can be deleted immediately after the creation of the pipeline
-  //layout, the pipeline layout will still be valid
+  // descriptor layout can be deleted immediately after the creation of the
+  // pipeline layout, the pipeline layout will still be valid
   vkDestroyDescriptorSetLayout(vk::LOGICAL_DEVICE, descriptorLayout, nullptr);
 
   return handle;

@@ -6,6 +6,7 @@
 #include "SirEngine/assetManager.h"
 #include "SirEngine/engineConfig.h"
 #include "SirEngine/globals.h"
+#include "SirEngine/graphics/camera.h"
 #include "SirEngine/log.h"
 #include "SirEngine/runtimeString.h"
 #include "platform/windows/graphics/vk/vk.h"
@@ -21,7 +22,6 @@
 #include "vkMaterialManager.h"
 #include "vkMeshManager.h"
 #include "vkTextureManager.h"
-#include "SirEngine/graphics/camera.h"
 
 namespace SirEngine::vk {
 VkInstance INSTANCE = nullptr;
@@ -251,11 +251,15 @@ bool VkRenderingContext::initializeGraphics() {
   if (!result) {
     SE_CORE_ERROR("FATAL: could not initialize graphics");
   }
+
+  m_cameraHandle = globals::CONSTANT_BUFFER_MANAGER->allocate(
+      sizeof(CameraBuffer),
+      ConstantBufferManager::CONSTANT_BUFFER_FLAGS::UPDATED_EVERY_FRAME,
+      nullptr);
   return result;
 }
 
-void VkRenderingContext::setupCameraForFrame()
-{
+void VkRenderingContext::setupCameraForFrame() {
   globals::MAIN_CAMERA->updateCamera();
   // TODO fix this hardcoded parameter
   m_camBufferCPU.vFov = 60.0f;
@@ -274,18 +278,25 @@ void VkRenderingContext::setupCameraForFrame()
   m_camBufferCPU.perspectiveValues = globals::MAIN_CAMERA->getProjParams();
 
   // memcpy(m_cameraBuffer.data, &m_camBufferCPU, sizeof(m_camBufferCPU));
-  globals::CONSTANT_BUFFER_MANAGER->update(m_cameraHandle,
-                                           &m_camBufferCPU);
+  globals::CONSTANT_BUFFER_MANAGER->update(m_cameraHandle, &m_camBufferCPU);
 
   VkWriteDescriptorSet writeDescriptorSets = {};
   VkDescriptorBufferInfo bufferInfoUniform = {};
-  //vk::CONSTANT_BUFFER_MANAGER->bindConstantBuffer(
-  //    m_cameraHandle, bufferInfoUniform, 0, &writeDescriptorSets,
-  //    m_meshDescriptorSet);
-  ////camera update
-  //vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, 1,
-  //                       &writeDescriptorSets[0], 0, nullptr);
+  vk::CONSTANT_BUFFER_MANAGER->bindConstantBuffer(
+      m_cameraHandle, bufferInfoUniform, 0, &writeDescriptorSets,
+      vk::PER_FRAME_DESCRIPTOR_SET[globals::CURRENT_FRAME]);
+  // camera update
+  vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, 1, &writeDescriptorSets, 0,
+                         nullptr);
+}
 
+void VkRenderingContext::bindCameraBuffer(int index) const {
+
+  // VkWriteDescriptorSet writeDescriptorSets{};
+  // VkDescriptorBufferInfo bufferInfoUniform = {};
+  // vk::CONSTANT_BUFFER_MANAGER->bindConstantBuffer(
+  //    m_cameraHandle, bufferInfoUniform, 0, &writeDescriptorSets,
+  //    vk::PER_FRAME_DESCRIPTOR_SET);
 }
 
 void waitOnFence(VkFence fence) {

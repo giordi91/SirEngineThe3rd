@@ -66,8 +66,6 @@ private:
   // mesh
   MeshHandle meshHandle;
   TextureHandle textureHandle;
-  CameraBuffer m_camBufferCPU;
-  ConstantBufferHandle m_cameraBufferHandle;
 
   VkVertexInputBindingDescription m_stream;
   VkVertexInputAttributeDescription m_attr[3];

@@ -21,6 +21,8 @@ extern VkDescriptorSetLayout STATIC_SAMPLER_LAYOUT;
 extern VkDescriptorSet
     STATIC_SAMPLER_DESCRIPTOR_SET; // used in case you want to manually update
                                    // the samplers and not bound them as static
+extern VkDescriptorSetLayout PER_FRAME_LAYOUT;
+extern VkDescriptorSet* PER_FRAME_DESCRIPTOR_SET;
 
 // VkPipeline
 // createGraphicsPipeline(const char *psoPath, VkDevice logicalDevice,

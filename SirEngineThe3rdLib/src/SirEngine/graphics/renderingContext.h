@@ -62,6 +62,7 @@ public:
   virtual void renderMaterialType(const SHADER_QUEUE_FLAGS flag) = 0;
 
   virtual void setupCameraForFrame() = 0;
+  virtual void bindCameraBuffer(int index) const = 0;
 
   inline const RenderingContextCreationSettings &getContextSettings() const {
     return m_settings;

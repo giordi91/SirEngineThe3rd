@@ -1,7 +1,7 @@
 #version 450
 
-layout (set=0,binding = 4) uniform texture2D colorTexture;
-layout (set=1,binding = 0) uniform sampler[7] colorSampler;
+layout (set=1,binding = 3) uniform texture2D colorTexture;
+layout (set=2,binding = 0) uniform sampler[7] colorSampler;
 
 layout(location=0) out vec4 outputColor;
 
