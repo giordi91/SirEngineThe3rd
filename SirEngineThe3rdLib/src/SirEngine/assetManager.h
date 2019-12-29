@@ -1,5 +1,6 @@
 #pragma once
 #include "SirEngine/handle.h"
+#include "memory/resizableVector.h"
 #include "memory/sparseMemoryPool.h"
 
 namespace SirEngine {
@@ -8,7 +9,7 @@ class AssetManager final {
   struct AssetData {
     AssetDataHandle *m_subAssets = nullptr;
     uint32_t magicNumber;
-    const char* name;
+    const char *name;
   };
 
 public:
@@ -27,5 +28,8 @@ private:
   SparseMemoryPool<AssetData> m_assetDatabase;
   static constexpr uint32_t RESERVE_SIZE = 400;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
+  // TODO temporary list of stuff to clean up, until we will have a proper
+  // asset definition of sort
+  ResizableVector<MaterialHandle> m_materialsToFree;
 };
 } // namespace SirEngine

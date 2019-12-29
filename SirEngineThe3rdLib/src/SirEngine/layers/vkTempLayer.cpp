@@ -62,9 +62,6 @@ void VkTempLayer::onAttach() {
       vk::PSO_MANAGER->loadRawPSO("../data/pso/forwardPhongPSO.json");
   m_pass = vk::PSO_MANAGER->getRenderPassFromHandle(handle);
 
-  // textureHandle = vk::TEXTURE_MANAGER->loadTexture(
-  //    "../data/processed/textures/knightB/jacket_A.texture", false);
-
   createRenderTargetAndFrameBuffer(globals::ENGINE_CONFIG->m_windowWidth,
                                    globals::ENGINE_CONFIG->m_windowHeight);
   // if constexpr (!USE_PUSH) {

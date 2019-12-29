@@ -36,7 +36,6 @@ VkSwapchain *SWAP_CHAIN = nullptr;
 VkDescriptorPool DESCRIPTOR_POOL = nullptr;
 
 VkFormat IMAGE_FORMAT = VK_FORMAT_UNDEFINED;
-VkPipelineLayout PIPELINE_LAYOUT = nullptr;
 VkDebugReportCallbackEXT DEBUG_CALLBACK = nullptr;
 VkDebugUtilsMessengerEXT DEBUG_CALLBACK2 = nullptr;
 
@@ -445,8 +444,7 @@ bool VkRenderingContext::shutdownGraphic() {
   destroyStaticSamplers();
   SHADER_MANAGER->cleanup();
   CONSTANT_BUFFER_MANAGER->cleanup();
-  vkDestroyPipelineLayout(LOGICAL_DEVICE, PIPELINE_LAYOUT, nullptr);
-  // vkDestroyRenderPass(LOGICAL_DEVICE, RENDER_PASS, nullptr);
+
   for (uint32_t i = 0; i < SWAP_CHAIN_IMAGE_COUNT; ++i) {
     vkDestroySemaphore(LOGICAL_DEVICE, FRAME_COMMAND[i].m_acquireSemaphore,
                        nullptr);
@@ -471,7 +469,11 @@ bool VkRenderingContext::shutdownGraphic() {
   }
 
   // clean up manager
+  PIPELINE_LAYOUT_MANAGER->cleanup();
   PSO_MANAGER->cleanup();
+
+  MATERIAL_MANAGER->releaseAllMaterialsAndRelatedResources();
+
   TEXTURE_MANAGER->cleanup();
 
   vkDestroyDevice(LOGICAL_DEVICE, nullptr);
@@ -532,7 +534,7 @@ void VkRenderingContext::renderQueueType(const SHADER_QUEUE_FLAGS queueFlag) {
           vk::MATERIAL_MANAGER->getTypeFlags(renderableList.first);
       const std::string &typeName =
           vk::MATERIAL_MANAGER->getStringFromShaderTypeFlag(type);
-      //annotateGraphicsBegin(typeName.c_str());
+      // annotateGraphicsBegin(typeName.c_str());
 
       // looping each of the object
       const size_t count = renderableList.second.size();
@@ -554,7 +556,7 @@ void VkRenderingContext::renderQueueType(const SHADER_QUEUE_FLAGS queueFlag) {
         //												 currentFc);
         //}
       }
-      //annotateGraphicsEnd();
+      // annotateGraphicsEnd();
     }
   }
 }

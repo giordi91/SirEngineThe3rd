@@ -74,6 +74,24 @@ VkShaderStageFlags getVisibilityFlags(const nlohmann::json &jobj) {
   return 0;
 }
 
+void VkPipelineLayoutManager::cleanup() {
+  int count = m_rootRegister.binCount();
+  for (int i = 0; i < count; ++i) {
+    if (m_rootRegister.isBinUsed(i)) {
+      const char *key = m_rootRegister.getKeyAtBin(i);
+      RSHandle handle{};
+      m_rootRegister.get(key, handle);
+      // now that we have the handle we can get the data
+      assertMagicNumber(handle);
+      const uint32_t index = getIndexFromHandle(handle);
+      const LayoutData &data = m_rsPool.getConstRef(index);
+      vkDestroyPipelineLayout(vk::LOGICAL_DEVICE, data.layout, nullptr);
+      vkDestroyDescriptorSetLayout(vk::LOGICAL_DEVICE, data.descriptorSetLayout,
+                                   nullptr);
+    }
+  }
+}
+
 void VkPipelineLayoutManager::loadSignaturesInFolder(const char *directory) {
   assert(0);
 }
@@ -146,6 +164,7 @@ RSHandle VkPipelineLayoutManager::loadSignatureFile(
   VkDescriptorSetLayout descriptorLayout;
   vkCreateDescriptorSetLayout(vk::LOGICAL_DEVICE, &descriptorInfo, nullptr,
                               &descriptorLayout);
+  SET_DEBUG_NAME(descriptorLayout,VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT,frameConcatenation(name.c_str(),"DescriptorLayout"));
 
   // we are going to use multiple layouts if static samplers are requested
   // (which is always the case)
@@ -164,6 +183,7 @@ RSHandle VkPipelineLayoutManager::loadSignatureFile(
   // TODO need a manager
   vkCreatePipelineLayout(vk::LOGICAL_DEVICE, &layoutInfo, nullptr,
                          &rsdata.layout);
+  SET_DEBUG_NAME(rsdata.layout,VK_OBJECT_TYPE_PIPELINE_LAYOUT,frameConcatenation(name.c_str(),"PipelineLayout"));
 
   const RSHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
   rsdata.magicNumber = MAGIC_NUMBER_COUNTER;
