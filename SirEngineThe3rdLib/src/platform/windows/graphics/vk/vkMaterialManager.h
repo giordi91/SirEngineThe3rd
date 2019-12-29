@@ -24,6 +24,7 @@ struct VkMaterialRuntime final {
       INVALID_QUEUE_TYPE_FLAGS, INVALID_QUEUE_TYPE_FLAGS};
   SkinHandle skinHandle;
   MeshHandle meshHandle;
+  DescriptorHandle descriptorHandles[4]{{}, {}, {}, {}};
 };
 
 struct MaterialData {
@@ -46,6 +47,7 @@ public:
   void bindMaterial(SHADER_QUEUE_FLAGS queueFlag,
                     const VkMaterialRuntime &materialRuntime,
                     VkCommandBuffer commandList);
+  void updateMaterial(SHADER_QUEUE_FLAGS queueFlag, MaterialHandle handle, VkCommandBuffer commandList);
 
   void bindRSandPSO(uint32_t shaderFlags, VkCommandBuffer commandList);
   VkMaterialManager(const VkMaterialManager &) = delete;

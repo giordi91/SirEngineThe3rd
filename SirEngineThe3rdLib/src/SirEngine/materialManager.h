@@ -78,6 +78,7 @@ protected:
     uint32_t shaderQueueTypeFlags[4] = {
         INVALID_QUEUE_TYPE_FLAGS, INVALID_QUEUE_TYPE_FLAGS,
         INVALID_QUEUE_TYPE_FLAGS, INVALID_QUEUE_TYPE_FLAGS};
+    bool isStatic = false;
   };
 
 public:
