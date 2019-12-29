@@ -32,28 +32,22 @@ VkSimpleForward::VkSimpleForward(GraphAllocators &allocators)
   outTexture.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
   outTexture.nodePtr = this;
   outTexture.name = "outTexture";
-
-  // fetching root signature
-  // rs =
-  //    dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(SIMPLE_FORWARD_RS);
-  // pso = dx12::PSO_MANAGER->getHandleFromName(SIMPLE_FORWARD_PSO);
-  PSOHandle m_psoHandle = vk::PSO_MANAGER->getHandleFromName("forwardPhongPSO");
-  m_pipeline = vk::PSO_MANAGER->getPipelineFromHandle(m_psoHandle);
-  m_pass = vk::PSO_MANAGER->getRenderPassFromHandle(m_psoHandle);
 }
 
 void VkSimpleForward::initialize() {}
 
 void VkSimpleForward::compute() {
 
-  annotateGraphicsBegin("Simple Forward");
+  // annotateGraphicsBegin("Simple Forward");
 
   // get input color texture
+  /*
   const auto renderTarget =
       getInputConnection<TextureHandle>(m_inConnections, IN_TEXTURE);
 
   const auto depth =
       getInputConnection<TextureHandle>(m_inConnections, DEPTH_RT);
+      */
 
   // draw calls go here
   VkViewport viewport{0,
@@ -69,20 +63,9 @@ void VkSimpleForward::compute() {
   vkCmdSetViewport(vk::CURRENT_FRAME_COMMAND->m_commandBuffer, 0, 1, &viewport);
   vkCmdSetScissor(vk::CURRENT_FRAME_COMMAND->m_commandBuffer, 0, 1, &scissor);
 
-  vkCmdBindPipeline(vk::CURRENT_FRAME_COMMAND->m_commandBuffer,
-                    VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
+  globals::RENDERING_CONTEXT->renderQueueType(SHADER_QUEUE_FLAGS::FORWARD);
 
-  /*
-  VkDescriptorSet sets[] = {m_meshDescriptorSet,
-                            vk::STATIC_SAMPLER_DESCRIPTOR_SET};
-  // multiple descriptor sets
-  vkCmdBindDescriptorSets(vk::CURRENT_FRAME_COMMAND->m_commandBuffer,
-                          VK_PIPELINE_BIND_POINT_GRAPHICS, vk::PIPELINE_LAYOUT,
-                          0, 2, sets, 0, nullptr);
 
-  vk::MESH_MANAGER->renderMesh(meshHandle,
-                               vk::CURRENT_FRAME_COMMAND->m_commandBuffer);
-                               */
 }
 
 void VkSimpleForward::onResizeEvent(int, int) {

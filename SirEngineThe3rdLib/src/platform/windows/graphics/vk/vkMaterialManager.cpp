@@ -114,11 +114,8 @@ commandList->OMSetStencilRef(static_cast<uint32_t>(STENCIL_REF::SSSSS));
 */
 }
 void updateForwardPhong(SHADER_QUEUE_FLAGS queueFlag,
-                        const MaterialHandle handle,
-                        VkMaterialManager *manager) {
+                        const VkMaterialRuntime &materialRuntime) {
 
-  const VkMaterialRuntime &materialRuntime =
-      manager->getMaterialRuntime(handle);
   // Update the descriptor set with the actual descriptors matching shader
   // bindings set in the layout
   // this far we defined just what descriptor we wanted and how they were setup,
@@ -126,7 +123,8 @@ void updateForwardPhong(SHADER_QUEUE_FLAGS queueFlag,
   // resources
 
   int queueFlagInt = static_cast<int>(queueFlag);
-  DescriptorHandle setHandle = materialRuntime.descriptorHandles[queueFlagInt];
+  int currentFlagId = static_cast<int>(log2(queueFlagInt & -queueFlagInt));
+  DescriptorHandle setHandle = materialRuntime.descriptorHandles[currentFlagId];
   VkDescriptorSet descriptorSet =
       vk::DESCRIPTOR_MANAGER->getDescriptorSet(setHandle);
 
@@ -149,9 +147,21 @@ void updateForwardPhong(SHADER_QUEUE_FLAGS queueFlag,
   vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, 4, &writeDescriptorSets[0], 0,
                          nullptr);
 }
-void bindForwardPhong(const VkMaterialRuntime &materialRuntime,
+void bindForwardPhong(uint32_t queueId,
+                      const VkMaterialRuntime &materialRuntime,
                       VkCommandBuffer commandList) {
-  assert(0);
+
+  DescriptorHandle setHandle = materialRuntime.descriptorHandles[queueId];
+  VkDescriptorSet descriptorSet =
+      vk::DESCRIPTOR_MANAGER->getDescriptorSet(setHandle);
+
+  VkDescriptorSet sets[] = {
+      vk::PER_FRAME_DESCRIPTOR_SET[globals::CURRENT_FRAME], descriptorSet,
+      vk::STATIC_SAMPLER_DESCRIPTOR_SET};
+  // multiple descriptor sets
+  vkCmdBindDescriptorSets(commandList,
+                          VK_PIPELINE_BIND_POINT_GRAPHICS, vk::PIPELINE_LAYOUT,
+                          0, 3, sets, 0, nullptr);
 }
 void bindForwardPBR(const VkMaterialRuntime &materialRuntime,
                     VkCommandBuffer commandList) {
@@ -380,6 +390,19 @@ void VkMaterialManager::bindMaterial(SHADER_QUEUE_FLAGS queueFlag,
   int currentFlagId = static_cast<int>(log2(queueFlagInt & -queueFlagInt));
   const SHADER_TYPE_FLAGS type =
       getTypeFlags(materialRuntime.shaderQueueTypeFlags[currentFlagId]);
+
+  DescriptorHandle setHandle = materialRuntime.descriptorHandles[currentFlagId];
+  VkDescriptorSet descriptorSet =
+      vk::DESCRIPTOR_MANAGER->getDescriptorSet(setHandle);
+
+  VkDescriptorSet sets[] = {
+      vk::PER_FRAME_DESCRIPTOR_SET[globals::CURRENT_FRAME], descriptorSet,
+      vk::STATIC_SAMPLER_DESCRIPTOR_SET};
+  // multiple descriptor sets
+  vkCmdBindDescriptorSets(commandList,
+                          VK_PIPELINE_BIND_POINT_GRAPHICS, vk::PIPELINE_LAYOUT,
+                          0, 3, sets, 0, nullptr);
+  /*
   switch (type) {
   case (SHADER_TYPE_FLAGS::PBR): {
     assert(0);
@@ -437,13 +460,14 @@ void VkMaterialManager::bindMaterial(SHADER_QUEUE_FLAGS queueFlag,
     break;
   }
   case (SHADER_TYPE_FLAGS::FORWARD_PHONG): {
-    bindForwardPhong(materialRuntime, commandList);
+    bindForwardPhong(currentFlagId, materialRuntime, commandList);
     break;
   }
   default: {
     assert(0 && "could not find material type");
   }
   }
+  */
 }
 void VkMaterialManager::updateMaterial(SHADER_QUEUE_FLAGS queueFlag,
                                        const MaterialHandle handle,
@@ -510,7 +534,7 @@ void VkMaterialManager::updateMaterial(SHADER_QUEUE_FLAGS queueFlag,
     break;
   }
   case (SHADER_TYPE_FLAGS::FORWARD_PHONG): {
-    updateForwardPhong(queueFlag, handle, this);
+    updateForwardPhong(queueFlag, materialRuntime);
     break;
   }
   default: {
@@ -536,7 +560,7 @@ void VkMaterialManager::bindRSandPSO(const uint32_t shaderFlags,
   ShaderBind bind;
   bool found = m_shderTypeToShaderBind.get(typeFlags, bind);
   if (found) {
-    vk::PIPELINE_LAYOUT_MANAGER->bindGraphicsRS(bind.rs, commandList);
+    //vk::PIPELINE_LAYOUT_MANAGER->bindGraphicsRS(bind.rs, commandList);
     vk::PSO_MANAGER->bindPSO(bind.pso, commandList);
     return;
   }
@@ -600,6 +624,7 @@ MaterialHandle VkMaterialManager::loadMaterial(const char *path,
     if (queue == INVALID_QUEUE_TYPE_FLAGS) {
       continue;
     }
+    const auto queueType = getQueueFlags(queue);
     const auto typeFlags = static_cast<uint16_t>((queue & mask) >> 16);
     ShaderBind bind{};
     bool found = m_shderTypeToShaderBind.get(typeFlags, bind);

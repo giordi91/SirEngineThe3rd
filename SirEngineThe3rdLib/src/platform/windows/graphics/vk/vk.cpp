@@ -61,7 +61,7 @@ struct VkRenderable {
 };
 
 typedef std::unordered_map<uint32_t, std::vector<VkRenderable>>
-    Dx12RenderingQueues;
+    VkRenderingQueues;
 
 bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
                           const uint32_t height) {
@@ -189,6 +189,8 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   PSO_MANAGER = new VkPSOManager();
   PSO_MANAGER->initialize();
   globals::PSO_MANAGER = PSO_MANAGER;
+  const PSOHandle handle =
+      vk::PSO_MANAGER->loadRawPSO("../data/pso/forwardPhongPSO.json");
 
   CONSTANT_BUFFER_MANAGER = new VkConstantBufferManager();
   CONSTANT_BUFFER_MANAGER->initialize();
@@ -211,6 +213,8 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
 
   MATERIAL_MANAGER = new VkMaterialManager();
   MATERIAL_MANAGER->inititialize();
+  MATERIAL_MANAGER->loadTypesInFolder(frameConcatenation(
+      globals::ENGINE_CONFIG->m_dataSourcePath, "/materials/types"));
   globals::MATERIAL_MANAGER = MATERIAL_MANAGER;
 
   globals::ASSET_MANAGER = new AssetManager();
@@ -245,7 +249,7 @@ VkRenderingContext::VkRenderingContext(
     const uint32_t height)
     : RenderingContext(settings, width, height) {
   SE_CORE_INFO("Initializing a Vulkan context");
-  queues = new Dx12RenderingQueues();
+  queues = new VkRenderingQueues();
 }
 
 void setDebugNameImpl() {}
@@ -485,7 +489,7 @@ void VkRenderingContext::executeGlobalCommandList() { assert(0); }
 void VkRenderingContext::resetGlobalCommandList() { assert(0); }
 
 void VkRenderingContext::addRenderablesToQueue(const Renderable &renderable) {
-  auto *typedQueues = reinterpret_cast<Dx12RenderingQueues *>(queues);
+  auto *typedQueues = reinterpret_cast<VkRenderingQueues *>(queues);
 
   VkRenderable vkRenderable{};
 
@@ -506,8 +510,53 @@ void VkRenderingContext::addRenderablesToQueue(const Renderable &renderable) {
   }
 }
 
-void VkRenderingContext::renderQueueType(const SHADER_QUEUE_FLAGS flag) {
-  assert(0);
+void VkRenderingContext::renderQueueType(const SHADER_QUEUE_FLAGS queueFlag) {
+  const auto &typedQueues = *(reinterpret_cast<VkRenderingQueues *>(queues));
+
+  auto *currentFc = CURRENT_FRAME_COMMAND;
+  auto commandList = currentFc->m_commandBuffer;
+
+  for (const auto &renderableList : typedQueues) {
+    if (vk::MATERIAL_MANAGER->isQueueType(renderableList.first, queueFlag)) {
+
+      // now that we know the material goes in the the deferred queue we can
+      // start rendering it
+
+      // bind the corresponding RS and PSO
+      vk::MATERIAL_MANAGER->bindRSandPSO(renderableList.first, commandList);
+      // commandList->SetGraphicsRootConstantBufferView(1, lightAddress);
+      // globals::RENDERING_CONTEXT->bindCameraBuffer(0);
+
+      // this is most for debug, it will boil down to nothing in release
+      const SHADER_TYPE_FLAGS type =
+          vk::MATERIAL_MANAGER->getTypeFlags(renderableList.first);
+      const std::string &typeName =
+          vk::MATERIAL_MANAGER->getStringFromShaderTypeFlag(type);
+      //annotateGraphicsBegin(typeName.c_str());
+
+      // looping each of the object
+      const size_t count = renderableList.second.size();
+      const VkRenderable *currRenderables = renderableList.second.data();
+      for (size_t i = 0; i < count; ++i) {
+        const VkRenderable &renderable = currRenderables[i];
+
+        // bind material data like textures etc, then render
+        vk::MATERIAL_MANAGER->bindMaterial(
+            queueFlag, renderable.m_materialRuntime, commandList);
+
+        vk::MESH_MANAGER->renderMesh(renderable.m_meshRuntime, commandList);
+
+        // if(SHADER_QUEUE_FLAGS::SHADOW == queueFlag) {
+        //	dx12::MESH_MANAGER->bindMeshRuntimeAndRenderPosOnly(renderable.m_meshRuntime,
+        //												 currentFc);
+        //} else {
+        //	dx12::MESH_MANAGER->bindMeshRuntimeAndRender(renderable.m_meshRuntime,
+        //												 currentFc);
+        //}
+      }
+      //annotateGraphicsEnd();
+    }
+  }
 }
 
 void VkRenderingContext::renderMaterialType(const SHADER_QUEUE_FLAGS flag) {

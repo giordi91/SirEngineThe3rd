@@ -10,8 +10,10 @@
 #include "SirEngine/layers/vkTempLayer.h"
 #include "platform/windows/graphics/vk/vk.h"
 #include "platform/windows/graphics/vk/vkConstantBufferManager.h"
+#include "platform/windows/graphics/vk/vkDescriptorManager.h"
 #include "platform/windows/graphics/vk/vkDescriptors.h"
 #include "platform/windows/graphics/vk/vkLoad.h"
+#include "platform/windows/graphics/vk/vkMaterialManager.h"
 #include "platform/windows/graphics/vk/vkMeshManager.h"
 #include "platform/windows/graphics/vk/vkPSOManager.h"
 #include "platform/windows/graphics/vk/vkShaderManager.h"
@@ -55,75 +57,23 @@ void VkTempLayer::onAttach() {
 
   // globals::ASSET_MANAGER->loadScene(globals::ENGINE_CONFIG->m_startScenePath);
   globals::ASSET_MANAGER->loadScene("../data/scenes/tempScene.json");
-  // load mesh
-  meshHandle = globals::MESH_MANAGER->loadMesh(
-      "../data/processed/meshes/knightB/jacket.model");
-
-  // allocate memory buffer for the mesh
-  VkPhysicalDeviceMemoryProperties memoryRequirements;
-  vkGetPhysicalDeviceMemoryProperties(vk::PHYSICAL_DEVICE, &memoryRequirements);
 
   const PSOHandle handle =
       vk::PSO_MANAGER->loadRawPSO("../data/pso/forwardPhongPSO.json");
-  m_pipeline = vk::PSO_MANAGER->getPipelineFromHandle(handle);
   m_pass = vk::PSO_MANAGER->getRenderPassFromHandle(handle);
-  rsHandle = vk::PSO_MANAGER->getRootSignatureHandleFromPSOHandle(handle);
-  layout =
-      vk::PIPELINE_LAYOUT_MANAGER->getDescriptorSetLayoutFromHandle(rsHandle);
 
-  textureHandle = vk::TEXTURE_MANAGER->loadTexture(
-      "../data/processed/textures/knightB/jacket_A.texture", false);
+  // textureHandle = vk::TEXTURE_MANAGER->loadTexture(
+  //    "../data/processed/textures/knightB/jacket_A.texture", false);
 
   createRenderTargetAndFrameBuffer(globals::ENGINE_CONFIG->m_windowWidth,
                                    globals::ENGINE_CONFIG->m_windowHeight);
   // if constexpr (!USE_PUSH) {
-  createDescriptorLayoutAdvanced();
   //}
 
   alloc =
       new GraphAllocators{globals::STRING_POOL, globals::PERSISTENT_ALLOCATOR};
   m_forward = new VkSimpleForward(*alloc);
   m_forward->initialize();
-}
-
-void VkTempLayer::createDescriptorLayoutAdvanced() {
-
-  // Allocates an empty descriptor set without actual descriptors from the pool
-  // using the set layout
-  VkDescriptorSetAllocateInfo allocateInfo{};
-  allocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-  allocateInfo.descriptorPool = vk::DESCRIPTOR_POOL;
-  allocateInfo.descriptorSetCount = 1;
-  allocateInfo.pSetLayouts = &layout; // the layout we defined for the set,
-                                           // so it also knows the size
-  VK_CHECK(vkAllocateDescriptorSets(vk::LOGICAL_DEVICE, &allocateInfo,
-                                    &m_meshDescriptorSet));
-  SET_DEBUG_NAME(m_meshDescriptorSet, VK_OBJECT_TYPE_DESCRIPTOR_SET,
-                 "meshDesscriptorSet");
-
-  // Update the descriptor set with the actual descriptors matching shader
-  // bindings set in the layout
-  // this far we defined just what descriptor we wanted and how they were setup,
-  // now we need to actually define the content of those descriptors, the actual
-  // resources
-  VkWriteDescriptorSet writeDescriptorSets[4] = {};
-
-  VkDescriptorBufferInfo bufferInfo[3] = {};
-  vk::MESH_MANAGER->bindMesh(meshHandle, writeDescriptorSets,
-                              m_meshDescriptorSet, bufferInfo);
-                             //root, bufferInfo);
-
-  vk::TEXTURE_MANAGER->bindTexture(textureHandle, &writeDescriptorSets[3],
-                                   m_meshDescriptorSet, 3);
-
-  // Execute the writes to update descriptors for this set
-  // Note that it's also possible to gather all writes and only run updates
-  // once, even for multiple sets This is possible because each
-  // VkWriteDescriptorSet also contains the destination set to be updated
-  // For simplicity we will update once per set instead
-  // object one off update
-  vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, 4, &writeDescriptorSets[0], 0,
-                         nullptr);
 }
 
 void VkTempLayer::onDetach() {}
@@ -136,20 +86,6 @@ void VkTempLayer::onUpdate() {
   static int counter = 0;
 
   static VkClearColorValue color{0.4, 0.4, 0.4, 1};
-  // color.float32[index] += 1.0f / 256.0f;
-  // counter++;
-  // if (counter == 255) {
-  //  index += 1;
-  //  counter = 0;
-  //}
-  // if (index == 3) {
-  //  counter = 0;
-  //  index = 0;
-  //  color.uint32[0] = 0;
-  //  color.uint32[1] = 0;
-  //  color.uint32[2] = 0;
-  //}
-
   // lets us start a render pass
 
   VkClearValue clear{};
@@ -184,38 +120,25 @@ void VkTempLayer::onUpdate() {
        static_cast<uint32_t>(globals::ENGINE_CONFIG->m_windowHeight)}};
   vkCmdSetViewport(vk::CURRENT_FRAME_COMMAND->m_commandBuffer, 0, 1, &viewport);
   vkCmdSetScissor(vk::CURRENT_FRAME_COMMAND->m_commandBuffer, 0, 1, &scissor);
-  vkCmdBindPipeline(vk::CURRENT_FRAME_COMMAND->m_commandBuffer,
-                    VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
 
-  /*
-  if constexpr (USE_PUSH) {
-    VkDescriptorBufferInfo bufferInfo{};
-    bufferInfo.buffer = m_vertexBuffer.buffer;
-    bufferInfo.offset = 0;
-    bufferInfo.range = m_vertexBuffer.size;
+  // if constexpr (USE_PUSH) {
+  //  VkDescriptorBufferInfo bufferInfo{};
+  //  bufferInfo.buffer = m_vertexBuffer.buffer;
+  //  bufferInfo.offset = 0;
+  //  bufferInfo.range = m_vertexBuffer.size;
 
-    VkWriteDescriptorSet descriptor[1]{};
-    descriptor[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    descriptor[0].dstBinding = 0;
-    descriptor[0].descriptorCount = 1;
-    descriptor[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-    descriptor[0].pBufferInfo = &bufferInfo;
+  //  VkWriteDescriptorSet descriptor[1]{};
+  //  descriptor[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  //  descriptor[0].dstBinding = 0;
+  //  descriptor[0].descriptorCount = 1;
+  //  descriptor[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  //  descriptor[0].pBufferInfo = &bufferInfo;
 
-    vkCmdPushDescriptorSetKHR(FRAME_COMMAND[0].m_commandBuffer,
-  VK_PIPELINE_BIND_POINT_GRAPHICS, PIPELINE_LAYOUT, 0, ARRAYSIZE(descriptor),
-                              descriptor);
-  } else {
-  */
-  VkDescriptorSet sets[] = {
-      vk::PER_FRAME_DESCRIPTOR_SET[globals::CURRENT_FRAME], m_meshDescriptorSet,
-      vk::STATIC_SAMPLER_DESCRIPTOR_SET};
-  // multiple descriptor sets
-  vkCmdBindDescriptorSets(vk::CURRENT_FRAME_COMMAND->m_commandBuffer,
-                          VK_PIPELINE_BIND_POINT_GRAPHICS, vk::PIPELINE_LAYOUT,
-                          0, 3, sets, 0, nullptr);
+  //  vkCmdPushDescriptorSetKHR(FRAME_COMMAND[0].m_commandBuffer,
+  // VK_PIPELINE_BIND_POINT_GRAPHICS, PIPELINE_LAYOUT, 0, ARRAYSIZE(descriptor),
+  //                            descriptor);
 
-  vk::MESH_MANAGER->renderMesh(meshHandle,
-                               vk::CURRENT_FRAME_COMMAND->m_commandBuffer);
+  m_forward->compute();
 
   vkCmdEndRenderPass(vk::CURRENT_FRAME_COMMAND->m_commandBuffer);
 
@@ -325,18 +248,15 @@ void VkTempLayer::onEvent(Event &event) {
 
 void VkTempLayer::clear() {
   vkDeviceWaitIdle(vk::LOGICAL_DEVICE);
-  // vk::BUFFER_MANAGER->free(m_vertexBufferHandle);
-  // vk::BUFFER_MANAGER->free(m_indexBufferHandle);
-  vk::MESH_MANAGER->free(meshHandle);
 
   // if constexpr (!USE_PUSH) {
-  vkDestroyDescriptorSetLayout(vk::LOGICAL_DEVICE, m_setLayout, nullptr);
+  // vkDestroyDescriptorSetLayout(vk::LOGICAL_DEVICE, m_setLayout, nullptr);
   vkDestroyDescriptorPool(vk::LOGICAL_DEVICE, vk::DESCRIPTOR_POOL, nullptr);
   // vkFreeMemory(vk::LOGICAL_DEVICE,m_rt.deviceMemory,nullptr);
   //}
   // TODO render target manager?
   vk::destroyFrameBuffer(vk::LOGICAL_DEVICE, m_tempFrameBuffer, m_rt);
-  vk::TEXTURE_MANAGER->free(textureHandle);
+  // vk::TEXTURE_MANAGER->free(textureHandle);
 }
 
 bool VkTempLayer::onMouseButtonPressEvent(MouseButtonPressEvent &e) {

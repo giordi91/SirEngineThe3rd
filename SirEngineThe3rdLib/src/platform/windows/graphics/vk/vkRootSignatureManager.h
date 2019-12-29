@@ -53,12 +53,8 @@ public:
     // commandList->SetGraphicsLayout(data.rs);
   }
 
-  RSHandle getHandleFromName(const char *name) const override {
-    assert(m_rootRegister.containsKey(name));
-    RSHandle value;
-    m_rootRegister.get(name, value);
-    return value;
-  }
+  RSHandle getHandleFromName(const char* name) const override;
+
   VkDescriptorSetLayout getDescriptorSetLayoutFromHandle(RSHandle handle) const
   {
     assertMagicNumber(handle);

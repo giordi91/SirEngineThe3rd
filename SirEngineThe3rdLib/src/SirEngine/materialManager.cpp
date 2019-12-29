@@ -72,6 +72,7 @@ static const std::unordered_map<SirEngine::SHADER_TYPE_FLAGS, std::string>
     TYPE_FLAGS_TO_STRING{
         {SirEngine::SHADER_TYPE_FLAGS::PBR, "pbr"},
         {SirEngine::SHADER_TYPE_FLAGS::FORWARD_PBR, "forwardPbr"},
+        {SirEngine::SHADER_TYPE_FLAGS::FORWARD_PHONG, "forwardPhong"},
         {SirEngine::SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT,
          "forwardPhongAlphaCutout"},
         {SirEngine::SHADER_TYPE_FLAGS::SKIN, "skin"},

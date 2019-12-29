@@ -62,16 +62,6 @@ private:
   // shaders
   VkPipeline m_pipeline;
 
-  // mesh
-  MeshHandle meshHandle;
-  TextureHandle textureHandle;
-  RSHandle rsHandle;
-  VkDescriptorSetLayout layout;
-
-  VkVertexInputBindingDescription m_stream;
-  VkVertexInputAttributeDescription m_attr[3];
-  VkDescriptorSetLayout m_setLayout;
-  VkDescriptorSet m_meshDescriptorSet;
   vk::VkTexture2D m_rt;
   VkFramebuffer m_tempFrameBuffer;
   VkRenderPass m_pass;
