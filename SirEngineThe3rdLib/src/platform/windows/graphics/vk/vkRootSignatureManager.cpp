@@ -97,7 +97,7 @@ RSHandle VkPipelineLayoutManager::loadSignatureFile(
   // check the number of bindings
   assert(jobj.find(ROOT_KEY_CONFIG) != jobj.end());
   auto config = jobj[ROOT_KEY_CONFIG];
-  const int configLen = config.size();
+  const uint32_t configLen = config.size();
 
   int allocSize = sizeof(VkDescriptorSetLayoutBinding) * configLen;
   // allocating enough memory of the set layout binding
@@ -167,13 +167,9 @@ RSHandle VkPipelineLayoutManager::loadSignatureFile(
 
   const RSHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
   rsdata.magicNumber = MAGIC_NUMBER_COUNTER;
+  rsdata.descriptorSetLayout = descriptorLayout;
   m_rootRegister.insert(name.c_str(), handle);
   ++MAGIC_NUMBER_COUNTER;
-
-  // cleanup
-  // descriptor layout can be deleted immediately after the creation of the
-  // pipeline layout, the pipeline layout will still be valid
-  vkDestroyDescriptorSetLayout(vk::LOGICAL_DEVICE, descriptorLayout, nullptr);
 
   return handle;
 }

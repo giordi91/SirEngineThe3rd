@@ -11,6 +11,7 @@
 
 #include <cassert>
 #include <string>
+#include "vkRootSignatureManager.h"
 
 namespace SirEngine::vk {
 
@@ -40,6 +41,7 @@ class VkPSOManager final : public PSOManager {
   struct PSOData {
     VkPipeline pso;
     VkRenderPass renderPass;
+    RSHandle rootSignature;
     uint32_t magicNumber;
   };
 
@@ -80,6 +82,12 @@ public:
     const uint32_t index = getIndexFromHandle(handle);
     const PSOData &data = m_psoPool.getConstRef(index);
     return data.renderPass;
+  }
+  RSHandle getRootSignatureHandleFromPSOHandle(const PSOHandle handle) const {
+    assertMagicNumber(handle);
+    const uint32_t index = getIndexFromHandle(handle);
+    const PSOData &data = m_psoPool.getConstRef(index);
+    return data.rootSignature;
   }
 
   inline PSOHandle getHandleFromName(const char *name) const {

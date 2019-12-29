@@ -3,7 +3,6 @@
 
 #include "SirEngine/handle.h"
 #include "SirEngine/layer.h"
-#include "platform/windows/graphics/vk/vkMeshManager.h"
 #include "platform/windows/graphics/vk/vkTexture.h"
 #include "SirEngine/graphics/nodes/vkSimpleForward.h"
 
@@ -66,6 +65,8 @@ private:
   // mesh
   MeshHandle meshHandle;
   TextureHandle textureHandle;
+  RSHandle rsHandle;
+  VkDescriptorSetLayout layout;
 
   VkVertexInputBindingDescription m_stream;
   VkVertexInputAttributeDescription m_attr[3];

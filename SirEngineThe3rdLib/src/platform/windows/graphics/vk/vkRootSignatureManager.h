@@ -59,6 +59,13 @@ public:
     m_rootRegister.get(name, value);
     return value;
   }
+  VkDescriptorSetLayout getDescriptorSetLayoutFromHandle(RSHandle handle) const
+  {
+    assertMagicNumber(handle);
+    const uint32_t index = getIndexFromHandle(handle);
+    const LayoutData &data = m_rsPool.getConstRef(index);
+    return data.descriptorSetLayout;
+  }
 
   // mostly to keep API uniform
   void init(){};
@@ -80,8 +87,9 @@ private:
 
 private:
   struct LayoutData {
-    VkPipelineLayout layout;
-    uint32_t magicNumber;
+    VkPipelineLayout layout = nullptr;
+    VkDescriptorSetLayout descriptorSetLayout = nullptr;
+    uint32_t magicNumber = 0;
   };
 
   HashMap<const char *, RSHandle, hashString32> m_rootRegister;

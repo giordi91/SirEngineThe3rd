@@ -67,6 +67,9 @@ void VkTempLayer::onAttach() {
       vk::PSO_MANAGER->loadRawPSO("../data/pso/forwardPhongPSO.json");
   m_pipeline = vk::PSO_MANAGER->getPipelineFromHandle(handle);
   m_pass = vk::PSO_MANAGER->getRenderPassFromHandle(handle);
+  rsHandle = vk::PSO_MANAGER->getRootSignatureHandleFromPSOHandle(handle);
+  layout =
+      vk::PIPELINE_LAYOUT_MANAGER->getDescriptorSetLayoutFromHandle(rsHandle);
 
   textureHandle = vk::TEXTURE_MANAGER->loadTexture(
       "../data/processed/textures/knightB/jacket_A.texture", false);
@@ -85,51 +88,13 @@ void VkTempLayer::onAttach() {
 
 void VkTempLayer::createDescriptorLayoutAdvanced() {
 
-  constexpr int resourceCount = 4;
-  VkDescriptorSetLayoutBinding resourceBinding[resourceCount] = {};
-
-  resourceBinding[0].binding = 0;
-  resourceBinding[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  resourceBinding[0].descriptorCount = 1;
-  resourceBinding[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-  resourceBinding[0].pImmutableSamplers = NULL;
-  resourceBinding[1].binding = 1;
-  resourceBinding[1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  resourceBinding[1].descriptorCount = 1;
-  resourceBinding[1].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-  resourceBinding[1].pImmutableSamplers = NULL;
-  resourceBinding[2].binding = 2;
-  resourceBinding[2].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  resourceBinding[2].descriptorCount = 1;
-  resourceBinding[2].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-  resourceBinding[2].pImmutableSamplers = NULL;
-
-  resourceBinding[3].binding = 3;
-  resourceBinding[3].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-  resourceBinding[3].descriptorCount = 1;
-  resourceBinding[3].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-  resourceBinding[3].pImmutableSamplers = NULL;
-
-  VkDescriptorSetLayoutCreateInfo resourceLayoutInfo[1] = {};
-  resourceLayoutInfo[0].sType =
-      VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-  resourceLayoutInfo[0].pNext = NULL;
-  resourceLayoutInfo[0].bindingCount = resourceCount;
-  resourceLayoutInfo[0].pBindings = resourceBinding;
-
-  VK_CHECK(vkCreateDescriptorSetLayout(vk::LOGICAL_DEVICE, resourceLayoutInfo,
-                                       NULL, &m_setLayout));
-
-  SET_DEBUG_NAME(m_setLayout, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT,
-                 "resourceBindingsLayoutNoSamplers");
-
   // Allocates an empty descriptor set without actual descriptors from the pool
   // using the set layout
   VkDescriptorSetAllocateInfo allocateInfo{};
   allocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
   allocateInfo.descriptorPool = vk::DESCRIPTOR_POOL;
   allocateInfo.descriptorSetCount = 1;
-  allocateInfo.pSetLayouts = &m_setLayout; // the layout we defined for the set,
+  allocateInfo.pSetLayouts = &layout; // the layout we defined for the set,
                                            // so it also knows the size
   VK_CHECK(vkAllocateDescriptorSets(vk::LOGICAL_DEVICE, &allocateInfo,
                                     &m_meshDescriptorSet));
@@ -143,37 +108,19 @@ void VkTempLayer::createDescriptorLayoutAdvanced() {
   // resources
   VkWriteDescriptorSet writeDescriptorSets[4] = {};
 
-  //// actual information of the descriptor, in this case it is our mesh buffer
-  // VkDescriptorBufferInfo bufferInfoUniform = {};
-  // vk::CONSTANT_BUFFER_MANAGER->bindConstantBuffer(
-  //    m_cameraBufferHandle, bufferInfoUniform, 0, writeDescriptorSets,
-  //    m_meshDescriptorSet);
-
   VkDescriptorBufferInfo bufferInfo[3] = {};
   vk::MESH_MANAGER->bindMesh(meshHandle, writeDescriptorSets,
-                             m_meshDescriptorSet, bufferInfo);
+                              m_meshDescriptorSet, bufferInfo);
+                             //root, bufferInfo);
 
   vk::TEXTURE_MANAGER->bindTexture(textureHandle, &writeDescriptorSets[3],
                                    m_meshDescriptorSet, 3);
-  //// Binding 2: Object texture
-  // writeDescriptorSets[4].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  // writeDescriptorSets[4].dstSet = m_meshDescriptorSet;
-  // writeDescriptorSets[4].dstBinding = 4;
-  // writeDescriptorSets[4].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-  //// Images use a different descriptor strucutre, so we use pImageInfo instead
-  //// of pBufferInfo
-  // writeDescriptorSets[4].pImageInfo = &uvTexture.descriptor;
-  // writeDescriptorSets[4].descriptorCount = 1;
 
   // Execute the writes to update descriptors for this set
   // Note that it's also possible to gather all writes and only run updates
   // once, even for multiple sets This is possible because each
   // VkWriteDescriptorSet also contains the destination set to be updated
   // For simplicity we will update once per set instead
-
-  // partial descriptor sets can be done, if necessary
-  // vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, ARRAYSIZE(writeDescriptorSets),
-  //                       writeDescriptorSets, 0, nullptr);
   // object one off update
   vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, 4, &writeDescriptorSets[0], 0,
                          nullptr);
