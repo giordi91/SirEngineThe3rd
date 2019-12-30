@@ -684,6 +684,7 @@ TextureHandle VkTextureManager::allocateRenderTexture(
   // need to convert genering render target format to vulkan render target
   // format
   VkFormat vkFormat = convertRTFormatToVKFormat(format);
+  data.format = vkFormat;
   // Get device properties for the requested texture format
   VkFormatProperties formatProperties;
   vkGetPhysicalDeviceFormatProperties(PHYSICAL_DEVICE, vkFormat,

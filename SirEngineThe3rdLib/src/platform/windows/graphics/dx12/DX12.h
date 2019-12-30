@@ -220,6 +220,21 @@ public:
   void renderQueueType(const DrawCallConfig &config,
                        const SHADER_QUEUE_FLAGS flag) override;
   void renderMaterialType(const SHADER_QUEUE_FLAGS queueFlag) override;
+  BufferBindingsHandle prepareBindingObject(const FrameBufferBindings &bindings,
+                                            const char *name) override {
+    assert(0);
+    return {};
+  };
+  void setBindingObject(const BufferBindingsHandle handle) override {
+    assert(0);
+  };
+  void clearBindingObject(const BufferBindingsHandle handle) override {
+    assert(0);
+  };
+  void freeBindingObject(const BufferBindingsHandle handle)override
+  {
+    assert(0);
+  }
 
 private:
   // member variable mostly temporary
