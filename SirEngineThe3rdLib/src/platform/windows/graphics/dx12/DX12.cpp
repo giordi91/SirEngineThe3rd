@@ -613,7 +613,8 @@ void Dx12RenderingContext::addRenderablesToQueue(const Renderable &renderable) {
   }
 }
 
-void Dx12RenderingContext::renderQueueType(const SHADER_QUEUE_FLAGS queueFlag) {
+void Dx12RenderingContext::renderQueueType(const DrawCallConfig &config,
+                                         const SHADER_QUEUE_FLAGS flag) {
 
   const auto &typedQueues = *(reinterpret_cast<Dx12RenderingQueues *>(queues));
 
@@ -621,7 +622,7 @@ void Dx12RenderingContext::renderQueueType(const SHADER_QUEUE_FLAGS queueFlag) {
   auto commandList = currentFc->commandList;
 
   for (const auto &renderableList : typedQueues) {
-    if (dx12::MATERIAL_MANAGER->isQueueType(renderableList.first, queueFlag)) {
+    if (dx12::MATERIAL_MANAGER->isQueueType(renderableList.first, flag)) {
 
       // now that we know the material goes in the the deferred queue we can
       // start rendering it
@@ -646,7 +647,7 @@ void Dx12RenderingContext::renderQueueType(const SHADER_QUEUE_FLAGS queueFlag) {
 
         // bind material data like textures etc, then render
         dx12::MATERIAL_MANAGER->bindMaterial(
-            queueFlag, renderable.m_materialRuntime, commandList);
+            flag, renderable.m_materialRuntime, commandList);
 
         dx12::MESH_MANAGER->render(renderable.m_meshRuntime, currentFc);
 

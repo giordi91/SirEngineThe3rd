@@ -5,9 +5,9 @@
 #include "WinPixEventRuntime/WinPixEventRuntime/pix3.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/Dx12PSOManager.h"
+#include "platform/windows/graphics/dx12/dx12SwapChain.h"
 #include "platform/windows/graphics/dx12/dx12TextureManager.h"
 #include "platform/windows/graphics/dx12/dx12rootSignatureManager.h"
-#include "platform/windows/graphics/dx12/dx12SwapChain.h"
 
 namespace SirEngine {
 
@@ -18,7 +18,7 @@ FinalBlitNode::FinalBlitNode(GraphAllocators &allocators)
   // lets create the plugs
   defaultInitializePlugsAndConnections(1, 0);
 
-  GPlug &inTexture= m_inputPlugs[PLUG_INDEX(PLUGS::IN_TEXTURE)];
+  GPlug &inTexture = m_inputPlugs[PLUG_INDEX(PLUGS::IN_TEXTURE)];
   inTexture.plugValue = 0;
   inTexture.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
   inTexture.nodePtr = this;
@@ -29,13 +29,9 @@ void FinalBlitNode::compute() {
   // get the render texture
   annotateGraphicsBegin("EndOfFrameBlit");
 
-  const auto conn = m_inConnections[PLUG_INDEX(PLUGS::IN_TEXTURE)];
-  assert(conn->size() == 1 && "too many input connections");
-  const GPlug *source = (*conn)[0];
-  TextureHandle texH;
-  texH.handle = source->plugValue;
-
-  const TextureHandle destination = dx12::SWAP_CHAIN->currentBackBufferTexture();
+  assert(inputRTHandle.isHandleValid());
+  const TextureHandle destination =
+      dx12::SWAP_CHAIN->currentBackBufferTexture();
   // globals::TEXTURE_MANAGER->copyTexture(texH,destination);
 
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
@@ -44,7 +40,8 @@ void FinalBlitNode::compute() {
   D3D12_RESOURCE_BARRIER barriers[2];
   int counter = 0;
   counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
-      texH, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, barriers, counter);
+      inputRTHandle, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, barriers,
+      counter);
   counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
       destination, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, counter);
   if (counter) {
@@ -52,7 +49,7 @@ void FinalBlitNode::compute() {
   }
 
   globals::TEXTURE_MANAGER->bindRenderTarget(destination, TextureHandle{});
-  dx12::DescriptorPair pair = dx12::TEXTURE_MANAGER->getSRVDx12(texH);
+  dx12::DescriptorPair pair = dx12::TEXTURE_MANAGER->getSRVDx12(inputRTHandle);
 
   dx12::PSO_MANAGER->bindPSO(m_pso, commandList);
   commandList->SetGraphicsRootSignature(m_rs);
@@ -65,5 +62,12 @@ void FinalBlitNode::compute() {
 void FinalBlitNode::initialize() {
   m_rs = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(FINAL_BLIT_RS);
   m_pso = dx12::PSO_MANAGER->getHandleFromName(FINAL_BLIT_PSO);
+}
+
+void FinalBlitNode::populateNodePorts() {
+  const auto conn = m_inConnections[PLUG_INDEX(PLUGS::IN_TEXTURE)];
+  assert(conn->size() == 1 && "too many input connections");
+  const GPlug *source = (*conn)[0];
+  inputRTHandle.handle = source->plugValue;
 }
 } // namespace SirEngine

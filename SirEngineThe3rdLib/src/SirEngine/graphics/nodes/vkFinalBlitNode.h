@@ -13,6 +13,7 @@ public:
   virtual void compute() override;
   virtual void initialize() override;
 
+  void populateNodePorts() override;
 private:
 };
 

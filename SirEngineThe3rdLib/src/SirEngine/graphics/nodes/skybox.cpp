@@ -2,13 +2,13 @@
 #include "SirEngine/assetManager.h"
 #include "SirEngine/graphics/debugAnnotations.h"
 #include "SirEngine/graphics/renderingContext.h"
-#include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/Dx12PSOManager.h"
-#include "platform/windows/graphics/dx12/dx12TextureManager.h"
+#include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
 #include "platform/windows/graphics/dx12/dx12MeshManager.h"
-#include "platform/windows/graphics/dx12/dx12SwapChain.h"
 #include "platform/windows/graphics/dx12/dx12RootSignatureManager.h"
+#include "platform/windows/graphics/dx12/dx12SwapChain.h"
+#include "platform/windows/graphics/dx12/dx12TextureManager.h"
 
 namespace SirEngine {
 static const char *SKYBOX_RS = "skybox_RS";
@@ -69,9 +69,6 @@ inline TextureHandle getInputConnection(ResizableVector<const GPlug *> **conns,
 void SkyBoxPass::compute() {
 
   annotateGraphicsBegin("Skybox");
-  const TextureHandle bufferHandle =
-      getInputConnection(m_inConnections, IN_TEXTURE);
-  const TextureHandle depthHandle = getInputConnection(m_inConnections, DEPTH);
 
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
@@ -91,15 +88,15 @@ void SkyBoxPass::compute() {
   D3D12_RESOURCE_BARRIER barriers[5];
   int counter = 0;
   counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
-      depthHandle, D3D12_RESOURCE_STATE_DEPTH_WRITE, barriers, counter);
+      inputDepthHandle, D3D12_RESOURCE_STATE_DEPTH_WRITE, barriers, counter);
   counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
-      bufferHandle, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, counter);
+      inputRTHandle, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, counter);
 
   if (counter) {
     commandList->ResourceBarrier(counter, barriers);
   }
 
-  globals::TEXTURE_MANAGER->bindRenderTarget(bufferHandle, depthHandle);
+  globals::TEXTURE_MANAGER->bindRenderTarget(inputRTHandle, inputDepthHandle);
   commandList->SetGraphicsRootSignature(rs);
 
   TextureHandle skyHandle = dx12::RENDERING_CONTEXT->getEnviromentMapHandle();
@@ -111,10 +108,10 @@ void SkyBoxPass::compute() {
       1, dx12::TEXTURE_MANAGER->getSRVDx12(skyHandle).gpuHandle);
 
   // commandList->DrawInstanced(6, 1, 0, 0);
-  //dx12::MESH_MANAGER->bindMeshRuntimeAndRender(skyboxHandle, currentFc);
-  dx12::MESH_MANAGER->bindMesh(skyboxHandle, currentFc->commandList,MeshAttributeFlags::POSITIONS,2);
+  // dx12::MESH_MANAGER->bindMeshRuntimeAndRender(skyboxHandle, currentFc);
+  dx12::MESH_MANAGER->bindMesh(skyboxHandle, currentFc->commandList,
+                               MeshAttributeFlags::POSITIONS, 2);
   dx12::MESH_MANAGER->render(skyboxHandle, currentFc);
-  m_outputPlugs[0].plugValue = bufferHandle.handle;
 
   // reset normal viewport
   commandList->RSSetViewports(1, currViewport);
@@ -124,5 +121,11 @@ void SkyBoxPass::compute() {
 void SkyBoxPass::onResizeEvent(int, int) {
   clear();
   initialize();
+}
+
+void SkyBoxPass::populateNodePorts() {
+  inputRTHandle = getInputConnection(m_inConnections, IN_TEXTURE);
+  inputDepthHandle = getInputConnection(m_inConnections, DEPTH);
+  m_outputPlugs[0].plugValue = inputRTHandle.handle;
 }
 } // namespace SirEngine

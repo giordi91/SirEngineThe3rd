@@ -25,4 +25,9 @@ void VkFinalBlitNode::compute() {
 
 void VkFinalBlitNode::initialize() {
 }
+
+void VkFinalBlitNode::populateNodePorts()
+{
+    assert(0);
+}
 } // namespace SirEngine

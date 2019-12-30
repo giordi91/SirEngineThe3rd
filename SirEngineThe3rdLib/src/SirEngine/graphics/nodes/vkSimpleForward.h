@@ -3,6 +3,8 @@
 #include "SirEngine/graphics/nodeGraph.h"
 #include "platform/windows/graphics/vk/volk.h"
 
+#include "platform/windows/graphics/vk/vkTextureManager.h"
+
 namespace SirEngine {
 
 
@@ -22,8 +24,14 @@ public:
   virtual void compute() override;
   virtual void onResizeEvent(int screenWidth, int screenHeight) override;
 
+  void populateNodePorts() override;
+  void clear() override;
+  vk::VkTexture2D  m_rt;
+
 private:
   VkRenderPass m_pass;
+  VkFramebuffer m_tempFrameBuffer;
+  TextureHandle m_rtHandle{};
 };
 
 } // namespace SirEngine

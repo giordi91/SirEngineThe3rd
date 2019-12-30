@@ -54,7 +54,7 @@ extern VkBufferManager *BUFFER_MANAGER;
 extern VkMeshManager *MESH_MANAGER;
 extern VkTextureManager *TEXTURE_MANAGER;
 extern VkMaterialManager *MATERIAL_MANAGER;
-extern VkDescriptorManager* DESCRIPTOR_MANAGER;
+extern VkDescriptorManager *DESCRIPTOR_MANAGER;
 extern uint32_t SWAP_CHAIN_IMAGE_COUNT;
 // incremented every frame and used to find the correct set of resources
 // like command buffer pool and allocators
@@ -170,8 +170,10 @@ public:
   void executeGlobalCommandList() override;
   void resetGlobalCommandList() override;
   void addRenderablesToQueue(const Renderable &renderable) override;
-  void renderQueueType(const SHADER_QUEUE_FLAGS flag) override;
+  void renderQueueType(const DrawCallConfig &config,
+                       const SHADER_QUEUE_FLAGS flag) override;
   void renderMaterialType(const SHADER_QUEUE_FLAGS flag) override;
+
 
 private:
   void *queues = nullptr;

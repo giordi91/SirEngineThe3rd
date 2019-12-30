@@ -170,7 +170,6 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
 
   CURRENT_FRAME_COMMAND = &FRAME_COMMAND[0];
 
-
   DESCRIPTOR_MANAGER = new VkDescriptorManager(10000, 10000);
   DESCRIPTOR_MANAGER->initialize();
 
@@ -186,7 +185,7 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   PSO_MANAGER = new VkPSOManager();
   PSO_MANAGER->initialize();
   globals::PSO_MANAGER = PSO_MANAGER;
-  //TODO TEMP HACK LOAD, remove this
+  // TODO TEMP HACK LOAD, remove this
   const PSOHandle handle =
       vk::PSO_MANAGER->loadRawPSO("../data/pso/forwardPhongPSO.json");
 
@@ -205,7 +204,6 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   TEXTURE_MANAGER = new VkTextureManager();
   TEXTURE_MANAGER->initialize();
   globals::TEXTURE_MANAGER = TEXTURE_MANAGER;
-
 
   MATERIAL_MANAGER = new VkMaterialManager();
   MATERIAL_MANAGER->inititialize();
@@ -511,29 +509,28 @@ void VkRenderingContext::addRenderablesToQueue(const Renderable &renderable) {
   }
 }
 
-void VkRenderingContext::renderQueueType(const SHADER_QUEUE_FLAGS queueFlag) {
+void VkRenderingContext::renderQueueType(const DrawCallConfig &config,
+                                         const SHADER_QUEUE_FLAGS flag) {
   const auto &typedQueues = *(reinterpret_cast<VkRenderingQueues *>(queues));
-
 
   auto *currentFc = CURRENT_FRAME_COMMAND;
   auto commandList = currentFc->m_commandBuffer;
 
   // draw calls go here
   VkViewport viewport{0,
-                      float(globals::ENGINE_CONFIG->m_windowHeight),
-                      float(globals::ENGINE_CONFIG->m_windowWidth),
-                      -float(globals::ENGINE_CONFIG->m_windowHeight),
+                      float(config.height),
+                      float(config.width),
+                      -float(config.height),
                       0.0f,
                       1.0f};
-  VkRect2D scissor{
-      {0, 0},
-      {static_cast<uint32_t>(globals::ENGINE_CONFIG->m_windowWidth),
-       static_cast<uint32_t>(globals::ENGINE_CONFIG->m_windowHeight)}};
+  VkRect2D scissor{{0, 0},
+                   {static_cast<uint32_t>(config.width),
+                    static_cast<uint32_t>(config.height)}};
   vkCmdSetViewport(commandList, 0, 1, &viewport);
   vkCmdSetScissor(commandList, 0, 1, &scissor);
 
   for (const auto &renderableList : typedQueues) {
-    if (vk::MATERIAL_MANAGER->isQueueType(renderableList.first, queueFlag)) {
+    if (vk::MATERIAL_MANAGER->isQueueType(renderableList.first, flag)) {
 
       // now that we know the material goes in the the deferred queue we can
       // start rendering it
@@ -557,11 +554,12 @@ void VkRenderingContext::renderQueueType(const SHADER_QUEUE_FLAGS queueFlag) {
         const VkRenderable &renderable = currRenderables[i];
 
         // bind material data like textures etc, then render
-        vk::MATERIAL_MANAGER->bindMaterial(
-            queueFlag, renderable.m_materialRuntime, commandList);
+        vk::MATERIAL_MANAGER->bindMaterial(flag, renderable.m_materialRuntime,
+                                           commandList);
 
         vk::MESH_MANAGER->renderMesh(renderable.m_meshRuntime, commandList);
       }
+	  //vkCmdEndRenderPass(vk::CURRENT_FRAME_COMMAND->m_commandBuffer);
       // annotateGraphicsEnd();
     }
   }

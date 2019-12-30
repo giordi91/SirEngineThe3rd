@@ -18,10 +18,11 @@ public:
 public:
   explicit GBufferPassPBR(GraphAllocators &allocators);
   virtual ~GBufferPassPBR() { clear(); };
-  virtual void initialize() override;
-  virtual void compute() override;
-  virtual void clear() override;
-  virtual void onResizeEvent(int screenWidth, int screenHeight) override;
+  void initialize() override;
+  void compute() override;
+  void clear() override;
+  void onResizeEvent(int screenWidth, int screenHeight) override;
+  void populateNodePorts() override;
 
 private:
   TextureHandle m_geometryBuffer{};

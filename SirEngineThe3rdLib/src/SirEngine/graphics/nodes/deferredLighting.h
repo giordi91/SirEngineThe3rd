@@ -27,6 +27,8 @@ public:
   virtual void clear() override;
   virtual void onResizeEvent(int screenWidth, int screenHeight) override;
 
+  void populateNodePorts() override;
+
 private:
   TextureHandle m_lightBuffer{};
   TextureHandle m_brdfHandle{};
@@ -34,6 +36,12 @@ private:
   PSOHandle pso;
   ConstantBufferHandle m_lightCB;
   D3D12_GPU_VIRTUAL_ADDRESS m_lightAddress;
+
+  // handles
+  TextureHandle gbufferHandle;
+  TextureHandle normalBufferHandle;
+  TextureHandle specularBufferHandle;
+  TextureHandle depthHandle;
 };
 
 } // namespace SirEngine

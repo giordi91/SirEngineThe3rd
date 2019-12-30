@@ -39,32 +39,27 @@ void PostProcessStack::initialize() {
 
   // allocate ping pong textures
   handles[0] = globals::TEXTURE_MANAGER->allocateRenderTexture(
-      globals::ENGINE_CONFIG->m_windowWidth, globals::ENGINE_CONFIG->m_windowHeight,
+      globals::ENGINE_CONFIG->m_windowWidth,
+      globals::ENGINE_CONFIG->m_windowHeight,
       RenderTargetFormat::R16G16B16A16_FLOAT, "postProcess1");
   handles[1] = globals::TEXTURE_MANAGER->allocateRenderTexture(
-      globals::ENGINE_CONFIG->m_windowWidth, globals::ENGINE_CONFIG->m_windowHeight,
+      globals::ENGINE_CONFIG->m_windowWidth,
+      globals::ENGINE_CONFIG->m_windowHeight,
       RenderTargetFormat::R16G16B16A16_FLOAT, "postProcess2");
 }
-
 
 void PostProcessStack::compute() {
   annotateGraphicsBegin("Post processing");
 
-  const auto texH =
-      getInputConnection<TextureHandle>(m_inConnections, IN_TEXTURE);
-
-  const auto depth =
-      getInputConnection<TextureHandle>(m_inConnections, DEPTH_RT);
-
   if (m_stack.empty()) {
-    m_outputPlugs[0].plugValue = texH.handle;
+    m_outputPlugs[0].plugValue = inputRTHandle.handle;
     return;
   }
   m_internalCounter = 0;
   const size_t stackSize = m_stack.size();
 
-  const PostProcessResources resources{depth};
-  m_stack[0]->render(texH, handles[0], resources);
+  const PostProcessResources resources{inputDepthHandle};
+  m_stack[0]->render(inputRTHandle, handles[0], resources);
 
   for (size_t i = 1; i < stackSize; ++i) {
     const int previous = m_internalCounter;
@@ -92,4 +87,17 @@ void PostProcessStack::onResizeEvent(int, int) {
   initialize();
 }
 
+void PostProcessStack::populateNodePorts() {
+  inputRTHandle =
+      getInputConnection<TextureHandle>(m_inConnections, IN_TEXTURE);
+  inputDepthHandle =
+      getInputConnection<TextureHandle>(m_inConnections, DEPTH_RT);
+
+  const size_t stackSize = m_stack.size();
+  for (size_t i = 1; i < stackSize; ++i) {
+    const int previous = m_internalCounter;
+    m_internalCounter = (m_internalCounter + 1) % 2;
+  }
+  m_outputPlugs[0].plugValue = handles[m_internalCounter].handle;
+}
 } // namespace SirEngine

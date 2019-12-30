@@ -65,6 +65,8 @@ public:
   virtual void compute() {}
   virtual void initialize(){};
   virtual void clear() { m_generation = -1; };
+  virtual void populateNodePorts(){};
+
   // un-named parameters are screenWidth and screenHeight
   // removing the names just to avoid huge spam;
   virtual void onResizeEvent(int, int){};

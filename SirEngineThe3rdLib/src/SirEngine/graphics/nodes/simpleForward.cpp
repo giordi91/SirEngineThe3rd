@@ -3,8 +3,8 @@
 #include "SirEngine/graphics/renderingContext.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/Dx12PSOManager.h"
-#include "platform/windows/graphics/dx12/dx12TextureManager.h"
 #include "platform/windows/graphics/dx12/dx12RootSignatureManager.h"
+#include "platform/windows/graphics/dx12/dx12TextureManager.h"
 
 namespace SirEngine {
 
@@ -40,19 +40,13 @@ SimpleForward::SimpleForward(GraphAllocators &allocators)
   pso = dx12::PSO_MANAGER->getHandleFromName(SIMPLE_FORWARD_PSO);
 }
 
-void SimpleForward::initialize() {
-}
+void SimpleForward::initialize() {}
 
 void SimpleForward::compute() {
 
   annotateGraphicsBegin("Simple Forward");
 
   // get input color texture
-  const auto renderTarget =
-      getInputConnection<TextureHandle>(m_inConnections, IN_TEXTURE);
-
-  const auto depth =
-      getInputConnection<TextureHandle>(m_inConnections, DEPTH_RT);
 
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
@@ -67,17 +61,20 @@ void SimpleForward::compute() {
   }
 
   globals::TEXTURE_MANAGER->bindRenderTarget(renderTarget, depth);
-  // globals::TEXTURE_MANAGER->bindRenderTarget(renderTarget, TextureHandle{});
 
-  globals::RENDERING_CONTEXT->renderQueueType(SHADER_QUEUE_FLAGS::FORWARD);
+  globals::RENDERING_CONTEXT->renderQueueType({}, SHADER_QUEUE_FLAGS::FORWARD);
 
-  m_outputPlugs[0].plugValue = renderTarget.handle;
   annotateGraphicsEnd();
 }
-
 
 void SimpleForward::onResizeEvent(int, int) {
   clear();
   initialize();
+}
+
+void SimpleForward::populateNodePorts() {
+  renderTarget = getInputConnection<TextureHandle>(m_inConnections, IN_TEXTURE);
+  depth = getInputConnection<TextureHandle>(m_inConnections, DEPTH_RT);
+  m_outputPlugs[0].plugValue = renderTarget.handle;
 }
 } // namespace SirEngine

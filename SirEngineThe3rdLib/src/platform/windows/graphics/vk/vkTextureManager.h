@@ -2,26 +2,29 @@
 
 #include "SirEngine/core.h"
 #include "SirEngine/handle.h"
+#include "SirEngine/layers/vkTempLayer.h"
 #include "SirEngine/memory/SparseMemoryPool.h"
 #include "SirEngine/textureManager.h"
 #include "platform/windows/graphics/vk/volk.h"
 
 namespace SirEngine::vk {
+struct VkTexture2D {
+  uint32_t width;
+  uint32_t height;
+  uint32_t mipLevels;
+  uint32_t magicNumber;
+  VkImage image;
+  VkDeviceMemory deviceMemory;
+  VkImageLayout imageLayout;
+  VkImageView view;
+  VkDescriptorImageInfo descriptor{};
+  VkFormat format;
+  VkImageLayout layout;
+  uint32_t isRenderTarget : 1;
+  uint32_t creationFlags : 31;
+};
 
 class SIR_ENGINE_API VkTextureManager final : public TextureManager {
-  struct VkTexture2DTemp {
-    uint32_t width;
-    uint32_t height;
-    uint32_t mipLevels;
-    uint32_t magicNumber;
-    VkImage image;
-    VkDeviceMemory deviceMemory;
-    VkImageLayout imageLayout;
-    VkImageView view;
-    VkDescriptorImageInfo descriptor{};
-    VkFormat format;
-    VkImageLayout layout;
-  };
 
 public:
   VkTextureManager() : m_texturePool(RESERVE_SIZE) {
@@ -59,6 +62,12 @@ public:
   void cleanup() override;
   inline TextureHandle getWhiteTexture() const { return m_whiteTexture; }
   // vk methods
+  const VkTexture2D &getTextureData(const TextureHandle &handle) const {
+    assertMagicNumber(handle);
+    const uint32_t idx = getIndexFromHandle(handle);
+    const auto &data = m_texturePool.getConstRef(idx);
+    return data;
+  };
   void bindTexture(const TextureHandle &handle,
                    VkWriteDescriptorSet *writeDescriptorSets,
                    VkDescriptorSet descriptorSet, uint32_t bindSlot) {
@@ -96,7 +105,7 @@ public:
 
 private:
   bool loadTextureFromFile(const char *name, VkFormat format, VkDevice device,
-                           VkTexture2DTemp &outTexture,
+                           VkTexture2D &outTexture,
                            VkImageUsageFlags imageUsageFlags,
                            VkImageLayout imageLayout,
                            bool isCube = false) const;
@@ -109,7 +118,7 @@ private:
 
 private:
   std::unordered_map<std::string, TextureHandle> m_nameToHandle;
-  SparseMemoryPool<VkTexture2DTemp> m_texturePool;
+  SparseMemoryPool<VkTexture2D> m_texturePool;
 
   // default texture
   TextureHandle m_whiteTexture;

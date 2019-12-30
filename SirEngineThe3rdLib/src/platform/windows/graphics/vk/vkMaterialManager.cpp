@@ -551,6 +551,31 @@ void VkMaterialManager::bindMaterial(SHADER_QUEUE_FLAGS queueFlag,
   bindMaterial(queueFlag, materialRuntime, commandList);
 }
 
+void beginRenderPass(ShaderBind bind) {
+
+  static VkClearColorValue color{0.4, 0.4, 0.4, 1};
+  // lets us start a render pass
+
+  VkClearValue clear{};
+  clear.color = color;
+
+  VkRenderPassBeginInfo beginInfo = {VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};
+  auto pass = vk::PSO_MANAGER->getRenderPassFromHandle(bind.pso);
+  beginInfo.renderPass = pass;
+  // beginInfo.framebuffer = m_tempFrameBuffer;
+
+  // similar to a viewport mostly used on "tiled renderers" to optimize, talking
+  // about hardware based tile renderer, aka mobile GPUs.
+  beginInfo.renderArea.extent.width =
+      static_cast<int32_t>(globals::ENGINE_CONFIG->m_windowWidth);
+  beginInfo.renderArea.extent.height =
+      static_cast<int32_t>(globals::ENGINE_CONFIG->m_windowHeight);
+  beginInfo.clearValueCount = 1;
+  beginInfo.pClearValues = &clear;
+
+  vkCmdBeginRenderPass(vk::CURRENT_FRAME_COMMAND->m_commandBuffer, &beginInfo,
+                       VK_SUBPASS_CONTENTS_INLINE);
+}
 void VkMaterialManager::bindRSandPSO(const uint32_t shaderFlags,
                                      VkCommandBuffer commandList) {
   // get type flags as int
@@ -560,7 +585,7 @@ void VkMaterialManager::bindRSandPSO(const uint32_t shaderFlags,
   ShaderBind bind;
   bool found = m_shderTypeToShaderBind.get(typeFlags, bind);
   if (found) {
-    // vk::PIPELINE_LAYOUT_MANAGER->bindGraphicsRS(bind.rs, commandList);
+    // beginRenderPass(bind);
     vk::PSO_MANAGER->bindPSO(bind.pso, commandList);
     return;
   }
