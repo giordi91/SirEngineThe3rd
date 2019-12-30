@@ -39,7 +39,6 @@ extern VkDevice LOGICAL_DEVICE;
 extern VkQueue GRAPHICS_QUEUE;
 extern VkQueue COMPUTE_QUEUE;
 extern VkPhysicalDevice PHYSICAL_DEVICE;
-extern VkDescriptorPool DESCRIPTOR_POOL;
 extern VkFormat IMAGE_FORMAT;
 extern VkDebugReportCallbackEXT DEBUG_CALLBACK;
 extern VkDebugUtilsMessengerEXT DEBUG_CALLBACK2;

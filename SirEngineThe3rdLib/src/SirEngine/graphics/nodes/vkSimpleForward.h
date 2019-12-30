@@ -1,10 +1,10 @@
 #pragma once
 
 #include "SirEngine/graphics/nodeGraph.h"
-#include "SirEngine/handle.h"
 #include "platform/windows/graphics/vk/volk.h"
 
 namespace SirEngine {
+
 
 class VkSimpleForward final : public GNode {
 public:

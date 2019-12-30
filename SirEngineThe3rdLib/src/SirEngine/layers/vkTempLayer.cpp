@@ -11,14 +11,11 @@
 #include "platform/windows/graphics/vk/vk.h"
 #include "platform/windows/graphics/vk/vkConstantBufferManager.h"
 #include "platform/windows/graphics/vk/vkDescriptorManager.h"
-#include "platform/windows/graphics/vk/vkDescriptors.h"
 #include "platform/windows/graphics/vk/vkLoad.h"
 #include "platform/windows/graphics/vk/vkMaterialManager.h"
-#include "platform/windows/graphics/vk/vkMeshManager.h"
 #include "platform/windows/graphics/vk/vkPSOManager.h"
 #include "platform/windows/graphics/vk/vkShaderManager.h"
 #include "platform/windows/graphics/vk/vkSwapChain.h"
-#include "platform/windows/graphics/vk/vkTextureManager.h"
 #include "platform/windows/graphics/vk/volk.h"
 
 namespace SirEngine {
@@ -103,20 +100,6 @@ void VkTempLayer::onUpdate() {
 
   vkCmdBeginRenderPass(vk::CURRENT_FRAME_COMMAND->m_commandBuffer, &beginInfo,
                        VK_SUBPASS_CONTENTS_INLINE);
-
-  // draw calls go here
-  VkViewport viewport{0,
-                      float(globals::ENGINE_CONFIG->m_windowHeight),
-                      float(globals::ENGINE_CONFIG->m_windowWidth),
-                      -float(globals::ENGINE_CONFIG->m_windowHeight),
-                      0.0f,
-                      1.0f};
-  VkRect2D scissor{
-      {0, 0},
-      {static_cast<uint32_t>(globals::ENGINE_CONFIG->m_windowWidth),
-       static_cast<uint32_t>(globals::ENGINE_CONFIG->m_windowHeight)}};
-  vkCmdSetViewport(vk::CURRENT_FRAME_COMMAND->m_commandBuffer, 0, 1, &viewport);
-  vkCmdSetScissor(vk::CURRENT_FRAME_COMMAND->m_commandBuffer, 0, 1, &scissor);
 
   // if constexpr (USE_PUSH) {
   //  VkDescriptorBufferInfo bufferInfo{};
@@ -248,7 +231,6 @@ void VkTempLayer::clear() {
 
   // if constexpr (!USE_PUSH) {
   // vkDestroyDescriptorSetLayout(vk::LOGICAL_DEVICE, m_setLayout, nullptr);
-  vkDestroyDescriptorPool(vk::LOGICAL_DEVICE, vk::DESCRIPTOR_POOL, nullptr);
   // vkFreeMemory(vk::LOGICAL_DEVICE,m_rt.deviceMemory,nullptr);
   //}
   // TODO render target manager?

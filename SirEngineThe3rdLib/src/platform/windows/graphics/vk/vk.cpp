@@ -13,7 +13,6 @@
 #include "platform/windows/graphics/vk/vkAdapter.h"
 #include "platform/windows/graphics/vk/vkBufferManager.h"
 #include "platform/windows/graphics/vk/vkConstantBufferManager.h"
-#include "platform/windows/graphics/vk/vkDescriptors.h"
 #include "platform/windows/graphics/vk/vkLoad.h"
 #include "platform/windows/graphics/vk/vkPSOManager.h"
 #include "platform/windows/graphics/vk/vkRootSignatureManager.h"
@@ -33,7 +32,6 @@ VkQueue COMPUTE_QUEUE = nullptr;
 VkQueue PRESENTATION_QUEUE = nullptr;
 VkPhysicalDevice PHYSICAL_DEVICE = nullptr;
 VkSwapchain *SWAP_CHAIN = nullptr;
-VkDescriptorPool DESCRIPTOR_POOL = nullptr;
 
 VkFormat IMAGE_FORMAT = VK_FORMAT_UNDEFINED;
 VkDebugReportCallbackEXT DEBUG_CALLBACK = nullptr;
@@ -172,9 +170,9 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
 
   CURRENT_FRAME_COMMAND = &FRAME_COMMAND[0];
 
-  // if constexpr (!USE_PUSH) {
-  vk::createDescriptorPool(vk::LOGICAL_DEVICE, {10000, 10000}, DESCRIPTOR_POOL);
-  //}
+
+  DESCRIPTOR_MANAGER = new VkDescriptorManager(10000, 10000);
+  DESCRIPTOR_MANAGER->initialize();
 
   SHADER_MANAGER = new VkShaderManager();
   SHADER_MANAGER->initialize();
@@ -188,6 +186,7 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   PSO_MANAGER = new VkPSOManager();
   PSO_MANAGER->initialize();
   globals::PSO_MANAGER = PSO_MANAGER;
+  //TODO TEMP HACK LOAD, remove this
   const PSOHandle handle =
       vk::PSO_MANAGER->loadRawPSO("../data/pso/forwardPhongPSO.json");
 
@@ -207,8 +206,6 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   TEXTURE_MANAGER->initialize();
   globals::TEXTURE_MANAGER = TEXTURE_MANAGER;
 
-  DESCRIPTOR_MANAGER = new VkDescriptorManager();
-  DESCRIPTOR_MANAGER->initialize();
 
   MATERIAL_MANAGER = new VkMaterialManager();
   MATERIAL_MANAGER->inititialize();
@@ -292,7 +289,8 @@ void VkRenderingContext::setupCameraForFrame() {
   VkDescriptorBufferInfo bufferInfoUniform = {};
   vk::CONSTANT_BUFFER_MANAGER->bindConstantBuffer(
       m_cameraHandle, bufferInfoUniform, 0, &writeDescriptorSets,
-      vk::PER_FRAME_DESCRIPTOR_SET[globals::CURRENT_FRAME]);
+      vk::DESCRIPTOR_MANAGER->getDescriptorSet(PER_FRAME_DATA_HANDLE));
+  // vk::PER_FRAME_DESCRIPTOR_SET[globals::CURRENT_FRAME]);
   // camera update
   vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, 1, &writeDescriptorSets, 0,
                          nullptr);
@@ -475,6 +473,7 @@ bool VkRenderingContext::shutdownGraphic() {
   MATERIAL_MANAGER->releaseAllMaterialsAndRelatedResources();
 
   TEXTURE_MANAGER->cleanup();
+  DESCRIPTOR_MANAGER->cleanup();
 
   vkDestroyDevice(LOGICAL_DEVICE, nullptr);
   vkDestroySurfaceKHR(INSTANCE, SURFACE, nullptr);
@@ -515,8 +514,23 @@ void VkRenderingContext::addRenderablesToQueue(const Renderable &renderable) {
 void VkRenderingContext::renderQueueType(const SHADER_QUEUE_FLAGS queueFlag) {
   const auto &typedQueues = *(reinterpret_cast<VkRenderingQueues *>(queues));
 
+
   auto *currentFc = CURRENT_FRAME_COMMAND;
   auto commandList = currentFc->m_commandBuffer;
+
+  // draw calls go here
+  VkViewport viewport{0,
+                      float(globals::ENGINE_CONFIG->m_windowHeight),
+                      float(globals::ENGINE_CONFIG->m_windowWidth),
+                      -float(globals::ENGINE_CONFIG->m_windowHeight),
+                      0.0f,
+                      1.0f};
+  VkRect2D scissor{
+      {0, 0},
+      {static_cast<uint32_t>(globals::ENGINE_CONFIG->m_windowWidth),
+       static_cast<uint32_t>(globals::ENGINE_CONFIG->m_windowHeight)}};
+  vkCmdSetViewport(commandList, 0, 1, &viewport);
+  vkCmdSetScissor(commandList, 0, 1, &scissor);
 
   for (const auto &renderableList : typedQueues) {
     if (vk::MATERIAL_MANAGER->isQueueType(renderableList.first, queueFlag)) {
@@ -547,14 +561,6 @@ void VkRenderingContext::renderQueueType(const SHADER_QUEUE_FLAGS queueFlag) {
             queueFlag, renderable.m_materialRuntime, commandList);
 
         vk::MESH_MANAGER->renderMesh(renderable.m_meshRuntime, commandList);
-
-        // if(SHADER_QUEUE_FLAGS::SHADOW == queueFlag) {
-        //	dx12::MESH_MANAGER->bindMeshRuntimeAndRenderPosOnly(renderable.m_meshRuntime,
-        //												 currentFc);
-        //} else {
-        //	dx12::MESH_MANAGER->bindMeshRuntimeAndRender(renderable.m_meshRuntime,
-        //												 currentFc);
-        //}
       }
       // annotateGraphicsEnd();
     }
