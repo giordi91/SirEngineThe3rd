@@ -3,6 +3,7 @@
 #include <vulkan/vulkan.h>
 
 #include "SirEngine/graphics/renderingContext.h"
+#include "SirEngine/memory/sparseMemoryPool.h"
 #include "SirEngine/runtimeString.h"
 #include <vector>
 
@@ -111,6 +112,15 @@ createVkRenderingContext(const RenderingContextCreationSettings &settings,
                          uint32_t width, uint32_t height);
 
 class VkRenderingContext final : public RenderingContext {
+
+  struct FrameBindingsData {
+    VkRenderPass m_pass;
+    VkFramebuffer m_buffer;
+    FrameBufferBindings m_bindings;
+    uint32_t m_magicNumber;
+    const char *name;
+  };
+
 public:
   explicit VkRenderingContext(const RenderingContextCreationSettings &settings,
                               uint32_t width, uint32_t height);
@@ -173,12 +183,29 @@ public:
   void renderQueueType(const DrawCallConfig &config,
                        const SHADER_QUEUE_FLAGS flag) override;
   void renderMaterialType(const SHADER_QUEUE_FLAGS flag) override;
+  BufferBindingsHandle prepareBindingObject(const FrameBufferBindings &bindings,
+                                            const char *name) override;
+  void setBindingObject(const BufferBindingsHandle handle) override;
+  void clearBindingObject(const BufferBindingsHandle handle) override;
+  void freeBindingObject(const BufferBindingsHandle handle)override;
 
+private:
+  inline void assertMagicNumber(const BufferBindingsHandle handle) const {
+    const uint32_t magic = getMagicFromHandle(handle);
+    const uint32_t idx = getIndexFromHandle(handle);
+    assert(static_cast<uint32_t>(
+               m_bindingsPool.getConstRef(idx).m_magicNumber) == magic &&
+           "invalid magic handle for constant buffer");
+  }
 
 private:
   void *queues = nullptr;
   ConstantBufferHandle m_cameraHandle{};
   CameraBuffer m_camBufferCPU{};
+  static constexpr uint32_t RESERVE_SIZE = 400;
+  uint32_t MAGIC_NUMBER_COUNTER = 1;
+  SparseMemoryPool<FrameBindingsData> m_bindingsPool;
+
   /*
 // member variable mostly temporary
 ConstantBufferHandle m_lightBuffer{};

@@ -79,4 +79,9 @@ struct DescriptorHandle {
   [[nodiscard]] bool isHandleValid() const { return handle != 0; }
 };
 
+struct BufferBindingsHandle {
+  uint32_t handle;
+  [[nodiscard]] bool isHandleValid() const { return handle != 0; }
+};
+
 } // namespace SirEngine

@@ -8,9 +8,25 @@ namespace SirEngine {
 
 class BaseWindow;
 
+struct RTBinding {
+  TextureHandle handle{};
+  glm::vec4 clearColor{0, 0, 0, 1};
+  uint32_t shouldClearColor : 1;
+  uint32_t padding : 31;
+};
+struct DepthBinding {
+  TextureHandle handle{};
+  glm::vec4 clearDepthColor{0, 0, 0, 1};
+  glm::vec4 clearStencilColor{0, 0, 0, 1};
+  uint32_t shouldClearDepth : 1;
+  uint32_t shouldClearStencil : 1;
+  uint32_t padding : 30;
+};
 struct FrameBufferBindings {
-  TextureHandle colorRT[8] = {};
-  TextureHandle depthStencil = {};
+  RTBinding colorRT[8] = {};
+  DepthBinding depthStencil = {};
+  uint32_t width;
+  uint32_t height;
 };
 
 struct APIConfig {
@@ -82,6 +98,12 @@ public:
   virtual void renderMaterialType(const SHADER_QUEUE_FLAGS flag) = 0;
 
   virtual void setupCameraForFrame() = 0;
+  virtual BufferBindingsHandle
+  prepareBindingObject(const FrameBufferBindings &bindings,
+                       const char *name) = 0;
+  virtual void setBindingObject(const BufferBindingsHandle handle) = 0;
+  virtual void clearBindingObject(const BufferBindingsHandle handle) = 0;
+  virtual void freeBindingObject(const BufferBindingsHandle handle)=0;
   virtual void bindCameraBuffer(int index) const = 0;
 
   inline const RenderingContextCreationSettings &getContextSettings() const {

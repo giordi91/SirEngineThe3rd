@@ -241,7 +241,7 @@ createVkRenderingContext(const RenderingContextCreationSettings &settings,
 VkRenderingContext::VkRenderingContext(
     const RenderingContextCreationSettings &settings, const uint32_t width,
     const uint32_t height)
-    : RenderingContext(settings, width, height) {
+    : RenderingContext(settings, width, height), m_bindingsPool(RESERVE_SIZE) {
   SE_CORE_INFO("Initializing a Vulkan context");
   queues = new VkRenderingQueues();
 }
@@ -559,7 +559,7 @@ void VkRenderingContext::renderQueueType(const DrawCallConfig &config,
 
         vk::MESH_MANAGER->renderMesh(renderable.m_meshRuntime, commandList);
       }
-	  //vkCmdEndRenderPass(vk::CURRENT_FRAME_COMMAND->m_commandBuffer);
+      // vkCmdEndRenderPass(vk::CURRENT_FRAME_COMMAND->m_commandBuffer);
       // annotateGraphicsEnd();
     }
   }
@@ -567,5 +567,156 @@ void VkRenderingContext::renderQueueType(const DrawCallConfig &config,
 
 void VkRenderingContext::renderMaterialType(const SHADER_QUEUE_FLAGS flag) {
   assert(0);
+}
+
+VkRenderPass createRenderPass(const FrameBufferBindings &bindings,
+                              const char *name) {
+  VkAttachmentDescription attachments[10] = {};
+  VkAttachmentReference attachmentsRefs[10] = {};
+  int count = 0;
+  for (int i = 0; i < 8; ++i) {
+    const RTBinding &binding = bindings.colorRT[i];
+    if (!binding.handle.isHandleValid()) {
+      continue;
+    }
+
+    VkFormat currentFormat =
+        vk::TEXTURE_MANAGER->getTextureFormat(binding.handle);
+    assert(currentFormat != VK_FORMAT_UNDEFINED && "Unsupported render format");
+
+    attachments[count].format = currentFormat;
+    // TODO no MSAA yet
+    attachments[count].samples = VK_SAMPLE_COUNT_1_BIT;
+    // attachments[count].loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+    attachments[count].loadOp = binding.shouldClearColor
+                                    ? VK_ATTACHMENT_LOAD_OP_CLEAR
+                                    : VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    attachments[count].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    // TODO not really sure what to do about the stencil...
+    // for now set to load and store, should leave it untouched
+    // attachments[count].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+    // attachments[count].stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
+    attachments[count].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    attachments[count].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    attachments[count].initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    attachments[count].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+    // we have only one subpass and uses all attachments
+    attachmentsRefs[count].attachment = count;
+    attachmentsRefs[count].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    count++;
+  }
+
+  VkRenderPass renderPass{};
+
+  VkSubpassDescription subPass{};
+  subPass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+  subPass.colorAttachmentCount = count;
+  subPass.pColorAttachments = attachmentsRefs;
+
+  VkRenderPassCreateInfo createInfo{VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO};
+  createInfo.attachmentCount = count;
+  createInfo.pAttachments = attachments;
+  createInfo.subpassCount = 1;
+  createInfo.pSubpasses = &subPass;
+
+  vkCreateRenderPass(vk::LOGICAL_DEVICE, &createInfo, nullptr, &renderPass);
+  SET_DEBUG_NAME(renderPass, VK_OBJECT_TYPE_RENDER_PASS,
+                 frameConcatenation(name, "RenderPass"));
+  return renderPass;
+}
+VkFramebuffer createFrameBuffer(VkRenderPass pass,
+                                const FrameBufferBindings &bindings,
+                                const char *name) {
+
+  VkImageView imageViews[10]{};
+  int count = 0;
+  for (int i = 0; i < 8; ++i) {
+    if (!bindings.colorRT[i].handle.isHandleValid()) {
+      continue;
+    }
+    const VkTexture2D &rt =
+        vk::TEXTURE_MANAGER->getTextureData(bindings.colorRT[i].handle);
+    imageViews[i] = rt.view;
+    ++count;
+  }
+
+  VkFramebufferCreateInfo createInfo = {
+      VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO};
+  createInfo.renderPass = pass;
+  createInfo.pAttachments = imageViews;
+  createInfo.attachmentCount = count;
+  createInfo.width = bindings.width;
+  createInfo.height = bindings.height;
+  createInfo.layers = 1;
+  VkFramebuffer buffer;
+
+  VK_CHECK(
+      vkCreateFramebuffer(vk::LOGICAL_DEVICE, &createInfo, nullptr, &buffer));
+  return buffer;
+}
+
+BufferBindingsHandle
+VkRenderingContext::prepareBindingObject(const FrameBufferBindings &bindings,
+                                         const char *name) {
+  uint32_t index;
+  FrameBindingsData &data = m_bindingsPool.getFreeMemoryData(index);
+  data.m_pass = createRenderPass(bindings, name);
+  data.m_buffer = createFrameBuffer(data.m_pass, bindings, name);
+  data.name = persistentString(name);
+  data.m_bindings = bindings;
+  data.m_magicNumber = MAGIC_NUMBER_COUNTER++;
+  return {data.m_magicNumber << 16 | index};
+}
+
+void VkRenderingContext::clearBindingObject(const BufferBindingsHandle handle) {
+  vkCmdEndRenderPass(vk::CURRENT_FRAME_COMMAND->m_commandBuffer);
+}
+
+void VkRenderingContext::freeBindingObject(const BufferBindingsHandle handle) {
+  assertMagicNumber(handle);
+  const uint32_t magic = getMagicFromHandle(handle);
+  const uint32_t idx = getIndexFromHandle(handle);
+  const FrameBindingsData &data = m_bindingsPool.getConstRef(idx);
+  vkDestroyRenderPass(vk::LOGICAL_DEVICE, data.m_pass, nullptr);
+  vkDestroyFramebuffer(vk::LOGICAL_DEVICE, data.m_buffer, nullptr);
+  stringFree(data.name);
+
+  m_bindingsPool.free(idx);
+}
+
+void VkRenderingContext::setBindingObject(const BufferBindingsHandle handle) {
+  assertMagicNumber(handle);
+  const uint32_t magic = getMagicFromHandle(handle);
+  const uint32_t idx = getIndexFromHandle(handle);
+  const FrameBindingsData &data = m_bindingsPool.getConstRef(idx);
+
+  VkClearValue colors[10]{};
+  int count = 0;
+  for (int i = 0; i < 8; ++i) {
+    const RTBinding &binding = data.m_bindings.colorRT[i];
+    if (!binding.handle.isHandleValid()) {
+      continue;
+    }
+    count += binding.shouldClearColor ? 1 : 0;
+    colors[i].color = {binding.clearColor.r, binding.clearColor.g,
+                       binding.clearColor.b, binding.clearColor.a};
+  }
+
+  VkRenderPassBeginInfo beginInfo = {VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};
+  beginInfo.renderPass = data.m_pass;
+  beginInfo.framebuffer = data.m_buffer;
+
+  // similar to a viewport mostly used on "tiled renderers" to optimize, talking
+  // about hardware based tile renderer, aka mobile GPUs.
+  beginInfo.renderArea.extent.width =
+      static_cast<int32_t>(globals::ENGINE_CONFIG->m_windowWidth);
+  beginInfo.renderArea.extent.height =
+      static_cast<int32_t>(globals::ENGINE_CONFIG->m_windowHeight);
+  beginInfo.clearValueCount = count;
+  beginInfo.pClearValues = colors;
+
+  vkCmdBeginRenderPass(vk::CURRENT_FRAME_COMMAND->m_commandBuffer, &beginInfo,
+                       VK_SUBPASS_CONTENTS_INLINE);
 }
 } // namespace SirEngine::vk

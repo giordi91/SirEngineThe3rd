@@ -68,6 +68,14 @@ public:
     const auto &data = m_texturePool.getConstRef(idx);
     return data;
   };
+  VkFormat getTextureFormat(const TextureHandle &handle)
+  {
+    assertMagicNumber(handle);
+    const uint32_t idx = getIndexFromHandle(handle);
+    const auto &data = m_texturePool.getConstRef(idx);
+    return data.format;
+  };
+
   void bindTexture(const TextureHandle &handle,
                    VkWriteDescriptorSet *writeDescriptorSets,
                    VkDescriptorSet descriptorSet, uint32_t bindSlot) {

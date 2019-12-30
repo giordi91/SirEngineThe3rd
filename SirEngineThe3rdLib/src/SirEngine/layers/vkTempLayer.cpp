@@ -7,6 +7,7 @@
 
 #include "SirEngine/assetManager.h"
 #include "SirEngine/engineConfig.h"
+#include "SirEngine/graphics/nodes/vkSimpleForward.h"
 #include "SirEngine/layers/vkTempLayer.h"
 #include "platform/windows/graphics/vk/vk.h"
 #include "platform/windows/graphics/vk/vkConstantBufferManager.h"
@@ -17,7 +18,7 @@
 #include "platform/windows/graphics/vk/vkShaderManager.h"
 #include "platform/windows/graphics/vk/vkSwapChain.h"
 #include "platform/windows/graphics/vk/volk.h"
-#include "SirEngine/graphics/nodes/vkSimpleForward.h"
+#include "platform/windows/graphics/vk/vkTextureManager.h"
 
 namespace SirEngine {
 
@@ -41,17 +42,13 @@ void VkTempLayer::onAttach() {
       new GraphAllocators{globals::STRING_POOL, globals::PERSISTENT_ALLOCATOR};
   m_forward = new VkSimpleForward(*alloc);
   m_forward->initialize();
+  m_forward->populateNodePorts();
 }
 
 void VkTempLayer::onDetach() {}
 void VkTempLayer::onUpdate() {
 
   globals::RENDERING_CONTEXT->setupCameraForFrame();
-
-  static float step = 0.01f;
-  static int index = 0;
-  static int counter = 0;
-
 
   // if constexpr (USE_PUSH) {
   //  VkDescriptorBufferInfo bufferInfo{};
@@ -72,6 +69,9 @@ void VkTempLayer::onUpdate() {
 
   m_forward->compute();
 
+  int idx = 0;
+  vk::VkTexture2D m_rt = vk::TEXTURE_MANAGER->getTextureData(
+      {m_forward->getOutputPlugs(idx)->plugValue});
 
   VkImageMemoryBarrier barrier[2] = {};
   barrier[0].sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -79,7 +79,7 @@ void VkTempLayer::onUpdate() {
   barrier[0].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
   barrier[0].srcQueueFamilyIndex = 0;
   barrier[0].dstQueueFamilyIndex = 0;
-  barrier[0].image = m_forward->m_rt.image;
+  barrier[0].image = m_rt.image;
   barrier[0].oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
   barrier[0].newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
   barrier[0].subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -117,11 +117,11 @@ void VkTempLayer::onUpdate() {
   region.srcSubresource.mipLevel = 0;
   region.dstOffset = VkOffset3D{};
   region.srcOffset = VkOffset3D{};
-  region.extent.width = m_forward->m_rt.width;
-  region.extent.height = m_forward->m_rt.height;
+  region.extent.width = m_rt.width;
+  region.extent.height = m_rt.height;
   region.extent.depth = 1;
 
-  vkCmdCopyImage(vk::CURRENT_FRAME_COMMAND->m_commandBuffer, m_forward->m_rt.image,
+  vkCmdCopyImage(vk::CURRENT_FRAME_COMMAND->m_commandBuffer, m_rt.image,
                  VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                  vk::SWAP_CHAIN->images[globals::CURRENT_FRAME],
                  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
@@ -130,7 +130,7 @@ void VkTempLayer::onUpdate() {
   barrier[0].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
   barrier[0].srcQueueFamilyIndex = 0;
   barrier[0].dstQueueFamilyIndex = 0;
-  barrier[0].image = m_forward->m_rt.image;
+  barrier[0].image = m_rt.image;
   barrier[0].newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
   barrier[0].oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
   barrier[0].subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -338,8 +338,8 @@ bool VkTempLayer::onDebugLayerEvent(DebugLayerChanged &e) {
 
 bool VkTempLayer::onResizeEvent(WindowResizeEvent &e) {
   // need to recreate the frame buffer, this is temporary
-    //TODO re-add resizing
-  //createRenderTargetAndFrameBuffer(globals::ENGINE_CONFIG->m_windowWidth,
+  // TODO re-add resizing
+  // createRenderTargetAndFrameBuffer(globals::ENGINE_CONFIG->m_windowWidth,
   //                                 globals::ENGINE_CONFIG->m_windowHeight);
 
   return true;

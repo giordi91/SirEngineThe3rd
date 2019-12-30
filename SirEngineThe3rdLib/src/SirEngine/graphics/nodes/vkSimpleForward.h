@@ -1,12 +1,8 @@
 #pragma once
 
 #include "SirEngine/graphics/nodeGraph.h"
-#include "platform/windows/graphics/vk/volk.h"
-
-#include "platform/windows/graphics/vk/vkTextureManager.h"
 
 namespace SirEngine {
-
 
 class VkSimpleForward final : public GNode {
 public:
@@ -26,12 +22,10 @@ public:
 
   void populateNodePorts() override;
   void clear() override;
-  vk::VkTexture2D  m_rt;
 
 private:
-  VkRenderPass m_pass;
-  VkFramebuffer m_tempFrameBuffer;
   TextureHandle m_rtHandle{};
+  BufferBindingsHandle m_bindHandle{};
 };
 
 } // namespace SirEngine
