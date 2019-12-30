@@ -21,10 +21,14 @@ public:
   virtual void compute() override;
   virtual void onResizeEvent(int screenWidth, int screenHeight) override;
 
+  void populateNodePorts() override;
 private:
   TextureHandle m_skyboxBuffer{};
   ID3D12RootSignature *rs = nullptr;
   PSOHandle pso;
+  //handles
+  TextureHandle inputRTHandle{};
+  TextureHandle inputDepthHandle{};
 };
 
 } // namespace SirEngine

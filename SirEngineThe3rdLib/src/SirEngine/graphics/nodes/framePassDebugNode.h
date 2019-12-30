@@ -13,6 +13,7 @@ public:
     OUT_TEXTURE = OUTPUT_PLUG_CODE(0),
     COUNT = 2
   };
+
 public:
   explicit FramePassDebugNode(GraphAllocators &allocators);
   virtual ~FramePassDebugNode() = default;
@@ -23,6 +24,7 @@ public:
     m_config = config;
     m_updateConfig = true;
   }
+  void populateNodePorts() override;
 
 private:
   enum class DebugIndex {
@@ -43,7 +45,7 @@ private:
 private:
   DebugIndex m_index;
   DebugLayerConfig m_config;
-  TextureConfig m_textureConfig{0,0};
+  TextureConfig m_textureConfig{0, 0};
   ConstantBufferHandle m_constBufferHandle;
   BufferHandle m_reduceBufferHandle;
   bool m_updateConfig = false;
@@ -57,8 +59,11 @@ private:
   PSOHandle m_depthPSOHandle;
   PSOHandle m_depthReducePSOHandle;
   PSOHandle m_depthReduceClearPSOHandle;
+
   ID3D12RootSignature *m_rs = nullptr;
-  ID3D12RootSignature *m_reduceRs= nullptr;
+  ID3D12RootSignature *m_reduceRs = nullptr;
+
+  TextureHandle inputRTHandle;
 };
 
 } // namespace SirEngine

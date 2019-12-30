@@ -3,15 +3,10 @@
 
 #include "SirEngine/handle.h"
 #include "SirEngine/layer.h"
-#include "platform/windows/graphics/vk/vkTexture.h"
-#include "SirEngine/graphics/nodes/vkSimpleForward.h"
 
 namespace SirEngine {
-namespace vk {
-struct VkMesh;
-struct VkTexture2D;
-} // namespace vk
 
+class VkSimpleForward;
 class ReloadScriptsEvent;
 class DebugRenderConfigChanged;
 class MouseButtonPressEvent;
@@ -57,15 +52,11 @@ private:
   float previousX = 0;
   float previousY = 0;
 
-  void createDescriptorLayoutAdvanced();
-  void createRenderTargetAndFrameBuffer(int width, int height);
   // shaders
   VkPipeline m_pipeline;
 
-  vk::VkTexture2D m_rt;
-  VkFramebuffer m_tempFrameBuffer;
   VkRenderPass m_pass;
-  VkSimpleForward* m_forward;
+  VkSimpleForward *m_forward;
   // TODO temp
   GraphAllocators *alloc;
 };

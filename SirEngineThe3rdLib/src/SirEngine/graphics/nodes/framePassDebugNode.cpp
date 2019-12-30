@@ -2,26 +2,26 @@
 #include "SirEngine/graphics/debugAnnotations.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/handle.h"
-#include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
 #include "platform/windows/graphics/dx12/Dx12PSOManager.h"
-#include "platform/windows/graphics/dx12/dx12TextureManager.h"
-#include "platform/windows/graphics/dx12/dx12BufferManager.h"
 #include "platform/windows/graphics/dx12/debugRenderer.h"
+#include "platform/windows/graphics/dx12/dx12BufferManager.h"
+#include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
 #include "platform/windows/graphics/dx12/dx12RootSignatureManager.h"
+#include "platform/windows/graphics/dx12/dx12TextureManager.h"
 
 namespace SirEngine {
 
-static const char* GBUFFER_DEBUG_PSO_NAME = "gbufferDebugPSO";
-static const char* NORMAL_DEBUG_PSO_NAME = "normalBufferDebugPSO";
-static const char* METALLIC_DEBUG_PSO_NAME = "metallicBufferDebugPSO";
-static const char* ROUGHNESS_DEBUG_PSO_NAME = "roughnessBufferDebugPSO";
-static const char* THICKNESS_DEBUG_PSO_NAME = "thicknessBufferDebugPSO";
-static const char* STENCIL_DEBUG_PSO_NAME = "stencilDebugPSO";
-static const char* DEPTH_DEBUG_PSO_NAME = "depthBufferDebugPSO";
-static const char* DEBUG_FULL_SCREEN_RS_NAME = "debugFullScreenBlit_RS";
-static const char* DEBUG_REDUCE_DEPTH_RS_NAME = "depthMinMaxReduce_RS";
-static const char* DEBUG_REDUCE_DEPTH_PSO_NAME = "depthMinMaxReduce_PSO";
-static const char* DEBUG_REDUCE_DEPTH_CLEAR_PSO_NAME =
+static const char *GBUFFER_DEBUG_PSO_NAME = "gbufferDebugPSO";
+static const char *NORMAL_DEBUG_PSO_NAME = "normalBufferDebugPSO";
+static const char *METALLIC_DEBUG_PSO_NAME = "metallicBufferDebugPSO";
+static const char *ROUGHNESS_DEBUG_PSO_NAME = "roughnessBufferDebugPSO";
+static const char *THICKNESS_DEBUG_PSO_NAME = "thicknessBufferDebugPSO";
+static const char *STENCIL_DEBUG_PSO_NAME = "stencilDebugPSO";
+static const char *DEPTH_DEBUG_PSO_NAME = "depthBufferDebugPSO";
+static const char *DEBUG_FULL_SCREEN_RS_NAME = "debugFullScreenBlit_RS";
+static const char *DEBUG_REDUCE_DEPTH_RS_NAME = "depthMinMaxReduce_RS";
+static const char *DEBUG_REDUCE_DEPTH_PSO_NAME = "depthMinMaxReduce_PSO";
+static const char *DEBUG_REDUCE_DEPTH_CLEAR_PSO_NAME =
     "depthMinMaxReduceClear_PSO";
 
 FramePassDebugNode::FramePassDebugNode(GraphAllocators &allocators)
@@ -172,6 +172,12 @@ inline void checkHandle(const TextureHandle input,
   assert(input.handle != handleToWriteOn.handle);
 }
 
+void FramePassDebugNode::populateNodePorts() {
+  inputRTHandle =
+      getInputConnection<TextureHandle>(m_inConnections, IN_TEXTURE);
+  m_outputPlugs[0].plugValue = inputRTHandle.handle;
+}
+
 void FramePassDebugNode::blitDebugFrame(
     const TextureHandle handleToWriteOn) const {
   switch (m_index) {
@@ -308,18 +314,14 @@ void FramePassDebugNode::compute() {
   // get the render texture
   annotateGraphicsBegin("DebugPass");
 
-  const auto texH =
-      getInputConnection<TextureHandle>(m_inConnections, IN_TEXTURE);
-
   // check if we need to update the constant buffer
   if (m_updateConfig) {
     updateConstantBuffer();
   }
 
 #if SE_DEBUG
-  blitDebugFrame(texH);
+  blitDebugFrame(inputRTHandle);
 #endif
-  m_outputPlugs[0].plugValue = texH.handle;
   annotateGraphicsEnd();
 }
 } // namespace SirEngine

@@ -29,7 +29,6 @@ DebugDrawNode::DebugDrawNode(GraphAllocators &allocators)
   outTexture.name = "outTexture";
 }
 
-
 inline void checkHandle(const TextureHandle input,
                         const TextureHandle handleToWriteOn) {
   assert(input.isHandleValid());
@@ -42,15 +41,20 @@ void DebugDrawNode::compute() {
   // get the render texture
   annotateGraphicsBegin("DebugDrawPass");
 
-  const auto texH =
-      getInputConnection<TextureHandle>(m_inConnections, IN_TEXTURE);
+  assert(inputRTHandle.isHandleValid());
+  assert(inputDepthHandle.isHandleValid());
+  dx12::DEBUG_RENDERER->render(inputRTHandle, inputDepthHandle);
 
-  const auto depth =
-      getInputConnection<TextureHandle>(m_inConnections, DEPTH_RT);
-
-  dx12::DEBUG_RENDERER->render(texH, depth);
-
-  m_outputPlugs[0].plugValue = texH.handle;
+  m_outputPlugs[0].plugValue = inputRTHandle.handle;
   annotateGraphicsEnd();
+}
+
+void DebugDrawNode::populateNodePorts() {
+
+  inputRTHandle =
+      getInputConnection<TextureHandle>(m_inConnections, IN_TEXTURE);
+  inputDepthHandle =
+      getInputConnection<TextureHandle>(m_inConnections, DEPTH_RT);
+  m_outputPlugs[0].plugValue = inputRTHandle.handle;
 }
 } // namespace SirEngine

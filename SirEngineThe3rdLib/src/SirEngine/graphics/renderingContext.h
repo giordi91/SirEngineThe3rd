@@ -8,6 +8,11 @@ namespace SirEngine {
 
 class BaseWindow;
 
+struct FrameBufferBindings {
+  TextureHandle colorRT[8] = {};
+  TextureHandle depthStencil = {};
+};
+
 struct APIConfig {
   bool vsync = false;
   uint32_t apiVersion = 0;
@@ -40,6 +45,7 @@ enum class DRAW_CALL_FLAGS {
   SHOULD_CLEAR_COLOR = 1,
   SHOULD_CLEAR_DEPTH_STENCIL = 2
 };
+
 struct DrawCallConfig {
   uint32_t width = 0;
   uint32_t height = 0;
@@ -71,7 +77,8 @@ public:
   virtual void executeGlobalCommandList() = 0;
   virtual void resetGlobalCommandList() = 0;
   virtual void addRenderablesToQueue(const Renderable &renderable) = 0;
-  virtual void renderQueueType(const SHADER_QUEUE_FLAGS flag) = 0;
+  virtual void renderQueueType(const DrawCallConfig &config,
+                               const SHADER_QUEUE_FLAGS flag) = 0;
   virtual void renderMaterialType(const SHADER_QUEUE_FLAGS flag) = 0;
 
   virtual void setupCameraForFrame() = 0;

@@ -13,10 +13,11 @@ public:
   virtual ~FinalBlitNode() = default;
   virtual void compute() override;
   virtual void initialize() override;
-
+  void populateNodePorts() override;
 private:
   ID3D12RootSignature *m_rs = nullptr;
   PSOHandle m_pso{};
+  TextureHandle inputRTHandle;
 };
 
 } // namespace SirEngine

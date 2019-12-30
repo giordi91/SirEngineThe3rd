@@ -1,8 +1,8 @@
 #include "SirEngine/graphics/nodes/shadowPass.h"
 #include "SirEngine/graphics/debugAnnotations.h"
 #include "SirEngine/graphics/renderingContext.h"
-#include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
 #include "platform/windows/graphics/dx12/DX12.h"
+#include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
 #include "platform/windows/graphics/dx12/dx12SwapChain.h"
 #include "platform/windows/graphics/dx12/dx12TextureManager.h"
 
@@ -18,7 +18,6 @@ ShadowPass::ShadowPass(GraphAllocators &allocators)
   geometryBuffer.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
   geometryBuffer.nodePtr = this;
   geometryBuffer.name = "shadowRT";
-
 }
 
 void ShadowPass::initialize() {
@@ -59,7 +58,7 @@ void ShadowPass::compute() {
   commandList->RSSetViewports(1, &viewport);
   commandList->RSSetScissorRects(1, &scissorRect);
 
-  globals::RENDERING_CONTEXT->renderQueueType(SHADER_QUEUE_FLAGS::SHADOW);
+  globals::RENDERING_CONTEXT->renderQueueType({}, SHADER_QUEUE_FLAGS::SHADOW);
 
   // TODO remove this each draw call should set its own
   // Set the viewport and scissor rect.  This needs to be reset whenever the
@@ -68,7 +67,6 @@ void ShadowPass::compute() {
   commandList->RSSetScissorRects(1, dx12::SWAP_CHAIN->getScissorRect());
 
   // setting the data as output
-  m_outputPlugs[0].plugValue = m_shadow.handle;
 
   // if we are in debug we want to populate debug data such that can be
   // used for blitting debug data on screen
@@ -91,5 +89,9 @@ void ShadowPass::clear() {
 void ShadowPass::onResizeEvent(int, int) {
   clear();
   initialize();
+}
+
+void ShadowPass::populateNodePorts() {
+  m_outputPlugs[0].plugValue = m_shadow.handle;
 }
 } // namespace SirEngine

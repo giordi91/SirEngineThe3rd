@@ -3,8 +3,8 @@
 #include <dxgi1_6.h>
 
 #include "SirEngine/globals.h"
-#include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/graphics/cpuGraphicsStructures.h"
+#include "SirEngine/graphics/renderingContext.h"
 #include <cassert>
 
 namespace SirEngine {
@@ -113,7 +113,7 @@ typedef ID3D12Device3 D3D12DeviceType;
 extern SIR_ENGINE_API D3D12DeviceType *DEVICE;
 extern SIR_ENGINE_API ID3D12Debug *DEBUG_CONTROLLER;
 extern IDXGIFactory6 *DXGI_FACTORY;
-extern SIR_ENGINE_API IDXGIAdapter3*ADAPTER;
+extern SIR_ENGINE_API IDXGIAdapter3 *ADAPTER;
 extern UINT64 CURRENT_FENCE;
 extern DescriptorHeap *GLOBAL_CBV_SRV_UAV_HEAP;
 extern DescriptorHeap *GLOBAL_RTV_HEAP;
@@ -203,6 +203,7 @@ public:
   void setupCameraForFrame() override;
   void setupLightingForFrame();
   void bindCameraBuffer(int index) const override;
+
   void bindCameraBufferCompute(int index) const;
   void updateSceneBoundingBox();
   void updateDirectionalLightMatrix();
@@ -215,8 +216,9 @@ public:
   void flush() override;
   void executeGlobalCommandList() override;
   void resetGlobalCommandList() override;
-  void addRenderablesToQueue(const Renderable& renderable) override;
-  void renderQueueType(const SHADER_QUEUE_FLAGS flag) override;
+  void addRenderablesToQueue(const Renderable &renderable) override;
+  void renderQueueType(const DrawCallConfig &config,
+                       const SHADER_QUEUE_FLAGS flag) override;
   void renderMaterialType(const SHADER_QUEUE_FLAGS queueFlag) override;
 
 private:
@@ -226,15 +228,13 @@ private:
   ConstantBufferHandle m_lightBuffer{};
   DebugDrawHandle m_lightAABBHandle{};
 
-  //TODO possibly find a better way to handle this don't want to leak the std map type out
-  //I cannot use my hash map because is quite basic and does not deal with complex datatypes that needs
-  //to be constructed, meaning would be hard to put in a ResizableVector as value so for now we don't deal with
-  //this
-  void* queues;
+  // TODO possibly find a better way to handle this don't want to leak the std
+  // map type out I cannot use my hash map because is quite basic and does not
+  // deal with complex datatypes that needs to be constructed, meaning would be
+  // hard to put in a ResizableVector as value so for now we don't deal with
+  // this
+  void *queues;
 };
 
-
-
-	
 } // namespace dx12
 } // namespace SirEngine

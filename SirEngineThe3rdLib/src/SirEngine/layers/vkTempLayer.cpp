@@ -17,27 +17,9 @@
 #include "platform/windows/graphics/vk/vkShaderManager.h"
 #include "platform/windows/graphics/vk/vkSwapChain.h"
 #include "platform/windows/graphics/vk/volk.h"
+#include "SirEngine/graphics/nodes/vkSimpleForward.h"
 
 namespace SirEngine {
-void VkTempLayer::createRenderTargetAndFrameBuffer(const int width,
-                                                   const int height) {
-  vk::createRenderTarget(
-      "RT", VK_FORMAT_R8G8B8A8_UNORM, vk::LOGICAL_DEVICE, m_rt,
-      VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
-      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, width, height);
-
-  VkFramebufferCreateInfo createInfo = {
-      VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO};
-  createInfo.renderPass = m_pass;
-  createInfo.pAttachments = &m_rt.view;
-  createInfo.attachmentCount = 1;
-  createInfo.width = m_rt.width;
-  createInfo.height = m_rt.height;
-  createInfo.layers = 1;
-
-  VK_CHECK(vkCreateFramebuffer(vk::LOGICAL_DEVICE, &createInfo, nullptr,
-                               &m_tempFrameBuffer));
-}
 
 void VkTempLayer::onAttach() {
   globals::MAIN_CAMERA = new Camera3DPivot();
@@ -55,15 +37,6 @@ void VkTempLayer::onAttach() {
   // globals::ASSET_MANAGER->loadScene(globals::ENGINE_CONFIG->m_startScenePath);
   globals::ASSET_MANAGER->loadScene("../data/scenes/tempScene.json");
 
-  const PSOHandle handle =
-      vk::PSO_MANAGER->loadRawPSO("../data/pso/forwardPhongPSO.json");
-  m_pass = vk::PSO_MANAGER->getRenderPassFromHandle(handle);
-
-  createRenderTargetAndFrameBuffer(globals::ENGINE_CONFIG->m_windowWidth,
-                                   globals::ENGINE_CONFIG->m_windowHeight);
-  // if constexpr (!USE_PUSH) {
-  //}
-
   alloc =
       new GraphAllocators{globals::STRING_POOL, globals::PERSISTENT_ALLOCATOR};
   m_forward = new VkSimpleForward(*alloc);
@@ -79,27 +52,6 @@ void VkTempLayer::onUpdate() {
   static int index = 0;
   static int counter = 0;
 
-  static VkClearColorValue color{0.4, 0.4, 0.4, 1};
-  // lets us start a render pass
-
-  VkClearValue clear{};
-  clear.color = color;
-
-  VkRenderPassBeginInfo beginInfo = {VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};
-  beginInfo.renderPass = m_pass;
-  beginInfo.framebuffer = m_tempFrameBuffer;
-
-  // similar to a viewport mostly used on "tiled renderers" to optimize, talking
-  // about hardware based tile renderer, aka mobile GPUs.
-  beginInfo.renderArea.extent.width =
-      static_cast<int32_t>(globals::ENGINE_CONFIG->m_windowWidth);
-  beginInfo.renderArea.extent.height =
-      static_cast<int32_t>(globals::ENGINE_CONFIG->m_windowHeight);
-  beginInfo.clearValueCount = 1;
-  beginInfo.pClearValues = &clear;
-
-  vkCmdBeginRenderPass(vk::CURRENT_FRAME_COMMAND->m_commandBuffer, &beginInfo,
-                       VK_SUBPASS_CONTENTS_INLINE);
 
   // if constexpr (USE_PUSH) {
   //  VkDescriptorBufferInfo bufferInfo{};
@@ -120,7 +72,6 @@ void VkTempLayer::onUpdate() {
 
   m_forward->compute();
 
-  vkCmdEndRenderPass(vk::CURRENT_FRAME_COMMAND->m_commandBuffer);
 
   VkImageMemoryBarrier barrier[2] = {};
   barrier[0].sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -128,7 +79,7 @@ void VkTempLayer::onUpdate() {
   barrier[0].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
   barrier[0].srcQueueFamilyIndex = 0;
   barrier[0].dstQueueFamilyIndex = 0;
-  barrier[0].image = m_rt.image;
+  barrier[0].image = m_forward->m_rt.image;
   barrier[0].oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
   barrier[0].newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
   barrier[0].subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -166,11 +117,11 @@ void VkTempLayer::onUpdate() {
   region.srcSubresource.mipLevel = 0;
   region.dstOffset = VkOffset3D{};
   region.srcOffset = VkOffset3D{};
-  region.extent.width = m_rt.width;
-  region.extent.height = m_rt.height;
+  region.extent.width = m_forward->m_rt.width;
+  region.extent.height = m_forward->m_rt.height;
   region.extent.depth = 1;
 
-  vkCmdCopyImage(vk::CURRENT_FRAME_COMMAND->m_commandBuffer, m_rt.image,
+  vkCmdCopyImage(vk::CURRENT_FRAME_COMMAND->m_commandBuffer, m_forward->m_rt.image,
                  VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                  vk::SWAP_CHAIN->images[globals::CURRENT_FRAME],
                  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
@@ -179,7 +130,7 @@ void VkTempLayer::onUpdate() {
   barrier[0].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
   barrier[0].srcQueueFamilyIndex = 0;
   barrier[0].dstQueueFamilyIndex = 0;
-  barrier[0].image = m_rt.image;
+  barrier[0].image = m_forward->m_rt.image;
   barrier[0].newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
   barrier[0].oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
   barrier[0].subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -228,14 +179,7 @@ void VkTempLayer::onEvent(Event &event) {
 
 void VkTempLayer::clear() {
   vkDeviceWaitIdle(vk::LOGICAL_DEVICE);
-
-  // if constexpr (!USE_PUSH) {
-  // vkDestroyDescriptorSetLayout(vk::LOGICAL_DEVICE, m_setLayout, nullptr);
-  // vkFreeMemory(vk::LOGICAL_DEVICE,m_rt.deviceMemory,nullptr);
-  //}
-  // TODO render target manager?
-  vk::destroyFrameBuffer(vk::LOGICAL_DEVICE, m_tempFrameBuffer, m_rt);
-  // vk::TEXTURE_MANAGER->free(textureHandle);
+  m_forward->clear();
 }
 
 bool VkTempLayer::onMouseButtonPressEvent(MouseButtonPressEvent &e) {
@@ -394,9 +338,9 @@ bool VkTempLayer::onDebugLayerEvent(DebugLayerChanged &e) {
 
 bool VkTempLayer::onResizeEvent(WindowResizeEvent &e) {
   // need to recreate the frame buffer, this is temporary
-  vk::destroyFrameBuffer(vk::LOGICAL_DEVICE, m_tempFrameBuffer, m_rt);
-  createRenderTargetAndFrameBuffer(globals::ENGINE_CONFIG->m_windowWidth,
-                                   globals::ENGINE_CONFIG->m_windowHeight);
+    //TODO re-add resizing
+  //createRenderTargetAndFrameBuffer(globals::ENGINE_CONFIG->m_windowWidth,
+  //                                 globals::ENGINE_CONFIG->m_windowHeight);
 
   return true;
 }

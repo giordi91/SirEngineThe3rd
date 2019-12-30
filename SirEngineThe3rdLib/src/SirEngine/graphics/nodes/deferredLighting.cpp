@@ -2,9 +2,9 @@
 #include "SirEngine/assetManager.h"
 #include "SirEngine/graphics/debugAnnotations.h"
 #include "SirEngine/graphics/renderingContext.h"
-#include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/Dx12PSOManager.h"
+#include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
 #include "platform/windows/graphics/dx12/dx12RootSignatureManager.h"
 #include "platform/windows/graphics/dx12/dx12TextureManager.h"
 
@@ -65,7 +65,8 @@ void DeferredLightingPass::initialize() {
 
   // HDR Buffer
   m_lightBuffer = globals::TEXTURE_MANAGER->allocateRenderTexture(
-      globals::ENGINE_CONFIG->m_windowWidth, globals::ENGINE_CONFIG->m_windowHeight,
+      globals::ENGINE_CONFIG->m_windowWidth,
+      globals::ENGINE_CONFIG->m_windowHeight,
       RenderTargetFormat::R16G16B16A16_FLOAT, "lightBuffer");
 
   m_lightCB = dx12::RENDERING_CONTEXT->getLightCB();
@@ -89,17 +90,13 @@ void DeferredLightingPass::compute() {
 
   annotateGraphicsBegin("DeferredLightingPass");
 
-  const TextureHandle gbufferHandle =
-      getInputConnection(m_inConnections, GEOMETRY_RT);
-  const TextureHandle normalBufferHandle =
-      getInputConnection(m_inConnections, NORMALS_RT);
-  const TextureHandle specularBufferHandle =
-      getInputConnection(m_inConnections, SPECULAR_RT);
-  const TextureHandle depthHandle =
-      getInputConnection(m_inConnections, DEPTH_RT);
-
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
+
+  assert(gbufferHandle.isHandleValid());
+  assert(normalBufferHandle.isHandleValid());
+  assert(specularBufferHandle.isHandleValid());
+  assert(depthHandle.isHandleValid());
 
   // commandList->SetPipelineState(pso);
   dx12::PSO_MANAGER->bindPSO(pso, commandList);
@@ -160,7 +157,6 @@ void DeferredLightingPass::compute() {
   currentFc->commandList->IASetPrimitiveTopology(
       D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
   commandList->DrawInstanced(6, 1, 0, 0);
-  m_outputPlugs[0].plugValue = m_lightBuffer.handle;
   annotateGraphicsEnd();
 }
 
@@ -179,5 +175,14 @@ void DeferredLightingPass::clear() {
 void DeferredLightingPass::onResizeEvent(int, int) {
   clear();
   initialize();
+}
+
+void DeferredLightingPass::populateNodePorts() {
+  gbufferHandle = getInputConnection(m_inConnections, GEOMETRY_RT);
+  normalBufferHandle = getInputConnection(m_inConnections, NORMALS_RT);
+  specularBufferHandle = getInputConnection(m_inConnections, SPECULAR_RT);
+  depthHandle = getInputConnection(m_inConnections, DEPTH_RT);
+
+  m_outputPlugs[0].plugValue = m_lightBuffer.handle;
 }
 } // namespace SirEngine

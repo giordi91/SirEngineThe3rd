@@ -1,9 +1,9 @@
 #include "SirEngine/graphics/nodes/gbufferPassPBR.h"
 #include "SirEngine/graphics/debugAnnotations.h"
 #include "SirEngine/graphics/renderingContext.h"
-#include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/Dx12PSOManager.h"
+#include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
 #include "platform/windows/graphics/dx12/dx12TextureManager.h"
 
 namespace SirEngine {
@@ -40,18 +40,22 @@ GBufferPassPBR::GBufferPassPBR(GraphAllocators &allocators)
 void GBufferPassPBR::initialize() {
 
   m_depth = dx12::TEXTURE_MANAGER->createDepthTexture(
-      "gbufferDepth", globals::ENGINE_CONFIG->m_windowWidth, globals::ENGINE_CONFIG->m_windowHeight);
+      "gbufferDepth", globals::ENGINE_CONFIG->m_windowWidth,
+      globals::ENGINE_CONFIG->m_windowHeight);
 
   m_geometryBuffer = globals::TEXTURE_MANAGER->allocateRenderTexture(
-      globals::ENGINE_CONFIG->m_windowWidth, globals::ENGINE_CONFIG->m_windowHeight, RenderTargetFormat::RGBA32,
+      globals::ENGINE_CONFIG->m_windowWidth,
+      globals::ENGINE_CONFIG->m_windowHeight, RenderTargetFormat::RGBA32,
       "geometryBuffer");
 
   m_normalBuffer = globals::TEXTURE_MANAGER->allocateRenderTexture(
-      globals::ENGINE_CONFIG->m_windowWidth, globals::ENGINE_CONFIG->m_windowHeight,
+      globals::ENGINE_CONFIG->m_windowWidth,
+      globals::ENGINE_CONFIG->m_windowHeight,
       RenderTargetFormat::R11G11B10_UNORM, "normalBuffer");
 
   m_specularBuffer = globals::TEXTURE_MANAGER->allocateRenderTexture(
-      globals::ENGINE_CONFIG->m_windowWidth, globals::ENGINE_CONFIG->m_windowHeight, RenderTargetFormat::RGBA32,
+      globals::ENGINE_CONFIG->m_windowWidth,
+      globals::ENGINE_CONFIG->m_windowHeight, RenderTargetFormat::RGBA32,
       "specularBuffer");
 }
 
@@ -98,22 +102,8 @@ void GBufferPassPBR::compute() {
   // the stream is a series of rendarables sorted by type, so here we loop for
   // all the renderable types and filter for the one that are tagged for the
   // deferred queue
-  globals::RENDERING_CONTEXT->renderQueueType(SHADER_QUEUE_FLAGS::DEFERRED);
+  globals::RENDERING_CONTEXT->renderQueueType({}, SHADER_QUEUE_FLAGS::DEFERRED);
 
-  // setting the data as output
-  m_outputPlugs[0].plugValue = m_geometryBuffer.handle;
-  m_outputPlugs[1].plugValue = m_normalBuffer.handle;
-  m_outputPlugs[2].plugValue = m_specularBuffer.handle;
-  m_outputPlugs[3].plugValue = m_depth.handle;
-
-#if SE_DEBUG
-  // if we are in debug we want to populate debug data such that can be
-  // used for blitting debug data on screen
-  globals::DEBUG_FRAME_DATA->geometryBuffer = m_geometryBuffer;
-  globals::DEBUG_FRAME_DATA->normalBuffer = m_normalBuffer;
-  globals::DEBUG_FRAME_DATA->specularBuffer = m_specularBuffer;
-  globals::DEBUG_FRAME_DATA->gbufferDepth = m_depth;
-#endif
   annotateGraphicsEnd();
 }
 
@@ -129,11 +119,28 @@ void GBufferPassPBR::clear() {
   freeTextureIfValid(m_geometryBuffer);
   freeTextureIfValid(m_normalBuffer);
   freeTextureIfValid(m_specularBuffer);
-  m_generation =-1;
+  m_generation = -1;
 }
 
 void GBufferPassPBR::onResizeEvent(int, int) {
   clear();
   initialize();
+}
+
+void GBufferPassPBR::populateNodePorts() {
+  // setting the data as output
+  m_outputPlugs[0].plugValue = m_geometryBuffer.handle;
+  m_outputPlugs[1].plugValue = m_normalBuffer.handle;
+  m_outputPlugs[2].plugValue = m_specularBuffer.handle;
+  m_outputPlugs[3].plugValue = m_depth.handle;
+
+#if SE_DEBUG
+  // if we are in debug we want to populate debug data such that can be
+  // used for blitting debug data on screen
+  globals::DEBUG_FRAME_DATA->geometryBuffer = m_geometryBuffer;
+  globals::DEBUG_FRAME_DATA->normalBuffer = m_normalBuffer;
+  globals::DEBUG_FRAME_DATA->specularBuffer = m_specularBuffer;
+  globals::DEBUG_FRAME_DATA->gbufferDepth = m_depth;
+#endif
 }
 } // namespace SirEngine

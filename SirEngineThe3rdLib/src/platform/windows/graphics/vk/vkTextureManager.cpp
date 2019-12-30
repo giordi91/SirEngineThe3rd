@@ -169,7 +169,7 @@ static void setImageLayout(
 
 bool VkTextureManager::loadTextureFromFile(const char *name, VkFormat format,
                                            VkDevice device,
-                                           VkTexture2DTemp &outTexture,
+                                           VkTexture2D &outTexture,
                                            VkImageUsageFlags imageUsageFlags,
                                            VkImageLayout imageLayout,
                                            bool isCube) const {
@@ -614,7 +614,7 @@ TextureHandle VkTextureManager::loadTexture(const char *path,
     const std::string extension = getFileExtension(texturePath);
 
     uint32_t index;
-    VkTexture2DTemp &data = m_texturePool.getFreeMemoryData(index);
+    VkTexture2D &data = m_texturePool.getFreeMemoryData(index);
     uint32_t usageFlags = VK_IMAGE_USAGE_SAMPLED_BIT;
     VkImageLayout layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
@@ -648,7 +648,7 @@ void VkTextureManager::free(const TextureHandle handle) {
   }
   assertMagicNumber(handle);
   uint32_t index = getIndexFromHandle(handle);
-  VkTexture2DTemp &data = m_texturePool[index];
+  VkTexture2D &data = m_texturePool[index];
 
   // releasing the texture data and objects;
   vkDestroyImage(vk::LOGICAL_DEVICE, data.image, nullptr);
@@ -663,57 +663,128 @@ void VkTextureManager::free(const TextureHandle handle) {
 TextureHandle VkTextureManager::allocateRenderTexture(
     const uint32_t width, const uint32_t height,
     const RenderTargetFormat format, const char *name, bool allowWrite) {
+
+  // NOTE for now this is hardcoded, if necessary will be changed
+  VkImageLayout imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+  // TODO have this being built by generic flags passed in
+  VkImageUsageFlags imageUsageFlags =
+      VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+
+  const std::string textureName = getFileName(name);
+
+  uint32_t index;
+  VkTexture2D &data = m_texturePool.getFreeMemoryData(index);
+  data.width = width;
+  data.height = height;
+  data.mipLevels = 1;
+  data.creationFlags = 0;
+  data.isRenderTarget = 1;
+
+  // need to convert genering render target format to vulkan render target
+  // format
+  VkFormat vkFormat = convertRTFormatToVKFormat(format);
+  // Get device properties for the requested texture format
+  VkFormatProperties formatProperties;
+  vkGetPhysicalDeviceFormatProperties(PHYSICAL_DEVICE, vkFormat,
+                                      &formatProperties);
+
+  VkPhysicalDeviceMemoryProperties memoryProperties;
+  vkGetPhysicalDeviceMemoryProperties(PHYSICAL_DEVICE, &memoryProperties);
+
+  VkMemoryAllocateInfo memAllocInfo = {VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO};
+  VkMemoryRequirements memReqs;
+
+  // create a command buffer separated to execute this stuff
+  // TODO fix hardcoded index
+  VkCommandBuffer buffer =
+      createCommandBuffer(CURRENT_FRAME_COMMAND->m_commandAllocator,
+                          VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+  SET_DEBUG_NAME(buffer, VK_OBJECT_TYPE_COMMAND_BUFFER,
+                 frameConcatenation(name, "CommandBufferTemp"));
+
+  // Create optimal tiled target image
+  VkImageCreateInfo imageCreateInfo = {VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO};
+  imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
+  imageCreateInfo.format = vkFormat;
+  imageCreateInfo.mipLevels = data.mipLevels;
+  imageCreateInfo.arrayLayers = 1;
+  imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+  imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+  imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+  imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  imageCreateInfo.extent = {data.width, data.height, 1};
+  imageCreateInfo.usage = imageUsageFlags;
+  // Ensure that the TRANSFER_DST bit is set for staging
+  if (!(imageCreateInfo.usage & VK_IMAGE_USAGE_TRANSFER_DST_BIT)) {
+    imageCreateInfo.usage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+  }
+  VK_CHECK(vkCreateImage(vk::LOGICAL_DEVICE, &imageCreateInfo, nullptr,
+                         &data.image));
+  SET_DEBUG_NAME(data.image, VK_OBJECT_TYPE_IMAGE,
+                 frameConcatenation(textureName.c_str(), "Image"));
+
+  vkGetImageMemoryRequirements(vk::LOGICAL_DEVICE, data.image, &memReqs);
+
+  memAllocInfo.allocationSize = memReqs.size;
+
+  memAllocInfo.memoryTypeIndex =
+      selectMemoryType(memoryProperties, memReqs.memoryTypeBits,
+                       VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+  VK_CHECK(vkAllocateMemory(vk::LOGICAL_DEVICE, &memAllocInfo, nullptr,
+                            &data.deviceMemory));
+  SET_DEBUG_NAME(data.deviceMemory, VK_OBJECT_TYPE_DEVICE_MEMORY,
+                 frameConcatenation(textureName.c_str(), "Memory"));
+  VK_CHECK(
+      vkBindImageMemory(vk::LOGICAL_DEVICE, data.image, data.deviceMemory, 0));
+
+  VkImageSubresourceRange subresourceRange = {};
+  subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  subresourceRange.baseMipLevel = 0;
+  subresourceRange.levelCount = data.mipLevels;
+  subresourceRange.layerCount = 1;
+
+  // Change texture image layout to shader read after
+  data.imageLayout = imageLayout;
+  setImageLayout(buffer, data.image, VK_IMAGE_LAYOUT_UNDEFINED, imageLayout,
+                 subresourceRange);
+
+  flushCommandBuffer(CURRENT_FRAME_COMMAND->m_commandAllocator, buffer,
+                     GRAPHICS_QUEUE, true);
+
+  // Create image view
+  // Textures are not directly accessed by the shaders and
+  // are abstracted by image views containing additional
+  // information and sub resource ranges
+  VkImageViewCreateInfo viewCreateInfo = {};
+  viewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+  viewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+  viewCreateInfo.format = vkFormat;
+  viewCreateInfo.components = {VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G,
+                               VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A};
+  viewCreateInfo.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
+  // Linear tiling usually won't support mip maps
+  // Only set mip map count if optimal tiling is used
+  viewCreateInfo.subresourceRange.levelCount = data.mipLevels;
+  viewCreateInfo.image = data.image;
+  VK_CHECK(vkCreateImageView(vk::LOGICAL_DEVICE, &viewCreateInfo, nullptr,
+                             &data.view));
+  SET_DEBUG_NAME(data.view, VK_OBJECT_TYPE_IMAGE_VIEW,
+                 frameConcatenation(textureName.c_str(), "ImageView"))
+
+  // Update descriptor image info member that can be used for setting up
+  // descriptor sets
   /*
-// convert SirEngine format to dx12 format
-DXGI_FORMAT actualFormat = convertToDXGIFormat(format);
+  updateDescriptor();
+  */
+  // data.descriptor.sampler = data.sampler;
+  data.descriptor.sampler = nullptr;
+  data.descriptor.imageView = data.view;
+  data.descriptor.imageLayout = imageLayout;
 
-uint32_t index;
-TextureData &data = m_texturePool.getFreeMemoryData(index);
-D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
-if (allowWrite) {
-  flags = flags | (D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
-}
-auto uavDesc = CD3DX12_RESOURCE_DESC::Tex2D(actualFormat, width, height, 1, 1,
-                                            1, 0, flags);
-
-D3D12_CLEAR_VALUE clear;
-clear.Color[0] = 0.0f;
-clear.Color[1] = 0.0f;
-clear.Color[2] = 0.0f;
-clear.Color[3] = 1.0f;
-clear.Format = actualFormat;
-auto defaultHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-HRESULT hr = dx12::DEVICE->CreateCommittedResource(
-    &defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &uavDesc,
-    D3D12_RESOURCE_STATE_RENDER_TARGET, &clear, IID_PPV_ARGS(&data.resource));
-assert(SUCCEEDED(hr));
-
-data.magicNumber = MAGIC_NUMBER_COUNTER;
-data.format = data.resource->GetDesc().Format;
-data.state = D3D12_RESOURCE_STATE_RENDER_TARGET;
-data.flags = TextureFlags::RT;
-
-TextureHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
-
-++MAGIC_NUMBER_COUNTER;
-
-createRTVSRV(dx12::GLOBAL_RTV_HEAP, data.resource, data.rtsrv);
-dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DSRV(data.srv, data.resource,
-                                                  data.format);
-if (allowWrite) {
-  dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DUAV(data.uav, data.resource,
-                                                    data.format);
-}
-
-// convert to wstring
-const std::string sname(name);
-const std::wstring wname(sname.begin(), sname.end());
-data.resource->SetName(wname.c_str());
-
-m_nameToHandle[name] = handle;
-return handle;
-*/
-  return {};
+  // build the handle
+  data.magicNumber = MAGIC_NUMBER_COUNTER++;
+  return {data.magicNumber << 16 | index};
 }
 
 TextureHandle VkTextureManager::allocateTexture(const uint32_t width,
@@ -907,7 +978,7 @@ void VkTextureManager::initialize() {
 void VkTextureManager::cleanup() {
   assertMagicNumber(m_whiteTexture);
   uint32_t index = getIndexFromHandle(m_whiteTexture);
-  VkTexture2DTemp &data = m_texturePool[index];
+  VkTexture2D &data = m_texturePool[index];
 
   // releasing the texture data and objects;
   vkDestroyImage(vk::LOGICAL_DEVICE, data.image, nullptr);

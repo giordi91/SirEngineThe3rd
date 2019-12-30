@@ -22,10 +22,14 @@ public:
   virtual void compute() override;
   virtual void onResizeEvent(int screenWidth, int screenHeight) override;
 
+  void populateNodePorts() override;
 private:
   ID3D12RootSignature *rs = nullptr;
   PSOHandle pso;
+  //handles
   MeshHandle skyboxHandle{};
+  TextureHandle inputRTHandle{};
+  TextureHandle inputDepthHandle{}; 
 };
 
 } // namespace SirEngine
