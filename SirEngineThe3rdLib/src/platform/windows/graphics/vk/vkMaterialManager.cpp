@@ -396,11 +396,12 @@ void VkMaterialManager::bindMaterial(SHADER_QUEUE_FLAGS queueFlag,
       vk::DESCRIPTOR_MANAGER->getDescriptorSet(setHandle);
 
   VkDescriptorSet sets[] = {
-      vk::PER_FRAME_DESCRIPTOR_SET[globals::CURRENT_FRAME], descriptorSet,
-      vk::STATIC_SAMPLER_DESCRIPTOR_SET};
+      vk::DESCRIPTOR_MANAGER->getDescriptorSet(PER_FRAME_DATA_HANDLE),
+      descriptorSet, vk::STATIC_SAMPLERS_DESCRIPTOR_SET};
   // multiple descriptor sets
   vkCmdBindDescriptorSets(commandList, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                          materialRuntime.layouts[currentFlagId], 0, 3, sets, 0, nullptr);
+                          materialRuntime.layouts[currentFlagId], 0, 3, sets, 0,
+                          nullptr);
   /*
   switch (type) {
   case (SHADER_TYPE_FLAGS::PBR): {
@@ -561,7 +562,7 @@ void VkMaterialManager::bindRSandPSO(const uint32_t shaderFlags,
   if (found) {
     // vk::PIPELINE_LAYOUT_MANAGER->bindGraphicsRS(bind.rs, commandList);
     vk::PSO_MANAGER->bindPSO(bind.pso, commandList);
-    return; 
+    return;
   }
   assert(0 && "Could not find requested shader type for PSO /RS bind");
   return;
@@ -643,7 +644,8 @@ MaterialHandle VkMaterialManager::loadMaterial(const char *path,
         vk::DESCRIPTOR_MANAGER->allocate(bind.rs, flags, descriptorName);
 
     materialData.m_materialRuntime.descriptorHandles[i] = descriptorHandle;
-    materialData.m_materialRuntime.layouts[i] = vk::PIPELINE_LAYOUT_MANAGER->getLayoutFromHandle(bind.rs);
+    materialData.m_materialRuntime.layouts[i] =
+        vk::PIPELINE_LAYOUT_MANAGER->getLayoutFromHandle(bind.rs);
 
     if (parse.isStatic) {
       // it is static lets bind the material right away

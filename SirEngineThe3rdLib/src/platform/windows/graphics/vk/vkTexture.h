@@ -20,13 +20,6 @@ bool createRenderTarget (const char *name, VkFormat format, VkDevice device,
                          VkImageUsageFlags imageUsageFlags,
                          VkImageLayout imageLayout, uint32_t width, uint32_t height); 
 
-bool loadTextureFromFile(
-    const char *name, VkFormat format, VkDevice device, 
-    VkTexture2D &outTexture,
-    VkImageUsageFlags imageUsageFlags = VK_IMAGE_USAGE_SAMPLED_BIT,
-    VkImageLayout imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
-bool destroyTexture(const VkDevice device, const VkTexture2D& texture);
 bool destroyFrameBuffer(const VkDevice device, const VkFramebuffer fb,
                         const VkTexture2D &texture); 
 

@@ -18,12 +18,14 @@ namespace SirEngine::vk {
 #define STATIC_SAMPLER_COUNT 7
 extern VkSampler STATIC_SAMPLERS[STATIC_SAMPLER_COUNT];
 extern VkDescriptorImageInfo STATIC_SAMPLERS_INFO[STATIC_SAMPLER_COUNT];
-extern VkDescriptorSetLayout STATIC_SAMPLER_LAYOUT;
+extern VkDescriptorSetLayout STATIC_SAMPLERS_LAYOUT;
 extern VkDescriptorSet
-    STATIC_SAMPLER_DESCRIPTOR_SET; // used in case you want to manually update
-                                   // the samplers and not bound them as static
+    STATIC_SAMPLERS_DESCRIPTOR_SET; // used in case you want to manually update
+                                    // the samplers and not bound them as static
 extern VkDescriptorSetLayout PER_FRAME_LAYOUT;
-extern VkDescriptorSet *PER_FRAME_DESCRIPTOR_SET;
+// extern VkDescriptorSet *PER_FRAME_DESCRIPTOR_SET;
+extern DescriptorHandle PER_FRAME_DATA_HANDLE;
+extern DescriptorHandle STATIC_SAMPLERS_HANDLE;
 
 // VkPipeline
 // createGraphicsPipeline(const char *psoPath, VkDevice logicalDevice,
@@ -70,8 +72,7 @@ public:
     assertMagicNumber(handle);
     const uint32_t index = getIndexFromHandle(handle);
     const PSOData &data = m_psoPool.getConstRef(index);
-    vkCmdBindPipeline(commandList,
-                      VK_PIPELINE_BIND_POINT_GRAPHICS, data.pso);
+    vkCmdBindPipeline(commandList, VK_PIPELINE_BIND_POINT_GRAPHICS, data.pso);
     // commandList->SetPipelineState(data.pso);
   }
   inline VkPipeline getPipelineFromHandle(const PSOHandle handle) const {
@@ -137,5 +138,5 @@ private:
   SparseMemoryPool<PSOData> m_psoPool;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
   static const uint32_t RESERVE_SIZE = 400;
-}; // namespace SirEngine::vk
+};
 } // namespace SirEngine::vk

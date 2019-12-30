@@ -1,7 +1,7 @@
 #pragma once
 #include <stdint.h>
 
-#include "../../../../../../Tests/src/graphNodesDefinitions.h"
+#include "SirEngine/globals.h"
 #include "SirEngine/handle.h"
 #include "SirEngine/memory/sparseMemoryPool.h"
 #include "platform/windows/graphics/vk/volk.h"
@@ -16,36 +16,49 @@ class VkDescriptorManager final {
     VkDescriptorSet *sets;
   };
 
+  struct DescriptorPoolDefinition {
+    uint32_t uniformDescriptorCount;
+    uint32_t imagesDescriptorCount;
+  };
+
 public:
   enum DESCRIPTOR_FLAGS { BUFFERED = 1 };
 
 public:
-  VkDescriptorManager() : m_descriptorPool(RESERVE_SIZE){};
+  VkDescriptorManager(uint32_t uniformDescriptorCount,
+                      uint32_t imagesDescriptorCount)
+      : m_descriptorDataPool(RESERVE_SIZE),
+        m_uniformDescriptorCount(uniformDescriptorCount),
+        m_imagesDescriptorCount(imagesDescriptorCount){};
   ~VkDescriptorManager() = default;
   VkDescriptorManager(const VkDescriptorManager &) = delete;
   VkDescriptorManager &operator=(const VkDescriptorManager &) = delete;
   VkDescriptorManager(VkDescriptorManager &&) = delete;
   VkDescriptorManager &operator=(VkDescriptorManager &&) = delete;
+  void initialize();
+  void cleanup();
 
   DescriptorHandle allocate(const RSHandle handle, uint32_t flags,
                             const char *name);
+  DescriptorHandle allocate(VkDescriptorSetLayout layout, uint32_t flags,
+                            const char *name);
+
   VkDescriptorSet getDescriptorSet(const DescriptorHandle handle) const {
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
-    const DescriptorData &data = m_descriptorPool.getConstRef(index);
+    const DescriptorData &data = m_descriptorDataPool.getConstRef(index);
     uint32_t setIndex = data.isBuffered ? globals::CURRENT_FRAME : 0;
     return data.sets[setIndex];
   }
 
-  void initialize(){};
-  void cleanup(){};
+  VkDescriptorPool getPool() const { return m_descriptorPool; }
 
 private:
   inline void assertMagicNumber(const DescriptorHandle handle) const {
 #ifdef SE_DEBUG
     uint32_t magic = getMagicFromHandle(handle);
     uint32_t idx = getIndexFromHandle(handle);
-    assert(m_descriptorPool.getConstRef(idx).magicNumber == magic &&
+    assert(m_descriptorDataPool.getConstRef(idx).magicNumber == magic &&
            "invalid magic handle for constant buffer");
 #endif
   }
@@ -53,7 +66,10 @@ private:
 private:
   static const uint32_t RESERVE_SIZE = 400;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
-  SparseMemoryPool<DescriptorData> m_descriptorPool;
+  SparseMemoryPool<DescriptorData> m_descriptorDataPool;
+  uint32_t m_uniformDescriptorCount;
+  uint32_t m_imagesDescriptorCount;
+  VkDescriptorPool m_descriptorPool;
 };
 
 } // namespace SirEngine::vk

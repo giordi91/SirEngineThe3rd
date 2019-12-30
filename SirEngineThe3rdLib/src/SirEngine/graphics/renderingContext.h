@@ -36,6 +36,19 @@ struct Renderable {
   MaterialHandle m_materialHandle;
 };
 
+enum class DRAW_CALL_FLAGS {
+  SHOULD_CLEAR_COLOR = 1,
+  SHOULD_CLEAR_DEPTH_STENCIL = 2
+};
+struct DrawCallConfig {
+  uint32_t width = 0;
+  uint32_t height = 0;
+  uint32_t flags = 0;
+  glm::vec4 clearColorValue;
+  glm::vec4 clearDepthValue;
+  glm::vec4 clearStencilValue;
+};
+
 class RenderingContext {
 
 public:

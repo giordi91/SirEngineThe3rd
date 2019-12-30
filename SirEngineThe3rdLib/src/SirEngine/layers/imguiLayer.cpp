@@ -27,6 +27,7 @@
 #include "SirEngine/events/shaderCompileEvent.h"
 #include "SirEngine/graphics/debugAnnotations.h"
 #include "platform/windows/graphics/vk/vkSwapChain.h"
+#include "platform/windows/graphics/vk/vkDescriptorManager.h"
 #include "vkTempLayer.h"
 
 namespace SirEngine {
@@ -50,7 +51,7 @@ void ImguiLayer::onAttach() {
     vkinfo.QueueFamily = vk::GRAPHICS_QUEUE_FAMILY;
     vkinfo.Queue = vk::GRAPHICS_QUEUE;
     vkinfo.PipelineCache = nullptr;
-    vkinfo.DescriptorPool = vk::DESCRIPTOR_POOL;
+    vkinfo.DescriptorPool = vk::DESCRIPTOR_MANAGER->getPool();
     vkinfo.Allocator = nullptr;
     vkinfo.ImageCount = vk::SWAP_CHAIN_IMAGE_COUNT;
     vkinfo.MinImageCount = vk::SWAP_CHAIN_IMAGE_COUNT;

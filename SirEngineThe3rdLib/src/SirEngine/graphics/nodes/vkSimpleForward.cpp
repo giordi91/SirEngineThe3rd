@@ -49,23 +49,13 @@ void VkSimpleForward::compute() {
       getInputConnection<TextureHandle>(m_inConnections, DEPTH_RT);
       */
 
-  // draw calls go here
-  VkViewport viewport{0,
-                      float(globals::ENGINE_CONFIG->m_windowHeight),
-                      float(globals::ENGINE_CONFIG->m_windowWidth),
-                      -float(globals::ENGINE_CONFIG->m_windowHeight),
-                      0.0f,
-                      1.0f};
-  VkRect2D scissor{
-      {0, 0},
-      {static_cast<uint32_t>(globals::ENGINE_CONFIG->m_windowWidth),
-       static_cast<uint32_t>(globals::ENGINE_CONFIG->m_windowHeight)}};
-  vkCmdSetViewport(vk::CURRENT_FRAME_COMMAND->m_commandBuffer, 0, 1, &viewport);
-  vkCmdSetScissor(vk::CURRENT_FRAME_COMMAND->m_commandBuffer, 0, 1, &scissor);
-
+  DrawCallConfig config{
+      globals::ENGINE_CONFIG->m_windowWidth,
+      globals::ENGINE_CONFIG->m_windowHeight,
+      static_cast<uint32_t>(DRAW_CALL_FLAGS::SHOULD_CLEAR_COLOR),
+      glm::vec4(0.4f, 0.4f, 0.4f, 1.0f),
+  };
   globals::RENDERING_CONTEXT->renderQueueType(SHADER_QUEUE_FLAGS::FORWARD);
-
-
 }
 
 void VkSimpleForward::onResizeEvent(int, int) {
