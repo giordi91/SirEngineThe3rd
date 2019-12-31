@@ -18,7 +18,7 @@ enum class RenderTargetFormat {
 
 class TextureManager {
 protected:
-  enum TextureFlags { NONE = 0, DEPTH = 1, RT = 2 };
+  //enum TextureFlags { NONE = 0, DEPTH = 1, RT = 2 };
 
 public:
   enum TEXTURE_ALLOCATION_FLAGS {
