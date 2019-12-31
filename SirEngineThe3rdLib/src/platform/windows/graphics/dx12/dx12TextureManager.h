@@ -18,7 +18,7 @@ class SIR_ENGINE_API Dx12TextureManager final : public TextureManager {
     ID3D12Resource *resource;
     D3D12_RESOURCE_STATES state;
     DXGI_FORMAT format;
-    TextureFlags flags;
+    uint32_t flags;//combination of texture allocation flags
     DescriptorPair srv;
     DescriptorPair rtsrv;
     DescriptorPair uav;

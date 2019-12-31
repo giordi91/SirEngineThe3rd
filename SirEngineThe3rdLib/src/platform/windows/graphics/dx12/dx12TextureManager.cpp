@@ -111,7 +111,7 @@ TextureHandle Dx12TextureManager::initializeFromResourceDx12(
   data.magicNumber = MAGIC_NUMBER_COUNTER;
   data.format = data.resource->GetDesc().Format;
   data.state = state;
-  data.flags = TextureFlags::RT;
+  data.flags = TEXTURE_ALLOCATION_FLAGS::RENDER_TARGET;
 
   ++MAGIC_NUMBER_COUNTER;
 
@@ -146,7 +146,7 @@ void Dx12TextureManager::free(const TextureHandle handle) {
   TextureData &data = m_texturePool[index];
 
   // check type
-  if ((data.flags & TextureFlags::DEPTH) > 0) {
+  if ((data.flags & TEXTURE_ALLOCATION_FLAGS::DEPTH_TEXTURE) > 0) {
     if (data.srv.cpuHandle.ptr != 0) {
       dx12::GLOBAL_CBV_SRV_UAV_HEAP->freeDescriptor(data.srv);
     }
@@ -157,7 +157,7 @@ void Dx12TextureManager::free(const TextureHandle handle) {
       assert(0 && "not supported yet check if is correct");
       dx12::GLOBAL_DSV_HEAP->freeDescriptor(data.uav);
     }
-  } else if ((data.flags & TextureFlags::RT) > 0) {
+  } else if ((data.flags & TEXTURE_ALLOCATION_FLAGS::RENDER_TARGET) > 0) {
     if (data.srv.cpuHandle.ptr != 0) {
       dx12::GLOBAL_CBV_SRV_UAV_HEAP->freeDescriptor(data.srv);
     }
@@ -239,7 +239,7 @@ TextureHandle Dx12TextureManager::allocateRenderTexture(
   D3D12_RESOURCE_STATES state = isRenderTexture
                                     ? D3D12_RESOURCE_STATE_RENDER_TARGET
                                     : D3D12_RESOURCE_STATE_COMMON;
-  state = isDepth  ? D3D12_RESOURCE_STATE_DEPTH_WRITE : state;
+  state = isDepth ? D3D12_RESOURCE_STATE_DEPTH_WRITE : state;
   auto defaultHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
   HRESULT hr = dx12::DEVICE->CreateCommittedResource(
       &defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &description, state, &clear,
@@ -249,11 +249,8 @@ TextureHandle Dx12TextureManager::allocateRenderTexture(
   data.magicNumber = MAGIC_NUMBER_COUNTER;
   data.format = data.resource->GetDesc().Format;
   data.state = state;
-  // cannot be both so only one will be set
-  // TODO should use a sigle set of flags here? we have texture flags and
-  // texture allocations flags
-  data.flags = isRenderTexture ? TextureFlags::RT : TextureFlags::NONE;
-  data.flags = isDepth ? TextureFlags::DEPTH : data.flags;
+  //TODO change texture allocation flags similar to vulkan, with bits and flags combination
+  data.flags = allocFlags;
 
   TextureHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
   ++MAGIC_NUMBER_COUNTER;
@@ -286,13 +283,12 @@ TextureHandle Dx12TextureManager::allocateRenderTexture(
   return handle;
 }
 
-
 void Dx12TextureManager::bindRenderTarget(const TextureHandle handle,
                                           const TextureHandle depth) {
   assertMagicNumber(handle);
   const uint32_t index = getIndexFromHandle(handle);
   const TextureData &data = m_texturePool.getConstRef(index);
-  assert((data.flags & TextureFlags::RT) > 0);
+  assert((data.flags & TEXTURE_ALLOCATION_FLAGS::RENDER_TARGET) > 0);
 
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
@@ -305,7 +301,7 @@ void Dx12TextureManager::bindRenderTarget(const TextureHandle handle,
     assertMagicNumber(depth);
     const uint32_t depthIndex = getIndexFromHandle(depth);
     const TextureData &depthData = m_texturePool.getConstRef(depthIndex);
-    assert((depthData.flags & TextureFlags::DEPTH) > 0);
+    assert((depthData.flags & TEXTURE_ALLOCATION_FLAGS::DEPTH_TEXTURE) > 0);
     depthDesc = &(depthData.rtsrv.cpuHandle);
   }
   commandList->OMSetRenderTargets(1, handles, true, depthDesc);
@@ -316,7 +312,7 @@ void Dx12TextureManager::bindRenderTargetStencil(TextureHandle handle,
   assertMagicNumber(handle);
   const uint32_t index = getIndexFromHandle(handle);
   const TextureData &data = m_texturePool.getConstRef(index);
-  assert((data.flags & TextureFlags::RT) > 0);
+  assert((data.flags &TEXTURE_ALLOCATION_FLAGS::RENDER_TARGET ) > 0);
 
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
@@ -329,7 +325,7 @@ void Dx12TextureManager::bindRenderTargetStencil(TextureHandle handle,
     assertMagicNumber(depth);
     const uint32_t depthIndex = getIndexFromHandle(depth);
     const TextureData &depthData = m_texturePool.getConstRef(depthIndex);
-    assert((depthData.flags & TextureFlags::DEPTH) > 0);
+    assert((depthData.flags & TEXTURE_ALLOCATION_FLAGS::DEPTH_TEXTURE) > 0);
     depthDesc = &(depthData.dsvStencil.cpuHandle);
   }
   commandList->OMSetRenderTargets(1, handles, true, depthDesc);
@@ -374,20 +370,20 @@ void Dx12TextureManager::copyTexture(const TextureHandle source,
 
 void Dx12TextureManager::bindBackBuffer(bool bindBackBufferDepth) {
   auto back = dx12::SWAP_CHAIN->currentBackBufferView();
-  //auto depth = dx12::SWAP_CHAIN->getDepthCPUDescriptor();
+  // auto depth = dx12::SWAP_CHAIN->getDepthCPUDescriptor();
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
-  commandList->OMSetRenderTargets(1, &back, true,
-                                    nullptr);
+  commandList->OMSetRenderTargets(1, &back, true, nullptr);
   ;
 }
 
 void Dx12TextureManager::clearDepth(const TextureHandle depth,
-                                    const float depthValue, const float stencilValue) {
+                                    const float depthValue,
+                                    const float stencilValue) {
   assertMagicNumber(depth);
   const uint32_t index = getIndexFromHandle(depth);
   const TextureData &data = m_texturePool.getConstRef(index);
-  assert((data.flags & TextureFlags::DEPTH) > 0);
+  assert((data.flags & TEXTURE_ALLOCATION_FLAGS::DEPTH_TEXTURE) > 0);
 
   CURRENT_FRAME_RESOURCE->fc.commandList->ClearDepthStencilView(
       data.rtsrv.cpuHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL,
@@ -399,7 +395,7 @@ void Dx12TextureManager::clearRT(const TextureHandle handle,
   assertMagicNumber(handle);
   const uint32_t index = getIndexFromHandle(handle);
   const TextureData &data = m_texturePool.getConstRef(index);
-  assert((data.flags & TextureFlags::RT) > 0);
+  assert((data.flags & TEXTURE_ALLOCATION_FLAGS::RENDER_TARGET) > 0);
   // Clear the back buffer and depth buffer.
   CURRENT_FRAME_RESOURCE->fc.commandList->ClearRenderTargetView(
       data.rtsrv.cpuHandle, color, 0, nullptr);
