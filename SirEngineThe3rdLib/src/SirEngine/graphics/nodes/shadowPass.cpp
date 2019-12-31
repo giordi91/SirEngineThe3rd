@@ -21,7 +21,7 @@ ShadowPass::ShadowPass(GraphAllocators &allocators)
 }
 
 void ShadowPass::initialize() {
-  m_shadow = dx12::TEXTURE_MANAGER->allocateRenderTexture(
+  m_shadow = dx12::TEXTURE_MANAGER->allocateTexture(
       shadowSize, shadowSize, RenderTargetFormat::DEPTH_F32_S8,
       "directionalShadow", TextureManager::DEPTH_TEXTURE);
 }

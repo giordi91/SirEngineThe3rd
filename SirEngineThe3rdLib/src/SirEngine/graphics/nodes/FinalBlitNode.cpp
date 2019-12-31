@@ -5,14 +5,13 @@
 #include "WinPixEventRuntime/WinPixEventRuntime/pix3.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/Dx12PSOManager.h"
+#include "platform/windows/graphics/dx12/dx12MaterialManager.h"
 #include "platform/windows/graphics/dx12/dx12SwapChain.h"
 #include "platform/windows/graphics/dx12/dx12TextureManager.h"
 #include "platform/windows/graphics/dx12/dx12rootSignatureManager.h"
 
 namespace SirEngine {
 
-static const char *FINAL_BLIT_PSO = "HDRtoSDREffect_PSO";
-static const char *FINAL_BLIT_RS = "standardPostProcessEffect_RS";
 FinalBlitNode::FinalBlitNode(GraphAllocators &allocators)
     : GNode("FinalBlit", "FinalBlit", allocators) {
   // lets create the plugs
@@ -26,48 +25,58 @@ FinalBlitNode::FinalBlitNode(GraphAllocators &allocators)
 }
 
 void FinalBlitNode::compute() {
-  // get the render texture
-  annotateGraphicsBegin("EndOfFrameBlit");
 
-  assert(inputRTHandle.isHandleValid());
-  const TextureHandle destination =
-      dx12::SWAP_CHAIN->currentBackBufferTexture();
-  // globals::TEXTURE_MANAGER->copyTexture(texH,destination);
+  globals::RENDERING_CONTEXT->setBindingObject(m_bindHandle);
 
-  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
-  auto commandList = currentFc->commandList;
+  // first we want to bind the back buffer so that we can render to it
+  globals::TEXTURE_MANAGER->bindBackBuffer();
+  // next we bind the material, this will among other things bind the pso and rs
+  globals::MATERIAL_MANAGER->bindMaterial(m_matHandle);
+  // we also need to bind the input resource, which is the texture we want to
+  // blit
+  globals::MATERIAL_MANAGER->bindTexture(m_matHandle, inputRTHandle, 1);
+  // finally we submit a fullscreen pass
+  globals::RENDERING_CONTEXT->fullScreenPass();
 
-  D3D12_RESOURCE_BARRIER barriers[2];
-  int counter = 0;
-  counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
-      inputRTHandle, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, barriers,
-      counter);
-  counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
-      destination, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, counter);
-  if (counter) {
-    commandList->ResourceBarrier(counter, barriers);
-  }
-
-  globals::TEXTURE_MANAGER->bindRenderTarget(destination, TextureHandle{});
-  dx12::DescriptorPair pair = dx12::TEXTURE_MANAGER->getSRVDx12(inputRTHandle);
-
-  dx12::PSO_MANAGER->bindPSO(m_pso, commandList);
-  commandList->SetGraphicsRootSignature(m_rs);
-  commandList->SetGraphicsRootDescriptorTable(1, pair.gpuHandle);
-
-  commandList->DrawInstanced(6, 1, 0, 0);
-  annotateGraphicsEnd();
+  // finishing the pass
+  globals::RENDERING_CONTEXT->clearBindingObject(m_bindHandle);
 }
 
 void FinalBlitNode::initialize() {
-  m_rs = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(FINAL_BLIT_RS);
-  m_pso = dx12::PSO_MANAGER->getHandleFromName(FINAL_BLIT_PSO);
+  m_matHandle = globals::MATERIAL_MANAGER->allocateMaterial(
+      "HDRtoSDREffect", "HDRtoSDREffect", 0);
 }
 
 void FinalBlitNode::populateNodePorts() {
-  const auto conn = m_inConnections[PLUG_INDEX(PLUGS::IN_TEXTURE)];
-  assert(conn->size() == 1 && "too many input connections");
-  const GPlug *source = (*conn)[0];
-  inputRTHandle.handle = source->plugValue;
+  inputRTHandle =
+      getInputConnection<TextureHandle>(m_inConnections, IN_TEXTURE);
+
+  // empty binding since we bind to the swap chain buffer
+  FrameBufferBindings bindings{};
+  bindings.width = globals::ENGINE_CONFIG->m_windowWidth;
+  bindings.height = globals::ENGINE_CONFIG->m_windowHeight;
+
+  bindings.extraBindings = reinterpret_cast<RTBinding *>(
+      globals::PERSISTENT_ALLOCATOR->allocate(sizeof(RTBinding)));
+  bindings.extraBindingsCount = 1;
+  bindings.extraBindings[0].handle = inputRTHandle;
+  bindings.extraBindings[0].currentResourceState = RESOURCE_STATE::GENERIC;
+  bindings.extraBindings[0].neededResourceState =
+      RESOURCE_STATE::SHADER_READ_RESOURCE;
+  bindings.extraBindings[0].shouldClearColor = 0;
+
+  m_bindHandle = globals::RENDERING_CONTEXT->prepareBindingObject(
+      bindings, "EndOfFrameBlit");
+}
+
+void FinalBlitNode::clear() {
+  // TODO why do i need the guard?, clear somehow gets called before
+  // the initialize and populateNodesPorts
+  if (m_matHandle.isHandleValid()) {
+    globals::MATERIAL_MANAGER->free(m_matHandle);
+  }
+  if (m_bindHandle.isHandleValid()) {
+    globals::RENDERING_CONTEXT->freeBindingObject(m_bindHandle);
+  }
 }
 } // namespace SirEngine

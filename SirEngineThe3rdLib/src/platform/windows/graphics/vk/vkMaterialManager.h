@@ -25,7 +25,7 @@ struct VkMaterialRuntime final {
   SkinHandle skinHandle;
   MeshHandle meshHandle;
   DescriptorHandle descriptorHandles[4]{{}, {}, {}, {}};
-  VkPipelineLayout layouts[4]{nullptr,nullptr,nullptr,nullptr};
+  VkPipelineLayout layouts[4]{nullptr, nullptr, nullptr, nullptr};
 };
 
 struct MaterialData {
@@ -77,6 +77,20 @@ private:
            "invalid magic handle for constant buffer");
   }
   void loadTypeFile(const char *path);
+
+public:
+  MaterialHandle allocateMaterial(const char *type, const char *name,
+                                  uint32_t flags) override {
+    assert(0);
+    return {};
+  }
+
+  void bindTexture(MaterialHandle matHandle, TextureHandle texHandle,
+                   uint32_t bindingIndex) override {
+    assert(0);
+  }
+  void bindMaterial(MaterialHandle handle) override { assert(0); }
+  void free(MaterialHandle handle) override{assert(0);};
 
 private:
   HashMap<const char *, MaterialHandle, hashString32> m_nameToHandle;

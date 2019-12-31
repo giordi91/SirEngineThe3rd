@@ -4,60 +4,14 @@
 #include "SirEngine/skinClusterManager.h"
 #include "nlohmann/json.hpp"
 #include "platform/windows/graphics/dx12/dx12BufferManager.h"
-#include "platform/windows/graphics/dx12/dx12MeshManager.h"
-#include "platform/windows/graphics/dx12/dx12TextureManager.h"
-#include "platform/windows/graphics/dx12/dx12RootSignatureManager.h"
 #include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
+#include "platform/windows/graphics/dx12/dx12MeshManager.h"
 #include "platform/windows/graphics/dx12/dx12PSOManager.h"
-
+#include "platform/windows/graphics/dx12/dx12RootSignatureManager.h"
+#include "platform/windows/graphics/dx12/dx12TextureManager.h"
 
 namespace SirEngine::dx12 {
 
-
-static const std::unordered_map<std::string, SirEngine::SHADER_TYPE_FLAGS>
-    STRING_TO_TYPE_FLAGS{
-        {"pbr", SirEngine::SHADER_TYPE_FLAGS::PBR},
-        {"forwardPbr", SirEngine::SHADER_TYPE_FLAGS::FORWARD_PBR},
-        {"forwardPhong", SirEngine::SHADER_TYPE_FLAGS::FORWARD_PHONG},
-        {"forwardPhongAlphaCutout",
-         SirEngine::SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT},
-        {"skin", SirEngine::SHADER_TYPE_FLAGS::SKIN},
-        {"hair", SirEngine::SHADER_TYPE_FLAGS::HAIR},
-        {"hairSkin", SirEngine::SHADER_TYPE_FLAGS::HAIRSKIN},
-        {"debugLinesColors", SirEngine::SHADER_TYPE_FLAGS::DEBUG_LINES_COLORS},
-        {"debugLinesSingleColor",
-         SirEngine::SHADER_TYPE_FLAGS::DEBUG_LINES_SINGLE_COLOR},
-        {"debugPointsColors",
-         SirEngine::SHADER_TYPE_FLAGS::DEBUG_POINTS_COLORS},
-        {"debugPointsSingleColor",
-         SirEngine::SHADER_TYPE_FLAGS::DEBUG_POINTS_SINGLE_COLOR},
-        {"debugTrianglesColors",
-         SirEngine::SHADER_TYPE_FLAGS::DEBUG_TRIANGLE_COLORS},
-        {"debugTrianglesSingleColor",
-         SirEngine::SHADER_TYPE_FLAGS::DEBUG_TRIANGLE_SINGLE_COLOR},
-        {"skinCluster", SirEngine::SHADER_TYPE_FLAGS::SKINCLUSTER},
-        {"skinSkinCluster", SirEngine::SHADER_TYPE_FLAGS::SKINSKINCLUSTER},
-        {"forwardPhongAlphaCutoutSkin",
-         SirEngine::SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT_SKIN},
-        {"forwardParallax", SirEngine::SHADER_TYPE_FLAGS::FORWARD_PARALLAX},
-        {"shadowSkinCluster",
-         SirEngine::SHADER_TYPE_FLAGS::SHADOW_SKIN_CLUSTER},
-    };
-
-inline uint16_t stringToActualTypeFlag(const std::string &flag) {
-  const auto found = STRING_TO_TYPE_FLAGS.find(flag);
-  if (found != STRING_TO_TYPE_FLAGS.end()) {
-    return static_cast<uint16_t>(found->second);
-  }
-  assert(0 && "could not map requested type flag");
-  return 0;
-}
-
-static uint16_t parseTypeFlags(const std::string &stringType) {
-  const uint16_t typeFlag = stringToActualTypeFlag(stringType);
-  return typeFlag;
-}
-	
 void bindPBR(const Dx12MaterialRuntime &materialRuntime,
              ID3D12GraphicsCommandList2 *commandList) {
 
@@ -408,6 +362,16 @@ void Dx12MaterialManager::bindMaterial(
   }
 }
 
+void Dx12MaterialManager::bindTexture(MaterialHandle,
+                                      const TextureHandle texHandle,
+                                      const uint32_t bindingIndex) {
+  dx12::DescriptorPair pair = dx12::TEXTURE_MANAGER->getSRVDx12(texHandle);
+
+  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
+  auto commandList = currentFc->commandList;
+  commandList->SetGraphicsRootDescriptorTable(bindingIndex, pair.gpuHandle);
+}
+
 void Dx12MaterialManager::bindMaterial(
     SHADER_QUEUE_FLAGS queueFlag, const MaterialHandle handle,
     ID3D12GraphicsCommandList2 *commandList) {
@@ -415,7 +379,6 @@ void Dx12MaterialManager::bindMaterial(
   const Dx12MaterialRuntime &materialRuntime = getMaterialRuntime(handle);
   bindMaterial(queueFlag, materialRuntime, commandList);
 }
-
 
 void Dx12MaterialManager::bindRSandPSO(
     const uint32_t shaderFlags, ID3D12GraphicsCommandList2 *commandList) {
@@ -431,6 +394,34 @@ void Dx12MaterialManager::bindRSandPSO(
     return;
   }
   assert(0 && "Could not find requested shader type for PSO /RS bind");
+}
+
+MaterialHandle Dx12MaterialManager::allocateMaterial(const char *type,
+                                                     const char *name,
+                                                     uint32_t) {
+  // from the type we can get the PSO
+  uint16_t shaderType = parseTypeFlags(type);
+  ShaderBind bind;
+  bool found = m_shderTypeToShaderBind.get(shaderType, bind);
+  assert(found && "could not find requested material type");
+
+  // TODO for now, not much is happening here, because we have a crappy binding
+  // system where each resource is bound with independent descriptor table, when
+  // we change this, here we will be doing an update of the binding table
+
+  // empty material
+  uint32_t index;
+  MaterialData &materialData =
+      m_materialTextureHandles.getFreeMemoryData(index);
+  materialData.magicNumber = MAGIC_NUMBER_COUNTER++;
+
+  // this will be used when we need to bind the material
+  materialData.PSOHandle = bind.pso;
+  materialData.rsHandle = bind.rs;
+
+  MaterialHandle handle{(materialData.magicNumber << 16) | (index)};
+  m_nameToHandle.insert(name, handle);
+  return handle;
 }
 
 MaterialHandle Dx12MaterialManager::loadMaterial(const char *path,
@@ -487,27 +478,46 @@ MaterialHandle Dx12MaterialManager::loadMaterial(const char *path,
   matCpu.heightMap = materialData.heightSrv.gpuHandle;
   matCpu.meshHandle = meshHandle;
 
-  memcpy(&matCpu.shaderQueueTypeFlags, parse.shaderQueueTypeFlags,sizeof(uint32_t)*4);
-
+  memcpy(&matCpu.shaderQueueTypeFlags, parse.shaderQueueTypeFlags,
+         sizeof(uint32_t) * 4);
 
   // we need to allocate  constant buffer
   // TODO should this be static constant buffer? investigate
   materialData.handles.cbHandle =
-      globals::CONSTANT_BUFFER_MANAGER->allocateDynamic(sizeof(Material), &parse.mat);
+      globals::CONSTANT_BUFFER_MANAGER->allocateDynamic(sizeof(Material),
+                                                        &parse.mat);
 
-  matCpu.cbVirtualAddress =
-      dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(materialData.handles.cbHandle);
+  matCpu.cbVirtualAddress = dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(
+      materialData.handles.cbHandle);
 
   materialData.magicNumber = MAGIC_NUMBER_COUNTER++;
   materialData.m_materialRuntime = matCpu;
 
   MaterialHandle handle{(materialData.magicNumber << 16) | (index)};
 
-  const std::string name =getFileName(path);
+  const std::string name = getFileName(path);
   m_nameToHandle.insert(name.c_str(), handle);
 
   return handle;
 }
 
+void Dx12MaterialManager::bindMaterial(MaterialHandle handle) {
+  assertMagicNumber(handle);
+  uint32_t index = getIndexFromHandle(handle);
+  const auto &data = m_materialTextureHandles.getConstRef(index);
+  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
+  auto commandList = currentFc->commandList;
+  dx12::PSO_MANAGER->bindPSO(data.PSOHandle, commandList);
+  ID3D12RootSignature *rs =
+      dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromHandle(data.rsHandle);
+  commandList->SetGraphicsRootSignature(rs);
+}
 
-} // namespace SirEngine
+void Dx12MaterialManager::free(MaterialHandle handle) {
+  // TODO properly cleanup the resources
+  assertMagicNumber(handle);
+  uint32_t index = getIndexFromHandle(handle);
+  const auto &data = m_materialTextureHandles.getConstRef(index);
+  m_materialTextureHandles.free(index);
+}
+} // namespace SirEngine::dx12

@@ -3,7 +3,7 @@
 #include "DXTK12/ResourceUploadBatch.h"
 #include "SirEngine/core.h"
 #include "SirEngine/handle.h"
-#include "SirEngine/memory/SparseMemoryPool.h"
+#include "SirEngine/memory/sparseMemoryPool.h"
 #include "SirEngine/textureManager.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/d3dx12.h"
@@ -35,7 +35,7 @@ public:
   virtual TextureHandle loadTexture(const char *path,
                                     bool cubeMap = false) override;
   virtual void free(const TextureHandle handle) override;
-  virtual TextureHandle allocateRenderTexture(uint32_t width, uint32_t height,
+  virtual TextureHandle allocateTexture(uint32_t width, uint32_t height,
                                               RenderTargetFormat format,
                                               const char *name,
                                               uint32_t allocFlags =0) override;
@@ -44,9 +44,7 @@ public:
   virtual void bindRenderTargetStencil(TextureHandle handle,
                                 TextureHandle depth);
 
-  virtual void copyTexture(TextureHandle source,
-                           TextureHandle destination) override;
-  virtual void bindBackBuffer(bool bindBackBufferDepth) override;
+  virtual void bindBackBuffer() override;
   virtual void clearDepth(const TextureHandle depth,
                                     const float depthValue, const float stencilValue) override;
   virtual void clearRT(const TextureHandle handle,

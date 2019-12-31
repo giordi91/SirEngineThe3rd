@@ -668,6 +668,12 @@ void Dx12RenderingContext::renderMaterialType(const SHADER_QUEUE_FLAGS flag) {
   assert(0);
 }
 
+void Dx12RenderingContext::fullScreenPass() {
+  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
+  auto commandList = currentFc->commandList;
+  commandList->DrawInstanced(6, 1, 0, 0);
+}
+
 BufferBindingsHandle
 Dx12RenderingContext::prepareBindingObject(const FrameBufferBindings &bindings,
                                            const char *name) {
@@ -703,30 +709,14 @@ D3D12_RESOURCE_STATES toDx12ResourceState(RESOURCE_STATE state) {
 void Dx12RenderingContext::setBindingObject(const BufferBindingsHandle handle) {
 
   assertMagicNumber(handle);
-  const uint32_t magic = getMagicFromHandle(handle);
   const uint32_t idx = getIndexFromHandle(handle);
   const FrameBindingsData &data = m_bindingsPool.getConstRef(idx);
 
+  annotateGraphicsBegin(data.name);
+
   D3D12_CPU_DESCRIPTOR_HANDLE handles[10] = {};
-  D3D12_RESOURCE_BARRIER barriers[10]{};
-
-  /*
-  // first thing first we need to be able to bind the deferred buffers,
-  // to do so we first transition them to be render targets
-  D3D12_RESOURCE_BARRIER barriers[4];
-  int counter = 0;
-  counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
-      m_depth, D3D12_RESOURCE_STATE_DEPTH_WRITE, barriers, counter);
-  counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
-      m_geometryBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, counter);
-  counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
-      m_normalBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, counter);
-  counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
-      m_specularBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, counter);
-
-  if (counter) {
-    commandList->ResourceBarrier(counter, barriers);
-  }*/
+  D3D12_RESOURCE_BARRIER barriers[20]{};
+  assert(10 + data.m_bindings.extraBindingsCount < 20);
 
   int counter = 0;
   int barrierCounter = 0;
@@ -745,6 +735,16 @@ void Dx12RenderingContext::setBindingObject(const BufferBindingsHandle handle) {
     counter++;
   }
 
+  // processing extra possible bindings, this are bindings that don't go as
+  // output but possibly as inputs like dynamic resources that need to be
+  // transitioned from write to read
+  for (int i = 0; i < data.m_bindings.extraBindingsCount; ++i) {
+    const RTBinding &binding = data.m_bindings.extraBindings[i];
+    barrierCounter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
+        binding.handle, toDx12ResourceState(binding.neededResourceState),
+        barriers, barrierCounter);
+  }
+
   // processing the depth
   D3D12_CPU_DESCRIPTOR_HANDLE depthHandle = {0};
   if (data.m_bindings.depthStencil.handle.isHandleValid()) {
@@ -754,7 +754,6 @@ void Dx12RenderingContext::setBindingObject(const BufferBindingsHandle handle) {
         binding.handle, toDx12ResourceState(binding.neededResourceState),
         barriers, barrierCounter);
   }
-  annotateGraphicsBegin(data.name);
 
   // transitioning resources if needed
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
@@ -773,6 +772,7 @@ void Dx12RenderingContext::setBindingObject(const BufferBindingsHandle handle) {
       globals::TEXTURE_MANAGER->clearRT(binding.handle, &binding.clearColor.x);
     }
   }
+
   if (data.m_bindings.depthStencil.handle.isHandleValid()) {
     const DepthBinding &binding = data.m_bindings.depthStencil;
     if (binding.shouldClearDepth) {
@@ -782,7 +782,9 @@ void Dx12RenderingContext::setBindingObject(const BufferBindingsHandle handle) {
     }
   }
 
-  commandList->OMSetRenderTargets(counter, handles, false, &depthHandle);
+  if (counter > 0) {
+    commandList->OMSetRenderTargets(counter, handles, false, &depthHandle);
+  }
 }
 
 void Dx12RenderingContext::clearBindingObject(

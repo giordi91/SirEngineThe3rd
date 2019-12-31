@@ -27,7 +27,6 @@ struct Dx12MaterialRuntime final {
   MeshHandle meshHandle;
 };
 
-
 struct MaterialData {
   MaterialDataHandles handles;
   dx12::DescriptorPair albedoSrv;
@@ -41,13 +40,15 @@ struct MaterialData {
   uint32_t magicNumber;
   Material m_material;
   Dx12MaterialRuntime m_materialRuntime;
+  PSOHandle PSOHandle;
+  RSHandle rsHandle;
 };
 
 class Dx12MaterialManager final : public MaterialManager {
 public:
   Dx12MaterialManager()
-      : MaterialManager(RESERVE_SIZE),
-        m_nameToHandle(RESERVE_SIZE), m_materialTextureHandles(RESERVE_SIZE){};
+      : MaterialManager(RESERVE_SIZE), m_nameToHandle(RESERVE_SIZE),
+        m_materialTextureHandles(RESERVE_SIZE){};
   ~Dx12MaterialManager() = default;
   void inititialize() override{};
   void cleanup() override{};
@@ -56,14 +57,20 @@ public:
   void bindMaterial(SHADER_QUEUE_FLAGS queueFlag,
                     const Dx12MaterialRuntime &runtime,
                     ID3D12GraphicsCommandList2 *commandList);
+  void bindTexture(MaterialHandle matHandle, TextureHandle texHandle,
+                   uint32_t bindingIndex) override;
 
   void bindRSandPSO(uint32_t shaderFlags,
                     ID3D12GraphicsCommandList2 *commandList);
   Dx12MaterialManager(const Dx12MaterialManager &) = delete;
   Dx12MaterialManager &operator=(const Dx12MaterialManager &) = delete;
 
+  MaterialHandle allocateMaterial(const char *type, const char *name,
+                                  uint32_t flags) override;
   MaterialHandle loadMaterial(const char *path, const MeshHandle meshHandle,
-                              const SkinHandle skinHandle);
+                              const SkinHandle skinHandle) override;
+  void bindMaterial(MaterialHandle handle) override;
+  void free(MaterialHandle handle) override;
 
   const Dx12MaterialRuntime &getMaterialRuntime(const MaterialHandle handle) {
     assertMagicNumber(handle);
@@ -81,7 +88,6 @@ private:
   void loadTypeFile(const char *path);
 
 private:
-
   HashMap<const char *, MaterialHandle, hashString32> m_nameToHandle;
   static const uint32_t RESERVE_SIZE = 200;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
@@ -89,4 +95,4 @@ private:
   SparseMemoryPool<MaterialData> m_materialTextureHandles;
 };
 
-} // namespace SirEngine
+} // namespace SirEngine::dx12

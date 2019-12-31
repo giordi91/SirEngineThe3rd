@@ -660,7 +660,7 @@ void VkTextureManager::free(const TextureHandle handle) {
   m_texturePool.free(index);
 }
 
-TextureHandle VkTextureManager::allocateRenderTexture(uint32_t width,
+TextureHandle VkTextureManager::allocateTexture(uint32_t width,
                                                       uint32_t height,
                                                       RenderTargetFormat format,
                                                       const char *name,
@@ -790,7 +790,6 @@ TextureHandle VkTextureManager::allocateRenderTexture(uint32_t width,
   return {data.magicNumber << 16 | index};
 }
 
-
 void VkTextureManager::bindRenderTarget(const TextureHandle handle,
                                         const TextureHandle depth) {
   /*
@@ -843,46 +842,8 @@ commandList->OMSetRenderTargets(1, handles, true, depthDesc);
 */
 }
 
-void VkTextureManager::copyTexture(const TextureHandle source,
-                                   const TextureHandle destination) {
-  /*
-assertMagicNumber(source);
-assertMagicNumber(destination);
 
-const uint32_t sourceIdx = getIndexFromHandle(source);
-const uint32_t destIdx = getIndexFromHandle(destination);
-
-TextureData &sourceData = m_texturePool[sourceIdx];
-TextureData &destData = m_texturePool[destIdx];
-
-auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
-auto commandList = currentFc->commandList;
-
-D3D12_RESOURCE_BARRIER barriers[2];
-
-int counter = 0;
-auto state = sourceData.state;
-if (sourceData.state != D3D12_RESOURCE_STATE_COPY_SOURCE) {
-  barriers[counter] = CD3DX12_RESOURCE_BARRIER::Transition(
-      sourceData.resource, state, D3D12_RESOURCE_STATE_COPY_SOURCE);
-  sourceData.state = D3D12_RESOURCE_STATE_COPY_SOURCE;
-  ++counter;
-}
-state = destData.state;
-if (destData.state != D3D12_RESOURCE_STATE_COPY_DEST) {
-  barriers[counter] = CD3DX12_RESOURCE_BARRIER::Transition(
-      destData.resource, state, D3D12_RESOURCE_STATE_COPY_DEST);
-  destData.state = D3D12_RESOURCE_STATE_COPY_DEST;
-  ++counter;
-}
-if (counter > 0) {
-  commandList->ResourceBarrier(counter, barriers);
-}
-commandList->CopyResource(destData.resource, sourceData.resource);
-*/
-}
-
-void VkTextureManager::bindBackBuffer(bool bindBackBufferDepth) {
+void VkTextureManager::bindBackBuffer() {
   /*
    *auto back = dx12::SWAP_CHAIN->currentBackBufferView();
   auto depth = dx12::SWAP_CHAIN->getDepthCPUDescriptor();
@@ -895,7 +856,8 @@ void VkTextureManager::bindBackBuffer(bool bindBackBufferDepth) {
 }
 
 void VkTextureManager::clearDepth(const TextureHandle depth,
-                                  const float depthValue , const float stencilValue) {
+                                  const float depthValue,
+                                  const float stencilValue) {
   /*
 assertMagicNumber(depth);
 const uint32_t index = getIndexFromHandle(depth);

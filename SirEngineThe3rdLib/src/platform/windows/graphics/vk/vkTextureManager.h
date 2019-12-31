@@ -37,7 +37,7 @@ public:
   virtual TextureHandle loadTexture(const char *path,
                                     bool cubeMap = false) override;
   virtual void free(const TextureHandle handle) override;
-  virtual TextureHandle allocateRenderTexture(uint32_t width, uint32_t height,
+  virtual TextureHandle allocateTexture(uint32_t width, uint32_t height,
                                               RenderTargetFormat format,
                                               const char *name,
                                               uint32_t allocFlags =0) override;
@@ -46,9 +46,7 @@ public:
   virtual void bindRenderTargetStencil(TextureHandle handle,
                                        TextureHandle depth);
 
-  virtual void copyTexture(TextureHandle source,
-                           TextureHandle destination) override;
-  virtual void bindBackBuffer(bool bindBackBufferDepth) override;
+  virtual void bindBackBuffer() override;
   virtual void clearDepth(const TextureHandle depth,
                           float depthValue,float stencilValue) override;
   virtual void clearRT(const TextureHandle handle,

@@ -67,7 +67,8 @@ enum class SHADER_TYPE_FLAGS {
   SKINSKINCLUSTER,
   HAIRSKIN,
   FORWARD_PARALLAX,
-  SHADOW_SKIN_CLUSTER
+  SHADOW_SKIN_CLUSTER,
+  HDR_TO_SDR
 };
 
 class MaterialManager {
@@ -93,9 +94,15 @@ public:
   virtual void inititialize() = 0;
   virtual void cleanup() = 0;
 
+  virtual MaterialHandle allocateMaterial(const char *type, const char *name,
+                                          uint32_t flags) = 0;
   virtual MaterialHandle loadMaterial(const char *path,
                                       const MeshHandle meshHandle,
                                       const SkinHandle skinHandle) = 0;
+  virtual void bindMaterial(MaterialHandle handle) = 0;
+  virtual void bindTexture(MaterialHandle matHandle, TextureHandle texHandle,
+                           uint32_t bindingIndex) = 0;
+  virtual void free(MaterialHandle handle) = 0;
 
   inline SHADER_TYPE_FLAGS getTypeFlags(const uint32_t flags) {
     // here we are creating a mask for the fist 16 bits, then we flip it
@@ -122,6 +129,7 @@ public:
     const uint32_t queueFlags = getQueueFlags(flags);
     return (queueFlags & static_cast<uint32_t>(queue)) > 0;
   }
+  static uint16_t parseTypeFlags(const char *stringType);
 
   const char *getStringFromShaderTypeFlag(SHADER_TYPE_FLAGS type);
 

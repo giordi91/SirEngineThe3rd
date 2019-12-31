@@ -1,10 +1,10 @@
 #include "SirEngine/materialManager.h"
-#include "SirEngine/textureManager.h"
 #include "SirEngine/PSOManager.h"
-#include "SirEngine/rootSignatureManager.h"
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/log.h"
+#include "SirEngine/rootSignatureManager.h"
+#include "SirEngine/textureManager.h"
 
 #include <cassert>
 #include <string>
@@ -30,7 +30,7 @@ static const char *QUEUE = "queue";
 static const char *TYPE = "type";
 static const char *RS_KEY = "rs";
 static const char *PSO_KEY = "pso";
-static const char *IS_STATIC_KEY= "isStatic";
+static const char *IS_STATIC_KEY = "isStatic";
 static const std::string DEFAULT_STRING = "";
 
 static const std::unordered_map<std::string, SirEngine::SHADER_QUEUE_FLAGS>
@@ -67,6 +67,7 @@ static const std::unordered_map<std::string, SirEngine::SHADER_TYPE_FLAGS>
         {"forwardParallax", SirEngine::SHADER_TYPE_FLAGS::FORWARD_PARALLAX},
         {"shadowSkinCluster",
          SirEngine::SHADER_TYPE_FLAGS::SHADOW_SKIN_CLUSTER},
+        {"HDRtoSDREffect", SirEngine::SHADER_TYPE_FLAGS::HDR_TO_SDR},
     };
 static const std::unordered_map<SirEngine::SHADER_TYPE_FLAGS, std::string>
     TYPE_FLAGS_TO_STRING{
@@ -96,6 +97,7 @@ static const std::unordered_map<SirEngine::SHADER_TYPE_FLAGS, std::string>
         {SirEngine::SHADER_TYPE_FLAGS::FORWARD_PARALLAX, "forwardParallax"},
         {SirEngine::SHADER_TYPE_FLAGS::SHADOW_SKIN_CLUSTER,
          "shadowSkinCluster"},
+        {SirEngine::SHADER_TYPE_FLAGS::HDR_TO_SDR, "HDRtoSDREffect"},
     };
 
 } // namespace materialKeys
@@ -117,12 +119,13 @@ inline uint16_t stringToActualTypeFlag(const std::string &flag) {
   return 0;
 }
 
-static uint16_t parseTypeFlags(const std::string &stringType) {
+uint16_t MaterialManager::parseTypeFlags(const char* stringType) {
   const uint16_t typeFlag = stringToActualTypeFlag(stringType);
   return typeFlag;
 }
 
-static void parseQueueTypeFlags(uint32_t *outFlags, const nlohmann::json &jobj) {
+static void parseQueueTypeFlags(uint32_t *outFlags,
+                                const nlohmann::json &jobj) {
   if (jobj.find(materialKeys::QUEUE) == jobj.end()) {
     assert(0 && "cannot find queue flags in material");
     return;
@@ -148,7 +151,7 @@ static void parseQueueTypeFlags(uint32_t *outFlags, const nlohmann::json &jobj) 
     int currentFlagId = static_cast<int>(log2(currentFlag & -currentFlag));
 
     const auto stringType = tjobj[i].get<std::string>();
-    const uint32_t typeFlag = parseTypeFlags(stringType);
+    const uint32_t typeFlag = MaterialManager::parseTypeFlags(stringType.c_str());
     flags = typeFlag << 16 | flags;
 
     outFlags[currentFlagId] = flags;
@@ -176,8 +179,7 @@ MaterialManager::parseMaterial(const char *path, const MeshHandle meshHandle,
       getValueIfInJson(jobj, materialKeys::ROUGHNESS_MULT, oneFloat);
   float metallicMult =
       getValueIfInJson(jobj, materialKeys::METALLIC_MULT, oneFloat);
-  bool isStatic=
-      getValueIfInJson(jobj, materialKeys::IS_STATIC_KEY, false);
+  bool isStatic = getValueIfInJson(jobj, materialKeys::IS_STATIC_KEY, false);
 
   const std::string empty;
   const std::string albedoName =
@@ -277,7 +279,7 @@ MaterialManager::parseMaterial(const char *path, const MeshHandle meshHandle,
   toReturn.mat = mat;
   toReturn.handles = texHandles;
   toReturn.isStatic = isStatic;
-  parseQueueTypeFlags(toReturn.shaderQueueTypeFlags,jobj);
+  parseQueueTypeFlags(toReturn.shaderQueueTypeFlags, jobj);
 
   return toReturn;
 }
@@ -315,7 +317,7 @@ void MaterialManager::loadTypeFile(const char *path) {
   std::string name = getFileName(path);
 
   const std::string type = jObj[materialKeys::TYPE].get<std::string>();
-  const uint16_t flags = parseTypeFlags(type);
+  const uint16_t flags = MaterialManager::parseTypeFlags(type.c_str());
   m_shderTypeToShaderBind.insert(flags, ShaderBind{rsHandle, psoHandle});
 }
 

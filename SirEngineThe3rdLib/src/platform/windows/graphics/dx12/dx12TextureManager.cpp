@@ -195,9 +195,11 @@ inline DXGI_FORMAT convertToDXGIFormat(const RenderTargetFormat format) {
   return DXGI_FORMAT_UNKNOWN;
 }
 
-TextureHandle Dx12TextureManager::allocateRenderTexture(
-    uint32_t width, uint32_t height, RenderTargetFormat format,
-    const char *name, uint32_t allocFlags) {
+TextureHandle Dx12TextureManager::allocateTexture(uint32_t width,
+                                                  uint32_t height,
+                                                  RenderTargetFormat format,
+                                                  const char *name,
+                                                  uint32_t allocFlags) {
   // convert SirEngine format to dx12 format
   DXGI_FORMAT actualFormat = convertToDXGIFormat(format);
 
@@ -249,7 +251,8 @@ TextureHandle Dx12TextureManager::allocateRenderTexture(
   data.magicNumber = MAGIC_NUMBER_COUNTER;
   data.format = data.resource->GetDesc().Format;
   data.state = state;
-  //TODO change texture allocation flags similar to vulkan, with bits and flags combination
+  // TODO change texture allocation flags similar to vulkan, with bits and flags
+  // combination
   data.flags = allocFlags;
 
   TextureHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
@@ -312,7 +315,7 @@ void Dx12TextureManager::bindRenderTargetStencil(TextureHandle handle,
   assertMagicNumber(handle);
   const uint32_t index = getIndexFromHandle(handle);
   const TextureData &data = m_texturePool.getConstRef(index);
-  assert((data.flags &TEXTURE_ALLOCATION_FLAGS::RENDER_TARGET ) > 0);
+  assert((data.flags & TEXTURE_ALLOCATION_FLAGS::RENDER_TARGET) > 0);
 
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
@@ -331,50 +334,22 @@ void Dx12TextureManager::bindRenderTargetStencil(TextureHandle handle,
   commandList->OMSetRenderTargets(1, handles, true, depthDesc);
 }
 
-void Dx12TextureManager::copyTexture(const TextureHandle source,
-                                     const TextureHandle destination) {
-  assertMagicNumber(source);
-  assertMagicNumber(destination);
+void Dx12TextureManager::bindBackBuffer() {
 
-  const uint32_t sourceIdx = getIndexFromHandle(source);
-  const uint32_t destIdx = getIndexFromHandle(destination);
-
-  TextureData &sourceData = m_texturePool[sourceIdx];
-  TextureData &destData = m_texturePool[destIdx];
-
+  const TextureHandle destination =
+      dx12::SWAP_CHAIN->currentBackBufferTexture();
+  D3D12_RESOURCE_BARRIER barriers[2];
+  int counter = 0;
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
-
-  D3D12_RESOURCE_BARRIER barriers[2];
-
-  int counter = 0;
-  auto state = sourceData.state;
-  if (sourceData.state != D3D12_RESOURCE_STATE_COPY_SOURCE) {
-    barriers[counter] = CD3DX12_RESOURCE_BARRIER::Transition(
-        sourceData.resource, state, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    sourceData.state = D3D12_RESOURCE_STATE_COPY_SOURCE;
-    ++counter;
-  }
-  state = destData.state;
-  if (destData.state != D3D12_RESOURCE_STATE_COPY_DEST) {
-    barriers[counter] = CD3DX12_RESOURCE_BARRIER::Transition(
-        destData.resource, state, D3D12_RESOURCE_STATE_COPY_DEST);
-    destData.state = D3D12_RESOURCE_STATE_COPY_DEST;
-    ++counter;
-  }
-  if (counter > 0) {
+  counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
+      destination, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, counter);
+  if (counter) {
     commandList->ResourceBarrier(counter, barriers);
   }
-  commandList->CopyResource(destData.resource, sourceData.resource);
-}
 
-void Dx12TextureManager::bindBackBuffer(bool bindBackBufferDepth) {
   auto back = dx12::SWAP_CHAIN->currentBackBufferView();
-  // auto depth = dx12::SWAP_CHAIN->getDepthCPUDescriptor();
-  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
-  auto commandList = currentFc->commandList;
   commandList->OMSetRenderTargets(1, &back, true, nullptr);
-  ;
 }
 
 void Dx12TextureManager::clearDepth(const TextureHandle depth,

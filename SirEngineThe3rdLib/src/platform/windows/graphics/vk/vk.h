@@ -187,7 +187,8 @@ public:
                                             const char *name) override;
   void setBindingObject(const BufferBindingsHandle handle) override;
   void clearBindingObject(const BufferBindingsHandle handle) override;
-  void freeBindingObject(const BufferBindingsHandle handle)override;
+  void freeBindingObject(const BufferBindingsHandle handle) override;
+  void fullScreenPass() override { assert(0); };
 
 private:
   inline void assertMagicNumber(const BufferBindingsHandle handle) const {

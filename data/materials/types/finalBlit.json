@@ -1,0 +1,6 @@
+{
+  "pso" :  "HDRtoSDREffect_PSO", 
+  "rs"  :  "standardPostProcessEffect_RS",
+  "type" : "HDRtoSDREffect"
+}
+

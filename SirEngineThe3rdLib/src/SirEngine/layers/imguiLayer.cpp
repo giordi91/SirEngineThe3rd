@@ -176,7 +176,7 @@ void ImguiLayer::onUpdate() {
                                                                     barriers);
     }
 
-    globals::TEXTURE_MANAGER->bindBackBuffer(false);
+    globals::TEXTURE_MANAGER->bindBackBuffer();
     ImGui_ImplDX12_NewFrame();
   }
 
@@ -186,8 +186,7 @@ void ImguiLayer::onUpdate() {
   // Setup time step
   INT64 current_time;
   ::QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER *>(&current_time));
-  io.DeltaTime = (float)(current_time - g_Time) / g_TicksPerSecond;
-  // SE_CORE_INFO("time {0}", io.DeltaTime);
+  io.DeltaTime = static_cast<float>(current_time - g_Time) / g_TicksPerSecond;
   g_Time = current_time;
 
   // Read keyboard modifiers inputs

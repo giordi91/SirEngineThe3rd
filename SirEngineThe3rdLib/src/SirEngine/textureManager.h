@@ -17,9 +17,6 @@ enum class RenderTargetFormat {
 };
 
 class TextureManager {
-protected:
-  //enum TextureFlags { NONE = 0, DEPTH = 1, RT = 2 };
-
 public:
   enum TEXTURE_ALLOCATION_FLAGS {
     ALLOW_RANDOM_WRITE = 1,
@@ -38,14 +35,13 @@ public:
   virtual void cleanup() = 0;
   virtual TextureHandle loadTexture(const char *path, bool cubeMap = false) = 0;
   virtual void free(const TextureHandle handle) = 0;
-  virtual TextureHandle allocateRenderTexture(uint32_t width, uint32_t height,
-                                              RenderTargetFormat format,
-                                              const char *name,
-                                              uint32_t allocFlags = 0) = 0;
+  virtual TextureHandle allocateTexture(uint32_t width, uint32_t height,
+                                        RenderTargetFormat format,
+                                        const char *name,
+                                        uint32_t allocFlags = 0) = 0;
 
-  virtual void copyTexture(TextureHandle source, TextureHandle destination) = 0;
   virtual void bindRenderTarget(TextureHandle handle, TextureHandle depth) = 0;
-  virtual void bindBackBuffer(bool bindBackBufferDepth) = 0;
+  virtual void bindBackBuffer() = 0;
   virtual void clearDepth(const TextureHandle depth, const float depthValue,
                           const float stencilValue) = 0;
   virtual void clearRT(const TextureHandle handle, const float color[4]) = 0;
