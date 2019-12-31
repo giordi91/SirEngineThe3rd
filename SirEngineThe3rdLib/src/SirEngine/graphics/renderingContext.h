@@ -22,7 +22,8 @@ struct RTBinding {
   RESOURCE_STATE currentResourceState;
   RESOURCE_STATE neededResourceState;
   uint32_t shouldClearColor : 1;
-  uint32_t padding : 31;
+  uint32_t isSwapChainBackBuffer: 1;
+  uint32_t padding : 30;
 };
 struct DepthBinding {
   TextureHandle handle{};

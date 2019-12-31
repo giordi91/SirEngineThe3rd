@@ -115,10 +115,12 @@ class VkRenderingContext final : public RenderingContext {
 
   struct FrameBindingsData {
     VkRenderPass m_pass;
-    VkFramebuffer m_buffer;
+    VkFramebuffer* m_buffer;
     FrameBufferBindings m_bindings;
     uint32_t m_magicNumber;
+    uint32_t m_frameBufferCount;
     const char *name;
+
   };
 
 public:

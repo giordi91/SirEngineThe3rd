@@ -1,14 +1,9 @@
 
 #include "SirEngine/graphics/nodes/FinalBlitNode.h"
-#include "SirEngine/graphics/debugAnnotations.h"
-#include "SirEngine/handle.h"
-#include "WinPixEventRuntime/WinPixEventRuntime/pix3.h"
-#include "platform/windows/graphics/dx12/DX12.h"
-#include "platform/windows/graphics/dx12/Dx12PSOManager.h"
-#include "platform/windows/graphics/dx12/dx12MaterialManager.h"
-#include "platform/windows/graphics/dx12/dx12SwapChain.h"
-#include "platform/windows/graphics/dx12/dx12TextureManager.h"
-#include "platform/windows/graphics/dx12/dx12rootSignatureManager.h"
+#include "SirEngine/textureManager.h"
+#include "SirEngine/graphics/renderingContext.h"
+#include "SirEngine/materialManager.h"
+
 
 namespace SirEngine {
 
