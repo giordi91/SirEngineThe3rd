@@ -621,36 +621,52 @@ VkRenderPass createRenderPass(const FrameBufferBindings &bindings,
                  frameConcatenation(name, "RenderPass"));
   return renderPass;
 }
-VkFramebuffer createFrameBuffer(VkRenderPass pass,
-                                const FrameBufferBindings &bindings,
-                                const char *name) {
+VkFramebuffer *createFrameBuffer(VkRenderPass pass,
+                                 const FrameBufferBindings &bindings,
+                                 const char *name,
+                                 uint32_t &outFrameBufferCount) {
 
-  VkImageView imageViews[10]{};
-  int count = 0;
+  bool bindsToBackBuffer = false;
   for (int i = 0; i < 8; ++i) {
-    if (!bindings.colorRT[i].handle.isHandleValid()) {
-      continue;
-    }
-    const VkTexture2D &rt =
-        vk::TEXTURE_MANAGER->getTextureData(bindings.colorRT[i].handle);
-    imageViews[i] = rt.view;
-    ++count;
+    bindsToBackBuffer |= !bindings.colorRT[i].isSwapChainBackBuffer;
   }
 
-  VkFramebufferCreateInfo createInfo = {
-      VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO};
-  createInfo.renderPass = pass;
-  createInfo.pAttachments = imageViews;
-  createInfo.attachmentCount = count;
-  createInfo.width = bindings.width;
-  createInfo.height = bindings.height;
-  createInfo.layers = 1;
-  VkFramebuffer buffer;
+  // if binds to backBuffer we need to create as many frame buffers
+  // as there are swap chain images
+  outFrameBufferCount = bindsToBackBuffer ? vk::SWAP_CHAIN_IMAGE_COUNT : 1u;
+  VkFramebuffer *frameBuffers =
+      reinterpret_cast<VkFramebuffer *>(globals::PERSISTENT_ALLOCATOR->allocate(
+          sizeof(VkFramebuffer) * outFrameBufferCount));
 
-  VK_CHECK(
-      vkCreateFramebuffer(vk::LOGICAL_DEVICE, &createInfo, nullptr, &buffer));
-  return buffer;
-}
+  VkImageView imageViews[10]{};
+  for (int swap = 0; swap < outFrameBufferCount; ++swap) {
+
+    int count = 0;
+    for (int i = 0; i < 8; ++i) {
+      if (!bindings.colorRT[i].handle.isHandleValid()) {
+        continue;
+      }
+      const VkTexture2D &rt =
+          vk::TEXTURE_MANAGER->getTextureData(bindings.colorRT[i].handle);
+      imageViews[i] = rt.view;
+      ++count;
+    }
+
+    VkFramebufferCreateInfo createInfo = {
+        VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO};
+    createInfo.renderPass = pass;
+    createInfo.pAttachments = imageViews;
+    createInfo.attachmentCount = count;
+    createInfo.width = bindings.width;
+    createInfo.height = bindings.height;
+    createInfo.layers = 1;
+    VkFramebuffer buffer;
+
+    VK_CHECK(vkCreateFramebuffer(vk::LOGICAL_DEVICE, &createInfo, nullptr,
+                                 &(frameBuffers[swap])));
+  }
+  return frameBuffers;
+} // namespace SirEngine::vk
 
 BufferBindingsHandle
 VkRenderingContext::prepareBindingObject(const FrameBufferBindings &bindings,
@@ -658,7 +674,8 @@ VkRenderingContext::prepareBindingObject(const FrameBufferBindings &bindings,
   uint32_t index;
   FrameBindingsData &data = m_bindingsPool.getFreeMemoryData(index);
   data.m_pass = createRenderPass(bindings, name);
-  data.m_buffer = createFrameBuffer(data.m_pass, bindings, name);
+  data.m_buffer =
+      createFrameBuffer(data.m_pass, bindings, name, data.m_frameBufferCount);
   data.name = persistentString(name);
   data.m_bindings = bindings;
   data.m_magicNumber = MAGIC_NUMBER_COUNTER++;
@@ -675,7 +692,10 @@ void VkRenderingContext::freeBindingObject(const BufferBindingsHandle handle) {
   const uint32_t idx = getIndexFromHandle(handle);
   const FrameBindingsData &data = m_bindingsPool.getConstRef(idx);
   vkDestroyRenderPass(vk::LOGICAL_DEVICE, data.m_pass, nullptr);
-  vkDestroyFramebuffer(vk::LOGICAL_DEVICE, data.m_buffer, nullptr);
+  for (int i = 0; i < data.m_frameBufferCount; ++i) {
+    vkDestroyFramebuffer(vk::LOGICAL_DEVICE, data.m_buffer[i], nullptr);
+  }
+  globals::PERSISTENT_ALLOCATOR->free(data.m_buffer);
   stringFree(data.name);
 
   m_bindingsPool.free(idx);
@@ -701,7 +721,8 @@ void VkRenderingContext::setBindingObject(const BufferBindingsHandle handle) {
 
   VkRenderPassBeginInfo beginInfo = {VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};
   beginInfo.renderPass = data.m_pass;
-  beginInfo.framebuffer = data.m_buffer;
+  uint32_t bufferIdx = data.m_frameBufferCount == 1? 1 :globals::CURRENT_FRAME;
+  beginInfo.framebuffer = data.m_buffer[bufferIdx];
 
   // similar to a viewport mostly used on "tiled renderers" to optimize, talking
   // about hardware based tile renderer, aka mobile GPUs.

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "SirEngine/graphics/nodeGraph.h"
-#include <d3d12.h>
 #include "SirEngine/handle.h"
 
 namespace SirEngine {
@@ -16,8 +15,6 @@ public:
   void populateNodePorts() override;
   void clear() override;
 private:
-  ID3D12RootSignature *m_rs = nullptr;
-  PSOHandle m_pso{};
   TextureHandle inputRTHandle;
   MaterialHandle m_matHandle{};
   BufferBindingsHandle m_bindHandle{};
