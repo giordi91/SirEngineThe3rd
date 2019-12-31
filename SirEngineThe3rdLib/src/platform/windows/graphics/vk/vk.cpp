@@ -537,8 +537,6 @@ void VkRenderingContext::renderQueueType(const DrawCallConfig &config,
 
       // bind the corresponding RS and PSO
       vk::MATERIAL_MANAGER->bindRSandPSO(renderableList.first, commandList);
-      // commandList->SetGraphicsRootConstantBufferView(1, lightAddress);
-      // globals::RENDERING_CONTEXT->bindCameraBuffer(0);
 
       // this is most for debug, it will boil down to nothing in release
       const SHADER_TYPE_FLAGS type =
@@ -559,8 +557,6 @@ void VkRenderingContext::renderQueueType(const DrawCallConfig &config,
 
         vk::MESH_MANAGER->renderMesh(renderable.m_meshRuntime, commandList);
       }
-      // vkCmdEndRenderPass(vk::CURRENT_FRAME_COMMAND->m_commandBuffer);
-      // annotateGraphicsEnd();
     }
   }
 }

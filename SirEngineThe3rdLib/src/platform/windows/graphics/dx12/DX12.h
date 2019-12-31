@@ -6,6 +6,7 @@
 #include "SirEngine/graphics/cpuGraphicsStructures.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include <cassert>
+#include "SirEngine/memory/sparseMemoryPool.h"
 
 namespace SirEngine {
 class IdentityManager;
@@ -189,6 +190,12 @@ createDx12RenderingContext(const RenderingContextCreationSettings &settings,
                            uint32_t width, uint32_t height);
 
 class Dx12RenderingContext final : public RenderingContext {
+  struct FrameBindingsData {
+    FrameBufferBindings m_bindings;
+    uint32_t m_magicNumber;
+    const char *name;
+  };
+
 public:
   explicit Dx12RenderingContext(
       const RenderingContextCreationSettings &settings, uint32_t width,
@@ -221,20 +228,22 @@ public:
                        const SHADER_QUEUE_FLAGS flag) override;
   void renderMaterialType(const SHADER_QUEUE_FLAGS queueFlag) override;
   BufferBindingsHandle prepareBindingObject(const FrameBufferBindings &bindings,
-                                            const char *name) override {
-    assert(0);
-    return {};
-  };
-  void setBindingObject(const BufferBindingsHandle handle) override {
-    assert(0);
-  };
-  void clearBindingObject(const BufferBindingsHandle handle) override {
-    assert(0);
-  };
-  void freeBindingObject(const BufferBindingsHandle handle)override
-  {
+                                            const char *name) override;
+  ;
+  void setBindingObject(const BufferBindingsHandle handle) override;;
+  void clearBindingObject(const BufferBindingsHandle handle) override;;
+  void freeBindingObject(const BufferBindingsHandle handle) override {
     assert(0);
   }
+private:
+  inline void assertMagicNumber(const BufferBindingsHandle handle) const {
+    const uint32_t magic = getMagicFromHandle(handle);
+    const uint32_t idx = getIndexFromHandle(handle);
+    assert(static_cast<uint32_t>(
+               m_bindingsPool.getConstRef(idx).m_magicNumber) == magic &&
+           "invalid magic handle for constant buffer");
+  }
+
 
 private:
   // member variable mostly temporary
@@ -242,6 +251,10 @@ private:
   ConstantBufferHandle m_cameraHandle{};
   ConstantBufferHandle m_lightBuffer{};
   DebugDrawHandle m_lightAABBHandle{};
+
+  static constexpr uint32_t RESERVE_SIZE = 400;
+  uint32_t MAGIC_NUMBER_COUNTER = 1;
+  SparseMemoryPool<FrameBindingsData> m_bindingsPool;
 
   // TODO possibly find a better way to handle this don't want to leak the std
   // map type out I cannot use my hash map because is quite basic and does not

@@ -75,7 +75,6 @@ void VkSimpleForward::populateNodePorts() {
 }
 
 void VkSimpleForward::clear() {
-  // vk::destroyFrameBuffer(vk::LOGICAL_DEVICE, m_tempFrameBuffer, m_rt);
   globals::TEXTURE_MANAGER->free(m_rtHandle);
   globals::RENDERING_CONTEXT->freeBindingObject(m_bindHandle);
 }

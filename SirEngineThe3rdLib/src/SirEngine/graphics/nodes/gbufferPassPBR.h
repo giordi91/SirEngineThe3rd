@@ -29,6 +29,7 @@ private:
   TextureHandle m_normalBuffer{};
   TextureHandle m_specularBuffer{};
   TextureHandle m_depth{};
+  BufferBindingsHandle m_bindHandle;
 };
 
 } // namespace SirEngine

@@ -31,19 +31,10 @@ public:
     m_swapChain->Present(0, 0);
     m_currentBackBuffer = (m_currentBackBuffer + 1) % FRAME_BUFFERS_COUNT;
   }
-  void clearDepth() const {
-    CURRENT_FRAME_RESOURCE->fc.commandList->ClearDepthStencilView(
-        m_swapChainDepthDescriptors.cpuHandle,
-        D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
-  }
-  inline D3D12_CPU_DESCRIPTOR_HANDLE getDepthCPUDescriptor() {
-    return m_swapChainDepthDescriptors.cpuHandle;
-  }
 
 private:
   // frame-buffer configuration, hard-coded for the time being
   const DXGI_FORMAT m_backBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
-  const DXGI_FORMAT m_depthStencilFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
   bool m_4xMsaaState = false;
   UINT m_msaaQuality;
 
@@ -52,9 +43,6 @@ private:
   UINT m_currentBackBuffer = 0;
   TextureHandle m_swapChainBuffersHandles[FRAME_BUFFERS_COUNT];
   DescriptorPair m_swapChainBuffersDescriptors[FRAME_BUFFERS_COUNT];
-
-  TextureHandle m_swapChainDepth;
-  DescriptorPair m_swapChainDepthDescriptors;
 
   D3D12_VIEWPORT m_screenViewport;
   D3D12_RECT m_scissorRect;

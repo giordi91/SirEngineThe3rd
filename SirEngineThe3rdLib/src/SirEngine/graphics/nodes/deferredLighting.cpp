@@ -67,7 +67,7 @@ void DeferredLightingPass::initialize() {
   m_lightBuffer = globals::TEXTURE_MANAGER->allocateRenderTexture(
       globals::ENGINE_CONFIG->m_windowWidth,
       globals::ENGINE_CONFIG->m_windowHeight,
-      RenderTargetFormat::R16G16B16A16_FLOAT, "lightBuffer");
+      RenderTargetFormat::R16G16B16A16_FLOAT, "lightBuffer",TextureManager::RENDER_TARGET);
 
   m_lightCB = dx12::RENDERING_CONTEXT->getLightCB();
   m_lightAddress = dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(m_lightCB);
