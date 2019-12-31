@@ -40,11 +40,7 @@ public:
   virtual TextureHandle allocateRenderTexture(uint32_t width, uint32_t height,
                                               RenderTargetFormat format,
                                               const char *name,
-                                              bool allowWrite = false) override;
-  virtual TextureHandle allocateTexture(uint32_t width, uint32_t height,
-                                        RenderTargetFormat format,
-                                        const char *name, bool mips,
-                                        bool allowWrite = false) override;
+                                              uint32_t allocFlags =0) override;
   virtual void bindRenderTarget(TextureHandle handle,
                                 TextureHandle depth) override;
   virtual void bindRenderTargetStencil(TextureHandle handle,
@@ -54,7 +50,7 @@ public:
                            TextureHandle destination) override;
   virtual void bindBackBuffer(bool bindBackBufferDepth) override;
   virtual void clearDepth(const TextureHandle depth,
-                          float value = 1.0f) override;
+                          float depthValue,float stencilValue) override;
   virtual void clearRT(const TextureHandle handle,
                        const float color[4]) override;
 

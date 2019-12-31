@@ -21,8 +21,9 @@ ShadowPass::ShadowPass(GraphAllocators &allocators)
 }
 
 void ShadowPass::initialize() {
-  m_shadow = dx12::TEXTURE_MANAGER->createDepthTexture("directionalShadow",
-                                                       shadowSize, shadowSize);
+  m_shadow = dx12::TEXTURE_MANAGER->allocateRenderTexture(
+      shadowSize, shadowSize, RenderTargetFormat::DEPTH_F32_S8,
+      "directionalShadow", TextureManager::DEPTH_TEXTURE);
 }
 
 void ShadowPass::compute() {
@@ -44,7 +45,7 @@ void ShadowPass::compute() {
   }
 
   // now that they are in the right state we are going to clear them
-  globals::TEXTURE_MANAGER->clearDepth(m_shadow, 0.0f);
+  globals::TEXTURE_MANAGER->clearDepth(m_shadow, 0.0f,0.0f);
 
   auto depthDescriptor = dx12::TEXTURE_MANAGER->getRTVDx12(m_shadow).cpuHandle;
   commandList->OMSetRenderTargets(0, nullptr, false, &depthDescriptor);

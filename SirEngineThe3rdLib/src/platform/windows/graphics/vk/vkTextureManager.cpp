@@ -660,9 +660,11 @@ void VkTextureManager::free(const TextureHandle handle) {
   m_texturePool.free(index);
 }
 
-TextureHandle VkTextureManager::allocateRenderTexture(
-    const uint32_t width, const uint32_t height,
-    const RenderTargetFormat format, const char *name, bool allowWrite) {
+TextureHandle VkTextureManager::allocateRenderTexture(uint32_t width,
+                                                      uint32_t height,
+                                                      RenderTargetFormat format,
+                                                      const char *name,
+                                                      uint32_t allocFlags) {
 
   // NOTE for now this is hardcoded, if necessary will be changed
   VkImageLayout imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
@@ -788,59 +790,6 @@ TextureHandle VkTextureManager::allocateRenderTexture(
   return {data.magicNumber << 16 | index};
 }
 
-TextureHandle VkTextureManager::allocateTexture(const uint32_t width,
-                                                const uint32_t height,
-                                                const RenderTargetFormat format,
-                                                const char *name,
-                                                const bool mips,
-                                                const bool allowWrite) {
-  /*
-// convert SirEngine format to dx12 format
-const DXGI_FORMAT actualFormat = convertToDXGIFormat(format);
-
-uint32_t index;
-TextureData &data = m_texturePool.getFreeMemoryData(index);
-D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
-if (allowWrite) {
-  flags = flags | (D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
-}
-
-const uint16_t mipsLevel = mips ? static_cast<uint16_t>(std::log2(width)) : 1;
-auto uavDesc = CD3DX12_RESOURCE_DESC::Tex2D(actualFormat, width, height, 1,
-                                            mipsLevel, 1, 0, flags);
-
-const D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COMMON;
-auto defaultHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-HRESULT hr = dx12::DEVICE->CreateCommittedResource(
-    &defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &uavDesc, state, nullptr,
-    IID_PPV_ARGS(&data.resource));
-assert(SUCCEEDED(hr));
-
-data.magicNumber = MAGIC_NUMBER_COUNTER;
-data.format = data.resource->GetDesc().Format;
-data.state = state;
-data.flags = static_cast<TextureFlags>(0);
-
-const TextureHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
-
-++MAGIC_NUMBER_COUNTER;
-
-dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DSRV(data.srv, data.resource,
-                                                  data.format);
-if (allowWrite) {
-  dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DUAV(data.uav, data.resource,
-                                                    data.format);
-}
-
-// convert to wstring
-const std::string sname(name);
-const std::wstring wname(sname.begin(), sname.end());
-data.resource->SetName(wname.c_str());
-
-m_nameToHandle[name] = handle;
-return handle;*/
-  return {};
-}
 
 void VkTextureManager::bindRenderTarget(const TextureHandle handle,
                                         const TextureHandle depth) {
@@ -946,7 +895,7 @@ void VkTextureManager::bindBackBuffer(bool bindBackBufferDepth) {
 }
 
 void VkTextureManager::clearDepth(const TextureHandle depth,
-                                  const float value) {
+                                  const float depthValue , const float stencilValue) {
   /*
 assertMagicNumber(depth);
 const uint32_t index = getIndexFromHandle(depth);

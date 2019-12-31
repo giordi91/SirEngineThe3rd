@@ -391,7 +391,7 @@ createDx12RenderingContext(const RenderingContextCreationSettings &settings,
 Dx12RenderingContext::Dx12RenderingContext(
     const RenderingContextCreationSettings &settings, const uint32_t width,
     const uint32_t height)
-    : RenderingContext(settings, width, height) {
+    : RenderingContext(settings, width, height), m_bindingsPool(RESERVE_SIZE) {
   SE_CORE_INFO("Initializing a DirectX 12 context");
   queues = new Dx12RenderingQueues();
 }
@@ -614,7 +614,7 @@ void Dx12RenderingContext::addRenderablesToQueue(const Renderable &renderable) {
 }
 
 void Dx12RenderingContext::renderQueueType(const DrawCallConfig &config,
-                                         const SHADER_QUEUE_FLAGS flag) {
+                                           const SHADER_QUEUE_FLAGS flag) {
 
   const auto &typedQueues = *(reinterpret_cast<Dx12RenderingQueues *>(queues));
 
@@ -646,8 +646,8 @@ void Dx12RenderingContext::renderQueueType(const DrawCallConfig &config,
         const Dx12Renderable &renderable = currRenderables[i];
 
         // bind material data like textures etc, then render
-        dx12::MATERIAL_MANAGER->bindMaterial(
-            flag, renderable.m_materialRuntime, commandList);
+        dx12::MATERIAL_MANAGER->bindMaterial(flag, renderable.m_materialRuntime,
+                                             commandList);
 
         dx12::MESH_MANAGER->render(renderable.m_meshRuntime, currentFc);
 
@@ -666,6 +666,128 @@ void Dx12RenderingContext::renderQueueType(const DrawCallConfig &config,
 
 void Dx12RenderingContext::renderMaterialType(const SHADER_QUEUE_FLAGS flag) {
   assert(0);
+}
+
+BufferBindingsHandle
+Dx12RenderingContext::prepareBindingObject(const FrameBufferBindings &bindings,
+                                           const char *name) {
+  uint32_t index;
+  FrameBindingsData &data = m_bindingsPool.getFreeMemoryData(index);
+  data.name = persistentString(name);
+  data.m_bindings = bindings;
+  data.m_magicNumber = MAGIC_NUMBER_COUNTER++;
+  return {data.m_magicNumber << 16 | index};
+}
+
+static const std::unordered_map<RESOURCE_STATE, D3D12_RESOURCE_STATES>
+    RESOURCE_STATE_TO_DX_STATE = {
+        {RESOURCE_STATE::GENERIC, D3D12_RESOURCE_STATE_COMMON},
+        {RESOURCE_STATE::RENDER_TARGET, D3D12_RESOURCE_STATE_RENDER_TARGET},
+        {RESOURCE_STATE::SHADER_READ_RESOURCE,
+         D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE},
+        {RESOURCE_STATE::RANDOM_WRITE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS},
+        {RESOURCE_STATE::DEPTH_RENDER_TARGET,
+         D3D12_RESOURCE_STATE_DEPTH_WRITE}};
+
+D3D12_RESOURCE_STATES toDx12ResourceState(RESOURCE_STATE state) {
+  auto found = RESOURCE_STATE_TO_DX_STATE.find(state);
+  if (found != RESOURCE_STATE_TO_DX_STATE.end()) {
+    return found->second;
+  }
+  assert(
+      0 &&
+      "Could not find requested resource state for conversion to dx12 state");
+  return D3D12_RESOURCE_STATE_COMMON;
+}
+
+void Dx12RenderingContext::setBindingObject(const BufferBindingsHandle handle) {
+
+  assertMagicNumber(handle);
+  const uint32_t magic = getMagicFromHandle(handle);
+  const uint32_t idx = getIndexFromHandle(handle);
+  const FrameBindingsData &data = m_bindingsPool.getConstRef(idx);
+
+  D3D12_CPU_DESCRIPTOR_HANDLE handles[10] = {};
+  D3D12_RESOURCE_BARRIER barriers[10]{};
+
+  /*
+  // first thing first we need to be able to bind the deferred buffers,
+  // to do so we first transition them to be render targets
+  D3D12_RESOURCE_BARRIER barriers[4];
+  int counter = 0;
+  counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
+      m_depth, D3D12_RESOURCE_STATE_DEPTH_WRITE, barriers, counter);
+  counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
+      m_geometryBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, counter);
+  counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
+      m_normalBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, counter);
+  counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
+      m_specularBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, counter);
+
+  if (counter) {
+    commandList->ResourceBarrier(counter, barriers);
+  }*/
+
+  int counter = 0;
+  int barrierCounter = 0;
+  // processing render targets
+  for (int i = 0; i < 8; ++i) {
+    const RTBinding &binding = data.m_bindings.colorRT[i];
+    if (!binding.handle.isHandleValid()) {
+      continue;
+    }
+    handles[counter] =
+        dx12::TEXTURE_MANAGER->getRTVDx12(binding.handle).cpuHandle;
+
+    barrierCounter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
+        binding.handle, toDx12ResourceState(binding.neededResourceState),
+        barriers, barrierCounter);
+    counter++;
+  }
+
+  // processing the depth
+  D3D12_CPU_DESCRIPTOR_HANDLE depthHandle = {0};
+  if (data.m_bindings.depthStencil.handle.isHandleValid()) {
+    const DepthBinding &binding = data.m_bindings.depthStencil;
+    depthHandle = dx12::TEXTURE_MANAGER->getRTVDx12(binding.handle).cpuHandle;
+    barrierCounter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
+        binding.handle, toDx12ResourceState(binding.neededResourceState),
+        barriers, barrierCounter);
+  }
+  annotateGraphicsBegin(data.name);
+
+  // transitioning resources if needed
+  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
+  auto commandList = currentFc->commandList;
+  if (barrierCounter != 0) {
+    commandList->ResourceBarrier(barrierCounter, barriers);
+  }
+  // clear if needed, this needs to happen after the barrier transitions
+  // otherwise there will be an invalid state and debug layer complaints
+  for (int i = 0; i < 8; ++i) {
+    const RTBinding &binding = data.m_bindings.colorRT[i];
+    if (!binding.handle.isHandleValid()) {
+      continue;
+    }
+    if (binding.shouldClearColor) {
+      globals::TEXTURE_MANAGER->clearRT(binding.handle, &binding.clearColor.x);
+    }
+  }
+  if (data.m_bindings.depthStencil.handle.isHandleValid()) {
+    const DepthBinding &binding = data.m_bindings.depthStencil;
+    if (binding.shouldClearDepth) {
+      globals::TEXTURE_MANAGER->clearDepth(binding.handle,
+                                           binding.clearDepthColor.x,
+                                           binding.clearStencilColor.x);
+    }
+  }
+
+  commandList->OMSetRenderTargets(counter, handles, false, &depthHandle);
+}
+
+void Dx12RenderingContext::clearBindingObject(
+    const BufferBindingsHandle handle) {
+  annotateGraphicsEnd();
 }
 
 bool Dx12RenderingContext::newFrame() { return newFrameDx12(); }

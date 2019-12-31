@@ -6,16 +6,27 @@
 namespace SirEngine {
 
 // TODO can this be a enum class?
-enum TextureFlags { DEPTH = 1, RT = 2 };
 
 enum class RenderTargetFormat {
   RGBA32,
   R11G11B10_FLOAT,
   R11G11B10_UNORM,
   R16G16B16A16_FLOAT,
-  BC1_UNORM
+  BC1_UNORM,
+  DEPTH_F32_S8
 };
+
 class TextureManager {
+protected:
+  enum TextureFlags { NONE = 0, DEPTH = 1, RT = 2 };
+
+public:
+  enum TEXTURE_ALLOCATION_FLAGS {
+    ALLOW_RANDOM_WRITE = 1,
+    DEPTH_TEXTURE = 2,
+    RENDER_TARGET = 4
+  };
+
 public:
   TextureManager() { m_nameToHandle.reserve(RESERVE_SIZE); }
 
@@ -30,17 +41,13 @@ public:
   virtual TextureHandle allocateRenderTexture(uint32_t width, uint32_t height,
                                               RenderTargetFormat format,
                                               const char *name,
-                                              bool allowWrite = false) = 0;
-  virtual TextureHandle allocateTexture(const uint32_t width,
-                                        const uint32_t height,
-                                        RenderTargetFormat format,
-                                        const char *name, bool mips,
-                                        const bool allowWrite = false) = 0;
+                                              uint32_t allocFlags = 0) = 0;
 
   virtual void copyTexture(TextureHandle source, TextureHandle destination) = 0;
   virtual void bindRenderTarget(TextureHandle handle, TextureHandle depth) = 0;
   virtual void bindBackBuffer(bool bindBackBufferDepth) = 0;
-  virtual void clearDepth(const TextureHandle depth, float value = 1.0f) = 0;
+  virtual void clearDepth(const TextureHandle depth, const float depthValue,
+                          const float stencilValue) = 0;
   virtual void clearRT(const TextureHandle handle, const float color[4]) = 0;
   virtual TextureHandle getWhiteTexture() const = 0;
 

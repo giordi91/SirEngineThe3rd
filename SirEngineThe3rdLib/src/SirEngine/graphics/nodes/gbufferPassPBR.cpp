@@ -1,10 +1,6 @@
 #include "SirEngine/graphics/nodes/gbufferPassPBR.h"
-#include "SirEngine/graphics/debugAnnotations.h"
 #include "SirEngine/graphics/renderingContext.h"
-#include "platform/windows/graphics/dx12/DX12.h"
-#include "platform/windows/graphics/dx12/Dx12PSOManager.h"
-#include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
-#include "platform/windows/graphics/dx12/dx12TextureManager.h"
+#include "SirEngine/textureManager.h"
 
 namespace SirEngine {
 GBufferPassPBR::GBufferPassPBR(GraphAllocators &allocators)
@@ -39,77 +35,40 @@ GBufferPassPBR::GBufferPassPBR(GraphAllocators &allocators)
 
 void GBufferPassPBR::initialize() {
 
-  m_depth = dx12::TEXTURE_MANAGER->createDepthTexture(
-      "gbufferDepth", globals::ENGINE_CONFIG->m_windowWidth,
-      globals::ENGINE_CONFIG->m_windowHeight);
+  m_depth = globals::TEXTURE_MANAGER->allocateRenderTexture(
+      globals::ENGINE_CONFIG->m_windowWidth,
+      globals::ENGINE_CONFIG->m_windowHeight, RenderTargetFormat::DEPTH_F32_S8,
+      "gbufferDepth", TextureManager::TEXTURE_ALLOCATION_FLAGS::DEPTH_TEXTURE);
 
   m_geometryBuffer = globals::TEXTURE_MANAGER->allocateRenderTexture(
       globals::ENGINE_CONFIG->m_windowWidth,
       globals::ENGINE_CONFIG->m_windowHeight, RenderTargetFormat::RGBA32,
-      "geometryBuffer");
+      "geometryBuffer",
+      TextureManager::TEXTURE_ALLOCATION_FLAGS::RENDER_TARGET);
 
   m_normalBuffer = globals::TEXTURE_MANAGER->allocateRenderTexture(
       globals::ENGINE_CONFIG->m_windowWidth,
       globals::ENGINE_CONFIG->m_windowHeight,
-      RenderTargetFormat::R11G11B10_UNORM, "normalBuffer");
+      RenderTargetFormat::R11G11B10_UNORM, "normalBuffer",
+      TextureManager::TEXTURE_ALLOCATION_FLAGS::RENDER_TARGET);
 
   m_specularBuffer = globals::TEXTURE_MANAGER->allocateRenderTexture(
       globals::ENGINE_CONFIG->m_windowWidth,
       globals::ENGINE_CONFIG->m_windowHeight, RenderTargetFormat::RGBA32,
-      "specularBuffer");
+      "specularBuffer",
+      TextureManager::TEXTURE_ALLOCATION_FLAGS::RENDER_TARGET);
 }
 
 void GBufferPassPBR::compute() {
 
-  annotateGraphicsBegin("GBufferPassPBR");
-
-  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
-  auto commandList = currentFc->commandList;
-
-  // first thing first we need to be able to bind the deferred buffers,
-  // to do so we first transition them to be render targets
-  D3D12_RESOURCE_BARRIER barriers[4];
-  int counter = 0;
-  counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
-      m_depth, D3D12_RESOURCE_STATE_DEPTH_WRITE, barriers, counter);
-  counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
-      m_geometryBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, counter);
-  counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
-      m_normalBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, counter);
-  counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
-      m_specularBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, counter);
-
-  if (counter) {
-    commandList->ResourceBarrier(counter, barriers);
-  }
-
-  // now that they are in the right state we are going to clear them
-  globals::TEXTURE_MANAGER->clearDepth(m_depth, 0.0f);
-  float color[4] = {0.0f, 0.0f, 0.0f, 1.0f};
-  globals::TEXTURE_MANAGER->clearRT(m_geometryBuffer, color);
-  globals::TEXTURE_MANAGER->clearRT(m_normalBuffer, color);
-  globals::TEXTURE_MANAGER->clearRT(m_specularBuffer, color);
-
-  // finally we can bind the buffers
-  D3D12_CPU_DESCRIPTOR_HANDLE handles[3] = {
-      dx12::TEXTURE_MANAGER->getRTVDx12(m_geometryBuffer).cpuHandle,
-      dx12::TEXTURE_MANAGER->getRTVDx12(m_normalBuffer).cpuHandle,
-      dx12::TEXTURE_MANAGER->getRTVDx12(m_specularBuffer).cpuHandle};
-
-  auto depthDescriptor = dx12::TEXTURE_MANAGER->getRTVDx12(m_depth).cpuHandle;
-  commandList->OMSetRenderTargets(3, handles, false, &depthDescriptor);
-
-  // the stream is a series of rendarables sorted by type, so here we loop for
-  // all the renderable types and filter for the one that are tagged for the
-  // deferred queue
+  globals::RENDERING_CONTEXT->setBindingObject(m_bindHandle);
   globals::RENDERING_CONTEXT->renderQueueType({}, SHADER_QUEUE_FLAGS::DEFERRED);
-
-  annotateGraphicsEnd();
+  globals::RENDERING_CONTEXT->clearBindingObject(m_bindHandle);
 }
 
 inline void freeTextureIfValid(TextureHandle h) {
   if (h.isHandleValid()) {
-    dx12::TEXTURE_MANAGER->free(h);
+    globals::TEXTURE_MANAGER->free(h);
     h.handle = 0;
   }
 }
@@ -142,5 +101,40 @@ void GBufferPassPBR::populateNodePorts() {
   globals::DEBUG_FRAME_DATA->specularBuffer = m_specularBuffer;
   globals::DEBUG_FRAME_DATA->gbufferDepth = m_depth;
 #endif
+
+  // we have everything necessary to prepare the buffers
+  FrameBufferBindings bindings{};
+  bindings.colorRT[0].handle = m_geometryBuffer;
+  bindings.colorRT[0].clearColor = {0.0f, 0.0f, 0.0f, 1.0f};
+  bindings.colorRT[0].shouldClearColor = true;
+  bindings.colorRT[0].currentResourceState = RESOURCE_STATE::GENERIC;
+  bindings.colorRT[0].neededResourceState = RESOURCE_STATE::RENDER_TARGET;
+
+  bindings.colorRT[1].handle = m_normalBuffer;
+  bindings.colorRT[1].clearColor = {0.0f, 0.0f, 0.0f, 1.0f};
+  bindings.colorRT[1].shouldClearColor = true;
+  bindings.colorRT[1].currentResourceState = RESOURCE_STATE::GENERIC;
+  bindings.colorRT[1].neededResourceState = RESOURCE_STATE::RENDER_TARGET;
+
+  bindings.colorRT[2].handle = m_specularBuffer;
+  bindings.colorRT[2].clearColor = {0.0f, 0.0f, 0.0f, 1.0f};
+  bindings.colorRT[2].shouldClearColor = true;
+  bindings.colorRT[2].currentResourceState = RESOURCE_STATE::GENERIC;
+  bindings.colorRT[2].neededResourceState = RESOURCE_STATE::RENDER_TARGET;
+
+  bindings.depthStencil.handle = m_depth;
+  bindings.depthStencil.clearDepthColor = {0.0f, 0.0f, 0.0f, 1.0f};
+  bindings.depthStencil.clearStencilColor = {0.0f, 0.0f, 0.0f, 1.0f};
+  bindings.depthStencil.shouldClearDepth = true;
+  bindings.depthStencil.shouldClearStencil = true;
+  bindings.depthStencil.currentResourceState = RESOURCE_STATE::GENERIC;
+  bindings.depthStencil.neededResourceState =
+      RESOURCE_STATE::DEPTH_RENDER_TARGET;
+
+  bindings.width = globals::ENGINE_CONFIG->m_windowWidth;
+  bindings.height = globals::ENGINE_CONFIG->m_windowHeight;
+
+  m_bindHandle = globals::RENDERING_CONTEXT->prepareBindingObject(
+      bindings, "gbufferPassPBR");
 }
 } // namespace SirEngine

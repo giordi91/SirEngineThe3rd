@@ -1,6 +1,7 @@
 #include "platform/windows/graphics/dx12/dx12TextureManager.h"
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
+#include "SirEngine/runtimeString.h"
 #include <DXTK12/DDSTextureLoader.h>
 #include <platform/windows/graphics/dx12/dx12SwapChain.h>
 
@@ -24,14 +25,11 @@ static std::unordered_map<RenderTargetFormat, DXGI_FORMAT>
         {RenderTargetFormat::R11G11B10_UNORM, DXGI_FORMAT_R10G10B10A2_UNORM},
         {RenderTargetFormat::R16G16B16A16_FLOAT,
          DXGI_FORMAT_R16G16B16A16_FLOAT},
-        {RenderTargetFormat::BC1_UNORM, DXGI_FORMAT_BC1_UNORM}};
+        {RenderTargetFormat::BC1_UNORM, DXGI_FORMAT_BC1_UNORM},
+        {RenderTargetFormat::DEPTH_F32_S8, DXGI_FORMAT_D32_FLOAT_S8X24_UINT}};
 
 Dx12TextureManager::~Dx12TextureManager() {
   // assert(m_texturePool.assertEverythingDealloc());
-}
-
-void Dx12TextureManager::loadLegacy(const std::string &) {
-  assert(0 && "legacy not yet supported");
 }
 
 TextureHandle Dx12TextureManager::loadTexture(const char *path,
@@ -54,9 +52,7 @@ TextureHandle Dx12TextureManager::loadTexture(const char *path,
   if (found == m_nameToHandle.end()) {
     const std::string extension = getFileExtension(texturePath);
     if (extension != ".dds") {
-      loadLegacy(path);
-      // not supported
-      assert(0);
+      assert(0 && "can only load dds");
     }
 
     uint32_t index;
@@ -121,85 +117,6 @@ TextureHandle Dx12TextureManager::initializeFromResourceDx12(
 
   dx12::createRTVSRV(dx12::GLOBAL_RTV_HEAP,
                      m_texturePool.getConstRef(index).resource, data.rtsrv);
-
-  m_nameToHandle[name] = handle;
-  return handle;
-}
-
-TextureHandle
-Dx12TextureManager::createDepthTexture(const char *name, const uint32_t width,
-                                       const uint32_t height,
-                                       const D3D12_RESOURCE_STATES state) {
-  const bool m_4xMsaaState = false;
-
-  // Create the depth/stencil buffer and view.
-  D3D12_RESOURCE_DESC depthStencilDesc;
-  depthStencilDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-  depthStencilDesc.Alignment = 0;
-  depthStencilDesc.Width = width;
-  depthStencilDesc.Height = height;
-  depthStencilDesc.DepthOrArraySize = 1;
-  depthStencilDesc.MipLevels = 1;
-
-  // Correction 11/12/2016: SSAO chapter requires an SRV to the depth buffer to
-  // read from the depth buffer.  Therefore, because we need to create two views
-  // to the same resource:
-  //   1. SRV format: DXGI_FORMAT_R24_UNORM_X8_TYPELESS
-  //   2. DSV Format: DXGI_FORMAT_D24_UNORM_S8_UINT
-  // we need to create the depth buffer resource with a typeless format.
-  depthStencilDesc.Format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
-
-  // Check 4X MSAA quality support for our back buffer format.
-  // All Direct3D 11 capable devices support 4X MSAA for all render
-  // target formats, so we only need to check quality support.
-  D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS msQualityLevels;
-  msQualityLevels.Format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
-  msQualityLevels.SampleCount = 4;
-  msQualityLevels.Flags = D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE;
-  msQualityLevels.NumQualityLevels = 0;
-  HRESULT res =
-      DEVICE->CheckFeatureSupport(D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS,
-                                  &msQualityLevels, sizeof(msQualityLevels));
-  assert(SUCCEEDED(res));
-  const UINT m_msaaQuality = msQualityLevels.NumQualityLevels;
-
-  depthStencilDesc.SampleDesc.Count = m_4xMsaaState ? 4 : 1;
-  depthStencilDesc.SampleDesc.Quality = m_4xMsaaState ? (m_msaaQuality - 1) : 0;
-  depthStencilDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-  depthStencilDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-
-  uint32_t index;
-  TextureData &data = m_texturePool.getFreeMemoryData(index);
-  D3D12_CLEAR_VALUE optClear;
-  optClear.Format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
-  optClear.DepthStencil.Depth = 0.0f;
-  optClear.DepthStencil.Stencil = 0;
-  auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-  res = DEVICE->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE,
-                                        &depthStencilDesc, state, &optClear,
-                                        IID_PPV_ARGS(&data.resource));
-  assert(SUCCEEDED(res));
-
-  data.flags = TextureFlags::DEPTH;
-  // we have the texture, we set the flag, we now need to create handle etc
-  // data is now loaded need to create handle etc
-  const TextureHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
-
-  data.magicNumber = MAGIC_NUMBER_COUNTER;
-  data.format = data.resource->GetDesc().Format;
-  data.state = state;
-
-  dx12::createDSV(dx12::GLOBAL_DSV_HEAP, m_texturePool[index].resource,
-                  data.rtsrv, DXGI_FORMAT_D32_FLOAT_S8X24_UINT);
-
-  dx12::createDSV(
-      dx12::GLOBAL_DSV_HEAP, m_texturePool[index].resource, data.dsvStencil,
-      DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
-      (D3D12_DSV_FLAG_READ_ONLY_DEPTH | D3D12_DSV_FLAG_READ_ONLY_STENCIL));
-
-  dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DSRV(
-      data.srv, data.resource, DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS);
-  ++MAGIC_NUMBER_COUNTER;
 
   m_nameToHandle[name] = handle;
   return handle;
@@ -278,112 +195,97 @@ inline DXGI_FORMAT convertToDXGIFormat(const RenderTargetFormat format) {
   return DXGI_FORMAT_UNKNOWN;
 }
 
-auto Dx12TextureManager::allocateRenderTexture(const uint32_t width,
-                                               const uint32_t height,
-                                               const RenderTargetFormat format,
-                                               const char *name,
-                                               bool allowWrite)
-    -> TextureHandle {
+TextureHandle Dx12TextureManager::allocateRenderTexture(
+    uint32_t width, uint32_t height, RenderTargetFormat format,
+    const char *name, uint32_t allocFlags) {
   // convert SirEngine format to dx12 format
   DXGI_FORMAT actualFormat = convertToDXGIFormat(format);
 
   uint32_t index;
   TextureData &data = m_texturePool.getFreeMemoryData(index);
-  D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
-  if (allowWrite) {
-    flags = flags | (D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
-  }
-  auto uavDesc = CD3DX12_RESOURCE_DESC::Tex2D(actualFormat, width, height, 1, 1,
-                                              1, 0, flags);
+  D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE;
+  bool allowWrite =
+      allocFlags &
+      static_cast<uint32_t>(TEXTURE_ALLOCATION_FLAGS::ALLOW_RANDOM_WRITE);
+  bool isRenderTexture =
+      allocFlags &
+      static_cast<uint32_t>(TEXTURE_ALLOCATION_FLAGS::RENDER_TARGET);
+  bool isDepth = allocFlags &
+                 static_cast<uint32_t>(TEXTURE_ALLOCATION_FLAGS::DEPTH_TEXTURE);
+  assert(!(isRenderTexture && isDepth) &&
+         "Cannot be both render texture and depth");
+
+  flags |= isRenderTexture ? D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET
+                           : D3D12_RESOURCE_FLAG_NONE;
+  flags |= allowWrite ? D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS
+                      : D3D12_RESOURCE_FLAG_NONE;
+  flags |= isDepth ? D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL
+                   : D3D12_RESOURCE_FLAG_NONE;
+
+  auto description = CD3DX12_RESOURCE_DESC::Tex2D(actualFormat, width, height,
+                                                  1, 1, 1, 0, flags);
 
   D3D12_CLEAR_VALUE clear;
-  clear.Color[0] = 0.0f;
-  clear.Color[1] = 0.0f;
-  clear.Color[2] = 0.0f;
-  clear.Color[3] = 1.0f;
+  if (!isDepth) {
+    clear.Color[0] = 0.0f;
+    clear.Color[1] = 0.0f;
+    clear.Color[2] = 0.0f;
+    clear.Color[3] = 1.0f;
+  } else {
+    clear.DepthStencil.Depth = 0.0f;
+    clear.DepthStencil.Stencil = 0;
+  }
   clear.Format = actualFormat;
+  D3D12_RESOURCE_STATES state = isRenderTexture
+                                    ? D3D12_RESOURCE_STATE_RENDER_TARGET
+                                    : D3D12_RESOURCE_STATE_COMMON;
+  state = isDepth  ? D3D12_RESOURCE_STATE_DEPTH_WRITE : state;
   auto defaultHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
   HRESULT hr = dx12::DEVICE->CreateCommittedResource(
-      &defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &uavDesc,
-      D3D12_RESOURCE_STATE_RENDER_TARGET, &clear, IID_PPV_ARGS(&data.resource));
-  assert(SUCCEEDED(hr));
-
-  data.magicNumber = MAGIC_NUMBER_COUNTER;
-  data.format = data.resource->GetDesc().Format;
-  data.state = D3D12_RESOURCE_STATE_RENDER_TARGET;
-  data.flags = TextureFlags::RT;
-
-  TextureHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
-
-  ++MAGIC_NUMBER_COUNTER;
-
-  createRTVSRV(dx12::GLOBAL_RTV_HEAP, data.resource, data.rtsrv);
-  dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DSRV(data.srv, data.resource,
-                                                    data.format);
-  if (allowWrite) {
-    dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DUAV(data.uav, data.resource,
-                                                      data.format);
-  }
-
-  // convert to wstring
-  const std::string sname(name);
-  const std::wstring wname(sname.begin(), sname.end());
-  data.resource->SetName(wname.c_str());
-
-  m_nameToHandle[name] = handle;
-  return handle;
-}
-
-TextureHandle
-Dx12TextureManager::allocateTexture(const uint32_t width, const uint32_t height,
-                                    const RenderTargetFormat format,
-                                    const char *name, const bool mips,
-                                    const bool allowWrite) {
-  // convert SirEngine format to dx12 format
-  const DXGI_FORMAT actualFormat = convertToDXGIFormat(format);
-
-  uint32_t index;
-  TextureData &data = m_texturePool.getFreeMemoryData(index);
-  D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
-  if (allowWrite) {
-    flags = flags | (D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
-  }
-
-  const uint16_t mipsLevel = mips ? static_cast<uint16_t>(std::log2(width)) : 1;
-  auto uavDesc = CD3DX12_RESOURCE_DESC::Tex2D(actualFormat, width, height, 1,
-                                              mipsLevel, 1, 0, flags);
-
-  const D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COMMON;
-  auto defaultHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-  HRESULT hr = dx12::DEVICE->CreateCommittedResource(
-      &defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &uavDesc, state, nullptr,
+      &defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &description, state, &clear,
       IID_PPV_ARGS(&data.resource));
   assert(SUCCEEDED(hr));
 
   data.magicNumber = MAGIC_NUMBER_COUNTER;
   data.format = data.resource->GetDesc().Format;
   data.state = state;
-  data.flags = static_cast<TextureFlags>(0);
+  // cannot be both so only one will be set
+  // TODO should use a sigle set of flags here? we have texture flags and
+  // texture allocations flags
+  data.flags = isRenderTexture ? TextureFlags::RT : TextureFlags::NONE;
+  data.flags = isDepth ? TextureFlags::DEPTH : data.flags;
 
-  const TextureHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
-
+  TextureHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
   ++MAGIC_NUMBER_COUNTER;
 
-  dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DSRV(data.srv, data.resource,
-                                                    data.format);
-  if (allowWrite) {
-    dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DUAV(data.uav, data.resource,
-                                                      data.format);
-  }
+  // here it diverges depending on the type of resource
+  if (isDepth) {
+    dx12::createDSV(dx12::GLOBAL_DSV_HEAP, m_texturePool[index].resource,
+                    data.rtsrv, DXGI_FORMAT_D32_FLOAT_S8X24_UINT);
 
-  // convert to wstring
-  const std::string sname(name);
-  const std::wstring wname(sname.begin(), sname.end());
-  data.resource->SetName(wname.c_str());
+    dx12::createDSV(
+        dx12::GLOBAL_DSV_HEAP, m_texturePool[index].resource, data.dsvStencil,
+        DXGI_FORMAT_D32_FLOAT_S8X24_UINT,
+        (D3D12_DSV_FLAG_READ_ONLY_DEPTH | D3D12_DSV_FLAG_READ_ONLY_STENCIL));
+
+    dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DSRV(
+        data.srv, data.resource, DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS);
+
+  } else {
+    createRTVSRV(dx12::GLOBAL_RTV_HEAP, data.resource, data.rtsrv);
+    dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DSRV(data.srv, data.resource,
+                                                      data.format);
+    if (allowWrite) {
+      dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DUAV(data.uav, data.resource,
+                                                        data.format);
+    }
+  }
+  data.resource->SetName(frameConvertWide(name));
 
   m_nameToHandle[name] = handle;
   return handle;
 }
+
 
 void Dx12TextureManager::bindRenderTarget(const TextureHandle handle,
                                           const TextureHandle depth) {
@@ -472,16 +374,16 @@ void Dx12TextureManager::copyTexture(const TextureHandle source,
 
 void Dx12TextureManager::bindBackBuffer(bool bindBackBufferDepth) {
   auto back = dx12::SWAP_CHAIN->currentBackBufferView();
-  auto depth = dx12::SWAP_CHAIN->getDepthCPUDescriptor();
+  //auto depth = dx12::SWAP_CHAIN->getDepthCPUDescriptor();
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
   commandList->OMSetRenderTargets(1, &back, true,
-                                  bindBackBufferDepth ? &depth : nullptr);
+                                    nullptr);
   ;
 }
 
 void Dx12TextureManager::clearDepth(const TextureHandle depth,
-                                    const float value) {
+                                    const float depthValue, const float stencilValue) {
   assertMagicNumber(depth);
   const uint32_t index = getIndexFromHandle(depth);
   const TextureData &data = m_texturePool.getConstRef(index);
@@ -489,7 +391,7 @@ void Dx12TextureManager::clearDepth(const TextureHandle depth,
 
   CURRENT_FRAME_RESOURCE->fc.commandList->ClearDepthStencilView(
       data.rtsrv.cpuHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL,
-      value, 0, 0, nullptr);
+      depthValue, stencilValue, 0, nullptr);
 }
 
 void Dx12TextureManager::clearRT(const TextureHandle handle,
@@ -511,8 +413,7 @@ void Dx12TextureManager::cleanup() {
   assertMagicNumber(m_whiteTexture);
   const uint32_t index = getIndexFromHandle(m_whiteTexture);
   const TextureData &data = m_texturePool.getConstRef(index);
-  //TODO check what other view/resourcess need to be released
+  // TODO check what other view/resourcess need to be released
   data.resource->Release();
-
 }
 } // namespace SirEngine::dx12

@@ -531,7 +531,7 @@ PSOHandle VkPSOManager::getHandleFromName(const char *name) const {
   bool found = m_psoRegisterHandle.containsKey(name);
   // assert(found);
   if (!found) {
-    SE_CORE_ERROR("could not find PSO handle for name {0}", 0);
+    SE_CORE_ERROR("could not find PSO handle for name {0}", name);
   }
   PSOHandle value{};
   m_psoRegisterHandle.get(name, value);

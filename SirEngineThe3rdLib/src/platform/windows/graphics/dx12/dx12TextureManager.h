@@ -26,24 +26,19 @@ class SIR_ENGINE_API Dx12TextureManager final : public TextureManager {
   };
 
 public:
-  Dx12TextureManager() : batch(dx12::DEVICE), m_texturePool(RESERVE_SIZE) {
+  Dx12TextureManager() : TextureManager(), batch(dx12::DEVICE), m_texturePool(RESERVE_SIZE) {
     m_nameToHandle.reserve(RESERVE_SIZE);
   }
-  ~Dx12TextureManager();
+  virtual ~Dx12TextureManager();
   Dx12TextureManager(const Dx12TextureManager &) = delete;
   Dx12TextureManager &operator=(const Dx12TextureManager &) = delete;
-  void loadLegacy(const std::string &path);
   virtual TextureHandle loadTexture(const char *path,
                                     bool cubeMap = false) override;
   virtual void free(const TextureHandle handle) override;
   virtual TextureHandle allocateRenderTexture(uint32_t width, uint32_t height,
                                               RenderTargetFormat format,
                                               const char *name,
-                                              bool allowWrite = false) override;
-  virtual TextureHandle allocateTexture(uint32_t width, uint32_t height,
-                                        RenderTargetFormat format,
-                                        const char *name, bool mips,
-                                        bool allowWrite = false) override;
+                                              uint32_t allocFlags =0) override;
   virtual void bindRenderTarget(TextureHandle handle,
                                 TextureHandle depth) override;
   virtual void bindRenderTargetStencil(TextureHandle handle,
@@ -53,7 +48,7 @@ public:
                            TextureHandle destination) override;
   virtual void bindBackBuffer(bool bindBackBufferDepth) override;
   virtual void clearDepth(const TextureHandle depth,
-                          float value = 1.0f) override;
+                                    const float depthValue, const float stencilValue) override;
   virtual void clearRT(const TextureHandle handle,
                        const float color[4]) override;
 
@@ -64,9 +59,6 @@ public:
   TextureHandle initializeFromResourceDx12(ID3D12Resource *resource,
                                            const char *name,
                                            D3D12_RESOURCE_STATES state);
-  TextureHandle
-  createDepthTexture(const char *name, uint32_t width, uint32_t height,
-                     D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COMMON);
 
   // handles facilities
   DescriptorPair getSRVDx12(const TextureHandle handle) {

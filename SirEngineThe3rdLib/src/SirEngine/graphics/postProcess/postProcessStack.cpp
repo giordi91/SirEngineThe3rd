@@ -41,11 +41,13 @@ void PostProcessStack::initialize() {
   handles[0] = globals::TEXTURE_MANAGER->allocateRenderTexture(
       globals::ENGINE_CONFIG->m_windowWidth,
       globals::ENGINE_CONFIG->m_windowHeight,
-      RenderTargetFormat::R16G16B16A16_FLOAT, "postProcess1");
+      RenderTargetFormat::R16G16B16A16_FLOAT, "postProcess1",
+      TextureManager::RENDER_TARGET);
   handles[1] = globals::TEXTURE_MANAGER->allocateRenderTexture(
       globals::ENGINE_CONFIG->m_windowWidth,
       globals::ENGINE_CONFIG->m_windowHeight,
-      RenderTargetFormat::R16G16B16A16_FLOAT, "postProcess2");
+      RenderTargetFormat::R16G16B16A16_FLOAT, "postProcess2",
+      TextureManager::RENDER_TARGET);
 }
 
 void PostProcessStack::compute() {
