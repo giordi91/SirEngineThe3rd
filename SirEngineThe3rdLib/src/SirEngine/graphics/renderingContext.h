@@ -37,8 +37,10 @@ struct DepthBinding {
 struct FrameBufferBindings {
   RTBinding colorRT[8] = {};
   DepthBinding depthStencil = {};
-  uint32_t width;
-  uint32_t height;
+  RTBinding *extraBindings = nullptr;
+  uint32_t extraBindingsCount = 0;
+  uint32_t width = 0;
+  uint32_t height = 0;
 };
 
 struct APIConfig {
@@ -108,6 +110,8 @@ public:
   virtual void renderQueueType(const DrawCallConfig &config,
                                const SHADER_QUEUE_FLAGS flag) = 0;
   virtual void renderMaterialType(const SHADER_QUEUE_FLAGS flag) = 0;
+  // simply submit a full screen quad to the render pipeline
+  virtual void fullScreenPass() = 0;
 
   virtual void setupCameraForFrame() = 0;
   virtual BufferBindingsHandle
