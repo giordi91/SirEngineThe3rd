@@ -41,7 +41,6 @@ public:
                                         uint32_t allocFlags = 0) = 0;
 
   virtual void bindRenderTarget(TextureHandle handle, TextureHandle depth) = 0;
-  virtual void bindBackBuffer() = 0;
   virtual void clearDepth(const TextureHandle depth, const float depthValue,
                           const float stencilValue) = 0;
   virtual void clearRT(const TextureHandle handle, const float color[4]) = 0;

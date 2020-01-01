@@ -21,10 +21,9 @@ FinalBlitNode::FinalBlitNode(GraphAllocators &allocators)
 
 void FinalBlitNode::compute() {
 
+  //this will take care of binding the back buffer and the input and transition
+  //both the back buffer  and input texture
   globals::RENDERING_CONTEXT->setBindingObject(m_bindHandle);
-
-  // first we want to bind the back buffer so that we can render to it
-  globals::TEXTURE_MANAGER->bindBackBuffer();
   // next we bind the material, this will among other things bind the pso and rs
   globals::MATERIAL_MANAGER->bindMaterial(m_matHandle);
   // we also need to bind the input resource, which is the texture we want to
@@ -48,6 +47,11 @@ void FinalBlitNode::populateNodePorts() {
 
   // empty binding since we bind to the swap chain buffer
   FrameBufferBindings bindings{};
+  bindings.colorRT[0].handle = {} ; 
+  bindings.colorRT[0].isSwapChainBackBuffer= true ; 
+  bindings.colorRT[0].shouldClearColor= false; 
+  bindings.colorRT[0].currentResourceState = RESOURCE_STATE::RENDER_TARGET; 
+  bindings.colorRT[0].neededResourceState= RESOURCE_STATE::RENDER_TARGET; 
   bindings.width = globals::ENGINE_CONFIG->m_windowWidth;
   bindings.height = globals::ENGINE_CONFIG->m_windowHeight;
 

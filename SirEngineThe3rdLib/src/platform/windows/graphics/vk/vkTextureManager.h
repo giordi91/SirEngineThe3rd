@@ -46,7 +46,6 @@ public:
   virtual void bindRenderTargetStencil(TextureHandle handle,
                                        TextureHandle depth);
 
-  virtual void bindBackBuffer() override;
   virtual void clearDepth(const TextureHandle depth,
                           float depthValue,float stencilValue) override;
   virtual void clearRT(const TextureHandle handle,

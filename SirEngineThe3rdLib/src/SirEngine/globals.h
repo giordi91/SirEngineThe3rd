@@ -21,6 +21,7 @@ class Input;
 class MeshManager;
 class PSOManager;
 class RootSignatureManager;
+class DependencyGraph;
 
 class StringPool;
 class StackAllocator;
@@ -65,6 +66,7 @@ extern MeshManager *MESH_MANAGER;
 extern MaterialManager *MATERIAL_MANAGER;
 extern PSOManager *PSO_MANAGER;
 extern RootSignatureManager* ROOT_SIGNATURE_MANAGER;
+extern DependencyGraph *RENDERING_GRAPH;
 
 // generic allocators
 extern SIR_ENGINE_API StringPool *STRING_POOL;

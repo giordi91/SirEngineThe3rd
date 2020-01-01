@@ -122,6 +122,26 @@ TextureHandle Dx12TextureManager::initializeFromResourceDx12(
   return handle;
 }
 
+void Dx12TextureManager::bindBackBuffer() const
+{
+	const TextureHandle destination =
+		dx12::SWAP_CHAIN->currentBackBufferTexture();
+	D3D12_RESOURCE_BARRIER barriers[2];
+	int counter = 0;
+	auto* currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
+	auto commandList = currentFc->commandList;
+	counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
+		destination, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, counter);
+	if (counter)
+	{
+		commandList->ResourceBarrier(counter, barriers);
+	}
+
+	auto back = dx12::SWAP_CHAIN->currentBackBufferView();
+	commandList->OMSetRenderTargets(1, &back, true, nullptr);
+}
+
+
 DescriptorPair
 Dx12TextureManager::getSrvStencilDx12(const TextureHandle handle) {
   {
@@ -334,23 +354,6 @@ void Dx12TextureManager::bindRenderTargetStencil(TextureHandle handle,
   commandList->OMSetRenderTargets(1, handles, true, depthDesc);
 }
 
-void Dx12TextureManager::bindBackBuffer() {
-
-  const TextureHandle destination =
-      dx12::SWAP_CHAIN->currentBackBufferTexture();
-  D3D12_RESOURCE_BARRIER barriers[2];
-  int counter = 0;
-  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
-  auto commandList = currentFc->commandList;
-  counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
-      destination, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, counter);
-  if (counter) {
-    commandList->ResourceBarrier(counter, barriers);
-  }
-
-  auto back = dx12::SWAP_CHAIN->currentBackBufferView();
-  commandList->OMSetRenderTargets(1, &back, true, nullptr);
-}
 
 void Dx12TextureManager::clearDepth(const TextureHandle depth,
                                     const float depthValue,

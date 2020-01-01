@@ -843,18 +843,6 @@ commandList->OMSetRenderTargets(1, handles, true, depthDesc);
 }
 
 
-void VkTextureManager::bindBackBuffer() {
-  /*
-   *auto back = dx12::SWAP_CHAIN->currentBackBufferView();
-  auto depth = dx12::SWAP_CHAIN->getDepthCPUDescriptor();
-  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
-  auto commandList = currentFc->commandList;
-  commandList->OMSetRenderTargets(1, &back, true,
-                                  bindBackBufferDepth ? &depth : nullptr);
-  ;
-  */
-}
-
 void VkTextureManager::clearDepth(const TextureHandle depth,
                                   const float depthValue,
                                   const float stencilValue) {

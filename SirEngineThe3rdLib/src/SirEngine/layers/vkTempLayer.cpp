@@ -6,12 +6,10 @@
 #include "SirEngine/graphics/camera.h"
 
 #include "SirEngine/assetManager.h"
-#include "SirEngine/engineConfig.h"
 #include "SirEngine/graphics/nodes/vkSimpleForward.h"
 #include "SirEngine/layers/vkTempLayer.h"
 #include "platform/windows/graphics/vk/vk.h"
 #include "platform/windows/graphics/vk/vkConstantBufferManager.h"
-#include "platform/windows/graphics/vk/vkDescriptorManager.h"
 #include "platform/windows/graphics/vk/vkLoad.h"
 #include "platform/windows/graphics/vk/vkMaterialManager.h"
 #include "platform/windows/graphics/vk/vkPSOManager.h"
@@ -40,15 +38,28 @@ void VkTempLayer::onAttach() {
 
   alloc =
       new GraphAllocators{globals::STRING_POOL, globals::PERSISTENT_ALLOCATOR};
+
+  globals::RENDERING_GRAPH = new DependencyGraph();
   m_forward = new VkSimpleForward(*alloc);
-  m_forward->initialize();
-  m_forward->populateNodePorts();
+
+  // temporary graph for testing
+  globals::RENDERING_GRAPH->addNode(m_forward);
+  globals::RENDERING_GRAPH->setFinalNode(m_forward);
+  //TODO this whole reset execute flush needs to be reworked
+  globals::RENDERING_CONTEXT->resetGlobalCommandList();
+  globals::RENDERING_GRAPH->finalizeGraph();
+  globals::RENDERING_CONTEXT->executeGlobalCommandList();
+  globals::RENDERING_CONTEXT->flush();
+  //m_forward->initialize();
+  //m_forward->populateNodePorts();
 }
 
 void VkTempLayer::onDetach() {}
 void VkTempLayer::onUpdate() {
 
   globals::RENDERING_CONTEXT->setupCameraForFrame();
+  // evaluating rendering graph
+  globals::RENDERING_GRAPH->compute();
 
   // if constexpr (USE_PUSH) {
   //  VkDescriptorBufferInfo bufferInfo{};
@@ -66,8 +77,6 @@ void VkTempLayer::onUpdate() {
   //  vkCmdPushDescriptorSetKHR(FRAME_COMMAND[0].m_commandBuffer,
   // VK_PIPELINE_BIND_POINT_GRAPHICS, PIPELINE_LAYOUT, 0, ARRAYSIZE(descriptor),
   //                            descriptor);
-
-  m_forward->compute();
 
   int idx = 0;
   vk::VkTexture2D m_rt = vk::TEXTURE_MANAGER->getTextureData(

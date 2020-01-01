@@ -18,7 +18,7 @@ class SIR_ENGINE_API Dx12TextureManager final : public TextureManager {
     ID3D12Resource *resource;
     D3D12_RESOURCE_STATES state;
     DXGI_FORMAT format;
-    uint32_t flags;//combination of texture allocation flags
+    uint32_t flags; // combination of texture allocation flags
     DescriptorPair srv;
     DescriptorPair rtsrv;
     DescriptorPair uav;
@@ -26,7 +26,8 @@ class SIR_ENGINE_API Dx12TextureManager final : public TextureManager {
   };
 
 public:
-  Dx12TextureManager() : TextureManager(), batch(dx12::DEVICE), m_texturePool(RESERVE_SIZE) {
+  Dx12TextureManager()
+      : TextureManager(), batch(dx12::DEVICE), m_texturePool(RESERVE_SIZE) {
     m_nameToHandle.reserve(RESERVE_SIZE);
   }
   virtual ~Dx12TextureManager();
@@ -36,17 +37,16 @@ public:
                                     bool cubeMap = false) override;
   virtual void free(const TextureHandle handle) override;
   virtual TextureHandle allocateTexture(uint32_t width, uint32_t height,
-                                              RenderTargetFormat format,
-                                              const char *name,
-                                              uint32_t allocFlags =0) override;
+                                        RenderTargetFormat format,
+                                        const char *name,
+                                        uint32_t allocFlags = 0) override;
   virtual void bindRenderTarget(TextureHandle handle,
                                 TextureHandle depth) override;
   virtual void bindRenderTargetStencil(TextureHandle handle,
-                                TextureHandle depth);
+                                       TextureHandle depth);
 
-  virtual void bindBackBuffer() override;
-  virtual void clearDepth(const TextureHandle depth,
-                                    const float depthValue, const float stencilValue) override;
+  virtual void clearDepth(const TextureHandle depth, const float depthValue,
+                          const float stencilValue) override;
   virtual void clearRT(const TextureHandle handle,
                        const float color[4]) override;
 
@@ -57,6 +57,7 @@ public:
   TextureHandle initializeFromResourceDx12(ID3D12Resource *resource,
                                            const char *name,
                                            D3D12_RESOURCE_STATES state);
+  void bindBackBuffer() const;;
 
   // handles facilities
   DescriptorPair getSRVDx12(const TextureHandle handle) {
@@ -69,7 +70,7 @@ public:
     return m_texturePool.getConstRef(index).srv;
   }
   // handles facilities
-  DescriptorPair getSrvStencilDx12(const TextureHandle handle); 
+  DescriptorPair getSrvStencilDx12(const TextureHandle handle);
   DescriptorPair getUAVDx12(const TextureHandle handle) {
 
     assertMagicNumber(handle);
@@ -128,7 +129,7 @@ public:
     const uint32_t index = getIndexFromHandle(handle);
     TextureData &data = m_texturePool[index];
 
-    if (data.state!= wantedState) {
+    if (data.state != wantedState) {
       barriers[counter] = CD3DX12_RESOURCE_BARRIER::Transition(
           data.resource, data.state, wantedState);
       data.state = wantedState;
@@ -139,8 +140,8 @@ public:
 
 private:
   inline void assertMagicNumber(const TextureHandle handle) const {
-	  const uint32_t magic = getMagicFromHandle(handle);
-	  const uint32_t idx = getIndexFromHandle(handle);
+    const uint32_t magic = getMagicFromHandle(handle);
+    const uint32_t idx = getIndexFromHandle(handle);
     assert(m_texturePool.getConstRef(idx).magicNumber == magic &&
            "invalid magic handle for constant buffer");
   }

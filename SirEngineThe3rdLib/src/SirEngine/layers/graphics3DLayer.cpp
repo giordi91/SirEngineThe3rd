@@ -27,9 +27,9 @@
 #include "SirEngine/graphics/renderingContext.h"
 
 #include "SirEngine/skinClusterManager.h"
-#include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
 #include "platform/windows/graphics/dx12/Dx12PSOManager.h"
 #include "platform/windows/graphics/dx12/dx12BufferManager.h"
+#include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
 
 #include "SirEngine/engineConfig.h"
 #include "SirEngine/graphics/nodes/shadowPass.h"
@@ -47,11 +47,7 @@ void Graphics3DLayer::onAttach() {
   globals::MAIN_CAMERA->setPosition(0, 14, 10);
   globals::MAIN_CAMERA->updateCamera();
   CameraManipulationConfig camConfig{
-      0.07f,
-      0.07f,
-      -0.012f,
-      0.012f,
-      -0.07f,
+      0.07f, 0.07f, -0.012f, 0.012f, -0.07f,
   };
   globals::MAIN_CAMERA->setManipulationMultipliers(camConfig);
 
@@ -64,7 +60,7 @@ void Graphics3DLayer::onAttach() {
 
   alloc =
       new GraphAllocators{globals::STRING_POOL, globals::PERSISTENT_ALLOCATOR};
-  dx12::RENDERING_GRAPH = new DependencyGraph();
+  globals::RENDERING_GRAPH = new DependencyGraph();
   const auto finalBlit = new FinalBlitNode(*alloc);
   const auto simpleForward = new SimpleForward(*alloc);
   auto postProcess = new PostProcessStack(*alloc);
@@ -81,76 +77,80 @@ void Graphics3DLayer::onAttach() {
   postProcess->initialize();
 
   // temporary graph for testing
-  dx12::RENDERING_GRAPH->addNode(finalBlit);
-  dx12::RENDERING_GRAPH->addNode(gbufferPass);
-  dx12::RENDERING_GRAPH->addNode(lighting);
-  dx12::RENDERING_GRAPH->addNode(sky);
-  dx12::RENDERING_GRAPH->addNode(simpleForward);
-  dx12::RENDERING_GRAPH->addNode(postProcess);
-  dx12::RENDERING_GRAPH->addNode(debugDraw);
-  dx12::RENDERING_GRAPH->addNode(shadowPass);
-  dx12::RENDERING_GRAPH->setFinalNode(finalBlit);
+  globals::RENDERING_GRAPH->addNode(finalBlit);
+  globals::RENDERING_GRAPH->addNode(gbufferPass);
+  globals::RENDERING_GRAPH->addNode(lighting);
+  globals::RENDERING_GRAPH->addNode(sky);
+  globals::RENDERING_GRAPH->addNode(simpleForward);
+  globals::RENDERING_GRAPH->addNode(postProcess);
+  globals::RENDERING_GRAPH->addNode(debugDraw);
+  globals::RENDERING_GRAPH->addNode(shadowPass);
+  globals::RENDERING_GRAPH->setFinalNode(finalBlit);
 
+  globals::RENDERING_GRAPH->connectNodes(gbufferPass,
+                                         GBufferPassPBR::GEOMETRY_RT, lighting,
+                                         DeferredLightingPass::GEOMETRY_RT);
+  globals::RENDERING_GRAPH->connectNodes(gbufferPass,
+                                         GBufferPassPBR::NORMALS_RT, lighting,
+                                         DeferredLightingPass::NORMALS_RT);
+  globals::RENDERING_GRAPH->connectNodes(gbufferPass,
+                                         GBufferPassPBR::SPECULAR_RT, lighting,
+                                         DeferredLightingPass::SPECULAR_RT);
+  globals::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::DEPTH_RT,
+                                         lighting,
+                                         DeferredLightingPass::DEPTH_RT);
 
-  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::GEOMETRY_RT,
-                                      lighting,
-                                      DeferredLightingPass::GEOMETRY_RT);
-  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::NORMALS_RT,
-                                      lighting,
-                                      DeferredLightingPass::NORMALS_RT);
-  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::SPECULAR_RT,
-                                      lighting,
-                                      DeferredLightingPass::SPECULAR_RT);
-  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::DEPTH_RT,
-                                      lighting, DeferredLightingPass::DEPTH_RT);
-
-  dx12::RENDERING_GRAPH->connectNodes(
+  globals::RENDERING_GRAPH->connectNodes(
       shadowPass, ShadowPass::DIRECTIONAL_SHADOW_RT, lighting,
       DeferredLightingPass::DIRECTIONAL_SHADOW_RT);
 
-  dx12::RENDERING_GRAPH->connectNodes(
+  globals::RENDERING_GRAPH->connectNodes(
       lighting, DeferredLightingPass::LIGHTING_RT, sky, SkyBoxPass::IN_TEXTURE);
 
-  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::DEPTH_RT,
-                                      sky, SkyBoxPass::DEPTH);
+  globals::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::DEPTH_RT,
+                                         sky, SkyBoxPass::DEPTH);
 
   // connecting forward
-  dx12::RENDERING_GRAPH->connectNodes(sky, SkyBoxPass::OUT_TEX, simpleForward,
-                                      SimpleForward::IN_TEXTURE);
-  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::DEPTH_RT,
-                                      simpleForward, SimpleForward::DEPTH_RT);
+  globals::RENDERING_GRAPH->connectNodes(
+      sky, SkyBoxPass::OUT_TEX, simpleForward, SimpleForward::IN_TEXTURE);
+  globals::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::DEPTH_RT,
+                                         simpleForward,
+                                         SimpleForward::DEPTH_RT);
 
-  dx12::RENDERING_GRAPH->connectNodes(simpleForward, SimpleForward::OUT_TEXTURE,
-                                      postProcess,
-                                      PostProcessStack::IN_TEXTURE);
+  globals::RENDERING_GRAPH->connectNodes(
+      simpleForward, SimpleForward::OUT_TEXTURE, postProcess,
+      PostProcessStack::IN_TEXTURE);
 
-  //TODO shouldn't this be the depth ouf of the forward? or forward does not modify depth? investigate
-  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::DEPTH_RT,
-                                      postProcess, PostProcessStack::DEPTH_RT);
+  // TODO shouldn't this be the depth ouf of the forward? or forward does not
+  // modify depth? investigate
+  globals::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::DEPTH_RT,
+                                         postProcess,
+                                         PostProcessStack::DEPTH_RT);
 
-  dx12::RENDERING_GRAPH->connectNodes(postProcess,
-                                      PostProcessStack::OUT_TEXTURE, debugDraw,
-                                      DebugDrawNode::IN_TEXTURE);
-  dx12::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::DEPTH_RT,
-                                      debugDraw, DebugDrawNode::DEPTH_RT);
+  globals::RENDERING_GRAPH->connectNodes(postProcess,
+                                         PostProcessStack::OUT_TEXTURE,
+                                         debugDraw, DebugDrawNode::IN_TEXTURE);
+  globals::RENDERING_GRAPH->connectNodes(gbufferPass, GBufferPassPBR::DEPTH_RT,
+                                         debugDraw, DebugDrawNode::DEPTH_RT);
 
-  dx12::RENDERING_GRAPH->connectNodes(debugDraw, DebugDrawNode::OUT_TEXTURE,
-                                      finalBlit, FinalBlitNode::IN_TEXTURE);
+  globals::RENDERING_GRAPH->connectNodes(debugDraw, DebugDrawNode::OUT_TEXTURE,
+                                         finalBlit, FinalBlitNode::IN_TEXTURE);
 
-  dx12::RENDERING_GRAPH->finalizeGraph();
+  globals::RENDERING_GRAPH->finalizeGraph();
 
   // flushing whatever pending resource we have and leaving command list close,
   // ready to start rendering frames
   globals::RENDERING_CONTEXT->executeGlobalCommandList();
   globals::RENDERING_CONTEXT->flush();
 
-  auto light = dx12::RENDERING_CONTEXT->getLightData();
+  auto light = globals::RENDERING_CONTEXT->getLightData();
   dx12::DEBUG_RENDERER->drawMatrix(light.localToWorld, 3.0f,
                                    glm::vec4(1, 0, 0, 1), "");
 
   uint32_t bbcount;
-  auto data =dx12::MESH_MANAGER->getBoundingBoxes(bbcount);
-  dx12::DEBUG_RENDERER->drawBoundingBoxes((BoundingBox*)data,bbcount,glm::vec4(1,0,0,1),"");
+  auto data = dx12::MESH_MANAGER->getBoundingBoxes(bbcount);
+  dx12::DEBUG_RENDERER->drawBoundingBoxes((BoundingBox *)data, bbcount,
+                                          glm::vec4(1, 0, 0, 1), "");
   // dx12::DEBUG_RENDERER->drawMatrix(
   //    globals::MAIN_CAMERA->getViewInverse(DirectX::XMMatrixIdentity()), 3.0f,
   //    DirectX::XMFLOAT4(1, 0, 0, 1), "");
@@ -170,10 +170,10 @@ void Graphics3DLayer::onUpdate() {
 
   // setting up camera for the frame
   globals::CONSTANT_BUFFER_MANAGER->processBufferedData();
-  dx12::RENDERING_CONTEXT->setupCameraForFrame();
+  globals::RENDERING_CONTEXT->setupCameraForFrame();
   dx12::RENDERING_CONTEXT->setupLightingForFrame();
   // evaluating rendering graph
-  dx12::RENDERING_GRAPH->compute();
+  globals::RENDERING_GRAPH->compute();
 
   // making any clean up for the mesh manager if we have to
   dx12::CONSTANT_BUFFER_MANAGER->clearUpQueueFree();
@@ -313,13 +313,13 @@ bool Graphics3DLayer::onDebugLayerEvent(DebugLayerChanged &e) {
     // if we have 0, we have no layer to debug so we can just check if there
     // there is a debug node and remove it
     const GNode *debugNode =
-        dx12::RENDERING_GRAPH->findNodeOfType("FramePassDebugNode");
+        globals::RENDERING_GRAPH->findNodeOfType("FramePassDebugNode");
     if (debugNode == nullptr) { // no debug we are good
       return true;
     }
 
-    removeDebugNode(dx12::RENDERING_GRAPH, const_cast<GNode *>(debugNode));
-    dx12::RENDERING_GRAPH->finalizeGraph();
+    removeDebugNode(globals::RENDERING_GRAPH, const_cast<GNode *>(debugNode));
+    globals::RENDERING_GRAPH->finalizeGraph();
     RenderGraphChanged *graphE = new RenderGraphChanged();
     globals::APPLICATION->queueEventForEndOfFrame(graphE);
     return true;
@@ -333,7 +333,7 @@ bool Graphics3DLayer::onDebugLayerEvent(DebugLayerChanged &e) {
   case (7): {
     // lets add debug
     const GNode *debugNode =
-        dx12::RENDERING_GRAPH->findNodeOfType("FramePassDebugNode");
+        globals::RENDERING_GRAPH->findNodeOfType("FramePassDebugNode");
     // debug already there, maybe i just need to change configuration?
     if (debugNode != nullptr) { // no debug we are good
       static_cast<FramePassDebugNode *>(const_cast<GNode *>(debugNode))
@@ -344,8 +344,8 @@ bool Graphics3DLayer::onDebugLayerEvent(DebugLayerChanged &e) {
     // TODO move the allocator inside the graph? not sure yet
     auto debug = new FramePassDebugNode(*alloc);
     debug->setDebugIndex(e.getLayer());
-    addDebugNode(dx12::RENDERING_GRAPH, debug);
-    dx12::RENDERING_GRAPH->finalizeGraph();
+    addDebugNode(globals::RENDERING_GRAPH, debug);
+    globals::RENDERING_GRAPH->finalizeGraph();
     auto *graphE = new RenderGraphChanged();
     globals::APPLICATION->queueEventForEndOfFrame(graphE);
     return true;
@@ -356,13 +356,13 @@ bool Graphics3DLayer::onDebugLayerEvent(DebugLayerChanged &e) {
 
 bool Graphics3DLayer::onResizeEvent(WindowResizeEvent &e) {
   // propagate the resize to every node of the graph
-  dx12::RENDERING_GRAPH->onResizeEvent(e.getWidth(), e.getHeight());
+  globals::RENDERING_GRAPH->onResizeEvent(e.getWidth(), e.getHeight());
   return true;
 }
 
 bool Graphics3DLayer::onDebugConfigChanged(DebugRenderConfigChanged &e) {
   GNode *debugNode =
-      dx12::RENDERING_GRAPH->findNodeOfType("FramePassDebugNode");
+      globals::RENDERING_GRAPH->findNodeOfType("FramePassDebugNode");
   if (debugNode) {
     auto *debugNodeTyped = (FramePassDebugNode *)debugNode;
     debugNodeTyped->setConfig(e.getConfig());

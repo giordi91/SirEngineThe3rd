@@ -44,7 +44,6 @@ FrameResource *CURRENT_FRAME_RESOURCE = nullptr;
 Dx12TextureManager *TEXTURE_MANAGER = nullptr;
 Dx12MeshManager *MESH_MANAGER = nullptr;
 Dx12MaterialManager *MATERIAL_MANAGER = nullptr;
-DependencyGraph *RENDERING_GRAPH = nullptr;
 Dx12ConstantBufferManager *CONSTANT_BUFFER_MANAGER = nullptr;
 ShaderManager *SHADER_MANAGER = nullptr;
 Dx12PSOManager *PSO_MANAGER = nullptr;
@@ -723,15 +722,20 @@ void Dx12RenderingContext::setBindingObject(const BufferBindingsHandle handle) {
   // processing render targets
   for (int i = 0; i < 8; ++i) {
     const RTBinding &binding = data.m_bindings.colorRT[i];
-    if (!binding.handle.isHandleValid()) {
+
+    if ((!binding.handle.isHandleValid()) & !binding.isSwapChainBackBuffer) {
       continue;
     }
-    handles[counter] =
-        dx12::TEXTURE_MANAGER->getRTVDx12(binding.handle).cpuHandle;
+    const TextureHandle destination =
+        binding.isSwapChainBackBuffer
+            ? dx12::SWAP_CHAIN->currentBackBufferTexture()
+            : binding.handle;
+
+    handles[counter] = dx12::TEXTURE_MANAGER->getRTVDx12(destination).cpuHandle;
 
     barrierCounter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
-        binding.handle, toDx12ResourceState(binding.neededResourceState),
-        barriers, barrierCounter);
+        destination, toDx12ResourceState(binding.neededResourceState), barriers,
+        barrierCounter);
     counter++;
   }
 
@@ -765,11 +769,16 @@ void Dx12RenderingContext::setBindingObject(const BufferBindingsHandle handle) {
   // otherwise there will be an invalid state and debug layer complaints
   for (int i = 0; i < 8; ++i) {
     const RTBinding &binding = data.m_bindings.colorRT[i];
-    if (!binding.handle.isHandleValid()) {
+    if (!binding.handle.isHandleValid() & !binding.isSwapChainBackBuffer) {
       continue;
     }
     if (binding.shouldClearColor) {
-      globals::TEXTURE_MANAGER->clearRT(binding.handle, &binding.clearColor.x);
+      const TextureHandle destination =
+          binding.isSwapChainBackBuffer
+              ? dx12::SWAP_CHAIN->currentBackBufferTexture()
+              : binding.handle;
+
+      globals::TEXTURE_MANAGER->clearRT(destination, &binding.clearColor.x);
     }
   }
 
@@ -783,7 +792,9 @@ void Dx12RenderingContext::setBindingObject(const BufferBindingsHandle handle) {
   }
 
   if (counter > 0) {
-    commandList->OMSetRenderTargets(counter, handles, false, &depthHandle);
+    D3D12_CPU_DESCRIPTOR_HANDLE *depthAddress =
+        depthHandle.ptr != 0 ? &depthHandle : nullptr;
+    commandList->OMSetRenderTargets(counter, handles, false, depthAddress);
   }
 }
 
