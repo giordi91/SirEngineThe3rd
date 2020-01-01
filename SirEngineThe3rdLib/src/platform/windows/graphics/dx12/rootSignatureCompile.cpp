@@ -35,6 +35,7 @@ const std::string ROOT_EMPTY = "empty";
 const std::string ROOT_DEFAULT_STRING = "";
 const std::string ROOT_KEY_STATIC_SAMPLERS = "staticSamplers";
 
+static const uint32_t ENGINE_RESIGSTER_SPACE = 0;
 static const uint32_t USER_REGISTER_SPACE = 1;
 
 const std::unordered_map<std::string, SUB_ROOT_TYPES> STRING_TO_ROOT_SUB_TYPE{
@@ -157,7 +158,8 @@ std::array<const CD3DX12_STATIC_SAMPLER_DESC, 7> getStaticSamplers() {
           anisotropicWrap, anisotropicClamp, shadowPCFClamp};
 }
 
-void processSRV(nlohmann::json &jobj, CD3DX12_ROOT_PARAMETER &param) {
+void processSRV(nlohmann::json &jobj, CD3DX12_ROOT_PARAMETER &param,
+                bool useRegister) {
   int defaultInt = -1;
   assert(jobj.find(ROOT_KEY_DATA) != jobj.end());
   auto &jdata = jobj[ROOT_KEY_DATA];
@@ -165,9 +167,12 @@ void processSRV(nlohmann::json &jobj, CD3DX12_ROOT_PARAMETER &param) {
   int startRegister =
       getValueIfInJson(jdata, ROOT_KEY_BASE_REGISTER, defaultInt);
   assert(startRegister != -1);
-  param.InitAsShaderResourceView(startRegister, 0, getVisibility(jobj));
+  param.InitAsShaderResourceView(startRegister,
+                                 useRegister ? USER_REGISTER_SPACE : 0,
+                                 getVisibility(jobj));
 }
-void processCBV(nlohmann::json &jobj, CD3DX12_ROOT_PARAMETER &param) {
+void processCBV(nlohmann::json &jobj, CD3DX12_ROOT_PARAMETER &param,
+                bool useRegister) {
   int defaultInt = -1;
   assert(jobj.find(ROOT_KEY_DATA) != jobj.end());
   auto &jdata = jobj[ROOT_KEY_DATA];
@@ -175,9 +180,12 @@ void processCBV(nlohmann::json &jobj, CD3DX12_ROOT_PARAMETER &param) {
   int startRegister =
       getValueIfInJson(jdata, ROOT_KEY_BASE_REGISTER, defaultInt);
   assert(startRegister != -1);
-  param.InitAsConstantBufferView(startRegister, 0, getVisibility(jobj));
+  param.InitAsConstantBufferView(startRegister,
+                                 useRegister ? USER_REGISTER_SPACE : 0,
+                                 getVisibility(jobj));
 }
-void processUAV(nlohmann::json &jobj, CD3DX12_ROOT_PARAMETER &param) {
+void processUAV(nlohmann::json &jobj, CD3DX12_ROOT_PARAMETER &param,
+                bool useRegister) {
   int defaultInt = -1;
   assert(jobj.find(ROOT_KEY_DATA) != jobj.end());
   auto &jdata = jobj[ROOT_KEY_DATA];
@@ -185,10 +193,13 @@ void processUAV(nlohmann::json &jobj, CD3DX12_ROOT_PARAMETER &param) {
   int startRegister =
       getValueIfInJson(jdata, ROOT_KEY_BASE_REGISTER, defaultInt);
   assert(startRegister != -1);
-  param.InitAsUnorderedAccessView(startRegister, 0, getVisibility(jobj));
+  param.InitAsUnorderedAccessView(startRegister,
+                                  useRegister ? USER_REGISTER_SPACE : 0,
+                                  getVisibility(jobj));
 }
 
-void processConstant(nlohmann::json &jobj, CD3DX12_ROOT_PARAMETER &param) {
+void processConstant(nlohmann::json &jobj, CD3DX12_ROOT_PARAMETER &param,
+                     bool useRegister) {
   int defaultInt = -1;
   assert(jobj.find(ROOT_KEY_DATA) != jobj.end());
   auto &jdata = jobj[ROOT_KEY_DATA];
@@ -199,50 +210,59 @@ void processConstant(nlohmann::json &jobj, CD3DX12_ROOT_PARAMETER &param) {
   int startRegister =
       getValueIfInJson(jdata, ROOT_KEY_BASE_REGISTER, defaultInt);
   assert(startRegister != -1);
-  param.InitAsConstants(sizeIn32Bit, startRegister, 0, getVisibility(jobj));
+  param.InitAsConstants(sizeIn32Bit, startRegister,
+                        useRegister ? USER_REGISTER_SPACE : 0,
+                        getVisibility(jobj));
 }
 
 void initDescriptorAsUAV(nlohmann::json &jobj,
-                         CD3DX12_DESCRIPTOR_RANGE &descriptor) {
+                         CD3DX12_DESCRIPTOR_RANGE &descriptor,
+                         bool useRegister) {
   int defaultInt = -1;
   int count = getValueIfInJson(jobj, ROOT_KEY_NUM_DESCRIPTOR, defaultInt);
   assert(count != -1);
   int startRegister =
       getValueIfInJson(jobj, ROOT_KEY_BASE_REGISTER, defaultInt);
   assert(startRegister != -1);
-  descriptor.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, count, startRegister);
+  descriptor.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, count, startRegister,
+                  useRegister ? USER_REGISTER_SPACE : 0);
 }
 
 void initDescriptorAsSRV(nlohmann::json &jobj,
-                         CD3DX12_DESCRIPTOR_RANGE &descriptor) {
+                         CD3DX12_DESCRIPTOR_RANGE &descriptor,
+                         bool useRegister) {
   int defaultInt = -1;
   int count = getValueIfInJson(jobj, ROOT_KEY_NUM_DESCRIPTOR, defaultInt);
   assert(count != -1);
   int startRegister =
       getValueIfInJson(jobj, ROOT_KEY_BASE_REGISTER, defaultInt);
   assert(startRegister != -1);
-  descriptor.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, count, startRegister);
+  descriptor.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, count, startRegister,
+                  useRegister ? USER_REGISTER_SPACE : 0);
 }
 
 void initDescriptorAsConstant(nlohmann::json &jobj,
-                              CD3DX12_DESCRIPTOR_RANGE &descriptor) {
+                              CD3DX12_DESCRIPTOR_RANGE &descriptor,
+                              bool useRegister) {
   int defaultInt = -1;
   int count = getValueIfInJson(jobj, ROOT_KEY_NUM_DESCRIPTOR, defaultInt);
   assert(count != -1);
   int startRegister =
       getValueIfInJson(jobj, ROOT_KEY_BASE_REGISTER, defaultInt);
   assert(startRegister != -1);
-  descriptor.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, count, startRegister);
+  descriptor.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, count, startRegister,
+                  useRegister ? USER_REGISTER_SPACE : 0);
 }
 
-void processDescriptorTable(nlohmann::json &jobj,
-                            CD3DX12_ROOT_PARAMETER &param) {
+void processDescriptorTable(nlohmann::json &jobj, CD3DX12_ROOT_PARAMETER &param,
+                            bool useRegister) {
   size_t size = jobj.size();
   assert(size != 0);
   assert(jobj.find(ROOT_KEY_DATA) != jobj.end());
   auto dataJ = jobj[ROOT_KEY_DATA];
   assert(dataJ.find(ROOT_KEY_RANGES) != dataJ.end());
   auto rangesJ = dataJ[ROOT_KEY_RANGES];
+  // TODO clean this up please
   auto *ranges = new CD3DX12_DESCRIPTOR_RANGE[rangesJ.size()];
   int counter = 0;
   const std::string defaultString = "";
@@ -253,15 +273,15 @@ void processDescriptorTable(nlohmann::json &jobj,
     SUB_ROOT_TYPES descriptorType = getTypeEnum(typeString);
     switch (descriptorType) {
     case (SUB_ROOT_TYPES::UAV): {
-      initDescriptorAsUAV(subRange, ranges[counter]);
+      initDescriptorAsUAV(subRange, ranges[counter], useRegister);
       break;
     }
     case (SUB_ROOT_TYPES::SRV): {
-      initDescriptorAsSRV(subRange, ranges[counter]);
+      initDescriptorAsSRV(subRange, ranges[counter], useRegister);
       break;
     }
     case (SUB_ROOT_TYPES::CBV): {
-      initDescriptorAsConstant(subRange, ranges[counter]);
+      initDescriptorAsConstant(subRange, ranges[counter], useRegister);
       break;
     }
     default: {
@@ -311,8 +331,22 @@ RootCompilerResult processSignatureFileToBlob(const char *path,
   assert(jvalue.find(ROOT_KEY_CONFIG) != jvalue.end());
   auto &configValue = jvalue[ROOT_KEY_CONFIG];
 
-  std::vector<CD3DX12_ROOT_PARAMETER> rootParams(configValue.size());
-  int counter = 0;
+  const std::string tempKey = "useRegisterSpace";
+  bool useRegister = getValueIfInJson(jvalue, tempKey, false);
+
+  int extraRegister = useRegister ? 1 : 0;
+
+  std::vector<CD3DX12_ROOT_PARAMETER> rootParams(configValue.size() +
+                                                 extraRegister);
+  if (useRegister) {
+    // create constant buffer for camera values
+    CD3DX12_DESCRIPTOR_RANGE ranges;
+    int startRegister = 0;
+    ranges.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, startRegister,
+                ENGINE_RESIGSTER_SPACE);
+    rootParams[0].InitAsDescriptorTable(1, &ranges);
+  }
+  int counter = 0 + extraRegister;
   for (auto &subConfig : configValue) {
     // getting the type of root
     std::string configTypeValueString =
@@ -321,23 +355,23 @@ RootCompilerResult processSignatureFileToBlob(const char *path,
     SUB_ROOT_TYPES configType = getTypeEnum(configTypeValueString);
     switch (configType) {
     case (SUB_ROOT_TYPES::CONSTANT): {
-      processConstant(subConfig, rootParams[counter]);
+      processConstant(subConfig, rootParams[counter], useRegister);
       break;
     }
     case (SUB_ROOT_TYPES::DESCRIPTOR_TABLE): {
-      processDescriptorTable(subConfig, rootParams[counter]);
+      processDescriptorTable(subConfig, rootParams[counter], useRegister);
       break;
     }
     case (SUB_ROOT_TYPES::SRV): {
-      processSRV(subConfig, rootParams[counter]);
+      processSRV(subConfig, rootParams[counter], useRegister);
       break;
     }
     case (SUB_ROOT_TYPES::CBV): {
-      processCBV(subConfig, rootParams[counter]);
+      processCBV(subConfig, rootParams[counter], useRegister);
       break;
     }
     case (SUB_ROOT_TYPES::UAV): {
-      processUAV(subConfig, rootParams[counter]);
+      processUAV(subConfig, rootParams[counter], useRegister);
       break;
     }
     default: {

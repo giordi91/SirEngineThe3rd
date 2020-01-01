@@ -26,7 +26,6 @@ void GammaAndToneMappingEffect::initialize() {
 void GammaAndToneMappingEffect::render(const TextureHandle input,
                                        const TextureHandle output,
                                        const PostProcessResources &) {
-
   annotateGraphicsBegin("Gamma & Tone-mapping");
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;

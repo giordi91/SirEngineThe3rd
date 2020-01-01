@@ -46,6 +46,7 @@ void SSSSSEffect::initialize() {
 void SSSSSEffect::render(const TextureHandle input, const TextureHandle output,
                          const PostProcessResources &resources) {
   annotateGraphicsBegin("SSSSS");
+
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
 

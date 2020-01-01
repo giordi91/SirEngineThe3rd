@@ -6,7 +6,7 @@
   "verboseStartup": true,
 
   "======GPU config=====": 0, 
-  "adapterVendor":"AMD",
+  "adapterVendor":"any",
   "vendorTolerant": true,
   "adapterSelectionRule":"largestFrameBuffer",
 
@@ -20,7 +20,7 @@
   "windowHeight": 720,
 
   "======graphics config=====": 0, 
-  "graphicAPI": "Vulkan",
+  "graphicAPI": "DX12",
   "useCachedPSO" :  false,
   "frameBufferingCount" : 3 
 }

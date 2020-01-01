@@ -7,16 +7,17 @@
 #include "platform/windows/graphics/dx12/d3dx12.h"
 
 #include <d3dcompiler.h>
+#include "rootSignatureCompile.h"
 
 namespace SirEngine {
 namespace dx12 {
 
 void Dx12RootSignatureManager::cleanup() {
   // cleanup the allocated root signatures
-  //for (const auto& it : m_rootRegister) {
+  // for (const auto& it : m_rootRegister) {
   //    getRootSignatureFromHandle(it.second)->Release();
   //}
-  //m_rootRegister.clear();
+  // m_rootRegister.clear();
 }
 
 void Dx12RootSignatureManager::loadSignatureBinaryFile(const char *file) {
@@ -57,17 +58,19 @@ void Dx12RootSignatureManager::loadSignatureBinaryFile(const char *file) {
     assert(res == S_OK);
     blob->Release();
 
+    //if (name == "standardPostProcessEffect_RS") {
+    //  auto resultCompile = processSignatureFile("../data/rs/standardPostProcessEffect_RS.json");
+    //  //rootSig = resultCompile.root;
+    //}
 
-	//generate the handle
+    // generate the handle
     uint32_t index;
-    RSData &rsdata= m_rsPool.getFreeMemoryData(index);
-    rsdata.rs= rootSig;
+    RSData &rsdata = m_rsPool.getFreeMemoryData(index);
+    rsdata.rs = rootSig;
     const RSHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
     rsdata.magicNumber = MAGIC_NUMBER_COUNTER;
-	m_rootRegister.insert(name.c_str(),handle);
+    m_rootRegister.insert(name.c_str(), handle);
     ++MAGIC_NUMBER_COUNTER;
-
-
   }
 }
 

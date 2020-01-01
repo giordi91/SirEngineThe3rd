@@ -1,7 +1,7 @@
 #include "../common/vertexDefinitions.hlsl"
 #include "../common/structures.hlsl"
 
-ConstantBuffer<CameraBuffer> g_cameraBuffer : register(b0);
+ConstantBuffer<CameraBuffer> g_camera: register(b0,space0);
 
 static const float4 arrBasePos[6] = {
     float4(-1.0f, 1.0f, 0.0f, 0.0f), float4(1.0f, 1.0f, 1.0f, 0.0f),

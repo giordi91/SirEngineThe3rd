@@ -26,15 +26,15 @@ void FinalBlitNode::compute() {
   globals::MATERIAL_MANAGER->bindMaterial(m_matHandle);
   // we also need to bind the input resource, which is the texture we want to
   // blit
-  static int test =0;
-  if(test ==0) {
-  
-  if (globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::DX12) {
-  globals::MATERIAL_MANAGER->bindTexture(m_matHandle, inputRTHandle, 1);
-  } else {
-  globals::MATERIAL_MANAGER->bindTexture(m_matHandle, inputRTHandle, 0);
-  }
-  }
+  static int test = 0;
+  //if (test == 0) {
+
+    if (globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::DX12) {
+      globals::MATERIAL_MANAGER->bindTexture(m_matHandle, inputRTHandle, 1);
+    } else {
+      globals::MATERIAL_MANAGER->bindTexture(m_matHandle, inputRTHandle, 0);
+    }
+  //}
 
   test++;
   // finally we submit a fullscreen pass
@@ -73,7 +73,8 @@ void FinalBlitNode::populateNodePorts() {
       globals::PERSISTENT_ALLOCATOR->allocate(sizeof(RTBinding)));
   bindings.extraBindingsCount = 1;
   bindings.extraBindings[0].handle = inputRTHandle;
-  bindings.extraBindings[0].currentResourceState = RESOURCE_STATE::RENDER_TARGET;
+  bindings.extraBindings[0].currentResourceState =
+      RESOURCE_STATE::RENDER_TARGET;
   bindings.extraBindings[0].neededResourceState =
       RESOURCE_STATE::SHADER_READ_RESOURCE;
   bindings.extraBindings[0].shouldClearColor = 0;
