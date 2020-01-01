@@ -75,7 +75,11 @@ void VkSimpleForward::populateNodePorts() {
 }
 
 void VkSimpleForward::clear() {
-  globals::TEXTURE_MANAGER->free(m_rtHandle);
-  globals::RENDERING_CONTEXT->freeBindingObject(m_bindHandle);
+  if (m_rtHandle.isHandleValid()) {
+    globals::TEXTURE_MANAGER->free(m_rtHandle);
+  }
+  if (m_bindHandle.isHandleValid()) {
+    globals::RENDERING_CONTEXT->freeBindingObject(m_bindHandle);
+  }
 }
 } // namespace SirEngine

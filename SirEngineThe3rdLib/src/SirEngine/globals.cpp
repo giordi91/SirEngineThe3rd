@@ -27,6 +27,7 @@ MeshManager *MESH_MANAGER = nullptr;
 MaterialManager *MATERIAL_MANAGER = nullptr;
 PSOManager *PSO_MANAGER = nullptr;
 RootSignatureManager *ROOT_SIGNATURE_MANAGER = nullptr;
+DependencyGraph *RENDERING_GRAPH =nullptr;
 
 // generic allocators
 StringPool *STRING_POOL = nullptr;

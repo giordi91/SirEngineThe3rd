@@ -153,7 +153,7 @@ void ImguiLayer::onAttach() {
       ImVec2(static_cast<float>(globals::ENGINE_CONFIG->m_windowWidth),
              static_cast<float>(globals::ENGINE_CONFIG->m_windowHeight));
 
-  m_renderGraph.initialize(dx12::RENDERING_GRAPH);
+  m_renderGraph.initialize(globals::RENDERING_GRAPH);
   m_shaderWidget.initialize();
 }
 
@@ -176,7 +176,7 @@ void ImguiLayer::onUpdate() {
                                                                     barriers);
     }
 
-    globals::TEXTURE_MANAGER->bindBackBuffer();
+    dx12::TEXTURE_MANAGER->bindBackBuffer();
     ImGui_ImplDX12_NewFrame();
   }
 
@@ -405,7 +405,7 @@ bool ImguiLayer::onKeyTypeEvent(const KeyTypeEvent &e) const {
 }
 
 bool ImguiLayer::onRenderGraphEvent(const RenderGraphChanged &) {
-  m_renderGraph.initialize(dx12::RENDERING_GRAPH);
+  m_renderGraph.initialize(globals::RENDERING_GRAPH);
   m_renderGraph.showGraph(true);
   return true;
 }

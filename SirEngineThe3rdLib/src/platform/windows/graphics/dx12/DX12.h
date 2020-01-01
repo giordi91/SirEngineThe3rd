@@ -128,7 +128,6 @@ extern FrameResource *CURRENT_FRAME_RESOURCE;
 extern Dx12TextureManager *TEXTURE_MANAGER;
 extern Dx12MeshManager *MESH_MANAGER;
 extern Dx12MaterialManager *MATERIAL_MANAGER;
-extern DependencyGraph *RENDERING_GRAPH;
 extern Dx12ConstantBufferManager *CONSTANT_BUFFER_MANAGER;
 extern ShaderManager *SHADER_MANAGER;
 extern Dx12RootSignatureManager *ROOT_SIGNATURE_MANAGER;

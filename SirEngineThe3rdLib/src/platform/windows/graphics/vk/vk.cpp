@@ -483,9 +483,30 @@ bool VkRenderingContext::shutdownGraphic() {
 
 void VkRenderingContext::flush() { vkDeviceWaitIdle(LOGICAL_DEVICE); }
 
-void VkRenderingContext::executeGlobalCommandList() { assert(0); }
+void VkRenderingContext::executeGlobalCommandList() {
+  auto buffer = CURRENT_FRAME_COMMAND->m_commandBuffer;
 
-void VkRenderingContext::resetGlobalCommandList() { assert(0); }
+  if (buffer == VK_NULL_HANDLE) {
+    return;
+  }
+
+  VK_CHECK(vkEndCommandBuffer(buffer));
+
+  VkSubmitInfo submitInfo = {VK_STRUCTURE_TYPE_SUBMIT_INFO};
+  submitInfo.commandBufferCount = 1;
+  submitInfo.pCommandBuffers = &buffer;
+
+  // Submit to the queue
+  VK_CHECK(vkQueueSubmit(GRAPHICS_QUEUE, 1, &submitInfo, nullptr));
+}
+
+void VkRenderingContext::resetGlobalCommandList() {
+  vkResetCommandPool(LOGICAL_DEVICE, CURRENT_FRAME_COMMAND->m_commandAllocator,
+                     0);
+  beginCommandBufferRecordingOperation(
+      CURRENT_FRAME_COMMAND->m_commandBuffer,
+      VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, nullptr);
+}
 
 void VkRenderingContext::addRenderablesToQueue(const Renderable &renderable) {
   auto *typedQueues = reinterpret_cast<VkRenderingQueues *>(queues);
@@ -639,7 +660,7 @@ VkFramebuffer *createFrameBuffer(VkRenderPass pass,
           sizeof(VkFramebuffer) * outFrameBufferCount));
 
   VkImageView imageViews[10]{};
-  for (int swap = 0; swap < outFrameBufferCount; ++swap) {
+  for (uint32_t swap = 0; swap < outFrameBufferCount; ++swap) {
 
     int count = 0;
     for (int i = 0; i < 8; ++i) {
@@ -721,7 +742,8 @@ void VkRenderingContext::setBindingObject(const BufferBindingsHandle handle) {
 
   VkRenderPassBeginInfo beginInfo = {VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};
   beginInfo.renderPass = data.m_pass;
-  uint32_t bufferIdx = data.m_frameBufferCount == 1? 1 :globals::CURRENT_FRAME;
+  uint32_t bufferIdx =
+      data.m_frameBufferCount == 1 ? 1 : globals::CURRENT_FRAME;
   beginInfo.framebuffer = data.m_buffer[bufferIdx];
 
   // similar to a viewport mostly used on "tiled renderers" to optimize, talking
