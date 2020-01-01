@@ -35,6 +35,8 @@ const std::string ROOT_EMPTY = "empty";
 const std::string ROOT_DEFAULT_STRING = "";
 const std::string ROOT_KEY_STATIC_SAMPLERS = "staticSamplers";
 
+static const uint32_t USER_REGISTER_SPACE = 1;
+
 const std::unordered_map<std::string, SUB_ROOT_TYPES> STRING_TO_ROOT_SUB_TYPE{
     {"constant", SUB_ROOT_TYPES::CONSTANT},
     {"descriptorTable", SUB_ROOT_TYPES::DESCRIPTOR_TABLE},
