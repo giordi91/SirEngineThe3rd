@@ -35,19 +35,19 @@ public:
   Dx12TextureManager &operator=(const Dx12TextureManager &) = delete;
   virtual TextureHandle loadTexture(const char *path,
                                     bool cubeMap = false) override;
-  virtual void free(const TextureHandle handle) override;
-  virtual TextureHandle allocateTexture(uint32_t width, uint32_t height,
-                                        RenderTargetFormat format,
-                                        const char *name,
-                                        uint32_t allocFlags = 0) override;
-  virtual void bindRenderTarget(TextureHandle handle,
+  void free(const TextureHandle handle) override;
+  TextureHandle allocateTexture(
+      uint32_t width, uint32_t height, RenderTargetFormat format,
+      const char *name, uint32_t allocFlags,
+      RESOURCE_STATE finalState) override;
+  void bindRenderTarget(TextureHandle handle,
                                 TextureHandle depth) override;
-  virtual void bindRenderTargetStencil(TextureHandle handle,
+  void bindRenderTargetStencil(TextureHandle handle,
                                        TextureHandle depth);
 
-  virtual void clearDepth(const TextureHandle depth, const float depthValue,
+  void clearDepth(const TextureHandle depth, const float depthValue,
                           const float stencilValue) override;
-  virtual void clearRT(const TextureHandle handle,
+  void clearRT(const TextureHandle handle,
                        const float color[4]) override;
 
   void initialize() override;
@@ -57,7 +57,8 @@ public:
   TextureHandle initializeFromResourceDx12(ID3D12Resource *resource,
                                            const char *name,
                                            D3D12_RESOURCE_STATES state);
-  void bindBackBuffer() const;;
+  void bindBackBuffer() const;
+  ;
 
   // handles facilities
   DescriptorPair getSRVDx12(const TextureHandle handle) {

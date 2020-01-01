@@ -68,7 +68,8 @@ enum class SHADER_TYPE_FLAGS {
   HAIRSKIN,
   FORWARD_PARALLAX,
   SHADOW_SKIN_CLUSTER,
-  HDR_TO_SDR
+  HDR_TO_SDR,
+  HDR_TO_SDR_VK
 };
 
 class MaterialManager {
@@ -83,6 +84,10 @@ protected:
   };
 
 public:
+  enum ALLOCATE_MATERIAL_FLAG_BITS { NONE = 0, BUFFERED = 1 };
+  typedef uint32_t ALLOCATE_MATERIAL_FLAGS;
+
+public:
   MaterialManager(const uint32_t reserveSize)
       : m_shderTypeToShaderBind(reserveSize){};
   virtual ~MaterialManager() = default;
@@ -95,7 +100,7 @@ public:
   virtual void cleanup() = 0;
 
   virtual MaterialHandle allocateMaterial(const char *type, const char *name,
-                                          uint32_t flags) = 0;
+                                          ALLOCATE_MATERIAL_FLAGS flags) = 0;
   virtual MaterialHandle loadMaterial(const char *path,
                                       const MeshHandle meshHandle,
                                       const SkinHandle skinHandle) = 0;

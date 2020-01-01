@@ -649,14 +649,6 @@ void Dx12RenderingContext::renderQueueType(const DrawCallConfig &config,
                                              commandList);
 
         dx12::MESH_MANAGER->render(renderable.m_meshRuntime, currentFc);
-
-        // if(SHADER_QUEUE_FLAGS::SHADOW == queueFlag) {
-        //	dx12::MESH_MANAGER->bindMeshRuntimeAndRenderPosOnly(renderable.m_meshRuntime,
-        //												 currentFc);
-        //} else {
-        //	dx12::MESH_MANAGER->bindMeshRuntimeAndRender(renderable.m_meshRuntime,
-        //												 currentFc);
-        //}
       }
       annotateGraphicsEnd();
     }

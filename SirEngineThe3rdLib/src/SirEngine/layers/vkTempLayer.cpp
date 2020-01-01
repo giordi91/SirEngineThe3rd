@@ -6,6 +6,7 @@
 #include "SirEngine/graphics/camera.h"
 
 #include "SirEngine/assetManager.h"
+#include "SirEngine/graphics/nodes/FinalBlitNode.h"
 #include "SirEngine/graphics/nodes/vkSimpleForward.h"
 #include "SirEngine/layers/vkTempLayer.h"
 #include "platform/windows/graphics/vk/vk.h"
@@ -15,8 +16,8 @@
 #include "platform/windows/graphics/vk/vkPSOManager.h"
 #include "platform/windows/graphics/vk/vkShaderManager.h"
 #include "platform/windows/graphics/vk/vkSwapChain.h"
-#include "platform/windows/graphics/vk/volk.h"
 #include "platform/windows/graphics/vk/vkTextureManager.h"
+#include "platform/windows/graphics/vk/volk.h"
 
 namespace SirEngine {
 
@@ -41,17 +42,25 @@ void VkTempLayer::onAttach() {
 
   globals::RENDERING_GRAPH = new DependencyGraph();
   m_forward = new VkSimpleForward(*alloc);
+  const auto finalBlit = new FinalBlitNode(*alloc);
 
   // temporary graph for testing
   globals::RENDERING_GRAPH->addNode(m_forward);
-  globals::RENDERING_GRAPH->setFinalNode(m_forward);
-  //TODO this whole reset execute flush needs to be reworked
+  // globals::RENDERING_GRAPH->setFinalNode(m_forward);
+  globals::RENDERING_GRAPH->addNode(finalBlit);
+  globals::RENDERING_GRAPH->setFinalNode(finalBlit);
+
+  globals::RENDERING_GRAPH->connectNodes(m_forward,
+                                         VkSimpleForward::OUT_TEXTURE,
+                                         finalBlit, FinalBlitNode::IN_TEXTURE);
+
+  // TODO this whole reset execute flush needs to be reworked
   globals::RENDERING_CONTEXT->resetGlobalCommandList();
   globals::RENDERING_GRAPH->finalizeGraph();
   globals::RENDERING_CONTEXT->executeGlobalCommandList();
   globals::RENDERING_CONTEXT->flush();
-  //m_forward->initialize();
-  //m_forward->populateNodePorts();
+  // m_forward->initialize();
+  // m_forward->populateNodePorts();
 }
 
 void VkTempLayer::onDetach() {}
@@ -78,6 +87,7 @@ void VkTempLayer::onUpdate() {
   // VK_PIPELINE_BIND_POINT_GRAPHICS, PIPELINE_LAYOUT, 0, ARRAYSIZE(descriptor),
   //                            descriptor);
 
+  /*
   int idx = 0;
   vk::VkTexture2D m_rt = vk::TEXTURE_MANAGER->getTextureData(
       {m_forward->getOutputPlugs(idx)->plugValue});
@@ -165,6 +175,7 @@ void VkTempLayer::onUpdate() {
       vk::CURRENT_FRAME_COMMAND->m_commandBuffer,
       VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
       VK_DEPENDENCY_DEVICE_GROUP_BIT, 0, nullptr, 0, nullptr, 2, barrier);
+      */
 }
 void VkTempLayer::onEvent(Event &event) {
   EventDispatcher dispatcher(event);
@@ -188,7 +199,7 @@ void VkTempLayer::onEvent(Event &event) {
 
 void VkTempLayer::clear() {
   vkDeviceWaitIdle(vk::LOGICAL_DEVICE);
-  m_forward->clear();
+  globals::RENDERING_GRAPH->clear();
 }
 
 bool VkTempLayer::onMouseButtonPressEvent(MouseButtonPressEvent &e) {

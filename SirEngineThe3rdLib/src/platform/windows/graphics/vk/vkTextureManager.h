@@ -1,6 +1,7 @@
 #pragma once
 
 #include "SirEngine/core.h"
+#include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/handle.h"
 #include "SirEngine/layers/vkTempLayer.h"
 #include "SirEngine/memory/SparseMemoryPool.h"
@@ -17,7 +18,9 @@ struct VkTexture2D {
   VkDeviceMemory deviceMemory;
   VkImageLayout imageLayout;
   VkImageView view;
-  VkDescriptorImageInfo descriptor{};
+  // VkDescriptorImageInfo descriptor{};
+  VkDescriptorImageInfo rtv{};
+  VkDescriptorImageInfo srv{};
   VkFormat format;
   VkImageLayout layout;
   uint32_t isRenderTarget : 1;
@@ -37,17 +40,17 @@ public:
   virtual TextureHandle loadTexture(const char *path,
                                     bool cubeMap = false) override;
   virtual void free(const TextureHandle handle) override;
-  virtual TextureHandle allocateTexture(uint32_t width, uint32_t height,
-                                              RenderTargetFormat format,
-                                              const char *name,
-                                              uint32_t allocFlags =0) override;
+  virtual TextureHandle allocateTexture(
+      uint32_t width, uint32_t height, RenderTargetFormat format,
+      const char *name, uint32_t allocFlags,
+      RESOURCE_STATE finalState) override;
   virtual void bindRenderTarget(TextureHandle handle,
                                 TextureHandle depth) override;
   virtual void bindRenderTargetStencil(TextureHandle handle,
                                        TextureHandle depth);
 
-  virtual void clearDepth(const TextureHandle depth,
-                          float depthValue,float stencilValue) override;
+  virtual void clearDepth(const TextureHandle depth, float depthValue,
+                          float stencilValue) override;
   virtual void clearRT(const TextureHandle handle,
                        const float color[4]) override;
 
@@ -61,8 +64,7 @@ public:
     const auto &data = m_texturePool.getConstRef(idx);
     return data;
   };
-  VkFormat getTextureFormat(const TextureHandle &handle)
-  {
+  VkFormat getTextureFormat(const TextureHandle &handle) {
     assertMagicNumber(handle);
     const uint32_t idx = getIndexFromHandle(handle);
     const auto &data = m_texturePool.getConstRef(idx);
@@ -71,16 +73,23 @@ public:
 
   void bindTexture(const TextureHandle &handle,
                    VkWriteDescriptorSet *writeDescriptorSets,
-                   VkDescriptorSet descriptorSet, uint32_t bindSlot) {
+                   VkDescriptorSet descriptorSet, uint32_t bindSlot
+                   //, VkImageLayout layout = VK_IMAGE_LAYOUT_UNDEFINED
+  ) {
     assertMagicNumber(handle);
     const uint32_t idx = getIndexFromHandle(handle);
     const auto &data = m_texturePool.getConstRef(idx);
+
+    // auto desc = data.descriptor;
+    // if (layout != VK_IMAGE_LAYOUT_UNDEFINED) {
+    //    desc.imageLayout = layout;
+    //}
 
     writeDescriptorSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writeDescriptorSets[0].dstSet = descriptorSet;
     writeDescriptorSets[0].dstBinding = bindSlot;
     writeDescriptorSets[0].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-    writeDescriptorSets[0].pImageInfo = &data.descriptor;
+    writeDescriptorSets[0].pImageInfo = &data.srv;
     writeDescriptorSets[0].descriptorCount = 1;
   };
   void bindTexture(const VkDescriptorImageInfo &info,
@@ -97,11 +106,11 @@ public:
   };
 
   inline VkDescriptorImageInfo
-  getTextureDescriptor(const TextureHandle handle) const {
+  getSrvDescriptor(const TextureHandle handle) const {
     assertMagicNumber(handle);
     const uint32_t idx = getIndexFromHandle(handle);
     const auto &data = m_texturePool.getConstRef(idx);
-    return data.descriptor;
+    return data.srv;
   }
 
 private:

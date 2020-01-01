@@ -360,9 +360,10 @@ bool VkTextureManager::loadTextureFromFile(const char *name, VkFormat format,
     updateDescriptor();
     */
     // outTexture.descriptor.sampler = outTexture.sampler;
-    outTexture.descriptor.sampler = 0;
-    outTexture.descriptor.imageView = outTexture.view;
-    outTexture.descriptor.imageLayout = imageLayout;
+
+    outTexture.srv.sampler = 0;
+    outTexture.srv.imageView = outTexture.view;
+    outTexture.srv.imageLayout = imageLayout;
 
     return true;
   } else {
@@ -584,9 +585,9 @@ bool VkTextureManager::loadTextureFromFile(const char *name, VkFormat format,
     updateDescriptor();
     */
     // outTexture.descriptor.sampler = outTexture.sampler;
-    outTexture.descriptor.sampler = 0;
-    outTexture.descriptor.imageView = outTexture.view;
-    outTexture.descriptor.imageLayout = imageLayout;
+    outTexture.srv.sampler = 0;
+    outTexture.srv.imageView = outTexture.view;
+    outTexture.srv.imageLayout = imageLayout;
 
     return true;
   }
@@ -660,18 +661,22 @@ void VkTextureManager::free(const TextureHandle handle) {
   m_texturePool.free(index);
 }
 
-TextureHandle VkTextureManager::allocateTexture(uint32_t width,
-                                                      uint32_t height,
-                                                      RenderTargetFormat format,
-                                                      const char *name,
-                                                      uint32_t allocFlags) {
+
+
+
+	
+TextureHandle VkTextureManager::allocateTexture(uint32_t width, uint32_t height,
+                                                RenderTargetFormat format,
+                                                const char *name,
+                                                uint32_t allocFlags,RESOURCE_STATE finalState) {
 
   // NOTE for now this is hardcoded, if necessary will be changed
-  VkImageLayout imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  VkImageLayout imageLayout = fromStateToLayout(finalState);
 
   // TODO have this being built by generic flags passed in
-  VkImageUsageFlags imageUsageFlags =
-      VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+  VkImageUsageFlags imageUsageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
+                                      VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
+                                      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
   const std::string textureName = getFileName(name);
 
@@ -777,13 +782,13 @@ TextureHandle VkTextureManager::allocateTexture(uint32_t width,
 
   // Update descriptor image info member that can be used for setting up
   // descriptor sets
-  /*
-  updateDescriptor();
-  */
-  // data.descriptor.sampler = data.sampler;
-  data.descriptor.sampler = nullptr;
-  data.descriptor.imageView = data.view;
-  data.descriptor.imageLayout = imageLayout;
+  data.rtv.sampler = nullptr;
+  data.rtv.imageView = data.view;
+  data.rtv.imageLayout = imageLayout;
+
+  data.srv.sampler = nullptr;
+  data.srv.imageView = data.view;
+  data.srv.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
   // build the handle
   data.magicNumber = MAGIC_NUMBER_COUNTER++;
@@ -841,7 +846,6 @@ if (depth.isHandleValid()) {
 commandList->OMSetRenderTargets(1, handles, true, depthDesc);
 */
 }
-
 
 void VkTextureManager::clearDepth(const TextureHandle depth,
                                   const float depthValue,

@@ -594,9 +594,8 @@ void VkMaterialManager::bindRSandPSO(const uint32_t shaderFlags,
 }
 
 inline VkDescriptorImageInfo getDescriptor(const TextureHandle handle) {
-  return handle.isHandleValid()
-             ? vk::TEXTURE_MANAGER->getTextureDescriptor(handle)
-             : VkDescriptorImageInfo{};
+  return handle.isHandleValid() ? vk::TEXTURE_MANAGER->getSrvDescriptor(handle)
+                                : VkDescriptorImageInfo{};
 }
 
 MaterialHandle VkMaterialManager::loadMaterial(const char *path,
@@ -605,7 +604,7 @@ MaterialHandle VkMaterialManager::loadMaterial(const char *path,
   PrelinaryMaterialParse parse = parseMaterial(path, meshHandle, skinHandle);
 
   uint32_t index;
-  MaterialData &materialData =
+  VkMaterialData &materialData =
       m_materialTextureHandles.getFreeMemoryData(index);
 
   materialData.m_material = parse.mat;
@@ -658,8 +657,9 @@ MaterialHandle VkMaterialManager::loadMaterial(const char *path,
     if (!found) {
       assert(0 && "could not find needed root signature");
     }
-    uint32_t flags =
-        parse.isStatic ? 0 : VkDescriptorManager::DESCRIPTOR_FLAGS::BUFFERED;
+    uint32_t flags = parse.isStatic
+                         ? 0
+                         : VkDescriptorManager::DESCRIPTOR_FLAGS_BITS::BUFFERED;
 
     const char *shaderTypeName =
         getStringFromShaderTypeFlag(static_cast<SHADER_TYPE_FLAGS>(typeFlags));
@@ -698,7 +698,7 @@ void VkMaterialManager::releaseAllMaterialsAndRelatedResources() {
       // now that we have the handle we can get the data
       assertMagicNumber(value);
       const uint32_t index = getIndexFromHandle(value);
-      const MaterialData &data = m_materialTextureHandles.getConstRef(index);
+      const VkMaterialData &data = m_materialTextureHandles.getConstRef(index);
       freeTextureIfNeeded(data.handles.albedo);
       freeTextureIfNeeded(data.handles.normal);
       freeTextureIfNeeded(data.handles.metallic);
@@ -717,8 +717,103 @@ void VkMaterialManager::releaseAllMaterialsAndRelatedResources() {
         // globals::SKIN_MANAGER->free(data.handles.skinHandle);
       }
 
-      vk::MESH_MANAGER->free(data.m_materialRuntime.meshHandle);
+      if (data.m_materialRuntime.meshHandle.isHandleValid()) {
+        vk::MESH_MANAGER->free(data.m_materialRuntime.meshHandle);
+      }
     }
   }
+}
+
+MaterialHandle
+VkMaterialManager::allocateMaterial(const char *type, const char *name,
+                                    ALLOCATE_MATERIAL_FLAGS flags) {
+  // from the type we can get the PSO
+  uint16_t shaderType = parseTypeFlags(type);
+  ShaderBind bind;
+  bool found = m_shderTypeToShaderBind.get(shaderType, bind);
+  assert(found && "could not find requested material type");
+  assert(bind.pso.isHandleValid());
+  assert(bind.rs.isHandleValid());
+
+  // allocating a descriptor set for the material
+  bool isBuffered = (flags & ALLOCATE_MATERIAL_FLAG_BITS::BUFFERED) > 0;
+  VkDescriptorManager::DESCRIPTOR_FLAGS descriptorFlags =
+      isBuffered ? VkDescriptorManager::BUFFERED : 0;
+  DescriptorHandle descriptorHandle =
+      vk::DESCRIPTOR_MANAGER->allocate(bind.rs, descriptorFlags, name);
+
+  // empty material
+  uint32_t index;
+  VkMaterialData &materialData =
+      m_materialTextureHandles.getFreeMemoryData(index);
+  materialData.magicNumber = MAGIC_NUMBER_COUNTER++;
+
+  // this will be used when we need to bind the material
+  materialData.m_psoHandle = bind.pso;
+  materialData.m_rsHandle = bind.rs;
+  materialData.m_descriptorHandle = descriptorHandle;
+  materialData.name = persistentString(name);
+
+  MaterialHandle handle{(materialData.magicNumber << 16) | (index)};
+  m_nameToHandle.insert(name, handle);
+  return handle;
+}
+
+void VkMaterialManager::bindTexture(MaterialHandle matHandle,
+                                    TextureHandle texHandle,
+                                    uint32_t bindingIndex) {
+  assertMagicNumber(matHandle);
+  uint32_t index = getIndexFromHandle(matHandle);
+  const auto &data = m_materialTextureHandles.getConstRef(index);
+  VkDescriptorSet descriptorSet =
+      vk::DESCRIPTOR_MANAGER->getDescriptorSet(data.m_descriptorHandle);
+
+  VkWriteDescriptorSet writeDescriptorSets{};
+
+  vk::TEXTURE_MANAGER->bindTexture(texHandle, &writeDescriptorSets,
+                                   descriptorSet, bindingIndex);
+
+  // Execute the writes to update descriptors for this set
+  // Note that it's also possible to gather all writes and only run updates
+  // once, even for multiple sets This is possible because each
+  // VkWriteDescriptorSet also contains the destination set to be updated
+  // For simplicity we will update once per set instead
+  // object one off update
+  vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, 1, &writeDescriptorSets, 0,
+                         nullptr);
+}
+
+void VkMaterialManager::bindMaterial(const MaterialHandle handle) {
+  assertMagicNumber(handle);
+  uint32_t index = getIndexFromHandle(handle);
+  const auto &data = m_materialTextureHandles.getConstRef(index);
+  vk::PSO_MANAGER->bindPSO(data.m_psoHandle,
+                           CURRENT_FRAME_COMMAND->m_commandBuffer);
+
+  VkDescriptorSet descriptorSet =
+      vk::DESCRIPTOR_MANAGER->getDescriptorSet(data.m_descriptorHandle);
+  VkPipelineLayout layout =
+      vk::PIPELINE_LAYOUT_MANAGER->getLayoutFromHandle(data.m_rsHandle);
+
+  VkDescriptorSet sets[] = {
+      vk::DESCRIPTOR_MANAGER->getDescriptorSet(PER_FRAME_DATA_HANDLE),
+      descriptorSet, vk::STATIC_SAMPLERS_DESCRIPTOR_SET};
+  // multiple descriptor sets
+  vkCmdBindDescriptorSets(CURRENT_FRAME_COMMAND->m_commandBuffer,
+                          VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0, 3, sets,
+                          0, nullptr);
+}
+
+void VkMaterialManager::free(MaterialHandle handle) {
+  // TODO properly cleanup the resources
+  assertMagicNumber(handle);
+  uint32_t index = getIndexFromHandle(handle);
+  const auto &data = m_materialTextureHandles.getConstRef(index);
+
+  if (data.name != nullptr) {
+    m_nameToHandle.remove(data.name);
+  }
+
+  m_materialTextureHandles.free(index);
 }
 } // namespace SirEngine::vk

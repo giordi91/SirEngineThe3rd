@@ -122,25 +122,22 @@ TextureHandle Dx12TextureManager::initializeFromResourceDx12(
   return handle;
 }
 
-void Dx12TextureManager::bindBackBuffer() const
-{
-	const TextureHandle destination =
-		dx12::SWAP_CHAIN->currentBackBufferTexture();
-	D3D12_RESOURCE_BARRIER barriers[2];
-	int counter = 0;
-	auto* currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
-	auto commandList = currentFc->commandList;
-	counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
-		destination, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, counter);
-	if (counter)
-	{
-		commandList->ResourceBarrier(counter, barriers);
-	}
+void Dx12TextureManager::bindBackBuffer() const {
+  const TextureHandle destination =
+      dx12::SWAP_CHAIN->currentBackBufferTexture();
+  D3D12_RESOURCE_BARRIER barriers[2];
+  int counter = 0;
+  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
+  auto commandList = currentFc->commandList;
+  counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
+      destination, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, counter);
+  if (counter) {
+    commandList->ResourceBarrier(counter, barriers);
+  }
 
-	auto back = dx12::SWAP_CHAIN->currentBackBufferView();
-	commandList->OMSetRenderTargets(1, &back, true, nullptr);
+  auto back = dx12::SWAP_CHAIN->currentBackBufferView();
+  commandList->OMSetRenderTargets(1, &back, true, nullptr);
 }
-
 
 DescriptorPair
 Dx12TextureManager::getSrvStencilDx12(const TextureHandle handle) {
@@ -215,11 +212,9 @@ inline DXGI_FORMAT convertToDXGIFormat(const RenderTargetFormat format) {
   return DXGI_FORMAT_UNKNOWN;
 }
 
-TextureHandle Dx12TextureManager::allocateTexture(uint32_t width,
-                                                  uint32_t height,
-                                                  RenderTargetFormat format,
-                                                  const char *name,
-                                                  uint32_t allocFlags) {
+TextureHandle Dx12TextureManager::allocateTexture(
+    uint32_t width, uint32_t height, RenderTargetFormat format,
+    const char *name, uint32_t allocFlags, RESOURCE_STATE finalState) {
   // convert SirEngine format to dx12 format
   DXGI_FORMAT actualFormat = convertToDXGIFormat(format);
 
@@ -353,7 +348,6 @@ void Dx12TextureManager::bindRenderTargetStencil(TextureHandle handle,
   }
   commandList->OMSetRenderTargets(1, handles, true, depthDesc);
 }
-
 
 void Dx12TextureManager::clearDepth(const TextureHandle depth,
                                     const float depthValue,

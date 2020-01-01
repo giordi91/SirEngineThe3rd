@@ -1,0 +1,6 @@
+{
+  "pso" :  "vkHDRtoSDREffect_PSO", 
+  "rs"  :  "vkStandardPostProcessEffect_RS",
+  "type" : "vkHDRtoSDREffect"
+}
+

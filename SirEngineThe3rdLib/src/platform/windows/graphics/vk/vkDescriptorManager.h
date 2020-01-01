@@ -14,6 +14,7 @@ class VkDescriptorManager final {
     uint16_t isBuffered : 1;
     uint16_t padding : 15;
     VkDescriptorSet *sets;
+	VkDescriptorSetLayout layout;
   };
 
   struct DescriptorPoolDefinition {
@@ -22,7 +23,8 @@ class VkDescriptorManager final {
   };
 
 public:
-  enum DESCRIPTOR_FLAGS { BUFFERED = 1 };
+  enum DESCRIPTOR_FLAGS_BITS { BUFFERED = 1 };
+  typedef uint32_t DESCRIPTOR_FLAGS;
 
 public:
   VkDescriptorManager(uint32_t uniformDescriptorCount,
@@ -38,10 +40,10 @@ public:
   void initialize();
   void cleanup();
 
-  DescriptorHandle allocate(const RSHandle handle, uint32_t flags,
+  DescriptorHandle allocate(const RSHandle handle, DESCRIPTOR_FLAGS flags,
                             const char *name);
-  DescriptorHandle allocate(VkDescriptorSetLayout layout, uint32_t flags,
-                            const char *name);
+  DescriptorHandle allocate(VkDescriptorSetLayout layout,
+                            DESCRIPTOR_FLAGS flags, const char *name);
 
   VkDescriptorSet getDescriptorSet(const DescriptorHandle handle) const {
     assertMagicNumber(handle);
@@ -49,6 +51,12 @@ public:
     const DescriptorData &data = m_descriptorDataPool.getConstRef(index);
     uint32_t setIndex = data.isBuffered ? globals::CURRENT_FRAME : 0;
     return data.sets[setIndex];
+  }
+  VkDescriptorSetLayout getDescriptorSetLayout(const DescriptorHandle handle) const {
+    assertMagicNumber(handle);
+    uint32_t index = getIndexFromHandle(handle);
+    const DescriptorData &data = m_descriptorDataPool.getConstRef(index);
+    return data.layout;
   }
 
   VkDescriptorPool getPool() const { return m_descriptorPool; }

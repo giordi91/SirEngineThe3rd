@@ -7,20 +7,7 @@ namespace SirEngine {
 VkSimpleForward::VkSimpleForward(GraphAllocators &allocators)
     : GNode("SimpleForward", "SimpleForward", allocators) {
 
-  defaultInitializePlugsAndConnections(3, 1);
-  // lets create the plugs
-  GPlug &inTexture = m_inputPlugs[PLUG_INDEX(PLUGS::IN_TEXTURE)];
-  inTexture.plugValue = 0;
-  inTexture.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
-  inTexture.nodePtr = this;
-  inTexture.name = "inTexture";
-
-  GPlug &depthBuffer = m_inputPlugs[PLUG_INDEX(PLUGS::DEPTH_RT)];
-  depthBuffer.plugValue = 0;
-  depthBuffer.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
-  depthBuffer.nodePtr = this;
-  depthBuffer.name = "depthTexture";
-
+  defaultInitializePlugsAndConnections(0, 1);
   GPlug &outTexture = m_outputPlugs[PLUG_INDEX(PLUGS::OUT_TEXTURE)];
   outTexture.plugValue = 0;
   outTexture.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
@@ -34,7 +21,8 @@ void VkSimpleForward::initialize() {
   int height = globals::ENGINE_CONFIG->m_windowHeight;
 
   m_rtHandle = globals::TEXTURE_MANAGER->allocateTexture(
-      width, height, RenderTargetFormat::RGBA32, "simpleForwardRT");
+      width, height, RenderTargetFormat::RGBA32, "simpleForwardRT", 0,
+      RESOURCE_STATE::SHADER_READ_RESOURCE);
 }
 
 void VkSimpleForward::compute() {
@@ -67,6 +55,10 @@ void VkSimpleForward::populateNodePorts() {
   bindings.colorRT[0].handle = m_rtHandle;
   bindings.colorRT[0].clearColor = {0.4, 0.4, 0.4, 1};
   bindings.colorRT[0].shouldClearColor = true;
+  bindings.colorRT[0].currentResourceState =
+      RESOURCE_STATE::SHADER_READ_RESOURCE;
+  bindings.colorRT[0].neededResourceState = RESOURCE_STATE::RENDER_TARGET;
+  bindings.colorRT[0].isSwapChainBackBuffer =0;
   bindings.width = globals::ENGINE_CONFIG->m_windowWidth;
   bindings.height = globals::ENGINE_CONFIG->m_windowHeight;
 
