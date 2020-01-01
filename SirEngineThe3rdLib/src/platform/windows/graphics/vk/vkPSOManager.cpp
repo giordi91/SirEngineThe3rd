@@ -240,7 +240,7 @@ void createPerFrameDataDescriptorSet(VkDescriptorSetLayout &layout) {
                  "perFrameDataDescriptorSetLayout");
 
   PER_FRAME_DATA_HANDLE = vk::DESCRIPTOR_MANAGER->allocate(
-      layout, VkDescriptorManager::DESCRIPTOR_FLAGS::BUFFERED,
+      layout, VkDescriptorManager::DESCRIPTOR_FLAGS_BITS::BUFFERED,
       "perFrameDataDescriptor");
 }
 
@@ -268,8 +268,8 @@ void createStaticSamplerDescriptorSet() {
                  "staticSamplersDescriptorSetLayout");
 
   STATIC_SAMPLERS_HANDLE = vk::DESCRIPTOR_MANAGER->allocate(
-      STATIC_SAMPLERS_LAYOUT, VkDescriptorManager::DESCRIPTOR_FLAGS::BUFFERED,
-      "staticSamplers");
+      STATIC_SAMPLERS_LAYOUT,
+      VkDescriptorManager::DESCRIPTOR_FLAGS_BITS::BUFFERED, "staticSamplers");
   STATIC_SAMPLERS_DESCRIPTOR_SET =
       vk::DESCRIPTOR_MANAGER->getDescriptorSet(STATIC_SAMPLERS_HANDLE);
 
@@ -367,12 +367,6 @@ VkCullModeFlagBits getCullMode(const nlohmann::json &jobj) {
 
 void getRasterInfo(const nlohmann::json jobj,
                    VkPipelineRasterizationStateCreateInfo &rasterInfo) {
-  rasterInfo.depthClampEnable = false;
-  rasterInfo.rasterizerDiscardEnable = false;
-  rasterInfo.polygonMode = VK_POLYGON_MODE_FILL;
-  rasterInfo.cullMode = VK_CULL_MODE_FRONT_BIT;
-  rasterInfo.lineWidth = 1.0f; // even if we don't use it must be specified
-  rasterInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 
   const std::string rasterStateString =
       getValueIfInJson(jobj, PSO_KEY_RASTER_STATE, DEFAULT_STRING);
@@ -383,6 +377,7 @@ void getRasterInfo(const nlohmann::json jobj,
     rasterInfo.rasterizerDiscardEnable = false;
     rasterInfo.polygonMode = VK_POLYGON_MODE_FILL;
     rasterInfo.cullMode = VK_CULL_MODE_BACK_BIT;
+    // rasterInfo.cullMode = VK_CULL_MODE_NONE;
     rasterInfo.lineWidth = 1.0f; // even if we don't use it must be specified
     rasterInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
     return;

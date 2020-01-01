@@ -68,44 +68,6 @@ debugCallback2(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
   return VK_FALSE;
 }
 
-/*
-bool loadFunctionExportedFromVulkanLoaderLibrary(
-    LIBRARY_TYPE const &vulkanLibrary) {
-#if defined _WIN32
-#define LoadFunction GetProcAddress
-#elif defined __linux
-#define LoadFunction dlsym
-#endif
-
-#define EXPORTED_VULKAN_FUNCTION(name)                                         \
-  name = (PFN_##name)LoadFunction(vulkanLibrary, #name);                       \
-  if (name == nullptr) {                                                       \
-    std::cout << "Could not load exported Vulkan function named: " #name       \
-              << std::endl;                                                    \
-    return false;                                                              \
-  }
-
-#include "ListOfVulkanFunctions.inl"
-
-  return true;
-}
-*/
-
-/*
-bool loadGlobalLevelFunctions() {
-#define GLOBAL_LEVEL_VULKAN_FUNCTION(name)                                     \
-  name = (PFN_##name)vkGetInstanceProcAddr(nullptr, #name);                    \
-  if (name == nullptr) {                                                       \
-    std::cout << "Could not load global level Vulkan function named: " #name   \
-              << std::endl;                                                    \
-    return false;                                                              \
-  }
-
-#include "ListOfVulkanFunctions.inl"
-
-  return true;
-}
-*/
 bool isExtensionSupported(
     std::vector<VkExtensionProperties> const &availableExtensions,
     char const *const extension) {

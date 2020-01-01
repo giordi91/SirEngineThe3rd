@@ -28,11 +28,15 @@ struct VkMaterialRuntime final {
   VkPipelineLayout layouts[4]{nullptr, nullptr, nullptr, nullptr};
 };
 
-struct MaterialData {
+struct VkMaterialData {
   MaterialDataHandles handles;
-  uint32_t magicNumber;
   Material m_material;
   VkMaterialRuntime m_materialRuntime;
+  PSOHandle m_psoHandle;
+  RSHandle m_rsHandle;
+  DescriptorHandle m_descriptorHandle;
+  uint32_t magicNumber;
+  const char* name = nullptr;
 };
 
 class VkMaterialManager final : public MaterialManager {
@@ -80,24 +84,20 @@ private:
 
 public:
   MaterialHandle allocateMaterial(const char *type, const char *name,
-                                  uint32_t flags) override {
-    assert(0);
-    return {};
-  }
+                                  ALLOCATE_MATERIAL_FLAGS flags) override;
 
   void bindTexture(MaterialHandle matHandle, TextureHandle texHandle,
-                   uint32_t bindingIndex) override {
-    assert(0);
-  }
-  void bindMaterial(MaterialHandle handle) override { assert(0); }
-  void free(MaterialHandle handle) override{assert(0);};
+                   uint32_t bindingIndex) override;
+
+  void bindMaterial(MaterialHandle handle) override;
+  void free(MaterialHandle handle) override;;
 
 private:
   HashMap<const char *, MaterialHandle, hashString32> m_nameToHandle;
   static const uint32_t RESERVE_SIZE = 200;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
 
-  SparseMemoryPool<MaterialData> m_materialTextureHandles;
+  SparseMemoryPool<VkMaterialData> m_materialTextureHandles;
 };
 
 } // namespace SirEngine::vk

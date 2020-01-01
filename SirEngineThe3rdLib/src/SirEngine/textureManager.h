@@ -2,6 +2,7 @@
 
 #include "SirEngine/handle.h"
 #include <unordered_map>
+#include "SirEngine/graphics/renderingContext.h"
 
 namespace SirEngine {
 
@@ -35,10 +36,10 @@ public:
   virtual void cleanup() = 0;
   virtual TextureHandle loadTexture(const char *path, bool cubeMap = false) = 0;
   virtual void free(const TextureHandle handle) = 0;
-  virtual TextureHandle allocateTexture(uint32_t width, uint32_t height,
-                                        RenderTargetFormat format,
-                                        const char *name,
-                                        uint32_t allocFlags = 0) = 0;
+  virtual TextureHandle allocateTexture(
+      uint32_t width, uint32_t height, RenderTargetFormat format,
+      const char *name, uint32_t allocFlags,
+      RESOURCE_STATE finalState = RESOURCE_STATE::RENDER_TARGET) = 0;
 
   virtual void bindRenderTarget(TextureHandle handle, TextureHandle depth) = 0;
   virtual void clearDepth(const TextureHandle depth, const float depthValue,

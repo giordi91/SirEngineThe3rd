@@ -186,6 +186,8 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   PSO_MANAGER->initialize();
   globals::PSO_MANAGER = PSO_MANAGER;
   // TODO TEMP HACK LOAD, remove this
+  const PSOHandle handle2 =
+      vk::PSO_MANAGER->loadRawPSO("../data/pso/vkHDRtoSDREffect_PSO.json");
   const PSOHandle handle =
       vk::PSO_MANAGER->loadRawPSO("../data/pso/forwardPhongPSO.json");
 
@@ -593,12 +595,14 @@ VkRenderPass createRenderPass(const FrameBufferBindings &bindings,
   int count = 0;
   for (int i = 0; i < 8; ++i) {
     const RTBinding &binding = bindings.colorRT[i];
-    if (!binding.handle.isHandleValid()) {
+    if ((!binding.handle.isHandleValid()) & (!binding.isSwapChainBackBuffer)) {
       continue;
     }
 
     VkFormat currentFormat =
-        vk::TEXTURE_MANAGER->getTextureFormat(binding.handle);
+        binding.isSwapChainBackBuffer
+            ? vk::IMAGE_FORMAT
+            : vk::TEXTURE_MANAGER->getTextureFormat(binding.handle);
     assert(currentFormat != VK_FORMAT_UNDEFINED && "Unsupported render format");
 
     attachments[count].format = currentFormat;
@@ -649,7 +653,7 @@ VkFramebuffer *createFrameBuffer(VkRenderPass pass,
 
   bool bindsToBackBuffer = false;
   for (int i = 0; i < 8; ++i) {
-    bindsToBackBuffer |= !bindings.colorRT[i].isSwapChainBackBuffer;
+    bindsToBackBuffer |= bindings.colorRT[i].isSwapChainBackBuffer;
   }
 
   // if binds to backBuffer we need to create as many frame buffers
@@ -664,12 +668,16 @@ VkFramebuffer *createFrameBuffer(VkRenderPass pass,
 
     int count = 0;
     for (int i = 0; i < 8; ++i) {
-      if (!bindings.colorRT[i].handle.isHandleValid()) {
+      const RTBinding &binding = bindings.colorRT[i];
+      if (!binding.handle.isHandleValid() & (!binding.isSwapChainBackBuffer)) {
         continue;
       }
-      const VkTexture2D &rt =
-          vk::TEXTURE_MANAGER->getTextureData(bindings.colorRT[i].handle);
-      imageViews[i] = rt.view;
+      VkImageView view =
+          binding.isSwapChainBackBuffer
+              ? vk::SWAP_CHAIN->imagesView[swap]
+              : vk::TEXTURE_MANAGER->getTextureData(bindings.colorRT[i].handle)
+                    .view;
+      imageViews[i] = view;
       ++count;
     }
 
@@ -722,11 +730,52 @@ void VkRenderingContext::freeBindingObject(const BufferBindingsHandle handle) {
   m_bindingsPool.free(idx);
 }
 
+void VkRenderingContext::fullScreenPass() {
+  auto buffer = vk::CURRENT_FRAME_COMMAND->m_commandBuffer;
+  vkCmdDraw(buffer, 6, 1, 0, 0);
+}
+
+
+int vkBarrier(int counter, VkImageMemoryBarrier *barriers, TextureHandle handle,
+              RESOURCE_STATE oldState, RESOURCE_STATE newState) {
+  if (oldState == newState) {
+    return counter;
+  }
+  vk::VkTexture2D m_rt = vk::TEXTURE_MANAGER->getTextureData(handle);
+  VkImageLayout oldLayout = fromStateToLayout(oldState);
+  VkImageLayout newLayout = fromStateToLayout(newState);
+  barriers[counter].sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+  barriers[counter].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+  barriers[counter].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+  barriers[counter].srcQueueFamilyIndex = 0;
+  barriers[counter].dstQueueFamilyIndex = 0;
+  barriers[counter].image = m_rt.image;
+  // barrier[0].oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  // barrier[0].newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+  barriers[counter].oldLayout = oldLayout;
+  barriers[counter].newLayout = newLayout;
+  barriers[counter].subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  barriers[counter].subresourceRange.baseArrayLayer = 0;
+  barriers[counter].subresourceRange.baseMipLevel = 0;
+  barriers[counter].subresourceRange.levelCount = 1;
+  barriers[counter].subresourceRange.layerCount = 1;
+  return ++counter;
+
+  ////TODO fix this, should not be all graphics bit i think
+  // vkCmdPipelineBarrier(
+  //    vk::CURRENT_FRAME_COMMAND->m_commandBuffer,
+  //    VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
+  //    VK_DEPENDENCY_DEVICE_GROUP_BIT, 0, nullptr, 0, nullptr, 2, barrier);
+}
+
 void VkRenderingContext::setBindingObject(const BufferBindingsHandle handle) {
   assertMagicNumber(handle);
   const uint32_t magic = getMagicFromHandle(handle);
   const uint32_t idx = getIndexFromHandle(handle);
   const FrameBindingsData &data = m_bindingsPool.getConstRef(idx);
+
+  VkImageMemoryBarrier barriers[10]{};
+  int barrierCounter = 0;
 
   VkClearValue colors[10]{};
   int count = 0;
@@ -738,12 +787,33 @@ void VkRenderingContext::setBindingObject(const BufferBindingsHandle handle) {
     count += binding.shouldClearColor ? 1 : 0;
     colors[i].color = {binding.clearColor.r, binding.clearColor.g,
                        binding.clearColor.b, binding.clearColor.a};
+    barrierCounter =
+        vkBarrier(barrierCounter, barriers, binding.handle,
+                  binding.currentResourceState, binding.neededResourceState);
+  }
+
+  for (int i = 0; i < data.m_bindings.extraBindingsCount; ++i) {
+    const RTBinding &binding = data.m_bindings.extraBindings[i];
+    if (!binding.handle.isHandleValid()) {
+      continue;
+    }
+    barrierCounter =
+        vkBarrier(barrierCounter, barriers, binding.handle,
+                  binding.currentResourceState, binding.neededResourceState);
+  }
+
+  if (barrierCounter) {
+    vkCmdPipelineBarrier(vk::CURRENT_FRAME_COMMAND->m_commandBuffer,
+                         VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
+                         VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
+                         VK_DEPENDENCY_DEVICE_GROUP_BIT, 0, nullptr, 0, nullptr,
+                         barrierCounter, barriers);
   }
 
   VkRenderPassBeginInfo beginInfo = {VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};
   beginInfo.renderPass = data.m_pass;
   uint32_t bufferIdx =
-      data.m_frameBufferCount == 1 ? 1 : globals::CURRENT_FRAME;
+      data.m_frameBufferCount == 1 ? 0 : globals::CURRENT_FRAME;
   beginInfo.framebuffer = data.m_buffer[bufferIdx];
 
   // similar to a viewport mostly used on "tiled renderers" to optimize, talking

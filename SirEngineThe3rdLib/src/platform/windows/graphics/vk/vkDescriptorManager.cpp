@@ -21,7 +21,7 @@ DescriptorHandle VkDescriptorManager::allocate(VkDescriptorSetLayout layout,
   allocateInfo.descriptorSetCount = 1;
   allocateInfo.pSetLayouts = &layout; // the layout we defined for the set,
                                       // so it also knows the size
-  bool isBuffered = (flags & DESCRIPTOR_FLAGS::BUFFERED) > 0;
+  bool isBuffered = (flags & DESCRIPTOR_FLAGS_BITS::BUFFERED) > 0;
   uint32_t count = isBuffered ? vk::SWAP_CHAIN_IMAGE_COUNT : 1;
 
   // allocate enough memory for the sets
@@ -48,6 +48,7 @@ DescriptorHandle VkDescriptorManager::allocate(VkDescriptorSetLayout layout,
   data.isBuffered = isBuffered;
   data.magicNumber = MAGIC_NUMBER_COUNTER++;
   data.sets = sets;
+  data.layout = layout;
 
   return {data.magicNumber << 16 | poolIdx};
 }

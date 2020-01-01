@@ -64,6 +64,24 @@ extern VkFrameCommand *CURRENT_FRAME_COMMAND;
 extern uint32_t GRAPHICS_QUEUE_FAMILY;
 extern uint32_t PRESENTATION_QUEUE_FAMILY;
 
+inline VkImageLayout fromStateToLayout(RESOURCE_STATE state) {
+  switch (state) {
+  case RESOURCE_STATE::GENERIC:
+    return VK_IMAGE_LAYOUT_GENERAL;
+  case RESOURCE_STATE::RENDER_TARGET:
+    return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  case RESOURCE_STATE::DEPTH_RENDER_TARGET:
+    return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+  case RESOURCE_STATE::SHADER_READ_RESOURCE:
+    return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  case RESOURCE_STATE::RANDOM_WRITE:
+    assert(0); // need to figure out what to do with this
+  default:
+    assert(0);
+  }
+  return VK_IMAGE_LAYOUT_UNDEFINED;
+}
+
 inline uint32_t
 selectMemoryType(const VkPhysicalDeviceMemoryProperties &memoryProperties,
                  const uint32_t memoryTypeBits,
@@ -190,7 +208,7 @@ public:
   void setBindingObject(const BufferBindingsHandle handle) override;
   void clearBindingObject(const BufferBindingsHandle handle) override;
   void freeBindingObject(const BufferBindingsHandle handle) override;
-  void fullScreenPass() override { assert(0); };
+  void fullScreenPass() override;;
 
 private:
   inline void assertMagicNumber(const BufferBindingsHandle handle) const {

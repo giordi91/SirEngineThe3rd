@@ -396,9 +396,8 @@ void Dx12MaterialManager::bindRSandPSO(
   assert(0 && "Could not find requested shader type for PSO /RS bind");
 }
 
-MaterialHandle Dx12MaterialManager::allocateMaterial(const char *type,
-                                                     const char *name,
-                                                     uint32_t) {
+MaterialHandle Dx12MaterialManager::allocateMaterial(const char *type, const char *name,
+                                          ALLOCATE_MATERIAL_FLAGS ) {
   // from the type we can get the PSO
   uint16_t shaderType = parseTypeFlags(type);
   ShaderBind bind;
@@ -416,8 +415,8 @@ MaterialHandle Dx12MaterialManager::allocateMaterial(const char *type,
   materialData.magicNumber = MAGIC_NUMBER_COUNTER++;
 
   // this will be used when we need to bind the material
-  materialData.PSOHandle = bind.pso;
-  materialData.rsHandle = bind.rs;
+  materialData.m_psoHandle= bind.pso;
+  materialData.m_rsHandle= bind.rs;
 
   MaterialHandle handle{(materialData.magicNumber << 16) | (index)};
   m_nameToHandle.insert(name, handle);
@@ -507,9 +506,9 @@ void Dx12MaterialManager::bindMaterial(MaterialHandle handle) {
   const auto &data = m_materialTextureHandles.getConstRef(index);
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
-  dx12::PSO_MANAGER->bindPSO(data.PSOHandle, commandList);
+  dx12::PSO_MANAGER->bindPSO(data.m_psoHandle, commandList);
   ID3D12RootSignature *rs =
-      dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromHandle(data.rsHandle);
+      dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromHandle(data.m_rsHandle);
   commandList->SetGraphicsRootSignature(rs);
 }
 

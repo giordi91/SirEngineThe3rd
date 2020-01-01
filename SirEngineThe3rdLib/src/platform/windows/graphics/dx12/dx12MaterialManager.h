@@ -40,8 +40,8 @@ struct MaterialData {
   uint32_t magicNumber;
   Material m_material;
   Dx12MaterialRuntime m_materialRuntime;
-  PSOHandle PSOHandle;
-  RSHandle rsHandle;
+  PSOHandle m_psoHandle;
+  RSHandle m_rsHandle;
 };
 
 class Dx12MaterialManager final : public MaterialManager {
@@ -66,7 +66,7 @@ public:
   Dx12MaterialManager &operator=(const Dx12MaterialManager &) = delete;
 
   MaterialHandle allocateMaterial(const char *type, const char *name,
-                                  uint32_t flags) override;
+                                          ALLOCATE_MATERIAL_FLAGS flags) override;
   MaterialHandle loadMaterial(const char *path, const MeshHandle meshHandle,
                               const SkinHandle skinHandle) override;
   void bindMaterial(MaterialHandle handle) override;

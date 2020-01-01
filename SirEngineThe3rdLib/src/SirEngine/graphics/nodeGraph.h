@@ -297,6 +297,7 @@ public:
   [[nodiscard]] GNode *getFinalNode() const { return finalNode; }
   inline void setFinalNode(GNode *node) { finalNode = node; }
   void finalizeGraph();
+  void clear();
   void compute();
   inline uint32_t nodeCount() const { return m_nodes.size(); }
   void onResizeEvent(const int screenWidth, const int screenHeight) {

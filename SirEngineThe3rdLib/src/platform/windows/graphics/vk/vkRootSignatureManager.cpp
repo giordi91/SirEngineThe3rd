@@ -45,7 +45,9 @@ VkDescriptorType getDescriptorType(const nlohmann::json &config) {
   assert(!type.empty());
   const std::string resource =
       getValueIfInJson(config, ROOT_KEY_RESOURCE, ROOT_DEFAULT_STRING);
-  assert(!resource.empty());
+  if (type == "SRV") {
+    assert(!resource.empty());
+  }
 
   const std::string actualType = type + "-" + resource;
   // sampler the map
@@ -164,7 +166,8 @@ RSHandle VkPipelineLayoutManager::loadSignatureFile(
   VkDescriptorSetLayout descriptorLayout;
   vkCreateDescriptorSetLayout(vk::LOGICAL_DEVICE, &descriptorInfo, nullptr,
                               &descriptorLayout);
-  SET_DEBUG_NAME(descriptorLayout,VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT,frameConcatenation(name.c_str(),"DescriptorLayout"));
+  SET_DEBUG_NAME(descriptorLayout, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT,
+                 frameConcatenation(name.c_str(), "DescriptorLayout"));
 
   // we are going to use multiple layouts if static samplers are requested
   // (which is always the case)
@@ -183,7 +186,8 @@ RSHandle VkPipelineLayoutManager::loadSignatureFile(
   // TODO need a manager
   vkCreatePipelineLayout(vk::LOGICAL_DEVICE, &layoutInfo, nullptr,
                          &rsdata.layout);
-  SET_DEBUG_NAME(rsdata.layout,VK_OBJECT_TYPE_PIPELINE_LAYOUT,frameConcatenation(name.c_str(),"PipelineLayout"));
+  SET_DEBUG_NAME(rsdata.layout, VK_OBJECT_TYPE_PIPELINE_LAYOUT,
+                 frameConcatenation(name.c_str(), "PipelineLayout"));
 
   const RSHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
   rsdata.magicNumber = MAGIC_NUMBER_COUNTER;

@@ -215,6 +215,17 @@ void DependencyGraph::finalizeGraph() {
   }
 }
 
+void DependencyGraph::clear()
+{
+  const int count = m_linearizedGraph.size();
+  for (int i = 0; i < count; ++i) {
+    m_linearizedGraph[i]->clear();
+    delete m_linearizedGraph[i];
+  }
+  m_linearizedGraph.clear();
+
+}
+
 void DependencyGraph::compute() {
   const int count = m_linearizedGraph.size();
   for (int i = 0; i < count; ++i) {

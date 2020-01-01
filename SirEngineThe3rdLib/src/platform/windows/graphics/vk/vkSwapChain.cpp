@@ -276,7 +276,7 @@ bool createSwapchainWithR8G8B8A8FormatAndMailboxPresentMode(
   // TODO should support v-sync
   if (!selectDesiredPresentationMode(physicalDevice, presentationSurface,
                                      VK_PRESENT_MODE_IMMEDIATE_KHR,
-                                     //VK_PRESENT_MODE_FIFO_KHR,
+                                     // VK_PRESENT_MODE_FIFO_KHR,
                                      desiredPresentMode)) {
     return false;
   }
@@ -348,7 +348,7 @@ bool createSwapchainWithR8G8B8A8FormatAndMailboxPresentMode(
     return false;
   }
 
-  //if (VK_NULL_HANDLE != oldSwapchain) {
+  // if (VK_NULL_HANDLE != oldSwapchain) {
   //  //TODO revisit
   //  vkDestroySwapchainKHR(logicalDevice, oldSwapchain, nullptr);
   //  oldSwapchain = VK_NULL_HANDLE;
@@ -359,9 +359,15 @@ bool createSwapchainWithR8G8B8A8FormatAndMailboxPresentMode(
   }
   // now that we have the swap chain images we need to create the view to them
   swapchainImageViews.resize(SWAP_CHAIN_IMAGE_COUNT);
+  assert(SWAP_CHAIN_IMAGE_COUNT < 9);
+  char charNumber[2];
+  charNumber[1] = '\0';
   for (uint32_t i = 0; i < SWAP_CHAIN_IMAGE_COUNT; ++i) {
+    charNumber[0] = static_cast<char>(48 + i);
     swapchainImageViews[i] =
         createSwapchainImageView(logicalDevice, swapchainImages[i]);
+    SET_DEBUG_NAME(swapchainImages[i], VK_OBJECT_TYPE_IMAGE,
+                   frameConcatenation("swapChainImage", charNumber));
   }
 
   return true;
