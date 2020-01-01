@@ -10,6 +10,7 @@
 #include <d3d12.h>
 
 #include <cassert>
+#include "SirEngine/log.h"
 
 namespace SirEngine {
 namespace dx12 {
@@ -56,7 +57,11 @@ public:
   }
 
   RSHandle getHandleFromName(const char *name) const {
-    assert(m_rootRegister.containsKey(name));
+    bool result = m_rootRegister.containsKey(name);
+    if(!result) {
+       //TODO change this back to asserting once vulkan port is stable 
+       SE_CORE_ERROR("Could not find resquested RS {0}",name);
+    }
     RSHandle value;
     m_rootRegister.get(name, value);
     return value;

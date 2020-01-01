@@ -1,10 +1,16 @@
 {
   "commands": [
+    "-p ../data/rs/standardPostProcessEffect_RS.json -o ../data/processed/rs/standardPostProcessEffect_RS.root --pluginName rootSignatureCompilerPlugin",
     "-p ../data/shaders/VK/rasterization/fullScreenQuadVS.glsl -o ../data/processed/shaders/VK/rasterization/fullScreenQuadVS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \"",
     "-p ../data/shaders/VK/rasterization/HDRtoSDREffectPS.glsl -o ../data/processed/shaders/VK/rasterization/HDRtoSDREffectPS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d \"",
     "-p ../data/shaders/VK/rasterization/forwardPhongVS.glsl -o ../data/processed/shaders/VK/rasterization/forwardPhongVS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \"",
     "-p ../data/shaders/VK/rasterization/forwardPhongPS.glsl -o ../data/processed/shaders/VK/rasterization/forwardPhongPS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d \"",
-    "-p ../data/rs/forwardPhongRS.json -o ../data/processed/rs/forwardPhongRS.root --pluginName rootSignatureCompilerPlugin"
+    "-p ../data/rs/forwardPhongRS.json -o ../data/processed/rs/forwardPhongRS.root --pluginName rootSignatureCompilerPlugin",
  
+    "-p ../data/shaders/DX12/rasterization/SSSSSEffectPS.hlsl -o ../data/processed/shaders/DX12/rasterization/SSSSSEffectPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
+    "-p ../data/rs/SSSSSEffect_RS.json -o ../data/processed/rs/SSSSSEffect_RS.root --pluginName rootSignatureCompilerPlugin",
+    "-p ../data/shaders/DX12/rasterization/HDRtoSDREffectPS.hlsl -o ../data/processed/shaders/DX12/rasterization/HDRtoSDREffectPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
+    "-p ../data/shaders/DX12/rasterization/gammaAndToneMappingEffectPS.hlsl -o ../data/processed/shaders/DX12/rasterization/gammaAndToneMappingEffectPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \""
+
   ]
 }

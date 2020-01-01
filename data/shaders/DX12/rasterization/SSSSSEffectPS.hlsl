@@ -6,10 +6,10 @@ struct VertexOut {
   float2 uv : TEXCOORD1;
 };
 
-Texture2D sourceTexture : register(t0);
-Texture2D depthTex : register(t1);
-ConstantBuffer<CameraBuffer> g_camera: register(b0);
-ConstantBuffer<SSSSSConfig> g_config: register(b1);
+Texture2D sourceTexture : register(t0,space1);
+Texture2D depthTex : register(t1,space1);
+ConstantBuffer<CameraBuffer> g_camera: register(b0, space0);
+ConstantBuffer<SSSSSConfig> g_config: register(b0, space1);
 
 SamplerState gsamPointWrap : register(s0);
 SamplerState gsamPointClamp : register(s1);
