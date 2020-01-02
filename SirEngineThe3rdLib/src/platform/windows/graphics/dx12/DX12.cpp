@@ -795,6 +795,17 @@ void Dx12RenderingContext::clearBindingObject(
   annotateGraphicsEnd();
 }
 
+void Dx12RenderingContext::freeBindingObject(const BufferBindingsHandle handle)
+{
+	assertMagicNumber(handle);
+	const uint32_t magic = getMagicFromHandle(handle);
+	const uint32_t idx = getIndexFromHandle(handle);
+	const FrameBindingsData& data = m_bindingsPool.getConstRef(idx);
+	stringFree(data.name);
+
+	m_bindingsPool.free(idx);
+}
+
 bool Dx12RenderingContext::newFrame() { return newFrameDx12(); }
 
 bool Dx12RenderingContext::dispatchFrame() { return dispatchFrameDx12(); }

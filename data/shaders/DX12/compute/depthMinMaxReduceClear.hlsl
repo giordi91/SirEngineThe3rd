@@ -1,8 +1,8 @@
 #include "../common/structures.hlsl"
 
-Texture2D<float> Input : register( t0 );
+Texture2D<float> Input : register( t0,space1 );
 ConstantBuffer<TextureConfig> g_textureConfig: register(b0);
-RWStructuredBuffer<ReducedDepth> reducedDepth : register(u0);
+RWStructuredBuffer<ReducedDepth> reducedDepth : register(u0,space1);
 
 [numthreads( 1, 1, 1 )]
 void CS( uint3 id : SV_DispatchThreadID)

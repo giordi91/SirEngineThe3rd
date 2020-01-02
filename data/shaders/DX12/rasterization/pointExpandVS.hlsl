@@ -1,9 +1,9 @@
 #include "../common/structures.hlsl"
 #include "../common/vertexDefinitions.hlsl"
 
-ConstantBuffer<CameraBuffer> g_cameraBuffer : register(b0);
-ConstantBuffer<DebugPointsFixedColor> g_settings : register(b1);
-StructuredBuffer<float3> points : register(t0);
+ConstantBuffer<CameraBuffer> g_cameraBuffer : register(b0,space0);
+ConstantBuffer<DebugPointsFixedColor> g_settings : register(b1,space1);
+StructuredBuffer<float3> points : register(t0,space1);
 
 static float3 offsets[] =
 {

@@ -1,8 +1,8 @@
 #include "../common/structures.hlsl"
 
-Texture2D<float> Input : register(t0);
-ConstantBuffer<CameraBuffer> g_camera : register(b0);
-RWStructuredBuffer<ReducedDepth> reducedDepth : register(u0);
+Texture2D<float> Input : register(t0,space1);
+ConstantBuffer<CameraBuffer> g_camera : register(b0,space0);
+RWStructuredBuffer<ReducedDepth> reducedDepth : register(u0,space1);
 
 #if AMD
 static const int GROUP_SIZE_X = 64;

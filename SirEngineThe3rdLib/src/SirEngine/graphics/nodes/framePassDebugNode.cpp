@@ -266,15 +266,15 @@ void FramePassDebugNode::reduceDepth(const TextureHandle source) const {
   // binding the resources
   dx12::DescriptorPair pair = dx12::TEXTURE_MANAGER->getSRVDx12(source);
   // bind the source
-  commandList->SetComputeRootDescriptorTable(1, pair.gpuHandle);
+  commandList->SetComputeRootDescriptorTable(2, pair.gpuHandle);
   // setup the
   // commandList->SetComputeRootDescriptorTable(
   //    2, dx12::CONSTANT_BUFFER_MANAGER
   //           ->getConstantBufferDx12Handle(m_textureConfigHandle)
   //           .gpuHandle);
 
-  dx12::RENDERING_CONTEXT->bindCameraBufferCompute(2);
-  dx12::BUFFER_MANAGER->bindBuffer(m_reduceBufferHandle, 0, commandList);
+  dx12::RENDERING_CONTEXT->bindCameraBufferCompute(0);
+  dx12::BUFFER_MANAGER->bindBuffer(m_reduceBufferHandle, 1, commandList);
   // first we kick the clear
   dx12::PSO_MANAGER->bindPSO(m_depthReduceClearPSOHandle, commandList);
   commandList->Dispatch(1, 1, 1);

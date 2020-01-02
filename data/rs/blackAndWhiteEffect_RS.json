@@ -1,35 +1,22 @@
 {
-      "type": "RASTER",
-      "staticSamplers" : true,
-      "config": [
-        {
-          "type": "descriptorTable",
-          "data": {
-            "numberDescriptor": "1",
-            "ranges": [
-              {
-                "type": "CBV",
-                "numDescriptors": 1,
-                "baseRegister": 0
-              }
-            ]
-          },
-          "visibility": "ALL"
-        },
-        {
-          "comment": "input texture",
-          "type": "descriptorTable",
-          "data": {
-            "numberDescriptor": "1",
-            "ranges": [
-              {
-                "type": "SRV",
-                "numDescriptors": 1,
-                "baseRegister": 0
-              }
-            ]
+  "type": "RASTER",
+  "staticSamplers": true,
+  "useRegisterSpace": true,
+  "config": [
+    {
+      "comment": "input texture",
+      "type": "descriptorTable",
+      "data": {
+        "numberDescriptor": "1",
+        "ranges": [
+          {
+            "type": "SRV",
+            "numDescriptors": 1,
+            "baseRegister": 0
           }
-        }
-      ],
-      "flags": []
+        ]
+      }
+    }
+  ],
+  "flags": []
 }
