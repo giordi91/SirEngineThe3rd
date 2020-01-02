@@ -8,8 +8,6 @@
 
 namespace SirEngine {
 
-static const char *SIMPLE_FORWARD_RS = "simpleMeshRSTex";
-static const char *SIMPLE_FORWARD_PSO = "simpleMeshPSOTex";
 
 SimpleForward::SimpleForward(GraphAllocators &allocators)
     : GNode("SimpleForward", "SimpleForward", allocators) {
@@ -34,10 +32,6 @@ SimpleForward::SimpleForward(GraphAllocators &allocators)
   outTexture.nodePtr = this;
   outTexture.name = "outTexture";
 
-  // fetching root signature
-  rs =
-      dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(SIMPLE_FORWARD_RS);
-  pso = dx12::PSO_MANAGER->getHandleFromName(SIMPLE_FORWARD_PSO);
 }
 
 void SimpleForward::initialize() {}

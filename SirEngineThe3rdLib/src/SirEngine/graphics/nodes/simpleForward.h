@@ -25,8 +25,6 @@ public:
   void populateNodePorts() override;
 
 private:
-  ID3D12RootSignature *rs = nullptr;
-  PSOHandle pso;
   // handles
   TextureHandle renderTarget{};
   TextureHandle depth{};
