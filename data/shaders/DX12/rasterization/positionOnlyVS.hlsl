@@ -1,8 +1,8 @@
 #include "../common/structures.hlsl"
 #include "../common/vertexDefinitions.hlsl"
 
-ConstantBuffer<CameraBuffer> g_cameraBuffer : register(b0);
-StructuredBuffer<float4> g_positions: register(t8);
+ConstantBuffer<CameraBuffer> g_cameraBuffer : register(b0,space0);
+StructuredBuffer<float4> g_positions: register(t8, space1);
 
 PositionOnlyVertexOut VS(uint vid : SV_VertexID)
 {

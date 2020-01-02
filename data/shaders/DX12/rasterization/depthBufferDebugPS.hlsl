@@ -3,9 +3,9 @@
 
 
 
-Texture2D sourceTexture: register(t0);
-ConstantBuffer<DebugLayerConfig> g_debugConfig: register(b1);
-StructuredBuffer<ReducedDepth> reducedDepth : register(t1);
+Texture2D sourceTexture: register(t0,space1);
+ConstantBuffer<DebugLayerConfig> g_debugConfig: register(b1,space1);
+StructuredBuffer<ReducedDepth> reducedDepth : register(t1,space1);
 
 SamplerState gsamPointWrap        : register(s0);
 SamplerState gsamPointClamp       : register(s1);

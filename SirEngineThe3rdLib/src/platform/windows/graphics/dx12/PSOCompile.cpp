@@ -294,7 +294,8 @@ PSOCompileResult processComputePSO(nlohmann::json &jobj, const char *path,
   cdesc->pRootSignature = rootS;
   cdesc->CS = computeShaderByteCode;
   cdesc->Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
-  dx12::DEVICE->CreateComputePipelineState(cdesc, IID_PPV_ARGS(&pso));
+  HRESULT result = dx12::DEVICE->CreateComputePipelineState(cdesc, IID_PPV_ARGS(&pso));
+  assert(SUCCEEDED(result));
 
   const std::string name = getFileName(path);
   return PSOCompileResult{cdesc,
@@ -319,7 +320,7 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj, const char *path,
   const std::string rootSignatureString =
       getValueIfInJson(jobj, PSO_KEY_GLOBAL_ROOT, DEFAULT_STRING);
 
-  if(rootSignatureString == "../data/rs/SSSSSEffect_RS.json") {
+  if(rootSignatureString == "../data/rs/debugFullScreenBlit_RS.json") {
       int x= 0;
   }
   auto resultCompile = processSignatureFile(rootSignatureString.c_str());

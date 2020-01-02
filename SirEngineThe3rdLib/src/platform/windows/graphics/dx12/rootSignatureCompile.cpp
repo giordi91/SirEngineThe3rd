@@ -338,9 +338,9 @@ RootCompilerResult processSignatureFileToBlob(const char *path,
 
   std::vector<CD3DX12_ROOT_PARAMETER> rootParams(configValue.size() +
                                                  extraRegister);
+  CD3DX12_DESCRIPTOR_RANGE ranges{};
   if (useRegister) {
     // create constant buffer for camera values
-    CD3DX12_DESCRIPTOR_RANGE ranges;
     int startRegister = 0;
     ranges.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, startRegister,
                 ENGINE_RESIGSTER_SPACE);

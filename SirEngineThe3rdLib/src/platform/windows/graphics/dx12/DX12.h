@@ -5,8 +5,8 @@
 #include "SirEngine/globals.h"
 #include "SirEngine/graphics/cpuGraphicsStructures.h"
 #include "SirEngine/graphics/renderingContext.h"
-#include <cassert>
 #include "SirEngine/memory/sparseMemoryPool.h"
+#include <cassert>
 
 namespace SirEngine {
 class IdentityManager;
@@ -230,11 +230,12 @@ public:
   BufferBindingsHandle prepareBindingObject(const FrameBufferBindings &bindings,
                                             const char *name) override;
   ;
-  void setBindingObject(const BufferBindingsHandle handle) override;;
-  void clearBindingObject(const BufferBindingsHandle handle) override;;
-  void freeBindingObject(const BufferBindingsHandle handle) override {
-    assert(0);
-  }
+  void setBindingObject(const BufferBindingsHandle handle) override;
+  ;
+  void clearBindingObject(const BufferBindingsHandle handle) override;
+  ;
+  void freeBindingObject(const BufferBindingsHandle handle) override;
+
 private:
   inline void assertMagicNumber(const BufferBindingsHandle handle) const {
     const uint32_t magic = getMagicFromHandle(handle);
@@ -243,7 +244,6 @@ private:
                m_bindingsPool.getConstRef(idx).m_magicNumber) == magic &&
            "invalid magic handle for constant buffer");
   }
-
 
 private:
   // member variable mostly temporary
