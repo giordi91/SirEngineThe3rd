@@ -1,19 +1,19 @@
 #include "../common/structures.hlsl"
 #include "../common/vertexDefinitions.hlsl"
 
-ConstantBuffer<CameraBuffer> g_cameraBuffer : register(b0);
-ConstantBuffer<DirectionalLightData> g_dirLight : register(b1);
+ConstantBuffer<CameraBuffer> g_cameraBuffer : register(b0,space0);
+ConstantBuffer<DirectionalLightData> g_dirLight : register(b1,space1);
 
 
 // deferred buffer bindings
-Texture2D depthTexture : register(t0);
-Texture2D colorSpecIntTexture : register(t1);
-Texture2D normalTexture : register(t2);
-Texture2D specPowTexture : register(t3);
-TextureCube skyboxIrradianceTexture: register(t4);
-TextureCube skyboxRadianceTexture: register(t5);
-Texture2D brdfTexture: register(t6);
-Texture2D directionalShadow: register(t7);
+Texture2D depthTexture : register(t0,space1);
+Texture2D colorSpecIntTexture : register(t1,space1);
+Texture2D normalTexture : register(t2,space1);
+Texture2D specPowTexture : register(t3,space1);
+TextureCube skyboxIrradianceTexture: register(t4,space1);
+TextureCube skyboxRadianceTexture: register(t5,space1);
+Texture2D brdfTexture: register(t6,space1);
+Texture2D directionalShadow: register(t7,space1);
 
 #include "../common/deferredUnpacking.hlsl"
 #include "../common/pbr.hlsl"
