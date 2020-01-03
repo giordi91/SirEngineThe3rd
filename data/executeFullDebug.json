@@ -60,6 +60,8 @@
     "-p ../data/shaders/DX12/rasterization/basicMeshParallaxVSTex.hlsl -o ../data/processed/shaders/DX12/rasterization/basicMeshParallaxVSTex.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t vs_6_2  -e VS -d \"",
     "-p ../data/shaders/DX12/rasterization/skinningPositionOnlyVS.hlsl -o ../data/processed/shaders/DX12/rasterization/skinningPositionOnlyVS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t vs_6_2  -e VS -d \"",
 
+    "-p ../data/shaders/VK/rasterization/HDRtoSDREffectPS.glsl -o ../data/processed/shaders/VK/rasterization/HDRtoSDREffectPS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d \"",
+
     "-p ../data/rs/blackAndWhiteEffect_RS.json -o ../data/processed/rs/blackAndWhiteEffect_RS.root --pluginName rootSignatureCompilerPlugin",
     "-p ../data/rs/SSSSSEffect_RS.json -o ../data/processed/rs/SSSSSEffect_RS.root --pluginName rootSignatureCompilerPlugin",
     "-p ../data/rs/gbufferRS.json -o ../data/processed/rs/gbufferRS.root --pluginName rootSignatureCompilerPlugin",

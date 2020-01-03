@@ -42,7 +42,7 @@ bool Dx12SwapChain::initialize(const HWND window, const int width,
   swapDesc.BufferDesc.Height = height;
   swapDesc.BufferDesc.RefreshRate.Numerator = 0;
   swapDesc.BufferDesc.RefreshRate.Denominator = 1;
-  swapDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+  swapDesc.BufferDesc.Format = SWAP_CHAIN_FORMAT;
   swapDesc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
   swapDesc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
   // if we got a valid MSAA state we set 4 samples

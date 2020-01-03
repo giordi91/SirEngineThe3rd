@@ -12,10 +12,11 @@
             "type": "SRV",
             "underlyingResource": "texture",
             "numDescriptors": 1,
-            "baseRegister": 0
+            "baseRegister": 1
           }
         ]
-      }
+      },
+      "visibility": "PS"
     },
     {
       "comment": "constant buffer for configuring the pass",
@@ -24,12 +25,13 @@
         "ranges": [
           {
             "type": "CBV",
+            "underlyingResource": "buffer",
             "numDescriptors": 1,
-            "baseRegister": 1
+            "baseRegister": 2
           }
         ]
       },
-      "visibility": "ALL"
+      "visibility": "PS"
     }
   ],
   "flags": []
