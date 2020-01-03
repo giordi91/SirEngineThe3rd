@@ -3,13 +3,16 @@
 #include "../common/structures.hlsl"
 #include "../common/vertexDefinitions.hlsl"
 
-ConstantBuffer<CameraBuffer> g_cameraBuffer : register(b0);
-ConstantBuffer<DirectionalLightData> g_dirLight : register(b1);
-ConstantBuffer<PhongMaterial> g_material : register(b2);
-Texture2D albedoTex : register(t0);
-Texture2D tangentTex : register(t1);
-Texture2D metallicTex : register(t2);
-Texture2D roughnessTex : register(t3);
+ConstantBuffer<CameraBuffer> g_cameraBuffer : register(b0,space0);
+ConstantBuffer<DirectionalLightData> g_dirLight : register(b1,space1);
+ConstantBuffer<PhongMaterial> g_material : register(b2,space1);
+Texture2D albedoTex : register(t0,space1);
+Texture2D tangentTex : register(t1,space1);
+Texture2D metallicTex : register(t2,space1);
+Texture2D roughnessTex : register(t3,space1);
+TextureCube skyboxIrradianceTexture: register(t4,space1);
+TextureCube skyboxRadianceTexture: register(t5,space1);
+Texture2D brdfTexture: register(t6,space1);
 
 
 SamplerState gsamPointWrap : register(s0);
@@ -18,9 +21,6 @@ SamplerState gsamLinearWrap : register(s2);
 SamplerState gsamLinearClamp : register(s3);
 SamplerState gsamAnisotropicWrap : register(s4);
 SamplerState gsamAnisotropicClamp : register(s5);
-TextureCube skyboxIrradianceTexture: register(t4);
-TextureCube skyboxRadianceTexture: register(t5);
-Texture2D brdfTexture: register(t6);
 
 float4 PS(FullMeshVertexOut input) : SV_Target {
   float2 uv = float2(input.uv.x, 1.0f - input.uv.y);
