@@ -4,7 +4,7 @@
 #include "../common/deferredPacking.hlsl"
 
 
-ConstantBuffer<PhongMaterial> g_material : register(b1);
+ConstantBuffer<PhongMaterial> g_material : register(b1,space1);
 
 
 PS_GBUFFER_OUT PackGBuffer(float3 BaseColor, float3 Normal, float SpecIntensity,

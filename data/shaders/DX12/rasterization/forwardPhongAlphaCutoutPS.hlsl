@@ -3,13 +3,13 @@
 #include "../common/structures.hlsl"
 #include "../common/vertexDefinitions.hlsl"
 
-ConstantBuffer<CameraBuffer> g_cameraBuffer : register(b0);
-ConstantBuffer<DirectionalLightData> g_dirLight : register(b1);
-ConstantBuffer<PhongMaterial> g_material : register(b2);
+ConstantBuffer<CameraBuffer> g_cameraBuffer : register(b0,space0);
+ConstantBuffer<DirectionalLightData> g_dirLight : register(b1,space1);
+ConstantBuffer<PhongMaterial> g_material : register(b2,space1);
 
-Texture2D albedoTex : register(t0);
-Texture2D tangentTex : register(t1);
-Texture2D separateAlpha : register(t2);
+Texture2D albedoTex : register(t0,space1);
+Texture2D tangentTex : register(t1,space1);
+Texture2D separateAlpha : register(t2,space1);
 
 SamplerState gsamPointWrap : register(s0);
 SamplerState gsamPointClamp : register(s1);
