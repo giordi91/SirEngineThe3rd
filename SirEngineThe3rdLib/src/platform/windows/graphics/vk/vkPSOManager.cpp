@@ -51,6 +51,7 @@ static const std::string PSO_KEY_STENCIL_FAIL_OP = "stencilFailOp";
 static const std::string PSO_KEY_STENCIL_DEPTH_FAIL_OP = "stencilDepthFailOp";
 static const std::string PSO_KEY_STENCIL_PASS_OP = "stencilPassOp";
 static const std::string PSO_KEY_STENCIL_COMPARISON_FUNCTION = "stencilFunc";
+static const std::string SWAP_CHAIN_FORMAT_KEY = "SWAP_CHAIN_FORMAT";
 
 static constexpr int MAX_SHADER_STAGE_COUNT = 5;
 
@@ -273,16 +274,6 @@ void createStaticSamplerDescriptorSet() {
   STATIC_SAMPLERS_DESCRIPTOR_SET =
       vk::DESCRIPTOR_MANAGER->getDescriptorSet(STATIC_SAMPLERS_HANDLE);
 
-  // VkDescriptorSetAllocateInfo allocateInfo{};
-  // allocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-  // allocateInfo.descriptorPool = pool;
-  // allocateInfo.descriptorSetCount = 1;
-  // allocateInfo.pSetLayouts = &layout; // the layout we defined for the set,
-  //                                    // so it also knows the size
-  // VK_CHECK(
-  //    vkAllocateDescriptorSets(vk::LOGICAL_DEVICE, &allocateInfo, &outSet));
-  // SET_DEBUG_NAME(outSet, VK_OBJECT_TYPE_DESCRIPTOR_SET,
-  //               "staticSamplersDescriptorSet");
 }
 
 void destroyStaticSamplers() {
@@ -457,6 +448,9 @@ void getDepthStencilState(
 }
 
 inline VkFormat convertStringToTextureFormat(const std::string &format) {
+  if (format == SWAP_CHAIN_FORMAT_KEY) {
+    return vk::IMAGE_FORMAT;
+  }
   const auto found = STRING_TO_VK_FORMAT.find(format);
   if (found != STRING_TO_VK_FORMAT.end()) {
     return found->second;
