@@ -2,7 +2,7 @@
 #include "../common/vertexDefinitions.hlsl"
 
 // deferred buffer bindings
-TextureCube skyboxTexture: register(t0);
+TextureCube skyboxTexture: register(t0,space1);
 
 SamplerState gsamPointWrap : register(s0);
 SamplerState gsamPointClamp : register(s1);

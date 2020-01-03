@@ -1,11 +1,11 @@
 #include "../common/structures.hlsl"
 #include "../common/vertexDefinitions.hlsl"
 
-ConstantBuffer<DirectionalLightData> g_light : register(b0);
-StructuredBuffer<int> g_influences : register(t0);
-StructuredBuffer<float> g_weights : register(t1);
-StructuredBuffer<float4x4> g_matrices : register(t2);
-StructuredBuffer<float4> g_positions: register(t8);
+ConstantBuffer<DirectionalLightData> g_light : register(b0,space1);
+StructuredBuffer<int> g_influences : register(t0,space1);
+StructuredBuffer<float> g_weights : register(t1,space1);
+StructuredBuffer<float4x4> g_matrices : register(t2,space1);
+StructuredBuffer<float4> g_positions: register(t8,space1);
 
 static const int NUMBER_OF_INFLUENCES = 6;
 
