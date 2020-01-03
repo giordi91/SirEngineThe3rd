@@ -1,6 +1,7 @@
 {
     "type": "RASTER",
     "staticSamplers": false,
+    "useRegisterSpace": true,
     "config": [
       {
         "comment": "directionalLight",

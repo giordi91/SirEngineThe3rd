@@ -281,7 +281,7 @@ void bindShadowSkin(const Dx12MaterialRuntime &materialRuntime,
   const auto address =
       dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(lightCB);
 
-  commandList->SetGraphicsRootConstantBufferView(0, address);
+  commandList->SetGraphicsRootConstantBufferView(1, address);
   // need to bind the skinning data
   const SkinHandle skHandle = materialRuntime.skinHandle;
   const SkinData &data = globals::SKIN_MANAGER->getSkinData(skHandle);
@@ -289,16 +289,16 @@ void bindShadowSkin(const Dx12MaterialRuntime &materialRuntime,
   // dx12::BUFFER_MANAGER->bindBufferAsSRVDescriptorTable(data.influencesBuffer,6,commandList);
 
   // frame, binding material should not worry about upload
-  dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.influencesBuffer, 1,
+  dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.influencesBuffer, 2,
                                                 commandList);
-  dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.weightsBuffer, 2,
+  dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.weightsBuffer, 3,
                                                 commandList);
   // binding skinning data
-  dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.matricesBuffer, 3,
+  dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.matricesBuffer, 4,
                                                 commandList);
 
   dx12::MESH_MANAGER->bindMesh(materialRuntime.meshHandle, commandList,
-                               MeshAttributeFlags::POSITIONS, 4);
+                               MeshAttributeFlags::POSITIONS, 5);
   // TODO HARDCODED stencil value might have to think of a nice way to handle
   // this
   commandList->OMSetStencilRef(static_cast<uint32_t>(STENCIL_REF::CLEAR));
