@@ -1,7 +1,8 @@
 {
   "commands": [
     "-p ../data/rs/debugDrawPointsSingleColorRS.json -o ../data/processed/rs/debugDrawPointsSingleColorRS.root --pluginName rootSignatureCompilerPlugin",
-    "-p ../data/rs/debugDrawLinesSingleColorRS.json -o ../data/processed/rs/debugDrawLinesSingleColorRS.root --pluginName rootSignatureCompilerPlugin"
+    "-p ../data/rs/debugDrawLinesSingleColorRS.json -o ../data/processed/rs/debugDrawLinesSingleColorRS.root --pluginName rootSignatureCompilerPlugin",
+    "-p ../data/shaders/VK/rasterization/HDRtoSDREffectPS.glsl -o ../data/processed/shaders/VK/rasterization/HDRtoSDREffectPS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d \""
 
   ]
 }

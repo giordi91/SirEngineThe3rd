@@ -187,7 +187,8 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   globals::PSO_MANAGER = PSO_MANAGER;
   // TODO TEMP HACK LOAD, remove this
   const PSOHandle handle2 =
-      vk::PSO_MANAGER->loadRawPSO("../data/pso/vkHDRtoSDREffect_PSO.json");
+      //vk::PSO_MANAGER->loadRawPSO("../data/pso/vkHDRtoSDREffect_PSO.json");
+      vk::PSO_MANAGER->loadRawPSO("../data/pso/HDRtoSDREffect_PSO.json");
   const PSOHandle handle =
       vk::PSO_MANAGER->loadRawPSO("../data/pso/forwardPhongPSO.json");
 

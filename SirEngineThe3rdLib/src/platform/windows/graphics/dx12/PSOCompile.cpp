@@ -7,6 +7,7 @@
 #include "platform/windows/graphics/dx12/dxgiFormatsDefine.h"
 #include "rootSignatureCompile.h"
 #include "shaderCompiler.h"
+#include "dx12SwapChain.h"
 
 namespace SirEngine::dx12 {
 static const std::string PSO_KEY_GLOBAL_ROOT = "globalRootSignature";
@@ -43,6 +44,7 @@ static const std::string PSO_KEY_STENCIL_FAIL_OP = "stencilFailOp";
 static const std::string PSO_KEY_STENCIL_DEPTH_FAIL_OP = "stencilDepthFailOp";
 static const std::string PSO_KEY_STENCIL_PASS_OP = "stencilPassOp";
 static const std::string PSO_KEY_STENCIL_COMPARISON_FUNCTION = "stencilFunc";
+static const std::string SWAP_CHAIN_FORMAT_KEY = "SWAP_CHAIN_FORMAT";
 
 static const int DEFAULT_INT = -1;
 static const bool DEFAULT_BOOL = false;
@@ -94,6 +96,9 @@ PSOType convertStringPSOTypeToEnum(const char *type) {
 }
 
 inline DXGI_FORMAT convertStringToDXGIFormat(const std::string &format) {
+  if(format == SWAP_CHAIN_FORMAT_KEY) {
+      return Dx12SwapChain::SWAP_CHAIN_FORMAT;
+  }
   const auto found = STRING_TO_DXGI_FORMAT.find(format);
   if (found != STRING_TO_DXGI_FORMAT.end()) {
     return found->second;

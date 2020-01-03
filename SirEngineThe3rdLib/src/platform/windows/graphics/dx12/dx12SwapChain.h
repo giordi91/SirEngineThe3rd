@@ -32,6 +32,9 @@ public:
     m_currentBackBuffer = (m_currentBackBuffer + 1) % FRAME_BUFFERS_COUNT;
   }
 
+public:
+  static constexpr DXGI_FORMAT SWAP_CHAIN_FORMAT = DXGI_FORMAT_R8G8B8A8_UNORM;
+
 private:
   // frame-buffer configuration, hard-coded for the time being
   const DXGI_FORMAT m_backBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
