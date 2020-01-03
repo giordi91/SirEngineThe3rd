@@ -23,18 +23,10 @@ extern VkDescriptorSet
     STATIC_SAMPLERS_DESCRIPTOR_SET; // used in case you want to manually update
                                     // the samplers and not bound them as static
 extern VkDescriptorSetLayout PER_FRAME_LAYOUT;
-// extern VkDescriptorSet *PER_FRAME_DESCRIPTOR_SET;
 extern DescriptorHandle PER_FRAME_DATA_HANDLE;
 extern DescriptorHandle STATIC_SAMPLERS_HANDLE;
 
-// VkPipeline
-// createGraphicsPipeline(const char *psoPath, VkDevice logicalDevice,
-//                       VkRenderPass &renderPass,
-//                       VkPipelineVertexInputStateCreateInfo *vertexInfo);
 void initStaticSamplers();
-void createStaticSamplerDescriptorSet(VkDescriptorPool &pool,
-                                      VkDescriptorSet &outSet,
-                                      VkDescriptorSetLayout &layout);
 void destroyStaticSamplers();
 
 // TODO make it not copyable assignable

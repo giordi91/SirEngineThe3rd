@@ -82,10 +82,19 @@ BufferHandle VkBufferManager::allocate(const uint32_t sizeInBytes,
   VkMemoryPropertyFlags memoryFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT |
                                       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                                       VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-  const uint32_t memoryIndex = selectMemoryType(
+  uint32_t memoryIndex = selectMemoryType(
       memoryProperties, requirements.memoryTypeBits, memoryFlags);
 
-  assert(memoryIndex != ~0u);
+  if (memoryIndex == ~0u) {
+    SE_CORE_WARN(
+        "requested memory flags for buffers are not available, failing "
+        "back to HOST_VISIBLE and HOST_CHOERENT, might have higher latency");
+    uint32_t newMemoryFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                              VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+    memoryIndex = selectMemoryType(memoryProperties,
+                                   requirements.memoryTypeBits, newMemoryFlags);
+    assert(memoryIndex != ~0u);
+  }
 
   VkMemoryAllocateInfo memoryInfo = {VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO};
   memoryInfo.allocationSize = requirements.size;

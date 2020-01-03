@@ -94,7 +94,7 @@ selectMemoryType(const VkPhysicalDeviceMemoryProperties &memoryProperties,
       return i;
     }
   }
-  assert(!"No compatible memory type found");
+  //assert(!"No compatible memory type found");
   return ~0u;
 }
 

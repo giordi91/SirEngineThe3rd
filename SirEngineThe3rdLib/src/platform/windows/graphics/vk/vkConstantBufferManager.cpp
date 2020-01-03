@@ -5,7 +5,6 @@
 
 namespace SirEngine::vk {
 
-
 void VkConstantBufferManager::initialize() {
   m_randomAlloc.initialize(4096, 20);
 
@@ -336,7 +335,6 @@ VkConstantBufferManager::getAllocations() const {
   return m_perFrameSlabs[0]->m_slabTracker.getAllocations();
 }
 
-
 void createBuffer(Buffer &buffer, const VkDevice device, const size_t size,
                   const VkBufferUsageFlags usage,
                   const VkMemoryPropertyFlags memoryFlags, const char *name) {
@@ -368,11 +366,19 @@ void createBuffer(Buffer &buffer, const VkDevice device, const size_t size,
   // Now in reality we should then copy this memory from gpu memory mapped
   // memory to DEVICE_BIT only, in this way it will be the fastest possible
   // access
-  const uint32_t memoryIndex =
-      selectMemoryType(memoryProperties, requirements.memoryTypeBits,
-                       memoryFlags);
+  uint32_t memoryIndex = selectMemoryType(
+      memoryProperties, requirements.memoryTypeBits, memoryFlags);
 
-  assert(memoryIndex != ~0u);
+  if (memoryIndex == ~0u) {
+    SE_CORE_WARN(
+        "requested memory flags for constant buffer are not available, failing "
+        "back to HOST_VISIBLE and HOST_CHOERENT, might have higher latency");
+    uint32_t newMemoryFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                              VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+    memoryIndex = selectMemoryType(
+        memoryProperties, requirements.memoryTypeBits, newMemoryFlags);
+    assert(memoryIndex != ~0u);
+  }
 
   VkMemoryAllocateInfo memoryInfo = {VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO};
   memoryInfo.allocationSize = requirements.size;

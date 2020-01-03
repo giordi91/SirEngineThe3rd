@@ -320,9 +320,6 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj, const char *path,
   const std::string rootSignatureString =
       getValueIfInJson(jobj, PSO_KEY_GLOBAL_ROOT, DEFAULT_STRING);
 
-  if(rootSignatureString == "../data/rs/debugFullScreenBlit_RS.json") {
-      int x= 0;
-  }
   auto resultCompile = processSignatureFile(rootSignatureString.c_str());
   auto rootSignature = resultCompile.root;
 

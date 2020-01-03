@@ -26,17 +26,12 @@ void FinalBlitNode::compute() {
   globals::MATERIAL_MANAGER->bindMaterial(m_matHandle);
   // we also need to bind the input resource, which is the texture we want to
   // blit
-  static int test = 0;
-  //if (test == 0) {
 
-    if (globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::DX12) {
-      globals::MATERIAL_MANAGER->bindTexture(m_matHandle, inputRTHandle, 1);
-    } else {
-      globals::MATERIAL_MANAGER->bindTexture(m_matHandle, inputRTHandle, 0);
-    }
-  //}
-
-  test++;
+  if (globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::DX12) {
+    globals::MATERIAL_MANAGER->bindTexture(m_matHandle, inputRTHandle, 1);
+  } else {
+    globals::MATERIAL_MANAGER->bindTexture(m_matHandle, inputRTHandle, 0);
+  }
   // finally we submit a fullscreen pass
   globals::RENDERING_CONTEXT->fullScreenPass();
 
@@ -51,7 +46,8 @@ void FinalBlitNode::initialize() {
         "HDRtoSDREffect", "HDRtoSDREffect", 0);
   } else {
     m_matHandle = globals::MATERIAL_MANAGER->allocateMaterial(
-        "vkHDRtoSDREffect", "HDRtoSDREffect", 0);
+        "vkHDRtoSDREffect", "HDRtoSDREffect",
+        MaterialManager::ALLOCATE_MATERIAL_FLAG_BITS::BUFFERED);
   }
 }
 
