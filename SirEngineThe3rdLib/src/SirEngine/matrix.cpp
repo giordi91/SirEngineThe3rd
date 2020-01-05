@@ -1,3 +1,6 @@
+//NOTE needed in order to get range between 0-1 and have inverted depth working properly
+//in vulkan
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include "SirEngine/matrix.h"
 #include "SirEngine/engineConfig.h"
 #include "SirEngine/globals.h"
@@ -46,9 +49,8 @@ glm::mat4 getPerspectiveMatrix(const int screenWidth, const int screenHeight) {
     return toGLM(xmat);
   }
 
-  auto m = glm::translate(glm::mat4(1.0f), glm::vec3(1, 2, 2));
-  //auto temp44 = glm::perspective(fieldOfView, screenAspect, farP, nearP);
-  auto temp44 = glm::perspective(fieldOfView, screenAspect, nearP, farP);
+  auto temp44 = glm::perspective(fieldOfView, screenAspect, farP, nearP);
+  //auto temp44 = glm::perspective(fieldOfView, screenAspect, nearP, farP);
   return temp44;
 }
 

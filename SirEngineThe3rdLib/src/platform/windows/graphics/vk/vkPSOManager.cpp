@@ -409,8 +409,8 @@ void getDepthStencilState(
   if (isDefault) {
     depthStencilState.depthTestEnable = true;
     depthStencilState.depthWriteEnable = true;
-    //depthStencilState.depthCompareOp = VK_COMPARE_OP_GREATER;
-    depthStencilState.depthCompareOp = VK_COMPARE_OP_LESS;
+    depthStencilState.depthCompareOp = VK_COMPARE_OP_GREATER;
+    //depthStencilState.depthCompareOp = VK_COMPARE_OP_LESS;
     depthStencilState.stencilTestEnable = false;
     return;
   }

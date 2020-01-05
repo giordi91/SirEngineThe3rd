@@ -66,7 +66,8 @@ void VkSimpleForward::populateNodePorts() {
   bindings.colorRT[0].isSwapChainBackBuffer = 0;
 
   bindings.depthStencil.handle = m_depthHandle;
-  bindings.depthStencil.clearDepthColor= {1.0, 1.0, 1.0, 1.0};
+  //bindings.depthStencil.clearDepthColor= {1.0, 1.0, 1.0, 1.0};
+  bindings.depthStencil.clearDepthColor= {0.0, 0.0, 0.0, 0.0};
   bindings.depthStencil.clearStencilColor= {0.0, 0.0, 0.0, 0.0};
   bindings.depthStencil.shouldClearDepth= true;
   bindings.depthStencil.shouldClearStencil= true;
