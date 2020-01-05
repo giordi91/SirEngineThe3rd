@@ -1,14 +1,14 @@
 #include "SirEngine/graphics/nodes/vkSimpleForward.h"
+
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/textureManager.h"
 
 namespace SirEngine {
 
-VkSimpleForward::VkSimpleForward(GraphAllocators &allocators)
+VkSimpleForward::VkSimpleForward(GraphAllocators& allocators)
     : GNode("SimpleForward", "SimpleForward", allocators) {
-
   defaultInitializePlugsAndConnections(0, 1);
-  GPlug &outTexture = m_outputPlugs[PLUG_INDEX(PLUGS::OUT_TEXTURE)];
+  GPlug& outTexture = m_outputPlugs[PLUG_INDEX(PLUGS::OUT_TEXTURE)];
   outTexture.plugValue = 0;
   outTexture.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
   outTexture.nodePtr = this;
@@ -16,17 +16,22 @@ VkSimpleForward::VkSimpleForward(GraphAllocators &allocators)
 }
 
 void VkSimpleForward::initialize() {
-
   int width = globals::ENGINE_CONFIG->m_windowWidth;
   int height = globals::ENGINE_CONFIG->m_windowHeight;
 
   m_rtHandle = globals::TEXTURE_MANAGER->allocateTexture(
-      width, height, RenderTargetFormat::RGBA32, "simpleForwardRT", 0,
+      width, height, RenderTargetFormat::RGBA32, "simpleForwardRT",
+      TextureManager::TEXTURE_ALLOCATION_FLAG_BITS::RENDER_TARGET |
+          TextureManager::TEXTURE_ALLOCATION_FLAG_BITS::SHADER_RESOURCE,
+      RESOURCE_STATE::SHADER_READ_RESOURCE);
+  m_depthHandle = globals::TEXTURE_MANAGER->allocateTexture(
+      width, height, RenderTargetFormat::DEPTH_F32_S8, "simpleForwardDepth",
+      TextureManager::TEXTURE_ALLOCATION_FLAG_BITS::DEPTH_TEXTURE |
+          TextureManager::TEXTURE_ALLOCATION_FLAG_BITS::SHADER_RESOURCE,
       RESOURCE_STATE::SHADER_READ_RESOURCE);
 }
 
 void VkSimpleForward::compute() {
-
   globals::RENDERING_CONTEXT->setBindingObject(m_bindHandle);
 
   DrawCallConfig config{
@@ -58,7 +63,7 @@ void VkSimpleForward::populateNodePorts() {
   bindings.colorRT[0].currentResourceState =
       RESOURCE_STATE::SHADER_READ_RESOURCE;
   bindings.colorRT[0].neededResourceState = RESOURCE_STATE::RENDER_TARGET;
-  bindings.colorRT[0].isSwapChainBackBuffer =0;
+  bindings.colorRT[0].isSwapChainBackBuffer = 0;
   bindings.width = globals::ENGINE_CONFIG->m_windowWidth;
   bindings.height = globals::ENGINE_CONFIG->m_windowHeight;
 
@@ -74,4 +79,4 @@ void VkSimpleForward::clear() {
     globals::RENDERING_CONTEXT->freeBindingObject(m_bindHandle);
   }
 }
-} // namespace SirEngine
+}  // namespace SirEngine

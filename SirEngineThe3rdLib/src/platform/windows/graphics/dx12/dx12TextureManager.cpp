@@ -1,9 +1,11 @@
 #include "platform/windows/graphics/dx12/dx12TextureManager.h"
+
+#include <DXTK12/DDSTextureLoader.h>
+#include <platform/windows/graphics/dx12/dx12SwapChain.h>
+
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
 #include "SirEngine/runtimeString.h"
-#include <DXTK12/DDSTextureLoader.h>
-#include <platform/windows/graphics/dx12/dx12SwapChain.h>
 
 namespace SirEngine::dx12 {
 
@@ -111,7 +113,7 @@ TextureHandle Dx12TextureManager::initializeFromResourceDx12(
   data.magicNumber = MAGIC_NUMBER_COUNTER;
   data.format = data.resource->GetDesc().Format;
   data.state = state;
-  data.flags = TEXTURE_ALLOCATION_FLAGS::RENDER_TARGET;
+  data.flags = TEXTURE_ALLOCATION_FLAG_BITS::RENDER_TARGET;
 
   ++MAGIC_NUMBER_COUNTER;
 
@@ -139,8 +141,8 @@ void Dx12TextureManager::bindBackBuffer() const {
   commandList->OMSetRenderTargets(1, &back, true, nullptr);
 }
 
-DescriptorPair
-Dx12TextureManager::getSrvStencilDx12(const TextureHandle handle) {
+DescriptorPair Dx12TextureManager::getSrvStencilDx12(
+    const TextureHandle handle) {
   {
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
@@ -163,7 +165,7 @@ void Dx12TextureManager::free(const TextureHandle handle) {
   TextureData &data = m_texturePool[index];
 
   // check type
-  if ((data.flags & TEXTURE_ALLOCATION_FLAGS::DEPTH_TEXTURE) > 0) {
+  if ((data.flags & TEXTURE_ALLOCATION_FLAG_BITS::DEPTH_TEXTURE) > 0) {
     if (data.srv.cpuHandle.ptr != 0) {
       dx12::GLOBAL_CBV_SRV_UAV_HEAP->freeDescriptor(data.srv);
     }
@@ -174,7 +176,7 @@ void Dx12TextureManager::free(const TextureHandle handle) {
       assert(0 && "not supported yet check if is correct");
       dx12::GLOBAL_DSV_HEAP->freeDescriptor(data.uav);
     }
-  } else if ((data.flags & TEXTURE_ALLOCATION_FLAGS::RENDER_TARGET) > 0) {
+  } else if ((data.flags & TEXTURE_ALLOCATION_FLAG_BITS::RENDER_TARGET) > 0) {
     if (data.srv.cpuHandle.ptr != 0) {
       dx12::GLOBAL_CBV_SRV_UAV_HEAP->freeDescriptor(data.srv);
     }
@@ -223,12 +225,12 @@ TextureHandle Dx12TextureManager::allocateTexture(
   D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE;
   bool allowWrite =
       allocFlags &
-      static_cast<uint32_t>(TEXTURE_ALLOCATION_FLAGS::ALLOW_RANDOM_WRITE);
+      static_cast<uint32_t>(TEXTURE_ALLOCATION_FLAG_BITS::ALLOW_RANDOM_WRITE);
   bool isRenderTexture =
       allocFlags &
-      static_cast<uint32_t>(TEXTURE_ALLOCATION_FLAGS::RENDER_TARGET);
-  bool isDepth = allocFlags &
-                 static_cast<uint32_t>(TEXTURE_ALLOCATION_FLAGS::DEPTH_TEXTURE);
+      static_cast<uint32_t>(TEXTURE_ALLOCATION_FLAG_BITS::RENDER_TARGET);
+  bool isDepth = allocFlags & static_cast<uint32_t>(
+                                  TEXTURE_ALLOCATION_FLAG_BITS::DEPTH_TEXTURE);
   assert(!(isRenderTexture && isDepth) &&
          "Cannot be both render texture and depth");
 
@@ -306,7 +308,7 @@ void Dx12TextureManager::bindRenderTarget(const TextureHandle handle,
   assertMagicNumber(handle);
   const uint32_t index = getIndexFromHandle(handle);
   const TextureData &data = m_texturePool.getConstRef(index);
-  assert((data.flags & TEXTURE_ALLOCATION_FLAGS::RENDER_TARGET) > 0);
+  assert((data.flags & TEXTURE_ALLOCATION_FLAG_BITS::RENDER_TARGET) > 0);
 
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
@@ -319,7 +321,7 @@ void Dx12TextureManager::bindRenderTarget(const TextureHandle handle,
     assertMagicNumber(depth);
     const uint32_t depthIndex = getIndexFromHandle(depth);
     const TextureData &depthData = m_texturePool.getConstRef(depthIndex);
-    assert((depthData.flags & TEXTURE_ALLOCATION_FLAGS::DEPTH_TEXTURE) > 0);
+    assert((depthData.flags & TEXTURE_ALLOCATION_FLAG_BITS::DEPTH_TEXTURE) > 0);
     depthDesc = &(depthData.rtsrv.cpuHandle);
   }
   commandList->OMSetRenderTargets(1, handles, true, depthDesc);
@@ -330,7 +332,7 @@ void Dx12TextureManager::bindRenderTargetStencil(TextureHandle handle,
   assertMagicNumber(handle);
   const uint32_t index = getIndexFromHandle(handle);
   const TextureData &data = m_texturePool.getConstRef(index);
-  assert((data.flags & TEXTURE_ALLOCATION_FLAGS::RENDER_TARGET) > 0);
+  assert((data.flags & TEXTURE_ALLOCATION_FLAG_BITS::RENDER_TARGET) > 0);
 
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
@@ -343,7 +345,7 @@ void Dx12TextureManager::bindRenderTargetStencil(TextureHandle handle,
     assertMagicNumber(depth);
     const uint32_t depthIndex = getIndexFromHandle(depth);
     const TextureData &depthData = m_texturePool.getConstRef(depthIndex);
-    assert((depthData.flags & TEXTURE_ALLOCATION_FLAGS::DEPTH_TEXTURE) > 0);
+    assert((depthData.flags & TEXTURE_ALLOCATION_FLAG_BITS::DEPTH_TEXTURE) > 0);
     depthDesc = &(depthData.dsvStencil.cpuHandle);
   }
   commandList->OMSetRenderTargets(1, handles, true, depthDesc);
@@ -355,7 +357,7 @@ void Dx12TextureManager::clearDepth(const TextureHandle depth,
   assertMagicNumber(depth);
   const uint32_t index = getIndexFromHandle(depth);
   const TextureData &data = m_texturePool.getConstRef(index);
-  assert((data.flags & TEXTURE_ALLOCATION_FLAGS::DEPTH_TEXTURE) > 0);
+  assert((data.flags & TEXTURE_ALLOCATION_FLAG_BITS::DEPTH_TEXTURE) > 0);
 
   CURRENT_FRAME_RESOURCE->fc.commandList->ClearDepthStencilView(
       data.rtsrv.cpuHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL,
@@ -367,7 +369,7 @@ void Dx12TextureManager::clearRT(const TextureHandle handle,
   assertMagicNumber(handle);
   const uint32_t index = getIndexFromHandle(handle);
   const TextureData &data = m_texturePool.getConstRef(index);
-  assert((data.flags & TEXTURE_ALLOCATION_FLAGS::RENDER_TARGET) > 0);
+  assert((data.flags & TEXTURE_ALLOCATION_FLAG_BITS::RENDER_TARGET) > 0);
   // Clear the back buffer and depth buffer.
   CURRENT_FRAME_RESOURCE->fc.commandList->ClearRenderTargetView(
       data.rtsrv.cpuHandle, color, 0, nullptr);
@@ -384,4 +386,4 @@ void Dx12TextureManager::cleanup() {
   // TODO check what other view/resourcess need to be released
   data.resource->Release();
 }
-} // namespace SirEngine::dx12
+}  // namespace SirEngine::dx12

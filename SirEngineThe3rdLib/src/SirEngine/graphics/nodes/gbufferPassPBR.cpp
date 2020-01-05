@@ -38,25 +38,25 @@ void GBufferPassPBR::initialize() {
   m_depth = globals::TEXTURE_MANAGER->allocateTexture(
       globals::ENGINE_CONFIG->m_windowWidth,
       globals::ENGINE_CONFIG->m_windowHeight, RenderTargetFormat::DEPTH_F32_S8,
-      "gbufferDepth", TextureManager::TEXTURE_ALLOCATION_FLAGS::DEPTH_TEXTURE);
+      "gbufferDepth", TextureManager::TEXTURE_ALLOCATION_FLAG_BITS::DEPTH_TEXTURE);
 
   m_geometryBuffer = globals::TEXTURE_MANAGER->allocateTexture(
       globals::ENGINE_CONFIG->m_windowWidth,
       globals::ENGINE_CONFIG->m_windowHeight, RenderTargetFormat::RGBA32,
       "geometryBuffer",
-      TextureManager::TEXTURE_ALLOCATION_FLAGS::RENDER_TARGET);
+      TextureManager::TEXTURE_ALLOCATION_FLAG_BITS::RENDER_TARGET);
 
   m_normalBuffer = globals::TEXTURE_MANAGER->allocateTexture(
       globals::ENGINE_CONFIG->m_windowWidth,
       globals::ENGINE_CONFIG->m_windowHeight,
       RenderTargetFormat::R11G11B10_UNORM, "normalBuffer",
-      TextureManager::TEXTURE_ALLOCATION_FLAGS::RENDER_TARGET);
+      TextureManager::TEXTURE_ALLOCATION_FLAG_BITS::RENDER_TARGET);
 
   m_specularBuffer = globals::TEXTURE_MANAGER->allocateTexture(
       globals::ENGINE_CONFIG->m_windowWidth,
       globals::ENGINE_CONFIG->m_windowHeight, RenderTargetFormat::RGBA32,
       "specularBuffer",
-      TextureManager::TEXTURE_ALLOCATION_FLAGS::RENDER_TARGET);
+      TextureManager::TEXTURE_ALLOCATION_FLAG_BITS::RENDER_TARGET);
 }
 
 void GBufferPassPBR::compute() {

@@ -28,8 +28,7 @@ struct VkTexture2D {
 };
 
 class SIR_ENGINE_API VkTextureManager final : public TextureManager {
-
-public:
+ public:
   VkTextureManager() : m_texturePool(RESERVE_SIZE) {
     m_nameToHandle.reserve(RESERVE_SIZE);
   }
@@ -40,10 +39,10 @@ public:
   virtual TextureHandle loadTexture(const char *path,
                                     bool cubeMap = false) override;
   virtual void free(const TextureHandle handle) override;
-  virtual TextureHandle allocateTexture(
-      uint32_t width, uint32_t height, RenderTargetFormat format,
-      const char *name, uint32_t allocFlags,
-      RESOURCE_STATE finalState) override;
+  virtual TextureHandle allocateTexture(uint32_t width, uint32_t height,
+                                        RenderTargetFormat format,
+                                        const char *name, TEXTURE_ALLOCATION_FLAGS allocFlags,
+                                        RESOURCE_STATE finalState) override;
   virtual void bindRenderTarget(TextureHandle handle,
                                 TextureHandle depth) override;
   virtual void bindRenderTargetStencil(TextureHandle handle,
@@ -96,7 +95,6 @@ public:
                    VkWriteDescriptorSet *writeDescriptorSets,
                    const VkDescriptorSet descriptorSet,
                    const uint32_t bindSlot) {
-
     writeDescriptorSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writeDescriptorSets[0].dstSet = descriptorSet;
     writeDescriptorSets[0].dstBinding = bindSlot;
@@ -105,15 +103,15 @@ public:
     writeDescriptorSets[0].descriptorCount = 1;
   };
 
-  inline VkDescriptorImageInfo
-  getSrvDescriptor(const TextureHandle handle) const {
+  inline VkDescriptorImageInfo getSrvDescriptor(
+      const TextureHandle handle) const {
     assertMagicNumber(handle);
     const uint32_t idx = getIndexFromHandle(handle);
     const auto &data = m_texturePool.getConstRef(idx);
     return data.srv;
   }
 
-private:
+ private:
   bool loadTextureFromFile(const char *name, VkFormat format, VkDevice device,
                            VkTexture2D &outTexture,
                            VkImageUsageFlags imageUsageFlags,
@@ -126,7 +124,7 @@ private:
            "invalid magic handle for constant buffer");
   }
 
-private:
+ private:
   std::unordered_map<std::string, TextureHandle> m_nameToHandle;
   SparseMemoryPool<VkTexture2D> m_texturePool;
 
@@ -134,4 +132,4 @@ private:
   TextureHandle m_whiteTexture;
 };
 
-} // namespace SirEngine::vk
+}  // namespace SirEngine::vk
