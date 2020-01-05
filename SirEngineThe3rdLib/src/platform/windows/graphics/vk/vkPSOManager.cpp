@@ -1,11 +1,11 @@
 #include "platform/windows/graphics/vk/vkPSOManager.h"
-#include "platform/windows/graphics/vk/vk.h"
-#include "platform/windows/graphics/vk/vkRootSignatureManager.h"
-#include "platform/windows/graphics/vk/vkShaderManager.h"
 
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/log.h"
+#include "platform/windows/graphics/vk/vk.h"
+#include "platform/windows/graphics/vk/vkRootSignatureManager.h"
+#include "platform/windows/graphics/vk/vkShaderManager.h"
 #include "vkDescriptorManager.h"
 
 namespace SirEngine::vk {
@@ -273,7 +273,6 @@ void createStaticSamplerDescriptorSet() {
       VkDescriptorManager::DESCRIPTOR_FLAGS_BITS::BUFFERED, "staticSamplers");
   STATIC_SAMPLERS_DESCRIPTOR_SET =
       vk::DESCRIPTOR_MANAGER->getDescriptorSet(STATIC_SAMPLERS_HANDLE);
-
 }
 
 void destroyStaticSamplers() {
@@ -293,7 +292,6 @@ PSO_TYPE convertStringPSOTypeToEnum(const char *type) {
 void getShaderStageCreateInfo(const nlohmann::json &jobj,
                               VkPipelineShaderStageCreateInfo *stages,
                               int &shaderStageCount) {
-
   // we have a raster pso lets pull out the shader stages
   const std::string vsFile =
       getValueIfInJson(jobj, PSO_KEY_VS_SHADER, DEFAULT_STRING);
@@ -322,8 +320,8 @@ void getShaderStageCreateInfo(const nlohmann::json &jobj,
   }
 }
 
-inline VkPrimitiveTopology
-convertStringToTopology(const std::string &topology) {
+inline VkPrimitiveTopology convertStringToTopology(
+    const std::string &topology) {
   const auto found = STRING_TO_TOPOLOGY.find(topology);
   if (found != STRING_TO_TOPOLOGY.end()) {
     return found->second;
@@ -336,7 +334,6 @@ convertStringToTopology(const std::string &topology) {
 void getAssemblyCreateInfo(
     const nlohmann::json &jobj,
     VkPipelineInputAssemblyStateCreateInfo &inputAssemblyCreateInfo) {
-
   const std::string topology =
       getValueIfInJson(jobj, PSO_KEY_TOPOLOGY_TYPE, DEFAULT_STRING);
   assert(!topology.empty());
@@ -358,7 +355,6 @@ VkCullModeFlagBits getCullMode(const nlohmann::json &jobj) {
 
 void getRasterInfo(const nlohmann::json jobj,
                    VkPipelineRasterizationStateCreateInfo &rasterInfo) {
-
   const std::string rasterStateString =
       getValueIfInJson(jobj, PSO_KEY_RASTER_STATE, DEFAULT_STRING);
 
@@ -369,7 +365,7 @@ void getRasterInfo(const nlohmann::json jobj,
     rasterInfo.polygonMode = VK_POLYGON_MODE_FILL;
     rasterInfo.cullMode = VK_CULL_MODE_BACK_BIT;
     // rasterInfo.cullMode = VK_CULL_MODE_NONE;
-    rasterInfo.lineWidth = 1.0f; // even if we don't use it must be specified
+    rasterInfo.lineWidth = 1.0f;  // even if we don't use it must be specified
     rasterInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
     return;
   }
@@ -381,7 +377,7 @@ void getRasterInfo(const nlohmann::json jobj,
   rasterInfo.rasterizerDiscardEnable = false;
   rasterInfo.polygonMode = VK_POLYGON_MODE_FILL;
   rasterInfo.cullMode = getCullMode(config);
-  rasterInfo.lineWidth = 1.0f; // even if we don't use it must be specified
+  rasterInfo.lineWidth = 1.0f;  // even if we don't use it must be specified
   rasterInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
 }
 
@@ -413,7 +409,8 @@ void getDepthStencilState(
   if (isDefault) {
     depthStencilState.depthTestEnable = true;
     depthStencilState.depthWriteEnable = true;
-    depthStencilState.depthCompareOp = VK_COMPARE_OP_GREATER;
+    //depthStencilState.depthCompareOp = VK_COMPARE_OP_GREATER;
+    depthStencilState.depthCompareOp = VK_COMPARE_OP_LESS;
     depthStencilState.stencilTestEnable = false;
     return;
   }
@@ -497,12 +494,54 @@ VkRenderPass getRenderPass(const nlohmann::json &jobj, const char *name) {
   assert(renderTargets == count &&
          "number of render targets and provided formats don't match");
 
+  // need to deal with the depth
+  const std::string depthStencilStateString =
+      getValueIfInJson(jobj, PSO_KEY_DEPTH_STENCIL_STATE, DEFAULT_STRING);
+  const std::string dsvFormatString =
+      getValueIfInJson(jobj, PSO_KEY_DSV_FORMAT, DEFAULT_STRING);
+
+  const bool isDefault = depthStencilStateString == DEFAULT_STATE;
+  bool hasDepth = false;
+  if (!dsvFormatString.empty()) {
+    if (isDefault) {
+      // default state means there is a dsv format to use
+      VkFormat currentFormat = convertStringToTextureFormat(dsvFormatString);
+      attachments[count].format = currentFormat;
+      // TODO no MSAA yet
+      attachments[count].samples = VK_SAMPLE_COUNT_1_BIT;
+      // attachments[count].loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+      // TODO need to fix this, needs to be defined in the json if will be
+      // cleared or not
+      attachments[count].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+      attachments[count].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+      // TODO not really sure what to do about the stencil...
+      // for now set to load and store, should leave it untouched
+      attachments[count].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+      attachments[count].stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
+      attachments[count].initialLayout =
+          VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+      attachments[count].finalLayout =
+          VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+      // we have only one subpass and uses all attachments
+      attachmentsRefs[count].attachment = count;
+      attachmentsRefs[count].layout =
+          VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+      count++;
+      hasDepth = true;
+    } else {
+      //assert(0 && "not supporting yet custom depth stencil");
+    }
+  }
+
   VkRenderPass renderPass{};
 
   VkSubpassDescription subPass{};
   subPass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-  subPass.colorAttachmentCount = count;
+  subPass.colorAttachmentCount = hasDepth ? count - 1 : count;
   subPass.pColorAttachments = attachmentsRefs;
+  subPass.pDepthStencilAttachment =
+      hasDepth ? &attachmentsRefs[count - 1] : nullptr;
 
   VkRenderPassCreateInfo createInfo{VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO};
   createInfo.attachmentCount = count;
@@ -525,7 +564,8 @@ PSOHandle VkPSOManager::getHandleFromName(const char *name) const {
   PSOHandle value{};
   m_psoRegisterHandle.get(name, value);
   return value;
-} // TODO fix vertex info, should not be passed in should be read from RS or PSO
+}  // TODO fix vertex info, should not be passed in should be read from RS or
+   // PSO
 PSOHandle VkPSOManager::processRasterPSO(
     const char *filePath, const nlohmann::json &jobj,
     VkPipelineVertexInputStateCreateInfo *vertexInfo) {
@@ -576,8 +616,6 @@ PSOHandle VkPSOManager::processRasterPSO(
   VkPipelineDepthStencilStateCreateInfo depthStencilState = {
       VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO};
   getDepthStencilState(jobj, depthStencilState);
-  // TODO remove this
-  depthStencilState.depthTestEnable = false;
 
   const std::string blendStateString =
       getValueIfInJson(jobj, PSO_KEY_BLEND_STATE, DEFAULT_STRING);
@@ -686,7 +724,6 @@ createGraphicsPipeline(const char *psoPath, VkDevice logicalDevice,
 void initStaticSamplers() {
   auto createInfos = getStaticSamplersCreateInfo();
   for (int i = 0; i < STATIC_SAMPLER_COUNT; ++i) {
-
     VK_CHECK(vkCreateSampler(vk::LOGICAL_DEVICE, &createInfos[i], NULL,
                              &STATIC_SAMPLERS[i]));
     // setting debug name
@@ -704,7 +741,6 @@ void initPerFrameDataDescriptor() {
 };
 
 void VkPSOManager::initialize() {
-
   vk::initPerFrameDataDescriptor();
   vk::initStaticSamplers();
 }
@@ -733,7 +769,6 @@ void VkPSOManager::loadRawPSOInFolder(const char *directory) { assert(0); }
 void VkPSOManager::loadCachedPSOInFolder(const char *directory) { assert(0); }
 
 PSOHandle VkPSOManager::loadRawPSO(const char *file) {
-
   const std::string fileName = getFileName(file);
   PSOHandle handle;
   bool result = m_psoRegisterHandle.get(fileName.c_str(), handle);
@@ -749,23 +784,23 @@ PSOHandle VkPSOManager::loadRawPSO(const char *file) {
   PSO_TYPE type = convertStringPSOTypeToEnum(typeString.c_str());
 
   switch (type) {
-  case PSO_TYPE::DXR: {
-    assert(0 && "Unsupported PSO type");
-    break;
-  }
-  case PSO_TYPE::RASTER: {
-    return processRasterPSO(file, jobj, nullptr);
-    break;
-  }
-  case PSO_TYPE::COMPUTE: {
-    assert(0 && "Unsupported PSO type");
-    break;
-  }
-  case PSO_TYPE::INVALID: {
-    assert(0 && "Unsupported PSO type");
-    break;
-  }
-  default:;
+    case PSO_TYPE::DXR: {
+      assert(0 && "Unsupported PSO type");
+      break;
+    }
+    case PSO_TYPE::RASTER: {
+      return processRasterPSO(file, jobj, nullptr);
+      break;
+    }
+    case PSO_TYPE::COMPUTE: {
+      assert(0 && "Unsupported PSO type");
+      break;
+    }
+    case PSO_TYPE::INVALID: {
+      assert(0 && "Unsupported PSO type");
+      break;
+    }
+    default:;
   }
   return {};
 }
@@ -774,4 +809,4 @@ void VkPSOManager::recompilePSOFromShader(const char *shaderName,
                                           const char *getOffsetPath) {
   assert(0);
 }
-} // namespace SirEngine::vk
+}  // namespace SirEngine::vk

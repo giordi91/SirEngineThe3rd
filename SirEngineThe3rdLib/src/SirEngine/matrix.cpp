@@ -37,7 +37,7 @@ glm::mat4 getPerspectiveMatrix(const int screenWidth, const int screenHeight) {
   constexpr float fieldOfView = SE_PI / 4.0f;
   float screenAspect =
       static_cast<float>(screenWidth) / static_cast<float>(screenHeight);
-  const float farP = 1000.0f;
+  const float farP = 100.0f;
   const float nearP = 0.001f;
 
   if (globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::DX12) {
