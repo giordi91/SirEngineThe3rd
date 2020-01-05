@@ -1,8 +1,9 @@
 #pragma once
 
-#include "SirEngine/handle.h"
 #include <unordered_map>
+
 #include "SirEngine/graphics/renderingContext.h"
+#include "SirEngine/handle.h"
 
 namespace SirEngine {
 
@@ -18,14 +19,18 @@ enum class RenderTargetFormat {
 };
 
 class TextureManager {
-public:
-  enum TEXTURE_ALLOCATION_FLAGS {
+ public:
+  enum TEXTURE_ALLOCATION_FLAG_BITS {
     ALLOW_RANDOM_WRITE = 1,
     DEPTH_TEXTURE = 2,
-    RENDER_TARGET = 4
+    RENDER_TARGET = 4,
+    SHADER_RESOURCE = 8,
+    COPY_SOURCE = 16,
+    COPY_DEST = 32
   };
+  typedef uint32_t TEXTURE_ALLOCATION_FLAGS;
 
-public:
+ public:
   TextureManager() { m_nameToHandle.reserve(RESERVE_SIZE); }
 
   virtual ~TextureManager() = default;
@@ -38,7 +43,7 @@ public:
   virtual void free(const TextureHandle handle) = 0;
   virtual TextureHandle allocateTexture(
       uint32_t width, uint32_t height, RenderTargetFormat format,
-      const char *name, uint32_t allocFlags,
+      const char *name, TEXTURE_ALLOCATION_FLAGS allocFlags,
       RESOURCE_STATE finalState = RESOURCE_STATE::RENDER_TARGET) = 0;
 
   virtual void bindRenderTarget(TextureHandle handle, TextureHandle depth) = 0;
@@ -55,10 +60,10 @@ public:
     return TextureHandle{0};
   }
 
-protected:
+ protected:
   std::unordered_map<std::string, TextureHandle> m_nameToHandle;
   static const uint32_t RESERVE_SIZE = 200;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
 };
 
-} // namespace SirEngine
+}  // namespace SirEngine

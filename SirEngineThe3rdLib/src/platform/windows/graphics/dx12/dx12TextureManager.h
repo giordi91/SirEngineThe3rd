@@ -18,14 +18,14 @@ class SIR_ENGINE_API Dx12TextureManager final : public TextureManager {
     ID3D12Resource *resource;
     D3D12_RESOURCE_STATES state;
     DXGI_FORMAT format;
-    uint32_t flags; // combination of texture allocation flags
+    uint32_t flags;  // combination of texture allocation flags
     DescriptorPair srv;
     DescriptorPair rtsrv;
     DescriptorPair uav;
     DescriptorPair dsvStencil;
   };
 
-public:
+ public:
   Dx12TextureManager()
       : TextureManager(), batch(dx12::DEVICE), m_texturePool(RESERVE_SIZE) {
     m_nameToHandle.reserve(RESERVE_SIZE);
@@ -36,19 +36,16 @@ public:
   virtual TextureHandle loadTexture(const char *path,
                                     bool cubeMap = false) override;
   void free(const TextureHandle handle) override;
-  TextureHandle allocateTexture(
-      uint32_t width, uint32_t height, RenderTargetFormat format,
-      const char *name, uint32_t allocFlags,
-      RESOURCE_STATE finalState) override;
-  void bindRenderTarget(TextureHandle handle,
-                                TextureHandle depth) override;
-  void bindRenderTargetStencil(TextureHandle handle,
-                                       TextureHandle depth);
+  TextureHandle allocateTexture(uint32_t width, uint32_t height,
+                                RenderTargetFormat format, const char *name,
+                                uint32_t allocFlags,
+                                RESOURCE_STATE finalState) override;
+  void bindRenderTarget(TextureHandle handle, TextureHandle depth) override;
+  void bindRenderTargetStencil(TextureHandle handle, TextureHandle depth);
 
   void clearDepth(const TextureHandle depth, const float depthValue,
-                          const float stencilValue) override;
-  void clearRT(const TextureHandle handle,
-                       const float color[4]) override;
+                  const float stencilValue) override;
+  void clearRT(const TextureHandle handle, const float color[4]) override;
 
   void initialize() override;
   void cleanup() override;
@@ -62,7 +59,6 @@ public:
 
   // handles facilities
   DescriptorPair getSRVDx12(const TextureHandle handle) {
-
     assertMagicNumber(handle);
     const uint32_t index = getIndexFromHandle(handle);
     const TextureData &data = m_texturePool.getConstRef(index);
@@ -73,7 +69,6 @@ public:
   // handles facilities
   DescriptorPair getSrvStencilDx12(const TextureHandle handle);
   DescriptorPair getUAVDx12(const TextureHandle handle) {
-
     assertMagicNumber(handle);
     const uint32_t index = getIndexFromHandle(handle);
     const TextureData &data = m_texturePool.getConstRef(index);
@@ -102,7 +97,6 @@ public:
     dx12::GLOBAL_CBV_SRV_UAV_HEAP->freeDescriptor(pair);
   }
   inline DescriptorPair getRTVDx12(const TextureHandle handle) const {
-
     assertMagicNumber(handle);
     const uint32_t index = getIndexFromHandle(handle);
     return m_texturePool.getConstRef(index).rtsrv;
@@ -121,11 +115,9 @@ public:
   }
 
   // barriers
-  inline int
-  transitionTexture2DifNeeded(const TextureHandle handle,
-                              const D3D12_RESOURCE_STATES wantedState,
-                              D3D12_RESOURCE_BARRIER *barriers, int counter) {
-
+  inline int transitionTexture2DifNeeded(
+      const TextureHandle handle, const D3D12_RESOURCE_STATES wantedState,
+      D3D12_RESOURCE_BARRIER *barriers, int counter) {
     assertMagicNumber(handle);
     const uint32_t index = getIndexFromHandle(handle);
     TextureData &data = m_texturePool[index];
@@ -139,7 +131,7 @@ public:
     return counter;
   }
 
-private:
+ private:
   inline void assertMagicNumber(const TextureHandle handle) const {
     const uint32_t magic = getMagicFromHandle(handle);
     const uint32_t idx = getIndexFromHandle(handle);
@@ -147,7 +139,7 @@ private:
            "invalid magic handle for constant buffer");
   }
 
-private:
+ private:
   std::unordered_map<std::string, TextureHandle> m_nameToHandle;
   DirectX::ResourceUploadBatch batch;
   SparseMemoryPool<TextureData> m_texturePool;
@@ -156,5 +148,5 @@ private:
   TextureHandle m_whiteTexture;
 };
 
-} // namespace dx12
-} // namespace SirEngine
+}  // namespace dx12
+}  // namespace SirEngine

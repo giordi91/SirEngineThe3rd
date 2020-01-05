@@ -1,4 +1,5 @@
 #include "platform/windows/graphics/vk/vkTextureManager.h"
+
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
 #include "gli/gli.hpp"
@@ -22,7 +23,8 @@ static std::unordered_map<RenderTargetFormat, VkFormat>
     RENDER_TARGET_FORMAT_TO_VK_FORMAT{
         {RenderTargetFormat::RGBA32, VK_FORMAT_R8G8B8A8_UNORM},
         {RenderTargetFormat::R16G16B16A16_FLOAT, VK_FORMAT_R16G16B16A16_SFLOAT},
-        {RenderTargetFormat::BC1_UNORM, VK_FORMAT_BC1_RGBA_UNORM_BLOCK}};
+        {RenderTargetFormat::BC1_UNORM, VK_FORMAT_BC1_RGBA_UNORM_BLOCK},
+        {RenderTargetFormat::DEPTH_F32_S8, VK_FORMAT_D32_SFLOAT_S8_UINT}};
 
 // TODO This value come from the texture compiler which spits out dxgi formats,
 // should fix this at one point?
@@ -70,96 +72,96 @@ static void setImageLayout(
   // Source access mask controls actions that have to be finished on the old
   // layout before it will be transitioned to the new layout
   switch (oldImageLayout) {
-  case VK_IMAGE_LAYOUT_UNDEFINED:
-    // Image layout is undefined (or does not matter)
-    // Only valid as initial layout
-    // No flags required, listed only for completeness
-    imageMemoryBarrier.srcAccessMask = 0;
-    break;
+    case VK_IMAGE_LAYOUT_UNDEFINED:
+      // Image layout is undefined (or does not matter)
+      // Only valid as initial layout
+      // No flags required, listed only for completeness
+      imageMemoryBarrier.srcAccessMask = 0;
+      break;
 
-  case VK_IMAGE_LAYOUT_PREINITIALIZED:
-    // Image is preinitialized
-    // Only valid as initial layout for linear images, preserves memory contents
-    // Make sure host writes have been finished
-    imageMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
-    break;
+    case VK_IMAGE_LAYOUT_PREINITIALIZED:
+      // Image is preinitialized
+      // Only valid as initial layout for linear images, preserves memory
+      // contents Make sure host writes have been finished
+      imageMemoryBarrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+      break;
 
-  case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
-    // Image is a color attachment
-    // Make sure any writes to the color buffer have been finished
-    imageMemoryBarrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-    break;
+    case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+      // Image is a color attachment
+      // Make sure any writes to the color buffer have been finished
+      imageMemoryBarrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+      break;
 
-  case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
-    // Image is a depth/stencil attachment
-    // Make sure any writes to the depth/stencil buffer have been finished
-    imageMemoryBarrier.srcAccessMask =
-        VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-    break;
+    case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
+      // Image is a depth/stencil attachment
+      // Make sure any writes to the depth/stencil buffer have been finished
+      imageMemoryBarrier.srcAccessMask =
+          VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+      break;
 
-  case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
-    // Image is a transfer source
-    // Make sure any reads from the image have been finished
-    imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-    break;
+    case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+      // Image is a transfer source
+      // Make sure any reads from the image have been finished
+      imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+      break;
 
-  case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
-    // Image is a transfer destination
-    // Make sure any writes to the image have been finished
-    imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-    break;
+    case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+      // Image is a transfer destination
+      // Make sure any writes to the image have been finished
+      imageMemoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+      break;
 
-  case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
-    // Image is read by a shader
-    // Make sure any shader reads from the image have been finished
-    imageMemoryBarrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-    break;
-  default:
-    // Other source layouts aren't handled (yet)
-    break;
+    case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+      // Image is read by a shader
+      // Make sure any shader reads from the image have been finished
+      imageMemoryBarrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+      break;
+    default:
+      // Other source layouts aren't handled (yet)
+      break;
   }
 
   // Target layouts (new)
   // Destination access mask controls the dependency for the new image layout
   switch (newImageLayout) {
-  case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
-    // Image will be used as a transfer destination
-    // Make sure any writes to the image have been finished
-    imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-    break;
+    case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+      // Image will be used as a transfer destination
+      // Make sure any writes to the image have been finished
+      imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+      break;
 
-  case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
-    // Image will be used as a transfer source
-    // Make sure any reads from the image have been finished
-    imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-    break;
+    case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+      // Image will be used as a transfer source
+      // Make sure any reads from the image have been finished
+      imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+      break;
 
-  case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
-    // Image will be used as a color attachment
-    // Make sure any writes to the color buffer have been finished
-    imageMemoryBarrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-    break;
+    case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+      // Image will be used as a color attachment
+      // Make sure any writes to the color buffer have been finished
+      imageMemoryBarrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+      break;
 
-  case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
-    // Image layout will be used as a depth/stencil attachment
-    // Make sure any writes to depth/stencil buffer have been finished
-    imageMemoryBarrier.dstAccessMask =
-        imageMemoryBarrier.dstAccessMask |
-        VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-    break;
+    case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
+      // Image layout will be used as a depth/stencil attachment
+      // Make sure any writes to depth/stencil buffer have been finished
+      imageMemoryBarrier.dstAccessMask =
+          imageMemoryBarrier.dstAccessMask |
+          VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+      break;
 
-  case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
-    // Image will be read in a shader (sampler, input attachment)
-    // Make sure any writes to the image have been finished
-    if (imageMemoryBarrier.srcAccessMask == 0) {
-      imageMemoryBarrier.srcAccessMask =
-          VK_ACCESS_HOST_WRITE_BIT | VK_ACCESS_TRANSFER_WRITE_BIT;
-    }
-    imageMemoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-    break;
-  default:
-    // Other source layouts aren't handled (yet)
-    break;
+    case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+      // Image will be read in a shader (sampler, input attachment)
+      // Make sure any writes to the image have been finished
+      if (imageMemoryBarrier.srcAccessMask == 0) {
+        imageMemoryBarrier.srcAccessMask =
+            VK_ACCESS_HOST_WRITE_BIT | VK_ACCESS_TRANSFER_WRITE_BIT;
+      }
+      imageMemoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+      break;
+    default:
+      // Other source layouts aren't handled (yet)
+      break;
   }
 
   // Put barrier inside setup command buffer
@@ -173,7 +175,6 @@ bool VkTextureManager::loadTextureFromFile(const char *name, VkFormat format,
                                            VkImageUsageFlags imageUsageFlags,
                                            VkImageLayout imageLayout,
                                            bool isCube) const {
-
   std::ifstream f(name);
   assert(!f.fail());
 
@@ -640,7 +641,6 @@ TextureHandle VkTextureManager::loadTexture(const char *path,
 }
 
 void VkTextureManager::free(const TextureHandle handle) {
-
   // by default if a texture is not present will get the white handle
   // to keep the asset destruction streamlined, we allow to pass
   // in the white texture, but ignore it
@@ -661,22 +661,26 @@ void VkTextureManager::free(const TextureHandle handle) {
   m_texturePool.free(index);
 }
 
-
-
-
-	
-TextureHandle VkTextureManager::allocateTexture(uint32_t width, uint32_t height,
-                                                RenderTargetFormat format,
-                                                const char *name,
-                                                uint32_t allocFlags,RESOURCE_STATE finalState) {
-
+TextureHandle VkTextureManager::allocateTexture(
+    uint32_t width, uint32_t height, RenderTargetFormat format,
+    const char *name, TEXTURE_ALLOCATION_FLAGS allocFlags,
+    RESOURCE_STATE finalState) {
   // NOTE for now this is hardcoded, if necessary will be changed
   VkImageLayout imageLayout = fromStateToLayout(finalState);
 
   // TODO have this being built by generic flags passed in
-  VkImageUsageFlags imageUsageFlags = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
-                                      VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
-                                      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  VkImageUsageFlags imageUsageFlags = 0;
+  bool isRT = (allocFlags & TEXTURE_ALLOCATION_FLAG_BITS::RENDER_TARGET) > 0;
+  bool isSrc = (allocFlags & TEXTURE_ALLOCATION_FLAG_BITS::COPY_SOURCE) > 0;
+  bool isDest = (allocFlags & TEXTURE_ALLOCATION_FLAG_BITS::COPY_DEST) > 0;
+  bool isShader =
+      (allocFlags & TEXTURE_ALLOCATION_FLAG_BITS::SHADER_RESOURCE) > 0;
+  bool isDepth = (allocFlags & TEXTURE_ALLOCATION_FLAG_BITS::DEPTH_TEXTURE) > 0;
+  imageUsageFlags |= isRT ? VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT : 0;
+  imageUsageFlags |= isSrc ? VK_IMAGE_USAGE_TRANSFER_SRC_BIT : 0;
+  imageUsageFlags |= isDest ? VK_IMAGE_USAGE_TRANSFER_DST_BIT : 0;
+  imageUsageFlags |= isShader ? VK_IMAGE_USAGE_SAMPLED_BIT : 0;
+  imageUsageFlags |= isDepth ? VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT : 0;
 
   const std::string textureName = getFileName(name);
 
@@ -746,8 +750,11 @@ TextureHandle VkTextureManager::allocateTexture(uint32_t width, uint32_t height,
   VK_CHECK(
       vkBindImageMemory(vk::LOGICAL_DEVICE, data.image, data.deviceMemory, 0));
 
+  VkImageAspectFlags aspect =
+      isDepth ? VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT
+              : VK_IMAGE_ASPECT_COLOR_BIT;
   VkImageSubresourceRange subresourceRange = {};
-  subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  subresourceRange.aspectMask = aspect;
   subresourceRange.baseMipLevel = 0;
   subresourceRange.levelCount = data.mipLevels;
   subresourceRange.layerCount = 1;
@@ -770,7 +777,8 @@ TextureHandle VkTextureManager::allocateTexture(uint32_t width, uint32_t height,
   viewCreateInfo.format = vkFormat;
   viewCreateInfo.components = {VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G,
                                VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A};
-  viewCreateInfo.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
+
+  viewCreateInfo.subresourceRange = {aspect, 0, 1, 0, 1};
   // Linear tiling usually won't support mip maps
   // Only set mip map count if optimal tiling is used
   viewCreateInfo.subresourceRange.levelCount = data.mipLevels;
@@ -889,4 +897,4 @@ void VkTextureManager::cleanup() {
   vkDestroyImageView(vk::LOGICAL_DEVICE, data.view, nullptr);
   vkFreeMemory(vk::LOGICAL_DEVICE, data.deviceMemory, nullptr);
 }
-} // namespace SirEngine::vk
+}  // namespace SirEngine::vk

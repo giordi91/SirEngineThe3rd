@@ -82,10 +82,9 @@ bool isExtensionSupported(
 bool checkAvailableInstanceExtensions(
     std::vector<VkExtensionProperties> &availableExtensions) {
   uint32_t extensionsCount = 0;
-  VkResult result = VK_SUCCESS;
 
-  result = vkEnumerateInstanceExtensionProperties(nullptr, &extensionsCount,
-                                                  nullptr);
+  VkResult result = vkEnumerateInstanceExtensionProperties(nullptr, &extensionsCount,
+                                                           nullptr);
   if ((result != VK_SUCCESS) || (extensionsCount == 0)) {
     std::cout << "Could not get the number of instance extensions."
               << std::endl;
