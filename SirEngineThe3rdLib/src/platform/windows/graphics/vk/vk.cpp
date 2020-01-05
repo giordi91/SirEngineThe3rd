@@ -1,6 +1,6 @@
 
 #define VOLK_IMPLEMENTATION
-#include "volk.h"
+#include "platform/windows/graphics/vk/vk.h"
 
 #include "SirEngine/Window.h"
 #include "SirEngine/assetManager.h"
@@ -9,7 +9,6 @@
 #include "SirEngine/graphics/camera.h"
 #include "SirEngine/log.h"
 #include "SirEngine/runtimeString.h"
-#include "platform/windows/graphics/vk/vk.h"
 #include "platform/windows/graphics/vk/vkAdapter.h"
 #include "platform/windows/graphics/vk/vkBufferManager.h"
 #include "platform/windows/graphics/vk/vkConstantBufferManager.h"
@@ -22,6 +21,7 @@
 #include "vkMaterialManager.h"
 #include "vkMeshManager.h"
 #include "vkTextureManager.h"
+#include "volk.h"
 
 namespace SirEngine::vk {
 VkInstance INSTANCE = nullptr;
@@ -125,13 +125,12 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
 
   assert(SWAP_CHAIN_IMAGE_COUNT != 0);
   assert(SWAP_CHAIN_IMAGE_COUNT <= PREALLOCATED_SEMAPHORE_COUNT);
-  assert(SWAP_CHAIN_IMAGE_COUNT <= 9); // used to convert easily the swap chain
-                                       // image count to char for debug name
+  assert(SWAP_CHAIN_IMAGE_COUNT <= 9);  // used to convert easily the swap chain
+                                        // image count to char for debug name
 
   // allocating all the per frame resources used for the render,
   // synchronization, command pool etc
   for (uint32_t i = 0; i < SWAP_CHAIN_IMAGE_COUNT; ++i) {
-
     char frame[2]{static_cast<char>(48 + globals::CURRENT_FRAME), '\0'};
     if (!newSemaphore(LOGICAL_DEVICE, (FRAME_COMMAND[i].m_acquireSemaphore))) {
       assert(0 && "failed to create acquire image semaphore");
@@ -187,7 +186,7 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   globals::PSO_MANAGER = PSO_MANAGER;
   // TODO TEMP HACK LOAD, remove this
   const PSOHandle handle2 =
-      //vk::PSO_MANAGER->loadRawPSO("../data/pso/vkHDRtoSDREffect_PSO.json");
+      // vk::PSO_MANAGER->loadRawPSO("../data/pso/vkHDRtoSDREffect_PSO.json");
       vk::PSO_MANAGER->loadRawPSO("../data/pso/HDRtoSDREffect_PSO.json");
   const PSOHandle handle =
       vk::PSO_MANAGER->loadRawPSO("../data/pso/forwardPhongPSO.json");
@@ -227,17 +226,17 @@ bool acquireSwapchainImage(const VkDevice logicalDevice,
   const VkResult result = vkAcquireNextImageKHR(
       logicalDevice, swapchain, 2000000000, semaphore, fence, &imageIndex);
   switch (result) {
-  case VK_SUCCESS:
-  case VK_SUBOPTIMAL_KHR:
-    return true;
-  default:
-    return false;
+    case VK_SUCCESS:
+    case VK_SUBOPTIMAL_KHR:
+      return true;
+    default:
+      return false;
   }
 }
 
-RenderingContext *
-createVkRenderingContext(const RenderingContextCreationSettings &settings,
-                         uint32_t width, uint32_t height) {
+RenderingContext *createVkRenderingContext(
+    const RenderingContextCreationSettings &settings, uint32_t width,
+    uint32_t height) {
   return new VkRenderingContext(settings, width, height);
 }
 
@@ -251,7 +250,6 @@ VkRenderingContext::VkRenderingContext(
 
 void setDebugNameImpl() {}
 bool VkRenderingContext::initializeGraphics() {
-
   const bool result = vkInitializeGraphics(
       m_settings.window, m_screenInfo.width, m_screenInfo.height);
   if (!result) {
@@ -298,7 +296,6 @@ void VkRenderingContext::setupCameraForFrame() {
 }
 
 void VkRenderingContext::bindCameraBuffer(int index) const {
-
   // VkWriteDescriptorSet writeDescriptorSets{};
   // VkDescriptorBufferInfo bufferInfoUniform = {};
   // vk::CONSTANT_BUFFER_MANAGER->bindConstantBuffer(
@@ -329,7 +326,6 @@ void resetFrameCommand(VkFrameCommand *command) {
 }
 
 bool VkRenderingContext::newFrame() {
-
   // resetting memory used on a per frame basis
   globals::STRING_POOL->resetFrameMemory();
   globals::FRAME_ALLOCATOR->reset();
@@ -363,9 +359,9 @@ bool VkRenderingContext::newFrame() {
       VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
       VK_IMAGE_LAYOUT_UNDEFINED,
       VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-      VK_QUEUE_FAMILY_IGNORED, // used for cross queue sync
+      VK_QUEUE_FAMILY_IGNORED,  // used for cross queue sync
       VK_QUEUE_FAMILY_IGNORED,
-      VK_IMAGE_ASPECT_COLOR_BIT}; // this wont work if you have depth buffers
+      VK_IMAGE_ASPECT_COLOR_BIT};  // this wont work if you have depth buffers
 
   setImageMemoryBarrier(CURRENT_FRAME_COMMAND->m_commandBuffer,
                         VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
@@ -375,7 +371,6 @@ bool VkRenderingContext::newFrame() {
 }
 
 bool VkRenderingContext::dispatchFrame() {
-
   assert(CURRENT_FRAME_COMMAND != nullptr);
 
   const ImageTransition imageTransitionBeforePresent = {
@@ -434,7 +429,6 @@ bool VkRenderingContext::stopGraphic() {
 }
 
 bool VkRenderingContext::shutdownGraphic() {
-
   vkDeviceWaitIdle(LOGICAL_DEVICE);
 
   bool result = destroySwapchain(LOGICAL_DEVICE, SWAP_CHAIN);
@@ -555,7 +549,6 @@ void VkRenderingContext::renderQueueType(const DrawCallConfig &config,
 
   for (const auto &renderableList : typedQueues) {
     if (vk::MATERIAL_MANAGER->isQueueType(renderableList.first, flag)) {
-
       // now that we know the material goes in the the deferred queue we can
       // start rendering it
 
@@ -629,12 +622,48 @@ VkRenderPass createRenderPass(const FrameBufferBindings &bindings,
     count++;
   }
 
+  bool hasDepth = bindings.depthStencil.handle.isHandleValid();
+  if (hasDepth) {
+    const DepthBinding &binding = bindings.depthStencil;
+    VkFormat currentFormat =
+        vk::TEXTURE_MANAGER->getTextureFormat(binding.handle);
+    assert(currentFormat != VK_FORMAT_UNDEFINED && "Unsupported render format");
+
+    attachments[count].format = currentFormat;
+    // TODO no MSAA yet
+    attachments[count].samples = VK_SAMPLE_COUNT_1_BIT;
+    // attachments[count].loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+    attachments[count].loadOp = binding.shouldClearDepth
+                                    ? VK_ATTACHMENT_LOAD_OP_CLEAR
+                                    : VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    attachments[count].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    // TODO not really sure what to do about the stencil...
+    // for now set to load and store, should leave it untouched
+    attachments[count].stencilLoadOp = binding.shouldClearStencil
+                                           ? VK_ATTACHMENT_LOAD_OP_CLEAR
+                                           : VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    ;
+    attachments[count].stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
+    attachments[count].initialLayout =
+        VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    attachments[count].finalLayout =
+        VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+    // we have only one subpass and uses all attachments
+    attachmentsRefs[count].attachment = count;
+    attachmentsRefs[count].layout =
+        VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    count++;
+  }
+
   VkRenderPass renderPass{};
 
   VkSubpassDescription subPass{};
   subPass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-  subPass.colorAttachmentCount = count;
+  subPass.colorAttachmentCount = hasDepth ? count - 1 : count;
   subPass.pColorAttachments = attachmentsRefs;
+  subPass.pDepthStencilAttachment =
+      hasDepth ? &attachmentsRefs[count - 1] : nullptr;
 
   VkRenderPassCreateInfo createInfo{VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO};
   createInfo.attachmentCount = count;
@@ -651,7 +680,6 @@ VkFramebuffer *createFrameBuffer(VkRenderPass pass,
                                  const FrameBufferBindings &bindings,
                                  const char *name,
                                  uint32_t &outFrameBufferCount) {
-
   bool bindsToBackBuffer = false;
   for (int i = 0; i < 8; ++i) {
     bindsToBackBuffer |= bindings.colorRT[i].isSwapChainBackBuffer;
@@ -666,7 +694,6 @@ VkFramebuffer *createFrameBuffer(VkRenderPass pass,
 
   VkImageView imageViews[10]{};
   for (uint32_t swap = 0; swap < outFrameBufferCount; ++swap) {
-
     int count = 0;
     for (int i = 0; i < 8; ++i) {
       const RTBinding &binding = bindings.colorRT[i];
@@ -680,6 +707,15 @@ VkFramebuffer *createFrameBuffer(VkRenderPass pass,
                     .view;
       imageViews[i] = view;
       ++count;
+    }
+
+    bool hasDepth = bindings.depthStencil.handle.isHandleValid();
+    if (hasDepth) {
+      const DepthBinding &binding = bindings.depthStencil;
+      VkImageView view =
+          vk::TEXTURE_MANAGER->getTextureData(binding.handle).view;
+      imageViews[count] = view;
+      count++;
     }
 
     VkFramebufferCreateInfo createInfo = {
@@ -696,11 +732,10 @@ VkFramebuffer *createFrameBuffer(VkRenderPass pass,
                                  &(frameBuffers[swap])));
   }
   return frameBuffers;
-} // namespace SirEngine::vk
+}  // namespace SirEngine::vk
 
-BufferBindingsHandle
-VkRenderingContext::prepareBindingObject(const FrameBufferBindings &bindings,
-                                         const char *name) {
+BufferBindingsHandle VkRenderingContext::prepareBindingObject(
+    const FrameBufferBindings &bindings, const char *name) {
   uint32_t index;
   FrameBindingsData &data = m_bindingsPool.getFreeMemoryData(index);
   data.m_pass = createRenderPass(bindings, name);
@@ -735,7 +770,6 @@ void VkRenderingContext::fullScreenPass() {
   auto buffer = vk::CURRENT_FRAME_COMMAND->m_commandBuffer;
   vkCmdDraw(buffer, 6, 1, 0, 0);
 }
-
 
 int vkBarrier(int counter, VkImageMemoryBarrier *barriers, TextureHandle handle,
               RESOURCE_STATE oldState, RESOURCE_STATE newState) {
@@ -803,6 +837,19 @@ void VkRenderingContext::setBindingObject(const BufferBindingsHandle handle) {
                   binding.currentResourceState, binding.neededResourceState);
   }
 
+  // taking care of depth
+  bool hasDepth = data.m_bindings.depthStencil.handle.isHandleValid();
+  if (hasDepth) {
+    const DepthBinding &binding = data.m_bindings.depthStencil;
+    colors[count].depthStencil = {
+        binding.clearDepthColor.r,
+        static_cast<uint32_t>(binding.clearStencilColor.g)};
+    count += binding.shouldClearDepth ? 1 : 0;
+    barrierCounter =
+        vkBarrier(barrierCounter, barriers, binding.handle,
+                  binding.currentResourceState, binding.neededResourceState);
+  }
+
   if (barrierCounter) {
     vkCmdPipelineBarrier(vk::CURRENT_FRAME_COMMAND->m_commandBuffer,
                          VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
@@ -829,4 +876,4 @@ void VkRenderingContext::setBindingObject(const BufferBindingsHandle handle) {
   vkCmdBeginRenderPass(vk::CURRENT_FRAME_COMMAND->m_commandBuffer, &beginInfo,
                        VK_SUBPASS_CONTENTS_INLINE);
 }
-} // namespace SirEngine::vk
+}  // namespace SirEngine::vk

@@ -28,7 +28,7 @@ void VkSimpleForward::initialize() {
       width, height, RenderTargetFormat::DEPTH_F32_S8, "simpleForwardDepth",
       TextureManager::TEXTURE_ALLOCATION_FLAG_BITS::DEPTH_TEXTURE |
           TextureManager::TEXTURE_ALLOCATION_FLAG_BITS::SHADER_RESOURCE,
-      RESOURCE_STATE::SHADER_READ_RESOURCE);
+      RESOURCE_STATE::DEPTH_RENDER_TARGET);
 }
 
 void VkSimpleForward::compute() {
@@ -64,8 +64,20 @@ void VkSimpleForward::populateNodePorts() {
       RESOURCE_STATE::SHADER_READ_RESOURCE;
   bindings.colorRT[0].neededResourceState = RESOURCE_STATE::RENDER_TARGET;
   bindings.colorRT[0].isSwapChainBackBuffer = 0;
+
+  bindings.depthStencil.handle = m_depthHandle;
+  bindings.depthStencil.clearDepthColor= {1.0, 1.0, 1.0, 1.0};
+  bindings.depthStencil.clearStencilColor= {0.0, 0.0, 0.0, 0.0};
+  bindings.depthStencil.shouldClearDepth= true;
+  bindings.depthStencil.shouldClearStencil= true;
+  bindings.depthStencil.currentResourceState =
+      RESOURCE_STATE::DEPTH_RENDER_TARGET;
+  bindings.depthStencil.neededResourceState = RESOURCE_STATE::DEPTH_RENDER_TARGET;
+
+	
   bindings.width = globals::ENGINE_CONFIG->m_windowWidth;
   bindings.height = globals::ENGINE_CONFIG->m_windowHeight;
+
 
   m_bindHandle = globals::RENDERING_CONTEXT->prepareBindingObject(
       bindings, "vkSimpleForward");
