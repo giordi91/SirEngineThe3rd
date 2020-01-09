@@ -19,10 +19,12 @@ jobs:
         cd build
         cmake ../ 
         cmake --build . --config ${{matrix.configuration}} 
-    - name: Build engine
+    - name: Setup deps
       shell: powershell
       run: |
         ./ciSetup.ps1
+    - name: Build engine
+      run: |
         mkdir build
         cd build
         cmake ../ -DBUILD_VULKAN=ON
