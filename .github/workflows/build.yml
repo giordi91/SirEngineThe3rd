@@ -20,7 +20,9 @@ jobs:
         cmake ../ 
         cmake --build . --config ${{matrix.configuration}} 
     - name: Build engine
+      shell: powershell
       run: |
+        ./ciSetup.ps1
         mkdir build
         cd build
         cmake ../
