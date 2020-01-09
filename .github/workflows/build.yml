@@ -25,6 +25,8 @@ jobs:
         ./ciSetup.ps1
     - name: Build engine
       run: |
+        setx VULKAN_SDK "C:\VulkanSDK\1.1.126.0" /M
+        echo %VULKAN_SDK%
         mkdir build
         cd build
         cmake ../ -DBUILD_VULKAN=ON
