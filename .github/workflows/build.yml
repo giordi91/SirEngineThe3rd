@@ -25,7 +25,7 @@ jobs:
         ./ciSetup.ps1
         mkdir build
         cd build
-        cmake ../
+        cmake ../ -DBUILD_VULKAN=ON
         cmake --build . --config ${{matrix.configuration}} 
     - name: Run tests
       run: |
