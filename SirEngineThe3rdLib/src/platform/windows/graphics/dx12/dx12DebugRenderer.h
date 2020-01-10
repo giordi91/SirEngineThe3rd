@@ -1,8 +1,10 @@
 #pragma once
-#include "SirEngine/handle.h"
+#include <glm/glm.hpp>
 #include <unordered_map>
 #include <vector>
-#include <glm/glm.hpp>
+
+#include "SirEngine/graphics/debugRenderer.h"
+#include "SirEngine/handle.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/dx12MaterialManager.h"
 
@@ -36,17 +38,21 @@ struct DebugTracker {
   uint32_t sizeInBtye;
 };
 
-class DebugRenderer {
+class Dx12DebugRenderer : DebugRenderer {
   struct BufferUploadResource final {
     ID3D12Resource *uploadBuffer = nullptr;
     UINT64 fence = 0;
   };
 
-public:
-  DebugRenderer() = default;
-  void init();
+ public:
+  Dx12DebugRenderer() = default;
+  Dx12DebugRenderer(const Dx12DebugRenderer &) = delete;
+  Dx12DebugRenderer &operator=(const Dx12DebugRenderer &) = delete;
+  Dx12DebugRenderer(Dx12DebugRenderer &&) = delete;
+  Dx12DebugRenderer &operator=(Dx12DebugRenderer &&) = delete;
+  void initialize() override;
 
-  void cleanup() {
+  void cleanup() override {
     // for (auto &deb : m_persistante_q) {
     //  deb.buff->Release();
     //}
@@ -55,39 +61,35 @@ public:
 
   DebugDrawHandle drawPointsUniformColor(float *data, uint32_t sizeInByte,
                                          glm::vec4 color, float size,
-                                         const char *debugName);
+                                         const char *debugName) override;
   DebugDrawHandle drawLinesUniformColor(float *data, uint32_t sizeInByte,
                                         glm::vec4 color, float size,
-                                        const char *debugName);
+                                        const char *debugName) override;
   DebugDrawHandle drawSkeleton(Skeleton *skeleton, glm::vec4 color,
                                float pointSize);
   DebugDrawHandle drawAnimatedSkeleton(DebugDrawHandle handle,
-                                       AnimationPlayer *state,
-                                       glm::vec4 color,
-                                       float pointSize);
+                                       AnimationPlayer *state, glm::vec4 color,
+                                       float pointSize) override;
 
-  void render(TextureHandle input, TextureHandle depth);
-  void clearUploadRequests();
+  void render(TextureHandle input, TextureHandle depth) override;
+  void clearUploadRequests() override;
   DebugDrawHandle drawBoundingBoxes(BoundingBox *data, int count,
                                     glm::vec4 color,
-                                    const char *debugName);
+                                    const char *debugName) override;
 
   DebugDrawHandle drawAnimatedBoundingBoxes(DebugDrawHandle handle,
                                             BoundingBox *data, int count,
                                             glm::vec4 color,
-                                            const char *debugName);
+                                            const char *debugName) override;
 
   DebugDrawHandle drawAnimatedBoundingBoxFromFullPoints(
       const DebugDrawHandle handle, const glm::vec3 *data, const int count,
-      const glm::vec4 color, const char *debugName);
+      const glm::vec4 color, const char *debugName) override;
 
-  void drawMatrix(const glm::mat4 &mat, float size,
-                  glm::vec4 color, const char *debugName);
+  void drawMatrix(const glm::mat4 &mat, float size, glm::vec4 color,
+                  const char *debugName) override;
 
-  DebugRenderer(const DebugRenderer &) = delete;
-  DebugRenderer &operator=(const DebugRenderer &) = delete;
-
-private:
+ private:
   void renderQueue(
       std::unordered_map<uint32_t, std::vector<DebugPrimitive>> &inQueue,
       const TextureHandle input, const TextureHandle depth);
@@ -104,14 +106,13 @@ private:
 
   inline void assertMagicNumber(const DebugDrawHandle handle) const {
     const uint32_t magic = getMagicFromHandle(handle);
-    const uint32_t idx = getIndexFromHandle(handle);
     const auto found = m_trackers.find(handle.handle);
     assert(found != m_trackers.end());
     assert(found->second.magicNumber == magic &&
            "invalid magic number for debug tracker");
   }
 
-private:
+ private:
   struct PSORSPair {
     PSOHandle pso;
     RSHandle rs;
@@ -127,5 +128,5 @@ private:
   std::vector<DebugPrimitive> m_primToFree;
 };
 
-} // namespace dx12
-} // namespace SirEngine
+}  // namespace dx12
+}  // namespace SirEngine

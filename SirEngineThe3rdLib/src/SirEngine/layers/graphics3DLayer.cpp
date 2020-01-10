@@ -10,7 +10,7 @@
 #include "SirEngine/graphics/camera.h"
 #include "SirEngine/graphics/nodeGraph.h"
 #include "platform/windows/graphics/dx12/DX12.h"
-#include "platform/windows/graphics/dx12/debugRenderer.h"
+#include "platform/windows/graphics/dx12/dx12DebugRenderer.h"
 
 #include "SirEngine/events/renderGraphEvent.h"
 #include "SirEngine/events/shaderCompileEvent.h"
