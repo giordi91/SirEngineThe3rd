@@ -30,7 +30,7 @@ struct DebugTracker {
 class DebugRenderer {
  public:
   DebugRenderer() = default;
-  ~DebugRenderer() = default;
+  virtual ~DebugRenderer() = default;
   DebugRenderer(const DebugRenderer &) = delete;
   DebugRenderer &operator=(const DebugRenderer &) = delete;
   DebugRenderer(DebugRenderer &&) = delete;
