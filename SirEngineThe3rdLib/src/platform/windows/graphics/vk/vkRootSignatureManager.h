@@ -62,10 +62,6 @@ public:
     const LayoutData &data = m_rsPool.getConstRef(index);
     return data.layout;
   }
-
-  // mostly to keep API uniform
-  void init(){};
-
 private:
   inline uint32_t getIndexFromHandle(const RSHandle h) const {
     return h.handle & INDEX_MASK;

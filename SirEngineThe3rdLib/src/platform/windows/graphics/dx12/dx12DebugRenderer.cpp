@@ -456,12 +456,10 @@ void Dx12DebugRenderer::renderQueue(
         currentFc->commandList->IASetPrimitiveTopology(
             D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
       } else {
-        // currentFc->commandList->IASetVertexBuffers(0, 1, &prim.bufferView);
         currentFc->commandList->IASetPrimitiveTopology(
             D3D_PRIMITIVE_TOPOLOGY_LINELIST);
       }
-      commandList->SetGraphicsRootShaderResourceView(
-          2, prim.buffer->GetGPUVirtualAddress());
+	  commandList->SetGraphicsRootDescriptorTable(2, prim.srv.gpuHandle);
 
       currentFc->commandList->DrawInstanced(prim.primitiveToRender, 1, 0, 0);
     }

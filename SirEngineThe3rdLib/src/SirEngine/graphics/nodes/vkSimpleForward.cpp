@@ -88,6 +88,9 @@ void VkSimpleForward::clear() {
   if (m_rtHandle.isHandleValid()) {
     globals::TEXTURE_MANAGER->free(m_rtHandle);
   }
+  if (m_depthHandle.isHandleValid()) {
+    globals::TEXTURE_MANAGER->free(m_depthHandle);
+  }
   if (m_bindHandle.isHandleValid()) {
     globals::RENDERING_CONTEXT->freeBindingObject(m_bindHandle);
   }

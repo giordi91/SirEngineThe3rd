@@ -1,5 +1,6 @@
 #version 450
 
+
 layout (set=1,binding = 3) uniform texture2D colorTexture;
 layout (set=2,binding = 0) uniform sampler[7] colorSampler;
 
