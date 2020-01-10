@@ -1,12 +1,13 @@
-#include "volk.h"
-
-#include "SirEngine/log.h"
 #include "platform/windows/graphics/vk/vkAdapter.h"
-#include "vk.h"
-#include "vkLoad.h"
+
 #include <cassert>
 #include <iostream>
 #include <vector>
+
+#include "SirEngine/log.h"
+#include "vk.h"
+#include "vkLoad.h"
+#include "volk.h"
 
 namespace SirEngine::vk {
 
@@ -76,7 +77,7 @@ void setVendorIdOnResult(VkAdapterResult &adapterResult) {
   vkGetPhysicalDeviceProperties(adapterResult.m_physicalDevice, &properties);
 
   // brute force match the vendor id
-  adapterResult.m_foundVendor = static_cast<ADAPTER_VENDOR>(4);
+  adapterResult.m_foundVendor = ADAPTER_VENDOR::ANY;
   for (int i = 0; i < 4; ++i) {
     if (properties.vendorID == VENDOR_ID[i]) {
       adapterResult.m_foundVendor = static_cast<ADAPTER_VENDOR>(i);
@@ -85,7 +86,6 @@ void setVendorIdOnResult(VkAdapterResult &adapterResult) {
 }
 
 uint32_t getMaxPhysicalDeviceVRAMSizeInGB(VkPhysicalDevice physicalDevice) {
-
   VkPhysicalDeviceMemoryProperties memoryProperties;
   vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memoryProperties);
 
@@ -109,7 +109,6 @@ bool findSpecificVendorBestAdapter(
     const AdapterRequestConfig &config,
     const std::vector<VkPhysicalDevice> &physicalDevices,
     VkAdapterResult &adapterResult) {
-
   // it means we have a preference for an hardware vendor so let us try look
   // for it
   uint32_t largestFrameBuffer = 0;
@@ -152,15 +151,17 @@ bool findSpecificVendorBestAdapter(
                                : largestFrameBuffer;
 
       if (config.m_genericRule == ADAPTER_SELECTION_RULE::FIRST_VALID) {
-		setVendorIdOnResult(adapterResult);
+        setVendorIdOnResult(adapterResult);
         return true;
       }
     }
   }
-  setVendorIdOnResult(adapterResult);
-  return largestFrameBuffer != 0;
+  const bool result = largestFrameBuffer != 0;
+  if (result) {
+    setVendorIdOnResult(adapterResult);
+  }
+  return result;
 }
-
 
 bool getBestAdapter(const AdapterRequestConfig &config,
                     VkAdapterResult &adapterResult) {
@@ -184,9 +185,10 @@ bool getBestAdapter(const AdapterRequestConfig &config,
 
     if (!result && !config.m_vendorTolerant) {
       // it means we found no valid adapter and we cannot search for fallback
-      SE_CORE_ERROR("Could not find requested vendor {0}, and fail back to any "
-                    "vendor is not allowed by settings",
-                    ADAPTER_VENDOR_NAMES[static_cast<int>(config.m_vendor)]);
+      SE_CORE_ERROR(
+          "Could not find requested vendor {0}, and fail back to any "
+          "vendor is not allowed by settings",
+          ADAPTER_VENDOR_NAMES[static_cast<int>(config.m_vendor)]);
       exit(EXIT_FAILURE);
     }
     SE_CORE_WARN(
@@ -198,7 +200,6 @@ bool getBestAdapter(const AdapterRequestConfig &config,
   // if we are here is because we want any type of adapter
   // we iterate all the devices
   for (auto &physicalDevice : physicalDevices) {
-
     // we found correct vendor, we need to see if support what we need
     bool result = physicalDeviceSupportsQueues(
         physicalDevice, adapterResult.m_graphicsQueueFamilyIndex,
@@ -246,7 +247,6 @@ bool getBestAdapter(const AdapterRequestConfig &config,
 }
 
 void logPhysicalDevice(VkPhysicalDevice physicalDevice) {
-
   VkPhysicalDeviceProperties properties;
   VkPhysicalDeviceMemoryProperties memoryProperties;
   vkGetPhysicalDeviceProperties(physicalDevice, &properties);
@@ -289,4 +289,4 @@ void logPhysicalDevice(VkPhysicalDevice physicalDevice) {
   }
   std::cout << std::endl;
 }
-} // namespace SirEngine::vk
+}  // namespace SirEngine::vk

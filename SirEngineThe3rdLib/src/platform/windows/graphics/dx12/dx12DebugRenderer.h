@@ -38,7 +38,7 @@ struct DebugTracker {
   uint32_t sizeInBtye;
 };
 
-class Dx12DebugRenderer : DebugRenderer {
+class Dx12DebugRenderer : public DebugRenderer {
   struct BufferUploadResource final {
     ID3D12Resource *uploadBuffer = nullptr;
     UINT64 fence = 0;

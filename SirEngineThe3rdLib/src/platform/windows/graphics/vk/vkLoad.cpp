@@ -230,70 +230,6 @@ bool createVulkanInstanceWithWsiExtensionsEnabled(
   return createVulkanInstance(desiredExtensions, applicationName, instance);
 }
 
-/*
-bool loadInstanceLevelFunctions(VkInstance instance,
-                                std::vector<char const *> const &extensions) {
-  // Load core Vulkan API instance-level functions
-#define INSTANCE_LEVEL_VULKAN_FUNCTION(name)                                   \
-  name = (PFN_##name)vkGetInstanceProcAddr(instance, #name);                   \
-  if (name == nullptr) {                                                       \
-    std::cout << "Could not load instance-level Vulkan function named: " #name \
-              << std::endl;                                                    \
-    return false;                                                              \
-  }
-
-  // Load instance-level functions from enabled extensions
-#define INSTANCE_LEVEL_VULKAN_FUNCTION_FROM_EXTENSION(name, extension)         \
-  for (auto &enabled_extension : extensions) {                                 \
-    if (std::string(enabled_extension) == std::string(extension)) {            \
-      name = (PFN_##name)vkGetInstanceProcAddr(instance, #name);               \
-      if (name == nullptr) {                                                   \
-        std::cout                                                              \
-            << "Could not load instance-level Vulkan function named: " #name   \
-            << std::endl;                                                      \
-        return false;                                                          \
-      }                                                                        \
-    }                                                                          \
-  }
-
-#include "ListOfVulkanFunctions.inl"
-
-  return true;
-}
-*/
-
-/*
-bool loadDeviceLevelFunctions(
-    VkDevice logicalDevice,
-    std::vector<char const *> const &enabledExtensions) {
-  // Load core Vulkan API device-level functions
-#define DEVICE_LEVEL_VULKAN_FUNCTION(name)                                     \
-  name = (PFN_##name)vkGetDeviceProcAddr(logicalDevice, #name);                \
-  if (name == nullptr) {                                                       \
-    std::cout << "Could not load device-level Vulkan function named: " #name   \
-              << std::endl;                                                    \
-    return false;                                                              \
-  }
-
-  // Load device-level functions from enabled extensions
-#define DEVICE_LEVEL_VULKAN_FUNCTION_FROM_EXTENSION(name, extension)           \
-  for (auto &enabledExtension : enabledExtensions) {                           \
-    if (std::string(enabledExtension) == std::string(extension)) {             \
-      name = (PFN_##name)vkGetDeviceProcAddr(logicalDevice, #name);            \
-      if (name == nullptr) {                                                   \
-        std::cout                                                              \
-            << "Could not load device-level Vulkan function named: " #name     \
-            << std::endl;                                                      \
-        return false;                                                          \
-      }                                                                        \
-    }                                                                          \
-  }
-
-#include "ListOfVulkanFunctions.inl"
-
-  return true;
-}
-*/
 
 bool enumerateAvailablePhysicalDevices(
     const VkInstance instance,
@@ -461,64 +397,6 @@ void getDeviceQueue(const VkDevice logicalDevice,
   vkGetDeviceQueue(logicalDevice, queueFamilyIndex, queueIndex, &queue);
 }
 
-/*
-bool createLogicalDeviceWithGeometryShadersAndGraphicsAndComputeQueues(
-    VkInstance instance, VkDevice &logicalDevice, VkQueue &graphicsQueue,
-    VkQueue &computeQueue) {
-  std::vector<VkPhysicalDevice> physicalDevices;
-  enumerateAvailablePhysicalDevices(instance, physicalDevices);
-
-  // after we enumerated the physical devices we are going to query the
-  // different feature
-  for (const auto &physicalDevice : physicalDevices) {
-    VkPhysicalDeviceProperties deviceProperties;
-    getFeaturesAndPropertiesOfPhysicalDevice(physicalDevice, deviceFeatures,
-                                             deviceProperties);
-
-    // if (!deviceFeatures.geometryShader) {
-    //  continue;
-    //} else {
-    //  deviceFeatures = {};
-    //  deviceFeatures.geometryShader = VK_TRUE;
-    //}
-
-
-    uint32_t graphicsQueueFamilyIndex;
-    if (!selectIndexOfQueueFamilyWithDesiredCapabilities(
-            physicalDevice, VK_QUEUE_GRAPHICS_BIT, graphicsQueueFamilyIndex)) {
-      continue;
-    }
-
-    uint32_t computeQueueFamilyIndex;
-    if (!selectIndexOfQueueFamilyWithDesiredCapabilities(
-            physicalDevice, VK_QUEUE_COMPUTE_BIT, computeQueueFamilyIndex)) {
-      continue;
-    }
-
-    // now we found index for both queues we needed, if they have the same index
-    // we make a single request
-    std::vector<QueueInfo> requestedQueues = {
-        {graphicsQueueFamilyIndex, {1.0f}}};
-    if (graphicsQueueFamilyIndex != computeQueueFamilyIndex) {
-      requestedQueues.push_back({computeQueueFamilyIndex, {1.0f}});
-    }
-
-    if (!createLogicalDevice(physicalDevice, requestedQueues, {},
-                             &deviceFeatures, logicalDevice)) {
-      continue;
-    } else {
-      if (!loadDeviceLevelFunctions(logicalDevice, {})) {
-        return false;
-      }
-      getDeviceQueue(logicalDevice, graphicsQueueFamilyIndex, 0, graphicsQueue);
-      getDeviceQueue(logicalDevice, computeQueueFamilyIndex, 0, computeQueue);
-
-      return true;
-    }
-  }
-  return false;
-}
-*/
 bool selectQueueFamilyThatSupportsPresentationToGivenSurface(
     VkPhysicalDevice physicalDevice, VkSurfaceKHR presentationSurface,
     uint32_t &queueFamilyIndex) {
@@ -735,33 +613,6 @@ VkFramebuffer createFrameBuffer(const VkDevice logicalDevice,
   VkFramebuffer frameBuffer = nullptr;
   vkCreateFramebuffer(logicalDevice, &createInfo, nullptr, &frameBuffer);
   return frameBuffer;
-}
-
-VkShaderModule loadShader(const VkDevice logicalDevice, const char *path) {
-  FILE *file = fopen(path, "rb");
-  assert(file);
-
-  fseek(file, 0, SEEK_END);
-  size_t length = ftell(file);
-  assert(length > 0);
-
-  fseek(file, 0, SEEK_SET);
-  char *buffer = new char[length];
-  size_t rc = fread(buffer, sizeof(char), length, file);
-  assert(rc == length);
-
-  fclose(file);
-
-  assert(length % 4 == 0);
-  VkShaderModuleCreateInfo createInfo = {
-      VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO};
-  createInfo.codeSize = length;
-  createInfo.pCode = reinterpret_cast<uint32_t *>(buffer);
-
-  VkShaderModule shaderModule = nullptr;
-  vkCreateShaderModule(logicalDevice, &createInfo, nullptr, &shaderModule);
-  delete[] buffer;
-  return shaderModule;
 }
 
 } // namespace vk
