@@ -26,7 +26,7 @@ class Dx12RootSignatureManager;
 class ShadersLayoutRegistry;
 class Dx12PSOManager;
 class BufferManagerDx12;
-class DebugRenderer;
+class Dx12DebugRenderer;
 class Dx12RenderingContext;
 class Dx12MaterialManager;
 
@@ -133,7 +133,7 @@ extern ShaderManager *SHADER_MANAGER;
 extern Dx12RootSignatureManager *ROOT_SIGNATURE_MANAGER;
 extern Dx12PSOManager *PSO_MANAGER;
 extern BufferManagerDx12 *BUFFER_MANAGER;
-extern DebugRenderer *DEBUG_RENDERER;
+extern Dx12DebugRenderer *DEBUG_RENDERER;
 extern Dx12RenderingContext *RENDERING_CONTEXT;
 
 inline UINT64 insertFenceToGlobalQueue() {

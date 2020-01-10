@@ -1,4 +1,4 @@
-#include "platform/windows/graphics/dx12/debugRenderer.h"
+#include "platform/windows/graphics/dx12/dx12DebugRenderer.h"
 #include "SirEngine/animation/animationClip.h"
 #include "SirEngine/animation/animationPlayer.h"
 #include "SirEngine/animation/skeleton.h"
@@ -15,7 +15,7 @@
 #include "platform/windows/graphics/dx12/dx12MaterialManager.h"
 
 namespace SirEngine::dx12 {
-void DebugRenderer::init() {
+void Dx12DebugRenderer::initialize() {
   // lets build the map of rs and pso
   // points single color
   PSOHandle psoHandle =
@@ -123,7 +123,7 @@ inline D3D12_VERTEX_BUFFER_VIEW getVertexBufferView(ID3D12Resource *buffer,
   return vbv;
 }
 
-DebugDrawHandle DebugRenderer::drawPointsUniformColor(float *data,
+DebugDrawHandle Dx12DebugRenderer::drawPointsUniformColor(float *data,
                                                       const uint32_t sizeInByte,
                                                       const glm::vec4 color,
                                                       const float size,
@@ -183,7 +183,7 @@ DebugDrawHandle DebugRenderer::drawPointsUniformColor(float *data,
   return debugHandle;
 }
 
-DebugDrawHandle DebugRenderer::drawLinesUniformColor(float *data,
+DebugDrawHandle Dx12DebugRenderer::drawLinesUniformColor(float *data,
                                                      const uint32_t sizeInByte,
                                                      const glm::vec4 color,
                                                      const float size,
@@ -240,7 +240,7 @@ DebugDrawHandle DebugRenderer::drawLinesUniformColor(float *data,
   return debugHandle;
 }
 
-DebugDrawHandle DebugRenderer::drawSkeleton(Skeleton *skeleton,
+DebugDrawHandle Dx12DebugRenderer::drawSkeleton(Skeleton *skeleton,
                                             const glm::vec4 color,
                                             const float pointSize) {
 
@@ -301,7 +301,7 @@ DebugDrawHandle DebugRenderer::drawSkeleton(Skeleton *skeleton,
   return returnHandle;
 }
 
-DebugDrawHandle DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
+DebugDrawHandle Dx12DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
                                                     AnimationPlayer *state,
                                                     const glm::vec4 color,
                                                     float pointSize) {
@@ -397,7 +397,7 @@ DebugDrawHandle DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
   }
 } // namespace SirEngine::dx12
 
-void DebugRenderer::renderQueue(
+void Dx12DebugRenderer::renderQueue(
     std::unordered_map<uint32_t, std::vector<DebugPrimitive>> &inQueue,
     const TextureHandle input, const TextureHandle depth) {
 
@@ -469,7 +469,7 @@ void DebugRenderer::renderQueue(
   }
 }
 
-void DebugRenderer::render(const TextureHandle input,
+void Dx12DebugRenderer::render(const TextureHandle input,
                            const TextureHandle depth) {
 
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
@@ -480,7 +480,7 @@ void DebugRenderer::render(const TextureHandle input,
   currentFc->commandList->IASetPrimitiveTopology(
       D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 } // namespace SirEngine::dx12
-void DebugRenderer::clearUploadRequests() {
+void Dx12DebugRenderer::clearUploadRequests() {
 
   const uint64_t id = GLOBAL_FENCE->GetCompletedValue();
 
@@ -555,7 +555,7 @@ int drawSquareBetweenTwoPoints(float *data, const glm::vec3 minP,
   return counter;
 }
 
-DebugDrawHandle DebugRenderer::drawBoundingBoxes(BoundingBox *data, int count,
+DebugDrawHandle Dx12DebugRenderer::drawBoundingBoxes(BoundingBox *data, int count,
                                                  const glm::vec4 color,
                                                  const char *debugName) {
 
@@ -598,7 +598,7 @@ DebugDrawHandle DebugRenderer::drawBoundingBoxes(BoundingBox *data, int count,
   return returnHandle;
 }
 
-DebugDrawHandle DebugRenderer::drawAnimatedBoundingBoxes(
+DebugDrawHandle Dx12DebugRenderer::drawAnimatedBoundingBoxes(
     DebugDrawHandle handle, BoundingBox *data, int count, glm::vec4 color,
     const char *debugName) {
   // first get AABB data
@@ -652,7 +652,7 @@ DebugDrawHandle DebugRenderer::drawAnimatedBoundingBoxes(
   }
 }
 
-DebugDrawHandle DebugRenderer::drawAnimatedBoundingBoxFromFullPoints(
+DebugDrawHandle Dx12DebugRenderer::drawAnimatedBoundingBoxFromFullPoints(
     const DebugDrawHandle handle, const glm::vec3 *data, const int count,
     const glm::vec4 color, const char *debugName) {
   // first get AABB data
@@ -713,7 +713,7 @@ DebugDrawHandle DebugRenderer::drawAnimatedBoundingBoxFromFullPoints(
   }
 } // namespace SirEngine::dx12
 
-void DebugRenderer::drawMatrix(const glm::mat4 &mat, float size,
+void Dx12DebugRenderer::drawMatrix(const glm::mat4 &mat, float size,
                                glm::vec4 color, const char *debugName) {
   const int totalSize =
       4 * 2 * 3; // 3 axis, each with two points, 4 floats each point

@@ -28,7 +28,7 @@ glm::vec4 toGLM(const DirectX::XMVECTOR &vec) {
 DirectX::XMMATRIX toDirectX(const glm::mat4 &mat) {
   auto matGlm = glm::transpose(mat);
   assert(sizeof(mat) == sizeof(matGlm));
-  DirectX::XMMATRIX toReturn;
+  DirectX::XMMATRIX toReturn{};
   memcpy(&toReturn, &mat, sizeof(mat));
   return toReturn;
 }
@@ -50,7 +50,6 @@ glm::mat4 getPerspectiveMatrix(const int screenWidth, const int screenHeight) {
   }
 
   auto temp44 = glm::perspective(fieldOfView, screenAspect, farP, nearP);
-  //auto temp44 = glm::perspective(fieldOfView, screenAspect, nearP, farP);
   return temp44;
 }
 

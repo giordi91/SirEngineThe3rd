@@ -1,7 +1,7 @@
 #include "SirEngine/graphics/nodes/debugDrawNode.h"
 #include "SirEngine/graphics/debugAnnotations.h"
 #include "SirEngine/handle.h"
-#include "platform/windows/graphics/dx12/debugRenderer.h"
+#include "platform/windows/graphics/dx12/dx12DebugRenderer.h"
 
 namespace SirEngine {
 

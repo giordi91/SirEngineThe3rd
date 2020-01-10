@@ -53,8 +53,8 @@ uint32_t GRAPHICS_QUEUE_FAMILY = 0;
 uint32_t PRESENTATION_QUEUE_FAMILY = 0;
 
 struct VkRenderable {
-  VkMeshRuntime m_meshRuntime;
-  VkMaterialRuntime m_materialRuntime;
+  VkMeshRuntime m_meshRuntime{};
+  VkMaterialRuntime m_materialRuntime{};
 };
 
 typedef std::unordered_map<uint32_t, std::vector<VkRenderable>>
@@ -93,7 +93,7 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   assert(VK_SUCCESS == result);
 
   // new adapter code here
-  AdapterRequestConfig adapterConfig{};
+  AdapterRequestConfig adapterConfig;
   adapterConfig.m_vendor = globals::ENGINE_CONFIG->m_requestedAdapterVendor;
   adapterConfig.m_vendorTolerant = globals::ENGINE_CONFIG->m_vendorTolerant;
   adapterConfig.m_genericRule = globals::ENGINE_CONFIG->m_adapterSelectionRule;
@@ -185,8 +185,6 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   PSO_MANAGER->initialize();
   globals::PSO_MANAGER = PSO_MANAGER;
   // TODO TEMP HACK LOAD, remove this
-  const PSOHandle handle2 =
-      // vk::PSO_MANAGER->loadRawPSO("../data/pso/vkHDRtoSDREffect_PSO.json");
       vk::PSO_MANAGER->loadRawPSO("../data/pso/HDRtoSDREffect_PSO.json");
   const PSOHandle handle =
       vk::PSO_MANAGER->loadRawPSO("../data/pso/forwardPhongPSO.json");
@@ -805,7 +803,6 @@ int vkBarrier(int counter, VkImageMemoryBarrier *barriers, TextureHandle handle,
 
 void VkRenderingContext::setBindingObject(const BufferBindingsHandle handle) {
   assertMagicNumber(handle);
-  const uint32_t magic = getMagicFromHandle(handle);
   const uint32_t idx = getIndexFromHandle(handle);
   const FrameBindingsData &data = m_bindingsPool.getConstRef(idx);
 
@@ -858,7 +855,8 @@ void VkRenderingContext::setBindingObject(const BufferBindingsHandle handle) {
                          barrierCounter, barriers);
   }
 
-  VkRenderPassBeginInfo beginInfo = {VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};
+  VkRenderPassBeginInfo beginInfo = {VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+                                     nullptr};
   beginInfo.renderPass = data.m_pass;
   uint32_t bufferIdx =
       data.m_frameBufferCount == 1 ? 0 : globals::CURRENT_FRAME;

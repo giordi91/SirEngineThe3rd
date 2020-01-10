@@ -10,7 +10,7 @@
 #include "SirEngine/memory/stringPool.h"
 #include "SirEngine/runtimeString.h"
 #include "SirEngine/skinClusterManager.h"
-#include "platform/windows/graphics/dx12/debugRenderer.h"
+#include "platform/windows/graphics/dx12/dx12DebugRenderer.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/dx12Adapter.h"
 #include "platform/windows/graphics/dx12/dx12BufferManager.h"
@@ -49,7 +49,7 @@ ShaderManager *SHADER_MANAGER = nullptr;
 Dx12PSOManager *PSO_MANAGER = nullptr;
 Dx12RootSignatureManager *ROOT_SIGNATURE_MANAGER = nullptr;
 BufferManagerDx12 *BUFFER_MANAGER = nullptr;
-DebugRenderer *DEBUG_RENDERER = nullptr;
+Dx12DebugRenderer *DEBUG_RENDERER = nullptr;
 Dx12RenderingContext *RENDERING_CONTEXT = nullptr;
 
 struct Dx12Renderable {
@@ -218,8 +218,8 @@ bool initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
       globals::ENGINE_CONFIG->m_dataSourcePath, "/materials/types"));
   globals::MATERIAL_MANAGER = MATERIAL_MANAGER;
 
-  DEBUG_RENDERER = new DebugRenderer();
-  DEBUG_RENDERER->init();
+  DEBUG_RENDERER = new Dx12DebugRenderer();
+  DEBUG_RENDERER->initialize();
 
   globals::ANIMATION_MANAGER = new AnimationManager();
   globals::ANIMATION_MANAGER->init();
