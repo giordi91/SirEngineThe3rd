@@ -1,7 +1,6 @@
 #version 450
 
-#extension GL_EXT_shader_16bit_storage: require
-#extension GL_EXT_shader_8bit_storage: require
+#extension GL_KHR_vulkan_glsl: enable 
 #extension GL_GOOGLE_include_directive: require
 
 #include "../common/structures.glsl"

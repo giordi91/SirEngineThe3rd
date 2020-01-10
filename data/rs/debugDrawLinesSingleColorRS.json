@@ -1,7 +1,7 @@
 {
   "type": "RASTER",
   "staticSamplers": false,
-  "useRegisterSpace": true, 
+  "useRegisterSpace": true,
   "config": [
     {
       "comment": "debug config",
@@ -11,6 +11,7 @@
         "ranges": [
           {
             "type": "CBV",
+            "underlyingResource": "buffer",
             "numDescriptors": 1,
             "baseRegister": 1
           }
@@ -19,15 +20,20 @@
       "visibility": "ALL"
     },
     {
-      "comment": "positions",
-      "type": "SRV",
+      "comment": "input geo",
+      "type": "descriptorTable",
       "data": {
-         "baseRegister": 8,
-         "numDescriptors": 1
+        "numberDescriptor": "1",
+        "ranges": [
+          {
+            "type": "SRV",
+            "underlyingResource": "buffer",
+            "numDescriptors": 1,
+            "baseRegister": 0
+          }
+        ]
       },
-      "visibility": "ALL"
+      "visibility": "VS"
     }
-
-
   ]
 }

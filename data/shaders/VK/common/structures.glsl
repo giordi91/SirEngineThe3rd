@@ -7,6 +7,7 @@ struct CameraBuffer {
   mat4 VPinverse;
   vec4 perspectiveValues;
   vec4 position;
+  vec4 cameraViewDir;
   float vFov;
   float screenWidth;
   float screenHeight;

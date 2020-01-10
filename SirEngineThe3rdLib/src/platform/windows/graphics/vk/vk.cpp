@@ -178,7 +178,7 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
       frameConcatenation(globals::ENGINE_CONFIG->m_dataSourcePath,
                          "/processed/shaders/VK/rasterization"));
   PIPELINE_LAYOUT_MANAGER = new VkPipelineLayoutManager();
-  PIPELINE_LAYOUT_MANAGER->init();
+  PIPELINE_LAYOUT_MANAGER->initialize();
   globals::ROOT_SIGNATURE_MANAGER = PIPELINE_LAYOUT_MANAGER;
 
   PSO_MANAGER = new VkPSOManager();
@@ -186,8 +186,9 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   globals::PSO_MANAGER = PSO_MANAGER;
   // TODO TEMP HACK LOAD, remove this
       vk::PSO_MANAGER->loadRawPSO("../data/pso/HDRtoSDREffect_PSO.json");
-  const PSOHandle handle =
       vk::PSO_MANAGER->loadRawPSO("../data/pso/forwardPhongPSO.json");
+      vk::PSO_MANAGER->loadRawPSO("../data/pso/debugDrawPointsSingleColorPSO.json");
+      vk::PSO_MANAGER->loadRawPSO("../data/pso/debugDrawLinesSingleColorPSO.json");
 
   CONSTANT_BUFFER_MANAGER = new VkConstantBufferManager();
   CONSTANT_BUFFER_MANAGER->initialize();

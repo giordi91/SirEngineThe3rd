@@ -27,7 +27,7 @@
             "type": "CBV",
             "underlyingResource": "buffer",
             "numDescriptors": 1,
-            "baseRegister": 2
+            "baseRegister":2 
           }
         ]
       },

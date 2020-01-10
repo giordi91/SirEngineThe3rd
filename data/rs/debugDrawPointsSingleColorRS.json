@@ -11,6 +11,7 @@
         "ranges": [
           {
             "type": "CBV",
+            "underlyingResource": "buffer",
             "numDescriptors": 1,
             "baseRegister": 1
           }
@@ -26,11 +27,13 @@
         "ranges": [
           {
             "type": "SRV",
+            "underlyingResource": "buffer",
             "numDescriptors": 1,
             "baseRegister": 0
           }
         ]
-      }
+      },
+      "visibility": "VS"
     }
   ]
 }

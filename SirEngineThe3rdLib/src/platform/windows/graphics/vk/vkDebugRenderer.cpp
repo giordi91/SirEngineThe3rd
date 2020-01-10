@@ -1,7 +1,30 @@
 #include "platform/windows/graphics/vk/vkDebugRenderer.h"
 
+#include "platform/windows/graphics/vk/vkPSOManager.h"
+#include "platform/windows/graphics/vk/vkRootSignatureManager.h"
+
 namespace SirEngine::vk {
-void VkDebugRenderer::initialize() {}
+void VkDebugRenderer::initialize() {
+  // lets build the map of rs and pso
+  // points single color
+  PSOHandle psoHandle =
+      vk::PSO_MANAGER->getHandleFromName("debugDrawPointsSingleColorPSO");
+  RSHandle rsHandle = vk::PIPELINE_LAYOUT_MANAGER->getHandleFromName(
+      "debugDrawPointsSingleColorRS");
+
+  m_shderTypeToShaderBind.insert(
+      static_cast<uint16_t>(SHADER_TYPE_FLAGS::DEBUG_POINTS_SINGLE_COLOR),
+      ShaderBind{rsHandle, psoHandle});
+
+  psoHandle =
+      vk::PSO_MANAGER->getHandleFromName("debugDrawLinesSingleColorPSO");
+  rsHandle = vk::PIPELINE_LAYOUT_MANAGER->getHandleFromName(
+      "debugDrawLinesSingleColorRS");
+
+  m_shderTypeToShaderBind.insert(
+      static_cast<uint16_t>(SHADER_TYPE_FLAGS::DEBUG_LINES_SINGLE_COLOR),
+      ShaderBind{rsHandle, psoHandle});
+}
 
 void VkDebugRenderer::cleanup() {}
 

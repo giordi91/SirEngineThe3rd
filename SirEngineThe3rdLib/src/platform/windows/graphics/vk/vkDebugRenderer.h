@@ -39,6 +39,8 @@ class VkDebugRenderer : public DebugRenderer {
       const glm::vec4 color, const char* debugName) override;
   void drawMatrix(const glm::mat4& mat, float size, glm::vec4 color,
                   const char* debugName) override;
+private:
+  HashMap<uint16_t, ShaderBind, hashUint16> m_shderTypeToShaderBind;
 };
 
 }  // namespace SirEngine::vk
