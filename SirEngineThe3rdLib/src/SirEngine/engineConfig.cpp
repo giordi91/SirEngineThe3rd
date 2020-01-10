@@ -26,7 +26,6 @@ static const int DEFAULT_ALLOCATOR_STRING_POOL_SIZE_MB = 20;
 static const int DEFAULT_ALLOCATOR_FRAME_SIZE_MB = 20;
 static const int DEFAULT_ALLOCAOTR_PERSISTENT_SIZE_MB = 20;
 
-static const char *GRAPHICS_API_TO_NAME[] = {"DirectX 12", "Vulkan"};
 static const std::unordered_map<std::string, SirEngine::GRAPHIC_API>
     NAME_TO_GRAPHIC_API{
         {"Vulkan", SirEngine::GRAPHIC_API::VULKAN},

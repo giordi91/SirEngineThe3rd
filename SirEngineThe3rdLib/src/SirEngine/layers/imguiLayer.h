@@ -1,13 +1,15 @@
 #pragma once
 
 #include "SirEngine/debugUiWidgets/frameTimingsWidget.h"
-#include "SirEngine/debugUiWidgets/hardwareInfo.h"
 #include "SirEngine/debugUiWidgets/memoryConsumptionWidget.h"
 #include "SirEngine/debugUiWidgets/renderGraphWidget.h"
 #include "SirEngine/debugUiWidgets/shaderRecompileWidget.h"
 #include "SirEngine/graphics/nodeGraph.h"
 #include "SirEngine/layer.h"
+#if BUILD_VK
+//TODO need to remove this
 #include <vulkan/vulkan.h>
+#endif
 
 namespace SirEngine {
 class Event;
@@ -25,7 +27,7 @@ class RequestShaderCompileEvent;
 
 class SIR_ENGINE_API ImguiLayer : public Layer {
 public:
-  ImguiLayer() : Layer("ImGuiLayer"){}
+  ImguiLayer() : Layer("ImGuiLayer") {}
 
   ~ImguiLayer() override = default;
 
@@ -50,8 +52,8 @@ private:
   bool onRequestCompileEvent(const RequestShaderCompileEvent &e);
 
 private:
-  INT64 g_Time = 0;
-  INT64 g_TicksPerSecond = 0;
+  uint64_t g_Time = 0;
+  uint64_t g_TicksPerSecond = 0;
   debug::FrameTimingsWidget m_frameTimings;
   debug::MemoryConsumptionWidget m_memoryUsage;
   debug::RenderGraphWidget m_renderGraph;
@@ -65,7 +67,10 @@ private:
   // 192 is the `
   static const uint32_t TRIGGER_UI_BUTTON = 192;
 
-    // vk imgui render pass
-    VkRenderPass imguiPass;
+  #if BUILD_VK
+  // TODO find a better solution for this, can it decay to void?
+  // vk imgui render pass
+  VkRenderPass imguiPass;
+  #endif
 };
 } // namespace SirEngine

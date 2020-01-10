@@ -8,16 +8,17 @@
 #include "SirEngine/assetManager.h"
 #include "SirEngine/graphics/nodes/FinalBlitNode.h"
 #include "SirEngine/graphics/nodes/vkSimpleForward.h"
+#include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/layers/vkTempLayer.h"
-#include "platform/windows/graphics/vk/vk.h"
-#include "platform/windows/graphics/vk/vkConstantBufferManager.h"
-#include "platform/windows/graphics/vk/vkLoad.h"
-#include "platform/windows/graphics/vk/vkMaterialManager.h"
-#include "platform/windows/graphics/vk/vkPSOManager.h"
-#include "platform/windows/graphics/vk/vkShaderManager.h"
-#include "platform/windows/graphics/vk/vkSwapChain.h"
-#include "platform/windows/graphics/vk/vkTextureManager.h"
-#include "platform/windows/graphics/vk/volk.h"
+//#include "platform/windows/graphics/vk/vk.h"
+//#include "platform/windows/graphics/vk/vkConstantBufferManager.h"
+//#include "platform/windows/graphics/vk/vkLoad.h"
+//#include "platform/windows/graphics/vk/vkMaterialManager.h"
+//#include "platform/windows/graphics/vk/vkPSOManager.h"
+//#include "platform/windows/graphics/vk/vkShaderManager.h"
+//#include "platform/windows/graphics/vk/vkSwapChain.h"
+//#include "platform/windows/graphics/vk/vkTextureManager.h"
+//#include "platform/windows/graphics/vk/volk.h"
 
 namespace SirEngine {
 
@@ -198,7 +199,7 @@ void VkTempLayer::onEvent(Event &event) {
 }
 
 void VkTempLayer::clear() {
-  vkDeviceWaitIdle(vk::LOGICAL_DEVICE);
+  //vkDeviceWaitIdle(vk::LOGICAL_DEVICE);
   globals::RENDERING_GRAPH->clear();
 }
 

@@ -1,5 +1,4 @@
 #pragma once
-#include <vulkan/vulkan.h>
 
 #include "SirEngine/handle.h"
 #include "SirEngine/layer.h"
@@ -53,9 +52,6 @@ private:
   float previousY = 0;
 
   // shaders
-  VkPipeline m_pipeline;
-
-  VkRenderPass m_pass;
   VkSimpleForward *m_forward;
   // TODO temp
   GraphAllocators *alloc;
