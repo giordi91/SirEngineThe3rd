@@ -54,7 +54,7 @@ project(SirEngineThe3rdLib)
 	ADD_EXTERNAL_HEADER(${CMAKE_SOURCE_DIR}/vendors/gli)
 	FINALIZE_EXTERNAL_HEADER()
 
-	if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+	if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 		#LNK4099 is for missing pbd of the compiled dependencies, I won't debug them so i don't add them
 		# to git to save space
 		add_compile_options(/wd4251 /wd4275 /wd4099)
@@ -66,15 +66,15 @@ project(SirEngineThe3rdLib)
 		if(${BUILD_AMD})
 			add_compile_definitions(BUILD_AMD SE_PLATFORM_WINDOWS SE_BUILD_DLL _CRT_SECURE_NO_WARNINGS _UNICODE QUIT_ESCAPE GRAPHICS_API=DX12)
 		else(${BUILD_AMD})
-			add_compile_definitions(SE_PLATFORM_WINDOWS SE_BUILD_DLL _CRT_SECURE_NO_WARNINGS _UNICODE QUIT_ESCAPE GRAPHICS_API=DX12)
+			add_compile_definitions(SE_PLATFORM_WINDOWS SE_BUILD_DLL _CRT_SECURE_NO_WARNINGS _UNICODE QUIT_ESCAPE)
 		endif(${BUILD_AMD})
 
 		if(${BUILD_VULKAN})
-			add_compile_definitions(VK_USE_PLATFORM_WIN32_KHR VK_NO_PROTOTYPES)
+			add_compile_definitions(VK_USE_PLATFORM_WIN32_KHR VK_NO_PROTOTYPES BUILD_VK)
 		endif(${BUILD_VULKAN})
-			
-
-
+		if(${BUILD_DX12})
+			add_compile_definitions(BUILD_DX12)
+		endif()
 	endif (WIN32)
 
 
@@ -85,7 +85,6 @@ project(SirEngineThe3rdLib)
 
 	#grouping in the IDE based on path
 	SOURCE_GROUP_BY_FOLDER(SirEngineThe3rdLib)
-
 
 	#finding all the files that are not c++, like shader, json definitions etc
 	#but is nice to have in the editor for quick editing
@@ -175,10 +174,12 @@ project(SirEngineThe3rdLib)
 		target_link_libraries(${PROJECT_NAME}  debug SPIRVd optimized SPIRV)
 	endif(${BUILD_VULKAN})
 
-	#copying needed libs from pix event dependency to output build folder
-	COPY_FILE_TO_BIN_DIRECTORY( "${CMAKE_SOURCE_DIR}/vendors/PixEvent/bin/WinPixEventRuntime.lib")
-	COPY_FILE_TO_BIN_DIRECTORY( "${CMAKE_SOURCE_DIR}/vendors/PixEvent/bin/WinPixEventRuntime.dll")
-	COPY_FILE_TO_BIN_DIRECTORY( "${CMAKE_SOURCE_DIR}/vendors/PixEvent/bin/WinPixEventRuntime_UAP.lib")
-	COPY_FILE_TO_BIN_DIRECTORY( "${CMAKE_SOURCE_DIR}/vendors/PixEvent/bin/WinPixEventRuntime_UAP.dll")
+	if(WIN32)
+		#copying needed libs from pix event dependency to output build folder
+		COPY_FILE_TO_BIN_DIRECTORY( "${CMAKE_SOURCE_DIR}/vendors/PixEvent/bin/WinPixEventRuntime.lib")
+		COPY_FILE_TO_BIN_DIRECTORY( "${CMAKE_SOURCE_DIR}/vendors/PixEvent/bin/WinPixEventRuntime.dll")
+		COPY_FILE_TO_BIN_DIRECTORY( "${CMAKE_SOURCE_DIR}/vendors/PixEvent/bin/WinPixEventRuntime_UAP.lib")
+		COPY_FILE_TO_BIN_DIRECTORY( "${CMAKE_SOURCE_DIR}/vendors/PixEvent/bin/WinPixEventRuntime_UAP.dll")
+	endif()
 
 

@@ -1,32 +1,46 @@
 #include "renderingContext.h"
-#include "SirEngine/globals.h"
-#include "SirEngine/graphics/camera.h"
-#include "platform/windows/graphics/dx12/DX12.h"
-#include "platform/windows/graphics/vk/vk.h"
 
-#include "platform/windows/graphics/dx12/dx12DebugRenderer.h"
-#include "platform/windows/graphics/dx12/dx12MeshManager.h"
+#include "SirEngine/globals.h"
+#include "SirEngine/log.h"
+#if BUILD_DX12
+#include "platform/windows/graphics/dx12/DX12.h"
+#endif
+
+#if BUILD_VK
+#include "platform/windows/graphics/vk/vk.h"
+#endif
 
 namespace SirEngine {
 
 RenderingContext *
 createWindowsRenderingContext(const RenderingContextCreationSettings &settings,
                               uint32_t width, uint32_t height) {
-
   if (!RenderingContext::isAPISupported(settings.graphicsAPI)) {
-    // logCoreError(
-    //    "Requested api is not supported on system: {0}",
-    //    GRAPHICS_API_TO_NAME[static_cast<uint32_t>(settings.graphicsAPI)]);
+    // TODO convert code to name
+    SE_CORE_ERROR("Requested api is not supported on system, API code: {0}",
+                  static_cast<uint32_t>(settings.graphicsAPI));
     return nullptr;
   }
 
   // API is supported we can create the context based on the given API
   switch (settings.graphicsAPI) {
   case (GRAPHIC_API::DX12): {
+#if BUILD_DX12
     return dx12::createDx12RenderingContext(settings, width, height);
+#else
+    SE_CORE_ERROR("Asking for a DX12 rendering context but DX12 was not "
+                  "enabled at compile time");
+    exit(-1);
+#endif
   }
   case GRAPHIC_API::VULKAN:;
-    return vk::createVkRenderingContext(settings,width,height);
+#if BUILD_VK
+    return vk::createVkRenderingContext(settings, width, height);
+#else
+    SE_CORE_ERROR("Asking for a Vulkan rendering context but vulkan was not "
+                  "enabled at compile time");
+    exit(-1);
+#endif
   default:;
     assert(!"Not supported API requested");
     return nullptr;

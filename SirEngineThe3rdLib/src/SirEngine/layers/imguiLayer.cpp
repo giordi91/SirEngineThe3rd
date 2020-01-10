@@ -1,21 +1,27 @@
-#include <Windows.h>
+//#include <Windows.h>
 
+#include "imguiLayer.h"
 #include "SirEngine/core.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/log.h"
 #include "imgui/imgui.h"
-#include "imguiLayer.h"
 
+#if BUILD_DX12
 // DX12
 #include "platform/windows/graphics/dx12/DX12.h"
-#include "platform/windows/graphics/dx12/dx12TextureManager.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/dx12SwapChain.h"
+#include "platform/windows/graphics/dx12/dx12TextureManager.h"
 #include "platform/windows/graphics/dx12/imgui_impl_dx12.h"
+#endif
 
+#if BUILD_VK
 // VK
 #include "platform/windows/graphics/vk/imgui_impl_vulkan.h"
 #include "platform/windows/graphics/vk/vk.h"
+#include "platform/windows/graphics/vk/vkDescriptorManager.h"
+#include "platform/windows/graphics/vk/vkSwapChain.h"
+#endif
 
 #include "SirEngine/application.h"
 #include "SirEngine/events/applicationEvent.h"
@@ -26,9 +32,6 @@
 #include "SirEngine/events/scriptingEvent.h"
 #include "SirEngine/events/shaderCompileEvent.h"
 #include "SirEngine/graphics/debugAnnotations.h"
-#include "platform/windows/graphics/vk/vkSwapChain.h"
-#include "platform/windows/graphics/vk/vkDescriptorManager.h"
-#include "vkTempLayer.h"
 
 namespace SirEngine {
 void ImguiLayer::onAttach() {
@@ -44,6 +47,7 @@ void ImguiLayer::onAttach() {
   } else {
     assert(globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::VULKAN);
 
+#if BUILD_VK
     ImGui_ImplVulkan_InitInfo vkinfo{};
     vkinfo.Instance = vk::INSTANCE;
     vkinfo.PhysicalDevice = vk::PHYSICAL_DEVICE;
@@ -118,6 +122,7 @@ void ImguiLayer::onAttach() {
       style.Colors[ImGuiCol_WindowBg] = ImVec4(0.0f, 0.4f, 0.0f, 0.75f);
       style.Colors[ImGuiCol_TitleBgActive] = ImVec4(0.0f, 0.7f, 0.0f, 1.00f);
     }
+#endif
   }
 
   // Keyboard mapping. ImGui will use those indices to peek into the
@@ -245,10 +250,13 @@ void ImguiLayer::onUpdate() {
   ImGui::Render();
 
   if (globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::DX12) {
+#if BUILD_DX12
     ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(),
                                   dx12::CURRENT_FRAME_RESOURCE->fc.commandList);
+#endif
     annotateGraphicsEnd();
   } else {
+#if BUILD_VK
     VkRenderPassBeginInfo info = {};
     info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     info.renderPass = imguiPass;
@@ -264,6 +272,7 @@ void ImguiLayer::onUpdate() {
                                     vk::CURRENT_FRAME_COMMAND->m_commandBuffer);
     // Submit command buffer
     vkCmdEndRenderPass(vk::CURRENT_FRAME_COMMAND->m_commandBuffer);
+#endif
   }
 }
 /*
@@ -345,12 +354,14 @@ void ImguiLayer::onEvent(Event &event) {
 }
 
 void ImguiLayer::clear() {
+#if BUILD_VK
   if (globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::VULKAN) {
     VK_CHECK(vkDeviceWaitIdle(vk::LOGICAL_DEVICE));
     ImGui_ImplVulkan_Shutdown();
     ImGui::DestroyContext();
     vkDestroyRenderPass(vk::LOGICAL_DEVICE, imguiPass, nullptr);
   }
+#endif
 }
 
 bool ImguiLayer::onMouseButtonPressEvent(const MouseButtonPressEvent &e) const {
