@@ -45,7 +45,7 @@ class Dx12DebugRenderer : public DebugRenderer {
   };
 
  public:
-  Dx12DebugRenderer() = default;
+  Dx12DebugRenderer():DebugRenderer(){};
   Dx12DebugRenderer(const Dx12DebugRenderer &) = delete;
   Dx12DebugRenderer &operator=(const Dx12DebugRenderer &) = delete;
   Dx12DebugRenderer(Dx12DebugRenderer &&) = delete;

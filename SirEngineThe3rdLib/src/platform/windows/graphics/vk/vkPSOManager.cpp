@@ -32,9 +32,13 @@ static const std::string PSO_KEY_SAMPLE_MASK = "sampleMask";
 static const std::string PSO_KEY_TOPOLOGY_TYPE = "topologyType";
 static const std::string PSO_KEY_RENDER_TARGETS = "renderTargets";
 static const std::string PSO_KEY_RTV_FORMATS = "rtvFormats";
+static const std::string PSO_KEY_RTV_CLEAR = "clearRTVs";
+static const std::string PSO_KEY_RTV_CLEAR_COLOR = "clearRTVCOlors";
 static const std::string PSO_KEY_SAMPLE_DESC_COUNT = "sampleDescCount";
 static const std::string PSO_KEY_SAMPLE_DESC_QUALITY = "sampleDescQuality";
 static const std::string PSO_KEY_DSV_FORMAT = "dsvFormat";
+static const std::string PSO_KEY_DSV_CLEAR = "clearDsv";
+static const std::string PSO_KEY_DSV_COLOR = "clearDsvColor";
 static const std::string PSO_KEY_DEPTH_STENCIL_CONFIG =
     "depthStencilStateConfig";
 static const std::string DEFAULT_STRING = "";
@@ -66,6 +70,10 @@ DescriptorHandle STATIC_SAMPLERS_HANDLE;
 void assertInJson(const nlohmann::json &jobj, const std::string &key) {
   const auto found = jobj.find(key);
   assert(found != jobj.end());
+}
+bool inJson(const nlohmann::json &jobj, const std::string &key) {
+  const auto found = jobj.find(key);
+  return found != jobj.end();
 }
 
 const char *STATIC_SAMPLERS_NAMES[STATIC_SAMPLER_COUNT] = {
@@ -410,7 +418,7 @@ void getDepthStencilState(
     depthStencilState.depthTestEnable = true;
     depthStencilState.depthWriteEnable = true;
     depthStencilState.depthCompareOp = VK_COMPARE_OP_GREATER;
-    //depthStencilState.depthCompareOp = VK_COMPARE_OP_LESS;
+    // depthStencilState.depthCompareOp = VK_COMPARE_OP_LESS;
     depthStencilState.stencilTestEnable = false;
     return;
   }
@@ -465,8 +473,19 @@ VkRenderPass getRenderPass(const nlohmann::json &jobj, const char *name) {
   // TODO change this to maximum number of attachments
   VkAttachmentDescription attachments[10] = {};
   VkAttachmentReference attachmentsRefs[10] = {};
+
+  bool hasClearColors = inJson(jobj, PSO_KEY_RTV_CLEAR);
+  auto formats = jobj[PSO_KEY_RTV_FORMATS];
+  nlohmann::json::value_type clearColors;
+  bool clearDepth = getValueIfInJson(jobj, PSO_KEY_DSV_CLEAR, false);
+
+  if (hasClearColors) {
+    clearColors = jobj[PSO_KEY_RTV_CLEAR];
+    assert(clearColors.size() == formats.size());
+  }
+
   int count = 0;
-  for (auto &format : jobj[PSO_KEY_RTV_FORMATS]) {
+  for (auto &format : formats) {
     VkFormat currentFormat =
         convertStringToTextureFormat(format.get<std::string>());
     assert(currentFormat != VK_FORMAT_UNDEFINED && "Unsupported render format");
@@ -475,7 +494,7 @@ VkRenderPass getRenderPass(const nlohmann::json &jobj, const char *name) {
     // TODO no MSAA yet
     attachments[count].samples = VK_SAMPLE_COUNT_1_BIT;
     // attachments[count].loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
-    attachments[count].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    attachments[count].loadOp = hasClearColors? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
     attachments[count].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
     // TODO not really sure what to do about the stencil...
     // for now set to load and store, should leave it untouched
@@ -512,11 +531,13 @@ VkRenderPass getRenderPass(const nlohmann::json &jobj, const char *name) {
       // attachments[count].loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
       // TODO need to fix this, needs to be defined in the json if will be
       // cleared or not
-      attachments[count].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+      attachments[count].loadOp =
+          clearDepth ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
       attachments[count].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
       // TODO not really sure what to do about the stencil...
       // for now set to load and store, should leave it untouched
-      attachments[count].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+      attachments[count].stencilLoadOp =
+          clearDepth ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
       attachments[count].stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
       attachments[count].initialLayout =
           VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
@@ -530,7 +551,7 @@ VkRenderPass getRenderPass(const nlohmann::json &jobj, const char *name) {
       count++;
       hasDepth = true;
     } else {
-      //assert(0 && "not supporting yet custom depth stencil");
+      // assert(0 && "not supporting yet custom depth stencil");
     }
   }
 

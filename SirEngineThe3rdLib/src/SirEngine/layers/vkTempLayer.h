@@ -5,7 +5,6 @@
 
 namespace SirEngine {
 
-class VkSimpleForward;
 class ReloadScriptsEvent;
 class DebugRenderConfigChanged;
 class MouseButtonPressEvent;
@@ -51,8 +50,6 @@ private:
   float previousX = 0;
   float previousY = 0;
 
-  // shaders
-  VkSimpleForward *m_forward;
   // TODO temp
   GraphAllocators *alloc;
 };

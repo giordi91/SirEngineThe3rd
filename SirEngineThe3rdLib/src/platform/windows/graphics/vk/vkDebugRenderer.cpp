@@ -62,7 +62,6 @@ DebugDrawHandle VkDebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
 }
 
 void VkDebugRenderer::render(TextureHandle input, TextureHandle depth) {
-  assert(0);
 }
 
 void VkDebugRenderer::clearUploadRequests() {}

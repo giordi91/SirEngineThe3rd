@@ -5,7 +5,7 @@ namespace SirEngine::vk {
 
 class VkDebugRenderer : public DebugRenderer {
  public:
-  VkDebugRenderer() = default;
+  VkDebugRenderer(): DebugRenderer(),m_shderTypeToShaderBind(RESERVE_SIZE){};
   virtual ~VkDebugRenderer() = default;
   VkDebugRenderer(const VkDebugRenderer&) = delete;
   VkDebugRenderer& operator=(const VkDebugRenderer&) = delete;
@@ -40,6 +40,7 @@ class VkDebugRenderer : public DebugRenderer {
   void drawMatrix(const glm::mat4& mat, float size, glm::vec4 color,
                   const char* debugName) override;
 private:
+  static constexpr uint32_t RESERVE_SIZE =20;
   HashMap<uint16_t, ShaderBind, hashUint16> m_shderTypeToShaderBind;
 };
 
