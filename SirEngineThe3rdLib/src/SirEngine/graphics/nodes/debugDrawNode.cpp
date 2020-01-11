@@ -1,13 +1,13 @@
 #include "SirEngine/graphics/nodes/debugDrawNode.h"
-#include "SirEngine/graphics/debugAnnotations.h"
+
+#include "SirEngine/graphics/debugRenderer.h"
 #include "SirEngine/handle.h"
-#include "platform/windows/graphics/dx12/dx12DebugRenderer.h"
+#include "SirEngine/graphics/renderingContext.h"
 
 namespace SirEngine {
 
 DebugDrawNode::DebugDrawNode(GraphAllocators &allocators)
     : GNode("DebugDrawNode", "DebugDrawNode", allocators) {
-
   defaultInitializePlugsAndConnections(2, 1);
   // lets create the plugs
   GPlug &inTexture = m_inputPlugs[PLUG_INDEX(PLUGS::IN_TEXTURE)];
@@ -29,32 +29,43 @@ DebugDrawNode::DebugDrawNode(GraphAllocators &allocators)
   outTexture.name = "outTexture";
 }
 
-inline void checkHandle(const TextureHandle input,
-                        const TextureHandle handleToWriteOn) {
-  assert(input.isHandleValid());
-  assert(input.handle != handleToWriteOn.handle);
-}
-
 void DebugDrawNode::initialize() {}
 
 void DebugDrawNode::compute() {
-  // get the render texture
-  annotateGraphicsBegin("DebugDrawPass");
-
-  assert(inputRTHandle.isHandleValid());
-  assert(inputDepthHandle.isHandleValid());
-  dx12::DEBUG_RENDERER->render(inputRTHandle, inputDepthHandle);
+  globals::RENDERING_CONTEXT->setBindingObject(m_bindHandle);
+  globals::DEBUG_RENDERER->render(inputRTHandle, inputDepthHandle);
+  globals::RENDERING_CONTEXT->clearBindingObject(m_bindHandle);
 
   m_outputPlugs[0].plugValue = inputRTHandle.handle;
-  annotateGraphicsEnd();
 }
 
 void DebugDrawNode::populateNodePorts() {
-
   inputRTHandle =
       getInputConnection<TextureHandle>(m_inConnections, IN_TEXTURE);
   inputDepthHandle =
       getInputConnection<TextureHandle>(m_inConnections, DEPTH_RT);
   m_outputPlugs[0].plugValue = inputRTHandle.handle;
+
+  // we have everything necessary to prepare the buffers
+  FrameBufferBindings bindings{};
+  bindings.colorRT[0].handle = inputRTHandle;
+  bindings.colorRT[0].shouldClearColor = false;
+  bindings.colorRT[0].currentResourceState = RESOURCE_STATE::RENDER_TARGET;
+  bindings.colorRT[0].neededResourceState = RESOURCE_STATE::RENDER_TARGET;
+  bindings.colorRT[0].isSwapChainBackBuffer = 0;
+
+  bindings.depthStencil.handle = inputDepthHandle;
+  bindings.depthStencil.shouldClearDepth = false;
+  bindings.depthStencil.shouldClearStencil = false;
+  bindings.depthStencil.currentResourceState =
+      RESOURCE_STATE::DEPTH_RENDER_TARGET;
+  bindings.depthStencil.neededResourceState =
+      RESOURCE_STATE::DEPTH_RENDER_TARGET;
+
+  bindings.width = globals::ENGINE_CONFIG->m_windowWidth;
+  bindings.height = globals::ENGINE_CONFIG->m_windowHeight;
+
+  m_bindHandle = globals::RENDERING_CONTEXT->prepareBindingObject(
+      bindings, "DebugDrawPass");
 }
-} // namespace SirEngine
+}  // namespace SirEngine

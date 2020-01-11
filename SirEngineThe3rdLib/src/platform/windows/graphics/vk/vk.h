@@ -18,6 +18,7 @@ class VkPipelineLayoutManager;
 class VkConstantBufferManager;
 class VkMaterialManager;
 class VkDescriptorManager;
+class VkDebugRenderer;
 struct VkSwapchain;
 
 static constexpr int PREALLOCATED_SEMAPHORE_COUNT = 4;
@@ -56,6 +57,7 @@ extern VkMeshManager *MESH_MANAGER;
 extern VkTextureManager *TEXTURE_MANAGER;
 extern VkMaterialManager *MATERIAL_MANAGER;
 extern VkDescriptorManager *DESCRIPTOR_MANAGER;
+extern VkDebugRenderer* DEBUG_RENDERER;
 extern uint32_t SWAP_CHAIN_IMAGE_COUNT;
 // incremented every frame and used to find the correct set of resources
 // like command buffer pool and allocators

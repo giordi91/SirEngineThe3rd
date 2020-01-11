@@ -24,6 +24,7 @@ public:
 private:
   TextureHandle inputRTHandle{};
   TextureHandle inputDepthHandle{};
+  BufferBindingsHandle m_bindHandle{};
 };
 
 } // namespace SirEngine

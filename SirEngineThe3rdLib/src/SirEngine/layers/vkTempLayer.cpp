@@ -1,24 +1,16 @@
+#include "SirEngine/layers/vkTempLayer.h"
+
 #include "SirEngine/application.h"
+#include "SirEngine/assetManager.h"
 #include "SirEngine/constantBufferManager.h"
 #include "SirEngine/events/debugEvent.h"
 #include "SirEngine/events/mouseEvent.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/graphics/camera.h"
-
-#include "SirEngine/assetManager.h"
 #include "SirEngine/graphics/nodes/FinalBlitNode.h"
 #include "SirEngine/graphics/nodes/vkSimpleForward.h"
 #include "SirEngine/graphics/renderingContext.h"
-#include "SirEngine/layers/vkTempLayer.h"
-//#include "platform/windows/graphics/vk/vk.h"
-//#include "platform/windows/graphics/vk/vkConstantBufferManager.h"
-//#include "platform/windows/graphics/vk/vkLoad.h"
-//#include "platform/windows/graphics/vk/vkMaterialManager.h"
-//#include "platform/windows/graphics/vk/vkPSOManager.h"
-//#include "platform/windows/graphics/vk/vkShaderManager.h"
-//#include "platform/windows/graphics/vk/vkSwapChain.h"
-//#include "platform/windows/graphics/vk/vkTextureManager.h"
-//#include "platform/windows/graphics/vk/volk.h"
+#include "SirEngine/graphics/debugRenderer.h"
 
 namespace SirEngine {
 
@@ -47,7 +39,6 @@ void VkTempLayer::onAttach() {
 
   // temporary graph for testing
   globals::RENDERING_GRAPH->addNode(m_forward);
-  // globals::RENDERING_GRAPH->setFinalNode(m_forward);
   globals::RENDERING_GRAPH->addNode(finalBlit);
   globals::RENDERING_GRAPH->setFinalNode(finalBlit);
 
@@ -62,11 +53,11 @@ void VkTempLayer::onAttach() {
   globals::RENDERING_CONTEXT->flush();
   // m_forward->initialize();
   // m_forward->populateNodePorts();
+  //globals::DEBUG_RENDERER->drawBoundingBoxes();
 }
 
 void VkTempLayer::onDetach() {}
 void VkTempLayer::onUpdate() {
-
   globals::RENDERING_CONTEXT->setupCameraForFrame();
   // evaluating rendering graph
   globals::RENDERING_GRAPH->compute();
@@ -87,96 +78,7 @@ void VkTempLayer::onUpdate() {
   //  vkCmdPushDescriptorSetKHR(FRAME_COMMAND[0].m_commandBuffer,
   // VK_PIPELINE_BIND_POINT_GRAPHICS, PIPELINE_LAYOUT, 0, ARRAYSIZE(descriptor),
   //                            descriptor);
-
-  /*
-  int idx = 0;
-  vk::VkTexture2D m_rt = vk::TEXTURE_MANAGER->getTextureData(
-      {m_forward->getOutputPlugs(idx)->plugValue});
-
-  VkImageMemoryBarrier barrier[2] = {};
-  barrier[0].sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-  barrier[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
-  barrier[0].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-  barrier[0].srcQueueFamilyIndex = 0;
-  barrier[0].dstQueueFamilyIndex = 0;
-  barrier[0].image = m_rt.image;
-  barrier[0].oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-  barrier[0].newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-  barrier[0].subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-  barrier[0].subresourceRange.baseArrayLayer = 0;
-  barrier[0].subresourceRange.baseMipLevel = 0;
-  barrier[0].subresourceRange.levelCount = 1;
-  barrier[0].subresourceRange.layerCount = 1;
-  barrier[1].sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-  barrier[1].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-  barrier[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-  barrier[1].srcQueueFamilyIndex = 0;
-  barrier[1].dstQueueFamilyIndex = 0;
-  barrier[1].image = vk::SWAP_CHAIN->images[globals::CURRENT_FRAME];
-  barrier[1].oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-  barrier[1].newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-  barrier[1].subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-  barrier[1].subresourceRange.baseArrayLayer = 0;
-  barrier[1].subresourceRange.baseMipLevel = 0;
-  barrier[1].subresourceRange.levelCount = 1;
-  barrier[1].subresourceRange.layerCount = 1;
-
-  vkCmdPipelineBarrier(
-      vk::CURRENT_FRAME_COMMAND->m_commandBuffer,
-      VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
-      VK_DEPENDENCY_DEVICE_GROUP_BIT, 0, nullptr, 0, nullptr, 2, barrier);
-
-  VkImageCopy region{};
-  region.dstSubresource.layerCount = 1;
-  region.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-  region.dstSubresource.baseArrayLayer = 0;
-  region.dstSubresource.mipLevel = 0;
-  region.srcSubresource.layerCount = 1;
-  region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-  region.srcSubresource.baseArrayLayer = 0;
-  region.srcSubresource.mipLevel = 0;
-  region.dstOffset = VkOffset3D{};
-  region.srcOffset = VkOffset3D{};
-  region.extent.width = m_rt.width;
-  region.extent.height = m_rt.height;
-  region.extent.depth = 1;
-
-  vkCmdCopyImage(vk::CURRENT_FRAME_COMMAND->m_commandBuffer, m_rt.image,
-                 VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                 vk::SWAP_CHAIN->images[globals::CURRENT_FRAME],
-                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-
-  barrier[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-  barrier[0].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
-  barrier[0].srcQueueFamilyIndex = 0;
-  barrier[0].dstQueueFamilyIndex = 0;
-  barrier[0].image = m_rt.image;
-  barrier[0].newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-  barrier[0].oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-  barrier[0].subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-  barrier[0].subresourceRange.baseArrayLayer = 0;
-  barrier[0].subresourceRange.baseMipLevel = 0;
-  barrier[0].subresourceRange.levelCount = 1;
-  barrier[0].subresourceRange.layerCount = 1;
-
-  barrier[1].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-  barrier[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-  barrier[1].srcQueueFamilyIndex = 0;
-  barrier[1].dstQueueFamilyIndex = 0;
-  barrier[1].image = vk::SWAP_CHAIN->images[globals::CURRENT_FRAME];
-  barrier[1].newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-  barrier[1].oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-  barrier[1].subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-  barrier[1].subresourceRange.baseArrayLayer = 0;
-  barrier[1].subresourceRange.baseMipLevel = 0;
-  barrier[1].subresourceRange.levelCount = 1;
-  barrier[1].subresourceRange.layerCount = 1;
-
-  vkCmdPipelineBarrier(
-      vk::CURRENT_FRAME_COMMAND->m_commandBuffer,
-      VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
-      VK_DEPENDENCY_DEVICE_GROUP_BIT, 0, nullptr, 0, nullptr, 2, barrier);
-      */
+  //}
 }
 void VkTempLayer::onEvent(Event &event) {
   EventDispatcher dispatcher(event);
@@ -199,7 +101,7 @@ void VkTempLayer::onEvent(Event &event) {
 }
 
 void VkTempLayer::clear() {
-  //vkDeviceWaitIdle(vk::LOGICAL_DEVICE);
+  // vkDeviceWaitIdle(vk::LOGICAL_DEVICE);
   globals::RENDERING_GRAPH->clear();
 }
 
@@ -388,4 +290,4 @@ bool VkTempLayer::onReloadScriptEvent(ReloadScriptsEvent &) {
   globals::SCRIPTING_CONTEXT->reloadContext();
   return true;
 }*/
-} // namespace SirEngine
+}  // namespace SirEngine

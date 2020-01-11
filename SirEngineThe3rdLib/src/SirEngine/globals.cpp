@@ -28,6 +28,7 @@ MaterialManager *MATERIAL_MANAGER = nullptr;
 PSOManager *PSO_MANAGER = nullptr;
 RootSignatureManager *ROOT_SIGNATURE_MANAGER = nullptr;
 DependencyGraph *RENDERING_GRAPH =nullptr;
+DebugRenderer* DEBUG_RENDERER = nullptr;
 
 // generic allocators
 StringPool *STRING_POOL = nullptr;
