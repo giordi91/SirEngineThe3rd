@@ -21,6 +21,7 @@ public:
 
   void populateNodePorts() override;
 
+  void clear() override;
 private:
   TextureHandle inputRTHandle{};
   TextureHandle inputDepthHandle{};

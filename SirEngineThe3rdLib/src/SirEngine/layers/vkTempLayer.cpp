@@ -7,10 +7,11 @@
 #include "SirEngine/events/mouseEvent.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/graphics/camera.h"
+#include "SirEngine/graphics/debugRenderer.h"
 #include "SirEngine/graphics/nodes/FinalBlitNode.h"
+#include "SirEngine/graphics/nodes/debugDrawNode.h"
 #include "SirEngine/graphics/nodes/vkSimpleForward.h"
 #include "SirEngine/graphics/renderingContext.h"
-#include "SirEngine/graphics/debugRenderer.h"
 
 namespace SirEngine {
 
@@ -34,16 +35,21 @@ void VkTempLayer::onAttach() {
       new GraphAllocators{globals::STRING_POOL, globals::PERSISTENT_ALLOCATOR};
 
   globals::RENDERING_GRAPH = new DependencyGraph();
-  m_forward = new VkSimpleForward(*alloc);
+  const auto forward = new VkSimpleForward(*alloc);
+  const auto debugDraw = new DebugDrawNode(*alloc);
   const auto finalBlit = new FinalBlitNode(*alloc);
 
   // temporary graph for testing
-  globals::RENDERING_GRAPH->addNode(m_forward);
+  globals::RENDERING_GRAPH->addNode(forward);
+  globals::RENDERING_GRAPH->addNode(debugDraw);
   globals::RENDERING_GRAPH->addNode(finalBlit);
   globals::RENDERING_GRAPH->setFinalNode(finalBlit);
 
-  globals::RENDERING_GRAPH->connectNodes(m_forward,
-                                         VkSimpleForward::OUT_TEXTURE,
+  globals::RENDERING_GRAPH->connectNodes(forward, VkSimpleForward::OUT_TEXTURE,
+                                         debugDraw, DebugDrawNode::IN_TEXTURE);
+  globals::RENDERING_GRAPH->connectNodes(forward, VkSimpleForward::DEPTH_RT,
+                                         debugDraw, DebugDrawNode::DEPTH_RT);
+  globals::RENDERING_GRAPH->connectNodes(debugDraw, DebugDrawNode::OUT_TEXTURE,
                                          finalBlit, FinalBlitNode::IN_TEXTURE);
 
   // TODO this whole reset execute flush needs to be reworked
@@ -53,7 +59,7 @@ void VkTempLayer::onAttach() {
   globals::RENDERING_CONTEXT->flush();
   // m_forward->initialize();
   // m_forward->populateNodePorts();
-  //globals::DEBUG_RENDERER->drawBoundingBoxes();
+  // globals::DEBUG_RENDERER->drawBoundingBoxes();
 }
 
 void VkTempLayer::onDetach() {}

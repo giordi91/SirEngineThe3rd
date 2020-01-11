@@ -20,7 +20,11 @@
   "topologyType": "triangle",
   "renderTargets": 1,
   "rtvFormats": [ "DXGI_FORMAT_R8G8B8A8_UNORM" ],
+  "clearRTVs" : [true], 
+  "clearRTVColors": ["black"],
   "sampleDescCount": 1,
   "sampleDescQuality": 0,
-  "dsvFormat": "DXGI_FORMAT_D32_FLOAT_S8X24_UINT"
+  "dsvFormat": "DXGI_FORMAT_D32_FLOAT_S8X24_UINT",
+  "clearDsv": true, 
+  "clearDsvColor": "white"
 }

@@ -1,8 +1,8 @@
 #include "SirEngine/graphics/nodes/debugDrawNode.h"
 
 #include "SirEngine/graphics/debugRenderer.h"
-#include "SirEngine/handle.h"
 #include "SirEngine/graphics/renderingContext.h"
+#include "SirEngine/handle.h"
 
 namespace SirEngine {
 
@@ -67,5 +67,11 @@ void DebugDrawNode::populateNodePorts() {
 
   m_bindHandle = globals::RENDERING_CONTEXT->prepareBindingObject(
       bindings, "DebugDrawPass");
+}
+
+void DebugDrawNode::clear() {
+  if (m_bindHandle.isHandleValid()) {
+    globals::RENDERING_CONTEXT->freeBindingObject(m_bindHandle);
+  }
 }
 }  // namespace SirEngine

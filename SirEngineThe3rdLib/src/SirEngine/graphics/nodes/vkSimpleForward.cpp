@@ -7,12 +7,18 @@ namespace SirEngine {
 
 VkSimpleForward::VkSimpleForward(GraphAllocators& allocators)
     : GNode("SimpleForward", "SimpleForward", allocators) {
-  defaultInitializePlugsAndConnections(0, 1);
+  defaultInitializePlugsAndConnections(0, 2);
   GPlug& outTexture = m_outputPlugs[PLUG_INDEX(PLUGS::OUT_TEXTURE)];
   outTexture.plugValue = 0;
   outTexture.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
   outTexture.nodePtr = this;
   outTexture.name = "outTexture";
+
+  GPlug &depthBuffer = m_outputPlugs[PLUG_INDEX(PLUGS::DEPTH_RT)];
+  depthBuffer.plugValue = 0;
+  depthBuffer.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
+  depthBuffer.nodePtr = this;
+  depthBuffer.name = "depth";
 }
 
 void VkSimpleForward::initialize() {
@@ -54,6 +60,7 @@ void VkSimpleForward::onResizeEvent(int, int) {
 void VkSimpleForward::populateNodePorts() {
   // setting the render target output handle
   m_outputPlugs[0].plugValue = m_rtHandle.handle;
+  m_outputPlugs[1].plugValue = m_depthHandle.handle;
 
   // we have everything necessary to prepare the buffers
   FrameBufferBindings bindings{};

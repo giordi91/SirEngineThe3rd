@@ -6,7 +6,11 @@ namespace SirEngine {
 
 class VkSimpleForward final : public GNode {
  public:
-  enum PLUGS { OUT_TEXTURE = OUTPUT_PLUG_CODE(0), COUNT = 1 };
+  enum PLUGS {
+    OUT_TEXTURE = OUTPUT_PLUG_CODE(0),
+    DEPTH_RT = OUTPUT_PLUG_CODE(1),
+    COUNT = 2,
+  };
 
  public:
   explicit VkSimpleForward(GraphAllocators& allocators);

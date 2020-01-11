@@ -22,6 +22,7 @@
 #include "vkMeshManager.h"
 #include "vkTextureManager.h"
 #include "volk.h"
+#include "vkDebugRenderer.h"
 
 namespace SirEngine::vk {
 VkInstance INSTANCE = nullptr;
@@ -173,6 +174,7 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   DESCRIPTOR_MANAGER = new VkDescriptorManager(10000, 10000);
   DESCRIPTOR_MANAGER->initialize();
 
+
   SHADER_MANAGER = new VkShaderManager();
   SHADER_MANAGER->initialize();
   SHADER_MANAGER->loadShadersInFolder(
@@ -212,6 +214,10 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   MATERIAL_MANAGER->loadTypesInFolder(frameConcatenation(
       globals::ENGINE_CONFIG->m_dataSourcePath, "/materials/types"));
   globals::MATERIAL_MANAGER = MATERIAL_MANAGER;
+
+  DEBUG_RENDERER = new VkDebugRenderer();
+  DEBUG_RENDERER    ->initialize();
+  globals::DEBUG_RENDERER=DEBUG_RENDERER;
 
   globals::ASSET_MANAGER = new AssetManager();
   globals::ASSET_MANAGER->initialize();
