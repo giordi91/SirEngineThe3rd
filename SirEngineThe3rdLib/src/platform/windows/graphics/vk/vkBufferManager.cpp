@@ -34,18 +34,19 @@ BufferHandle VkBufferManager::allocate(const uint32_t sizeInBytes,
   bool isVertexBuffer = (flags & BUFFER_FLAGS::VERTEX_BUFFER) > 0;
   bool isBuffered = (flags & BUFFER_FLAGS::BUFFERED) > 0;
   bool isUpdatedEveryFrame = (flags & BUFFER_FLAGS::UPDATED_EVERY_FRAME) > 0;
+  bool isStorage = (flags & BUFFER_FLAGS::STORAGE_BUFFER) > 0;
   // better be safe than sorry, extensive checks on flags combinations
   assert(!isBuffered && "not supported yet");
   assert(!isUpdatedEveryFrame && "not supported yet");
   assert(!isIndirectBuffer && "not supported yet");
-  assert((isVertexBuffer != isIndex) &&
+  assert(!(isVertexBuffer && isIndex) &&
          "canont be both vertex and index buffer");
 
   // process the flags
   uint32_t usage = isRandomWrite ? VK_BUFFER_USAGE_STORAGE_BUFFER_BIT : 0;
   usage |= isIndex ? VK_BUFFER_USAGE_INDEX_BUFFER_BIT : 0;
   usage |= isIndirectBuffer ? VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT : 0;
-  usage |= isVertexBuffer ? VK_BUFFER_USAGE_STORAGE_BUFFER_BIT : 0;
+  usage |= isVertexBuffer | isStorage ? VK_BUFFER_USAGE_STORAGE_BUFFER_BIT : 0;
 
   VkBufferCreateInfo createInfo{VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};
   createInfo.size = sizeInBytes;

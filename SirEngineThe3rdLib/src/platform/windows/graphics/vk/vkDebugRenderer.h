@@ -1,11 +1,32 @@
 #pragma once
-#include "platform/windows/graphics/dx12/dx12DebugRenderer.h"
+#include "SirEngine/graphics/debugRenderer.h"
+#include "SirEngine/memory/hashMap.h"
+#include "platform/windows/graphics/vk/volk.h"
+
+#include <vector>
+#include <unordered_map>
+#include "SirEngine/materialManager.h"
 
 namespace SirEngine::vk {
 
 class VkDebugRenderer : public DebugRenderer {
+  struct VkDebugPrimitive {
+    // slow I know but for the time being will get the job done
+    ConstantBufferHandle cbHandle;
+    BufferHandle bufferHandle;
+    DescriptorHandle descriptorHandle;
+    VkPipelineLayout layout;
+    int primitiveToRender;
+    PRIMITIVE_TYPE primitiveType;
+    // DescriptorPair srv;
+    uint64_t fence;
+  };
+
  public:
-  VkDebugRenderer(): DebugRenderer(),m_shderTypeToShaderBind(RESERVE_SIZE){};
+  VkDebugRenderer()
+      : DebugRenderer(),
+        m_shderTypeToShaderBind(RESERVE_SIZE),
+        m_trackers(RESERVE_SIZE){};
   virtual ~VkDebugRenderer() = default;
   VkDebugRenderer(const VkDebugRenderer&) = delete;
   VkDebugRenderer& operator=(const VkDebugRenderer&) = delete;
@@ -39,9 +60,18 @@ class VkDebugRenderer : public DebugRenderer {
       const glm::vec4 color, const char* debugName) override;
   void drawMatrix(const glm::mat4& mat, float size, glm::vec4 color,
                   const char* debugName) override;
-private:
-  static constexpr uint32_t RESERVE_SIZE =20;
+
+ private:
+  void VkDebugRenderer::renderQueue(
+      std::unordered_map<uint32_t, std::vector<VkDebugPrimitive>>& inQueue,
+      const TextureHandle input, const TextureHandle depth);
+
+ private:
+  static constexpr uint32_t RESERVE_SIZE = 200;
+  uint32_t MAGIC_NUMBER_COUNTER = 1;
   HashMap<uint16_t, ShaderBind, hashUint16> m_shderTypeToShaderBind;
+  std::unordered_map<uint32_t, std::vector<VkDebugPrimitive>> m_renderables;
+  HashMap<uint32_t, DebugTracker, hashUint32> m_trackers;
 };
 
 }  // namespace SirEngine::vk

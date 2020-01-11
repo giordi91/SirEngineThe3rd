@@ -264,7 +264,7 @@ bool VkRenderingContext::initializeGraphics() {
 
   m_cameraHandle = globals::CONSTANT_BUFFER_MANAGER->allocate(
       sizeof(CameraBuffer),
-      ConstantBufferManager::CONSTANT_BUFFER_FLAGS::UPDATED_EVERY_FRAME,
+      ConstantBufferManager::CONSTANT_BUFFER_FLAG_BITS::UPDATED_EVERY_FRAME,
       nullptr);
   return result;
 }
@@ -566,7 +566,6 @@ void VkRenderingContext::renderQueueType(const DrawCallConfig &config,
           vk::MATERIAL_MANAGER->getTypeFlags(renderableList.first);
       const std::string &typeName =
           vk::MATERIAL_MANAGER->getStringFromShaderTypeFlag(type);
-      // annotateGraphicsBegin(typeName.c_str());
 
       // looping each of the object
       const size_t count = renderableList.second.size();
@@ -611,7 +610,7 @@ VkRenderPass createRenderPass(const FrameBufferBindings &bindings,
     // attachments[count].loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
     attachments[count].loadOp = binding.shouldClearColor
                                     ? VK_ATTACHMENT_LOAD_OP_CLEAR
-                                    : VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+                                    : VK_ATTACHMENT_LOAD_OP_LOAD;
     attachments[count].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
     // TODO not really sure what to do about the stencil...
     // for now set to load and store, should leave it untouched
@@ -641,7 +640,7 @@ VkRenderPass createRenderPass(const FrameBufferBindings &bindings,
     // attachments[count].loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
     attachments[count].loadOp = binding.shouldClearDepth
                                     ? VK_ATTACHMENT_LOAD_OP_CLEAR
-                                    : VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+                                    : VK_ATTACHMENT_LOAD_OP_LOAD;
     attachments[count].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
     // TODO not really sure what to do about the stencil...
     // for now set to load and store, should leave it untouched

@@ -12,7 +12,8 @@ public:
     INDIRECT_BUFFER = 4,
     VERTEX_BUFFER = 8,
     BUFFERED = 16,
-    UPDATED_EVERY_FRAME =32 
+    UPDATED_EVERY_FRAME =32,
+    STORAGE_BUFFER =64 
   };
 
 public:

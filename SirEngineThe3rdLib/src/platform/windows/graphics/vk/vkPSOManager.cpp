@@ -494,12 +494,9 @@ VkRenderPass getRenderPass(const nlohmann::json &jobj, const char *name) {
     // TODO no MSAA yet
     attachments[count].samples = VK_SAMPLE_COUNT_1_BIT;
     // attachments[count].loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
-    attachments[count].loadOp = hasClearColors? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
+    attachments[count].loadOp = hasClearColors ? VK_ATTACHMENT_LOAD_OP_CLEAR
+                                               : VK_ATTACHMENT_LOAD_OP_LOAD;
     attachments[count].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    // TODO not really sure what to do about the stencil...
-    // for now set to load and store, should leave it untouched
-    // attachments[count].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
-    // attachments[count].stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
     attachments[count].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     attachments[count].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     attachments[count].initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
@@ -520,39 +517,40 @@ VkRenderPass getRenderPass(const nlohmann::json &jobj, const char *name) {
       getValueIfInJson(jobj, PSO_KEY_DSV_FORMAT, DEFAULT_STRING);
 
   const bool isDefault = depthStencilStateString == DEFAULT_STATE;
-  bool hasDepth = false;
-  if (!dsvFormatString.empty()) {
-    if (isDefault) {
-      // default state means there is a dsv format to use
-      VkFormat currentFormat = convertStringToTextureFormat(dsvFormatString);
-      attachments[count].format = currentFormat;
-      // TODO no MSAA yet
-      attachments[count].samples = VK_SAMPLE_COUNT_1_BIT;
-      // attachments[count].loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
-      // TODO need to fix this, needs to be defined in the json if will be
-      // cleared or not
-      attachments[count].loadOp =
-          clearDepth ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
-      attachments[count].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-      // TODO not really sure what to do about the stencil...
-      // for now set to load and store, should leave it untouched
-      attachments[count].stencilLoadOp =
-          clearDepth ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
-      attachments[count].stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
-      attachments[count].initialLayout =
-          VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-      attachments[count].finalLayout =
-          VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-      // we have only one subpass and uses all attachments
-      attachmentsRefs[count].attachment = count;
-      attachmentsRefs[count].layout =
-          VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-      count++;
-      hasDepth = true;
-    } else {
-      // assert(0 && "not supporting yet custom depth stencil");
-    }
+  bool hasDepthConfig = inJson(jobj, PSO_KEY_DEPTH_STENCIL_CONFIG);
+  bool isDepthEnabled = false;
+  if (hasDepthConfig) {
+    const auto &depthConfig = jobj[PSO_KEY_DEPTH_STENCIL_CONFIG];
+    isDepthEnabled =
+        getValueIfInJson(depthConfig, PSO_KEY_DEPTH_ENABLED, false);
+  }
+
+  bool hasDepth = !dsvFormatString.empty() && (isDefault | isDepthEnabled);
+
+  if (hasDepth) {
+    // default state means there is a dsv format to use
+    VkFormat currentFormat = convertStringToTextureFormat(dsvFormatString);
+    attachments[count].format = currentFormat;
+    // TODO no MSAA yet
+    attachments[count].samples = VK_SAMPLE_COUNT_1_BIT;
+    // attachments[count].loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+    attachments[count].loadOp =
+        clearDepth ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
+    attachments[count].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    attachments[count].stencilLoadOp =
+        clearDepth ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
+    attachments[count].stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
+    attachments[count].initialLayout =
+        VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    attachments[count].finalLayout =
+        VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+    // we have only one subpass and uses all attachments
+    attachmentsRefs[count].attachment = count;
+    attachmentsRefs[count].layout =
+        VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    count++;
   }
 
   VkRenderPass renderPass{};
@@ -574,7 +572,7 @@ VkRenderPass getRenderPass(const nlohmann::json &jobj, const char *name) {
   SET_DEBUG_NAME(renderPass, VK_OBJECT_TYPE_RENDER_PASS,
                  frameConcatenation(name, "RenderPass"));
   return renderPass;
-}
+}  // namespace SirEngine::vk
 
 PSOHandle VkPSOManager::getHandleFromName(const char *name) const {
   bool found = m_psoRegisterHandle.containsKey(name);
@@ -585,8 +583,7 @@ PSOHandle VkPSOManager::getHandleFromName(const char *name) const {
   PSOHandle value{};
   m_psoRegisterHandle.get(name, value);
   return value;
-}  // TODO fix vertex info, should not be passed in should be read from RS or
-   // PSO
+}
 PSOHandle VkPSOManager::processRasterPSO(
     const char *filePath, const nlohmann::json &jobj,
     VkPipelineVertexInputStateCreateInfo *vertexInfo) {
@@ -608,8 +605,7 @@ PSOHandle VkPSOManager::processRasterPSO(
   int shaderStageCount = 0;
   getShaderStageCreateInfo(jobj, stages, shaderStageCount);
 
-  // TODO right now we are not using a vertex input, this needs to be fixed and
-  // read from PSO
+  // no vertex info used, we ditched the input assembler completely
   VkPipelineVertexInputStateCreateInfo vertexInputCreateInfo{
       VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO};
 
@@ -633,7 +629,6 @@ PSOHandle VkPSOManager::processRasterPSO(
       VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO};
   multisampleState.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
-  // TODO fix depth test
   VkPipelineDepthStencilStateCreateInfo depthStencilState = {
       VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO};
   getDepthStencilState(jobj, depthStencilState);

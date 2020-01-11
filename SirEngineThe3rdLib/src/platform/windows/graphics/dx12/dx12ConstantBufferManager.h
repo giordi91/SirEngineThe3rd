@@ -24,7 +24,7 @@ public:
 
   ConstantBufferHandle allocateDynamic(uint32_t sizeInBytes,
                                        void *data = nullptr) override;
-  ConstantBufferHandle allocate(uint32_t sizeInBytes, uint32_t flags = 0,
+  ConstantBufferHandle allocate(uint32_t sizeInBytes, CONSTANT_BUFFER_FLAGS flags = 0,
                                 void *data = nullptr) override {
     assert(0);
     return {};

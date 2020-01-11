@@ -150,7 +150,7 @@ int VkConstantBufferManager::getFreeSlabIndex(uint32_t allocSize) {
 
 SirEngine::ConstantBufferHandle
 VkConstantBufferManager::allocate(const uint32_t sizeInBytes,
-                                  const uint32_t flags, void *data) {
+                                  const CONSTANT_BUFFER_FLAGS flags, void *data) {
 
   uint32_t allocSize = padTo256BytesMultiple(sizeInBytes);
 

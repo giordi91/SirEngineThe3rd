@@ -59,7 +59,8 @@ void VkTempLayer::onAttach() {
   globals::RENDERING_CONTEXT->flush();
   // m_forward->initialize();
   // m_forward->populateNodePorts();
-  // globals::DEBUG_RENDERER->drawBoundingBoxes();
+  BoundingBox aabb{{0,0,0},{10,10,10}};
+  globals::DEBUG_RENDERER->drawBoundingBoxes(&aabb,1,{1.0f,0.0f,0.0f,1.0f},"debugAABB");
 }
 
 void VkTempLayer::onDetach() {}

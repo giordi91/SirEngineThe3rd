@@ -26,7 +26,7 @@ void VkSimpleForward::initialize() {
   int height = globals::ENGINE_CONFIG->m_windowHeight;
 
   m_rtHandle = globals::TEXTURE_MANAGER->allocateTexture(
-      width, height, RenderTargetFormat::RGBA32, "simpleForwardRT",
+      width, height, RenderTargetFormat::R16G16B16A16_FLOAT, "simpleForwardRT",
       TextureManager::TEXTURE_ALLOCATION_FLAG_BITS::RENDER_TARGET |
           TextureManager::TEXTURE_ALLOCATION_FLAG_BITS::SHADER_RESOURCE,
       RESOURCE_STATE::SHADER_READ_RESOURCE);
