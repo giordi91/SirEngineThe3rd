@@ -1,4 +1,5 @@
 #include "platform/windows/graphics/dx12/DX12.h"
+
 #include "SirEngine/Window.h"
 #include "SirEngine/animation/animationManager.h"
 #include "SirEngine/assetManager.h"
@@ -10,11 +11,11 @@
 #include "SirEngine/memory/stringPool.h"
 #include "SirEngine/runtimeString.h"
 #include "SirEngine/skinClusterManager.h"
-#include "platform/windows/graphics/dx12/dx12DebugRenderer.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/dx12Adapter.h"
 #include "platform/windows/graphics/dx12/dx12BufferManager.h"
 #include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
+#include "platform/windows/graphics/dx12/dx12DebugRenderer.h"
 #include "platform/windows/graphics/dx12/dx12MaterialManager.h"
 #include "platform/windows/graphics/dx12/dx12MeshManager.h"
 #include "platform/windows/graphics/dx12/dx12PSOManager.h"
@@ -129,8 +130,7 @@ bool initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
     D3D12_FEATURE_DATA_D3D12_OPTIONS5 opts5 = {};
     dx12::DEVICE->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &opts5,
                                       sizeof(opts5));
-    if (opts5.RaytracingTier == D3D12_RAYTRACING_TIER_NOT_SUPPORTED)
-      assert(0);
+    if (opts5.RaytracingTier == D3D12_RAYTRACING_TIER_NOT_SUPPORTED) assert(0);
   }
 #endif
 
@@ -220,6 +220,7 @@ bool initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
 
   DEBUG_RENDERER = new Dx12DebugRenderer();
   DEBUG_RENDERER->initialize();
+  globals::DEBUG_RENDERER = DEBUG_RENDERER;
 
   globals::ANIMATION_MANAGER = new AnimationManager();
   globals::ANIMATION_MANAGER->init();
@@ -379,9 +380,9 @@ bool dispatchFrameDx12() {
   return true;
 }
 
-RenderingContext *
-createDx12RenderingContext(const RenderingContextCreationSettings &settings,
-                           uint32_t width, uint32_t height) {
+RenderingContext *createDx12RenderingContext(
+    const RenderingContextCreationSettings &settings, uint32_t width,
+    uint32_t height) {
   auto *ctx = new Dx12RenderingContext(settings, width, height);
   dx12::RENDERING_CONTEXT = ctx;
   return ctx;
@@ -614,7 +615,6 @@ void Dx12RenderingContext::addRenderablesToQueue(const Renderable &renderable) {
 
 void Dx12RenderingContext::renderQueueType(const DrawCallConfig &config,
                                            const SHADER_QUEUE_FLAGS flag) {
-
   const auto &typedQueues = *(reinterpret_cast<Dx12RenderingQueues *>(queues));
 
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
@@ -622,7 +622,6 @@ void Dx12RenderingContext::renderQueueType(const DrawCallConfig &config,
 
   for (const auto &renderableList : typedQueues) {
     if (dx12::MATERIAL_MANAGER->isQueueType(renderableList.first, flag)) {
-
       // now that we know the material goes in the the deferred queue we can
       // start rendering it
 
@@ -665,9 +664,8 @@ void Dx12RenderingContext::fullScreenPass() {
   commandList->DrawInstanced(6, 1, 0, 0);
 }
 
-BufferBindingsHandle
-Dx12RenderingContext::prepareBindingObject(const FrameBufferBindings &bindings,
-                                           const char *name) {
+BufferBindingsHandle Dx12RenderingContext::prepareBindingObject(
+    const FrameBufferBindings &bindings, const char *name) {
   uint32_t index;
   FrameBindingsData &data = m_bindingsPool.getFreeMemoryData(index);
   data.name = persistentString(name);
@@ -698,7 +696,6 @@ D3D12_RESOURCE_STATES toDx12ResourceState(RESOURCE_STATE state) {
 }
 
 void Dx12RenderingContext::setBindingObject(const BufferBindingsHandle handle) {
-
   assertMagicNumber(handle);
   const uint32_t idx = getIndexFromHandle(handle);
   const FrameBindingsData &data = m_bindingsPool.getConstRef(idx);
@@ -795,15 +792,15 @@ void Dx12RenderingContext::clearBindingObject(
   annotateGraphicsEnd();
 }
 
-void Dx12RenderingContext::freeBindingObject(const BufferBindingsHandle handle)
-{
-	assertMagicNumber(handle);
-	const uint32_t magic = getMagicFromHandle(handle);
-	const uint32_t idx = getIndexFromHandle(handle);
-	const FrameBindingsData& data = m_bindingsPool.getConstRef(idx);
-	stringFree(data.name);
+void Dx12RenderingContext::freeBindingObject(
+    const BufferBindingsHandle handle) {
+  assertMagicNumber(handle);
+  const uint32_t magic = getMagicFromHandle(handle);
+  const uint32_t idx = getIndexFromHandle(handle);
+  const FrameBindingsData &data = m_bindingsPool.getConstRef(idx);
+  stringFree(data.name);
 
-	m_bindingsPool.free(idx);
+  m_bindingsPool.free(idx);
 }
 
 bool Dx12RenderingContext::newFrame() { return newFrameDx12(); }
@@ -832,4 +829,4 @@ void Dx12RenderingContext::resetGlobalCommandList() {
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   resetAllocatorAndList(currentFc);
 }
-} // namespace SirEngine::dx12
+}  // namespace SirEngine::dx12

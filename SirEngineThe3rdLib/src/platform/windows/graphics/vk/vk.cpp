@@ -46,6 +46,7 @@ VkMeshManager *MESH_MANAGER = nullptr;
 VkTextureManager *TEXTURE_MANAGER = nullptr;
 VkMaterialManager *MATERIAL_MANAGER = nullptr;
 VkDescriptorManager *DESCRIPTOR_MANAGER = nullptr;
+VkDebugRenderer *DEBUG_RENDERER = nullptr;
 uint32_t SWAP_CHAIN_IMAGE_COUNT = 0;
 VkFrameCommand FRAME_COMMAND[PREALLOCATED_SEMAPHORE_COUNT];
 VkFrameCommand *CURRENT_FRAME_COMMAND = nullptr;
@@ -185,10 +186,10 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   PSO_MANAGER->initialize();
   globals::PSO_MANAGER = PSO_MANAGER;
   // TODO TEMP HACK LOAD, remove this
-      vk::PSO_MANAGER->loadRawPSO("../data/pso/HDRtoSDREffect_PSO.json");
-      vk::PSO_MANAGER->loadRawPSO("../data/pso/forwardPhongPSO.json");
-      vk::PSO_MANAGER->loadRawPSO("../data/pso/debugDrawPointsSingleColorPSO.json");
-      vk::PSO_MANAGER->loadRawPSO("../data/pso/debugDrawLinesSingleColorPSO.json");
+  vk::PSO_MANAGER->loadRawPSO("../data/pso/HDRtoSDREffect_PSO.json");
+  vk::PSO_MANAGER->loadRawPSO("../data/pso/forwardPhongPSO.json");
+  vk::PSO_MANAGER->loadRawPSO("../data/pso/debugDrawPointsSingleColorPSO.json");
+  vk::PSO_MANAGER->loadRawPSO("../data/pso/debugDrawLinesSingleColorPSO.json");
 
   CONSTANT_BUFFER_MANAGER = new VkConstantBufferManager();
   CONSTANT_BUFFER_MANAGER->initialize();
