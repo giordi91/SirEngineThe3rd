@@ -5,10 +5,11 @@ namespace SirEngine {
 
 class ConstantBufferManager {
 public:
-  enum CONSTANT_BUFFER_FLAGS {
+  enum CONSTANT_BUFFER_FLAG_BITS {
     NONE = 0,
     UPDATED_EVERY_FRAME = 2,
   };
+  typedef  uint32_t CONSTANT_BUFFER_FLAGS;
 
 public:
   ConstantBufferManager() = default;
@@ -24,7 +25,7 @@ public:
                                                void *data = nullptr) = 0;
 
   virtual ConstantBufferHandle
-  allocate(uint32_t sizeInBytes, uint32_t flags = 0, void *data = nullptr) = 0;
+  allocate(uint32_t sizeInBytes, CONSTANT_BUFFER_FLAGS flags = 0, void *data = nullptr) = 0;
   virtual void update(ConstantBufferHandle handle , void* data) =0;
   virtual void
   updateConstantBufferNotBuffered(const ConstantBufferHandle handle,

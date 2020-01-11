@@ -388,8 +388,6 @@ void VkMaterialManager::bindMaterial(SHADER_QUEUE_FLAGS queueFlag,
                                      VkCommandBuffer commandList) {
   int queueFlagInt = static_cast<int>(queueFlag);
   int currentFlagId = static_cast<int>(log2(queueFlagInt & -queueFlagInt));
-  const SHADER_TYPE_FLAGS type =
-      getTypeFlags(materialRuntime.shaderQueueTypeFlags[currentFlagId]);
 
   DescriptorHandle setHandle = materialRuntime.descriptorHandles[currentFlagId];
   VkDescriptorSet descriptorSet =
