@@ -387,7 +387,7 @@ void Dx12MaterialManager::bindRSandPSO(
   const auto typeFlags = static_cast<uint16_t>((shaderFlags & mask) >> 16);
 
   ShaderBind bind;
-  bool found = m_shderTypeToShaderBind.get(typeFlags, bind);
+  bool found = m_shaderTypeToShaderBind.get(typeFlags, bind);
   if (found) {
     dx12::ROOT_SIGNATURE_MANAGER->bindGraphicsRS(bind.rs, commandList);
     dx12::PSO_MANAGER->bindPSO(bind.pso, commandList);
@@ -401,7 +401,7 @@ MaterialHandle Dx12MaterialManager::allocateMaterial(const char *type, const cha
   // from the type we can get the PSO
   uint16_t shaderType = parseTypeFlags(type);
   ShaderBind bind;
-  bool found = m_shderTypeToShaderBind.get(shaderType, bind);
+  bool found = m_shaderTypeToShaderBind.get(shaderType, bind);
   assert(found && "could not find requested material type");
 
   // TODO for now, not much is happening here, because we have a crappy binding

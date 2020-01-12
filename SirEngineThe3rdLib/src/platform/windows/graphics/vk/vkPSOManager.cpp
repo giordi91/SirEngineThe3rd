@@ -67,14 +67,6 @@ VkDescriptorSetLayout PER_FRAME_LAYOUT = nullptr;
 DescriptorHandle PER_FRAME_DATA_HANDLE;
 DescriptorHandle STATIC_SAMPLERS_HANDLE;
 
-void assertInJson(const nlohmann::json &jobj, const std::string &key) {
-  const auto found = jobj.find(key);
-  assert(found != jobj.end());
-}
-bool inJson(const nlohmann::json &jobj, const std::string &key) {
-  const auto found = jobj.find(key);
-  return found != jobj.end();
-}
 
 const char *STATIC_SAMPLERS_NAMES[STATIC_SAMPLER_COUNT] = {
     "pointWrapSampler",   "pointClampSampler",      "linearWrapSampler",
@@ -534,7 +526,6 @@ VkRenderPass getRenderPass(const nlohmann::json &jobj, const char *name) {
     attachments[count].format = currentFormat;
     // TODO no MSAA yet
     attachments[count].samples = VK_SAMPLE_COUNT_1_BIT;
-    // attachments[count].loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
     attachments[count].loadOp =
         clearDepth ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
     attachments[count].storeOp = VK_ATTACHMENT_STORE_OP_STORE;

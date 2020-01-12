@@ -89,7 +89,7 @@ public:
 
 public:
   MaterialManager(const uint32_t reserveSize)
-      : m_shderTypeToShaderBind(reserveSize){};
+      : m_shaderTypeToShaderBind(reserveSize){};
   virtual ~MaterialManager() = default;
 
   void loadTypesInFolder(const char *folder);
@@ -145,7 +145,7 @@ protected:
   void loadTypeFile(const char *path);
 
 protected:
-  HashMap<uint16_t, ShaderBind, hashUint16> m_shderTypeToShaderBind;
+  HashMap<uint16_t, ShaderBind, hashUint16> m_shaderTypeToShaderBind;
 };
 
 } // namespace SirEngine

@@ -202,6 +202,8 @@ public:
   void executeGlobalCommandList() override;
   void resetGlobalCommandList() override;
   void addRenderablesToQueue(const Renderable &renderable) override;
+  void addRenderablesToQueue(const RenderableDescription& description) override;
+
   void renderQueueType(const DrawCallConfig &config,
                        const SHADER_QUEUE_FLAGS flag) override;
   void renderMaterialType(const SHADER_QUEUE_FLAGS flag) override;

@@ -3,8 +3,7 @@
 #include "platform/windows/graphics/dx12/dx12TextureManager.h"
 #include <dxgi1_4.h>
 
-namespace SirEngine {
-namespace dx12 {
+namespace SirEngine::dx12 {
 
 class Dx12SwapChain {
 public:
@@ -51,5 +50,4 @@ private:
   D3D12_RECT m_scissorRect;
   bool m_isInit = false;
 };
-} // namespace dx12
 } // namespace SirEngine

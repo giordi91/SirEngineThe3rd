@@ -10,6 +10,7 @@
 #include "SirEngine/graphics/debugRenderer.h"
 #include "SirEngine/graphics/nodes/FinalBlitNode.h"
 #include "SirEngine/graphics/nodes/debugDrawNode.h"
+#include "SirEngine/graphics/nodes/grassNode.h"
 #include "SirEngine/graphics/nodes/vkSimpleForward.h"
 #include "SirEngine/graphics/renderingContext.h"
 
@@ -36,19 +37,25 @@ void VkTempLayer::onAttach() {
 
   globals::RENDERING_GRAPH = new DependencyGraph();
   const auto forward = new VkSimpleForward(*alloc);
+  const auto grass = new GrassNode(*alloc);
   const auto debugDraw = new DebugDrawNode(*alloc);
   const auto finalBlit = new FinalBlitNode(*alloc);
 
   // temporary graph for testing
   globals::RENDERING_GRAPH->addNode(forward);
+  globals::RENDERING_GRAPH->addNode(grass);
   globals::RENDERING_GRAPH->addNode(debugDraw);
   globals::RENDERING_GRAPH->addNode(finalBlit);
   globals::RENDERING_GRAPH->setFinalNode(finalBlit);
 
   globals::RENDERING_GRAPH->connectNodes(forward, VkSimpleForward::OUT_TEXTURE,
-                                         debugDraw, DebugDrawNode::IN_TEXTURE);
+                                         grass, GrassNode::IN_TEXTURE);
   globals::RENDERING_GRAPH->connectNodes(forward, VkSimpleForward::DEPTH_RT,
-                                         debugDraw, DebugDrawNode::DEPTH_RT);
+                                         grass, GrassNode::DEPTH_RT);
+  globals::RENDERING_GRAPH->connectNodes(grass, GrassNode::OUT_TEXTURE,
+                                         debugDraw, DebugDrawNode::IN_TEXTURE);
+  globals::RENDERING_GRAPH->connectNodes(grass, GrassNode::OUT_DEPTH, debugDraw,
+                                         DebugDrawNode::DEPTH_RT);
   globals::RENDERING_GRAPH->connectNodes(debugDraw, DebugDrawNode::OUT_TEXTURE,
                                          finalBlit, FinalBlitNode::IN_TEXTURE);
 
@@ -57,10 +64,6 @@ void VkTempLayer::onAttach() {
   globals::RENDERING_GRAPH->finalizeGraph();
   globals::RENDERING_CONTEXT->executeGlobalCommandList();
   globals::RENDERING_CONTEXT->flush();
-  // m_forward->initialize();
-  // m_forward->populateNodePorts();
-  BoundingBox aabb{{0,0,0},{10,10,10}};
-  globals::DEBUG_RENDERER->drawBoundingBoxes(&aabb,1,{1.0f,0.0f,0.0f,1.0f},"debugAABB");
 }
 
 void VkTempLayer::onDetach() {}

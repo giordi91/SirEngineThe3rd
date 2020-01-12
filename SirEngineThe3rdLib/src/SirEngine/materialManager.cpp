@@ -320,7 +320,7 @@ void MaterialManager::loadTypeFile(const char *path) {
 
   const std::string type = jObj[materialKeys::TYPE].get<std::string>();
   const uint16_t flags = MaterialManager::parseTypeFlags(type.c_str());
-  m_shderTypeToShaderBind.insert(flags, ShaderBind{rsHandle, psoHandle});
+  m_shaderTypeToShaderBind.insert(flags, ShaderBind{rsHandle, psoHandle});
 }
 
 void MaterialManager::loadTypesInFolder(const char *folder) {
