@@ -620,7 +620,7 @@ MaterialHandle VkMaterialManager::loadMaterial(const char *path,
   matCpu.meshHandle = meshHandle;
 
   memcpy(&matCpu.shaderQueueTypeFlags, parse.shaderQueueTypeFlags,
-         sizeof(uint32_t) * 4);
+         sizeof(uint32_t) * QUEUE_COUNT);
 
   materialData.handles.cbHandle = globals::CONSTANT_BUFFER_MANAGER->allocate(
       sizeof(Material), 0, &parse.mat);
@@ -639,7 +639,7 @@ MaterialHandle VkMaterialManager::loadMaterial(const char *path,
   constexpr auto mask = static_cast<uint32_t>(~((1 << 16) - 1));
 
   // looping the queues
-  for (int i = 0; i < 4; ++i) {
+  for (int i = 0; i < QUEUE_COUNT; ++i) {
     uint32_t queue = matCpu.shaderQueueTypeFlags[i];
     if (queue == INVALID_QUEUE_TYPE_FLAGS) {
       continue;
@@ -720,34 +720,49 @@ void VkMaterialManager::releaseAllMaterialsAndRelatedResources() {
 }
 
 MaterialHandle VkMaterialManager::allocateMaterial(
-    const char *type, const char *name, ALLOCATE_MATERIAL_FLAGS flags) {
-  // from the type we can get the PSO
-  uint16_t shaderType = parseTypeFlags(type);
-  ShaderBind bind;
-  bool found = m_shaderTypeToShaderBind.get(shaderType, bind);
-  assert(found && "could not find requested material type");
-  assert(bind.pso.isHandleValid());
-  assert(bind.rs.isHandleValid());
-
-  // allocating a descriptor set for the material
-  bool isBuffered = (flags & ALLOCATE_MATERIAL_FLAG_BITS::BUFFERED) > 0;
-  VkDescriptorManager::DESCRIPTOR_FLAGS descriptorFlags =
-      isBuffered ? VkDescriptorManager::BUFFERED : 0;
-  DescriptorHandle descriptorHandle =
-      vk::DESCRIPTOR_MANAGER->allocate(bind.rs, descriptorFlags, name);
-
+    const char *name, ALLOCATE_MATERIAL_FLAGS flags,
+    const char *materialsPerQueue[QUEUE_COUNT]) {
   // empty material
   uint32_t index;
   VkMaterialData &materialData =
       m_materialTextureHandles.getFreeMemoryData(index);
-  materialData.magicNumber = MAGIC_NUMBER_COUNTER++;
 
-  // this will be used when we need to bind the material
-  materialData.m_psoHandle = bind.pso;
-  materialData.m_rsHandle = bind.rs;
-  materialData.m_descriptorHandle = descriptorHandle;
+  for (int i = 0; i < QUEUE_COUNT; ++i) {
+    if (materialsPerQueue[i] == nullptr) {
+      continue;
+    }
+    // from the type we can get the PSO
+    const char *type = materialsPerQueue[i];
+    uint16_t shaderType = parseTypeFlags(type);
+    ShaderBind bind{};
+    bool found = m_shaderTypeToShaderBind.get(shaderType, bind);
+    assert(found && "could not find requested material type");
+    assert(bind.pso.isHandleValid());
+    assert(bind.rs.isHandleValid());
+
+    // allocating a descriptor set for the material
+    bool isBuffered = (flags & ALLOCATE_MATERIAL_FLAG_BITS::BUFFERED) > 0;
+    VkDescriptorManager::DESCRIPTOR_FLAGS descriptorFlags =
+        isBuffered ? VkDescriptorManager::BUFFERED : 0;
+    DescriptorHandle descriptorHandle =
+        vk::DESCRIPTOR_MANAGER->allocate(bind.rs, descriptorFlags, name);
+
+    materialData.m_materialRuntime.descriptorHandles[i] = descriptorHandle;
+    materialData.m_materialRuntime.layouts[i] =
+        vk::PIPELINE_LAYOUT_MANAGER->getLayoutFromHandle(bind.rs);
+    materialData.m_materialRuntime.useStaticSamplers[i] =
+        vk::PIPELINE_LAYOUT_MANAGER->usesStaticSamplers(bind.rs);
+    SHADER_QUEUE_FLAGS queueType = static_cast<SHADER_QUEUE_FLAGS>(1<<i);
+    materialData.m_materialRuntime.shaderQueueTypeFlags[i] =
+        getQueueTypeFlags(queueType, shaderType);
+
+    // this will be used when we need to bind the material
+    // materialData.m_psoHandle = bind.pso;
+    // materialData.m_rsHandle = bind.rs;
+    // materialData.m_descriptorHandle = descriptorHandle;
+  }
   materialData.name = persistentString(name);
-
+  materialData.magicNumber = MAGIC_NUMBER_COUNTER++;
   MaterialHandle handle{(materialData.magicNumber << 16) | (index)};
   m_nameToHandle.insert(name, handle);
   return handle;
@@ -755,12 +770,20 @@ MaterialHandle VkMaterialManager::allocateMaterial(
 
 void VkMaterialManager::bindTexture(MaterialHandle matHandle,
                                     TextureHandle texHandle,
-                                    uint32_t bindingIndex) {
+                                    uint32_t bindingIndex,
+                                    SHADER_QUEUE_FLAGS queue) {
   assertMagicNumber(matHandle);
   uint32_t index = getIndexFromHandle(matHandle);
   const auto &data = m_materialTextureHandles.getConstRef(index);
+
+  const uint32_t currentFlag = static_cast<uint32_t>(queue);
+  int currentFlagId = static_cast<int>(log2(currentFlag & -currentFlag));
+
+  DescriptorHandle descriptorHandle =
+      data.m_materialRuntime.descriptorHandles[currentFlagId];
+  assert(descriptorHandle.isHandleValid());
   VkDescriptorSet descriptorSet =
-      vk::DESCRIPTOR_MANAGER->getDescriptorSet(data.m_descriptorHandle);
+      vk::DESCRIPTOR_MANAGER->getDescriptorSet(descriptorHandle);
 
   VkWriteDescriptorSet writeDescriptorSets{};
 
@@ -777,17 +800,32 @@ void VkMaterialManager::bindTexture(MaterialHandle matHandle,
                          nullptr);
 }
 
-void VkMaterialManager::bindMaterial(const MaterialHandle handle) {
+void VkMaterialManager::bindMaterial(MaterialHandle handle,
+                                     SHADER_QUEUE_FLAGS queue) {
   assertMagicNumber(handle);
   uint32_t index = getIndexFromHandle(handle);
   const auto &data = m_materialTextureHandles.getConstRef(index);
-  vk::PSO_MANAGER->bindPSO(data.m_psoHandle,
-                           CURRENT_FRAME_COMMAND->m_commandBuffer);
 
+  const uint32_t currentFlag = static_cast<uint32_t>(queue);
+  int currentFlagId = static_cast<int>(log2(currentFlag & -currentFlag));
+
+  // find the PSO, should this be part of the runtime directly?
+  uint32_t flags = data.m_materialRuntime.shaderQueueTypeFlags[currentFlagId];
+  SHADER_TYPE_FLAGS type = getTypeFlags(flags);
+  ShaderBind bind;
+  bool found = m_shaderTypeToShaderBind.get(static_cast<uint32_t>(type), bind);
+  assert(found);
+
+  vk::PSO_MANAGER->bindPSO(bind.pso, CURRENT_FRAME_COMMAND->m_commandBuffer);
+
+  DescriptorHandle descriptorHandle =
+      data.m_materialRuntime.descriptorHandles[currentFlagId];
+  assert(descriptorHandle.isHandleValid());
   VkDescriptorSet descriptorSet =
-      vk::DESCRIPTOR_MANAGER->getDescriptorSet(data.m_descriptorHandle);
-  VkPipelineLayout layout =
-      vk::PIPELINE_LAYOUT_MANAGER->getLayoutFromHandle(data.m_rsHandle);
+      vk::DESCRIPTOR_MANAGER->getDescriptorSet(descriptorHandle);
+
+  VkPipelineLayout layout = data.m_materialRuntime.layouts[currentFlagId];
+  assert(layout != nullptr);
 
   VkDescriptorSet sets[] = {
       vk::DESCRIPTOR_MANAGER->getDescriptorSet(PER_FRAME_DATA_HANDLE),

@@ -1,19 +1,20 @@
 #pragma once
-#include "SirEngine/core.h"
 #include <cstdint>
 
+#include "SirEngine/core.h"
+
 namespace SirEngine {
-//vendors
+// vendors
 enum class ADAPTER_VENDOR { NVIDIA = 0, AMD, INTEL, WARP, ANY };
 enum class ADAPTER_SELECTION_RULE { LARGEST_FRAME_BUFFER, FIRST_VALID };
 inline const char *ADAPTER_VENDOR_NAMES[]{"NVIDIA", "AMD", "INTEL", "WARP",
                                           "ANY"};
 inline const uint32_t VENDOR_ID[] = {
-    0x10DE, // NVIDIA
-    0x1002, // AMD
-    0x8086, // INTEL
-    0x1414, // MICROSOFT warp adapter, DX only
-    0xFFFF  // NONE
+    0x10DE,  // NVIDIA
+    0x1002,  // AMD
+    0x8086,  // INTEL
+    0x1414,  // MICROSOFT warp adapter, DX only
+    0xFFFF   // NONE
 };
 enum class GRAPHIC_API { DX12 = 0, VULKAN = 1, UNKNOWN };
 
@@ -34,22 +35,23 @@ static constexpr double TO_RAD_D = SE_PI_D / 180.0;
 static constexpr float TO_DEG = static_cast<float>(180.0 / SE_PI_D);
 static constexpr double TO_DEG_D = 180.0 / SE_PI_D;
 
-//rendering
+// rendering
 enum class SHADER_QUEUE_FLAGS {
   FORWARD = 1 << 0,
   DEFERRED = 1 << 1,
   SHADOW = 1 << 2,
   DEBUG = 1 << 3,
+  CUSTOM = 1 << 4,
 };
 
-//memory
-static constexpr uint64_t MB_TO_BYTE = 1024*1024;
-static constexpr double BYTE_TO_MB_D =1.0/ MB_TO_BYTE ;
+// memory
+static constexpr uint64_t MB_TO_BYTE = 1024 * 1024;
+static constexpr double BYTE_TO_MB_D = 1.0 / MB_TO_BYTE;
 static constexpr float BYTE_TO_MB = BYTE_TO_MB_D;
 
 struct MemoryRange {
   uint32_t m_offset;
-  uint32_t m_size; // can allocate max 4 gigs beware
+  uint32_t m_size;  // can allocate max 4 gigs beware
 };
 
-} // namespace SirEngine
+}  // namespace SirEngine

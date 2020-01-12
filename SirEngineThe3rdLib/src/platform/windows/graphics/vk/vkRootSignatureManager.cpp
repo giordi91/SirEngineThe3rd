@@ -192,6 +192,7 @@ RSHandle VkPipelineLayoutManager::loadSignatureFile(
   const RSHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
   rsdata.magicNumber = MAGIC_NUMBER_COUNTER;
   rsdata.descriptorSetLayout = descriptorLayout;
+  rsdata.usesStaticSamplers = useStaticSamplers;
   m_rootRegister.insert(name.c_str(), handle);
   ++MAGIC_NUMBER_COUNTER;
 

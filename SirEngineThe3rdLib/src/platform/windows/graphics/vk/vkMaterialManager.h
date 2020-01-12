@@ -19,23 +19,24 @@ struct VkMaterialRuntime final {
   VkDescriptorImageInfo separateAlpha;
   VkDescriptorImageInfo heightMap;
   VkDescriptorImageInfo ao;
-  uint32_t shaderQueueTypeFlags[4] = {
+  uint32_t shaderQueueTypeFlags[MaterialManager::QUEUE_COUNT] = {
       INVALID_QUEUE_TYPE_FLAGS, INVALID_QUEUE_TYPE_FLAGS,
-      INVALID_QUEUE_TYPE_FLAGS, INVALID_QUEUE_TYPE_FLAGS};
+      INVALID_QUEUE_TYPE_FLAGS, INVALID_QUEUE_TYPE_FLAGS,
+      INVALID_QUEUE_TYPE_FLAGS};
   SkinHandle skinHandle;
   MeshHandle meshHandle;
-  DescriptorHandle descriptorHandles[4]{{}, {}, {}, {}};
-  VkPipelineLayout layouts[4]{nullptr, nullptr, nullptr, nullptr};
-  uint8_t useStaticSamplers[4]{1, 1, 1, 1};
+  DescriptorHandle descriptorHandles[5]{{}, {}, {}, {}, {}};
+  VkPipelineLayout layouts[5]{nullptr, nullptr, nullptr, nullptr};
+  uint8_t useStaticSamplers[5]{1, 1, 1, 1, 1};
 };
 
 struct VkMaterialData {
   MaterialDataHandles handles;
   Material m_material;
   VkMaterialRuntime m_materialRuntime;
-  PSOHandle m_psoHandle;
-  RSHandle m_rsHandle;
-  DescriptorHandle m_descriptorHandle;
+  //PSOHandle m_psoHandle;
+  //RSHandle m_rsHandle;
+  //DescriptorHandle m_descriptorHandle;
   uint32_t magicNumber;
   const char *name = nullptr;
 };
@@ -82,7 +83,7 @@ class VkMaterialManager final : public MaterialManager {
 
  private:
   inline void assertMagicNumber(const MaterialHandle handle) {
-    const uint16_t magic = getMagicFromHandle(handle);
+    const uint32_t magic = getMagicFromHandle(handle);
     const uint32_t idx = getIndexFromHandle(handle);
     assert(m_materialTextureHandles[idx].magicNumber == magic &&
            "invalid magic handle for constant buffer");
@@ -90,13 +91,14 @@ class VkMaterialManager final : public MaterialManager {
   void loadTypeFile(const char *path);
 
  public:
-  MaterialHandle allocateMaterial(const char *type, const char *name,
-                                  ALLOCATE_MATERIAL_FLAGS flags) override;
+  MaterialHandle allocateMaterial(
+      const char *name, ALLOCATE_MATERIAL_FLAGS flags,
+      const char *materialsPerQueue[QUEUE_COUNT]) override;
 
   void bindTexture(MaterialHandle matHandle, TextureHandle texHandle,
-                   uint32_t bindingIndex) override;
+                   uint32_t bindingIndex, SHADER_QUEUE_FLAGS queue) override;
 
-  void bindMaterial(MaterialHandle handle) override;
+  void bindMaterial(MaterialHandle handle, SHADER_QUEUE_FLAGS queue) override;
   void free(MaterialHandle handle) override;
   ;
 

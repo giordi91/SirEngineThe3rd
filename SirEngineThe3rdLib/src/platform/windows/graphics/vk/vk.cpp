@@ -523,7 +523,7 @@ void VkRenderingContext::addRenderablesToQueue(const Renderable &renderable) {
   vkRenderable.m_materialRuntime = materialRuntime;
   vkRenderable.m_meshRuntime = meshRuntime;
   // store the renderable on each queue
-  for (int i = 0; i < 4; ++i) {
+  for (int i = 0; i < MaterialManager::QUEUE_COUNT; ++i) {
     const uint32_t flag = materialRuntime.shaderQueueTypeFlags[i];
 
     if (flag != INVALID_QUEUE_TYPE_FLAGS) {
@@ -550,17 +550,17 @@ void VkRenderingContext::addRenderablesToQueue(
   meshRuntime.normalsRange = description.subragesCount > 0
                                  ? description.subranges[1]
                                  : MemoryRange{0, 0};
-  meshRuntime.uvRange = description.subragesCount > 1
-                                 ? description.subranges[2]
-                                 : MemoryRange{0, 0};
+  meshRuntime.uvRange = description.subragesCount > 1 ? description.subranges[2]
+                                                      : MemoryRange{0, 0};
   meshRuntime.tangentsRange = description.subragesCount > 2
-                                 ? description.subranges[3]
-                                 : MemoryRange{0, 0};
-  meshRuntime.vertexBuffer = vk::BUFFER_MANAGER->getNativeBuffer(description.buffer);
+                                  ? description.subranges[3]
+                                  : MemoryRange{0, 0};
+  meshRuntime.vertexBuffer =
+      vk::BUFFER_MANAGER->getNativeBuffer(description.buffer);
 
   vkRenderable.m_meshRuntime = meshRuntime;
   // store the renderable on each queue
-  for (int i = 0; i < 4; ++i) {
+  for (int i = 0; i < MaterialManager::QUEUE_COUNT; ++i) {
     const uint32_t flag = materialRuntime.shaderQueueTypeFlags[i];
 
     if (flag != INVALID_QUEUE_TYPE_FLAGS) {

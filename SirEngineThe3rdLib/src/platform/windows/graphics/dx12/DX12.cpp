@@ -403,7 +403,7 @@ bool Dx12RenderingContext::initializeGraphics() {
     SE_CORE_ERROR("FATAL: could not initialize graphics");
   }
 
-  // initialize camaera and light
+  // initialize camera and light
   // ask for the camera buffer handle;
   m_cameraHandle =
       globals::CONSTANT_BUFFER_MANAGER->allocateDynamic(sizeof(CameraBuffer));
@@ -604,7 +604,7 @@ void Dx12RenderingContext::addRenderablesToQueue(const Renderable &renderable) {
   dx12Renderable.m_materialRuntime = materialRuntime;
   dx12Renderable.m_meshRuntime = meshRuntime;
   // store the renderable on each queue
-  for (int i = 0; i < 4; ++i) {
+  for (int i = 0; i < MaterialManager::QUEUE_COUNT; ++i) {
     const uint32_t flag = materialRuntime.shaderQueueTypeFlags[i];
 
     if (flag != INVALID_QUEUE_TYPE_FLAGS) {
