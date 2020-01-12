@@ -5,6 +5,7 @@
 #include "vkBufferManager.h"
 #include "vkConstantBufferManager.h"
 #include "vkDescriptorManager.h"
+#include "vkMaterialManager.h"
 
 namespace SirEngine::vk {
 void VkDebugRenderer::initialize() {
@@ -98,7 +99,7 @@ DebugDrawHandle VkDebugRenderer::drawLinesUniformColor(float* data,
                                                        glm::vec4 color,
                                                        float size,
                                                        const char* debugName) {
-  VkDebugPrimitive primitive;
+  VkDebugPrimitive primitive{};
 
   // allocate vertex buffer
   assert((sizeInByte % (sizeof(float) * 3)) == 0);
@@ -119,33 +120,91 @@ DebugDrawHandle VkDebugRenderer::drawLinesUniformColor(float* data,
       static_cast<uint16_t>(SHADER_TYPE_FLAGS::DEBUG_LINES_SINGLE_COLOR), bind);
 
   const char* descriptorName = frameConcatenation(debugName, "Data");
-  // not buffered
-  uint32_t flags = 0;
-  primitive.descriptorHandle =
-      vk::DESCRIPTOR_MANAGER->allocate(bind.rs, flags, descriptorName);
 
-  primitive.layout = vk::PIPELINE_LAYOUT_MANAGER->getLayoutFromHandle(bind.rs);
+  //// not buffered
+  // uint32_t flags = 0;
+  // primitive.descriptorHandle =
+  //    vk::DESCRIPTOR_MANAGER->allocate(bind.rs, flags, descriptorName);
+
+  // primitive.layout =
+  // vk::PIPELINE_LAYOUT_MANAGER->getLayoutFromHandle(bind.rs);
+
+  // VkWriteDescriptorSet writeDescriptorSet[2]{};
+  // VkDescriptorBufferInfo info[2]{};
+  // VkDescriptorSet descriptorSet =
+  //    vk::DESCRIPTOR_MANAGER->getDescriptorSet(primitive.descriptorHandle);
+  //// updating the descriptors
+  // info[0].buffer =
+  // vk::BUFFER_MANAGER->getNativeBuffer(primitive.bufferHandle); info[0].offset
+  // = 0; info[0].range = sizeInByte;
+
+  // writeDescriptorSet[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  // writeDescriptorSet[0].dstSet = descriptorSet;
+  // writeDescriptorSet[0].dstBinding = 0;
+  // writeDescriptorSet[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  // writeDescriptorSet[0].pBufferInfo = &info[0];
+  // writeDescriptorSet[0].descriptorCount = 1;
+
+  // vk::CONSTANT_BUFFER_MANAGER->bindConstantBuffer(
+  //    chandle, info[1], 1, writeDescriptorSet, descriptorSet);
+
+  // vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, 2, writeDescriptorSet, 0,
+  // nullptr);
+
+  RenderableDescription description{};
+  description.buffer = bufferHandle;
+  description.subranges[0].m_offset = 0;
+  description.subranges[0].m_size = sizeInByte;
+  description.subragesCount = 1;
+  description.materialHandle = globals::MATERIAL_MANAGER->allocateMaterial(
+      "debugLinesSingleColor", debugName,
+      MaterialManager::ALLOCATE_MATERIAL_FLAG_BITS::NONE);
+  description.primitiveToRender = elementCount;
+
+  VkMaterialData& r =
+      const_cast<VkMaterialData&>(vk::MATERIAL_MANAGER->getMaterialData(description.materialHandle));
+
+  // setting the correct queue
+  VkMaterialRuntime& runtime = r.m_materialRuntime;
+  for (int i = 0; i < 4; ++i) {
+    runtime.shaderQueueTypeFlags[i] = INVALID_QUEUE_TYPE_FLAGS;
+  }
+
+  uint32_t currentFlag = static_cast<uint32_t>(SHADER_QUEUE_FLAGS::DEBUG);
+  int currentFlagId = static_cast<int>(log2(currentFlag & -currentFlag));
+
+  runtime.shaderQueueTypeFlags[currentFlagId] =
+      currentFlag |
+      ((static_cast<uint32_t>(SHADER_TYPE_FLAGS::DEBUG_LINES_SINGLE_COLOR)
+        << 16));
+  runtime.descriptorHandles[currentFlagId] = r.m_descriptorHandle;
+  runtime.layouts[currentFlagId] =
+   vk::PIPELINE_LAYOUT_MANAGER->getLayoutFromHandle(bind.rs);
+  runtime.useStaticSamplers[currentFlagId] = 0;
+
+  DescriptorHandle desc = r.m_descriptorHandle;
+  VkDescriptorSet set = vk::DESCRIPTOR_MANAGER->getDescriptorSet(desc);
 
   VkWriteDescriptorSet writeDescriptorSet[2]{};
   VkDescriptorBufferInfo info[2]{};
-  VkDescriptorSet descriptorSet =
-      vk::DESCRIPTOR_MANAGER->getDescriptorSet(primitive.descriptorHandle);
   // updating the descriptors
   info[0].buffer = vk::BUFFER_MANAGER->getNativeBuffer(primitive.bufferHandle);
   info[0].offset = 0;
   info[0].range = sizeInByte;
 
   writeDescriptorSet[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  writeDescriptorSet[0].dstSet = descriptorSet;
+  writeDescriptorSet[0].dstSet = set;
   writeDescriptorSet[0].dstBinding = 0;
   writeDescriptorSet[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   writeDescriptorSet[0].pBufferInfo = &info[0];
   writeDescriptorSet[0].descriptorCount = 1;
 
-  vk::CONSTANT_BUFFER_MANAGER->bindConstantBuffer(
-      chandle, info[1], 1, writeDescriptorSet, descriptorSet);
+  vk::CONSTANT_BUFFER_MANAGER->bindConstantBuffer(chandle, info[1], 1,
+                                                  writeDescriptorSet, set);
 
   vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, 2, writeDescriptorSet, 0, nullptr);
+
+  globals::RENDERING_CONTEXT->addRenderablesToQueue(description);
 
   // store it such way that we can render it
   primitive.primitiveType = PRIMITIVE_TYPE::LINE;
@@ -199,6 +258,18 @@ void VkDebugRenderer::renderQueue(
   auto* currentFc = CURRENT_FRAME_COMMAND;
   auto commandList = currentFc->m_commandBuffer;
 
+
+  DrawCallConfig config{
+      globals::ENGINE_CONFIG->m_windowWidth,
+      globals::ENGINE_CONFIG->m_windowHeight,
+      static_cast<uint32_t>(DRAW_CALL_FLAGS::SHOULD_CLEAR_COLOR),
+      glm::vec4(0.4f, 0.4f, 0.4f, 1.0f),
+  };
+  globals::RENDERING_CONTEXT->renderQueueType(config,
+                                              SHADER_QUEUE_FLAGS::DEBUG);
+
+  return;
+
   for (auto& queue : inQueue) {
     assert((globals::MATERIAL_MANAGER->isQueueType(queue.first,
                                                    SHADER_QUEUE_FLAGS::DEBUG)));
@@ -222,7 +293,6 @@ void VkDebugRenderer::renderQueue(
         globals::MATERIAL_MANAGER->getTypeFlags(queue.first);
 
     for (auto& prim : queue.second) {
-
       VkDescriptorSet descriptorSet =
           vk::DESCRIPTOR_MANAGER->getDescriptorSet(prim.descriptorHandle);
       VkDescriptorSet sets[] = {
@@ -232,16 +302,14 @@ void VkDebugRenderer::renderQueue(
       vkCmdBindDescriptorSets(commandList, VK_PIPELINE_BIND_POINT_GRAPHICS,
                               prim.layout, 0, 2, sets, 0, nullptr);
 
-
-      //wheter you render triangle or lines, is embedded in the pso, no need to set manually
+      // wheter you render triangle or lines, is embedded in the pso, no need to
+      // set manually
       const uint32_t isPC = type == SHADER_TYPE_FLAGS::DEBUG_POINTS_COLORS;
       const uint32_t isPSC =
-         type == SHADER_TYPE_FLAGS::DEBUG_POINTS_SINGLE_COLOR;
-    	
+          type == SHADER_TYPE_FLAGS::DEBUG_POINTS_SINGLE_COLOR;
+
       if (isPC | isPSC) {
-
       } else {
-
       }
       vkCmdDraw(commandList, prim.primitiveToRender, 1, 0, 0);
     }
@@ -295,7 +363,7 @@ DebugDrawHandle VkDebugRenderer::drawBoundingBoxes(BoundingBox* data, int count,
                                      (MAGIC_NUMBER_COUNTER << 16) | 0};
   ++MAGIC_NUMBER_COUNTER;
   return returnHandle;
-}  // namespace SirEngine::vk
+}
 
 DebugDrawHandle VkDebugRenderer::drawAnimatedBoundingBoxes(
     DebugDrawHandle handle, BoundingBox* data, int count, glm::vec4 color,

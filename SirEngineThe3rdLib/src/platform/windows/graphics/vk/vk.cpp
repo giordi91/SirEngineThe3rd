@@ -17,12 +17,12 @@
 #include "platform/windows/graphics/vk/vkRootSignatureManager.h"
 #include "platform/windows/graphics/vk/vkShaderManager.h"
 #include "platform/windows/graphics/vk/vkSwapChain.h"
+#include "vkDebugRenderer.h"
 #include "vkDescriptorManager.h"
 #include "vkMaterialManager.h"
 #include "vkMeshManager.h"
 #include "vkTextureManager.h"
 #include "volk.h"
-#include "vkDebugRenderer.h"
 
 namespace SirEngine::vk {
 VkInstance INSTANCE = nullptr;
@@ -174,7 +174,6 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   DESCRIPTOR_MANAGER = new VkDescriptorManager(10000, 10000);
   DESCRIPTOR_MANAGER->initialize();
 
-
   SHADER_MANAGER = new VkShaderManager();
   SHADER_MANAGER->initialize();
   SHADER_MANAGER->loadShadersInFolder(
@@ -216,8 +215,8 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   globals::MATERIAL_MANAGER = MATERIAL_MANAGER;
 
   DEBUG_RENDERER = new VkDebugRenderer();
-  DEBUG_RENDERER    ->initialize();
-  globals::DEBUG_RENDERER=DEBUG_RENDERER;
+  DEBUG_RENDERER->initialize();
+  globals::DEBUG_RENDERER = DEBUG_RENDERER;
 
   globals::ASSET_MANAGER = new AssetManager();
   globals::ASSET_MANAGER->initialize();
@@ -522,6 +521,43 @@ void VkRenderingContext::addRenderablesToQueue(const Renderable &renderable) {
       vk::MESH_MANAGER->getMeshRuntime(renderable.m_meshHandle);
 
   vkRenderable.m_materialRuntime = materialRuntime;
+  vkRenderable.m_meshRuntime = meshRuntime;
+  // store the renderable on each queue
+  for (int i = 0; i < 4; ++i) {
+    const uint32_t flag = materialRuntime.shaderQueueTypeFlags[i];
+
+    if (flag != INVALID_QUEUE_TYPE_FLAGS) {
+      (*typedQueues)[flag].emplace_back(vkRenderable);
+    }
+  }
+}
+
+void VkRenderingContext::addRenderablesToQueue(
+    const RenderableDescription &description) {
+  auto *typedQueues = reinterpret_cast<VkRenderingQueues *>(queues);
+
+  VkRenderable vkRenderable{};
+
+  const VkMaterialRuntime &materialRuntime =
+      vk::MATERIAL_MANAGER->getMaterialRuntime(description.materialHandle);
+
+  vkRenderable.m_materialRuntime = materialRuntime;
+  VkMeshRuntime meshRuntime{};
+  meshRuntime.indexBuffer = nullptr;
+  meshRuntime.indexCount = description.primitiveToRender;
+  meshRuntime.positionRange = description.subranges[0];
+  meshRuntime.positionRange = description.subranges[0];
+  meshRuntime.normalsRange = description.subragesCount > 0
+                                 ? description.subranges[1]
+                                 : MemoryRange{0, 0};
+  meshRuntime.uvRange = description.subragesCount > 1
+                                 ? description.subranges[2]
+                                 : MemoryRange{0, 0};
+  meshRuntime.tangentsRange = description.subragesCount > 2
+                                 ? description.subranges[3]
+                                 : MemoryRange{0, 0};
+  meshRuntime.vertexBuffer = vk::BUFFER_MANAGER->getNativeBuffer(description.buffer);
+
   vkRenderable.m_meshRuntime = meshRuntime;
   // store the renderable on each queue
   for (int i = 0; i < 4; ++i) {

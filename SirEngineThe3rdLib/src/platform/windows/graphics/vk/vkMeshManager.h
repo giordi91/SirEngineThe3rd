@@ -1,5 +1,8 @@
 #pragma once
 
+#include <unordered_map>
+#include <vector>
+
 #include "SirEngine/graphics/cpuGraphicsStructures.h"
 #include "SirEngine/graphics/graphicsDefines.h"
 #include "SirEngine/handle.h"
@@ -7,8 +10,6 @@
 #include "SirEngine/meshManager.h"
 #include "platform/windows/graphics/vk/vkMemory.h"
 #include "platform/windows/graphics/vk/volk.h"
-#include <unordered_map>
-#include <vector>
 
 namespace SirEngine::vk {
 
@@ -31,24 +32,24 @@ struct MeshData final {
   BufferHandle idxBuffHandle;
   uint32_t indexCount;
   uint32_t vertexCount;
-  uint32_t entityID; // this is an id that is used to index other data that we
-                     // are starting to split, for example bounding box;
+  uint32_t entityID;  // this is an id that is used to index other data that we
+                      // are starting to split, for example bounding box;
   VkMeshRuntime meshRuntime;
 };
 class VkMeshManager final : public MeshManager {
-private:
+ private:
   struct MeshUploadResource final {
     // ID3D12Resource *uploadVertexBuffer = nullptr;
     // ID3D12Resource *uploadIndexBuffer = nullptr;
     UINT64 fence = 0;
   };
 
-public:
+ public:
   VkMeshManager() : m_meshPool(RESERVE_SIZE) {
     m_nameToHandle.reserve(RESERVE_SIZE);
     m_uploadRequests.reserve(RESERVE_SIZE);
   }
-  ~VkMeshManager() { // assert(m_meshPool.assertEverythingDealloc());
+  ~VkMeshManager() {  // assert(m_meshPool.assertEverythingDealloc());
   }
 
   inline uint32_t getIndexCount(const MeshHandle &handle) const {
@@ -89,10 +90,13 @@ public:
   };
   inline void renderMesh(const VkMeshRuntime runtime,
                          const VkCommandBuffer commandBuffer) const {
-
-    vkCmdBindIndexBuffer(commandBuffer, runtime.indexBuffer, 0,
-                         VK_INDEX_TYPE_UINT32);
-    vkCmdDrawIndexed(commandBuffer, runtime.indexCount, 1, 0, 0, 0);
+    if (runtime.indexBuffer != nullptr) {
+      vkCmdBindIndexBuffer(commandBuffer, runtime.indexBuffer, 0,
+                           VK_INDEX_TYPE_UINT32);
+      vkCmdDrawIndexed(commandBuffer, runtime.indexCount, 1, 0, 0, 0);
+    } else {
+      vkCmdDraw(commandBuffer, runtime.indexCount, 1, 0, 0);
+    }
   };
 
   void free(const MeshHandle handle) override;
@@ -106,7 +110,7 @@ public:
   void bindMesh(MeshHandle handle, VkWriteDescriptorSet *set,
                 VkDescriptorSet descriptorSet, VkDescriptorBufferInfo *info);
 
-private:
+ private:
   inline void assertMagicNumber(const MeshHandle handle) const {
 #ifdef SE_DEBUG
     uint32_t magic = getMagicFromHandle(handle);
@@ -158,7 +162,7 @@ private:
   }
   */
 
-private:
+ private:
   SparseMemoryPool<MeshData> m_meshPool;
 
   std::unordered_map<std::string, MeshHandle> m_nameToHandle;
@@ -168,4 +172,4 @@ private:
   std::vector<BoundingBox> m_boundingBoxes;
 };
 
-} // namespace SirEngine::vk
+}  // namespace SirEngine::vk

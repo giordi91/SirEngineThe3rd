@@ -13,6 +13,7 @@ enum MeshAttributeFlags
 	ALL=15
 };
 
+
 class MeshManager {
 
 public:

@@ -1,0 +1,6 @@
+{
+  "pso" :  "debugDrawLinesSingleColorPSO", 
+  "rs"  :  "debugDrawLinesSingleColorRS",
+  "type" : "debugLinesSingleColor"
+}
+

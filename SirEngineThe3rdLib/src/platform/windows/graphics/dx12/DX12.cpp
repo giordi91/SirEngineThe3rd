@@ -613,6 +613,11 @@ void Dx12RenderingContext::addRenderablesToQueue(const Renderable &renderable) {
   }
 }
 
+void Dx12RenderingContext::addRenderablesToQueue(const RenderableDescription& description)
+{
+    assert(0);
+}
+
 void Dx12RenderingContext::renderQueueType(const DrawCallConfig &config,
                                            const SHADER_QUEUE_FLAGS flag) {
   const auto &typedQueues = *(reinterpret_cast<Dx12RenderingQueues *>(queues));

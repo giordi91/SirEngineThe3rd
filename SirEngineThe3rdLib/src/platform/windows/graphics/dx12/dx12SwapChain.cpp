@@ -5,8 +5,7 @@
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include <d3d12.h>
 
-namespace SirEngine {
-namespace dx12 {
+namespace SirEngine::dx12 {
 
 namespace SwapChainConstants {
 const char *BACK_BUFFER_NAMES[3]{"backBuffer1", "backBuffer2", "backBuffer3"};
@@ -139,5 +138,4 @@ bool Dx12SwapChain::resize(FrameCommand *command, const int width,
 
   return true;
 }
-} // namespace dx12
 } // namespace SirEngine

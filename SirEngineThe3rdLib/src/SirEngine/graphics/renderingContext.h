@@ -1,8 +1,9 @@
 #pragma once
+#include <glm/mat4x4.hpp>
+
 #include "SirEngine/engineConfig.h"
 #include "SirEngine/graphics/cpuGraphicsStructures.h"
 #include "SirEngine/handle.h"
-#include <glm/mat4x4.hpp>
 
 namespace SirEngine {
 
@@ -22,7 +23,7 @@ struct RTBinding {
   RESOURCE_STATE currentResourceState;
   RESOURCE_STATE neededResourceState;
   uint32_t shouldClearColor : 1;
-  uint32_t isSwapChainBackBuffer: 1;
+  uint32_t isSwapChainBackBuffer : 1;
   uint32_t padding : 30;
 };
 struct DepthBinding {
@@ -72,6 +73,16 @@ struct Renderable {
   MaterialHandle m_materialHandle;
 };
 
+struct RenderableDescription {
+  // index buffer can be null
+  BufferHandle indexBuffer{};
+  BufferHandle buffer{};
+  MemoryRange subranges[6]{};
+  uint32_t subragesCount = 0;
+  uint32_t primitiveToRender=0;
+  MaterialHandle materialHandle;
+};
+
 enum class DRAW_CALL_FLAGS {
   SHOULD_CLEAR_COLOR = 1,
   SHOULD_CLEAR_DEPTH_STENCIL = 2
@@ -87,16 +98,15 @@ struct DrawCallConfig {
 };
 
 class RenderingContext {
-
-public:
+ public:
   virtual ~RenderingContext() = default;
   // private copy and assignment
   RenderingContext(const RenderingContext &) = delete;
   RenderingContext &operator=(const RenderingContext &) = delete;
 
-  static RenderingContext *
-  create(const RenderingContextCreationSettings &settings, uint32_t width,
-         uint32_t height);
+  static RenderingContext *create(
+      const RenderingContextCreationSettings &settings, uint32_t width,
+      uint32_t height);
   static bool isAPISupported(const GRAPHIC_API graphicsAPI);
   virtual bool initializeGraphics() = 0;
   virtual bool newFrame() = 0;
@@ -108,6 +118,8 @@ public:
   virtual void executeGlobalCommandList() = 0;
   virtual void resetGlobalCommandList() = 0;
   virtual void addRenderablesToQueue(const Renderable &renderable) = 0;
+  virtual void addRenderablesToQueue(
+      const RenderableDescription &description) = 0;
   virtual void renderQueueType(const DrawCallConfig &config,
                                const SHADER_QUEUE_FLAGS flag) = 0;
   virtual void renderMaterialType(const SHADER_QUEUE_FLAGS flag) = 0;
@@ -115,9 +127,8 @@ public:
   virtual void fullScreenPass() = 0;
 
   virtual void setupCameraForFrame() = 0;
-  virtual BufferBindingsHandle
-  prepareBindingObject(const FrameBufferBindings &bindings,
-                       const char *name) = 0;
+  virtual BufferBindingsHandle prepareBindingObject(
+      const FrameBufferBindings &bindings, const char *name) = 0;
   virtual void setBindingObject(const BufferBindingsHandle handle) = 0;
   virtual void clearBindingObject(const BufferBindingsHandle handle) = 0;
   virtual void freeBindingObject(const BufferBindingsHandle handle) = 0;
@@ -139,8 +150,8 @@ public:
   }
 
   inline const DirectionalLightData &getLightData() const { return m_light; };
-  inline void
-  setEnviromentMapRadiance(const TextureHandle enviromentMapRadianceHandle) {
+  inline void setEnviromentMapRadiance(
+      const TextureHandle enviromentMapRadianceHandle) {
     m_enviromentMapRadianceHandle = enviromentMapRadianceHandle;
   };
   inline TextureHandle getEnviromentMapHandle() const {
@@ -160,7 +171,7 @@ public:
   inline ConstantBufferHandle getLightCB() const { return m_lightCB; }
   inline BoundingBox getBoundingBox() const { return m_boundingBox; }
 
-protected:
+ protected:
   // Anonymous parameters are width and height, removed the name to mute the
   // visual studio warning
   explicit RenderingContext(const RenderingContextCreationSettings &settings,
@@ -171,7 +182,7 @@ protected:
     m_screenInfo.height = height;
   };
 
-protected:
+ protected:
   RenderingContextCreationSettings m_settings;
   ScreenInfo m_screenInfo{};
   TextureHandle m_enviromentMapHandle{};
@@ -183,4 +194,4 @@ protected:
   DirectionalLightData m_light{};
 };
 
-} // namespace SirEngine
+}  // namespace SirEngine

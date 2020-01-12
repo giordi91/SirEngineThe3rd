@@ -1,15 +1,15 @@
 #pragma once
 #undef max
 #undef min
-#include "nlohmann/json.hpp"
 #include <exception>
 #include <filesystem>
 #include <fstream>
+#include <glm/glm.hpp>
+#include <glm/gtx/quaternion.hpp>
 #include <iostream>
 #include <sstream>
 
-#include <glm/glm.hpp>
-#include <glm/gtx/quaternion.hpp>
+#include "nlohmann/json.hpp"
 
 // NOTE: requires c++17 filesystem
 inline void listFilesInFolder(const char *folderPath,
@@ -54,9 +54,8 @@ inline bool filePathExists(const std::string &name) {
   return std::filesystem::exists(parent);
 }
 
-inline bool isPathDirectory(const std::string &name)
-{
-    return std::filesystem::is_directory(name);
+inline bool isPathDirectory(const std::string &name) {
+  return std::filesystem::is_directory(name);
 }
 
 template <typename T>
@@ -68,12 +67,10 @@ inline T getValueIfInJson(const nlohmann::json &data, const std::string &key,
   return defaultValue;
 }
 
-
 template <>
-inline glm::mat4 
-getValueIfInJson(const nlohmann::json &data, const std::string &key,
-                 const glm::mat4 &default_value) {
-
+inline glm::mat4 getValueIfInJson(const nlohmann::json &data,
+                                  const std::string &key,
+                                  const glm::mat4 &default_value) {
   if (data.find(key) != data.end()) {
     auto &mat = data[key];
     return glm::mat4(
@@ -88,43 +85,50 @@ getValueIfInJson(const nlohmann::json &data, const std::string &key,
 }
 template <>
 inline glm::vec4 getValueIfInJson(const nlohmann::json &data,
-                                          const std::string &key,
-                                          const glm::vec4 &defValue) {
+                                  const std::string &key,
+                                  const glm::vec4 &defValue) {
   if (data.find(key) != data.end()) {
     auto &vec = data[key];
     return glm::vec4(vec[0].get<float>(), vec[1].get<float>(),
-                             vec[2].get<float>(), vec[3].get<float>());
+                     vec[2].get<float>(), vec[3].get<float>());
   }
   return defValue;
 }
 
 template <>
 inline glm::quat getValueIfInJson(const nlohmann::json &data,
-                                          const std::string &key,
-                                          const glm::quat &defValue) {
+                                  const std::string &key,
+                                  const glm::quat &defValue) {
   if (data.find(key) != data.end()) {
     auto &vec = data[key];
-    //NOTE: glm quaternion wants first the W component then xyz
+    // NOTE: glm quaternion wants first the W component then xyz
     return glm::quat(vec[3].get<float>(), vec[0].get<float>(),
-                             vec[1].get<float>(), vec[2].get<float>());
+                     vec[1].get<float>(), vec[2].get<float>());
   }
   return defValue;
 }
 
 template <>
 inline glm::vec3 getValueIfInJson(const nlohmann::json &data,
-                                          const std::string &key,
-                                          const glm::vec3 &defValue) {
+                                  const std::string &key,
+                                  const glm::vec3 &defValue) {
   if (data.find(key) != data.end()) {
     auto &vec = data[key];
     return glm::vec3(vec[0].get<float>(), vec[1].get<float>(),
-                             vec[2].get<float>());
+                     vec[2].get<float>());
   }
   return defValue;
 }
+inline void assertInJson(const nlohmann::json &jobj, const std::string &key) {
+  const auto found = jobj.find(key);
+  assert(found != jobj.end());
+}
+inline bool inJson(const nlohmann::json &jobj, const std::string &key) {
+  const auto found = jobj.find(key);
+  return found != jobj.end();
+}
 
 inline nlohmann::json getJsonObj(std::string path) {
-
   bool res = fileExists(path);
   if (res) {
     // let s open the stream

@@ -1,11 +1,11 @@
 #pragma once
 
+#include <cassert>
+
 #include "SirEngine/handle.h"
 #include "SirEngine/materialManager.h"
 #include "SirEngine/memory/sparseMemoryPool.h"
 #include "SirEngine/memory/stringHashMap.h"
-#include <cassert>
-
 #include "platform/windows/graphics/vk/volk.h"
 namespace SirEngine::vk {
 
@@ -26,6 +26,7 @@ struct VkMaterialRuntime final {
   MeshHandle meshHandle;
   DescriptorHandle descriptorHandles[4]{{}, {}, {}, {}};
   VkPipelineLayout layouts[4]{nullptr, nullptr, nullptr, nullptr};
+  uint8_t useStaticSamplers[4]{1, 1, 1, 1};
 };
 
 struct VkMaterialData {
@@ -36,13 +37,14 @@ struct VkMaterialData {
   RSHandle m_rsHandle;
   DescriptorHandle m_descriptorHandle;
   uint32_t magicNumber;
-  const char* name = nullptr;
+  const char *name = nullptr;
 };
 
 class VkMaterialManager final : public MaterialManager {
-public:
+ public:
   VkMaterialManager()
-      : MaterialManager(RESERVE_SIZE), m_nameToHandle(RESERVE_SIZE),
+      : MaterialManager(RESERVE_SIZE),
+        m_nameToHandle(RESERVE_SIZE),
         m_materialTextureHandles(RESERVE_SIZE){};
   ~VkMaterialManager() = default;
   void inititialize() override{};
@@ -68,12 +70,17 @@ public:
     uint32_t index = getIndexFromHandle(handle);
     return m_materialTextureHandles.getConstRef(index).m_materialRuntime;
   }
+  const VkMaterialData &getMaterialData(const MaterialHandle handle) {
+    assertMagicNumber(handle);
+    uint32_t index = getIndexFromHandle(handle);
+    return m_materialTextureHandles.getConstRef(index);
+  }
 
   // called only on shutdown, main goal is to release GPU resources to
   // ease up the validation layer
   void releaseAllMaterialsAndRelatedResources();
 
-private:
+ private:
   inline void assertMagicNumber(const MaterialHandle handle) {
     const uint16_t magic = getMagicFromHandle(handle);
     const uint32_t idx = getIndexFromHandle(handle);
@@ -82,7 +89,7 @@ private:
   }
   void loadTypeFile(const char *path);
 
-public:
+ public:
   MaterialHandle allocateMaterial(const char *type, const char *name,
                                   ALLOCATE_MATERIAL_FLAGS flags) override;
 
@@ -90,9 +97,10 @@ public:
                    uint32_t bindingIndex) override;
 
   void bindMaterial(MaterialHandle handle) override;
-  void free(MaterialHandle handle) override;;
+  void free(MaterialHandle handle) override;
+  ;
 
-private:
+ private:
   HashMap<const char *, MaterialHandle, hashString32> m_nameToHandle;
   static const uint32_t RESERVE_SIZE = 200;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
@@ -100,4 +108,4 @@ private:
   SparseMemoryPool<VkMaterialData> m_materialTextureHandles;
 };
 
-} // namespace SirEngine::vk
+}  // namespace SirEngine::vk
