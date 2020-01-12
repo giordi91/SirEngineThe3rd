@@ -62,6 +62,16 @@ public:
     const LayoutData &data = m_rsPool.getConstRef(index);
     return data.layout;
   }
+
+  inline uint16_t usesStaticSamplers(const RSHandle handle)const
+  {
+    assertMagicNumber(handle);
+    const uint32_t index = getIndexFromHandle(handle);
+    const LayoutData &data = m_rsPool.getConstRef(index);
+    return data.usesStaticSamplers;
+  }
+
+	
 private:
   inline uint32_t getIndexFromHandle(const RSHandle h) const {
     return h.handle & INDEX_MASK;
@@ -81,7 +91,8 @@ private:
   struct LayoutData {
     VkPipelineLayout layout = nullptr;
     VkDescriptorSetLayout descriptorSetLayout = nullptr;
-    uint32_t magicNumber = 0;
+    uint32_t magicNumber:16;
+    uint32_t usesStaticSamplers :16;
   };
 
   HashMap<const char *, RSHandle, hashString32> m_rootRegister;

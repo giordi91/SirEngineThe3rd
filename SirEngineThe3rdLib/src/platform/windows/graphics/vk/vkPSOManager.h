@@ -1,17 +1,16 @@
 #pragma once
 
+#include <cassert>
+#include <nlohmann/json_fwd.hpp>
+#include <string>
+
 #include "SirEngine/PSOManager.h"
 #include "SirEngine/handle.h"
 #include "SirEngine/memory/resizableVector.h"
 #include "SirEngine/memory/sparseMemoryPool.h"
 #include "SirEngine/memory/stringHashMap.h"
 #include "platform/windows/graphics/vk/volk.h"
-
-#include <nlohmann/json_fwd.hpp>
-
 #include "vkRootSignatureManager.h"
-#include <cassert>
-#include <string>
 
 namespace SirEngine::vk {
 
@@ -20,8 +19,9 @@ extern VkSampler STATIC_SAMPLERS[STATIC_SAMPLER_COUNT];
 extern VkDescriptorImageInfo STATIC_SAMPLERS_INFO[STATIC_SAMPLER_COUNT];
 extern VkDescriptorSetLayout STATIC_SAMPLERS_LAYOUT;
 extern VkDescriptorSet
-    STATIC_SAMPLERS_DESCRIPTOR_SET; // used in case you want to manually update
-                                    // the samplers and not bound them as static
+    STATIC_SAMPLERS_DESCRIPTOR_SET;  // used in case you want to manually update
+                                     // the samplers and not bound them as
+                                     // static
 extern VkDescriptorSetLayout PER_FRAME_LAYOUT;
 extern DescriptorHandle PER_FRAME_DATA_HANDLE;
 extern DescriptorHandle STATIC_SAMPLERS_HANDLE;
@@ -31,7 +31,6 @@ void destroyStaticSamplers();
 
 // TODO make it not copyable assignable
 class VkPSOManager final : public PSOManager {
-
   struct PSOData {
     VkPipeline pso;
     VkRenderPass renderPass;
@@ -39,10 +38,12 @@ class VkPSOManager final : public PSOManager {
     uint32_t magicNumber;
   };
 
-public:
+ public:
   VkPSOManager()
-      : PSOManager(), m_psoRegister(RESERVE_SIZE),
-        m_psoRegisterHandle(RESERVE_SIZE), m_shaderToPSOFile(RESERVE_SIZE),
+      : PSOManager(),
+        m_psoRegister(RESERVE_SIZE),
+        m_psoRegisterHandle(RESERVE_SIZE),
+        m_shaderToPSOFile(RESERVE_SIZE),
         m_psoPool(RESERVE_SIZE){};
   virtual ~VkPSOManager() = default;
 
@@ -60,7 +61,6 @@ public:
                               const char *getOffsetPath) override;
   inline void bindPSO(const PSOHandle handle,
                       VkCommandBuffer commandList) const {
-
     assertMagicNumber(handle);
     const uint32_t index = getIndexFromHandle(handle);
     const PSOData &data = m_psoPool.getConstRef(index);
@@ -88,7 +88,7 @@ public:
 
   PSOHandle getHandleFromName(const char *name) const override;
 
-private:
+ private:
   // PSOCompileResult processComputePSO(nlohmann::json &jobj,
   //                                   const std::string &path);
   // PSOCompileResult processRasterPSO(nlohmann::json &jobj,
@@ -100,7 +100,7 @@ private:
   //                           CD3DX12_STATE_OBJECT_DESC &pipe) const;
   // PSOCompileResult loadCachedPSO(const char *path);
 
-private:
+ private:
   // void updatePSOCache(const char *name, ID3D12PipelineState *pso);
   // void insertInPSOCache(const PSOCompileResult &result);
 
@@ -115,7 +115,7 @@ private:
   PSOHandle processRasterPSO(const char *filePath, const nlohmann::json &jobj,
                              VkPipelineVertexInputStateCreateInfo *vertexInfo);
 
-private:
+ private:
   HashMap<const char *, VkPipeline, hashString32> m_psoRegister;
   HashMap<const char *, PSOHandle, hashString32> m_psoRegisterHandle;
 
@@ -131,4 +131,4 @@ private:
   uint32_t MAGIC_NUMBER_COUNTER = 1;
   static const uint32_t RESERVE_SIZE = 400;
 };
-} // namespace SirEngine::vk
+}  // namespace SirEngine::vk

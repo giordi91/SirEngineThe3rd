@@ -1,4 +1,5 @@
 #include "platform/windows/graphics/dx12/dx12MaterialManager.h"
+
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/skinClusterManager.h"
@@ -14,7 +15,6 @@ namespace SirEngine::dx12 {
 
 void bindPBR(const Dx12MaterialRuntime &materialRuntime,
              ID3D12GraphicsCommandList2 *commandList) {
-
   dx12::RENDERING_CONTEXT->bindCameraBuffer(0);
 
   commandList->SetGraphicsRootConstantBufferView(
@@ -221,7 +221,6 @@ void bindForwardPhongAlphaCutoutSkin(const Dx12MaterialRuntime &materialRuntime,
 }
 void bindHair(const Dx12MaterialRuntime &materialRuntime,
               ID3D12GraphicsCommandList2 *commandList) {
-
   dx12::RENDERING_CONTEXT->bindCameraBuffer(0);
 
   const ConstantBufferHandle lightCB = dx12::RENDERING_CONTEXT->getLightCB();
@@ -312,59 +311,61 @@ void Dx12MaterialManager::bindMaterial(
   const SHADER_TYPE_FLAGS type =
       getTypeFlags(materialRuntime.shaderQueueTypeFlags[currentFlagId]);
   switch (type) {
-  case (SHADER_TYPE_FLAGS::PBR): {
-    bindPBR(materialRuntime, commandList);
-    break;
-  }
-  case (SHADER_TYPE_FLAGS::SKIN): {
-    bindSkin(materialRuntime, commandList);
-    break;
-  }
-  case (SHADER_TYPE_FLAGS::FORWARD_PBR): {
-    bindForwardPBR(materialRuntime, commandList);
-    break;
-  }
-  case (SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT): {
-    bindForwardPhongAlphaCutout(materialRuntime, commandList);
-    break;
-  }
-  case (SHADER_TYPE_FLAGS::HAIR): {
-    bindHair(materialRuntime, commandList);
-    break;
-  }
-  case (SHADER_TYPE_FLAGS::SKINCLUSTER): {
-    bindSkinning(materialRuntime, commandList);
-    break;
-  }
-  case (SHADER_TYPE_FLAGS::SKINSKINCLUSTER): {
-    bindSkinSkinning(materialRuntime, commandList);
-    break;
-  }
-  case (SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT_SKIN): {
-    bindForwardPhongAlphaCutoutSkin(materialRuntime, commandList);
-    break;
-  }
-  case (SHADER_TYPE_FLAGS::HAIRSKIN): {
-    bindHairSkin(materialRuntime, commandList);
-    break;
-  }
-  case (SHADER_TYPE_FLAGS::FORWARD_PARALLAX): {
-    bindParallaxPBR(materialRuntime, commandList);
-    break;
-  }
-  case (SHADER_TYPE_FLAGS::SHADOW_SKIN_CLUSTER): {
-    bindShadowSkin(materialRuntime, commandList);
-    break;
-  }
-  default: {
-    assert(0 && "could not find material type");
-  }
+    case (SHADER_TYPE_FLAGS::PBR): {
+      bindPBR(materialRuntime, commandList);
+      break;
+    }
+    case (SHADER_TYPE_FLAGS::SKIN): {
+      bindSkin(materialRuntime, commandList);
+      break;
+    }
+    case (SHADER_TYPE_FLAGS::FORWARD_PBR): {
+      bindForwardPBR(materialRuntime, commandList);
+      break;
+    }
+    case (SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT): {
+      bindForwardPhongAlphaCutout(materialRuntime, commandList);
+      break;
+    }
+    case (SHADER_TYPE_FLAGS::HAIR): {
+      bindHair(materialRuntime, commandList);
+      break;
+    }
+    case (SHADER_TYPE_FLAGS::SKINCLUSTER): {
+      bindSkinning(materialRuntime, commandList);
+      break;
+    }
+    case (SHADER_TYPE_FLAGS::SKINSKINCLUSTER): {
+      bindSkinSkinning(materialRuntime, commandList);
+      break;
+    }
+    case (SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT_SKIN): {
+      bindForwardPhongAlphaCutoutSkin(materialRuntime, commandList);
+      break;
+    }
+    case (SHADER_TYPE_FLAGS::HAIRSKIN): {
+      bindHairSkin(materialRuntime, commandList);
+      break;
+    }
+    case (SHADER_TYPE_FLAGS::FORWARD_PARALLAX): {
+      bindParallaxPBR(materialRuntime, commandList);
+      break;
+    }
+    case (SHADER_TYPE_FLAGS::SHADOW_SKIN_CLUSTER): {
+      bindShadowSkin(materialRuntime, commandList);
+      break;
+    }
+    default: {
+      assert(0 && "could not find material type");
+    }
   }
 }
 
 void Dx12MaterialManager::bindTexture(MaterialHandle,
                                       const TextureHandle texHandle,
-                                      const uint32_t bindingIndex) {
+                                      const uint32_t bindingIndex,
+                                      SHADER_QUEUE_FLAGS queue) {
+  assert(0);
   dx12::DescriptorPair pair = dx12::TEXTURE_MANAGER->getSRVDx12(texHandle);
 
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
@@ -375,7 +376,6 @@ void Dx12MaterialManager::bindTexture(MaterialHandle,
 void Dx12MaterialManager::bindMaterial(
     SHADER_QUEUE_FLAGS queueFlag, const MaterialHandle handle,
     ID3D12GraphicsCommandList2 *commandList) {
-
   const Dx12MaterialRuntime &materialRuntime = getMaterialRuntime(handle);
   bindMaterial(queueFlag, materialRuntime, commandList);
 }
@@ -396,31 +396,41 @@ void Dx12MaterialManager::bindRSandPSO(
   assert(0 && "Could not find requested shader type for PSO /RS bind");
 }
 
-MaterialHandle Dx12MaterialManager::allocateMaterial(const char *type, const char *name,
-                                          ALLOCATE_MATERIAL_FLAGS ) {
+MaterialHandle Dx12MaterialManager::allocateMaterial(
+    const char *name, ALLOCATE_MATERIAL_FLAGS flags,
+    const char *materialsPerQueue[QUEUE_COUNT]) {
   // from the type we can get the PSO
-  uint16_t shaderType = parseTypeFlags(type);
-  ShaderBind bind;
-  bool found = m_shaderTypeToShaderBind.get(shaderType, bind);
-  assert(found && "could not find requested material type");
+  // TODO clean this up properly
+  for (int i = 0; i < QUEUE_COUNT; ++i) {
+    if (materialsPerQueue[i] == nullptr) {
+      continue;
+    }
+    uint16_t shaderType = parseTypeFlags(materialsPerQueue[i]);
+    ShaderBind bind;
+    bool found = m_shaderTypeToShaderBind.get(shaderType, bind);
+    assert(found && "could not find requested material type");
 
-  // TODO for now, not much is happening here, because we have a crappy binding
-  // system where each resource is bound with independent descriptor table, when
-  // we change this, here we will be doing an update of the binding table
+    // TODO for now, not much is happening here, because we have a crappy
+    // binding system where each resource is bound with independent descriptor
+    // table, when we change this, here we will be doing an update of the
+    // binding table
 
-  // empty material
-  uint32_t index;
-  MaterialData &materialData =
-      m_materialTextureHandles.getFreeMemoryData(index);
-  materialData.magicNumber = MAGIC_NUMBER_COUNTER++;
+    // empty material
+    uint32_t index;
+    MaterialData &materialData =
+        m_materialTextureHandles.getFreeMemoryData(index);
+    materialData.magicNumber = MAGIC_NUMBER_COUNTER++;
 
-  // this will be used when we need to bind the material
-  materialData.m_psoHandle= bind.pso;
-  materialData.m_rsHandle= bind.rs;
+    // this will be used when we need to bind the material
+    materialData.m_psoHandle = bind.pso;
+    materialData.m_rsHandle = bind.rs;
 
-  MaterialHandle handle{(materialData.magicNumber << 16) | (index)};
-  m_nameToHandle.insert(name, handle);
-  return handle;
+    MaterialHandle handle{(materialData.magicNumber << 16) | (index)};
+    m_nameToHandle.insert(name, handle);
+    return handle;
+  }
+  assert(0);
+  return {};
 }
 
 MaterialHandle Dx12MaterialManager::loadMaterial(const char *path,
@@ -500,7 +510,9 @@ MaterialHandle Dx12MaterialManager::loadMaterial(const char *path,
   return handle;
 }
 
-void Dx12MaterialManager::bindMaterial(MaterialHandle handle) {
+void Dx12MaterialManager::bindMaterial(MaterialHandle handle,
+                                       SHADER_QUEUE_FLAGS queue) {
+  assert(0);
   assertMagicNumber(handle);
   uint32_t index = getIndexFromHandle(handle);
   const auto &data = m_materialTextureHandles.getConstRef(index);
@@ -519,4 +531,4 @@ void Dx12MaterialManager::free(MaterialHandle handle) {
   const auto &data = m_materialTextureHandles.getConstRef(index);
   m_materialTextureHandles.free(index);
 }
-} // namespace SirEngine::dx12
+}  // namespace SirEngine::dx12

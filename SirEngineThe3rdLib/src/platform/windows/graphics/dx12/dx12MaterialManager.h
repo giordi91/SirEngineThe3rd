@@ -1,11 +1,11 @@
 #pragma once
 
+#include <cassert>
+
 #include "SirEngine/handle.h"
 #include "SirEngine/materialManager.h"
 #include "SirEngine/memory/sparseMemoryPool.h"
 #include "SirEngine/memory/stringHashMap.h"
-#include <cassert>
-
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 
 namespace SirEngine::dx12 {
@@ -20,9 +20,9 @@ struct Dx12MaterialRuntime final {
   D3D12_GPU_DESCRIPTOR_HANDLE separateAlpha;
   D3D12_GPU_DESCRIPTOR_HANDLE heightMap;
   D3D12_GPU_DESCRIPTOR_HANDLE ao;
-  uint32_t shaderQueueTypeFlags[4] = {
+  uint32_t shaderQueueTypeFlags[MaterialManager::QUEUE_COUNT] = {
       INVALID_QUEUE_TYPE_FLAGS, INVALID_QUEUE_TYPE_FLAGS,
-      INVALID_QUEUE_TYPE_FLAGS, INVALID_QUEUE_TYPE_FLAGS};
+      INVALID_QUEUE_TYPE_FLAGS, INVALID_QUEUE_TYPE_FLAGS,INVALID_QUEUE_TYPE_FLAGS};
   SkinHandle skinHandle;
   MeshHandle meshHandle;
 };
@@ -45,9 +45,10 @@ struct MaterialData {
 };
 
 class Dx12MaterialManager final : public MaterialManager {
-public:
+ public:
   Dx12MaterialManager()
-      : MaterialManager(RESERVE_SIZE), m_nameToHandle(RESERVE_SIZE),
+      : MaterialManager(RESERVE_SIZE),
+        m_nameToHandle(RESERVE_SIZE),
         m_materialTextureHandles(RESERVE_SIZE){};
   ~Dx12MaterialManager() = default;
   void inititialize() override{};
@@ -57,19 +58,22 @@ public:
   void bindMaterial(SHADER_QUEUE_FLAGS queueFlag,
                     const Dx12MaterialRuntime &runtime,
                     ID3D12GraphicsCommandList2 *commandList);
-  void bindTexture(MaterialHandle matHandle, TextureHandle texHandle,
-                   uint32_t bindingIndex) override;
+  void bindTexture(MaterialHandle matHandle,
+                                    TextureHandle texHandle,
+                                    uint32_t bindingIndex,
+                                    SHADER_QUEUE_FLAGS queue) override;
 
   void bindRSandPSO(uint32_t shaderFlags,
                     ID3D12GraphicsCommandList2 *commandList);
   Dx12MaterialManager(const Dx12MaterialManager &) = delete;
   Dx12MaterialManager &operator=(const Dx12MaterialManager &) = delete;
 
-  MaterialHandle allocateMaterial(const char *type, const char *name,
-                                          ALLOCATE_MATERIAL_FLAGS flags) override;
+  MaterialHandle allocateMaterial(
+      const char *name, ALLOCATE_MATERIAL_FLAGS flags,
+      const char *materialsPerQueue[QUEUE_COUNT]) override;
   MaterialHandle loadMaterial(const char *path, const MeshHandle meshHandle,
                               const SkinHandle skinHandle) override;
-  void bindMaterial(MaterialHandle handle) override;
+  void bindMaterial(MaterialHandle handle,SHADER_QUEUE_FLAGS queue) override;
   void free(MaterialHandle handle) override;
 
   const Dx12MaterialRuntime &getMaterialRuntime(const MaterialHandle handle) {
@@ -78,7 +82,7 @@ public:
     return m_materialTextureHandles.getConstRef(index).m_materialRuntime;
   }
 
-private:
+ private:
   inline void assertMagicNumber(const MaterialHandle handle) {
     const uint16_t magic = getMagicFromHandle(handle);
     const uint32_t idx = getIndexFromHandle(handle);
@@ -87,7 +91,7 @@ private:
   }
   void loadTypeFile(const char *path);
 
-private:
+ private:
   HashMap<const char *, MaterialHandle, hashString32> m_nameToHandle;
   static const uint32_t RESERVE_SIZE = 200;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
@@ -95,4 +99,4 @@ private:
   SparseMemoryPool<MaterialData> m_materialTextureHandles;
 };
 
-} // namespace SirEngine::dx12
+}  // namespace SirEngine::dx12

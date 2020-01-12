@@ -1,5 +1,6 @@
 
 #include "SirEngine/graphics/nodes/FinalBlitNode.h"
+
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/materialManager.h"
 
@@ -18,15 +19,14 @@ FinalBlitNode::FinalBlitNode(GraphAllocators &allocators)
 }
 
 void FinalBlitNode::compute() {
-
   // this will take care of binding the back buffer and the input and transition
   // both the back buffer  and input texture
   globals::RENDERING_CONTEXT->setBindingObject(m_bindHandle);
   // next we bind the material, this will among other things bind the pso and rs
-  globals::MATERIAL_MANAGER->bindMaterial(m_matHandle);
+  globals::MATERIAL_MANAGER->bindMaterial(m_matHandle,SHADER_QUEUE_FLAGS::CUSTOM);
   // we also need to bind the input resource, which is the texture we want to
   // blit
-  globals::MATERIAL_MANAGER->bindTexture(m_matHandle, inputRTHandle, 1);
+  globals::MATERIAL_MANAGER->bindTexture(m_matHandle, inputRTHandle, 1,SHADER_QUEUE_FLAGS::CUSTOM);
   // finally we submit a fullscreen pass
   globals::RENDERING_CONTEXT->fullScreenPass();
 
@@ -35,9 +35,13 @@ void FinalBlitNode::compute() {
 }
 
 void FinalBlitNode::initialize() {
-  // TODO temp hack
-    m_matHandle = globals::MATERIAL_MANAGER->allocateMaterial(
-        "HDRtoSDREffect", "HDRtoSDREffect", MaterialManager::ALLOCATE_MATERIAL_FLAG_BITS::BUFFERED);
+  const char *queues[5] = {nullptr, nullptr, nullptr, nullptr,
+                           "HDRtoSDREffect"};
+  m_matHandle = globals::MATERIAL_MANAGER->allocateMaterial(
+      "HDRtoSDREffect", MaterialManager::ALLOCATE_MATERIAL_FLAG_BITS::BUFFERED,
+      queues
+
+  );
 }
 
 void FinalBlitNode::populateNodePorts() {
@@ -78,4 +82,4 @@ void FinalBlitNode::clear() {
     globals::RENDERING_CONTEXT->freeBindingObject(m_bindHandle);
   }
 }
-} // namespace SirEngine
+}  // namespace SirEngine
