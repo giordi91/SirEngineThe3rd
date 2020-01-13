@@ -42,7 +42,7 @@ public:
       : m_bufferSizeInBytes(bufferSizeInBytes), m_allocations(preAlloc),
         m_freeAllocations(preAlloc){};
 
-  BufferRangeHandle allocate(const uint64_t allocSizeInBytes);
+  BufferRangeHandle allocate(const uint64_t allocSizeInBytes, const uint32_t alignment);
   void free(const BufferRangeHandle handle);
 
   // getters

@@ -9,25 +9,6 @@
 
 namespace SirEngine::vk {
 void VkDebugRenderer::initialize() {
-  // lets build the map of rs and pso
-  // points single color
-  PSOHandle psoHandle =
-      vk::PSO_MANAGER->getHandleFromName("debugDrawPointsSingleColorPSO");
-  RSHandle rsHandle = vk::PIPELINE_LAYOUT_MANAGER->getHandleFromName(
-      "debugDrawPointsSingleColorRS");
-
-  m_shderTypeToShaderBind.insert(
-      static_cast<uint16_t>(SHADER_TYPE_FLAGS::DEBUG_POINTS_SINGLE_COLOR),
-      ShaderBind{rsHandle, psoHandle});
-
-  psoHandle =
-      vk::PSO_MANAGER->getHandleFromName("debugDrawLinesSingleColorPSO");
-  rsHandle = vk::PIPELINE_LAYOUT_MANAGER->getHandleFromName(
-      "debugDrawLinesSingleColorRS");
-
-  m_shderTypeToShaderBind.insert(
-      static_cast<uint16_t>(SHADER_TYPE_FLAGS::DEBUG_LINES_SINGLE_COLOR),
-      ShaderBind{rsHandle, psoHandle});
 }
 inline int push3toVec(float* data, const glm::vec4 v, int counter) {
   data[counter++] = v.x;
@@ -114,10 +95,6 @@ DebugDrawHandle VkDebugRenderer::drawLinesUniformColor(float* data,
   DebugPointsFixedColor settings{color, size};
   const ConstantBufferHandle chandle =
       vk::CONSTANT_BUFFER_MANAGER->allocate(sizeof(settings), 0, &settings);
-
-  ShaderBind bind{};
-  bool found = m_shderTypeToShaderBind.get(
-      static_cast<uint16_t>(SHADER_TYPE_FLAGS::DEBUG_LINES_SINGLE_COLOR), bind);
 
   RenderableDescription description{};
   description.buffer = bufferHandle;

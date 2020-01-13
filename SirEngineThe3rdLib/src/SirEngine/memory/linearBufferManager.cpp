@@ -1,12 +1,19 @@
 #include "SirEngine/memory/linearBufferManager.h"
+#include <memory>
 
 namespace SirEngine {
-BufferRangeHandle
-LinearBufferManager::allocate(const uint64_t allocSizeInBytes) {
 
-  uint64_t newStackPointer = allocSizeInBytes + m_stackPointer;
-  bool allocationFits = newStackPointer < m_bufferSizeInBytes;
-  bool hasFreeAllocations = m_freeAllocations.size() != 0;
+uint64_t alignTo(const uint64_t stackOffset, const uint32_t alignment) {
+  const bool isAligned = stackOffset % alignment == 0;
+  return isAligned ? stackOffset : ((stackOffset / alignment) + 1) * alignment;
+}
+
+BufferRangeHandle LinearBufferManager::allocate(const uint64_t allocSizeInBytes,
+                                                const uint32_t alignment) {
+  const uint64_t alignedStackPointer = alignTo(m_stackPointer, alignment);
+  const uint64_t newStackPointer = allocSizeInBytes + alignedStackPointer;
+  const bool allocationFits = newStackPointer < m_bufferSizeInBytes;
+  const bool hasFreeAllocations = m_freeAllocations.size() != 0;
   if ((!allocationFits) & (!hasFreeAllocations)) {
     // allocation does not fit and no free allocations
     return BufferRangeHandle{};
@@ -37,14 +44,14 @@ LinearBufferManager::allocate(const uint64_t allocSizeInBytes) {
 
   // if we are here we need a new allocation
   BufferRangeTracker toReturn{};
-  toReturn.m_range = {m_stackPointer, allocSizeInBytes};
+  toReturn.m_range = {alignedStackPointer, allocSizeInBytes};
   toReturn.m_allocIndex = static_cast<uint16_t>(m_allocations.size());
   toReturn.m_magicNumber = MAGIC_NUMBER_COUNTER++;
   toReturn.m_actualAllocSize = allocSizeInBytes;
   m_allocations.pushBack(toReturn);
 
   // moving stack pointer up
-  m_stackPointer += allocSizeInBytes;
+  m_stackPointer = alignedStackPointer + allocSizeInBytes;
   m_allocCount += 1;
 
   const BufferRangeHandle handle{static_cast<uint32_t>(
@@ -58,7 +65,7 @@ void LinearBufferManager::free(const BufferRangeHandle handle) {
   uint32_t idx = getIndexFromHandle(handle);
   assert(idx < m_allocations.size());
 
-  BufferRangeTracker& tracker = m_allocations[idx];
+  BufferRangeTracker &tracker = m_allocations[idx];
   // this invalidate the tracker
   tracker.m_range.m_size = 0;
   assert(tracker.m_range.isValid() == false);

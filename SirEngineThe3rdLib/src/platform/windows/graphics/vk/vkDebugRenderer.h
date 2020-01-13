@@ -25,7 +25,7 @@ class VkDebugRenderer : public DebugRenderer {
  public:
   VkDebugRenderer()
       : DebugRenderer(),
-        m_shderTypeToShaderBind(RESERVE_SIZE),
+        //m_shderTypeToShaderBind(RESERVE_SIZE),
         m_trackers(RESERVE_SIZE){};
   virtual ~VkDebugRenderer() = default;
   VkDebugRenderer(const VkDebugRenderer&) = delete;
@@ -69,7 +69,7 @@ class VkDebugRenderer : public DebugRenderer {
  private:
   static constexpr uint32_t RESERVE_SIZE = 200;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
-  HashMap<uint16_t, ShaderBind, hashUint16> m_shderTypeToShaderBind;
+  //HashMap<uint16_t, ShaderBind, hashUint16> m_shderTypeToShaderBind;
   std::unordered_map<uint32_t, std::vector<VkDebugPrimitive>> m_renderables;
   HashMap<uint32_t, DebugTracker, hashUint32> m_trackers;
 };
