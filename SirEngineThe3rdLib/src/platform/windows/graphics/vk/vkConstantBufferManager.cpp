@@ -26,6 +26,12 @@ void VkConstantBufferManager::initialize() {
 
   // initialize at least one slab
   allocateSlab();
+
+  // checking aligment requirements
+  // VkPhysicalDeviceLimits::minUniformBufferOffsetAlignment
+  VkPhysicalDeviceProperties properties;
+  vkGetPhysicalDeviceProperties(vk::PHYSICAL_DEVICE, &properties);
+  m_requireAlignment = properties.limits.minUniformBufferOffsetAlignment;
 }
 
 void destroyBuffer(const VkDevice device, const Buffer &buffer) {
@@ -120,7 +126,7 @@ inline uint32_t padTo256BytesMultiple(const uint32_t size) {
   return size % 32 != 0 ? (size / 32 + 1) * 32 : size;
 }
 
-int VkConstantBufferManager::getFreeSlabIndex(uint32_t allocSize) {
+int VkConstantBufferManager::getFreeSlabIndex(const uint32_t allocSize) {
 
   int freeSlab = -1;
   for (uint32_t i = 0; i < m_allocatedSlabs; ++i) {
@@ -148,15 +154,13 @@ int VkConstantBufferManager::getFreeSlabIndex(uint32_t allocSize) {
   return -1;
 }
 
-SirEngine::ConstantBufferHandle
-VkConstantBufferManager::allocate(const uint32_t sizeInBytes,
-                                  const CONSTANT_BUFFER_FLAGS flags, void *data) {
-
-  uint32_t allocSize = padTo256BytesMultiple(sizeInBytes);
+SirEngine::ConstantBufferHandle VkConstantBufferManager::allocate(
+    const uint32_t sizeInBytes, const CONSTANT_BUFFER_FLAGS flags, void *data) {
+  const uint32_t allocSize = padTo256BytesMultiple(sizeInBytes);
 
   // search the slabs, slabs per frame are exactly identical, searching one will
   // yield the same result of searching all of them
-  int freeSlab = getFreeSlabIndex(allocSize);
+  const int freeSlab = getFreeSlabIndex(allocSize);
 
 #ifdef SE_DEBUG
   // we want to make sure all the handles are the same, since we want to keep
@@ -169,7 +173,8 @@ VkConstantBufferManager::allocate(const uint32_t sizeInBytes,
   BufferRangeHandle handle{};
   BufferRange range{};
   for (uint32_t pfs = 0; pfs < vk::SWAP_CHAIN_IMAGE_COUNT; ++pfs) {
-    handle = m_perFrameSlabs[pfs][freeSlab].m_slabTracker.allocate(sizeInBytes);
+    handle = m_perFrameSlabs[pfs][freeSlab].m_slabTracker.allocate(
+        sizeInBytes, m_requireAlignment);
     range = m_perFrameSlabs[pfs][freeSlab].m_slabTracker.getBufferRange(handle);
     // copying the data if we have a valid pointer
     if (data != nullptr) {
@@ -307,7 +312,7 @@ void VkConstantBufferManager::processBufferedData() {
 void VkConstantBufferManager::bindConstantBuffer(
     const ConstantBufferHandle handle, VkDescriptorBufferInfo &bufferInfo,
     const uint32_t bindingIdx, VkWriteDescriptorSet *set,
-    const VkDescriptorSet descSet) {
+    const VkDescriptorSet descSet) const {
 
   assertMagicNumber(handle);
   uint32_t idx = getIndexFromHandle(handle);
@@ -375,8 +380,8 @@ void createBuffer(Buffer &buffer, const VkDevice device, const size_t size,
         "back to HOST_VISIBLE and HOST_CHOERENT, might have higher latency");
     uint32_t newMemoryFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                               VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-    memoryIndex = selectMemoryType(
-        memoryProperties, requirements.memoryTypeBits, newMemoryFlags);
+    memoryIndex = selectMemoryType(memoryProperties,
+                                   requirements.memoryTypeBits, newMemoryFlags);
     assert(memoryIndex != ~0u);
   }
 

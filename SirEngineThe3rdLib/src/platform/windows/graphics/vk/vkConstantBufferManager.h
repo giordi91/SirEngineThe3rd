@@ -38,7 +38,8 @@ public:
   virtual ConstantBufferHandle allocateDynamic(uint32_t sizeInBytes,
                                                void *data = nullptr) override;
 
-  ConstantBufferHandle allocate(uint32_t sizeInBytes, CONSTANT_BUFFER_FLAGS flags = 0,
+  ConstantBufferHandle allocate(uint32_t sizeInBytes,
+                                CONSTANT_BUFFER_FLAGS flags = 0,
                                 void *data = nullptr) override;
   void update(ConstantBufferHandle handle, void *data) override;
 
@@ -59,7 +60,7 @@ public:
   void bindConstantBuffer(ConstantBufferHandle handle,
                           VkDescriptorBufferInfo &bufferInfo,
                           uint32_t bindingIdx, VkWriteDescriptorSet *set,
-                          VkDescriptorSet descSet);
+                          VkDescriptorSet descSet) const;
   inline VkDescriptorBufferInfo
   getBufferDescriptor(const ConstantBufferHandle &handle) const {
     assertMagicNumber(handle);
@@ -122,6 +123,7 @@ private:
   Slab *m_slabs = nullptr;
   Slab **m_perFrameSlabs = nullptr;
   uint32_t m_allocatedSlabs = 0;
+  uint32_t m_requireAlignment = 0;
 };
 
 } // namespace SirEngine::vk
