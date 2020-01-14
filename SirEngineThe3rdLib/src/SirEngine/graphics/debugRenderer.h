@@ -38,6 +38,7 @@ class DebugRenderer {
 
   virtual void initialize() = 0;
   virtual void cleanup() = 0;
+  virtual void free(DebugDrawHandle handle) = 0;
 
   virtual DebugDrawHandle drawPointsUniformColor(float *data,
                                                  uint32_t sizeInByte,

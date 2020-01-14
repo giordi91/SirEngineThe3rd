@@ -8,8 +8,8 @@
 #include "vkMaterialManager.h"
 
 namespace SirEngine::vk {
-void VkDebugRenderer::initialize() {
-}
+
+void VkDebugRenderer::initialize() {}
 inline int push3toVec(float* data, const glm::vec4 v, int counter) {
   data[counter++] = v.x;
   data[counter++] = v.y;
@@ -64,7 +64,33 @@ int drawSquareBetweenTwoPoints(float* data, const glm::vec3 minP,
   return counter;
 }
 
+VkDebugRenderer::VkDebugRenderer()
+    : DebugRenderer(),
+      m_primitivesPool(RESERVE_SIZE),
+      m_trackers(RESERVE_SIZE) {}
+
 void VkDebugRenderer::cleanup() {}
+
+void VkDebugRenderer::free(const DebugDrawHandle handle) {
+  assertMagicNumber(handle);
+  const uint32_t magic = getMagicFromHandle(handle);
+
+  DebugTracker tracker;
+  bool found = m_trackers.get(handle.handle, tracker);
+  int primCount = tracker.compoundCount;
+  for (int i = 0; i < primCount; ++i) {
+    DebugDrawHandle handle = tracker.compoundHandles[i];
+    assertPoolMagicNumber(handle);
+    const uint32_t index = getIndexFromHandle(handle);
+    const VkDebugPrimitive& prim = m_primitivesPool.getConstRef(index);
+    if (prim.m_bufferHandle.isHandleValid()) {
+      globals::BUFFER_MANAGER->free(prim.m_bufferHandle);
+    }
+    if (prim.m_cbHandle.isHandleValid()) {
+      globals::CONSTANT_BUFFER_MANAGER->free(prim.m_cbHandle);
+    }
+  }
+}
 
 DebugDrawHandle VkDebugRenderer::drawPointsUniformColor(float* data,
                                                         uint32_t sizeInByte,
@@ -80,7 +106,8 @@ DebugDrawHandle VkDebugRenderer::drawLinesUniformColor(float* data,
                                                        glm::vec4 color,
                                                        float size,
                                                        const char* debugName) {
-  VkDebugPrimitive primitive{};
+  uint32_t index;
+  VkDebugPrimitive& primitive = m_primitivesPool.getFreeMemoryData(index);
 
   // allocate vertex buffer
   assert((sizeInByte % (sizeof(float) * 3)) == 0);
@@ -89,7 +116,7 @@ DebugDrawHandle VkDebugRenderer::drawLinesUniformColor(float* data,
   BufferHandle bufferHandle = vk::BUFFER_MANAGER->allocate(
       sizeInByte, data, debugName, elementCount, sizeof(float) * 3,
       BufferManager::BUFFER_FLAGS::STORAGE_BUFFER);
-  primitive.bufferHandle = bufferHandle;
+  primitive.m_bufferHandle = bufferHandle;
 
   // allocate constant buffer
   DebugPointsFixedColor settings{color, size};
@@ -102,25 +129,28 @@ DebugDrawHandle VkDebugRenderer::drawLinesUniformColor(float* data,
   description.subranges[0].m_size = sizeInByte;
   description.subragesCount = 1;
 
-  const char* queues[5] = {nullptr, nullptr, nullptr,
-                           "debugLinesSingleColor",nullptr};
+  const char* queues[5] = {nullptr, nullptr, nullptr, "debugLinesSingleColor",
+                           nullptr};
 
   description.materialHandle = globals::MATERIAL_MANAGER->allocateMaterial(
       debugName, MaterialManager::ALLOCATE_MATERIAL_FLAG_BITS::NONE, queues);
   description.primitiveToRender = elementCount;
 
-  const VkMaterialRuntime& runtime = 
+  const VkMaterialRuntime& runtime =
       vk::MATERIAL_MANAGER->getMaterialRuntime(description.materialHandle);
 
+  // TODO do we need that? we should be able to query from the material
+  // manager for the wanted queue
   const auto currentFlag = static_cast<uint32_t>(SHADER_QUEUE_FLAGS::DEBUG);
   int currentFlagId = static_cast<int>(log2(currentFlag & (-currentFlag)));
 
-  VkDescriptorSet set = vk::DESCRIPTOR_MANAGER->getDescriptorSet(runtime.descriptorHandles[currentFlagId]);
+  VkDescriptorSet set = vk::DESCRIPTOR_MANAGER->getDescriptorSet(
+      runtime.descriptorHandles[currentFlagId]);
 
   VkWriteDescriptorSet writeDescriptorSet[2]{};
   VkDescriptorBufferInfo info[2]{};
   // updating the descriptors
-  info[0].buffer = vk::BUFFER_MANAGER->getNativeBuffer(primitive.bufferHandle);
+  info[0].buffer = vk::BUFFER_MANAGER->getNativeBuffer(primitive.m_bufferHandle);
   info[0].offset = 0;
   info[0].range = sizeInByte;
 
@@ -139,35 +169,33 @@ DebugDrawHandle VkDebugRenderer::drawLinesUniformColor(float* data,
   globals::RENDERING_CONTEXT->addRenderablesToQueue(description);
 
   // store it such way that we can render it
-  primitive.primitiveType = PRIMITIVE_TYPE::LINE;
-  primitive.cbHandle = chandle;
-  primitive.primitiveToRender = static_cast<int>(elementCount);
+  primitive.m_primitiveType = PRIMITIVE_TYPE::LINE;
+  primitive.m_cbHandle = chandle;
+  primitive.m_primitiveToRender = static_cast<int>(elementCount);
+  primitive.m_magicNumber = MAGIC_NUMBER_COUNTER;
 
-  // generate handle for storing
-  SHADER_QUEUE_FLAGS queue = SHADER_QUEUE_FLAGS::DEBUG;
-  SHADER_TYPE_FLAGS type = SHADER_TYPE_FLAGS::DEBUG_LINES_SINGLE_COLOR;
-  const uint32_t storeHandle =
-      static_cast<uint32_t>(queue) | (static_cast<uint32_t>(type) << 16);
+  const DebugDrawHandle debugHandle{(MAGIC_NUMBER_COUNTER << 16) | index};
+  ++MAGIC_NUMBER_COUNTER;
 
   DebugTracker tracker{};
-  tracker.compoundCount = 0;
-  tracker.index = m_renderables[storeHandle].size();
   tracker.magicNumber = MAGIC_NUMBER_COUNTER;
-  tracker.queue = storeHandle;
   tracker.mappedData = nullptr;
+  // only one object, this should be renamed to normal counter not compound
+  // simply set to one if not compound
+  tracker.compoundCount = 1;
+  tracker.compoundHandles = reinterpret_cast<DebugDrawHandle*>(
+      globals::PERSISTENT_ALLOCATOR->allocate(sizeof(DebugDrawHandle) * 1));
+  tracker.compoundHandles[0] = debugHandle;
   tracker.sizeInBtye = sizeInByte;
 
-  const DebugDrawHandle debugHandle{(MAGIC_NUMBER_COUNTER << 16) |
-                                    tracker.index};
+  const DebugDrawHandle trackerHandle{(MAGIC_NUMBER_COUNTER << 16)};
 
   // registering the tracker
-  m_trackers.insert(debugHandle.handle, tracker);
-  // registering the renderables
-  m_renderables[storeHandle].push_back(primitive);
+  m_trackers.insert(trackerHandle.handle, tracker);
 
   ++MAGIC_NUMBER_COUNTER;
 
-  return debugHandle;
+  return trackerHandle;
 }
 
 DebugDrawHandle VkDebugRenderer::drawSkeleton(Skeleton* skeleton,
@@ -184,11 +212,9 @@ DebugDrawHandle VkDebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
   assert(0);
   return {};
 }
-void VkDebugRenderer::renderQueue(
-    std::unordered_map<uint32_t, std::vector<VkDebugPrimitive>>& inQueue,
-    const TextureHandle input, const TextureHandle depth) {
-  auto* currentFc = CURRENT_FRAME_COMMAND;
-  auto commandList = currentFc->m_commandBuffer;
+
+void VkDebugRenderer::render(TextureHandle input, TextureHandle depth) {
+  auto commandList = &vk::CURRENT_FRAME_COMMAND->m_commandBuffer;
 
   DrawCallConfig config{
       globals::ENGINE_CONFIG->m_windowWidth,
@@ -200,19 +226,14 @@ void VkDebugRenderer::renderQueue(
                                               SHADER_QUEUE_FLAGS::DEBUG);
 }
 
-void VkDebugRenderer::render(TextureHandle input, TextureHandle depth) {
-  auto commandList = &vk::CURRENT_FRAME_COMMAND->m_commandBuffer;
-  // first static stuff
-  renderQueue(m_renderables, input, depth);
-}
-
 void VkDebugRenderer::clearUploadRequests() {}
 
 DebugDrawHandle VkDebugRenderer::drawBoundingBoxes(BoundingBox* data, int count,
                                                    glm::vec4 color,
                                                    const char* debugName) {
-  // 12 is the number of lines needed for the AABB, 4 top, 4 bottom, 4 vertical
-  // two is because we need two points per line, we are not doing trianglestrip
+  // 12 is the number of lines needed for the AABB, 4 top, 4 bottom, 4
+  // vertical two is because we need two points per line, we are not doing
+  // trianglestrip
   int totalSize = 4 * count * 12 * 2;  // here 4 is the xmfloat4
 
   auto* points = reinterpret_cast<float*>(
@@ -238,15 +259,8 @@ DebugDrawHandle VkDebugRenderer::drawBoundingBoxes(BoundingBox* data, int count,
     counter = push4toVec(points, minP.x, maxP.y, maxP.z, counter);
     assert(counter <= totalSize);
   }
-  drawLinesUniformColor(points, totalSize * sizeof(float), color,
-                        static_cast<float>(totalSize), debugName);
-
-  // this is not compound;
-  const int compoundBit = 0;
-  const DebugDrawHandle returnHandle{compoundBit |
-                                     (MAGIC_NUMBER_COUNTER << 16) | 0};
-  ++MAGIC_NUMBER_COUNTER;
-  return returnHandle;
+  return drawLinesUniformColor(points, totalSize * sizeof(float), color,
+                               static_cast<float>(totalSize), debugName);
 }
 
 DebugDrawHandle VkDebugRenderer::drawAnimatedBoundingBoxes(
