@@ -81,7 +81,7 @@ void GrassNode::initialize() {
     tileCounter++;
   }
 
-  globals::DEBUG_RENDERER->drawBoundingBoxes(
+  m_debugHandle = globals::DEBUG_RENDERER->drawBoundingBoxes(
       aabbs, tileCount, glm::vec4(1, 0, 0, 1), "grassTiles");
 }
 
@@ -120,5 +120,14 @@ void GrassNode::populateNodePorts() {
 
   m_outputPlugs[0].plugValue = renderTarget.handle;
   m_outputPlugs[1].plugValue = depth.handle;
+}
+
+void GrassNode::clear() {
+  if (m_debugHandle.isHandleValid()) {
+    globals::DEBUG_RENDERER->free(m_debugHandle);
+  }
+  if(m_bindHandle.isHandleValid()) {
+      globals::RENDERING_CONTEXT->freeBindingObject(m_bindHandle);
+  }
 }
 }  // namespace SirEngine

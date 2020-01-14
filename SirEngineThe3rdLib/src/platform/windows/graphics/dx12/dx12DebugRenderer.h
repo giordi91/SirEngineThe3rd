@@ -45,12 +45,14 @@ class Dx12DebugRenderer : public DebugRenderer {
   };
 
  public:
-  Dx12DebugRenderer():DebugRenderer(){};
+  Dx12DebugRenderer() : DebugRenderer(){};
+  virtual ~Dx12DebugRenderer() = default;
   Dx12DebugRenderer(const Dx12DebugRenderer &) = delete;
   Dx12DebugRenderer &operator=(const Dx12DebugRenderer &) = delete;
   Dx12DebugRenderer(Dx12DebugRenderer &&) = delete;
   Dx12DebugRenderer &operator=(Dx12DebugRenderer &&) = delete;
   void initialize() override;
+  void free(DebugDrawHandle handle) override;
 
   void cleanup() override {
     // for (auto &deb : m_persistante_q) {

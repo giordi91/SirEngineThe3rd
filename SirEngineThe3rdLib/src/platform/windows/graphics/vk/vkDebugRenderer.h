@@ -1,32 +1,24 @@
 #pragma once
 #include "SirEngine/graphics/debugRenderer.h"
-#include "SirEngine/memory/hashMap.h"
-#include "platform/windows/graphics/vk/volk.h"
-
-#include <vector>
-#include <unordered_map>
 #include "SirEngine/materialManager.h"
+#include "SirEngine/memory/hashMap.h"
+#include "SirEngine/memory/sparseMemoryPool.h"
 
 namespace SirEngine::vk {
 
 class VkDebugRenderer : public DebugRenderer {
   struct VkDebugPrimitive {
-    // slow I know but for the time being will get the job done
-    ConstantBufferHandle cbHandle;
-    BufferHandle bufferHandle;
-    DescriptorHandle descriptorHandle;
-    VkPipelineLayout layout;
-    int primitiveToRender;
-    PRIMITIVE_TYPE primitiveType;
-    // DescriptorPair srv;
-    uint64_t fence;
+    ConstantBufferHandle m_cbHandle;
+    BufferHandle m_bufferHandle;
+    DescriptorHandle m_descriptorHandle;
+    PRIMITIVE_TYPE m_primitiveType;
+    uint32_t m_magicNumber;
+    int m_primitiveToRender;
   };
 
  public:
-  VkDebugRenderer()
-      : DebugRenderer(),
-        //m_shderTypeToShaderBind(RESERVE_SIZE),
-        m_trackers(RESERVE_SIZE){};
+  VkDebugRenderer();
+  ;
   virtual ~VkDebugRenderer() = default;
   VkDebugRenderer(const VkDebugRenderer&) = delete;
   VkDebugRenderer& operator=(const VkDebugRenderer&) = delete;
@@ -35,6 +27,8 @@ class VkDebugRenderer : public DebugRenderer {
   // override interface
   void initialize() override;
   void cleanup() override;
+
+  void free(DebugDrawHandle handle) override;
   DebugDrawHandle drawPointsUniformColor(float* data, uint32_t sizeInByte,
                                          glm::vec4 color, float size,
                                          const char* debugName) override;
@@ -62,15 +56,26 @@ class VkDebugRenderer : public DebugRenderer {
                   const char* debugName) override;
 
  private:
-  void VkDebugRenderer::renderQueue(
-      std::unordered_map<uint32_t, std::vector<VkDebugPrimitive>>& inQueue,
-      const TextureHandle input, const TextureHandle depth);
+  inline void assertMagicNumber(const DebugDrawHandle handle) const {
+    const uint32_t magic = getMagicFromHandle(handle);
+
+    DebugTracker tracker;
+    bool found = m_trackers.get(handle.handle, tracker);
+    assert(found);
+    assert(tracker.magicNumber == magic &&
+           "invalid magic handle for debug tracker buffer");
+  }
+  inline void assertPoolMagicNumber(const DebugDrawHandle handle) {
+    const uint32_t magic = getMagicFromHandle(handle);
+    const uint32_t idx = getIndexFromHandle(handle);
+    assert(m_primitivesPool[idx].m_magicNumber == magic &&
+           "invalid magic handle for material data");
+  }
 
  private:
   static constexpr uint32_t RESERVE_SIZE = 200;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
-  //HashMap<uint16_t, ShaderBind, hashUint16> m_shderTypeToShaderBind;
-  std::unordered_map<uint32_t, std::vector<VkDebugPrimitive>> m_renderables;
+  SparseMemoryPool<VkDebugPrimitive> m_primitivesPool;
   HashMap<uint32_t, DebugTracker, hashUint32> m_trackers;
 };
 

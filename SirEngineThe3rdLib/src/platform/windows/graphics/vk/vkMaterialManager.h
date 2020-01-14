@@ -86,7 +86,7 @@ class VkMaterialManager final : public MaterialManager {
     const uint32_t magic = getMagicFromHandle(handle);
     const uint32_t idx = getIndexFromHandle(handle);
     assert(m_materialTextureHandles[idx].magicNumber == magic &&
-           "invalid magic handle for constant buffer");
+           "invalid magic handle for material data");
   }
   void loadTypeFile(const char *path);
 

@@ -1,4 +1,5 @@
 #include "platform/windows/graphics/dx12/dx12DebugRenderer.h"
+
 #include "SirEngine/animation/animationClip.h"
 #include "SirEngine/animation/animationPlayer.h"
 #include "SirEngine/animation/skeleton.h"
@@ -9,10 +10,10 @@
 #include "SirEngine/runtimeString.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/Dx12PSOManager.h"
-#include "platform/windows/graphics/dx12/dx12TextureManager.h"
 #include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
-#include "platform/windows/graphics/dx12/dx12RootSignatureManager.h"
 #include "platform/windows/graphics/dx12/dx12MaterialManager.h"
+#include "platform/windows/graphics/dx12/dx12RootSignatureManager.h"
+#include "platform/windows/graphics/dx12/dx12TextureManager.h"
 
 namespace SirEngine::dx12 {
 void Dx12DebugRenderer::initialize() {
@@ -37,10 +38,11 @@ void Dx12DebugRenderer::initialize() {
       ShaderBind{rsHandle, psoHandle};
 }
 
-inline ID3D12Resource *
-allocateUploadBuffer(ID3D12Device *pDevice, void *pData,
-                     const uint64_t dataSize, void **pMappedData,
-                     const wchar_t *resourceName = nullptr) {
+void Dx12DebugRenderer::free(DebugDrawHandle handle) { assert(0); }
+
+inline ID3D12Resource *allocateUploadBuffer(
+    ID3D12Device *pDevice, void *pData, const uint64_t dataSize,
+    void **pMappedData, const wchar_t *resourceName = nullptr) {
   ID3D12Resource *ppResource;
   auto uploadHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
   auto bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(dataSize);
@@ -115,7 +117,6 @@ static ID3D12Resource *createDefaultBuffer(ID3D12Device *device,
 inline D3D12_VERTEX_BUFFER_VIEW getVertexBufferView(ID3D12Resource *buffer,
                                                     uint32_t strideInByte,
                                                     uint32_t sizeInByte) {
-
   D3D12_VERTEX_BUFFER_VIEW vbv;
   vbv.BufferLocation = buffer->GetGPUVirtualAddress();
   vbv.StrideInBytes = strideInByte;
@@ -123,13 +124,12 @@ inline D3D12_VERTEX_BUFFER_VIEW getVertexBufferView(ID3D12Resource *buffer,
   return vbv;
 }
 
-DebugDrawHandle Dx12DebugRenderer::drawPointsUniformColor(float *data,
-                                                      const uint32_t sizeInByte,
-                                                      const glm::vec4 color,
-                                                      const float size,
-                                                      const char *debugName) {
-  //TODO : next time we draw points, we need to fix the code to go from vec3 to vec4 and
-  //to bind mesh separately, as buffer and read manually, not input assembler a anymore
+DebugDrawHandle Dx12DebugRenderer::drawPointsUniformColor(
+    float *data, const uint32_t sizeInByte, const glm::vec4 color,
+    const float size, const char *debugName) {
+  // TODO : next time we draw points, we need to fix the code to go from vec3 to
+  // vec4 and to bind mesh separately, as buffer and read manually, not input
+  // assembler a anymore
   assert(0);
   BufferUploadResource upload;
   DebugPrimitive primitive;
@@ -138,7 +138,7 @@ DebugDrawHandle Dx12DebugRenderer::drawPointsUniformColor(float *data,
   assert((sizeInByte % (sizeof(float) * 3)) == 0);
   const uint32_t elementCount = sizeInByte / (sizeof(float) * 3);
 
-  //TODO fix this, should use normal buffer manager
+  // TODO fix this, should use normal buffer manager
   primitive.buffer = allocateUploadBuffer(
       dx12::DEVICE, data, sizeInByte, &mappedData, frameConvertWide(debugName));
 
@@ -183,11 +183,9 @@ DebugDrawHandle Dx12DebugRenderer::drawPointsUniformColor(float *data,
   return debugHandle;
 }
 
-DebugDrawHandle Dx12DebugRenderer::drawLinesUniformColor(float *data,
-                                                     const uint32_t sizeInByte,
-                                                     const glm::vec4 color,
-                                                     const float size,
-                                                     const char *debugName) {
+DebugDrawHandle Dx12DebugRenderer::drawLinesUniformColor(
+    float *data, const uint32_t sizeInByte, const glm::vec4 color,
+    const float size, const char *debugName) {
   DebugPrimitive primitive;
 
   // allocate vertex buffer
@@ -197,7 +195,6 @@ DebugDrawHandle Dx12DebugRenderer::drawLinesUniformColor(float *data,
   void *mappedData;
   primitive.buffer = allocateUploadBuffer(
       dx12::DEVICE, data, sizeInByte, &mappedData, frameConvertWide(debugName));
-
 
   dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferSRV(
       primitive.srv, primitive.buffer, elementCount, sizeof(float) * 3);
@@ -241,9 +238,8 @@ DebugDrawHandle Dx12DebugRenderer::drawLinesUniformColor(float *data,
 }
 
 DebugDrawHandle Dx12DebugRenderer::drawSkeleton(Skeleton *skeleton,
-                                            const glm::vec4 color,
-                                            const float pointSize) {
-
+                                                const glm::vec4 color,
+                                                const float pointSize) {
   const ResizableVector<glm::mat4> &joints = skeleton->m_jointsWolrdInv;
   // first we need to convert the skeleton to points we can actually render
   auto *points = reinterpret_cast<glm::vec3 *>(
@@ -265,7 +261,6 @@ DebugDrawHandle Dx12DebugRenderer::drawSkeleton(Skeleton *skeleton,
     points[i] = glm::vec3(pos);
 
     if (parentIds[i] != -1) {
-
       // here we add a line from the parent to the children, might do a more
       // elaborate joint drawing one day
       lines[lineCounter] = points[parentIds[i]];
@@ -302,10 +297,9 @@ DebugDrawHandle Dx12DebugRenderer::drawSkeleton(Skeleton *skeleton,
 }
 
 DebugDrawHandle Dx12DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
-                                                    AnimationPlayer *state,
-                                                    const glm::vec4 color,
-                                                    float pointSize) {
-
+                                                        AnimationPlayer *state,
+                                                        const glm::vec4 color,
+                                                        float pointSize) {
   const glm::mat4 *pose = state->getOutPose()->m_worldMat;
   const uint32_t jointCount = state->getOutPose()->m_skeleton->m_jointCount;
 
@@ -395,12 +389,11 @@ DebugDrawHandle Dx12DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
 
     return returnHandle;
   }
-} // namespace SirEngine::dx12
+}  // namespace SirEngine::dx12
 
 void Dx12DebugRenderer::renderQueue(
     std::unordered_map<uint32_t, std::vector<DebugPrimitive>> &inQueue,
     const TextureHandle input, const TextureHandle depth) {
-
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
 
@@ -459,7 +452,7 @@ void Dx12DebugRenderer::renderQueue(
         currentFc->commandList->IASetPrimitiveTopology(
             D3D_PRIMITIVE_TOPOLOGY_LINELIST);
       }
-	  commandList->SetGraphicsRootDescriptorTable(2, prim.srv.gpuHandle);
+      commandList->SetGraphicsRootDescriptorTable(2, prim.srv.gpuHandle);
 
       currentFc->commandList->DrawInstanced(prim.primitiveToRender, 1, 0, 0);
     }
@@ -468,8 +461,7 @@ void Dx12DebugRenderer::renderQueue(
 }
 
 void Dx12DebugRenderer::render(const TextureHandle input,
-                           const TextureHandle depth) {
-
+                               const TextureHandle depth) {
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   // first static stuff
   renderQueue(m_renderables, input, depth);
@@ -477,9 +469,8 @@ void Dx12DebugRenderer::render(const TextureHandle input,
   // TODO fix this, every draw call should set as appropriate
   currentFc->commandList->IASetPrimitiveTopology(
       D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-} // namespace SirEngine::dx12
+}  // namespace SirEngine::dx12
 void Dx12DebugRenderer::clearUploadRequests() {
-
   const uint64_t id = GLOBAL_FENCE->GetCompletedValue();
 
   const int requestSize = static_cast<int>(m_uploadRequests.size()) - 1;
@@ -553,19 +544,18 @@ int drawSquareBetweenTwoPoints(float *data, const glm::vec3 minP,
   return counter;
 }
 
-DebugDrawHandle Dx12DebugRenderer::drawBoundingBoxes(BoundingBox *data, int count,
-                                                 const glm::vec4 color,
-                                                 const char *debugName) {
-
+DebugDrawHandle Dx12DebugRenderer::drawBoundingBoxes(BoundingBox *data,
+                                                     int count,
+                                                     const glm::vec4 color,
+                                                     const char *debugName) {
   // 12 is the number of lines needed for the AABB, 4 top, 4 bottom, 4 vertical
   // two is because we need two points per line, we are not doing trianglestrip
-  int totalSize = 4 * count * 12 * 2; // here 4 is the xmfloat4
+  int totalSize = 4 * count * 12 * 2;  // here 4 is the xmfloat4
 
   auto *points = reinterpret_cast<float *>(
       globals::FRAME_ALLOCATOR->allocate(sizeof(glm::vec4) * count * 12 * 2));
   int counter = 0;
   for (int i = 0; i < count; ++i) {
-
     assert(counter <= totalSize);
     const auto &minP = data[i].min;
     const auto &maxP = data[i].max;
@@ -602,13 +592,12 @@ DebugDrawHandle Dx12DebugRenderer::drawAnimatedBoundingBoxes(
   // first get AABB data
   // 12 is the number of lines needed for the AABB, 4 top, 4 bottom, 4 vertical
   // two is because we need two points per line, we are not doing trianglestrip
-  int totalSize = 3 * count * 12 * 2; // here 3 is the xmfloat3
+  int totalSize = 3 * count * 12 * 2;  // here 3 is the xmfloat3
 
   auto *points = reinterpret_cast<float *>(
       globals::FRAME_ALLOCATOR->allocate(sizeof(glm::vec3) * count * 12 * 2));
   int counter = 0;
   for (int i = 0; i < count; ++i) {
-
     assert(counter <= totalSize);
     const auto &minP = data[i].min;
     const auto &maxP = data[i].max;
@@ -630,7 +619,6 @@ DebugDrawHandle Dx12DebugRenderer::drawAnimatedBoundingBoxes(
   }
 
   if (handle.isHandleValid()) {
-
     // lets get the trackers out for each one
     const auto found = m_trackers.find(handle.handle);
     assert(found != m_trackers.end());
@@ -656,7 +644,7 @@ DebugDrawHandle Dx12DebugRenderer::drawAnimatedBoundingBoxFromFullPoints(
   // first get AABB data
   // 12 is the number of lines needed for the AABB, 4 top, 4 bottom, 4 vertical
   // two is because we need two points per line, we are not doing trianglestrip
-  const int totalSize = 4 * count * 12 * 2; // here 4 is the xmfloat3
+  const int totalSize = 4 * count * 12 * 2;  // here 4 is the xmfloat3
 
   auto *points = reinterpret_cast<float *>(
       globals::FRAME_ALLOCATOR->allocate(sizeof(glm::vec4) * count * 12 * 2));
@@ -691,7 +679,6 @@ DebugDrawHandle Dx12DebugRenderer::drawAnimatedBoundingBoxFromFullPoints(
   assert(counter <= totalSize);
 
   if (handle.isHandleValid()) {
-
     // lets get the trackers out for each one
     const auto found = m_trackers.find(handle.handle);
     assert(found != m_trackers.end());
@@ -709,12 +696,12 @@ DebugDrawHandle Dx12DebugRenderer::drawAnimatedBoundingBoxFromFullPoints(
 
     return outHandle;
   }
-} // namespace SirEngine::dx12
+}  // namespace SirEngine::dx12
 
 void Dx12DebugRenderer::drawMatrix(const glm::mat4 &mat, float size,
-                               glm::vec4 color, const char *debugName) {
+                                   glm::vec4 color, const char *debugName) {
   const int totalSize =
-      4 * 2 * 3; // 3 axis, each with two points, 4 floats each point
+      4 * 2 * 3;  // 3 axis, each with two points, 4 floats each point
   auto *points = reinterpret_cast<float *>(
       globals::FRAME_ALLOCATOR->allocate(sizeof(float) * totalSize));
 
@@ -738,4 +725,4 @@ void Dx12DebugRenderer::drawMatrix(const glm::mat4 &mat, float size,
   drawLinesUniformColor(points, totalSize * sizeof(float), color, totalSize,
                         debugName);
 }
-} // namespace SirEngine::dx12
+}  // namespace SirEngine::dx12

@@ -17,18 +17,20 @@ public:
 
 public:
   explicit GrassNode(GraphAllocators &allocators);
-  virtual ~GrassNode() { clear(); };
+  virtual ~GrassNode() =default;
   virtual void initialize() override;
   virtual void compute() override;
   virtual void onResizeEvent(int screenWidth, int screenHeight) override;
 
   void populateNodePorts() override;
 
+  void clear() override;
 private:
   // handles
   TextureHandle renderTarget{};
   TextureHandle depth{};
   BufferBindingsHandle m_bindHandle{};
+  DebugDrawHandle m_debugHandle{};
 };
 
 } // namespace SirEngine
