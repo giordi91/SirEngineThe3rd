@@ -132,7 +132,7 @@ DebugDrawHandle Dx12DebugRenderer::drawPointsUniformColor(
   // assembler a anymore
   assert(0);
   BufferUploadResource upload;
-  DebugPrimitive primitive;
+  Dx12DebugPrimitive primitive;
   void *mappedData;
   // allocate vertex buffer
   assert((sizeInByte % (sizeof(float) * 3)) == 0);
@@ -186,7 +186,7 @@ DebugDrawHandle Dx12DebugRenderer::drawPointsUniformColor(
 DebugDrawHandle Dx12DebugRenderer::drawLinesUniformColor(
     float *data, const uint32_t sizeInByte, const glm::vec4 color,
     const float size, const char *debugName) {
-  DebugPrimitive primitive;
+  Dx12DebugPrimitive primitive;
 
   // allocate vertex buffer
   assert((sizeInByte % (sizeof(float) * 3)) == 0);
@@ -392,7 +392,7 @@ DebugDrawHandle Dx12DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
 }  // namespace SirEngine::dx12
 
 void Dx12DebugRenderer::renderQueue(
-    std::unordered_map<uint32_t, std::vector<DebugPrimitive>> &inQueue,
+    std::unordered_map<uint32_t, std::vector<Dx12DebugPrimitive>> &inQueue,
     const TextureHandle input, const TextureHandle depth) {
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;

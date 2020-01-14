@@ -364,8 +364,9 @@ void Dx12MaterialManager::bindMaterial(
 void Dx12MaterialManager::bindTexture(MaterialHandle,
                                       const TextureHandle texHandle,
                                       const uint32_t bindingIndex,
-                                      SHADER_QUEUE_FLAGS queue) {
-  assert(0);
+                                      SHADER_QUEUE_FLAGS ) {
+
+  //TODO use the queue flags once we re-designed the descriptor handling ofr dx12
   dx12::DescriptorPair pair = dx12::TEXTURE_MANAGER->getSRVDx12(texHandle);
 
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
@@ -510,9 +511,9 @@ MaterialHandle Dx12MaterialManager::loadMaterial(const char *path,
   return handle;
 }
 
-void Dx12MaterialManager::bindMaterial(MaterialHandle handle,
-                                       SHADER_QUEUE_FLAGS queue) {
-  assert(0);
+void Dx12MaterialManager::bindMaterial(const MaterialHandle handle,
+                                       SHADER_QUEUE_FLAGS ) {
+  //TODO use the queue flags once we re-designed the descriptor handling ofr dx12
   assertMagicNumber(handle);
   uint32_t index = getIndexFromHandle(handle);
   const auto &data = m_materialTextureHandles.getConstRef(index);
@@ -524,7 +525,7 @@ void Dx12MaterialManager::bindMaterial(MaterialHandle handle,
   commandList->SetGraphicsRootSignature(rs);
 }
 
-void Dx12MaterialManager::free(MaterialHandle handle) {
+void Dx12MaterialManager::free(const MaterialHandle handle) {
   // TODO properly cleanup the resources
   assertMagicNumber(handle);
   uint32_t index = getIndexFromHandle(handle);

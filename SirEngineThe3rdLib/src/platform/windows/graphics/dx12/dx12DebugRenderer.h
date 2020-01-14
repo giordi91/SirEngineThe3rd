@@ -17,7 +17,7 @@ class AnimationPlayer;
 namespace dx12 {
 
 enum PRIMITIVE_TYPE { TRIANGLE, LINE, POINT };
-struct DebugPrimitive {
+struct Dx12DebugPrimitive {
   // slow I know but for the time being will get the job done
   ConstantBufferHandle cbHandle;
   ID3D12Resource *buffer;
@@ -93,7 +93,7 @@ class Dx12DebugRenderer : public DebugRenderer {
 
  private:
   void renderQueue(
-      std::unordered_map<uint32_t, std::vector<DebugPrimitive>> &inQueue,
+      std::unordered_map<uint32_t, std::vector<Dx12DebugPrimitive>> &inQueue,
       const TextureHandle input, const TextureHandle depth);
 
   static bool isCompound(const DebugDrawHandle handle) {
@@ -120,14 +120,14 @@ class Dx12DebugRenderer : public DebugRenderer {
     RSHandle rs;
   };
 
-  std::unordered_map<uint32_t, std::vector<DebugPrimitive>> m_renderables;
+  std::unordered_map<uint32_t, std::vector<Dx12DebugPrimitive>> m_renderables;
   std::unordered_map<uint32_t, DebugTracker> m_trackers;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
   static const uint32_t INDEX_MASK = (1 << 16) - 1;
   static const uint32_t MAGIC_NUMBER_MASK = ~INDEX_MASK;
   std::unordered_map<uint16_t, ShaderBind> m_shderTypeToShaderBind;
   std::vector<BufferUploadResource> m_uploadRequests;
-  std::vector<DebugPrimitive> m_primToFree;
+  std::vector<Dx12DebugPrimitive> m_primToFree;
 };
 
 }  // namespace dx12

@@ -79,8 +79,8 @@ void VkDebugRenderer::free(const DebugDrawHandle handle) {
   bool found = m_trackers.get(handle.handle, tracker);
   int primCount = tracker.compoundCount;
   for (int i = 0; i < primCount; ++i) {
-    DebugDrawHandle handle = tracker.compoundHandles[i];
-    assertPoolMagicNumber(handle);
+    DebugDrawHandle compHandle = tracker.compoundHandles[i];
+    assertPoolMagicNumber(compHandle);
     const uint32_t index = getIndexFromHandle(handle);
     const VkDebugPrimitive& prim = m_primitivesPool.getConstRef(index);
     if (prim.m_bufferHandle.isHandleValid()) {
@@ -89,7 +89,9 @@ void VkDebugRenderer::free(const DebugDrawHandle handle) {
     if (prim.m_cbHandle.isHandleValid()) {
       globals::CONSTANT_BUFFER_MANAGER->free(prim.m_cbHandle);
     }
+    m_primitivesPool.free(index);
   }
+  m_trackers.remove(handle.handle);
 }
 
 DebugDrawHandle VkDebugRenderer::drawPointsUniformColor(float* data,
