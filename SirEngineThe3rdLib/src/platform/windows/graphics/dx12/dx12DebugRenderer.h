@@ -20,6 +20,7 @@ enum PRIMITIVE_TYPE { TRIANGLE, LINE, POINT };
 struct Dx12DebugPrimitive {
   // slow I know but for the time being will get the job done
   ConstantBufferHandle cbHandle;
+  BufferHandle bufferHandle;
   ID3D12Resource *buffer;
   int primitiveToRender;
   PRIMITIVE_TYPE primitiveType;
@@ -44,8 +45,9 @@ class Dx12DebugRenderer : public DebugRenderer {
     UINT64 fence = 0;
   };
 
- public:
-  Dx12DebugRenderer() : DebugRenderer(){};
+public:
+  // TODO cleanup creation, this is probably going away
+  Dx12DebugRenderer() : DebugRenderer(), m_primitivesPool(200){};
   virtual ~Dx12DebugRenderer() = default;
   Dx12DebugRenderer(const Dx12DebugRenderer &) = delete;
   Dx12DebugRenderer &operator=(const Dx12DebugRenderer &) = delete;
@@ -91,7 +93,7 @@ class Dx12DebugRenderer : public DebugRenderer {
   void drawMatrix(const glm::mat4 &mat, float size, glm::vec4 color,
                   const char *debugName) override;
 
- private:
+private:
   void renderQueue(
       std::unordered_map<uint32_t, std::vector<Dx12DebugPrimitive>> &inQueue,
       const TextureHandle input, const TextureHandle depth);
@@ -114,7 +116,7 @@ class Dx12DebugRenderer : public DebugRenderer {
            "invalid magic number for debug tracker");
   }
 
- private:
+private:
   struct PSORSPair {
     PSOHandle pso;
     RSHandle rs;
@@ -128,7 +130,8 @@ class Dx12DebugRenderer : public DebugRenderer {
   std::unordered_map<uint16_t, ShaderBind> m_shderTypeToShaderBind;
   std::vector<BufferUploadResource> m_uploadRequests;
   std::vector<Dx12DebugPrimitive> m_primToFree;
+  SparseMemoryPool<Dx12DebugPrimitive> m_primitivesPool;
 };
 
-}  // namespace dx12
-}  // namespace SirEngine
+} // namespace dx12
+} // namespace SirEngine

@@ -8,6 +8,7 @@
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/memory/stringPool.h"
 #include "SirEngine/runtimeString.h"
+#include "dx12BufferManager.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/Dx12PSOManager.h"
 #include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
@@ -40,90 +41,6 @@ void Dx12DebugRenderer::initialize() {
 
 void Dx12DebugRenderer::free(DebugDrawHandle handle) { assert(0); }
 
-inline ID3D12Resource *allocateUploadBuffer(
-    ID3D12Device *pDevice, void *pData, const uint64_t dataSize,
-    void **pMappedData, const wchar_t *resourceName = nullptr) {
-  ID3D12Resource *ppResource;
-  auto uploadHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-  auto bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(dataSize);
-  HRESULT res = pDevice->CreateCommittedResource(
-      &uploadHeapProperties, D3D12_HEAP_FLAG_NONE, &bufferDesc,
-      D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&ppResource));
-
-  if (FAILED(res)) {
-    SE_CORE_ERROR("error allocating uppload buffer");
-  }
-  if (resourceName) {
-    (ppResource)->SetName(resourceName);
-  }
-  (ppResource)->Map(0, nullptr, pMappedData);
-  memcpy(*pMappedData, pData, dataSize);
-  //(ppResource)->Unmap(0, nullptr);
-  return ppResource;
-}
-
-static ID3D12Resource *createDefaultBuffer(ID3D12Device *device,
-                                           ID3D12GraphicsCommandList *cmdList,
-                                           const void *initData,
-                                           const UINT64 byteSize,
-                                           ID3D12Resource **uploadBuffer) {
-  ID3D12Resource *defaultBuffer = nullptr;
-
-  // Create the actual default buffer resource.
-  auto defaultHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-  auto defaultBufferDesc = CD3DX12_RESOURCE_DESC::Buffer(byteSize);
-  HRESULT res = device->CreateCommittedResource(
-      &defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &defaultBufferDesc,
-      D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&defaultBuffer));
-  assert(SUCCEEDED(res));
-
-  // In order to copy CPU memory data into our default buffer, we need to create
-  // an intermediate upload heap.
-  auto uploadHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-  auto uploadBufferDesc = CD3DX12_RESOURCE_DESC::Buffer(byteSize);
-  res = device->CreateCommittedResource(
-      &uploadHeapProperties, D3D12_HEAP_FLAG_NONE, &uploadBufferDesc,
-      D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(uploadBuffer));
-  assert(SUCCEEDED(res));
-
-  // Describe the data we want to copy into the default buffer.
-  D3D12_SUBRESOURCE_DATA subResourceData = {};
-  subResourceData.pData = initData;
-  subResourceData.RowPitch = byteSize;
-  subResourceData.SlicePitch = subResourceData.RowPitch;
-
-  // Schedule to copy the data to the default buffer resource.  At a high level,
-  // the helper function UpdateSubresources will copy the CPU memory into the
-  // intermediate upload heap.  Then, using
-  // ID3D12CommandList::CopySubresourceRegion, the intermediate upload heap data
-  // will be copied to mBuffer.
-  auto preTransition = CD3DX12_RESOURCE_BARRIER::Transition(
-      defaultBuffer, D3D12_RESOURCE_STATE_COMMON,
-      D3D12_RESOURCE_STATE_COPY_DEST);
-  cmdList->ResourceBarrier(1, &preTransition);
-  UpdateSubresources<1>(cmdList, defaultBuffer, *uploadBuffer, 0, 0, 1,
-                        &subResourceData);
-  auto postTransition = CD3DX12_RESOURCE_BARRIER::Transition(
-      defaultBuffer, D3D12_RESOURCE_STATE_COPY_DEST,
-      D3D12_RESOURCE_STATE_GENERIC_READ);
-  cmdList->ResourceBarrier(1, &postTransition);
-
-  // Note: uploadBuffer has to be kept alive after the above function calls
-  // because the command list has not been executed yet that performs the actual
-  // copy. The caller can Release the uploadBuffer after it knows the copy has
-  // been executed.
-  return defaultBuffer;
-}
-inline D3D12_VERTEX_BUFFER_VIEW getVertexBufferView(ID3D12Resource *buffer,
-                                                    uint32_t strideInByte,
-                                                    uint32_t sizeInByte) {
-  D3D12_VERTEX_BUFFER_VIEW vbv;
-  vbv.BufferLocation = buffer->GetGPUVirtualAddress();
-  vbv.StrideInBytes = strideInByte;
-  vbv.SizeInBytes = sizeInByte;
-  return vbv;
-}
-
 DebugDrawHandle Dx12DebugRenderer::drawPointsUniformColor(
     float *data, const uint32_t sizeInByte, const glm::vec4 color,
     const float size, const char *debugName) {
@@ -132,15 +49,20 @@ DebugDrawHandle Dx12DebugRenderer::drawPointsUniformColor(
   // assembler a anymore
   assert(0);
   BufferUploadResource upload;
-  Dx12DebugPrimitive primitive;
-  void *mappedData;
+  Dx12DebugPrimitive primitive{};
   // allocate vertex buffer
   assert((sizeInByte % (sizeof(float) * 3)) == 0);
   const uint32_t elementCount = sizeInByte / (sizeof(float) * 3);
 
-  // TODO fix this, should use normal buffer manager
-  primitive.buffer = allocateUploadBuffer(
-      dx12::DEVICE, data, sizeInByte, &mappedData, frameConvertWide(debugName));
+  // TODO type of allocation should be dictated by wheter or not is updated on a
+  // per frame basis or not
+  primitive.bufferHandle =
+      dx12::BUFFER_MANAGER->allocateUpload(sizeInByte, debugName);
+  primitive.buffer =
+      dx12::BUFFER_MANAGER->getNativeBuffer(primitive.bufferHandle);
+  void *mappedData =
+      dx12::BUFFER_MANAGER->getMappedData(primitive.bufferHandle);
+  memcpy(mappedData, data, sizeInByte);
 
   dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferSRV(
       primitive.srv, primitive.buffer, elementCount, sizeof(float) * 3);
@@ -186,15 +108,21 @@ DebugDrawHandle Dx12DebugRenderer::drawPointsUniformColor(
 DebugDrawHandle Dx12DebugRenderer::drawLinesUniformColor(
     float *data, const uint32_t sizeInByte, const glm::vec4 color,
     const float size, const char *debugName) {
-  Dx12DebugPrimitive primitive;
+
+  uint32_t index;
+  Dx12DebugPrimitive &primitive = m_primitivesPool.getFreeMemoryData(index);
 
   // allocate vertex buffer
   assert((sizeInByte % (sizeof(float) * 3)) == 0);
   const uint32_t elementCount = sizeInByte / (sizeof(float) * 3);
 
-  void *mappedData;
-  primitive.buffer = allocateUploadBuffer(
-      dx12::DEVICE, data, sizeInByte, &mappedData, frameConvertWide(debugName));
+  primitive.bufferHandle =
+      dx12::BUFFER_MANAGER->allocateUpload(sizeInByte, debugName);
+  void *mappedData =
+      dx12::BUFFER_MANAGER->getMappedData(primitive.bufferHandle);
+  memcpy(mappedData, data, sizeInByte);
+  primitive.buffer =
+      dx12::BUFFER_MANAGER->getNativeBuffer(primitive.bufferHandle);
 
   dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferSRV(
       primitive.srv, primitive.buffer, elementCount, sizeof(float) * 3);
@@ -210,6 +138,19 @@ DebugDrawHandle Dx12DebugRenderer::drawLinesUniformColor(
   primitive.cbHandle = chandle;
   primitive.primitiveToRender = static_cast<int>(elementCount);
 
+  RenderableDescription description{};
+  description.buffer = primitive.bufferHandle;
+  description.subranges[0].m_offset = 0;
+  description.subranges[0].m_size = sizeInByte;
+  description.subragesCount = 1;
+
+  const char *queues[5] = {nullptr, nullptr, nullptr, "debugLinesSingleColor",
+                           nullptr};
+
+  description.materialHandle = globals::MATERIAL_MANAGER->allocateMaterial(
+      debugName, MaterialManager::ALLOCATE_MATERIAL_FLAG_BITS::NONE, queues);
+  description.primitiveToRender = elementCount;
+
   // generate handle for storing
   SHADER_QUEUE_FLAGS queue = SHADER_QUEUE_FLAGS::DEBUG;
   SHADER_TYPE_FLAGS type = SHADER_TYPE_FLAGS::DEBUG_LINES_SINGLE_COLOR;
@@ -223,6 +164,14 @@ DebugDrawHandle Dx12DebugRenderer::drawLinesUniformColor(
   tracker.queue = storeHandle;
   tracker.mappedData = mappedData;
   tracker.sizeInBtye = sizeInByte;
+
+  // TODO temp const cast
+  auto &runtime = const_cast<Dx12MaterialRuntime &>(
+      dx12::MATERIAL_MANAGER->getMaterialRuntime(description.materialHandle));
+  runtime.cbVirtualAddress =
+      dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(chandle);
+
+  globals::RENDERING_CONTEXT->addRenderablesToQueue(description);
 
   const DebugDrawHandle debugHandle{(MAGIC_NUMBER_COUNTER << 16) |
                                     tracker.index};
@@ -389,7 +338,7 @@ DebugDrawHandle Dx12DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
 
     return returnHandle;
   }
-}  // namespace SirEngine::dx12
+} // namespace SirEngine::dx12
 
 void Dx12DebugRenderer::renderQueue(
     std::unordered_map<uint32_t, std::vector<Dx12DebugPrimitive>> &inQueue,
@@ -462,6 +411,15 @@ void Dx12DebugRenderer::renderQueue(
 
 void Dx12DebugRenderer::render(const TextureHandle input,
                                const TextureHandle depth) {
+  DrawCallConfig config{
+      globals::ENGINE_CONFIG->m_windowWidth,
+      globals::ENGINE_CONFIG->m_windowHeight,
+      static_cast<uint32_t>(DRAW_CALL_FLAGS::SHOULD_CLEAR_COLOR),
+      glm::vec4(0.4f, 0.4f, 0.4f, 1.0f),
+  };
+  globals::RENDERING_CONTEXT->renderQueueType(config,
+                                              SHADER_QUEUE_FLAGS::DEBUG);
+  return;
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   // first static stuff
   renderQueue(m_renderables, input, depth);
@@ -469,7 +427,7 @@ void Dx12DebugRenderer::render(const TextureHandle input,
   // TODO fix this, every draw call should set as appropriate
   currentFc->commandList->IASetPrimitiveTopology(
       D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-}  // namespace SirEngine::dx12
+} // namespace SirEngine::dx12
 void Dx12DebugRenderer::clearUploadRequests() {
   const uint64_t id = GLOBAL_FENCE->GetCompletedValue();
 
@@ -550,7 +508,7 @@ DebugDrawHandle Dx12DebugRenderer::drawBoundingBoxes(BoundingBox *data,
                                                      const char *debugName) {
   // 12 is the number of lines needed for the AABB, 4 top, 4 bottom, 4 vertical
   // two is because we need two points per line, we are not doing trianglestrip
-  int totalSize = 4 * count * 12 * 2;  // here 4 is the xmfloat4
+  int totalSize = 4 * count * 12 * 2; // here 4 is the xmfloat4
 
   auto *points = reinterpret_cast<float *>(
       globals::FRAME_ALLOCATOR->allocate(sizeof(glm::vec4) * count * 12 * 2));
@@ -592,7 +550,7 @@ DebugDrawHandle Dx12DebugRenderer::drawAnimatedBoundingBoxes(
   // first get AABB data
   // 12 is the number of lines needed for the AABB, 4 top, 4 bottom, 4 vertical
   // two is because we need two points per line, we are not doing trianglestrip
-  int totalSize = 3 * count * 12 * 2;  // here 3 is the xmfloat3
+  int totalSize = 3 * count * 12 * 2; // here 3 is the xmfloat3
 
   auto *points = reinterpret_cast<float *>(
       globals::FRAME_ALLOCATOR->allocate(sizeof(glm::vec3) * count * 12 * 2));
@@ -644,7 +602,7 @@ DebugDrawHandle Dx12DebugRenderer::drawAnimatedBoundingBoxFromFullPoints(
   // first get AABB data
   // 12 is the number of lines needed for the AABB, 4 top, 4 bottom, 4 vertical
   // two is because we need two points per line, we are not doing trianglestrip
-  const int totalSize = 4 * count * 12 * 2;  // here 4 is the xmfloat3
+  const int totalSize = 4 * count * 12 * 2; // here 4 is the xmfloat3
 
   auto *points = reinterpret_cast<float *>(
       globals::FRAME_ALLOCATOR->allocate(sizeof(glm::vec4) * count * 12 * 2));
@@ -696,12 +654,12 @@ DebugDrawHandle Dx12DebugRenderer::drawAnimatedBoundingBoxFromFullPoints(
 
     return outHandle;
   }
-}  // namespace SirEngine::dx12
+} // namespace SirEngine::dx12
 
 void Dx12DebugRenderer::drawMatrix(const glm::mat4 &mat, float size,
                                    glm::vec4 color, const char *debugName) {
   const int totalSize =
-      4 * 2 * 3;  // 3 axis, each with two points, 4 floats each point
+      4 * 2 * 3; // 3 axis, each with two points, 4 floats each point
   auto *points = reinterpret_cast<float *>(
       globals::FRAME_ALLOCATOR->allocate(sizeof(float) * totalSize));
 
@@ -725,4 +683,4 @@ void Dx12DebugRenderer::drawMatrix(const glm::mat4 &mat, float size,
   drawLinesUniformColor(points, totalSize * sizeof(float), color, totalSize,
                         debugName);
 }
-}  // namespace SirEngine::dx12
+} // namespace SirEngine::dx12

@@ -115,7 +115,7 @@ DebugDrawHandle VkDebugRenderer::drawLinesUniformColor(float* data,
   assert((sizeInByte % (sizeof(float) * 3)) == 0);
   const uint32_t elementCount = sizeInByte / (sizeof(float) * 3);
 
-  BufferHandle bufferHandle = vk::BUFFER_MANAGER->allocate(
+  const BufferHandle bufferHandle = vk::BUFFER_MANAGER->allocate(
       sizeInByte, data, debugName, elementCount, sizeof(float) * 3,
       BufferManager::BUFFER_FLAGS::STORAGE_BUFFER);
   primitive.m_bufferHandle = bufferHandle;

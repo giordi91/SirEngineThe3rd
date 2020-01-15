@@ -11,6 +11,8 @@
 namespace SirEngine::dx12 {
 
 struct Dx12MaterialRuntime final {
+  ConstantBufferHandle chandle;
+  BufferHandle dataHandle;
   D3D12_GPU_VIRTUAL_ADDRESS cbVirtualAddress;
   D3D12_GPU_DESCRIPTOR_HANDLE albedo;
   D3D12_GPU_DESCRIPTOR_HANDLE normal;

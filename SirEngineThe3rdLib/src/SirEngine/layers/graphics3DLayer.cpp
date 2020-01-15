@@ -138,10 +138,6 @@ void Graphics3DLayer::onAttach() {
 
   globals::RENDERING_GRAPH->finalizeGraph();
 
-  // flushing whatever pending resource we have and leaving command list close,
-  // ready to start rendering frames
-  globals::RENDERING_CONTEXT->executeGlobalCommandList();
-  globals::RENDERING_CONTEXT->flush();
 
   auto light = globals::RENDERING_CONTEXT->getLightData();
   dx12::DEBUG_RENDERER->drawMatrix(light.localToWorld, 3.0f,
@@ -154,6 +150,10 @@ void Graphics3DLayer::onAttach() {
   // dx12::DEBUG_RENDERER->drawMatrix(
   //    globals::MAIN_CAMERA->getViewInverse(DirectX::XMMatrixIdentity()), 3.0f,
   //    DirectX::XMFLOAT4(1, 0, 0, 1), "");
+  // flushing whatever pending resource we have and leaving command list close,
+  // ready to start rendering frames
+  globals::RENDERING_CONTEXT->executeGlobalCommandList();
+  globals::RENDERING_CONTEXT->flush();
 }
 void Graphics3DLayer::onDetach() {}
 void Graphics3DLayer::onUpdate() {
