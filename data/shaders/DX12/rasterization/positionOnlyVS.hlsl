@@ -9,7 +9,7 @@ PositionOnlyVertexOut VS(uint vid : SV_VertexID)
 	PositionOnlyVertexOut vout;
 	
 	// Transform to homogeneous clip space.
-	vout.pos = mul(g_positions[vid] , g_cameraBuffer.MVP);
+    vout.pos = mul(g_positions[vid], g_cameraBuffer.MVP);
 	
     return vout;
 }

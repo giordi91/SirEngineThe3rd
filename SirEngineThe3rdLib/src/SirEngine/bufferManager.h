@@ -31,7 +31,9 @@ public:
                                 const char *name, int numElements,
                                 int elementSize, uint32_t flags) = 0;
   virtual BufferHandle allocateUpload(const uint32_t sizeInByte,
-                                      const char *name) = 0;
+                              const uint32_t numElements,
+                              const uint32_t elementSize,
+                              const char *name) = 0;
 
 };
 

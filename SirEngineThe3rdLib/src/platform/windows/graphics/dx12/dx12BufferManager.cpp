@@ -1,12 +1,14 @@
 #include "platform/windows/graphics/dx12/dx12BufferManager.h"
+
+#include <cassert>
+
 #include "SirEngine/log.h"
 #include "SirEngine/runtimeString.h"
 #include "platform/windows/graphics/dx12/DX12.h"
-#include <cassert>
 
 namespace SirEngine::dx12 {
-ID3D12Resource *
-BufferManagerDx12::getNativeBuffer(const BufferHandle bufferHandle) {
+ID3D12Resource *BufferManagerDx12::getNativeBuffer(
+    const BufferHandle bufferHandle) {
   assertMagicNumber(bufferHandle);
   uint32_t index = getIndexFromHandle(bufferHandle);
   BufferData &data = m_bufferPool[index];
@@ -14,7 +16,6 @@ BufferManagerDx12::getNativeBuffer(const BufferHandle bufferHandle) {
 }
 
 void BufferManagerDx12::free(const BufferHandle handle) {
-
   assertMagicNumber(handle);
   uint32_t index = getIndexFromHandle(handle);
   BufferData &data = m_bufferPool[index];
@@ -57,7 +58,6 @@ BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInBytes,
   // assert(initData == nullptr);
 
   if (initData != nullptr) {
-
     // In order to copy CPU memory data into our default buffer, we need to
     // create an intermediate upload heap.
     auto uploadHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
@@ -108,9 +108,9 @@ BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInBytes,
     // lets create the decriptor
     dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferUAV(data.uav, data.data,
                                                    numElements, elementSize);
-  } else {
-    // assert(0);
   }
+  dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferSRV(data.srv, data.data,
+                                                 numElements, elementSize);
 
   // data is now loaded need to create handle etc
   BufferHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
@@ -123,9 +123,11 @@ BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInBytes,
   return handle;
 }
 
-//TODO this is bad practice, this is used for the matrices of skin cluster, and copied every
-//frame, this should be buffered!
+// TODO this is bad practice, this is used for the matrices of skin cluster,
+// and copied every frame, this should be buffered!
 BufferHandle BufferManagerDx12::allocateUpload(const uint32_t sizeInByte,
+                                               const uint32_t numElements,
+                                               const uint32_t elementSize,
                                                const char *name) {
   uint32_t actualSize =
       sizeInByte % 256 == 0 ? sizeInByte : ((sizeInByte / 256) + 1) * 256;
@@ -149,6 +151,8 @@ BufferHandle BufferManagerDx12::allocateUpload(const uint32_t sizeInByte,
   data.data = uploadBuffer;
   data.state = D3D12_RESOURCE_STATE_GENERIC_READ;
   data.type = BufferType::SRV;
+  dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferSRV(data.srv, data.data,
+                                                 numElements, elementSize);
 
   HRESULT mapResult = uploadBuffer->Map(0, nullptr, &data.mappedData);
   assert(SUCCEEDED(mapResult));
@@ -159,7 +163,6 @@ BufferHandle BufferManagerDx12::allocateUpload(const uint32_t sizeInByte,
 void BufferManagerDx12::bindBuffer(
     const BufferHandle handle, const int slot,
     ID3D12GraphicsCommandList2 *commandList) const {
-
   assertMagicNumber(handle);
   uint32_t index = getIndexFromHandle(handle);
   const BufferData &data = m_bufferPool.getConstRef(index);
@@ -181,9 +184,19 @@ void BufferManagerDx12::bindBufferAsSRVGraphics(
   commandList->SetGraphicsRootShaderResourceView(
       slot, data.data->GetGPUVirtualAddress() + offset);
 }
+void BufferManagerDx12::bindBufferAsDescriptorTableGrahpics(
+    const BufferHandle handle, const int slot,
+    ID3D12GraphicsCommandList2 *commandList, const uint32_t offset) const {
+  assertMagicNumber(handle);
+  uint32_t index = getIndexFromHandle(handle);
+  const BufferData &data = m_bufferPool.getConstRef(index);
+
+  commandList->SetGraphicsRootDescriptorTable(2, data.srv.gpuHandle);
+  // commandList->SetGraphicsRootShaderResourceView(
+  //    slot, data.data->GetGPUVirtualAddress() + offset);
+}
 
 void BufferManagerDx12::clearUploadRequests() {
-
   const auto id = GLOBAL_FENCE->GetCompletedValue();
   const int requestSize = static_cast<int>(m_uploadRequests.size()) - 1;
   int stackTopIdx = requestSize;
@@ -203,4 +216,4 @@ void BufferManagerDx12::clearUploadRequests() {
   // resizing the vector
   m_uploadRequests.resize(stackTopIdx + 1);
 }
-} // namespace SirEngine::dx12
+}  // namespace SirEngine::dx12

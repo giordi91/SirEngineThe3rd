@@ -1,15 +1,16 @@
 #pragma once
 
+#include <vector>
+
 #include "DXTK12/ResourceUploadBatch.h"
 #include "SirEngine/graphics/cpuGraphicsStructures.h"
 #include "SirEngine/handle.h"
 #include "SirEngine/memory/sparseMemoryPool.h"
 #include "SirEngine/meshManager.h"
 #include "platform/windows/graphics/dx12/DX12.h"
-#include "platform/windows/graphics/dx12/dx12BufferManager.h"
 #include "platform/windows/graphics/dx12/d3dx12.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
-#include <vector>
+#include "platform/windows/graphics/dx12/dx12BufferManager.h"
 
 namespace SirEngine {
 namespace dx12 {
@@ -25,7 +26,7 @@ struct Dx12MeshRuntime final {
 };
 
 class Dx12MeshManager final : public MeshManager {
-private:
+ private:
   struct MeshData final {
     uint32_t magicNumber : 16;
     uint32_t stride : 16;
@@ -34,15 +35,15 @@ private:
     Dx12MeshRuntime meshRuntime;
     uint32_t indexCount;
     uint32_t vertexCount;
-    uint32_t entityID; // this is an id that is used to index other data that we
-                       // are starting to split, for example bounding box;
+    uint32_t entityID;  // this is an id that is used to index other data that
+                        // we are starting to split, for example bounding box;
   };
 
-public:
+ public:
   Dx12MeshManager() : m_meshPool(RESERVE_SIZE), batch(dx12::DEVICE) {
     m_nameToHandle.reserve(RESERVE_SIZE);
   }
-  virtual ~Dx12MeshManager() { // assert(m_meshPool.assertEverythingDealloc());
+  virtual ~Dx12MeshManager() {  // assert(m_meshPool.assertEverythingDealloc());
   }
 
   Dx12MeshManager(const Dx12MeshManager &) = delete;
@@ -110,8 +111,8 @@ public:
         D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
   }
 
-  [[nodiscard]] const Dx12MeshRuntime &
-  getMeshRuntime(const MeshHandle &handle) const {
+  [[nodiscard]] const Dx12MeshRuntime &getMeshRuntime(
+      const MeshHandle &handle) const {
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
     const MeshData &data = m_meshPool.getConstRef(index);
@@ -125,17 +126,23 @@ public:
         meshRuntime.bufferHandle, 4, currentFc->commandList,
         meshRuntime.positionRange.m_offset);
   }
-  void render(const Dx12MeshRuntime &meshRuntime, FrameCommand *currentFc) {
-    currentFc->commandList->DrawIndexedInstanced(meshRuntime.indexCount, 1, 0,
-                                                 0, 0);
+  void render(const Dx12MeshRuntime &meshRuntime, FrameCommand *currentFc,
+              bool indexed = true) {
+    if (indexed) {
+      currentFc->commandList->DrawIndexedInstanced(meshRuntime.indexCount, 1, 0,
+                                                   0, 0);
+    } else {
+      currentFc->commandList->DrawInstanced(meshRuntime.indexCount, 1, 0, 0);
+    }
   }
   void render(const MeshHandle handle, FrameCommand *currentFc) {
     const Dx12MeshRuntime &runtime = getMeshRuntime(handle);
-    currentFc->commandList->DrawIndexedInstanced(runtime.indexCount, 1, 0,
-                                                 0, 0);
+    currentFc->commandList->DrawIndexedInstanced(runtime.indexCount, 1, 0, 0,
+                                                 0);
   }
 
-  inline void bindMesh(MeshHandle handle, ID3D12GraphicsCommandList2 *commandList, uint32_t flags,
+  inline void bindMesh(MeshHandle handle,
+                       ID3D12GraphicsCommandList2 *commandList, uint32_t flags,
                        uint32_t startIndex) {
     const Dx12MeshRuntime &runtime = getMeshRuntime(handle);
     if ((flags & MeshAttributeFlags::POSITIONS) > 0) {
@@ -149,9 +156,9 @@ public:
           runtime.normalsRange.m_offset);
     }
     if ((flags & MeshAttributeFlags::UV) > 0) {
-      dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(
-          runtime.bufferHandle, startIndex + 2, commandList,
-          runtime.uvRange.m_offset);
+      dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(runtime.bufferHandle,
+                                                    startIndex + 2, commandList,
+                                                    runtime.uvRange.m_offset);
     }
     if ((flags & MeshAttributeFlags::TANGENTS) > 0) {
       dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(
@@ -159,13 +166,11 @@ public:
           runtime.tangentsRange.m_offset);
     }
     commandList->IASetIndexBuffer(&runtime.iview);
-    commandList->IASetPrimitiveTopology(
-        D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
   }
 
   inline void bindMeshRuntimeAndRender(const Dx12MeshRuntime &runtime,
                                        FrameCommand *fc) const {
-
     dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(
         runtime.bufferHandle, 9, fc->commandList,
         runtime.positionRange.m_offset);
@@ -182,12 +187,11 @@ public:
 
   inline void bindMeshRuntimeAndRender(const MeshHandle &handle,
                                        FrameCommand *fc) const {
-
     const Dx12MeshRuntime &runtime = getMeshRuntime(handle);
     bindMeshRuntimeAndRender(runtime, fc);
   }
 
-private:
+ private:
   inline void assertMagicNumber(const MeshHandle handle) const {
 #ifdef SE_DEBUG
     uint32_t magic = getMagicFromHandle(handle);
@@ -197,7 +201,7 @@ private:
 #endif
   }
 
-private:
+ private:
   SparseMemoryPool<MeshData> m_meshPool;
 
   std::unordered_map<std::string, MeshHandle> m_nameToHandle;
@@ -207,5 +211,5 @@ private:
   std::vector<BoundingBox> m_boundingBoxes;
 };
 
-} // namespace dx12
-} // namespace SirEngine
+}  // namespace dx12
+}  // namespace SirEngine

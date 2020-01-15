@@ -304,15 +304,16 @@ void bindShadowSkin(const Dx12MaterialRuntime &materialRuntime,
 }
 void bindDebugLinesSingleColor(const Dx12MaterialRuntime &materialRuntime,
                                ID3D12GraphicsCommandList2 *commandList) {
-
   commandList->SetGraphicsRootDescriptorTable(
       1, dx12::CONSTANT_BUFFER_MANAGER
-             ->getConstantBufferDx12Handle(materialRuntime)
+             ->getConstantBufferDx12Handle(materialRuntime.chandle)
              .gpuHandle);
 
   commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
-  commandList->SetGraphicsRootDescriptorTable(
-      2, materialRuntime.meshHandle.srv.gpuHandle);
+  BufferHandle handle = materialRuntime.dataHandle;
+  dx12::BUFFER_MANAGER->bindBufferAsDescriptorTableGrahpics(handle, 2, commandList, 0);
+  // commandList->SetGraphicsRootDescriptorTable(
+  //    2, materialRuntime.meshHandle.srv.gpuHandle);
 }
 
 void Dx12MaterialManager::bindMaterial(
@@ -324,57 +325,57 @@ void Dx12MaterialManager::bindMaterial(
   const SHADER_TYPE_FLAGS type =
       getTypeFlags(materialRuntime.shaderQueueTypeFlags[currentFlagId]);
   switch (type) {
-  case (SHADER_TYPE_FLAGS::PBR): {
-    bindPBR(materialRuntime, commandList);
-    break;
-  }
-  case (SHADER_TYPE_FLAGS::SKIN): {
-    bindSkin(materialRuntime, commandList);
-    break;
-  }
-  case (SHADER_TYPE_FLAGS::FORWARD_PBR): {
-    bindForwardPBR(materialRuntime, commandList);
-    break;
-  }
-  case (SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT): {
-    bindForwardPhongAlphaCutout(materialRuntime, commandList);
-    break;
-  }
-  case (SHADER_TYPE_FLAGS::HAIR): {
-    bindHair(materialRuntime, commandList);
-    break;
-  }
-  case (SHADER_TYPE_FLAGS::SKINCLUSTER): {
-    bindSkinning(materialRuntime, commandList);
-    break;
-  }
-  case (SHADER_TYPE_FLAGS::SKINSKINCLUSTER): {
-    bindSkinSkinning(materialRuntime, commandList);
-    break;
-  }
-  case (SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT_SKIN): {
-    bindForwardPhongAlphaCutoutSkin(materialRuntime, commandList);
-    break;
-  }
-  case (SHADER_TYPE_FLAGS::HAIRSKIN): {
-    bindHairSkin(materialRuntime, commandList);
-    break;
-  }
-  case (SHADER_TYPE_FLAGS::FORWARD_PARALLAX): {
-    bindParallaxPBR(materialRuntime, commandList);
-    break;
-  }
-  case (SHADER_TYPE_FLAGS::SHADOW_SKIN_CLUSTER): {
-    bindShadowSkin(materialRuntime, commandList);
-    break;
-  }
-  case (SHADER_TYPE_FLAGS::DEBUG_LINES_SINGLE_COLOR): {
-    bindDebugLinesSingleColor(materialRuntime, commandList);
-    break;
-  }
-  default: {
-    assert(0 && "could not find material type");
-  }
+    case (SHADER_TYPE_FLAGS::PBR): {
+      bindPBR(materialRuntime, commandList);
+      break;
+    }
+    case (SHADER_TYPE_FLAGS::SKIN): {
+      bindSkin(materialRuntime, commandList);
+      break;
+    }
+    case (SHADER_TYPE_FLAGS::FORWARD_PBR): {
+      bindForwardPBR(materialRuntime, commandList);
+      break;
+    }
+    case (SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT): {
+      bindForwardPhongAlphaCutout(materialRuntime, commandList);
+      break;
+    }
+    case (SHADER_TYPE_FLAGS::HAIR): {
+      bindHair(materialRuntime, commandList);
+      break;
+    }
+    case (SHADER_TYPE_FLAGS::SKINCLUSTER): {
+      bindSkinning(materialRuntime, commandList);
+      break;
+    }
+    case (SHADER_TYPE_FLAGS::SKINSKINCLUSTER): {
+      bindSkinSkinning(materialRuntime, commandList);
+      break;
+    }
+    case (SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT_SKIN): {
+      bindForwardPhongAlphaCutoutSkin(materialRuntime, commandList);
+      break;
+    }
+    case (SHADER_TYPE_FLAGS::HAIRSKIN): {
+      bindHairSkin(materialRuntime, commandList);
+      break;
+    }
+    case (SHADER_TYPE_FLAGS::FORWARD_PARALLAX): {
+      bindParallaxPBR(materialRuntime, commandList);
+      break;
+    }
+    case (SHADER_TYPE_FLAGS::SHADOW_SKIN_CLUSTER): {
+      bindShadowSkin(materialRuntime, commandList);
+      break;
+    }
+    case (SHADER_TYPE_FLAGS::DEBUG_LINES_SINGLE_COLOR): {
+      bindDebugLinesSingleColor(materialRuntime, commandList);
+      break;
+    }
+    default: {
+      assert(0 && "could not find material type");
+    }
   }
 }
 
@@ -382,7 +383,6 @@ void Dx12MaterialManager::bindTexture(MaterialHandle,
                                       const TextureHandle texHandle,
                                       const uint32_t bindingIndex,
                                       SHADER_QUEUE_FLAGS) {
-
   // TODO use the queue flags once we re-designed the descriptor handling ofr
   // dx12
   dx12::DescriptorPair pair = dx12::TEXTURE_MANAGER->getSRVDx12(texHandle);
@@ -556,4 +556,4 @@ void Dx12MaterialManager::free(const MaterialHandle handle) {
   const auto &data = m_materialTextureHandles.getConstRef(index);
   m_materialTextureHandles.free(index);
 }
-} // namespace SirEngine::dx12
+}  // namespace SirEngine::dx12

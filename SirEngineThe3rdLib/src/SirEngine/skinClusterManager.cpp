@@ -1,6 +1,8 @@
 #include "SirEngine/skinClusterManager.h"
+
 #include "SirEngine/animation/animationClip.h"
 #include "SirEngine/animation/animationManager.h"
+#include "SirEngine/animation/animationPlayer.h"
 #include "SirEngine/animation/skeleton.h"
 #include "SirEngine/binary/binaryFile.h"
 #include "SirEngine/bufferManager.h"
@@ -9,17 +11,14 @@
 #include "SirEngine/log.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/dx12BufferManager.h"
-#include "SirEngine/animation/animationPlayer.h"
 
 namespace SirEngine {
 
 static const int VERTEX_INFLUENCE_COUNT = 6;
 static const float SKIN_TOTAL_WEIGHT_TOLERANCE = 0.001f;
 
-SkinHandle
-SkinClusterManager::loadSkinCluster(const char *path,
-                                    AnimationConfigHandle animHandle) {
-
+SkinHandle SkinClusterManager::loadSkinCluster(
+    const char *path, AnimationConfigHandle animHandle) {
   SE_CORE_INFO("Loading skin {0}", path);
   const bool res = fileExists(path);
   assert(res);
@@ -49,11 +48,11 @@ SkinClusterManager::loadSkinCluster(const char *path,
         mapper->weightsSizeInByte / sizeof(float), sizeof(float), false);
 
     // now we need to generate the buffer for the matrices we are going to use
-    const AnimationPlayer* animConfig =
+    const AnimationPlayer *animConfig =
         globals::ANIMATION_MANAGER->getConfig(animHandle);
     const uint32_t jointCount = animConfig->getJointCount();
     const BufferHandle matricesHandle = globals::BUFFER_MANAGER->allocateUpload(
-        jointCount * sizeof(float) * 16, "");
+        jointCount * sizeof(float) * 16, jointCount, sizeof(float) * 16, "");
 
     uint32_t index;
     SkinData &data = m_skinPool.getFreeMemoryData(index);
@@ -75,7 +74,6 @@ SkinClusterManager::loadSkinCluster(const char *path,
 }
 
 void SkinClusterManager::uploadDirtyMatrices() {
-
   // TODO why the heck I am using a string here? investigate hopefully remove
   // for a simple array?
   std::unordered_map<std::string, SkinHandle>::iterator it =
@@ -88,15 +86,15 @@ void SkinClusterManager::uploadDirtyMatrices() {
     void *mappedData = dx12::BUFFER_MANAGER->getMappedData(data.matricesBuffer);
     assert(mappedData != nullptr);
 
-    AnimationPlayer* animConfig =
+    AnimationPlayer *animConfig =
         globals::ANIMATION_MANAGER->getConfig(data.animHandle);
     const glm::mat4 *matricesDataToCopy =
         animConfig->getOutPose()->m_globalPose;
 
     const uint32_t jointCount = animConfig->getJointCount();
     memcpy(mappedData, matricesDataToCopy, jointCount * sizeof(float) * 16);
-	animConfig->setFlags(ANIM_FLAGS::READY);
+    animConfig->setFlags(ANIM_FLAGS::READY);
     ++it;
   }
 }
-} // namespace SirEngine
+}  // namespace SirEngine
