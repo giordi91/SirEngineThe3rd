@@ -130,8 +130,7 @@ bool initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
     D3D12_FEATURE_DATA_D3D12_OPTIONS5 opts5 = {};
     dx12::DEVICE->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &opts5,
                                       sizeof(opts5));
-    if (opts5.RaytracingTier == D3D12_RAYTRACING_TIER_NOT_SUPPORTED)
-      assert(0);
+    if (opts5.RaytracingTier == D3D12_RAYTRACING_TIER_NOT_SUPPORTED) assert(0);
   }
 #endif
 
@@ -381,9 +380,9 @@ bool dispatchFrameDx12() {
   return true;
 }
 
-RenderingContext *
-createDx12RenderingContext(const RenderingContextCreationSettings &settings,
-                           uint32_t width, uint32_t height) {
+RenderingContext *createDx12RenderingContext(
+    const RenderingContextCreationSettings &settings, uint32_t width,
+    uint32_t height) {
   auto *ctx = new Dx12RenderingContext(settings, width, height);
   dx12::RENDERING_CONTEXT = ctx;
   return ctx;
@@ -683,7 +682,10 @@ void Dx12RenderingContext::renderQueueType(const DrawCallConfig &config,
         dx12::MATERIAL_MANAGER->bindMaterial(flag, renderable.m_materialRuntime,
                                              commandList);
 
-        dx12::MESH_MANAGER->render(renderable.m_meshRuntime, currentFc);
+        // TODO temp check, needs to change
+        bool isDebug = dx12::MATERIAL_MANAGER->isQueueType(
+            renderableList.first, SHADER_QUEUE_FLAGS::DEBUG);
+        dx12::MESH_MANAGER->render(renderable.m_meshRuntime, currentFc, !isDebug);
       }
       annotateGraphicsEnd();
     }
@@ -697,12 +699,12 @@ void Dx12RenderingContext::renderMaterialType(const SHADER_QUEUE_FLAGS flag) {
 void Dx12RenderingContext::fullScreenPass() {
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
+  commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
   commandList->DrawInstanced(6, 1, 0, 0);
 }
 
-BufferBindingsHandle
-Dx12RenderingContext::prepareBindingObject(const FrameBufferBindings &bindings,
-                                           const char *name) {
+BufferBindingsHandle Dx12RenderingContext::prepareBindingObject(
+    const FrameBufferBindings &bindings, const char *name) {
   uint32_t index;
   FrameBindingsData &data = m_bindingsPool.getFreeMemoryData(index);
   data.name = persistentString(name);
@@ -866,4 +868,4 @@ void Dx12RenderingContext::resetGlobalCommandList() {
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   resetAllocatorAndList(currentFc);
 }
-} // namespace SirEngine::dx12
+}  // namespace SirEngine::dx12

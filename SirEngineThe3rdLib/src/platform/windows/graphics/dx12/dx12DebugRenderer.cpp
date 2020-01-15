@@ -56,8 +56,8 @@ DebugDrawHandle Dx12DebugRenderer::drawPointsUniformColor(
 
   // TODO type of allocation should be dictated by wheter or not is updated on a
   // per frame basis or not
-  primitive.bufferHandle =
-      dx12::BUFFER_MANAGER->allocateUpload(sizeInByte, debugName);
+  primitive.bufferHandle = dx12::BUFFER_MANAGER->allocateUpload(
+      sizeInByte, elementCount, sizeof(float) * 3, debugName);
   primitive.buffer =
       dx12::BUFFER_MANAGER->getNativeBuffer(primitive.bufferHandle);
   void *mappedData =
@@ -108,7 +108,6 @@ DebugDrawHandle Dx12DebugRenderer::drawPointsUniformColor(
 DebugDrawHandle Dx12DebugRenderer::drawLinesUniformColor(
     float *data, const uint32_t sizeInByte, const glm::vec4 color,
     const float size, const char *debugName) {
-
   uint32_t index;
   Dx12DebugPrimitive &primitive = m_primitivesPool.getFreeMemoryData(index);
 
@@ -116,8 +115,8 @@ DebugDrawHandle Dx12DebugRenderer::drawLinesUniformColor(
   assert((sizeInByte % (sizeof(float) * 3)) == 0);
   const uint32_t elementCount = sizeInByte / (sizeof(float) * 3);
 
-  primitive.bufferHandle =
-      dx12::BUFFER_MANAGER->allocateUpload(sizeInByte, debugName);
+  primitive.bufferHandle = dx12::BUFFER_MANAGER->allocateUpload(
+      sizeInByte, elementCount, sizeof(float) * 3, debugName);
   void *mappedData =
       dx12::BUFFER_MANAGER->getMappedData(primitive.bufferHandle);
   memcpy(mappedData, data, sizeInByte);
@@ -170,6 +169,8 @@ DebugDrawHandle Dx12DebugRenderer::drawLinesUniformColor(
       dx12::MATERIAL_MANAGER->getMaterialRuntime(description.materialHandle));
   runtime.cbVirtualAddress =
       dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(chandle);
+  runtime.chandle = chandle;
+  runtime.dataHandle = primitive.bufferHandle;
 
   globals::RENDERING_CONTEXT->addRenderablesToQueue(description);
 
@@ -338,7 +339,7 @@ DebugDrawHandle Dx12DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
 
     return returnHandle;
   }
-} // namespace SirEngine::dx12
+}  // namespace SirEngine::dx12
 
 void Dx12DebugRenderer::renderQueue(
     std::unordered_map<uint32_t, std::vector<Dx12DebugPrimitive>> &inQueue,
@@ -427,7 +428,7 @@ void Dx12DebugRenderer::render(const TextureHandle input,
   // TODO fix this, every draw call should set as appropriate
   currentFc->commandList->IASetPrimitiveTopology(
       D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-} // namespace SirEngine::dx12
+}  // namespace SirEngine::dx12
 void Dx12DebugRenderer::clearUploadRequests() {
   const uint64_t id = GLOBAL_FENCE->GetCompletedValue();
 
@@ -508,7 +509,7 @@ DebugDrawHandle Dx12DebugRenderer::drawBoundingBoxes(BoundingBox *data,
                                                      const char *debugName) {
   // 12 is the number of lines needed for the AABB, 4 top, 4 bottom, 4 vertical
   // two is because we need two points per line, we are not doing trianglestrip
-  int totalSize = 4 * count * 12 * 2; // here 4 is the xmfloat4
+  int totalSize = 4 * count * 12 * 2;  // here 4 is the xmfloat4
 
   auto *points = reinterpret_cast<float *>(
       globals::FRAME_ALLOCATOR->allocate(sizeof(glm::vec4) * count * 12 * 2));
@@ -550,7 +551,7 @@ DebugDrawHandle Dx12DebugRenderer::drawAnimatedBoundingBoxes(
   // first get AABB data
   // 12 is the number of lines needed for the AABB, 4 top, 4 bottom, 4 vertical
   // two is because we need two points per line, we are not doing trianglestrip
-  int totalSize = 3 * count * 12 * 2; // here 3 is the xmfloat3
+  int totalSize = 3 * count * 12 * 2;  // here 3 is the xmfloat3
 
   auto *points = reinterpret_cast<float *>(
       globals::FRAME_ALLOCATOR->allocate(sizeof(glm::vec3) * count * 12 * 2));
@@ -602,7 +603,7 @@ DebugDrawHandle Dx12DebugRenderer::drawAnimatedBoundingBoxFromFullPoints(
   // first get AABB data
   // 12 is the number of lines needed for the AABB, 4 top, 4 bottom, 4 vertical
   // two is because we need two points per line, we are not doing trianglestrip
-  const int totalSize = 4 * count * 12 * 2; // here 4 is the xmfloat3
+  const int totalSize = 4 * count * 12 * 2;  // here 4 is the xmfloat3
 
   auto *points = reinterpret_cast<float *>(
       globals::FRAME_ALLOCATOR->allocate(sizeof(glm::vec4) * count * 12 * 2));
@@ -654,12 +655,12 @@ DebugDrawHandle Dx12DebugRenderer::drawAnimatedBoundingBoxFromFullPoints(
 
     return outHandle;
   }
-} // namespace SirEngine::dx12
+}  // namespace SirEngine::dx12
 
 void Dx12DebugRenderer::drawMatrix(const glm::mat4 &mat, float size,
                                    glm::vec4 color, const char *debugName) {
   const int totalSize =
-      4 * 2 * 3; // 3 axis, each with two points, 4 floats each point
+      4 * 2 * 3;  // 3 axis, each with two points, 4 floats each point
   auto *points = reinterpret_cast<float *>(
       globals::FRAME_ALLOCATOR->allocate(sizeof(float) * totalSize));
 
@@ -683,4 +684,4 @@ void Dx12DebugRenderer::drawMatrix(const glm::mat4 &mat, float size,
   drawLinesUniformColor(points, totalSize * sizeof(float), color, totalSize,
                         debugName);
 }
-} // namespace SirEngine::dx12
+}  // namespace SirEngine::dx12

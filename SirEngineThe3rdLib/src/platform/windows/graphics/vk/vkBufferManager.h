@@ -34,6 +34,8 @@ public:
 
   void free(BufferHandle handle) override;
   BufferHandle allocateUpload(const uint32_t sizeInByte,
+                              const uint32_t numElements,
+                              const uint32_t elementSize,
                               const char *name) override {
     assert(0);
     return {};
