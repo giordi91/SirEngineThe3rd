@@ -302,71 +302,89 @@ void bindShadowSkin(const Dx12MaterialRuntime &materialRuntime,
   // this
   commandList->OMSetStencilRef(static_cast<uint32_t>(STENCIL_REF::CLEAR));
 }
+void bindDebugLinesSingleColor(const Dx12MaterialRuntime &materialRuntime,
+                               ID3D12GraphicsCommandList2 *commandList) {
+
+  commandList->SetGraphicsRootDescriptorTable(
+      1, dx12::CONSTANT_BUFFER_MANAGER
+             ->getConstantBufferDx12Handle(materialRuntime)
+             .gpuHandle);
+
+  commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
+  commandList->SetGraphicsRootDescriptorTable(
+      2, materialRuntime.meshHandle.srv.gpuHandle);
+}
 
 void Dx12MaterialManager::bindMaterial(
     SHADER_QUEUE_FLAGS queueFlag, const Dx12MaterialRuntime &materialRuntime,
     ID3D12GraphicsCommandList2 *commandList) {
-  int queueFlagInt = static_cast<int>(queueFlag);
-  int currentFlagId = static_cast<int>(log2(queueFlagInt & -queueFlagInt));
+  const auto queueFlagInt = static_cast<int>(queueFlag);
+  const auto currentFlagId =
+      static_cast<int>(log2(queueFlagInt & -queueFlagInt));
   const SHADER_TYPE_FLAGS type =
       getTypeFlags(materialRuntime.shaderQueueTypeFlags[currentFlagId]);
   switch (type) {
-    case (SHADER_TYPE_FLAGS::PBR): {
-      bindPBR(materialRuntime, commandList);
-      break;
-    }
-    case (SHADER_TYPE_FLAGS::SKIN): {
-      bindSkin(materialRuntime, commandList);
-      break;
-    }
-    case (SHADER_TYPE_FLAGS::FORWARD_PBR): {
-      bindForwardPBR(materialRuntime, commandList);
-      break;
-    }
-    case (SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT): {
-      bindForwardPhongAlphaCutout(materialRuntime, commandList);
-      break;
-    }
-    case (SHADER_TYPE_FLAGS::HAIR): {
-      bindHair(materialRuntime, commandList);
-      break;
-    }
-    case (SHADER_TYPE_FLAGS::SKINCLUSTER): {
-      bindSkinning(materialRuntime, commandList);
-      break;
-    }
-    case (SHADER_TYPE_FLAGS::SKINSKINCLUSTER): {
-      bindSkinSkinning(materialRuntime, commandList);
-      break;
-    }
-    case (SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT_SKIN): {
-      bindForwardPhongAlphaCutoutSkin(materialRuntime, commandList);
-      break;
-    }
-    case (SHADER_TYPE_FLAGS::HAIRSKIN): {
-      bindHairSkin(materialRuntime, commandList);
-      break;
-    }
-    case (SHADER_TYPE_FLAGS::FORWARD_PARALLAX): {
-      bindParallaxPBR(materialRuntime, commandList);
-      break;
-    }
-    case (SHADER_TYPE_FLAGS::SHADOW_SKIN_CLUSTER): {
-      bindShadowSkin(materialRuntime, commandList);
-      break;
-    }
-    default: {
-      assert(0 && "could not find material type");
-    }
+  case (SHADER_TYPE_FLAGS::PBR): {
+    bindPBR(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::SKIN): {
+    bindSkin(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::FORWARD_PBR): {
+    bindForwardPBR(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT): {
+    bindForwardPhongAlphaCutout(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::HAIR): {
+    bindHair(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::SKINCLUSTER): {
+    bindSkinning(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::SKINSKINCLUSTER): {
+    bindSkinSkinning(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT_SKIN): {
+    bindForwardPhongAlphaCutoutSkin(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::HAIRSKIN): {
+    bindHairSkin(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::FORWARD_PARALLAX): {
+    bindParallaxPBR(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::SHADOW_SKIN_CLUSTER): {
+    bindShadowSkin(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::DEBUG_LINES_SINGLE_COLOR): {
+    bindDebugLinesSingleColor(materialRuntime, commandList);
+    break;
+  }
+  default: {
+    assert(0 && "could not find material type");
+  }
   }
 }
 
 void Dx12MaterialManager::bindTexture(MaterialHandle,
                                       const TextureHandle texHandle,
                                       const uint32_t bindingIndex,
-                                      SHADER_QUEUE_FLAGS ) {
+                                      SHADER_QUEUE_FLAGS) {
 
-  //TODO use the queue flags once we re-designed the descriptor handling ofr dx12
+  // TODO use the queue flags once we re-designed the descriptor handling ofr
+  // dx12
   dx12::DescriptorPair pair = dx12::TEXTURE_MANAGER->getSRVDx12(texHandle);
 
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
@@ -425,6 +443,11 @@ MaterialHandle Dx12MaterialManager::allocateMaterial(
     // this will be used when we need to bind the material
     materialData.m_psoHandle = bind.pso;
     materialData.m_rsHandle = bind.rs;
+
+    // adding correct queue
+    SHADER_QUEUE_FLAGS queueType = static_cast<SHADER_QUEUE_FLAGS>(1 << i);
+    materialData.m_materialRuntime.shaderQueueTypeFlags[i] =
+        getQueueTypeFlags(queueType, shaderType);
 
     MaterialHandle handle{(materialData.magicNumber << 16) | (index)};
     m_nameToHandle.insert(name, handle);
@@ -512,8 +535,9 @@ MaterialHandle Dx12MaterialManager::loadMaterial(const char *path,
 }
 
 void Dx12MaterialManager::bindMaterial(const MaterialHandle handle,
-                                       SHADER_QUEUE_FLAGS ) {
-  //TODO use the queue flags once we re-designed the descriptor handling ofr dx12
+                                       SHADER_QUEUE_FLAGS) {
+  // TODO use the queue flags once we re-designed the descriptor handling ofr
+  // dx12
   assertMagicNumber(handle);
   uint32_t index = getIndexFromHandle(handle);
   const auto &data = m_materialTextureHandles.getConstRef(index);
@@ -532,4 +556,4 @@ void Dx12MaterialManager::free(const MaterialHandle handle) {
   const auto &data = m_materialTextureHandles.getConstRef(index);
   m_materialTextureHandles.free(index);
 }
-}  // namespace SirEngine::dx12
+} // namespace SirEngine::dx12
