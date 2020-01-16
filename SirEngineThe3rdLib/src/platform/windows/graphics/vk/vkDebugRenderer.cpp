@@ -73,10 +73,10 @@ void VkDebugRenderer::cleanup() {}
 
 void VkDebugRenderer::free(const DebugDrawHandle handle) {
   assertMagicNumber(handle);
-  const uint32_t magic = getMagicFromHandle(handle);
 
-  DebugTracker tracker;
-  bool found = m_trackers.get(handle.handle, tracker);
+  DebugTracker tracker{};
+  const bool found = m_trackers.get(handle.handle, tracker);
+  assert(found);
   const int primCount = tracker.compoundCount;
   for (int i = 0; i < primCount; ++i) {
     const DebugDrawHandle compHandle = tracker.compoundHandles[i];
@@ -121,7 +121,7 @@ DebugDrawHandle VkDebugRenderer::drawLinesUniformColor(float *data,
   primitive.m_bufferHandle = bufferHandle;
 
   // allocate constant buffer
-  DebugPointsFixedColor settings{color, size};
+  DebugPointsFixedColor settings{color, size, {0, 0, 0}};
   const ConstantBufferHandle chandle =
       globals::CONSTANT_BUFFER_MANAGER->allocate(sizeof(settings), 0,
                                                  &settings);
@@ -145,7 +145,8 @@ DebugDrawHandle VkDebugRenderer::drawLinesUniformColor(float *data,
   // TODO do we need that? we should be able to query from the material
   // manager for the wanted queue
   const auto currentFlag = static_cast<uint32_t>(SHADER_QUEUE_FLAGS::DEBUG);
-  int currentFlagId = static_cast<int>(log2(currentFlag & (-currentFlag)));
+  const int currentFlagId =
+      static_cast<int>(log2(currentFlag & (-currentFlag)));
 
   VkDescriptorSet set = vk::DESCRIPTOR_MANAGER->getDescriptorSet(
       runtime.descriptorHandles[currentFlagId]);
@@ -220,12 +221,9 @@ DebugDrawHandle VkDebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
 void VkDebugRenderer::render(TextureHandle input, TextureHandle depth) {
   auto commandList = &vk::CURRENT_FRAME_COMMAND->m_commandBuffer;
 
-  DrawCallConfig config{
-      globals::ENGINE_CONFIG->m_windowWidth,
-      globals::ENGINE_CONFIG->m_windowHeight,
-      static_cast<uint32_t>(DRAW_CALL_FLAGS::SHOULD_CLEAR_COLOR),
-      glm::vec4(0.4f, 0.4f, 0.4f, 1.0f),
-  };
+  const DrawCallConfig config{
+      static_cast<uint32_t>(globals::ENGINE_CONFIG->m_windowWidth),
+      static_cast<uint32_t>(globals::ENGINE_CONFIG->m_windowHeight), 0};
   globals::RENDERING_CONTEXT->renderQueueType(config,
                                               SHADER_QUEUE_FLAGS::DEBUG);
 }

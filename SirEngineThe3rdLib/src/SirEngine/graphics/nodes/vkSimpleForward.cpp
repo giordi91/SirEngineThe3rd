@@ -5,10 +5,10 @@
 
 namespace SirEngine {
 
-VkSimpleForward::VkSimpleForward(GraphAllocators& allocators)
+VkSimpleForward::VkSimpleForward(GraphAllocators &allocators)
     : GNode("SimpleForward", "SimpleForward", allocators) {
   defaultInitializePlugsAndConnections(0, 2);
-  GPlug& outTexture = m_outputPlugs[PLUG_INDEX(PLUGS::OUT_TEXTURE)];
+  GPlug &outTexture = m_outputPlugs[PLUG_INDEX(PLUGS::OUT_TEXTURE)];
   outTexture.plugValue = 0;
   outTexture.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
   outTexture.nodePtr = this;
@@ -40,12 +40,8 @@ void VkSimpleForward::initialize() {
 void VkSimpleForward::compute() {
   globals::RENDERING_CONTEXT->setBindingObject(m_bindHandle);
 
-  DrawCallConfig config{
-      globals::ENGINE_CONFIG->m_windowWidth,
-      globals::ENGINE_CONFIG->m_windowHeight,
-      static_cast<uint32_t>(DRAW_CALL_FLAGS::SHOULD_CLEAR_COLOR),
-      glm::vec4(0.4f, 0.4f, 0.4f, 1.0f),
-  };
+  DrawCallConfig config{globals::ENGINE_CONFIG->m_windowWidth,
+                        globals::ENGINE_CONFIG->m_windowHeight, 0};
   globals::RENDERING_CONTEXT->renderQueueType(config,
                                               SHADER_QUEUE_FLAGS::FORWARD);
 
@@ -73,19 +69,18 @@ void VkSimpleForward::populateNodePorts() {
   bindings.colorRT[0].isSwapChainBackBuffer = 0;
 
   bindings.depthStencil.handle = m_depthHandle;
-  //bindings.depthStencil.clearDepthColor= {1.0, 1.0, 1.0, 1.0};
-  bindings.depthStencil.clearDepthColor= {0.0, 0.0, 0.0, 0.0};
-  bindings.depthStencil.clearStencilColor= {0.0, 0.0, 0.0, 0.0};
-  bindings.depthStencil.shouldClearDepth= true;
-  bindings.depthStencil.shouldClearStencil= true;
+  // bindings.depthStencil.clearDepthColor= {1.0, 1.0, 1.0, 1.0};
+  bindings.depthStencil.clearDepthColor = {0.0, 0.0, 0.0, 0.0};
+  bindings.depthStencil.clearStencilColor = {0.0, 0.0, 0.0, 0.0};
+  bindings.depthStencil.shouldClearDepth = true;
+  bindings.depthStencil.shouldClearStencil = true;
   bindings.depthStencil.currentResourceState =
       RESOURCE_STATE::DEPTH_RENDER_TARGET;
-  bindings.depthStencil.neededResourceState = RESOURCE_STATE::DEPTH_RENDER_TARGET;
+  bindings.depthStencil.neededResourceState =
+      RESOURCE_STATE::DEPTH_RENDER_TARGET;
 
-	
   bindings.width = globals::ENGINE_CONFIG->m_windowWidth;
   bindings.height = globals::ENGINE_CONFIG->m_windowHeight;
-
 
   m_bindHandle = globals::RENDERING_CONTEXT->prepareBindingObject(
       bindings, "vkSimpleForward");
@@ -102,4 +97,4 @@ void VkSimpleForward::clear() {
     globals::RENDERING_CONTEXT->freeBindingObject(m_bindHandle);
   }
 }
-}  // namespace SirEngine
+} // namespace SirEngine
