@@ -228,7 +228,7 @@ void VkDebugRenderer::render(TextureHandle input, TextureHandle depth) {
                                               SHADER_QUEUE_FLAGS::DEBUG);
 }
 
-DebugDrawHandle VkDebugRenderer::drawBoundingBoxes(BoundingBox *data,
+DebugDrawHandle VkDebugRenderer::drawBoundingBoxes(const BoundingBox *data,
                                                    const int count,
                                                    const glm::vec4 color,
                                                    const char *debugName) {

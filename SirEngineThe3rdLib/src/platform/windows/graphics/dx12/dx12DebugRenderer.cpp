@@ -367,7 +367,7 @@ int drawSquareBetweenTwoPoints(float *data, const glm::vec3 minP,
   return counter;
 }
 
-DebugDrawHandle Dx12DebugRenderer::drawBoundingBoxes(BoundingBox *data,
+DebugDrawHandle Dx12DebugRenderer::drawBoundingBoxes(const BoundingBox *data,
                                                      int count,
                                                      const glm::vec4 color,
                                                      const char *debugName) {

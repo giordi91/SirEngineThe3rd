@@ -1,0 +1,6 @@
+{
+  "pso" :  "grassForwardPSO", 
+  "rs"  :  "grassForwardRS",
+  "type" : "grassForward"
+}
+

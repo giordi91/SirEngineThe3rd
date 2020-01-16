@@ -38,7 +38,6 @@ layout (set=1,binding=2) buffer uvs
 };
 
 
-layout(location =0) out vec4 color;
 layout(location =1) out vec2 outUV;
 void VS()
 {
@@ -57,7 +56,5 @@ void VS()
 	outUV= uv[gl_VertexIndex];
 
 	gl_Position = cameraBuffer.MVP * position;
-	//gl_Position = vec4(position + vec3(0,0,0.5),1.0f);
-	color = vec4(normal*0.5f + vec3(0.5f),1.0f);
 }
 
