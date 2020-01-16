@@ -47,9 +47,10 @@ DebugDrawHandle Dx12DebugRenderer::drawPointsUniformColor(
   // TODO : next time we draw points, we need to fix the code to go from vec3 to
   // vec4 and to bind mesh separately, as buffer and read manually, not input
   // assembler a anymore
-  assert(0);
-  BufferUploadResource upload;
-  Dx12DebugPrimitive primitive{};
+
+  uint32_t index;
+  Dx12DebugPrimitive &primitive = m_primitivesPool.getFreeMemoryData(index);
+
   // allocate vertex buffer
   assert((sizeInByte % (sizeof(float) * 3)) == 0);
   const uint32_t elementCount = sizeInByte / (sizeof(float) * 3);
@@ -78,6 +79,18 @@ DebugDrawHandle Dx12DebugRenderer::drawPointsUniformColor(
   primitive.cbHandle = chandle;
   primitive.primitiveToRender = elementCount * 6;
 
+  RenderableDescription description{};
+  description.buffer = primitive.bufferHandle;
+  description.subranges[0].m_offset = 0;
+  description.subranges[0].m_size = sizeInByte;
+  description.subragesCount = 1;
+
+  const char *queues[5] = {nullptr, nullptr, nullptr, "debugPointsSingleColor",
+                           nullptr};
+  description.materialHandle = globals::MATERIAL_MANAGER->allocateMaterial(
+      debugName, MaterialManager::ALLOCATE_MATERIAL_FLAG_BITS::NONE, queues);
+  description.primitiveToRender = elementCount*6;
+
   // generate handle for storing
   SHADER_QUEUE_FLAGS queue = SHADER_QUEUE_FLAGS::DEBUG;
   SHADER_TYPE_FLAGS type = SHADER_TYPE_FLAGS::DEBUG_POINTS_SINGLE_COLOR;
@@ -91,6 +104,16 @@ DebugDrawHandle Dx12DebugRenderer::drawPointsUniformColor(
   tracker.queue = storeHandle;
   tracker.mappedData = mappedData;
   tracker.sizeInBtye = sizeInByte;
+
+  // TODO temp const cast
+  auto &runtime = const_cast<Dx12MaterialRuntime &>(
+      dx12::MATERIAL_MANAGER->getMaterialRuntime(description.materialHandle));
+  runtime.cbVirtualAddress =
+      dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(chandle);
+  runtime.chandle = chandle;
+  runtime.dataHandle = primitive.bufferHandle;
+
+  globals::RENDERING_CONTEXT->addRenderablesToQueue(description);
 
   const DebugDrawHandle debugHandle{(MAGIC_NUMBER_COUNTER << 16) |
                                     tracker.index};
@@ -112,11 +135,11 @@ DebugDrawHandle Dx12DebugRenderer::drawLinesUniformColor(
   Dx12DebugPrimitive &primitive = m_primitivesPool.getFreeMemoryData(index);
 
   // allocate vertex buffer
-  assert((sizeInByte % (sizeof(float) * 3)) == 0);
-  const uint32_t elementCount = sizeInByte / (sizeof(float) * 3);
+  assert((sizeInByte % (sizeof(float) * 4)) == 0);
+  const uint32_t elementCount = sizeInByte / (sizeof(float) * 4);
 
   primitive.bufferHandle = dx12::BUFFER_MANAGER->allocateUpload(
-      sizeInByte, elementCount, sizeof(float) * 3, debugName);
+      sizeInByte, elementCount, sizeof(float) * 4, debugName);
   void *mappedData =
       dx12::BUFFER_MANAGER->getMappedData(primitive.bufferHandle);
   memcpy(mappedData, data, sizeInByte);
@@ -192,11 +215,11 @@ DebugDrawHandle Dx12DebugRenderer::drawSkeleton(Skeleton *skeleton,
                                                 const float pointSize) {
   const ResizableVector<glm::mat4> &joints = skeleton->m_jointsWolrdInv;
   // first we need to convert the skeleton to points we can actually render
-  auto *points = reinterpret_cast<glm::vec3 *>(
-      globals::FRAME_ALLOCATOR->allocate(sizeof(glm::vec3) * joints.size()));
+  auto *points = reinterpret_cast<glm::vec4 *>(
+      globals::FRAME_ALLOCATOR->allocate(sizeof(glm::vec4) * joints.size()));
   auto *lines =
-      reinterpret_cast<glm::vec3 *>(globals::FRAME_ALLOCATOR->allocate(
-          sizeof(glm::vec3) * joints.size() * 2));
+      reinterpret_cast<glm::vec4 *>(globals::FRAME_ALLOCATOR->allocate(
+          sizeof(glm::vec4) * joints.size() * 2));
 
   const ResizableVector<int> &parentIds = skeleton->m_parentIds;
   uint32_t lineCounter = 0;
@@ -208,22 +231,22 @@ DebugDrawHandle Dx12DebugRenderer::drawSkeleton(Skeleton *skeleton,
     // DirectX::XMVECTOR scale;
     // DirectX::XMVECTOR rot;
     // DirectX::XMMatrixDecompose(&scale, &rot, &pos, mat);
-    points[i] = glm::vec3(pos);
+    points[i] = glm::vec4(pos);
 
     if (parentIds[i] != -1) {
       // here we add a line from the parent to the children, might do a more
       // elaborate joint drawing one day
       lines[lineCounter] = points[parentIds[i]];
-      lines[lineCounter + 1] = glm::vec3(pos);
+      lines[lineCounter + 1] = glm::vec4(pos);
       lineCounter += 2;
     }
   }
   const DebugDrawHandle pointsHandle =
-      drawPointsUniformColor(&points[0].x, joints.size() * sizeof(glm::vec3),
+      drawPointsUniformColor(&points[0].x, joints.size() * sizeof(glm::vec4),
                              color, pointSize, skeleton->m_name);
 
   const DebugDrawHandle linesHandle =
-      drawLinesUniformColor(&lines[0].x, lineCounter * sizeof(glm::vec3), color,
+      drawLinesUniformColor(&lines[0].x, lineCounter * sizeof(glm::vec4), color,
                             pointSize, skeleton->m_name);
 
   // lets prepare the compound handle
