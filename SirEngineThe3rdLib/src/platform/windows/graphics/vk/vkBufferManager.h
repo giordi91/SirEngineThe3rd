@@ -41,6 +41,8 @@ public:
     return {};
   };
 
+  void* getMappedData(const BufferHandle handle) const override;
+
   const vk::Buffer &getBufferData(const BufferHandle handle) const {
     assertMagicNumber(handle);
     uint32_t idx = getIndexFromHandle(handle);
@@ -53,6 +55,7 @@ public:
     uint32_t idx = getIndexFromHandle(handle);
     return m_bufferStorage.getConstRef(idx).buffer;
   }
+
 
 private:
   inline void assertMagicNumber(const BufferHandle handle) const {

@@ -196,6 +196,14 @@ void BufferManagerDx12::bindBufferAsDescriptorTableGrahpics(
   //    slot, data.data->GetGPUVirtualAddress() + offset);
 }
 
+void* BufferManagerDx12::getMappedData(const BufferHandle handle) const
+{
+	assertMagicNumber(handle);
+	const uint32_t index = getIndexFromHandle(handle);
+	const BufferData& data = m_bufferPool.getConstRef(index);
+	return data.mappedData;
+}
+
 void BufferManagerDx12::clearUploadRequests() {
   const auto id = GLOBAL_FENCE->GetCompletedValue();
   const int requestSize = static_cast<int>(m_uploadRequests.size()) - 1;

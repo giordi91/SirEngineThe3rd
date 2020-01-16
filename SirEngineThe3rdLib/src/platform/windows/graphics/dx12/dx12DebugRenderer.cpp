@@ -2,11 +2,9 @@
 
 #include "SirEngine/animation/animationPlayer.h"
 #include "SirEngine/animation/skeleton.h"
-#include "SirEngine/graphics/cpuGraphicsStructures.h"
+#include "SirEngine/bufferManager.h"
 #include "SirEngine/graphics/renderingContext.h"
-#include "SirEngine/memory/stringPool.h"
-#include "platform/windows/graphics/dx12/DX12.h"
-#include "platform/windows/graphics/dx12/dx12BufferManager.h"
+
 #include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
 #include "platform/windows/graphics/dx12/dx12MaterialManager.h"
 
@@ -31,19 +29,18 @@ DebugDrawHandle Dx12DebugRenderer::drawPointsUniformColor(
 
   // TODO type of allocation should be dictated by wheter or not is updated on a
   // per frame basis or not
-  primitive.m_bufferHandle = dx12::BUFFER_MANAGER->allocateUpload(
+  primitive.m_bufferHandle = globals::BUFFER_MANAGER->allocateUpload(
       sizeInByte, elementCount, sizeof(float) * 3, debugName);
   void *mappedData =
-      dx12::BUFFER_MANAGER->getMappedData(primitive.m_bufferHandle);
+      globals::BUFFER_MANAGER->getMappedData(primitive.m_bufferHandle);
   memcpy(mappedData, data, sizeInByte);
   primitive.m_sizeInByte = sizeInByte;
-
 
   // allocate constant buffer
   DebugPointsFixedColor settings{color, size};
   const ConstantBufferHandle chandle =
-      dx12::CONSTANT_BUFFER_MANAGER->allocateDynamic(sizeof(settings),
-                                                     &settings);
+      globals::CONSTANT_BUFFER_MANAGER->allocateDynamic(sizeof(settings),
+                                                        &settings);
 
   // store it such way that we can render it
   primitive.m_primitiveType = PRIMITIVE_TYPE::POINT;
@@ -95,13 +92,12 @@ DebugDrawHandle Dx12DebugRenderer::drawLinesUniformColor(
   assert((sizeInByte % (sizeof(float) * 4)) == 0);
   const uint32_t elementCount = sizeInByte / (sizeof(float) * 4);
 
-  primitive.m_bufferHandle = dx12::BUFFER_MANAGER->allocateUpload(
+  primitive.m_bufferHandle = globals::BUFFER_MANAGER->allocateUpload(
       sizeInByte, elementCount, sizeof(float) * 4, debugName);
   void *mappedData =
-      dx12::BUFFER_MANAGER->getMappedData(primitive.m_bufferHandle);
+      globals::BUFFER_MANAGER->getMappedData(primitive.m_bufferHandle);
   memcpy(mappedData, data, sizeInByte);
   primitive.m_sizeInByte = sizeInByte;
-
 
   // allocate constant buffer
   DebugPointsFixedColor settings{color, size};
@@ -261,7 +257,7 @@ DebugDrawHandle Dx12DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
 
     assert(primitive.m_sizeInByte == (sizeof(glm::vec4) * jointCount));
     void *mappedData =
-        dx12::BUFFER_MANAGER->getMappedData(primitive.m_bufferHandle);
+        globals::BUFFER_MANAGER->getMappedData(primitive.m_bufferHandle);
     memcpy(mappedData, points, primitive.m_sizeInByte);
 
     assertPoolMagicNumber(linesHandle);
@@ -270,7 +266,7 @@ DebugDrawHandle Dx12DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
 
     assert(linePrimitive.m_sizeInByte == (sizeof(glm::vec4) * lineCounter));
     mappedData =
-        dx12::BUFFER_MANAGER->getMappedData(linePrimitive.m_bufferHandle);
+        globals::BUFFER_MANAGER->getMappedData(linePrimitive.m_bufferHandle);
     memcpy(mappedData, lines, linePrimitive.m_sizeInByte);
 
     // data is updated we are good to go, returning same handle
@@ -519,14 +515,15 @@ DebugDrawHandle Dx12DebugRenderer::drawAnimatedBoundingBoxFromFullPoints(
     assert(found);
     assert(tracker.m_compoundCount == 1);
 
-    DebugDrawHandle dHandle = tracker.m_compoundHandles[0];
+    const DebugDrawHandle dHandle = tracker.m_compoundHandles[0];
     assert(dHandle.isHandleValid());
     assertPoolMagicNumber(dHandle);
     uint32_t index = getIndexFromHandle(dHandle);
     const Dx12DebugPrimitive &prim = m_primitivesPool.getConstRef(index);
     // assert(prim.sizeInBtye == (sizeof(float) * totalSize));
 
-    void *mappedData = dx12::BUFFER_MANAGER->getMappedData(prim.m_bufferHandle);
+    void *mappedData =
+        globals::BUFFER_MANAGER->getMappedData(prim.m_bufferHandle);
     memcpy(mappedData, points, prim.m_sizeInByte);
     return handle;
   }

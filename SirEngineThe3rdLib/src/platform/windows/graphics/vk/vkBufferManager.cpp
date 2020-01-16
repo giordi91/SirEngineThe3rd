@@ -23,6 +23,13 @@ void VkBufferManager::free(const BufferHandle handle) {
   m_bufferStorage.free(idx);
 }
 
+void *VkBufferManager::getMappedData(const BufferHandle handle) const {
+  assertMagicNumber(handle);
+  uint32_t idx = getIndexFromHandle(handle);
+  const Buffer &data = m_bufferStorage.getConstRef(idx);
+  return data.memory;
+}
+
 BufferHandle VkBufferManager::allocate(const uint32_t sizeInBytes,
                                        void *initData, const char *name,
                                        const int, const int,

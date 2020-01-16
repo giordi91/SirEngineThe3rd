@@ -34,6 +34,7 @@ public:
                               const uint32_t numElements,
                               const uint32_t elementSize,
                               const char *name) = 0;
+  virtual void *getMappedData(const BufferHandle handle) const =0;
 
 };
 

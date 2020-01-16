@@ -16,7 +16,7 @@ class BufferManagerDx12 final : public BufferManager {
     uint64_t fence;
   };
 
- public:
+public:
   BufferManagerDx12() : m_bufferPool(RESERVE_SIZE){};
 
   virtual ~BufferManagerDx12() = default;
@@ -42,9 +42,10 @@ class BufferManagerDx12 final : public BufferManager {
   void bindBufferAsSRVGraphics(BufferHandle handle, int slot,
                                ID3D12GraphicsCommandList2 *commandList,
                                uint32_t offset = 0) const;
-  void bindBufferAsDescriptorTableGrahpics(
-      const BufferHandle handle, const int slot,
-      ID3D12GraphicsCommandList2 *commandList, uint32_t offset) const;
+  void
+  bindBufferAsDescriptorTableGrahpics(const BufferHandle handle, const int slot,
+                                      ID3D12GraphicsCommandList2 *commandList,
+                                      uint32_t offset) const;
 
   BufferHandle getBufferFromName(const std::string &name) const {
     const auto found = m_nameToHandle.find(name);
@@ -54,12 +55,8 @@ class BufferManagerDx12 final : public BufferManager {
 
     return BufferHandle{0};
   }
-  inline void *getMappedData(const BufferHandle &handle) const {
-    assertMagicNumber(handle);
-    const uint32_t index = getIndexFromHandle(handle);
-    const BufferData &data = m_bufferPool.getConstRef(index);
-    return data.mappedData;
-  }
+
+  void *getMappedData(const BufferHandle handle) const override;
 
   inline int bufferUAVTransition(const BufferHandle handle,
                                  D3D12_RESOURCE_BARRIER *barriers,
@@ -98,7 +95,7 @@ class BufferManagerDx12 final : public BufferManager {
   //  }
   //  return BufferHandle{0};
   //}
- private:
+private:
   inline void assertMagicNumber(const BufferHandle handle) const {
     uint32_t magic = getMagicFromHandle(handle);
     uint32_t idx = getIndexFromHandle(handle);
@@ -123,5 +120,5 @@ class BufferManagerDx12 final : public BufferManager {
   std::vector<UploadRequest> m_uploadRequests;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
 };
-}  // namespace dx12
-}  // namespace SirEngine
+} // namespace dx12
+} // namespace SirEngine
