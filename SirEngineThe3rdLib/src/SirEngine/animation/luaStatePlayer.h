@@ -55,6 +55,7 @@ private:
 
   // temporary
   std::queue<Transition> m_transitionsQueue;
+
 };
 
 } // namespace SirEngine

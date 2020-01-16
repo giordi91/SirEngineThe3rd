@@ -56,7 +56,6 @@ class DebugRenderer {
                                                float pointSize) = 0;
 
   virtual void render(TextureHandle input, TextureHandle depth) = 0;
-  virtual void clearUploadRequests() = 0;
   virtual DebugDrawHandle drawBoundingBoxes(BoundingBox *data, int count,
                                             glm::vec4 color,
                                             const char *debugName) = 0;
@@ -70,7 +69,7 @@ class DebugRenderer {
       const DebugDrawHandle handle, const glm::vec3 *data, const int count,
       const glm::vec4 color, const char *debugName) = 0;
 
-  virtual void drawMatrix(const glm::mat4 &mat, float size, glm::vec4 color,
+  virtual DebugDrawHandle drawMatrix(const glm::mat4 &mat, float size, glm::vec4 color,
                           const char *debugName) = 0;
 };
 

@@ -18,7 +18,6 @@ class VkDebugRenderer : public DebugRenderer {
 
  public:
   VkDebugRenderer();
-  ;
   virtual ~VkDebugRenderer() = default;
   VkDebugRenderer(const VkDebugRenderer&) = delete;
   VkDebugRenderer& operator=(const VkDebugRenderer&) = delete;
@@ -41,7 +40,6 @@ class VkDebugRenderer : public DebugRenderer {
                                        AnimationPlayer* state, glm::vec4 color,
                                        float pointSize) override;
   void render(TextureHandle input, TextureHandle depth) override;
-  void clearUploadRequests() override;
   DebugDrawHandle drawBoundingBoxes(BoundingBox* data, int count,
                                     glm::vec4 color,
                                     const char* debugName) override;
@@ -52,7 +50,7 @@ class VkDebugRenderer : public DebugRenderer {
   DebugDrawHandle drawAnimatedBoundingBoxFromFullPoints(
       const DebugDrawHandle handle, const glm::vec3* data, const int count,
       const glm::vec4 color, const char* debugName) override;
-  void drawMatrix(const glm::mat4& mat, float size, glm::vec4 color,
+  DebugDrawHandle drawMatrix(const glm::mat4& mat, float size, glm::vec4 color,
                   const char* debugName) override;
 
  private:
@@ -60,7 +58,7 @@ class VkDebugRenderer : public DebugRenderer {
     const uint32_t magic = getMagicFromHandle(handle);
 
     DebugTracker tracker;
-    bool found = m_trackers.get(handle.handle, tracker);
+    const bool found = m_trackers.get(handle.handle, tracker);
     assert(found);
     assert(tracker.magicNumber == magic &&
            "invalid magic handle for debug tracker buffer");
