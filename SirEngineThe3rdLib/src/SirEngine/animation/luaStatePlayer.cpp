@@ -259,6 +259,9 @@ void LuaStatePlayer::evaluate(const int64_t stampNS) {
       m_transitionsQueue.pop();
     }
   }
+  static DebugDrawHandle handle{};
+  handle = globals::DEBUG_RENDERER->drawAnimatedSkeleton(
+      handle, this, glm::vec4{0, 1, 0, 1}, 0.1f);
 }
 
 bool LuaStatePlayer::performTransition(Transition *transition,

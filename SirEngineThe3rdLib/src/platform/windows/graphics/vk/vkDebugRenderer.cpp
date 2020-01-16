@@ -228,7 +228,6 @@ void VkDebugRenderer::render(TextureHandle input, TextureHandle depth) {
                                               SHADER_QUEUE_FLAGS::DEBUG);
 }
 
-void VkDebugRenderer::clearUploadRequests() {}
 
 DebugDrawHandle VkDebugRenderer::drawBoundingBoxes(BoundingBox* data, int count,
                                                    glm::vec4 color,
@@ -279,8 +278,9 @@ DebugDrawHandle VkDebugRenderer::drawAnimatedBoundingBoxFromFullPoints(
   return {};
 }
 
-void VkDebugRenderer::drawMatrix(const glm::mat4& mat, float size,
+DebugDrawHandle VkDebugRenderer::drawMatrix(const glm::mat4& mat, float size,
                                  glm::vec4 color, const char* debugName) {
   assert(0);
+  return {};
 }
 }  // namespace SirEngine::vk
