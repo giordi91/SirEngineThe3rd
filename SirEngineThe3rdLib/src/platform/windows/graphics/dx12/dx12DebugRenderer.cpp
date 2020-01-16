@@ -1,13 +1,11 @@
 #include "platform/windows/graphics/dx12/dx12DebugRenderer.h"
 
-#include "SirEngine/animation/animationClip.h"
 #include "SirEngine/animation/animationPlayer.h"
 #include "SirEngine/animation/skeleton.h"
 #include "SirEngine/graphics/cpuGraphicsStructures.h"
 #include "SirEngine/graphics/debugAnnotations.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/memory/stringPool.h"
-#include "SirEngine/runtimeString.h"
 #include "dx12BufferManager.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/Dx12PSOManager.h"
@@ -64,6 +62,7 @@ DebugDrawHandle Dx12DebugRenderer::drawPointsUniformColor(
   void *mappedData =
       dx12::BUFFER_MANAGER->getMappedData(primitive.bufferHandle);
   memcpy(mappedData, data, sizeInByte);
+  primitive.sizeInByte = sizeInByte;
 
   dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferSRV(
       primitive.srv, primitive.buffer, elementCount, sizeof(float) * 3);
@@ -89,21 +88,13 @@ DebugDrawHandle Dx12DebugRenderer::drawPointsUniformColor(
                            nullptr};
   description.materialHandle = globals::MATERIAL_MANAGER->allocateMaterial(
       debugName, MaterialManager::ALLOCATE_MATERIAL_FLAG_BITS::NONE, queues);
-  description.primitiveToRender = elementCount*6;
+  description.primitiveToRender = elementCount * 6;
 
   // generate handle for storing
   SHADER_QUEUE_FLAGS queue = SHADER_QUEUE_FLAGS::DEBUG;
   SHADER_TYPE_FLAGS type = SHADER_TYPE_FLAGS::DEBUG_POINTS_SINGLE_COLOR;
   const uint32_t storeHandle =
       static_cast<uint32_t>(queue) | (static_cast<uint32_t>(type) << 16);
-
-  DebugTracker tracker{};
-  tracker.compoundCount = 0;
-  tracker.index = m_renderables[storeHandle].size();
-  tracker.magicNumber = MAGIC_NUMBER_COUNTER;
-  tracker.queue = storeHandle;
-  tracker.mappedData = mappedData;
-  tracker.sizeInBtye = sizeInByte;
 
   // TODO temp const cast
   auto &runtime = const_cast<Dx12MaterialRuntime &>(
@@ -112,20 +103,32 @@ DebugDrawHandle Dx12DebugRenderer::drawPointsUniformColor(
       dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(chandle);
   runtime.chandle = chandle;
   runtime.dataHandle = primitive.bufferHandle;
+  primitive.m_magicNumber = MAGIC_NUMBER_COUNTER;
 
   globals::RENDERING_CONTEXT->addRenderablesToQueue(description);
 
-  const DebugDrawHandle debugHandle{(MAGIC_NUMBER_COUNTER << 16) |
-                                    tracker.index};
+  const DebugDrawHandle debugHandle{(MAGIC_NUMBER_COUNTER << 16) | index};
+  ++MAGIC_NUMBER_COUNTER;
+
+  DebugTracker tracker{};
+  tracker.magicNumber = MAGIC_NUMBER_COUNTER;
+  tracker.mappedData = nullptr;
+  // only one object, this should be renamed to normal counter not compound
+  // simply set to one if not compound
+  tracker.compoundCount = 1;
+  tracker.compoundHandles = reinterpret_cast<DebugDrawHandle *>(
+      globals::PERSISTENT_ALLOCATOR->allocate(sizeof(DebugDrawHandle) * 1));
+  tracker.compoundHandles[0] = debugHandle;
+  tracker.sizeInBtye = sizeInByte;
+
+  const DebugDrawHandle trackerHandle{(MAGIC_NUMBER_COUNTER << 16)};
 
   // registering the tracker
-  m_trackers[debugHandle.handle] = tracker;
-  // registering the renderables
-  m_renderables[storeHandle].push_back(primitive);
+  m_trackers.insert(trackerHandle.handle, tracker);
 
   ++MAGIC_NUMBER_COUNTER;
 
-  return debugHandle;
+  return trackerHandle;
 }
 
 DebugDrawHandle Dx12DebugRenderer::drawLinesUniformColor(
@@ -145,6 +148,7 @@ DebugDrawHandle Dx12DebugRenderer::drawLinesUniformColor(
   memcpy(mappedData, data, sizeInByte);
   primitive.buffer =
       dx12::BUFFER_MANAGER->getNativeBuffer(primitive.bufferHandle);
+  primitive.sizeInByte = sizeInByte;
 
   dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferSRV(
       primitive.srv, primitive.buffer, elementCount, sizeof(float) * 3);
@@ -179,14 +183,6 @@ DebugDrawHandle Dx12DebugRenderer::drawLinesUniformColor(
   const uint32_t storeHandle =
       static_cast<uint32_t>(queue) | (static_cast<uint32_t>(type) << 16);
 
-  DebugTracker tracker{};
-  tracker.compoundCount = 0;
-  tracker.index = m_renderables[storeHandle].size();
-  tracker.magicNumber = MAGIC_NUMBER_COUNTER;
-  tracker.queue = storeHandle;
-  tracker.mappedData = mappedData;
-  tracker.sizeInBtye = sizeInByte;
-
   // TODO temp const cast
   auto &runtime = const_cast<Dx12MaterialRuntime &>(
       dx12::MATERIAL_MANAGER->getMaterialRuntime(description.materialHandle));
@@ -194,20 +190,32 @@ DebugDrawHandle Dx12DebugRenderer::drawLinesUniformColor(
       dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(chandle);
   runtime.chandle = chandle;
   runtime.dataHandle = primitive.bufferHandle;
+  primitive.m_magicNumber = MAGIC_NUMBER_COUNTER;
 
   globals::RENDERING_CONTEXT->addRenderablesToQueue(description);
 
-  const DebugDrawHandle debugHandle{(MAGIC_NUMBER_COUNTER << 16) |
-                                    tracker.index};
+  const DebugDrawHandle debugHandle{(MAGIC_NUMBER_COUNTER << 16) | index};
+  ++MAGIC_NUMBER_COUNTER;
+
+  DebugTracker tracker{};
+  tracker.magicNumber = MAGIC_NUMBER_COUNTER;
+  tracker.mappedData = nullptr;
+  // only one object, this should be renamed to normal counter not compound
+  // simply set to one if not compound
+  tracker.compoundCount = 1;
+  tracker.compoundHandles = reinterpret_cast<DebugDrawHandle *>(
+      globals::PERSISTENT_ALLOCATOR->allocate(sizeof(DebugDrawHandle) * 1));
+  tracker.compoundHandles[0] = debugHandle;
+  tracker.sizeInBtye = sizeInByte;
+
+  const DebugDrawHandle trackerHandle{(MAGIC_NUMBER_COUNTER << 16)};
 
   // registering the tracker
-  m_trackers[debugHandle.handle] = tracker;
-  // registering the renderables
-  m_renderables[storeHandle].push_back(primitive);
+  m_trackers.insert(trackerHandle.handle, tracker);
 
   ++MAGIC_NUMBER_COUNTER;
 
-  return debugHandle;
+  return trackerHandle;
 }
 
 DebugDrawHandle Dx12DebugRenderer::drawSkeleton(Skeleton *skeleton,
@@ -249,6 +257,7 @@ DebugDrawHandle Dx12DebugRenderer::drawSkeleton(Skeleton *skeleton,
       drawLinesUniformColor(&lines[0].x, lineCounter * sizeof(glm::vec4), color,
                             pointSize, skeleton->m_name);
 
+  /*
   // lets prepare the compound handle
   // there are two items only lines and points and the points is the first
   DebugTracker tracker{};
@@ -264,9 +273,10 @@ DebugDrawHandle Dx12DebugRenderer::drawSkeleton(Skeleton *skeleton,
                                      (MAGIC_NUMBER_COUNTER << 16) | 0};
 
   m_trackers[returnHandle.handle] = tracker;
+  */
 
   ++MAGIC_NUMBER_COUNTER;
-  return returnHandle;
+  return {};
 }
 
 DebugDrawHandle Dx12DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
@@ -298,6 +308,8 @@ DebugDrawHandle Dx12DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
     }
   }
 
+  assert(0);
+  /*
   // if handle is null means we need to allocate, if not we reuse the memory
   if (handle.isHandleValid()) {
     // we need to allocate the memory
@@ -362,7 +374,9 @@ DebugDrawHandle Dx12DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
 
     return returnHandle;
   }
-}  // namespace SirEngine::dx12
+  */
+  return {};
+} // namespace SirEngine::dx12
 
 void Dx12DebugRenderer::renderQueue(
     std::unordered_map<uint32_t, std::vector<Dx12DebugPrimitive>> &inQueue,
@@ -451,7 +465,7 @@ void Dx12DebugRenderer::render(const TextureHandle input,
   // TODO fix this, every draw call should set as appropriate
   currentFc->commandList->IASetPrimitiveTopology(
       D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-}  // namespace SirEngine::dx12
+} // namespace SirEngine::dx12
 void Dx12DebugRenderer::clearUploadRequests() {
   const uint64_t id = GLOBAL_FENCE->GetCompletedValue();
 
@@ -532,7 +546,7 @@ DebugDrawHandle Dx12DebugRenderer::drawBoundingBoxes(BoundingBox *data,
                                                      const char *debugName) {
   // 12 is the number of lines needed for the AABB, 4 top, 4 bottom, 4 vertical
   // two is because we need two points per line, we are not doing trianglestrip
-  int totalSize = 4 * count * 12 * 2;  // here 4 is the xmfloat4
+  int totalSize = 4 * count * 12 * 2; // here 4 is the xmfloat4
 
   auto *points = reinterpret_cast<float *>(
       globals::FRAME_ALLOCATOR->allocate(sizeof(glm::vec4) * count * 12 * 2));
@@ -574,7 +588,7 @@ DebugDrawHandle Dx12DebugRenderer::drawAnimatedBoundingBoxes(
   // first get AABB data
   // 12 is the number of lines needed for the AABB, 4 top, 4 bottom, 4 vertical
   // two is because we need two points per line, we are not doing trianglestrip
-  int totalSize = 3 * count * 12 * 2;  // here 3 is the xmfloat3
+  int totalSize = 3 * count * 12 * 2; // here 3 is the xmfloat3
 
   auto *points = reinterpret_cast<float *>(
       globals::FRAME_ALLOCATOR->allocate(sizeof(glm::vec3) * count * 12 * 2));
@@ -600,6 +614,8 @@ DebugDrawHandle Dx12DebugRenderer::drawAnimatedBoundingBoxes(
     assert(counter <= totalSize);
   }
 
+  assert(0);
+  /*
   if (handle.isHandleValid()) {
     // lets get the trackers out for each one
     const auto found = m_trackers.find(handle.handle);
@@ -618,6 +634,8 @@ DebugDrawHandle Dx12DebugRenderer::drawAnimatedBoundingBoxes(
 
     return outHandle;
   }
+  */
+  return {};
 }
 
 DebugDrawHandle Dx12DebugRenderer::drawAnimatedBoundingBoxFromFullPoints(
@@ -626,7 +644,7 @@ DebugDrawHandle Dx12DebugRenderer::drawAnimatedBoundingBoxFromFullPoints(
   // first get AABB data
   // 12 is the number of lines needed for the AABB, 4 top, 4 bottom, 4 vertical
   // two is because we need two points per line, we are not doing trianglestrip
-  const int totalSize = 4 * count * 12 * 2;  // here 4 is the xmfloat3
+  const int totalSize = 4 * count * 12 * 2; // here 4 is the xmfloat3
 
   auto *points = reinterpret_cast<float *>(
       globals::FRAME_ALLOCATOR->allocate(sizeof(glm::vec4) * count * 12 * 2));
@@ -662,28 +680,33 @@ DebugDrawHandle Dx12DebugRenderer::drawAnimatedBoundingBoxFromFullPoints(
 
   if (handle.isHandleValid()) {
     // lets get the trackers out for each one
-    const auto found = m_trackers.find(handle.handle);
-    assert(found != m_trackers.end());
-    assert(found->second.compoundCount == 0);
+    DebugTracker tracker{};
+    const bool found = m_trackers.get(handle.handle, tracker);
+    assert(found);
+    assert(tracker.compoundCount == 1);
 
-    const DebugTracker &tracker = found->second;
-    assert(tracker.sizeInBtye == (sizeof(float) * totalSize));
-    memcpy(tracker.mappedData, points, tracker.sizeInBtye);
+    DebugDrawHandle dHandle = tracker.compoundHandles[0];
+    assert(dHandle.isHandleValid());
+    assertPoolMagicNumber(dHandle);
+    uint32_t index = getIndexFromHandle(dHandle);
+    const Dx12DebugPrimitive &prim = m_primitivesPool.getConstRef(index);
+    // assert(prim.sizeInBtye == (sizeof(float) * totalSize));
+
+    void *mappedData = dx12::BUFFER_MANAGER->getMappedData(prim.bufferHandle);
+    memcpy(mappedData, points, prim.sizeInByte);
     return handle;
-
-  } else {
-    const DebugDrawHandle outHandle =
-        drawLinesUniformColor(points, totalSize * sizeof(float), color,
-                              static_cast<float>(totalSize), debugName);
-
-    return outHandle;
   }
-}  // namespace SirEngine::dx12
+  const DebugDrawHandle outHandle =
+      drawLinesUniformColor(points, totalSize * sizeof(float), color,
+                            static_cast<float>(totalSize), debugName);
+
+  return outHandle;
+}
 
 void Dx12DebugRenderer::drawMatrix(const glm::mat4 &mat, float size,
                                    glm::vec4 color, const char *debugName) {
   const int totalSize =
-      4 * 2 * 3;  // 3 axis, each with two points, 4 floats each point
+      4 * 2 * 3; // 3 axis, each with two points, 4 floats each point
   auto *points = reinterpret_cast<float *>(
       globals::FRAME_ALLOCATOR->allocate(sizeof(float) * totalSize));
 
@@ -707,4 +730,4 @@ void Dx12DebugRenderer::drawMatrix(const glm::mat4 &mat, float size,
   drawLinesUniformColor(points, totalSize * sizeof(float), color, totalSize,
                         debugName);
 }
-}  // namespace SirEngine::dx12
+} // namespace SirEngine::dx12
