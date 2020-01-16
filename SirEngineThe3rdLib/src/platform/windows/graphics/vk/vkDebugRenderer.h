@@ -40,7 +40,7 @@ class VkDebugRenderer : public DebugRenderer {
                                        AnimationPlayer* state, glm::vec4 color,
                                        float pointSize) override;
   void render(TextureHandle input, TextureHandle depth) override;
-  DebugDrawHandle drawBoundingBoxes(BoundingBox* data, int count,
+  DebugDrawHandle drawBoundingBoxes(const BoundingBox* data, int count,
                                     glm::vec4 color,
                                     const char* debugName) override;
   DebugDrawHandle drawAnimatedBoundingBoxes(DebugDrawHandle handle,

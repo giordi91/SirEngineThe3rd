@@ -189,6 +189,7 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   // TODO TEMP HACK LOAD, remove this
   vk::PSO_MANAGER->loadRawPSO("../data/pso/HDRtoSDREffect_PSO.json");
   vk::PSO_MANAGER->loadRawPSO("../data/pso/forwardPhongPSO.json");
+  vk::PSO_MANAGER->loadRawPSO("../data/pso/grassForwardPSO.json");
   vk::PSO_MANAGER->loadRawPSO("../data/pso/debugDrawPointsSingleColorPSO.json");
   vk::PSO_MANAGER->loadRawPSO("../data/pso/debugDrawLinesSingleColorPSO.json");
 

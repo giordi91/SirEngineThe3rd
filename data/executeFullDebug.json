@@ -66,6 +66,7 @@
     "-p ../data/shaders/VK/rasterization/positionOnlyVS.glsl -o ../data/processed/shaders/VK/rasterization/positionOnlyVS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \"",
     "-p ../data/shaders/VK/rasterization/pointExpandVS.glsl -o ../data/processed/shaders/VK/rasterization/pointExpandVS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \"",
     "-p ../data/shaders/VK/rasterization/basicColor.glsl -o ../data/processed/shaders/VK/rasterization/basicColorPS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d \"",
+    "-p ../data/shaders/VK/rasterization/grassExpansionVS.glsl -o ../data/processed/shaders/VK/rasterization/grassExpansionVS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \"",
 
     "-p ../data/rs/blackAndWhiteEffect_RS.json -o ../data/processed/rs/blackAndWhiteEffect_RS.root --pluginName rootSignatureCompilerPlugin",
     "-p ../data/rs/SSSSSEffect_RS.json -o ../data/processed/rs/SSSSSEffect_RS.root --pluginName rootSignatureCompilerPlugin",

@@ -41,7 +41,7 @@ private:
   bool onDebugConfigChanged(DebugRenderConfigChanged &e);
   bool onShaderCompileEvent(ShaderCompileEvent &e);
   bool onReloadScriptEvent(ReloadScriptsEvent &e);
-  void setupCameraForFrame();
+  void initGrass();
 
   // camera event control
   bool leftDown = false;
@@ -52,5 +52,8 @@ private:
 
   // TODO temp
   GraphAllocators *alloc;
+  DebugDrawHandle m_debugHandle;
+  BufferHandle m_grassBuffer;
+  MaterialHandle m_grassMaterial;
 };
 } // namespace SirEngine

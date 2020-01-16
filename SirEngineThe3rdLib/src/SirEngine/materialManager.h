@@ -69,14 +69,14 @@ enum class SHADER_TYPE_FLAGS {
   FORWARD_PARALLAX,
   SHADOW_SKIN_CLUSTER,
   HDR_TO_SDR,
-  HDR_TO_SDR_VK
+  GRASS_FORWARD
 };
 
 class MaterialManager {
- public:
+public:
   static constexpr uint32_t QUEUE_COUNT = 5;
 
- protected:
+protected:
   struct PrelinaryMaterialParse {
     Material mat;
     MaterialDataHandles handles;
@@ -87,11 +87,11 @@ class MaterialManager {
     bool isStatic = false;
   };
 
- public:
+public:
   enum ALLOCATE_MATERIAL_FLAG_BITS { NONE = 0, BUFFERED = 1 };
   typedef uint32_t ALLOCATE_MATERIAL_FLAGS;
 
- public:
+public:
   MaterialManager(const uint32_t reserveSize)
       : m_shaderTypeToShaderBind(reserveSize){};
   virtual ~MaterialManager() = default;
@@ -103,9 +103,9 @@ class MaterialManager {
   virtual void inititialize() = 0;
   virtual void cleanup() = 0;
 
-  virtual MaterialHandle allocateMaterial(
-      const char *name, ALLOCATE_MATERIAL_FLAGS flags,
-      const char *materialsPerQueue[QUEUE_COUNT]) = 0;
+  virtual MaterialHandle
+  allocateMaterial(const char *name, ALLOCATE_MATERIAL_FLAGS flags,
+                   const char *materialsPerQueue[QUEUE_COUNT]) = 0;
   virtual MaterialHandle loadMaterial(const char *path,
                                       const MeshHandle meshHandle,
                                       const SkinHandle skinHandle) = 0;
@@ -157,14 +157,14 @@ class MaterialManager {
 
   const char *getStringFromShaderTypeFlag(SHADER_TYPE_FLAGS type);
 
- protected:
+protected:
   PrelinaryMaterialParse parseMaterial(const char *path,
                                        const MeshHandle meshHandle,
                                        const SkinHandle skinHandle);
   void loadTypeFile(const char *path);
 
- protected:
+protected:
   HashMap<uint16_t, ShaderBind, hashUint16> m_shaderTypeToShaderBind;
 };
 
-}  // namespace SirEngine
+} // namespace SirEngine

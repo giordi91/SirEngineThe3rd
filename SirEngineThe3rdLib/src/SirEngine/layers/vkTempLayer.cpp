@@ -2,19 +2,80 @@
 
 #include "SirEngine/application.h"
 #include "SirEngine/assetManager.h"
-#include "SirEngine/constantBufferManager.h"
+#include "SirEngine/bufferManager.h"
 #include "SirEngine/events/debugEvent.h"
 #include "SirEngine/events/mouseEvent.h"
+#include "SirEngine/fileUtils.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/graphics/camera.h"
 #include "SirEngine/graphics/debugRenderer.h"
+#include "SirEngine/materialManager.h"
 #include "SirEngine/graphics/nodes/FinalBlitNode.h"
 #include "SirEngine/graphics/nodes/debugDrawNode.h"
-#include "SirEngine/graphics/nodes/grassNode.h"
 #include "SirEngine/graphics/nodes/vkSimpleForward.h"
 #include "SirEngine/graphics/renderingContext.h"
 
 namespace SirEngine {
+void VkTempLayer::initGrass() {
+  // lets read the grass file
+  const char *grassFile = "../data/external/grass/points.json";
+  auto jobj = getJsonObj(grassFile);
+
+  // compute the amount of memory needed
+  const uint32_t tileCount = jobj.size();
+  assert((tileCount > 0) && "no tiles found in the file");
+  // assuming all tiles have same size
+  assertInJson(jobj[0], "points");
+  const uint32_t pointCount = jobj[0]["points"].size();
+  const uint64_t totalSize = sizeof(float) * 3 * pointCount * tileCount;
+
+  auto *data =
+      reinterpret_cast<float *>(globals::FRAME_ALLOCATOR->allocate(totalSize));
+
+  auto *aabbs = reinterpret_cast<BoundingBox *>(
+      globals::FRAME_ALLOCATOR->allocate(sizeof(BoundingBox) * tileCount));
+
+  // looping the tiles
+  glm::vec3 zero{0, 0, 0};
+  int counter = 0;
+  int tileCounter = 0;
+  for (const auto &tile : jobj) {
+    assertInJson(tile, "aabb");
+    assertInJson(tile, "points");
+    const auto &aabbJ = tile["aabb"];
+    const glm::vec3 minAABB(aabbJ[0][0].get<float>(), aabbJ[0][1].get<float>(),
+                            aabbJ[0][2].get<float>());
+    const glm::vec3 maxAABB(aabbJ[1][0].get<float>(), aabbJ[1][1].get<float>(),
+                            aabbJ[1][2].get<float>());
+    aabbs[tileCounter].min = minAABB;
+    aabbs[tileCounter].max = maxAABB;
+
+    const auto &points = tile["points"];
+    uint32_t currentPointCount = points.size();
+    assert(currentPointCount == pointCount);
+
+    for (uint32_t i = 0; i < currentPointCount; ++i) {
+      data[counter++] = points[i][0].get<float>();
+      data[counter++] = points[i][1].get<float>();
+      data[counter++] = points[i][2].get<float>();
+    }
+    tileCounter++;
+  }
+
+  m_debugHandle = globals::DEBUG_RENDERER->drawBoundingBoxes(
+      aabbs, tileCount, glm::vec4(1, 0, 0, 1), "debugGrassTiles");
+  // we have the tiles, good now we want to render the blades
+  m_grassBuffer = globals::BUFFER_MANAGER->allocate(
+      totalSize, data, "grassBuffer", pointCount * tileCount, sizeof(float) * 3,
+      BufferManager::STORAGE_BUFFER);
+  //setup a material
+
+  const char *queues[5] = {"grassForward", nullptr, nullptr, nullptr,
+                           nullptr};
+
+  m_grassMaterial = globals::MATERIAL_MANAGER->allocateMaterial(
+      "grassMaterial", MaterialManager::ALLOCATE_MATERIAL_FLAG_BITS::NONE, queues);
+}
 
 void VkTempLayer::onAttach() {
   globals::MAIN_CAMERA = new Camera3DPivot();
@@ -32,30 +93,26 @@ void VkTempLayer::onAttach() {
   // globals::ASSET_MANAGER->loadScene(globals::ENGINE_CONFIG->m_startScenePath);
   globals::ASSET_MANAGER->loadScene("../data/scenes/tempScene.json");
 
+  initGrass();
+
   alloc =
       new GraphAllocators{globals::STRING_POOL, globals::PERSISTENT_ALLOCATOR};
 
   globals::RENDERING_GRAPH = new DependencyGraph();
   const auto forward = new VkSimpleForward(*alloc);
-  const auto grass = new GrassNode(*alloc);
   const auto debugDraw = new DebugDrawNode(*alloc);
   const auto finalBlit = new FinalBlitNode(*alloc);
 
   // temporary graph for testing
   globals::RENDERING_GRAPH->addNode(forward);
-  globals::RENDERING_GRAPH->addNode(grass);
   globals::RENDERING_GRAPH->addNode(debugDraw);
   globals::RENDERING_GRAPH->addNode(finalBlit);
   globals::RENDERING_GRAPH->setFinalNode(finalBlit);
 
   globals::RENDERING_GRAPH->connectNodes(forward, VkSimpleForward::OUT_TEXTURE,
-                                         grass, GrassNode::IN_TEXTURE);
-  globals::RENDERING_GRAPH->connectNodes(forward, VkSimpleForward::DEPTH_RT,
-                                         grass, GrassNode::DEPTH_RT);
-  globals::RENDERING_GRAPH->connectNodes(grass, GrassNode::OUT_TEXTURE,
                                          debugDraw, DebugDrawNode::IN_TEXTURE);
-  globals::RENDERING_GRAPH->connectNodes(grass, GrassNode::OUT_DEPTH, debugDraw,
-                                         DebugDrawNode::DEPTH_RT);
+  globals::RENDERING_GRAPH->connectNodes(forward, VkSimpleForward::DEPTH_RT,
+                                         debugDraw, DebugDrawNode::DEPTH_RT);
   globals::RENDERING_GRAPH->connectNodes(debugDraw, DebugDrawNode::OUT_TEXTURE,
                                          finalBlit, FinalBlitNode::IN_TEXTURE);
 
@@ -113,6 +170,7 @@ void VkTempLayer::onEvent(Event &event) {
 void VkTempLayer::clear() {
   // vkDeviceWaitIdle(vk::LOGICAL_DEVICE);
   globals::RENDERING_GRAPH->clear();
+  globals::DEBUG_RENDERER->free(m_debugHandle);
 }
 
 bool VkTempLayer::onMouseButtonPressEvent(MouseButtonPressEvent &e) {
@@ -278,8 +336,6 @@ bool VkTempLayer::onResizeEvent(WindowResizeEvent &e) {
   return true;
 }
 
-void VkTempLayer::setupCameraForFrame() {}
-
 /*
 bool VkTempLayer::onDebugConfigChanged(DebugRenderConfigChanged &e) {
   GNode *debugNode =
@@ -300,4 +356,4 @@ bool VkTempLayer::onReloadScriptEvent(ReloadScriptsEvent &) {
   globals::SCRIPTING_CONTEXT->reloadContext();
   return true;
 }*/
-}  // namespace SirEngine
+} // namespace SirEngine

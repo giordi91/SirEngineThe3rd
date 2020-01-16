@@ -6,7 +6,7 @@
 #include "SirEngine/graphics/cpuGraphicsStructures.h"
 #include "SirEngine/graphics/graphicsDefines.h"
 #include "SirEngine/handle.h"
-#include "SirEngine/memory/sparseMemoryPool.h"
+#include "SirEngine/memory/SparseMemoryPool.h"
 #include "SirEngine/meshManager.h"
 #include "platform/windows/graphics/vk/vkMemory.h"
 #include "platform/windows/graphics/vk/volk.h"
