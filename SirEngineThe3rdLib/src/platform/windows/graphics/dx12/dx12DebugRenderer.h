@@ -1,12 +1,11 @@
 #pragma once
 #include <glm/glm.hpp>
-#include <unordered_map>
-#include <vector>
 
 #include "SirEngine/graphics/debugRenderer.h"
 #include "SirEngine/handle.h"
-#include "platform/windows/graphics/dx12/DX12.h"
-#include "platform/windows/graphics/dx12/dx12MaterialManager.h"
+#include "SirEngine/hashing.h"
+#include "SirEngine/memory/hashMap.h"
+#include "SirEngine/memory/sparseMemoryPool.h"
 
 namespace SirEngine {
 
@@ -33,10 +32,6 @@ struct DebugTracker {
 };
 
 class Dx12DebugRenderer : public DebugRenderer {
-  struct BufferUploadResource final {
-    ID3D12Resource *uploadBuffer = nullptr;
-    UINT64 fence = 0;
-  };
 
 public:
   // TODO cleanup creation, this is probably going away
@@ -51,10 +46,7 @@ public:
   void free(DebugDrawHandle handle) override;
 
   void cleanup() override {
-    // for (auto &deb : m_persistante_q) {
-    //  deb.buff->Release();
-    //}
-    // m_persistante_q.clear();
+    // TODO proerly implement cleanup
   }
 
   DebugDrawHandle drawPointsUniformColor(float *data, uint32_t sizeInByte,
@@ -109,7 +101,6 @@ private:
   }
 
 private:
-
   HashMap<uint32_t, DebugTracker, hashUint32> m_trackers;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
   SparseMemoryPool<Dx12DebugPrimitive> m_primitivesPool;
