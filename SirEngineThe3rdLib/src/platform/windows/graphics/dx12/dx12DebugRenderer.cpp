@@ -305,11 +305,10 @@ DebugDrawHandle Dx12DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
 
 void Dx12DebugRenderer::render(const TextureHandle input,
                                const TextureHandle depth) {
-  DrawCallConfig config{
+	const DrawCallConfig config{
       globals::ENGINE_CONFIG->m_windowWidth,
       globals::ENGINE_CONFIG->m_windowHeight,
-      static_cast<uint32_t>(DRAW_CALL_FLAGS::SHOULD_CLEAR_COLOR),
-      glm::vec4(0.4f, 0.4f, 0.4f, 1.0f),
+      0
   };
   globals::RENDERING_CONTEXT->renderQueueType(config,
                                               SHADER_QUEUE_FLAGS::DEBUG);
