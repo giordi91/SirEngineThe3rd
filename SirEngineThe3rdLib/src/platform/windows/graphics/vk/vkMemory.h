@@ -6,6 +6,7 @@ namespace SirEngine::vk {
 struct Buffer {
   VkBuffer buffer;
   VkDeviceMemory memory;
+  VkDescriptorBufferInfo info;
   void *data;
   size_t size;
   size_t allocationSize;

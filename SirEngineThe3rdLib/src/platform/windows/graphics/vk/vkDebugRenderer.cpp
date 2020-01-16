@@ -66,7 +66,8 @@ int drawSquareBetweenTwoPoints(float *data, const glm::vec3 minP,
 }
 
 VkDebugRenderer::VkDebugRenderer()
-    : DebugRenderer(), m_primitivesPool(RESERVE_SIZE),
+    : DebugRenderer(),
+      m_primitivesPool(RESERVE_SIZE),
       m_trackers(RESERVE_SIZE) {}
 
 void VkDebugRenderer::cleanup() {}
@@ -151,25 +152,23 @@ DebugDrawHandle VkDebugRenderer::drawLinesUniformColor(float *data,
   VkDescriptorSet set = vk::DESCRIPTOR_MANAGER->getDescriptorSet(
       runtime.descriptorHandles[currentFlagId]);
 
-  VkWriteDescriptorSet writeDescriptorSet[2]{};
-  VkDescriptorBufferInfo info[2]{};
-  // updating the descriptors
-  info[0].buffer =
-      vk::BUFFER_MANAGER->getNativeBuffer(primitive.m_bufferHandle);
-  info[0].offset = 0;
-  info[0].range = sizeInByte;
+  VkWriteDescriptorSet writeDescriptorSet{};
+  VkDescriptorBufferInfo info{};
 
-  writeDescriptorSet[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  writeDescriptorSet[0].dstSet = set;
-  writeDescriptorSet[0].dstBinding = 0;
-  writeDescriptorSet[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  writeDescriptorSet[0].pBufferInfo = &info[0];
-  writeDescriptorSet[0].descriptorCount = 1;
+  // TODO here two different updates descriptor updates are performed
+  // slower but "cleaner", need to figure out both a nice and fast way
+  // TODO here we can see the difference between a "generic" material set
+  // and the Vulkan aware one, where we can pass in vk structure to be filled
+  // than have one write only
+  globals::MATERIAL_MANAGER->bindBuffer(description.materialHandle,
+                                        primitive.m_bufferHandle, 0,
+                                        SHADER_QUEUE_FLAGS::DEBUG);
 
-  vk::CONSTANT_BUFFER_MANAGER->bindConstantBuffer(chandle, info[1], 1,
-                                                  writeDescriptorSet, set);
+  vk::CONSTANT_BUFFER_MANAGER->bindConstantBuffer(chandle, info, 1,
+                                                  &writeDescriptorSet, set);
 
-  vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, 2, writeDescriptorSet, 0, nullptr);
+  vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, 1, &writeDescriptorSet, 0,
+                         nullptr);
 
   globals::RENDERING_CONTEXT->addRenderablesToQueue(description);
 
@@ -235,7 +234,7 @@ DebugDrawHandle VkDebugRenderer::drawBoundingBoxes(const BoundingBox *data,
   // 12 is the number of lines needed for the AABB, 4 top, 4 bottom, 4
   // vertical two is because we need two points per line, we are not doing
   // triangle-strip
-  const int totalSize = 4 * count * 12 * 2; // here 4 is the xmfloat4
+  const int totalSize = 4 * count * 12 * 2;  // here 4 is the xmfloat4
 
   auto *points = reinterpret_cast<float *>(
       globals::FRAME_ALLOCATOR->allocate(sizeof(glm::vec4) * count * 12 * 2));
@@ -284,4 +283,4 @@ DebugDrawHandle VkDebugRenderer::drawMatrix(const glm::mat4 &mat, float size,
   assert(0);
   return {};
 }
-} // namespace SirEngine::vk
+}  // namespace SirEngine::vk

@@ -13,6 +13,7 @@
 #include "vkPSOManager.h"
 #include "vkRootSignatureManager.h"
 #include "vkTextureManager.h"
+#include "vkBufferManager.h"
 
 namespace SirEngine::vk {
 
@@ -752,7 +753,7 @@ MaterialHandle VkMaterialManager::allocateMaterial(
         vk::PIPELINE_LAYOUT_MANAGER->getLayoutFromHandle(bind.rs);
     materialData.m_materialRuntime.useStaticSamplers[i] =
         vk::PIPELINE_LAYOUT_MANAGER->usesStaticSamplers(bind.rs);
-    SHADER_QUEUE_FLAGS queueType = static_cast<SHADER_QUEUE_FLAGS>(1<<i);
+    SHADER_QUEUE_FLAGS queueType = static_cast<SHADER_QUEUE_FLAGS>(1 << i);
     materialData.m_materialRuntime.shaderQueueTypeFlags[i] =
         getQueueTypeFlags(queueType, shaderType);
 
@@ -800,13 +801,39 @@ void VkMaterialManager::bindTexture(MaterialHandle matHandle,
                          nullptr);
 }
 
-void VkMaterialManager::bindMaterial(MaterialHandle handle,
+void VkMaterialManager::bindBuffer(MaterialHandle matHandle,
+                                   BufferHandle bufferHandle,
+                                   uint32_t bindingIndex,
+                                   SHADER_QUEUE_FLAGS queue) {
+  assertMagicNumber(matHandle);
+  uint32_t index = getIndexFromHandle(matHandle);
+  const auto &data = m_materialTextureHandles.getConstRef(index);
+
+  const uint32_t currentFlag = static_cast<uint32_t>(queue);
+  int currentFlagId = static_cast<int>(log2(currentFlag & -currentFlag));
+
+  DescriptorHandle descriptorHandle =
+      data.m_materialRuntime.descriptorHandles[currentFlagId];
+  assert(descriptorHandle.isHandleValid());
+  VkDescriptorSet descriptorSet =
+      vk::DESCRIPTOR_MANAGER->getDescriptorSet(descriptorHandle);
+
+  VkWriteDescriptorSet writeDescriptorSets{};
+
+  vk::BUFFER_MANAGER->bindBuffer(bufferHandle, &writeDescriptorSets,
+                                   descriptorSet, bindingIndex);
+
+  vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, 1, &writeDescriptorSets, 0,
+                         nullptr);
+}
+
+void VkMaterialManager::bindMaterial(const MaterialHandle handle,
                                      SHADER_QUEUE_FLAGS queue) {
   assertMagicNumber(handle);
   uint32_t index = getIndexFromHandle(handle);
   const auto &data = m_materialTextureHandles.getConstRef(index);
 
-  const uint32_t currentFlag = static_cast<uint32_t>(queue);
+  const auto currentFlag = static_cast<uint32_t>(queue);
   int currentFlagId = static_cast<int>(log2(currentFlag & -currentFlag));
 
   // find the PSO, should this be part of the runtime directly?

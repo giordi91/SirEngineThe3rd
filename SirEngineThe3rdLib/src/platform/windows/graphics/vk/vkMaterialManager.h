@@ -88,7 +88,6 @@ class VkMaterialManager final : public MaterialManager {
     assert(m_materialTextureHandles[idx].magicNumber == magic &&
            "invalid magic handle for material data");
   }
-  void loadTypeFile(const char *path);
 
  public:
   MaterialHandle allocateMaterial(
@@ -97,10 +96,11 @@ class VkMaterialManager final : public MaterialManager {
 
   void bindTexture(MaterialHandle matHandle, TextureHandle texHandle,
                    uint32_t bindingIndex, SHADER_QUEUE_FLAGS queue) override;
+  void bindBuffer(MaterialHandle matHandle, BufferHandle bufferHandle, uint32_t bindingIndex,
+	  SHADER_QUEUE_FLAGS queue) override;;
 
   void bindMaterial(MaterialHandle handle, SHADER_QUEUE_FLAGS queue) override;
   void free(MaterialHandle handle) override;
-  ;
 
  private:
   HashMap<const char *, MaterialHandle, hashString32> m_nameToHandle;

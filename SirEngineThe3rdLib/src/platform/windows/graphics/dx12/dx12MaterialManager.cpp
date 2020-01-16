@@ -413,6 +413,12 @@ void Dx12MaterialManager::bindTexture(MaterialHandle,
   commandList->SetGraphicsRootDescriptorTable(bindingIndex, pair.gpuHandle);
 }
 
+void Dx12MaterialManager::bindBuffer(MaterialHandle matHandle, BufferHandle texHandle, uint32_t bindingIndex,
+	SHADER_QUEUE_FLAGS queue)
+{
+    assert(0);
+}
+
 void Dx12MaterialManager::bindMaterial(
     SHADER_QUEUE_FLAGS queueFlag, const MaterialHandle handle,
     ID3D12GraphicsCommandList2 *commandList) {

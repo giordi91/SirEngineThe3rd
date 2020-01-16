@@ -113,6 +113,8 @@ public:
                             SHADER_QUEUE_FLAGS queue) = 0;
   virtual void bindTexture(MaterialHandle matHandle, TextureHandle texHandle,
                            uint32_t bindingIndex, SHADER_QUEUE_FLAGS queue) = 0;
+  virtual void bindBuffer(MaterialHandle matHandle, BufferHandle texHandle,
+                           uint32_t bindingIndex, SHADER_QUEUE_FLAGS queue) = 0;
   virtual void free(MaterialHandle handle) = 0;
 
   inline SHADER_TYPE_FLAGS getTypeFlags(const uint32_t flags) {
@@ -158,7 +160,7 @@ public:
   const char *getStringFromShaderTypeFlag(SHADER_TYPE_FLAGS type);
 
 protected:
-  PrelinaryMaterialParse parseMaterial(const char *path,
+  static PrelinaryMaterialParse parseMaterial(const char *path,
                                        const MeshHandle meshHandle,
                                        const SkinHandle skinHandle);
   void loadTypeFile(const char *path);
