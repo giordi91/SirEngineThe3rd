@@ -3,7 +3,7 @@
 
 ConstantBuffer<CameraBuffer> g_cameraBuffer : register(b0,space0);
 ConstantBuffer<DebugPointsFixedColor> g_settings : register(b1,space1);
-StructuredBuffer<float3> points : register(t0,space1);
+StructuredBuffer<float4> points : register(t0,space1);
 
 static float3 offsets[] =
 {
@@ -24,7 +24,7 @@ PositionOnlyVertexOut VS(uint id : SV_VertexID)
     float3 view = float3(g_cameraBuffer.ViewMatrix._31, g_cameraBuffer.
     ViewMatrix._31, g_cameraBuffer.ViewMatrix._31);
 
-    offset = mul(offset, (float3x3)g_cameraBuffer.ViewMatrix) + points[id/6];
+    offset = mul(offset, (float3x3)g_cameraBuffer.ViewMatrix) + points[id/6].xyz;
 
 	// Transform to homogeneous clip space.
     vout.worldPos = float4(offset, 1.0);

@@ -6,6 +6,7 @@
 #include "SirEngine/scripting/scriptingContext.h"
 
 #include "SirEngine/fileUtils.h"
+#include "SirEngine/graphics/debugRenderer.h"
 #include "SirEngine/input.h"
 #include "SirEngine/log.h"
 #include "SirEngine/runtimeString.h"
@@ -60,6 +61,7 @@ void LuaStatePlayer::init(AnimationManager *manager,
   skeleton =
       manager->loadSkeleton(skeletonFileName.c_str(), skeletonFile.c_str());
   assert(skeleton != nullptr);
+  globals::DEBUG_RENDERER->drawSkeleton(skeleton, glm::vec4{1, 0, 1, 1}, 0.2f);
 
   // load the script
   const std::string scriptPath =
