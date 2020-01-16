@@ -26,6 +26,8 @@ struct Dx12DebugPrimitive {
   PRIMITIVE_TYPE primitiveType;
   DescriptorPair srv;
   uint64_t fence;
+  uint32_t m_magicNumber;
+  uint32_t sizeInByte;
 };
 
 struct DebugTracker {
@@ -47,7 +49,8 @@ class Dx12DebugRenderer : public DebugRenderer {
 
 public:
   // TODO cleanup creation, this is probably going away
-  Dx12DebugRenderer() : DebugRenderer(), m_primitivesPool(200){};
+  Dx12DebugRenderer()
+      : DebugRenderer(), m_trackers(200), m_primitivesPool(200){};
   virtual ~Dx12DebugRenderer() = default;
   Dx12DebugRenderer(const Dx12DebugRenderer &) = delete;
   Dx12DebugRenderer &operator=(const Dx12DebugRenderer &) = delete;
@@ -110,10 +113,19 @@ private:
 
   inline void assertMagicNumber(const DebugDrawHandle handle) const {
     const uint32_t magic = getMagicFromHandle(handle);
-    const auto found = m_trackers.find(handle.handle);
-    assert(found != m_trackers.end());
-    assert(found->second.magicNumber == magic &&
-           "invalid magic number for debug tracker");
+
+    DebugTracker tracker;
+    bool found = m_trackers.get(handle.handle, tracker);
+    assert(found);
+    assert(tracker.magicNumber == magic &&
+           "invalid magic handle for debug tracker buffer");
+  }
+  inline void assertPoolMagicNumber(const DebugDrawHandle handle) const {
+    const uint32_t magic = getMagicFromHandle(handle);
+    const uint32_t idx = getIndexFromHandle(handle);
+    const auto &data = m_primitivesPool.getConstRef(idx);
+    assert(data.m_magicNumber == magic &&
+           "invalid magic handle for material data");
   }
 
 private:
@@ -123,7 +135,7 @@ private:
   };
 
   std::unordered_map<uint32_t, std::vector<Dx12DebugPrimitive>> m_renderables;
-  std::unordered_map<uint32_t, DebugTracker> m_trackers;
+  HashMap<uint32_t, DebugTracker, hashUint32> m_trackers;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
   static const uint32_t INDEX_MASK = (1 << 16) - 1;
   static const uint32_t MAGIC_NUMBER_MASK = ~INDEX_MASK;
