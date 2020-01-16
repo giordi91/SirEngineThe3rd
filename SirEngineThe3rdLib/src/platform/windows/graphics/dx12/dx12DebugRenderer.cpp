@@ -65,7 +65,8 @@ DebugDrawHandle Dx12DebugRenderer::drawPointsUniformColor(
   const uint32_t storeHandle =
       static_cast<uint32_t>(queue) | (static_cast<uint32_t>(type) << 16);
 
-  // TODO temp const cast
+  // TODO temp const cast. this is due to the fact that material system is not
+  // yet as mature and polished as should be
   auto &runtime = const_cast<Dx12MaterialRuntime &>(
       dx12::MATERIAL_MANAGER->getMaterialRuntime(description.materialHandle));
   runtime.cbVirtualAddress =

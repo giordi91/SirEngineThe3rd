@@ -46,7 +46,7 @@ public:
   void free(DebugDrawHandle handle) override;
 
   void cleanup() override {
-    // TODO proerly implement cleanup
+    // TODO properly implement cleanup
   }
 
   DebugDrawHandle drawPointsUniformColor(float *data, uint32_t sizeInByte,
