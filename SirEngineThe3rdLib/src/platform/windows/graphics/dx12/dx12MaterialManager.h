@@ -64,6 +64,8 @@ class Dx12MaterialManager final : public MaterialManager {
                                     TextureHandle texHandle,
                                     uint32_t bindingIndex,
                                     SHADER_QUEUE_FLAGS queue) override;
+  void bindBuffer(MaterialHandle matHandle, BufferHandle texHandle, uint32_t bindingIndex,
+	  SHADER_QUEUE_FLAGS queue) override;
 
   void bindRSandPSO(uint32_t shaderFlags,
                     ID3D12GraphicsCommandList2 *commandList);
@@ -91,7 +93,6 @@ class Dx12MaterialManager final : public MaterialManager {
     assert(m_materialTextureHandles[idx].magicNumber == magic &&
            "invalid magic handle for constant buffer");
   }
-  void loadTypeFile(const char *path);
 
  private:
   HashMap<const char *, MaterialHandle, hashString32> m_nameToHandle;

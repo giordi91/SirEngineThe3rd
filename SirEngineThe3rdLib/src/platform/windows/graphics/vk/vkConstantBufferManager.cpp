@@ -325,7 +325,7 @@ void VkConstantBufferManager::bindConstantBuffer(
   bufferInfo.offset = buffData.m_range.m_offset;
   bufferInfo.range = buffData.m_range.m_size;
 
-  VkWriteDescriptorSet &correctSet = set[bindingIdx];
+  VkWriteDescriptorSet &correctSet = set[0];
 
   correctSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   correctSet.dstSet = descSet;

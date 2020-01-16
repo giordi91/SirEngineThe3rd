@@ -9,11 +9,11 @@
 #include "SirEngine/globals.h"
 #include "SirEngine/graphics/camera.h"
 #include "SirEngine/graphics/debugRenderer.h"
-#include "SirEngine/materialManager.h"
 #include "SirEngine/graphics/nodes/FinalBlitNode.h"
 #include "SirEngine/graphics/nodes/debugDrawNode.h"
 #include "SirEngine/graphics/nodes/vkSimpleForward.h"
 #include "SirEngine/graphics/renderingContext.h"
+#include "SirEngine/materialManager.h"
 
 namespace SirEngine {
 void VkTempLayer::initGrass() {
@@ -27,7 +27,7 @@ void VkTempLayer::initGrass() {
   // assuming all tiles have same size
   assertInJson(jobj[0], "points");
   const uint32_t pointCount = jobj[0]["points"].size();
-  const uint64_t totalSize = sizeof(float) * 3 * pointCount * tileCount;
+  const uint64_t totalSize = sizeof(float) * 4 * pointCount * tileCount;
 
   auto *data =
       reinterpret_cast<float *>(globals::FRAME_ALLOCATOR->allocate(totalSize));
@@ -36,7 +36,6 @@ void VkTempLayer::initGrass() {
       globals::FRAME_ALLOCATOR->allocate(sizeof(BoundingBox) * tileCount));
 
   // looping the tiles
-  glm::vec3 zero{0, 0, 0};
   int counter = 0;
   int tileCounter = 0;
   for (const auto &tile : jobj) {
@@ -58,6 +57,7 @@ void VkTempLayer::initGrass() {
       data[counter++] = points[i][0].get<float>();
       data[counter++] = points[i][1].get<float>();
       data[counter++] = points[i][2].get<float>();
+      data[counter++] = 1;
     }
     tileCounter++;
   }
@@ -66,15 +66,31 @@ void VkTempLayer::initGrass() {
       aabbs, tileCount, glm::vec4(1, 0, 0, 1), "debugGrassTiles");
   // we have the tiles, good now we want to render the blades
   m_grassBuffer = globals::BUFFER_MANAGER->allocate(
-      totalSize, data, "grassBuffer", pointCount * tileCount, sizeof(float) * 3,
+      totalSize, data, "grassBuffer", pointCount * tileCount, sizeof(float) * 4,
       BufferManager::STORAGE_BUFFER);
-  //setup a material
+  // setup a material
 
-  const char *queues[5] = {"grassForward", nullptr, nullptr, nullptr,
-                           nullptr};
+  const char *queues[5] = {"grassForward", nullptr, nullptr, nullptr, nullptr};
 
   m_grassMaterial = globals::MATERIAL_MANAGER->allocateMaterial(
-      "grassMaterial", MaterialManager::ALLOCATE_MATERIAL_FLAG_BITS::NONE, queues);
+      "grassMaterial", MaterialManager::ALLOCATE_MATERIAL_FLAG_BITS::NONE,
+      queues);
+  globals::MATERIAL_MANAGER->bindBuffer(m_grassMaterial, m_grassBuffer, 0,
+                                        SHADER_QUEUE_FLAGS::FORWARD);
+
+  //lets create the needed stuff to add the object to the queue 
+  RenderableDescription description{};
+  description.buffer = m_grassBuffer;
+  description.subranges[0].m_offset = 0;
+  description.subranges[0].m_size = totalSize;
+  description.subragesCount = 1;
+
+  description.materialHandle = m_grassMaterial; 
+  //*3 because we render a triangle for now
+  description.primitiveToRender = pointCount*tileCount*3;
+  globals::RENDERING_CONTEXT->addRenderablesToQueue(description);
+
+	
 }
 
 void VkTempLayer::onAttach() {
@@ -356,4 +372,4 @@ bool VkTempLayer::onReloadScriptEvent(ReloadScriptsEvent &) {
   globals::SCRIPTING_CONTEXT->reloadContext();
   return true;
 }*/
-} // namespace SirEngine
+}  // namespace SirEngine

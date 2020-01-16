@@ -2,7 +2,7 @@
   "type": "RASTER",
   "globalRootSignature": "../data/rs/grassForwardRS.json",
   "VS": "grassExpansionVS",
-  "PS": "forwardPhongPS",
+  "PS": "grassForwardPS",
   "rasterState": "default",
   "blendState": "default",
   "depthStencilState": "default",

@@ -56,6 +56,8 @@ public:
     return m_bufferStorage.getConstRef(idx).buffer;
   }
 
+  void bindBuffer(BufferHandle handle,VkWriteDescriptorSet* write, VkDescriptorSet set, uint32_t bindingIndex);
+
 
 private:
   inline void assertMagicNumber(const BufferHandle handle) const {

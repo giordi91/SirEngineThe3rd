@@ -1,7 +1,9 @@
 #include "platform/windows/graphics/vk/vkBufferManager.h"
+
+#include <random>
+
 #include "platform/windows/graphics/vk/vk.h"
 #include "vkMemory.h"
-#include <random>
 
 namespace SirEngine::vk {
 
@@ -12,7 +14,6 @@ void VkBufferManager::initialize() {
 void VkBufferManager::cleanup() {}
 
 void VkBufferManager::free(const BufferHandle handle) {
-
   assertMagicNumber(handle);
   uint32_t idx = getIndexFromHandle(handle);
   const Buffer &buffData = m_bufferStorage.getConstRef(idx);
@@ -30,11 +31,26 @@ void *VkBufferManager::getMappedData(const BufferHandle handle) const {
   return data.memory;
 }
 
+void VkBufferManager::bindBuffer(BufferHandle handle,
+                                 VkWriteDescriptorSet *write,
+                                 VkDescriptorSet set, uint32_t bindingIndex) {
+  assertMagicNumber(handle);
+  uint32_t idx = getIndexFromHandle(handle);
+  const Buffer &data = m_bufferStorage.getConstRef(idx);
+
+  write->sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+  write->dstSet = set;
+  write->dstBinding = bindingIndex;
+  //TODO this should be probably be queried by the buffer data
+  write->descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  write->pBufferInfo = &data.info;
+  write->descriptorCount = 1;
+}
+
 BufferHandle VkBufferManager::allocate(const uint32_t sizeInBytes,
                                        void *initData, const char *name,
                                        const int, const int,
                                        const uint32_t flags) {
-
   bool isRandomWrite = (flags & BUFFER_FLAGS::RANDOM_WRITE) > 0;
   bool isIndex = (flags & BUFFER_FLAGS::INDEX_BUFFER) > 0;
   bool isIndirectBuffer = (flags & BUFFER_FLAGS::INDIRECT_BUFFER) > 0;
@@ -124,6 +140,9 @@ BufferHandle VkBufferManager::allocate(const uint32_t sizeInBytes,
   }
 
   buffer.m_magicNumber = MAGIC_NUMBER_COUNTER++;
+  buffer.info.buffer = buffer.buffer;
+  buffer.info.offset = 0;
+  buffer.info.range = buffer.allocationSize;
   // creating a handle
   BufferHandle handle{(buffer.m_magicNumber << 16) | index};
   return handle;
@@ -159,4 +178,4 @@ void VkBufferManager::update(const ConstantBufferHandle handle, void *data) {
   }
 }*/
 
-} // namespace SirEngine::vk
+}  // namespace SirEngine::vk
