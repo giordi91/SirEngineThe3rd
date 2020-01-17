@@ -1,6 +1,7 @@
 #include "SirEngine/memory/stringPool.h"
 #include <cstdio>
 #include <cstdlib>
+#include "SirEngine/log.h"
 
 namespace SirEngine {
 
@@ -45,7 +46,11 @@ const char* StringPool::loadFilePersistent(const char* path,
   FILE* fp = nullptr;
 
   const errno_t error = fopen_s(&fp, path, "rb");
-  assert((error == 0) && "could not open file");
+  //assert((error == 0) && "could not open file");
+  if(error!=0) {
+      SE_CORE_ERROR("Could not open file {0}",path);
+      return nullptr;
+  }
 
   fseek(fp, 0L, SEEK_END);
   const long fileSize = ftell(fp);

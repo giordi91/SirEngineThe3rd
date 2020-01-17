@@ -1,13 +1,14 @@
 #include "platform/windows/graphics/dx12/PSOCompile.h"
+
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/graphics/nodes/framePassDebugNode.h"
 #include "SirEngine/log.h"
+#include "dx12SwapChain.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/d3dx12.h"
 #include "platform/windows/graphics/dx12/dxgiFormatsDefine.h"
 #include "rootSignatureCompile.h"
 #include "shaderCompiler.h"
-#include "dx12SwapChain.h"
 
 namespace SirEngine::dx12 {
 static const std::string PSO_KEY_GLOBAL_ROOT = "globalRootSignature";
@@ -96,8 +97,8 @@ PSOType convertStringPSOTypeToEnum(const char *type) {
 }
 
 inline DXGI_FORMAT convertStringToDXGIFormat(const std::string &format) {
-  if(format == SWAP_CHAIN_FORMAT_KEY) {
-      return Dx12SwapChain::SWAP_CHAIN_FORMAT;
+  if (format == SWAP_CHAIN_FORMAT_KEY) {
+    return Dx12SwapChain::SWAP_CHAIN_FORMAT;
   }
   const auto found = STRING_TO_DXGI_FORMAT.find(format);
   if (found != STRING_TO_DXGI_FORMAT.end()) {
@@ -107,8 +108,8 @@ inline DXGI_FORMAT convertStringToDXGIFormat(const std::string &format) {
   return DXGI_FORMAT_UNKNOWN;
 }
 
-inline D3D12_PRIMITIVE_TOPOLOGY_TYPE
-convertStringToTopology(const std::string &topology) {
+inline D3D12_PRIMITIVE_TOPOLOGY_TYPE convertStringToTopology(
+    const std::string &topology) {
   const auto found = STRING_TO_TOPOLOGY.find(topology);
   if (found != STRING_TO_TOPOLOGY.end()) {
     return found->second;
@@ -273,14 +274,15 @@ PSOCompileResult processComputePSO(nlohmann::json &jobj, const char *path,
       getValueIfInJson(jobj, PSO_KEY_SHADER_NAME, DEFAULT_STRING);
   assert(!shaderName.empty());
 
-  const char *CSnameAndExtension = frameConcatenation(shaderName.c_str(), ".hlsl");
+  const char *CSnameAndExtension =
+      frameConcatenation(shaderName.c_str(), ".hlsl");
   const char *csPath =
       frameConcatenation(shaderPath, CSnameAndExtension, "/compute/");
 
   auto resultCompile = processSignatureFile(globalRootSignatureName.c_str());
   auto rootS = resultCompile.root;
 
-  //compiling the shader
+  // compiling the shader
   DXCShaderCompiler compiler;
   ShaderArgs csArgs;
   csArgs.entryPoint = L"CS";
@@ -288,8 +290,7 @@ PSOCompileResult processComputePSO(nlohmann::json &jobj, const char *path,
   csArgs.type = L"cs_6_2";
 
   std::string log;
-  auto *computeShader =
-      compiler.compileShader(csPath, csArgs, &log);
+  auto *computeShader = compiler.compileShader(csPath, csArgs, &log);
 
   D3D12_SHADER_BYTECODE computeShaderByteCode{computeShader->GetBufferPointer(),
                                               computeShader->GetBufferSize()};
@@ -299,7 +300,8 @@ PSOCompileResult processComputePSO(nlohmann::json &jobj, const char *path,
   cdesc->pRootSignature = rootS;
   cdesc->CS = computeShaderByteCode;
   cdesc->Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
-  HRESULT result = dx12::DEVICE->CreateComputePipelineState(cdesc, IID_PPV_ARGS(&pso));
+  HRESULT result =
+      dx12::DEVICE->CreateComputePipelineState(cdesc, IID_PPV_ARGS(&pso));
   assert(SUCCEEDED(result));
 
   const std::string name = getFileName(path);
@@ -341,9 +343,9 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj, const char *path,
       frameConcatenation(shaderPath, PSnameAndExtension, "/rasterization/");
 
   // we have the shader name, we need to find it.
-  //TODO not ideal, should this be an engine config? realistically aint going to
-  //support either mix and match or different versions, everything needs to compile
-  //for the lastest
+  // TODO not ideal, should this be an engine config? realistically aint going
+  // to support either mix and match or different versions, everything needs to
+  // compile for the lastest
   DXCShaderCompiler compiler;
   ShaderArgs vsArgs;
   vsArgs.entryPoint = L"VS";
@@ -352,6 +354,9 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj, const char *path,
 
   std::string log;
   auto *vs = compiler.compileShader(vsPath, vsArgs, &log);
+  if (vs == nullptr) {
+    return PSOCompileResult{};
+  }
 
   ShaderArgs psArgs;
   psArgs.entryPoint = L"PS";
@@ -360,6 +365,9 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj, const char *path,
   ID3DBlob *ps = nullptr;
   if (PSname != "null") {
     ps = compiler.compileShader(psPath, psArgs, &log);
+    if (ps == nullptr) {
+      return PSOCompileResult{};
+    }
   }
 
   const std::string rasterStateString =
@@ -410,7 +418,7 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj, const char *path,
   auto *psoDesc = new D3D12_GRAPHICS_PIPELINE_STATE_DESC();
   ID3D12PipelineState *pso = nullptr;
   ZeroMemory(psoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
-  //NOTE: we are not using input assembler at all
+  // NOTE: we are not using input assembler at all
   psoDesc->InputLayout = {nullptr, 0};
   psoDesc->pRootSignature = rootSignature;
   psoDesc->VS = {reinterpret_cast<BYTE *>(vs->GetBufferPointer()),
@@ -453,7 +461,7 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj, const char *path,
                           frameString(path),
                           frameString(layoutString.c_str()),
                           frameString(rootSignatureString.c_str())};
-} // namespace SirEngine::dx12
+}  // namespace SirEngine::dx12
 
 PSOCompileResult compileRawPSO(const char *path, const char *shaderPath) {
   auto jobj = getJsonObj(path);
@@ -465,24 +473,24 @@ PSOCompileResult compileRawPSO(const char *path, const char *shaderPath) {
   const PSOType psoType = convertStringPSOTypeToEnum(psoTypeString.c_str());
 
   switch (psoType) {
-  case (PSOType::COMPUTE): {
-    return processComputePSO(jobj, path, shaderPath);
-    break;
-  }
-  case (PSOType::DXR): {
-    assert(0);
-    break;
-  }
-  case (PSOType::RASTER): {
-    return processRasterPSO(jobj, path, shaderPath);
-    break;
-  }
-  default: {
-    assert(0 && "PSO Type not supported");
-    break;
-  }
+    case (PSOType::COMPUTE): {
+      return processComputePSO(jobj, path, shaderPath);
+      break;
+    }
+    case (PSOType::DXR): {
+      assert(0);
+      break;
+    }
+    case (PSOType::RASTER): {
+      return processRasterPSO(jobj, path, shaderPath);
+      break;
+    }
+    default: {
+      assert(0 && "PSO Type not supported");
+      break;
+    }
   }
   return PSOCompileResult{nullptr, nullptr, nullptr, PSOType::INVALID};
 }
 
-} // namespace SirEngine::dx12
+}  // namespace SirEngine::dx12

@@ -45,6 +45,9 @@ ID3DBlob *DXCShaderCompiler::compileShader(const char *shaderPath,
 
   uint32_t fileSize;
   const char *program = persistentFileLoad(shaderPath, fileSize);
+  if(program == nullptr) {
+      return nullptr;
+  }
 
   IDxcBlobEncoding *pSource;
   DxcCreateInstance(CLSID_DxcLibrary, __uuidof(IDxcLibrary),
