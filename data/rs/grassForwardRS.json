@@ -2,6 +2,7 @@
   "type": "RASTER",
   "staticSamplers": false,
   "staticSamplersVisibility": [ "PS" ],
+  "generateMetadata" :  true, 
   "config": [
     {
       "comment": "vertex buffer bound as storage buffer/ positions",
