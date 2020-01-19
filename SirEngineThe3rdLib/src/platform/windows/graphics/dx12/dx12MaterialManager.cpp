@@ -400,25 +400,36 @@ void Dx12MaterialManager::bindMaterial(
   }
 }
 
-void Dx12MaterialManager::bindTexture(MaterialHandle,
+void Dx12MaterialManager::bindTexture(MaterialHandle handle,
                                       const TextureHandle texHandle,
                                       const uint32_t bindingIndex,
-                                      SHADER_QUEUE_FLAGS) {
-  // TODO use the queue flags once we re-designed the descriptor handling ofr
-  // dx12
+                                      SHADER_QUEUE_FLAGS queue) {
+  assertMagicNumber(handle);
+  uint32_t index = getIndexFromHandle(handle);
+  const auto &data = m_materialTextureHandles.getConstRef(index);
+
+  const auto queueFlagInt = static_cast<int>(queue);
+  const auto currentFlagId =
+      static_cast<int>(log2(queueFlagInt & -queueFlagInt));
+  assert(data.m_tables[currentFlagId].isFlatRoot == true);
+
   dx12::DescriptorPair pair = dx12::TEXTURE_MANAGER->getSRVDx12(texHandle);
 
-  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
-  auto commandList = currentFc->commandList;
-  commandList->SetGraphicsRootDescriptorTable(bindingIndex, pair.gpuHandle);
+  const FlatDescriptorTalbe &table = data.m_tables[currentFlagId];
+
+  dx12::TEXTURE_MANAGER->createSRV(texHandle,
+                                   table.flatDescriptors[bindingIndex]);
+
+  // dx12::DEVICE->CopyDescriptorsSimple(
+  //    1, table.flatDescriptors[bindingIndex].cpuHandle, pair.cpuHandle,
+  //    D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
 void Dx12MaterialManager::bindBuffer(MaterialHandle matHandle,
                                      BufferHandle texHandle,
                                      uint32_t bindingIndex,
                                      SHADER_QUEUE_FLAGS queue) {
-assert(0);
-
+  assert(0);
 }
 
 void Dx12MaterialManager::bindMaterial(
@@ -470,9 +481,8 @@ MaterialHandle Dx12MaterialManager::allocateMaterial(
     materialData.m_tables[i].descriptorCount = 0;
     materialData.m_tables[i].flatDescriptors = nullptr;
 
-
-  	//now we check whether is a flat table or not, if it is
-  	//we allocate the corresponding descriptors
+    // now we check whether is a flat table or not, if it is
+    // we allocate the corresponding descriptors
     RSHandle root = bind.rs;
     bool isFlatRoot = dx12::ROOT_SIGNATURE_MANAGER->isFlatRoot(root);
     if (isFlatRoot) {
@@ -586,7 +596,7 @@ MaterialHandle Dx12MaterialManager::loadMaterial(const char *path,
 }
 
 void Dx12MaterialManager::bindMaterial(const MaterialHandle handle,
-                                       SHADER_QUEUE_FLAGS) {
+                                       SHADER_QUEUE_FLAGS queue) {
   // TODO use the queue flags once we re-designed the descriptor handling ofr
   // dx12
   assertMagicNumber(handle);
@@ -598,6 +608,15 @@ void Dx12MaterialManager::bindMaterial(const MaterialHandle handle,
   ID3D12RootSignature *rs =
       dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromHandle(data.m_rsHandle);
   commandList->SetGraphicsRootSignature(rs);
+
+  const auto queueFlagInt = static_cast<int>(queue);
+  const auto currentFlagId =
+      static_cast<int>(log2(queueFlagInt & -queueFlagInt));
+
+  assert(data.m_tables[currentFlagId].isFlatRoot == true);
+  // let us bind the descriptor table
+  commandList->SetGraphicsRootDescriptorTable(
+      1, data.m_tables[currentFlagId].flatDescriptors[0].gpuHandle);
 }
 
 void Dx12MaterialManager::free(const MaterialHandle handle) {

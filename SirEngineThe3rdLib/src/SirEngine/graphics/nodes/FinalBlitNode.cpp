@@ -23,10 +23,8 @@ void FinalBlitNode::compute() {
   // both the back buffer  and input texture
   globals::RENDERING_CONTEXT->setBindingObject(m_bindHandle);
   // next we bind the material, this will among other things bind the pso and rs
-  globals::MATERIAL_MANAGER->bindMaterial(m_matHandle,SHADER_QUEUE_FLAGS::CUSTOM);
-  // we also need to bind the input resource, which is the texture we want to
-  // blit
-  globals::MATERIAL_MANAGER->bindTexture(m_matHandle, inputRTHandle, 1,SHADER_QUEUE_FLAGS::CUSTOM);
+  globals::MATERIAL_MANAGER->bindMaterial(m_matHandle,
+                                          SHADER_QUEUE_FLAGS::CUSTOM);
   // finally we submit a fullscreen pass
   globals::RENDERING_CONTEXT->fullScreenPass();
 
@@ -38,7 +36,7 @@ void FinalBlitNode::initialize() {
   const char *queues[5] = {nullptr, nullptr, nullptr, nullptr,
                            "HDRtoSDREffect"};
   m_matHandle = globals::MATERIAL_MANAGER->allocateMaterial(
-      "HDRtoSDREffect", MaterialManager::ALLOCATE_MATERIAL_FLAG_BITS::BUFFERED,
+      "HDRtoSDREffect", 0,
       queues
 
   );
@@ -70,6 +68,11 @@ void FinalBlitNode::populateNodePorts() {
 
   m_bindHandle = globals::RENDERING_CONTEXT->prepareBindingObject(
       bindings, "EndOfFrameBlit");
+
+  // we also need to bind the input resource, which is the texture we want to
+  // blit
+  globals::MATERIAL_MANAGER->bindTexture(m_matHandle, inputRTHandle, 0,
+                                         SHADER_QUEUE_FLAGS::CUSTOM);
 }
 
 void FinalBlitNode::clear() {

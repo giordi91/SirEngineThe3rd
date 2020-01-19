@@ -63,8 +63,8 @@ Application::Application() {
 
   if (globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::DX12) {
     imGuiLayer = new ImguiLayer();
-    //graphicsLayer = new Graphics3DLayer();
-    graphicsLayer = new VkTempLayer();
+    graphicsLayer = new Graphics3DLayer();
+    //graphicsLayer = new VkTempLayer();
     m_layerStack.pushLayer(graphicsLayer);
     m_layerStack.pushLayer(imGuiLayer);
   } else {

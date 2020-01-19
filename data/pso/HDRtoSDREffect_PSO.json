@@ -1,7 +1,7 @@
 {
   "type": "RASTER",
   "inputLayout": "deferredNull",
-  "globalRootSignature": "../data/rs/standardPostProcessEffect_RS.json",
+  "globalRootSignature": "../data/rs/finalBlit_RS.json",
   "VS": "fullScreenQuadVS",
   "PS": "HDRtoSDREffectPS",
   "rasterState": "default",

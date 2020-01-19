@@ -1,6 +1,6 @@
 {
   "pso" :  "HDRtoSDREffect_PSO", 
-  "rs"  :  "standardPostProcessEffect_RS",
+  "rs"  :  "finalBlit_RS",
   "type" : "HDRtoSDREffect"
 }
 

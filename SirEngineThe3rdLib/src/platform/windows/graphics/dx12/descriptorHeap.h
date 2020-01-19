@@ -81,7 +81,7 @@ public:
   int reserveDescriptors(DescriptorPair *pair, uint32_t count);
 
   UINT createTexture2DSRV(DescriptorPair &pair, ID3D12Resource *resource,
-                          DXGI_FORMAT format, UINT mipLevel = 0);
+                          DXGI_FORMAT format, UINT mipLevel = 0, bool descriptorExists=false);
   UINT createTextureCubeSRV(DescriptorPair &pair, ID3D12Resource *resource,
                             DXGI_FORMAT format);
   UINT createTexture2DUAV(DescriptorPair &pair, ID3D12Resource *resource,

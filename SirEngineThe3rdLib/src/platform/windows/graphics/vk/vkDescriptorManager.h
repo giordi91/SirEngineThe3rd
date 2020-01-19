@@ -14,7 +14,7 @@ class VkDescriptorManager final {
     uint16_t isBuffered : 1;
     uint16_t padding : 15;
     VkDescriptorSet *sets;
-	VkDescriptorSetLayout layout;
+    VkDescriptorSetLayout layout;
   };
 
   struct DescriptorPoolDefinition {
@@ -22,11 +22,11 @@ class VkDescriptorManager final {
     uint32_t imagesDescriptorCount;
   };
 
-public:
+ public:
   enum DESCRIPTOR_FLAGS_BITS { BUFFERED = 1 };
   typedef uint32_t DESCRIPTOR_FLAGS;
 
-public:
+ public:
   VkDescriptorManager(uint32_t uniformDescriptorCount,
                       uint32_t imagesDescriptorCount)
       : m_descriptorDataPool(RESERVE_SIZE),
@@ -52,16 +52,24 @@ public:
     uint32_t setIndex = data.isBuffered ? globals::CURRENT_FRAME : 0;
     return data.sets[setIndex];
   }
-  VkDescriptorSetLayout getDescriptorSetLayout(const DescriptorHandle handle) const {
+  VkDescriptorSetLayout getDescriptorSetLayout(
+      const DescriptorHandle handle) const {
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
     const DescriptorData &data = m_descriptorDataPool.getConstRef(index);
     return data.layout;
   }
 
+  bool isBuffered(const DescriptorHandle handle) const {
+    assertMagicNumber(handle);
+    uint32_t index = getIndexFromHandle(handle);
+    const DescriptorData &data = m_descriptorDataPool.getConstRef(index);
+    return data.isBuffered;
+  }
+
   VkDescriptorPool getPool() const { return m_descriptorPool; }
 
-private:
+ private:
   inline void assertMagicNumber(const DescriptorHandle handle) const {
 #ifdef SE_DEBUG
     uint32_t magic = getMagicFromHandle(handle);
@@ -71,7 +79,7 @@ private:
 #endif
   }
 
-private:
+ private:
   static const uint32_t RESERVE_SIZE = 400;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
   SparseMemoryPool<DescriptorData> m_descriptorDataPool;
@@ -80,4 +88,4 @@ private:
   VkDescriptorPool m_descriptorPool;
 };
 
-} // namespace SirEngine::vk
+}  // namespace SirEngine::vk
