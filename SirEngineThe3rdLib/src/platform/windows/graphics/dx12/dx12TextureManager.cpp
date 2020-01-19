@@ -65,8 +65,6 @@ TextureHandle Dx12TextureManager::loadTexture(const char *path,
     std::vector<D3D12_SUBRESOURCE_DATA> subresources;
 
     batch.Begin();
-    // DirectX::CreateDDSTextureFromFile(dx12::DEVICE, batch, pathws.c_str(),
-    //                                  &data.resource, false);
     DirectX::DDS_LOADER_FLAGS loadF =
         isGamma ? DirectX::DDS_LOADER_FORCE_SRGB : DirectX::DDS_LOADER_DEFAULT;
 

@@ -130,6 +130,13 @@ class SIR_ENGINE_API Dx12TextureManager final : public TextureManager {
     }
     return counter;
   }
+  void createSRV(TextureHandle handle, DescriptorPair &pair) {
+    assertMagicNumber(handle);
+    const uint32_t index = getIndexFromHandle(handle);
+    TextureData &data = m_texturePool[index];
+    dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DSRV(pair, data.resource,
+                                                      data.format,0, true);
+  }
 
  private:
   inline void assertMagicNumber(const TextureHandle handle) const {

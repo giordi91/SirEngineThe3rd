@@ -7,13 +7,13 @@
 #include "nlohmann/json.hpp"
 #include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
 #include "vk.h"
+#include "vkBufferManager.h"
 #include "vkConstantBufferManager.h"
 #include "vkDescriptorManager.h"
 #include "vkMeshManager.h"
 #include "vkPSOManager.h"
 #include "vkRootSignatureManager.h"
 #include "vkTextureManager.h"
-#include "vkBufferManager.h"
 
 namespace SirEngine::vk {
 
@@ -785,6 +785,8 @@ void VkMaterialManager::bindTexture(MaterialHandle matHandle,
   assert(descriptorHandle.isHandleValid());
   VkDescriptorSet descriptorSet =
       vk::DESCRIPTOR_MANAGER->getDescriptorSet(descriptorHandle);
+  assert(!vk::DESCRIPTOR_MANAGER->isBuffered(descriptorHandle) &&
+         "buffered not yet implemented");
 
   VkWriteDescriptorSet writeDescriptorSets{};
 
@@ -821,7 +823,7 @@ void VkMaterialManager::bindBuffer(MaterialHandle matHandle,
   VkWriteDescriptorSet writeDescriptorSets{};
 
   vk::BUFFER_MANAGER->bindBuffer(bufferHandle, &writeDescriptorSets,
-                                   descriptorSet, bindingIndex);
+                                 descriptorSet, bindingIndex);
 
   vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, 1, &writeDescriptorSets, 0,
                          nullptr);

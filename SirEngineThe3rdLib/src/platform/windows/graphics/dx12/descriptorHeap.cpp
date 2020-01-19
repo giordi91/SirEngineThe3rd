@@ -81,8 +81,17 @@ UINT DescriptorHeap::createBufferCBV(DescriptorPair &pair,
 
 UINT DescriptorHeap::createTexture2DSRV(DescriptorPair &pair,
                                         ID3D12Resource *resource,
-                                        DXGI_FORMAT format, UINT mipLevel) {
-  UINT descriptorIndex = allocateDescriptor(&pair.cpuHandle);
+                                        DXGI_FORMAT format, UINT mipLevel,
+                                        bool descriptorExists) {
+  UINT descriptorIndex = 0;
+  if (!descriptorExists) {
+    descriptorIndex = allocateDescriptor(&pair.cpuHandle);
+  } else {
+    //reconstruct the descriptor index using pointers
+    auto descriptorHeapCpuBase = getCPUStart();
+    descriptorIndex =
+        (pair.cpuHandle.ptr - descriptorHeapCpuBase.ptr) / m_descriptorSize;
+  }
 
   D3D12_RESOURCE_DESC desc = resource->GetDesc();
   D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
