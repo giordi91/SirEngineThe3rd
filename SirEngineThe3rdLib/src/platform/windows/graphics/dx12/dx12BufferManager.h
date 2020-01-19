@@ -16,7 +16,7 @@ class BufferManagerDx12 final : public BufferManager {
     uint64_t fence;
   };
 
-public:
+ public:
   BufferManagerDx12() : m_bufferPool(RESERVE_SIZE){};
 
   virtual ~BufferManagerDx12() = default;
@@ -42,10 +42,11 @@ public:
   void bindBufferAsSRVGraphics(BufferHandle handle, int slot,
                                ID3D12GraphicsCommandList2 *commandList,
                                uint32_t offset = 0) const;
-  void
-  bindBufferAsDescriptorTableGrahpics(const BufferHandle handle, const int slot,
-                                      ID3D12GraphicsCommandList2 *commandList,
-                                      uint32_t offset) const;
+  void createSrv(const BufferHandle &handle,
+                 DescriptorPair &descriptorPair) const;
+  void bindBufferAsDescriptorTableGrahpics(
+      const BufferHandle handle, const int slot,
+      ID3D12GraphicsCommandList2 *commandList, uint32_t offset) const;
 
   BufferHandle getBufferFromName(const std::string &name) const {
     const auto found = m_nameToHandle.find(name);
@@ -95,7 +96,7 @@ public:
   //  }
   //  return BufferHandle{0};
   //}
-private:
+ private:
   inline void assertMagicNumber(const BufferHandle handle) const {
     uint32_t magic = getMagicFromHandle(handle);
     uint32_t idx = getIndexFromHandle(handle);
@@ -111,6 +112,8 @@ private:
     uint32_t magicNumber;
     DescriptorPair srv;
     DescriptorPair uav;
+    uint32_t elementCount; 
+    uint32_t elementSize;
     void *mappedData = nullptr;
   };
 
@@ -120,5 +123,5 @@ private:
   std::vector<UploadRequest> m_uploadRequests;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
 };
-} // namespace dx12
-} // namespace SirEngine
+}  // namespace dx12
+}  // namespace SirEngine

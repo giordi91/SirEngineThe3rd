@@ -70,7 +70,7 @@ class Dx12MaterialManager final : public MaterialManager {
                     ID3D12GraphicsCommandList2 *commandList);
   void bindTexture(MaterialHandle matHandle, TextureHandle texHandle,
                    uint32_t bindingIndex, SHADER_QUEUE_FLAGS queue) override;
-  void bindBuffer(MaterialHandle matHandle, BufferHandle texHandle,
+  void bindBuffer(MaterialHandle handle, BufferHandle bufferHandle,
                   uint32_t bindingIndex, SHADER_QUEUE_FLAGS queue) override;
 
   void bindRSandPSO(uint32_t shaderFlags,

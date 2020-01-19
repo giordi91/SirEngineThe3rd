@@ -340,7 +340,7 @@ RootCompilerResult flatTablesRS(nlohmann::json jobj, const std::string &name,
   }
   int counter = 0 + extraRegister;
 
-  auto *userRanges = new CD3DX12_DESCRIPTOR_RANGE[configValue.size()];
+  auto *userRanges = new CD3DX12_DESCRIPTOR_RANGE[configValue.size()]{};
   int userCounter = 0;
   for (auto &subConfig : configValue) {
     // getting the type of root

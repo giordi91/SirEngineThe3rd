@@ -320,6 +320,7 @@ PSOCompileResult processComputePSO(nlohmann::json &jobj, const char *path,
 
 PSOCompileResult processRasterPSO(nlohmann::json &jobj, const char *path,
                                   const char *shaderPath) {
+
   // find the input layout
   const std::string layoutString =
       getValueIfInJson(jobj, PSO_KEY_INPUT_LAYOUT, DEFAULT_STRING);
