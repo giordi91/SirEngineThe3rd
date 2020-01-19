@@ -119,6 +119,8 @@ BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInBytes,
   data.state = isUav ? D3D12_RESOURCE_STATE_UNORDERED_ACCESS
                      : D3D12_RESOURCE_STATE_GENERIC_READ;
   data.type = isUav ? BufferType::UAV : BufferType::SRV;
+  data.elementCount = numElements;
+  data.elementSize= elementSize;
 
   return handle;
 }
@@ -151,6 +153,9 @@ BufferHandle BufferManagerDx12::allocateUpload(const uint32_t sizeInByte,
   data.data = uploadBuffer;
   data.state = D3D12_RESOURCE_STATE_GENERIC_READ;
   data.type = BufferType::SRV;
+  data.elementCount = numElements;
+  data.elementSize= elementSize;
+
   dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferSRV(data.srv, data.data,
                                                  numElements, elementSize);
 
@@ -184,6 +189,16 @@ void BufferManagerDx12::bindBufferAsSRVGraphics(
   commandList->SetGraphicsRootShaderResourceView(
       slot, data.data->GetGPUVirtualAddress() + offset);
 }
+
+void BufferManagerDx12::createSrv(const BufferHandle &handle,
+                                  DescriptorPair &descriptorPair) const {
+  assertMagicNumber(handle);
+  const uint32_t index = getIndexFromHandle(handle);
+  const BufferData &data = m_bufferPool.getConstRef(index);
+  dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferSRV(
+      descriptorPair, data.data, data.elementCount, data.elementSize);
+}
+
 void BufferManagerDx12::bindBufferAsDescriptorTableGrahpics(
     const BufferHandle handle, const int slot,
     ID3D12GraphicsCommandList2 *commandList, const uint32_t offset) const {
@@ -196,12 +211,11 @@ void BufferManagerDx12::bindBufferAsDescriptorTableGrahpics(
   //    slot, data.data->GetGPUVirtualAddress() + offset);
 }
 
-void* BufferManagerDx12::getMappedData(const BufferHandle handle) const
-{
-	assertMagicNumber(handle);
-	const uint32_t index = getIndexFromHandle(handle);
-	const BufferData& data = m_bufferPool.getConstRef(index);
-	return data.mappedData;
+void *BufferManagerDx12::getMappedData(const BufferHandle handle) const {
+  assertMagicNumber(handle);
+  const uint32_t index = getIndexFromHandle(handle);
+  const BufferData &data = m_bufferPool.getConstRef(index);
+  return data.mappedData;
 }
 
 void BufferManagerDx12::clearUploadRequests() {

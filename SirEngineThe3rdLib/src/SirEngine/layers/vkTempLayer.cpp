@@ -106,6 +106,8 @@ void VkTempLayer::onAttach() {
   globals::MAIN_CAMERA->setPosition(0, 15, 15);
   globals::MAIN_CAMERA->updateCamera();
 
+  globals::RENDERING_CONTEXT->flush();
+  globals::RENDERING_CONTEXT->resetGlobalCommandList();
   // globals::ASSET_MANAGER->loadScene(globals::ENGINE_CONFIG->m_startScenePath);
   globals::ASSET_MANAGER->loadScene("../data/scenes/tempScene.json");
 
@@ -133,7 +135,6 @@ void VkTempLayer::onAttach() {
                                          finalBlit, FinalBlitNode::IN_TEXTURE);
 
   // TODO this whole reset execute flush needs to be reworked
-  globals::RENDERING_CONTEXT->resetGlobalCommandList();
   globals::RENDERING_GRAPH->finalizeGraph();
   globals::RENDERING_CONTEXT->executeGlobalCommandList();
   globals::RENDERING_CONTEXT->flush();

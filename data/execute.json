@@ -1,9 +1,9 @@
 {
   "commands": [
+    "-p ../data/rs/finalBlit_RS.json -o ../data/processed/rs/finalBlit_RS.root --pluginName rootSignatureCompilerPlugin",
     "-p ../data/shaders/VK/rasterization/grassExpansionVS.glsl -o ../data/processed/shaders/VK/rasterization/grassExpansionVS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \"",
     "-p ../data/shaders/VK/rasterization/grassForwardPS.glsl -o ../data/processed/shaders/VK/rasterization/grassForwardPS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d \"",
     "-p ../data/rs/grassForwardRS.json -o ../data/processed/rs/grassForwardRS.root --pluginName rootSignatureCompilerPlugin",
-    "-p ../data/rs/finalBlit_RS.json -o ../data/processed/rs/finalBlit_RS.root --pluginName rootSignatureCompilerPlugin",
     "-p ../data/shaders/DX12/rasterization/grassExpansionVS.hlsl -o ../data/processed/shaders/DX12/rasterization/grassExpansionVS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t vs_6_2  -e VS -d \"",
     "-p ../data/shaders/DX12/rasterization/grassForwardPS.hlsl -o ../data/processed/shaders/DX12/rasterization/grassForwardPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \""
   ]

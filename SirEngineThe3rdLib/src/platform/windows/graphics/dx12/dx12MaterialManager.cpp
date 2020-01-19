@@ -413,8 +413,6 @@ void Dx12MaterialManager::bindTexture(MaterialHandle handle,
       static_cast<int>(log2(queueFlagInt & -queueFlagInt));
   assert(data.m_tables[currentFlagId].isFlatRoot == true);
 
-  dx12::DescriptorPair pair = dx12::TEXTURE_MANAGER->getSRVDx12(texHandle);
-
   const FlatDescriptorTalbe &table = data.m_tables[currentFlagId];
 
   dx12::TEXTURE_MANAGER->createSRV(texHandle,
@@ -425,15 +423,27 @@ void Dx12MaterialManager::bindTexture(MaterialHandle handle,
   //    D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
-void Dx12MaterialManager::bindBuffer(MaterialHandle matHandle,
-                                     BufferHandle texHandle,
-                                     uint32_t bindingIndex,
+void Dx12MaterialManager::bindBuffer(const MaterialHandle handle,
+                                     BufferHandle bufferHandle,
+                                     const uint32_t bindingIndex,
                                      SHADER_QUEUE_FLAGS queue) {
-  assert(0);
+  assertMagicNumber(handle);
+  uint32_t index = getIndexFromHandle(handle);
+  const auto &data = m_materialTextureHandles.getConstRef(index);
+
+  const auto queueFlagInt = static_cast<int>(queue);
+  const auto currentFlagId =
+      static_cast<int>(log2(queueFlagInt & -queueFlagInt));
+  assert(data.m_tables[currentFlagId].isFlatRoot == true);
+
+  const FlatDescriptorTalbe &table = data.m_tables[currentFlagId];
+
+  dx12::BUFFER_MANAGER->createSrv(bufferHandle,
+                                  table.flatDescriptors[bindingIndex]);
 }
 
 void Dx12MaterialManager::bindMaterial(
-    SHADER_QUEUE_FLAGS queueFlag, const MaterialHandle handle,
+    const SHADER_QUEUE_FLAGS queueFlag, const MaterialHandle handle,
     ID3D12GraphicsCommandList2 *commandList) {
   const Dx12MaterialRuntime &materialRuntime = getMaterialRuntime(handle);
   bindMaterial(queueFlag, materialRuntime, commandList);
