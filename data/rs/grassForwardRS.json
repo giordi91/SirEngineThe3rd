@@ -1,8 +1,9 @@
 {
   "type": "RASTER",
   "staticSamplers": false,
+  "useRegisterSpace": true, 
   "staticSamplersVisibility": [ "PS" ],
-  "generateMetadata" :  true, 
+  "flatDescriptorTable" :  true, 
   "config": [
     {
       "comment": "vertex buffer bound as storage buffer/ positions",

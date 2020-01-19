@@ -78,6 +78,7 @@ public:
                        int totalSizeInByte);
 
   int reserveDescriptor(DescriptorPair &pair);
+  int reserveDescriptors(DescriptorPair *pair, uint32_t count);
 
   UINT createTexture2DSRV(DescriptorPair &pair, ID3D12Resource *resource,
                           DXGI_FORMAT format, UINT mipLevel = 0);

@@ -32,7 +32,8 @@ inline const BinaryFileHeader *getHeader(const void *binaryData) {
   return reinterpret_cast<const BinaryFileHeader *>(binaryData);
 };
 
-template <typename T> const T *getMapperData(const void *binaryData) {
+template <typename T>
+const T *getMapperData(const void *binaryData) {
   const BinaryFileHeader *header = getHeader(binaryData);
   const char *outPointer = reinterpret_cast<const char *>(binaryData) +
                            header->mapperDataOffsetInByte;
@@ -57,13 +58,13 @@ writeBinaryFile(const BinaryFileWriteRequest &request);
 bool SIR_ENGINE_API readAllBytes(const std::string &filename,
                                  std::vector<char> &data);
 
-#define BINARY_FILE_TYPES                                                      \
-  X(NONE)                                                                      \
-  X(MODEL)                                                                     \
-  X(SHADER)                                                                    \
-  X(RS)                                                                        \
-  X(SKIN)                                                                      \
-  X(ANIM)                                                                      \
+#define BINARY_FILE_TYPES \
+  X(NONE)                 \
+  X(MODEL)                \
+  X(SHADER)               \
+  X(RS)                   \
+  X(SKIN)                 \
+  X(ANIM)                 \
   X(PSO)
 
 enum BinaryFileType {
@@ -120,8 +121,10 @@ struct VkShaderMapperData final {
 };
 
 struct RootSignatureMappedData final {
-  uint32_t type = 0;
   uint32_t sizeInByte = 0;
+  uint32_t type : 8;
+  uint32_t isFlatRoot : 8;
+  uint32_t flatRootSignatureCount : 16;
 };
 
 struct SkinMapperData {

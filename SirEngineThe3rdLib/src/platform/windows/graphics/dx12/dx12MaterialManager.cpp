@@ -417,7 +417,8 @@ void Dx12MaterialManager::bindBuffer(MaterialHandle matHandle,
                                      BufferHandle texHandle,
                                      uint32_t bindingIndex,
                                      SHADER_QUEUE_FLAGS queue) {
-  assert(0);
+assert(0);
+
 }
 
 void Dx12MaterialManager::bindMaterial(
@@ -460,23 +461,42 @@ MaterialHandle Dx12MaterialManager::allocateMaterial(
            "could find the material type but no PSO, does the correct material "
            "exists for HLSL?");
 
-    // TODO for now, not much is happening here, because we have a crappy
-    // binding system where each resource is bound with independent descriptor
-    // table, when we change this, here we will be doing an update of the
-    // binding table
-
     // empty material
     uint32_t index;
     MaterialData &materialData =
         m_materialTextureHandles.getFreeMemoryData(index);
     materialData.magicNumber = MAGIC_NUMBER_COUNTER++;
+    materialData.m_tables[i].isFlatRoot = false;
+    materialData.m_tables[i].descriptorCount = 0;
+    materialData.m_tables[i].flatDescriptors = nullptr;
+
+
+  	//now we check whether is a flat table or not, if it is
+  	//we allocate the corresponding descriptors
+    RSHandle root = bind.rs;
+    bool isFlatRoot = dx12::ROOT_SIGNATURE_MANAGER->isFlatRoot(root);
+    if (isFlatRoot) {
+      // lets allocate enough descriptors to use for the descriptor table
+      uint32_t descriptorCount =
+          dx12::ROOT_SIGNATURE_MANAGER->getDescriptorCount(root);
+      auto *descriptors = reinterpret_cast<DescriptorPair *>(
+          globals::PERSISTENT_ALLOCATOR->allocate(sizeof(DescriptorPair) *
+                                                  descriptorCount));
+      // now we have enough descriptors that we can use to bind everything
+      uint32_t baseDescriptorIdx =
+          dx12::GLOBAL_CBV_SRV_UAV_HEAP->reserveDescriptors(descriptors,
+                                                            descriptorCount);
+      materialData.m_tables[i].descriptorCount = descriptorCount;
+      materialData.m_tables[i].isFlatRoot = true;
+      materialData.m_tables[i].flatDescriptors = descriptors;
+    }
 
     // this will be used when we need to bind the material
     materialData.m_psoHandle = bind.pso;
     materialData.m_rsHandle = bind.rs;
 
     // adding correct queue
-    SHADER_QUEUE_FLAGS queueType = static_cast<SHADER_QUEUE_FLAGS>(1 << i);
+    auto queueType = static_cast<SHADER_QUEUE_FLAGS>(1 << i);
     materialData.m_materialRuntime.shaderQueueTypeFlags[i] =
         getQueueTypeFlags(queueType, shaderType);
 

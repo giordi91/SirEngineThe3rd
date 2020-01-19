@@ -1,12 +1,13 @@
 
 #include "platform/windows/graphics/dx12/dx12RootSignatureManager.h"
+
+#include <d3dcompiler.h>
+
 #include "SirEngine/binary/binaryFile.h"
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/d3dx12.h"
-
-#include <d3dcompiler.h>
 #include "rootSignatureCompile.h"
 
 namespace SirEngine {
@@ -21,7 +22,6 @@ void Dx12RootSignatureManager::cleanup() {
 }
 
 void Dx12RootSignatureManager::loadSignatureBinaryFile(const char *file) {
-
   // check the file exists and read all the binary data out of the file
   const auto expPath = std::filesystem::path(file);
   const std::string name = expPath.stem().string();
@@ -58,8 +58,9 @@ void Dx12RootSignatureManager::loadSignatureBinaryFile(const char *file) {
     assert(res == S_OK);
     blob->Release();
 
-    //if (name == "standardPostProcessEffect_RS") {
-    //  auto resultCompile = processSignatureFile("../data/rs/standardPostProcessEffect_RS.json");
+    // if (name == "standardPostProcessEffect_RS") {
+    //  auto resultCompile =
+    //  processSignatureFile("../data/rs/standardPostProcessEffect_RS.json");
     //  //rootSig = resultCompile.root;
     //}
 
@@ -69,13 +70,14 @@ void Dx12RootSignatureManager::loadSignatureBinaryFile(const char *file) {
     rsdata.rs = rootSig;
     const RSHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
     rsdata.magicNumber = MAGIC_NUMBER_COUNTER;
+    rsdata.isFlatRoot = mapper->isFlatRoot;
+    rsdata.descriptorCount = mapper->flatRootSignatureCount;
     m_rootRegister.insert(name.c_str(), handle);
     ++MAGIC_NUMBER_COUNTER;
   }
 }
 
 void Dx12RootSignatureManager::loadSignaturesInFolder(const char *directory) {
-
   std::vector<std::string> paths;
   listFilesInFolder(directory, paths, "root");
 
@@ -84,5 +86,5 @@ void Dx12RootSignatureManager::loadSignaturesInFolder(const char *directory) {
   }
 }
 
-} // namespace dx12
-} // namespace SirEngine
+}  // namespace dx12
+}  // namespace SirEngine
