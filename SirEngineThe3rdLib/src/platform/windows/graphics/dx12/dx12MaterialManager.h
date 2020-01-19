@@ -24,11 +24,18 @@ struct Dx12MaterialRuntime final {
   D3D12_GPU_DESCRIPTOR_HANDLE ao;
   uint32_t shaderQueueTypeFlags[MaterialManager::QUEUE_COUNT] = {
       INVALID_QUEUE_TYPE_FLAGS, INVALID_QUEUE_TYPE_FLAGS,
-      INVALID_QUEUE_TYPE_FLAGS, INVALID_QUEUE_TYPE_FLAGS,INVALID_QUEUE_TYPE_FLAGS};
+      INVALID_QUEUE_TYPE_FLAGS, INVALID_QUEUE_TYPE_FLAGS,
+      INVALID_QUEUE_TYPE_FLAGS};
   SkinHandle skinHandle;
   MeshHandle meshHandle;
 };
 
+struct FlatDescriptorTalbe {
+  uint32_t isFlatRoot : 1;
+  uint32_t descriptorCount : 15;
+  uint32_t pading : 16;
+  DescriptorPair *flatDescriptors;
+};
 struct MaterialData {
   MaterialDataHandles handles;
   dx12::DescriptorPair albedoSrv;
@@ -44,6 +51,7 @@ struct MaterialData {
   Dx12MaterialRuntime m_materialRuntime;
   PSOHandle m_psoHandle;
   RSHandle m_rsHandle;
+  FlatDescriptorTalbe m_tables[MaterialManager::QUEUE_COUNT];
 };
 
 class Dx12MaterialManager final : public MaterialManager {
@@ -60,12 +68,10 @@ class Dx12MaterialManager final : public MaterialManager {
   void bindMaterial(SHADER_QUEUE_FLAGS queueFlag,
                     const Dx12MaterialRuntime &runtime,
                     ID3D12GraphicsCommandList2 *commandList);
-  void bindTexture(MaterialHandle matHandle,
-                                    TextureHandle texHandle,
-                                    uint32_t bindingIndex,
-                                    SHADER_QUEUE_FLAGS queue) override;
-  void bindBuffer(MaterialHandle matHandle, BufferHandle texHandle, uint32_t bindingIndex,
-	  SHADER_QUEUE_FLAGS queue) override;
+  void bindTexture(MaterialHandle matHandle, TextureHandle texHandle,
+                   uint32_t bindingIndex, SHADER_QUEUE_FLAGS queue) override;
+  void bindBuffer(MaterialHandle matHandle, BufferHandle texHandle,
+                  uint32_t bindingIndex, SHADER_QUEUE_FLAGS queue) override;
 
   void bindRSandPSO(uint32_t shaderFlags,
                     ID3D12GraphicsCommandList2 *commandList);
@@ -77,7 +83,7 @@ class Dx12MaterialManager final : public MaterialManager {
       const char *materialsPerQueue[QUEUE_COUNT]) override;
   MaterialHandle loadMaterial(const char *path, const MeshHandle meshHandle,
                               const SkinHandle skinHandle) override;
-  void bindMaterial(MaterialHandle handle,SHADER_QUEUE_FLAGS queue) override;
+  void bindMaterial(MaterialHandle handle, SHADER_QUEUE_FLAGS queue) override;
   void free(MaterialHandle handle) override;
 
   const Dx12MaterialRuntime &getMaterialRuntime(const MaterialHandle handle) {

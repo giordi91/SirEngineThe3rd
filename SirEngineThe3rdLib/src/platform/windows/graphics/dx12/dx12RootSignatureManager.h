@@ -1,46 +1,41 @@
 #pragma once
 
-#include "SirEngine/rootSignatureManager.h"
-
-#include "SirEngine/handle.h"
-#include "SirEngine/hashing.h"
-#include "SirEngine/memory/sparseMemoryPool.h"
-#include "SirEngine/memory/stringHashMap.h"
-
 #include <d3d12.h>
 
 #include <cassert>
+
+#include "SirEngine/handle.h"
+#include "SirEngine/hashing.h"
 #include "SirEngine/log.h"
+#include "SirEngine/memory/sparseMemoryPool.h"
+#include "SirEngine/memory/stringHashMap.h"
+#include "SirEngine/rootSignatureManager.h"
 
 namespace SirEngine {
 namespace dx12 {
 
-class Dx12RootSignatureManager final: public RootSignatureManager {
-
-public:
+class Dx12RootSignatureManager final : public RootSignatureManager {
+ public:
   Dx12RootSignatureManager()
-      :  m_rootRegister(RESERVE_SIZE),
-        m_rsPool(RESERVE_SIZE){};
+      : m_rootRegister(RESERVE_SIZE), m_rsPool(RESERVE_SIZE){};
   Dx12RootSignatureManager(const Dx12RootSignatureManager &) = delete;
-  Dx12RootSignatureManager &
-  operator=(const Dx12RootSignatureManager &) = delete;
+  Dx12RootSignatureManager &operator=(const Dx12RootSignatureManager &) =
+      delete;
   ~Dx12RootSignatureManager() = default;
-  void initialize() {};
-  void cleanup() ;
-  void loadSignaturesInFolder(const char *directory) ;
-  void loadSignatureBinaryFile(const char *file) ;
+  void initialize(){};
+  void cleanup();
+  void loadSignaturesInFolder(const char *directory);
+  void loadSignatureBinaryFile(const char *file);
 
   inline ID3D12RootSignature *getRootSignatureFromName(const char *name) const {
-
     const RSHandle handle = getHandleFromName(name);
     assertMagicNumber(handle);
     const uint32_t index = getIndexFromHandle(handle);
     const RSData &data = m_rsPool.getConstRef(index);
     return data.rs;
   }
-  inline ID3D12RootSignature *
-  getRootSignatureFromHandle(const RSHandle handle) const {
-
+  inline ID3D12RootSignature *getRootSignatureFromHandle(
+      const RSHandle handle) const {
     assertMagicNumber(handle);
     const uint32_t index = getIndexFromHandle(handle);
     const RSData &data = m_rsPool.getConstRef(index);
@@ -49,25 +44,36 @@ public:
 
   inline void bindGraphicsRS(const RSHandle handle,
                              ID3D12GraphicsCommandList2 *commandList) const {
-
     assertMagicNumber(handle);
     const uint32_t index = getIndexFromHandle(handle);
     const RSData &data = m_rsPool.getConstRef(index);
     commandList->SetGraphicsRootSignature(data.rs);
   }
+  inline bool isFlatRoot(const RSHandle handle) const {
+    assertMagicNumber(handle);
+    const uint32_t index = getIndexFromHandle(handle);
+    const RSData &data = m_rsPool.getConstRef(index);
+    return data.isFlatRoot > 0;
+  }
+  inline uint32_t getDescriptorCount(const RSHandle handle) const {
+    assertMagicNumber(handle);
+    const uint32_t index = getIndexFromHandle(handle);
+    const RSData &data = m_rsPool.getConstRef(index);
+    return data.descriptorCount;
+  }
 
   RSHandle getHandleFromName(const char *name) const {
     bool result = m_rootRegister.containsKey(name);
-    if(!result) {
-       //TODO change this back to asserting once vulkan port is stable 
-       SE_CORE_ERROR("Could not find resquested RS {0}",name);
+    if (!result) {
+      // TODO change this back to asserting once vulkan port is stable
+      SE_CORE_ERROR("Could not find resquested RS {0}", name);
     }
     RSHandle value;
     m_rootRegister.get(name, value);
     return value;
   }
 
-private:
+ private:
   inline void assertMagicNumber(const RSHandle handle) const {
     const uint32_t magic = getMagicFromHandle(handle);
     const uint32_t idx = getIndexFromHandle(handle);
@@ -76,10 +82,12 @@ private:
            "invalid magic handle for root signature");
   }
 
-private:
+ private:
   struct RSData {
     ID3D12RootSignature *rs;
-    uint32_t magicNumber;
+    uint32_t magicNumber : 16;
+    uint32_t descriptorCount : 15;
+    uint32_t isFlatRoot : 1;
   };
 
   HashMap<const char *, RSHandle, hashString32> m_rootRegister;
@@ -87,5 +95,5 @@ private:
   uint32_t MAGIC_NUMBER_COUNTER = 1;
   static const uint32_t RESERVE_SIZE = 400;
 };
-} // namespace dx12
-} // namespace SirEngine
+}  // namespace dx12
+}  // namespace SirEngine

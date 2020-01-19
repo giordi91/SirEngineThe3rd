@@ -1,11 +1,11 @@
 
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
+
 #include "platform/windows/graphics/dx12/d3dx12.h"
 
 namespace SirEngine {
 namespace dx12 {
 bool DescriptorHeap::initialize(int size, D3D12_DESCRIPTOR_HEAP_TYPE type) {
-
   D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
 
   // might need to extend this for more customization
@@ -64,7 +64,6 @@ UINT DescriptorHeap::allocateDescriptor(
 UINT DescriptorHeap::createBufferCBV(DescriptorPair &pair,
                                      ID3D12Resource *resource,
                                      int totalSizeInByte) {
-
   D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
   cbvDesc.BufferLocation = resource->GetGPUVirtualAddress();
   cbvDesc.SizeInBytes = totalSizeInByte;
@@ -111,20 +110,18 @@ UINT DescriptorHeap::createTexture2DUAV(DescriptorPair &pair,
   UAVDesc.Format = format;
   UAVDesc.Texture2D.MipSlice = mipLevel;
   DEVICE->CreateUnorderedAccessView(resource, nullptr, &UAVDesc,
-                                      pair.cpuHandle);
-  pair.gpuHandle= CD3DX12_GPU_DESCRIPTOR_HANDLE(
-      getGPUStart(), descriptorIndex, m_descriptorSize);
+                                    pair.cpuHandle);
+  pair.gpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(getGPUStart(), descriptorIndex,
+                                                 m_descriptorSize);
 #if SE_DEBUG
   pair.type = DescriptorType::UAV;
 #endif
   return descriptorIndex;
 }
 
-
-
 UINT DescriptorHeap::createTextureCubeSRV(DescriptorPair &pair,
-                                        ID3D12Resource *resource,
-                                        DXGI_FORMAT format) {
+                                          ID3D12Resource *resource,
+                                          DXGI_FORMAT format) {
   UINT descriptorIndex = allocateDescriptor(&pair.cpuHandle);
 
   D3D12_RESOURCE_DESC desc = resource->GetDesc();
@@ -145,8 +142,8 @@ UINT DescriptorHeap::createTextureCubeSRV(DescriptorPair &pair,
 }
 
 UINT createDSV(DescriptorHeap *heap, ID3D12Resource *resource,
-               DescriptorPair &pair, const DXGI_FORMAT format, const D3D12_DSV_FLAGS flags) {
-
+               DescriptorPair &pair, const DXGI_FORMAT format,
+               const D3D12_DSV_FLAGS flags) {
   assert(heap->getType() == D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
   UINT descriptorIndex = heap->allocateDescriptor(&pair.cpuHandle);
   // Hard-code depthstencil format
@@ -168,24 +165,33 @@ UINT createDSV(DescriptorHeap *heap, ID3D12Resource *resource,
 }
 
 int DescriptorHeap::reserveDescriptor(DescriptorPair &pair) {
-
   UINT descriptorIndex = allocateDescriptor(&pair.cpuHandle);
   pair.gpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(getGPUStart(), descriptorIndex,
                                                  m_descriptorSize);
   return descriptorIndex;
 }
 
+int DescriptorHeap::reserveDescriptors(DescriptorPair *pair,
+                                       const uint32_t count) {
+  uint32_t baseDescriptorIndex;
+  for (uint32_t i = 0; i < count; ++i) {
+    UINT descriptorIndex = allocateDescriptor(&pair[i].cpuHandle);
+    pair[i].gpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(
+        getGPUStart(), descriptorIndex, m_descriptorSize);
+    baseDescriptorIndex = i == 0 ? descriptorIndex : baseDescriptorIndex;
+  }
+  return baseDescriptorIndex;
+}
+
 UINT DescriptorHeap::createBufferSRV(DescriptorPair &pair,
                                      ID3D12Resource *resource, UINT numElements,
                                      UINT elementSize) {
-
   // SRV
   D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
   srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
   srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
   srvDesc.Buffer.NumElements = numElements;
   if (elementSize == 0) {
-
     srvDesc.Format = DXGI_FORMAT_R32_TYPELESS;
     srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_RAW;
     srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
@@ -210,18 +216,18 @@ UINT DescriptorHeap::createBufferSRV(DescriptorPair &pair,
 UINT DescriptorHeap::createBufferUAV(DescriptorPair &pair,
                                      ID3D12Resource *resource, UINT numElements,
                                      UINT elementSize) {
-
   // SRV
   D3D12_UNORDERED_ACCESS_VIEW_DESC srvDesc = {};
   srvDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
-  srvDesc.Buffer.FirstElement =0;
+  srvDesc.Buffer.FirstElement = 0;
   srvDesc.Buffer.NumElements = numElements;
-  srvDesc.Buffer.StructureByteStride= elementSize;
+  srvDesc.Buffer.StructureByteStride = elementSize;
 
-  //srvDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_RAW;
+  // srvDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_RAW;
 
   UINT descriptorIndex = allocateDescriptor(&pair.cpuHandle);
-  DEVICE->CreateUnorderedAccessView(resource,nullptr, &srvDesc, pair.cpuHandle);
+  DEVICE->CreateUnorderedAccessView(resource, nullptr, &srvDesc,
+                                    pair.cpuHandle);
   pair.gpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(getGPUStart(), descriptorIndex,
                                                  m_descriptorSize);
 
@@ -245,5 +251,5 @@ UINT createRTVSRV(DescriptorHeap *heap, ID3D12Resource *resource,
 
   return descriptorIndex;
 }
-} // namespace dx12
-} // namespace SirEngine
+}  // namespace dx12
+}  // namespace SirEngine

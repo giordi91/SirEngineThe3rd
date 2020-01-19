@@ -1,11 +1,11 @@
 #include "rootSignatureCompilerPlugin.h"
+
+#include "SirEngine/argsUtils.h"
+#include "SirEngine/binary/binaryFile.h"
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
 #include "cxxopts/cxxopts.hpp"
 #include "platform/windows/graphics/dx12/rootSignatureCompile.h"
-
-#include "SirEngine/argsUtils.h"
-#include "SirEngine/binary/binaryFile.h"
 
 const std::string PLUGIN_NAME = "rootSignatureCompilerPlugin";
 const unsigned int VERSION_MAJOR = 0;
@@ -14,7 +14,6 @@ const unsigned int VERSION_PATCH = 0;
 
 bool processRoot(const std::string &assetPath, const std::string &outputPath,
                  const std::string &) {
-
   // checking IO files exits
   bool exits = fileExists(assetPath);
   if (!exits) {
@@ -33,8 +32,8 @@ bool processRoot(const std::string &assetPath, const std::string &outputPath,
       SirEngine::dx12::processSignatureFileToBlob(assetPath.c_str(), &blob);
 
   if (blob == nullptr) {
-	SE_CORE_ERROR("Could not compiler root signature {0}",assetPath);
-	return false;
+    SE_CORE_ERROR("Could not compiler root signature {0}", assetPath);
+    return false;
   }
   // writing binary file
   BinaryFileWriteRequest request;
@@ -52,8 +51,11 @@ bool processRoot(const std::string &assetPath, const std::string &outputPath,
   request.bulkDataSizeInByte = blob->GetBufferSize();
 
   RootSignatureMappedData mapperData;
-  mapperData.type = static_cast<int>(result.type);
   mapperData.sizeInByte = static_cast<uint32_t>(blob->GetBufferSize());
+  mapperData.type = static_cast<uint8_t>(result.type);
+  mapperData.isFlatRoot = static_cast<uint8_t>(result.flatRoot);
+  mapperData.flatRootSignatureCount =
+      static_cast<uint16_t>(result.descriptorCount);
   request.mapperData = &mapperData;
   request.mapperDataSizeInByte = sizeof(RootSignatureMappedData);
 

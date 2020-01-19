@@ -57,14 +57,6 @@ void Dx12PSOManager::loadRawPSOInFolder(const char *directory) {
   const char *shaderPath = frameConcatenation(
       globals::ENGINE_CONFIG->m_dataSourcePath, "/shaders/DX12");
   for (const auto &p : paths) {
-    // TODO remove temp
-    std::string skip = "../data/pso\\forwardPhongPSO.json";
-    if (p == skip) {
-      continue;
-    }
-    if (p == "../data/pso\\shadowSkinClusterPSO.json") {
-      int x = 0;
-    }
     PSOCompileResult result = compileRawPSO(p.c_str(), shaderPath);
     if (result.psoType == PSOType::INVALID) {
       SE_CORE_ERROR("Could not compile PSO: {0}", p);

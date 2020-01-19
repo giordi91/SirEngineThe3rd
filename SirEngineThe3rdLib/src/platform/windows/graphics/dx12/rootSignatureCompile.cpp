@@ -1,13 +1,15 @@
 #include "platform/windows/graphics/dx12/rootSignatureCompile.h"
+
+#include <cassert>
+#include <string>
+#include <unordered_map>
+
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
 #include "SirEngine/runtimeString.h"
 #include "nlohmann/json.hpp"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/d3dx12.h"
-#include <cassert>
-#include <string>
-#include <unordered_map>
 
 namespace SirEngine::dx12 {
 enum class SUB_ROOT_TYPES {
@@ -34,6 +36,7 @@ const std::string ROOT_KEY_FLAGS_LOCAL = "local";
 const std::string ROOT_EMPTY = "empty";
 const std::string ROOT_DEFAULT_STRING = "";
 const std::string ROOT_KEY_STATIC_SAMPLERS = "staticSamplers";
+const std::string DEFAULT_STRING = "";
 
 static const uint32_t ENGINE_RESIGSTER_SPACE = 0;
 static const uint32_t USER_REGISTER_SPACE = 1;
@@ -86,9 +89,10 @@ D3D12_SHADER_VISIBILITY getVisibility(const nlohmann::json &jobj) {
     if (found != STRING_TO_VISIBILITY_FLAG.end()) {
       toReturn = found->second;
     } else {
-      SE_CORE_WARN("Cannot convert shader visibility from string, value not "
-                   "recognized: {0}",
-                   visString);
+      SE_CORE_WARN(
+          "Cannot convert shader visibility from string, value not "
+          "recognized: {0}",
+          visString);
       SE_CORE_WARN("D3D12_SHADER_VISIBILITY_ALL will be used");
     }
   }
@@ -100,59 +104,59 @@ std::array<const CD3DX12_STATIC_SAMPLER_DESC, 7> getStaticSamplers() {
   // all up front and keep them available as part of the root signature.
 
   const CD3DX12_STATIC_SAMPLER_DESC pointWrap(
-      0,                                // shaderRegister
-      D3D12_FILTER_MIN_MAG_MIP_POINT,   // filter
-      D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressU
-      D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressV
-      D3D12_TEXTURE_ADDRESS_MODE_WRAP); // addressW
+      0,                                 // shaderRegister
+      D3D12_FILTER_MIN_MAG_MIP_POINT,    // filter
+      D3D12_TEXTURE_ADDRESS_MODE_WRAP,   // addressU
+      D3D12_TEXTURE_ADDRESS_MODE_WRAP,   // addressV
+      D3D12_TEXTURE_ADDRESS_MODE_WRAP);  // addressW
 
   const CD3DX12_STATIC_SAMPLER_DESC pointClamp(
-      1,                                 // shaderRegister
-      D3D12_FILTER_MIN_MAG_MIP_POINT,    // filter
-      D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressU
-      D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressV
-      D3D12_TEXTURE_ADDRESS_MODE_CLAMP); // addressW
+      1,                                  // shaderRegister
+      D3D12_FILTER_MIN_MAG_MIP_POINT,     // filter
+      D3D12_TEXTURE_ADDRESS_MODE_CLAMP,   // addressU
+      D3D12_TEXTURE_ADDRESS_MODE_CLAMP,   // addressV
+      D3D12_TEXTURE_ADDRESS_MODE_CLAMP);  // addressW
 
   const CD3DX12_STATIC_SAMPLER_DESC linearWrap(
-      2,                                // shaderRegister
-      D3D12_FILTER_MIN_MAG_MIP_LINEAR,  // filter
-      D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressU
-      D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressV
-      D3D12_TEXTURE_ADDRESS_MODE_WRAP); // addressW
+      2,                                 // shaderRegister
+      D3D12_FILTER_MIN_MAG_MIP_LINEAR,   // filter
+      D3D12_TEXTURE_ADDRESS_MODE_WRAP,   // addressU
+      D3D12_TEXTURE_ADDRESS_MODE_WRAP,   // addressV
+      D3D12_TEXTURE_ADDRESS_MODE_WRAP);  // addressW
 
   const CD3DX12_STATIC_SAMPLER_DESC linearClamp(
-      3,                                 // shaderRegister
-      D3D12_FILTER_MIN_MAG_MIP_LINEAR,   // filter
-      D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressU
-      D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressV
-      D3D12_TEXTURE_ADDRESS_MODE_CLAMP); // addressW
+      3,                                  // shaderRegister
+      D3D12_FILTER_MIN_MAG_MIP_LINEAR,    // filter
+      D3D12_TEXTURE_ADDRESS_MODE_CLAMP,   // addressU
+      D3D12_TEXTURE_ADDRESS_MODE_CLAMP,   // addressV
+      D3D12_TEXTURE_ADDRESS_MODE_CLAMP);  // addressW
 
   const CD3DX12_STATIC_SAMPLER_DESC anisotropicWrap(
-      4,                               // shaderRegister
-      D3D12_FILTER_ANISOTROPIC,        // filter
-      D3D12_TEXTURE_ADDRESS_MODE_WRAP, // addressU
-      D3D12_TEXTURE_ADDRESS_MODE_WRAP, // addressV
-      D3D12_TEXTURE_ADDRESS_MODE_WRAP, // addressW
-      0.0f,                            // mipLODBias
-      8);                              // maxAnisotropy
-
-  const CD3DX12_STATIC_SAMPLER_DESC anisotropicClamp(
-      5,                                // shaderRegister
+      4,                                // shaderRegister
       D3D12_FILTER_ANISOTROPIC,         // filter
-      D3D12_TEXTURE_ADDRESS_MODE_CLAMP, // addressU
-      D3D12_TEXTURE_ADDRESS_MODE_CLAMP, // addressV
-      D3D12_TEXTURE_ADDRESS_MODE_CLAMP, // addressW
+      D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressU
+      D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressV
+      D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressW
       0.0f,                             // mipLODBias
       8);                               // maxAnisotropy
+
+  const CD3DX12_STATIC_SAMPLER_DESC anisotropicClamp(
+      5,                                 // shaderRegister
+      D3D12_FILTER_ANISOTROPIC,          // filter
+      D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressU
+      D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressV
+      D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressW
+      0.0f,                              // mipLODBias
+      8);                                // maxAnisotropy
   const CD3DX12_STATIC_SAMPLER_DESC shadowPCFClamp(
-      6,                                                // shaderRegister
-      D3D12_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT, // filter
-      D3D12_TEXTURE_ADDRESS_MODE_BORDER,                // addressU
-      D3D12_TEXTURE_ADDRESS_MODE_BORDER,                // addressV
-      D3D12_TEXTURE_ADDRESS_MODE_BORDER,                // addressW
-      0.0f,                                             // mipLODBias
+      6,                                                 // shaderRegister
+      D3D12_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT,  // filter
+      D3D12_TEXTURE_ADDRESS_MODE_BORDER,                 // addressU
+      D3D12_TEXTURE_ADDRESS_MODE_BORDER,                 // addressV
+      D3D12_TEXTURE_ADDRESS_MODE_BORDER,                 // addressW
+      0.0f,                                              // mipLODBias
       16, D3D12_COMPARISON_FUNC_GREATER,
-      D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK); // maxAnisotropy
+      D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK);  // maxAnisotropy
 
   return {pointWrap,       pointClamp,       linearWrap,    linearClamp,
           anisotropicWrap, anisotropicClamp, shadowPCFClamp};
@@ -267,25 +271,24 @@ void processDescriptorTable(nlohmann::json &jobj, CD3DX12_ROOT_PARAMETER &param,
   int counter = 0;
   const std::string defaultString = "";
   for (auto &subRange : rangesJ) {
-
     std::string typeString =
         getValueIfInJson(subRange, ROOT_KEY_TYPE, defaultString);
     SUB_ROOT_TYPES descriptorType = getTypeEnum(typeString);
     switch (descriptorType) {
-    case (SUB_ROOT_TYPES::UAV): {
-      initDescriptorAsUAV(subRange, ranges[counter], useRegister);
-      break;
-    }
-    case (SUB_ROOT_TYPES::SRV): {
-      initDescriptorAsSRV(subRange, ranges[counter], useRegister);
-      break;
-    }
-    case (SUB_ROOT_TYPES::CBV): {
-      initDescriptorAsConstant(subRange, ranges[counter], useRegister);
-      break;
-    }
-    default: {
-    }
+      case (SUB_ROOT_TYPES::UAV): {
+        initDescriptorAsUAV(subRange, ranges[counter], useRegister);
+        break;
+      }
+      case (SUB_ROOT_TYPES::SRV): {
+        initDescriptorAsSRV(subRange, ranges[counter], useRegister);
+        break;
+      }
+      case (SUB_ROOT_TYPES::CBV): {
+        initDescriptorAsConstant(subRange, ranges[counter], useRegister);
+        break;
+      }
+      default: {
+      }
     }
     ++counter;
   }
@@ -312,29 +315,133 @@ bool shouldBindSamplers(const nlohmann::json &jobj) {
   }
   return toReturn;
 }
-
-RootCompilerResult processSignatureFileToBlob(const char *path,
-                                              ID3DBlob **blob) {
-  auto jobj = getJsonObj(path);
-  // there might be multiple signatures in the files lets loop them
-
-  const std::string defaultString;
-  // for (auto it = jobj.begin(); it != jobj.end(); ++it) {
-  //  const std::string &name = it.key();
-  const std::string &name = getFileName(path);
-  auto jvalue = jobj;
-
-  std::string fileType = getValueIfInJson(jvalue, ROOT_KEY_TYPE, defaultString);
-
-  assert(!fileType.empty());
-
-  assert(jvalue.find(ROOT_KEY_CONFIG) != jvalue.end());
-  auto &configValue = jvalue[ROOT_KEY_CONFIG];
-
+RootCompilerResult flatTablesRS(nlohmann::json jobj, const std::string &name,
+                                ID3DBlob **blob) {
   const std::string tempKey = "useRegisterSpace";
-  bool useRegister = getValueIfInJson(jvalue, tempKey, false);
+  bool useRegister = getValueIfInJson(jobj, tempKey, false);
 
   int extraRegister = useRegister ? 1 : 0;
+
+  auto &configValue = jobj[ROOT_KEY_CONFIG];
+
+  std::string fileType = getValueIfInJson(jobj, ROOT_KEY_TYPE, DEFAULT_STRING);
+  assert(!fileType.empty());
+
+  // we have one flat descriptor table to bind
+  uint32_t registerCount = 1;
+  std::vector<CD3DX12_ROOT_PARAMETER> rootParams(registerCount + extraRegister);
+  CD3DX12_DESCRIPTOR_RANGE ranges{};
+  if (useRegister) {
+    // create constant buffer for camera values
+    int startRegister = 0;
+    ranges.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, startRegister,
+                ENGINE_RESIGSTER_SPACE);
+    rootParams[0].InitAsDescriptorTable(1, &ranges);
+  }
+  int counter = 0 + extraRegister;
+
+  auto *userRanges = new CD3DX12_DESCRIPTOR_RANGE[configValue.size()];
+  int userCounter = 0;
+  for (auto &subConfig : configValue) {
+    // getting the type of root
+    std::string configTypeValueString =
+        getValueIfInJson(subConfig, ROOT_KEY_TYPE, DEFAULT_STRING);
+    assert(!configTypeValueString.empty());
+    SUB_ROOT_TYPES configType = getTypeEnum(configTypeValueString);
+    // here we are dealing with the old system, where everything was a
+    // descriptor table now we want to unpack that, so we need to extract the
+    // ranges from inside the descriptor tables which are always one object, and
+    // flatten them out
+    assert(configType == SUB_ROOT_TYPES::DESCRIPTOR_TABLE);
+
+    // lets go in and expand the actual inner type,accessing the ranges
+    assert(subConfig.find(ROOT_KEY_DATA) != subConfig.end());
+    auto dataJ = subConfig[ROOT_KEY_DATA];
+    assert(dataJ.find(ROOT_KEY_RANGES) != dataJ.end());
+    auto rangesJ = dataJ[ROOT_KEY_RANGES];
+    assert(rangesJ.size() == 1);
+    auto currentRange = rangesJ[0];
+    configTypeValueString =
+        getValueIfInJson(currentRange, ROOT_KEY_TYPE, DEFAULT_STRING);
+    assert(!configTypeValueString.empty());
+    configType = getTypeEnum(configTypeValueString);
+
+    switch (configType) {
+      case (SUB_ROOT_TYPES::CBV): {
+        initDescriptorAsConstant(currentRange, userRanges[userCounter],
+                                 useRegister);
+        break;
+      }
+      case (SUB_ROOT_TYPES::SRV): {
+        initDescriptorAsSRV(currentRange, userRanges[userCounter], useRegister);
+        break;
+      }
+      case (SUB_ROOT_TYPES::UAV): {
+        initDescriptorAsUAV(currentRange, userRanges[userCounter], useRegister);
+        break;
+      }
+      default: {
+        assert(0 && "descriptor type not supported");
+      }
+    }
+    ++userCounter;
+  }
+  rootParams[counter].InitAsDescriptorTable(userCounter, userRanges);
+
+  UINT numStaticSampers = 0;
+  D3D12_STATIC_SAMPLER_DESC const *staticSamplers = nullptr;
+  auto samplers = getStaticSamplers();
+
+  if (shouldBindSamplers(jobj)) {
+    staticSamplers = &samplers[0];
+    numStaticSampers = static_cast<UINT>(samplers.size());
+  }
+
+  CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc(
+      static_cast<UINT>(rootParams.size()), rootParams.data(), numStaticSampers,
+      staticSamplers);
+
+  // process flags
+  auto found = jobj.find(ROOT_KEY_FLAGS);
+  if (found != jobj.end()) {
+    auto &jflags = jobj[ROOT_KEY_FLAGS];
+    for (auto &subFlag : jflags) {
+      // This was for DXR, which is not supported yet
+      if (subFlag.get<std::string>() == ROOT_KEY_FLAGS_LOCAL) {
+        rootSignatureDesc.Flags |=
+            D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE;
+      }
+      // in case we want input assembler, this is by now legacy
+      // but keeping the feature just in case. This way is not particularly
+      // pretty maybe there is a better way to do this, maybe converting with a
+      // macro
+      if (subFlag.get<std::string>() ==
+          "D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT") {
+        rootSignatureDesc.Flags |=
+            D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+      }
+    }
+  }
+
+  const ROOT_TYPE fileTypeEnum = getFileTypeEnum(fileType);
+  (*blob) = serializeRootSignature(rootSignatureDesc);
+
+  return RootCompilerResult{frameString(name.c_str()), nullptr, fileTypeEnum,
+                            true, static_cast<uint16_t>(userCounter)
+  };
+}
+
+RootCompilerResult multipleTablesRS(nlohmann::json jobj,
+                                    const std::string &name, ID3DBlob **blob) {
+  const std::string tempKey = "useRegisterSpace";
+  bool useRegister = getValueIfInJson(jobj, tempKey, false);
+
+  int extraRegister = useRegister ? 1 : 0;
+
+  auto &configValue = jobj[ROOT_KEY_CONFIG];
+
+  std::string fileType = getValueIfInJson(jobj, ROOT_KEY_TYPE, DEFAULT_STRING);
+  assert(!fileType.empty());
 
   std::vector<CD3DX12_ROOT_PARAMETER> rootParams(configValue.size() +
                                                  extraRegister);
@@ -350,33 +457,33 @@ RootCompilerResult processSignatureFileToBlob(const char *path,
   for (auto &subConfig : configValue) {
     // getting the type of root
     std::string configTypeValueString =
-        getValueIfInJson(subConfig, ROOT_KEY_TYPE, defaultString);
+        getValueIfInJson(subConfig, ROOT_KEY_TYPE, DEFAULT_STRING);
     assert(!configTypeValueString.empty());
     SUB_ROOT_TYPES configType = getTypeEnum(configTypeValueString);
     switch (configType) {
-    case (SUB_ROOT_TYPES::CONSTANT): {
-      processConstant(subConfig, rootParams[counter], useRegister);
-      break;
-    }
-    case (SUB_ROOT_TYPES::DESCRIPTOR_TABLE): {
-      processDescriptorTable(subConfig, rootParams[counter], useRegister);
-      break;
-    }
-    case (SUB_ROOT_TYPES::SRV): {
-      processSRV(subConfig, rootParams[counter], useRegister);
-      break;
-    }
-    case (SUB_ROOT_TYPES::CBV): {
-      processCBV(subConfig, rootParams[counter], useRegister);
-      break;
-    }
-    case (SUB_ROOT_TYPES::UAV): {
-      processUAV(subConfig, rootParams[counter], useRegister);
-      break;
-    }
-    default: {
-      assert(0 && " root type not supported");
-    }
+      case (SUB_ROOT_TYPES::CONSTANT): {
+        processConstant(subConfig, rootParams[counter], useRegister);
+        break;
+      }
+      case (SUB_ROOT_TYPES::DESCRIPTOR_TABLE): {
+        processDescriptorTable(subConfig, rootParams[counter], useRegister);
+        break;
+      }
+      case (SUB_ROOT_TYPES::SRV): {
+        processSRV(subConfig, rootParams[counter], useRegister);
+        break;
+      }
+      case (SUB_ROOT_TYPES::CBV): {
+        processCBV(subConfig, rootParams[counter], useRegister);
+        break;
+      }
+      case (SUB_ROOT_TYPES::UAV): {
+        processUAV(subConfig, rootParams[counter], useRegister);
+        break;
+      }
+      default: {
+        assert(0 && " root type not supported");
+      }
     }
     ++counter;
   }
@@ -385,7 +492,7 @@ RootCompilerResult processSignatureFileToBlob(const char *path,
   D3D12_STATIC_SAMPLER_DESC const *staticSamplers = nullptr;
   auto samplers = getStaticSamplers();
 
-  if (shouldBindSamplers(jvalue)) {
+  if (shouldBindSamplers(jobj)) {
     staticSamplers = &samplers[0];
     numStaticSampers = static_cast<UINT>(samplers.size());
   }
@@ -395,9 +502,9 @@ RootCompilerResult processSignatureFileToBlob(const char *path,
       staticSamplers);
 
   // process flags
-  auto found = jvalue.find(ROOT_KEY_FLAGS);
-  if (found != jvalue.end()) {
-    auto &jflags = jvalue[ROOT_KEY_FLAGS];
+  auto found = jobj.find(ROOT_KEY_FLAGS);
+  if (found != jobj.end()) {
+    auto &jflags = jobj[ROOT_KEY_FLAGS];
     for (auto &subFlag : jflags) {
       if (subFlag.get<std::string>() == ROOT_KEY_FLAGS_LOCAL) {
         rootSignatureDesc.Flags |=
@@ -416,7 +523,27 @@ RootCompilerResult processSignatureFileToBlob(const char *path,
   const ROOT_TYPE fileTypeEnum = getFileTypeEnum(fileType);
   (*blob) = serializeRootSignature(rootSignatureDesc);
 
-  return RootCompilerResult{frameString(name.c_str()), nullptr, fileTypeEnum};
+  return RootCompilerResult{frameString(name.c_str()), nullptr, fileTypeEnum,
+                            false, 0};
+}
+
+RootCompilerResult processSignatureFileToBlob(const char *path,
+                                              ID3DBlob **blob) {
+  auto jobj = getJsonObj(path);
+  // there might be multiple signatures in the files lets loop them
+
+  const std::string defaultString;
+  const std::string &name = getFileName(path);
+
+  assert(jobj.find(ROOT_KEY_CONFIG) != jobj.end());
+
+  const std::string flatDescriptorTableKey = "flatDescriptorTable";
+  bool isFlatTable = getValueIfInJson(jobj, flatDescriptorTableKey, false);
+  if (isFlatTable) {
+    return flatTablesRS(jobj, name, blob);
+  } else {
+    return multipleTablesRS(jobj, name, blob);
+  }
 }
 
 RootCompilerResult processSignatureFile(const char *path) {
@@ -431,4 +558,4 @@ RootCompilerResult processSignatureFile(const char *path) {
   compilerResult.root = rootSig;
   return compilerResult;
 }
-} // namespace SirEngine::dx12
+}  // namespace SirEngine::dx12
