@@ -26,7 +26,7 @@ struct Dx12MeshRuntime final {
 };
 
 class Dx12MeshManager final : public MeshManager {
- private:
+private:
   struct MeshData final {
     uint32_t magicNumber : 16;
     uint32_t stride : 16;
@@ -35,15 +35,15 @@ class Dx12MeshManager final : public MeshManager {
     Dx12MeshRuntime meshRuntime;
     uint32_t indexCount;
     uint32_t vertexCount;
-    uint32_t entityID;  // this is an id that is used to index other data that
-                        // we are starting to split, for example bounding box;
+    uint32_t entityID; // this is an id that is used to index other data that
+                       // we are starting to split, for example bounding box;
   };
 
- public:
+public:
   Dx12MeshManager() : m_meshPool(RESERVE_SIZE), batch(dx12::DEVICE) {
     m_nameToHandle.reserve(RESERVE_SIZE);
   }
-  virtual ~Dx12MeshManager() {  // assert(m_meshPool.assertEverythingDealloc());
+  virtual ~Dx12MeshManager() { // assert(m_meshPool.assertEverythingDealloc());
   }
 
   Dx12MeshManager(const Dx12MeshManager &) = delete;
@@ -111,8 +111,8 @@ class Dx12MeshManager final : public MeshManager {
         D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
   }
 
-  [[nodiscard]] const Dx12MeshRuntime &getMeshRuntime(
-      const MeshHandle &handle) const {
+  [[nodiscard]] const Dx12MeshRuntime &
+  getMeshRuntime(const MeshHandle &handle) const {
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
     const MeshData &data = m_meshPool.getConstRef(index);
@@ -141,9 +141,36 @@ class Dx12MeshManager final : public MeshManager {
                                                  0);
   }
 
-  inline void bindMesh(MeshHandle handle,
-                       ID3D12GraphicsCommandList2 *commandList, uint32_t flags,
-                       uint32_t startIndex) {
+  inline void bindFlatMesh(const MeshHandle handle, DescriptorPair *pairs,
+                           const uint32_t flags,
+                           const uint32_t startIndex) const {
+    const Dx12MeshRuntime &runtime = getMeshRuntime(handle);
+    if ((flags & MeshAttributeFlags::POSITIONS) > 0) {
+
+      dx12::BUFFER_MANAGER->createSrv(runtime.bufferHandle,
+                                      pairs[startIndex + 0],
+                                      runtime.positionRange.m_offset);
+    }
+    if ((flags & MeshAttributeFlags::NORMALS) > 0) {
+      dx12::BUFFER_MANAGER->createSrv(runtime.bufferHandle,
+                                      pairs[startIndex + 1],
+                                      runtime.normalsRange.m_offset);
+    }
+    if ((flags & MeshAttributeFlags::UV) > 0) {
+      dx12::BUFFER_MANAGER->createSrv(runtime.bufferHandle,
+                                      pairs[startIndex + 2],
+                                      runtime.uvRange.m_offset);
+    }
+    if ((flags & MeshAttributeFlags::TANGENTS) > 0) {
+      dx12::BUFFER_MANAGER->createSrv(runtime.bufferHandle,
+                                      pairs[startIndex + 3],
+                                      runtime.tangentsRange.m_offset);
+    }
+  }
+
+  inline void bindMesh(const MeshHandle handle,
+                       ID3D12GraphicsCommandList2 *commandList,
+                       const uint32_t flags, const uint32_t startIndex) const {
     const Dx12MeshRuntime &runtime = getMeshRuntime(handle);
     if ((flags & MeshAttributeFlags::POSITIONS) > 0) {
       dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(
@@ -191,7 +218,7 @@ class Dx12MeshManager final : public MeshManager {
     bindMeshRuntimeAndRender(runtime, fc);
   }
 
- private:
+private:
   inline void assertMagicNumber(const MeshHandle handle) const {
 #ifdef SE_DEBUG
     uint32_t magic = getMagicFromHandle(handle);
@@ -201,7 +228,7 @@ class Dx12MeshManager final : public MeshManager {
 #endif
   }
 
- private:
+private:
   SparseMemoryPool<MeshData> m_meshPool;
 
   std::unordered_map<std::string, MeshHandle> m_nameToHandle;
@@ -211,5 +238,5 @@ class Dx12MeshManager final : public MeshManager {
   std::vector<BoundingBox> m_boundingBoxes;
 };
 
-}  // namespace dx12
-}  // namespace SirEngine
+} // namespace dx12
+} // namespace SirEngine

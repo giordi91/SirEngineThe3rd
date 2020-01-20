@@ -39,7 +39,7 @@ public:
   inline D3D12_DESCRIPTOR_HEAP_DESC getDesc() const {
     return m_heap->GetDesc();
   }
-  inline UINT getDescriptorSize() const { return m_descriptorSize; }
+  inline uint32_t getDescriptorSize() const { return m_descriptorSize; }
   inline D3D12_DESCRIPTOR_HEAP_TYPE getType() const { return m_type; }
   inline void reset() {
     // setting the allocated descriptor back to zero, so we are free to
@@ -48,16 +48,17 @@ public:
     m_descriptorsAllocated = 0;
   }
 
-  inline UINT
+  inline uint32_t
   findCPUDescriptorIndexFromHandle(D3D12_CPU_DESCRIPTOR_HANDLE handle) const {
-    UINT idx = static_cast<UINT>(
+    uint32_t idx = static_cast<uint32_t>(
         (handle.ptr - m_heap->GetCPUDescriptorHandleForHeapStart().ptr) /
         m_descriptorSize);
     return idx;
   }
 
-  UINT allocateDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE *cpuDescriptor,
-                          UINT descriptorIndexToUse = UINT_MAX);
+  //TODO fix this UINT max crap
+  uint32_t allocateDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE *cpuDescriptor,
+                              uint32_t descriptorIndexToUse = UINT_MAX);
   void freeDescriptor(const DescriptorPair &handles) {
 
     assert(handles.cpuHandle.ptr != 0);
@@ -69,28 +70,30 @@ public:
     m_freeList[m_freeListIdx++] = idx;
   }
 
-  UINT createBufferSRV(DescriptorPair &pair, ID3D12Resource *resource,
-                       UINT numElements, UINT elementSize);
-  UINT createBufferUAV(DescriptorPair &pair, ID3D12Resource *resource,
-                       UINT numElements, UINT elementSize);
+  uint32_t createBufferSRV(DescriptorPair &pair, ID3D12Resource *resource,
+                           uint32_t numElements, uint32_t elementSize,
+                           uint32_t elementOffset=0);
+  uint32_t createBufferUAV(DescriptorPair &pair, ID3D12Resource *resource,
+                           uint32_t numElements, uint32_t elementSize);
 
-  UINT createBufferCBV(DescriptorPair &pair, ID3D12Resource *resource,
-                       int totalSizeInByte);
+  uint32_t createBufferCBV(DescriptorPair &pair, ID3D12Resource *resource,
+                           int totalSizeInByte);
 
   int reserveDescriptor(DescriptorPair &pair);
   int reserveDescriptors(DescriptorPair *pair, uint32_t count);
 
-  UINT createTexture2DSRV(DescriptorPair &pair, ID3D12Resource *resource,
-                          DXGI_FORMAT format, UINT mipLevel = 0, bool descriptorExists=false);
-  UINT createTextureCubeSRV(DescriptorPair &pair, ID3D12Resource *resource,
-                            DXGI_FORMAT format);
-  UINT createTexture2DUAV(DescriptorPair &pair, ID3D12Resource *resource,
-                          DXGI_FORMAT format, UINT mipLevel = 0);
+  uint32_t createTexture2DSRV(DescriptorPair &pair, ID3D12Resource *resource,
+                              DXGI_FORMAT format, uint32_t mipLevel = 0,
+                              bool descriptorExists = false);
+  uint32_t createTextureCubeSRV(DescriptorPair &pair, ID3D12Resource *resource,
+                                DXGI_FORMAT format);
+  uint32_t createTexture2DUAV(DescriptorPair &pair, ID3D12Resource *resource,
+                              DXGI_FORMAT format, uint32_t mipLevel = 0);
 
 private:
-  UINT m_descriptorsAllocated = 0;
+  uint32_t m_descriptorsAllocated = 0;
   ID3D12DescriptorHeap *m_heap = nullptr;
-  UINT m_descriptorSize = 0;
+  uint32_t m_descriptorSize = 0;
   D3D12_DESCRIPTOR_HEAP_TYPE m_type;
 
   //
@@ -100,9 +103,10 @@ private:
 
 // this function are kept externally because refer to a particular type of
 // of texture
-UINT createRTVSRV(DescriptorHeap *heap, ID3D12Resource *resource,
-                  DescriptorPair &pair);
-UINT createDSV(DescriptorHeap *heap, ID3D12Resource *resource,
-               DescriptorPair &pair, DXGI_FORMAT format, const D3D12_DSV_FLAGS flags = D3D12_DSV_FLAG_NONE);
+uint32_t createRTVSRV(DescriptorHeap *heap, ID3D12Resource *resource,
+                      DescriptorPair &pair);
+uint32_t createDSV(DescriptorHeap *heap, ID3D12Resource *resource,
+                   DescriptorPair &pair, DXGI_FORMAT format,
+                   const D3D12_DSV_FLAGS flags = D3D12_DSV_FLAG_NONE);
 } // namespace dx12
 } // namespace SirEngine
