@@ -333,6 +333,21 @@ void bindDebugPointsSingleColor(const Dx12MaterialRuntime &materialRuntime,
   //    2, materialRuntime.meshHandle.srv.gpuHandle);
 }
 
+void bindFlatDescriptorMaterial(const Dx12MaterialRuntime &materialRuntime,
+                                ID3D12GraphicsCommandList2 *commandList,
+                                SHADER_QUEUE_FLAGS queueFlag) {
+
+  dx12::RENDERING_CONTEXT->bindCameraBuffer(0);
+  const auto queueFlagInt = static_cast<int>(queueFlag);
+  const auto currentFlagId =
+      static_cast<int>(log2(queueFlagInt & -queueFlagInt));
+
+  assert(materialRuntime.m_tables[currentFlagId].isFlatRoot == true);
+  // let us bind the descriptor table
+  commandList->SetGraphicsRootDescriptorTable(
+      1, materialRuntime.m_tables[currentFlagId].flatDescriptors[0].gpuHandle);
+}
+
 void Dx12MaterialManager::bindMaterial(
     SHADER_QUEUE_FLAGS queueFlag, const Dx12MaterialRuntime &materialRuntime,
     ID3D12GraphicsCommandList2 *commandList) {
@@ -342,61 +357,179 @@ void Dx12MaterialManager::bindMaterial(
   const SHADER_TYPE_FLAGS type =
       getTypeFlags(materialRuntime.shaderQueueTypeFlags[currentFlagId]);
   switch (type) {
-    case (SHADER_TYPE_FLAGS::PBR): {
-      bindPBR(materialRuntime, commandList);
-      break;
-    }
-    case (SHADER_TYPE_FLAGS::SKIN): {
-      bindSkin(materialRuntime, commandList);
-      break;
-    }
-    case (SHADER_TYPE_FLAGS::FORWARD_PBR): {
-      bindForwardPBR(materialRuntime, commandList);
-      break;
-    }
-    case (SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT): {
-      bindForwardPhongAlphaCutout(materialRuntime, commandList);
-      break;
-    }
-    case (SHADER_TYPE_FLAGS::HAIR): {
-      bindHair(materialRuntime, commandList);
-      break;
-    }
-    case (SHADER_TYPE_FLAGS::SKINCLUSTER): {
-      bindSkinning(materialRuntime, commandList);
-      break;
-    }
-    case (SHADER_TYPE_FLAGS::SKINSKINCLUSTER): {
-      bindSkinSkinning(materialRuntime, commandList);
-      break;
-    }
-    case (SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT_SKIN): {
-      bindForwardPhongAlphaCutoutSkin(materialRuntime, commandList);
-      break;
-    }
-    case (SHADER_TYPE_FLAGS::HAIRSKIN): {
-      bindHairSkin(materialRuntime, commandList);
-      break;
-    }
-    case (SHADER_TYPE_FLAGS::FORWARD_PARALLAX): {
-      bindParallaxPBR(materialRuntime, commandList);
-      break;
-    }
-    case (SHADER_TYPE_FLAGS::SHADOW_SKIN_CLUSTER): {
-      bindShadowSkin(materialRuntime, commandList);
-      break;
-    }
-    case (SHADER_TYPE_FLAGS::DEBUG_LINES_SINGLE_COLOR): {
-      bindDebugLinesSingleColor(materialRuntime, commandList);
-      break;
-    }
-    case (SHADER_TYPE_FLAGS::DEBUG_POINTS_SINGLE_COLOR): {
-      bindDebugPointsSingleColor(materialRuntime, commandList);
-      break;
-    }
-    default: {
-      assert(0 && "could not find material type");
-    }
+  case (SHADER_TYPE_FLAGS::PBR): {
+    bindPBR(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::SKIN): {
+    bindSkin(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::FORWARD_PBR): {
+    bindForwardPBR(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT): {
+    bindForwardPhongAlphaCutout(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::HAIR): {
+    bindHair(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::SKINCLUSTER): {
+    bindSkinning(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::SKINSKINCLUSTER): {
+    bindSkinSkinning(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT_SKIN): {
+    bindForwardPhongAlphaCutoutSkin(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::HAIRSKIN): {
+    bindHairSkin(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::FORWARD_PARALLAX): {
+    bindParallaxPBR(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::SHADOW_SKIN_CLUSTER): {
+    bindShadowSkin(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::DEBUG_LINES_SINGLE_COLOR): {
+    bindDebugLinesSingleColor(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::DEBUG_POINTS_SINGLE_COLOR): {
+    bindDebugPointsSingleColor(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::GRASS_FORWARD): {
+    bindFlatDescriptorMaterial(materialRuntime, commandList, queueFlag);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::FORWARD_PHONG): {
+    bindFlatDescriptorMaterial(materialRuntime, commandList, queueFlag);
+    break;
+  }
+  default: {
+    assert(0 && "could not find material type");
+  }
+  }
+}
+
+void updateForwardPhong(const MaterialData &data,
+                        ID3D12GraphicsCommandList2 *commandList,
+                        SHADER_QUEUE_FLAGS queueFlag) {
+  const auto queueFlagInt = static_cast<int>(queueFlag);
+  const auto currentFlagId =
+      static_cast<int>(log2(queueFlagInt & -queueFlagInt));
+  const FlatDescriptorTable &table = data.m_materialRuntime.m_tables[currentFlagId];
+  // bind mesh
+  // no tangents for now
+  const uint32_t meshFlags = POSITIONS | NORMALS | UV;
+  dx12::MESH_MANAGER->bindFlatMesh(data.m_materialRuntime.meshHandle,
+                                   table.flatDescriptors, meshFlags, 0);
+  // now bind the texture
+  assert(data.m_materialRuntime.m_tables[currentFlagId].isFlatRoot == true);
+
+
+  dx12::TEXTURE_MANAGER->createSRV(data.handles.albedo,
+                                   table.flatDescriptors[3]);
+}
+
+void Dx12MaterialManager::updateMaterial(
+    SHADER_QUEUE_FLAGS queueFlag, const MaterialData& data,
+    ID3D12GraphicsCommandList2 *commandList) {
+  const auto queueFlagInt = static_cast<int>(queueFlag);
+  const auto currentFlagId =
+      static_cast<int>(log2(queueFlagInt & -queueFlagInt));
+  const SHADER_TYPE_FLAGS type =
+      getTypeFlags(data.m_materialRuntime.shaderQueueTypeFlags[currentFlagId]);
+  auto& materialRuntime = data.m_materialRuntime;
+  switch (type) {
+  case (SHADER_TYPE_FLAGS::PBR): {
+    assert(0);
+    bindPBR(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::SKIN): {
+    assert(0);
+    bindSkin(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::FORWARD_PBR): {
+    assert(0);
+    bindForwardPBR(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT): {
+    assert(0);
+    bindForwardPhongAlphaCutout(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::HAIR): {
+    assert(0);
+    bindHair(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::SKINCLUSTER): {
+    assert(0);
+    bindSkinning(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::SKINSKINCLUSTER): {
+    assert(0);
+    bindSkinSkinning(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT_SKIN): {
+    assert(0);
+    bindForwardPhongAlphaCutoutSkin(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::HAIRSKIN): {
+    assert(0);
+    bindHairSkin(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::FORWARD_PARALLAX): {
+    assert(0);
+    bindParallaxPBR(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::SHADOW_SKIN_CLUSTER): {
+    assert(0);
+    bindShadowSkin(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::DEBUG_LINES_SINGLE_COLOR): {
+    assert(0);
+    bindDebugLinesSingleColor(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::DEBUG_POINTS_SINGLE_COLOR): {
+    assert(0);
+    bindDebugPointsSingleColor(materialRuntime, commandList);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::GRASS_FORWARD): {
+    assert(0);
+    bindFlatDescriptorMaterial(materialRuntime, commandList, queueFlag);
+    break;
+  }
+  case (SHADER_TYPE_FLAGS::FORWARD_PHONG): {
+    updateForwardPhong(data, commandList, queueFlag);
+    break;
+  }
+  default: {
+    assert(0 && "could not find material type");
+  }
   }
 }
 
@@ -411,9 +544,10 @@ void Dx12MaterialManager::bindTexture(MaterialHandle handle,
   const auto queueFlagInt = static_cast<int>(queue);
   const auto currentFlagId =
       static_cast<int>(log2(queueFlagInt & -queueFlagInt));
-  assert(data.m_tables[currentFlagId].isFlatRoot == true);
+  assert(data.m_materialRuntime.m_tables[currentFlagId].isFlatRoot == true);
 
-  const FlatDescriptorTalbe &table = data.m_tables[currentFlagId];
+  const FlatDescriptorTable &table =
+      data.m_materialRuntime.m_tables[currentFlagId];
 
   dx12::TEXTURE_MANAGER->createSRV(texHandle,
                                    table.flatDescriptors[bindingIndex]);
@@ -434,9 +568,10 @@ void Dx12MaterialManager::bindBuffer(const MaterialHandle handle,
   const auto queueFlagInt = static_cast<int>(queue);
   const auto currentFlagId =
       static_cast<int>(log2(queueFlagInt & -queueFlagInt));
-  assert(data.m_tables[currentFlagId].isFlatRoot == true);
+  assert(data.m_materialRuntime.m_tables[currentFlagId].isFlatRoot == true);
 
-  const FlatDescriptorTalbe &table = data.m_tables[currentFlagId];
+  const FlatDescriptorTable &table =
+      data.m_materialRuntime.m_tables[currentFlagId];
 
   dx12::BUFFER_MANAGER->createSrv(bufferHandle,
                                   table.flatDescriptors[bindingIndex]);
@@ -465,6 +600,22 @@ void Dx12MaterialManager::bindRSandPSO(
   assert(0 && "Could not find requested shader type for PSO /RS bind");
 }
 
+void allocateDescriptorTable(FlatDescriptorTable &table, const RSHandle root) {
+  // lets allocate enough descriptors to use for the descriptor table
+  const uint32_t descriptorCount =
+      dx12::ROOT_SIGNATURE_MANAGER->getDescriptorCount(root);
+  auto *descriptors = reinterpret_cast<DescriptorPair *>(
+      globals::PERSISTENT_ALLOCATOR->allocate(sizeof(DescriptorPair) *
+                                              descriptorCount));
+  // now we have enough descriptors that we can use to bind everything
+  uint32_t baseDescriptorIdx =
+      dx12::GLOBAL_CBV_SRV_UAV_HEAP->reserveDescriptors(descriptors,
+                                                        descriptorCount);
+  table.descriptorCount = descriptorCount;
+  table.isFlatRoot = true;
+  table.flatDescriptors = descriptors;
+}
+
 MaterialHandle Dx12MaterialManager::allocateMaterial(
     const char *name, ALLOCATE_MATERIAL_FLAGS flags,
     const char *materialsPerQueue[QUEUE_COUNT]) {
@@ -487,28 +638,16 @@ MaterialHandle Dx12MaterialManager::allocateMaterial(
     MaterialData &materialData =
         m_materialTextureHandles.getFreeMemoryData(index);
     materialData.magicNumber = MAGIC_NUMBER_COUNTER++;
-    materialData.m_tables[i].isFlatRoot = false;
-    materialData.m_tables[i].descriptorCount = 0;
-    materialData.m_tables[i].flatDescriptors = nullptr;
+    materialData.m_materialRuntime.m_tables[i].isFlatRoot = false;
+    materialData.m_materialRuntime.m_tables[i].descriptorCount = 0;
+    materialData.m_materialRuntime.m_tables[i].flatDescriptors = nullptr;
 
     // now we check whether is a flat table or not, if it is
     // we allocate the corresponding descriptors
     RSHandle root = bind.rs;
     bool isFlatRoot = dx12::ROOT_SIGNATURE_MANAGER->isFlatRoot(root);
     if (isFlatRoot) {
-      // lets allocate enough descriptors to use for the descriptor table
-      uint32_t descriptorCount =
-          dx12::ROOT_SIGNATURE_MANAGER->getDescriptorCount(root);
-      auto *descriptors = reinterpret_cast<DescriptorPair *>(
-          globals::PERSISTENT_ALLOCATOR->allocate(sizeof(DescriptorPair) *
-                                                  descriptorCount));
-      // now we have enough descriptors that we can use to bind everything
-      uint32_t baseDescriptorIdx =
-          dx12::GLOBAL_CBV_SRV_UAV_HEAP->reserveDescriptors(descriptors,
-                                                            descriptorCount);
-      materialData.m_tables[i].descriptorCount = descriptorCount;
-      materialData.m_tables[i].isFlatRoot = true;
-      materialData.m_tables[i].flatDescriptors = descriptors;
+      allocateDescriptorTable(materialData.m_materialRuntime.m_tables[i], root);
     }
 
     // this will be used when we need to bind the material
@@ -516,11 +655,11 @@ MaterialHandle Dx12MaterialManager::allocateMaterial(
     materialData.m_rsHandle = bind.rs;
 
     // adding correct queue
-    auto queueType = static_cast<SHADER_QUEUE_FLAGS>(1 << i);
+    const auto queueType = static_cast<SHADER_QUEUE_FLAGS>(1 << i);
     materialData.m_materialRuntime.shaderQueueTypeFlags[i] =
         getQueueTypeFlags(queueType, shaderType);
 
-    MaterialHandle handle{(materialData.magicNumber << 16) | (index)};
+    const MaterialHandle handle{(materialData.magicNumber << 16) | (index)};
     m_nameToHandle.insert(name, handle);
     return handle;
   }
@@ -597,6 +736,36 @@ MaterialHandle Dx12MaterialManager::loadMaterial(const char *path,
   materialData.magicNumber = MAGIC_NUMBER_COUNTER++;
   materialData.m_materialRuntime = matCpu;
 
+  // check if is flat material
+  for (uint32_t i = 0; i < QUEUE_COUNT; ++i) {
+    if (parse.shaderQueueTypeFlags[i] == INVALID_QUEUE_TYPE_FLAGS) {
+      continue;
+    }
+    // get the type of shader
+    const SHADER_TYPE_FLAGS type = getTypeFlags(parse.shaderQueueTypeFlags[i]);
+    // get the rs
+    ShaderBind bind;
+    bool found =
+        m_shaderTypeToShaderBind.get(static_cast<uint16_t>(type), bind);
+    assert(found);
+    assert(bind.pso.isHandleValid());
+    assert(bind.rs.isHandleValid());
+
+    // now that we have the RS we can check whether is a flat material or not
+    bool isFlatRoot = dx12::ROOT_SIGNATURE_MANAGER->isFlatRoot(bind.rs);
+    if (!isFlatRoot) {
+      continue;
+    }
+
+    // we have a flat material we need to deal with it accordingly
+    allocateDescriptorTable(materialData.m_materialRuntime.m_tables[i],
+                            bind.rs);
+
+    // we have a flat root but we actually need to setup the data
+    SHADER_QUEUE_FLAGS queueFlags = static_cast<SHADER_QUEUE_FLAGS>(parse.shaderQueueTypeFlags[i]);
+    updateMaterial(queueFlags,materialData,nullptr);
+  }
+
   MaterialHandle handle{(materialData.magicNumber << 16) | (index)};
 
   const std::string name = getFileName(path);
@@ -623,10 +792,12 @@ void Dx12MaterialManager::bindMaterial(const MaterialHandle handle,
   const auto currentFlagId =
       static_cast<int>(log2(queueFlagInt & -queueFlagInt));
 
-  assert(data.m_tables[currentFlagId].isFlatRoot == true);
+  assert(data.m_materialRuntime.m_tables[currentFlagId].isFlatRoot == true);
   // let us bind the descriptor table
   commandList->SetGraphicsRootDescriptorTable(
-      1, data.m_tables[currentFlagId].flatDescriptors[0].gpuHandle);
+      1, data.m_materialRuntime.m_tables[currentFlagId]
+             .flatDescriptors[0]
+             .gpuHandle);
 }
 
 void Dx12MaterialManager::free(const MaterialHandle handle) {
@@ -636,4 +807,4 @@ void Dx12MaterialManager::free(const MaterialHandle handle) {
   const auto &data = m_materialTextureHandles.getConstRef(index);
   m_materialTextureHandles.free(index);
 }
-}  // namespace SirEngine::dx12
+} // namespace SirEngine::dx12

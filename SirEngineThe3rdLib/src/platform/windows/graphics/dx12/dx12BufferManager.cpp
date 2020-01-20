@@ -191,12 +191,17 @@ void BufferManagerDx12::bindBufferAsSRVGraphics(
 }
 
 void BufferManagerDx12::createSrv(const BufferHandle &handle,
-                                  DescriptorPair &descriptorPair) const {
+                                  DescriptorPair &descriptorPair, uint32_t offset) const {
   assertMagicNumber(handle);
   const uint32_t index = getIndexFromHandle(handle);
   const BufferData &data = m_bufferPool.getConstRef(index);
+
+  //we need to check what the offset in elements is
+  int elementOffset = offset/data.elementSize;
+
+	
   dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferSRV(
-      descriptorPair, data.data, data.elementCount, data.elementSize);
+      descriptorPair, data.data, data.elementCount, data.elementSize, elementOffset);
 }
 
 void BufferManagerDx12::bindBufferAsDescriptorTableGrahpics(
