@@ -62,8 +62,8 @@ uint32_t DescriptorHeap::allocateDescriptor(
 }
 
 uint32_t DescriptorHeap::createBufferCBV(DescriptorPair &pair,
-                                     ID3D12Resource *resource,
-                                     int totalSizeInByte) {
+                                         ID3D12Resource *resource,
+                                         int totalSizeInByte) {
   D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
   cbvDesc.BufferLocation = resource->GetGPUVirtualAddress();
   cbvDesc.SizeInBytes = totalSizeInByte;
@@ -80,14 +80,15 @@ uint32_t DescriptorHeap::createBufferCBV(DescriptorPair &pair,
 }
 
 uint32_t DescriptorHeap::createTexture2DSRV(DescriptorPair &pair,
-                                        ID3D12Resource *resource,
-                                        DXGI_FORMAT format, uint32_t mipLevel,
-                                        bool descriptorExists) {
+                                            ID3D12Resource *resource,
+                                            DXGI_FORMAT format,
+                                            uint32_t mipLevel,
+                                            bool descriptorExists) {
   uint32_t descriptorIndex = 0;
   if (!descriptorExists) {
     descriptorIndex = allocateDescriptor(&pair.cpuHandle);
   } else {
-    //reconstruct the descriptor index using pointers
+    // reconstruct the descriptor index using pointers
     auto descriptorHeapCpuBase = getCPUStart();
     descriptorIndex =
         (pair.cpuHandle.ptr - descriptorHeapCpuBase.ptr) / m_descriptorSize;
@@ -110,8 +111,9 @@ uint32_t DescriptorHeap::createTexture2DSRV(DescriptorPair &pair,
 }
 
 uint32_t DescriptorHeap::createTexture2DUAV(DescriptorPair &pair,
-                                        ID3D12Resource *resource,
-                                        DXGI_FORMAT format, uint32_t mipLevel) {
+                                            ID3D12Resource *resource,
+                                            DXGI_FORMAT format,
+                                            uint32_t mipLevel) {
   uint32_t descriptorIndex = allocateDescriptor(&pair.cpuHandle);
 
   D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc = {};
@@ -129,8 +131,8 @@ uint32_t DescriptorHeap::createTexture2DUAV(DescriptorPair &pair,
 }
 
 uint32_t DescriptorHeap::createTextureCubeSRV(DescriptorPair &pair,
-                                          ID3D12Resource *resource,
-                                          DXGI_FORMAT format) {
+                                              ID3D12Resource *resource,
+                                              DXGI_FORMAT format) {
   uint32_t descriptorIndex = allocateDescriptor(&pair.cpuHandle);
 
   D3D12_RESOURCE_DESC desc = resource->GetDesc();
@@ -151,8 +153,8 @@ uint32_t DescriptorHeap::createTextureCubeSRV(DescriptorPair &pair,
 }
 
 uint32_t createDSV(DescriptorHeap *heap, ID3D12Resource *resource,
-               DescriptorPair &pair, const DXGI_FORMAT format,
-               const D3D12_DSV_FLAGS flags) {
+                   DescriptorPair &pair, const DXGI_FORMAT format,
+                   const D3D12_DSV_FLAGS flags) {
   assert(heap->getType() == D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
   uint32_t descriptorIndex = heap->allocateDescriptor(&pair.cpuHandle);
   // Hard-code depthstencil format
@@ -192,9 +194,9 @@ int DescriptorHeap::reserveDescriptors(DescriptorPair *pair,
   return baseDescriptorIndex;
 }
 
-uint32_t DescriptorHeap::createBufferSRV(DescriptorPair &pair,
-                                     ID3D12Resource *resource, uint32_t numElements,
-                                     uint32_t elementSize, uint32_t elementOffset) {
+uint32_t DescriptorHeap::createBufferSRV(
+    DescriptorPair &pair, ID3D12Resource *resource, uint32_t numElements,
+    uint32_t elementSize, uint32_t elementOffset, bool descriptorExists) {
   // SRV
   D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
   srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
@@ -213,7 +215,16 @@ uint32_t DescriptorHeap::createBufferSRV(DescriptorPair &pair,
     srvDesc.Buffer.StructureByteStride = elementSize;
     srvDesc.Buffer.FirstElement = elementOffset;
   }
-  uint32_t descriptorIndex = allocateDescriptor(&pair.cpuHandle);
+  uint32_t descriptorIndex;
+  if (!descriptorExists) {
+    descriptorIndex = allocateDescriptor(&pair.cpuHandle);
+  } else {
+    // reconstruct the descriptor index using pointers
+    auto descriptorHeapCpuBase = getCPUStart();
+    descriptorIndex =
+        (pair.cpuHandle.ptr - descriptorHeapCpuBase.ptr) / m_descriptorSize;
+  }
+
   DEVICE->CreateShaderResourceView(resource, &srvDesc, pair.cpuHandle);
   pair.gpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(getGPUStart(), descriptorIndex,
                                                  m_descriptorSize);
@@ -225,8 +236,9 @@ uint32_t DescriptorHeap::createBufferSRV(DescriptorPair &pair,
 };
 
 uint32_t DescriptorHeap::createBufferUAV(DescriptorPair &pair,
-                                     ID3D12Resource *resource, uint32_t numElements,
-                                     uint32_t elementSize) {
+                                         ID3D12Resource *resource,
+                                         uint32_t numElements,
+                                         uint32_t elementSize) {
   // SRV
   D3D12_UNORDERED_ACCESS_VIEW_DESC srvDesc = {};
   srvDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
@@ -249,7 +261,7 @@ uint32_t DescriptorHeap::createBufferUAV(DescriptorPair &pair,
 };
 
 uint32_t createRTVSRV(DescriptorHeap *heap, ID3D12Resource *resource,
-                  DescriptorPair &pair) {
+                      DescriptorPair &pair) {
   assert(heap->getType() == D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
   uint32_t descriptorIndex = heap->allocateDescriptor(&pair.cpuHandle);
   DEVICE->CreateRenderTargetView(resource, nullptr, pair.cpuHandle);

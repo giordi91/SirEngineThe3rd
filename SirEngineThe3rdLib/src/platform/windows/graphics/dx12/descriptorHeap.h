@@ -72,7 +72,7 @@ public:
 
   uint32_t createBufferSRV(DescriptorPair &pair, ID3D12Resource *resource,
                            uint32_t numElements, uint32_t elementSize,
-                           uint32_t elementOffset=0);
+                           uint32_t elementOffset=0,bool descriptorExists=false);
   uint32_t createBufferUAV(DescriptorPair &pair, ID3D12Resource *resource,
                            uint32_t numElements, uint32_t elementSize);
 

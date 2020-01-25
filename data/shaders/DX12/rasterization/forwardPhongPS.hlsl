@@ -12,7 +12,8 @@ SamplerState gsamAnisotropicClamp : register(s5);
 
 float4 PS(FullMeshVertexOut pin) : SV_Target
 {
-    float4 color = sourceTexture.Sample(gsamLinearClamp, pin.uv);
+    float4 color = sourceTexture.Sample(gsamLinearClamp, float2(pin.uv.x, 1.0f - pin.uv.y));
+    //float4 color = float4(pin.uv, 0, 1);
 	return color;
 }
 

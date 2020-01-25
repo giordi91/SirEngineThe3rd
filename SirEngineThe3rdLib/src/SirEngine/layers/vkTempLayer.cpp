@@ -78,27 +78,28 @@ void VkTempLayer::initGrass() {
   globals::MATERIAL_MANAGER->bindBuffer(m_grassMaterial, m_grassBuffer, 0,
                                         SHADER_QUEUE_FLAGS::FORWARD);
 
-  //lets create the needed stuff to add the object to the queue 
+  // lets create the needed stuff to add the object to the queue
   RenderableDescription description{};
   description.buffer = m_grassBuffer;
   description.subranges[0].m_offset = 0;
   description.subranges[0].m_size = totalSize;
   description.subragesCount = 1;
 
-  description.materialHandle = m_grassMaterial; 
+  description.materialHandle = m_grassMaterial;
   //*3 because we render a triangle for now
-  description.primitiveToRender = pointCount*tileCount*3;
+  description.primitiveToRender = pointCount * tileCount * 3;
   globals::RENDERING_CONTEXT->addRenderablesToQueue(description);
-
-	
 }
 
 void VkTempLayer::onAttach() {
   globals::MAIN_CAMERA = new Camera3DPivot();
   // globals::MAIN_CAMERA->setLookAt(0, 125, 0);
   // globals::MAIN_CAMERA->setPosition(00, 125, 60);
+  //camera in dx12 has negate panX and rotateX, unsure why, might be because vulkan
+  //has the negative viewport?
+  float negate = globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::DX12 ? -1.0f :0.0f;
   CameraManipulationConfig camConfig{
-      -0.01f, 0.01f, 0.012f, 0.012f, -0.07f,
+      -0.01f*negate, 0.01f, 0.012f*negate, 0.012f, -0.07f,
   };
   globals::MAIN_CAMERA->setManipulationMultipliers(camConfig);
 
@@ -111,7 +112,7 @@ void VkTempLayer::onAttach() {
   // globals::ASSET_MANAGER->loadScene(globals::ENGINE_CONFIG->m_startScenePath);
   globals::ASSET_MANAGER->loadScene("../data/scenes/tempScene.json");
 
-  initGrass();
+  // initGrass();
 
   alloc =
       new GraphAllocators{globals::STRING_POOL, globals::PERSISTENT_ALLOCATOR};

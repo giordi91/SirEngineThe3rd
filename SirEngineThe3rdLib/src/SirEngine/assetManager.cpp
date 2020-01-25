@@ -139,6 +139,7 @@ AssetDataHandle AssetManager::loadScene(const char *path) {
       getValueIfInJson(jobj, AssetManagerKeys::ENVIROMENT_MAP_KEY,
                        AssetManagerKeys::DEFAULT_STRING);
   assert(!enviromentMapString.empty());
+
   TextureHandle enviromentMapHandle =
       globals::TEXTURE_MANAGER->loadTexture(enviromentMapString.c_str(), true);
 

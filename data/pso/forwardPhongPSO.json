@@ -6,7 +6,7 @@
   "PS": "forwardPhongPS",
   "rasterState": "default",
   "blendState": "default",
-  "depthStencilState": "default",
+  "depthStencilState": "custom",
   "depthStencilStateConfig": {
     "depthEnabled": true,
     "depthFunc": "GREATER",

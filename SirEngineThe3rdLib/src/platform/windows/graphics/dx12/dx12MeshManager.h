@@ -149,22 +149,22 @@ public:
 
       dx12::BUFFER_MANAGER->createSrv(runtime.bufferHandle,
                                       pairs[startIndex + 0],
-                                      runtime.positionRange.m_offset);
+                                      runtime.positionRange,true);
     }
     if ((flags & MeshAttributeFlags::NORMALS) > 0) {
       dx12::BUFFER_MANAGER->createSrv(runtime.bufferHandle,
                                       pairs[startIndex + 1],
-                                      runtime.normalsRange.m_offset);
+                                      runtime.normalsRange,true);
     }
     if ((flags & MeshAttributeFlags::UV) > 0) {
       dx12::BUFFER_MANAGER->createSrv(runtime.bufferHandle,
                                       pairs[startIndex + 2],
-                                      runtime.uvRange.m_offset);
+                                      runtime.uvRange,true);
     }
     if ((flags & MeshAttributeFlags::TANGENTS) > 0) {
       dx12::BUFFER_MANAGER->createSrv(runtime.bufferHandle,
                                       pairs[startIndex + 3],
-                                      runtime.tangentsRange.m_offset);
+                                      runtime.tangentsRange,true);
     }
   }
 
