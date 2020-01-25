@@ -23,6 +23,8 @@ class SIR_ENGINE_API Dx12TextureManager final : public TextureManager {
     DescriptorPair rtsrv;
     DescriptorPair uav;
     DescriptorPair dsvStencil;
+    uint32_t width;
+    uint32_t height;
   };
 
  public:
@@ -133,6 +135,7 @@ class SIR_ENGINE_API Dx12TextureManager final : public TextureManager {
   void createSRV(TextureHandle handle, DescriptorPair &pair) {
     assertMagicNumber(handle);
     const uint32_t index = getIndexFromHandle(handle);
+    //const uint32_t index = getIndexFromHandle(m_whiteTexture);
     TextureData &data = m_texturePool[index];
     dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DSRV(pair, data.resource,
                                                       data.format,0, true);
