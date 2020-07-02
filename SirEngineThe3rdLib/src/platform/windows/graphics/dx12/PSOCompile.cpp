@@ -37,6 +37,7 @@ static const std::string DEFAULT_STRING = "";
 static const std::string DEFAULT_STATE = "default";
 static const std::string PSO_KEY_CUSTOM_STATE = "custom";
 static const std::string PSO_KEY_DEPTH_ENABLED = "depthEnabled";
+static const std::string PSO_KEY_DEPTH_WRITE = "depthWrite";
 static const std::string PSO_KEY_STENCIL_ENABLED = "stencilEnabled";
 static const std::string PSO_KEY_DEPTH_COMPARISON_FUNCTION = "depthFunc";
 static const std::string PSO_KEY_RASTER_CONFIG = "rasterStateConfig";
@@ -194,7 +195,10 @@ inline D3D12_DEPTH_STENCIL_DESC getDSState(const std::string &state,
     const bool depthEnabled =
         getValueIfInJson(dssObj, PSO_KEY_DEPTH_ENABLED, DEFAULT_BOOL);
     desc.DepthEnable = depthEnabled;
-    desc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+
+    const bool depthWrite = getValueIfInJson(dssObj, PSO_KEY_DEPTH_WRITE, true);
+    desc.DepthWriteMask =
+        depthWrite ? D3D12_DEPTH_WRITE_MASK_ALL : D3D12_DEPTH_WRITE_MASK_ZERO;
     desc.DepthFunc =
         getComparisonFunction(dssObj, PSO_KEY_DEPTH_COMPARISON_FUNCTION);
     const bool stencilEnabled =
@@ -320,7 +324,6 @@ PSOCompileResult processComputePSO(nlohmann::json &jobj, const char *path,
 
 PSOCompileResult processRasterPSO(nlohmann::json &jobj, const char *path,
                                   const char *shaderPath) {
-
   // find the input layout
   const std::string layoutString =
       getValueIfInJson(jobj, PSO_KEY_INPUT_LAYOUT, DEFAULT_STRING);
