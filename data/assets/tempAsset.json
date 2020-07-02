@@ -3,6 +3,10 @@
     {
       "mesh": "../data/processed/meshes/knightB/jacket.model",
       "material": "../data/materials/knightBJacketForward.json"
+    },
+    {
+      "mesh": "../data/processed/meshes/knightB/pants.model",
+      "material": "../data/materials/knightBPantsForward.json"
     }
   ]
   ,"t": [

@@ -74,7 +74,8 @@ void Dx12PSOManager::loadCachedPSOInFolder(const char *directory) {
   }
 }
 
-PSOCompileResult Dx12PSOManager::loadCachedPSO(const char *path) {
+PSOCompileResult Dx12PSOManager::loadCachedPSO(const char *path) const
+{
   const auto expPath = std::filesystem::path(path);
   const std::string name = expPath.stem().string();
 

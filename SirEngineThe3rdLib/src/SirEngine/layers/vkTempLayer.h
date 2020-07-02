@@ -52,7 +52,7 @@ private:
 
   // TODO temp
   GraphAllocators *alloc;
-  DebugDrawHandle m_debugHandle;
+  DebugDrawHandle m_debugHandle{};
   BufferHandle m_grassBuffer;
   MaterialHandle m_grassMaterial;
 };

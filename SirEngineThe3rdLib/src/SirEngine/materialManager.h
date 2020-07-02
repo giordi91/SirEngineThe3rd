@@ -77,13 +77,15 @@ public:
   static constexpr uint32_t QUEUE_COUNT = 5;
 
 protected:
-  struct PrelinaryMaterialParse {
+  struct PreliminaryMaterialParse {
     Material mat;
     MaterialDataHandles handles;
     uint32_t shaderQueueTypeFlags[QUEUE_COUNT] = {
         INVALID_QUEUE_TYPE_FLAGS, INVALID_QUEUE_TYPE_FLAGS,
         INVALID_QUEUE_TYPE_FLAGS, INVALID_QUEUE_TYPE_FLAGS,
         INVALID_QUEUE_TYPE_FLAGS};
+    //defines whether or not we expect the material to change, if not we can save
+  	//some resource allocations
     bool isStatic = false;
   };
 
@@ -92,7 +94,7 @@ public:
   typedef uint32_t ALLOCATE_MATERIAL_FLAGS;
 
 public:
-  MaterialManager(const uint32_t reserveSize)
+  explicit MaterialManager(const uint32_t reserveSize)
       : m_shaderTypeToShaderBind(reserveSize){};
   virtual ~MaterialManager() = default;
 
@@ -160,7 +162,7 @@ public:
   const char *getStringFromShaderTypeFlag(SHADER_TYPE_FLAGS type);
 
 protected:
-  static PrelinaryMaterialParse parseMaterial(const char *path,
+  static PreliminaryMaterialParse parseMaterial(const char *path,
                                        const MeshHandle meshHandle,
                                        const SkinHandle skinHandle);
   void loadTypeFile(const char *path);

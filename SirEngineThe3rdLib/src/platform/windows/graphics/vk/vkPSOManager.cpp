@@ -47,6 +47,7 @@ static const bool DEFAULT_BOOL = false;
 static const std::string DEFAULT_STATE = "default";
 static const std::string PSO_KEY_CUSTOM_STATE = "custom";
 static const std::string PSO_KEY_DEPTH_ENABLED = "depthEnabled";
+static const std::string PSO_KEY_DEPTH_WRITE = "depthWrite";
 static const std::string PSO_KEY_STENCIL_ENABLED = "stencilEnabled";
 static const std::string PSO_KEY_DEPTH_COMPARISON_FUNCTION = "depthFunc";
 static const std::string PSO_KEY_RASTER_CONFIG = "rasterStateConfig";
@@ -419,7 +420,11 @@ void getDepthStencilState(
 
   const bool depthEnabled =
       getValueIfInJson(dssObj, PSO_KEY_DEPTH_ENABLED, DEFAULT_BOOL);
+  //if not set we retur ntrue
+  const bool depthWrite=
+      getValueIfInJson(dssObj, PSO_KEY_DEPTH_WRITE, true);
   depthStencilState.depthTestEnable = depthEnabled;
+  depthStencilState.depthWriteEnable = depthWrite;
 
   depthStencilState.depthCompareOp =
       getComparisonFunction(dssObj, PSO_KEY_DEPTH_COMPARISON_FUNCTION);

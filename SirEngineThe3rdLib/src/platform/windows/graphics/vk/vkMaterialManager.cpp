@@ -597,7 +597,7 @@ inline VkDescriptorImageInfo getDescriptor(const TextureHandle handle) {
 MaterialHandle VkMaterialManager::loadMaterial(const char *path,
                                                const MeshHandle meshHandle,
                                                const SkinHandle skinHandle) {
-  PrelinaryMaterialParse parse = parseMaterial(path, meshHandle, skinHandle);
+  PreliminaryMaterialParse parse = parseMaterial(path, meshHandle, skinHandle);
 
   uint32_t index;
   VkMaterialData &materialData =

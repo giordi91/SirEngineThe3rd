@@ -681,7 +681,7 @@ MaterialHandle Dx12MaterialManager::allocateMaterial(
 MaterialHandle Dx12MaterialManager::loadMaterial(const char *path,
                                                  const MeshHandle meshHandle,
                                                  const SkinHandle skinHandle) {
-  PrelinaryMaterialParse parse = parseMaterial(path, meshHandle, skinHandle);
+  PreliminaryMaterialParse parse = parseMaterial(path, meshHandle, skinHandle);
 
   uint32_t index;
   MaterialData &materialData =

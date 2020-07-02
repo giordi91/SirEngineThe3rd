@@ -69,7 +69,7 @@ private:
                                   CD3DX12_STATE_OBJECT_DESC &pipe) const;
   void processPipelineConfig(nlohmann::json &jobj,
                              CD3DX12_STATE_OBJECT_DESC &pipe) const;
-  PSOCompileResult loadCachedPSO(const char *path);
+  PSOCompileResult loadCachedPSO(const char *path) const;
 
   void updatePSOCache(const char *name, ID3D12PipelineState *pso);
   void insertInPSOCache(const PSOCompileResult &result);

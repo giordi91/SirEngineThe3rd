@@ -95,11 +95,12 @@ void VkTempLayer::onAttach() {
   globals::MAIN_CAMERA = new Camera3DPivot();
   // globals::MAIN_CAMERA->setLookAt(0, 125, 0);
   // globals::MAIN_CAMERA->setPosition(00, 125, 60);
-  //camera in dx12 has negate panX and rotateX, unsure why, might be because vulkan
-  //has the negative viewport?
-  float negate = globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::DX12 ? -1.0f :0.0f;
+  // camera in dx12 has negate panX and rotateX, unsure why, might be because
+  // vulkan has the negative viewport?
+  float negate =
+      globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::DX12 ? -1.0f : 1.0f;
   CameraManipulationConfig camConfig{
-      -0.01f*negate, 0.01f, 0.012f*negate, 0.012f, -0.07f,
+      -0.01f * negate, 0.01f, 0.012f * negate, 0.012f, -0.07f,
   };
   globals::MAIN_CAMERA->setManipulationMultipliers(camConfig);
 
@@ -118,9 +119,9 @@ void VkTempLayer::onAttach() {
       new GraphAllocators{globals::STRING_POOL, globals::PERSISTENT_ALLOCATOR};
 
   globals::RENDERING_GRAPH = new DependencyGraph();
-  const auto forward = new VkSimpleForward(*alloc);
-  const auto debugDraw = new DebugDrawNode(*alloc);
-  const auto finalBlit = new FinalBlitNode(*alloc);
+  auto *const forward = new VkSimpleForward(*alloc);
+  auto *const debugDraw = new DebugDrawNode(*alloc);
+  auto *const finalBlit = new FinalBlitNode(*alloc);
 
   // temporary graph for testing
   globals::RENDERING_GRAPH->addNode(forward);
@@ -128,12 +129,14 @@ void VkTempLayer::onAttach() {
   globals::RENDERING_GRAPH->addNode(finalBlit);
   globals::RENDERING_GRAPH->setFinalNode(finalBlit);
 
-  globals::RENDERING_GRAPH->connectNodes(forward, VkSimpleForward::OUT_TEXTURE,
-                                         debugDraw, DebugDrawNode::IN_TEXTURE);
-  globals::RENDERING_GRAPH->connectNodes(forward, VkSimpleForward::DEPTH_RT,
-                                         debugDraw, DebugDrawNode::DEPTH_RT);
-  globals::RENDERING_GRAPH->connectNodes(debugDraw, DebugDrawNode::OUT_TEXTURE,
-                                         finalBlit, FinalBlitNode::IN_TEXTURE);
+  SirEngine::DependencyGraph::connectNodes(
+      forward, VkSimpleForward::OUT_TEXTURE, debugDraw,
+      DebugDrawNode::IN_TEXTURE);
+  SirEngine::DependencyGraph::connectNodes(forward, VkSimpleForward::DEPTH_RT,
+                                           debugDraw, DebugDrawNode::DEPTH_RT);
+  SirEngine::DependencyGraph::connectNodes(
+      debugDraw, DebugDrawNode::OUT_TEXTURE, finalBlit,
+      FinalBlitNode::IN_TEXTURE);
 
   // TODO this whole reset execute flush needs to be reworked
   globals::RENDERING_GRAPH->finalizeGraph();
@@ -188,7 +191,9 @@ void VkTempLayer::onEvent(Event &event) {
 void VkTempLayer::clear() {
   // vkDeviceWaitIdle(vk::LOGICAL_DEVICE);
   globals::RENDERING_GRAPH->clear();
-  globals::DEBUG_RENDERER->free(m_debugHandle);
+  if (m_debugHandle.isHandleValid()) {
+    globals::DEBUG_RENDERER->free(m_debugHandle);
+  }
 }
 
 bool VkTempLayer::onMouseButtonPressEvent(MouseButtonPressEvent &e) {
