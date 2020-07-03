@@ -14,6 +14,7 @@
 #include "SirEngine/graphics/nodes/vkSimpleForward.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/materialManager.h"
+#include "SirEngine/graphics/nodes/skybox.h"
 
 namespace SirEngine {
 void VkTempLayer::initGrass() {
@@ -120,23 +121,32 @@ void VkTempLayer::onAttach() {
 
   globals::RENDERING_GRAPH = new DependencyGraph();
   auto *const forward = new VkSimpleForward(*alloc);
+  auto *const skybox = new SkyBoxPass(*alloc);
   auto *const debugDraw = new DebugDrawNode(*alloc);
   auto *const finalBlit = new FinalBlitNode(*alloc);
 
   // temporary graph for testing
   globals::RENDERING_GRAPH->addNode(forward);
+  globals::RENDERING_GRAPH->addNode(skybox);
   globals::RENDERING_GRAPH->addNode(debugDraw);
   globals::RENDERING_GRAPH->addNode(finalBlit);
   globals::RENDERING_GRAPH->setFinalNode(finalBlit);
 
   SirEngine::DependencyGraph::connectNodes(
-      forward, VkSimpleForward::OUT_TEXTURE, debugDraw,
+      forward, VkSimpleForward::OUT_TEXTURE, skybox,
+      SkyBoxPass::IN_TEXTURE);
+  SirEngine::DependencyGraph::connectNodes(forward, VkSimpleForward::DEPTH_RT,
+                                           skybox, SkyBoxPass::DEPTH);
+
+  SirEngine::DependencyGraph::connectNodes(
+      skybox, SkyBoxPass::OUT_TEX, debugDraw,
       DebugDrawNode::IN_TEXTURE);
   SirEngine::DependencyGraph::connectNodes(forward, VkSimpleForward::DEPTH_RT,
                                            debugDraw, DebugDrawNode::DEPTH_RT);
   SirEngine::DependencyGraph::connectNodes(
       debugDraw, DebugDrawNode::OUT_TEXTURE, finalBlit,
       FinalBlitNode::IN_TEXTURE);
+
 
   // TODO this whole reset execute flush needs to be reworked
   globals::RENDERING_GRAPH->finalizeGraph();

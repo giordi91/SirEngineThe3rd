@@ -106,6 +106,11 @@ I have started doing a lot of work to port the dx12 engine to Vulkan.
 
 ![alt text](./images/06_VK01.png "moving")
 
+** Run the compiler **
+```
+C:\WORK_IN_PROGRESS\C\directX\SirEngineThe3rd\build2019>cd bin\release && ResourceCompiler.exe -e ../data/executeFullDeb
+ug.json && cd ../..
+```
 
 ***Credits***
 

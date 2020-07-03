@@ -45,7 +45,7 @@ class BufferManagerDx12 final : public BufferManager {
   void createSrv(const BufferHandle &handle, DescriptorPair &descriptorPair,
                  uint32_t offset = 0) const;
   void createSrv(const BufferHandle &handle, DescriptorPair &descriptorPair,
-                 MemoryRange range,bool descriptorExists=false) const;
+                 MemoryRange range,bool descriptorExists=false, int elementSize=-1) const;
 
   void bindBufferAsDescriptorTableGrahpics(
       const BufferHandle handle, const int slot,

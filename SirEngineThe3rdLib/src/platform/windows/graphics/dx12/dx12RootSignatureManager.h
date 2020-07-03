@@ -22,10 +22,10 @@ class Dx12RootSignatureManager final : public RootSignatureManager {
   Dx12RootSignatureManager &operator=(const Dx12RootSignatureManager &) =
       delete;
   ~Dx12RootSignatureManager() = default;
-  void initialize(){};
-  void cleanup();
-  void loadSignaturesInFolder(const char *directory);
-  void loadSignatureBinaryFile(const char *file);
+  void initialize() override {};
+  void cleanup() override;
+  void loadSignaturesInFolder(const char *directory) override;
+  void loadSignatureBinaryFile(const char *file) override;
 
   inline ID3D12RootSignature *getRootSignatureFromName(const char *name) const {
     const RSHandle handle = getHandleFromName(name);

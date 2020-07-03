@@ -1,27 +1,36 @@
 {
-      "type": "RASTER",
-      "staticSamplers" : true,
-      "useRegisterSpace": true,
-      "config": [
-        {
-          "comment":  "albedo tex",
-          "type": "descriptorTable",
-          "data": {
-            "ranges": [
-              {
-                "type": "SRV",
-                "numDescriptors": 1,
-                "baseRegister":0 
-              }
-            ]
+  "type": "RASTER",
+  "staticSamplers": true,
+  "useRegisterSpace": true,
+  "flatDescriptorTable": true,
+  "config": [
+    {
+      "comment": "albedo tex",
+      "type": "descriptorTable",
+      "data": {
+        "ranges": [
+          {
+            "type": "SRV",
+            "numDescriptors": 1,
+            "baseRegister": 0
           }
-        },
-        {
-          "comment": "positions",
-          "type": "SRV",
-          "data": { "baseRegister": 8 },
-          "visibility": "ALL"
-        }
-
-      ]
+        ]
+      }
+    },
+    {
+      "comment": "vertex buffer bound as storage buffer/ positions",
+      "type": "descriptorTable",
+      "visibility": "VS",
+      "data": {
+        "ranges": [
+          {
+            "type": "SRV",
+            "underlyingResource": "buffer",
+            "numDescriptors": 1,
+            "baseRegister": 8
+          }
+        ]
+      }
+    }
+  ]
 }

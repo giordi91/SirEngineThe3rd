@@ -615,6 +615,7 @@ void allocateDescriptorTable(FlatDescriptorTable &table, const RSHandle root) {
   // lets allocate enough descriptors to use for the descriptor table
   const uint32_t descriptorCount =
       dx12::ROOT_SIGNATURE_MANAGER->getDescriptorCount(root);
+  //Fix magic number...
   auto *descriptors = reinterpret_cast<DescriptorPair *>(
       globals::PERSISTENT_ALLOCATOR->allocate(sizeof(DescriptorPair) *
                                               descriptorCount+30));

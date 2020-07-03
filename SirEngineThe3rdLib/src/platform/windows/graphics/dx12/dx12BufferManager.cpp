@@ -120,7 +120,7 @@ BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInBytes,
                      : D3D12_RESOURCE_STATE_GENERIC_READ;
   data.type = isUav ? BufferType::UAV : BufferType::SRV;
   data.elementCount = numElements;
-  data.elementSize= elementSize;
+  data.elementSize = elementSize;
 
   return handle;
 }
@@ -154,7 +154,7 @@ BufferHandle BufferManagerDx12::allocateUpload(const uint32_t sizeInByte,
   data.state = D3D12_RESOURCE_STATE_GENERIC_READ;
   data.type = BufferType::SRV;
   data.elementCount = numElements;
-  data.elementSize= elementSize;
+  data.elementSize = elementSize;
 
   dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferSRV(data.srv, data.data,
                                                  numElements, elementSize);
@@ -191,31 +191,38 @@ void BufferManagerDx12::bindBufferAsSRVGraphics(
 }
 
 void BufferManagerDx12::createSrv(const BufferHandle &handle,
-                                  DescriptorPair &descriptorPair, uint32_t offset) const {
+                                  DescriptorPair &descriptorPair,
+                                  uint32_t offset) const {
   assertMagicNumber(handle);
   const uint32_t index = getIndexFromHandle(handle);
   const BufferData &data = m_bufferPool.getConstRef(index);
 
-  //we need to check what the offset in elements is
-  int elementOffset = offset/data.elementSize;
+  // we need to check what the offset in elements is
+  uint32_t elementOffset = offset / data.elementSize;
 
-	
   dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferSRV(
-      descriptorPair, data.data, data.elementCount, data.elementSize, elementOffset);
+      descriptorPair, data.data, data.elementCount, data.elementSize,
+      elementOffset);
 }
 void BufferManagerDx12::createSrv(const BufferHandle &handle,
-                                  DescriptorPair &descriptorPair, MemoryRange range,bool descriptorExists) const {
+                                  DescriptorPair &descriptorPair,
+                                  const MemoryRange range,
+                                  const bool descriptorExists, const int elementSize) const {
   assertMagicNumber(handle);
   const uint32_t index = getIndexFromHandle(handle);
   const BufferData &data = m_bufferPool.getConstRef(index);
 
-  //we need to check what the offset in elements is
-  int elementOffset = range.m_offset/data.elementSize;
-  int elementCount = range.m_size/data.elementSize; 
+  //the element size of the buffer might not be representative, for example
+  //we might have a single buffer for the whole mesh, but we will make different
+  //SRV out of it, for float4, float2 and so on, so we pass the elementSize from outside
+  //if needed, if none is provided (-1) then we simply use the buffer one
+  int elemSize = elementSize ==  -1 ? data.elementSize : elementSize; 
+  int elementOffset =  (range.m_offset / elemSize);
+  int elementCount = range.m_size / elemSize;
 
-	
   dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferSRV(
-      descriptorPair, data.data, elementCount, data.elementSize, elementOffset,descriptorExists);
+      descriptorPair, data.data, elementCount, elemSize, elementOffset,
+      descriptorExists);
 }
 
 void BufferManagerDx12::bindBufferAsDescriptorTableGrahpics(

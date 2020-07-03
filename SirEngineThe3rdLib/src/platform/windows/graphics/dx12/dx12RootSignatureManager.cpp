@@ -10,8 +10,8 @@
 #include "platform/windows/graphics/dx12/d3dx12.h"
 #include "rootSignatureCompile.h"
 
-namespace SirEngine {
-namespace dx12 {
+namespace SirEngine::dx12
+{
 
 void Dx12RootSignatureManager::cleanup() {
   // cleanup the allocated root signatures
@@ -85,6 +85,4 @@ void Dx12RootSignatureManager::loadSignaturesInFolder(const char *directory) {
     loadSignatureBinaryFile(p.c_str());
   }
 }
-
-}  // namespace dx12
-}  // namespace SirEngine
+} // namespace SirEngine

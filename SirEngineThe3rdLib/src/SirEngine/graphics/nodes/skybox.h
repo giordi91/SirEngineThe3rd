@@ -2,7 +2,7 @@
 
 #include "SirEngine/graphics/nodeGraph.h"
 #include "platform/windows/graphics/dx12/dx12MeshManager.h"
-#include <d3d12.h>
+//#include <d3d12.h>
 
 namespace SirEngine {
 
@@ -23,13 +23,18 @@ public:
   virtual void onResizeEvent(int screenWidth, int screenHeight) override;
 
   void populateNodePorts() override;
+  void clear() override;
 private:
-  ID3D12RootSignature *rs = nullptr;
-  PSOHandle pso;
+  //ID3D12RootSignature *rs = nullptr;
+  //PSOHandle pso;
   //handles
   MeshHandle skyboxHandle{};
   TextureHandle inputRTHandle{};
   TextureHandle inputDepthHandle{}; 
+  BufferBindingsHandle m_bindHandle{};
+  RSHandle m_rs{};
+  PSOHandle m_pso{};
+  MaterialHandle m_matHandle{};
 };
 
 } // namespace SirEngine
