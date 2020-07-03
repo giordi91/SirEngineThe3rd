@@ -79,6 +79,9 @@ public:
   Dx12MaterialManager(const Dx12MaterialManager &) = delete;
   Dx12MaterialManager &operator=(const Dx12MaterialManager &) = delete;
 
+  //a material can be processed in different queues, we can provide a material per
+  //queue, check SHADER_QUEUE_FLAGS to see available queues. The argument will be a const char*
+  //that will be parsed to a shader type
   MaterialHandle
   allocateMaterial(const char *name, ALLOCATE_MATERIAL_FLAGS flags,
                    const char *materialsPerQueue[QUEUE_COUNT]) override;

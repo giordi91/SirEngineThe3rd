@@ -69,14 +69,15 @@ enum class SHADER_TYPE_FLAGS {
   FORWARD_PARALLAX,
   SHADOW_SKIN_CLUSTER,
   HDR_TO_SDR,
-  GRASS_FORWARD
+  GRASS_FORWARD,
+  SKYBOX
 };
 
 class MaterialManager {
-public:
+ public:
   static constexpr uint32_t QUEUE_COUNT = 5;
 
-protected:
+ protected:
   struct PreliminaryMaterialParse {
     Material mat;
     MaterialDataHandles handles;
@@ -84,16 +85,16 @@ protected:
         INVALID_QUEUE_TYPE_FLAGS, INVALID_QUEUE_TYPE_FLAGS,
         INVALID_QUEUE_TYPE_FLAGS, INVALID_QUEUE_TYPE_FLAGS,
         INVALID_QUEUE_TYPE_FLAGS};
-    //defines whether or not we expect the material to change, if not we can save
-  	//some resource allocations
+    // defines whether or not we expect the material to change, if not we can
+    // save some resource allocations
     bool isStatic = false;
   };
 
-public:
+ public:
   enum ALLOCATE_MATERIAL_FLAG_BITS { NONE = 0, BUFFERED = 1 };
   typedef uint32_t ALLOCATE_MATERIAL_FLAGS;
 
-public:
+ public:
   explicit MaterialManager(const uint32_t reserveSize)
       : m_shaderTypeToShaderBind(reserveSize){};
   virtual ~MaterialManager() = default;
@@ -105,9 +106,9 @@ public:
   virtual void inititialize() = 0;
   virtual void cleanup() = 0;
 
-  virtual MaterialHandle
-  allocateMaterial(const char *name, ALLOCATE_MATERIAL_FLAGS flags,
-                   const char *materialsPerQueue[QUEUE_COUNT]) = 0;
+  virtual MaterialHandle allocateMaterial(
+      const char *name, ALLOCATE_MATERIAL_FLAGS flags,
+      const char *materialsPerQueue[QUEUE_COUNT]) = 0;
   virtual MaterialHandle loadMaterial(const char *path,
                                       const MeshHandle meshHandle,
                                       const SkinHandle skinHandle) = 0;
@@ -116,7 +117,7 @@ public:
   virtual void bindTexture(MaterialHandle matHandle, TextureHandle texHandle,
                            uint32_t bindingIndex, SHADER_QUEUE_FLAGS queue) = 0;
   virtual void bindBuffer(MaterialHandle matHandle, BufferHandle texHandle,
-                           uint32_t bindingIndex, SHADER_QUEUE_FLAGS queue) = 0;
+                          uint32_t bindingIndex, SHADER_QUEUE_FLAGS queue) = 0;
   virtual void free(MaterialHandle handle) = 0;
 
   inline SHADER_TYPE_FLAGS getTypeFlags(const uint32_t flags) {
@@ -159,16 +160,16 @@ public:
 
   static uint16_t parseTypeFlags(const char *stringType);
 
-  const char *getStringFromShaderTypeFlag(SHADER_TYPE_FLAGS type);
+  static const char *getStringFromShaderTypeFlag(SHADER_TYPE_FLAGS type);
 
-protected:
+ protected:
   static PreliminaryMaterialParse parseMaterial(const char *path,
-                                       const MeshHandle meshHandle,
-                                       const SkinHandle skinHandle);
+                                                const MeshHandle meshHandle,
+                                                const SkinHandle skinHandle);
   void loadTypeFile(const char *path);
 
-protected:
+ protected:
   HashMap<uint16_t, ShaderBind, hashUint16> m_shaderTypeToShaderBind;
 };
 
-} // namespace SirEngine
+}  // namespace SirEngine

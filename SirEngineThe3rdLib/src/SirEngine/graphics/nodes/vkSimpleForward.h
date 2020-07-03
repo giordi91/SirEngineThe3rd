@@ -14,7 +14,7 @@ class VkSimpleForward final : public GNode {
 
  public:
   explicit VkSimpleForward(GraphAllocators& allocators);
-  virtual ~VkSimpleForward(){};
+  virtual ~VkSimpleForward()=default;
   virtual void initialize() override;
   virtual void compute() override;
   virtual void onResizeEvent(int screenWidth, int screenHeight) override;

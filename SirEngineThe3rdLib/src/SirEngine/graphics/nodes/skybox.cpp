@@ -1,14 +1,12 @@
 #include "SirEngine/graphics/nodes/skybox.h"
+
 #include "SirEngine/assetManager.h"
 #include "SirEngine/graphics/debugAnnotations.h"
 #include "SirEngine/graphics/renderingContext.h"
-#include "platform/windows/graphics/dx12/DX12.h"
-#include "platform/windows/graphics/dx12/Dx12PSOManager.h"
+#include "SirEngine/psoManager.h"
+#include "SirEngine/rootSignatureManager.h"
+#include "SirEngine/materialManager.h"
 #include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
-#include "platform/windows/graphics/dx12/dx12MeshManager.h"
-#include "platform/windows/graphics/dx12/dx12RootSignatureManager.h"
-#include "platform/windows/graphics/dx12/dx12SwapChain.h"
-#include "platform/windows/graphics/dx12/dx12TextureManager.h"
 
 namespace SirEngine {
 static const char *SKYBOX_RS = "skybox_RS";
@@ -16,7 +14,6 @@ static const char *SKYBOX_PSO = "skyboxPSO";
 
 SkyBoxPass::SkyBoxPass(GraphAllocators &allocators)
     : GNode("SkyBoxPass", "SkyBoxPass", allocators) {
-
   defaultInitializePlugsAndConnections(2, 1);
   // lets create the plugs
   GPlug &fullscreenPass = m_inputPlugs[PLUG_INDEX(PLUGS::IN_TEXTURE)];
@@ -39,6 +36,21 @@ SkyBoxPass::SkyBoxPass(GraphAllocators &allocators)
 }
 
 void SkyBoxPass::initialize() {
+  m_rs = globals::ROOT_SIGNATURE_MANAGER->getHandleFromName(SKYBOX_RS);
+  m_pso = globals::PSO_MANAGER->getHandleFromName(SKYBOX_PSO);
+
+  skyboxHandle = globals::MESH_MANAGER->loadMesh(
+      "../data/processed/meshes/skybox.model", true);
+
+  const char *queues[5] = {nullptr, nullptr, nullptr, nullptr,
+                           "skybox"};
+  m_matHandle = globals::MATERIAL_MANAGER->allocateMaterial(
+      "skybox", 0,
+      queues
+
+  );
+	
+  /*
   // fetching root signature
   rs = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(SKYBOX_RS);
   pso = dx12::PSO_MANAGER->getHandleFromName(SKYBOX_PSO);
@@ -52,24 +64,25 @@ void SkyBoxPass::initialize() {
   // dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE,
   //                         &dx12::CURRENT_FRAME_RESOURCE->fc);
   // dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
-}
-
-inline TextureHandle getInputConnection(ResizableVector<const GPlug *> **conns,
-                                        const int plugId) {
-  const auto conn = conns[PLUG_INDEX(plugId)];
-
-  // TODO not super safe to do this, might be worth improving this
-  assert(conn->size() == 1 && "too many input connections");
-  const GPlug *source = (*conn)[0];
-  const auto h = TextureHandle{source->plugValue};
-  assert(h.isHandleValid());
-  return h;
+  */
 }
 
 void SkyBoxPass::compute() {
-
   annotateGraphicsBegin("Skybox");
 
+  // this will take care of binding the back buffer and the input and transition
+  // both the back buffer  and input texture
+  globals::RENDERING_CONTEXT->setBindingObject(m_bindHandle);
+
+  // next we bind the material, this will among other things bind the pso and rs
+  globals::MATERIAL_MANAGER->bindMaterial(m_matHandle,
+                                          SHADER_QUEUE_FLAGS::CUSTOM);
+
+
+  // finishing the pass
+  globals::RENDERING_CONTEXT->clearBindingObject(m_bindHandle);
+
+  /*
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
 
@@ -116,6 +129,7 @@ void SkyBoxPass::compute() {
   // reset normal viewport
   commandList->RSSetViewports(1, currViewport);
   annotateGraphicsEnd();
+  */
 }
 
 void SkyBoxPass::onResizeEvent(int, int) {
@@ -124,8 +138,47 @@ void SkyBoxPass::onResizeEvent(int, int) {
 }
 
 void SkyBoxPass::populateNodePorts() {
-  inputRTHandle = getInputConnection(m_inConnections, IN_TEXTURE);
-  inputDepthHandle = getInputConnection(m_inConnections, DEPTH);
+  inputRTHandle =
+      getInputConnection<TextureHandle>(m_inConnections, IN_TEXTURE);
+  inputDepthHandle = getInputConnection<TextureHandle>(m_inConnections, DEPTH);
+
+  // setting the render target output handle
   m_outputPlugs[0].plugValue = inputRTHandle.handle;
+
+  // we have everything necessary to prepare the buffers
+  FrameBufferBindings bindings{};
+  bindings.colorRT[0].handle = inputRTHandle;
+  bindings.colorRT[0].clearColor = {};
+  bindings.colorRT[0].shouldClearColor = false;
+  bindings.colorRT[0].currentResourceState = RESOURCE_STATE::RENDER_TARGET;
+  bindings.colorRT[0].neededResourceState = RESOURCE_STATE::RENDER_TARGET;
+  bindings.colorRT[0].isSwapChainBackBuffer = 0;
+
+  bindings.depthStencil.handle = inputDepthHandle;
+  bindings.depthStencil.clearDepthColor = {};
+  bindings.depthStencil.clearStencilColor = {};
+  bindings.depthStencil.shouldClearDepth = false;
+  bindings.depthStencil.shouldClearStencil = false;
+  bindings.depthStencil.currentResourceState =
+      RESOURCE_STATE::DEPTH_RENDER_TARGET;
+  bindings.depthStencil.neededResourceState =
+      RESOURCE_STATE::DEPTH_RENDER_TARGET;
+
+  bindings.width = globals::ENGINE_CONFIG->m_windowWidth;
+  bindings.height = globals::ENGINE_CONFIG->m_windowHeight;
+
+  m_bindHandle =
+      globals::RENDERING_CONTEXT->prepareBindingObject(bindings, "Skybox");
+
+  TextureHandle skyHandle = dx12::RENDERING_CONTEXT->getEnviromentMapHandle();
+  assert(skyHandle.isHandleValid());
+  globals::MATERIAL_MANAGER->bindTexture(m_matHandle, skyHandle, 1,
+                                         SHADER_QUEUE_FLAGS::CUSTOM);
 }
-} // namespace SirEngine
+
+void SkyBoxPass::clear() {
+  if (m_bindHandle.isHandleValid()) {
+    globals::RENDERING_CONTEXT->freeBindingObject(m_bindHandle);
+  }
+}
+}  // namespace SirEngine

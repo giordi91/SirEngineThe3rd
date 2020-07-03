@@ -1,0 +1,6 @@
+{
+  "pso" :  "skyboxPSO", 
+  "rs"  :  "skybox_RS",
+  "type" : "skybox"
+}
+

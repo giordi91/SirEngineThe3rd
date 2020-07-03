@@ -71,6 +71,7 @@ static const std::unordered_map<std::string, SirEngine::SHADER_TYPE_FLAGS>
          SirEngine::SHADER_TYPE_FLAGS::SHADOW_SKIN_CLUSTER},
         {"HDRtoSDREffect", SirEngine::SHADER_TYPE_FLAGS::HDR_TO_SDR},
         {"grassForward", SirEngine::SHADER_TYPE_FLAGS::GRASS_FORWARD},
+        {"skybox", SirEngine::SHADER_TYPE_FLAGS::SKYBOX},
     };
 static const std::unordered_map<SirEngine::SHADER_TYPE_FLAGS, std::string>
     TYPE_FLAGS_TO_STRING{
@@ -102,6 +103,7 @@ static const std::unordered_map<SirEngine::SHADER_TYPE_FLAGS, std::string>
          "shadowSkinCluster"},
         {SirEngine::SHADER_TYPE_FLAGS::HDR_TO_SDR, "HDRtoSDREffect"},
         {SirEngine::SHADER_TYPE_FLAGS::GRASS_FORWARD, "grassForward"},
+        {SirEngine::SHADER_TYPE_FLAGS::SKYBOX, "skybox"},
     };
 
 } // namespace materialKeys
