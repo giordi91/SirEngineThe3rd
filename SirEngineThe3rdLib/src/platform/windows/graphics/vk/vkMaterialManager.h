@@ -95,7 +95,8 @@ class VkMaterialManager final : public MaterialManager {
       const char *materialsPerQueue[QUEUE_COUNT]) override;
 
   void bindTexture(const MaterialHandle matHandle,
-                   const TextureHandle texHandle, const uint32_t bindingIndex,
+                   const TextureHandle texHandle,
+                   const uint32_t descriptorIndex, const uint32_t bindingIndex,
                    SHADER_QUEUE_FLAGS queue, const bool isCubeMap) override;
   void bindBuffer(MaterialHandle matHandle, BufferHandle bufferHandle,
                   uint32_t bindingIndex, SHADER_QUEUE_FLAGS queue) override;

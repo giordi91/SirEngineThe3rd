@@ -133,7 +133,7 @@ void updateForwardPhong(SHADER_QUEUE_FLAGS queueFlag,
   uint32_t flags = POSITIONS | NORMALS | UV;
   VkDescriptorBufferInfo bufferInfo[3] = {};
   vk::MESH_MANAGER->bindMesh(materialRuntime.meshHandle, writeDescriptorSets,
-                             descriptorSet, bufferInfo, flags,0);
+                             descriptorSet, bufferInfo, flags, 0);
   // root, bufferInfo);
 
   vk::TEXTURE_MANAGER->bindTexture(materialRuntime.albedo,
@@ -772,6 +772,7 @@ MaterialHandle VkMaterialManager::allocateMaterial(
 
 void VkMaterialManager::bindTexture(const MaterialHandle matHandle,
                                     const TextureHandle texHandle,
+                                    const uint32_t descriptorIndex,
                                     const uint32_t bindingIndex,
                                     SHADER_QUEUE_FLAGS queue,
                                     const bool isCubeMap) {
