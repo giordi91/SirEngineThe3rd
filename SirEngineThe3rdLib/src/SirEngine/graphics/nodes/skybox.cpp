@@ -6,7 +6,6 @@
 #include "SirEngine/materialManager.h"
 #include "SirEngine/psoManager.h"
 #include "SirEngine/rootSignatureManager.h"
-#include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
 
 namespace SirEngine {
 static const char *SKYBOX_RS = "skybox_RS";
@@ -41,7 +40,7 @@ void SkyBoxPass::initialize() {
 
   skyboxHandle = globals::MESH_MANAGER->loadMesh(
       "../data/processed/meshes/skybox.model", true);
-      //"../data/processed/meshes/knightB/jacket.model", true);
+  //"../data/processed/meshes/knightB/jacket.model", true);
 
   const char *queues[5] = {nullptr, nullptr, nullptr, nullptr, "skybox"};
   m_matHandle = globals::MATERIAL_MANAGER->allocateMaterial("skybox", 0, queues
@@ -79,55 +78,6 @@ void SkyBoxPass::compute() {
 
   // finishing the pass
   globals::RENDERING_CONTEXT->clearBindingObject(m_bindHandle);
-
-  /*
-  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
-  auto commandList = currentFc->commandList;
-
-  D3D12_VIEWPORT *currViewport = dx12::SWAP_CHAIN->getViewport();
-  D3D12_VIEWPORT viewport;
-  viewport.MaxDepth = 0.000000000f;
-  viewport.MinDepth = 0.000000000f;
-  viewport.Height = currViewport->Height;
-  viewport.Width = currViewport->Width;
-  viewport.TopLeftX = currViewport->TopLeftX;
-  viewport.TopLeftY = currViewport->TopLeftY;
-  currentFc->commandList->RSSetViewports(1, &viewport);
-
-  dx12::PSO_MANAGER->bindPSO(pso, commandList);
-
-  D3D12_RESOURCE_BARRIER barriers[5];
-  int counter = 0;
-  counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
-      inputDepthHandle, D3D12_RESOURCE_STATE_DEPTH_WRITE, barriers, counter);
-  counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
-      inputRTHandle, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, counter);
-
-  if (counter) {
-    commandList->ResourceBarrier(counter, barriers);
-  }
-
-  globals::TEXTURE_MANAGER->bindRenderTarget(inputRTHandle, inputDepthHandle);
-  commandList->SetGraphicsRootSignature(rs);
-
-  TextureHandle skyHandle = dx12::RENDERING_CONTEXT->getEnviromentMapHandle();
-  // TextureHandle skyHandle =
-  // globals::RENDERING_CONTEX->getEnviromentMapIrradianceHandle();
-  dx12::RENDERING_CONTEXT->bindCameraBuffer(0);
-  // commandList->SetGraphicsRootConstantBufferView(1, m_lightAddress);
-  commandList->SetGraphicsRootDescriptorTable(
-      1, dx12::TEXTURE_MANAGER->getSRVDx12(skyHandle).gpuHandle);
-
-  // commandList->DrawInstanced(6, 1, 0, 0);
-  // dx12::MESH_MANAGER->bindMeshRuntimeAndRender(skyboxHandle, currentFc);
-  dx12::MESH_MANAGER->bindMesh(skyboxHandle, currentFc->commandList,
-                               MeshAttributeFlags::POSITIONS, 2);
-  dx12::MESH_MANAGER->render(skyboxHandle, currentFc);
-
-  // reset normal viewport
-  commandList->RSSetViewports(1, currViewport);
-  annotateGraphicsEnd();
-  */
 }
 
 void SkyBoxPass::onResizeEvent(int, int) {
@@ -168,14 +118,13 @@ void SkyBoxPass::populateNodePorts() {
   m_bindHandle =
       globals::RENDERING_CONTEXT->prepareBindingObject(bindings, "Skybox");
 
-  TextureHandle skyHandle = dx12::RENDERING_CONTEXT->getEnviromentMapHandle();
+  TextureHandle skyHandle = globals::RENDERING_CONTEXT->getEnviromentMapHandle();
   assert(skyHandle.isHandleValid());
   globals::MATERIAL_MANAGER->bindTexture(m_matHandle, skyHandle, 0,
-                                         SHADER_QUEUE_FLAGS::CUSTOM,true);
+                                         SHADER_QUEUE_FLAGS::CUSTOM, true);
   globals::MATERIAL_MANAGER->bindMesh(m_matHandle, skyboxHandle, 1,
                                       MeshAttributeFlags::POSITIONS,
                                       SHADER_QUEUE_FLAGS::CUSTOM);
-  // globals::MATERIAL_MANAGER->bindBuffer()
 }
 
 void SkyBoxPass::clear() {

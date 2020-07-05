@@ -166,7 +166,7 @@ uint32_t createDSV(DescriptorHeap *heap, ID3D12Resource *resource,
                    const D3D12_DSV_FLAGS flags) {
   assert(heap->getType() == D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
   uint32_t descriptorIndex = heap->allocateDescriptor(&pair.cpuHandle);
-  // Hard-code depthstencil format
+  // Hard-code depth-stencil format
   // Create descriptor to mip level 0 of entire resource using the format of the
   // resource.
   D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc;

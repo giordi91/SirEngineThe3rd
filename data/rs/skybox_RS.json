@@ -11,6 +11,7 @@
         "ranges": [
           {
             "type": "SRV",
+            "underlyingResource": "texture",
             "numDescriptors": 1,
             "baseRegister": 1
           }
