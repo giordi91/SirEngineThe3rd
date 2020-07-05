@@ -88,8 +88,9 @@ class VkMeshManager final : public MeshManager {
                          VK_INDEX_TYPE_UINT32);
     vkCmdDrawIndexed(commandBuffer, data.indexCount, 1, 0, 0, 0);
   };
-  inline void renderMesh(const VkMeshRuntime runtime,
-                         const VkCommandBuffer commandBuffer) const {
+
+  static inline void renderMesh(const VkMeshRuntime runtime,
+                                const VkCommandBuffer commandBuffer) {
     if (runtime.indexBuffer != nullptr) {
       vkCmdBindIndexBuffer(commandBuffer, runtime.indexBuffer, 0,
                            VK_INDEX_TYPE_UINT32);
@@ -107,8 +108,10 @@ class VkMeshManager final : public MeshManager {
     const MeshData &data = m_meshPool.getConstRef(index);
     return data.meshRuntime;
   };
-  void bindMesh(MeshHandle handle, VkWriteDescriptorSet *set,
-                VkDescriptorSet descriptorSet, VkDescriptorBufferInfo *info);
+  void bindMesh(const MeshHandle handle, VkWriteDescriptorSet *set,
+                const VkDescriptorSet descriptorSet,
+                VkDescriptorBufferInfo *info, const uint32_t bindFlags,
+                const uint32_t startIdx);
 
  private:
   inline void assertMagicNumber(const MeshHandle handle) const {

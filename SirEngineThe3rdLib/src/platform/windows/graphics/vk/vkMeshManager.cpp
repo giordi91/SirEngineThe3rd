@@ -22,7 +22,6 @@ vk::Buffer VkMeshManager::getIndexBuffer(const MeshHandle &handle) {
 }
 
 MeshHandle VkMeshManager::loadMesh(const char *path, bool isInternal) {
-
   SE_CORE_INFO("Loading mesh {0}", path);
   const bool res = fileExists(path);
   assert(res);
@@ -122,59 +121,69 @@ MeshHandle VkMeshManager::loadMesh(const char *path, bool isInternal) {
   return handle;
 }
 
-void VkMeshManager::bindMesh(MeshHandle handle, VkWriteDescriptorSet *set,
-                             VkDescriptorSet descriptorSet,
-                             VkDescriptorBufferInfo *info) {
+void VkMeshManager::bindMesh(const MeshHandle handle, VkWriteDescriptorSet *set,
+                             const VkDescriptorSet descriptorSet,
+                             VkDescriptorBufferInfo *info,
+                             const uint32_t bindFlags,
+                             const uint32_t startIdx) {
   uint32_t magic = getMagicFromHandle(handle);
   uint32_t idx = getIndexFromHandle(handle);
   const MeshData &data = m_meshPool.getConstRef(idx);
 
-  // actual information of the descriptor, in this case it is our mesh buffer
-  info[0].buffer = data.vertexBuffer;
-  info[0].offset = data.meshRuntime.positionRange.m_offset;
-  info[0].range = data.meshRuntime.positionRange.m_size;
-  VkDescriptorBufferInfo bufferInfoN = {};
-  info[1].buffer = data.vertexBuffer;
-  info[1].offset = data.meshRuntime.normalsRange.m_offset;
-  info[1].range = data.meshRuntime.normalsRange.m_size;
-  VkDescriptorBufferInfo bufferInfoUV = {};
-  info[2].buffer = data.vertexBuffer;
-  info[2].offset = data.meshRuntime.uvRange.m_offset;
-  info[2].range = data.meshRuntime.uvRange.m_size;
+  if ((bindFlags & MeshAttributeFlags::POSITIONS) > 0) {
+    // actual information of the descriptor, in this case it is our mesh buffer
+    info[0].buffer = data.vertexBuffer;
+    info[0].offset = data.meshRuntime.positionRange.m_offset;
+    info[0].range = data.meshRuntime.positionRange.m_size;
 
-  // Binding 0: Object mesh buffer
-  set[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  set[0].dstSet = descriptorSet;
-  set[0].dstBinding = 0;
-  set[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  set[0].pBufferInfo = &info[0];
-  set[0].descriptorCount = 1;
+    // Binding 0: Object mesh buffer
+    set[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    set[0].dstSet = descriptorSet;
+    set[0].dstBinding = startIdx + 0;
+    set[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    set[0].pBufferInfo = &info[0];
+    set[0].descriptorCount = 1;
+  }
 
-  set[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  set[1].dstSet = descriptorSet;
-  set[1].dstBinding = 1;
-  set[1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  set[1].pBufferInfo = &info[1];
-  set[1].descriptorCount = 1;
+  if ((bindFlags & MeshAttributeFlags::NORMALS) > 0) {
+    info[1].buffer = data.vertexBuffer;
+    info[1].offset = data.meshRuntime.normalsRange.m_offset;
+    info[1].range = data.meshRuntime.normalsRange.m_size;
 
-  set[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  set[2].dstSet = descriptorSet;
-  set[2].dstBinding = 2;
-  set[2].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  set[2].pBufferInfo = &info[2];
-  set[2].descriptorCount = 1;
+    set[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    set[1].dstSet = descriptorSet;
+    set[1].dstBinding = startIdx + 1;
+    set[1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    set[1].pBufferInfo = &info[1];
+    set[1].descriptorCount = 1;
+  }
+
+  if ((bindFlags & MeshAttributeFlags::UV) > 0) {
+    info[2].buffer = data.vertexBuffer;
+    info[2].offset = data.meshRuntime.uvRange.m_offset;
+    info[2].range = data.meshRuntime.uvRange.m_size;
+
+    set[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    set[2].dstSet = descriptorSet;
+    set[2].dstBinding = startIdx + 2;
+    set[2].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    set[2].pBufferInfo = &info[2];
+    set[2].descriptorCount = 1;
+  }
+  if ((bindFlags & MeshAttributeFlags::TANGENTS) > 0) {
+    assert(0 && "binding tangents in vk is not supproted yet");
+  }
 }
 
-void VkMeshManager::free(const MeshHandle handle)
-{
-	assertMagicNumber(handle);
-	uint32_t index = getIndexFromHandle(handle);
-	MeshData& data = m_meshPool[index];
-	vk::BUFFER_MANAGER->free(data.vtxBuffHandle);
-	vk::BUFFER_MANAGER->free(data.idxBuffHandle);
-	// invalidating magic number
-	data.magicNumber = 0;
-	// adding the index to the free list
-	m_meshPool.free(index);
+void VkMeshManager::free(const MeshHandle handle) {
+  assertMagicNumber(handle);
+  uint32_t index = getIndexFromHandle(handle);
+  MeshData &data = m_meshPool[index];
+  vk::BUFFER_MANAGER->free(data.vtxBuffHandle);
+  vk::BUFFER_MANAGER->free(data.idxBuffHandle);
+  // invalidating magic number
+  data.magicNumber = 0;
+  // adding the index to the free list
+  m_meshPool.free(index);
 }
-} // namespace SirEngine::vk
+}  // namespace SirEngine::vk

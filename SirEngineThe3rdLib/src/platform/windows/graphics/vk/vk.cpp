@@ -810,7 +810,11 @@ void VkRenderingContext::freeBindingObject(const BufferBindingsHandle handle) {
 }
 
 void VkRenderingContext::renderMesh(const MeshHandle handle, bool isIndexed) {
-  assert(0);
+  const VkMeshRuntime& runtime = vk::MESH_MANAGER->getMeshRuntime(handle);
+
+  auto *currentFc = CURRENT_FRAME_COMMAND;
+  VkCommandBuffer commandList = currentFc->m_commandBuffer;
+  vk::MESH_MANAGER->renderMesh(runtime, commandList);
 }
 
 void VkRenderingContext::fullScreenPass() {
@@ -818,8 +822,9 @@ void VkRenderingContext::fullScreenPass() {
   vkCmdDraw(buffer, 6, 1, 0, 0);
 }
 
-int vkBarrier(int counter, VkImageMemoryBarrier *barriers, const TextureHandle handle,
-              const RESOURCE_STATE oldState, const RESOURCE_STATE newState) {
+int vkBarrier(int counter, VkImageMemoryBarrier *barriers,
+              const TextureHandle handle, const RESOURCE_STATE oldState,
+              const RESOURCE_STATE newState) {
   if (oldState == newState) {
     return counter;
   }

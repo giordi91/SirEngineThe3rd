@@ -130,9 +130,10 @@ void updateForwardPhong(SHADER_QUEUE_FLAGS queueFlag,
 
   VkWriteDescriptorSet writeDescriptorSets[4] = {};
 
+  uint32_t flags = POSITIONS | NORMALS | UV;
   VkDescriptorBufferInfo bufferInfo[3] = {};
   vk::MESH_MANAGER->bindMesh(materialRuntime.meshHandle, writeDescriptorSets,
-                             descriptorSet, bufferInfo);
+                             descriptorSet, bufferInfo, flags,0);
   // root, bufferInfo);
 
   vk::TEXTURE_MANAGER->bindTexture(materialRuntime.albedo,
@@ -770,10 +771,10 @@ MaterialHandle VkMaterialManager::allocateMaterial(
 }
 
 void VkMaterialManager::bindTexture(const MaterialHandle matHandle,
-                                      const TextureHandle texHandle,
-                                      const uint32_t bindingIndex,
-                                      SHADER_QUEUE_FLAGS queue,
-                                      const bool isCubeMap) {
+                                    const TextureHandle texHandle,
+                                    const uint32_t bindingIndex,
+                                    SHADER_QUEUE_FLAGS queue,
+                                    const bool isCubeMap) {
   assertMagicNumber(matHandle);
   uint32_t index = getIndexFromHandle(matHandle);
   const auto &data = m_materialTextureHandles.getConstRef(index);
@@ -881,9 +882,39 @@ void VkMaterialManager::free(const MaterialHandle handle) {
 
 void VkMaterialManager::bindMesh(const MaterialHandle handle,
                                  const MeshHandle meshHandle,
+                                 const uint32_t descriptorIndex,
                                  const uint32_t bindingIndex,
                                  const uint32_t meshBindFlags,
                                  SHADER_QUEUE_FLAGS queue) {
-  assert(0);
+  const auto &materialRuntime = getMaterialRuntime(handle);
+  int queueFlagInt = static_cast<int>(queue);
+  int currentFlagId = static_cast<int>(log2(queueFlagInt & -queueFlagInt));
+  DescriptorHandle setHandle = materialRuntime.descriptorHandles[currentFlagId];
+  VkDescriptorSet descriptorSet =
+      vk::DESCRIPTOR_MANAGER->getDescriptorSet(setHandle);
+
+  // TODO here we are assuming always four sets might have to rework this
+  VkWriteDescriptorSet writeDescriptorSets[4] = {};
+
+  VkDescriptorBufferInfo bufferInfo[3] = {};
+  vk::MESH_MANAGER->bindMesh(meshHandle, &writeDescriptorSets[bindingIndex],
+                             descriptorSet, bufferInfo, meshBindFlags,
+                             bindingIndex);
+
+  int setPos = (meshBindFlags & MeshAttributeFlags::POSITIONS) > 0 ? 1 : 0;
+  int setNormals = (meshBindFlags & MeshAttributeFlags::NORMALS) > 0 ? 1 : 0;
+  int setUV = (meshBindFlags & MeshAttributeFlags::UV) > 0 ? 1 : 0;
+  int setTangents = (meshBindFlags & MeshAttributeFlags::TANGENTS) > 0 ? 1 : 0;
+
+  int toBind = setPos + setNormals + setUV + setTangents;
+
+  // Execute the writes to update descriptors for this set
+  // Note that it's also possible to gather all writes and only run updates
+  // once, even for multiple sets This is possible because each
+  // VkWriteDescriptorSet also contains the destination set to be updated
+  // For simplicity we will update once per set instead
+  // object one off update
+  vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, toBind, &writeDescriptorSets[0], 0,
+                         nullptr);
 }
 }  // namespace SirEngine::vk
