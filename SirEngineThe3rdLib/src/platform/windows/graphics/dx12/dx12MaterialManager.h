@@ -70,9 +70,10 @@ class Dx12MaterialManager final : public MaterialManager {
                     const Dx12MaterialRuntime &runtime,
                     ID3D12GraphicsCommandList2 *commandList);
 
-  void bindTexture(const MaterialHandle handle, const TextureHandle texHandle,
-                   const uint32_t bindingIndex, SHADER_QUEUE_FLAGS queue,
-                   const bool isCubeMap) override;
+  void bindTexture(const MaterialHandle matHandle,
+                   const TextureHandle texHandle,
+                   const uint32_t descriptorIndex, const uint32_t bindingIndex,
+                   SHADER_QUEUE_FLAGS queue, const bool isCubeMap) override;
   void bindMesh(const MaterialHandle handle, const MeshHandle meshHandle,
                 const uint32_t descriptorIndex, const uint32_t bindingIndex,
                 const uint32_t meshBindFlags,

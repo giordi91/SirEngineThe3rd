@@ -540,13 +540,14 @@ void Dx12MaterialManager::updateMaterial(
   }
 }
 
-void Dx12MaterialManager::bindTexture(const MaterialHandle handle,
+void Dx12MaterialManager::bindTexture(const MaterialHandle matHandle,
                                       const TextureHandle texHandle,
+                                      const uint32_t descriptorIndex,
                                       const uint32_t bindingIndex,
                                       SHADER_QUEUE_FLAGS queue,
                                       const bool isCubeMap) {
-  assertMagicNumber(handle);
-  uint32_t index = getIndexFromHandle(handle);
+  assertMagicNumber(matHandle);
+  uint32_t index = getIndexFromHandle(matHandle);
   const auto &data = m_materialTextureHandles.getConstRef(index);
 
   const auto queueFlagInt = static_cast<int>(queue);
@@ -558,7 +559,7 @@ void Dx12MaterialManager::bindTexture(const MaterialHandle handle,
       data.m_materialRuntime.m_tables[currentFlagId];
 
   dx12::TEXTURE_MANAGER->createSRV(
-      texHandle, table.flatDescriptors[bindingIndex], isCubeMap);
+      texHandle, table.flatDescriptors[descriptorIndex], isCubeMap);
 }
 
 void Dx12MaterialManager::bindMesh(const MaterialHandle handle,

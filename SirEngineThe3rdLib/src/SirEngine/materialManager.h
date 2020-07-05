@@ -116,6 +116,7 @@ class MaterialManager {
                             SHADER_QUEUE_FLAGS queue) = 0;
   virtual void bindTexture(const MaterialHandle matHandle,
                              const TextureHandle texHandle,
+                             const uint32_t descriptorIndex,
                              const uint32_t bindingIndex,
                              SHADER_QUEUE_FLAGS queue,
                              const bool isCubeMap) = 0;

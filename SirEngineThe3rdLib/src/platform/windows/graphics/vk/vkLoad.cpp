@@ -144,7 +144,6 @@ bool createVulkanInstance(std::vector<char const *> const &desiredExtensions,
     "VK_LAYER_LUNARG_object_tracker",
 #endif
 #if VULKAN_PARAM_VALIDATION
-    "VK_LAYER_LUNARG_parameter_validation",
 #endif
   };
   instanceCreateInfo.ppEnabledLayerNames = layers;
