@@ -114,10 +114,18 @@ class MaterialManager {
                                       const SkinHandle skinHandle) = 0;
   virtual void bindMaterial(MaterialHandle handle,
                             SHADER_QUEUE_FLAGS queue) = 0;
-  virtual void bindTexture(MaterialHandle matHandle, TextureHandle texHandle,
-                           uint32_t bindingIndex, SHADER_QUEUE_FLAGS queue) = 0;
+  virtual void bindTexture(const MaterialHandle matHandle,
+                             const TextureHandle texHandle,
+                             const uint32_t bindingIndex,
+                             SHADER_QUEUE_FLAGS queue,
+                             const bool isCubeMap) = 0;
   virtual void bindBuffer(MaterialHandle matHandle, BufferHandle texHandle,
                           uint32_t bindingIndex, SHADER_QUEUE_FLAGS queue) = 0;
+  virtual void bindMesh(const MaterialHandle handle, const MeshHandle texHandle,
+                        const uint32_t bindingIndex,
+                        const uint32_t meshBindFlags,
+                        SHADER_QUEUE_FLAGS queue) = 0;
+
   virtual void free(MaterialHandle handle) = 0;
 
   inline SHADER_TYPE_FLAGS getTypeFlags(const uint32_t flags) {

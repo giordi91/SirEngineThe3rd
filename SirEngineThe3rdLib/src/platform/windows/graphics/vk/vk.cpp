@@ -808,13 +808,17 @@ void VkRenderingContext::freeBindingObject(const BufferBindingsHandle handle) {
   m_bindingsPool.free(idx);
 }
 
+void VkRenderingContext::renderMesh(const MeshHandle handle, bool isIndexed) {
+  assert(0);
+}
+
 void VkRenderingContext::fullScreenPass() {
   auto buffer = vk::CURRENT_FRAME_COMMAND->m_commandBuffer;
   vkCmdDraw(buffer, 6, 1, 0, 0);
 }
 
-int vkBarrier(int counter, VkImageMemoryBarrier *barriers, TextureHandle handle,
-              RESOURCE_STATE oldState, RESOURCE_STATE newState) {
+int vkBarrier(int counter, VkImageMemoryBarrier *barriers, const TextureHandle handle,
+              const RESOURCE_STATE oldState, const RESOURCE_STATE newState) {
   if (oldState == newState) {
     return counter;
   }

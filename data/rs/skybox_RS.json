@@ -12,7 +12,7 @@
           {
             "type": "SRV",
             "numDescriptors": 1,
-            "baseRegister": 0
+            "baseRegister": 1
           }
         ]
       }
@@ -27,7 +27,7 @@
             "type": "SRV",
             "underlyingResource": "buffer",
             "numDescriptors": 1,
-            "baseRegister": 8
+            "baseRegister": 0
           }
         ]
       }

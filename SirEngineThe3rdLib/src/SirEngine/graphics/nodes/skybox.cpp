@@ -3,9 +3,9 @@
 #include "SirEngine/assetManager.h"
 #include "SirEngine/graphics/debugAnnotations.h"
 #include "SirEngine/graphics/renderingContext.h"
+#include "SirEngine/materialManager.h"
 #include "SirEngine/psoManager.h"
 #include "SirEngine/rootSignatureManager.h"
-#include "SirEngine/materialManager.h"
 #include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
 
 namespace SirEngine {
@@ -41,15 +41,13 @@ void SkyBoxPass::initialize() {
 
   skyboxHandle = globals::MESH_MANAGER->loadMesh(
       "../data/processed/meshes/skybox.model", true);
+      //"../data/processed/meshes/knightB/jacket.model", true);
 
-  const char *queues[5] = {nullptr, nullptr, nullptr, nullptr,
-                           "skybox"};
-  m_matHandle = globals::MATERIAL_MANAGER->allocateMaterial(
-      "skybox", 0,
-      queues
+  const char *queues[5] = {nullptr, nullptr, nullptr, nullptr, "skybox"};
+  m_matHandle = globals::MATERIAL_MANAGER->allocateMaterial("skybox", 0, queues
 
   );
-	
+
   /*
   // fetching root signature
   rs = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(SKYBOX_RS);
@@ -68,8 +66,6 @@ void SkyBoxPass::initialize() {
 }
 
 void SkyBoxPass::compute() {
-  annotateGraphicsBegin("Skybox");
-
   // this will take care of binding the back buffer and the input and transition
   // both the back buffer  and input texture
   globals::RENDERING_CONTEXT->setBindingObject(m_bindHandle);
@@ -78,6 +74,8 @@ void SkyBoxPass::compute() {
   globals::MATERIAL_MANAGER->bindMaterial(m_matHandle,
                                           SHADER_QUEUE_FLAGS::CUSTOM);
 
+  globals::RENDERING_CONTEXT->bindCameraBuffer(0);
+  globals::RENDERING_CONTEXT->renderMesh(skyboxHandle, true);
 
   // finishing the pass
   globals::RENDERING_CONTEXT->clearBindingObject(m_bindHandle);
@@ -172,8 +170,12 @@ void SkyBoxPass::populateNodePorts() {
 
   TextureHandle skyHandle = dx12::RENDERING_CONTEXT->getEnviromentMapHandle();
   assert(skyHandle.isHandleValid());
-  globals::MATERIAL_MANAGER->bindTexture(m_matHandle, skyHandle, 1,
-                                         SHADER_QUEUE_FLAGS::CUSTOM);
+  globals::MATERIAL_MANAGER->bindTexture(m_matHandle, skyHandle, 0,
+                                         SHADER_QUEUE_FLAGS::CUSTOM,true);
+  globals::MATERIAL_MANAGER->bindMesh(m_matHandle, skyboxHandle, 1,
+                                      MeshAttributeFlags::POSITIONS,
+                                      SHADER_QUEUE_FLAGS::CUSTOM);
+  // globals::MATERIAL_MANAGER->bindBuffer()
 }
 
 void SkyBoxPass::clear() {

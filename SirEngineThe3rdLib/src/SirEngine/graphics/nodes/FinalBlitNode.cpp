@@ -72,7 +72,7 @@ void FinalBlitNode::populateNodePorts() {
   // we also need to bind the input resource, which is the texture we want to
   // blit
   globals::MATERIAL_MANAGER->bindTexture(m_matHandle, inputRTHandle, 0,
-                                         SHADER_QUEUE_FLAGS::CUSTOM);
+                                         SHADER_QUEUE_FLAGS::CUSTOM,false);
 }
 
 void FinalBlitNode::clear() {

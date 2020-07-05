@@ -1,8 +1,8 @@
 {
 "assets": [ "../data/assets/tempAsset.json" ],
-"enviromentMap" :"../data/external/textures/newportCube.texture",
-"enviromentMapIrradiance" :"../data/external/textures/newportCubeIrradiance.texture",
-"enviromentMapRadiance" :"../data/external/textures/newportCubeRadiance.texture"
+"enviromentMap" :"../data/external/textures/outdoorEnv1/qwantaniSkybox.texture",
+"enviromentMapIrradiance" :"../data/external/textures/outdoorEnv1/qwantaniIrradiance.texture",
+"enviromentMapRadiance" :"../data/external/textures/outdoorEnv1/qwantaniRadiance.texture"
 }
 
 

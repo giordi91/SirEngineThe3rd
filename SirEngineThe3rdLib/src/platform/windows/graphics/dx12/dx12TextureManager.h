@@ -132,13 +132,18 @@ class SIR_ENGINE_API Dx12TextureManager final : public TextureManager {
     }
     return counter;
   }
-  void createSRV(TextureHandle handle, DescriptorPair &pair) {
+  void createSRV(const TextureHandle handle, DescriptorPair &pair, const bool isCubeMap) {
     assertMagicNumber(handle);
     const uint32_t index = getIndexFromHandle(handle);
-    //const uint32_t index = getIndexFromHandle(m_whiteTexture);
+    // const uint32_t index = getIndexFromHandle(m_whiteTexture);
     TextureData &data = m_texturePool[index];
-    dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DSRV(pair, data.resource,
-                                                      data.format,0, true);
+    if (!isCubeMap) {
+      dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DSRV(pair, data.resource,
+                                                        data.format, 0, true);
+    } else {
+      dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTextureCubeSRV(
+          pair, data.resource, data.format, true);
+    }
   }
 
  private:

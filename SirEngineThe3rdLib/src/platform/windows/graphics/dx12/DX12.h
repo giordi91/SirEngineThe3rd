@@ -2,11 +2,12 @@
 #include <d3d12.h>
 #include <dxgi1_6.h>
 
+#include <cassert>
+
 #include "SirEngine/globals.h"
 #include "SirEngine/graphics/cpuGraphicsStructures.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/memory/sparseMemoryPool.h"
-#include <cassert>
 
 namespace SirEngine {
 class IdentityManager;
@@ -63,7 +64,6 @@ struct FrameResource final {
 };
 
 inline HRESULT resetCommandList(FrameCommand *command) {
-
   assert(!command->isListOpen);
   HRESULT res = command->commandList->Reset(command->commandAllocator, nullptr);
   assert(SUCCEEDED(res));
@@ -73,7 +73,6 @@ inline HRESULT resetCommandList(FrameCommand *command) {
 
 // should be used only at the beginning of the frame
 inline HRESULT resetAllocatorAndList(FrameCommand *command) {
-
   assert(!command->isListOpen);
 
   // Reuse the memory associated with command recording.
@@ -184,9 +183,9 @@ void flushDx12();
 bool beginHeadlessWorkDx12();
 bool endHeadlessWorkDx12();
 
-RenderingContext *
-createDx12RenderingContext(const RenderingContextCreationSettings &settings,
-                           uint32_t width, uint32_t height);
+RenderingContext *createDx12RenderingContext(
+    const RenderingContextCreationSettings &settings, uint32_t width,
+    uint32_t height);
 
 class Dx12RenderingContext final : public RenderingContext {
   struct FrameBindingsData {
@@ -195,7 +194,7 @@ class Dx12RenderingContext final : public RenderingContext {
     const char *name;
   };
 
-public:
+ public:
   explicit Dx12RenderingContext(
       const RenderingContextCreationSettings &settings, uint32_t width,
       uint32_t height);
@@ -223,10 +222,11 @@ public:
   void executeGlobalCommandList() override;
   void resetGlobalCommandList() override;
   void addRenderablesToQueue(const Renderable &renderable) override;
-  void addRenderablesToQueue(const RenderableDescription& description) override;
+  void addRenderablesToQueue(const RenderableDescription &description) override;
   void renderQueueType(const DrawCallConfig &config,
                        const SHADER_QUEUE_FLAGS flag) override;
   void renderMaterialType(const SHADER_QUEUE_FLAGS queueFlag) override;
+  void renderMesh(const MeshHandle handle, bool isIndexed) override;
   void fullScreenPass() override;
   BufferBindingsHandle prepareBindingObject(const FrameBufferBindings &bindings,
                                             const char *name) override;
@@ -237,7 +237,7 @@ public:
   ;
   void freeBindingObject(const BufferBindingsHandle handle) override;
 
-private:
+ private:
   inline void assertMagicNumber(const BufferBindingsHandle handle) const {
     const uint32_t magic = getMagicFromHandle(handle);
     const uint32_t idx = getIndexFromHandle(handle);
@@ -246,7 +246,7 @@ private:
            "invalid magic handle for constant buffer");
   }
 
-private:
+ private:
   // member variable mostly temporary
   CameraBuffer m_camBufferCPU{};
   ConstantBufferHandle m_cameraHandle{};
@@ -265,5 +265,5 @@ private:
   void *queues;
 };
 
-} // namespace dx12
-} // namespace SirEngine
+}  // namespace dx12
+}  // namespace SirEngine

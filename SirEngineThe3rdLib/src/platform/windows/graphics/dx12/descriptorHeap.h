@@ -1,14 +1,14 @@
 #pragma once
+#include <vector>
+
 #include "SirEngine/core.h"
 #include "platform/windows/graphics/dx12/DX12.h"
-#include <vector>
 
 namespace SirEngine {
 namespace dx12 {
 
 class SIR_ENGINE_API DescriptorHeap {
-
-public:
+ public:
   DescriptorHeap() = default;
   ~DescriptorHeap();
   bool initialize(int size, D3D12_DESCRIPTOR_HEAP_TYPE type);
@@ -48,19 +48,18 @@ public:
     m_descriptorsAllocated = 0;
   }
 
-  inline uint32_t
-  findCPUDescriptorIndexFromHandle(D3D12_CPU_DESCRIPTOR_HANDLE handle) const {
+  inline uint32_t findCPUDescriptorIndexFromHandle(
+      D3D12_CPU_DESCRIPTOR_HANDLE handle) const {
     uint32_t idx = static_cast<uint32_t>(
         (handle.ptr - m_heap->GetCPUDescriptorHandleForHeapStart().ptr) /
         m_descriptorSize);
     return idx;
   }
 
-  //TODO fix this UINT max crap
+  // TODO fix this UINT max crap
   uint32_t allocateDescriptor(D3D12_CPU_DESCRIPTOR_HANDLE *cpuDescriptor,
                               uint32_t descriptorIndexToUse = UINT_MAX);
   void freeDescriptor(const DescriptorPair &handles) {
-
     assert(handles.cpuHandle.ptr != 0);
     int idx = findCPUDescriptorIndexFromHandle(handles.cpuHandle);
     // freeing is just a matter of freeing up the index
@@ -72,7 +71,8 @@ public:
 
   uint32_t createBufferSRV(DescriptorPair &pair, ID3D12Resource *resource,
                            uint32_t numElements, uint32_t elementSize,
-                           uint32_t elementOffset=0,bool descriptorExists=false);
+                           uint32_t elementOffset = 0,
+                           bool descriptorExists = false);
   uint32_t createBufferUAV(DescriptorPair &pair, ID3D12Resource *resource,
                            uint32_t numElements, uint32_t elementSize);
 
@@ -86,11 +86,12 @@ public:
                               DXGI_FORMAT format, uint32_t mipLevel = 0,
                               bool descriptorExists = false);
   uint32_t createTextureCubeSRV(DescriptorPair &pair, ID3D12Resource *resource,
-                                DXGI_FORMAT format);
+                                DXGI_FORMAT format,
+                                bool descriptorExists = false);
   uint32_t createTexture2DUAV(DescriptorPair &pair, ID3D12Resource *resource,
                               DXGI_FORMAT format, uint32_t mipLevel = 0);
 
-private:
+ private:
   uint32_t m_descriptorsAllocated = 0;
   ID3D12DescriptorHeap *m_heap = nullptr;
   uint32_t m_descriptorSize = 0;
@@ -108,5 +109,5 @@ uint32_t createRTVSRV(DescriptorHeap *heap, ID3D12Resource *resource,
 uint32_t createDSV(DescriptorHeap *heap, ID3D12Resource *resource,
                    DescriptorPair &pair, DXGI_FORMAT format,
                    const D3D12_DSV_FLAGS flags = D3D12_DSV_FLAG_NONE);
-} // namespace dx12
-} // namespace SirEngine
+}  // namespace dx12
+}  // namespace SirEngine
