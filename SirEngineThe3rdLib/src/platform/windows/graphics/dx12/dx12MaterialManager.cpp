@@ -447,10 +447,10 @@ void updateForwardPhong(const MaterialData &data,
 
   // now bind the texture
   dx12::TEXTURE_MANAGER->createSRV(data.handles.albedo,
-                                   table.flatDescriptors[3]);
+                                   table.flatDescriptors[3],false);
 
-  //const uint32_t meshFlags2 = POSITIONS;
-  //dx12::MESH_MANAGER->bindFlatMesh(data.m_materialRuntime.meshHandle,
+  // const uint32_t meshFlags2 = POSITIONS;
+  // dx12::MESH_MANAGER->bindFlatMesh(data.m_materialRuntime.meshHandle,
   //                                 table.flatDescriptors, meshFlags, 3);
 }
 
@@ -544,10 +544,11 @@ void Dx12MaterialManager::updateMaterial(
   }
 }
 
-void Dx12MaterialManager::bindTexture(MaterialHandle handle,
-                                      const TextureHandle texHandle,
-                                      const uint32_t bindingIndex,
-                                      SHADER_QUEUE_FLAGS queue) {
+void Dx12MaterialManager::bindTexture(const MaterialHandle handle,
+                                        const TextureHandle texHandle,
+                                        const uint32_t bindingIndex,
+                                        SHADER_QUEUE_FLAGS queue,
+                                        const bool isCubeMap) {
   assertMagicNumber(handle);
   uint32_t index = getIndexFromHandle(handle);
   const auto &data = m_materialTextureHandles.getConstRef(index);
@@ -560,12 +561,38 @@ void Dx12MaterialManager::bindTexture(MaterialHandle handle,
   const FlatDescriptorTable &table =
       data.m_materialRuntime.m_tables[currentFlagId];
 
+  dx12::TEXTURE_MANAGER->createSRV(
+      texHandle, table.flatDescriptors[bindingIndex], isCubeMap);
+}
+
+void Dx12MaterialManager::bindMesh(const MaterialHandle handle,
+                                   const MeshHandle meshHandle,
+                                   const uint32_t bindingIndex,
+                                   const uint32_t meshBindFlags,
+                                   SHADER_QUEUE_FLAGS queue) {
+  assertMagicNumber(handle);
+  uint32_t index = getIndexFromHandle(handle);
+  const auto &data = m_materialTextureHandles.getConstRef(index);
+
+  const auto queueFlagInt = static_cast<int>(queue);
+  const auto currentFlagId =
+      static_cast<int>(log2(queueFlagInt & -queueFlagInt));
+  assert(data.m_materialRuntime.m_tables[currentFlagId].isFlatRoot == true);
+
+  const FlatDescriptorTable &table =
+      data.m_materialRuntime.m_tables[currentFlagId];
+
+  dx12::MESH_MANAGER->bindFlatMesh(meshHandle, table.flatDescriptors,
+                                   meshBindFlags, bindingIndex);
+
+  /*
   dx12::TEXTURE_MANAGER->createSRV(texHandle,
                                    table.flatDescriptors[bindingIndex]);
 
   // dx12::DEVICE->CopyDescriptorsSimple(
   //    1, table.flatDescriptors[bindingIndex].cpuHandle, pair.cpuHandle,
   //    D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+  */
 }
 
 void Dx12MaterialManager::bindBuffer(const MaterialHandle handle,
@@ -615,14 +642,14 @@ void allocateDescriptorTable(FlatDescriptorTable &table, const RSHandle root) {
   // lets allocate enough descriptors to use for the descriptor table
   const uint32_t descriptorCount =
       dx12::ROOT_SIGNATURE_MANAGER->getDescriptorCount(root);
-  //Fix magic number...
+  // Fix magic number...
   auto *descriptors = reinterpret_cast<DescriptorPair *>(
-      globals::PERSISTENT_ALLOCATOR->allocate(sizeof(DescriptorPair) *
-                                              descriptorCount+30));
+      globals::PERSISTENT_ALLOCATOR->allocate(
+          sizeof(DescriptorPair) * descriptorCount + 30));
   // now we have enough descriptors that we can use to bind everything
   uint32_t baseDescriptorIdx =
       dx12::GLOBAL_CBV_SRV_UAV_HEAP->reserveDescriptors(descriptors,
-                                                        descriptorCount+30);
+                                                        descriptorCount + 30);
   table.descriptorCount = descriptorCount;
   table.isFlatRoot = true;
   table.flatDescriptors = descriptors;

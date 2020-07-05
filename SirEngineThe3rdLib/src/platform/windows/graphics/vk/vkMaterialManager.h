@@ -34,9 +34,9 @@ struct VkMaterialData {
   MaterialDataHandles handles;
   Material m_material;
   VkMaterialRuntime m_materialRuntime;
-  //PSOHandle m_psoHandle;
-  //RSHandle m_rsHandle;
-  //DescriptorHandle m_descriptorHandle;
+  // PSOHandle m_psoHandle;
+  // RSHandle m_rsHandle;
+  // DescriptorHandle m_descriptorHandle;
   uint32_t magicNumber;
   const char *name = nullptr;
 };
@@ -94,13 +94,19 @@ class VkMaterialManager final : public MaterialManager {
       const char *name, ALLOCATE_MATERIAL_FLAGS flags,
       const char *materialsPerQueue[QUEUE_COUNT]) override;
 
-  void bindTexture(MaterialHandle matHandle, TextureHandle texHandle,
-                   uint32_t bindingIndex, SHADER_QUEUE_FLAGS queue) override;
-  void bindBuffer(MaterialHandle matHandle, BufferHandle bufferHandle, uint32_t bindingIndex,
-	  SHADER_QUEUE_FLAGS queue) override;;
+  void bindTexture(const MaterialHandle matHandle,
+                     const TextureHandle texHandle, const uint32_t bindingIndex,
+                     SHADER_QUEUE_FLAGS queue, const bool isCubeMap) override;
+  void bindBuffer(MaterialHandle matHandle, BufferHandle bufferHandle,
+                  uint32_t bindingIndex, SHADER_QUEUE_FLAGS queue) override;
+  ;
 
   void bindMaterial(MaterialHandle handle, SHADER_QUEUE_FLAGS queue) override;
   void free(MaterialHandle handle) override;
+
+  void bindMesh(const MaterialHandle handle, const MeshHandle meshHandle,
+                const uint32_t bindingIndex, const uint32_t meshBindFlags,
+                SHADER_QUEUE_FLAGS queue) override;
 
  private:
   HashMap<const char *, MaterialHandle, hashString32> m_nameToHandle;

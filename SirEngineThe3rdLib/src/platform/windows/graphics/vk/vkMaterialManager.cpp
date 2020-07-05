@@ -769,10 +769,11 @@ MaterialHandle VkMaterialManager::allocateMaterial(
   return handle;
 }
 
-void VkMaterialManager::bindTexture(MaterialHandle matHandle,
-                                    TextureHandle texHandle,
-                                    uint32_t bindingIndex,
-                                    SHADER_QUEUE_FLAGS queue) {
+void VkMaterialManager::bindTexture(const MaterialHandle matHandle,
+                                      const TextureHandle texHandle,
+                                      const uint32_t bindingIndex,
+                                      SHADER_QUEUE_FLAGS queue,
+                                      const bool isCubeMap) {
   assertMagicNumber(matHandle);
   uint32_t index = getIndexFromHandle(matHandle);
   const auto &data = m_materialTextureHandles.getConstRef(index);
@@ -865,7 +866,7 @@ void VkMaterialManager::bindMaterial(const MaterialHandle handle,
                           0, nullptr);
 }
 
-void VkMaterialManager::free(MaterialHandle handle) {
+void VkMaterialManager::free(const MaterialHandle handle) {
   // TODO properly cleanup the resources
   assertMagicNumber(handle);
   uint32_t index = getIndexFromHandle(handle);
@@ -876,5 +877,13 @@ void VkMaterialManager::free(MaterialHandle handle) {
   }
 
   m_materialTextureHandles.free(index);
+}
+
+void VkMaterialManager::bindMesh(const MaterialHandle handle,
+                                 const MeshHandle meshHandle,
+                                 const uint32_t bindingIndex,
+                                 const uint32_t meshBindFlags,
+                                 SHADER_QUEUE_FLAGS queue) {
+  assert(0);
 }
 }  // namespace SirEngine::vk

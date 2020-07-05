@@ -120,6 +120,7 @@ class RenderingContext {
   virtual void renderQueueType(const DrawCallConfig &config,
                                const SHADER_QUEUE_FLAGS flag) = 0;
   virtual void renderMaterialType(const SHADER_QUEUE_FLAGS flag) = 0;
+  virtual void renderMesh (const MeshHandle handle,bool isIndexed) = 0;
   // simply submit a full screen quad to the render pipeline
   virtual void fullScreenPass() = 0;
 

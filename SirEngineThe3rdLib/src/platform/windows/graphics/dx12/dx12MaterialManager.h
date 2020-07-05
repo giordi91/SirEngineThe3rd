@@ -56,9 +56,10 @@ struct MaterialData {
 };
 
 class Dx12MaterialManager final : public MaterialManager {
-public:
+ public:
   Dx12MaterialManager()
-      : MaterialManager(RESERVE_SIZE), m_nameToHandle(RESERVE_SIZE),
+      : MaterialManager(RESERVE_SIZE),
+        m_nameToHandle(RESERVE_SIZE),
         m_materialTextureHandles(RESERVE_SIZE){};
   ~Dx12MaterialManager() = default;
   void inititialize() override{};
@@ -69,8 +70,14 @@ public:
                     const Dx12MaterialRuntime &runtime,
                     ID3D12GraphicsCommandList2 *commandList);
 
-  void bindTexture(MaterialHandle matHandle, TextureHandle texHandle,
-                   uint32_t bindingIndex, SHADER_QUEUE_FLAGS queue) override;
+  void bindTexture(const MaterialHandle handle,
+                                        const TextureHandle texHandle,
+                                        const uint32_t bindingIndex,
+                                        SHADER_QUEUE_FLAGS queue, const bool isCubeMap) override;
+  void bindMesh(const MaterialHandle handle, const MeshHandle meshHandle,
+                const uint32_t bindingIndex, const uint32_t meshBindFlags,
+                SHADER_QUEUE_FLAGS queue) override;
+
   void bindBuffer(MaterialHandle handle, BufferHandle bufferHandle,
                   uint32_t bindingIndex, SHADER_QUEUE_FLAGS queue) override;
 
@@ -79,12 +86,12 @@ public:
   Dx12MaterialManager(const Dx12MaterialManager &) = delete;
   Dx12MaterialManager &operator=(const Dx12MaterialManager &) = delete;
 
-  //a material can be processed in different queues, we can provide a material per
-  //queue, check SHADER_QUEUE_FLAGS to see available queues. The argument will be a const char*
-  //that will be parsed to a shader type
-  MaterialHandle
-  allocateMaterial(const char *name, ALLOCATE_MATERIAL_FLAGS flags,
-                   const char *materialsPerQueue[QUEUE_COUNT]) override;
+  // a material can be processed in different queues, we can provide a material
+  // per queue, check SHADER_QUEUE_FLAGS to see available queues. The argument
+  // will be a const char* that will be parsed to a shader type
+  MaterialHandle allocateMaterial(
+      const char *name, ALLOCATE_MATERIAL_FLAGS flags,
+      const char *materialsPerQueue[QUEUE_COUNT]) override;
   MaterialHandle loadMaterial(const char *path, const MeshHandle meshHandle,
                               const SkinHandle skinHandle) override;
   void bindMaterial(MaterialHandle handle, SHADER_QUEUE_FLAGS queue) override;
@@ -96,19 +103,18 @@ public:
     return m_materialTextureHandles.getConstRef(index).m_materialRuntime;
   }
 
-private:
+ private:
   inline void assertMagicNumber(const MaterialHandle handle) {
     const uint16_t magic = getMagicFromHandle(handle);
     const uint32_t idx = getIndexFromHandle(handle);
     assert(m_materialTextureHandles[idx].magicNumber == magic &&
            "invalid magic handle for constant buffer");
   }
-  void
-  Dx12MaterialManager::updateMaterial(SHADER_QUEUE_FLAGS queueFlag,
-                                      const MaterialData &data,
-                                      ID3D12GraphicsCommandList2 *commandList);
+  void Dx12MaterialManager::updateMaterial(
+      SHADER_QUEUE_FLAGS queueFlag, const MaterialData &data,
+      ID3D12GraphicsCommandList2 *commandList);
 
-private:
+ private:
   HashMap<const char *, MaterialHandle, hashString32> m_nameToHandle;
   static const uint32_t RESERVE_SIZE = 200;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
@@ -116,4 +122,4 @@ private:
   SparseMemoryPool<MaterialData> m_materialTextureHandles;
 };
 
-} // namespace SirEngine::dx12
+}  // namespace SirEngine::dx12

@@ -132,8 +132,17 @@ uint32_t DescriptorHeap::createTexture2DUAV(DescriptorPair &pair,
 
 uint32_t DescriptorHeap::createTextureCubeSRV(DescriptorPair &pair,
                                               ID3D12Resource *resource,
-                                              DXGI_FORMAT format) {
-  uint32_t descriptorIndex = allocateDescriptor(&pair.cpuHandle);
+                                              DXGI_FORMAT format, bool descriptorExists) {
+  uint32_t descriptorIndex;
+
+  if (!descriptorExists) {
+    descriptorIndex = allocateDescriptor(&pair.cpuHandle);
+  } else {
+    // reconstruct the descriptor index using pointers
+    auto descriptorHeapCpuBase = getCPUStart();
+    descriptorIndex =
+        (pair.cpuHandle.ptr - descriptorHeapCpuBase.ptr) / m_descriptorSize;
+  }
 
   D3D12_RESOURCE_DESC desc = resource->GetDesc();
   D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
@@ -184,7 +193,8 @@ int DescriptorHeap::reserveDescriptor(DescriptorPair &pair) {
 
 int DescriptorHeap::reserveDescriptors(DescriptorPair *pair,
                                        const uint32_t count) {
-  uint32_t baseDescriptorIndex;
+  assert(count > 0 && "asking for zero reserved descriptors");
+  uint32_t baseDescriptorIndex = 0;
   for (uint32_t i = 0; i < count; ++i) {
     uint32_t descriptorIndex = allocateDescriptor(&pair[i].cpuHandle);
     pair[i].gpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(

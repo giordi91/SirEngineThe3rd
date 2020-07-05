@@ -212,6 +212,7 @@ public:
   void setBindingObject(const BufferBindingsHandle handle) override;
   void clearBindingObject(const BufferBindingsHandle handle) override;
   void freeBindingObject(const BufferBindingsHandle handle) override;
+  void renderMesh(const MeshHandle handle, bool isIndexed) override;
   void fullScreenPass() override;;
 
 private:

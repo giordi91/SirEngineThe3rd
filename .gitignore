@@ -296,3 +296,6 @@ out
 *.pyc
 .vscode
 tags
+
+
+RelWithDebInfo

@@ -685,7 +685,8 @@ void Dx12RenderingContext::renderQueueType(const DrawCallConfig &config,
         // TODO temp check, needs to change
         bool isDebug = dx12::MATERIAL_MANAGER->isQueueType(
             renderableList.first, SHADER_QUEUE_FLAGS::DEBUG);
-        dx12::MESH_MANAGER->render(renderable.m_meshRuntime, currentFc, !isDebug);
+        dx12::MESH_MANAGER->render(renderable.m_meshRuntime, currentFc,
+                                   !isDebug);
       }
       annotateGraphicsEnd();
     }
@@ -694,6 +695,14 @@ void Dx12RenderingContext::renderQueueType(const DrawCallConfig &config,
 
 void Dx12RenderingContext::renderMaterialType(const SHADER_QUEUE_FLAGS flag) {
   assert(0);
+}
+
+void Dx12RenderingContext::renderMesh(const MeshHandle handle, bool isIndexed) {
+  // get mesh runtime
+  const Dx12MeshRuntime runtime = dx12::MESH_MANAGER->getMeshRuntime(handle);
+  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
+  currentFc->commandList->IASetIndexBuffer(&runtime.iview);
+  dx12::MESH_MANAGER->render(runtime, currentFc, isIndexed);
 }
 
 void Dx12RenderingContext::fullScreenPass() {

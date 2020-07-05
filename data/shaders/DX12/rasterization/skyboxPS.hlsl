@@ -2,7 +2,7 @@
 #include "../common/vertexDefinitions.hlsl"
 
 // deferred buffer bindings
-TextureCube skyboxTexture: register(t0,space1);
+TextureCube skyboxTexture: register(t1,space1);
 
 SamplerState gsamPointWrap : register(s0);
 SamplerState gsamPointClamp : register(s1);
@@ -13,4 +13,5 @@ SamplerState gsamAnisotropicClamp : register(s5);
 
 float4 PS(PositionOnlyVertexOut input) : SV_TARGET {
   return skyboxTexture.Sample(gsamLinearClamp,input.worldPos.xyz);
+  //return float4(1,0,0,1);
 }
