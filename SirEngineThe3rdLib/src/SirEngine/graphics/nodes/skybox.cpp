@@ -120,9 +120,9 @@ void SkyBoxPass::populateNodePorts() {
 
   TextureHandle skyHandle = globals::RENDERING_CONTEXT->getEnviromentMapHandle();
   assert(skyHandle.isHandleValid());
-  globals::MATERIAL_MANAGER->bindTexture(m_matHandle, skyHandle, 0,
-                                         SHADER_QUEUE_FLAGS::CUSTOM, true);
-  globals::MATERIAL_MANAGER->bindMesh(m_matHandle, skyboxHandle, 1,
+  //globals::MATERIAL_MANAGER->bindTexture(m_matHandle, skyHandle, 0,
+  //                                       SHADER_QUEUE_FLAGS::CUSTOM, true);
+  globals::MATERIAL_MANAGER->bindMesh(m_matHandle, skyboxHandle, 1,0,
                                       MeshAttributeFlags::POSITIONS,
                                       SHADER_QUEUE_FLAGS::CUSTOM);
 }

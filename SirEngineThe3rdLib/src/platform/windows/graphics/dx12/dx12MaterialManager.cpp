@@ -447,11 +447,7 @@ void updateForwardPhong(const MaterialData &data,
 
   // now bind the texture
   dx12::TEXTURE_MANAGER->createSRV(data.handles.albedo,
-                                   table.flatDescriptors[3],false);
-
-  // const uint32_t meshFlags2 = POSITIONS;
-  // dx12::MESH_MANAGER->bindFlatMesh(data.m_materialRuntime.meshHandle,
-  //                                 table.flatDescriptors, meshFlags, 3);
+                                   table.flatDescriptors[3], false);
 }
 
 void Dx12MaterialManager::updateMaterial(
@@ -545,10 +541,10 @@ void Dx12MaterialManager::updateMaterial(
 }
 
 void Dx12MaterialManager::bindTexture(const MaterialHandle handle,
-                                        const TextureHandle texHandle,
-                                        const uint32_t bindingIndex,
-                                        SHADER_QUEUE_FLAGS queue,
-                                        const bool isCubeMap) {
+                                      const TextureHandle texHandle,
+                                      const uint32_t bindingIndex,
+                                      SHADER_QUEUE_FLAGS queue,
+                                      const bool isCubeMap) {
   assertMagicNumber(handle);
   uint32_t index = getIndexFromHandle(handle);
   const auto &data = m_materialTextureHandles.getConstRef(index);
@@ -567,6 +563,7 @@ void Dx12MaterialManager::bindTexture(const MaterialHandle handle,
 
 void Dx12MaterialManager::bindMesh(const MaterialHandle handle,
                                    const MeshHandle meshHandle,
+                                   const uint32_t descriptorIndex,
                                    const uint32_t bindingIndex,
                                    const uint32_t meshBindFlags,
                                    SHADER_QUEUE_FLAGS queue) {
@@ -583,7 +580,7 @@ void Dx12MaterialManager::bindMesh(const MaterialHandle handle,
       data.m_materialRuntime.m_tables[currentFlagId];
 
   dx12::MESH_MANAGER->bindFlatMesh(meshHandle, table.flatDescriptors,
-                                   meshBindFlags, bindingIndex);
+                                   meshBindFlags, descriptorIndex);
 
   /*
   dx12::TEXTURE_MANAGER->createSRV(texHandle,

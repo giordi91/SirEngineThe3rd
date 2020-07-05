@@ -121,7 +121,20 @@ class MaterialManager {
                              const bool isCubeMap) = 0;
   virtual void bindBuffer(MaterialHandle matHandle, BufferHandle texHandle,
                           uint32_t bindingIndex, SHADER_QUEUE_FLAGS queue) = 0;
-  virtual void bindMesh(const MaterialHandle handle, const MeshHandle texHandle,
+  //TODO clean this. The issue is, we need two indices to bind the mesh
+  //one is the binding index, meaning which slot in the shader is referring to.
+  //The second one is which descriptor are we going to update? 
+  //DX12 has a match one to one, we have a series of descriptors exactly as in the PSO
+  //for example if you have in the PSO fist a texture then a buffer descriptor for the position
+  //of the mesh, you need to have a descriptorIndex of 1 because it appears after the texture
+  //vulkan on the other hand is not, you have descriptors that describe a resource and they can be
+  //in different order, so if you want to update the mesh you can simply grab an array of descriptor info
+  //fill it correctly and do an update. This mean that you have a sort of mismatched indices. Ideally
+  //this will be solved by having introspection in the PSO, where you say bind "positions" and will tell you
+  //all you need to know, both descriptor and slot index. For now we expose both indices to make it work on
+  //both dx12 and VK
+  virtual void bindMesh(const MaterialHandle handle, const MeshHandle meshHandle,
+                        const uint32_t descriptorIndex,
                         const uint32_t bindingIndex,
                         const uint32_t meshBindFlags,
                         SHADER_QUEUE_FLAGS queue) = 0;
