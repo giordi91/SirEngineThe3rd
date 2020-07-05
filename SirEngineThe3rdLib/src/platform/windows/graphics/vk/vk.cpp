@@ -192,6 +192,7 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   vk::PSO_MANAGER->loadRawPSO("../data/pso/grassForwardPSO.json");
   vk::PSO_MANAGER->loadRawPSO("../data/pso/debugDrawPointsSingleColorPSO.json");
   vk::PSO_MANAGER->loadRawPSO("../data/pso/debugDrawLinesSingleColorPSO.json");
+  vk::PSO_MANAGER->loadRawPSO("../data/pso/skyboxPSO.json");
 
   CONSTANT_BUFFER_MANAGER = new VkConstantBufferManager();
   CONSTANT_BUFFER_MANAGER->initialize();
@@ -799,7 +800,7 @@ void VkRenderingContext::freeBindingObject(const BufferBindingsHandle handle) {
   const uint32_t idx = getIndexFromHandle(handle);
   const FrameBindingsData &data = m_bindingsPool.getConstRef(idx);
   vkDestroyRenderPass(vk::LOGICAL_DEVICE, data.m_pass, nullptr);
-  for (int i = 0; i < data.m_frameBufferCount; ++i) {
+  for (uint32_t i = 0; i < data.m_frameBufferCount; ++i) {
     vkDestroyFramebuffer(vk::LOGICAL_DEVICE, data.m_buffer[i], nullptr);
   }
   globals::PERSISTENT_ALLOCATOR->free(data.m_buffer);
@@ -872,7 +873,7 @@ void VkRenderingContext::setBindingObject(const BufferBindingsHandle handle) {
                   binding.currentResourceState, binding.neededResourceState);
   }
 
-  for (int i = 0; i < data.m_bindings.extraBindingsCount; ++i) {
+  for (uint32_t i = 0; i < data.m_bindings.extraBindingsCount; ++i) {
     const RTBinding &binding = data.m_bindings.extraBindings[i];
     if (!binding.handle.isHandleValid()) {
       continue;
