@@ -597,7 +597,7 @@ bool convertObj(const char *path, const char *tangentsPath,
 
   int finalIndexCount = indices.size();
   // lets compute all the offsets
-  uint32_t alignRequirement = sizeof(float) * 4;
+  uint32_t alignRequirement = sizeof(float) * 64;
   uint64_t pointSizeInByte = vertexData.size() * sizeof(float) * 4;
   uint64_t normalPointerOffset = 0;
   uint64_t normalsOffsetByte =
