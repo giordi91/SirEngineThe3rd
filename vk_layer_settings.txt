@@ -1,0 +1,6 @@
+khronos_validation.report_flags = info,error
+khronos_validation.debug_action = VK_DBG_LAYER_ACTION_LOG_MSG
+khronos_validation.disable = VK_VALIDATION_FEATURE_DISABLE_UNIQUE_HANDLES_EXT 
+# VK_LAYER_LUNARG_api_dump custom settings
+lunarg_api_dump.no_addr = TRUE
+lunarg_api_dump.file = FALSE
