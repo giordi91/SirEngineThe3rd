@@ -1,11 +1,13 @@
 
 #include "platform/windows/graphics/vk/vkLoad.h"
+
 #include "platform/windows/graphics/vk/volk.h"
 //#include "platform/windows/graphics/vk/VulkanFunctions.h"
-#include "SirEngine/log.h"
-#include "vk.h"
 #include <cassert>
 #include <iostream>
+
+#include "SirEngine/log.h"
+#include "vk.h"
 
 namespace SirEngine {
 namespace vk {
@@ -15,7 +17,6 @@ VkBool32 debugCallback(VkDebugReportFlagsEXT flags,
                        size_t location, int32_t messageCode,
                        const char *pLayerPrefix, const char *pMessage,
                        void *pUserData) {
-
   const char *type =
       flags & VK_DEBUG_REPORT_ERROR_BIT_EXT
           ? "ERROR"
@@ -43,7 +44,6 @@ debugCallback2(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
                VkDebugUtilsMessageTypeFlagsEXT messageType,
                const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
                void *pUserData) {
-
   const char *type =
       messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT
           ? "ERROR"
@@ -83,8 +83,8 @@ bool checkAvailableInstanceExtensions(
     std::vector<VkExtensionProperties> &availableExtensions) {
   uint32_t extensionsCount = 0;
 
-  VkResult result = vkEnumerateInstanceExtensionProperties(nullptr, &extensionsCount,
-                                                           nullptr);
+  VkResult result = vkEnumerateInstanceExtensionProperties(
+      nullptr, &extensionsCount, nullptr);
   if ((result != VK_SUCCESS) || (extensionsCount == 0)) {
     std::cout << "Could not get the number of instance extensions."
               << std::endl;
@@ -138,7 +138,8 @@ bool createVulkanInstance(std::vector<char const *> const &desiredExtensions,
 
 #if _DEBUG
   const char *layers[] = {
-    "VK_LAYER_LUNARG_standard_validation",
+    //"VK_LAYER_LUNARG_standard_validation"
+    "VK_LAYER_KHRONOS_validation",
 
 #if VULKAN_OBJ_TRACKER
     "VK_LAYER_LUNARG_object_tracker",
@@ -149,6 +150,17 @@ bool createVulkanInstance(std::vector<char const *> const &desiredExtensions,
   instanceCreateInfo.ppEnabledLayerNames = layers;
   instanceCreateInfo.enabledLayerCount = ARRAYSIZE(layers);
 #endif
+
+  uint32_t layerCount;
+  vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
+
+  std::vector<VkLayerProperties> availableLayers(layerCount);
+  vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
+  for(auto l : availableLayers)
+  {
+      std::cout<<l.layerName<<std::endl;
+	  
+  }
 
   /*
   VkValidationFeatureEnableEXT enables[] = {
@@ -229,11 +241,9 @@ bool createVulkanInstanceWithWsiExtensionsEnabled(
   return createVulkanInstance(desiredExtensions, applicationName, instance);
 }
 
-
 bool enumerateAvailablePhysicalDevices(
     const VkInstance instance,
     std::vector<VkPhysicalDevice> &availableDevices) {
-
   uint32_t devicesCount = 0;
   VkResult result = VK_SUCCESS;
 
@@ -466,10 +476,10 @@ bool presentImage(VkQueue queue, std::vector<VkSemaphore> renderingSemaphores,
 
   const VkResult result = vkQueuePresentKHR(queue, &presentInfo);
   switch (result) {
-  case VK_SUCCESS:
-    return true;
-  default:
-    return false;
+    case VK_SUCCESS:
+      return true;
+    default:
+      return false;
   }
 }
 
@@ -565,7 +575,7 @@ bool endCommandBufferRecordingOperation(const VkCommandBuffer commandBuffer) {
 bool submitCommandBuffersToQueue(
     VkQueue queue, std::vector<WaitSemaphoreInfo> waitSemaphoreInfos,
     std::vector<VkCommandBuffer> commandBuffers,
-    std::vector<VkSemaphore> signalSemaphores, VkFence& fence) {
+    std::vector<VkSemaphore> signalSemaphores, VkFence &fence) {
   std::vector<VkSemaphore> waitSemaphoreHandles;
   std::vector<VkPipelineStageFlags> waitSemaphoreStages;
 
@@ -593,7 +603,6 @@ bool submitCommandBuffersToQueue(
   return true;
 }
 
-
 // framebuffer is the collection of images you are rendering to plus
 // a couple of extra attributes
 VkFramebuffer createFrameBuffer(const VkDevice logicalDevice,
@@ -614,5 +623,5 @@ VkFramebuffer createFrameBuffer(const VkDevice logicalDevice,
   return frameBuffer;
 }
 
-} // namespace vk
-} // namespace SirEngine
+}  // namespace vk
+}  // namespace SirEngine

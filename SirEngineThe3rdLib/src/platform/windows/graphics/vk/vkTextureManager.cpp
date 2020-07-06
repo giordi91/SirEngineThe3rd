@@ -29,6 +29,8 @@ static std::unordered_map<RenderTargetFormat, VkFormat>
 // TODO This value come from the texture compiler which spits out dxgi formats,
 // should fix this at one point?
 static std::unordered_map<int, VkFormat> BC_INT_FORMAT_TO_VK_FORMAT{
+    {44,VK_FORMAT_B8G8R8A8_UNORM},
+    {50, VK_FORMAT_B8G8R8A8_SRGB},
     {71, VK_FORMAT_BC1_RGBA_UNORM_BLOCK},
     {72, VK_FORMAT_BC1_RGBA_SRGB_BLOCK},
     {77, VK_FORMAT_BC3_UNORM_BLOCK},
@@ -371,6 +373,10 @@ bool VkTextureManager::loadTextureFromFile(const char *name, VkFormat format,
     // load cube texture
     gli::texture_cube tex2D(tex);
     assert(!tex2D.empty());
+    auto f = tex2D.format();
+
+    gli::gl GL(gli::gl::PROFILE_GL33);
+    gli::gl::format const translatedFormat = GL.translate(tex2D.format(),tex2D.swizzles());
 
     const std::string textureName = getFileName(name);
 
@@ -435,38 +441,12 @@ bool VkTextureManager::loadTextureFromFile(const char *name, VkFormat format,
     memcpy(data, tex2D.data(), tex2D.size());
     vkUnmapMemory(device, stagingMemory);
 
-    //--------------------------------------------
-    //--------------------------------------------
-    //--------------------------------------------
-    //--------------------------------------------
-    //--------------------------------------------
-    // CORRECT UNTIL HERE, I THINK
-    // Setup buffer copy regions for each mip level
-    // std::vector<VkBufferImageCopy> bufferCopyRegions;
-    // uint32_t offset = 0;
-
-    // for (uint32_t i = 0; i < outTexture.mipLevels; i++) {
-    //  VkBufferImageCopy bufferCopyRegion = {};
-    //  bufferCopyRegion.imageSubresource.aspectMask =
-    //  VK_IMAGE_ASPECT_COLOR_BIT; bufferCopyRegion.imageSubresource.mipLevel =
-    //  i; bufferCopyRegion.imageSubresource.baseArrayLayer = 0;
-    //  bufferCopyRegion.imageSubresource.layerCount = 1;
-    //  bufferCopyRegion.imageExtent.width =
-    //      static_cast<uint32_t>(tex2D[i].extent().x);
-    //  bufferCopyRegion.imageExtent.height =
-    //      static_cast<uint32_t>(tex2D[i].extent().y);
-    //  bufferCopyRegion.imageExtent.depth = 1;
-    //  bufferCopyRegion.bufferOffset = offset;
-
-    //  bufferCopyRegions.push_back(bufferCopyRegion);
-
-    //  offset += static_cast<uint32_t>(tex2D[i].size());
-    //}
-
     // Create optimal tiled target image
     VkImageCreateInfo imageCreateInfo = {VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO};
     imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
     imageCreateInfo.format = format;
+
+    //imageCreateInfo.format = VkFormat::VK_FORMAT_B8G8R8A8_SRGB;
     imageCreateInfo.mipLevels = outTexture.mipLevels;
     imageCreateInfo.arrayLayers = 6;
     imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -570,7 +550,7 @@ bool VkTextureManager::loadTextureFromFile(const char *name, VkFormat format,
     viewCreateInfo.components = {VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G,
                                  VK_COMPONENT_SWIZZLE_B,
                                  VK_COMPONENT_SWIZZLE_A};
-    viewCreateInfo.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
+    viewCreateInfo.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 6};
     // Linear tiling usually won't support mip maps
     // Only set mip map count if optimal tiling is used
     viewCreateInfo.subresourceRange.levelCount = outTexture.mipLevels;
