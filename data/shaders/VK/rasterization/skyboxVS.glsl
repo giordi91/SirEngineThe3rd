@@ -9,12 +9,6 @@ layout (set=0,binding=0) uniform InputData
 	CameraBuffer cameraBuffer;
 }; 
 
-layout (set=1,binding=0) buffer positions 
-{
-	vec4 p[];
-};
-
-
 vec3 createCube( uint vertexID)
 {
 	uint b = 1 << vertexID;

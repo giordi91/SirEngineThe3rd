@@ -18,21 +18,6 @@
           }
         ]
       }
-    },
-    {
-      "comment": "vertex buffer bound as storage buffer/ positions",
-      "type": "descriptorTable",
-      "visibility": "VS",
-      "data": {
-        "ranges": [
-          {
-            "type": "SRV",
-            "underlyingResource": "buffer",
-            "numDescriptors": 1,
-            "baseRegister": 0
-          }
-        ]
-      }
     }
   ]
 }

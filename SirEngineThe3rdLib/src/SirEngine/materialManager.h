@@ -115,26 +115,28 @@ class MaterialManager {
   virtual void bindMaterial(MaterialHandle handle,
                             SHADER_QUEUE_FLAGS queue) = 0;
   virtual void bindTexture(const MaterialHandle matHandle,
-                             const TextureHandle texHandle,
-                             const uint32_t descriptorIndex,
-                             const uint32_t bindingIndex,
-                             SHADER_QUEUE_FLAGS queue,
-                             const bool isCubeMap) = 0;
+                           const TextureHandle texHandle,
+                           const uint32_t descriptorIndex,
+                           const uint32_t bindingIndex,
+                           SHADER_QUEUE_FLAGS queue, const bool isCubeMap) = 0;
   virtual void bindBuffer(MaterialHandle matHandle, BufferHandle texHandle,
                           uint32_t bindingIndex, SHADER_QUEUE_FLAGS queue) = 0;
-  //TODO clean this. The issue is, we need two indices to bind the mesh
-  //one is the binding index, meaning which slot in the shader is referring to.
-  //The second one is which descriptor are we going to update? 
-  //DX12 has a match one to one, we have a series of descriptors exactly as in the PSO
-  //for example if you have in the PSO fist a texture then a buffer descriptor for the position
-  //of the mesh, you need to have a descriptorIndex of 1 because it appears after the texture
-  //vulkan on the other hand is not, you have descriptors that describe a resource and they can be
-  //in different order, so if you want to update the mesh you can simply grab an array of descriptor info
-  //fill it correctly and do an update. This mean that you have a sort of mismatched indices. Ideally
-  //this will be solved by having introspection in the PSO, where you say bind "positions" and will tell you
-  //all you need to know, both descriptor and slot index. For now we expose both indices to make it work on
-  //both dx12 and VK
-  virtual void bindMesh(const MaterialHandle handle, const MeshHandle meshHandle,
+  // TODO clean this. The issue is, we need two indices to bind the mesh
+  // one is the binding index, meaning which slot in the shader is referring to.
+  // The second one is which descriptor are we going to update?
+  // DX12 has a match one to one, we have a series of descriptors exactly as in
+  // the PSO for example if you have in the PSO fist a texture then a buffer
+  // descriptor for the position of the mesh, you need to have a descriptorIndex
+  // of 1 because it appears after the texture vulkan on the other hand is not,
+  // you have descriptors that describe a resource and they can be in different
+  // order, so if you want to update the mesh you can simply grab an array of
+  // descriptor info fill it correctly and do an update. This mean that you have
+  // a sort of mismatched indices. Ideally this will be solved by having
+  // introspection in the PSO, where you say bind "positions" and will tell you
+  // all you need to know, both descriptor and slot index. For now we expose
+  // both indices to make it work on both dx12 and VK
+  virtual void bindMesh(const MaterialHandle handle,
+                        const MeshHandle meshHandle,
                         const uint32_t descriptorIndex,
                         const uint32_t bindingIndex,
                         const uint32_t meshBindFlags,
@@ -142,7 +144,7 @@ class MaterialManager {
 
   virtual void free(MaterialHandle handle) = 0;
 
-  inline SHADER_TYPE_FLAGS getTypeFlags(const uint32_t flags) {
+  static inline SHADER_TYPE_FLAGS getTypeFlags(const uint32_t flags) {
     // here we are creating a mask for the fist 16 bits, then we flip it
     // such that we are going to mask the upper 16 bits
     constexpr uint32_t mask = static_cast<uint32_t>(~((1 << 16) - 1));
@@ -150,31 +152,30 @@ class MaterialManager {
     return static_cast<SHADER_TYPE_FLAGS>(typeFlags);
   }
 
-  inline bool isShaderOfType(const uint32_t flags,
-                             const SHADER_TYPE_FLAGS type) {
+  static inline bool isShaderOfType(const uint32_t flags,
+                                    const SHADER_TYPE_FLAGS type) {
     const SHADER_TYPE_FLAGS typeFlags = getTypeFlags(flags);
     return typeFlags == type;
   }
 
-  inline uint32_t getQueueFlags(const uint32_t flags) {
+  static inline uint32_t getQueueFlags(const uint32_t flags) {
     constexpr uint32_t mask = (1 << 16) - 1;
     const uint32_t queueFlags = flags & mask;
     return queueFlags;
   }
 
-  inline bool isQueueType(const uint32_t flags,
-                          const SHADER_QUEUE_FLAGS queue) {
+  static inline bool isQueueType(const uint32_t flags,
+                                 const SHADER_QUEUE_FLAGS queue) {
     const uint32_t queueFlags = getQueueFlags(flags);
     return (queueFlags & static_cast<uint32_t>(queue)) > 0;
   }
 
-  inline uint32_t getQueueTypeFlags(SHADER_QUEUE_FLAGS queue,
-                                    uint32_t shaderType) {
+  // combines the queue and shader type flags together
+  static inline uint32_t getQueueTypeFlags(SHADER_QUEUE_FLAGS queue,
+                                           const uint32_t shaderType) {
     uint32_t flags = 0;
-    uint32_t currentFlag = static_cast<uint32_t>(queue);
+    auto currentFlag = static_cast<uint32_t>(queue);
     flags |= currentFlag;
-
-    int currentFlagId = static_cast<int>(log2(currentFlag & -currentFlag));
 
     flags = shaderType << 16 | flags;
     return flags;

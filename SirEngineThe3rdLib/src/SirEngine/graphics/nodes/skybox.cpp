@@ -38,9 +38,6 @@ void SkyBoxPass::initialize() {
   m_rs = globals::ROOT_SIGNATURE_MANAGER->getHandleFromName(SKYBOX_RS);
   m_pso = globals::PSO_MANAGER->getHandleFromName(SKYBOX_PSO);
 
-  skyboxHandle = globals::MESH_MANAGER->loadMesh(
-      "../data/processed/meshes/skybox.model", true);
-
   const char *queues[5] = {nullptr, nullptr, nullptr, nullptr, "skybox"};
   m_matHandle = globals::MATERIAL_MANAGER->allocateMaterial("skybox", 0, queues);
 }
@@ -61,7 +58,6 @@ void SkyBoxPass::compute() {
   globals::RENDERING_CONTEXT->setViewportAndScissor(0, 0, w, h, 0, 0);
 
   globals::RENDERING_CONTEXT->bindCameraBuffer(0);
-  //globals::RENDERING_CONTEXT->renderMesh(skyboxHandle, true);
   globals::RENDERING_CONTEXT->renderProcedural(14);
 
   // finishing the pass
@@ -111,9 +107,6 @@ void SkyBoxPass::populateNodePorts() {
   assert(skyHandle.isHandleValid());
   globals::MATERIAL_MANAGER->bindTexture(m_matHandle, skyHandle, 0, 1,
                                          SHADER_QUEUE_FLAGS::CUSTOM, true);
-  globals::MATERIAL_MANAGER->bindMesh(m_matHandle, skyboxHandle, 1, 0,
-                                      MESH_ATTRIBUTE_FLAGS::POSITIONS,
-                                      SHADER_QUEUE_FLAGS::CUSTOM);
 }
 
 void SkyBoxPass::clear() {
