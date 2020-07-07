@@ -51,7 +51,7 @@ void bindSkinning(const Dx12MaterialRuntime &materialRuntime,
                                                 commandList);
 
   dx12::MESH_MANAGER->bindMesh(materialRuntime.meshHandle, commandList,
-                               MeshAttributeFlags::ALL, 9);
+                               MESH_ATTRIBUTE_FLAGS::ALL, 9);
   // bind mesh data
 
   // dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(.matricesBuffer, 8,
@@ -96,7 +96,7 @@ void bindSkinSkinning(const Dx12MaterialRuntime &materialRuntime,
   dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.matricesBuffer, 9,
                                                 commandList);
   dx12::MESH_MANAGER->bindMesh(materialRuntime.meshHandle, commandList,
-                               MeshAttributeFlags::ALL, 10);
+                               MESH_ATTRIBUTE_FLAGS::ALL, 10);
 
   // HARDCODED stencil value might have to think of a nice way to handle this
   commandList->OMSetStencilRef(static_cast<uint32_t>(STENCIL_REF::SSSSS));
@@ -182,7 +182,7 @@ void bindParallaxPBR(const Dx12MaterialRuntime &materialRuntime,
               ->getSRVDx12(globals::DEBUG_FRAME_DATA->directionalShadow)
               .gpuHandle);
   dx12::MESH_MANAGER->bindMesh(materialRuntime.meshHandle, commandList,
-                               MeshAttributeFlags::ALL, 12);
+                               MESH_ATTRIBUTE_FLAGS::ALL, 12);
 }
 
 void bindForwardPhongAlphaCutoutSkin(const Dx12MaterialRuntime &materialRuntime,
@@ -214,7 +214,7 @@ void bindForwardPhongAlphaCutoutSkin(const Dx12MaterialRuntime &materialRuntime,
   dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.matricesBuffer, 8,
                                                 commandList);
   dx12::MESH_MANAGER->bindMesh(materialRuntime.meshHandle, commandList,
-                               MeshAttributeFlags::ALL, 9);
+                               MESH_ATTRIBUTE_FLAGS::ALL, 9);
 
   // HARDCODED stencil value might have to think of a nice way to handle this
   commandList->OMSetStencilRef(static_cast<uint32_t>(STENCIL_REF::CLEAR));
@@ -268,7 +268,7 @@ void bindHairSkin(const Dx12MaterialRuntime &materialRuntime,
                                                 commandList);
 
   dx12::MESH_MANAGER->bindMesh(materialRuntime.meshHandle, commandList,
-                               MeshAttributeFlags::ALL, 10);
+                               MESH_ATTRIBUTE_FLAGS::ALL, 10);
 
   // HARDCODED stencil value might have to think of a nice way to handle this
   commandList->OMSetStencilRef(static_cast<uint32_t>(STENCIL_REF::CLEAR));
@@ -297,7 +297,7 @@ void bindShadowSkin(const Dx12MaterialRuntime &materialRuntime,
                                                 commandList);
 
   dx12::MESH_MANAGER->bindMesh(materialRuntime.meshHandle, commandList,
-                               MeshAttributeFlags::POSITIONS, 5);
+                               MESH_ATTRIBUTE_FLAGS::POSITIONS, 5);
   // TODO HARDCODED stencil value might have to think of a nice way to handle
   // this
   commandList->OMSetStencilRef(static_cast<uint32_t>(STENCIL_REF::CLEAR));

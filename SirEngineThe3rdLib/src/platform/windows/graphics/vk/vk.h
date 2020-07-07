@@ -227,6 +227,7 @@ private:
 public:
   void setViewportAndScissor(float offsetX, float offsetY, float width, float height, float minDepth,
 	  float maxDepth) override;
+  void renderProcedural(const uint32_t indexCount) override;
 private:
   void *queues = nullptr;
   ConstantBufferHandle m_cameraHandle{};

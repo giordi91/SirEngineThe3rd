@@ -81,6 +81,7 @@ static const std::unordered_map<std::string, PSO_TYPE> STRING_TO_PSO_TYPE{
 };
 static const std::unordered_map<std::string, VkPrimitiveTopology>
     STRING_TO_TOPOLOGY = {
+        {"triangleStrip", VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP},
         {"triangle", VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST},
         {"line", VK_PRIMITIVE_TOPOLOGY_LINE_LIST},
 };

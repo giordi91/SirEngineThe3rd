@@ -245,6 +245,8 @@ class Dx12RenderingContext final : public RenderingContext {
            "invalid magic handle for constant buffer");
   }
 
+public:
+  void renderProcedural(const uint32_t indexCount) override;
  private:
   // member variable mostly temporary
   CameraBuffer m_camBufferCPU{};
