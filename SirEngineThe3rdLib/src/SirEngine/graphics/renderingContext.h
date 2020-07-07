@@ -79,7 +79,7 @@ struct RenderableDescription {
   BufferHandle buffer{};
   MemoryRange subranges[6]{};
   uint32_t subragesCount = 0;
-  uint32_t primitiveToRender=0;
+  uint32_t primitiveToRender = 0;
   MaterialHandle materialHandle;
 };
 
@@ -120,7 +120,10 @@ class RenderingContext {
   virtual void renderQueueType(const DrawCallConfig &config,
                                const SHADER_QUEUE_FLAGS flag) = 0;
   virtual void renderMaterialType(const SHADER_QUEUE_FLAGS flag) = 0;
-  virtual void renderMesh (const MeshHandle handle,bool isIndexed) = 0;
+  virtual void renderMesh(const MeshHandle handle, bool isIndexed) = 0;
+  virtual void setViewportAndScissor(float offsetX, float offsetY, float width,
+                                     float height, float minDepth,
+                                     float maxDepth) = 0;
   // simply submit a full screen quad to the render pipeline
   virtual void fullScreenPass() = 0;
 

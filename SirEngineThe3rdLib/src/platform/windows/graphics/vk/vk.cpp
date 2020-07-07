@@ -810,7 +810,7 @@ void VkRenderingContext::freeBindingObject(const BufferBindingsHandle handle) {
 }
 
 void VkRenderingContext::renderMesh(const MeshHandle handle, bool isIndexed) {
-  const VkMeshRuntime& runtime = vk::MESH_MANAGER->getMeshRuntime(handle);
+  const VkMeshRuntime &runtime = vk::MESH_MANAGER->getMeshRuntime(handle);
 
   auto *currentFc = CURRENT_FRAME_COMMAND;
   VkCommandBuffer commandList = currentFc->m_commandBuffer;
@@ -820,6 +820,24 @@ void VkRenderingContext::renderMesh(const MeshHandle handle, bool isIndexed) {
 void VkRenderingContext::fullScreenPass() {
   auto buffer = vk::CURRENT_FRAME_COMMAND->m_commandBuffer;
   vkCmdDraw(buffer, 6, 1, 0, 0);
+}
+
+void VkRenderingContext::setViewportAndScissor(
+    const float offsetX, const float offsetY, const float width,
+    const float height, const float minDepth, const float maxDepth) {
+  auto *currentFc = CURRENT_FRAME_COMMAND;
+  auto commandList = currentFc->m_commandBuffer;
+
+  // draw calls go here
+  // here the standard position of the viewport is the same as height due to
+  // inverted viewport so we get height -offsetY to get the correct value
+  VkViewport viewport{offsetX, height - offsetY, width,
+                      -height, minDepth,         maxDepth};
+  VkRect2D scissor{
+      {offsetX, offsetY},
+      {static_cast<uint32_t>(width), static_cast<uint32_t>(height)}};
+  vkCmdSetViewport(commandList, 0, 1, &viewport);
+  vkCmdSetScissor(commandList, 0, 1, &scissor);
 }
 
 int vkBarrier(int counter, VkImageMemoryBarrier *barriers,

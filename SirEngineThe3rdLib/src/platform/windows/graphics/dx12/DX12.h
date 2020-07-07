@@ -230,12 +230,11 @@ class Dx12RenderingContext final : public RenderingContext {
   void fullScreenPass() override;
   BufferBindingsHandle prepareBindingObject(const FrameBufferBindings &bindings,
                                             const char *name) override;
-  ;
   void setBindingObject(const BufferBindingsHandle handle) override;
-  ;
   void clearBindingObject(const BufferBindingsHandle handle) override;
-  ;
   void freeBindingObject(const BufferBindingsHandle handle) override;
+  void setViewportAndScissor(float offsetX, float offsetY, float width, float height, float minDepth,
+	  float maxDepth) override;
 
  private:
   inline void assertMagicNumber(const BufferBindingsHandle handle) const {

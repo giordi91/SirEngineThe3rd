@@ -46,22 +46,6 @@ void SkyBoxPass::initialize() {
   m_matHandle = globals::MATERIAL_MANAGER->allocateMaterial("skybox", 0, queues
 
   );
-
-  /*
-  // fetching root signature
-  rs = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(SKYBOX_RS);
-  pso = dx12::PSO_MANAGER->getHandleFromName(SKYBOX_PSO);
-
-  // dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
-  // if (!dx12::CURRENT_FRAME_RESOURCE->fc.isListOpen) {
-  //  dx12::resetAllocatorAndList(&dx12::CURRENT_FRAME_RESOURCE->fc);
-  //}
-  skyboxHandle = dx12::MESH_MANAGER->loadMesh(
-      "../data/processed/meshes/skybox.model", true);
-  // dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE,
-  //                         &dx12::CURRENT_FRAME_RESOURCE->fc);
-  // dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
-  */
 }
 
 void SkyBoxPass::compute() {
@@ -72,6 +56,12 @@ void SkyBoxPass::compute() {
   // next we bind the material, this will among other things bind the pso and rs
   globals::MATERIAL_MANAGER->bindMaterial(m_matHandle,
                                           SHADER_QUEUE_FLAGS::CUSTOM);
+
+  // we clamp the viewport depth to the far plan. this means no matter how big
+  // our sphere is it will be pushed to the far plane without artifacts:
+  auto w = static_cast<float>(globals::ENGINE_CONFIG->m_windowWidth);
+  auto h = static_cast<float>(globals::ENGINE_CONFIG->m_windowHeight);
+  globals::RENDERING_CONTEXT->setViewportAndScissor(0, 0, w, h, 0, 0);
 
   globals::RENDERING_CONTEXT->bindCameraBuffer(0);
   globals::RENDERING_CONTEXT->renderMesh(skyboxHandle, true);
