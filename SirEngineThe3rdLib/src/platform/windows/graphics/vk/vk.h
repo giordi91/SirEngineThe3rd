@@ -224,6 +224,9 @@ private:
            "invalid magic handle for constant buffer");
   }
 
+public:
+  void setViewportAndScissor(float offsetX, float offsetY, float width, float height, float minDepth,
+	  float maxDepth) override;
 private:
   void *queues = nullptr;
   ConstantBufferHandle m_cameraHandle{};

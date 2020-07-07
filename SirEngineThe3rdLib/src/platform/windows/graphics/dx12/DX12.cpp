@@ -851,6 +851,25 @@ void Dx12RenderingContext::freeBindingObject(
   m_bindingsPool.free(idx);
 }
 
+auto Dx12RenderingContext::setViewportAndScissor(
+    const float offsetX, const float offsetY, const float width,
+    const float height, const float minDepth, const float maxDepth) -> void {
+  D3D12_VIEWPORT viewport;
+  viewport.MaxDepth = maxDepth;
+  viewport.MinDepth = minDepth;
+  viewport.Height = height;
+  viewport.Width = width;
+  viewport.TopLeftX = offsetX;
+  viewport.TopLeftY = offsetY;
+  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
+  currentFc->commandList->RSSetViewports(1, &viewport);
+  auto scissor =
+      D3D12_RECT{static_cast<uint16_t>(offsetX), static_cast<uint16_t>(offsetY),
+                 static_cast<uint16_t>(offsetX + width),
+                 static_cast<uint16_t>(offsetY + height)};
+  currentFc->commandList->RSSetScissorRects(1, &scissor);
+}
+
 bool Dx12RenderingContext::newFrame() { return newFrameDx12(); }
 
 bool Dx12RenderingContext::dispatchFrame() { return dispatchFrameDx12(); }
