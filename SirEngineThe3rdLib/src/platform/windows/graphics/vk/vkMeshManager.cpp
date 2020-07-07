@@ -130,7 +130,7 @@ void VkMeshManager::bindMesh(const MeshHandle handle, VkWriteDescriptorSet *set,
   uint32_t idx = getIndexFromHandle(handle);
   const MeshData &data = m_meshPool.getConstRef(idx);
 
-  if ((bindFlags & MeshAttributeFlags::POSITIONS) > 0) {
+  if ((bindFlags & MESH_ATTRIBUTE_FLAGS::POSITIONS) > 0) {
     // actual information of the descriptor, in this case it is our mesh buffer
     info[0].buffer = data.vertexBuffer;
     info[0].offset = data.meshRuntime.positionRange.m_offset;
@@ -145,7 +145,7 @@ void VkMeshManager::bindMesh(const MeshHandle handle, VkWriteDescriptorSet *set,
     set[0].descriptorCount = 1;
   }
 
-  if ((bindFlags & MeshAttributeFlags::NORMALS) > 0) {
+  if ((bindFlags & MESH_ATTRIBUTE_FLAGS::NORMALS) > 0) {
     info[1].buffer = data.vertexBuffer;
     info[1].offset = data.meshRuntime.normalsRange.m_offset;
     info[1].range = data.meshRuntime.normalsRange.m_size;
@@ -158,7 +158,7 @@ void VkMeshManager::bindMesh(const MeshHandle handle, VkWriteDescriptorSet *set,
     set[1].descriptorCount = 1;
   }
 
-  if ((bindFlags & MeshAttributeFlags::UV) > 0) {
+  if ((bindFlags & MESH_ATTRIBUTE_FLAGS::UV) > 0) {
     info[2].buffer = data.vertexBuffer;
     info[2].offset = data.meshRuntime.uvRange.m_offset;
     info[2].range = data.meshRuntime.uvRange.m_size;
@@ -170,7 +170,7 @@ void VkMeshManager::bindMesh(const MeshHandle handle, VkWriteDescriptorSet *set,
     set[2].pBufferInfo = &info[2];
     set[2].descriptorCount = 1;
   }
-  if ((bindFlags & MeshAttributeFlags::TANGENTS) > 0) {
+  if ((bindFlags & MESH_ATTRIBUTE_FLAGS::TANGENTS) > 0) {
     assert(0 && "binding tangents in vk is not supproted yet");
   }
 }

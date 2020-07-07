@@ -13,7 +13,7 @@
   "rasterState": "custom",
   "rasterStateConfig": { "cullMode": "NONE" },
   "sampleMask": "max",
-  "topologyType": "triangle",
+  "topologyType": "triangleStrip",
   "renderTargets": 1,
   "rtvFormats": [ "DXGI_FORMAT_R16G16B16A16_FLOAT" ],
   "sampleDescCount": 1,

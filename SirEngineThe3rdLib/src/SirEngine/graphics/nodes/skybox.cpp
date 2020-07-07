@@ -40,12 +40,9 @@ void SkyBoxPass::initialize() {
 
   skyboxHandle = globals::MESH_MANAGER->loadMesh(
       "../data/processed/meshes/skybox.model", true);
-  //"../data/processed/meshes/knightB/jacket.model", true);
 
   const char *queues[5] = {nullptr, nullptr, nullptr, nullptr, "skybox"};
-  m_matHandle = globals::MATERIAL_MANAGER->allocateMaterial("skybox", 0, queues
-
-  );
+  m_matHandle = globals::MATERIAL_MANAGER->allocateMaterial("skybox", 0, queues);
 }
 
 void SkyBoxPass::compute() {
@@ -64,7 +61,8 @@ void SkyBoxPass::compute() {
   globals::RENDERING_CONTEXT->setViewportAndScissor(0, 0, w, h, 0, 0);
 
   globals::RENDERING_CONTEXT->bindCameraBuffer(0);
-  globals::RENDERING_CONTEXT->renderMesh(skyboxHandle, true);
+  //globals::RENDERING_CONTEXT->renderMesh(skyboxHandle, true);
+  globals::RENDERING_CONTEXT->renderProcedural(14);
 
   // finishing the pass
   globals::RENDERING_CONTEXT->clearBindingObject(m_bindHandle);
@@ -114,7 +112,7 @@ void SkyBoxPass::populateNodePorts() {
   globals::MATERIAL_MANAGER->bindTexture(m_matHandle, skyHandle, 0, 1,
                                          SHADER_QUEUE_FLAGS::CUSTOM, true);
   globals::MATERIAL_MANAGER->bindMesh(m_matHandle, skyboxHandle, 1, 0,
-                                      MeshAttributeFlags::POSITIONS,
+                                      MESH_ATTRIBUTE_FLAGS::POSITIONS,
                                       SHADER_QUEUE_FLAGS::CUSTOM);
 }
 

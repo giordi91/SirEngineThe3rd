@@ -89,7 +89,7 @@ class VkMeshManager final : public MeshManager {
     vkCmdDrawIndexed(commandBuffer, data.indexCount, 1, 0, 0, 0);
   };
 
-  static inline void renderMesh(const VkMeshRuntime runtime,
+  static inline void renderMesh(const VkMeshRuntime& runtime,
                                 const VkCommandBuffer commandBuffer) {
     if (runtime.indexBuffer != nullptr) {
       vkCmdBindIndexBuffer(commandBuffer, runtime.indexBuffer, 0,

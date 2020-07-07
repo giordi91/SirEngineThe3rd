@@ -840,6 +840,13 @@ void VkRenderingContext::setViewportAndScissor(
   vkCmdSetScissor(commandList, 0, 1, &scissor);
 }
 
+void VkRenderingContext::renderProcedural(const uint32_t indexCount)
+{
+  auto *currentFc = CURRENT_FRAME_COMMAND;
+  auto commandList = currentFc->m_commandBuffer;
+  vkCmdDraw(commandList, indexCount, 1, 0, 0);
+}
+
 int vkBarrier(int counter, VkImageMemoryBarrier *barriers,
               const TextureHandle handle, const RESOURCE_STATE oldState,
               const RESOURCE_STATE newState) {

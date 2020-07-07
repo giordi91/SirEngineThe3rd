@@ -121,6 +121,7 @@ class RenderingContext {
                                const SHADER_QUEUE_FLAGS flag) = 0;
   virtual void renderMaterialType(const SHADER_QUEUE_FLAGS flag) = 0;
   virtual void renderMesh(const MeshHandle handle, bool isIndexed) = 0;
+  virtual void renderProcedural(const uint32_t indexCount) = 0;
   virtual void setViewportAndScissor(float offsetX, float offsetY, float width,
                                      float height, float minDepth,
                                      float maxDepth) = 0;

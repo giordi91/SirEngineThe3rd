@@ -902,10 +902,10 @@ void VkMaterialManager::bindMesh(const MaterialHandle handle,
                              descriptorSet, bufferInfo, meshBindFlags,
                              bindingIndex);
 
-  int setPos = (meshBindFlags & MeshAttributeFlags::POSITIONS) > 0 ? 1 : 0;
-  int setNormals = (meshBindFlags & MeshAttributeFlags::NORMALS) > 0 ? 1 : 0;
-  int setUV = (meshBindFlags & MeshAttributeFlags::UV) > 0 ? 1 : 0;
-  int setTangents = (meshBindFlags & MeshAttributeFlags::TANGENTS) > 0 ? 1 : 0;
+  int setPos = (meshBindFlags & MESH_ATTRIBUTE_FLAGS::POSITIONS) > 0 ? 1 : 0;
+  int setNormals = (meshBindFlags & MESH_ATTRIBUTE_FLAGS::NORMALS) > 0 ? 1 : 0;
+  int setUV = (meshBindFlags & MESH_ATTRIBUTE_FLAGS::UV) > 0 ? 1 : 0;
+  int setTangents = (meshBindFlags & MESH_ATTRIBUTE_FLAGS::TANGENTS) > 0 ? 1 : 0;
 
   int toBind = setPos + setNormals + setUV + setTangents;
 

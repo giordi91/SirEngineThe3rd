@@ -146,7 +146,7 @@ class Dx12MeshManager final : public MeshManager {
                            const uint32_t flags,
                            const uint32_t startIndex) const {
     const Dx12MeshRuntime &runtime = getMeshRuntime(handle);
-    if ((flags & MeshAttributeFlags::POSITIONS) > 0) {
+    if ((flags & MESH_ATTRIBUTE_FLAGS::POSITIONS) > 0) {
       // TODO The element size of the srv for now is hardcoded, this value is
       // defined by the compiler and probably should simply put in the mesh file
       // definition
@@ -154,17 +154,17 @@ class Dx12MeshManager final : public MeshManager {
           runtime.bufferHandle, pairs[startIndex + 0], runtime.positionRange,
           true, sizeof(float) * 4);
     }
-    if ((flags & MeshAttributeFlags::NORMALS) > 0) {
+    if ((flags & MESH_ATTRIBUTE_FLAGS::NORMALS) > 0) {
       dx12::BUFFER_MANAGER->createSrv(
           runtime.bufferHandle, pairs[startIndex + 1], runtime.normalsRange,
           true, sizeof(float) * 4);
     }
-    if ((flags & MeshAttributeFlags::UV) > 0) {
+    if ((flags & MESH_ATTRIBUTE_FLAGS::UV) > 0) {
       dx12::BUFFER_MANAGER->createSrv(runtime.bufferHandle,
                                       pairs[startIndex + 2], runtime.uvRange,
                                       true, sizeof(float) * 2);
     }
-    if ((flags & MeshAttributeFlags::TANGENTS) > 0) {
+    if ((flags & MESH_ATTRIBUTE_FLAGS::TANGENTS) > 0) {
       dx12::BUFFER_MANAGER->createSrv(
           runtime.bufferHandle, pairs[startIndex + 3], runtime.tangentsRange,
           true, sizeof(float) * 4);
@@ -175,22 +175,22 @@ class Dx12MeshManager final : public MeshManager {
                        ID3D12GraphicsCommandList2 *commandList,
                        const uint32_t flags, const uint32_t startIndex) const {
     const Dx12MeshRuntime &runtime = getMeshRuntime(handle);
-    if ((flags & MeshAttributeFlags::POSITIONS) > 0) {
+    if ((flags & MESH_ATTRIBUTE_FLAGS::POSITIONS) > 0) {
       dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(
           runtime.bufferHandle, startIndex + 0, commandList,
           runtime.positionRange.m_offset);
     }
-    if ((flags & MeshAttributeFlags::NORMALS) > 0) {
+    if ((flags & MESH_ATTRIBUTE_FLAGS::NORMALS) > 0) {
       dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(
           runtime.bufferHandle, startIndex + 1, commandList,
           runtime.normalsRange.m_offset);
     }
-    if ((flags & MeshAttributeFlags::UV) > 0) {
+    if ((flags & MESH_ATTRIBUTE_FLAGS::UV) > 0) {
       dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(runtime.bufferHandle,
                                                     startIndex + 2, commandList,
                                                     runtime.uvRange.m_offset);
     }
-    if ((flags & MeshAttributeFlags::TANGENTS) > 0) {
+    if ((flags & MESH_ATTRIBUTE_FLAGS::TANGENTS) > 0) {
       dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(
           runtime.bufferHandle, startIndex + 3, commandList,
           runtime.tangentsRange.m_offset);
