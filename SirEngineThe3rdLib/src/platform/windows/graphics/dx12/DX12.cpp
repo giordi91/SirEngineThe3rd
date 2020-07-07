@@ -872,8 +872,6 @@ auto Dx12RenderingContext::setViewportAndScissor(
 
 void Dx12RenderingContext::renderProcedural(const uint32_t indexCount) {
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
-  currentFc->commandList->IASetPrimitiveTopology(
-      D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
   currentFc->commandList->DrawInstanced(indexCount, 1, 0, 0);
 }
 

@@ -1,7 +1,6 @@
 #include "platform/windows/graphics/vk/vkPSOManager.h"
 
 #include "SirEngine/fileUtils.h"
-#include "SirEngine/globals.h"
 #include "SirEngine/log.h"
 #include "platform/windows/graphics/vk/vk.h"
 #include "platform/windows/graphics/vk/vkRootSignatureManager.h"
@@ -68,7 +67,6 @@ VkDescriptorSetLayout PER_FRAME_LAYOUT = nullptr;
 DescriptorHandle PER_FRAME_DATA_HANDLE;
 DescriptorHandle STATIC_SAMPLERS_HANDLE;
 
-
 const char *STATIC_SAMPLERS_NAMES[STATIC_SAMPLER_COUNT] = {
     "pointWrapSampler",   "pointClampSampler",      "linearWrapSampler",
     "linearClampSampler", "anisotropicWrapSampler", "anisotropicClampSampler",
@@ -84,6 +82,13 @@ static const std::unordered_map<std::string, VkPrimitiveTopology>
         {"triangleStrip", VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP},
         {"triangle", VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST},
         {"line", VK_PRIMITIVE_TOPOLOGY_LINE_LIST},
+};
+
+static const std::unordered_map<std::string, TOPOLOGY_TYPE>
+    STRING_TO_ENGINE_TOPOLOGY = {
+        {"triangleStrip", TOPOLOGY_TYPE::TRIANGLE_STRIP},
+        {"triangle", TOPOLOGY_TYPE::TRIANGLE},
+        {"line", TOPOLOGY_TYPE::LINE},
 };
 
 static const std::unordered_map<std::string, VkCullModeFlagBits>
@@ -332,8 +337,19 @@ inline VkPrimitiveTopology convertStringToTopology(
          "provided string format is not a valid VK topology, or unsupported");
   return VK_PRIMITIVE_TOPOLOGY_MAX_ENUM;
 }
+inline TOPOLOGY_TYPE convertStringToEngineTopology(
+    const std::string &topology) {
+  const auto found = STRING_TO_ENGINE_TOPOLOGY.find(topology);
+  if (found != STRING_TO_ENGINE_TOPOLOGY.end()) {
+    return found->second;
+  }
+  assert(
+      0 &&
+      "provided string format is not a valid engine topology, or unsupported");
+  return TOPOLOGY_TYPE::UNDEFINED;
+}
 
-void getAssemblyCreateInfo(
+std::string getAssemblyCreateInfo(
     const nlohmann::json &jobj,
     VkPipelineInputAssemblyStateCreateInfo &inputAssemblyCreateInfo) {
   const std::string topology =
@@ -344,6 +360,7 @@ void getAssemblyCreateInfo(
   assert(inputAssemblyCreateInfo.topology != VK_PRIMITIVE_TOPOLOGY_MAX_ENUM);
   // always false unless geometry shader?
   inputAssemblyCreateInfo.primitiveRestartEnable = false;
+  return topology;
 }
 
 VkCullModeFlagBits getCullMode(const nlohmann::json &jobj) {
@@ -421,9 +438,8 @@ void getDepthStencilState(
 
   const bool depthEnabled =
       getValueIfInJson(dssObj, PSO_KEY_DEPTH_ENABLED, DEFAULT_BOOL);
-  //if not set we retur ntrue
-  const bool depthWrite=
-      getValueIfInJson(dssObj, PSO_KEY_DEPTH_WRITE, true);
+  // if not set we retur ntrue
+  const bool depthWrite = getValueIfInJson(dssObj, PSO_KEY_DEPTH_WRITE, true);
   depthStencilState.depthTestEnable = depthEnabled;
   depthStencilState.depthWriteEnable = depthWrite;
 
@@ -610,7 +626,8 @@ PSOHandle VkPSOManager::processRasterPSO(
   // input assembler info
   VkPipelineInputAssemblyStateCreateInfo inputAssemblyCreateInfo{
       VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO};
-  getAssemblyCreateInfo(jobj, inputAssemblyCreateInfo);
+  const std::string topology =
+      getAssemblyCreateInfo(jobj, inputAssemblyCreateInfo);
 
   VkPipelineViewportStateCreateInfo viewportCreateInfo{
       VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO};
@@ -693,47 +710,13 @@ PSOHandle VkPSOManager::processRasterPSO(
   data.rootSignature = layoutHandle;
   const PSOHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
   data.magicNumber = MAGIC_NUMBER_COUNTER;
+  data.topology = convertStringToEngineTopology(topology);
   m_psoRegisterHandle.insert(fileName.c_str(), handle);
   ++MAGIC_NUMBER_COUNTER;
 
   return handle;
 };
 
-/*
-VkPipeline
-createGraphicsPipeline(const char *psoPath, VkDevice logicalDevice,
-                       VkRenderPass &renderPass,
-                       VkPipelineVertexInputStateCreateInfo *vertexInfo) {
-
-  auto jobj = getJsonObj(psoPath);
-
-  const std::string typeString =
-      getValueIfInJson(jobj, PSO_KEY_TYPE, DEFAULT_STRING);
-  assert(!typeString.empty());
-  PSOType type = convertStringPSOTypeToEnum(typeString.c_str());
-
-  switch (type) {
-  case PSOType::DXR: {
-    assert(0 && "Unsupported PSO type");
-    break;
-  }
-  case PSOType::RASTER: {
-    return processRasterPSO(jobj, renderPass, vertexInfo);
-    break;
-  }
-  case PSOType::COMPUTE: {
-    assert(0 && "Unsupported PSO type");
-    break;
-  }
-  case PSOType::INVALID: {
-    assert(0 && "Unsupported PSO type");
-    break;
-  }
-  default:;
-  }
-  return nullptr;
-}
-*/
 
 void initStaticSamplers() {
   auto createInfos = getStaticSamplersCreateInfo();

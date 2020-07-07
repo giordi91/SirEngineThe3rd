@@ -36,6 +36,7 @@ class VkPSOManager final : public PSOManager {
     VkRenderPass renderPass;
     RSHandle rootSignature;
     uint32_t magicNumber;
+    TOPOLOGY_TYPE topology;
   };
 
  public:

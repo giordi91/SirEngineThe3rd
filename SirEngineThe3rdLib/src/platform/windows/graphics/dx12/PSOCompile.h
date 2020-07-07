@@ -2,10 +2,10 @@
 #include <d3d12.h>
 
 #include "SirEngine/core.h"
+#include "SirEngine/graphics/graphicsDefines.h"
 
 namespace SirEngine::dx12 {
 enum class PSOType { DXR = 0, RASTER, COMPUTE, INVALID };
-enum class TOPOLOGY_TYPE { UNDEFINED=0,LINE, LINE_STRIP, TRIANGLE, TRIANGLE_STRIP };
 struct SIR_ENGINE_API PSOCompileResult {
   D3D12_COMPUTE_PIPELINE_STATE_DESC *computeDesc = nullptr;
   D3D12_GRAPHICS_PIPELINE_STATE_DESC *graphicDesc = nullptr;

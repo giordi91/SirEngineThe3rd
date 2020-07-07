@@ -327,7 +327,8 @@ PSOCompileResult processComputePSO(nlohmann::json &jobj, const char *path,
                           frameString(name.c_str()),
                           frameString(path),
                           nullptr,
-                          frameString(globalRootSignatureName.c_str())};
+                          frameString(globalRootSignatureName.c_str()),
+                          TOPOLOGY_TYPE::UNDEFINED};
 }
 
 TOPOLOGY_TYPE convertStringToEngineTopologyType(const std::string &topology) {
@@ -351,7 +352,7 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj, const char *path,
       getValueIfInJson(jobj, PSO_KEY_GLOBAL_ROOT, DEFAULT_STRING);
 
   auto resultCompile = processSignatureFile(rootSignatureString.c_str());
-  auto rootSignature = resultCompile.root;
+  ID3D12RootSignature *rootSignature = resultCompile.root;
 
   const std::string VSname =
       getValueIfInJson(jobj, PSO_KEY_VS_SHADER, DEFAULT_STRING);
@@ -487,8 +488,7 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj, const char *path,
                           frameString(layoutString.c_str()),
                           frameString(rootSignatureString.c_str()),
                           engineTopologyType};
-
-}  // namespace SirEngine::dx12
+}
 
 PSOCompileResult compileRawPSO(const char *path, const char *shaderPath) {
   auto jobj = getJsonObj(path);

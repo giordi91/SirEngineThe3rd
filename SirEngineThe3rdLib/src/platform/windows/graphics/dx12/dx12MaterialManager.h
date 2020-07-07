@@ -68,7 +68,7 @@ class Dx12MaterialManager final : public MaterialManager {
                     ID3D12GraphicsCommandList2 *commandList);
   void bindMaterial(SHADER_QUEUE_FLAGS queueFlag,
                     const Dx12MaterialRuntime &runtime,
-                    ID3D12GraphicsCommandList2 *commandList);
+                    ID3D12GraphicsCommandList2 *commandList) const;
 
   void bindTexture(const MaterialHandle matHandle,
                    const TextureHandle texHandle,

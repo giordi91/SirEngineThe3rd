@@ -5,25 +5,27 @@
 #include "SirEngine/memory/resizableVector.h"
 #include "SirEngine/memory/sparseMemoryPool.h"
 #include "SirEngine/memory/stringHashMap.h"
+#include "nlohmann/json_fwd.hpp"
 #include "platform/windows/graphics/dx12/PSOCompile.h"
 #include "platform/windows/graphics/dx12/d3dx12.h"
-
-#include "nlohmann/json_fwd.hpp"
 
 namespace SirEngine::dx12 {
 
 class Dx12PSOManager final : public PSOManager {
-
   struct PSOData {
     ID3D12PipelineState *pso;
     uint32_t magicNumber;
+    TOPOLOGY_TYPE topology;
   };
 
-public:
+ public:
   Dx12PSOManager()
-      : PSOManager(), m_psoDXRRegister(RESERVE_SIZE),
-        m_psoRegister(RESERVE_SIZE), m_psoRegisterHandle(RESERVE_SIZE),
-        m_shaderToPSOFile(RESERVE_SIZE), m_psoPool(RESERVE_SIZE){};
+      : PSOManager(),
+        m_psoDXRRegister(RESERVE_SIZE),
+        m_psoRegister(RESERVE_SIZE),
+        m_psoRegisterHandle(RESERVE_SIZE),
+        m_shaderToPSOFile(RESERVE_SIZE),
+        m_psoPool(RESERVE_SIZE){};
   virtual ~Dx12PSOManager() = default;
   Dx12PSOManager(const Dx12PSOManager &) = delete;
   Dx12PSOManager &operator=(const Dx12PSOManager &) = delete;
@@ -39,7 +41,6 @@ public:
                               const char *getOffsetPath);
   inline void bindPSO(const PSOHandle handle,
                       ID3D12GraphicsCommandList2 *commandList) const {
-
     assertMagicNumber(handle);
     const uint32_t index = getIndexFromHandle(handle);
     const PSOData &data = m_psoPool.getConstRef(index);
@@ -47,8 +48,9 @@ public:
   }
 
   PSOHandle getHandleFromName(const char *name) const override;
+  TOPOLOGY_TYPE getTopology(const PSOHandle psoHandle) const ;
 
-private:
+ private:
   // PSOCompileResult processComputePSO(nlohmann::json &jobj,
   //                                   const std::string &path);
   // PSOCompileResult processRasterPSO(nlohmann::json &jobj,
@@ -82,7 +84,7 @@ private:
            "invalid magic handle for constant buffer");
   }
 
-private:
+ private:
   D3D12DeviceType *m_dxrDevice = nullptr;
 
   HashMap<const char *, ID3D12StateObject *, hashString32> m_psoDXRRegister;
@@ -102,4 +104,4 @@ private:
   static const uint32_t INDEX_MASK = (1 << 16) - 1;
   static const uint32_t MAGIC_NUMBER_MASK = ~INDEX_MASK;
 };
-} // namespace SirEngine::dx12
+}  // namespace SirEngine::dx12

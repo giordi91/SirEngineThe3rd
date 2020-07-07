@@ -74,8 +74,7 @@ void Dx12PSOManager::loadCachedPSOInFolder(const char *directory) {
   }
 }
 
-PSOCompileResult Dx12PSOManager::loadCachedPSO(const char *path) const
-{
+PSOCompileResult Dx12PSOManager::loadCachedPSO(const char *path) const {
   const auto expPath = std::filesystem::path(path);
   const std::string name = expPath.stem().string();
 
@@ -216,6 +215,7 @@ void Dx12PSOManager::insertInPSOCache(const PSOCompileResult &result) {
       uint32_t index;
       PSOData &data = m_psoPool.getFreeMemoryData(index);
       data.pso = result.pso;
+      data.topology = result.topologyType;
       const PSOHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
       data.magicNumber = MAGIC_NUMBER_COUNTER;
       m_psoRegisterHandle.insert(result.PSOName, handle);
@@ -228,6 +228,7 @@ void Dx12PSOManager::insertInPSOCache(const PSOCompileResult &result) {
       uint32_t index;
       PSOData &data = m_psoPool.getFreeMemoryData(index);
       data.pso = result.pso;
+      data.topology = TOPOLOGY_TYPE::UNDEFINED;
       const PSOHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
       data.magicNumber = MAGIC_NUMBER_COUNTER;
       m_psoRegisterHandle.insert(result.PSOName, handle);
@@ -350,6 +351,13 @@ PSOHandle Dx12PSOManager::getHandleFromName(const char *name) const {
   PSOHandle value{};
   m_psoRegisterHandle.get(name, value);
   return value;
+}
+
+TOPOLOGY_TYPE Dx12PSOManager::getTopology(const PSOHandle psoHandle) const {
+  assertMagicNumber(psoHandle);
+  const uint32_t idx = getIndexFromHandle(psoHandle);
+  const PSOData &data = m_psoPool.getConstRef(idx);
+  return data.topology;
 }
 
 void Dx12PSOManager::printStateObjectDesc(const D3D12_STATE_OBJECT_DESC *desc) {

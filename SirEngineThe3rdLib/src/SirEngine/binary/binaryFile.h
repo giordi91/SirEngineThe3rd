@@ -153,4 +153,5 @@ struct PSOMappedData {
   int inputLayoutSize;
   int rootSignatureSize;
   int psoType;
+  int topologyType;
 };
