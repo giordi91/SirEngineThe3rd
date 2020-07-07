@@ -44,6 +44,14 @@ enum class SHADER_QUEUE_FLAGS {
   CUSTOM = 1 << 4,
 };
 
+enum class TOPOLOGY_TYPE {
+  UNDEFINED = 0,
+  LINE,
+  LINE_STRIP,
+  TRIANGLE,
+  TRIANGLE_STRIP
+};
+
 // memory
 static constexpr uint64_t MB_TO_BYTE = 1024 * 1024;
 static constexpr double BYTE_TO_MB_D = 1.0 / MB_TO_BYTE;

@@ -356,7 +356,7 @@ void bindFlatDescriptorMaterial(const Dx12MaterialRuntime &materialRuntime,
 
 void Dx12MaterialManager::bindMaterial(
     SHADER_QUEUE_FLAGS queueFlag, const Dx12MaterialRuntime &materialRuntime,
-    ID3D12GraphicsCommandList2 *commandList) {
+    ID3D12GraphicsCommandList2 *commandList) const {
   const auto queueFlagInt = static_cast<int>(queueFlag);
   const auto currentFlagId =
       static_cast<int>(log2(queueFlagInt & -queueFlagInt));
@@ -836,6 +836,35 @@ void Dx12MaterialManager::bindMaterial(const MaterialHandle handle,
       1, data.m_materialRuntime.m_tables[currentFlagId]
              .flatDescriptors[0]
              .gpuHandle);
+
+  TOPOLOGY_TYPE topology = dx12::PSO_MANAGER->getTopology(data.m_psoHandle);
+  switch (topology) {
+    case (TOPOLOGY_TYPE::TRIANGLE): {
+      commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+      break;
+    }
+    case TOPOLOGY_TYPE::UNDEFINED:
+  	{
+        assert(0 && "trying to bind undefined topology");
+        return;
+    }
+    case TOPOLOGY_TYPE::LINE:
+  	{
+      commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
+      break;
+    }
+    case TOPOLOGY_TYPE::LINE_STRIP:
+  	{
+      commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINESTRIP);
+      break;
+    }
+    case TOPOLOGY_TYPE::TRIANGLE_STRIP:
+  	{
+      commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+      break;
+    }
+    default:;
+  }
 }
 
 void Dx12MaterialManager::free(const MaterialHandle handle) {

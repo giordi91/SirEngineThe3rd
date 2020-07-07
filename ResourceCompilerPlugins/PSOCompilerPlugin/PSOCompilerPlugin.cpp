@@ -1,11 +1,11 @@
 #include "PSOCompilerPlugin.h"
+
 #include "PSOProcess.h"
+#include "SirEngine/argsUtils.h"
+#include "SirEngine/binary/binaryFile.h"
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
 #include "cxxopts/cxxopts.hpp"
-
-#include "SirEngine/argsUtils.h"
-#include "SirEngine/binary/binaryFile.h"
 
 const std::string PLUGIN_NAME = "PSOCompilerPlugin";
 const unsigned int VERSION_MAJOR = 0;
@@ -45,9 +45,10 @@ void processArgs(const std::string args, std::string &target,
 }
 
 bool compileAndSavePSO(const std::string &assetPath,
-                       const std::string &outputPath, const std::string& shaderPath) {
-
-  SirEngine::dx12::PSOCompileResult result = processPSO(assetPath.c_str(), shaderPath.c_str());
+                       const std::string &outputPath,
+                       const std::string &shaderPath) {
+  SirEngine::dx12::PSOCompileResult result =
+      processPSO(assetPath.c_str(), shaderPath.c_str());
 
   // writing binary file
   BinaryFileWriteRequest request;
@@ -145,6 +146,7 @@ bool compileAndSavePSO(const std::string &assetPath,
   mapperData.csShaderNameSize = csNameSize;
   mapperData.inputLayoutSize = inputLayoutNameSize;
   mapperData.rootSignatureSize = rootNameSize;
+  mapperData.topologyType = static_cast<int>(result.topologyType);
 
   request.mapperData = &mapperData;
   request.mapperDataSizeInByte = sizeof(PSOMappedData);
@@ -158,7 +160,6 @@ bool compileAndSavePSO(const std::string &assetPath,
 
 bool process(const std::string &assetPath, const std::string &outputPath,
              const std::string &args) {
-
   // checking IO files exits
   bool exits = fileExists(assetPath);
   if (!exits) {
@@ -177,12 +178,13 @@ bool process(const std::string &assetPath, const std::string &outputPath,
   processArgs(args, target, shaderPath, processFolder);
 
   if (processFolder && !isPathDirectory(assetPath)) {
-    SE_CORE_ERROR("Requested to compile all PSO in path, but provided path is "
-                  "not a directory");
+    SE_CORE_ERROR(
+        "Requested to compile all PSO in path, but provided path is "
+        "not a directory");
   }
-  if(shaderPath.empty()) {
+  if (shaderPath.empty()) {
     SE_CORE_ERROR("Shader path not provided, cannot compile PSO");
-	  return false;
+    return false;
   }
 
   if (!processFolder) {
