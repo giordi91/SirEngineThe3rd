@@ -88,8 +88,16 @@ static const std::unordered_map<std::string, DXGI_FORMAT> STRING_TO_DXGI_FORMAT{
 
 static const std::unordered_map<std::string, D3D12_PRIMITIVE_TOPOLOGY_TYPE>
     STRING_TO_TOPOLOGY = {
+        {"triangleStrip", D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE},
         {"triangle", D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE},
         {"line", D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE},
+};
+
+static const std::unordered_map<std::string, TOPOLOGY_TYPE>
+    STRING_TO_ENGINE_TOPOLOGY = {
+        {"triangleStrip", TOPOLOGY_TYPE::TRIANGLE_STRIP},
+        {"triangle", TOPOLOGY_TYPE::TRIANGLE},
+        {"line", TOPOLOGY_TYPE::LINE},
 };
 
 PSOType convertStringPSOTypeToEnum(const char *type) {
@@ -322,6 +330,17 @@ PSOCompileResult processComputePSO(nlohmann::json &jobj, const char *path,
                           frameString(globalRootSignatureName.c_str())};
 }
 
+TOPOLOGY_TYPE convertStringToEngineTopologyType(const std::string &topology) {
+  const auto found = STRING_TO_ENGINE_TOPOLOGY.find(topology);
+  if (found != STRING_TO_ENGINE_TOPOLOGY.end()) {
+    return found->second;
+  }
+  assert(0 &&
+         "provided string format is not a valid engine topology, or "
+         "unsupported");
+  return TOPOLOGY_TYPE::UNDEFINED;
+}
+
 PSOCompileResult processRasterPSO(nlohmann::json &jobj, const char *path,
                                   const char *shaderPath) {
   // find the input layout
@@ -347,9 +366,9 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj, const char *path,
       frameConcatenation(shaderPath, PSnameAndExtension, "/rasterization/");
 
   // we have the shader name, we need to find it.
-  // TODO not ideal, should this be an engine config? realistically aint going
-  // to support either mix and match or different versions, everything needs to
-  // compile for the lastest
+  // TODO not ideal, should this be an engine config? realistically I am not
+  // going to support either mix and match or different versions, everything
+  // needs to compile for the lastest
   DXCShaderCompiler compiler;
   ShaderArgs vsArgs;
   vsArgs.entryPoint = L"VS";
@@ -398,6 +417,8 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj, const char *path,
       getValueIfInJson(jobj, PSO_KEY_TOPOLOGY_TYPE, DEFAULT_STRING);
   D3D12_PRIMITIVE_TOPOLOGY_TYPE topologyType =
       convertStringToTopology(topologyString);
+  TOPOLOGY_TYPE engineTopologyType =
+      convertStringToEngineTopologyType(topologyString);
 
   size_t renderTargets =
       getValueIfInJson(jobj, PSO_KEY_RENDER_TARGETS, DEFAULT_INT);
@@ -464,7 +485,9 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj, const char *path,
                           frameString(name.c_str()),
                           frameString(path),
                           frameString(layoutString.c_str()),
-                          frameString(rootSignatureString.c_str())};
+                          frameString(rootSignatureString.c_str()),
+                          engineTopologyType};
+
 }  // namespace SirEngine::dx12
 
 PSOCompileResult compileRawPSO(const char *path, const char *shaderPath) {

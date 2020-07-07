@@ -870,9 +870,11 @@ auto Dx12RenderingContext::setViewportAndScissor(
   currentFc->commandList->RSSetScissorRects(1, &scissor);
 }
 
-void Dx12RenderingContext::renderProcedural(const uint32_t indexCount)
-{
-    assert(0);
+void Dx12RenderingContext::renderProcedural(const uint32_t indexCount) {
+  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
+  currentFc->commandList->IASetPrimitiveTopology(
+      D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+  currentFc->commandList->DrawInstanced(indexCount, 1, 0, 0);
 }
 
 bool Dx12RenderingContext::newFrame() { return newFrameDx12(); }

@@ -28,7 +28,6 @@ private:
   //ID3D12RootSignature *rs = nullptr;
   //PSOHandle pso;
   //handles
-  MeshHandle skyboxHandle{};
   TextureHandle inputRTHandle{};
   TextureHandle inputDepthHandle{}; 
   BufferBindingsHandle m_bindHandle{};
