@@ -1,4 +1,6 @@
 #pragma once
+#include <vector>
+
 #include "SirEngine/constantBufferManager.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/handle.h"
@@ -6,44 +8,45 @@
 #include "SirEngine/memory/SparseMemoryPool.h"
 #include "SirEngine/memory/randomSizeAllocator.h"
 #include "platform/windows/graphics/dx12/DX12.h"
-#include <vector>
 
 namespace SirEngine::dx12 {
 
 class Dx12ConstantBufferManager final : public ConstantBufferManager {
-public:
+ public:
   Dx12ConstantBufferManager() : m_dynamicStorage(RESERVE_SIZE) {}
   virtual ~Dx12ConstantBufferManager() = default;
   void initialize() override;
   void cleanup() override;
   void clearUpQueueFree();
+  void createSrv(const ConstantBufferHandle &bufferHandle,
+                 DescriptorPair &descriptorPair);
   // deleted method to avoid copy, you can still move it though
   Dx12ConstantBufferManager(const Dx12ConstantBufferManager &) = delete;
-  Dx12ConstantBufferManager &
-  operator=(const Dx12ConstantBufferManager &) = delete;
+  Dx12ConstantBufferManager &operator=(const Dx12ConstantBufferManager &) =
+      delete;
 
   ConstantBufferHandle allocateDynamic(uint32_t sizeInBytes,
                                        void *data = nullptr) override;
-  ConstantBufferHandle allocate(uint32_t sizeInBytes, CONSTANT_BUFFER_FLAGS flags = 0,
+  ConstantBufferHandle allocate(uint32_t sizeInBytes,
+                                CONSTANT_BUFFER_FLAGS flags = 0,
                                 void *data = nullptr) override {
     assert(0);
     return {};
   };
-  void update(ConstantBufferHandle handle, void *data) override { assert(0); }
+  void update(ConstantBufferHandle handle, void *data) override; 
 
   bool free(ConstantBufferHandle handle) override;
 
-  inline DescriptorPair
-  getConstantBufferDx12Handle(const ConstantBufferHandle handle) {
-
+  inline DescriptorPair getConstantBufferDx12Handle(
+      const ConstantBufferHandle handle) {
     // making sure the resource has not been de-allocated
     assertMagicNumber(handle);
     const uint32_t index = getIndexFromHandle(handle);
     return m_dynamicStorage[index].cbData[globals::CURRENT_FRAME].pair;
   }
 
-  inline D3D12_GPU_VIRTUAL_ADDRESS
-  getVirtualAddress(const ConstantBufferHandle handle) {
+  inline D3D12_GPU_VIRTUAL_ADDRESS getVirtualAddress(
+      const ConstantBufferHandle handle) {
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
     return m_dynamicStorage[index]
@@ -51,9 +54,8 @@ public:
         .resource->GetGPUVirtualAddress();
   }
 
-  virtual void
-  updateConstantBufferNotBuffered(const ConstantBufferHandle handle,
-                                  void *dataToUpload) override;
+  virtual void updateConstantBufferNotBuffered(
+      const ConstantBufferHandle handle, void *dataToUpload) override;
 
   virtual void updateConstantBufferBuffered(const ConstantBufferHandle handle,
                                             void *dataToUpload) override;
@@ -62,7 +64,7 @@ public:
   // any buffered constant buffer will be dealt with
   virtual void processBufferedData() override;
 
-private:
+ private:
   struct ConstantBufferedData {
     ConstantBufferHandle handle;
     RandomSizeAllocationHandle dataAllocHandle;
@@ -87,7 +89,7 @@ private:
     ConstantBufferData cbData[FRAME_BUFFERS_COUNT];
   };
 
-private:
+ private:
   inline void assertMagicNumber(const ConstantBufferHandle handle) {
     uint32_t magic = getMagicFromHandle(handle);
     uint32_t idx = getIndexFromHandle(handle);
@@ -113,10 +115,10 @@ private:
     }
   }
 
-private:
+ private:
   ;
 
-private:
+ private:
   // std::vector<ConstantBufferData> m_dynamicStorage[FRAME_BUFFERS_COUNT];
 
   SparseMemoryPool<ConstantBufferDataDynamic> m_dynamicStorage;
@@ -129,4 +131,4 @@ private:
   std::vector<uint32_t> m_bufferToFree;
 };
 
-} // namespace SirEngine::dx12
+}  // namespace SirEngine::dx12

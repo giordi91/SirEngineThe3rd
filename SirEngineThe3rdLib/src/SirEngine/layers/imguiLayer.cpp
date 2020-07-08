@@ -239,7 +239,6 @@ void ImguiLayer::onUpdate() {
     m_frameTimings.render();
     m_memoryUsage.render();
   }
-  // TODO TEMP DISABLE
   if (ImGui::CollapsingHeader("Graphics", ImGuiTreeNodeFlags_DefaultOpen)) {
     m_renderGraph.render();
   }

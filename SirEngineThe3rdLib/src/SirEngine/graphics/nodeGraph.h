@@ -220,7 +220,7 @@ inline T getInputConnection(ResizableVector<const GPlug *> **conns,
                             const int plugId) {
   const auto conn = conns[PLUG_INDEX(plugId)];
 
-  // TODO not super safe to do this, might be worth improving this
+  assert(conn->size() != 0 && "no connections on given plug");
   assert(conn->size() == 1 && "too many input connections");
   const GPlug *source = (*conn)[0];
   const auto h = T{source->plugValue};

@@ -1,0 +1,6 @@
+{
+  "pso": "gammaAndToneMappingEffect_PSO", 
+  "rs"  :  "standardPostProcessEffect_RS",
+  "type" : "gammaAndToneMapping"
+}
+

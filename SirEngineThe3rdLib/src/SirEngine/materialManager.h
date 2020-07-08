@@ -70,7 +70,8 @@ enum class SHADER_TYPE_FLAGS {
   SHADOW_SKIN_CLUSTER,
   HDR_TO_SDR,
   GRASS_FORWARD,
-  SKYBOX
+  SKYBOX,
+  GAMMA_AND_TONE_MAPPING
 };
 
 class MaterialManager {
@@ -121,6 +122,12 @@ class MaterialManager {
                            SHADER_QUEUE_FLAGS queue, const bool isCubeMap) = 0;
   virtual void bindBuffer(MaterialHandle matHandle, BufferHandle texHandle,
                           uint32_t bindingIndex, SHADER_QUEUE_FLAGS queue) = 0;
+  virtual void bindConstantBuffer(MaterialHandle handle,
+                          ConstantBufferHandle bufferHandle,
+                          const uint32_t descriptorIndex,
+                          const uint32_t bindingIndex,
+                          SHADER_QUEUE_FLAGS queue) = 0;
+
   // TODO clean this. The issue is, we need two indices to bind the mesh
   // one is the binding index, meaning which slot in the shader is referring to.
   // The second one is which descriptor are we going to update?

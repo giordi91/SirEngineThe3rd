@@ -4,7 +4,7 @@
 
 namespace SirEngine {
 
-class VkSimpleForward final : public GNode {
+class ForwardPlus final : public GNode {
  public:
   enum PLUGS {
     OUT_TEXTURE = OUTPUT_PLUG_CODE(0),
@@ -13,8 +13,8 @@ class VkSimpleForward final : public GNode {
   };
 
  public:
-  explicit VkSimpleForward(GraphAllocators& allocators);
-  virtual ~VkSimpleForward()=default;
+  explicit ForwardPlus(GraphAllocators& allocators);
+  virtual ~ForwardPlus()=default;
   virtual void initialize() override;
   virtual void compute() override;
   virtual void onResizeEvent(int screenWidth, int screenHeight) override;

@@ -77,7 +77,7 @@ class SIR_ENGINE_API DescriptorHeap {
                            uint32_t numElements, uint32_t elementSize);
 
   uint32_t createBufferCBV(DescriptorPair &pair, ID3D12Resource *resource,
-                           int totalSizeInByte);
+                           int totalSizeInByte,bool descriptorExists = false);
 
   int reserveDescriptor(DescriptorPair &pair);
   int reserveDescriptors(DescriptorPair *pair, uint32_t count);

@@ -2,6 +2,7 @@
   "type": "RASTER",
   "staticSamplers": true,
   "useRegisterSpace": true,
+  "flatDescriptorTable" :  true, 
   "config": [
     {
       "comment": "input texture to sample",

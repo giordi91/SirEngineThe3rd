@@ -558,8 +558,8 @@ void Dx12MaterialManager::bindTexture(const MaterialHandle matHandle,
   const FlatDescriptorTable &table =
       data.m_materialRuntime.m_tables[currentFlagId];
 
-  dx12::TEXTURE_MANAGER->createSRV(
-      texHandle, table.flatDescriptors[descriptorIndex], isCubeMap);
+  auto &descriptor = table.flatDescriptors[descriptorIndex];
+  dx12::TEXTURE_MANAGER->createSRV(texHandle, descriptor, isCubeMap);
 }
 
 void Dx12MaterialManager::bindMesh(const MaterialHandle handle,
@@ -613,15 +613,30 @@ void Dx12MaterialManager::bindBuffer(const MaterialHandle handle,
                                   table.flatDescriptors[bindingIndex]);
 }
 
-void Dx12MaterialManager::bindMaterial(
-    const SHADER_QUEUE_FLAGS queueFlag, const MaterialHandle handle,
-    ID3D12GraphicsCommandList2 *commandList) {
-  const Dx12MaterialRuntime &materialRuntime = getMaterialRuntime(handle);
-  bindMaterial(queueFlag, materialRuntime, commandList);
+void Dx12MaterialManager::bindConstantBuffer(const MaterialHandle handle,
+                                             const ConstantBufferHandle bufferHandle,
+                                             const uint32_t descriptorIndex,
+                                             const uint32_t bindingIndex,
+                                             SHADER_QUEUE_FLAGS queue) {
+  assertMagicNumber(handle);
+  uint32_t index = getIndexFromHandle(handle);
+  const auto &data = m_materialTextureHandles.getConstRef(index);
+
+  const auto queueFlagInt = static_cast<int>(queue);
+  const auto currentFlagId =
+      static_cast<int>(log2(queueFlagInt & -queueFlagInt));
+  assert(data.m_materialRuntime.m_tables[currentFlagId].isFlatRoot == true);
+
+  const FlatDescriptorTable &table =
+      data.m_materialRuntime.m_tables[currentFlagId];
+
+  dx12::CONSTANT_BUFFER_MANAGER->createSrv(
+      bufferHandle, table.flatDescriptors[descriptorIndex]);
 }
 
 void Dx12MaterialManager::bindRSandPSO(
-    const uint32_t shaderFlags, ID3D12GraphicsCommandList2 *commandList) {
+    const uint32_t shaderFlags, ID3D12GraphicsCommandList2 *commandList) const
+{
   // get type flags as int
   constexpr auto mask = static_cast<uint32_t>(~((1 << 16) - 1));
   const auto typeFlags = static_cast<uint16_t>((shaderFlags & mask) >> 16);
@@ -843,23 +858,19 @@ void Dx12MaterialManager::bindMaterial(const MaterialHandle handle,
       commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
       break;
     }
-    case TOPOLOGY_TYPE::UNDEFINED:
-  	{
-        assert(0 && "trying to bind undefined topology");
-        return;
+    case TOPOLOGY_TYPE::UNDEFINED: {
+      assert(0 && "trying to bind undefined topology");
+      return;
     }
-    case TOPOLOGY_TYPE::LINE:
-  	{
+    case TOPOLOGY_TYPE::LINE: {
       commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
       break;
     }
-    case TOPOLOGY_TYPE::LINE_STRIP:
-  	{
+    case TOPOLOGY_TYPE::LINE_STRIP: {
       commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINESTRIP);
       break;
     }
-    case TOPOLOGY_TYPE::TRIANGLE_STRIP:
-  	{
+    case TOPOLOGY_TYPE::TRIANGLE_STRIP: {
       commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
       break;
     }

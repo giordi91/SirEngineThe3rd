@@ -918,4 +918,24 @@ void VkMaterialManager::bindMesh(const MaterialHandle handle,
   vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, toBind, &writeDescriptorSets[0], 0,
                          nullptr);
 }
+
+void VkMaterialManager::bindConstantBuffer(MaterialHandle handle, ConstantBufferHandle bufferHandle,
+	const uint32_t descriptorIndex, const uint32_t bindingIndex, SHADER_QUEUE_FLAGS queue)
+{
+  const auto &materialRuntime = getMaterialRuntime(handle);
+  int queueFlagInt = static_cast<int>(queue);
+  int currentFlagId = static_cast<int>(log2(queueFlagInt & -queueFlagInt));
+  DescriptorHandle setHandle = materialRuntime.descriptorHandles[currentFlagId];
+  VkDescriptorSet descriptorSet =
+      vk::DESCRIPTOR_MANAGER->getDescriptorSet(setHandle);
+
+  VkWriteDescriptorSet writeDescriptorSets = {};
+  VkDescriptorBufferInfo bufferInfoUniform = {};
+  vk::CONSTANT_BUFFER_MANAGER->bindConstantBuffer(
+      bufferHandle, bufferInfoUniform, 0, &writeDescriptorSets,
+      descriptorSet);
+
+  vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, 1, &writeDescriptorSets, 0,
+                         nullptr);
+}
 }  // namespace SirEngine::vk

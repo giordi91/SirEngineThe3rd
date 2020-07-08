@@ -1,4 +1,5 @@
 #include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
+
 #include "d3dx12.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 
@@ -8,13 +9,11 @@ void Dx12ConstantBufferManager::initialize() {
   m_randomAlloc.initialize(4096, 20);
 }
 
-void Dx12ConstantBufferManager::cleanup()
-{
-    //TODO do proper cleanup
+void Dx12ConstantBufferManager::cleanup() {
+  // TODO do proper cleanup
 }
 
 void Dx12ConstantBufferManager::clearUpQueueFree() {
-
   const uint64_t id = GLOBAL_FENCE->GetCompletedValue();
   const auto count = static_cast<int>(m_bufferToFree.size()) - 1;
   int stackTopIdx = count;
@@ -25,9 +24,7 @@ void Dx12ConstantBufferManager::clearUpQueueFree() {
     ConstantBufferDataDynamic &data = m_dynamicStorage[index];
 
     for (int c = 0; c < FRAME_BUFFERS_COUNT; ++c) {
-
       if (data.cbData[i].fence < id) {
-
         // we need to remove it from the request list if it is there
         auto found = m_bufferedRequests.find(handle.handle);
         if (found != m_bufferedRequests.end()) {
@@ -52,6 +49,30 @@ void Dx12ConstantBufferManager::clearUpQueueFree() {
   }
 }
 
+void Dx12ConstantBufferManager::createSrv(
+    const ConstantBufferHandle &bufferHandle, DescriptorPair &descriptorPair) {
+  assertMagicNumber(bufferHandle);
+  uint32_t index = getIndexFromHandle(bufferHandle);
+  auto data = m_dynamicStorage[index].cbData[globals::CURRENT_FRAME];
+
+  const uint32_t actualSize =
+      data.size % 256 == 0 ? data.size : ((data.size / 256) + 1) * 256;
+  dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferCBV(descriptorPair, data.resource,
+                                                 actualSize, true);
+}
+
+inline bool isFlagSet(
+    const uint32_t flags,
+    const ConstantBufferManager::CONSTANT_BUFFER_FLAGS toCheck) {
+  return (flags & toCheck) > 0;
+}
+
+void Dx12ConstantBufferManager::update(ConstantBufferHandle handle,
+                                       void *data) {
+
+  assert(0);
+}
+
 bool Dx12ConstantBufferManager::free(ConstantBufferHandle handle) {
   // here we insert a fence so that we know when will be safe to delete
   // making sure the resource has not been de-allocated
@@ -67,10 +88,8 @@ bool Dx12ConstantBufferManager::free(ConstantBufferHandle handle) {
   return false;
 }
 
-ConstantBufferHandle
-Dx12ConstantBufferManager::allocateDynamic(const uint32_t sizeInBytes,
-                                           void *inputData) {
-
+ConstantBufferHandle Dx12ConstantBufferManager::allocateDynamic(
+    const uint32_t sizeInBytes, void *inputData) {
   // allocate dynamics takes into account we could have multiple frame in
   // flight and we don not want to override the value meanwhile is still in
   // use, so multiple version are allocated same number of flame inflight the
@@ -132,7 +151,6 @@ void Dx12ConstantBufferManager::updateConstantBufferNotBuffered(
 
 void Dx12ConstantBufferManager::updateConstantBufferBuffered(
     const ConstantBufferHandle handle, void *dataToUpload) {
-
   // check if we have any other request for this buffer if so we clear it
   const auto found = m_bufferedRequests.find(handle.handle);
   if (found != m_bufferedRequests.end()) {
@@ -184,4 +202,4 @@ void Dx12ConstantBufferManager::processBufferedData() {
     m_bufferedRequests.erase(m_bufferedRequests.find(processedIdxs[i]));
   }
 }
-} // namespace SirEngine::dx12
+}  // namespace SirEngine::dx12
