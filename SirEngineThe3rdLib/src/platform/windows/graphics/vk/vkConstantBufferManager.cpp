@@ -124,6 +124,11 @@ inline uint32_t padTo256BytesMultiple(const uint32_t size) {
   return size % 32 != 0 ? (size / 32 + 1) * 32 : size;
 }
 
+// as of now memory is allocated in so called slabs, such slabs are nothing more
+// than a range of memory to be filled up, when the memory is full, a new slab
+// gets allocated keep in mind memory is not meant to be de-allocated right now is
+// a simple implementation:. as such also slabs are automatically buffered, when you allocating
+// one, in reality you allocating N of them where N is the number of frame in flight.
 int VkConstantBufferManager::getFreeSlabIndex(const uint32_t allocSize) {
   int freeSlab = -1;
   for (uint32_t i = 0; i < m_allocatedSlabs; ++i) {
@@ -151,6 +156,7 @@ int VkConstantBufferManager::getFreeSlabIndex(const uint32_t allocSize) {
   return -1;
 }
 
+	
 SirEngine::ConstantBufferHandle VkConstantBufferManager::allocate(
     const uint32_t sizeInBytes, const CONSTANT_BUFFER_FLAGS flags, void *data) {
   const uint32_t allocSize = padTo256BytesMultiple(sizeInBytes);
@@ -169,6 +175,8 @@ SirEngine::ConstantBufferHandle VkConstantBufferManager::allocate(
   // we have a valid range, lets loop the per frame slabs (aka pfs)
   BufferRangeHandle handle{};
   BufferRange range{};
+  //for each slab clone we do an allocation (basically reserving the same memory
+  //on every buffered slab
   for (uint32_t pfs = 0; pfs < vk::SWAP_CHAIN_IMAGE_COUNT; ++pfs) {
     handle = m_perFrameSlabs[pfs][freeSlab].m_slabTracker.allocate(
         sizeInBytes, m_requireAlignment);
@@ -187,7 +195,7 @@ SirEngine::ConstantBufferHandle VkConstantBufferManager::allocate(
   }
 
 #ifdef SE_DEBUG
-  // let us know check if all the andles are the same
+  // let us know check if all the handles are the same
   for (uint32_t pf = 1; pf < vk::SWAP_CHAIN_IMAGE_COUNT; ++pf) {
     assert(handles[0].handle == handles[freeSlab].handle);
   }
@@ -234,19 +242,19 @@ void VkConstantBufferManager::update(const ConstantBufferHandle handle,
   }
 }
 
-void VkConstantBufferManager::updateConstantBufferNotBuffered(
-    const ConstantBufferHandle handle, void *dataToUpload) {
-  assert(0);
-  /*
-  assertMagicNumber(handle);
-  const uint32_t index = getIndexFromHandle(handle);
-  const ConstantBufferData &data =
-      m_dynamicStorage[index].cbData[globals::CURRENT_FRAME];
-
-  assert(data.mappedData != nullptr);
-  memcpy(data.mappedData, dataToUpload, data.size);
-  */
-}
+//void VkConstantBufferManager::updateConstantBufferNotBuffered(
+//    const ConstantBufferHandle handle, void *dataToUpload) {
+//  assert(0);
+//  /*
+//  assertMagicNumber(handle);
+//  const uint32_t index = getIndexFromHandle(handle);
+//  const ConstantBufferData &data =
+//      m_dynamicStorage[index].cbData[globals::CURRENT_FRAME];
+//
+//  assert(data.mappedData != nullptr);
+//  memcpy(data.mappedData, dataToUpload, data.size);
+//  */
+//}
 
 void VkConstantBufferManager::updateConstantBufferBuffered(
     const ConstantBufferHandle handle, void *dataToUpload) {

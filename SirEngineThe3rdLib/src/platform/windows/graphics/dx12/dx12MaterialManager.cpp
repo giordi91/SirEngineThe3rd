@@ -613,11 +613,10 @@ void Dx12MaterialManager::bindBuffer(const MaterialHandle handle,
                                   table.flatDescriptors[bindingIndex]);
 }
 
-void Dx12MaterialManager::bindConstantBuffer(const MaterialHandle handle,
-                                             const ConstantBufferHandle bufferHandle,
-                                             const uint32_t descriptorIndex,
-                                             const uint32_t bindingIndex,
-                                             SHADER_QUEUE_FLAGS queue) {
+void Dx12MaterialManager::bindConstantBuffer(
+    const MaterialHandle handle, const ConstantBufferHandle bufferHandle,
+    const uint32_t descriptorIndex, const uint32_t bindingIndex,
+    SHADER_QUEUE_FLAGS queue) {
   assertMagicNumber(handle);
   uint32_t index = getIndexFromHandle(handle);
   const auto &data = m_materialTextureHandles.getConstRef(index);
@@ -635,8 +634,7 @@ void Dx12MaterialManager::bindConstantBuffer(const MaterialHandle handle,
 }
 
 void Dx12MaterialManager::bindRSandPSO(
-    const uint32_t shaderFlags, ID3D12GraphicsCommandList2 *commandList) const
-{
+    const uint32_t shaderFlags, ID3D12GraphicsCommandList2 *commandList) const {
   // get type flags as int
   constexpr auto mask = static_cast<uint32_t>(~((1 << 16) - 1));
   const auto typeFlags = static_cast<uint16_t>((shaderFlags & mask) >> 16);
@@ -778,9 +776,8 @@ MaterialHandle Dx12MaterialManager::loadMaterial(const char *path,
 
   // we need to allocate  constant buffer
   // TODO should this be static constant buffer? investigate
-  materialData.handles.cbHandle =
-      globals::CONSTANT_BUFFER_MANAGER->allocateDynamic(sizeof(Material),
-                                                        &parse.mat);
+  materialData.handles.cbHandle = globals::CONSTANT_BUFFER_MANAGER->allocate(
+      sizeof(Material), 0, &parse.mat);
 
   matCpu.cbVirtualAddress = dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(
       materialData.handles.cbHandle);
