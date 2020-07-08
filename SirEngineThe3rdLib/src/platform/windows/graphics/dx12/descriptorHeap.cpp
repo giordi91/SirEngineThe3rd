@@ -61,14 +61,22 @@ uint32_t DescriptorHeap::allocateDescriptor(
   return descriptorIndexToUse;
 }
 
-uint32_t DescriptorHeap::createBufferCBV(DescriptorPair &pair,
-                                         ID3D12Resource *resource,
-                                         int totalSizeInByte) {
+uint32_t DescriptorHeap::createBufferCBV(DescriptorPair &pair, ID3D12Resource *resource,
+                           int totalSizeInByte,bool descriptorExists) {
   D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
   cbvDesc.BufferLocation = resource->GetGPUVirtualAddress();
   cbvDesc.SizeInBytes = totalSizeInByte;
 
-  uint32_t descriptorIndex = allocateDescriptor(&pair.cpuHandle);
+  uint32_t descriptorIndex = 0;
+  if (!descriptorExists) {
+    descriptorIndex = allocateDescriptor(&pair.cpuHandle);
+  } else {
+    // reconstruct the descriptor index using pointers
+    auto descriptorHeapCpuBase = getCPUStart();
+    descriptorIndex =
+        (pair.cpuHandle.ptr - descriptorHeapCpuBase.ptr) / m_descriptorSize;
+  }
+
   DEVICE->CreateConstantBufferView(&cbvDesc, pair.cpuHandle);
 
   pair.gpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(getGPUStart(), descriptorIndex,

@@ -296,7 +296,7 @@ void VkRenderingContext::setupCameraForFrame() {
   vk::CONSTANT_BUFFER_MANAGER->bindConstantBuffer(
       m_cameraHandle, bufferInfoUniform, 0, &writeDescriptorSets,
       vk::DESCRIPTOR_MANAGER->getDescriptorSet(PER_FRAME_DATA_HANDLE));
-  // vk::PER_FRAME_DESCRIPTOR_SET[globals::CURRENT_FRAME]);
+
   // camera update
   vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, 1, &writeDescriptorSets, 0,
                          nullptr);

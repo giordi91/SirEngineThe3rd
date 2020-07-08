@@ -465,7 +465,11 @@ void Dx12RenderingContext::setupLightingForFrame() {
                                                                     &m_light);
 }
 
-void Dx12RenderingContext::bindCameraBuffer(const int index) const {
+void Dx12RenderingContext::bindCameraBuffer(int index) const {
+  //assert(0);
+  //TODO REMOVE
+  // this code should not be called anymore and will need to remove after
+  // transition of the whole multi-backend
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
   D3D12_GPU_DESCRIPTOR_HANDLE handle =
@@ -473,6 +477,7 @@ void Dx12RenderingContext::bindCameraBuffer(const int index) const {
           .gpuHandle;
   commandList->SetGraphicsRootDescriptorTable(index, handle);
 }
+
 void Dx12RenderingContext::bindCameraBufferCompute(const int index) const {
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
@@ -662,8 +667,6 @@ void Dx12RenderingContext::renderQueueType(const DrawCallConfig &config,
 
       // bind the corresponding RS and PSO
       dx12::MATERIAL_MANAGER->bindRSandPSO(renderableList.first, commandList);
-      // commandList->SetGraphicsRootConstantBufferView(1, lightAddress);
-      // globals::RENDERING_CONTEXT->bindCameraBuffer(0);
 
       // this is most for debug, it will boil down to nothing in release
       const SHADER_TYPE_FLAGS type =

@@ -1,7 +1,8 @@
 #pragma once
+#include <vector>
+
 #include "SirEngine/graphics/nodeGraph.h"
 #include "SirEngine/handle.h"
-#include <vector>
 
 namespace SirEngine {
 
@@ -10,7 +11,7 @@ struct PostProcessResources {
 };
 
 class PostProcessEffect {
-public:
+ public:
   PostProcessEffect(const char *name, const char *type)
       : m_name(name), m_type(type) {}
   virtual ~PostProcessEffect() = default;
@@ -23,14 +24,14 @@ public:
   inline bool isEnabled() const { return m_enabled; }
   inline const char *getType() const { return m_type; }
 
-protected:
+ protected:
   const char *m_name;
   const char *m_type;
   bool m_enabled = true;
 };
 
 class PostProcessStack final : public GNode {
-public:
+ public:
   enum PLUGS {
     IN_TEXTURE = INPUT_PLUG_CODE(0),
     DEPTH_RT = INPUT_PLUG_CODE(1),
@@ -38,7 +39,7 @@ public:
     COUNT = 3
   };
 
-public:
+ public:
   PostProcessStack(GraphAllocators &allocators);
   virtual ~PostProcessStack() = default;
   virtual void initialize() override;
@@ -48,7 +49,8 @@ public:
   inline void registerPassToStack(PostProcessEffect *pass) {
     m_stack.push_back(pass);
   };
-  template <typename T> T *allocateRenderPass(const char *name) {
+  template <typename T>
+  T *allocateRenderPass(const char *name) {
     T *pass = new T(name);
     m_stack.push_back(pass);
     return pass;
@@ -57,15 +59,15 @@ public:
 
   void populateNodePorts() override;
 
-private:
+ private:
   std::vector<PostProcessEffect *> m_stack;
   std::vector<TextureHandle> m_buffers;
   int m_internalCounter = 0;
-  //handles
-  TextureHandle inputRTHandle{}; 
+  // handles
+  TextureHandle inputRTHandle{};
   TextureHandle inputDepthHandle{};
   TextureHandle handles[2]{};
-
+  BufferBindingsHandle m_bindHandles[2];
 };
 
-} // namespace SirEngine
+}  // namespace SirEngine

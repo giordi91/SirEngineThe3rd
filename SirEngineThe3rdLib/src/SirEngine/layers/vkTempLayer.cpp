@@ -9,12 +9,15 @@
 #include "SirEngine/globals.h"
 #include "SirEngine/graphics/camera.h"
 #include "SirEngine/graphics/debugRenderer.h"
+#include "SirEngine/constantBufferManager.h"
 #include "SirEngine/graphics/nodes/FinalBlitNode.h"
 #include "SirEngine/graphics/nodes/debugDrawNode.h"
-#include "SirEngine/graphics/nodes/vkSimpleForward.h"
+#include "SirEngine/graphics/nodes/forwardPlus.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/materialManager.h"
 #include "SirEngine/graphics/nodes/skybox.h"
+#include "SirEngine/graphics/postProcess/postProcessStack.h"
+#include "SirEngine/graphics/postProcess/effects/gammaAndToneMappingEffect.h"
 
 namespace SirEngine {
 void VkTempLayer::initGrass() {
@@ -120,31 +123,43 @@ void VkTempLayer::onAttach() {
       new GraphAllocators{globals::STRING_POOL, globals::PERSISTENT_ALLOCATOR};
 
   globals::RENDERING_GRAPH = new DependencyGraph();
-  auto *const forward = new VkSimpleForward(*alloc);
+  auto *const forward = new ForwardPlus(*alloc);
   auto *const skybox = new SkyBoxPass(*alloc);
   auto *const debugDraw = new DebugDrawNode(*alloc);
   auto *const finalBlit = new FinalBlitNode(*alloc);
+  auto *postProcess = new PostProcessStack(*alloc);
+  postProcess->allocateRenderPass<GammaAndToneMappingEffect>(
+      "GammaToneMapping");
+  postProcess->initialize();
 
   // temporary graph for testing
   globals::RENDERING_GRAPH->addNode(forward);
   globals::RENDERING_GRAPH->addNode(skybox);
   globals::RENDERING_GRAPH->addNode(debugDraw);
   globals::RENDERING_GRAPH->addNode(finalBlit);
+  globals::RENDERING_GRAPH->addNode(postProcess);
   globals::RENDERING_GRAPH->setFinalNode(finalBlit);
 
   SirEngine::DependencyGraph::connectNodes(
-      forward, VkSimpleForward::OUT_TEXTURE, skybox,
+      forward, ForwardPlus::OUT_TEXTURE, skybox,
       SkyBoxPass::IN_TEXTURE);
-  SirEngine::DependencyGraph::connectNodes(forward, VkSimpleForward::DEPTH_RT,
+  SirEngine::DependencyGraph::connectNodes(forward, ForwardPlus::DEPTH_RT,
                                            skybox, SkyBoxPass::DEPTH);
 
   SirEngine::DependencyGraph::connectNodes(
       skybox, SkyBoxPass::OUT_TEX, debugDraw,
       DebugDrawNode::IN_TEXTURE);
-  SirEngine::DependencyGraph::connectNodes(forward, VkSimpleForward::DEPTH_RT,
+  SirEngine::DependencyGraph::connectNodes(forward, ForwardPlus::DEPTH_RT,
                                            debugDraw, DebugDrawNode::DEPTH_RT);
+
+  globals::RENDERING_GRAPH->connectNodes(
+      debugDraw, DebugDrawNode::OUT_TEXTURE, postProcess,
+      PostProcessStack::IN_TEXTURE);
+  globals::RENDERING_GRAPH->connectNodes(
+      forward, ForwardPlus::DEPTH_RT, postProcess,
+      PostProcessStack::DEPTH_RT);
   SirEngine::DependencyGraph::connectNodes(
-      debugDraw, DebugDrawNode::OUT_TEXTURE, finalBlit,
+      postProcess, PostProcessStack::OUT_TEXTURE, finalBlit,
       FinalBlitNode::IN_TEXTURE);
 
 
@@ -158,6 +173,7 @@ void VkTempLayer::onDetach() {}
 void VkTempLayer::onUpdate() {
   globals::RENDERING_CONTEXT->setupCameraForFrame();
   // evaluating rendering graph
+  globals::CONSTANT_BUFFER_MANAGER->processBufferedData();
   globals::RENDERING_GRAPH->compute();
 
   // if constexpr (USE_PUSH) {

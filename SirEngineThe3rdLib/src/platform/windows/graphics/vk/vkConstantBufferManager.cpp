@@ -1,7 +1,9 @@
 #include "platform/windows/graphics/vk/vkConstantBufferManager.h"
+
+#include <random>
+
 #include "platform/windows/graphics/vk/vk.h"
 #include "vkMemory.h"
-#include <random>
 
 namespace SirEngine::vk {
 
@@ -52,7 +54,6 @@ void VkConstantBufferManager::cleanup() {
 }
 
 void VkConstantBufferManager::clearUpQueueFree() {
-
   /*
   const uint64_t id = GLOBAL_FENCE->GetCompletedValue();
   const auto count = static_cast<int>(m_bufferToFree.size()) - 1;
@@ -91,14 +92,13 @@ void VkConstantBufferManager::clearUpQueueFree() {
   }
   */
 }
-inline bool
-isFlagSet(const uint32_t flags,
-          const ConstantBufferManager::CONSTANT_BUFFER_FLAGS toCheck) {
+inline bool isFlagSet(
+    const uint32_t flags,
+    const ConstantBufferManager::CONSTANT_BUFFER_FLAGS toCheck) {
   return (flags & toCheck) > 0;
 }
 
 bool VkConstantBufferManager::free(const ConstantBufferHandle handle) {
-
   assertMagicNumber(handle);
   uint32_t idx = getIndexFromHandle(handle);
   const ConstantBufferData &buffData = m_allocInfoStorage.getConstRef(idx);
@@ -114,10 +114,8 @@ bool VkConstantBufferManager::free(const ConstantBufferHandle handle) {
   return false;
 }
 
-ConstantBufferHandle
-VkConstantBufferManager::allocateDynamic(const uint32_t sizeInBytes,
-                                         void *inputData) {
-
+ConstantBufferHandle VkConstantBufferManager::allocateDynamic(
+    const uint32_t sizeInBytes, void *inputData) {
   assert(0);
   return {};
 }
@@ -127,7 +125,6 @@ inline uint32_t padTo256BytesMultiple(const uint32_t size) {
 }
 
 int VkConstantBufferManager::getFreeSlabIndex(const uint32_t allocSize) {
-
   int freeSlab = -1;
   for (uint32_t i = 0; i < m_allocatedSlabs; ++i) {
     bool canAllocate =
@@ -239,6 +236,7 @@ void VkConstantBufferManager::update(const ConstantBufferHandle handle,
 
 void VkConstantBufferManager::updateConstantBufferNotBuffered(
     const ConstantBufferHandle handle, void *dataToUpload) {
+  assert(0);
   /*
   assertMagicNumber(handle);
   const uint32_t index = getIndexFromHandle(handle);
@@ -252,7 +250,7 @@ void VkConstantBufferManager::updateConstantBufferNotBuffered(
 
 void VkConstantBufferManager::updateConstantBufferBuffered(
     const ConstantBufferHandle handle, void *dataToUpload) {
-
+  assert(0);
   /*
   // check if we have any other request for this buffer if so we clear it
   const auto found = m_bufferedRequests.find(handle.handle);
@@ -285,6 +283,7 @@ void VkConstantBufferManager::updateConstantBufferBuffered(
 }
 
 void VkConstantBufferManager::processBufferedData() {
+  assert(0);
   /*
   std::vector<int> processedIdxs;
   const int bufferedRequests = static_cast<int>(m_bufferedRequests.size());
@@ -313,7 +312,6 @@ void VkConstantBufferManager::bindConstantBuffer(
     const ConstantBufferHandle handle, VkDescriptorBufferInfo &bufferInfo,
     const uint32_t bindingIdx, VkWriteDescriptorSet *set,
     const VkDescriptorSet descSet) const {
-
   assertMagicNumber(handle);
   uint32_t idx = getIndexFromHandle(handle);
   const ConstantBufferData &buffData = m_allocInfoStorage.getConstRef(idx);
@@ -335,15 +333,14 @@ void VkConstantBufferManager::bindConstantBuffer(
   correctSet.descriptorCount = 1;
 }
 
-const ResizableVector<BufferRangeTracker> *
-VkConstantBufferManager::getAllocations() const {
+const ResizableVector<BufferRangeTracker>
+    *VkConstantBufferManager::getAllocations() const {
   return m_perFrameSlabs[0]->m_slabTracker.getAllocations();
 }
 
 void createBuffer(Buffer &buffer, const VkDevice device, const size_t size,
                   const VkBufferUsageFlags usage,
                   const VkMemoryPropertyFlags memoryFlags, const char *name) {
-
   VkBufferCreateInfo createInfo{VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};
   createInfo.size = size;
   createInfo.usage = usage;
@@ -399,14 +396,12 @@ void createBuffer(Buffer &buffer, const VkDevice device, const size_t size,
   // now we map memory so we get a pointer we can write to
   VK_CHECK(vkMapMemory(device, buffer.memory, 0, buffer.size, 0, &buffer.data));
 
-} // namespace vk
+}  // namespace vk
 
 void VkConstantBufferManager::allocateSlab() {
-
   assert(m_allocatedSlabs < MAX_ALLOCATED_SLABS);
   int newSlabIdx = m_allocatedSlabs++;
   for (uint32_t i = 0; i < vk::SWAP_CHAIN_IMAGE_COUNT; ++i) {
-
     // m_slabs[i * MAX_ALLOCATED_SLABS + newSlabIdx] = new Slab();
     void *allocPtr = &m_slabs[i * MAX_ALLOCATED_SLABS + newSlabIdx];
     auto *slab = new (allocPtr) Slab();
@@ -435,4 +430,4 @@ void VkConstantBufferManager::allocateSlab() {
                  frameConcatenation("slab", counterChar));
   }
 }
-} // namespace SirEngine::vk
+}  // namespace SirEngine::vk

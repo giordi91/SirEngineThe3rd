@@ -1,12 +1,12 @@
-#include "SirEngine/graphics/nodes/vkSimpleForward.h"
+#include "SirEngine/graphics/nodes/forwardPlus.h"
 
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/textureManager.h"
 
 namespace SirEngine {
 
-VkSimpleForward::VkSimpleForward(GraphAllocators &allocators)
-    : GNode("SimpleForward", "SimpleForward", allocators) {
+ForwardPlus::ForwardPlus(GraphAllocators &allocators)
+    : GNode("ForwardPlus", "ForwardPlus", allocators) {
   defaultInitializePlugsAndConnections(0, 2);
   GPlug &outTexture = m_outputPlugs[PLUG_INDEX(PLUGS::OUT_TEXTURE)];
   outTexture.plugValue = 0;
@@ -21,7 +21,7 @@ VkSimpleForward::VkSimpleForward(GraphAllocators &allocators)
   depthBuffer.name = "depth";
 }
 
-void VkSimpleForward::initialize() {
+void ForwardPlus::initialize() {
   int width = globals::ENGINE_CONFIG->m_windowWidth;
   int height = globals::ENGINE_CONFIG->m_windowHeight;
 
@@ -37,7 +37,7 @@ void VkSimpleForward::initialize() {
       RESOURCE_STATE::DEPTH_RENDER_TARGET);
 }
 
-void VkSimpleForward::compute() {
+void ForwardPlus::compute() {
   globals::RENDERING_CONTEXT->setBindingObject(m_bindHandle);
 
   DrawCallConfig config{globals::ENGINE_CONFIG->m_windowWidth,
@@ -48,12 +48,12 @@ void VkSimpleForward::compute() {
   globals::RENDERING_CONTEXT->clearBindingObject(m_bindHandle);
 }
 
-void VkSimpleForward::onResizeEvent(int, int) {
+void ForwardPlus::onResizeEvent(int, int) {
   clear();
   initialize();
 }
 
-void VkSimpleForward::populateNodePorts() {
+void ForwardPlus::populateNodePorts() {
   // setting the render target output handle
   m_outputPlugs[0].plugValue = m_rtHandle.handle;
   m_outputPlugs[1].plugValue = m_depthHandle.handle;
@@ -83,10 +83,10 @@ void VkSimpleForward::populateNodePorts() {
   bindings.height = globals::ENGINE_CONFIG->m_windowHeight;
 
   m_bindHandle = globals::RENDERING_CONTEXT->prepareBindingObject(
-      bindings, "vkSimpleForward");
+      bindings, "ForwardPlus");
 }
 
-void VkSimpleForward::clear() {
+void ForwardPlus::clear() {
   if (m_rtHandle.isHandleValid()) {
     globals::TEXTURE_MANAGER->free(m_rtHandle);
   }

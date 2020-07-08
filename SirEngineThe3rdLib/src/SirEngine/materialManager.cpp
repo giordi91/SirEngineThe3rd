@@ -1,14 +1,15 @@
 #include "SirEngine/materialManager.h"
+
+#include <cassert>
+#include <string>
+#include <unordered_map>
+
 #include "SirEngine/PSOManager.h"
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/log.h"
 #include "SirEngine/rootSignatureManager.h"
 #include "SirEngine/textureManager.h"
-
-#include <cassert>
-#include <string>
-#include <unordered_map>
 
 namespace SirEngine {
 namespace materialKeys {
@@ -72,6 +73,7 @@ static const std::unordered_map<std::string, SirEngine::SHADER_TYPE_FLAGS>
         {"HDRtoSDREffect", SirEngine::SHADER_TYPE_FLAGS::HDR_TO_SDR},
         {"grassForward", SirEngine::SHADER_TYPE_FLAGS::GRASS_FORWARD},
         {"skybox", SirEngine::SHADER_TYPE_FLAGS::SKYBOX},
+        {"gammaAndToneMapping", SirEngine::SHADER_TYPE_FLAGS::GAMMA_AND_TONE_MAPPING},
     };
 static const std::unordered_map<SirEngine::SHADER_TYPE_FLAGS, std::string>
     TYPE_FLAGS_TO_STRING{
@@ -104,9 +106,9 @@ static const std::unordered_map<SirEngine::SHADER_TYPE_FLAGS, std::string>
         {SirEngine::SHADER_TYPE_FLAGS::HDR_TO_SDR, "HDRtoSDREffect"},
         {SirEngine::SHADER_TYPE_FLAGS::GRASS_FORWARD, "grassForward"},
         {SirEngine::SHADER_TYPE_FLAGS::SKYBOX, "skybox"},
-    };
+        {SirEngine::SHADER_TYPE_FLAGS::GAMMA_AND_TONE_MAPPING, "gammaAndToneMapping"}};
 
-} // namespace materialKeys
+}  // namespace materialKeys
 
 inline uint32_t stringToActualQueueFlag(const std::string &flag) {
   const auto found = materialKeys::STRING_TO_QUEUE_FLAG.find(flag);
@@ -125,7 +127,7 @@ inline uint16_t stringToActualTypeFlag(const std::string &flag) {
   return 0;
 }
 
-uint16_t MaterialManager::parseTypeFlags(const char* stringType) {
+uint16_t MaterialManager::parseTypeFlags(const char *stringType) {
   const uint16_t typeFlag = stringToActualTypeFlag(stringType);
   return typeFlag;
 }
@@ -157,16 +159,17 @@ static void parseQueueTypeFlags(uint32_t *outFlags,
     int currentFlagId = static_cast<int>(log2(currentFlag & -currentFlag));
 
     const auto stringType = tjobj[i].get<std::string>();
-    const uint32_t typeFlag = MaterialManager::parseTypeFlags(stringType.c_str());
+    const uint32_t typeFlag =
+        MaterialManager::parseTypeFlags(stringType.c_str());
     flags = typeFlag << 16 | flags;
 
     outFlags[currentFlagId] = flags;
   }
 }
 
-MaterialManager::PreliminaryMaterialParse
-MaterialManager::parseMaterial(const char *path, const MeshHandle meshHandle,
-                               const SkinHandle skinHandle) {
+MaterialManager::PreliminaryMaterialParse MaterialManager::parseMaterial(
+    const char *path, const MeshHandle meshHandle,
+    const SkinHandle skinHandle) {
   // for materials we do not perform the check whether is loaded or not
   // each object is going to get it s own material copy.
   // if that starts to be an issue we will add extra logic to deal with this.
@@ -290,8 +293,8 @@ MaterialManager::parseMaterial(const char *path, const MeshHandle meshHandle,
   return toReturn;
 }
 
-const char *
-MaterialManager::getStringFromShaderTypeFlag(const SHADER_TYPE_FLAGS type) {
+const char *MaterialManager::getStringFromShaderTypeFlag(
+    const SHADER_TYPE_FLAGS type) {
   const auto found = materialKeys::TYPE_FLAGS_TO_STRING.find(type);
   if (found != materialKeys::TYPE_FLAGS_TO_STRING.end()) {
     return found->second.c_str();
@@ -336,4 +339,4 @@ void MaterialManager::loadTypesInFolder(const char *folder) {
   }
 }
 
-} // namespace SirEngine
+}  // namespace SirEngine

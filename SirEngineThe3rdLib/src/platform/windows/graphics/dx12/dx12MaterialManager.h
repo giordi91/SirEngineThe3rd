@@ -64,11 +64,8 @@ class Dx12MaterialManager final : public MaterialManager {
   ~Dx12MaterialManager() = default;
   void inititialize() override{};
   void cleanup() override{};
-  void bindMaterial(SHADER_QUEUE_FLAGS queueFlag, const MaterialHandle handle,
-                    ID3D12GraphicsCommandList2 *commandList);
-  void bindMaterial(SHADER_QUEUE_FLAGS queueFlag,
-                    const Dx12MaterialRuntime &runtime,
-                    ID3D12GraphicsCommandList2 *commandList) const;
+
+  void bindMaterial(MaterialHandle handle, SHADER_QUEUE_FLAGS queue) override;
 
   void bindTexture(const MaterialHandle matHandle,
                    const TextureHandle texHandle,
@@ -81,11 +78,17 @@ class Dx12MaterialManager final : public MaterialManager {
 
   void bindBuffer(MaterialHandle handle, BufferHandle bufferHandle,
                   uint32_t bindingIndex, SHADER_QUEUE_FLAGS queue) override;
+  void bindConstantBuffer(MaterialHandle handle, ConstantBufferHandle bufferHandle,
+                const uint32_t descriptorIndex,  const uint32_t bindingIndex, SHADER_QUEUE_FLAGS queue) override;
 
   void bindRSandPSO(uint32_t shaderFlags,
-                    ID3D12GraphicsCommandList2 *commandList);
+                    ID3D12GraphicsCommandList2 *commandList) const;
   Dx12MaterialManager(const Dx12MaterialManager &) = delete;
   Dx12MaterialManager &operator=(const Dx12MaterialManager &) = delete;
+
+  void bindMaterial(SHADER_QUEUE_FLAGS queueFlag,
+                    const Dx12MaterialRuntime &runtime,
+                    ID3D12GraphicsCommandList2 *commandList) const;
 
   // a material can be processed in different queues, we can provide a material
   // per queue, check SHADER_QUEUE_FLAGS to see available queues. The argument
@@ -95,7 +98,6 @@ class Dx12MaterialManager final : public MaterialManager {
       const char *materialsPerQueue[QUEUE_COUNT]) override;
   MaterialHandle loadMaterial(const char *path, const MeshHandle meshHandle,
                               const SkinHandle skinHandle) override;
-  void bindMaterial(MaterialHandle handle, SHADER_QUEUE_FLAGS queue) override;
   void free(MaterialHandle handle) override;
 
   const Dx12MaterialRuntime &getMaterialRuntime(const MaterialHandle handle) {
@@ -103,6 +105,7 @@ class Dx12MaterialManager final : public MaterialManager {
     uint32_t index = getIndexFromHandle(handle);
     return m_materialTextureHandles.getConstRef(index).m_materialRuntime;
   }
+
 
  private:
   inline void assertMagicNumber(const MaterialHandle handle) {

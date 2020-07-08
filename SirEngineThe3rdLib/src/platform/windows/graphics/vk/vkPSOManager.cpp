@@ -358,7 +358,8 @@ std::string getAssemblyCreateInfo(
 
   inputAssemblyCreateInfo.topology = convertStringToTopology(topology);
   assert(inputAssemblyCreateInfo.topology != VK_PRIMITIVE_TOPOLOGY_MAX_ENUM);
-  // always false unless geometry shader?
+  // always false unless geometry shader? geometry shaders are not supported in
+  // the engine anyway
   inputAssemblyCreateInfo.primitiveRestartEnable = false;
   return topology;
 }
@@ -372,7 +373,7 @@ VkCullModeFlagBits getCullMode(const nlohmann::json &jobj) {
   return found->second;
 }
 
-void getRasterInfo(const nlohmann::json jobj,
+void getRasterInfo(const nlohmann::json &jobj,
                    VkPipelineRasterizationStateCreateInfo &rasterInfo) {
   const std::string rasterStateString =
       getValueIfInJson(jobj, PSO_KEY_RASTER_STATE, DEFAULT_STRING);
@@ -716,7 +717,6 @@ PSOHandle VkPSOManager::processRasterPSO(
 
   return handle;
 };
-
 
 void initStaticSamplers() {
   auto createInfos = getStaticSamplersCreateInfo();

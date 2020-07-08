@@ -192,7 +192,7 @@ void BufferManagerDx12::bindBufferAsSRVGraphics(
 
 void BufferManagerDx12::createSrv(const BufferHandle &handle,
                                   DescriptorPair &descriptorPair,
-                                  uint32_t offset) const {
+                                  const uint32_t offset) const {
   assertMagicNumber(handle);
   const uint32_t index = getIndexFromHandle(handle);
   const BufferData &data = m_bufferPool.getConstRef(index);

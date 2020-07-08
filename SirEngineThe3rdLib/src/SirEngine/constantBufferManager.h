@@ -36,8 +36,10 @@ public:
 
   virtual void processBufferedData() = 0;
 
+
 protected:
   uint32_t MAGIC_NUMBER_COUNTER = 1;
 };
+
 
 } // namespace SirEngine

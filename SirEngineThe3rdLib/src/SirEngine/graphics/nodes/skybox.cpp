@@ -57,7 +57,6 @@ void SkyBoxPass::compute() {
   auto h = static_cast<float>(globals::ENGINE_CONFIG->m_windowHeight);
   globals::RENDERING_CONTEXT->setViewportAndScissor(0, 0, w, h, 0, 0);
 
-  globals::RENDERING_CONTEXT->bindCameraBuffer(0);
   globals::RENDERING_CONTEXT->renderProcedural(14);
 
   // finishing the pass
@@ -105,6 +104,7 @@ void SkyBoxPass::populateNodePorts() {
   TextureHandle skyHandle =
       globals::RENDERING_CONTEXT->getEnviromentMapHandle();
   assert(skyHandle.isHandleValid());
+
   globals::MATERIAL_MANAGER->bindTexture(m_matHandle, skyHandle, 0, 1,
                                          SHADER_QUEUE_FLAGS::CUSTOM, true);
 }
