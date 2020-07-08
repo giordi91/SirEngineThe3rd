@@ -26,14 +26,11 @@ class Dx12ConstantBufferManager final : public ConstantBufferManager {
       delete;
 
   ConstantBufferHandle allocateDynamic(uint32_t sizeInBytes,
-                                       void *data = nullptr) override;
+                                       void *inputData = nullptr) override;
   ConstantBufferHandle allocate(uint32_t sizeInBytes,
                                 CONSTANT_BUFFER_FLAGS flags = 0,
-                                void *data = nullptr) override {
-    assert(0);
-    return {};
-  };
-  void update(ConstantBufferHandle handle, void *data) override; 
+                                void *data = nullptr) override;
+  void update(ConstantBufferHandle handle, void *data) override;
 
   bool free(ConstantBufferHandle handle) override;
 
@@ -55,7 +52,7 @@ class Dx12ConstantBufferManager final : public ConstantBufferManager {
   }
 
   virtual void updateConstantBufferNotBuffered(
-      const ConstantBufferHandle handle, void *dataToUpload) override;
+      const ConstantBufferHandle handle, void *dataToUpload);
 
   virtual void updateConstantBufferBuffered(const ConstantBufferHandle handle,
                                             void *dataToUpload) override;
@@ -83,6 +80,7 @@ class Dx12ConstantBufferManager final : public ConstantBufferManager {
     uint32_t magicNumber : 16;
     uint32_t padding : 16;
     DescriptorPair pair;
+    uint32_t flags;
   };
 
   struct ConstantBufferDataDynamic {

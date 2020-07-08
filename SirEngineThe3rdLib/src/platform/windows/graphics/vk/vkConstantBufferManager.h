@@ -35,6 +35,7 @@ public:
   VkConstantBufferManager(const VkConstantBufferManager &) = delete;
   VkConstantBufferManager &operator=(const VkConstantBufferManager &) = delete;
 
+  //TODO remove
   virtual ConstantBufferHandle allocateDynamic(uint32_t sizeInBytes,
                                                void *data = nullptr) override;
 
@@ -45,9 +46,9 @@ public:
 
   bool free(ConstantBufferHandle handle) override;
 
-  virtual void
-  updateConstantBufferNotBuffered(const ConstantBufferHandle handle,
-                                  void *dataToUpload) override;
+  //virtual void
+  //updateConstantBufferNotBuffered(const ConstantBufferHandle handle,
+  //                                void *dataToUpload) override;
 
   virtual void updateConstantBufferBuffered(const ConstantBufferHandle handle,
                                             void *dataToUpload) override;

@@ -406,7 +406,7 @@ bool Dx12RenderingContext::initializeGraphics() {
   // initialize camera and light
   // ask for the camera buffer handle;
   m_cameraHandle =
-      globals::CONSTANT_BUFFER_MANAGER->allocateDynamic(sizeof(CameraBuffer));
+      globals::CONSTANT_BUFFER_MANAGER->allocate(sizeof(CameraBuffer));
 
   float intensity = 4.0f;
   m_light.lightColor = {intensity, intensity, intensity, 1.0f};
@@ -431,8 +431,8 @@ bool Dx12RenderingContext::initializeGraphics() {
   m_light.worldToLocal = glm::inverse(m_light.localToWorld);
 
   // allocate the constant buffer
-  m_lightCB = globals::CONSTANT_BUFFER_MANAGER->allocateDynamic(
-      sizeof(DirectionalLightData), &m_light);
+  m_lightCB = globals::CONSTANT_BUFFER_MANAGER->allocate(
+      sizeof(DirectionalLightData), 0,&m_light);
 
   return result;
 }
@@ -456,18 +456,16 @@ void Dx12RenderingContext::setupCameraForFrame() {
       glm::transpose(globals::MAIN_CAMERA->getMVPInverse(glm::mat4(1.0)));
   m_camBufferCPU.perspectiveValues = globals::MAIN_CAMERA->getProjParams();
 
-  globals::CONSTANT_BUFFER_MANAGER->updateConstantBufferNotBuffered(
-      m_cameraHandle, &m_camBufferCPU);
+  globals::CONSTANT_BUFFER_MANAGER->update(m_cameraHandle, &m_camBufferCPU);
 }
 
 void Dx12RenderingContext::setupLightingForFrame() {
-  globals::CONSTANT_BUFFER_MANAGER->updateConstantBufferNotBuffered(m_lightCB,
-                                                                    &m_light);
+  globals::CONSTANT_BUFFER_MANAGER->update(m_lightCB, &m_light);
 }
 
 void Dx12RenderingContext::bindCameraBuffer(int index) const {
-  //assert(0);
-  //TODO REMOVE
+  // assert(0);
+  // TODO REMOVE
   // this code should not be called anymore and will need to remove after
   // transition of the whole multi-backend
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;

@@ -17,8 +17,8 @@ void GammaAndToneMappingEffect::initialize() {
   m_config.exposure = 1.0f;
   m_config.gamma = 2.2f;
   m_config.gammaInverse = 1.0f / m_config.gamma;
-  m_constantBufferHandle = globals::CONSTANT_BUFFER_MANAGER->allocateDynamic(
-      sizeof(GammaToneMappingConfig), &m_config);
+  m_constantBufferHandle = globals::CONSTANT_BUFFER_MANAGER->allocate(
+      sizeof(GammaToneMappingConfig),0, &m_config);
 
   const char *queues[5] = {nullptr, nullptr, nullptr, nullptr,
                            "gammaAndToneMapping"};
@@ -43,8 +43,8 @@ void GammaAndToneMappingEffect::render(const TextureHandle input,
   globals::RENDERING_CONTEXT->fullScreenPass();
 }
 void GammaAndToneMappingEffect::updateConstantBuffer() {
-  // globals::CONSTANT_BUFFER_MANAGER->update(
-  globals::CONSTANT_BUFFER_MANAGER->updateConstantBufferBuffered(
+  globals::CONSTANT_BUFFER_MANAGER->update(
+  //globals::CONSTANT_BUFFER_MANAGER->updateConstantBufferBuffered(
       m_constantBufferHandle, &m_config);
   updateConfig = false;
 }
