@@ -65,6 +65,8 @@ extern VkFrameCommand FRAME_COMMAND[PREALLOCATED_SEMAPHORE_COUNT];
 extern VkFrameCommand *CURRENT_FRAME_COMMAND;
 extern uint32_t GRAPHICS_QUEUE_FAMILY;
 extern uint32_t PRESENTATION_QUEUE_FAMILY;
+extern bool DEBUG_MARKERS_ENABLED;
+
 
 inline VkImageLayout fromStateToLayout(RESOURCE_STATE state) {
   switch (state) {

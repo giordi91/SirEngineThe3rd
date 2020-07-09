@@ -65,6 +65,19 @@ bool createLogicalDevice(VkPhysicalDevice physicalDevice,
   deviceExtensions.emplace_back(VK_KHR_16BIT_STORAGE_EXTENSION_NAME);
   deviceExtensions.emplace_back(VK_KHR_8BIT_STORAGE_EXTENSION_NAME);
 
+#if _DEBUG
+  // TODO not ideal might want to refactor, it is a bit wasteful but is only
+  // in debug to enable the markers
+  std::vector<VkExtensionProperties> availableExtensions;
+  checkAvailableDeviceExtensions(physicalDevice, availableExtensions);
+
+  if (isExtensionSupported(availableExtensions,
+                           VK_EXT_DEBUG_MARKER_EXTENSION_NAME)) {
+    deviceExtensions.emplace_back(VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
+    vk::DEBUG_MARKERS_ENABLED = true;
+  }
+#endif
+
   if (!createLogicalDevice(physicalDevice, requestedQueues, deviceExtensions,
                            &deviceFeatures, adapterResult.m_device)) {
     return false;

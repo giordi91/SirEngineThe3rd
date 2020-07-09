@@ -51,6 +51,13 @@ bool createLogicalDevice(const VkPhysicalDevice physicalDevice,
                          VkPhysicalDeviceFeatures2 *desiredFeatures,
                          VkDevice &logicalDevice);
 
+bool checkAvailableDeviceExtensions(
+    const VkPhysicalDevice physicalDevice,
+    std::vector<VkExtensionProperties> &availableExtensions); 
+bool isExtensionSupported(
+    std::vector<VkExtensionProperties> const &availableExtensions,
+    char const *const extension);
+
 void getDeviceQueue(const VkDevice logicalDevice,
                     const uint32_t queueFamilyIndex, const uint32_t queueIndex,
                     VkQueue &queue);

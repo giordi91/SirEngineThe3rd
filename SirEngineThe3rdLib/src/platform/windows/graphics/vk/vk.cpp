@@ -52,6 +52,7 @@ VkFrameCommand FRAME_COMMAND[PREALLOCATED_SEMAPHORE_COUNT];
 VkFrameCommand *CURRENT_FRAME_COMMAND = nullptr;
 uint32_t GRAPHICS_QUEUE_FAMILY = 0;
 uint32_t PRESENTATION_QUEUE_FAMILY = 0;
+bool DEBUG_MARKERS_ENABLED = false;
 
 struct VkRenderable {
   VkMeshRuntime m_meshRuntime{};
