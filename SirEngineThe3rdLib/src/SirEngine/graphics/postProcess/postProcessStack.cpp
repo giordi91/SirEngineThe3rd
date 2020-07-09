@@ -42,12 +42,14 @@ void PostProcessStack::initialize() {
       globals::ENGINE_CONFIG->m_windowWidth,
       globals::ENGINE_CONFIG->m_windowHeight,
       RenderTargetFormat::R16G16B16A16_FLOAT, "postProcess1",
-      TextureManager::RENDER_TARGET | TextureManager::SHADER_RESOURCE);
+      TextureManager::RENDER_TARGET | TextureManager::SHADER_RESOURCE,
+      RESOURCE_STATE::SHADER_READ_RESOURCE);
   handles[1] = globals::TEXTURE_MANAGER->allocateTexture(
       globals::ENGINE_CONFIG->m_windowWidth,
       globals::ENGINE_CONFIG->m_windowHeight,
       RenderTargetFormat::R16G16B16A16_FLOAT, "postProcess2",
-      TextureManager::RENDER_TARGET | TextureManager::SHADER_RESOURCE);
+      TextureManager::RENDER_TARGET | TextureManager::SHADER_RESOURCE,
+      RESOURCE_STATE::SHADER_READ_RESOURCE);
 }
 
 void PostProcessStack::compute() {
@@ -87,6 +89,15 @@ void PostProcessStack::clear() {
     globals::TEXTURE_MANAGER->free(handles[1]);
     handles[1].handle = 0;
   }
+
+  if (m_bindHandles[0].isHandleValid()) {
+    globals::RENDERING_CONTEXT->freeBindingObject(m_bindHandles[0]);
+    m_bindHandles[0] = {};
+  }
+  if (m_bindHandles[1].isHandleValid()) {
+    globals::RENDERING_CONTEXT->freeBindingObject(m_bindHandles[1]);
+    m_bindHandles[1] = {};
+  }
 }
 void PostProcessStack::onResizeEvent(int, int) {
   clear();
@@ -106,7 +117,8 @@ void PostProcessStack::populateNodePorts() {
   bindings.colorRT[0].handle = handles[0];
   bindings.colorRT[0].clearColor = {};
   bindings.colorRT[0].shouldClearColor = false;
-  bindings.colorRT[0].currentResourceState = RESOURCE_STATE::RENDER_TARGET;
+  bindings.colorRT[0].currentResourceState =
+      RESOURCE_STATE::SHADER_READ_RESOURCE;
   bindings.colorRT[0].neededResourceState = RESOURCE_STATE::RENDER_TARGET;
   bindings.colorRT[0].isSwapChainBackBuffer = 0;
 

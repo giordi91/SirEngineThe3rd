@@ -722,7 +722,7 @@ void VkMaterialManager::releaseAllMaterialsAndRelatedResources() {
 }
 
 MaterialHandle VkMaterialManager::allocateMaterial(
-    const char *name, ALLOCATE_MATERIAL_FLAGS flags,
+    const char *name, const ALLOCATE_MATERIAL_FLAGS flags,
     const char *materialsPerQueue[QUEUE_COUNT]) {
   // empty material
   uint32_t index;
@@ -780,16 +780,20 @@ void VkMaterialManager::bindTexture(const MaterialHandle matHandle,
   uint32_t index = getIndexFromHandle(matHandle);
   const auto &data = m_materialTextureHandles.getConstRef(index);
 
-  const uint32_t currentFlag = static_cast<uint32_t>(queue);
+  const auto currentFlag = static_cast<uint32_t>(queue);
   int currentFlagId = static_cast<int>(log2(currentFlag & -currentFlag));
 
+  // this is the descriptor for our correct queue
   DescriptorHandle descriptorHandle =
       data.m_materialRuntime.descriptorHandles[currentFlagId];
   assert(descriptorHandle.isHandleValid());
+  // the descriptor set is already taking into account whether or not
+  // is buffered, it gives us the correct one we want
   VkDescriptorSet descriptorSet =
       vk::DESCRIPTOR_MANAGER->getDescriptorSet(descriptorHandle);
-  assert(!vk::DESCRIPTOR_MANAGER->isBuffered(descriptorHandle) &&
-         "buffered not yet implemented");
+
+  //assert(!vk::DESCRIPTOR_MANAGER->isBuffered(descriptorHandle) &&
+  //       "buffered not yet implemented");
 
   VkWriteDescriptorSet writeDescriptorSets{};
 
@@ -905,7 +909,8 @@ void VkMaterialManager::bindMesh(const MaterialHandle handle,
   int setPos = (meshBindFlags & MESH_ATTRIBUTE_FLAGS::POSITIONS) > 0 ? 1 : 0;
   int setNormals = (meshBindFlags & MESH_ATTRIBUTE_FLAGS::NORMALS) > 0 ? 1 : 0;
   int setUV = (meshBindFlags & MESH_ATTRIBUTE_FLAGS::UV) > 0 ? 1 : 0;
-  int setTangents = (meshBindFlags & MESH_ATTRIBUTE_FLAGS::TANGENTS) > 0 ? 1 : 0;
+  int setTangents =
+      (meshBindFlags & MESH_ATTRIBUTE_FLAGS::TANGENTS) > 0 ? 1 : 0;
 
   int toBind = setPos + setNormals + setUV + setTangents;
 
@@ -919,9 +924,11 @@ void VkMaterialManager::bindMesh(const MaterialHandle handle,
                          nullptr);
 }
 
-void VkMaterialManager::bindConstantBuffer(MaterialHandle handle, ConstantBufferHandle bufferHandle,
-	const uint32_t descriptorIndex, const uint32_t bindingIndex, SHADER_QUEUE_FLAGS queue)
-{
+void VkMaterialManager::bindConstantBuffer(MaterialHandle handle,
+                                           ConstantBufferHandle bufferHandle,
+                                           const uint32_t descriptorIndex,
+                                           const uint32_t bindingIndex,
+                                           SHADER_QUEUE_FLAGS queue) {
   const auto &materialRuntime = getMaterialRuntime(handle);
   int queueFlagInt = static_cast<int>(queue);
   int currentFlagId = static_cast<int>(log2(queueFlagInt & -queueFlagInt));
