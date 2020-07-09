@@ -22,7 +22,6 @@
 #include "vkMaterialManager.h"
 #include "vkMeshManager.h"
 #include "vkTextureManager.h"
-#include "volk.h"
 
 namespace SirEngine::vk {
 VkInstance INSTANCE = nullptr;
@@ -815,11 +814,11 @@ void VkRenderingContext::renderMesh(const MeshHandle handle, bool isIndexed) {
 
   auto *currentFc = CURRENT_FRAME_COMMAND;
   VkCommandBuffer commandList = currentFc->m_commandBuffer;
-  vk::MESH_MANAGER->renderMesh(runtime, commandList);
+  VkMeshManager::renderMesh(runtime, commandList);
 }
 
 void VkRenderingContext::fullScreenPass() {
-  auto buffer = vk::CURRENT_FRAME_COMMAND->m_commandBuffer;
+  VkCommandBuffer buffer = vk::CURRENT_FRAME_COMMAND->m_commandBuffer;
   vkCmdDraw(buffer, 6, 1, 0, 0);
 }
 
@@ -841,8 +840,7 @@ void VkRenderingContext::setViewportAndScissor(
   vkCmdSetScissor(commandList, 0, 1, &scissor);
 }
 
-void VkRenderingContext::renderProcedural(const uint32_t indexCount)
-{
+void VkRenderingContext::renderProcedural(const uint32_t indexCount) {
   auto *currentFc = CURRENT_FRAME_COMMAND;
   auto commandList = currentFc->m_commandBuffer;
   vkCmdDraw(commandList, indexCount, 1, 0, 0);

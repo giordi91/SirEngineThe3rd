@@ -2,6 +2,7 @@
 #if BUILD_DX12
 // NOTE DX12.h needs to appear before pix3.h!!!
 #include "platform/windows/graphics/dx12/DX12.h"
+// keep this gap
 
 #include "WinPixEventRuntime/WinPixEventRuntime/pix3.h"
 #endif
@@ -23,4 +24,4 @@ inline void annotateGraphicsEnd() {
   }
 }
 
-} // namespace SirEngine
+}  // namespace SirEngine

@@ -19,10 +19,10 @@ class PostProcessEffect {
   virtual void render(const TextureHandle input, const TextureHandle output,
                       const PostProcessResources &resources) = 0;
   virtual void clear() = 0;
-  inline const char *getName() const { return m_name; }
+  [[nodiscard]] inline const char *getName() const { return m_name; }
   inline void setEnable(const bool enabled) { m_enabled = enabled; }
-  inline bool isEnabled() const { return m_enabled; }
-  inline const char *getType() const { return m_type; }
+  [[nodiscard]] inline bool isEnabled() const { return m_enabled; }
+  [[nodiscard]] inline const char *getType() const { return m_type; }
 
  protected:
   const char *m_name;
@@ -40,7 +40,7 @@ class PostProcessStack final : public GNode {
   };
 
  public:
-  PostProcessStack(GraphAllocators &allocators);
+  explicit PostProcessStack(GraphAllocators &allocators);
   virtual ~PostProcessStack() = default;
   virtual void initialize() override;
   void clear() override;
@@ -55,7 +55,9 @@ class PostProcessStack final : public GNode {
     m_stack.push_back(pass);
     return pass;
   }
-  const std::vector<PostProcessEffect *> &getEffects() const { return m_stack; }
+  [[nodiscard]] const std::vector<PostProcessEffect *> &getEffects() const {
+    return m_stack;
+  }
 
   void populateNodePorts() override;
 

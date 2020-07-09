@@ -1,12 +1,11 @@
 
 #include "platform/windows/graphics/vk/vkLoad.h"
 
-#include "platform/windows/graphics/vk/volk.h"
-
 #include <cassert>
 #include <iostream>
 
 #include "SirEngine/log.h"
+#include "platform/windows/graphics/vk/volk.h"
 #include "vk.h"
 
 namespace SirEngine {
@@ -138,14 +137,9 @@ bool createVulkanInstance(std::vector<char const *> const &desiredExtensions,
 
 #if _DEBUG
   const char *layers[] = {
-    //"VK_LAYER_LUNARG_standard_validation"
-    "VK_LAYER_KHRONOS_validation",
-
-#if VULKAN_OBJ_TRACKER
-    "VK_LAYER_LUNARG_object_tracker",
-#endif
-#if VULKAN_PARAM_VALIDATION
-#endif
+      // NOTE Khronos layer name changed with 1.135 Vulkan SDK
+      // VK_LAYER_LUNARG_standard_validation"
+      "VK_LAYER_KHRONOS_validation",
   };
   instanceCreateInfo.ppEnabledLayerNames = layers;
   instanceCreateInfo.enabledLayerCount = ARRAYSIZE(layers);
@@ -156,10 +150,8 @@ bool createVulkanInstance(std::vector<char const *> const &desiredExtensions,
 
   std::vector<VkLayerProperties> availableLayers(layerCount);
   vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
-  for(auto l : availableLayers)
-  {
-      std::cout<<l.layerName<<std::endl;
-	  
+  for (auto l : availableLayers) {
+    std::cout << l.layerName << std::endl;
   }
 
   /*
@@ -428,19 +420,6 @@ bool selectQueueFamilyThatSupportsPresentationToGivenSurface(
   return false;
 }
 
-bool createLogicalDeviceWithWsiExtensionsEnabled(
-    const VkPhysicalDevice physicalDevice,
-    const std::vector<QueueInfo> queueInfos,
-    std::vector<char const *> &desiredExtensions,
-    VkPhysicalDeviceFeatures2 *desiredFeatures, VkDevice &logicalDevice) {
-  desiredExtensions.emplace_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
-  // desiredExtensions.emplace_back(VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME);
-  desiredExtensions.emplace_back(VK_KHR_16BIT_STORAGE_EXTENSION_NAME);
-  desiredExtensions.emplace_back(VK_KHR_8BIT_STORAGE_EXTENSION_NAME);
-
-  return createLogicalDevice(physicalDevice, queueInfos, desiredExtensions,
-                             desiredFeatures, logicalDevice);
-}
 bool newSemaphore(const VkDevice logicalDevice, VkSemaphore &semaphore) {
   VkSemaphoreCreateInfo semaphoreCreateInfo = {
       VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO, nullptr, 0};

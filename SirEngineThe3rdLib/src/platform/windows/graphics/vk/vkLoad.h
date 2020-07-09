@@ -5,8 +5,9 @@
 #elif defined __linux
 #define LIBRARY_TYPE void *
 #endif
-#include <vector>
 #include <vulkan/vulkan.h>
+
+#include <vector>
 
 namespace SirEngine {
 namespace vk {
@@ -20,9 +21,6 @@ struct PresentInfo {
   VkSwapchainKHR swapchain;
   uint32_t imageIndex;
 };
-// bool loadFunctionExportedFromVulkanLoaderLibrary(
-//    LIBRARY_TYPE const &vulkanLibrary);
-// bool loadGlobalLevelFunctions();
 
 bool checkAvailableInstanceExtensions(
     std::vector<VkExtensionProperties> &availableExtensions);
@@ -35,14 +33,6 @@ bool registerDebugCallback(VkInstance instance);
 bool createVulkanInstanceWithWsiExtensionsEnabled(
     std::vector<char const *> &desiredExtensions,
     char const *const applicationName, VkInstance &instance);
-// bool loadInstanceLevelFunctions(
-//    VkInstance instance, std::vector<char const *> const &enabledExtensions);
-
-/*
-bool createLogicalDeviceWithGeometryShadersAndGraphicsAndComputeQueues(
-    VkInstance instance, VkDevice& logicalDevice, VkQueue& graphicsQueue,
-    VkQueue& computeQueue);
-        */
 
 bool enumerateAvailablePhysicalDevices(
     const VkInstance instance, std::vector<VkPhysicalDevice> &availableDevices);
@@ -55,20 +45,17 @@ bool selectQueueFamilyThatSupportsPresentationToGivenSurface(
     VkPhysicalDevice physicalDevice, VkSurfaceKHR presentationSurface,
     uint32_t &queueFamilyIndex);
 
-bool createLogicalDeviceWithWsiExtensionsEnabled(
-    VkPhysicalDevice physicalDevice, std::vector<QueueInfo> queueInfos,
-    std::vector<char const *> &desiredExtensions,
-    VkPhysicalDeviceFeatures2 *desiredFeatures, VkDevice &logicalDevice);
+bool createLogicalDevice(const VkPhysicalDevice physicalDevice,
+                         std::vector<QueueInfo> queueInfos,
+                         std::vector<char const *> const &desiredExtensions,
+                         VkPhysicalDeviceFeatures2 *desiredFeatures,
+                         VkDevice &logicalDevice);
 
-// bool loadDeviceLevelFunctions(
-//    VkDevice logicalDevice, std::vector<char const *> const
-//    &enabledExtensions);
 void getDeviceQueue(const VkDevice logicalDevice,
                     const uint32_t queueFamilyIndex, const uint32_t queueIndex,
                     VkQueue &queue);
 
 bool newSemaphore(const VkDevice logicalDevice, VkSemaphore &semaphore);
-
 
 bool presentImage(VkQueue queue, std::vector<VkSemaphore> renderingSemaphores,
                   std::vector<PresentInfo> imagesToPresent);
@@ -112,17 +99,12 @@ struct WaitSemaphoreInfo {
 bool submitCommandBuffersToQueue(
     VkQueue queue, std::vector<WaitSemaphoreInfo> waitSemaphoreInfos,
     std::vector<VkCommandBuffer> commandBuffers,
-    std::vector<VkSemaphore> signalSemaphores, VkFence& fence);
+    std::vector<VkSemaphore> signalSemaphores, VkFence &fence);
 
 VkFramebuffer createFrameBuffer(VkDevice logicalDevice, VkRenderPass renderPass,
                                 VkImageView imageView, uint32_t width,
                                 uint32_t height);
 
-VkShaderModule loadShader(VkDevice logicalDevice, const char *path);
-// VkPipeline
-// createGraphicsPipeline(VkDevice logicalDevice, VkShaderModule vs,
-//                       VkShaderModule ps, VkRenderPass renderPass,
-//                       VkPipelineVertexInputStateCreateInfo *vertexInfo);
 
-} // namespace vk
-} // namespace SirEngine
+}  // namespace vk
+}  // namespace SirEngine
