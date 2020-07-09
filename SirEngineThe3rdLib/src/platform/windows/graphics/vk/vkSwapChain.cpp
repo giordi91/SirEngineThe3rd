@@ -81,12 +81,12 @@ bool selectNumberOfSwapchainImages(
   // value
   uint32_t finalImageCount =
       std::max(std::min(surfaceCapabilities.maxImageCount,
-                        globals::ENGINE_CONFIG->m_frameBufferingCoung),
+                        globals::ENGINE_CONFIG->m_frameBufferingCount),
                surfaceCapabilities.minImageCount);
-  if (finalImageCount != globals::ENGINE_CONFIG->m_frameBufferingCoung) {
+  if (finalImageCount != globals::ENGINE_CONFIG->m_frameBufferingCount) {
     SE_CORE_WARN("Swap chain: could not create requested number of images:{0}, "
                  "created {1} instead",
-                 globals::ENGINE_CONFIG->m_frameBufferingCoung,
+                 globals::ENGINE_CONFIG->m_frameBufferingCount,
                  finalImageCount);
   }
   numberOfImages = finalImageCount;

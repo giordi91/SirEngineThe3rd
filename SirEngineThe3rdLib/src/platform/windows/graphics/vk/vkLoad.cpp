@@ -2,7 +2,7 @@
 #include "platform/windows/graphics/vk/vkLoad.h"
 
 #include "platform/windows/graphics/vk/volk.h"
-//#include "platform/windows/graphics/vk/VulkanFunctions.h"
+
 #include <cassert>
 #include <iostream>
 

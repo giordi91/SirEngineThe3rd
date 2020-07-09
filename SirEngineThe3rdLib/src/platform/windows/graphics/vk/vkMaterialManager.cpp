@@ -932,7 +932,7 @@ void VkMaterialManager::bindConstantBuffer(MaterialHandle handle, ConstantBuffer
   VkWriteDescriptorSet writeDescriptorSets = {};
   VkDescriptorBufferInfo bufferInfoUniform = {};
   vk::CONSTANT_BUFFER_MANAGER->bindConstantBuffer(
-      bufferHandle, bufferInfoUniform, 0, &writeDescriptorSets,
+      bufferHandle, bufferInfoUniform, bindingIndex, &writeDescriptorSets,
       descriptorSet);
 
   vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, 1, &writeDescriptorSets, 0,

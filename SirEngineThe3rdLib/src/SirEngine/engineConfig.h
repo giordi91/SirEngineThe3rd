@@ -30,7 +30,7 @@ struct EngineConfig {
   //graphics  config
   GRAPHIC_API m_graphicsAPI;
   bool m_useCachedPSO;
-  uint32_t m_frameBufferingCoung;
+  uint32_t m_frameBufferingCount;
 };
 
 struct EngineInitializationConfig {

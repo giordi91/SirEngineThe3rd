@@ -147,7 +147,7 @@ void parseConfigFile(const char *path,const EngineInitializationConfig& initConf
   config.m_requestedAdapterVendor = getAdapterVendor(jobj);
   config.m_adapterSelectionRule = getAdapterSelectionRule(jobj);
 
-  config.m_frameBufferingCoung =
+  config.m_frameBufferingCount =
       (getValueIfInJson(jobj, CONFIG_FREAME_BUFFERING_COUNT, 2u));
 
   assert(config.m_windowWidth != -1);
