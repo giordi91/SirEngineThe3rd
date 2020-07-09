@@ -67,7 +67,7 @@ class PostProcessStack final : public GNode {
   TextureHandle inputRTHandle{};
   TextureHandle inputDepthHandle{};
   TextureHandle handles[2]{};
-  BufferBindingsHandle m_bindHandles[2];
+  BufferBindingsHandle m_bindHandles[2] = {};
 };
 
 }  // namespace SirEngine
