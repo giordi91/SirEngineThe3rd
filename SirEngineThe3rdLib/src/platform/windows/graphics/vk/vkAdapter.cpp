@@ -60,12 +60,16 @@ bool createLogicalDevice(VkPhysicalDevice physicalDevice,
 
   deviceFeatures.pNext = &feature8;
 
-  // lets create a logical queue with the requested features
-  if (!createLogicalDeviceWithWsiExtensionsEnabled(
-          physicalDevice, requestedQueues, deviceExtensions, &deviceFeatures,
-          adapterResult.m_device)) {
+  deviceExtensions.emplace_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+  // desiredExtensions.emplace_back(VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME);
+  deviceExtensions.emplace_back(VK_KHR_16BIT_STORAGE_EXTENSION_NAME);
+  deviceExtensions.emplace_back(VK_KHR_8BIT_STORAGE_EXTENSION_NAME);
+
+  if (!createLogicalDevice(physicalDevice, requestedQueues, deviceExtensions,
+                           &deviceFeatures, adapterResult.m_device)) {
     return false;
   }
+
   volkLoadDevice(adapterResult.m_device);
 
   adapterResult.m_physicalDevice = physicalDevice;
