@@ -1,7 +1,6 @@
 #include "../common/structures.hlsl"
 #include "../common/vertexDefinitions.hlsl"
 
-
 Texture2D sourceTexture: register(t1,space1);
 ConstantBuffer<GammaToneMappingConfig> g_config: register(b2,space1);
 

@@ -125,6 +125,7 @@ class Dx12ConstantBufferManager final : public ConstantBufferManager {
   static const uint32_t RESERVE_SIZE = 400;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
   RandomSizeAllocator m_randomAlloc;
+  //TODO this should be a vector not a map
   std::unordered_map<uint32_t, ConstantBufferedData> m_bufferedRequests;
   std::vector<uint32_t> m_bufferToFree;
 };

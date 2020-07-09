@@ -126,9 +126,10 @@ inline uint32_t padTo256BytesMultiple(const uint32_t size) {
 
 // as of now memory is allocated in so called slabs, such slabs are nothing more
 // than a range of memory to be filled up, when the memory is full, a new slab
-// gets allocated keep in mind memory is not meant to be de-allocated right now is
-// a simple implementation:. as such also slabs are automatically buffered, when you allocating
-// one, in reality you allocating N of them where N is the number of frame in flight.
+// gets allocated keep in mind memory is not meant to be de-allocated right now
+// is a simple implementation:. as such also slabs are automatically buffered,
+// when you allocating one, in reality you allocating N of them where N is the
+// number of frame in flight.
 int VkConstantBufferManager::getFreeSlabIndex(const uint32_t allocSize) {
   int freeSlab = -1;
   for (uint32_t i = 0; i < m_allocatedSlabs; ++i) {
@@ -156,7 +157,6 @@ int VkConstantBufferManager::getFreeSlabIndex(const uint32_t allocSize) {
   return -1;
 }
 
-	
 SirEngine::ConstantBufferHandle VkConstantBufferManager::allocate(
     const uint32_t sizeInBytes, const CONSTANT_BUFFER_FLAGS flags, void *data) {
   const uint32_t allocSize = padTo256BytesMultiple(sizeInBytes);
@@ -175,8 +175,8 @@ SirEngine::ConstantBufferHandle VkConstantBufferManager::allocate(
   // we have a valid range, lets loop the per frame slabs (aka pfs)
   BufferRangeHandle handle{};
   BufferRange range{};
-  //for each slab clone we do an allocation (basically reserving the same memory
-  //on every buffered slab
+  // for each slab clone we do an allocation (basically reserving the same
+  // memory on every buffered slab
   for (uint32_t pfs = 0; pfs < vk::SWAP_CHAIN_IMAGE_COUNT; ++pfs) {
     handle = m_perFrameSlabs[pfs][freeSlab].m_slabTracker.allocate(
         sizeInBytes, m_requireAlignment);
@@ -237,73 +237,51 @@ void VkConstantBufferManager::update(const ConstantBufferHandle handle,
 
   bool submitBufferedRequest = !updatedEveryFrame;
   if (submitBufferedRequest) {
-    // we need to do the proper
-    assert(0);
+    // lets create a new request
+    ConstantBufferedData buffRequest;
+
+    // setting data on the buffer request
+    buffRequest.dataAllocHandle =
+        m_randomAlloc.allocate(buffData.m_range.m_size);
+    buffRequest.handle = handle;
+
+    // perform current update, that is why we use frame buffer count -1
+    buffRequest.counter = vk::SWAP_CHAIN_IMAGE_COUNT - 1;
+
+    int slabIndex = buffData.m_slabIdx;
+    const Slab &slab = m_perFrameSlabs[globals::CURRENT_FRAME][slabIndex];
+    assert(data != nullptr);
+    memcpy(static_cast<char *>(slab.m_buffer.data) + buffData.m_range.m_offset,
+           data, buffData.m_range.m_size);
+
+    // copying data in storage so we can keep track of it
+    memcpy(m_randomAlloc.getPointer(buffRequest.dataAllocHandle), data,
+           buffData.m_range.m_size);
+    m_bufferedRequests[handle.handle] = buffRequest;
   }
 }
-
-//void VkConstantBufferManager::updateConstantBufferNotBuffered(
-//    const ConstantBufferHandle handle, void *dataToUpload) {
-//  assert(0);
-//  /*
-//  assertMagicNumber(handle);
-//  const uint32_t index = getIndexFromHandle(handle);
-//  const ConstantBufferData &data =
-//      m_dynamicStorage[index].cbData[globals::CURRENT_FRAME];
-//
-//  assert(data.mappedData != nullptr);
-//  memcpy(data.mappedData, dataToUpload, data.size);
-//  */
-//}
 
 void VkConstantBufferManager::updateConstantBufferBuffered(
     const ConstantBufferHandle handle, void *dataToUpload) {
   assert(0);
-  /*
-  // check if we have any other request for this buffer if so we clear it
-  const auto found = m_bufferedRequests.find(handle.handle);
-  if (found != m_bufferedRequests.end()) {
-    // lets clear up the allocation
-    m_randomAlloc.freeAllocation(found->second.dataAllocHandle);
-  }
-
-  // lets create a new request
-  ConstantBufferedData buffRequest;
-  assertMagicNumber(handle);
-  const uint32_t index = getIndexFromHandle(handle);
-  buffRequest.poolIndex = index;
-
-  const ConstantBufferData data =
-      m_dynamicStorage[index].cbData[globals::CURRENT_FRAME];
-
-  // setting data on the buffer request
-  buffRequest.dataAllocHandle = m_randomAlloc.allocate(data.size);
-  buffRequest.handle = handle;
-
-  // perform current update, that is why we use frame buffer count -1
-  buffRequest.counter = FRAME_BUFFERS_COUNT - 1;
-  updateConstantBufferNotBuffered(handle, dataToUpload);
-  // copying data in storage so we can keep track of it
-  memcpy(m_randomAlloc.getPointer(buffRequest.dataAllocHandle), dataToUpload,
-         data.size);
-  m_bufferedRequests[handle.handle] = buffRequest;
-  */
 }
 
 void VkConstantBufferManager::processBufferedData() {
-  assert(0);
-  /*
+  // TODO This vector is wasteful maybe we can do something better
   std::vector<int> processedIdxs;
   const int bufferedRequests = static_cast<int>(m_bufferedRequests.size());
   processedIdxs.reserve(bufferedRequests);
 
   for (auto &handle : m_bufferedRequests) {
-    uchar *ptr = m_randomAlloc.getPointer(handle.second.dataAllocHandle);
-    updateConstantBufferNotBuffered(handle.second.handle, ptr);
-    handle.second.counter -= 1;
-    if (handle.second.counter == 0) {
-      processedIdxs.push_back(handle.first);
-    }
+    uint32_t idx = getIndexFromHandle(ConstantBufferHandle{handle.first});
+    const ConstantBufferData &buffData = m_allocInfoStorage.getConstRef(idx);
+
+    int slabIndex = buffData.m_slabIdx;
+    const Slab &slab = m_perFrameSlabs[globals::CURRENT_FRAME][slabIndex];
+    void *data = m_randomAlloc.getPointer(handle.second.dataAllocHandle);
+    assert(data != nullptr);
+    memcpy(static_cast<char *>(slab.m_buffer.data) + buffData.m_range.m_offset,
+           data, buffData.m_range.m_size);
   }
 
   // cleanup
@@ -313,7 +291,6 @@ void VkConstantBufferManager::processBufferedData() {
     m_randomAlloc.freeAllocation(data.dataAllocHandle);
     m_bufferedRequests.erase(m_bufferedRequests.find(processedIdxs[i]));
   }
-  */
 }
 
 void VkConstantBufferManager::bindConstantBuffer(

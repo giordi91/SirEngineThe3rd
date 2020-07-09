@@ -76,14 +76,22 @@ void Dx12ConstantBufferManager::update(const ConstantBufferHandle handle,
     m_randomAlloc.freeAllocation(found->second.dataAllocHandle);
   }
 
-  // lets create a new request
-  ConstantBufferedData buffRequest;
   assertMagicNumber(handle);
   const uint32_t index = getIndexFromHandle(handle);
-  buffRequest.poolIndex = index;
-
   const ConstantBufferData data =
       m_dynamicStorage[index].cbData[globals::CURRENT_FRAME];
+
+  bool updatedEveryFrame = isFlagSet(data.flags, UPDATED_EVERY_FRAME);
+  // if we update every frame like the camera buffer for example let us just
+  // skip extra steps
+  if (updatedEveryFrame) {
+    updateConstantBufferNotBuffered(handle, inputData);
+    return;
+  }
+
+  // lets create a new request
+  ConstantBufferedData buffRequest;
+  buffRequest.poolIndex = index;
 
   // setting data on the buffer request
   buffRequest.dataAllocHandle = m_randomAlloc.allocate(data.size);

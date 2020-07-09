@@ -24,7 +24,8 @@ void GammaAndToneMappingEffect::initialize() {
                            "gammaAndToneMapping"};
   m_matHandle = globals::MATERIAL_MANAGER->allocateMaterial(
       "gammaAndToneMapping",
-      MaterialManager::ALLOCATE_MATERIAL_FLAG_BITS::BUFFERED, queues);
+      //MaterialManager::ALLOCATE_MATERIAL_FLAG_BITS::BUFFERED, queues);
+      0, queues);
 }
 
 void GammaAndToneMappingEffect::render(const TextureHandle input,

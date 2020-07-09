@@ -100,6 +100,14 @@ private:
     uint32_t m_slabIdx : 16;
   };
 
+  struct ConstantBufferedData {
+    ConstantBufferHandle handle;
+    //this data represent the data we need to copy in the buffer
+  	//this data is on the CPU and will be used for the memcpy
+    RandomSizeAllocationHandle dataAllocHandle;
+    int counter = 0;
+  };
+
 private:
   void allocateSlab();
   int getFreeSlabIndex(uint32_t allocSize);
@@ -118,7 +126,7 @@ private:
   static const uint32_t RESERVE_SIZE = 400;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
   RandomSizeAllocator m_randomAlloc;
-  // std::unordered_map<uint32_t, ConstantBufferedData> m_bufferedRequests;
+  std::unordered_map<uint32_t, ConstantBufferedData> m_bufferedRequests;
   std::vector<uint32_t> m_bufferToFree;
 
   Slab *m_slabs = nullptr;
