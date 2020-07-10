@@ -132,7 +132,7 @@ class VkPSOManager final : public PSOManager {
 
   VkPSOCompileResult processRasterPSO(
       const char *filePath, const nlohmann::json &jobj,
-      VkPipelineVertexInputStateCreateInfo *vertexInfo);
+      VkPipelineVertexInputStateCreateInfo *vertexInfo) const;
 
   void updatePSOCache(const char *name, const VkPSOCompileResult& result);
 

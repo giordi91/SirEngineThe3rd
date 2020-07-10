@@ -1,13 +1,13 @@
 #include "platform/windows/graphics/vk/vkPSOManager.h"
 
+#include "SirEngine/application.h"
+#include "SirEngine/events/shaderCompileEvent.h"
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
 #include "platform/windows/graphics/vk/vk.h"
 #include "platform/windows/graphics/vk/vkRootSignatureManager.h"
 #include "platform/windows/graphics/vk/vkShaderManager.h"
 #include "vkDescriptorManager.h"
-#include "SirEngine/application.h"
-#include "SirEngine/events/shaderCompileEvent.h"
 
 namespace SirEngine::vk {
 
@@ -683,9 +683,9 @@ PSOHandle VkPSOManager::insertInPSOCache(const VkPSOCompileResult &result) {
 
 VkPSOCompileResult VkPSOManager::processRasterPSO(
     const char *filePath, const nlohmann::json &jobj,
-    VkPipelineVertexInputStateCreateInfo *vertexInfo) {
-  // TODO a bit overkill for now but this is the base for further refactoring
-  // when we will start loading cached pso
+    VkPipelineVertexInputStateCreateInfo *vertexInfo) const {
+
+  // creating a compile result that will be later used for caching
   VkPSOCompileResult compileResult{};
   compileResult.psoType = PSO_TYPE::RASTER;
   compileResult.PSOFullPathFile = frameString(filePath);
@@ -983,12 +983,12 @@ void VkPSOManager::recompilePSOFromShader(const char *shaderName,
 
   // all the shader have been recompiled, we should be able to
   // recompile the PSO now
-  auto*e =
-      new ShaderCompileResultEvent(compileLog.c_str());
+  auto *e = new ShaderCompileResultEvent(compileLog.c_str());
   globals::APPLICATION->queueEventForEndOfFrame(e);
 }
 
-void VkPSOManager::updatePSOCache(const char *name, const VkPSOCompileResult& result) {
+void VkPSOManager::updatePSOCache(const char *name,
+                                  const VkPSOCompileResult &result) {
   assert(m_psoRegisterHandle.containsKey(name));
   PSOHandle handle;
   m_psoRegisterHandle.get(name, handle);

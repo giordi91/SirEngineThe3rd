@@ -1,15 +1,17 @@
 #pragma once
+#include <stdint.h>
+#include <string.h>
+
 #include "SirEngine/globals.h"
 #include "SirEngine/hashing.h"
 #include "SirEngine/memory/hashMap.h"
 #include "stringPool.h"
-#include <stdint.h>
-#include <string.h>
 
 namespace SirEngine {
 
-template <typename VALUE> class HashMap<const char *, VALUE, hashString32> {
-public:
+template <typename VALUE>
+class HashMap<const char *, VALUE, hashString32> {
+ public:
   // TODO add use of engine allocator, not only heap allocations
   explicit HashMap(const uint32_t bins) : m_bins(bins) {
     m_keys = new const char *[m_bins];
@@ -32,20 +34,20 @@ public:
 
     // modding wit the bin count
     uint32_t bin = computedHash % m_bins;
-    if (m_keys[bin] != nullptr && strcmp(m_keys[bin], key) == 0) {
+    uint32_t meta = getMetadata(bin);
+    if ((m_keys[bin] != nullptr && strcmp(m_keys[bin], key) == 0) &
+        (meta == static_cast<uint32_t>(BIN_FLAGS::USED))) {
       // key exists we just override the value
       m_values[bin] = value;
       return true;
     }
 
     const uint32_t startBin = bin;
-    uint32_t meta = getMetadata(bin);
-    //BUG!! we need to check if is not free if actually is the same
-  	//or duplicate keys won't get overritten 
+    //this might still fail if you actually store null pointer as a string.
     bool free = canWriteToBin(meta);
-    while (!free) {
+    while ((!free) && !(m_keys[bin] != nullptr && strcmp(m_keys[bin], key) == 0)) {
       ++bin;
-      bin = bin % m_bins; // wrap around the bins count
+      bin = bin % m_bins;  // wrap around the bins count
       meta = getMetadata(bin);
       free = canWriteToBin(meta);
       if (bin == startBin) {
@@ -60,19 +62,18 @@ public:
   }
 
   [[nodiscard]] bool containsKey(const char *key) const {
-
     uint32_t bin = 0;
     const bool isKeyFound = getBin(key, bin);
     const uint32_t meta = getMetadata(bin);
     return isKeyFound &
            (m_keys[bin] != nullptr &&
-            strcmp(m_keys[bin], key) == 0) // does the key match?
+            strcmp(m_keys[bin], key) == 0)  // does the key match?
            &
            (meta == static_cast<uint32_t>(
-                        BIN_FLAGS::USED)); // is the bin actually used, we dont
-                                           // delete anything so if they key is
-                                           // deleted key value might still
-                                           // match but metadata is set to free
+                        BIN_FLAGS::USED));  // is the bin actually used, we dont
+                                            // delete anything so if they key is
+                                            // deleted key value might still
+                                            // match but metadata is set to free
   }
 
   inline bool get(const char *key, VALUE &value) const {
@@ -104,8 +105,7 @@ public:
     return meta == static_cast<uint32_t>(BIN_FLAGS::USED);
   }
 
-  const char* getKeyAtBin(const uint32_t bin) const
-  {
+  const char *getKeyAtBin(const uint32_t bin) const {
     // no check done whether the bin is used or not, up to you kid
     assert(bin < m_bins);
     return m_keys[bin];
@@ -120,7 +120,7 @@ public:
   HashMap(const HashMap &) = delete;
   HashMap &operator=(const HashMap &) = delete;
 
-private:
+ private:
   enum class BIN_FLAGS { NONE = 0, FREE = 1, DELETED = 2, USED = 3 };
 
   bool getBin(const char *key, uint32_t &bin) const {
@@ -140,7 +140,7 @@ private:
       }
 
       ++bin;
-      bin = bin % m_bins; // wrap around the bins count
+      bin = bin % m_bins;  // wrap around the bins count
       if ((bin == startBin) | !isBinUsed) {
         go = false;
         status = false;
@@ -182,10 +182,10 @@ private:
     return binMetadata;
   }
 
-private:
+ private:
   // this is the number of bits required for bin
   static constexpr uint32_t BIN_FLAGS_SIZE = 2;
-  static constexpr uint32_t BIN_FLAGS_MASK = 3; // first two bit sets
+  static constexpr uint32_t BIN_FLAGS_MASK = 3;  // first two bit sets
 
   const char **m_keys;
   VALUE *m_values;
@@ -193,4 +193,4 @@ private:
   uint32_t m_bins;
   uint32_t m_usedBins = 0;
 };
-} // namespace SirEngine
+}  // namespace SirEngine
