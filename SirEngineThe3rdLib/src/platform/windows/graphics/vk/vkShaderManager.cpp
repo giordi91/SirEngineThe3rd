@@ -1,28 +1,32 @@
 #include "platform/windows/graphics/vk/vkShaderManager.h"
-#include "platform/windows/graphics/vk/vkShaderCompiler.h"
 
 #include "SirEngine/argsUtils.h"
 #include "SirEngine/binary/binaryFile.h"
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/graphics/graphicsDefines.h"
 #include "SirEngine/runtimeString.h"
+#include "platform/windows/graphics/vk/vkShaderCompiler.h"
 #include "vk.h"
 
 namespace SirEngine::vk {
 
 void VkShaderManager::cleanup() {
-  // we need to de-allocate everything
-  for (auto s : m_stringToShader) {
-    vkDestroyShaderModule(vk::LOGICAL_DEVICE, s.second.shader, nullptr);
+
+  int size = m_stringToShader.binCount();
+  for (int i = 0; i < size; ++i) {
+    bool used = m_stringToShader.isBinUsed(i);
+    if (used) {
+      VkShaderBlob v = m_stringToShader.getValueAtBin(i);
+      vkDestroyShaderModule(vk::LOGICAL_DEVICE, v.shader, nullptr);
+    }
   }
-  m_stringToShader.clear();
 }
 
 VkShaderMetadata *extractShaderMetadata(StackAllocator &alloc,
                                         const VkShaderMapperData *mapper,
                                         const void *startOfData) {
   // extract metadata
-  // I know, this aint pretty
+  // I know, this is not pretty
   SHADER_TYPE type = static_cast<SHADER_TYPE>(mapper->type);
   const char *entry = (char *)(startOfData) + mapper->shaderSizeInByte;
   const char *shaderPath = (char *)(entry) + mapper->entryPointInByte;
@@ -54,7 +58,8 @@ VkShaderMetadata *extractShaderMetadata(StackAllocator &alloc,
 
 void VkShaderManager::loadShaderBinaryFile(const char *path) {
   const std::string name = getFileName(path);
-  if (m_stringToShader.find(name) == m_stringToShader.end()) {
+
+  if (!m_stringToShader.containsKey(name.c_str())) {
     // TODO just use scrap memory for this instead of a heap alloc
     uint32_t fileSize;
     const char *data = frameFileLoad(path, fileSize);
@@ -71,15 +76,19 @@ void VkShaderManager::loadShaderBinaryFile(const char *path) {
     VkShaderMetadata *metadata =
         extractShaderMetadata(m_metadataAllocator, mapper, shaderPointer);
 
-    m_stringToShader[name] = VkShaderBlob{shaderModule, metadata};
+    const char *cname = globals::STRING_POOL->allocatePersistent(name.c_str());
+    m_stringToShader.insert(cname, VkShaderBlob{shaderModule, metadata});
+    m_shaderNames.pushBack(cname);
   }
 }
 
-void VkShaderManager::recompileShader(const char *path, const char *offsetPath,
-                                      std::string *log) {
+const char *VkShaderManager::recompileShader(const char *path,
+                                             const char *offsetPath) {
   // first thing first we need to get the shader metadata
-  auto found = m_stringToShader.find(path);
-  if (found == m_stringToShader.end()) {
+
+  VkShaderBlob blob;
+  bool result = m_stringToShader.get(path, blob);
+  if (!result) {
     assert(0 && "could not find shader you are asking to recompile");
   }
 
@@ -121,6 +130,7 @@ void VkShaderManager::recompileShader(const char *path, const char *offsetPath,
     }
   }
   */
+  return nullptr;
 }
 
 VkShaderManager::~VkShaderManager() { delete m_compiler; }
@@ -129,6 +139,8 @@ void VkShaderManager::initialize() {
   m_metadataAllocator.initialize(METADATA_STACK_SIZE);
   m_compiler = new VkShaderCompiler();
 }
+
+void VkShaderManager::loadShaderFile(const char *path) { assert(0); }
 
 void VkShaderManager::loadShadersInFolder(const char *directory) {
   std::vector<std::string> paths;
@@ -140,4 +152,4 @@ void VkShaderManager::loadShadersInFolder(const char *directory) {
   }
 }
 
-} // namespace SirEngine::vk
+}  // namespace SirEngine::vk

@@ -109,8 +109,12 @@ class VkMaterialManager final : public MaterialManager {
                 const uint32_t meshBindFlags,
                 SHADER_QUEUE_FLAGS queue) override;
 
-  void bindConstantBuffer(MaterialHandle handle, ConstantBufferHandle bufferHandle, const uint32_t descriptorIndex,
-	  const uint32_t bindingIndex, SHADER_QUEUE_FLAGS queue) override;
+  void bindConstantBuffer(MaterialHandle handle,
+                          ConstantBufferHandle bufferHandle,
+                          const uint32_t descriptorIndex,
+                          const uint32_t bindingIndex,
+                          SHADER_QUEUE_FLAGS queue) override;
+
  private:
   HashMap<const char *, MaterialHandle, hashString32> m_nameToHandle;
   static const uint32_t RESERVE_SIZE = 200;
