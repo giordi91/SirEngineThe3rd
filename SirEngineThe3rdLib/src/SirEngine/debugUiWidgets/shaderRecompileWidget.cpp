@@ -169,8 +169,8 @@ struct ShaderCompileConsole {
 
 ShaderCompilerWidget::~ShaderCompilerWidget() {}
 void ShaderCompilerWidget::initialize() {
-  elementsToRender.reserve(100);
-  console = new ShaderCompileConsole();
+  m_elementsToRender.reserve(100);
+  m_console = new ShaderCompileConsole();
 }
 static bool fuzzy_match_simple(char const *pattern, char const *str) {
   while (*pattern != '\0' && *str != '\0') {
@@ -181,68 +181,69 @@ static bool fuzzy_match_simple(char const *pattern, char const *str) {
   return *pattern == '\0' ? true : false;
 }
 void ShaderCompilerWidget::render() {
-  ImVec2 winPos{globals::ENGINE_CONFIG->m_windowWidth - width - 100, 0};
+  ImVec2 winPos{globals::ENGINE_CONFIG->m_windowWidth - m_width - 100, 0};
   ImGui::SetNextWindowPos(winPos, ImGuiCond_FirstUseEver);
-  ImGui::SetNextWindowSize(ImVec2(width, height), ImGuiCond_FirstUseEver);
-  if (!ImGui::Begin("Shader HOTTTT recompile", &opened)) {
+  ImGui::SetNextWindowSize(ImVec2(m_width, m_height), ImGuiCond_FirstUseEver);
+  if (!ImGui::Begin("Shader HOTTTT recompile", &m_opened)) {
     ImGui::End();
     return;
   }
   // static ImGuiTextFilter filter;
   ImGui::InputText("shader filter", shaderName, IM_ARRAYSIZE(shaderName));
   ImGui::Separator();
-  const std::vector<std::string> &shaders =
+  const ResizableVector<const char *> &shaders =
       dx12::SHADER_MANAGER->getShaderNames();
 
   const char *pattern = &shaderName[0];
 
-  elementsToRender.clear();
-  for (const auto &shader : shaders) {
-    bool shouldRender = fuzzy_match_simple(pattern, shader.c_str());
+  m_elementsToRender.clear();
+  uint32_t shadersSize = shaders.size();
+  for (uint32_t i = 0; i < shadersSize; ++i) {
+    bool shouldRender = fuzzy_match_simple(pattern, shaders.getConstRef(i));
     shouldRender = strlen(pattern) == 0 ? true : shouldRender;
     if (shouldRender) {
-      elementsToRender.push_back(shader.c_str());
+      m_elementsToRender.push_back(shaders.getConstRef(i));
     }
   }
 
-  ImGui::ListBox("", &currentSelectedItem, elementsToRender.data(),
-                 static_cast<int>(elementsToRender.size()));
+  ImGui::ListBox("", &m_currentSelectedItem, m_elementsToRender.data(),
+                 static_cast<int>(m_elementsToRender.size()));
 
   ImGui::PushItemWidth(-1.0f);
-  ImGui::Checkbox("Use develop path offset", &useDevelopPath);
+  ImGui::Checkbox("Use develop path offset", &m_useDevelopPath);
   ImGui::SameLine();
   ImGui::InputText("", offsetDevelopPath, IM_ARRAYSIZE(offsetDevelopPath));
   if (ImGui::Button("COMPILE SELECTED",
                     ImVec2{ImGui::GetContentRegionAvailWidth(), 30})) {
     // let s generate a compile request
-    if (currentSelectedItem != -1) {
-      m_currentSelectedShader = elementsToRender[currentSelectedItem];
+    if (m_currentSelectedItem != -1) {
+      m_currentSelectedShader = m_elementsToRender[m_currentSelectedItem];
       auto *event =
-          new ShaderCompileEvent(elementsToRender[currentSelectedItem],
-                                 useDevelopPath ? offsetDevelopPath : "");
+          new ShaderCompileEvent(m_elementsToRender[m_currentSelectedItem],
+                                 m_useDevelopPath ? offsetDevelopPath : "");
       globals::APPLICATION->queueEventForEndOfFrame(event);
     }
   }
 
   if (ImGui::CollapsingHeader("Console Output")) {
-    shouldRenderConsole = true;
-    console->Draw(&shouldRenderConsole);
+    m_shouldRenderConsole = true;
+    m_console->Draw(&m_shouldRenderConsole);
   } else {
-    shouldRenderConsole = false;
+    m_shouldRenderConsole = false;
   }
 
   ImGui::Separator();
   ImGui::End();
 }
 void ShaderCompilerWidget::log(const char *logValue) {
-  console->AddLog(logValue);
+  m_console->AddLog(logValue);
 }
 
 void ShaderCompilerWidget::requestCompile() {
   if (!m_currentSelectedShader.empty()) {
     auto *event =
         new ShaderCompileEvent(m_currentSelectedShader.c_str(),
-                               useDevelopPath ? offsetDevelopPath : "");
+                               m_useDevelopPath ? offsetDevelopPath : "");
     globals::APPLICATION->queueEventForEndOfFrame(event);
   }
 }

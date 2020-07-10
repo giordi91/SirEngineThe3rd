@@ -1,7 +1,6 @@
 #pragma once
-#include "SirEngine/graphics/cpuGraphicsStructures.h"
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace SirEngine {
 namespace debug {
@@ -9,28 +8,26 @@ struct GraphStatus;
 struct ShaderCompileConsole;
 
 struct ShaderCompilerWidget final {
-  ShaderCompilerWidget() : shaderName(""),offsetDevelopPath("../../"){};
+  ShaderCompilerWidget() : shaderName(""), offsetDevelopPath("../../"){};
   ~ShaderCompilerWidget();
   void initialize();
   void render();
   void log(const char* logValue);
   void requestCompile();
 
-  bool opened = false;
-  float width = 600;
-  float height = 300;
+  bool m_opened = false;
+  float m_width = 600;
+  float m_height = 300;
   char shaderName[200];
   char offsetDevelopPath[200];
-  std::vector<const char *> elementsToRender;
-  int currentSelectedItem = -1;
-  ShaderCompileConsole* console = nullptr;
-  bool shouldRenderConsole = true;
-  bool useDevelopPath = true;
+  std::vector<const char*> m_elementsToRender;
+  int m_currentSelectedItem = -1;
+  ShaderCompileConsole* m_console = nullptr;
+  bool m_shouldRenderConsole = true;
+  bool m_useDevelopPath = true;
 
   std::string m_currentSelectedShader;
-
-  
 };
 
-} // namespace debug
-} // namespace SirEngine
+}  // namespace debug
+}  // namespace SirEngine

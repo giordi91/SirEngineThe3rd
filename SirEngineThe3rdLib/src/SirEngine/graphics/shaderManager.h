@@ -1,9 +1,8 @@
 #pragma once
 
 #include <string>
-#include <unordered_map>
 
-#include "SirEngine/handle.h"
+#include "SirEngine/memory/resizableVector.h"
 
 namespace SirEngine::graphics {
 
@@ -23,8 +22,11 @@ class ShaderManager {
   virtual void loadShaderBinaryFile(const char *path) = 0;
   virtual void loadShadersInFolder(const char *directory) = 0;
 
+  // TODO ideally I would like to remove the string from interface
+  // the log is used to show in the ui the result of compilation
+  // we can probably return a const char* and let the user combine it
   virtual void recompileShader(const char *path, const char *offsetPath,
                                std::string *log) = 0;
-  virtual const std::vector<std::string> &getShaderNames() = 0;
+  virtual const ResizableVector<const char *> &getShaderNames() = 0;
 };
 }  // namespace SirEngine::graphics
