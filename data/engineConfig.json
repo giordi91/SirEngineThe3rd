@@ -20,7 +20,7 @@
   "windowHeight": 720,
 
   "======graphics config=====": 0, 
-  "graphicAPI": "Vulkan",
+  "graphicAPI": "DX12",
   "useCachedPSO" :  false,
   "frameBufferingCount" : 3 
 }

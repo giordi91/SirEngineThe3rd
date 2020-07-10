@@ -31,7 +31,7 @@ public:
   VkShaderManager() = default;
   ~VkShaderManager();
   // right now this is empty, is kept here for the time being
-  // just for simmetry with the other managers
+  // just for symmetry with the other managers
   void initialize();
   void loadShadersInFolder(const char *directory);
   void cleanup();
