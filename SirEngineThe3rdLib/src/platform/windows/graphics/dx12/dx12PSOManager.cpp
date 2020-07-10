@@ -45,7 +45,7 @@ D3D12_SHADER_BYTECODE getShaderByteCodeFromFullPath(const char *path) {
   }
   ID3D10Blob *blob =
       path != nullptr
-          ? dx12::SHADER_MANAGER->getShaderFromName(getFileName(path))
+          ? dx12::SHADER_MANAGER->getShaderFromName(getFileName(path).c_str())
           : nullptr;
   return {blob->GetBufferPointer(), blob->GetBufferSize()};
 }
@@ -310,8 +310,11 @@ void Dx12PSOManager::recompilePSOFromShader(const char *shaderName,
 
   // recompile all the shaders involved
   for (auto &shader : shadersToRecompile) {
-    dx12::SHADER_MANAGER->recompileShader(shader.c_str(), offsetPath,
-                                          &compileLog);
+    const char *log =
+        dx12::SHADER_MANAGER->recompileShader(shader.c_str(), offsetPath);
+    if (log != nullptr) {
+      compileLog += log;
+    }
   }
 
   // now that all shaders are recompiled we can recompile the pso

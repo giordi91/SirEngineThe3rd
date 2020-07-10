@@ -1,5 +1,4 @@
 #pragma once
-#include <d3dcommon.h>
 
 #include <cassert>
 
@@ -8,6 +7,7 @@
 #include "SirEngine/memory/stackAllocator.h"
 #include "SirEngine/memory/stringHashMap.h"
 
+struct ID3D10Blob;
 namespace SirEngine::dx12 {
 struct ShaderArgs;
 
@@ -21,7 +21,7 @@ struct ShaderMetadata {
   wchar_t *compilerArgs;
 };
 struct ShaderBlob {
-  ID3DBlob *shader;
+  ID3D10Blob *shader;
   ShaderMetadata *metadata;
 };
 
@@ -32,20 +32,20 @@ class Dx12ShaderManager final : public graphics::ShaderManager {
   void initialize() override;
   void loadShadersInFolder(const char *directory) override;
   void cleanup() override;
-  inline ID3DBlob *getShaderFromName(const std::string &name) const {
+  inline ID3D10Blob *getShaderFromName(const char *name) const {
     /*const auto found = m_stringToShader.find(name);
     if (found != m_stringToShader.end()) {
       return found->second.shader;
     }
     */
     // TODO ideally here we would want to get a ref, we will need to expand the
-    // map to do so
+    // hash map to do so
     ShaderBlob blob;
-    bool result = m_stringToShader.get(name.c_str(), blob);
+    bool result = m_stringToShader.get(name, blob);
     if (result) {
       return blob.shader;
     }
-    if (name == "null") {
+    if (strcmp(name ,"null")==0) {
       return nullptr;
     }
     assert(0 && "could not find shader");
@@ -57,13 +57,18 @@ class Dx12ShaderManager final : public graphics::ShaderManager {
   }
 
   Dx12ShaderManager() : m_stringToShader(400), m_shaderNames(400) {}
-  ~Dx12ShaderManager();
+  virtual ~Dx12ShaderManager();
   Dx12ShaderManager(const Dx12ShaderManager &) = delete;
   Dx12ShaderManager &operator=(const Dx12ShaderManager &) = delete;
+  Dx12ShaderManager(Dx12ShaderManager &&o) noexcept =
+      delete;  // move constructor
+  Dx12ShaderManager &operator=(Dx12ShaderManager &&other) =
+      delete;  // move assignment
+
   void loadShaderFile(const char *path) override;
   void loadShaderBinaryFile(const char *path) override;
-  void recompileShader(const char *path, const char *offsetPath,
-                       std::string *log) override;
+  const char *recompileShader(const char *path,
+                              const char *offsetPath) override;
 
  private:
   // 2 mb of data for the stack

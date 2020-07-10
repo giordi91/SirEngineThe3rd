@@ -4,7 +4,6 @@
 #include "SirEngine/animation/skeleton.h"
 #include "SirEngine/bufferManager.h"
 #include "SirEngine/graphics/renderingContext.h"
-
 #include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
 #include "platform/windows/graphics/dx12/dx12MaterialManager.h"
 
@@ -305,11 +304,9 @@ DebugDrawHandle Dx12DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
 
 void Dx12DebugRenderer::render(const TextureHandle input,
                                const TextureHandle depth) {
-	const DrawCallConfig config{
-      globals::ENGINE_CONFIG->m_windowWidth,
-      globals::ENGINE_CONFIG->m_windowHeight,
-      0
-  };
+  const DrawCallConfig config{
+      static_cast<uint32_t>(globals::ENGINE_CONFIG->m_windowWidth),
+      static_cast<uint32_t>(globals::ENGINE_CONFIG->m_windowHeight), 0};
   globals::RENDERING_CONTEXT->renderQueueType(config,
                                               SHADER_QUEUE_FLAGS::DEBUG);
 }
@@ -373,7 +370,7 @@ DebugDrawHandle Dx12DebugRenderer::drawBoundingBoxes(const BoundingBox *data,
                                                      const char *debugName) {
   // 12 is the number of lines needed for the AABB, 4 top, 4 bottom, 4 vertical
   // two is because we need two points per line, we are not doing trianglestrip
-  int totalSize = 4 * count * 12 * 2; // here 4 is the xmfloat4
+  int totalSize = 4 * count * 12 * 2;  // here 4 is the xmfloat4
 
   auto *points = reinterpret_cast<float *>(
       globals::FRAME_ALLOCATOR->allocate(sizeof(glm::vec4) * count * 12 * 2));
@@ -415,7 +412,7 @@ DebugDrawHandle Dx12DebugRenderer::drawAnimatedBoundingBoxes(
   // first get AABB data
   // 12 is the number of lines needed for the AABB, 4 top, 4 bottom, 4 vertical
   // two is because we need two points per line, we are not doing trianglestrip
-  int totalSize = 3 * count * 12 * 2; // here 3 is the xmfloat3
+  int totalSize = 3 * count * 12 * 2;  // here 3 is the xmfloat3
 
   auto *points = reinterpret_cast<float *>(
       globals::FRAME_ALLOCATOR->allocate(sizeof(glm::vec3) * count * 12 * 2));
@@ -471,7 +468,7 @@ DebugDrawHandle Dx12DebugRenderer::drawAnimatedBoundingBoxFromFullPoints(
   // first get AABB data
   // 12 is the number of lines needed for the AABB, 4 top, 4 bottom, 4 vertical
   // two is because we need two points per line, we are not doing trianglestrip
-  const int totalSize = 4 * count * 12 * 2; // here 4 is the xmfloat3
+  const int totalSize = 4 * count * 12 * 2;  // here 4 is the xmfloat3
 
   auto *points = reinterpret_cast<float *>(
       globals::FRAME_ALLOCATOR->allocate(sizeof(glm::vec4) * count * 12 * 2));
@@ -506,7 +503,6 @@ DebugDrawHandle Dx12DebugRenderer::drawAnimatedBoundingBoxFromFullPoints(
   assert(counter <= totalSize);
 
   if (handle.isHandleValid()) {
-
     // should not be a compound
     assert((handle.handle & (1 << 31)) == 0);
     // lets get the trackers out for each one
@@ -553,7 +549,7 @@ DebugDrawHandle Dx12DebugRenderer::drawMatrix(const glm::mat4 &mat, float size,
                                               glm::vec4 color,
                                               const char *debugName) {
   const int totalSize =
-      4 * 2 * 3; // 3 axis, each with two points, 4 floats each point
+      4 * 2 * 3;  // 3 axis, each with two points, 4 floats each point
   auto *points = reinterpret_cast<float *>(
       globals::FRAME_ALLOCATOR->allocate(sizeof(float) * totalSize));
 
@@ -595,4 +591,4 @@ DebugDrawHandle Dx12DebugRenderer::drawMatrix(const glm::mat4 &mat, float size,
 
   return returnHandle;
 }
-} // namespace SirEngine::dx12
+}  // namespace SirEngine::dx12

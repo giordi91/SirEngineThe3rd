@@ -301,11 +301,12 @@ PSOCompileResult processComputePSO(nlohmann::json &jobj, const char *path,
   csArgs.debug = true;
   csArgs.type = L"cs_6_2";
 
-  std::string log;
-  auto *computeShader = compiler.compileShader(csPath, csArgs, &log);
+  ShaderCompileResult compileResult =
+      compiler.compileShader(csPath, csArgs);
 
-  D3D12_SHADER_BYTECODE computeShaderByteCode{computeShader->GetBufferPointer(),
-                                              computeShader->GetBufferSize()};
+  D3D12_SHADER_BYTECODE computeShaderByteCode{
+      compileResult.blob->GetBufferPointer(),
+      compileResult.blob->GetBufferSize()};
   ID3D12PipelineState *pso;
   // configure compute shader
   auto *cdesc = new D3D12_COMPUTE_PIPELINE_STATE_DESC{};
@@ -376,9 +377,8 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj, const char *path,
   vsArgs.debug = true;
   vsArgs.type = L"vs_6_2";
 
-  std::string log;
-  auto *vs = compiler.compileShader(vsPath, vsArgs, &log);
-  if (vs == nullptr) {
+  auto vsResult = compiler.compileShader(vsPath, vsArgs);
+  if (vsResult.blob == nullptr) {
     return PSOCompileResult{};
   }
 
@@ -386,12 +386,13 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj, const char *path,
   psArgs.entryPoint = L"PS";
   psArgs.debug = true;
   psArgs.type = L"ps_6_2";
-  ID3DBlob *ps = nullptr;
+  ID3DBlob *ps= nullptr;
   if (PSname != "null") {
-    ps = compiler.compileShader(psPath, psArgs, &log);
-    if (ps == nullptr) {
+    auto psResult = compiler.compileShader(psPath, psArgs);
+    if (psResult.blob == nullptr) {
       return PSOCompileResult{};
     }
+    ps = psResult.blob;
   }
 
   const std::string rasterStateString =
@@ -447,8 +448,8 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj, const char *path,
   // NOTE: we are not using input assembler at all
   psoDesc->InputLayout = {nullptr, 0};
   psoDesc->pRootSignature = rootSignature;
-  psoDesc->VS = {reinterpret_cast<BYTE *>(vs->GetBufferPointer()),
-                 vs->GetBufferSize()};
+  psoDesc->VS = {reinterpret_cast<BYTE *>(vsResult.blob->GetBufferPointer()),
+                 vsResult.blob->GetBufferSize()};
 
   psoDesc->PS = {nullptr, 0};
   if (ps != nullptr) {

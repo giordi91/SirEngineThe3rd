@@ -1,6 +1,8 @@
-#include "SirEngine/core.h"
 #include <d3dcommon.h>
+
 #include <string>
+
+#include "SirEngine/core.h"
 #include "SirEngine/memory/resizableVector.h"
 
 struct IDxcCompiler;
@@ -11,10 +13,11 @@ namespace SirEngine {
 template class SIR_ENGINE_API ResizableVector<wchar_t *>;
 namespace dx12 {
 
-
 struct SIR_ENGINE_API ShaderArgs {
   ShaderArgs()
-      : entryPoint(nullptr), type(nullptr), compilerArgs(nullptr),
+      : entryPoint(nullptr),
+        type(nullptr),
+        compilerArgs(nullptr),
         splitCompilerArgsPointers(20){};
   bool debug = false;
 
@@ -25,19 +28,24 @@ struct SIR_ENGINE_API ShaderArgs {
   ResizableVector<wchar_t *> splitCompilerArgsPointers;
 };
 
+struct SIR_ENGINE_API ShaderCompileResult {
+  ID3D10Blob *blob;
+  const char *logResult;
+};
+
 class SIR_ENGINE_API DXCShaderCompiler {
-public:
+ public:
   DXCShaderCompiler();
   ~DXCShaderCompiler();
-  ID3DBlob *compileShader(const char *shaderPath, ShaderArgs &shaderArgs,
-                          std::string *log = nullptr);
+  ShaderCompileResult compileShader(const char *shaderPath,
+                                    ShaderArgs &shaderArgs);
   unsigned int getShaderFlags(const ShaderArgs &shaderArgs);
 
-private:
+ private:
   IDxcCompiler *pCompiler = nullptr;
   IDxcLibrary *pLibrary = nullptr;
   IDxcIncludeHandler *includeHandle = nullptr;
 };
 
-} // namespace dx12
-} // namespace SirEngine
+}  // namespace dx12
+}  // namespace SirEngine
