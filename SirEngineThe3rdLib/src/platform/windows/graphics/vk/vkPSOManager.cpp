@@ -804,6 +804,6 @@ PSOHandle VkPSOManager::loadRawPSO(const char *file) {
 
 void VkPSOManager::recompilePSOFromShader(const char *shaderName,
                                           const char *getOffsetPath) {
-  assert(0);
+    std::cout<<"requested shader reload "<<shaderName<<std::endl;
 }
 }  // namespace SirEngine::vk

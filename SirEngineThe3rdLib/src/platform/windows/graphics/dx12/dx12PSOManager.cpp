@@ -14,7 +14,7 @@
 #include "SirEngine/runtimeString.h"
 #include "nlohmann/json.hpp"
 #include "platform/windows/graphics/dx12/dx12RootSignatureManager.h"
-#include "platform/windows/graphics/dx12/shaderManager.h"
+#include "platform/windows/graphics/dx12/dx12ShaderManager.h"
 
 namespace SirEngine::dx12 {
 

@@ -38,7 +38,7 @@ class Dx12PSOManager final : public PSOManager {
   void loadCachedPSOInFolder(const char *directory) override;
 
   void recompilePSOFromShader(const char *shaderName,
-                              const char *getOffsetPath);
+                              const char *getOffsetPath) override;
   inline void bindPSO(const PSOHandle handle,
                       ID3D12GraphicsCommandList2 *commandList) const {
     assertMagicNumber(handle);
@@ -51,10 +51,6 @@ class Dx12PSOManager final : public PSOManager {
   TOPOLOGY_TYPE getTopology(const PSOHandle psoHandle) const ;
 
  private:
-  // PSOCompileResult processComputePSO(nlohmann::json &jobj,
-  //                                   const std::string &path);
-  // PSOCompileResult processRasterPSO(nlohmann::json &jobj,
-  //                                  const std::string &path);
 
   // debugging function to be able to print to console the composition of a
   // state object

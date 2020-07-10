@@ -1,4 +1,5 @@
 #include "SirEngine/debugUiWidgets/memoryPoolTrackerWidget.h"
+
 #include "SirEngine/graphics/graphicsDefines.h"
 #include "SirEngine/runtimeString.h"
 
@@ -54,14 +55,16 @@ void clusterAllocations(const ResizableVector<BufferRangeTracker> *allocs,
     }
 
     accum += current.m_actualAllocSize;
-    itoa(current.m_actualAllocSize, numberBuffer, 10);
+    itoa(static_cast<int>(current.m_actualAllocSize), numberBuffer, 10);
     const char *sizeTemp = frameConcatenation(numberBuffer, " Bytes \n");
     const char *allocTemp = frameConcatenation("alloc: ", sizeTemp);
 
-    info.m_totalAllocationInBytes += current.m_actualAllocSize;
-    info.m_totalUsedAllocationInBytes += current.m_range.m_size;
-    info.m_wastedMemoryInBytes +=
-        current.m_actualAllocSize - current.m_range.m_size;
+    info.m_totalAllocationInBytes +=
+        static_cast<uint32_t>(current.m_actualAllocSize);
+    info.m_totalUsedAllocationInBytes +=
+        static_cast<uint32_t>(current.m_range.m_size);
+    info.m_wastedMemoryInBytes += static_cast<uint32_t>(
+        current.m_actualAllocSize - current.m_range.m_size);
 
     name = frameConcatenation(name, allocTemp);
 
@@ -93,8 +96,7 @@ void renderMemoryPoolTracker(
 
   ImGuiWindow *window = ImGui::GetCurrentWindow();
   const ImGuiID id = window->GetID("");
-  if (window->SkipItems)
-    return;
+  if (window->SkipItems) return;
 
   ImGuiContext &g = *GImGui;
   const ImGuiStyle &style = g.Style;
@@ -105,8 +107,7 @@ void renderMemoryPoolTracker(
   ImVec2 size = ImGui::CalcItemSize(ImVec2(0.f, 0.f), frameWidth, 50);
   ImRect bb(pos, pos + size);
   ImGui::ItemSize(size, style.FramePadding.y);
-  if (!ImGui::ItemAdd(bb, 0))
-    return;
+  if (!ImGui::ItemAdd(bb, 0)) return;
 
   // Render BG
   ImGui::RenderFrame(bb.Min, bb.Max, ImGui::GetColorU32(ImGuiCol_FrameBg), true,
@@ -114,44 +115,43 @@ void renderMemoryPoolTracker(
 
   bb.Expand(ImVec2(-style.FrameBorderSize, -style.FrameBorderSize));
 
-  int count = allocs->size();
-  auto range = double(poolRangeInBytes * MB_TO_BYTE);
+  auto range = static_cast<double>(poolRangeInBytes * MB_TO_BYTE);
 
   double threshold = 1.0 / (bb.GetSize().x);
-  size_t minAlloc = threshold * range;
+  auto minAlloc = static_cast<size_t>(threshold * range);
 
   std::vector<DrawAlloc> clusteredAllocs;
   DrawAllocInfo info{};
   clusterAllocations(allocs, clusteredAllocs, minAlloc, info);
 
-  const BufferRangeTracker &tracker = (*allocs)[0];
-  double allocRation = double(tracker.m_range.m_size) / range;
-  double allocOffset = double(tracker.m_range.m_offset) / range;
-
   for (size_t i = 0; i < clusteredAllocs.size(); ++i) {
-
     auto minB = bb.Min;
-    minB.x = (clusteredAllocs[i].m_offset / range) * bb.GetSize().x + bb.Min.x;
-    auto maxB = bb.Max;
-    maxB.x = (clusteredAllocs[i].m_offset + clusteredAllocs[i].m_size) / range *
+    minB.x = static_cast<float>(clusteredAllocs[i].m_offset / range) *
                  bb.GetSize().x +
              bb.Min.x;
-    ImRect innerBB(minB, maxB);
+    auto maxB = bb.Max;
+    maxB.x =
+        static_cast<float>(
+            (clusteredAllocs[i].m_offset + clusteredAllocs[i].m_size) / range) *
+            bb.GetSize().x +
+        bb.Min.x;
+    const ImRect innerBB(minB, maxB);
     ImGui::RenderRectFilledRangeH(
         window->DrawList, bb, ImGui::GetColorU32(COLORS[i]),
         static_cast<float>(clusteredAllocs[i].m_offset / range),
-        static_cast<float>((clusteredAllocs[i].m_offset + clusteredAllocs[i].m_size) / range),
+        static_cast<float>(
+            (clusteredAllocs[i].m_offset + clusteredAllocs[i].m_size) / range),
         style.FrameRounding);
 
     const bool hovered = ImGui::ItemHoverable(bb, id);
     if (hovered && innerBB.Contains(g.IO.MousePos)) {
-      ImGui::SetTooltip(clusteredAllocs[i].m_name);
+      ImGui::SetTooltip("%s",clusteredAllocs[i].m_name);
     }
   }
 
   std::stringstream stream;
-  stream << std::fixed << std::setprecision(2) << "Pool Size: " << range*BYTE_TO_MB
-         << "MB\n"
+  stream << std::fixed << std::setprecision(2)
+         << "Pool Size: " << range * BYTE_TO_MB << "MB\n"
          << "Allocation count: " << info.m_allocationCount
          << ".\nFree allocations: " << info.m_freeAllocations
          << ".\nTotal alloc: " << info.m_totalAllocationInBytes * BYTE_TO_MB
@@ -163,4 +163,4 @@ void renderMemoryPoolTracker(
          << "MB  " << info.m_wastedMemoryInBytes << "Bytes\n";
   ImGui::Text(stream.str().c_str());
 }
-} // namespace SirEngine::debug
+}  // namespace SirEngine::debug

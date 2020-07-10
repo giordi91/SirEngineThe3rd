@@ -122,7 +122,7 @@ void PostProcessStack::populateNodePorts() {
   bindings.colorRT[0].neededResourceState = RESOURCE_STATE::RENDER_TARGET;
   bindings.colorRT[0].isSwapChainBackBuffer = 0;
 
-  bindings.extraBindings = reinterpret_cast<RTBinding *>(
+  bindings.extraBindings = static_cast<RTBinding *>(
       globals::PERSISTENT_ALLOCATOR->allocate(sizeof(RTBinding)));
   bindings.extraBindingsCount = 1;
   bindings.extraBindings[0].handle = inputRTHandle;

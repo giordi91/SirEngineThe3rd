@@ -1,20 +1,20 @@
 #include "SirEngine/debugUiWidgets/shaderRecompileWidget.h"
+
 #include "SirEngine/application.h"
 #include "SirEngine/events/shaderCompileEvent.h"
 #include "SirEngine/globals.h"
 #include "imgui/imgui.h"
 #include "platform/windows/graphics/dx12/DX12.h"
-#include "platform/windows/graphics/dx12/shaderManager.h"
+#include "platform/windows/graphics/dx12/dx12ShaderManager.h"
 
-namespace SirEngine::debug
-{
+namespace SirEngine::debug {
 
 struct ShaderCompileConsole {
   char InputBuf[256];
   ImVector<char *> Items;
   bool ScrollToBottom;
   ImVector<char *> History;
-  int HistoryPos; // -1: new line, 0..History.Size-1 browsing history.
+  int HistoryPos;  // -1: new line, 0..History.Size-1 browsing history.
   ImVector<const char *> Commands;
 
   ShaderCompileConsole() {
@@ -27,8 +27,7 @@ struct ShaderCompileConsole {
   }
   ~ShaderCompileConsole() {
     ClearLog();
-    for (int i = 0; i < History.Size; i++)
-      free(History[i]);
+    for (int i = 0; i < History.Size; i++) free(History[i]);
   }
 
   // Portable helpers
@@ -56,14 +55,12 @@ struct ShaderCompileConsole {
   }
   static void Strtrim(char *str) {
     char *str_end = str + strlen(str);
-    while (str_end > str && str_end[-1] == ' ')
-      str_end--;
+    while (str_end > str && str_end[-1] == ' ') str_end--;
     *str_end = 0;
   }
 
   void ClearLog() {
-    for (int i = 0; i < Items.Size; i++)
-      free(Items[i]);
+    for (int i = 0; i < Items.Size; i++) free(Items[i]);
     Items.clear();
     ScrollToBottom = true;
   }
@@ -92,8 +89,7 @@ struct ShaderCompileConsole {
     // return true when hovering the title bar. Here we create a context menu
     // only available from the title bar.
     if (ImGui::BeginPopupContextItem()) {
-      if (ImGui::MenuItem("Close Console"))
-        *p_open = false;
+      if (ImGui::MenuItem("Close Console")) *p_open = false;
       ImGui::EndPopup();
     }
     // TODO: display items starting from the bottom
@@ -106,8 +102,7 @@ struct ShaderCompileConsole {
       ClearLog();
     }
     ImGui::SameLine();
-    if (ImGui::SmallButton("Scroll to bottom"))
-      ScrollToBottom = true;
+    if (ImGui::SmallButton("Scroll to bottom")) ScrollToBottom = true;
     ImGui::Separator();
 
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
@@ -116,14 +111,13 @@ struct ShaderCompileConsole {
 
     const float footer_height_to_reserve =
         ImGui::GetStyle().ItemSpacing.y +
-        ImGui::GetFrameHeightWithSpacing(); // 1 separator, 1 input text
+        ImGui::GetFrameHeightWithSpacing();  // 1 separator, 1 input text
     ImGui::BeginChild(
         "ScrollingRegion", ImVec2(0, -footer_height_to_reserve), false,
-        ImGuiWindowFlags_HorizontalScrollbar); // Leave room for 1 separator + 1
-                                               // InputText
+        ImGuiWindowFlags_HorizontalScrollbar);  // Leave room for 1 separator +
+                                                // 1 InputText
     if (ImGui::BeginPopupContextWindow()) {
-      if (ImGui::Selectable("Clear"))
-        ClearLog();
+      if (ImGui::Selectable("Clear")) ClearLog();
       ImGui::EndPopup();
     }
 
@@ -150,7 +144,7 @@ struct ShaderCompileConsole {
     // similar to what ImGuiListClipper does. Or split your data into fixed
     // height items to allow random-seeking into your list.
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing,
-                        ImVec2(4, 1)); // Tighten spacing
+                        ImVec2(4, 1));  // Tighten spacing
 
     ImVec4 col_default_text = ImGui::GetStyleColorVec4(ImGuiCol_Text);
     for (int i = 0; i < Items.Size; i++) {
@@ -165,8 +159,7 @@ struct ShaderCompileConsole {
       ImGui::PopStyleColor();
     }
 
-    if (ScrollToBottom)
-      ImGui::SetScrollHereY(1.0f);
+    if (ScrollToBottom) ImGui::SetScrollHereY(1.0f);
     ScrollToBottom = false;
     ImGui::PopStyleVar();
     ImGui::EndChild();
@@ -181,15 +174,13 @@ void ShaderCompilerWidget::initialize() {
 }
 static bool fuzzy_match_simple(char const *pattern, char const *str) {
   while (*pattern != '\0' && *str != '\0') {
-    if (tolower(*pattern) == tolower(*str))
-      ++pattern;
+    if (tolower(*pattern) == tolower(*str)) ++pattern;
     ++str;
   }
 
   return *pattern == '\0' ? true : false;
 }
 void ShaderCompilerWidget::render() {
-
   ImVec2 winPos{globals::ENGINE_CONFIG->m_windowWidth - width - 100, 0};
   ImGui::SetNextWindowPos(winPos, ImGuiCond_FirstUseEver);
   ImGui::SetNextWindowSize(ImVec2(width, height), ImGuiCond_FirstUseEver);
@@ -200,18 +191,17 @@ void ShaderCompilerWidget::render() {
   // static ImGuiTextFilter filter;
   ImGui::InputText("shader filter", shaderName, IM_ARRAYSIZE(shaderName));
   ImGui::Separator();
-  const std::unordered_map<std::string, dx12::ShaderBlob> shaders =
-      dx12::SHADER_MANAGER->getShaderMap();
+  const std::vector<std::string> &shaders =
+      dx12::SHADER_MANAGER->getShaderNames();
 
   const char *pattern = &shaderName[0];
 
   elementsToRender.clear();
   for (const auto &shader : shaders) {
-
-    bool shouldRender = fuzzy_match_simple(pattern, shader.first.c_str());
+    bool shouldRender = fuzzy_match_simple(pattern, shader.c_str());
     shouldRender = strlen(pattern) == 0 ? true : shouldRender;
     if (shouldRender) {
-      elementsToRender.push_back(shader.first.c_str());
+      elementsToRender.push_back(shader.c_str());
     }
   }
 
@@ -256,4 +246,4 @@ void ShaderCompilerWidget::requestCompile() {
     globals::APPLICATION->queueEventForEndOfFrame(event);
   }
 }
-} // namespace SirEngine
+}  // namespace SirEngine::debug

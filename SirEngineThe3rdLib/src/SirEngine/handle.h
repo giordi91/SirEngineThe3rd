@@ -3,14 +3,16 @@
 
 namespace SirEngine {
 
-template <typename T> inline uint32_t getIndexFromHandle(const T h) {
-  constexpr uint32_t STANDARD_INDEX_MASK = (1 << 16) - 1;
-  return h.handle & STANDARD_INDEX_MASK;
+template <typename T>
+inline uint32_t getIndexFromHandle(const T h) {
+  constexpr uint32_t standardIndexMask = (1 << 16) - 1;
+  return h.handle & standardIndexMask;
 }
-template <typename T> inline uint32_t getMagicFromHandle(const T h) {
-  constexpr uint32_t STANDARD_INDEX_MASK = (1 << 16) - 1;
-  const uint32_t STANDARD_MAGIC_NUMBER_MASK = ~STANDARD_INDEX_MASK;
-  return (h.handle & STANDARD_MAGIC_NUMBER_MASK) >> 16;
+template <typename T>
+inline uint32_t getMagicFromHandle(const T h) {
+  constexpr uint32_t standardIndexMask = (1 << 16) - 1;
+  const uint32_t standardMagicNumberMask = ~standardIndexMask;
+  return (h.handle & standardMagicNumberMask) >> 16;
 }
 
 struct AssetDataHandle final {
@@ -49,7 +51,7 @@ struct BufferHandle final {
   [[nodiscard]] bool isHandleValid() const { return handle != 0; }
 };
 
-struct StreamHandle {
+struct ShaderHandle {
   uint32_t handle;
   [[nodiscard]] bool isHandleValid() const { return handle != 0; }
 };
@@ -84,4 +86,4 @@ struct BufferBindingsHandle {
   [[nodiscard]] bool isHandleValid() const { return handle != 0; }
 };
 
-} // namespace SirEngine
+}  // namespace SirEngine

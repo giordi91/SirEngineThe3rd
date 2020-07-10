@@ -42,10 +42,10 @@ class PostProcessStack final : public GNode {
  public:
   explicit PostProcessStack(GraphAllocators &allocators);
   virtual ~PostProcessStack() = default;
-  virtual void initialize() override;
+  void initialize() override;
   void clear() override;
-  virtual void compute() override;
-  virtual void onResizeEvent(int screenWidth, int screenHeight) override;
+  void compute() override;
+  void onResizeEvent(int screenWidth, int screenHeight) override;
   inline void registerPassToStack(PostProcessEffect *pass) {
     m_stack.push_back(pass);
   };
@@ -63,7 +63,6 @@ class PostProcessStack final : public GNode {
 
  private:
   std::vector<PostProcessEffect *> m_stack;
-  std::vector<TextureHandle> m_buffers;
   int m_internalCounter = 0;
   // handles
   TextureHandle inputRTHandle{};

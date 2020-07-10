@@ -10,14 +10,17 @@
 #include "SirEngine/graphics/camera.h"
 #include "SirEngine/graphics/debugRenderer.h"
 #include "SirEngine/constantBufferManager.h"
+#include "SirEngine/log.h"
 #include "SirEngine/graphics/nodes/FinalBlitNode.h"
 #include "SirEngine/graphics/nodes/debugDrawNode.h"
 #include "SirEngine/graphics/nodes/forwardPlus.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/materialManager.h"
+#include "SirEngine/psoManager.h"
 #include "SirEngine/graphics/nodes/skybox.h"
 #include "SirEngine/graphics/postProcess/postProcessStack.h"
 #include "SirEngine/graphics/postProcess/effects/gammaAndToneMappingEffect.h"
+#include "SirEngine/events/shaderCompileEvent.h"
 
 namespace SirEngine {
 void VkTempLayer::initGrass() {
@@ -208,8 +211,8 @@ void VkTempLayer::onEvent(Event &event) {
       SE_BIND_EVENT_FN(VkTempLayer::onResizeEvent));
   // dispatcher.dispatch<DebugRenderConfigChanged>(
   //    SE_BIND_EVENT_FN(VkTempLayer::onDebugConfigChanged));
-  // dispatcher.dispatch<ShaderCompileEvent>(
-  //    SE_BIND_EVENT_FN(VkTempLayer::onShaderCompileEvent));
+   dispatcher.dispatch<ShaderCompileEvent>(
+      SE_BIND_EVENT_FN(VkTempLayer::onShaderCompileEvent));
   // dispatcher.dispatch<ReloadScriptsEvent>(
   //    SE_BIND_EVENT_FN(VkTempLayer::onReloadScriptEvent));
 }
@@ -395,12 +398,14 @@ bool VkTempLayer::onDebugConfigChanged(DebugRenderConfigChanged &e) {
   }
   return true;
 }
+*/
 bool VkTempLayer::onShaderCompileEvent(ShaderCompileEvent &e) {
   SE_CORE_INFO("Reading to compile shader");
-  dx12::PSO_MANAGER->recompilePSOFromShader(e.getShader(), e.getOffsetPath());
+  globals::PSO_MANAGER->recompilePSOFromShader(e.getShader(), e.getOffsetPath());
   return true;
 }
 
+/*
 bool VkTempLayer::onReloadScriptEvent(ReloadScriptsEvent &) {
   globals::SCRIPTING_CONTEXT->reloadContext();
   return true;

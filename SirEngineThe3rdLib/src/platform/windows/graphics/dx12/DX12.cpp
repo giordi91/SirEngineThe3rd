@@ -22,7 +22,7 @@
 #include "platform/windows/graphics/dx12/dx12RootSignatureManager.h"
 #include "platform/windows/graphics/dx12/dx12SwapChain.h"
 #include "platform/windows/graphics/dx12/dx12TextureManager.h"
-#include "platform/windows/graphics/dx12/shaderManager.h"
+#include "platform/windows/graphics/dx12/dx12ShaderManager.h"
 
 #undef max
 #undef min
@@ -46,7 +46,7 @@ Dx12TextureManager *TEXTURE_MANAGER = nullptr;
 Dx12MeshManager *MESH_MANAGER = nullptr;
 Dx12MaterialManager *MATERIAL_MANAGER = nullptr;
 Dx12ConstantBufferManager *CONSTANT_BUFFER_MANAGER = nullptr;
-ShaderManager *SHADER_MANAGER = nullptr;
+Dx12ShaderManager *SHADER_MANAGER = nullptr;
 Dx12PSOManager *PSO_MANAGER = nullptr;
 Dx12RootSignatureManager *ROOT_SIGNATURE_MANAGER = nullptr;
 BufferManagerDx12 *BUFFER_MANAGER = nullptr;
@@ -184,7 +184,7 @@ bool initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
   globals::ASSET_MANAGER = new AssetManager();
   globals::ASSET_MANAGER->initialize();
 
-  SHADER_MANAGER = new ShaderManager();
+  SHADER_MANAGER = new Dx12ShaderManager();
   SHADER_MANAGER->initialize();
   SHADER_MANAGER->loadShadersInFolder(
       frameConcatenation(globals::ENGINE_CONFIG->m_dataSourcePath,
