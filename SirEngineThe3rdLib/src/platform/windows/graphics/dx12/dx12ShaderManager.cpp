@@ -9,22 +9,21 @@
 #include "SirEngine/runtimeString.h"
 #include "platform/windows/graphics/dx12/shaderCompiler.h"
 
-namespace SirEngine {
-namespace dx12 {
+namespace SirEngine::dx12 {
 
 void Dx12ShaderManager::cleanup() {
   // we need to de-allocate everything
-  for (auto s : m_stringToShader) {
-    s.second.shader->Release();
-  }
-  m_stringToShader.clear();
+  // for (auto s : m_stringToShader) {
+  //  s.second.shader->Release();
+  //}
+  // m_stringToShader.clear();
 }
 
 ID3DBlob *loadCompiledShader(const std::string &filename) {
   std::ifstream fin(filename, std::ios::binary);
   assert(!fin.fail());
   fin.seekg(0, std::ios_base::end);
-  std::ifstream::pos_type size = (int)fin.tellg();
+  std::ifstream::pos_type size = static_cast<int>(fin.tellg());
   fin.seekg(0, std::ios_base::beg);
 
   ID3DBlob *blob;
@@ -39,10 +38,13 @@ ID3DBlob *loadCompiledShader(const std::string &filename) {
 void Dx12ShaderManager::loadShaderFile(const char *path) {
   auto expPath = std::filesystem::path(path);
   std::string name = expPath.stem().string();
-  if (m_stringToShader.find(name) == m_stringToShader.end()) {
+
+  if (!m_stringToShader.containsKey(name.c_str())) {
     ID3DBlob *blob = loadCompiledShader(path);
-    m_stringToShader[name].shader = blob;
-    m_shaderNames.push_back(name);
+    const char *cname = globals::STRING_POOL->allocatePersistent(name.c_str());
+    // m_stringToShader[name].shader = blob;
+    m_stringToShader.insert(name.c_str(), {blob, nullptr});
+    m_shaderNames.pushBack(cname);
   }
 }
 
@@ -98,12 +100,13 @@ ShaderMetadata *extractShaderMetadata(StackAllocator &alloc,
 void Dx12ShaderManager::loadShaderBinaryFile(const char *path) {
   const auto expPath = std::filesystem::path(path);
   const std::string name = expPath.stem().string();
-  if (m_stringToShader.find(name) == m_stringToShader.end()) {
+  if (!m_stringToShader.containsKey(name.c_str())) {
     // TODO just use scrap memory for this instead of a heap alloc
     std::vector<char> data;
     readAllBytes(path, data);
 
-    const auto mapper = getMapperData<ShaderMapperData>(data.data());
+    const ShaderMapperData *const mapper =
+        getMapperData<ShaderMapperData>(data.data());
     void *shaderPointer = data.data() + sizeof(BinaryFileHeader);
     ID3DBlob *blob;
     const HRESULT hr = D3DCreateBlob(mapper->shaderSizeInByte, &blob);
@@ -113,8 +116,9 @@ void Dx12ShaderManager::loadShaderBinaryFile(const char *path) {
     ShaderMetadata *metadata =
         extractShaderMetadata(m_metadataAllocator, mapper, shaderPointer);
 
-    m_stringToShader[name] = ShaderBlob{blob, metadata};
-    m_shaderNames.push_back(name);
+    const char *cname = globals::STRING_POOL->allocatePersistent(name.c_str());
+    m_stringToShader.insert(cname, ShaderBlob{blob, metadata});
+    m_shaderNames.pushBack(cname);
   }
 }
 
@@ -122,12 +126,16 @@ void Dx12ShaderManager::recompileShader(const char *path,
                                         const char *offsetPath,
                                         std::string *log) {
   // first thing first we need to get the shader metadata
-  auto found = m_stringToShader.find(path);
-  if (found == m_stringToShader.end()) {
+  ShaderBlob blob;
+  bool result = m_stringToShader.get(path, blob);
+  // auto found = m_stringToShader.find(path);
+  // if (found == m_stringToShader.end()) {
+  //  assert(0 && "could not find shader you are asking to recompile");
+  //}
+  if (!result) {
     assert(0 && "could not find shader you are asking to recompile");
   }
 
-  ShaderBlob &blob = found->second;
   ShaderMetadata *meta = blob.metadata;
   ShaderArgs args;
   args.debug = meta->shaderFlags & SHADER_FLAGS::DEBUG;
@@ -154,7 +162,7 @@ void Dx12ShaderManager::recompileShader(const char *path,
     blob.shader = compiledShader;
     // here we recompile and override and existing one no need to update the
     // list of names
-    m_stringToShader[name] = blob;
+    m_stringToShader.insert(name.c_str(), blob);
 
     // update log
     if (log != nullptr) {
@@ -189,6 +197,4 @@ void Dx12ShaderManager::loadShadersInFolder(const char *directory) {
     loadShaderFile(p.c_str());
   }
 }
-
-}  // namespace dx12
-}  // namespace SirEngine
+}  // namespace SirEngine::dx12

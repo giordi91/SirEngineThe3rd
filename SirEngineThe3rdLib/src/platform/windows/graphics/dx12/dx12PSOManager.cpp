@@ -270,8 +270,6 @@ void Dx12PSOManager::recompilePSOFromShader(const char *shaderName,
   // shaders to recompile
   std::vector<std::string> shadersToRecompile;
   shadersToRecompile.reserve(10);
-  std::string vs;
-  std::string ps;
   int psoCount = psos->size();
   for (int i = 0; i < psoCount; ++i) {
     const char *pso = (*psos)[i];
@@ -294,9 +292,11 @@ void Dx12PSOManager::recompilePSOFromShader(const char *shaderName,
       //  break;
       //}
       case (PSOType::RASTER): {
-        vs = getValueIfInJson(jobj, PSO_KEY_VS_SHADER, DEFAULT_STRING);
+        std::string vs =
+            getValueIfInJson(jobj, PSO_KEY_VS_SHADER, DEFAULT_STRING);
         assert(!vs.empty());
-        ps = getValueIfInJson(jobj, PSO_KEY_PS_SHADER, DEFAULT_STRING);
+        std::string ps =
+            getValueIfInJson(jobj, PSO_KEY_PS_SHADER, DEFAULT_STRING);
         assert(!ps.empty());
         shadersToRecompile.push_back(vs);
         shadersToRecompile.push_back(ps);
