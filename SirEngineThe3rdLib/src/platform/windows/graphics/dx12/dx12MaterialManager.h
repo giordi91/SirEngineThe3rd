@@ -109,7 +109,7 @@ class Dx12MaterialManager final : public MaterialManager {
 
  private:
   inline void assertMagicNumber(const MaterialHandle handle) {
-    const uint16_t magic = getMagicFromHandle(handle);
+    const uint32_t magic = getMagicFromHandle(handle);
     const uint32_t idx = getIndexFromHandle(handle);
     assert(m_materialTextureHandles[idx].magicNumber == magic &&
            "invalid magic handle for constant buffer");

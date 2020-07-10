@@ -1,7 +1,5 @@
 #pragma once
 
-#include <string>
-
 #include "SirEngine/memory/resizableVector.h"
 
 namespace SirEngine::graphics {
@@ -12,6 +10,8 @@ class ShaderManager {
   ShaderManager() = default;
   ShaderManager(const ShaderManager &) = delete;
   ShaderManager &operator=(const ShaderManager &) = delete;
+  ShaderManager(ShaderManager &&o) noexcept = delete;        // move constructor
+  ShaderManager &operator=(ShaderManager &&other) = delete;  // move assignment
 
   // right now this is empty, is kept here for the time being
   // just for symmetry with the other managers
@@ -25,8 +25,8 @@ class ShaderManager {
   // TODO ideally I would like to remove the string from interface
   // the log is used to show in the ui the result of compilation
   // we can probably return a const char* and let the user combine it
-  virtual void recompileShader(const char *path, const char *offsetPath,
-                               std::string *log) = 0;
+  virtual const char *recompileShader(const char *path,
+                                      const char *offsetPath) = 0;
   virtual const ResizableVector<const char *> &getShaderNames() = 0;
 };
 }  // namespace SirEngine::graphics

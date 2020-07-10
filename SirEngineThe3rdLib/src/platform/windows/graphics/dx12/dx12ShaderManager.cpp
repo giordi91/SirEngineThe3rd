@@ -1,5 +1,6 @@
 #include "platform/windows/graphics/dx12/dx12ShaderManager.h"
 
+#include <d3dcommon.h>
 #include <d3dcompiler.h>
 
 #include "SirEngine/argsUtils.h"
@@ -122,16 +123,11 @@ void Dx12ShaderManager::loadShaderBinaryFile(const char *path) {
   }
 }
 
-void Dx12ShaderManager::recompileShader(const char *path,
-                                        const char *offsetPath,
-                                        std::string *log) {
+const char *Dx12ShaderManager::recompileShader(const char *path,
+                                               const char *offsetPath) {
   // first thing first we need to get the shader metadata
   ShaderBlob blob;
   bool result = m_stringToShader.get(path, blob);
-  // auto found = m_stringToShader.find(path);
-  // if (found == m_stringToShader.end()) {
-  //  assert(0 && "could not find shader you are asking to recompile");
-  //}
   if (!result) {
     assert(0 && "could not find shader you are asking to recompile");
   }
@@ -151,26 +147,31 @@ void Dx12ShaderManager::recompileShader(const char *path,
   std::string fullShaderPath(offsetPath);
   fullShaderPath += blob.metadata->shaderPath;
 
-  ID3DBlob *compiledShader =
-      m_compiler->compileShader(fullShaderPath.c_str(), args, log);
-  if (compiledShader != nullptr) {
+  ShaderCompileResult compileResult =
+      m_compiler->compileShader(fullShaderPath.c_str(), args);
+  if (compileResult.blob != nullptr) {
     auto exp_path = std::filesystem::path(path);
     std::string name = exp_path.stem().string();
     // release old shader
     blob.shader->Release();
     // assign new one
-    blob.shader = compiledShader;
+    blob.shader = compileResult.blob;
     // here we recompile and override and existing one no need to update the
     // list of names
     m_stringToShader.insert(name.c_str(), blob);
 
-    // update log
-    if (log != nullptr) {
-      std::string &logRef = *log;
-      logRef += "Successfully compiled shader: ";
-      logRef += name;
-      logRef += "\n";
+    // prepare output log
+    const char *out;
+    if (compileResult.logResult) {
+      out = globals::STRING_POOL->concatenateFrame(
+          compileResult.logResult, "Successfully compiled shader: ");
+      out = globals::STRING_POOL->concatenateFrame(out, "\n", name.c_str());
+      //      logRef += compileResult.logResult;
+    } else {
+      out = globals::STRING_POOL->concatenateFrame(
+          "Successfully compiled shader: ", "\n", name.c_str());
     }
+    return out;
   }
 }
 

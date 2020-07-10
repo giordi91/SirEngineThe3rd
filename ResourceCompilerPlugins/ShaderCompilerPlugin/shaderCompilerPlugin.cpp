@@ -1,15 +1,16 @@
 #include "shaderCompilerPlugin.h"
-#include "SirEngine/fileUtils.h"
-#include "SirEngine/log.h"
-#include "cxxopts/cxxopts.hpp"
+
+#include <d3dcommon.h>
+
+#include <filesystem>
 
 #include "SirEngine/argsUtils.h"
 #include "SirEngine/binary/binaryFile.h"
-#include "platform/windows/graphics/dx12/shaderCompiler.h"
-
+#include "SirEngine/fileUtils.h"
+#include "SirEngine/log.h"
 #include "SirEngine/memory/stringPool.h"
-#include <d3dcommon.h>
-#include <filesystem>
+#include "cxxopts/cxxopts.hpp"
+#include "platform/windows/graphics/dx12/shaderCompiler.h"
 
 const std::string PLUGIN_NAME = "shaderCompilerPlugin";
 const unsigned int VERSION_MAJOR = 0;
@@ -59,8 +60,7 @@ bool processArgs(const std::string args,
     std::string strippedCargs = cargs.substr(1, cargs.length() - 2);
     returnArgs.compilerArgs = const_cast<wchar_t *>(
         SirEngine::globals::STRING_POOL->convertWide(strippedCargs.c_str()));
-    splitCompilerArgs(strippedCargs, 
-                      returnArgs.splitCompilerArgsPointers);
+    splitCompilerArgs(strippedCargs, returnArgs.splitCompilerArgsPointers);
 
   } else {
     returnArgs.compilerArgs = L"";
@@ -94,9 +94,14 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
   }
 
   SirEngine::dx12::DXCShaderCompiler compiler;
-  ID3DBlob *blob = compiler.compileShader(assetPath.c_str(), shaderArgs);
+  SirEngine::dx12::ShaderCompileResult compileResult =
+      compiler.compileShader(assetPath.c_str(), shaderArgs);
+  if (compileResult.blob == nullptr) {
+    SE_CORE_ERROR("failed to compile shader {0}", assetPath);
+    return false;
+  }
 
-  int size = blob->GetBufferSize();
+  int size = compileResult.blob->GetBufferSize();
   // save the file by building a binary request
   BinaryFileWriteRequest request;
   request.fileType = BinaryFileType::SHADER;
@@ -109,7 +114,8 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
   // what we want to do is to store the data in this way
   //| shader | shader type | shader entry point | shader path | mapper |
   // we need to store enough data for everything
-  int totalBulkDataInBytes = static_cast<int>(blob->GetBufferSize());
+  int totalBulkDataInBytes =
+      static_cast<int>(compileResult.blob->GetBufferSize());
   //+1 is to take into account the termination value
   totalBulkDataInBytes +=
       static_cast<int>((wcslen(shaderArgs.type) + 1) * sizeof(wchar_t));
@@ -117,7 +123,7 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
       static_cast<int>((wcslen(shaderArgs.entryPoint) + 1) * sizeof(wchar_t));
   totalBulkDataInBytes += static_cast<int>(assetPath.size() + 1);
   totalBulkDataInBytes +=
-      static_cast<int>((wcslen(shaderArgs.compilerArgs)+ 1) * sizeof(wchar_t));
+      static_cast<int>((wcslen(shaderArgs.compilerArgs) + 1) * sizeof(wchar_t));
 
   // layout the data
 
@@ -126,21 +132,23 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
   char *bulkDataPtr = dataPtr;
 
   // write down the shader in the buffer
-  int dataToWriteSizeInByte = static_cast<int>(blob->GetBufferSize());
+  int dataToWriteSizeInByte =
+      static_cast<int>(compileResult.blob->GetBufferSize());
   mapperData.shaderSizeInByte = dataToWriteSizeInByte;
-  memcpy(bulkDataPtr, blob->GetBufferPointer(), dataToWriteSizeInByte);
+  memcpy(bulkDataPtr, compileResult.blob->GetBufferPointer(),
+         dataToWriteSizeInByte);
   bulkDataPtr += dataToWriteSizeInByte;
 
   // write down the type
   dataToWriteSizeInByte =
-      static_cast<int>((wcslen(shaderArgs.type)+ 1) * sizeof(wchar_t));
+      static_cast<int>((wcslen(shaderArgs.type) + 1) * sizeof(wchar_t));
   mapperData.typeSizeInByte = dataToWriteSizeInByte;
   memcpy(bulkDataPtr, shaderArgs.type, dataToWriteSizeInByte);
   bulkDataPtr += dataToWriteSizeInByte;
 
   // write down the entry point
   dataToWriteSizeInByte =
-      static_cast<int>((wcslen(shaderArgs.entryPoint)+ 1) * sizeof(wchar_t));
+      static_cast<int>((wcslen(shaderArgs.entryPoint) + 1) * sizeof(wchar_t));
   mapperData.entryPointInByte = dataToWriteSizeInByte;
   memcpy(bulkDataPtr, shaderArgs.entryPoint, dataToWriteSizeInByte);
   bulkDataPtr += dataToWriteSizeInByte;
@@ -165,14 +173,17 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
   request.bulkData = dataPtr;
   request.bulkDataSizeInByte = totalBulkDataInBytes;
 
-  mapperData.shaderSizeInByte = static_cast<uint32_t>(blob->GetBufferSize());
+  mapperData.shaderSizeInByte =
+      static_cast<uint32_t>(compileResult.blob->GetBufferSize());
   request.mapperData = &mapperData;
   request.mapperDataSizeInByte = sizeof(ShaderMapperData);
 
   writeBinaryFile(request);
 
   // release compiler data
-  blob->Release();
+  // no need to release the const char* log if there, because is temp allocated
+  // anyway
+  compileResult.blob->Release();
 
   SE_CORE_INFO("Shader successfully compiled ---> {0}", outputPath);
   return true;
