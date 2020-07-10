@@ -1,4 +1,5 @@
 #include "vkRootSignatureManager.h"
+
 #include "SirEngine/binary/binaryFile.h"
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
@@ -105,9 +106,15 @@ void VkPipelineLayoutManager::loadSignatureBinaryFile(const char *file) {
 RSHandle VkPipelineLayoutManager::loadSignatureFile(
     const char *file, const VkDescriptorSetLayout perFrameLayout,
     const VkDescriptorSetLayout samplersLayout) {
+  const std::string name = getFileName(file);
+
+  RSHandle cachedHandle;
+  if (m_rootRegister.get(name.c_str(), cachedHandle)) {
+    return cachedHandle;
+  }
+
   auto jobj = getJsonObj(file);
 
-  const std::string name = getFileName(file);
   // From spec:  The pipeline layout represents a sequence of descriptor sets
   // with each having a specific layout.
   // this is the same as root signature in DX12
@@ -209,4 +216,4 @@ RSHandle VkPipelineLayoutManager::getHandleFromName(const char *name) const {
   m_rootRegister.get(name, value);
   return value;
 }
-} // namespace SirEngine::vk
+}  // namespace SirEngine::vk
