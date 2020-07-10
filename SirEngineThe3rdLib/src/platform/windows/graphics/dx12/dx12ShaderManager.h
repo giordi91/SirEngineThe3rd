@@ -33,11 +33,6 @@ class Dx12ShaderManager final : public graphics::ShaderManager {
   void loadShadersInFolder(const char *directory) override;
   void cleanup() override;
   inline ID3D10Blob *getShaderFromName(const char *name) const {
-    /*const auto found = m_stringToShader.find(name);
-    if (found != m_stringToShader.end()) {
-      return found->second.shader;
-    }
-    */
     // TODO ideally here we would want to get a ref, we will need to expand the
     // hash map to do so
     ShaderBlob blob;

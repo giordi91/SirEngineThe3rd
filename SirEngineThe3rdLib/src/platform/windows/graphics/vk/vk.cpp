@@ -179,6 +179,9 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   SHADER_MANAGER->loadShadersInFolder(
       frameConcatenation(globals::ENGINE_CONFIG->m_dataSourcePath,
                          "/processed/shaders/VK/rasterization"));
+
+  globals::SHADER_MANAGER = vk::SHADER_MANAGER;
+
   PIPELINE_LAYOUT_MANAGER = new VkPipelineLayoutManager();
   PIPELINE_LAYOUT_MANAGER->initialize();
   globals::ROOT_SIGNATURE_MANAGER = PIPELINE_LAYOUT_MANAGER;

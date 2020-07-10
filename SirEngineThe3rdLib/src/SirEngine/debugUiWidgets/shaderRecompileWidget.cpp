@@ -192,7 +192,7 @@ void ShaderCompilerWidget::render() {
   ImGui::InputText("shader filter", shaderName, IM_ARRAYSIZE(shaderName));
   ImGui::Separator();
   const ResizableVector<const char *> &shaders =
-      dx12::SHADER_MANAGER->getShaderNames();
+      globals::SHADER_MANAGER->getShaderNames();
 
   const char *pattern = &shaderName[0];
 

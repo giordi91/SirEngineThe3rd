@@ -1,11 +1,13 @@
 #pragma once
-#include "SirEngine/graphics/graphicsDefines.h"
-#include "SirEngine/memory/stackAllocator.h"
-#include "platform/windows/graphics/vk/volk.h"
 #include <cassert>
-#include <d3dcommon.h>
 #include <string>
 #include <unordered_map>
+
+#include "SirEngine/graphics/graphicsDefines.h"
+#include "SirEngine/graphics/shaderManager.h"
+#include "SirEngine/memory/stackAllocator.h"
+#include "SirEngine/memory/stringHashMap.h"
+#include "platform/windows/graphics/vk/volk.h"
 
 namespace SirEngine::vk {
 struct VkShaderArgs;
@@ -26,44 +28,48 @@ struct VkShaderBlob {
   VkShaderMetadata *metadata;
 };
 
-class VkShaderManager {
-public:
-  VkShaderManager() = default;
+class VkShaderManager : public graphics::ShaderManager {
+ public:
+  VkShaderManager() : m_stringToShader(400), m_shaderNames(400) {}
   ~VkShaderManager();
   // right now this is empty, is kept here for the time being
   // just for symmetry with the other managers
-  void initialize();
-  void loadShadersInFolder(const char *directory);
-  void cleanup();
+  void initialize() override;
+  void loadShaderFile(const char* path) override;
+  void loadShadersInFolder(const char *directory) override;
+  void cleanup() override;
 
-  inline VkShaderModule getShaderFromName(const std::string &name) {
-    const auto found = m_stringToShader.find(name);
-    if (found != m_stringToShader.end()) {
-      return found->second.shader;
+  VkShaderModule getShaderFromName(const char *name) const {
+    // TODO ideally here we would want to get a ref, we will need to expand the
+    // hash map to do so
+    VkShaderBlob blob;
+    bool result = m_stringToShader.get(name, blob);
+    if (result) {
+      return blob.shader;
     }
-    if (name == "null") {
+    if (strcmp(name, "null") == 0) {
       return nullptr;
     }
     assert(0 && "could not find shader");
     return nullptr;
   }
-
-  inline const std::unordered_map<std::string, VkShaderBlob> &getShaderMap() {
-    return m_stringToShader;
+  const ResizableVector<const char *> &getShaderNames() override {
+    return m_shaderNames;
   }
 
   VkShaderManager(const VkShaderManager &) = delete;
   VkShaderManager &operator=(const VkShaderManager &) = delete;
-  void loadShaderBinaryFile(const char *path);
-  void recompileShader(const char *path, const char *offsetPath,
-                       std::string *log);
+  void loadShaderBinaryFile(const char *path) override;
+  const char *recompileShader(const char *path,
+                              const char *offsetPath) override;
 
-private:
+ private:
   // 2 mb of data for the stack
   const int METADATA_STACK_SIZE = 1 << 21;
   // data caching
-  std::unordered_map<std::string, VkShaderBlob> m_stringToShader;
+  HashMap<const char *, VkShaderBlob, hashString32> m_stringToShader;
+  ResizableVector<const char *> m_shaderNames;
   StackAllocator m_metadataAllocator;
-  VkShaderCompiler *m_compiler;
+  VkShaderCompiler *m_compiler = nullptr;
 };
-} // namespace SirEngine::vk
+}  // namespace SirEngine::vk

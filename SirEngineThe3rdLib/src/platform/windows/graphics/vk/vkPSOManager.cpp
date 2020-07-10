@@ -312,7 +312,7 @@ void getShaderStageCreateInfo(const nlohmann::json &jobj,
   // only) vsInfo.pSpecializationInfo;
   stages[id].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
   stages[id].stage = VK_SHADER_STAGE_VERTEX_BIT;
-  stages[id].module = vk::SHADER_MANAGER->getShaderFromName(vsFile);
+  stages[id].module = vk::SHADER_MANAGER->getShaderFromName(vsFile.c_str());
   stages[id].pName = PSO_VS_SHADER_ENTRY_POINT;
 
   const std::string psFile =
@@ -322,7 +322,7 @@ void getShaderStageCreateInfo(const nlohmann::json &jobj,
 
     stages[id].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     stages[id].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-    stages[id].module = vk::SHADER_MANAGER->getShaderFromName(psFile);
+    stages[id].module = vk::SHADER_MANAGER->getShaderFromName(psFile.c_str());
     stages[id].pName = PSO_PS_SHADER_ENTRY_POINT;
   }
 }
