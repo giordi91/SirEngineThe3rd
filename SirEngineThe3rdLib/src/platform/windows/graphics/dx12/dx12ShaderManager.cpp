@@ -173,6 +173,7 @@ const char *Dx12ShaderManager::recompileShader(const char *path,
     }
     return out;
   }
+  return nullptr;
 }
 
 Dx12ShaderManager::~Dx12ShaderManager() { delete m_compiler; }

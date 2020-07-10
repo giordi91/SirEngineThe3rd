@@ -6,10 +6,10 @@
 #include "platform/windows/graphics/vk/vkRootSignatureManager.h"
 #include "platform/windows/graphics/vk/vkShaderManager.h"
 #include "vkDescriptorManager.h"
+#include "SirEngine/application.h"
+#include "SirEngine/events/shaderCompileEvent.h"
 
 namespace SirEngine::vk {
-
-enum class PSO_TYPE { DXR = 0, RASTER, COMPUTE, INVALID };
 
 static const char *PSO_VS_SHADER_ENTRY_POINT = "main";
 static const char *PSO_PS_SHADER_ENTRY_POINT = "main";
@@ -298,13 +298,15 @@ PSO_TYPE convertStringPSOTypeToEnum(const char *type) {
 
 void getShaderStageCreateInfo(const nlohmann::json &jobj,
                               VkPipelineShaderStageCreateInfo *stages,
-                              int &shaderStageCount) {
+                              int &shaderStageCount,
+                              VkPSOCompileResult &result) {
   // we have a raster pso lets pull out the shader stages
   const std::string vsFile =
       getValueIfInJson(jobj, PSO_KEY_VS_SHADER, DEFAULT_STRING);
   assert(!vsFile.empty());
   int id = shaderStageCount++;
   // fill up shader binding
+  result.VSName = frameString(vsFile.c_str());
 
   // this allows us to change constants at pipeline creation time,
   // this can allow for example to change compute shaders group size
@@ -324,6 +326,7 @@ void getShaderStageCreateInfo(const nlohmann::json &jobj,
     stages[id].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
     stages[id].module = vk::SHADER_MANAGER->getShaderFromName(psFile.c_str());
     stages[id].pName = PSO_PS_SHADER_ENTRY_POINT;
+    result.PSName = frameString(psFile.c_str());
   }
 }
 
@@ -599,26 +602,111 @@ PSOHandle VkPSOManager::getHandleFromName(const char *name) const {
   m_psoRegisterHandle.get(name, value);
   return value;
 }
-PSOHandle VkPSOManager::processRasterPSO(
+
+PSOHandle VkPSOManager::insertInPSOCache(const VkPSOCompileResult &result) {
+  switch (result.psoType) {
+    case PSO_TYPE::DXR:
+      assert(0);
+      break;
+    case PSO_TYPE::RASTER: {
+      bool hasShader = m_shaderToPSOFile.containsKey(result.VSName);
+      if (!hasShader) {
+        m_shaderToPSOFile.insert(result.VSName,
+                                 new ResizableVector<const char *>(20));
+      }
+      ResizableVector<const char *> *list;
+      m_shaderToPSOFile.get(result.VSName, list);
+      // make sure to internalize the string
+      list->pushBack(persistentString(result.PSOFullPathFile));
+
+      hasShader = m_shaderToPSOFile.containsKey(result.PSName);
+      if (!hasShader) {
+        m_shaderToPSOFile.insert(result.PSName,
+                                 new ResizableVector<const char *>(20));
+      }
+      m_shaderToPSOFile.get(result.PSName, list);
+      // make sure to internalize the string
+      list->pushBack(persistentString(result.PSOFullPathFile));
+
+      // generating and storing the handle
+      uint32_t index;
+      PSOData &data = m_psoPool.getFreeMemoryData(index);
+      data.pso = result.pso;
+      data.topology = result.topologyType;
+      data.renderPass = result.renderPass;
+      const PSOHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
+      data.magicNumber = MAGIC_NUMBER_COUNTER;
+      m_psoRegisterHandle.insert(
+          persistentString(getFileName(result.PSOFullPathFile).c_str()),
+          handle);
+      ++MAGIC_NUMBER_COUNTER;
+      return handle;
+    }
+    case PSO_TYPE::COMPUTE: {
+      // can probably wrap this into a function to make it less verbose
+      // generating and storing the handle
+      uint32_t index;
+      PSOData &data = m_psoPool.getFreeMemoryData(index);
+      data.pso = result.pso;
+      data.topology = TOPOLOGY_TYPE::UNDEFINED;
+      const PSOHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
+      data.magicNumber = MAGIC_NUMBER_COUNTER;
+      m_psoRegisterHandle.insert(
+          persistentString(getFileName(result.PSOFullPathFile).c_str()),
+          handle);
+
+      ++MAGIC_NUMBER_COUNTER;
+
+      m_psoRegister.insert(result.CSName, result.pso);
+
+      // need to push the pso to the map
+      // first we make sure there is a vector to push to
+      const bool hasShader = m_shaderToPSOFile.containsKey(result.CSName);
+      if (!hasShader) {
+        m_shaderToPSOFile.insert(result.CSName,
+                                 new ResizableVector<const char *>(20));
+      }
+      ResizableVector<const char *> *list;
+      m_shaderToPSOFile.get(result.CSName, list);
+      // make sure to internalize the string
+      list->pushBack(persistentString(result.PSOFullPathFile));
+
+      return handle;
+    }
+    case PSO_TYPE::INVALID:
+      assert(0);
+      break;
+    default:;
+  }
+  return {};
+}
+
+VkPSOCompileResult VkPSOManager::processRasterPSO(
     const char *filePath, const nlohmann::json &jobj,
     VkPipelineVertexInputStateCreateInfo *vertexInfo) {
+  // TODO a bit overkill for now but this is the base for further refactoring
+  // when we will start loading cached pso
+  VkPSOCompileResult compileResult{};
+  compileResult.psoType = PSO_TYPE::RASTER;
+  compileResult.PSOFullPathFile = frameString(filePath);
+
   // load root signature
   const std::string rootFile =
       getValueIfInJson(jobj, PSO_KEY_GLOBAL_ROOT, DEFAULT_STRING);
   assert(!rootFile.empty());
+  compileResult.rootSignature = frameString(rootFile.c_str());
 
   const std::string fileName = getFileName(filePath);
 
   RSHandle layoutHandle = vk::PIPELINE_LAYOUT_MANAGER->loadSignatureFile(
       rootFile.c_str(), vk::PER_FRAME_LAYOUT, vk::STATIC_SAMPLERS_LAYOUT);
-  // TODO fix this should not be global anymore
-  auto layout = vk::PIPELINE_LAYOUT_MANAGER->getLayoutFromHandle(layoutHandle);
+  auto *layout = vk::PIPELINE_LAYOUT_MANAGER->getLayoutFromHandle(layoutHandle);
 
   // load shader stage
   // here we define all the stages of the pipeline
   VkPipelineShaderStageCreateInfo stages[MAX_SHADER_STAGE_COUNT] = {};
   int shaderStageCount = 0;
-  getShaderStageCreateInfo(jobj, stages, shaderStageCount);
+  getShaderStageCreateInfo(jobj, stages, shaderStageCount, compileResult);
 
   // no vertex info used, we ditched the input assembler completely
   VkPipelineVertexInputStateCreateInfo vertexInputCreateInfo{
@@ -702,20 +790,23 @@ PSOHandle VkPSOManager::processRasterPSO(
   SET_DEBUG_NAME(pipeline, VK_OBJECT_TYPE_PIPELINE,
                  frameConcatenation(fileName.c_str(), "Pipeline"));
 
-  // all good we need to store the data
-  // generating and storing the handle
-  uint32_t index;
-  PSOData &data = m_psoPool.getFreeMemoryData(index);
-  data.pso = pipeline;
-  data.renderPass = renderPass;
-  data.rootSignature = layoutHandle;
-  const PSOHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
-  data.magicNumber = MAGIC_NUMBER_COUNTER;
-  data.topology = convertStringToEngineTopology(topology);
-  m_psoRegisterHandle.insert(fileName.c_str(), handle);
-  ++MAGIC_NUMBER_COUNTER;
+  //// all good we need to store the data
+  //// generating and storing the handle
+  // uint32_t index;
+  // PSOData &data = m_psoPool.getFreeMemoryData(index);
+  // data.pso = pipeline;
+  // data.renderPass = renderPass;
+  // data.rootSignature = layoutHandle;
+  // const PSOHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
+  // data.magicNumber = MAGIC_NUMBER_COUNTER;
+  // data.topology = convertStringToEngineTopology(topology);
+  // m_psoRegisterHandle.insert(fileName.c_str(), handle);
+  //++MAGIC_NUMBER_COUNTER;
 
-  return handle;
+  compileResult.topologyType = convertStringToEngineTopology(topology);
+  compileResult.pso = pipeline;
+  compileResult.renderPass = renderPass;
+  return compileResult;
 };
 
 void initStaticSamplers() {
@@ -773,6 +864,12 @@ PSOHandle VkPSOManager::loadRawPSO(const char *file) {
     return handle;
   }
 
+  auto compileResult = compileRawPSO(file);
+  return insertInPSOCache(compileResult);
+}
+
+VkPSOCompileResult VkPSOManager::compileRawPSO(const char *file) {
+  const std::string fileName = getFileName(file);
   auto jobj = getJsonObj(file);
 
   const std::string typeString =
@@ -787,7 +884,6 @@ PSOHandle VkPSOManager::loadRawPSO(const char *file) {
     }
     case PSO_TYPE::RASTER: {
       return processRasterPSO(file, jobj, nullptr);
-      break;
     }
     case PSO_TYPE::COMPUTE: {
       assert(0 && "Unsupported PSO type");
@@ -797,13 +893,112 @@ PSOHandle VkPSOManager::loadRawPSO(const char *file) {
       assert(0 && "Unsupported PSO type");
       break;
     }
-    default:;
+    default: {
+      assert(0);
+    }
   }
   return {};
 }
 
 void VkPSOManager::recompilePSOFromShader(const char *shaderName,
-                                          const char *getOffsetPath) {
-    std::cout<<"requested shader reload "<<shaderName<<std::endl;
+                                          const char *offsetPath) {
+  std::cout << "requested shader reload " << shaderName << std::endl;
+
+  // clearing the log
+  compileLog = "";
+  ResizableVector<const char *> *psos;
+  bool found = m_shaderToPSOFile.get(shaderName, psos);
+  if (!found) {
+    assert(0);
+    return;
+  }
+  // now we need to extract the data out of the pso to figure out which
+  // shaders to recompile
+  std::vector<std::string> shadersToRecompile;
+  shadersToRecompile.reserve(10);
+  int psoCount = psos->size();
+  for (int i = 0; i < psoCount; ++i) {
+    const char *pso = (*psos)[i];
+    const auto jobj = getJsonObj(pso);
+    std::cout << "[Engine]: Loading PSO from: " << pso << std::endl;
+
+    const std::string psoTypeString =
+        getValueIfInJson(jobj, PSO_KEY_TYPE, DEFAULT_STRING);
+    const PSO_TYPE psoType = convertStringPSOTypeToEnum(psoTypeString.c_str());
+    switch (psoType) {
+      case (PSO_TYPE::COMPUTE): {
+        const std::string computeName =
+            getValueIfInJson(jobj, PSO_KEY_SHADER_NAME, DEFAULT_STRING);
+        assert(!computeName.empty());
+        shadersToRecompile.push_back(computeName);
+        break;
+      }
+      // case (PSOType::DXR): {
+      //  processDXRPSO(jobj, path);
+      //  break;
+      //}
+      case (PSO_TYPE::RASTER): {
+        std::string vs =
+            getValueIfInJson(jobj, PSO_KEY_VS_SHADER, DEFAULT_STRING);
+        assert(!vs.empty());
+        std::string ps =
+            getValueIfInJson(jobj, PSO_KEY_PS_SHADER, DEFAULT_STRING);
+        assert(!ps.empty());
+        shadersToRecompile.push_back(vs);
+        shadersToRecompile.push_back(ps);
+        break;
+      }
+      default: {
+        assert(0 && "PSO type not supported");
+      }
+    }
+  }
+
+  // recompile all the shaders involved
+  for (auto &shader : shadersToRecompile) {
+    const char *log =
+        vk::SHADER_MANAGER->recompileShader(shader.c_str(), offsetPath);
+    if (log != nullptr) {
+      compileLog += log;
+    }
+  }
+  // now that all shaders are recompiled we can recompile the pso
+  // before doing that we do need to flush to make sure none of the PSO are
+  // used
+  globals::RENDERING_CONTEXT->flush();
+
+  const char *shaderPath = frameConcatenation(
+      globals::ENGINE_CONFIG->m_dataSourcePath, "/shaders/vk");
+  for (int i = 0; i < psoCount; ++i) {
+    const char *pso = (*psos)[i];
+    const auto result = compileRawPSO(pso);
+    // need to update the cache
+    updatePSOCache(getFileName(result.PSOFullPathFile).c_str(), result);
+
+    // log
+    compileLog += "Compiled PSO: ";
+    compileLog += pso;
+    compileLog += "\n";
+  }
+
+  // all the shader have been recompiled, we should be able to
+  // recompile the PSO now
+  auto*e =
+      new ShaderCompileResultEvent(compileLog.c_str());
+  globals::APPLICATION->queueEventForEndOfFrame(e);
 }
+
+void VkPSOManager::updatePSOCache(const char *name, const VkPSOCompileResult& result) {
+  assert(m_psoRegisterHandle.containsKey(name));
+  PSOHandle handle;
+  m_psoRegisterHandle.get(name, handle);
+  uint32_t index = getIndexFromHandle(handle);
+  PSOData &data = m_psoPool[index];
+  // release old one
+  vkDestroyPipeline(vk::LOGICAL_DEVICE, data.pso, nullptr);
+  vkDestroyRenderPass(vk::LOGICAL_DEVICE, data.renderPass, nullptr);
+  data.pso = result.pso;
+  data.renderPass = result.renderPass;
+}
+
 }  // namespace SirEngine::vk

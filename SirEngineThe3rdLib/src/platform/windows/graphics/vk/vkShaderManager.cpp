@@ -4,6 +4,7 @@
 #include "SirEngine/binary/binaryFile.h"
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/graphics/graphicsDefines.h"
+#include "SirEngine/log.h"
 #include "SirEngine/runtimeString.h"
 #include "platform/windows/graphics/vk/vkShaderCompiler.h"
 #include "vk.h"
@@ -11,7 +12,6 @@
 namespace SirEngine::vk {
 
 void VkShaderManager::cleanup() {
-
   int size = m_stringToShader.binCount();
   for (int i = 0; i < size; ++i) {
     bool used = m_stringToShader.isBinUsed(i);
@@ -86,50 +86,48 @@ const char *VkShaderManager::recompileShader(const char *path,
                                              const char *offsetPath) {
   // first thing first we need to get the shader metadata
 
-  VkShaderBlob blob;
+  VkShaderBlob blob{};
   bool result = m_stringToShader.get(path, blob);
   if (!result) {
     assert(0 && "could not find shader you are asking to recompile");
   }
 
-  assert(0 && "VK shader recompilation not yet supported");
-  /*
-  ShaderBlob &blob = found->second;
-  ShaderMetadata *meta = blob.metadata;
+  VkShaderMetadata *meta = blob.metadata;
   VkShaderArgs args;
-  args.debug = meta->shaderFlags & SHADER_FLAGS::DEBUG;
-  args.entryPoint = meta->entryPoint;
+  args.debug = true;
   args.type = meta->type;
-  args.compilerArgs = meta->compilerArgs;
-  std::string compilerArgs(frameConvert(meta->compilerArgs));
 
-  // TODO this is quite a mess, so many conversion with Wstring back and
-  // fort small allocations etc.
-  splitCompilerArgs(compilerArgs, args.splitCompilerArgsPointers);
-
+  SE_CORE_INFO("requested shader recompilation for {0}\n {1}", path,
+               offsetPath);
+  std::string log;
+  // we need the shader full path
   std::string fullShaderPath(offsetPath);
   fullShaderPath += blob.metadata->shaderPath;
 
-  ID3DBlob *compiledShader =
-      m_compiler->compileShader(fullShaderPath.c_str(), args, log);
-  if (compiledShader != nullptr) {
-    auto exp_path = std::filesystem::path(path);
-    std::string name = exp_path.stem().string();
+  VkShaderModule module =
+      m_compiler->compileToShaderModule(fullShaderPath.c_str(), args, &log);
+  if (module != nullptr) {
+    auto expPath = std::filesystem::path(path);
+    std::string name = expPath.stem().string();
     // release old shader
-    blob.shader->Release();
+    vkDestroyShaderModule(vk::LOGICAL_DEVICE, blob.shader, nullptr);
     // assign new one
-    blob.shader = compiledShader;
-    m_stringToShader[name] = blob;
+    blob.shader = module;
+    m_stringToShader.insert(name.c_str(), blob);
 
-    // update log
-    if (log != nullptr) {
-      std::string &logRef = *log;
-      logRef += "Successfully compiled shader: ";
-      logRef += name;
-      logRef += "\n";
+    // prepare output log
+    const char *out;
+    if (!log.empty()) {
+      out = globals::STRING_POOL->concatenateFrame(
+          log.c_str(), "Successfully compiled shader: ");
+      out = globals::STRING_POOL->concatenateFrame(out, "\n", name.c_str());
+      //      logRef += compileResult.logResult;
+    } else {
+      out = globals::STRING_POOL->concatenateFrame(
+          "Successfully compiled shader: ", "\n", name.c_str());
     }
+    return out;
   }
-  */
   return nullptr;
 }
 

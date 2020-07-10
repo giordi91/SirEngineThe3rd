@@ -4,15 +4,30 @@
 #include <nlohmann/json_fwd.hpp>
 #include <string>
 
+#include "SirEngine/memory/stringHashMap.h"
 #include "SirEngine/PSOManager.h"
 #include "SirEngine/handle.h"
 #include "SirEngine/memory/resizableVector.h"
 #include "SirEngine/memory/sparseMemoryPool.h"
-#include "SirEngine/memory/stringHashMap.h"
 #include "platform/windows/graphics/vk/volk.h"
 #include "vkRootSignatureManager.h"
 
 namespace SirEngine::vk {
+// TODO move this to graphics define and use the same for both dx12 and vk
+enum class PSO_TYPE { DXR = 0, RASTER, COMPUTE, INVALID };
+
+struct SIR_ENGINE_API VkPSOCompileResult {
+  VkPipeline pso = nullptr;
+  PSO_TYPE psoType = PSO_TYPE::INVALID;
+  const char *VSName = nullptr;
+  const char *PSName = nullptr;
+  const char *CSName = nullptr;
+  const char *PSOFullPathFile = nullptr;
+  const char *inputLayout = nullptr;
+  const char *rootSignature = nullptr;
+  TOPOLOGY_TYPE topologyType;
+  VkRenderPass renderPass;
+};
 
 #define STATIC_SAMPLER_COUNT 7
 extern VkSampler STATIC_SAMPLERS[STATIC_SAMPLER_COUNT];
@@ -56,7 +71,9 @@ class VkPSOManager final : public PSOManager {
   void cleanup() override;
   void loadRawPSOInFolder(const char *directory) override;
   void loadCachedPSOInFolder(const char *directory) override;
+  // TODO temporary function to be removed once the load rawPSO In folder works
   PSOHandle loadRawPSO(const char *file);
+  VkPSOCompileResult compileRawPSO(const char *file);
 
   void recompilePSOFromShader(const char *shaderName,
                               const char *getOffsetPath) override;
@@ -103,7 +120,7 @@ class VkPSOManager final : public PSOManager {
 
  private:
   // void updatePSOCache(const char *name, ID3D12PipelineState *pso);
-  // void insertInPSOCache(const PSOCompileResult &result);
+  PSOHandle insertInPSOCache(const VkPSOCompileResult &result);
 
   inline void assertMagicNumber(const PSOHandle handle) const {
     const uint32_t magic = getMagicFromHandle(handle);
@@ -113,8 +130,11 @@ class VkPSOManager final : public PSOManager {
            "invalid magic handle for constant buffer");
   }
 
-  PSOHandle processRasterPSO(const char *filePath, const nlohmann::json &jobj,
-                             VkPipelineVertexInputStateCreateInfo *vertexInfo);
+  VkPSOCompileResult processRasterPSO(
+      const char *filePath, const nlohmann::json &jobj,
+      VkPipelineVertexInputStateCreateInfo *vertexInfo);
+
+  void updatePSOCache(const char *name, const VkPSOCompileResult& result);
 
  private:
   HashMap<const char *, VkPipeline, hashString32> m_psoRegister;

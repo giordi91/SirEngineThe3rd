@@ -40,6 +40,8 @@ public:
 
     const uint32_t startBin = bin;
     uint32_t meta = getMetadata(bin);
+    //BUG!! we need to check if is not free if actually is the same
+  	//or duplicate keys won't get overritten 
     bool free = canWriteToBin(meta);
     while (!free) {
       ++bin;
