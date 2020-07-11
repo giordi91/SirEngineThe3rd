@@ -124,12 +124,15 @@ void Dx12ShaderManager::loadShaderBinaryFile(const char *path) {
 }
 
 const char *Dx12ShaderManager::recompileShader(const char *path,
-                                               const char *offsetPath) {
+                                               const char *offsetPath,
+                                               bool &result) {
   // first thing first we need to get the shader metadata
   ShaderBlob blob;
-  bool result = m_stringToShader.get(path, blob);
-  if (!result) {
+  bool found = m_stringToShader.get(path, blob);
+  if (!found) {
     assert(0 && "could not find shader you are asking to recompile");
+    result = false;
+    return nullptr;
   }
 
   ShaderMetadata *meta = blob.metadata;
@@ -171,8 +174,10 @@ const char *Dx12ShaderManager::recompileShader(const char *path,
       out = globals::STRING_POOL->concatenateFrame(
           "Successfully compiled shader: ", "\n", name.c_str());
     }
+    result = true;
     return out;
   }
+  result = false;
   return nullptr;
 }
 

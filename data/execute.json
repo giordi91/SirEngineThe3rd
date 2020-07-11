@@ -12,6 +12,8 @@
     "-p ../data/shaders/DX12/rasterization/forwardPhongPS.hlsl -o ../data/processed/shaders/DX12/rasterization/forwardPhongPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
     "-p ../data/shaders/VK/rasterization/skyboxVS.glsl -o ../data/processed/shaders/VK/rasterization/skyboxVS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \"",
     "-p ../data/shaders/VK/rasterization/skyboxPS.glsl -o ../data/processed/shaders/VK/rasterization/skyboxPS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d \"",
+    "-p ../data/shaders/VK/rasterization/forwardPhongVS.glsl -o ../data/processed/shaders/VK/rasterization/forwardPhongVS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \"",
+    "-p ../data/shaders/VK/rasterization/forwardPhongVS.glsl -o ../data/processed/shaders/VK/rasterization/forwardPhongVS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d \"",
     "-p ../data/pso -o ../data/processed/pso --pluginName PSOCompilerPlugin --pluginArgs \"-t DX12 -a -s ../data/shaders/DX12\""
   ]
 }

@@ -22,7 +22,7 @@ layout (set=0,binding=0) uniform InputData
 	CameraBuffer cameraBuffer;
 }; 
 
-struct normal{uint8_t nx, ny, nz, nw;};
+//struct normal{uint8_t nx, ny, nz, nw;};
 
 layout (set=1,binding=0) buffer vertices
 {
@@ -30,7 +30,7 @@ layout (set=1,binding=0) buffer vertices
 };
 layout (set=1,binding=1) buffer normals 
 {
-	normal n[];
+	vec4 n[];
 };
 layout (set=1,binding=2) buffer uvs 
 {
@@ -38,6 +38,7 @@ layout (set=1,binding=2) buffer uvs
 };
 
 
+layout(location =0) out vec3 outNormal;
 layout(location =1) out vec2 outUV;
 void VS()
 {
@@ -52,7 +53,7 @@ void VS()
 
 	vec4 position = p[gl_VertexIndex];
 	//vec3 position = vec3(p[gl_VertexIndex].x,p[gl_VertexIndex].y,p[gl_VertexIndex].z);
-	vec3 normal = vec3(int(n[gl_VertexIndex].nx),int(n[gl_VertexIndex].ny),int(n[gl_VertexIndex].nz)) /127.0 -1.0f;
+	outNormal= n[gl_VertexIndex].xyz;
 	outUV= uv[gl_VertexIndex];
 
 	gl_Position = cameraBuffer.MVP * position;

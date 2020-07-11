@@ -35,7 +35,7 @@ class VkShaderManager : public graphics::ShaderManager {
   // right now this is empty, is kept here for the time being
   // just for symmetry with the other managers
   void initialize() override;
-  void loadShaderFile(const char* path) override;
+  void loadShaderFile(const char *path) override;
   void loadShadersInFolder(const char *directory) override;
   void cleanup() override;
 
@@ -60,8 +60,8 @@ class VkShaderManager : public graphics::ShaderManager {
   VkShaderManager(const VkShaderManager &) = delete;
   VkShaderManager &operator=(const VkShaderManager &) = delete;
   void loadShaderBinaryFile(const char *path) override;
-  const char *recompileShader(const char *path,
-                              const char *offsetPath) override;
+  const char *recompileShader(const char *path, const char *offsetPath,
+                              bool &result) override;
 
  private:
   // 2 mb of data for the stack
