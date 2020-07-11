@@ -171,7 +171,8 @@ void Graphics3DLayer::onUpdate() {
   // setting up camera for the frame
   globals::CONSTANT_BUFFER_MANAGER->processBufferedData();
   globals::RENDERING_CONTEXT->setupCameraForFrame();
-  dx12::RENDERING_CONTEXT->setupLightingForFrame();
+  //TODO this has been removed and should be handled differently
+  //dx12::RENDERING_CONTEXT->setupLightingForFrame();
   // evaluating rendering graph
   globals::RENDERING_GRAPH->compute();
 
