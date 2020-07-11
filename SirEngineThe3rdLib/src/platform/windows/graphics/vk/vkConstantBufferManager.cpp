@@ -235,30 +235,38 @@ void VkConstantBufferManager::update(const ConstantBufferHandle handle,
     return;
   }
 
-  bool submitBufferedRequest = !updatedEveryFrame;
-  if (submitBufferedRequest) {
-    // lets create a new request
-    ConstantBufferedData buffRequest;
-
-    // setting data on the buffer request
-    buffRequest.dataAllocHandle =
-        m_randomAlloc.allocate(buffData.m_range.m_size);
-    buffRequest.handle = handle;
-
-    // perform current update, that is why we use frame buffer count -1
-    buffRequest.counter = vk::SWAP_CHAIN_IMAGE_COUNT - 1;
-
-    int slabIndex = buffData.m_slabIdx;
-    const Slab &slab = m_perFrameSlabs[globals::CURRENT_FRAME][slabIndex];
-    assert(data != nullptr);
-    memcpy(static_cast<char *>(slab.m_buffer.data) + buffData.m_range.m_offset,
-           data, buffData.m_range.m_size);
-
-    // copying data in storage so we can keep track of it
-    memcpy(m_randomAlloc.getPointer(buffRequest.dataAllocHandle), data,
-           buffData.m_range.m_size);
-    m_bufferedRequests[handle.handle] = buffRequest;
+  // before making a request we need to see if there is any already buffered up
+  // for this handle
+  auto found = m_bufferedRequests.find(handle.handle);
+  if (found != m_bufferedRequests.end()) {
+    // let us free the handle
+    const ConstantBufferedData &dataToFree = found->second;
+    // we are not going to erase the data from the bufferedRequest map because
+    // we are going to allocate that value anyway
+    m_randomAlloc.freeAllocation(dataToFree.dataAllocHandle);
   }
+
+  // we need to make an update request
+  // lets create a new request
+  ConstantBufferedData buffRequest;
+
+  // setting data on the buffer request
+  buffRequest.dataAllocHandle = m_randomAlloc.allocate(buffData.m_range.m_size);
+  buffRequest.handle = handle;
+
+  // perform current update, that is why we use frame buffer count -1
+  buffRequest.counter = SWAP_CHAIN_IMAGE_COUNT - 1;
+
+  int slabIndex = buffData.m_slabIdx;
+  const Slab &slab = m_perFrameSlabs[globals::CURRENT_FRAME][slabIndex];
+  assert(data != nullptr);
+  memcpy(static_cast<char *>(slab.m_buffer.data) + buffData.m_range.m_offset,
+         data, buffData.m_range.m_size);
+
+  // copying data in storage so we can keep track of it
+  memcpy(m_randomAlloc.getPointer(buffRequest.dataAllocHandle), data,
+         buffData.m_range.m_size);
+  m_bufferedRequests[handle.handle] = buffRequest;
 }
 
 void VkConstantBufferManager::updateConstantBufferBuffered(
@@ -282,6 +290,11 @@ void VkConstantBufferManager::processBufferedData() {
     assert(data != nullptr);
     memcpy(static_cast<char *>(slab.m_buffer.data) + buffData.m_range.m_offset,
            data, buffData.m_range.m_size);
+
+    handle.second.counter -= 1;
+    if (handle.second.counter <= 0) {
+      processedIdxs.push_back(handle.first);
+    }
   }
 
   // cleanup

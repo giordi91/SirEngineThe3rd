@@ -479,13 +479,12 @@ void RenderGraphWidget::render() {
 
   // lets render post process stack configuration
   if (ImGui::CollapsingHeader("Post process stack")) {
-    const PostProcessStack *stack = dynamic_cast<const PostProcessStack *>(
+    const auto*stack = dynamic_cast<const PostProcessStack *>(
         m_graph->findNodeOfType("PostProcessStack"));
     if (stack != nullptr) {
       const std::vector<PostProcessEffect *> &effects = stack->getEffects();
       for (const auto &effect : effects) {
         PostProcessTypeDebug type = getPostProcessDebugType(effect->getType());
-        SE_CORE_INFO("Type {0}", static_cast<int>(type));
         if (type == PostProcessTypeDebug::NONE) {
           continue;
         }

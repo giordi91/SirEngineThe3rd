@@ -125,61 +125,81 @@ getStaticSamplersCreateInfo() {
   // Applications usually only need a handful of samplers.  So just define them
   // all up front and keep them available as part of the root signature.
 
-  const VkSamplerCreateInfo pointWrap{VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
-                                      nullptr,
-                                      0,
-                                      VK_FILTER_NEAREST,
-                                      VK_FILTER_NEAREST,
-                                      VK_SAMPLER_MIPMAP_MODE_NEAREST,
-                                      VK_SAMPLER_ADDRESS_MODE_REPEAT,
-                                      VK_SAMPLER_ADDRESS_MODE_REPEAT,
-                                      VK_SAMPLER_ADDRESS_MODE_REPEAT,
-                                      0.0f,
-                                      VK_FALSE,
-                                      1};
-  const VkSamplerCreateInfo pointClamp{VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
-                                       nullptr,
-                                       0,
-                                       VK_FILTER_NEAREST,
-                                       VK_FILTER_NEAREST,
-                                       VK_SAMPLER_MIPMAP_MODE_NEAREST,
-                                       VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
-                                       VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
-                                       VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
-                                       0.0f,
-                                       VK_FALSE,
-                                       1};
-  const VkSamplerCreateInfo linearWrap{VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
-                                       nullptr,
-                                       0,
-                                       VK_FILTER_LINEAR,
-                                       VK_FILTER_LINEAR,
-                                       VK_SAMPLER_MIPMAP_MODE_NEAREST,
-                                       VK_SAMPLER_ADDRESS_MODE_REPEAT,
-                                       VK_SAMPLER_ADDRESS_MODE_REPEAT,
-                                       VK_SAMPLER_ADDRESS_MODE_REPEAT,
-                                       0.0f,
-                                       VK_FALSE,
-                                       1};
-  const VkSamplerCreateInfo linearClamp{VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
-                                        nullptr,
-                                        0,
-                                        VK_FILTER_LINEAR,
-                                        VK_FILTER_LINEAR,
-                                        VK_SAMPLER_MIPMAP_MODE_NEAREST,
-                                        VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
-                                        VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
-                                        VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
-                                        0.0f,
-                                        VK_FALSE,
-                                        1};
+  const VkSamplerCreateInfo pointWrap{
+      VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+      nullptr,
+      0,
+      VK_FILTER_NEAREST,
+      VK_FILTER_NEAREST,
+      VK_SAMPLER_MIPMAP_MODE_NEAREST,
+      VK_SAMPLER_ADDRESS_MODE_REPEAT,
+      VK_SAMPLER_ADDRESS_MODE_REPEAT,
+      VK_SAMPLER_ADDRESS_MODE_REPEAT,
+      0.0f,
+      VK_FALSE,
+      1,
+      false,
+      VK_COMPARE_OP_NEVER,  // should not matter since compare is off
+      0.0,
+      20.0};
+  const VkSamplerCreateInfo pointClamp{
+      VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+      nullptr,
+      0,
+      VK_FILTER_NEAREST,
+      VK_FILTER_NEAREST,
+      VK_SAMPLER_MIPMAP_MODE_NEAREST,
+      VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+      VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+      VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+      0.0f,
+      VK_FALSE,
+      1,
+      false,
+      VK_COMPARE_OP_NEVER,  // should not matter since compare is off
+      0.0,
+      20.0};
+  const VkSamplerCreateInfo linearWrap{
+      VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+      nullptr,
+      0,
+      VK_FILTER_LINEAR,
+      VK_FILTER_LINEAR,
+      VK_SAMPLER_MIPMAP_MODE_LINEAR,
+      VK_SAMPLER_ADDRESS_MODE_REPEAT,
+      VK_SAMPLER_ADDRESS_MODE_REPEAT,
+      VK_SAMPLER_ADDRESS_MODE_REPEAT,
+      0.0f,
+      VK_FALSE,
+      1,
+      false,
+      VK_COMPARE_OP_NEVER,  // should not matter since compare is off
+      0.0,
+      20.0};
+  const VkSamplerCreateInfo linearClamp{
+      VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+      nullptr,
+      0,
+      VK_FILTER_LINEAR,
+      VK_FILTER_LINEAR,
+      VK_SAMPLER_MIPMAP_MODE_LINEAR,
+      VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+      VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+      VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+      0.0f,
+      VK_FALSE,
+      1,
+      false,
+      VK_COMPARE_OP_NEVER,  // should not matter since compare is off
+      0.0,
+      20.0};
   const VkSamplerCreateInfo anisotropicWrap{
       VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
       nullptr,
       0,
       VK_FILTER_LINEAR,
       VK_FILTER_LINEAR,
-      VK_SAMPLER_MIPMAP_MODE_NEAREST,
+      VK_SAMPLER_MIPMAP_MODE_LINEAR,
       VK_SAMPLER_ADDRESS_MODE_REPEAT,
       VK_SAMPLER_ADDRESS_MODE_REPEAT,
       VK_SAMPLER_ADDRESS_MODE_REPEAT,
@@ -192,7 +212,7 @@ getStaticSamplersCreateInfo() {
       0,
       VK_FILTER_LINEAR,
       VK_FILTER_LINEAR,
-      VK_SAMPLER_MIPMAP_MODE_NEAREST,
+      VK_SAMPLER_MIPMAP_MODE_LINEAR,
       VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
       VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
       VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
@@ -684,7 +704,6 @@ PSOHandle VkPSOManager::insertInPSOCache(const VkPSOCompileResult &result) {
 VkPSOCompileResult VkPSOManager::processRasterPSO(
     const char *filePath, const nlohmann::json &jobj,
     VkPipelineVertexInputStateCreateInfo *vertexInfo) const {
-
   // creating a compile result that will be later used for caching
   VkPSOCompileResult compileResult{};
   compileResult.psoType = PSO_TYPE::RASTER;
