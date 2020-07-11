@@ -460,11 +460,8 @@ void Dx12RenderingContext::setupCameraForFrame() {
   globals::CONSTANT_BUFFER_MANAGER->update(m_cameraHandle, &m_camBufferCPU);
 }
 
-void Dx12RenderingContext::setupLightingForFrame() {
-  globals::CONSTANT_BUFFER_MANAGER->update(m_lightCB, &m_light);
-}
 
-void Dx12RenderingContext::bindCameraBuffer(int index) const {
+void Dx12RenderingContext::bindCameraBuffer(const int index) const {
   // assert(0);
   // TODO REMOVE
   // this code should not be called anymore and will need to remove after

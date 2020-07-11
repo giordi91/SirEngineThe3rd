@@ -3,24 +3,24 @@
 #include "SirEngine/application.h"
 #include "SirEngine/assetManager.h"
 #include "SirEngine/bufferManager.h"
+#include "SirEngine/constantBufferManager.h"
 #include "SirEngine/events/debugEvent.h"
 #include "SirEngine/events/mouseEvent.h"
+#include "SirEngine/events/shaderCompileEvent.h"
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/graphics/camera.h"
 #include "SirEngine/graphics/debugRenderer.h"
-#include "SirEngine/constantBufferManager.h"
-#include "SirEngine/log.h"
 #include "SirEngine/graphics/nodes/FinalBlitNode.h"
 #include "SirEngine/graphics/nodes/debugDrawNode.h"
 #include "SirEngine/graphics/nodes/forwardPlus.h"
+#include "SirEngine/graphics/nodes/skybox.h"
+#include "SirEngine/graphics/postProcess/effects/gammaAndToneMappingEffect.h"
+#include "SirEngine/graphics/postProcess/postProcessStack.h"
 #include "SirEngine/graphics/renderingContext.h"
+#include "SirEngine/log.h"
 #include "SirEngine/materialManager.h"
 #include "SirEngine/psoManager.h"
-#include "SirEngine/graphics/nodes/skybox.h"
-#include "SirEngine/graphics/postProcess/postProcessStack.h"
-#include "SirEngine/graphics/postProcess/effects/gammaAndToneMappingEffect.h"
-#include "SirEngine/events/shaderCompileEvent.h"
 
 namespace SirEngine {
 void VkTempLayer::initGrass() {
@@ -143,28 +143,24 @@ void VkTempLayer::onAttach() {
   globals::RENDERING_GRAPH->addNode(postProcess);
   globals::RENDERING_GRAPH->setFinalNode(finalBlit);
 
-  SirEngine::DependencyGraph::connectNodes(
-      forward, ForwardPlus::OUT_TEXTURE, skybox,
-      SkyBoxPass::IN_TEXTURE);
+  SirEngine::DependencyGraph::connectNodes(forward, ForwardPlus::OUT_TEXTURE,
+                                           skybox, SkyBoxPass::IN_TEXTURE);
   SirEngine::DependencyGraph::connectNodes(forward, ForwardPlus::DEPTH_RT,
                                            skybox, SkyBoxPass::DEPTH);
 
   SirEngine::DependencyGraph::connectNodes(
-      skybox, SkyBoxPass::OUT_TEX, debugDraw,
-      DebugDrawNode::IN_TEXTURE);
+      skybox, SkyBoxPass::OUT_TEX, debugDraw, DebugDrawNode::IN_TEXTURE);
   SirEngine::DependencyGraph::connectNodes(forward, ForwardPlus::DEPTH_RT,
                                            debugDraw, DebugDrawNode::DEPTH_RT);
 
+  globals::RENDERING_GRAPH->connectNodes(debugDraw, DebugDrawNode::OUT_TEXTURE,
+                                         postProcess,
+                                         PostProcessStack::IN_TEXTURE);
   globals::RENDERING_GRAPH->connectNodes(
-      debugDraw, DebugDrawNode::OUT_TEXTURE, postProcess,
-      PostProcessStack::IN_TEXTURE);
-  globals::RENDERING_GRAPH->connectNodes(
-      forward, ForwardPlus::DEPTH_RT, postProcess,
-      PostProcessStack::DEPTH_RT);
+      forward, ForwardPlus::DEPTH_RT, postProcess, PostProcessStack::DEPTH_RT);
   SirEngine::DependencyGraph::connectNodes(
       postProcess, PostProcessStack::OUT_TEXTURE, finalBlit,
       FinalBlitNode::IN_TEXTURE);
-
 
   // TODO this whole reset execute flush needs to be reworked
   globals::RENDERING_GRAPH->finalizeGraph();
@@ -178,24 +174,6 @@ void VkTempLayer::onUpdate() {
   // evaluating rendering graph
   globals::CONSTANT_BUFFER_MANAGER->processBufferedData();
   globals::RENDERING_GRAPH->compute();
-
-  // if constexpr (USE_PUSH) {
-  //  VkDescriptorBufferInfo bufferInfo{};
-  //  bufferInfo.buffer = m_vertexBuffer.buffer;
-  //  bufferInfo.offset = 0;
-  //  bufferInfo.range = m_vertexBuffer.size;
-
-  //  VkWriteDescriptorSet descriptor[1]{};
-  //  descriptor[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  //  descriptor[0].dstBinding = 0;
-  //  descriptor[0].descriptorCount = 1;
-  //  descriptor[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  //  descriptor[0].pBufferInfo = &bufferInfo;
-
-  //  vkCmdPushDescriptorSetKHR(FRAME_COMMAND[0].m_commandBuffer,
-  // VK_PIPELINE_BIND_POINT_GRAPHICS, PIPELINE_LAYOUT, 0, ARRAYSIZE(descriptor),
-  //                            descriptor);
-  //}
 }
 void VkTempLayer::onEvent(Event &event) {
   EventDispatcher dispatcher(event);
@@ -211,14 +189,13 @@ void VkTempLayer::onEvent(Event &event) {
       SE_BIND_EVENT_FN(VkTempLayer::onResizeEvent));
   // dispatcher.dispatch<DebugRenderConfigChanged>(
   //    SE_BIND_EVENT_FN(VkTempLayer::onDebugConfigChanged));
-   dispatcher.dispatch<ShaderCompileEvent>(
+  dispatcher.dispatch<ShaderCompileEvent>(
       SE_BIND_EVENT_FN(VkTempLayer::onShaderCompileEvent));
   // dispatcher.dispatch<ReloadScriptsEvent>(
   //    SE_BIND_EVENT_FN(VkTempLayer::onReloadScriptEvent));
 }
 
 void VkTempLayer::clear() {
-  // vkDeviceWaitIdle(vk::LOGICAL_DEVICE);
   globals::RENDERING_GRAPH->clear();
   if (m_debugHandle.isHandleValid()) {
     globals::DEBUG_RENDERER->free(m_debugHandle);
@@ -401,7 +378,8 @@ bool VkTempLayer::onDebugConfigChanged(DebugRenderConfigChanged &e) {
 */
 bool VkTempLayer::onShaderCompileEvent(ShaderCompileEvent &e) {
   SE_CORE_INFO("Reading to compile shader");
-  globals::PSO_MANAGER->recompilePSOFromShader(e.getShader(), e.getOffsetPath());
+  globals::PSO_MANAGER->recompilePSOFromShader(e.getShader(),
+                                               e.getOffsetPath());
   return true;
 }
 

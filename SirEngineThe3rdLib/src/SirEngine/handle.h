@@ -51,7 +51,7 @@ struct BufferHandle final {
   [[nodiscard]] bool isHandleValid() const { return handle != 0; }
 };
 
-struct ShaderHandle {
+struct LightHandle {
   uint32_t handle;
   [[nodiscard]] bool isHandleValid() const { return handle != 0; }
 };

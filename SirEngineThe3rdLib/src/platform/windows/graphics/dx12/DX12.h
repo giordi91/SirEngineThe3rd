@@ -206,7 +206,6 @@ class Dx12RenderingContext final : public RenderingContext {
   bool initializeGraphics() override;
 
   void setupCameraForFrame() override;
-  void setupLightingForFrame();
   void bindCameraBuffer(int index) const override;
 
   void bindCameraBufferCompute(int index) const;
