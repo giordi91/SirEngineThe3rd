@@ -7,6 +7,7 @@
 #include "SirEngine/engineConfig.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/graphics/camera.h"
+#include "SirEngine/graphics/lightManager.h"
 #include "SirEngine/log.h"
 #include "SirEngine/runtimeString.h"
 #include "platform/windows/graphics/vk/vkAdapter.h"
@@ -181,6 +182,8 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
                          "/processed/shaders/VK/rasterization"));
 
   globals::SHADER_MANAGER = vk::SHADER_MANAGER;
+
+  globals::LIGHT_MANAGER = new graphics::LightManager();
 
   PIPELINE_LAYOUT_MANAGER = new VkPipelineLayoutManager();
   PIPELINE_LAYOUT_MANAGER->initialize();
@@ -447,6 +450,7 @@ bool VkRenderingContext::shutdownGraphic() {
 
   destroyStaticSamplers();
   SHADER_MANAGER->cleanup();
+  globals::LIGHT_MANAGER->cleanup();
   CONSTANT_BUFFER_MANAGER->cleanup();
 
   for (uint32_t i = 0; i < SWAP_CHAIN_IMAGE_COUNT; ++i) {

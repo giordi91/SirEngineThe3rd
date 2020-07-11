@@ -1,5 +1,6 @@
 #include "SirEngine/graphics/nodes/forwardPlus.h"
 
+#include "SirEngine/graphics/lightManager.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/textureManager.h"
 
@@ -21,6 +22,32 @@ ForwardPlus::ForwardPlus(GraphAllocators &allocators)
   depthBuffer.name = "depth";
 }
 
+void ForwardPlus::setupLight() {
+  float intensity = 4.0f;
+  m_light.lightColor = {intensity, intensity, intensity, 1.0f};
+  // m_light.lightDir = {0.0f, 0.0f, -1.0f, 0.0f};
+  m_light.lightDir = {-1.0f, -0.6f, -1.0f, 1.0f};
+  m_light.lightPosition = {10.0f, 10.0f, 10.0f, 1.0f};
+
+  // build a look at matrix for the light
+  glm::vec3 lightDir = glm::normalize(glm::vec3(m_light.lightDir));
+  glm::vec3 upVector{0, 1, 0};
+
+  const auto cross = glm::cross(upVector, lightDir);
+  const auto crossNorm = glm::normalize(cross);
+
+  const auto newUp = glm::cross(lightDir, crossNorm);
+  const auto newUpNorm = glm::normalize(newUp);
+
+  m_light.localToWorld =
+      glm::mat4(glm::vec4(crossNorm, 0), glm::vec4(newUpNorm, 0),
+                glm::vec4(lightDir, 0), m_light.lightPosition);
+
+  m_light.worldToLocal = glm::inverse(m_light.localToWorld);
+  m_lightHandle = globals::LIGHT_MANAGER->addLight(
+      m_light, graphics::LightManager::GPU_BACKED);
+}
+
 void ForwardPlus::initialize() {
   int width = globals::ENGINE_CONFIG->m_windowWidth;
   int height = globals::ENGINE_CONFIG->m_windowHeight;
@@ -35,6 +62,8 @@ void ForwardPlus::initialize() {
       TextureManager::TEXTURE_ALLOCATION_FLAG_BITS::DEPTH_TEXTURE |
           TextureManager::TEXTURE_ALLOCATION_FLAG_BITS::SHADER_RESOURCE,
       RESOURCE_STATE::DEPTH_RENDER_TARGET);
+
+  setupLight();
 }
 
 void ForwardPlus::compute() {
@@ -82,8 +111,8 @@ void ForwardPlus::populateNodePorts() {
   bindings.width = globals::ENGINE_CONFIG->m_windowWidth;
   bindings.height = globals::ENGINE_CONFIG->m_windowHeight;
 
-  m_bindHandle = globals::RENDERING_CONTEXT->prepareBindingObject(
-      bindings, "ForwardPlus");
+  m_bindHandle =
+      globals::RENDERING_CONTEXT->prepareBindingObject(bindings, "ForwardPlus");
 }
 
 void ForwardPlus::clear() {
@@ -97,4 +126,4 @@ void ForwardPlus::clear() {
     globals::RENDERING_CONTEXT->freeBindingObject(m_bindHandle);
   }
 }
-} // namespace SirEngine
+}  // namespace SirEngine

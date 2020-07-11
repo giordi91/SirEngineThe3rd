@@ -1,6 +1,7 @@
 #pragma once
 
 #include "SirEngine/graphics/nodeGraph.h"
+#include "SirEngine/graphics/cpuGraphicsStructures.h"
 
 namespace SirEngine {
 
@@ -15,6 +16,7 @@ class ForwardPlus final : public GNode {
  public:
   explicit ForwardPlus(GraphAllocators& allocators);
   virtual ~ForwardPlus()=default;
+  void setupLight();
   virtual void initialize() override;
   virtual void compute() override;
   virtual void onResizeEvent(int screenWidth, int screenHeight) override;
@@ -26,6 +28,8 @@ class ForwardPlus final : public GNode {
   TextureHandle m_rtHandle{};
   TextureHandle m_depthHandle{};
   BufferBindingsHandle m_bindHandle{};
+  LightHandle m_lightHandle{};
+  DirectionalLightData m_light;
 };
 
 }  // namespace SirEngine
