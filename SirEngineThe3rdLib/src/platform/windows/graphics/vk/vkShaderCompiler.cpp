@@ -272,6 +272,10 @@ VkShaderModule VkShaderCompiler::compileToShaderModule(const char *shaderPath,
                                                        VkShaderArgs &shaderArgs,
                                                        std::string *log) const {
   const SpirVBlob shader = compileToSpirV(shaderPath, shaderArgs, log);
+  if(shader.memory == nullptr || shader.sizeInByte ==0)
+  {
+      return nullptr;
+  }
   return spirvToShaderModule(shader);
 }
 uint32_t VkShaderCompiler::getShaderFlags(const VkShaderArgs &shaderArgs) {

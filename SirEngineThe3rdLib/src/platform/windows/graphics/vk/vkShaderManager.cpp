@@ -64,7 +64,8 @@ void VkShaderManager::loadShaderBinaryFile(const char *path) {
     uint32_t fileSize;
     const char *data = frameFileLoad(path, fileSize);
 
-    const auto mapper = getMapperData<VkShaderMapperData>(data);
+    const VkShaderMapperData *const mapper =
+        getMapperData<VkShaderMapperData>(data);
     const void *shaderPointer = data + sizeof(BinaryFileHeader);
 
     // TODO check if I can make Spirv blob const void*;
@@ -83,13 +84,16 @@ void VkShaderManager::loadShaderBinaryFile(const char *path) {
 }
 
 const char *VkShaderManager::recompileShader(const char *path,
-                                             const char *offsetPath) {
+                                             const char *offsetPath,
+                                             bool &result) {
   // first thing first we need to get the shader metadata
 
   VkShaderBlob blob{};
-  bool result = m_stringToShader.get(path, blob);
-  if (!result) {
+  bool found = m_stringToShader.get(path, blob);
+  if (!found) {
     assert(0 && "could not find shader you are asking to recompile");
+    result = false;
+    return nullptr;
   }
 
   VkShaderMetadata *meta = blob.metadata;
@@ -126,9 +130,13 @@ const char *VkShaderManager::recompileShader(const char *path,
       out = globals::STRING_POOL->concatenateFrame(
           "Successfully compiled shader: ", "\n", name.c_str());
     }
+    result = true;
     return out;
   }
-  return nullptr;
+  result = false;
+
+  const char* out  = frameString(log.c_str());
+  return out;
 }
 
 VkShaderManager::~VkShaderManager() { delete m_compiler; }

@@ -40,7 +40,7 @@ class Dx12ShaderManager final : public graphics::ShaderManager {
     if (result) {
       return blob.shader;
     }
-    if (strcmp(name ,"null")==0) {
+    if (strcmp(name, "null") == 0) {
       return nullptr;
     }
     assert(0 && "could not find shader");
@@ -62,8 +62,8 @@ class Dx12ShaderManager final : public graphics::ShaderManager {
 
   void loadShaderFile(const char *path) override;
   void loadShaderBinaryFile(const char *path) override;
-  const char *recompileShader(const char *path,
-                              const char *offsetPath) override;
+  const char *recompileShader(const char *path, const char *offsetPath,
+                              bool &result) override;
 
  private:
   // 2 mb of data for the stack

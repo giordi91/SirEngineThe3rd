@@ -26,7 +26,7 @@ class ShaderManager {
   // the log is used to show in the ui the result of compilation
   // we can probably return a const char* and let the user combine it
   virtual const char *recompileShader(const char *path,
-                                      const char *offsetPath) = 0;
+                                      const char *offsetPath, bool& result) = 0;
   virtual const ResizableVector<const char *> &getShaderNames() = 0;
 };
 }  // namespace SirEngine::graphics

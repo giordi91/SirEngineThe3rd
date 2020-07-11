@@ -310,8 +310,9 @@ void Dx12PSOManager::recompilePSOFromShader(const char *shaderName,
 
   // recompile all the shaders involved
   for (auto &shader : shadersToRecompile) {
-    const char *log =
-        dx12::SHADER_MANAGER->recompileShader(shader.c_str(), offsetPath);
+    bool compileResult = false;
+    const char *log = dx12::SHADER_MANAGER->recompileShader(
+        shader.c_str(), offsetPath, compileResult);
     if (log != nullptr) {
       compileLog += log;
     }

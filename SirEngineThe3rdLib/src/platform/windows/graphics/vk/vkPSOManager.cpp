@@ -975,10 +975,18 @@ void VkPSOManager::recompilePSOFromShader(const char *shaderName,
 
   // recompile all the shaders involved
   for (auto &shader : shadersToRecompile) {
+    bool result = false;
     const char *log =
-        vk::SHADER_MANAGER->recompileShader(shader.c_str(), offsetPath);
+        vk::SHADER_MANAGER->recompileShader(shader.c_str(), offsetPath, result);
     if (log != nullptr) {
       compileLog += log;
+    }
+    if (!result) {
+      SE_CORE_ERROR("Error in compiling shader {0}", shader);
+      //we need to update the log with the error and return
+      auto *e = new ShaderCompileResultEvent(compileLog.c_str());
+      globals::APPLICATION->queueEventForEndOfFrame(e);
+      return;
     }
   }
   // now that all shaders are recompiled we can recompile the pso

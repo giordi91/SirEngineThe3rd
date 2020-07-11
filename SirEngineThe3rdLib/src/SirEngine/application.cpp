@@ -122,7 +122,7 @@ void Application::queueEventForEndOfFrame(Event *e) const {
 }
 void Application::onEvent(Event &e) {
   // close event dispatch
-  SE_CORE_INFO("{0}", e.toString());
+  //SE_CORE_INFO("{0}", e.toString());
   EventDispatcher dispatcher(e);
   dispatcher.dispatch<WindowCloseEvent>(
       [this](WindowCloseEvent &e) -> bool { return (this->onCloseWindow(e)); });
