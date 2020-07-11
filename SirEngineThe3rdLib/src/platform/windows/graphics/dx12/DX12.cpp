@@ -6,6 +6,7 @@
 #include "SirEngine/engineConfig.h"
 #include "SirEngine/graphics/camera.h"
 #include "SirEngine/graphics/debugAnnotations.h"
+#include "SirEngine/graphics/lightManager.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/log.h"
 #include "SirEngine/memory/stringPool.h"
@@ -20,9 +21,9 @@
 #include "platform/windows/graphics/dx12/dx12MeshManager.h"
 #include "platform/windows/graphics/dx12/dx12PSOManager.h"
 #include "platform/windows/graphics/dx12/dx12RootSignatureManager.h"
+#include "platform/windows/graphics/dx12/dx12ShaderManager.h"
 #include "platform/windows/graphics/dx12/dx12SwapChain.h"
 #include "platform/windows/graphics/dx12/dx12TextureManager.h"
-#include "platform/windows/graphics/dx12/dx12ShaderManager.h"
 
 #undef max
 #undef min
@@ -193,6 +194,8 @@ bool initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
       frameConcatenation(globals::ENGINE_CONFIG->m_dataSourcePath,
                          "/processed/shaders/DX12/compute"));
   globals::SHADER_MANAGER = dx12::SHADER_MANAGER;
+
+  globals::LIGHT_MANAGER = new graphics::LightManager();
 
   ROOT_SIGNATURE_MANAGER = new Dx12RootSignatureManager();
   ROOT_SIGNATURE_MANAGER->loadSignaturesInFolder(frameConcatenation(
@@ -433,7 +436,7 @@ bool Dx12RenderingContext::initializeGraphics() {
 
   // allocate the constant buffer
   m_lightCB = globals::CONSTANT_BUFFER_MANAGER->allocate(
-      sizeof(DirectionalLightData), 0,&m_light);
+      sizeof(DirectionalLightData), 0, &m_light);
 
   return result;
 }
@@ -459,7 +462,6 @@ void Dx12RenderingContext::setupCameraForFrame() {
 
   globals::CONSTANT_BUFFER_MANAGER->update(m_cameraHandle, &m_camBufferCPU);
 }
-
 
 void Dx12RenderingContext::bindCameraBuffer(const int index) const {
   // assert(0);

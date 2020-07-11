@@ -29,10 +29,10 @@ class StackAllocator;
 class ThreeSizesPool;
 
 using PersistantAllocatorType = ThreeSizesPool;
-namespace graphics
-{
-	class ShaderManager;
-}
+namespace graphics {
+class ShaderManager;
+class LightManager;
+}  // namespace graphics
 
 namespace globals {
 
@@ -74,6 +74,7 @@ extern RootSignatureManager *ROOT_SIGNATURE_MANAGER;
 extern DependencyGraph *RENDERING_GRAPH;
 extern DebugRenderer *DEBUG_RENDERER;
 extern graphics::ShaderManager *SHADER_MANAGER;
+extern graphics::LightManager *LIGHT_MANAGER;
 
 // generic allocators
 extern SIR_ENGINE_API StringPool *STRING_POOL;

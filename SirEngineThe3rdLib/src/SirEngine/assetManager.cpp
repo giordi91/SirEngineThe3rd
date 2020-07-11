@@ -1,4 +1,5 @@
 #include "SirEngine/assetManager.h"
+
 #include "SirEngine/animation/animationManager.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/materialManager.h"
@@ -20,12 +21,9 @@ static const char *ENVIROMENT_MAP_KEY = "enviromentMap";
 static const char *ENVIROMENT_MAP_IRRADIANCE_KEY = "enviromentMapIrradiance";
 static const char *ENVIROMENT_MAP_RADIANCE_KEY = "enviromentMapRadiance";
 static const std::string DEFAULT_STRING = "";
-} // namespace AssetManagerKeys
+}  // namespace AssetManagerKeys
 
-void AssetManager::cleanup()
-{
-
-}
+void AssetManager::cleanup() {}
 
 AssetDataHandle AssetManager::loadAsset(const char *path) {
   auto jobj = getJsonObj(path);
@@ -36,7 +34,7 @@ AssetDataHandle AssetManager::loadAsset(const char *path) {
   assert(jobj.find(AssetManagerKeys::SUB_ASSETS_KEY) != jobj.end());
   auto subAssetsJ = jobj[AssetManagerKeys::SUB_ASSETS_KEY];
 
-  uint32_t subAssetCount = subAssetsJ.size();
+  uint32_t subAssetCount = static_cast<uint32_t>(subAssetsJ.size());
   uint32_t assetIdx;
   AssetData &assetData = m_assetDatabase.getFreeMemoryData(assetIdx);
   assetData.m_subAssets = reinterpret_cast<AssetDataHandle *>(
@@ -48,12 +46,12 @@ AssetDataHandle AssetManager::loadAsset(const char *path) {
 
   uint32_t assetCounter = 0;
   for (auto &subAsset : subAssetsJ) {
-
     uint32_t subAssetIdx;
     AssetData &subAssetData = m_assetDatabase.getFreeMemoryData(subAssetIdx);
-    subAssetData.m_subAssets = nullptr; 
+    subAssetData.m_subAssets = nullptr;
     subAssetData.magicNumber = MAGIC_NUMBER_COUNTER++;
-    AssetDataHandle subAssetHandle = {assetData.magicNumber << 16 | subAssetIdx};
+    AssetDataHandle subAssetHandle = {assetData.magicNumber << 16 |
+                                      subAssetIdx};
 
     Renderable renderable{};
     // get the mesh
@@ -61,10 +59,9 @@ AssetDataHandle AssetManager::loadAsset(const char *path) {
         subAsset, AssetManagerKeys::MESH_KEY, AssetManagerKeys::DEFAULT_STRING);
     assert(!meshString.empty());
 
-    //TODO using mesh string as asset name, should have a proper name and then keep track of what it contains
-  	//for now this will do
+    // TODO using mesh string as asset name, should have a proper name and then
+    // keep track of what it contains for now this will do
     assetData.name = persistentString(meshString.c_str());
-
 
     // get material
     const std::string materialString =
@@ -116,7 +113,7 @@ AssetDataHandle AssetManager::loadScene(const char *path) {
 
   // load all the assets
   auto assetsJ = jobj[AssetManagerKeys::ASSETS_KEY];
-  uint32_t subAssetCount = assetsJ.size();
+  uint32_t subAssetCount = static_cast<uint32_t>(assetsJ.size());
   uint32_t assetIdx;
   AssetData &assetData = m_assetDatabase.getFreeMemoryData(assetIdx);
   assetData.m_subAssets = reinterpret_cast<AssetDataHandle *>(
@@ -172,4 +169,4 @@ AssetDataHandle AssetManager::loadScene(const char *path) {
 
   return assetHandle;
 }
-} // namespace SirEngine
+}  // namespace SirEngine
