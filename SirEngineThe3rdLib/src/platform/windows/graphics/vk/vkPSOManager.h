@@ -4,11 +4,11 @@
 #include <nlohmann/json_fwd.hpp>
 #include <string>
 
-#include "SirEngine/memory/stringHashMap.h"
 #include "SirEngine/PSOManager.h"
 #include "SirEngine/handle.h"
 #include "SirEngine/memory/resizableVector.h"
 #include "SirEngine/memory/sparseMemoryPool.h"
+#include "SirEngine/memory/stringHashMap.h"
 #include "platform/windows/graphics/vk/volk.h"
 #include "vkRootSignatureManager.h"
 
@@ -27,6 +27,7 @@ struct SIR_ENGINE_API VkPSOCompileResult {
   const char *rootSignature = nullptr;
   TOPOLOGY_TYPE topologyType;
   VkRenderPass renderPass;
+  VkPipelineLayout pipelineLayout;
 };
 
 #define STATIC_SAMPLER_COUNT 7
@@ -49,6 +50,7 @@ class VkPSOManager final : public PSOManager {
   struct PSOData {
     VkPipeline pso;
     VkRenderPass renderPass;
+    VkPipelineLayout layout;
     RSHandle rootSignature;
     uint32_t magicNumber;
     TOPOLOGY_TYPE topology;
@@ -103,6 +105,12 @@ class VkPSOManager final : public PSOManager {
     const PSOData &data = m_psoPool.getConstRef(index);
     return data.rootSignature;
   }
+  VkPipelineLayout getPipelineLayoutFromPSOHandle(const PSOHandle handle) const {
+    assertMagicNumber(handle);
+    const uint32_t index = getIndexFromHandle(handle);
+    const PSOData &data = m_psoPool.getConstRef(index);
+    return data.layout;
+  }
 
   PSOHandle getHandleFromName(const char *name) const override;
 
@@ -134,7 +142,7 @@ class VkPSOManager final : public PSOManager {
       const char *filePath, const nlohmann::json &jobj,
       VkPipelineVertexInputStateCreateInfo *vertexInfo) const;
 
-  void updatePSOCache(const char *name, const VkPSOCompileResult& result);
+  void updatePSOCache(const char *name, const VkPSOCompileResult &result);
 
  private:
   HashMap<const char *, VkPipeline, hashString32> m_psoRegister;

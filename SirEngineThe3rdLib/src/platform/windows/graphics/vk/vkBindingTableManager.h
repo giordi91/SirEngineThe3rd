@@ -23,7 +23,7 @@ class VkBindingTableManager final : public graphics::BindingTableManager {
     graphics::BindingDescription *descriptions;
     VkDescriptorSetLayout layout;
     DescriptorHandle descriptorHandle;
-	graphics::BINDING_TABLE_FLAGS flags;
+    graphics::BINDING_TABLE_FLAGS flags;
     uint32_t magicNumber;
   };
 
@@ -86,13 +86,28 @@ class VkBindingTableManager final : public graphics::BindingTableManager {
       const graphics::BindingDescription *descriptions, const uint32_t count,
       graphics::BINDING_TABLE_FLAGS flags, const char *name = nullptr) override;
 
+  void bindTexture(const BindingTableHandle bindHandle,
+                   const TextureHandle texture, const uint32_t descriptorIndex,
+                   const uint32_t bindingIndex, const bool isCube) override;
+
+  void bindTable(const BindingTableHandle bindHandle,
+                 const PSOHandle psoHandle);
+
  private:
   inline void assertMagicNumber(const DescriptorHandle handle) const {
 #ifdef SE_DEBUG
     uint32_t magic = getMagicFromHandle(handle);
     uint32_t idx = getIndexFromHandle(handle);
     assert(m_descriptorDataPool.getConstRef(idx).magicNumber == magic &&
-           "invalid magic handle for constant buffer");
+           "invalid magic handle for descriptor handle buffer");
+#endif
+  }
+  inline void assertMagicNumber(const BindingTableHandle handle) const {
+#ifdef SE_DEBUG
+    uint32_t magic = getMagicFromHandle(handle);
+    uint32_t idx = getIndexFromHandle(handle);
+    assert(m_bindingTablePool.getConstRef(idx).magicNumber == magic &&
+           "invalid magic handle for binding table pool");
 #endif
   }
 

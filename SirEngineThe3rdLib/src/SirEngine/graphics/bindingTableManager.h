@@ -11,7 +11,7 @@ struct BindingDescription {
 };
 
 enum BINDING_TABLE_FLAGS_BITS {
-  BINDING_TABLE_NONE =0,
+  BINDING_TABLE_NONE = 0,
   BINDING_TABLE_BUFFERED = 1
 };
 typedef uint32_t BINDING_TABLE_FLAGS;
@@ -32,5 +32,8 @@ class BindingTableManager {
   virtual BindingTableHandle allocateBindingTable(
       const graphics::BindingDescription *descriptions, const uint32_t count,
       graphics::BINDING_TABLE_FLAGS flags, const char *name = nullptr) = 0;
+  virtual void bindTexture(const BindingTableHandle bindHandle,
+                   const TextureHandle texture, const uint32_t descriptorIndex,
+                   const uint32_t bindingIndex, const bool isCube) =0;
 };
 }  // namespace SirEngine::graphics
