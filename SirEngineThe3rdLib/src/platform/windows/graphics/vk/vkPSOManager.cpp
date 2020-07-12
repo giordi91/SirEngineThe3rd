@@ -655,6 +655,7 @@ PSOHandle VkPSOManager::insertInPSOCache(const VkPSOCompileResult &result) {
       data.pso = result.pso;
       data.topology = result.topologyType;
       data.renderPass = result.renderPass;
+      data.layout  = result.pipelineLayout;
       const PSOHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
       data.magicNumber = MAGIC_NUMBER_COUNTER;
       m_psoRegisterHandle.insert(
@@ -826,6 +827,7 @@ VkPSOCompileResult VkPSOManager::processRasterPSO(
   compileResult.topologyType = convertStringToEngineTopology(topology);
   compileResult.pso = pipeline;
   compileResult.renderPass = renderPass;
+  compileResult.pipelineLayout=layout;
   return compileResult;
 };
 

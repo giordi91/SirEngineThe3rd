@@ -34,6 +34,7 @@ private:
   RSHandle m_rs{};
   PSOHandle m_pso{};
   MaterialHandle m_matHandle{};
+  BindingTableHandle m_bindingTable{};
 };
 
 } // namespace SirEngine

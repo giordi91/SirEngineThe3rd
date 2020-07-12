@@ -4,6 +4,7 @@
 
 #include "platform/windows/graphics/vk/vk.h"
 #include "platform/windows/graphics/vk/vkPSOManager.h"
+#include "vkTextureManager.h"
 
 namespace SirEngine::vk {
 DescriptorHandle VkBindingTableManager::allocate(
@@ -146,6 +147,66 @@ BindingTableHandle VkBindingTableManager::allocateBindingTable(
   data.flags = flags;
 
   return {data.magicNumber << 16 | poolIdx};
+}
+
+void VkBindingTableManager::bindTexture(const BindingTableHandle bindHandle,
+                                        const TextureHandle texture,
+                                        const uint32_t descriptorIndex,
+                                        const uint32_t bindingIndex,
+                                        const bool isCube) {
+  assertMagicNumber(bindHandle);
+  uint32_t index = getIndexFromHandle(bindHandle);
+  const auto &data = m_bindingTablePool.getConstRef(index);
+
+  assert(data.descriptorHandle.isHandleValid());
+  // the descriptor set is already taking into account whether or not
+  // is buffered, it gives us the correct one we want
+  VkDescriptorSet descriptorSet =
+      vk::DESCRIPTOR_MANAGER->getDescriptorSet(data.descriptorHandle);
+
+  // assert(!vk::DESCRIPTOR_MANAGER->isBuffered(descriptorHandle) &&
+  //       "buffered not yet implemented");
+
+  VkWriteDescriptorSet writeDescriptorSets{};
+
+  vk::TEXTURE_MANAGER->bindTexture(texture, &writeDescriptorSets, descriptorSet,
+                                   bindingIndex);
+
+  // Execute the writes to update descriptors for this set
+  // Note that it's also possible to gather all writes and only run updates
+  // once, even for multiple sets This is possible because each
+  // VkWriteDescriptorSet also contains the destination set to be updated
+  // For simplicity we will update once per set instead
+  // object one off update
+  vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, 1, &writeDescriptorSets, 0,
+                         nullptr);
+}
+
+void VkBindingTableManager::bindTable(const BindingTableHandle bindHandle,
+                                      const PSOHandle psoHandle) {
+  assertMagicNumber(bindHandle);
+  uint32_t index = getIndexFromHandle(bindHandle);
+  const auto &data = m_bindingTablePool.getConstRef(index);
+
+  vk::PSO_MANAGER->bindPSO(psoHandle, CURRENT_FRAME_COMMAND->m_commandBuffer);
+
+  DescriptorHandle descriptorHandle = data.descriptorHandle;
+  // data.m_materialRuntime.descriptorHandles[currentFlagId];
+  assert(descriptorHandle.isHandleValid());
+  VkDescriptorSet descriptorSet =
+      vk::DESCRIPTOR_MANAGER->getDescriptorSet(descriptorHandle);
+
+  VkPipelineLayout layout =
+      vk::PSO_MANAGER->getPipelineLayoutFromPSOHandle(psoHandle);
+  assert(layout != nullptr);
+
+  VkDescriptorSet sets[] = {
+      vk::DESCRIPTOR_MANAGER->getDescriptorSet(PER_FRAME_DATA_HANDLE),
+      descriptorSet, vk::STATIC_SAMPLERS_DESCRIPTOR_SET};
+  // multiple descriptor sets
+  vkCmdBindDescriptorSets(CURRENT_FRAME_COMMAND->m_commandBuffer,
+                          VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0, 3, sets,
+                          0, nullptr);
 }
 
 void createDescriptorPool(const VkDevice device,
