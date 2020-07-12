@@ -19,7 +19,7 @@
 // VK
 #include "platform/windows/graphics/vk/imgui_impl_vulkan.h"
 #include "platform/windows/graphics/vk/vk.h"
-#include "platform/windows/graphics/vk/vkDescriptorManager.h"
+#include "platform/windows/graphics/vk/vkBindingTableManager.h"
 #include "platform/windows/graphics/vk/vkSwapChain.h"
 #endif
 

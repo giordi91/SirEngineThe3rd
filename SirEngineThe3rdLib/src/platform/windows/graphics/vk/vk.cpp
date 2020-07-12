@@ -18,11 +18,11 @@
 #include "platform/windows/graphics/vk/vkRootSignatureManager.h"
 #include "platform/windows/graphics/vk/vkShaderManager.h"
 #include "platform/windows/graphics/vk/vkSwapChain.h"
-#include "vkDebugRenderer.h"
-#include "vkDescriptorManager.h"
-#include "vkMaterialManager.h"
-#include "vkMeshManager.h"
-#include "vkTextureManager.h"
+#include "platform/windows/graphics/vk/vkDebugRenderer.h"
+#include "platform/windows/graphics/vk/vkBindingTableManager.h"
+#include "platform/windows/graphics/vk/vkMeshManager.h"
+#include "platform/windows/graphics/vk/vkTextureManager.h"
+#include "platform/windows/graphics/vk/vkMaterialManager.h"
 
 namespace SirEngine::vk {
 VkInstance INSTANCE = nullptr;
@@ -46,7 +46,7 @@ VkBufferManager *BUFFER_MANAGER = nullptr;
 VkMeshManager *MESH_MANAGER = nullptr;
 VkTextureManager *TEXTURE_MANAGER = nullptr;
 VkMaterialManager *MATERIAL_MANAGER = nullptr;
-VkDescriptorManager *DESCRIPTOR_MANAGER = nullptr;
+VkBindingTableManager *DESCRIPTOR_MANAGER = nullptr;
 VkDebugRenderer *DEBUG_RENDERER = nullptr;
 uint32_t SWAP_CHAIN_IMAGE_COUNT = 0;
 VkFrameCommand FRAME_COMMAND[PREALLOCATED_SEMAPHORE_COUNT];
@@ -172,7 +172,7 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
 
   CURRENT_FRAME_COMMAND = &FRAME_COMMAND[0];
 
-  DESCRIPTOR_MANAGER = new VkDescriptorManager(10000, 10000);
+  DESCRIPTOR_MANAGER = new VkBindingTableManager(10000, 10000);
   DESCRIPTOR_MANAGER->initialize();
 
   SHADER_MANAGER = new VkShaderManager();

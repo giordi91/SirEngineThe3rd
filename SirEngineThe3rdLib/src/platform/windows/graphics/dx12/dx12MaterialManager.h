@@ -78,8 +78,11 @@ class Dx12MaterialManager final : public MaterialManager {
 
   void bindBuffer(MaterialHandle handle, BufferHandle bufferHandle,
                   uint32_t bindingIndex, SHADER_QUEUE_FLAGS queue) override;
-  void bindConstantBuffer(MaterialHandle handle, ConstantBufferHandle bufferHandle,
-                const uint32_t descriptorIndex,  const uint32_t bindingIndex, SHADER_QUEUE_FLAGS queue) override;
+  void bindConstantBuffer(MaterialHandle handle,
+                          ConstantBufferHandle bufferHandle,
+                          const uint32_t descriptorIndex,
+                          const uint32_t bindingIndex,
+                          SHADER_QUEUE_FLAGS queue) override;
 
   void bindRSandPSO(uint32_t shaderFlags,
                     ID3D12GraphicsCommandList2 *commandList) const;
@@ -105,7 +108,6 @@ class Dx12MaterialManager final : public MaterialManager {
     uint32_t index = getIndexFromHandle(handle);
     return m_materialTextureHandles.getConstRef(index).m_materialRuntime;
   }
-
 
  private:
   inline void assertMagicNumber(const MaterialHandle handle) {

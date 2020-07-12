@@ -1,11 +1,12 @@
 #pragma once
-#include "platform/windows/graphics/vk/volk.h"
 #include <vulkan/vulkan.h>
+
+#include <vector>
 
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/memory/sparseMemoryPool.h"
 #include "SirEngine/runtimeString.h"
-#include <vector>
+#include "platform/windows/graphics/vk/volk.h"
 
 namespace SirEngine {
 namespace vk {
@@ -17,7 +18,7 @@ class VkTextureManager;
 class VkPipelineLayoutManager;
 class VkConstantBufferManager;
 class VkMaterialManager;
-class VkDescriptorManager;
+class VkBindingTableManager;
 class VkDebugRenderer;
 struct VkSwapchain;
 
@@ -56,8 +57,8 @@ extern VkBufferManager *BUFFER_MANAGER;
 extern VkMeshManager *MESH_MANAGER;
 extern VkTextureManager *TEXTURE_MANAGER;
 extern VkMaterialManager *MATERIAL_MANAGER;
-extern VkDescriptorManager *DESCRIPTOR_MANAGER;
-extern VkDebugRenderer* DEBUG_RENDERER;
+extern VkBindingTableManager *DESCRIPTOR_MANAGER;
+extern VkDebugRenderer *DEBUG_RENDERER;
 extern uint32_t SWAP_CHAIN_IMAGE_COUNT;
 // incremented every frame and used to find the correct set of resources
 // like command buffer pool and allocators
@@ -67,29 +68,27 @@ extern uint32_t GRAPHICS_QUEUE_FAMILY;
 extern uint32_t PRESENTATION_QUEUE_FAMILY;
 extern bool DEBUG_MARKERS_ENABLED;
 
-
 inline VkImageLayout fromStateToLayout(RESOURCE_STATE state) {
   switch (state) {
-  case RESOURCE_STATE::GENERIC:
-    return VK_IMAGE_LAYOUT_GENERAL;
-  case RESOURCE_STATE::RENDER_TARGET:
-    return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-  case RESOURCE_STATE::DEPTH_RENDER_TARGET:
-    return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-  case RESOURCE_STATE::SHADER_READ_RESOURCE:
-    return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-  case RESOURCE_STATE::RANDOM_WRITE:
-    assert(0); // need to figure out what to do with this
-  default:
-    assert(0);
+    case RESOURCE_STATE::GENERIC:
+      return VK_IMAGE_LAYOUT_GENERAL;
+    case RESOURCE_STATE::RENDER_TARGET:
+      return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    case RESOURCE_STATE::DEPTH_RENDER_TARGET:
+      return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    case RESOURCE_STATE::SHADER_READ_RESOURCE:
+      return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    case RESOURCE_STATE::RANDOM_WRITE:
+      assert(0);  // need to figure out what to do with this
+    default:
+      assert(0);
   }
   return VK_IMAGE_LAYOUT_UNDEFINED;
 }
 
-inline uint32_t
-selectMemoryType(const VkPhysicalDeviceMemoryProperties &memoryProperties,
-                 const uint32_t memoryTypeBits,
-                 const VkMemoryPropertyFlags flags) {
+inline uint32_t selectMemoryType(
+    const VkPhysicalDeviceMemoryProperties &memoryProperties,
+    const uint32_t memoryTypeBits, const VkMemoryPropertyFlags flags) {
   for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; ++i) {
     uint32_t matchMemoryType = (memoryTypeBits & (1 << i)) != 0;
     uint32_t matchWantedFlags =
@@ -98,17 +97,17 @@ selectMemoryType(const VkPhysicalDeviceMemoryProperties &memoryProperties,
       return i;
     }
   }
-  //assert(!"No compatible memory type found");
+  // assert(!"No compatible memory type found");
   return ~0u;
 }
 
 bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
                           const uint32_t height);
 
-#define VK_CHECK(call)                                                         \
-  do {                                                                         \
-    VkResult result_ = call;                                                   \
-    assert(result_ == VK_SUCCESS);                                             \
+#define VK_CHECK(call)             \
+  do {                             \
+    VkResult result_ = call;       \
+    assert(result_ == VK_SUCCESS); \
   } while (0)
 
 #ifndef ARRAYSIZE
@@ -118,34 +117,34 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
 #if _DEBUG
 #define SET_DEBUG_NAME(resource, type, name)                                   \
   {                                                                            \
-    VkDebugUtilsObjectNameInfoEXT debugInfo_{};                                \
-    debugInfo_.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;     \
-    debugInfo_.objectHandle = (uint64_t)resource;                              \
-    debugInfo_.objectType = type;                                              \
-    debugInfo_.pObjectName = SirEngine::persistentString(name);                \
-    VK_CHECK(vkSetDebugUtilsObjectNameEXT(vk::LOGICAL_DEVICE, &debugInfo_));   \
+    if (name != nullptr) {                                                     \
+      VkDebugUtilsObjectNameInfoEXT debugInfo_{};                              \
+      debugInfo_.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;   \
+      debugInfo_.objectHandle = (uint64_t)resource;                            \
+      debugInfo_.objectType = type;                                            \
+      debugInfo_.pObjectName = SirEngine::persistentString(name);              \
+      VK_CHECK(vkSetDebugUtilsObjectNameEXT(vk::LOGICAL_DEVICE, &debugInfo_)); \
+    }                                                                          \
   }
 #else
 #define SET_DEBUG_NAME(resource, type, name)
 #endif
 
-RenderingContext *
-createVkRenderingContext(const RenderingContextCreationSettings &settings,
-                         uint32_t width, uint32_t height);
+RenderingContext *createVkRenderingContext(
+    const RenderingContextCreationSettings &settings, uint32_t width,
+    uint32_t height);
 
 class VkRenderingContext final : public RenderingContext {
-
   struct FrameBindingsData {
     VkRenderPass m_pass;
-    VkFramebuffer* m_buffer;
+    VkFramebuffer *m_buffer;
     FrameBufferBindings m_bindings;
     uint32_t m_magicNumber;
     uint32_t m_frameBufferCount;
     const char *name;
-
   };
 
-public:
+ public:
   explicit VkRenderingContext(const RenderingContextCreationSettings &settings,
                               uint32_t width, uint32_t height);
   ~VkRenderingContext() = default;
@@ -203,7 +202,7 @@ public:
   void executeGlobalCommandList() override;
   void resetGlobalCommandList() override;
   void addRenderablesToQueue(const Renderable &renderable) override;
-  void addRenderablesToQueue(const RenderableDescription& description) override;
+  void addRenderablesToQueue(const RenderableDescription &description) override;
 
   void renderQueueType(const DrawCallConfig &config,
                        const SHADER_QUEUE_FLAGS flag) override;
@@ -214,9 +213,10 @@ public:
   void clearBindingObject(const BufferBindingsHandle handle) override;
   void freeBindingObject(const BufferBindingsHandle handle) override;
   void renderMesh(const MeshHandle handle, bool isIndexed) override;
-  void fullScreenPass() override;;
+  void fullScreenPass() override;
+  ;
 
-private:
+ private:
   inline void assertMagicNumber(const BufferBindingsHandle handle) const {
     const uint32_t magic = getMagicFromHandle(handle);
     const uint32_t idx = getIndexFromHandle(handle);
@@ -225,11 +225,13 @@ private:
            "invalid magic handle for constant buffer");
   }
 
-public:
-  void setViewportAndScissor(float offsetX, float offsetY, float width, float height, float minDepth,
-	  float maxDepth) override;
+ public:
+  void setViewportAndScissor(float offsetX, float offsetY, float width,
+                             float height, float minDepth,
+                             float maxDepth) override;
   void renderProcedural(const uint32_t indexCount) override;
-private:
+
+ private:
   void *queues = nullptr;
   ConstantBufferHandle m_cameraHandle{};
   CameraBuffer m_camBufferCPU{};
@@ -251,5 +253,5 @@ DebugDrawHandle m_lightAABBHandle{};
 */
 };
 
-} // namespace vk
-} // namespace SirEngine
+}  // namespace vk
+}  // namespace SirEngine
