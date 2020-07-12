@@ -5,9 +5,9 @@
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
 #include "platform/windows/graphics/vk/vk.h"
+#include "platform/windows/graphics/vk/vkBindingTableManager.h"
 #include "platform/windows/graphics/vk/vkRootSignatureManager.h"
 #include "platform/windows/graphics/vk/vkShaderManager.h"
-#include "vkDescriptorManager.h"
 
 namespace SirEngine::vk {
 
@@ -258,7 +258,7 @@ void createPerFrameDataDescriptorSet(VkDescriptorSetLayout &layout) {
   VkDescriptorSetLayoutCreateInfo resourceLayoutInfo[1] = {};
   resourceLayoutInfo[0].sType =
       VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-  resourceLayoutInfo[0].pNext = NULL;
+  resourceLayoutInfo[0].pNext = nullptr;
   resourceLayoutInfo[0].bindingCount = 1;
   resourceLayoutInfo[0].pBindings = resourceBinding;
 
@@ -268,7 +268,7 @@ void createPerFrameDataDescriptorSet(VkDescriptorSetLayout &layout) {
                  "perFrameDataDescriptorSetLayout");
 
   PER_FRAME_DATA_HANDLE = vk::DESCRIPTOR_MANAGER->allocate(
-      layout, VkDescriptorManager::DESCRIPTOR_FLAGS_BITS::BUFFERED,
+      layout, graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED,
       "perFrameDataDescriptor");
 }
 
@@ -286,7 +286,7 @@ void createStaticSamplerDescriptorSet() {
   VkDescriptorSetLayoutCreateInfo resourceLayoutInfo[1] = {};
   resourceLayoutInfo[0].sType =
       VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-  resourceLayoutInfo[0].pNext = NULL;
+  resourceLayoutInfo[0].pNext = nullptr;
   resourceLayoutInfo[0].bindingCount = 1;
   resourceLayoutInfo[0].pBindings = resourceBinding;
 
@@ -297,7 +297,8 @@ void createStaticSamplerDescriptorSet() {
 
   STATIC_SAMPLERS_HANDLE = vk::DESCRIPTOR_MANAGER->allocate(
       STATIC_SAMPLERS_LAYOUT,
-      VkDescriptorManager::DESCRIPTOR_FLAGS_BITS::BUFFERED, "staticSamplers");
+      graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_NONE,
+      "staticSamplers");
   STATIC_SAMPLERS_DESCRIPTOR_SET =
       vk::DESCRIPTOR_MANAGER->getDescriptorSet(STATIC_SAMPLERS_HANDLE);
 }
@@ -983,7 +984,7 @@ void VkPSOManager::recompilePSOFromShader(const char *shaderName,
     }
     if (!result) {
       SE_CORE_ERROR("Error in compiling shader {0}", shader);
-      //we need to update the log with the error and return
+      // we need to update the log with the error and return
       auto *e = new ShaderCompileResultEvent(compileLog.c_str());
       globals::APPLICATION->queueEventForEndOfFrame(e);
       return;

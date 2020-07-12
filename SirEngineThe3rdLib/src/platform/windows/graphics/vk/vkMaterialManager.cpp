@@ -5,15 +5,14 @@
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/skinClusterManager.h"
 #include "nlohmann/json.hpp"
-#include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
-#include "vk.h"
-#include "vkBufferManager.h"
-#include "vkConstantBufferManager.h"
-#include "vkDescriptorManager.h"
-#include "vkMeshManager.h"
-#include "vkPSOManager.h"
-#include "vkRootSignatureManager.h"
-#include "vkTextureManager.h"
+#include "platform/windows/graphics/vk/vk.h"
+#include "platform/windows/graphics/vk/vkBindingTableManager.h"
+#include "platform/windows/graphics/vk/vkBufferManager.h"
+#include "platform/windows/graphics/vk/vkConstantBufferManager.h"
+#include "platform/windows/graphics/vk/vkMeshManager.h"
+#include "platform/windows/graphics/vk/vkPSOManager.h"
+#include "platform/windows/graphics/vk/vkRootSignatureManager.h"
+#include "platform/windows/graphics/vk/vkTextureManager.h"
 
 namespace SirEngine::vk {
 
@@ -654,9 +653,10 @@ MaterialHandle VkMaterialManager::loadMaterial(const char *path,
     if (!found) {
       assert(0 && "could not find needed root signature");
     }
-    uint32_t flags = parse.isStatic
-                         ? 0
-                         : VkDescriptorManager::DESCRIPTOR_FLAGS_BITS::BUFFERED;
+    uint32_t flags =
+        parse.isStatic
+            ? 0
+            : graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED;
 
     const char *shaderTypeName =
         getStringFromShaderTypeFlag(static_cast<SHADER_TYPE_FLAGS>(typeFlags));
@@ -744,8 +744,9 @@ MaterialHandle VkMaterialManager::allocateMaterial(
 
     // allocating a descriptor set for the material
     bool isBuffered = (flags & ALLOCATE_MATERIAL_FLAG_BITS::BUFFERED) > 0;
-    VkDescriptorManager::DESCRIPTOR_FLAGS descriptorFlags =
-        isBuffered ? VkDescriptorManager::BUFFERED : 0;
+    graphics::BINDING_TABLE_FLAGS descriptorFlags =
+        isBuffered ? graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED
+                   : 0;
     DescriptorHandle descriptorHandle =
         vk::DESCRIPTOR_MANAGER->allocate(bind.rs, descriptorFlags, name);
 
@@ -757,11 +758,6 @@ MaterialHandle VkMaterialManager::allocateMaterial(
     SHADER_QUEUE_FLAGS queueType = static_cast<SHADER_QUEUE_FLAGS>(1 << i);
     materialData.m_materialRuntime.shaderQueueTypeFlags[i] =
         getQueueTypeFlags(queueType, shaderType);
-
-    // this will be used when we need to bind the material
-    // materialData.m_psoHandle = bind.pso;
-    // materialData.m_rsHandle = bind.rs;
-    // materialData.m_descriptorHandle = descriptorHandle;
   }
   materialData.name = persistentString(name);
   materialData.magicNumber = MAGIC_NUMBER_COUNTER++;
@@ -792,7 +788,7 @@ void VkMaterialManager::bindTexture(const MaterialHandle matHandle,
   VkDescriptorSet descriptorSet =
       vk::DESCRIPTOR_MANAGER->getDescriptorSet(descriptorHandle);
 
-  //assert(!vk::DESCRIPTOR_MANAGER->isBuffered(descriptorHandle) &&
+  // assert(!vk::DESCRIPTOR_MANAGER->isBuffered(descriptorHandle) &&
   //       "buffered not yet implemented");
 
   VkWriteDescriptorSet writeDescriptorSets{};

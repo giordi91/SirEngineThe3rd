@@ -51,6 +51,12 @@ struct BufferHandle final {
   [[nodiscard]] bool isHandleValid() const { return handle != 0; }
 };
 
+struct BindingTableHandle
+{
+  uint32_t handle;
+  [[nodiscard]] bool isHandleValid() const { return handle != 0; }
+};
+
 struct LightHandle {
   uint32_t handle;
   [[nodiscard]] bool isHandleValid() const { return handle != 0; }

@@ -145,7 +145,7 @@ RSHandle VkPipelineLayoutManager::loadSignatureFile(
     const auto &currentConfigJ = config[i];
     const auto &ranges = currentConfigJ[ROOT_KEY_DATA][ROOT_KEY_RANGES];
     assert(ranges.size() == 1 &&
-           "Currently ranges bigger than one are not supported in VK");
+           "Currently ranges bigger than one are not supported in the VK backend");
     const auto &range = ranges[0];
 
     int bindingIdx = getValueIfInJson(range, ROOT_KEY_BASE_REGISTER, -1);

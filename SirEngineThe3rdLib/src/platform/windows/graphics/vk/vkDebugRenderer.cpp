@@ -4,7 +4,7 @@
 #include "SirEngine/graphics/renderingContext.h"
 #include "platform/windows/graphics/vk/vkBufferManager.h"
 #include "platform/windows/graphics/vk/vkConstantBufferManager.h"
-#include "platform/windows/graphics/vk/vkDescriptorManager.h"
+#include "platform/windows/graphics/vk/vkBindingTableManager.h"
 #include "platform/windows/graphics/vk/vkMaterialManager.h"
 #include "vk.h"
 
