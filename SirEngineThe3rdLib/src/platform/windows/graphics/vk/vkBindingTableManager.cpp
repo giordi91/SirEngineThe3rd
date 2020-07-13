@@ -201,12 +201,12 @@ void VkBindingTableManager::bindTable(const BindingTableHandle bindHandle,
   assert(layout != nullptr);
 
   VkDescriptorSet sets[] = {
-      vk::DESCRIPTOR_MANAGER->getDescriptorSet(PER_FRAME_DATA_HANDLE),
-      descriptorSet, vk::STATIC_SAMPLERS_DESCRIPTOR_SET};
+      descriptorSet,
+  };
   // multiple descriptor sets
   vkCmdBindDescriptorSets(CURRENT_FRAME_COMMAND->m_commandBuffer,
-                          VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0, 3, sets,
-                          0, nullptr);
+                          VK_PIPELINE_BIND_POINT_GRAPHICS, layout,
+                          PSOManager::PER_OBJECT_BINDING_INDEX, 1, sets, 0, nullptr);
 }
 
 void createDescriptorPool(const VkDevice device,

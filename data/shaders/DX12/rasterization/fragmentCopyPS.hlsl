@@ -2,7 +2,7 @@
 #include "../common/vertexDefinitions.hlsl"
 
 
-Texture2D sourceTexture: register(t0,space1);
+Texture2D sourceTexture: register(t0,space3);
 
 SamplerState gsamPointWrap        : register(s0);
 SamplerState gsamPointClamp       : register(s1);

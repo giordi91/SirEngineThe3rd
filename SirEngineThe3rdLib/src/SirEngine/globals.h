@@ -32,6 +32,7 @@ using PersistantAllocatorType = ThreeSizesPool;
 namespace graphics {
 class ShaderManager;
 class LightManager;
+class BindingTableManager;
 }  // namespace graphics
 
 namespace globals {
@@ -75,6 +76,7 @@ extern DependencyGraph *RENDERING_GRAPH;
 extern DebugRenderer *DEBUG_RENDERER;
 extern graphics::ShaderManager *SHADER_MANAGER;
 extern graphics::LightManager *LIGHT_MANAGER;
+extern graphics::BindingTableManager *BINDING_TABLE_MANAGER;
 
 // generic allocators
 extern SIR_ENGINE_API StringPool *STRING_POOL;

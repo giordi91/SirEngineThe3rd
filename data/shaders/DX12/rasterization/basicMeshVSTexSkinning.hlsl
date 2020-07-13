@@ -2,13 +2,13 @@
 #include "../common/vertexDefinitions.hlsl"
 
 ConstantBuffer<CameraBuffer> g_cameraBuffer : register(b0,space0);
-StructuredBuffer<int> g_influences : register(t5,space1);
-StructuredBuffer<float> g_weights : register(t6,space1);
-StructuredBuffer<float4x4> g_matrices : register(t7,space1);
-StructuredBuffer<float4> g_positions: register(t8,space1);
-StructuredBuffer<float4> g_normals: register(t9,space1);
-StructuredBuffer<float2> g_uvs: register(t10,space1);
-StructuredBuffer<float4> g_tangents: register(t11,space1);
+StructuredBuffer<int> g_influences : register(t5,space3);
+StructuredBuffer<float> g_weights : register(t6,space3);
+StructuredBuffer<float4x4> g_matrices : register(t7,space3);
+StructuredBuffer<float4> g_positions: register(t8,space3);
+StructuredBuffer<float4> g_normals: register(t9,space3);
+StructuredBuffer<float2> g_uvs: register(t10,space3);
+StructuredBuffer<float4> g_tangents: register(t11,space3);
 
 #include "../common/skinning.hlsl"
 

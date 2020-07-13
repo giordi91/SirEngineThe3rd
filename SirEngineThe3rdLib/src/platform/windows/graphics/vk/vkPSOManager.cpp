@@ -66,6 +66,7 @@ VkDescriptorSet STATIC_SAMPLERS_DESCRIPTOR_SET;
 VkDescriptorSetLayout PER_FRAME_LAYOUT = nullptr;
 DescriptorHandle PER_FRAME_DATA_HANDLE;
 DescriptorHandle STATIC_SAMPLERS_HANDLE;
+VkPipelineLayout ENGINE_PIPELINE_LAYOUT;
 
 const char *STATIC_SAMPLERS_NAMES[STATIC_SAMPLER_COUNT] = {
     "pointWrapSampler",   "pointClampSampler",      "linearWrapSampler",
@@ -297,8 +298,7 @@ void createStaticSamplerDescriptorSet() {
 
   STATIC_SAMPLERS_HANDLE = vk::DESCRIPTOR_MANAGER->allocate(
       STATIC_SAMPLERS_LAYOUT,
-      graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_NONE,
-      "staticSamplers");
+      graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_NONE, "staticSamplers");
   STATIC_SAMPLERS_DESCRIPTOR_SET =
       vk::DESCRIPTOR_MANAGER->getDescriptorSet(STATIC_SAMPLERS_HANDLE);
 }
@@ -655,7 +655,7 @@ PSOHandle VkPSOManager::insertInPSOCache(const VkPSOCompileResult &result) {
       data.pso = result.pso;
       data.topology = result.topologyType;
       data.renderPass = result.renderPass;
-      data.layout  = result.pipelineLayout;
+      data.layout = result.pipelineLayout;
       const PSOHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
       data.magicNumber = MAGIC_NUMBER_COUNTER;
       m_psoRegisterHandle.insert(
@@ -827,7 +827,7 @@ VkPSOCompileResult VkPSOManager::processRasterPSO(
   compileResult.topologyType = convertStringToEngineTopology(topology);
   compileResult.pso = pipeline;
   compileResult.renderPass = renderPass;
-  compileResult.pipelineLayout=layout;
+  compileResult.pipelineLayout = layout;
   return compileResult;
 };
 
@@ -853,6 +853,8 @@ void initPerFrameDataDescriptor() {
 void VkPSOManager::initialize() {
   vk::initPerFrameDataDescriptor();
   vk::initStaticSamplers();
+  ENGINE_PIPELINE_LAYOUT = vk::PIPELINE_LAYOUT_MANAGER->createEngineLayout(
+      PER_FRAME_LAYOUT, STATIC_SAMPLERS_LAYOUT);
 }
 
 void VkPSOManager::cleanup() {
@@ -871,6 +873,7 @@ void VkPSOManager::cleanup() {
     }
   }
 
+  vkDestroyPipelineLayout(vk::LOGICAL_DEVICE,ENGINE_PIPELINE_LAYOUT,nullptr);
   vkDestroyDescriptorSetLayout(vk::LOGICAL_DEVICE, PER_FRAME_LAYOUT, nullptr);
 }
 

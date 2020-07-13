@@ -34,6 +34,7 @@ DependencyGraph *RENDERING_GRAPH = nullptr;
 DebugRenderer *DEBUG_RENDERER = nullptr;
 graphics::ShaderManager *SHADER_MANAGER = nullptr;
 graphics::LightManager *LIGHT_MANAGER = nullptr;
+graphics::BindingTableManager *BINDING_TABLE_MANAGER = nullptr;
 
 // generic allocators
 StringPool *STRING_POOL = nullptr;

@@ -430,7 +430,7 @@ void Dx12RenderingContext::setupCameraForFrame() {
 }
 
 void Dx12RenderingContext::bindCameraBuffer(const int index) const {
-  assert(0);
+  //assert(0);
   // TODO REMOVE
   // this code should not be called anymore and will need to remove after
   // transition of the whole multi-backend

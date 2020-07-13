@@ -1,8 +1,8 @@
 #include "../common/structures.hlsl"
 #include "../common/vertexDefinitions.hlsl"
 
-Texture2D sourceTexture: register(t1,space1);
-ConstantBuffer<GammaToneMappingConfig> g_config: register(b2,space1);
+Texture2D sourceTexture: register(t1,space3);
+ConstantBuffer<GammaToneMappingConfig> g_config: register(b2,space3);
 
 SamplerState gsamPointWrap        : register(s0);
 SamplerState gsamPointClamp       : register(s1);
