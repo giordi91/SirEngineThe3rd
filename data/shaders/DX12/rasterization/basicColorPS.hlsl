@@ -3,7 +3,7 @@
 
 
 ConstantBuffer<CameraBuffer> g_camera: register(b0,space0);
-ConstantBuffer<DebugPointsFixedColor> g_settings: register(b1,space1);
+ConstantBuffer<DebugPointsFixedColor> g_settings: register(b1,space3);
 
 
 float4 PS(PositionOnlyVertexOut pin) : SV_Target

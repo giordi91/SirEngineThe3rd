@@ -392,14 +392,17 @@ void VkMaterialManager::bindMaterial(SHADER_QUEUE_FLAGS queueFlag,
       vk::DESCRIPTOR_MANAGER->getDescriptorSet(setHandle);
 
   VkDescriptorSet sets[] = {
-      vk::DESCRIPTOR_MANAGER->getDescriptorSet(PER_FRAME_DATA_HANDLE),
-      descriptorSet, vk::STATIC_SAMPLERS_DESCRIPTOR_SET};
+      // vk::DESCRIPTOR_MANAGER->getDescriptorSet(PER_FRAME_DATA_HANDLE),
+      descriptorSet
+      //, vk::STATIC_SAMPLERS_DESCRIPTOR_SET
+  };
   uint32_t setsToBind =
       materialRuntime.useStaticSamplers[currentFlagId] ? 3 : 2;
   // multiple descriptor sets
   vkCmdBindDescriptorSets(commandList, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                          materialRuntime.layouts[currentFlagId], 0, setsToBind,
-                          sets, 0, nullptr);
+                          materialRuntime.layouts[currentFlagId],
+                          PSOManager::PER_OBJECT_BINDING_INDEX, 1, sets, 0,
+                          nullptr);
   /*
   switch (type) {
   case (SHADER_TYPE_FLAGS::PBR): {
@@ -859,13 +862,11 @@ void VkMaterialManager::bindMaterial(const MaterialHandle handle,
   VkPipelineLayout layout = data.m_materialRuntime.layouts[currentFlagId];
   assert(layout != nullptr);
 
-  VkDescriptorSet sets[] = {
-      vk::DESCRIPTOR_MANAGER->getDescriptorSet(PER_FRAME_DATA_HANDLE),
-      descriptorSet, vk::STATIC_SAMPLERS_DESCRIPTOR_SET};
+  VkDescriptorSet sets[] = {descriptorSet};
   // multiple descriptor sets
-  vkCmdBindDescriptorSets(CURRENT_FRAME_COMMAND->m_commandBuffer,
-                          VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0, 3, sets,
-                          0, nullptr);
+  vkCmdBindDescriptorSets(
+      CURRENT_FRAME_COMMAND->m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+      layout, PSOManager::PER_OBJECT_BINDING_INDEX, 1, sets, 0, nullptr);
 }
 
 void VkMaterialManager::free(const MaterialHandle handle) {

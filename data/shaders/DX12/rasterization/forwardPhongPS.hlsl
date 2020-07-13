@@ -1,7 +1,7 @@
 #include "../common/vertexDefinitions.hlsl"
 #include "../common/structures.hlsl"
 
-Texture2D sourceTexture: register(t3,space1);
+Texture2D sourceTexture: register(t3,space3);
 
 SamplerState gsamPointWrap        : register(s0);
 SamplerState gsamPointClamp       : register(s1);

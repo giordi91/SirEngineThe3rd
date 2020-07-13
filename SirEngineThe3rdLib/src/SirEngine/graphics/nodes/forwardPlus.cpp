@@ -69,10 +69,10 @@ void ForwardPlus::initialize() {
 void ForwardPlus::compute() {
   globals::RENDERING_CONTEXT->setBindingObject(m_bindHandle);
 
-  DrawCallConfig config{globals::ENGINE_CONFIG->m_windowWidth,
-                        globals::ENGINE_CONFIG->m_windowHeight, 0};
-  globals::RENDERING_CONTEXT->renderQueueType(config,
-                                              SHADER_QUEUE_FLAGS::FORWARD);
+  //DrawCallConfig config{globals::ENGINE_CONFIG->m_windowWidth,
+  //                      globals::ENGINE_CONFIG->m_windowHeight, 0};
+  //globals::RENDERING_CONTEXT->renderQueueType(config,
+  //                                            SHADER_QUEUE_FLAGS::FORWARD);
 
   globals::RENDERING_CONTEXT->clearBindingObject(m_bindHandle);
 }
@@ -90,7 +90,7 @@ void ForwardPlus::populateNodePorts() {
   // we have everything necessary to prepare the buffers
   FrameBufferBindings bindings{};
   bindings.colorRT[0].handle = m_rtHandle;
-  bindings.colorRT[0].clearColor = {0.4, 0.4, 0.4, 1};
+  bindings.colorRT[0].clearColor = {0.0, 0.0, 0.0, 1};
   bindings.colorRT[0].shouldClearColor = true;
   bindings.colorRT[0].currentResourceState =
       RESOURCE_STATE::SHADER_READ_RESOURCE;

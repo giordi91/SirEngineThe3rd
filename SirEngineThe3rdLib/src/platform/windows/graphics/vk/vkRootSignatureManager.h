@@ -71,6 +71,10 @@ public:
     return data.usesStaticSamplers;
   }
 
+  static VkPipelineLayout createEngineLayout(const VkDescriptorSetLayout perFrameLayout,
+                                             const VkDescriptorSetLayout samplersLayout);
+	//{}
+
 	
 private:
   inline uint32_t getIndexFromHandle(const RSHandle h) const {

@@ -11,18 +11,18 @@
 #include "SirEngine/log.h"
 #include "SirEngine/runtimeString.h"
 #include "platform/windows/graphics/vk/vkAdapter.h"
+#include "platform/windows/graphics/vk/vkBindingTableManager.h"
 #include "platform/windows/graphics/vk/vkBufferManager.h"
 #include "platform/windows/graphics/vk/vkConstantBufferManager.h"
+#include "platform/windows/graphics/vk/vkDebugRenderer.h"
 #include "platform/windows/graphics/vk/vkLoad.h"
+#include "platform/windows/graphics/vk/vkMaterialManager.h"
+#include "platform/windows/graphics/vk/vkMeshManager.h"
 #include "platform/windows/graphics/vk/vkPSOManager.h"
 #include "platform/windows/graphics/vk/vkRootSignatureManager.h"
 #include "platform/windows/graphics/vk/vkShaderManager.h"
 #include "platform/windows/graphics/vk/vkSwapChain.h"
-#include "platform/windows/graphics/vk/vkDebugRenderer.h"
-#include "platform/windows/graphics/vk/vkBindingTableManager.h"
-#include "platform/windows/graphics/vk/vkMeshManager.h"
 #include "platform/windows/graphics/vk/vkTextureManager.h"
-#include "platform/windows/graphics/vk/vkMaterialManager.h"
 
 namespace SirEngine::vk {
 VkInstance INSTANCE = nullptr;
@@ -194,12 +194,12 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   globals::PSO_MANAGER = PSO_MANAGER;
   // TODO TEMP HACK LOAD, remove this
   vk::PSO_MANAGER->loadRawPSO("../data/pso/HDRtoSDREffect_PSO.json");
-  vk::PSO_MANAGER->loadRawPSO("../data/pso/forwardPhongPSO.json");
-  vk::PSO_MANAGER->loadRawPSO("../data/pso/grassForwardPSO.json");
-  vk::PSO_MANAGER->loadRawPSO("../data/pso/debugDrawPointsSingleColorPSO.json");
-  vk::PSO_MANAGER->loadRawPSO("../data/pso/debugDrawLinesSingleColorPSO.json");
+  //vk::PSO_MANAGER->loadRawPSO("../data/pso/forwardPhongPSO.json");
+  //vk::PSO_MANAGER->loadRawPSO("../data/pso/grassForwardPSO.json");
+  //vk::PSO_MANAGER->loadRawPSO("../data/pso/debugDrawPointsSingleColorPSO.json");
+  //vk::PSO_MANAGER->loadRawPSO("../data/pso/debugDrawLinesSingleColorPSO.json");
   vk::PSO_MANAGER->loadRawPSO("../data/pso/skyboxPSO.json");
-  vk::PSO_MANAGER->loadRawPSO("../data/pso/gammaAndToneMappingEffect_PSO.json");
+  //vk::PSO_MANAGER->loadRawPSO("../data/pso/gammaAndToneMappingEffect_PSO.json");
 
   CONSTANT_BUFFER_MANAGER = new VkConstantBufferManager();
   CONSTANT_BUFFER_MANAGER->initialize();
@@ -381,8 +381,24 @@ bool VkRenderingContext::newFrame() {
                         VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
                         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
                         {imageTransitionBeforeDrawing});
-  return true;
-}
+
+  // let us bind static samplers and camera
+  VkDescriptorSet sets[] = {
+      vk::DESCRIPTOR_MANAGER->getDescriptorSet(PER_FRAME_DATA_HANDLE),
+      vk::STATIC_SAMPLERS_DESCRIPTOR_SET};
+
+// multiple descriptor sets
+vkCmdBindDescriptorSets(CURRENT_FRAME_COMMAND->m_commandBuffer,
+                        VK_PIPELINE_BIND_POINT_GRAPHICS,
+                        vk::ENGINE_PIPELINE_LAYOUT, 0, 2, sets, 0, nullptr);
+// VkDescriptorSet samplers[] = {vk::STATIC_SAMPLERS_DESCRIPTOR_SET};
+// vkCmdBindDescriptorSets(CURRENT_FRAME_COMMAND->m_commandBuffer,
+//                        VK_PIPELINE_BIND_POINT_GRAPHICS,
+//                        vk::ENGINE_PIPELINE_LAYOUT, 2, 1, samplers, 0,
+//                        nullptr);
+
+return true;
+}  // namespace SirEngine::vk
 
 bool VkRenderingContext::dispatchFrame() {
   assert(CURRENT_FRAME_COMMAND != nullptr);

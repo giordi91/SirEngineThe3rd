@@ -4,15 +4,15 @@
 #include "../common/vertexDefinitions.hlsl"
 
 ConstantBuffer<CameraBuffer> g_cameraBuffer : register(b0,space0);
-ConstantBuffer<DirectionalLightData> g_dirLight : register(b1,space1);
-ConstantBuffer<PhongMaterial> g_material : register(b2,space1);
-Texture2D albedoTex : register(t0,space1);
-Texture2D tangentTex : register(t1,space1);
-Texture2D metallicTex : register(t2,space1);
-Texture2D roughnessTex : register(t3,space1);
-TextureCube skyboxIrradianceTexture: register(t4,space1);
-TextureCube skyboxRadianceTexture: register(t5,space1);
-Texture2D brdfTexture: register(t6,space1);
+ConstantBuffer<DirectionalLightData> g_dirLight : register(b1,space3);
+ConstantBuffer<PhongMaterial> g_material : register(b2,space3);
+Texture2D albedoTex : register(t0,space3);
+Texture2D tangentTex : register(t1,space3);
+Texture2D metallicTex : register(t2,space3);
+Texture2D roughnessTex : register(t3,space3);
+TextureCube skyboxIrradianceTexture: register(t4,space3);
+TextureCube skyboxRadianceTexture: register(t5,space3);
+Texture2D brdfTexture: register(t6,space3);
 
 
 SamplerState gsamPointWrap : register(s0);

@@ -135,8 +135,8 @@ RSHandle VkPipelineLayoutManager::loadSignatureFile(
 
   // we support at most 3 descriptor set
   // 0 = per frame data
-  // 1 = per object data
-  // 2 = static samplers
+  // 1 = static samplers
+  // 2 = per object data
   // everything in the bindings will be for set 1, the object
   // the per  frame data is defined by the engine and will be a different
   // descriptor set
@@ -144,8 +144,9 @@ RSHandle VkPipelineLayoutManager::loadSignatureFile(
   for (int i = 0; i < configLen; ++i) {
     const auto &currentConfigJ = config[i];
     const auto &ranges = currentConfigJ[ROOT_KEY_DATA][ROOT_KEY_RANGES];
-    assert(ranges.size() == 1 &&
-           "Currently ranges bigger than one are not supported in the VK backend");
+    assert(
+        ranges.size() == 1 &&
+        "Currently ranges bigger than one are not supported in the VK backend");
     const auto &range = ranges[0];
 
     int bindingIdx = getValueIfInJson(range, ROOT_KEY_BASE_REGISTER, -1);
@@ -182,15 +183,17 @@ RSHandle VkPipelineLayoutManager::loadSignatureFile(
       getValueIfInJson(jobj, ROOT_KEY_STATIC_SAMPLERS, false);
   // always allocating two layouts, and dynamically changing how many layouts we
   // use depending on user config
-  VkDescriptorSetLayout layouts[3] = {perFrameLayout, descriptorLayout,
-                                      samplersLayout};
+  VkDescriptorSetLayout layouts[3] = {
+      perFrameLayout,
+      samplersLayout,
+      descriptorLayout,
+  };
   layoutInfo.setLayoutCount = 2 + (useStaticSamplers ? 1 : 0);
   layoutInfo.pSetLayouts = layouts;
 
   // generate the handle
   uint32_t index;
   LayoutData &rsdata = m_rsPool.getFreeMemoryData(index);
-  // TODO need a manager
   vkCreatePipelineLayout(vk::LOGICAL_DEVICE, &layoutInfo, nullptr,
                          &rsdata.layout);
   SET_DEBUG_NAME(rsdata.layout, VK_OBJECT_TYPE_PIPELINE_LAYOUT,
@@ -215,5 +218,37 @@ RSHandle VkPipelineLayoutManager::getHandleFromName(const char *name) const {
   RSHandle value;
   m_rootRegister.get(name, value);
   return value;
+}
+
+VkPipelineLayout VkPipelineLayoutManager::createEngineLayout(
+    const VkDescriptorSetLayout perFrameLayout,
+    const VkDescriptorSetLayout samplersLayout) {
+  // From spec:  The pipeline layout represents a sequence of descriptor sets
+  // with each having a specific layout.
+  // this is the same as root signature in DX12
+  VkPipelineLayoutCreateInfo layoutInfo = {
+      VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
+
+  // we are going to use multiple layouts if static samplers are requested
+  // (which is always the case)
+  bool useStaticSamplers = true;
+  // always allocating two layouts, and dynamically changing how many layouts we
+  // use depending on user config
+  // passing in the "root signature"
+  VkDescriptorSetLayoutCreateInfo descriptorInfo{
+      VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
+  descriptorInfo.bindingCount = 0;
+  descriptorInfo.pBindings = nullptr;
+  VkDescriptorSetLayout emptyLayout;
+  vkCreateDescriptorSetLayout(vk::LOGICAL_DEVICE, &descriptorInfo, nullptr,
+                              &emptyLayout);
+
+  VkDescriptorSetLayout layouts[3] = {perFrameLayout,samplersLayout, emptyLayout};
+  layoutInfo.setLayoutCount = 3;
+  layoutInfo.pSetLayouts = layouts;
+
+  VkPipelineLayout layout;
+  vkCreatePipelineLayout(vk::LOGICAL_DEVICE, &layoutInfo, nullptr, &layout);
+  return layout;
 }
 }  // namespace SirEngine::vk

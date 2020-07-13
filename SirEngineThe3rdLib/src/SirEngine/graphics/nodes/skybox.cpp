@@ -6,7 +6,7 @@
 #include "SirEngine/materialManager.h"
 #include "SirEngine/psoManager.h"
 #include "SirEngine/rootSignatureManager.h"
-//#include "platform/windows/graphics/vk/vkBindingTableManager.h"
+#include "SirEngine/graphics/bindingTableManager.h"
 
 namespace SirEngine {
 static const char *SKYBOX_RS = "skybox_RS";
@@ -46,7 +46,7 @@ void SkyBoxPass::initialize() {
   //graphics::BindingDescription descriptions[1] = {
   //    {1, GRAPHIC_RESOURCE_TYPE::TEXTURE,
   //     GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT}};
-  //m_bindingTable = vk::DESCRIPTOR_MANAGER->allocateBindingTable(
+  //m_bindingTable = globals::DESCRIPTOR_MANAGER->allocateBindingTable(
   //    descriptions, 1, graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_NONE,
   //    "skyboxBindingTable");
 }
@@ -59,6 +59,7 @@ void SkyBoxPass::compute() {
   // next we bind the material, this will among other things bind the pso and rs
   globals::MATERIAL_MANAGER->bindMaterial(m_matHandle,
                                           SHADER_QUEUE_FLAGS::CUSTOM);
+  //globals::RENDERING_CONTEXT->bindCameraBuffer(0);
   //vk::DESCRIPTOR_MANAGER->bindTable(m_bindingTable, m_pso);
 
   // we clamp the viewport depth to the far plan. this means no matter how big

@@ -2,12 +2,12 @@
 #include "../common/structures.hlsl"
 #include "../common/vertexDefinitions.hlsl"
 
-ConstantBuffer<PhongMaterial> g_material : register(b1,space1);
-Texture2D albedoTex : register(t0,space1);
-Texture2D tangentTex: register(t1,space1);
-Texture2D metallicTex: register(t2,space1);
-Texture2D roughnessTex : register(t3,space1);
-Texture2D thicknessTex : register(t4,space1);
+ConstantBuffer<PhongMaterial> g_material : register(b1,space3);
+Texture2D albedoTex : register(t0,space3);
+Texture2D tangentTex: register(t1,space3);
+Texture2D metallicTex: register(t2,space3);
+Texture2D roughnessTex : register(t3,space3);
+Texture2D thicknessTex : register(t4,space3);
 
 SamplerState gsamPointWrap : register(s0);
 SamplerState gsamPointClamp : register(s1);

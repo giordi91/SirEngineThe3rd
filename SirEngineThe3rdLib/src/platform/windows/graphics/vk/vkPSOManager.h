@@ -41,6 +41,7 @@ extern VkDescriptorSet
 extern VkDescriptorSetLayout PER_FRAME_LAYOUT;
 extern DescriptorHandle PER_FRAME_DATA_HANDLE;
 extern DescriptorHandle STATIC_SAMPLERS_HANDLE;
+extern VkPipelineLayout ENGINE_PIPELINE_LAYOUT;
 
 void initStaticSamplers();
 void destroyStaticSamplers();

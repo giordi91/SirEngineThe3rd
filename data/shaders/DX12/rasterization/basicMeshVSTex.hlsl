@@ -2,10 +2,10 @@
 #include "../common/vertexDefinitions.hlsl"
 
 ConstantBuffer<CameraBuffer> g_cameraBuffer : register(b0,space0);
-StructuredBuffer<float4> g_positions : register(t8,space1);
-StructuredBuffer<float4> g_normals : register(t9,space1);
-StructuredBuffer<float2> g_uvs : register(t10,space1);
-StructuredBuffer<float4> g_tangents : register(t11,space1);
+StructuredBuffer<float4> g_positions : register(t8,space3);
+StructuredBuffer<float4> g_normals : register(t9,space3);
+StructuredBuffer<float2> g_uvs : register(t10,space3);
+StructuredBuffer<float4> g_tangents : register(t11,space3);
 
 
 FullMeshVertexOut VS( uint vid : SV_VertexID)
