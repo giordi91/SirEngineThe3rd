@@ -329,9 +329,11 @@ ID3D12RootSignature *enginePerFrameEmptyRS(const char *name) {
               ENGINE_RESIGSTER_SPACE);
   rootParams[0].InitAsDescriptorTable(1, &ranges);
 
-  UINT numStaticSampers = 0;
-  D3D12_STATIC_SAMPLER_DESC const *staticSamplers = nullptr;
   auto samplers = getStaticSamplers();
+
+  // bind staticSamplers
+  D3D12_STATIC_SAMPLER_DESC const *staticSamplers = &samplers[0];
+  UINT numStaticSampers = static_cast<UINT>(samplers.size());
 
   CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc(
       static_cast<UINT>(rootParams.size()), rootParams.data(), numStaticSampers,

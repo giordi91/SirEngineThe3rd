@@ -15,7 +15,7 @@ namespace SirEngine {
 RenderingContext *
 createWindowsRenderingContext(const RenderingContextCreationSettings &settings,
                               uint32_t width, uint32_t height) {
-  if (!RenderingContext::isAPISupported(settings.graphicsAPI)) {
+  if (!RenderingContext::isApiSupported(settings.graphicsAPI)) {
     // TODO convert code to name
     SE_CORE_ERROR("Requested api is not supported on system, API code: {0}",
                   static_cast<uint32_t>(settings.graphicsAPI));
@@ -53,9 +53,9 @@ RenderingContext::create(const RenderingContextCreationSettings &settings,
   return createWindowsRenderingContext(settings, width, height);
 }
 
-bool RenderingContext::isAPISupported(const GRAPHIC_API graphicsAPI) {
-  return (graphicsAPI == GRAPHIC_API::DX12) |
-         (graphicsAPI == GRAPHIC_API::VULKAN);
+bool RenderingContext::isApiSupported(const GRAPHIC_API graphicsApi) {
+  return (graphicsApi == GRAPHIC_API::DX12) |
+         (graphicsApi == GRAPHIC_API::VULKAN);
 }
 
 /*
