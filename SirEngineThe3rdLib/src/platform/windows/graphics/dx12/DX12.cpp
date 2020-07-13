@@ -24,6 +24,7 @@
 #include "platform/windows/graphics/dx12/dx12ShaderManager.h"
 #include "platform/windows/graphics/dx12/dx12SwapChain.h"
 #include "platform/windows/graphics/dx12/dx12TextureManager.h"
+#include "rootSignatureCompile.h"
 
 #undef max
 #undef min
@@ -311,53 +312,7 @@ bool stopGraphicsDx12() {
   flushCommandQueue(GLOBAL_COMMAND_QUEUE);
   return true;
 }
-bool newFrameDx12() {
-  globals::STRING_POOL->resetFrameMemory();
-  globals::FRAME_ALLOCATOR->reset();
-  // here we need to check which frame resource we are going to use
-  dx12::CURRENT_FRAME_RESOURCE = &dx12::FRAME_RESOURCES[globals::CURRENT_FRAME];
-
-  // check if the resource has finished rendering if not we have to wait
-  if (dx12::CURRENT_FRAME_RESOURCE->fence != 0 &&
-      dx12::GLOBAL_FENCE->GetCompletedValue() <
-          dx12::CURRENT_FRAME_RESOURCE->fence) {
-    const HANDLE eventHandle =
-        CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
-    const auto handleResult = dx12::GLOBAL_FENCE->SetEventOnCompletion(
-        dx12::CURRENT_FRAME_RESOURCE->fence, eventHandle);
-    assert(SUCCEEDED(handleResult));
-    WaitForSingleObject(eventHandle, INFINITE);
-
-    CloseHandle(eventHandle);
-  }
-  // at this point we know we are ready to go
-
-  // Reuse the memory associated with command recording.
-  // We can only reset when the associated command lists have finished
-  // execution on the GPU.
-  resetAllocatorAndList(&dx12::CURRENT_FRAME_RESOURCE->fc);
-  // Indicate a state transition on the resource usage.
-  auto *commandList = dx12::CURRENT_FRAME_RESOURCE->fc.commandList;
-  D3D12_RESOURCE_BARRIER rtbarrier[1];
-
-  const TextureHandle backBufferH =
-      dx12::SWAP_CHAIN->currentBackBufferTexture();
-  int rtcounter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
-      backBufferH, D3D12_RESOURCE_STATE_RENDER_TARGET, rtbarrier, 0);
-  if (rtcounter != 0) {
-    commandList->ResourceBarrier(rtcounter, rtbarrier);
-  }
-
-  // Set the viewport and scissor rect.  This needs to be reset whenever the
-  // command list is reset.
-  commandList->RSSetViewports(1, dx12::SWAP_CHAIN->getViewport());
-  commandList->RSSetScissorRects(1, dx12::SWAP_CHAIN->getScissorRect());
-
-  auto *heap = dx12::GLOBAL_CBV_SRV_UAV_HEAP->getResource();
-  commandList->SetDescriptorHeaps(1, &heap);
-
-  return true;
-}
+bool newFrameDx12() { return true; }
 bool dispatchFrameDx12() {
   D3D12_RESOURCE_BARRIER rtbarrier[1];
   // finally transition the resource to be present
@@ -438,6 +393,9 @@ bool Dx12RenderingContext::initializeGraphics() {
   m_lightCB = globals::CONSTANT_BUFFER_MANAGER->allocate(
       sizeof(DirectionalLightData), 0, &m_light);
 
+  // get the engine root signature to bind at the beginning of the frame
+  engineRS = enginePerFrameEmptyRS("engineFrame");
+
   return result;
 }
 
@@ -461,10 +419,18 @@ void Dx12RenderingContext::setupCameraForFrame() {
   m_camBufferCPU.perspectiveValues = globals::MAIN_CAMERA->getProjParams();
 
   globals::CONSTANT_BUFFER_MANAGER->update(m_cameraHandle, &m_camBufferCPU);
+  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
+
+  // let us bind the camera at the beginning of the frame
+  auto commandList = currentFc->commandList;
+  D3D12_GPU_DESCRIPTOR_HANDLE handle =
+      dx12::CONSTANT_BUFFER_MANAGER->getConstantBufferDx12Handle(m_cameraHandle)
+          .gpuHandle;
+  commandList->SetGraphicsRootDescriptorTable(0, handle);
 }
 
 void Dx12RenderingContext::bindCameraBuffer(const int index) const {
-  // assert(0);
+  assert(0);
   // TODO REMOVE
   // this code should not be called anymore and will need to remove after
   // transition of the whole multi-backend
@@ -473,7 +439,7 @@ void Dx12RenderingContext::bindCameraBuffer(const int index) const {
   D3D12_GPU_DESCRIPTOR_HANDLE handle =
       dx12::CONSTANT_BUFFER_MANAGER->getConstantBufferDx12Handle(m_cameraHandle)
           .gpuHandle;
-  commandList->SetGraphicsRootDescriptorTable(index, handle);
+  commandList->SetGraphicsRootDescriptorTable(0, handle);
 }
 
 void Dx12RenderingContext::bindCameraBufferCompute(const int index) const {
@@ -876,7 +842,56 @@ void Dx12RenderingContext::renderProcedural(const uint32_t indexCount) {
   currentFc->commandList->DrawInstanced(indexCount, 1, 0, 0);
 }
 
-bool Dx12RenderingContext::newFrame() { return newFrameDx12(); }
+bool Dx12RenderingContext::newFrame() {
+  globals::STRING_POOL->resetFrameMemory();
+  globals::FRAME_ALLOCATOR->reset();
+  // here we need to check which frame resource we are going to use
+  dx12::CURRENT_FRAME_RESOURCE = &dx12::FRAME_RESOURCES[globals::CURRENT_FRAME];
+
+  // check if the resource has finished rendering if not we have to wait
+  if (dx12::CURRENT_FRAME_RESOURCE->fence != 0 &&
+      dx12::GLOBAL_FENCE->GetCompletedValue() <
+          dx12::CURRENT_FRAME_RESOURCE->fence) {
+    const HANDLE eventHandle =
+        CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
+    const auto handleResult = dx12::GLOBAL_FENCE->SetEventOnCompletion(
+        dx12::CURRENT_FRAME_RESOURCE->fence, eventHandle);
+    assert(SUCCEEDED(handleResult));
+    WaitForSingleObject(eventHandle, INFINITE);
+
+    CloseHandle(eventHandle);
+  }
+  // at this point we know we are ready to go
+
+  // Reuse the memory associated with command recording.
+  // We can only reset when the associated command lists have finished
+  // execution on the GPU.
+  resetAllocatorAndList(&dx12::CURRENT_FRAME_RESOURCE->fc);
+  // Indicate a state transition on the resource usage.
+  auto *commandList = dx12::CURRENT_FRAME_RESOURCE->fc.commandList;
+  D3D12_RESOURCE_BARRIER rtbarrier[1];
+
+  const TextureHandle backBufferH =
+      dx12::SWAP_CHAIN->currentBackBufferTexture();
+  int rtcounter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
+      backBufferH, D3D12_RESOURCE_STATE_RENDER_TARGET, rtbarrier, 0);
+  if (rtcounter != 0) {
+    commandList->ResourceBarrier(rtcounter, rtbarrier);
+  }
+
+  // Set the viewport and scissor rect.  This needs to be reset whenever the
+  // command list is reset.
+  commandList->RSSetViewports(1, dx12::SWAP_CHAIN->getViewport());
+  commandList->RSSetScissorRects(1, dx12::SWAP_CHAIN->getScissorRect());
+
+  auto *heap = dx12::GLOBAL_CBV_SRV_UAV_HEAP->getResource();
+  commandList->SetDescriptorHeaps(1, &heap);
+
+  // let us bind the engine descriptrion so we can bind the camera buffer
+  commandList->SetGraphicsRootSignature(engineRS);
+
+  return true;
+}
 
 bool Dx12RenderingContext::dispatchFrame() { return dispatchFrameDx12(); }
 

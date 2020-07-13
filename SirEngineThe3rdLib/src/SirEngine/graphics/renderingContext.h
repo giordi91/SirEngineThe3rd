@@ -104,7 +104,7 @@ class RenderingContext {
   static RenderingContext *create(
       const RenderingContextCreationSettings &settings, uint32_t width,
       uint32_t height);
-  static bool isAPISupported(const GRAPHIC_API graphicsAPI);
+  static bool isApiSupported(const GRAPHIC_API graphicsApi);
   virtual bool initializeGraphics() = 0;
   virtual bool newFrame() = 0;
   virtual bool dispatchFrame() = 0;

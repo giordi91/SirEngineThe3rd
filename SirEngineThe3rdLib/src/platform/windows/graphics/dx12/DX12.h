@@ -252,6 +252,7 @@ public:
   ConstantBufferHandle m_cameraHandle{};
   ConstantBufferHandle m_lightBuffer{};
   DebugDrawHandle m_lightAABBHandle{};
+  ID3D12RootSignature* engineRS;
 
   static constexpr uint32_t RESERVE_SIZE = 400;
   uint32_t MAGIC_NUMBER_COUNTER = 1;

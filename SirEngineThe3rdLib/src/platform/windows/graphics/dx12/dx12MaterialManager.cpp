@@ -336,7 +336,7 @@ void bindDebugPointsSingleColor(const Dx12MaterialRuntime &materialRuntime,
 void bindFlatDescriptorMaterial(const Dx12MaterialRuntime &materialRuntime,
                                 ID3D12GraphicsCommandList2 *commandList,
                                 SHADER_QUEUE_FLAGS queueFlag) {
-  dx12::RENDERING_CONTEXT->bindCameraBuffer(0);
+  //dx12::RENDERING_CONTEXT->bindCameraBuffer(0);
   const auto queueFlagInt = static_cast<int>(queueFlag);
   const auto currentFlagId =
       static_cast<int>(log2(queueFlagInt & -queueFlagInt));
@@ -826,8 +826,6 @@ MaterialHandle Dx12MaterialManager::loadMaterial(const char *path,
 
 void Dx12MaterialManager::bindMaterial(const MaterialHandle handle,
                                        SHADER_QUEUE_FLAGS queue) {
-  // TODO use the queue flags once we re-designed the descriptor handling ofr
-  // dx12
   assertMagicNumber(handle);
   uint32_t index = getIndexFromHandle(handle);
   const auto &data = m_materialTextureHandles.getConstRef(index);
