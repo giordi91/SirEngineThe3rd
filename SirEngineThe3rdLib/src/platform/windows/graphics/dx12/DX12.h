@@ -30,6 +30,7 @@ class BufferManagerDx12;
 class Dx12DebugRenderer;
 class Dx12RenderingContext;
 class Dx12MaterialManager;
+class Dx12BindingTableManager;
 
 enum class DescriptorType {
   NONE = 0,
@@ -134,6 +135,7 @@ extern Dx12PSOManager *PSO_MANAGER;
 extern BufferManagerDx12 *BUFFER_MANAGER;
 extern Dx12DebugRenderer *DEBUG_RENDERER;
 extern Dx12RenderingContext *RENDERING_CONTEXT;
+extern Dx12BindingTableManager *BINDING_TABLE_MANAGER;
 
 inline UINT64 insertFenceToGlobalQueue() {
   // Advance the fence value to mark commands up to this fence point.

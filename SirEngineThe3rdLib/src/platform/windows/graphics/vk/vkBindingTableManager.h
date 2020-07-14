@@ -91,7 +91,7 @@ class VkBindingTableManager final : public graphics::BindingTableManager {
                    const uint32_t bindingIndex, const bool isCube) override;
 
   void bindTable(const BindingTableHandle bindHandle,
-                 const PSOHandle psoHandle);
+                 const PSOHandle psoHandle) override;
 
  private:
   inline void assertMagicNumber(const DescriptorHandle handle) const {

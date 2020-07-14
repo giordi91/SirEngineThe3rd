@@ -1,12 +1,15 @@
 #include "SirEngine/graphics/nodes/skybox.h"
 
 #include "SirEngine/assetManager.h"
+#include "SirEngine/graphics/bindingTableManager.h"
 #include "SirEngine/graphics/debugAnnotations.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/materialManager.h"
 #include "SirEngine/psoManager.h"
 #include "SirEngine/rootSignatureManager.h"
-#include "SirEngine/graphics/bindingTableManager.h"
+#include "platform/windows/graphics/dx12/dx12MaterialManager.h"
+#include "platform/windows/graphics/dx12/dx12PSOManager.h"
+#include "platform/windows/graphics/dx12/dx12RootSignatureManager.h"
 
 namespace SirEngine {
 static const char *SKYBOX_RS = "skybox_RS";
@@ -43,12 +46,12 @@ void SkyBoxPass::initialize() {
   m_matHandle =
       globals::MATERIAL_MANAGER->allocateMaterial("skybox", 0, queues);
 
-  //graphics::BindingDescription descriptions[1] = {
-  //    {1, GRAPHIC_RESOURCE_TYPE::TEXTURE,
-  //     GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT}};
-  //m_bindingTable = globals::DESCRIPTOR_MANAGER->allocateBindingTable(
-  //    descriptions, 1, graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_NONE,
-  //    "skyboxBindingTable");
+  graphics::BindingDescription descriptions[1] = {
+      {1, GRAPHIC_RESOURCE_TYPE::TEXTURE,
+       GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT}};
+  m_bindingTable = globals::BINDING_TABLE_MANAGER->allocateBindingTable(
+      descriptions, 1, graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_NONE,
+      "skyboxBindingTable");
 }
 
 void SkyBoxPass::compute() {
@@ -57,10 +60,18 @@ void SkyBoxPass::compute() {
   globals::RENDERING_CONTEXT->setBindingObject(m_bindHandle);
 
   // next we bind the material, this will among other things bind the pso and rs
-  globals::MATERIAL_MANAGER->bindMaterial(m_matHandle,
-                                          SHADER_QUEUE_FLAGS::CUSTOM);
-  //globals::RENDERING_CONTEXT->bindCameraBuffer(0);
-  //vk::DESCRIPTOR_MANAGER->bindTable(m_bindingTable, m_pso);
+  // globals::MATERIAL_MANAGER->bindMaterial(m_matHandle,
+  //                                        SHADER_QUEUE_FLAGS::CUSTOM);
+
+  //auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
+  //auto commandList = currentFc->commandList;
+  //ID3D12RootSignature *rs =
+  //    dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromHandle(m_rs);
+  //commandList->SetGraphicsRootSignature(rs);
+  // globals::RENDERING_CONTEXT->bindCameraBuffer(0);
+  // ID3D12RootSignature *rs =
+  //    dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromHandle(m_rs);
+  globals::BINDING_TABLE_MANAGER->bindTable(m_bindingTable, m_pso);
 
   // we clamp the viewport depth to the far plan. this means no matter how big
   // our sphere is it will be pushed to the far plane without artifacts:
@@ -118,7 +129,8 @@ void SkyBoxPass::populateNodePorts() {
 
   globals::MATERIAL_MANAGER->bindTexture(m_matHandle, skyHandle, 0, 1,
                                          SHADER_QUEUE_FLAGS::CUSTOM, true);
-  //vk::DESCRIPTOR_MANAGER->bindTexture(m_bindingTable, skyHandle, 0, 1, true);
+  globals::BINDING_TABLE_MANAGER->bindTexture(m_bindingTable, skyHandle, 0, 1,
+                                              true);
 }
 
 void SkyBoxPass::clear() {

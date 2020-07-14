@@ -216,6 +216,8 @@ void Dx12PSOManager::insertInPSOCache(const PSOCompileResult &result) {
       PSOData &data = m_psoPool.getFreeMemoryData(index);
       data.pso = result.pso;
       data.topology = result.topologyType;
+      data.root = result.graphicDesc->pRootSignature;
+      data.type = PSOType::RASTER;
       const PSOHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
       data.magicNumber = MAGIC_NUMBER_COUNTER;
       m_psoRegisterHandle.insert(result.PSOName, handle);
@@ -229,6 +231,8 @@ void Dx12PSOManager::insertInPSOCache(const PSOCompileResult &result) {
       PSOData &data = m_psoPool.getFreeMemoryData(index);
       data.pso = result.pso;
       data.topology = TOPOLOGY_TYPE::UNDEFINED;
+      data.type = PSOType::COMPUTE;
+      data.root= result.computeDesc->pRootSignature;
       const PSOHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
       data.magicNumber = MAGIC_NUMBER_COUNTER;
       m_psoRegisterHandle.insert(result.PSOName, handle);

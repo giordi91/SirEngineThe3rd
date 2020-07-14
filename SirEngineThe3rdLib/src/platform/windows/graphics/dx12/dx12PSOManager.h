@@ -16,6 +16,8 @@ class Dx12PSOManager final : public PSOManager {
     ID3D12PipelineState *pso;
     uint32_t magicNumber;
     TOPOLOGY_TYPE topology;
+    ID3D12RootSignature *root;
+    PSOType type;
   };
 
  public:
@@ -40,18 +42,25 @@ class Dx12PSOManager final : public PSOManager {
   void recompilePSOFromShader(const char *shaderName,
                               const char *getOffsetPath) override;
   inline void bindPSO(const PSOHandle handle,
-                      ID3D12GraphicsCommandList2 *commandList) const {
+                      ID3D12GraphicsCommandList2 *commandList,
+                      bool bindRoot = false) const {
     assertMagicNumber(handle);
     const uint32_t index = getIndexFromHandle(handle);
     const PSOData &data = m_psoPool.getConstRef(index);
     commandList->SetPipelineState(data.pso);
+    if (bindRoot) {
+      if (data.type == PSOType::RASTER) {
+        commandList->SetGraphicsRootSignature(data.root);
+      } else {
+        commandList->SetComputeRootSignature(data.root);
+      }
+    }
   }
 
   PSOHandle getHandleFromName(const char *name) const override;
-  TOPOLOGY_TYPE getTopology(const PSOHandle psoHandle) const ;
+  TOPOLOGY_TYPE getTopology(const PSOHandle psoHandle) const;
 
  private:
-
   // debugging function to be able to print to console the composition of a
   // state object
   static void printStateObjectDesc(const D3D12_STATE_OBJECT_DESC *desc);
