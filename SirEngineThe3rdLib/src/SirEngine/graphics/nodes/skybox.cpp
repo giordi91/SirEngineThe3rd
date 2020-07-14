@@ -127,5 +127,8 @@ void SkyBoxPass::clear() {
   if (m_bindHandle.isHandleValid()) {
     globals::RENDERING_CONTEXT->freeBindingObject(m_bindHandle);
   }
+  if (m_bindingTable.isHandleValid()) {
+    globals::BINDING_TABLE_MANAGER->free(m_bindingTable);
+  }
 }
 }  // namespace SirEngine

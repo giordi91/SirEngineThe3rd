@@ -95,6 +95,7 @@ private:
   struct LayoutData {
     VkPipelineLayout layout = nullptr;
     VkDescriptorSetLayout descriptorSetLayout = nullptr;
+    VkDescriptorSetLayout passSetLayout= nullptr;
     uint32_t magicNumber:16;
     uint32_t usesStaticSamplers :16;
   };

@@ -29,6 +29,7 @@ class BindingTableManager {
 
   virtual void initialize() = 0;
   virtual void cleanup() = 0;
+  virtual void free(const BindingTableHandle &bindingTable) = 0;
   virtual BindingTableHandle allocateBindingTable(
       const graphics::BindingDescription *descriptions, const uint32_t count,
       graphics::BINDING_TABLE_FLAGS flags, const char *name = nullptr) = 0;

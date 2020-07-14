@@ -182,7 +182,7 @@ void VkBindingTableManager::bindTexture(const BindingTableHandle bindHandle,
                          nullptr);
 }
 
-void VkBindingTableManager::bindTable(uint32_t bindingSpace,
+void VkBindingTableManager::bindTable(const uint32_t bindingSpace,
                                       const BindingTableHandle bindHandle,
                                       const PSOHandle psoHandle) {
   assertMagicNumber(bindHandle);
@@ -205,9 +205,18 @@ void VkBindingTableManager::bindTable(uint32_t bindingSpace,
       descriptorSet,
   };
   // multiple descriptor sets
-  vkCmdBindDescriptorSets(
-      CURRENT_FRAME_COMMAND->m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-      layout, PSOManager::PER_OBJECT_BINDING_INDEX, 1, sets, 0, nullptr);
+  vkCmdBindDescriptorSets(CURRENT_FRAME_COMMAND->m_commandBuffer,
+                          VK_PIPELINE_BIND_POINT_GRAPHICS, layout, bindingSpace,
+                          1, sets, 0, nullptr);
+}
+
+void VkBindingTableManager::free(const BindingTableHandle &bindingTable) {
+  assertMagicNumber(bindingTable);
+  uint32_t index = getIndexFromHandle(bindingTable);
+  const auto &data = m_bindingTablePool.getConstRef(index);
+
+  vkDestroyDescriptorSetLayout(vk::LOGICAL_DEVICE,data.layout,nullptr);
+  //vkDestroyDescriptorSetLayout(vk::LOGICAL_DEVICE,data,nullptr);
 }
 
 void createDescriptorPool(const VkDevice device,
