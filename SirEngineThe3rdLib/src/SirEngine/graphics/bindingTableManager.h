@@ -33,7 +33,11 @@ class BindingTableManager {
       const graphics::BindingDescription *descriptions, const uint32_t count,
       graphics::BINDING_TABLE_FLAGS flags, const char *name = nullptr) = 0;
   virtual void bindTexture(const BindingTableHandle bindHandle,
-                   const TextureHandle texture, const uint32_t descriptorIndex,
-                   const uint32_t bindingIndex, const bool isCube) =0;
+                           const TextureHandle texture,
+                           const uint32_t descriptorIndex,
+                           const uint32_t bindingIndex, const bool isCube) = 0;
+
+  virtual void bindTable(const BindingTableHandle bindHandle,
+                         const PSOHandle psoHandle) = 0;
 };
 }  // namespace SirEngine::graphics

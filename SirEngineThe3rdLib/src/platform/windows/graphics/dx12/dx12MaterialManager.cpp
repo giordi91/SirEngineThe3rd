@@ -446,6 +446,7 @@ void updateForwardPhong(const MaterialData &data,
                                    table.flatDescriptors, meshFlags, 0);
 
   // now bind the texture
+  //HARDCODED albedo
   dx12::TEXTURE_MANAGER->createSRV(data.handles.albedo,
                                    table.flatDescriptors[3], false);
 }
@@ -660,7 +661,7 @@ void allocateDescriptorTable(FlatDescriptorTable &table, const RSHandle root) {
   // now we have enough descriptors that we can use to bind everything
   uint32_t baseDescriptorIdx =
       dx12::GLOBAL_CBV_SRV_UAV_HEAP->reserveDescriptors(descriptors,
-                                                        descriptorCount + 30);
+                                                        descriptorCount);
   table.descriptorCount = descriptorCount;
   table.isFlatRoot = true;
   table.flatDescriptors = descriptors;
@@ -842,10 +843,11 @@ void Dx12MaterialManager::bindMaterial(const MaterialHandle handle,
 
   assert(data.m_materialRuntime.m_tables[currentFlagId].isFlatRoot == true);
   // let us bind the descriptor table
-  commandList->SetGraphicsRootDescriptorTable(
-      1, data.m_materialRuntime.m_tables[currentFlagId]
+  auto gpuHandle= data.m_materialRuntime.m_tables[currentFlagId]
              .flatDescriptors[0]
-             .gpuHandle);
+             .gpuHandle;
+  commandList->SetGraphicsRootDescriptorTable(
+      1, gpuHandle);
 
   TOPOLOGY_TYPE topology = dx12::PSO_MANAGER->getTopology(data.m_psoHandle);
   switch (topology) {

@@ -13,7 +13,7 @@ namespace SirEngine::dx12 {
 struct FlatDescriptorTable {
   uint32_t isFlatRoot : 1;
   uint32_t descriptorCount : 15;
-  uint32_t pading : 16;
+  uint32_t padding : 16;
   DescriptorPair *flatDescriptors;
 };
 

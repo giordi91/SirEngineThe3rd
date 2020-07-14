@@ -12,6 +12,7 @@
 #include "SirEngine/memory/stringPool.h"
 #include "SirEngine/runtimeString.h"
 #include "SirEngine/skinClusterManager.h"
+#include "dx12BindingTableManager.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/dx12Adapter.h"
 #include "platform/windows/graphics/dx12/dx12BufferManager.h"
@@ -54,6 +55,7 @@ Dx12RootSignatureManager *ROOT_SIGNATURE_MANAGER = nullptr;
 BufferManagerDx12 *BUFFER_MANAGER = nullptr;
 Dx12DebugRenderer *DEBUG_RENDERER = nullptr;
 Dx12RenderingContext *RENDERING_CONTEXT = nullptr;
+Dx12BindingTableManager *BINDING_TABLE_MANAGER = nullptr;
 
 struct Dx12Renderable {
   Dx12MeshRuntime m_meshRuntime;
@@ -169,6 +171,9 @@ bool initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
   CURRENT_FRAME_RESOURCE = &FRAME_RESOURCES[0];
 
   // initialize the managers
+  dx12::BINDING_TABLE_MANAGER = new Dx12BindingTableManager();
+  dx12::BINDING_TABLE_MANAGER->initialize();
+  globals::BINDING_TABLE_MANAGER = dx12::BINDING_TABLE_MANAGER;
   // TODO add initialize to all managers for consistency and symmetry
   CONSTANT_BUFFER_MANAGER = new Dx12ConstantBufferManager();
   CONSTANT_BUFFER_MANAGER->initialize();
@@ -208,6 +213,7 @@ bool initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
   globals::PSO_MANAGER = PSO_MANAGER;
 
   if (globals::ENGINE_CONFIG->m_useCachedPSO) {
+    assert(0 && "to used cached pso we need to add root signature information in there");
     PSO_MANAGER->loadCachedPSOInFolder(frameConcatenation(
         globals::ENGINE_CONFIG->m_dataSourcePath, "/processed/pso/DX12"));
   } else {
@@ -430,7 +436,7 @@ void Dx12RenderingContext::setupCameraForFrame() {
 }
 
 void Dx12RenderingContext::bindCameraBuffer(const int index) const {
-  //assert(0);
+  // assert(0);
   // TODO REMOVE
   // this code should not be called anymore and will need to remove after
   // transition of the whole multi-backend
@@ -887,7 +893,7 @@ bool Dx12RenderingContext::newFrame() {
   auto *heap = dx12::GLOBAL_CBV_SRV_UAV_HEAP->getResource();
   commandList->SetDescriptorHeaps(1, &heap);
 
-  // let us bind the engine descriptrion so we can bind the camera buffer
+  // let us bind the engine description: so we can bind the camera buffer
   commandList->SetGraphicsRootSignature(engineRS);
 
   return true;
