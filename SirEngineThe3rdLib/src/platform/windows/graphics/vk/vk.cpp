@@ -174,6 +174,7 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
 
   DESCRIPTOR_MANAGER = new VkBindingTableManager(10000, 10000);
   DESCRIPTOR_MANAGER->initialize();
+  globals::BINDING_TABLE_MANAGER = DESCRIPTOR_MANAGER;
 
   SHADER_MANAGER = new VkShaderManager();
   SHADER_MANAGER->initialize();
@@ -194,12 +195,12 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   globals::PSO_MANAGER = PSO_MANAGER;
   // TODO TEMP HACK LOAD, remove this
   vk::PSO_MANAGER->loadRawPSO("../data/pso/HDRtoSDREffect_PSO.json");
-  //vk::PSO_MANAGER->loadRawPSO("../data/pso/forwardPhongPSO.json");
-  //vk::PSO_MANAGER->loadRawPSO("../data/pso/grassForwardPSO.json");
-  //vk::PSO_MANAGER->loadRawPSO("../data/pso/debugDrawPointsSingleColorPSO.json");
-  //vk::PSO_MANAGER->loadRawPSO("../data/pso/debugDrawLinesSingleColorPSO.json");
+  // vk::PSO_MANAGER->loadRawPSO("../data/pso/forwardPhongPSO.json");
+  // vk::PSO_MANAGER->loadRawPSO("../data/pso/grassForwardPSO.json");
+  // vk::PSO_MANAGER->loadRawPSO("../data/pso/debugDrawPointsSingleColorPSO.json");
+  // vk::PSO_MANAGER->loadRawPSO("../data/pso/debugDrawLinesSingleColorPSO.json");
   vk::PSO_MANAGER->loadRawPSO("../data/pso/skyboxPSO.json");
-  //vk::PSO_MANAGER->loadRawPSO("../data/pso/gammaAndToneMappingEffect_PSO.json");
+  // vk::PSO_MANAGER->loadRawPSO("../data/pso/gammaAndToneMappingEffect_PSO.json");
 
   CONSTANT_BUFFER_MANAGER = new VkConstantBufferManager();
   CONSTANT_BUFFER_MANAGER->initialize();
@@ -387,17 +388,17 @@ bool VkRenderingContext::newFrame() {
       vk::DESCRIPTOR_MANAGER->getDescriptorSet(PER_FRAME_DATA_HANDLE),
       vk::STATIC_SAMPLERS_DESCRIPTOR_SET};
 
-// multiple descriptor sets
-vkCmdBindDescriptorSets(CURRENT_FRAME_COMMAND->m_commandBuffer,
-                        VK_PIPELINE_BIND_POINT_GRAPHICS,
-                        vk::ENGINE_PIPELINE_LAYOUT, 0, 2, sets, 0, nullptr);
-// VkDescriptorSet samplers[] = {vk::STATIC_SAMPLERS_DESCRIPTOR_SET};
-// vkCmdBindDescriptorSets(CURRENT_FRAME_COMMAND->m_commandBuffer,
-//                        VK_PIPELINE_BIND_POINT_GRAPHICS,
-//                        vk::ENGINE_PIPELINE_LAYOUT, 2, 1, samplers, 0,
-//                        nullptr);
+  // multiple descriptor sets
+  vkCmdBindDescriptorSets(CURRENT_FRAME_COMMAND->m_commandBuffer,
+                          VK_PIPELINE_BIND_POINT_GRAPHICS,
+                          vk::ENGINE_PIPELINE_LAYOUT, 0, 2, sets, 0, nullptr);
+  // VkDescriptorSet samplers[] = {vk::STATIC_SAMPLERS_DESCRIPTOR_SET};
+  // vkCmdBindDescriptorSets(CURRENT_FRAME_COMMAND->m_commandBuffer,
+  //                        VK_PIPELINE_BIND_POINT_GRAPHICS,
+  //                        vk::ENGINE_PIPELINE_LAYOUT, 2, 1, samplers, 0,
+  //                        nullptr);
 
-return true;
+  return true;
 }  // namespace SirEngine::vk
 
 bool VkRenderingContext::dispatchFrame() {

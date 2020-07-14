@@ -7,6 +7,7 @@
 namespace SirEngine::vk {
 
 const std::string ROOT_KEY_CONFIG = "config";
+const std::string ROOT_KEY_PASS_CONFIG = "passConfig";
 const std::string ROOT_KEY_NAME = "name";
 const std::string ROOT_KEY_TYPE = "type";
 const std::string ROOT_KEY_DATA = "data";
@@ -39,6 +40,17 @@ const std::unordered_map<std::string, VkShaderStageFlags>
         {"CS", VkShaderStageFlagBits::VK_SHADER_STAGE_COMPUTE_BIT},
         {"ALL", VkShaderStageFlagBits::VK_SHADER_STAGE_ALL},
     };
+
+VkDescriptorSetLayout getEmptyLayout() {
+  VkDescriptorSetLayoutCreateInfo descriptorInfo{
+      VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
+  descriptorInfo.bindingCount = 0;
+  descriptorInfo.pBindings = nullptr;
+  VkDescriptorSetLayout emptyLayout;
+  vkCreateDescriptorSetLayout(vk::LOGICAL_DEVICE, &descriptorInfo, nullptr,
+                              &emptyLayout);
+  return emptyLayout;
+}
 
 VkDescriptorType getDescriptorType(const nlohmann::json &config) {
   const std::string type =
@@ -162,7 +174,6 @@ RSHandle VkPipelineLayoutManager::loadSignatureFile(
     bindings[i].descriptorCount = descriptorCount;
     bindings[i].stageFlags = getVisibilityFlags(currentConfigJ);
   }
-
   // passing in the "root signature"
   VkDescriptorSetLayoutCreateInfo descriptorInfo{
       VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
@@ -177,18 +188,72 @@ RSHandle VkPipelineLayoutManager::loadSignatureFile(
   SET_DEBUG_NAME(descriptorLayout, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT,
                  frameConcatenation(name.c_str(), "DescriptorLayout"));
 
+  auto passConfig = jobj[ROOT_KEY_PASS_CONFIG];
+  const uint32_t passConfigLen = passConfig.size();
+
+  VkDescriptorSetLayout passDescriptorLayout = nullptr;
+  if (passConfigLen > 0) {
+    int passAllocSize = sizeof(VkDescriptorSetLayoutBinding) * configLen;
+    // allocating enough memory of the set layout binding
+    auto *passBindings = static_cast<VkDescriptorSetLayoutBinding *>(
+        globals::FRAME_ALLOCATOR->allocate(allocSize));
+    // zeroing out
+    memset(passBindings, 0, allocSize);
+    for (int i = 0; i < configLen; ++i) {
+      const auto &currentConfigJ = passConfig[i];
+      const auto &ranges = currentConfigJ[ROOT_KEY_DATA][ROOT_KEY_RANGES];
+      assert(ranges.size() == 1 &&
+             "Currently ranges bigger than one are not supported in the VK "
+             "backend");
+      const auto &range = ranges[0];
+
+      int bindingIdx = getValueIfInJson(range, ROOT_KEY_BASE_REGISTER, -1);
+      int descriptorCount =
+          getValueIfInJson(range, ROOT_KEY_NUM_DESCRIPTOR, -1);
+
+      assert(bindingIdx != -1);
+      assert(descriptorCount != -1);
+      VkDescriptorType descriptorType = getDescriptorType(range);
+      assert(descriptorType != VK_DESCRIPTOR_TYPE_MAX_ENUM);
+
+      passBindings[i].binding = bindingIdx;
+      passBindings[i].descriptorType = descriptorType;
+      passBindings[i].descriptorCount = descriptorCount;
+      passBindings[i].stageFlags = getVisibilityFlags(currentConfigJ);
+    }
+
+    // passing in the "root signature"
+    VkDescriptorSetLayoutCreateInfo passDescriptorInfo{
+        VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
+
+    passDescriptorInfo.bindingCount = passConfigLen;
+    passDescriptorInfo.pBindings = passBindings;
+
+    // can be freed
+    vkCreateDescriptorSetLayout(vk::LOGICAL_DEVICE, &passDescriptorInfo,
+                                nullptr, &passDescriptorLayout);
+    SET_DEBUG_NAME(descriptorLayout, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT,
+                   frameConcatenation(name.c_str(), "PassDescriptorLayout"));
+  } else {
+    passDescriptorLayout = getEmptyLayout();
+  }
+
   // we are going to use multiple layouts if static samplers are requested
   // (which is always the case)
   bool useStaticSamplers =
       getValueIfInJson(jobj, ROOT_KEY_STATIC_SAMPLERS, false);
   // always allocating two layouts, and dynamically changing how many layouts we
   // use depending on user config
-  VkDescriptorSetLayout layouts[3] = {
+  assert(
+      useStaticSamplers &&
+      "if not using static sampler we need an empty layout for the samplers");
+  VkDescriptorSetLayout layouts[4] = {
       perFrameLayout,
       samplersLayout,
+      passDescriptorLayout,
       descriptorLayout,
   };
-  layoutInfo.setLayoutCount = 2 + (useStaticSamplers ? 1 : 0);
+  layoutInfo.setLayoutCount = 3 + (useStaticSamplers ? 1 : 0);
   layoutInfo.pSetLayouts = layouts;
 
   // generate the handle
@@ -235,15 +300,10 @@ VkPipelineLayout VkPipelineLayoutManager::createEngineLayout(
   // always allocating two layouts, and dynamically changing how many layouts we
   // use depending on user config
   // passing in the "root signature"
-  VkDescriptorSetLayoutCreateInfo descriptorInfo{
-      VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
-  descriptorInfo.bindingCount = 0;
-  descriptorInfo.pBindings = nullptr;
-  VkDescriptorSetLayout emptyLayout;
-  vkCreateDescriptorSetLayout(vk::LOGICAL_DEVICE, &descriptorInfo, nullptr,
-                              &emptyLayout);
+  VkDescriptorSetLayout emptyLayout = getEmptyLayout();
 
-  VkDescriptorSetLayout layouts[3] = {perFrameLayout,samplersLayout, emptyLayout};
+  VkDescriptorSetLayout layouts[3] = {perFrameLayout, samplersLayout,
+                                      emptyLayout};
   layoutInfo.setLayoutCount = 3;
   layoutInfo.pSetLayouts = layouts;
 

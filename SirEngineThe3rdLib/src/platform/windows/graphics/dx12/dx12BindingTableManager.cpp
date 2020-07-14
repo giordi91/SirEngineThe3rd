@@ -68,7 +68,8 @@ void Dx12BindingTableManager::bindTexture(const BindingTableHandle bindHandle,
   dx12::TEXTURE_MANAGER->createSRV(texture, pair, isCube);
 }
 
-void Dx12BindingTableManager::bindTable(const BindingTableHandle bindHandle,
+void Dx12BindingTableManager::bindTable(uint32_t bindingSpace,
+                                        const BindingTableHandle bindHandle,
                                         const PSOHandle psoHandle) {
   assertMagicNumber(bindHandle);
   uint32_t poolIndex = getIndexFromHandle(bindHandle);

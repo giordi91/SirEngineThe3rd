@@ -7,9 +7,6 @@
 #include "SirEngine/materialManager.h"
 #include "SirEngine/psoManager.h"
 #include "SirEngine/rootSignatureManager.h"
-#include "platform/windows/graphics/dx12/dx12MaterialManager.h"
-#include "platform/windows/graphics/dx12/dx12PSOManager.h"
-#include "platform/windows/graphics/dx12/dx12RootSignatureManager.h"
 
 namespace SirEngine {
 static const char *SKYBOX_RS = "skybox_RS";
@@ -43,8 +40,8 @@ void SkyBoxPass::initialize() {
   m_pso = globals::PSO_MANAGER->getHandleFromName(SKYBOX_PSO);
 
   const char *queues[5] = {nullptr, nullptr, nullptr, nullptr, "skybox"};
-  m_matHandle =
-      globals::MATERIAL_MANAGER->allocateMaterial("skybox", 0, queues);
+  // m_matHandle =
+  //    globals::MATERIAL_MANAGER->allocateMaterial("skybox", 0, queues);
 
   graphics::BindingDescription descriptions[1] = {
       {1, GRAPHIC_RESOURCE_TYPE::TEXTURE,
@@ -63,15 +60,8 @@ void SkyBoxPass::compute() {
   // globals::MATERIAL_MANAGER->bindMaterial(m_matHandle,
   //                                        SHADER_QUEUE_FLAGS::CUSTOM);
 
-  //auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
-  //auto commandList = currentFc->commandList;
-  //ID3D12RootSignature *rs =
-  //    dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromHandle(m_rs);
-  //commandList->SetGraphicsRootSignature(rs);
-  // globals::RENDERING_CONTEXT->bindCameraBuffer(0);
-  // ID3D12RootSignature *rs =
-  //    dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromHandle(m_rs);
-  globals::BINDING_TABLE_MANAGER->bindTable(m_bindingTable, m_pso);
+  globals::BINDING_TABLE_MANAGER->bindTable(
+      PSOManager::PER_OBJECT_BINDING_INDEX, m_bindingTable, m_pso);
 
   // we clamp the viewport depth to the far plan. this means no matter how big
   // our sphere is it will be pushed to the far plane without artifacts:
@@ -127,8 +117,8 @@ void SkyBoxPass::populateNodePorts() {
       globals::RENDERING_CONTEXT->getEnviromentMapHandle();
   assert(skyHandle.isHandleValid());
 
-  globals::MATERIAL_MANAGER->bindTexture(m_matHandle, skyHandle, 0, 1,
-                                         SHADER_QUEUE_FLAGS::CUSTOM, true);
+  // globals::MATERIAL_MANAGER->bindTexture(m_matHandle, skyHandle, 0, 1,
+  //                                       SHADER_QUEUE_FLAGS::CUSTOM, true);
   globals::BINDING_TABLE_MANAGER->bindTexture(m_bindingTable, skyHandle, 0, 1,
                                               true);
 }
