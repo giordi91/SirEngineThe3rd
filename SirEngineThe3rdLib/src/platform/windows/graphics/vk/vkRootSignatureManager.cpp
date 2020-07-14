@@ -41,7 +41,7 @@ const std::unordered_map<std::string, VkShaderStageFlags>
         {"ALL", VkShaderStageFlagBits::VK_SHADER_STAGE_ALL},
     };
 
-VkDescriptorSetLayout getEmptyLayout() {
+VkDescriptorSetLayout getEmptyLayout(const char *name) {
   VkDescriptorSetLayoutCreateInfo descriptorInfo{
       VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
   descriptorInfo.bindingCount = 0;
@@ -49,6 +49,8 @@ VkDescriptorSetLayout getEmptyLayout() {
   VkDescriptorSetLayout emptyLayout;
   vkCreateDescriptorSetLayout(vk::LOGICAL_DEVICE, &descriptorInfo, nullptr,
                               &emptyLayout);
+
+  SET_DEBUG_NAME(emptyLayout, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, name);
   return emptyLayout;
 }
 
@@ -102,6 +104,8 @@ void VkPipelineLayoutManager::cleanup() {
       const LayoutData &data = m_rsPool.getConstRef(index);
       vkDestroyPipelineLayout(vk::LOGICAL_DEVICE, data.layout, nullptr);
       vkDestroyDescriptorSetLayout(vk::LOGICAL_DEVICE, data.descriptorSetLayout,
+                                   nullptr);
+      vkDestroyDescriptorSetLayout(vk::LOGICAL_DEVICE, data.passSetLayout,
                                    nullptr);
     }
   }
@@ -229,13 +233,14 @@ RSHandle VkPipelineLayoutManager::loadSignatureFile(
     passDescriptorInfo.bindingCount = passConfigLen;
     passDescriptorInfo.pBindings = passBindings;
 
-    // can be freed
     vkCreateDescriptorSetLayout(vk::LOGICAL_DEVICE, &passDescriptorInfo,
                                 nullptr, &passDescriptorLayout);
     SET_DEBUG_NAME(descriptorLayout, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT,
                    frameConcatenation(name.c_str(), "PassDescriptorLayout"));
   } else {
-    passDescriptorLayout = getEmptyLayout();
+    const char *passname =
+        frameConcatenation(name.c_str(), "PassDescriptorLayoutEmpty");
+    passDescriptorLayout = getEmptyLayout(passname);
   }
 
   // we are going to use multiple layouts if static samplers are requested
@@ -268,6 +273,7 @@ RSHandle VkPipelineLayoutManager::loadSignatureFile(
   rsdata.magicNumber = MAGIC_NUMBER_COUNTER;
   rsdata.descriptorSetLayout = descriptorLayout;
   rsdata.usesStaticSamplers = useStaticSamplers;
+  rsdata.passSetLayout=passDescriptorLayout;
   m_rootRegister.insert(name.c_str(), handle);
   ++MAGIC_NUMBER_COUNTER;
 
@@ -300,7 +306,8 @@ VkPipelineLayout VkPipelineLayoutManager::createEngineLayout(
   // always allocating two layouts, and dynamically changing how many layouts we
   // use depending on user config
   // passing in the "root signature"
-  VkDescriptorSetLayout emptyLayout = getEmptyLayout();
+  VkDescriptorSetLayout emptyLayout =
+      getEmptyLayout("engineDescriptorSetLayout");
 
   VkDescriptorSetLayout layouts[3] = {perFrameLayout, samplersLayout,
                                       emptyLayout};
@@ -309,6 +316,8 @@ VkPipelineLayout VkPipelineLayoutManager::createEngineLayout(
 
   VkPipelineLayout layout;
   vkCreatePipelineLayout(vk::LOGICAL_DEVICE, &layoutInfo, nullptr, &layout);
+  //destroying the descriptor set layout immediately since wont be needed
+  vkDestroyDescriptorSetLayout(vk::LOGICAL_DEVICE, emptyLayout, nullptr);
   return layout;
 }
 }  // namespace SirEngine::vk

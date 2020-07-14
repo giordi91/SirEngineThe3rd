@@ -392,11 +392,6 @@ bool VkRenderingContext::newFrame() {
   vkCmdBindDescriptorSets(CURRENT_FRAME_COMMAND->m_commandBuffer,
                           VK_PIPELINE_BIND_POINT_GRAPHICS,
                           vk::ENGINE_PIPELINE_LAYOUT, 0, 2, sets, 0, nullptr);
-  // VkDescriptorSet samplers[] = {vk::STATIC_SAMPLERS_DESCRIPTOR_SET};
-  // vkCmdBindDescriptorSets(CURRENT_FRAME_COMMAND->m_commandBuffer,
-  //                        VK_PIPELINE_BIND_POINT_GRAPHICS,
-  //                        vk::ENGINE_PIPELINE_LAYOUT, 2, 1, samplers, 0,
-  //                        nullptr);
 
   return true;
 }  // namespace SirEngine::vk

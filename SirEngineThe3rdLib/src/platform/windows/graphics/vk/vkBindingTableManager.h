@@ -35,11 +35,12 @@ class VkBindingTableManager final : public graphics::BindingTableManager {
  public:
   VkBindingTableManager(const uint32_t uniformDescriptorCount,
                         const uint32_t imagesDescriptorCount)
-      : m_descriptorDataPool(RESERVE_SIZE),
-        m_bindingTablePool(RESERVE_SIZE),
-        m_uniformDescriptorCount(uniformDescriptorCount),
-        m_imagesDescriptorCount(imagesDescriptorCount) {
-    m_allocator.initialize(10 * MB_TO_BYTE);
+	  : m_descriptorDataPool(RESERVE_SIZE),
+	    m_bindingTablePool(RESERVE_SIZE),
+	    m_uniformDescriptorCount(uniformDescriptorCount),
+	    m_imagesDescriptorCount(imagesDescriptorCount)
+  {
+	  m_allocator.initialize(10 * MB_TO_BYTE);
   };
   ~VkBindingTableManager() = default;
   VkBindingTableManager(const VkBindingTableManager &) = delete;
@@ -92,6 +93,7 @@ class VkBindingTableManager final : public graphics::BindingTableManager {
 
   void bindTable(uint32_t bindingSpace, const BindingTableHandle bindHandle,
                  const PSOHandle psoHandle) override;
+  void free(const BindingTableHandle& bindingTable) override;
 
  private:
   inline void assertMagicNumber(const DescriptorHandle handle) const {

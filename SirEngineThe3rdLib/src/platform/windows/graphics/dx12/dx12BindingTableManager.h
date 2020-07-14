@@ -36,6 +36,7 @@ class Dx12BindingTableManager : public graphics::BindingTableManager {
   void bindTable(uint32_t bindingSpace, const BindingTableHandle bindHandle,
                  const PSOHandle psoHandle) override;
 
+  void free(const BindingTableHandle& bindingTable) override;
  private:
   inline void assertMagicNumber(const BindingTableHandle handle) {
     const uint32_t magic = getMagicFromHandle(handle);

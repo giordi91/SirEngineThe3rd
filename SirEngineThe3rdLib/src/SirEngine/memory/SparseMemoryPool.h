@@ -92,6 +92,7 @@ class SparseMemoryPool final {
     assert(index < m_poolSize);
     return m_memory[index];
   }
+  inline uint32_t getPoolSize() const { return m_poolSize; }
 
 #if SE_DEBUG
   bool assertEverythingDealloc() const {
