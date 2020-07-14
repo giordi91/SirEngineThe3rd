@@ -37,7 +37,8 @@ class BindingTableManager {
                            const uint32_t descriptorIndex,
                            const uint32_t bindingIndex, const bool isCube) = 0;
 
-  virtual void bindTable(const BindingTableHandle bindHandle,
+  virtual void bindTable(uint32_t bindSpace,
+                         const BindingTableHandle bindHandle,
                          const PSOHandle psoHandle) = 0;
 };
 }  // namespace SirEngine::graphics

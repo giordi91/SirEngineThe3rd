@@ -3,6 +3,7 @@
   "staticSamplers": true,
   "useRegisterSpace": true,
   "flatDescriptorTable": true,
+  "passConfig": [], 
   "config": [
     {
       "comment": "albedo tex",
