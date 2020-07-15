@@ -4,6 +4,23 @@
   "useRegisterSpace": true,
   "flatDescriptorTable" :  true, 
   "staticSamplersVisibility": [ "PS" ],
+  "passConfig": [
+    {
+      "comment": "lighting data",
+      "type": "descriptorTable",
+      "data": {
+        "ranges": [
+          {
+            "type": "CBV",
+            "underlyingResource": "buffer",
+            "numDescriptors": 1,
+            "baseRegister":0 
+          }
+        ]
+      },
+      "visibility": "PS"
+    }
+  ], 
   "config": [
     {
       "comment": "vertex buffer bound as storage buffer/ positions",
