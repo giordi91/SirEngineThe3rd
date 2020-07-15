@@ -34,6 +34,5 @@ public:
   virtual void loadSignatureBinaryFile(const char *file) = 0;
 
   virtual RSHandle getHandleFromName(const char *name) const = 0;
-  //virtual RSHandle generateRootSignatureFromDescriptrion() = 0;
 };
 } // namespace SirEngine
