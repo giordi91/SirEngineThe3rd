@@ -56,6 +56,10 @@ bool processRoot(const std::string &assetPath, const std::string &outputPath,
   mapperData.isFlatRoot = static_cast<uint8_t>(result.flatRoot);
   mapperData.flatRootSignatureCount =
       static_cast<uint16_t>(result.descriptorCount);
+  mapperData.bindingSlots[0] = result.bindingSlots[0];
+  mapperData.bindingSlots[1] = result.bindingSlots[1];
+  mapperData.bindingSlots[2] = result.bindingSlots[2];
+  mapperData.bindingSlots[3] = result.bindingSlots[3];
   request.mapperData = &mapperData;
   request.mapperDataSizeInByte = sizeof(RootSignatureMappedData);
 

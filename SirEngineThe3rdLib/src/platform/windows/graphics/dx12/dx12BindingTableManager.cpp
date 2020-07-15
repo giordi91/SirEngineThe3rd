@@ -3,6 +3,7 @@
 #include "SirEngine/globals.h"
 #include "SirEngine/memory/threeSizesPool.h"
 #include "dx12ConstantBufferManager.h"
+#include "dx12RootSignatureManager.h"
 #include "dx12TextureManager.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/dx12PSOManager.h"
@@ -71,40 +72,13 @@ void Dx12BindingTableManager::bindTexture(const BindingTableHandle bindHandle,
 
 void Dx12BindingTableManager::bindTable(uint32_t bindingSpace,
                                         const BindingTableHandle bindHandle,
-                                        const PSOHandle psoHandle) {
+                                        const RSHandle rsHandle) {
   assertMagicNumber(bindHandle);
   uint32_t poolIndex = getIndexFromHandle(bindHandle);
   const auto &data = m_bindingTablePool.getConstRef(poolIndex);
 
   auto *commandList = dx12::CURRENT_FRAME_RESOURCE->fc.commandList;
-  dx12::PSO_MANAGER->bindPSO(psoHandle, commandList, true);
-
-  // TODO move this to the bind pso
-  TOPOLOGY_TYPE topology = dx12::PSO_MANAGER->getTopology(psoHandle);
-  topology = dx12::PSO_MANAGER->getTopology(psoHandle);
-  switch (topology) {
-    case (TOPOLOGY_TYPE::TRIANGLE): {
-      commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-      break;
-    }
-    case TOPOLOGY_TYPE::UNDEFINED: {
-      assert(0 && "trying to bind undefined topology");
-      return;
-    }
-    case TOPOLOGY_TYPE::LINE: {
-      commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
-      break;
-    }
-    case TOPOLOGY_TYPE::LINE_STRIP: {
-      commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINESTRIP);
-      break;
-    }
-    case TOPOLOGY_TYPE::TRIANGLE_STRIP: {
-      commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-      break;
-    }
-    default:;
-  }
+  dx12::ROOT_SIGNATURE_MANAGER->bindGraphicsRS(rsHandle,commandList);
 
   bool isBuffered = isFlagSet(
       data.flags, graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED);
@@ -112,7 +86,9 @@ void Dx12BindingTableManager::bindTable(uint32_t bindingSpace,
   uint32_t index = 0 + (multiplier * data.descriptionsCount);
   DescriptorPair &pair = data.descriptors[index];
 
-  commandList->SetGraphicsRootDescriptorTable(1, pair.gpuHandle);
+  uint32_t bindSlot =dx12::ROOT_SIGNATURE_MANAGER->getBindingSlot(rsHandle, bindingSpace);
+  assert(bindSlot != -1);
+  commandList->SetGraphicsRootDescriptorTable(bindSlot, pair.gpuHandle);
 }
 
 void Dx12BindingTableManager::bindConstantBuffer(

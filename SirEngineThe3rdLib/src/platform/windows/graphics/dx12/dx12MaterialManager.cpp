@@ -335,16 +335,21 @@ void bindDebugPointsSingleColor(const Dx12MaterialRuntime &materialRuntime,
 
 void bindFlatDescriptorMaterial(const Dx12MaterialRuntime &materialRuntime,
                                 ID3D12GraphicsCommandList2 *commandList,
-                                SHADER_QUEUE_FLAGS queueFlag) {
-  //dx12::RENDERING_CONTEXT->bindCameraBuffer(0);
+                                SHADER_QUEUE_FLAGS queueFlag,
+                                const RSHandle rsHandle) {
+
   const auto queueFlagInt = static_cast<int>(queueFlag);
   const auto currentFlagId =
       static_cast<int>(log2(queueFlagInt & -queueFlagInt));
 
   assert(materialRuntime.m_tables[currentFlagId].isFlatRoot == true);
   // let us bind the descriptor table
+  //we look up the binding slot for the per object based on root signature
+  int bindSlot = dx12::ROOT_SIGNATURE_MANAGER->getBindingSlot(
+      rsHandle, PSOManager::PER_OBJECT_BINDING_INDEX);
+  assert(bindSlot != -1);
   commandList->SetGraphicsRootDescriptorTable(
-      1, materialRuntime.m_tables[currentFlagId].flatDescriptors[0].gpuHandle);
+      bindSlot, materialRuntime.m_tables[currentFlagId].flatDescriptors[0].gpuHandle);
 
   commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -362,6 +367,9 @@ void Dx12MaterialManager::bindMaterial(
       static_cast<int>(log2(queueFlagInt & -queueFlagInt));
   const SHADER_TYPE_FLAGS type =
       getTypeFlags(materialRuntime.shaderQueueTypeFlags[currentFlagId]);
+
+  ShaderBind bind;
+  bool found = m_shaderTypeToShaderBind.get(static_cast<uint16_t>(type), bind);
   switch (type) {
     case (SHADER_TYPE_FLAGS::PBR): {
       bindPBR(materialRuntime, commandList);
@@ -416,11 +424,13 @@ void Dx12MaterialManager::bindMaterial(
       break;
     }
     case (SHADER_TYPE_FLAGS::GRASS_FORWARD): {
-      bindFlatDescriptorMaterial(materialRuntime, commandList, queueFlag);
+      bindFlatDescriptorMaterial(materialRuntime, commandList, queueFlag,
+                                 bind.rs);
       break;
     }
     case (SHADER_TYPE_FLAGS::FORWARD_PHONG): {
-      bindFlatDescriptorMaterial(materialRuntime, commandList, queueFlag);
+      bindFlatDescriptorMaterial(materialRuntime, commandList, queueFlag,
+                                 bind.rs);
       break;
     }
     default: {
@@ -446,7 +456,7 @@ void updateForwardPhong(const MaterialData &data,
                                    table.flatDescriptors, meshFlags, 0);
 
   // now bind the texture
-  //HARDCODED albedo
+  // HARDCODED albedo
   dx12::TEXTURE_MANAGER->createSRV(data.handles.albedo,
                                    table.flatDescriptors[3], false);
 }
@@ -460,6 +470,9 @@ void Dx12MaterialManager::updateMaterial(
   const SHADER_TYPE_FLAGS type =
       getTypeFlags(data.m_materialRuntime.shaderQueueTypeFlags[currentFlagId]);
   auto &materialRuntime = data.m_materialRuntime;
+
+  ShaderBind bind;
+  bool found = m_shaderTypeToShaderBind.get(static_cast<uint16_t>(type), bind);
   switch (type) {
     case (SHADER_TYPE_FLAGS::PBR): {
       assert(0);
@@ -528,7 +541,7 @@ void Dx12MaterialManager::updateMaterial(
     }
     case (SHADER_TYPE_FLAGS::GRASS_FORWARD): {
       assert(0);
-      bindFlatDescriptorMaterial(materialRuntime, commandList, queueFlag);
+      bindFlatDescriptorMaterial(materialRuntime, commandList, queueFlag,bind.rs);
       break;
     }
     case (SHADER_TYPE_FLAGS::FORWARD_PHONG): {
@@ -843,11 +856,11 @@ void Dx12MaterialManager::bindMaterial(const MaterialHandle handle,
 
   assert(data.m_materialRuntime.m_tables[currentFlagId].isFlatRoot == true);
   // let us bind the descriptor table
-  auto gpuHandle= data.m_materialRuntime.m_tables[currentFlagId]
-             .flatDescriptors[0]
-             .gpuHandle;
-  commandList->SetGraphicsRootDescriptorTable(
-      1, gpuHandle);
+  auto gpuHandle = data.m_materialRuntime.m_tables[currentFlagId]
+                       .flatDescriptors[0]
+                       .gpuHandle;
+
+  commandList->SetGraphicsRootDescriptorTable(1, gpuHandle);
 
   TOPOLOGY_TYPE topology = dx12::PSO_MANAGER->getTopology(data.m_psoHandle);
   switch (topology) {

@@ -44,6 +44,6 @@ class BindingTableManager {
 
   virtual void bindTable(uint32_t bindSpace,
                          const BindingTableHandle bindHandle,
-                         const PSOHandle psoHandle) = 0;
+                         const RSHandle rsHandle) = 0;
 };
 }  // namespace SirEngine::graphics

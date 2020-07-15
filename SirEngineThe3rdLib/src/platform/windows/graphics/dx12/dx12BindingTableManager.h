@@ -34,7 +34,7 @@ class Dx12BindingTableManager : public graphics::BindingTableManager {
                    const uint32_t bindingIndex, const bool isCube) override;
 
   void bindTable(uint32_t bindingSpace, const BindingTableHandle bindHandle,
-                 const PSOHandle psoHandle) override;
+                 const RSHandle rsHandle) override;
   void bindConstantBuffer(const BindingTableHandle& bindingTable, const ConstantBufferHandle& constantBufferHandle,
 	  const uint32_t descriptorIndex, const uint32_t bindingIndex) override;
 

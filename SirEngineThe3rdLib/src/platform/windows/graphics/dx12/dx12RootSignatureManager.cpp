@@ -10,8 +10,7 @@
 #include "platform/windows/graphics/dx12/d3dx12.h"
 #include "rootSignatureCompile.h"
 
-namespace SirEngine::dx12
-{
+namespace SirEngine::dx12 {
 
 void Dx12RootSignatureManager::cleanup() {
   // cleanup the allocated root signatures
@@ -43,7 +42,8 @@ void Dx12RootSignatureManager::loadSignatureBinaryFile(const char *file) {
           getBinaryFileTypeName(static_cast<BinaryFileType>(h->fileType)));
       return;
     }
-    const auto mapper = getMapperData<RootSignatureMappedData>(data.data());
+    const RootSignatureMappedData *const mapper =
+        getMapperData<RootSignatureMappedData>(data.data());
     void *rootSignaturePointer = data.data() + sizeof(BinaryFileHeader);
     ID3DBlob *blob;
     const HRESULT hr = D3DCreateBlob(mapper->sizeInByte, &blob);
@@ -58,12 +58,6 @@ void Dx12RootSignatureManager::loadSignatureBinaryFile(const char *file) {
     assert(res == S_OK);
     blob->Release();
 
-    // if (name == "standardPostProcessEffect_RS") {
-    //  auto resultCompile =
-    //  processSignatureFile("../data/rs/standardPostProcessEffect_RS.json");
-    //  //rootSig = resultCompile.root;
-    //}
-
     // generate the handle
     uint32_t index;
     RSData &rsdata = m_rsPool.getFreeMemoryData(index);
@@ -72,6 +66,10 @@ void Dx12RootSignatureManager::loadSignatureBinaryFile(const char *file) {
     rsdata.magicNumber = MAGIC_NUMBER_COUNTER;
     rsdata.isFlatRoot = mapper->isFlatRoot;
     rsdata.descriptorCount = mapper->flatRootSignatureCount;
+    rsdata.bindingSlots[0] = mapper->bindingSlots[0];
+    rsdata.bindingSlots[1] = mapper->bindingSlots[1];
+    rsdata.bindingSlots[2] = mapper->bindingSlots[2];
+    rsdata.bindingSlots[3] = mapper->bindingSlots[3];
     m_rootRegister.insert(name.c_str(), handle);
     ++MAGIC_NUMBER_COUNTER;
   }
@@ -85,4 +83,4 @@ void Dx12RootSignatureManager::loadSignaturesInFolder(const char *directory) {
     loadSignatureBinaryFile(p.c_str());
   }
 }
-} // namespace SirEngine
+}  // namespace SirEngine::dx12

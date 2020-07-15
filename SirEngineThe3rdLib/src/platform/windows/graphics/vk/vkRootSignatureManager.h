@@ -11,6 +11,19 @@
 
 namespace SirEngine::vk {
 
+#define STATIC_SAMPLER_COUNT 7
+extern VkSampler STATIC_SAMPLERS[STATIC_SAMPLER_COUNT];
+extern VkDescriptorImageInfo STATIC_SAMPLERS_INFO[STATIC_SAMPLER_COUNT];
+extern VkDescriptorSetLayout STATIC_SAMPLERS_LAYOUT;
+extern VkDescriptorSet
+    STATIC_SAMPLERS_DESCRIPTOR_SET;  // used in case you want to manually update
+                                     // the samplers and not bound them as
+                                     // static
+extern VkDescriptorSetLayout PER_FRAME_LAYOUT;
+extern DescriptorHandle PER_FRAME_DATA_HANDLE;
+extern DescriptorHandle STATIC_SAMPLERS_HANDLE;
+extern VkPipelineLayout ENGINE_PIPELINE_LAYOUT;
+
 class VkPipelineLayoutManager final : public RootSignatureManager {
 
 public:
@@ -19,13 +32,11 @@ public:
   VkPipelineLayoutManager(const VkPipelineLayoutManager &) = delete;
   VkPipelineLayoutManager &operator=(const VkPipelineLayoutManager &) = delete;
   ~VkPipelineLayoutManager() = default;
-  void initialize() override{};
+  void initialize() override;;
   void cleanup() override;
   void loadSignaturesInFolder(const char *directory) override;
   void loadSignatureBinaryFile(const char *file) override;
-  RSHandle loadSignatureFile(const char *file,
-                             const VkDescriptorSetLayout perFrameLayout,
-                             const VkDescriptorSetLayout samplersLayout);
+  RSHandle loadSignatureFile(const char *file);
 
   inline VkPipelineLayout getLayoutFromName(const char *name) const {
 

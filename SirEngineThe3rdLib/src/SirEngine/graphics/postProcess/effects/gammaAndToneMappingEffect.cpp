@@ -38,12 +38,13 @@ void GammaAndToneMappingEffect::render(const TextureHandle input,
   if (updateConfig) {
     updateConstantBuffer();
   }
+  globals::PSO_MANAGER->bindPSO(m_pso);
   globals::BINDING_TABLE_MANAGER->bindTexture(m_bindingTable, input, 0, 1,
                                               false);
   globals::BINDING_TABLE_MANAGER->bindConstantBuffer(
       m_bindingTable, m_constantBufferHandle, 1, 2);
   globals::BINDING_TABLE_MANAGER->bindTable(
-      PSOManager::PER_OBJECT_BINDING_INDEX, m_bindingTable, m_pso);
+      PSOManager::PER_OBJECT_BINDING_INDEX, m_bindingTable, m_rs);
   globals::RENDERING_CONTEXT->fullScreenPass();
 }
 void GammaAndToneMappingEffect::updateConstantBuffer() {

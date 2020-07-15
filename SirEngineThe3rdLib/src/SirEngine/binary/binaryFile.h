@@ -125,6 +125,7 @@ struct RootSignatureMappedData final {
   uint32_t type : 8;
   uint32_t isFlatRoot : 8;
   uint32_t flatRootSignatureCount : 16;
+  int16_t  bindingSlots[4]={-1,-1,-1,-1};
 };
 
 struct SkinMapperData {

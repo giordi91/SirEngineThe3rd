@@ -30,22 +30,6 @@ struct SIR_ENGINE_API VkPSOCompileResult {
   VkPipelineLayout pipelineLayout;
 };
 
-#define STATIC_SAMPLER_COUNT 7
-extern VkSampler STATIC_SAMPLERS[STATIC_SAMPLER_COUNT];
-extern VkDescriptorImageInfo STATIC_SAMPLERS_INFO[STATIC_SAMPLER_COUNT];
-extern VkDescriptorSetLayout STATIC_SAMPLERS_LAYOUT;
-extern VkDescriptorSet
-    STATIC_SAMPLERS_DESCRIPTOR_SET;  // used in case you want to manually update
-                                     // the samplers and not bound them as
-                                     // static
-extern VkDescriptorSetLayout PER_FRAME_LAYOUT;
-extern DescriptorHandle PER_FRAME_DATA_HANDLE;
-extern DescriptorHandle STATIC_SAMPLERS_HANDLE;
-extern VkPipelineLayout ENGINE_PIPELINE_LAYOUT;
-
-void initStaticSamplers();
-void destroyStaticSamplers();
-
 // TODO make it not copyable assignable
 class VkPSOManager final : public PSOManager {
   struct PSOData {
@@ -86,7 +70,6 @@ class VkPSOManager final : public PSOManager {
     const uint32_t index = getIndexFromHandle(handle);
     const PSOData &data = m_psoPool.getConstRef(index);
     vkCmdBindPipeline(commandList, VK_PIPELINE_BIND_POINT_GRAPHICS, data.pso);
-    // commandList->SetPipelineState(data.pso);
   }
   inline VkPipeline getPipelineFromHandle(const PSOHandle handle) const {
     assertMagicNumber(handle);
@@ -106,7 +89,8 @@ class VkPSOManager final : public PSOManager {
     const PSOData &data = m_psoPool.getConstRef(index);
     return data.rootSignature;
   }
-  VkPipelineLayout getPipelineLayoutFromPSOHandle(const PSOHandle handle) const {
+  VkPipelineLayout getPipelineLayoutFromPSOHandle(
+      const PSOHandle handle) const {
     assertMagicNumber(handle);
     const uint32_t index = getIndexFromHandle(handle);
     const PSOData &data = m_psoPool.getConstRef(index);
@@ -114,6 +98,10 @@ class VkPSOManager final : public PSOManager {
   }
 
   PSOHandle getHandleFromName(const char *name) const override;
+  void bindPSO(const PSOHandle handle) const override {
+    VkCommandBuffer buffer = vk::CURRENT_FRAME_COMMAND->m_commandBuffer;
+    bindPSO(handle, buffer);
+  };
 
  private:
   // PSOCompileResult processComputePSO(nlohmann::json &jobj,

@@ -22,7 +22,7 @@ class Dx12RootSignatureManager final : public RootSignatureManager {
   Dx12RootSignatureManager &operator=(const Dx12RootSignatureManager &) =
       delete;
   ~Dx12RootSignatureManager() = default;
-  void initialize() override {};
+  void initialize() override{};
   void cleanup() override;
   void loadSignaturesInFolder(const char *directory) override;
   void loadSignatureBinaryFile(const char *file) override;
@@ -73,6 +73,14 @@ class Dx12RootSignatureManager final : public RootSignatureManager {
     return value;
   }
 
+  uint32_t getBindingSlot(const RSHandle handle, const uint32_t space)
+  {
+    assertMagicNumber(handle);
+    const uint32_t index = getIndexFromHandle(handle);
+    const RSData &data = m_rsPool.getConstRef(index);
+    return data.bindingSlots[space];
+  }
+
  private:
   inline void assertMagicNumber(const RSHandle handle) const {
     const uint32_t magic = getMagicFromHandle(handle);
@@ -88,6 +96,7 @@ class Dx12RootSignatureManager final : public RootSignatureManager {
     uint32_t magicNumber : 16;
     uint32_t descriptorCount : 15;
     uint32_t isFlatRoot : 1;
+    int16_t bindingSlots[3] = {-1, -1, -1};
   };
 
   HashMap<const char *, RSHandle, hashString32> m_rootRegister;
