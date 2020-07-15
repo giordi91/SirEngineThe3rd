@@ -3,7 +3,6 @@
   "staticSamplers": true,
   "useRegisterSpace": true,
   "flatDescriptorTable" :  true, 
-  "passConfig": [], 
   "config": [
     {
       "comment": "input texture to sample",

@@ -1,0 +1,24 @@
+{
+  "type": "RASTER",
+  "staticSamplers": true,
+  "useRegisterSpace": true,
+  "flatDescriptorTable" :  true, 
+  "staticSamplersVisibility": [ "PS" ],
+  "passConfig": [
+    {
+      "comment": "lighting data",
+      "type": "descriptorTable",
+      "data": {
+        "ranges": [
+          {
+            "type": "CBV",
+            "underlyingResource": "buffer",
+            "numDescriptors": 1,
+            "baseRegister":0 
+          }
+        ]
+      },
+      "visibility": "PS"
+    }
+  ] 
+}
