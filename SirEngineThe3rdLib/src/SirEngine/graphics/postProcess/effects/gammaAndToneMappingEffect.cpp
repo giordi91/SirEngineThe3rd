@@ -2,6 +2,7 @@
 
 #include "SirEngine/constantBufferManager.h"
 #include "SirEngine/globals.h"
+#include "SirEngine/graphics/bindingTableManager.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/materialManager.h"
 #include "SirEngine/psoManager.h"
@@ -20,11 +21,15 @@ void GammaAndToneMappingEffect::initialize() {
   m_constantBufferHandle = globals::CONSTANT_BUFFER_MANAGER->allocate(
       sizeof(GammaToneMappingConfig), 0, &m_config);
 
-  const char *queues[5] = {nullptr, nullptr, nullptr, nullptr,
-                           "gammaAndToneMapping"};
-  m_matHandle = globals::MATERIAL_MANAGER->allocateMaterial(
-      "gammaAndToneMapping",
-      MaterialManager::ALLOCATE_MATERIAL_FLAG_BITS::BUFFERED, queues);
+  graphics::BindingDescription descriptions[2] = {
+      {1, GRAPHIC_RESOURCE_TYPE::TEXTURE,
+       GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT},
+      {2, GRAPHIC_RESOURCE_TYPE::CONSTANT_BUFFER,
+       GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT}};
+  m_bindingTable = globals::BINDING_TABLE_MANAGER->allocateBindingTable(
+      descriptions, 2,
+      graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED,
+      "gammaAndToneMappingBindingTable");
 }
 
 void GammaAndToneMappingEffect::render(const TextureHandle input,
@@ -33,13 +38,12 @@ void GammaAndToneMappingEffect::render(const TextureHandle input,
   if (updateConfig) {
     updateConstantBuffer();
   }
-  globals::MATERIAL_MANAGER->bindTexture(m_matHandle, input, 0, 1,
-                                         SHADER_QUEUE_FLAGS::CUSTOM, false);
-  globals::MATERIAL_MANAGER->bindConstantBuffer(
-      m_matHandle, m_constantBufferHandle, 1, 2, SHADER_QUEUE_FLAGS::CUSTOM);
-
-  globals::MATERIAL_MANAGER->bindMaterial(m_matHandle,
-                                          SHADER_QUEUE_FLAGS::CUSTOM);
+  globals::BINDING_TABLE_MANAGER->bindTexture(m_bindingTable, input, 0, 1,
+                                              false);
+  globals::BINDING_TABLE_MANAGER->bindConstantBuffer(
+      m_bindingTable, m_constantBufferHandle, 1, 2);
+  globals::BINDING_TABLE_MANAGER->bindTable(
+      PSOManager::PER_OBJECT_BINDING_INDEX, m_bindingTable, m_pso);
   globals::RENDERING_CONTEXT->fullScreenPass();
 }
 void GammaAndToneMappingEffect::updateConstantBuffer() {
@@ -47,5 +51,9 @@ void GammaAndToneMappingEffect::updateConstantBuffer() {
   updateConfig = false;
 }
 
-void GammaAndToneMappingEffect::clear() {}
+void GammaAndToneMappingEffect::clear() {
+  if (m_bindingTable.isHandleValid()) {
+    globals::BINDING_TABLE_MANAGER->free(m_bindingTable);
+  }
+}
 }  // namespace SirEngine

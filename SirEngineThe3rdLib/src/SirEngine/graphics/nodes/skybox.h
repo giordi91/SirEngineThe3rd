@@ -33,7 +33,6 @@ private:
   BufferBindingsHandle m_bindHandle{};
   RSHandle m_rs{};
   PSOHandle m_pso{};
-  MaterialHandle m_matHandle{};
   BindingTableHandle m_bindingTable{};
 };
 

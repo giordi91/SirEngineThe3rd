@@ -28,7 +28,7 @@ class GammaAndToneMappingEffect final : public PostProcessEffect {
   ConstantBufferHandle m_constantBufferHandle;
   bool updateConfig = false;
   GammaToneMappingConfig m_config;
-  MaterialHandle m_matHandle{};
+  BindingTableHandle m_bindingTable{};
 };
 
 }  // namespace SirEngine

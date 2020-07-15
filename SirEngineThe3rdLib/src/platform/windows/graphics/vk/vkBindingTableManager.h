@@ -91,6 +91,9 @@ class VkBindingTableManager final : public graphics::BindingTableManager {
                    const TextureHandle texture, const uint32_t descriptorIndex,
                    const uint32_t bindingIndex, const bool isCube) override;
 
+  void bindConstantBuffer(const BindingTableHandle& bindingTable, const ConstantBufferHandle& constantBufferHandle,
+	  const uint32_t descriptorIndex, const uint32_t bindingIndex) override;
+
   void bindTable(uint32_t bindingSpace, const BindingTableHandle bindHandle,
                  const PSOHandle psoHandle) override;
   void free(const BindingTableHandle& bindingTable) override;

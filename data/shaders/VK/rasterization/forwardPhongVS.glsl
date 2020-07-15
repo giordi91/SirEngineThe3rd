@@ -24,15 +24,15 @@ layout (set=0,binding=0) uniform InputData
 
 //struct normal{uint8_t nx, ny, nz, nw;};
 
-layout (set=2,binding=0) buffer vertices
+layout (set=3,binding=0) buffer vertices
 {
 	vec4 p[];
 };
-layout (set=2,binding=1) buffer normals 
+layout (set=3,binding=1) buffer normals 
 {
 	vec4 n[];
 };
-layout (set=2,binding=2) buffer uvs 
+layout (set=3,binding=2) buffer uvs 
 {
 	vec2 uv[];
 };

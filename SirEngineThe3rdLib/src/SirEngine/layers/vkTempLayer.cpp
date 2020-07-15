@@ -131,8 +131,8 @@ void VkTempLayer::onAttach() {
   auto *const debugDraw = new DebugDrawNode(*alloc);
   auto *const finalBlit = new FinalBlitNode(*alloc);
   auto *postProcess = new PostProcessStack(*alloc);
-  //postProcess->allocateRenderPass<GammaAndToneMappingEffect>(
-  //    "GammaToneMapping");
+  postProcess->allocateRenderPass<GammaAndToneMappingEffect>(
+      "GammaToneMapping");
   postProcess->initialize();
 
   // temporary graph for testing

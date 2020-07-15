@@ -921,11 +921,10 @@ void VkMaterialManager::bindMesh(const MaterialHandle handle,
                          nullptr);
 }
 
-void VkMaterialManager::bindConstantBuffer(MaterialHandle handle,
-                                           ConstantBufferHandle bufferHandle,
-                                           const uint32_t descriptorIndex,
-                                           const uint32_t bindingIndex,
-                                           SHADER_QUEUE_FLAGS queue) {
+void VkMaterialManager::bindConstantBuffer(
+    const MaterialHandle handle, const ConstantBufferHandle bufferHandle,
+    const uint32_t descriptorIndex, const uint32_t bindingIndex,
+    SHADER_QUEUE_FLAGS queue) {
   const auto &materialRuntime = getMaterialRuntime(handle);
   int queueFlagInt = static_cast<int>(queue);
   int currentFlagId = static_cast<int>(log2(queueFlagInt & -queueFlagInt));
