@@ -37,6 +37,10 @@ class BindingTableManager {
                            const TextureHandle texture,
                            const uint32_t descriptorIndex,
                            const uint32_t bindingIndex, const bool isCube) = 0;
+  virtual void bindConstantBuffer(const BindingTableHandle &bindingTable,
+                          const ConstantBufferHandle &constantBufferHandle,
+                          const uint32_t descriptorIndex,
+                          const uint32_t bindingIndex) =0;
 
   virtual void bindTable(uint32_t bindSpace,
                          const BindingTableHandle bindHandle,

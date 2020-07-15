@@ -98,6 +98,11 @@ void PostProcessStack::clear() {
     globals::RENDERING_CONTEXT->freeBindingObject(m_bindHandles[1]);
     m_bindHandles[1] = {};
   }
+  //clearning the passes too
+  for(auto* pass : m_stack)
+  {
+      pass->clear();
+  }
 }
 void PostProcessStack::onResizeEvent(int, int) {
   clear();

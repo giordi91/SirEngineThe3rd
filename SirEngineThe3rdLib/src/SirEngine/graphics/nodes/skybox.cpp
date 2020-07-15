@@ -39,10 +39,6 @@ void SkyBoxPass::initialize() {
   m_rs = globals::ROOT_SIGNATURE_MANAGER->getHandleFromName(SKYBOX_RS);
   m_pso = globals::PSO_MANAGER->getHandleFromName(SKYBOX_PSO);
 
-  const char *queues[5] = {nullptr, nullptr, nullptr, nullptr, "skybox"};
-  // m_matHandle =
-  //    globals::MATERIAL_MANAGER->allocateMaterial("skybox", 0, queues);
-
   graphics::BindingDescription descriptions[1] = {
       {1, GRAPHIC_RESOURCE_TYPE::TEXTURE,
        GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT}};
@@ -55,10 +51,6 @@ void SkyBoxPass::compute() {
   // this will take care of binding the back buffer and the input and transition
   // both the back buffer  and input texture
   globals::RENDERING_CONTEXT->setBindingObject(m_bindHandle);
-
-  // next we bind the material, this will among other things bind the pso and rs
-  // globals::MATERIAL_MANAGER->bindMaterial(m_matHandle,
-  //                                        SHADER_QUEUE_FLAGS::CUSTOM);
 
   globals::BINDING_TABLE_MANAGER->bindTable(
       PSOManager::PER_OBJECT_BINDING_INDEX, m_bindingTable, m_pso);
@@ -117,8 +109,6 @@ void SkyBoxPass::populateNodePorts() {
       globals::RENDERING_CONTEXT->getEnviromentMapHandle();
   assert(skyHandle.isHandleValid());
 
-  // globals::MATERIAL_MANAGER->bindTexture(m_matHandle, skyHandle, 0, 1,
-  //                                       SHADER_QUEUE_FLAGS::CUSTOM, true);
   globals::BINDING_TABLE_MANAGER->bindTexture(m_bindingTable, skyHandle, 0, 1,
                                               true);
 }

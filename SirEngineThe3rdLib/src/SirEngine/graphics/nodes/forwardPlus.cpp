@@ -69,10 +69,10 @@ void ForwardPlus::initialize() {
 void ForwardPlus::compute() {
   globals::RENDERING_CONTEXT->setBindingObject(m_bindHandle);
 
-  //DrawCallConfig config{globals::ENGINE_CONFIG->m_windowWidth,
-  //                      globals::ENGINE_CONFIG->m_windowHeight, 0};
-  //globals::RENDERING_CONTEXT->renderQueueType(config,
-  //                                            SHADER_QUEUE_FLAGS::FORWARD);
+  DrawCallConfig config{globals::ENGINE_CONFIG->m_windowWidth,
+                        globals::ENGINE_CONFIG->m_windowHeight, 0};
+  globals::RENDERING_CONTEXT->renderQueueType(config,
+                                              SHADER_QUEUE_FLAGS::FORWARD);
 
   globals::RENDERING_CONTEXT->clearBindingObject(m_bindHandle);
 }

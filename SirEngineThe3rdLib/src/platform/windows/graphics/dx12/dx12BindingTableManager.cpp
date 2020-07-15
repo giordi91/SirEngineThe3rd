@@ -114,7 +114,14 @@ void Dx12BindingTableManager::bindTable(uint32_t bindingSpace,
   commandList->SetGraphicsRootDescriptorTable(1, pair.gpuHandle);
 }
 
-void Dx12BindingTableManager::free(const BindingTableHandle& bindingTable)
+void Dx12BindingTableManager::bindConstantBuffer(
+    const BindingTableHandle &bindingTable,
+    const ConstantBufferHandle &constantBufferHandle,
+    const uint32_t descriptorIndex, const uint32_t bindingIndex)
 {
+    assert(0);
+	
 }
+
+void Dx12BindingTableManager::free(const BindingTableHandle &bindingTable) {}
 }  // namespace SirEngine::dx12

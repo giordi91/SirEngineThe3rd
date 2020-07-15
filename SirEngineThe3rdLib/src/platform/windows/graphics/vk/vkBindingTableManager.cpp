@@ -4,6 +4,7 @@
 
 #include "platform/windows/graphics/vk/vk.h"
 #include "platform/windows/graphics/vk/vkPSOManager.h"
+#include "vkConstantBufferManager.h"
 #include "vkTextureManager.h"
 
 namespace SirEngine::vk {
@@ -117,7 +118,7 @@ BindingTableHandle VkBindingTableManager::allocateBindingTable(
   resourceLayoutInfo[0].sType =
       VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   resourceLayoutInfo[0].pNext = nullptr;
-  resourceLayoutInfo[0].bindingCount = 1;
+  resourceLayoutInfo[0].bindingCount = count;
   resourceLayoutInfo[0].pBindings = bindings;
 
   VkDescriptorSetLayout layout;
@@ -182,6 +183,30 @@ void VkBindingTableManager::bindTexture(const BindingTableHandle bindHandle,
                          nullptr);
 }
 
+void VkBindingTableManager::bindConstantBuffer(
+    const BindingTableHandle &bindingTable,
+    const ConstantBufferHandle &constantBufferHandle,
+    const uint32_t descriptorIndex, const uint32_t bindingIndex) {
+  assertMagicNumber(bindingTable);
+  uint32_t index = getIndexFromHandle(bindingTable);
+  const auto &data = m_bindingTablePool.getConstRef(index);
+
+  assert(data.descriptorHandle.isHandleValid());
+  // the descriptor set is already taking into account whether or not
+  // is buffered, it gives us the correct one we want
+  VkDescriptorSet descriptorSet =
+      vk::DESCRIPTOR_MANAGER->getDescriptorSet(data.descriptorHandle);
+
+  VkWriteDescriptorSet writeDescriptorSets = {};
+  VkDescriptorBufferInfo bufferInfoUniform = {};
+  vk::CONSTANT_BUFFER_MANAGER->bindConstantBuffer(
+      constantBufferHandle, bufferInfoUniform, bindingIndex,
+      &writeDescriptorSets, descriptorSet);
+
+  vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, 1, &writeDescriptorSets, 0,
+                         nullptr);
+}
+
 void VkBindingTableManager::bindTable(const uint32_t bindingSpace,
                                       const BindingTableHandle bindHandle,
                                       const PSOHandle psoHandle) {
@@ -215,8 +240,8 @@ void VkBindingTableManager::free(const BindingTableHandle &bindingTable) {
   uint32_t index = getIndexFromHandle(bindingTable);
   const auto &data = m_bindingTablePool.getConstRef(index);
 
-  vkDestroyDescriptorSetLayout(vk::LOGICAL_DEVICE,data.layout,nullptr);
-  //vkDestroyDescriptorSetLayout(vk::LOGICAL_DEVICE,data,nullptr);
+  vkDestroyDescriptorSetLayout(vk::LOGICAL_DEVICE, data.layout, nullptr);
+  // vkDestroyDescriptorSetLayout(vk::LOGICAL_DEVICE,data,nullptr);
 }
 
 void createDescriptorPool(const VkDevice device,
