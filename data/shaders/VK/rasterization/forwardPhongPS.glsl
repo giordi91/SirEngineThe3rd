@@ -1,7 +1,14 @@
 #version 450
 
+#extension GL_GOOGLE_include_directive: require
+#include "../common/structures.glsl"
 
 layout (set=3,binding = 3) uniform texture2D colorTexture;
+//pass data, lights
+layout (set=2,binding=0) uniform LightData 
+{
+	DirectionalLightData lightData;
+}; 
 layout (set=1,binding = 0) uniform sampler[7] colorSampler;
 
 layout(location=0) out vec4 outputColor;

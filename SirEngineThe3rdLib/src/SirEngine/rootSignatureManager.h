@@ -4,7 +4,19 @@
 
 namespace SirEngine {
 
-enum class ROOT_FILE_TYPE { RASTER = 0, COMPUTE = 1, DXR = 2, NULL_TYPE };
+enum class ROOT_FILE_TYPE { NULL_TYPE, RASTER = 1, COMPUTE = 2, DXR = 3 };
+
+struct RootDefinition
+{
+	ROOT_FILE_TYPE rootType;
+
+	
+};
+
+struct RootComponentDefinition
+{
+	
+};
 
 class RootSignatureManager {
 
@@ -22,5 +34,6 @@ public:
   virtual void loadSignatureBinaryFile(const char *file) = 0;
 
   virtual RSHandle getHandleFromName(const char *name) const = 0;
+  //virtual RSHandle generateRootSignatureFromDescriptrion() = 0;
 };
 } // namespace SirEngine

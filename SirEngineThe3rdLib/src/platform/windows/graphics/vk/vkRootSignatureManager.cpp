@@ -197,13 +197,13 @@ RSHandle VkPipelineLayoutManager::loadSignatureFile(
 
   VkDescriptorSetLayout passDescriptorLayout = nullptr;
   if (passConfigLen > 0) {
-    int passAllocSize = sizeof(VkDescriptorSetLayoutBinding) * configLen;
+    int passAllocSize = sizeof(VkDescriptorSetLayoutBinding) * passConfigLen;
     // allocating enough memory of the set layout binding
     auto *passBindings = static_cast<VkDescriptorSetLayoutBinding *>(
-        globals::FRAME_ALLOCATOR->allocate(allocSize));
+        globals::FRAME_ALLOCATOR->allocate(passAllocSize));
     // zeroing out
-    memset(passBindings, 0, allocSize);
-    for (int i = 0; i < configLen; ++i) {
+    memset(passBindings, 0, passAllocSize);
+    for (int i = 0; i < passConfigLen; ++i) {
       const auto &currentConfigJ = passConfig[i];
       const auto &ranges = currentConfigJ[ROOT_KEY_DATA][ROOT_KEY_RANGES];
       assert(ranges.size() == 1 &&

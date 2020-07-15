@@ -119,7 +119,6 @@ void Dx12BindingTableManager::bindConstantBuffer(
     const BindingTableHandle &bindingTable,
     const ConstantBufferHandle &constantBufferHandle,
     const uint32_t descriptorIndex, const uint32_t bindingIndex) {
-
   assertMagicNumber(bindingTable);
   uint32_t poolIndex = getIndexFromHandle(bindingTable);
   const auto &data = m_bindingTablePool.getConstRef(poolIndex);
@@ -128,10 +127,15 @@ void Dx12BindingTableManager::bindConstantBuffer(
       data.flags, graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED);
   uint32_t multiplier = isBuffered ? globals::CURRENT_FRAME : 0;
   uint32_t index = descriptorIndex + (multiplier * data.descriptionsCount);
-  
+
   dx12::CONSTANT_BUFFER_MANAGER->createSrv(constantBufferHandle,
                                            data.descriptors[index]);
 }
 
-void Dx12BindingTableManager::free(const BindingTableHandle &bindingTable) {}
+void Dx12BindingTableManager::free(const BindingTableHandle &bindingTable)
+{
+    //TODO freeing descriptor has never been done properly and is currently not supported at
+	//runtime. This method mostly exists for clean up in the vulkan back end and make the
+	//validation layer happy
+}
 }  // namespace SirEngine::dx12
