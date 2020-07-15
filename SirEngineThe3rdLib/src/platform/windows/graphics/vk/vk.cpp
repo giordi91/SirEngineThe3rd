@@ -188,6 +188,8 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
 
   PIPELINE_LAYOUT_MANAGER = new VkPipelineLayoutManager();
   PIPELINE_LAYOUT_MANAGER->initialize();
+  PIPELINE_LAYOUT_MANAGER->loadSignatureFile("../data/rs/forwardPlusPassRS.json");
+
   globals::ROOT_SIGNATURE_MANAGER = PIPELINE_LAYOUT_MANAGER;
 
   PSO_MANAGER = new VkPSOManager();
@@ -460,7 +462,6 @@ bool VkRenderingContext::shutdownGraphic() {
   bool result = destroySwapchain(LOGICAL_DEVICE, SWAP_CHAIN);
   assert(result);
 
-  destroyStaticSamplers();
   SHADER_MANAGER->cleanup();
   globals::LIGHT_MANAGER->cleanup();
   CONSTANT_BUFFER_MANAGER->cleanup();

@@ -3,6 +3,7 @@
 #include "SirEngine/graphics/lightManager.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/textureManager.h"
+#include "SirEngine/rootSignatureManager.h"
 
 namespace SirEngine {
 
@@ -62,6 +63,10 @@ void ForwardPlus::initialize() {
       TextureManager::TEXTURE_ALLOCATION_FLAG_BITS::DEPTH_TEXTURE |
           TextureManager::TEXTURE_ALLOCATION_FLAG_BITS::SHADER_RESOURCE,
       RESOURCE_STATE::DEPTH_RENDER_TARGET);
+
+  //TODO fix this add generic way to load root signature if needed
+  //this is mostly needed for the bindings process
+  m_rs = globals::ROOT_SIGNATURE_MANAGER->getHandleFromName("forwardPlusPassRS");
 
   setupLight();
 }

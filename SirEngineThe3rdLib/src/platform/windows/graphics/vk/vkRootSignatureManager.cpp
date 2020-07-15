@@ -3,8 +3,232 @@
 #include "SirEngine/binary/binaryFile.h"
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
+#include "platform/windows/graphics/vk/vkBindingTableManager.h"
 
 namespace SirEngine::vk {
+
+VkSampler STATIC_SAMPLERS[STATIC_SAMPLER_COUNT];
+VkDescriptorImageInfo STATIC_SAMPLERS_INFO[STATIC_SAMPLER_COUNT];
+VkDescriptorSetLayout STATIC_SAMPLERS_LAYOUT;
+VkDescriptorSet STATIC_SAMPLERS_DESCRIPTOR_SET;
+VkDescriptorSetLayout PER_FRAME_LAYOUT = nullptr;
+DescriptorHandle PER_FRAME_DATA_HANDLE;
+DescriptorHandle STATIC_SAMPLERS_HANDLE;
+VkPipelineLayout ENGINE_PIPELINE_LAYOUT;
+
+const char *STATIC_SAMPLERS_NAMES[STATIC_SAMPLER_COUNT] = {
+    "pointWrapSampler",   "pointClampSampler",      "linearWrapSampler",
+    "linearClampSampler", "anisotropicWrapSampler", "anisotropicClampSampler",
+    "pcfSampler"};
+
+std::array<const VkSamplerCreateInfo, STATIC_SAMPLER_COUNT>
+getStaticSamplersCreateInfo() {
+  // Applications usually only need a handful of samplers.  So just define them
+  // all up front and keep them available as part of the root signature.
+
+  const VkSamplerCreateInfo pointWrap{
+      VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+      nullptr,
+      0,
+      VK_FILTER_NEAREST,
+      VK_FILTER_NEAREST,
+      VK_SAMPLER_MIPMAP_MODE_NEAREST,
+      VK_SAMPLER_ADDRESS_MODE_REPEAT,
+      VK_SAMPLER_ADDRESS_MODE_REPEAT,
+      VK_SAMPLER_ADDRESS_MODE_REPEAT,
+      0.0f,
+      VK_FALSE,
+      1,
+      false,
+      VK_COMPARE_OP_NEVER,  // should not matter since compare is off
+      0.0,
+      20.0};
+  const VkSamplerCreateInfo pointClamp{
+      VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+      nullptr,
+      0,
+      VK_FILTER_NEAREST,
+      VK_FILTER_NEAREST,
+      VK_SAMPLER_MIPMAP_MODE_NEAREST,
+      VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+      VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+      VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+      0.0f,
+      VK_FALSE,
+      1,
+      false,
+      VK_COMPARE_OP_NEVER,  // should not matter since compare is off
+      0.0,
+      20.0};
+  const VkSamplerCreateInfo linearWrap{
+      VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+      nullptr,
+      0,
+      VK_FILTER_LINEAR,
+      VK_FILTER_LINEAR,
+      VK_SAMPLER_MIPMAP_MODE_LINEAR,
+      VK_SAMPLER_ADDRESS_MODE_REPEAT,
+      VK_SAMPLER_ADDRESS_MODE_REPEAT,
+      VK_SAMPLER_ADDRESS_MODE_REPEAT,
+      0.0f,
+      VK_FALSE,
+      1,
+      false,
+      VK_COMPARE_OP_NEVER,  // should not matter since compare is off
+      0.0,
+      20.0};
+  const VkSamplerCreateInfo linearClamp{
+      VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+      nullptr,
+      0,
+      VK_FILTER_LINEAR,
+      VK_FILTER_LINEAR,
+      VK_SAMPLER_MIPMAP_MODE_LINEAR,
+      VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+      VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+      VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+      0.0f,
+      VK_FALSE,
+      1,
+      false,
+      VK_COMPARE_OP_NEVER,  // should not matter since compare is off
+      0.0,
+      20.0};
+  const VkSamplerCreateInfo anisotropicWrap{
+      VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+      nullptr,
+      0,
+      VK_FILTER_LINEAR,
+      VK_FILTER_LINEAR,
+      VK_SAMPLER_MIPMAP_MODE_LINEAR,
+      VK_SAMPLER_ADDRESS_MODE_REPEAT,
+      VK_SAMPLER_ADDRESS_MODE_REPEAT,
+      VK_SAMPLER_ADDRESS_MODE_REPEAT,
+      0.0f,
+      VK_TRUE,
+      16};
+  const VkSamplerCreateInfo anisotropicClamp{
+      VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+      nullptr,
+      0,
+      VK_FILTER_LINEAR,
+      VK_FILTER_LINEAR,
+      VK_SAMPLER_MIPMAP_MODE_LINEAR,
+      VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+      VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+      VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+      0.0f,
+      VK_TRUE,
+      8};
+  const VkSamplerCreateInfo shadowPCFClamp{
+      VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+      nullptr,
+      0,
+      VK_FILTER_LINEAR,
+      VK_FILTER_LINEAR,
+      VK_SAMPLER_MIPMAP_MODE_NEAREST,
+      VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+      VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+      VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+      0.0f,
+      VK_FALSE,
+      1,
+      VK_TRUE,
+      VK_COMPARE_OP_GREATER,
+      0.0,
+      0.0,
+      VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK};
+
+  return {pointWrap,       pointClamp,       linearWrap,    linearClamp,
+          anisotropicWrap, anisotropicClamp, shadowPCFClamp};
+}
+
+void createPerFrameDataDescriptorSet(VkDescriptorSetLayout &layout) {
+  // here we are are creating the layout, but we are using static samplers
+  // so we are passing immutable samplers directly in the layout that
+  // gets built in the graphics pipeline
+  VkDescriptorSetLayoutBinding resourceBinding[1] = {};
+  resourceBinding[0].binding = 0;
+  resourceBinding[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+  resourceBinding[0].descriptorCount = 1;
+  resourceBinding[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT |
+                                  VK_SHADER_STAGE_FRAGMENT_BIT |
+                                  VK_SHADER_STAGE_COMPUTE_BIT;
+  resourceBinding[0].pImmutableSamplers = nullptr;
+
+  VkDescriptorSetLayoutCreateInfo resourceLayoutInfo[1] = {};
+  resourceLayoutInfo[0].sType =
+      VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+  resourceLayoutInfo[0].pNext = nullptr;
+  resourceLayoutInfo[0].bindingCount = 1;
+  resourceLayoutInfo[0].pBindings = resourceBinding;
+
+  VK_CHECK(vkCreateDescriptorSetLayout(vk::LOGICAL_DEVICE, resourceLayoutInfo,
+                                       NULL, &layout));
+  SET_DEBUG_NAME(layout, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT,
+                 "perFrameDataDescriptorSetLayout");
+
+  PER_FRAME_DATA_HANDLE = vk::DESCRIPTOR_MANAGER->allocate(
+      layout, graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED,
+      "perFrameDataDescriptor");
+}
+
+void createStaticSamplerDescriptorSet() {
+  // here we are are creating the layout, but we are using static samplers
+  // so we are passing immutable samplers directly in the layout that
+  // gets built in the graphics pipeline
+  VkDescriptorSetLayoutBinding resourceBinding[1] = {};
+  resourceBinding[0].binding = 0;
+  resourceBinding[0].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+  resourceBinding[0].descriptorCount = STATIC_SAMPLER_COUNT;
+  resourceBinding[0].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+  resourceBinding[0].pImmutableSamplers = STATIC_SAMPLERS;
+
+  VkDescriptorSetLayoutCreateInfo resourceLayoutInfo[1] = {};
+  resourceLayoutInfo[0].sType =
+      VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+  resourceLayoutInfo[0].pNext = nullptr;
+  resourceLayoutInfo[0].bindingCount = 1;
+  resourceLayoutInfo[0].pBindings = resourceBinding;
+
+  VK_CHECK(vkCreateDescriptorSetLayout(vk::LOGICAL_DEVICE, resourceLayoutInfo,
+                                       NULL, &STATIC_SAMPLERS_LAYOUT));
+  SET_DEBUG_NAME(STATIC_SAMPLERS_LAYOUT, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT,
+                 "staticSamplersDescriptorSetLayout");
+
+  STATIC_SAMPLERS_HANDLE = vk::DESCRIPTOR_MANAGER->allocate(
+      STATIC_SAMPLERS_LAYOUT,
+      graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_NONE, "staticSamplers");
+  STATIC_SAMPLERS_DESCRIPTOR_SET =
+      vk::DESCRIPTOR_MANAGER->getDescriptorSet(STATIC_SAMPLERS_HANDLE);
+}
+
+void destroyStaticSamplers() {
+  for (int i = 0; i < STATIC_SAMPLER_COUNT; ++i) {
+    vkDestroySampler(vk::LOGICAL_DEVICE, STATIC_SAMPLERS[i], nullptr);
+  }
+  vkDestroyDescriptorSetLayout(vk::LOGICAL_DEVICE, STATIC_SAMPLERS_LAYOUT,
+                               nullptr);
+}
+
+void initStaticSamplers() {
+  auto createInfos = getStaticSamplersCreateInfo();
+  for (int i = 0; i < STATIC_SAMPLER_COUNT; ++i) {
+    VK_CHECK(vkCreateSampler(vk::LOGICAL_DEVICE, &createInfos[i], NULL,
+                             &STATIC_SAMPLERS[i]));
+    // setting debug name
+    SET_DEBUG_NAME(STATIC_SAMPLERS[i], VK_OBJECT_TYPE_SAMPLER,
+                   STATIC_SAMPLERS_NAMES[i]);
+
+    STATIC_SAMPLERS_INFO[i] = {};
+    STATIC_SAMPLERS_INFO[i].sampler = STATIC_SAMPLERS[i];
+  }
+  createStaticSamplerDescriptorSet();
+}
+
+void initPerFrameDataDescriptor() {
+  createPerFrameDataDescriptorSet(PER_FRAME_LAYOUT);
+};
 
 const std::string ROOT_KEY_CONFIG = "config";
 const std::string ROOT_KEY_PASS_CONFIG = "passConfig";
@@ -91,7 +315,13 @@ VkShaderStageFlags getVisibilityFlags(const nlohmann::json &jobj) {
   return 0;
 }
 
+void VkPipelineLayoutManager::initialize() {
+  vk::initPerFrameDataDescriptor();
+  vk::initStaticSamplers();
+}
+
 void VkPipelineLayoutManager::cleanup() {
+  destroyStaticSamplers();
   int count = m_rootRegister.binCount();
   for (int i = 0; i < count; ++i) {
     if (m_rootRegister.isBinUsed(i)) {
@@ -141,9 +371,7 @@ void processConfig(const nlohmann::json &jobj,
   binding->stageFlags = getVisibilityFlags(jobj);
 }
 
-RSHandle VkPipelineLayoutManager::loadSignatureFile(
-    const char *file, const VkDescriptorSetLayout perFrameLayout,
-    const VkDescriptorSetLayout samplersLayout) {
+RSHandle VkPipelineLayoutManager::loadSignatureFile(const char *file) {
   const std::string name = getFileName(file);
 
   RSHandle cachedHandle;
@@ -259,8 +487,8 @@ RSHandle VkPipelineLayoutManager::loadSignatureFile(
       useStaticSamplers &&
       "if not using static sampler we need an empty layout for the samplers");
   VkDescriptorSetLayout layouts[4] = {
-      perFrameLayout,
-      samplersLayout,
+      PER_FRAME_LAYOUT,
+      STATIC_SAMPLERS_LAYOUT,
       passDescriptorLayout,
       descriptorLayout,
   };

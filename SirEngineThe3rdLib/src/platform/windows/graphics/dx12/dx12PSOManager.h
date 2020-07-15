@@ -43,7 +43,7 @@ class Dx12PSOManager final : public PSOManager {
                               const char *getOffsetPath) override;
   inline void bindPSO(const PSOHandle handle,
                       ID3D12GraphicsCommandList2 *commandList,
-                      bool bindRoot = false) const {
+                      const bool bindRoot = false) const {
     assertMagicNumber(handle);
     const uint32_t index = getIndexFromHandle(handle);
     const PSOData &data = m_psoPool.getConstRef(index);
@@ -55,6 +55,36 @@ class Dx12PSOManager final : public PSOManager {
         commandList->SetComputeRootSignature(data.root);
       }
     }
+    // TODO move this to the bind pso
+    switch (data.topology) {
+      case (TOPOLOGY_TYPE::TRIANGLE): {
+        commandList->IASetPrimitiveTopology(
+            D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        break;
+      }
+      case TOPOLOGY_TYPE::UNDEFINED: {
+        assert(0 && "trying to bind undefined topology");
+        return;
+      }
+      case TOPOLOGY_TYPE::LINE: {
+        commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
+        break;
+      }
+      case TOPOLOGY_TYPE::LINE_STRIP: {
+        commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINESTRIP);
+        break;
+      }
+      case TOPOLOGY_TYPE::TRIANGLE_STRIP: {
+        commandList->IASetPrimitiveTopology(
+            D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+        break;
+      }
+      default:;
+    }
+  }
+  void bindPSO(const PSOHandle handle) const override {
+    auto *commandList = dx12::CURRENT_FRAME_RESOURCE->fc.commandList;
+    bindPSO(handle, commandList, false);
   }
 
   PSOHandle getHandleFromName(const char *name) const override;

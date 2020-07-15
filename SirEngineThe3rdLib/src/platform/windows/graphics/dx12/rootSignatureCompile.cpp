@@ -355,19 +355,30 @@ ID3D12RootSignature *enginePerFrameEmptyRS(const char *name) {
 
 RootCompilerResult flatTablesRS(nlohmann::json jobj, const std::string &name,
                                 ID3DBlob **blob) {
+  if (name == "forwardPhongRS") {
+    int x = 0;
+  }
   const std::string tempKey = "useRegisterSpace";
+  const std::string tempKey2 = "passConfig";
   bool useRegister = getValueIfInJson(jobj, tempKey, false);
 
-  int extraRegister = useRegister ? 1 : 0;
+  // not using register not supported anymore, will be fixed over time
+  assert(useRegister == true);
 
-  auto &configValue = jobj[ROOT_KEY_CONFIG];
+  bool hasPassConfig = jobj.find(tempKey2) != jobj.end();
+  if (hasPassConfig) {
+    hasPassConfig = jobj[tempKey2].size() > 0 ? true : false;
+  }
+  bool hasConfig = jobj.find(ROOT_KEY_CONFIG) != jobj.end();
 
   std::string fileType = getValueIfInJson(jobj, ROOT_KEY_TYPE, DEFAULT_STRING);
   assert(!fileType.empty());
 
   // we have one flat descriptor table to bind
   uint32_t registerCount = 1;
-  std::vector<CD3DX12_ROOT_PARAMETER> rootParams(registerCount + extraRegister);
+  registerCount += hasPassConfig ? 1 : 0;
+  registerCount += hasConfig ? 1 : 0;
+  std::vector<CD3DX12_ROOT_PARAMETER> rootParams(registerCount);
   CD3DX12_DESCRIPTOR_RANGE ranges{};
   if (useRegister) {
     // create constant buffer for camera values
@@ -376,55 +387,61 @@ RootCompilerResult flatTablesRS(nlohmann::json jobj, const std::string &name,
                 ENGINE_RESIGSTER_SPACE);
     rootParams[0].InitAsDescriptorTable(1, &ranges);
   }
-  int counter = 0 + extraRegister;
+  int configIndex =
+      0 + static_cast<int>(hasPassConfig) + static_cast<int>(hasConfig);
 
-  auto *userRanges = new CD3DX12_DESCRIPTOR_RANGE[configValue.size()]{};
   int userCounter = 0;
-  for (auto &subConfig : configValue) {
-    // getting the type of root
-    std::string configTypeValueString =
-        getValueIfInJson(subConfig, ROOT_KEY_TYPE, DEFAULT_STRING);
-    assert(!configTypeValueString.empty());
-    SUB_ROOT_TYPES configType = getTypeEnum(configTypeValueString);
-    // here we are dealing with the old system, where everything was a
-    // descriptor table now we want to unpack that, so we need to extract the
-    // ranges from inside the descriptor tables which are always one object, and
-    // flatten them out
-    assert(configType == SUB_ROOT_TYPES::DESCRIPTOR_TABLE);
+  if (hasConfig) {
+    auto &configValue = jobj[ROOT_KEY_CONFIG];
+    auto *userRanges = new CD3DX12_DESCRIPTOR_RANGE[configValue.size()]{};
+    for (auto &subConfig : configValue) {
+      // getting the type of root
+      std::string configTypeValueString =
+          getValueIfInJson(subConfig, ROOT_KEY_TYPE, DEFAULT_STRING);
+      assert(!configTypeValueString.empty());
+      SUB_ROOT_TYPES configType = getTypeEnum(configTypeValueString);
+      // here we are dealing with the old system, where everything was a
+      // descriptor table now we want to unpack that, so we need to extract the
+      // ranges from inside the descriptor tables which are always one object,
+      // and flatten them out
+      assert(configType == SUB_ROOT_TYPES::DESCRIPTOR_TABLE);
 
-    // lets go in and expand the actual inner type,accessing the ranges
-    assert(subConfig.find(ROOT_KEY_DATA) != subConfig.end());
-    auto dataJ = subConfig[ROOT_KEY_DATA];
-    assert(dataJ.find(ROOT_KEY_RANGES) != dataJ.end());
-    auto rangesJ = dataJ[ROOT_KEY_RANGES];
-    assert(rangesJ.size() == 1);
-    auto currentRange = rangesJ[0];
-    configTypeValueString =
-        getValueIfInJson(currentRange, ROOT_KEY_TYPE, DEFAULT_STRING);
-    assert(!configTypeValueString.empty());
-    configType = getTypeEnum(configTypeValueString);
+      // lets go in and expand the actual inner type,accessing the ranges
+      assert(subConfig.find(ROOT_KEY_DATA) != subConfig.end());
+      auto dataJ = subConfig[ROOT_KEY_DATA];
+      assert(dataJ.find(ROOT_KEY_RANGES) != dataJ.end());
+      auto rangesJ = dataJ[ROOT_KEY_RANGES];
+      assert(rangesJ.size() == 1);
+      auto currentRange = rangesJ[0];
+      configTypeValueString =
+          getValueIfInJson(currentRange, ROOT_KEY_TYPE, DEFAULT_STRING);
+      assert(!configTypeValueString.empty());
+      configType = getTypeEnum(configTypeValueString);
 
-    switch (configType) {
-      case (SUB_ROOT_TYPES::CBV): {
-        initDescriptorAsConstant(currentRange, userRanges[userCounter],
-                                 useRegister);
-        break;
+      switch (configType) {
+        case (SUB_ROOT_TYPES::CBV): {
+          initDescriptorAsConstant(currentRange, userRanges[userCounter],
+                                   useRegister);
+          break;
+        }
+        case (SUB_ROOT_TYPES::SRV): {
+          initDescriptorAsSRV(currentRange, userRanges[userCounter],
+                              useRegister);
+          break;
+        }
+        case (SUB_ROOT_TYPES::UAV): {
+          initDescriptorAsUAV(currentRange, userRanges[userCounter],
+                              useRegister);
+          break;
+        }
+        default: {
+          assert(0 && "descriptor type not supported");
+        }
       }
-      case (SUB_ROOT_TYPES::SRV): {
-        initDescriptorAsSRV(currentRange, userRanges[userCounter], useRegister);
-        break;
-      }
-      case (SUB_ROOT_TYPES::UAV): {
-        initDescriptorAsUAV(currentRange, userRanges[userCounter], useRegister);
-        break;
-      }
-      default: {
-        assert(0 && "descriptor type not supported");
-      }
+      ++userCounter;
     }
-    ++userCounter;
+    rootParams[configIndex].InitAsDescriptorTable(userCounter, userRanges);
   }
-  rootParams[counter].InitAsDescriptorTable(userCounter, userRanges);
 
   UINT numStaticSampers = 0;
   D3D12_STATIC_SAMPLER_DESC const *staticSamplers = nullptr;
@@ -464,12 +481,18 @@ RootCompilerResult flatTablesRS(nlohmann::json jobj, const std::string &name,
   const ROOT_TYPE fileTypeEnum = getFileTypeEnum(fileType);
   (*blob) = serializeRootSignature(rootSignatureDesc);
 
-  return RootCompilerResult{frameString(name.c_str()), nullptr, fileTypeEnum,
-                            true, static_cast<uint16_t>(userCounter)};
+  return RootCompilerResult{
+      frameString(name.c_str()),
+      nullptr,
+      fileTypeEnum,
+      true,
+      static_cast<uint16_t>(userCounter),
+      {0, -1, hasPassConfig ? 1 : -1, hasPassConfig ? 2 : 1}};
 }
 
 RootCompilerResult multipleTablesRS(nlohmann::json jobj,
                                     const std::string &name, ID3DBlob **blob) {
+  // assert(0);
   const std::string tempKey = "useRegisterSpace";
   bool useRegister = getValueIfInJson(jobj, tempKey, false);
 
@@ -572,7 +595,7 @@ RootCompilerResult processSignatureFileToBlob(const char *path,
   const std::string defaultString;
   const std::string &name = getFileName(path);
 
-  assert(jobj.find(ROOT_KEY_CONFIG) != jobj.end());
+  // assert(jobj.find(ROOT_KEY_CONFIG) != jobj.end());
 
   const std::string flatDescriptorTableKey = "flatDescriptorTable";
   bool isFlatTable = getValueIfInJson(jobj, flatDescriptorTableKey, false);

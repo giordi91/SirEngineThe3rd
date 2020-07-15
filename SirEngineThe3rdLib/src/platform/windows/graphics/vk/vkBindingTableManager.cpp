@@ -209,12 +209,13 @@ void VkBindingTableManager::bindConstantBuffer(
 
 void VkBindingTableManager::bindTable(const uint32_t bindingSpace,
                                       const BindingTableHandle bindHandle,
-                                      const PSOHandle psoHandle) {
+                                      const RSHandle rsHandle) {
   assertMagicNumber(bindHandle);
   uint32_t index = getIndexFromHandle(bindHandle);
   const auto &data = m_bindingTablePool.getConstRef(index);
 
-  vk::PSO_MANAGER->bindPSO(psoHandle, CURRENT_FRAME_COMMAND->m_commandBuffer);
+  // vk::PSO_MANAGER->bindPSO(psoHandle,
+  // CURRENT_FRAME_COMMAND->m_commandBuffer);
 
   DescriptorHandle descriptorHandle = data.descriptorHandle;
   // data.m_materialRuntime.descriptorHandles[currentFlagId];
@@ -223,7 +224,7 @@ void VkBindingTableManager::bindTable(const uint32_t bindingSpace,
       vk::DESCRIPTOR_MANAGER->getDescriptorSet(descriptorHandle);
 
   VkPipelineLayout layout =
-      vk::PSO_MANAGER->getPipelineLayoutFromPSOHandle(psoHandle);
+      vk::PIPELINE_LAYOUT_MANAGER->getLayoutFromHandle(rsHandle);
   assert(layout != nullptr);
 
   VkDescriptorSet sets[] = {

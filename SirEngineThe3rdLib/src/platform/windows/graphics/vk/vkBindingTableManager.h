@@ -95,7 +95,7 @@ class VkBindingTableManager final : public graphics::BindingTableManager {
 	  const uint32_t descriptorIndex, const uint32_t bindingIndex) override;
 
   void bindTable(uint32_t bindingSpace, const BindingTableHandle bindHandle,
-                 const PSOHandle psoHandle) override;
+                 const RSHandle rsHandle) override;
   void free(const BindingTableHandle& bindingTable) override;
 
  private:

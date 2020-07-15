@@ -30,6 +30,7 @@ class ForwardPlus final : public GNode {
   BufferBindingsHandle m_bindHandle{};
   LightHandle m_lightHandle{};
   DirectionalLightData m_light;
+  RSHandle m_rs{};
 };
 
 }  // namespace SirEngine
