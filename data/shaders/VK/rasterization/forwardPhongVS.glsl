@@ -36,10 +36,15 @@ layout (set=3,binding=2) buffer uvs
 {
 	vec2 uv[];
 };
+layout (set=3,binding=3) buffer tangents 
+{
+	vec4 tans[];
+};
 
 
 layout(location =0) out vec3 outNormal;
-layout(location =1) out vec2 outUV;
+layout(location =1) out vec3 outTan;
+layout(location =2) out vec2 outUV;
 void VS()
 {
 	//this can't be used becuase seems like is making a copy and the 
@@ -54,6 +59,7 @@ void VS()
 	vec4 position = p[gl_VertexIndex];
 	//vec3 position = vec3(p[gl_VertexIndex].x,p[gl_VertexIndex].y,p[gl_VertexIndex].z);
 	outNormal= n[gl_VertexIndex].xyz;
+	outTan= tans[gl_VertexIndex].xyz;
 	outUV= uv[gl_VertexIndex];
 
 	gl_Position = cameraBuffer.MVP * position;

@@ -171,7 +171,16 @@ void VkMeshManager::bindMesh(const MeshHandle handle, VkWriteDescriptorSet *set,
     set[2].descriptorCount = 1;
   }
   if ((bindFlags & MESH_ATTRIBUTE_FLAGS::TANGENTS) > 0) {
-    assert(0 && "binding tangents in vk is not supproted yet");
+    info[3].buffer = data.vertexBuffer;
+    info[3].offset = data.meshRuntime.tangentsRange.m_offset;
+    info[3].range = data.meshRuntime.tangentsRange.m_size;
+
+    set[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    set[3].dstSet = descriptorSet;
+    set[3].dstBinding = startIdx + 3;
+    set[3].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    set[3].pBufferInfo = &info[3];
+    set[3].descriptorCount = 1;
   }
 }
 

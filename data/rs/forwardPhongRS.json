@@ -68,6 +68,21 @@
       }
     },
     {
+      "comment": "vertex buffer bound as storage buffer/ tangents",
+      "type": "descriptorTable",
+      "visibility": "VS",
+      "data": {
+        "ranges": [
+          {
+            "type": "SRV",
+            "underlyingResource": "buffer",
+            "numDescriptors": 1,
+            "baseRegister": 3
+          }
+        ]
+      }
+    },
+    {
       "comment": "albedo tex",
       "type": "descriptorTable",
       "data": {
@@ -76,7 +91,7 @@
             "type": "SRV",
             "underlyingResource": "texture",
             "numDescriptors": 1,
-            "baseRegister": 3
+            "baseRegister": 4
           }
         ]
       },
