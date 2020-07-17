@@ -20,7 +20,7 @@ inline bool isFlagSet(const uint32_t flags,
 
 BindingTableHandle Dx12BindingTableManager::allocateBindingTable(
     const graphics::BindingDescription *descriptions, const uint32_t count,
-    graphics::BINDING_TABLE_FLAGS flags, const char *name) {
+    const graphics::BINDING_TABLE_FLAGS flags, const char *) {
   // if the table is buffered we need to allocate N times where N is the number
   // of buffers in flight
   uint32_t descriptorCount =
@@ -33,9 +33,8 @@ BindingTableHandle Dx12BindingTableManager::allocateBindingTable(
   auto *descriptors = static_cast<DescriptorPair *>(
       m_allocator.allocate(sizeof(DescriptorPair) * descriptorCount));
   // now we have enough descriptors that we can use to bind everything
-  uint32_t baseDescriptorIdx =
-      dx12::GLOBAL_CBV_SRV_UAV_HEAP->reserveDescriptors(descriptors,
-                                                        descriptorCount);
+  dx12::GLOBAL_CBV_SRV_UAV_HEAP->reserveDescriptors(descriptors,
+                                                    descriptorCount);
 
   uint32_t descriptrionSize = sizeof(graphics::BindingDescription) * count;
   auto *descriptrionMemory = reinterpret_cast<graphics::BindingDescription *>(
@@ -78,7 +77,7 @@ void Dx12BindingTableManager::bindTable(uint32_t bindingSpace,
   const auto &data = m_bindingTablePool.getConstRef(poolIndex);
 
   auto *commandList = dx12::CURRENT_FRAME_RESOURCE->fc.commandList;
-  dx12::ROOT_SIGNATURE_MANAGER->bindGraphicsRS(rsHandle,commandList);
+  dx12::ROOT_SIGNATURE_MANAGER->bindGraphicsRS(rsHandle, commandList);
 
   bool isBuffered = isFlagSet(
       data.flags, graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED);
@@ -86,7 +85,8 @@ void Dx12BindingTableManager::bindTable(uint32_t bindingSpace,
   uint32_t index = 0 + (multiplier * data.descriptionsCount);
   DescriptorPair &pair = data.descriptors[index];
 
-  uint32_t bindSlot =dx12::ROOT_SIGNATURE_MANAGER->getBindingSlot(rsHandle, bindingSpace);
+  uint32_t bindSlot =
+      dx12::ROOT_SIGNATURE_MANAGER->getBindingSlot(rsHandle, bindingSpace);
   assert(bindSlot != -1);
   commandList->SetGraphicsRootDescriptorTable(bindSlot, pair.gpuHandle);
 }
@@ -94,7 +94,7 @@ void Dx12BindingTableManager::bindTable(uint32_t bindingSpace,
 void Dx12BindingTableManager::bindConstantBuffer(
     const BindingTableHandle &bindingTable,
     const ConstantBufferHandle &constantBufferHandle,
-    const uint32_t descriptorIndex, const uint32_t bindingIndex) {
+    const uint32_t descriptorIndex, const uint32_t ) {
   assertMagicNumber(bindingTable);
   uint32_t poolIndex = getIndexFromHandle(bindingTable);
   const auto &data = m_bindingTablePool.getConstRef(poolIndex);
@@ -108,10 +108,9 @@ void Dx12BindingTableManager::bindConstantBuffer(
                                            data.descriptors[index]);
 }
 
-void Dx12BindingTableManager::free(const BindingTableHandle &bindingTable)
-{
-    //TODO freeing descriptor has never been done properly and is currently not supported at
-	//runtime. This method mostly exists for clean up in the vulkan back end and make the
-	//validation layer happy
+void Dx12BindingTableManager::free(const BindingTableHandle &bindingTable) {
+  // TODO freeing descriptor has never been done properly and is currently not
+  // supported at runtime. This method mostly exists for clean up in the vulkan
+  // back end and make the validation layer happy
 }
 }  // namespace SirEngine::dx12

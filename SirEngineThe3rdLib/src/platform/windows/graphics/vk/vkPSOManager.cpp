@@ -318,7 +318,7 @@ VkRenderPass getRenderPass(const nlohmann::json &jobj, const char *name) {
     assert(clearColors.size() == formats.size());
   }
 
-  int count = 0;
+  uint32_t count = 0;
   for (auto &format : formats) {
     VkFormat currentFormat =
         convertStringToTextureFormat(format.get<std::string>());

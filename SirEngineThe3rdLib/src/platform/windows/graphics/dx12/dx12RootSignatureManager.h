@@ -96,7 +96,7 @@ class Dx12RootSignatureManager final : public RootSignatureManager {
     uint32_t magicNumber : 16;
     uint32_t descriptorCount : 15;
     uint32_t isFlatRoot : 1;
-    int16_t bindingSlots[3] = {-1, -1, -1};
+    int16_t bindingSlots[4] = {-1, -1, -1,-1};
   };
 
   HashMap<const char *, RSHandle, hashString32> m_rootRegister;

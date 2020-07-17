@@ -301,8 +301,7 @@ PSOCompileResult processComputePSO(nlohmann::json &jobj, const char *path,
   csArgs.debug = true;
   csArgs.type = L"cs_6_2";
 
-  ShaderCompileResult compileResult =
-      compiler.compileShader(csPath, csArgs);
+  ShaderCompileResult compileResult = compiler.compileShader(csPath, csArgs);
 
   D3D12_SHADER_BYTECODE computeShaderByteCode{
       compileResult.blob->GetBufferPointer(),
@@ -386,7 +385,7 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj, const char *path,
   psArgs.entryPoint = L"PS";
   psArgs.debug = true;
   psArgs.type = L"ps_6_2";
-  ID3DBlob *ps= nullptr;
+  ID3DBlob *ps = nullptr;
   if (PSname != "null") {
     auto psResult = compiler.compileShader(psPath, psArgs);
     if (psResult.blob == nullptr) {

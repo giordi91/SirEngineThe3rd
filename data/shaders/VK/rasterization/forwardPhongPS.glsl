@@ -19,9 +19,8 @@ layout (location = 1) in vec2 inUV;
 void PS()
 {
    vec2 uv = vec2(inUV.x,1.0f - inUV.y);
-   vec3 l  = -(normalize(vec3(-1,-1,-1)));
+   vec3 l  = -lightData.lightDir.xyz;
    float d = dot(l,normals);
-   outputColor = vec4(d,d,d,1.0);
-   //outputColor = texture (sampler2D (colorTexture, colorSampler[2]), uv);
+   outputColor = texture (sampler2D (colorTexture, colorSampler[2]), uv) *d;
    //outputColor = color;
 }

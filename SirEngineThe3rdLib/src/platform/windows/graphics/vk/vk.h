@@ -115,16 +115,14 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
 #endif
 
 #if _DEBUG
-#define SET_DEBUG_NAME(resource, type, name)                                   \
-  {                                                                            \
-    if (name != nullptr) {                                                     \
-      VkDebugUtilsObjectNameInfoEXT debugInfo_{};                              \
-      debugInfo_.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;   \
-      debugInfo_.objectHandle = (uint64_t)resource;                            \
-      debugInfo_.objectType = type;                                            \
-      debugInfo_.pObjectName = SirEngine::persistentString(name);              \
-      VK_CHECK(vkSetDebugUtilsObjectNameEXT(vk::LOGICAL_DEVICE, &debugInfo_)); \
-    }                                                                          \
+#define SET_DEBUG_NAME(resource, type, name)                                 \
+  {                                                                          \
+    VkDebugUtilsObjectNameInfoEXT debugInfo_{};                              \
+    debugInfo_.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;   \
+    debugInfo_.objectHandle = (uint64_t)resource;                            \
+    debugInfo_.objectType = type;                                            \
+    debugInfo_.pObjectName = SirEngine::persistentString(name);              \
+    VK_CHECK(vkSetDebugUtilsObjectNameEXT(vk::LOGICAL_DEVICE, &debugInfo_)); \
   }
 #else
 #define SET_DEBUG_NAME(resource, type, name)

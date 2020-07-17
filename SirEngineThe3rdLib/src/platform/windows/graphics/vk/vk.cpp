@@ -7,6 +7,7 @@
 #include "SirEngine/engineConfig.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/graphics/camera.h"
+#include "SirEngine/graphics/debugAnnotations.h"
 #include "SirEngine/graphics/lightManager.h"
 #include "SirEngine/log.h"
 #include "SirEngine/runtimeString.h"
@@ -188,7 +189,8 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
 
   PIPELINE_LAYOUT_MANAGER = new VkPipelineLayoutManager();
   PIPELINE_LAYOUT_MANAGER->initialize();
-  PIPELINE_LAYOUT_MANAGER->loadSignatureFile("../data/rs/forwardPlusPassRS.json");
+  PIPELINE_LAYOUT_MANAGER->loadSignatureFile(
+      "../data/rs/forwardPlusPassRS.json");
 
   globals::ROOT_SIGNATURE_MANAGER = PIPELINE_LAYOUT_MANAGER;
 
@@ -613,7 +615,7 @@ void VkRenderingContext::renderQueueType(const DrawCallConfig &config,
   vkCmdSetScissor(commandList, 0, 1, &scissor);
 
   for (const auto &renderableList : typedQueues) {
-    if (vk::MATERIAL_MANAGER->isQueueType(renderableList.first, flag)) {
+    if (MATERIAL_MANAGER->isQueueType(renderableList.first, flag)) {
       // now that we know the material goes in the the deferred queue we can
       // start rendering it
 
@@ -622,9 +624,10 @@ void VkRenderingContext::renderQueueType(const DrawCallConfig &config,
 
       // this is most for debug, it will boil down to nothing in release
       const SHADER_TYPE_FLAGS type =
-          vk::MATERIAL_MANAGER->getTypeFlags(renderableList.first);
+          MATERIAL_MANAGER->getTypeFlags(renderableList.first);
       const std::string &typeName =
-          vk::MATERIAL_MANAGER->getStringFromShaderTypeFlag(type);
+          MATERIAL_MANAGER->getStringFromShaderTypeFlag(type);
+      annotateGraphicsBegin(typeName.c_str());
 
       // looping each of the object
       const size_t count = renderableList.second.size();
@@ -633,11 +636,12 @@ void VkRenderingContext::renderQueueType(const DrawCallConfig &config,
         const VkRenderable &renderable = currRenderables[i];
 
         // bind material data like textures etc, then render
-        vk::MATERIAL_MANAGER->bindMaterial(flag, renderable.m_materialRuntime,
-                                           commandList);
+        MATERIAL_MANAGER->bindMaterial(flag, renderable.m_materialRuntime,
+                                       commandList);
 
-        vk::MESH_MANAGER->renderMesh(renderable.m_meshRuntime, commandList);
+        MESH_MANAGER->renderMesh(renderable.m_meshRuntime, commandList);
       }
+      annotateGraphicsEnd();
     }
   }
 }
@@ -811,7 +815,7 @@ BufferBindingsHandle VkRenderingContext::prepareBindingObject(
   return {data.m_magicNumber << 16 | index};
 }
 
-void VkRenderingContext::clearBindingObject(const BufferBindingsHandle handle) {
+void VkRenderingContext::clearBindingObject(const BufferBindingsHandle) {
   vkCmdEndRenderPass(vk::CURRENT_FRAME_COMMAND->m_commandBuffer);
 }
 
@@ -855,7 +859,7 @@ void VkRenderingContext::setViewportAndScissor(
   VkViewport viewport{offsetX, height - offsetY, width,
                       -height, minDepth,         maxDepth};
   VkRect2D scissor{
-      {offsetX, offsetY},
+      {static_cast<uint32_t>(offsetX), static_cast<uint32_t>(offsetY)},
       {static_cast<uint32_t>(width), static_cast<uint32_t>(height)}};
   vkCmdSetViewport(commandList, 0, 1, &viewport);
   vkCmdSetScissor(commandList, 0, 1, &scissor);
@@ -863,7 +867,7 @@ void VkRenderingContext::setViewportAndScissor(
 
 void VkRenderingContext::renderProcedural(const uint32_t indexCount) {
   auto *currentFc = CURRENT_FRAME_COMMAND;
-  auto commandList = currentFc->m_commandBuffer;
+  VkCommandBuffer commandList = currentFc->m_commandBuffer;
   vkCmdDraw(commandList, indexCount, 1, 0, 0);
 }
 
@@ -873,7 +877,7 @@ int vkBarrier(int counter, VkImageMemoryBarrier *barriers,
   if (oldState == newState) {
     return counter;
   }
-  vk::VkTexture2D m_rt = vk::TEXTURE_MANAGER->getTextureData(handle);
+  VkTexture2D rt = vk::TEXTURE_MANAGER->getTextureData(handle);
   VkImageLayout oldLayout = fromStateToLayout(oldState);
   VkImageLayout newLayout = fromStateToLayout(newState);
   barriers[counter].sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -881,9 +885,8 @@ int vkBarrier(int counter, VkImageMemoryBarrier *barriers,
   barriers[counter].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
   barriers[counter].srcQueueFamilyIndex = 0;
   barriers[counter].dstQueueFamilyIndex = 0;
-  barriers[counter].image = m_rt.image;
-  // barrier[0].oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-  // barrier[0].newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+  barriers[counter].image = rt.image;
+
   barriers[counter].oldLayout = oldLayout;
   barriers[counter].newLayout = newLayout;
   barriers[counter].subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -892,12 +895,6 @@ int vkBarrier(int counter, VkImageMemoryBarrier *barriers,
   barriers[counter].subresourceRange.levelCount = 1;
   barriers[counter].subresourceRange.layerCount = 1;
   return ++counter;
-
-  ////TODO fix this, should not be all graphics bit i think
-  // vkCmdPipelineBarrier(
-  //    vk::CURRENT_FRAME_COMMAND->m_commandBuffer,
-  //    VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
-  //    VK_DEPENDENCY_DEVICE_GROUP_BIT, 0, nullptr, 0, nullptr, 2, barrier);
 }
 
 void VkRenderingContext::setBindingObject(const BufferBindingsHandle handle) {

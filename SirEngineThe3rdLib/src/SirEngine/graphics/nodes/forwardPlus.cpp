@@ -1,9 +1,12 @@
 #include "SirEngine/graphics/nodes/forwardPlus.h"
 
+#include "SirEngine/constantBufferManager.h"
+#include "SirEngine/graphics/bindingTableManager.h"
 #include "SirEngine/graphics/lightManager.h"
 #include "SirEngine/graphics/renderingContext.h"
-#include "SirEngine/textureManager.h"
+#include "SirEngine/psoManager.h"
 #include "SirEngine/rootSignatureManager.h"
+#include "SirEngine/textureManager.h"
 
 namespace SirEngine {
 
@@ -47,6 +50,18 @@ void ForwardPlus::setupLight() {
   m_light.worldToLocal = glm::inverse(m_light.localToWorld);
   m_lightHandle = globals::LIGHT_MANAGER->addLight(
       m_light, graphics::LightManager::GPU_BACKED);
+
+  // allocate the constant buffer
+  m_lightCB = globals::CONSTANT_BUFFER_MANAGER->allocate(
+      sizeof(DirectionalLightData), 0, &m_light);
+
+  graphics::BindingDescription descriptions[1] = {
+      {0, GRAPHIC_RESOURCE_TYPE::CONSTANT_BUFFER,
+       GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT}};
+  m_passBindings = globals::BINDING_TABLE_MANAGER->allocateBindingTable(
+      descriptions, 1,
+      graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED,
+      "forwardPlusPassDataBindingTable");
 }
 
 void ForwardPlus::initialize() {
@@ -64,15 +79,20 @@ void ForwardPlus::initialize() {
           TextureManager::TEXTURE_ALLOCATION_FLAG_BITS::SHADER_RESOURCE,
       RESOURCE_STATE::DEPTH_RENDER_TARGET);
 
-  //TODO fix this add generic way to load root signature if needed
-  //this is mostly needed for the bindings process
-  m_rs = globals::ROOT_SIGNATURE_MANAGER->getHandleFromName("forwardPlusPassRS");
-
+  // TODO fix this add generic way to load root signature if needed
+  // this is mostly needed for the bindings process
+  m_rs =
+      globals::ROOT_SIGNATURE_MANAGER->getHandleFromName("forwardPlusPassRS");
   setupLight();
 }
 
 void ForwardPlus::compute() {
   globals::RENDERING_CONTEXT->setBindingObject(m_bindHandle);
+
+  globals::BINDING_TABLE_MANAGER->bindConstantBuffer(m_passBindings, m_lightCB,
+                                                     0, 0);
+  globals::BINDING_TABLE_MANAGER->bindTable(PSOManager::PER_PASS_BINDING_INDEX,
+                                            m_passBindings, m_rs);
 
   DrawCallConfig config{globals::ENGINE_CONFIG->m_windowWidth,
                         globals::ENGINE_CONFIG->m_windowHeight, 0};
@@ -129,6 +149,9 @@ void ForwardPlus::clear() {
   }
   if (m_bindHandle.isHandleValid()) {
     globals::RENDERING_CONTEXT->freeBindingObject(m_bindHandle);
+  }
+  if (m_passBindings.isHandleValid()) {
+    globals::BINDING_TABLE_MANAGER->free(m_passBindings);
   }
 }
 }  // namespace SirEngine

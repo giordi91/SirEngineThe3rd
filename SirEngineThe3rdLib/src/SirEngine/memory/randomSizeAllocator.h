@@ -104,9 +104,9 @@ class RandomSizeAllocator final {
   }
 
   inline float getAllocatedAmount() const {
-    float range = m_end - m_memory;
-    float curr = m_unfragmentedPtr - m_memory;
-    return curr / range;
+    auto range = static_cast<double>(m_end - m_memory);
+    auto curr = static_cast<double>(m_unfragmentedPtr - m_memory);
+    return static_cast<float>(curr / range);
   }
 
  private:
