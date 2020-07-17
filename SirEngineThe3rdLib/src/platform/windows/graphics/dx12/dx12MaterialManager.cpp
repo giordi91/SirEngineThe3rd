@@ -337,19 +337,19 @@ void bindFlatDescriptorMaterial(const Dx12MaterialRuntime &materialRuntime,
                                 ID3D12GraphicsCommandList2 *commandList,
                                 SHADER_QUEUE_FLAGS queueFlag,
                                 const RSHandle rsHandle) {
-
   const auto queueFlagInt = static_cast<int>(queueFlag);
   const auto currentFlagId =
       static_cast<int>(log2(queueFlagInt & -queueFlagInt));
 
   assert(materialRuntime.m_tables[currentFlagId].isFlatRoot == true);
   // let us bind the descriptor table
-  //we look up the binding slot for the per object based on root signature
+  // we look up the binding slot for the per object based on root signature
   int bindSlot = dx12::ROOT_SIGNATURE_MANAGER->getBindingSlot(
       rsHandle, PSOManager::PER_OBJECT_BINDING_INDEX);
   assert(bindSlot != -1);
   commandList->SetGraphicsRootDescriptorTable(
-      bindSlot, materialRuntime.m_tables[currentFlagId].flatDescriptors[0].gpuHandle);
+      bindSlot,
+      materialRuntime.m_tables[currentFlagId].flatDescriptors[0].gpuHandle);
 
   commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -541,7 +541,8 @@ void Dx12MaterialManager::updateMaterial(
     }
     case (SHADER_TYPE_FLAGS::GRASS_FORWARD): {
       assert(0);
-      bindFlatDescriptorMaterial(materialRuntime, commandList, queueFlag,bind.rs);
+      bindFlatDescriptorMaterial(materialRuntime, commandList, queueFlag,
+                                 bind.rs);
       break;
     }
     case (SHADER_TYPE_FLAGS::FORWARD_PHONG): {
@@ -672,9 +673,8 @@ void allocateDescriptorTable(FlatDescriptorTable &table, const RSHandle root) {
       globals::PERSISTENT_ALLOCATOR->allocate(
           sizeof(DescriptorPair) * descriptorCount + 30));
   // now we have enough descriptors that we can use to bind everything
-  uint32_t baseDescriptorIdx =
-      dx12::GLOBAL_CBV_SRV_UAV_HEAP->reserveDescriptors(descriptors,
-                                                        descriptorCount);
+  dx12::GLOBAL_CBV_SRV_UAV_HEAP->reserveDescriptors(descriptors,
+                                                    descriptorCount);
   table.descriptorCount = descriptorCount;
   table.isFlatRoot = true;
   table.flatDescriptors = descriptors;
@@ -892,7 +892,6 @@ void Dx12MaterialManager::free(const MaterialHandle handle) {
   // TODO properly cleanup the resources
   assertMagicNumber(handle);
   uint32_t index = getIndexFromHandle(handle);
-  const auto &data = m_materialTextureHandles.getConstRef(index);
   m_materialTextureHandles.free(index);
 }
 }  // namespace SirEngine::dx12

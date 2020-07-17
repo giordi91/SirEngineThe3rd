@@ -468,7 +468,7 @@ void Dx12RenderingContext::updateSceneBoundingBox() {
   float maxY = maxX;
   float maxZ = maxY;
 
-  for (int i = 0; i < boxesCount; ++i) {
+  for (uint32_t i = 0; i < boxesCount; ++i) {
     const BoundingBox &box = boxes[i];
     // lets us compute bounding box
     minX = box.min.x < minX ? box.min.x : minX;
@@ -752,7 +752,7 @@ void Dx12RenderingContext::setBindingObject(const BufferBindingsHandle handle) {
   // processing extra possible bindings, this are bindings that don't go as
   // output but possibly as inputs like dynamic resources that need to be
   // transitioned from write to read
-  for (int i = 0; i < data.m_bindings.extraBindingsCount; ++i) {
+  for (uint32_t i = 0; i < data.m_bindings.extraBindingsCount; ++i) {
     const RTBinding &binding = data.m_bindings.extraBindings[i];
     barrierCounter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
         binding.handle, toDx12ResourceState(binding.neededResourceState),
@@ -809,7 +809,7 @@ void Dx12RenderingContext::setBindingObject(const BufferBindingsHandle handle) {
 }
 
 void Dx12RenderingContext::clearBindingObject(
-    const BufferBindingsHandle handle) {
+    const BufferBindingsHandle ) {
   annotateGraphicsEnd();
 }
 

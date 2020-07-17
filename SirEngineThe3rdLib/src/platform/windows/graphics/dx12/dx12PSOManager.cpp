@@ -102,7 +102,8 @@ PSOCompileResult Dx12PSOManager::loadCachedPSO(const char *path) const {
   memcpy(blob->GetBufferPointer(), ptr, blob->GetBufferSize());
   char *ptrOffset = ptr + blob->GetBufferSize();
   ptrOffset += mapper->psoDescSizeInByte;
-  char *psoPath = ptrOffset;
+  //TODO remove PSO name which is not used
+  //char *psoPath = ptrOffset;
   ptrOffset += mapper->psoNameSizeInByte;
   char *vsPath = mapper->vsShaderNameSize == 0 ? nullptr : ptrOffset;
   ptrOffset += mapper->vsShaderNameSize;
@@ -134,9 +135,6 @@ PSOCompileResult Dx12PSOManager::loadCachedPSO(const char *path) const {
         dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromName(
             getFileName(rootSignature).c_str());
     desc->pRootSignature = root;
-
-    // auto resultCompile = processSignatureFile(rootSignature);
-    // desc->pRootSignature = resultCompile.root;
 
     HRESULT psoResult =
         DEVICE->CreateGraphicsPipelineState(desc, IID_PPV_ARGS(&state));

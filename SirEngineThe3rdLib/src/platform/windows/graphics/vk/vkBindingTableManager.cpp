@@ -51,7 +51,7 @@ DescriptorHandle VkBindingTableManager::allocate(
   uint32_t poolIdx;
   DescriptorData &data = m_descriptorDataPool.getFreeMemoryData(poolIdx);
   data.isBuffered = isBuffered;
-  data.magicNumber = MAGIC_NUMBER_COUNTER++;
+  data.magicNumber = static_cast<uint16_t>(MAGIC_NUMBER_COUNTER++);
   data.sets = sets;
   data.layout = layout;
 

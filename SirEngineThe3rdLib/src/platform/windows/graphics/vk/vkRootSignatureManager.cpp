@@ -393,7 +393,7 @@ RSHandle VkPipelineLayoutManager::loadSignatureFile(const char *file) {
   bool useConfigEmpty = true;
   if (hasConfig) {
     auto config = jobj[ROOT_KEY_CONFIG];
-    const uint32_t configLen = config.size();
+    const auto configLen = static_cast<uint32_t>(config.size());
     if (configLen > 0) {
       useConfigEmpty = false;
       int allocSize = sizeof(VkDescriptorSetLayoutBinding) * configLen;
@@ -440,7 +440,7 @@ RSHandle VkPipelineLayoutManager::loadSignatureFile(const char *file) {
   bool usePassEmpty = true;
   if (passFound) {
     auto passConfig = jobj[ROOT_KEY_PASS_CONFIG];
-    const uint32_t passConfigLen = passConfig.size();
+    const auto passConfigLen = static_cast<uint32_t>(passConfig.size());
 
     if (passConfigLen > 0) {
       // if we have both a passConfig and is not empty we are going to process
@@ -452,7 +452,7 @@ RSHandle VkPipelineLayoutManager::loadSignatureFile(const char *file) {
           globals::FRAME_ALLOCATOR->allocate(passAllocSize));
       // zeroing out
       memset(passBindings, 0, passAllocSize);
-      for (int i = 0; i < passConfigLen; ++i) {
+      for (uint32_t i = 0; i < passConfigLen; ++i) {
         const auto &currentConfigJ = passConfig[i];
         processConfig(currentConfigJ, &passBindings[i]);
       }
@@ -534,23 +534,14 @@ VkPipelineLayout VkPipelineLayoutManager::createEngineLayout(
   VkPipelineLayoutCreateInfo layoutInfo = {
       VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
 
-  // we are going to use multiple layouts if static samplers are requested
-  // (which is always the case)
-  bool useStaticSamplers = true;
   // always allocating two layouts, and dynamically changing how many layouts
   // we use depending on user config passing in the "root signature"
-  VkDescriptorSetLayout emptyLayout =
-      getEmptyLayout("engineDescriptorSetLayout");
-
-  VkDescriptorSetLayout layouts[3] = {perFrameLayout, samplersLayout,
-                                      emptyLayout};
-  layoutInfo.setLayoutCount = 3;
+  VkDescriptorSetLayout layouts[2] = {perFrameLayout, samplersLayout};
+  layoutInfo.setLayoutCount = 2;
   layoutInfo.pSetLayouts = layouts;
 
   VkPipelineLayout layout;
   vkCreatePipelineLayout(vk::LOGICAL_DEVICE, &layoutInfo, nullptr, &layout);
-  // destroying the descriptor set layout immediately since wont be needed
-  vkDestroyDescriptorSetLayout(vk::LOGICAL_DEVICE, emptyLayout, nullptr);
   return layout;
 }
 }  // namespace SirEngine::vk

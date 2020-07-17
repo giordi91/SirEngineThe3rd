@@ -1,13 +1,12 @@
 #pragma once
+#include <cassert>
+
 #include "SirEngine/handle.h"
 #include "SirEngine/hashing.h"
 #include "SirEngine/memory/sparseMemoryPool.h"
 #include "SirEngine/memory/stringHashMap.h"
 #include "SirEngine/rootSignatureManager.h"
-
 #include "vk.h"
-
-#include <cassert>
 
 namespace SirEngine::vk {
 
@@ -19,27 +18,27 @@ extern VkDescriptorSet
     STATIC_SAMPLERS_DESCRIPTOR_SET;  // used in case you want to manually update
                                      // the samplers and not bound them as
                                      // static
+
 extern VkDescriptorSetLayout PER_FRAME_LAYOUT;
 extern DescriptorHandle PER_FRAME_DATA_HANDLE;
 extern DescriptorHandle STATIC_SAMPLERS_HANDLE;
 extern VkPipelineLayout ENGINE_PIPELINE_LAYOUT;
 
 class VkPipelineLayoutManager final : public RootSignatureManager {
-
-public:
+ public:
   VkPipelineLayoutManager()
       : m_rootRegister(RESERVE_SIZE), m_rsPool(RESERVE_SIZE){};
   VkPipelineLayoutManager(const VkPipelineLayoutManager &) = delete;
   VkPipelineLayoutManager &operator=(const VkPipelineLayoutManager &) = delete;
   ~VkPipelineLayoutManager() = default;
-  void initialize() override;;
+  void initialize() override;
+  ;
   void cleanup() override;
   void loadSignaturesInFolder(const char *directory) override;
   void loadSignatureBinaryFile(const char *file) override;
   RSHandle loadSignatureFile(const char *file);
 
   inline VkPipelineLayout getLayoutFromName(const char *name) const {
-
     const RSHandle handle = getHandleFromName(name);
     assertMagicNumber(handle);
     const uint32_t index = getIndexFromHandle(handle);
@@ -47,47 +46,36 @@ public:
     return data.layout;
   }
 
-  inline void bindGraphicsRS(const RSHandle handle,
-                             VkCommandBuffer commandList) const {
-
-    assertMagicNumber(handle);
-    const uint32_t index = getIndexFromHandle(handle);
-    const LayoutData &data = m_rsPool.getConstRef(index);
-    assert(0);
-    // commandList->SetGraphicsLayout(data.rs);
-  }
-
   RSHandle getHandleFromName(const char *name) const override;
 
-  VkDescriptorSetLayout
-  getDescriptorSetLayoutFromHandle(RSHandle handle) const {
+  [[nodiscard]] VkDescriptorSetLayout getDescriptorSetLayoutFromHandle(
+      RSHandle handle) const {
     assertMagicNumber(handle);
     const uint32_t index = getIndexFromHandle(handle);
     const LayoutData &data = m_rsPool.getConstRef(index);
     return data.descriptorSetLayout;
   }
-  inline VkPipelineLayout getLayoutFromHandle(const RSHandle handle) const {
 
+  inline VkPipelineLayout getLayoutFromHandle(const RSHandle handle) const {
     assertMagicNumber(handle);
     const uint32_t index = getIndexFromHandle(handle);
     const LayoutData &data = m_rsPool.getConstRef(index);
     return data.layout;
   }
 
-  inline uint16_t usesStaticSamplers(const RSHandle handle)const
-  {
+  inline uint16_t usesStaticSamplers(const RSHandle handle) const {
     assertMagicNumber(handle);
     const uint32_t index = getIndexFromHandle(handle);
     const LayoutData &data = m_rsPool.getConstRef(index);
     return data.usesStaticSamplers;
   }
 
-  static VkPipelineLayout createEngineLayout(const VkDescriptorSetLayout perFrameLayout,
-                                             const VkDescriptorSetLayout samplersLayout);
-	//{}
+  static VkPipelineLayout createEngineLayout(
+      const VkDescriptorSetLayout perFrameLayout,
+      const VkDescriptorSetLayout samplersLayout);
+  //{}
 
-	
-private:
+ private:
   inline uint32_t getIndexFromHandle(const RSHandle h) const {
     return h.handle & INDEX_MASK;
   }
@@ -102,13 +90,13 @@ private:
            "invalid magic handle for pipeline layout");
   }
 
-private:
+ private:
   struct LayoutData {
     VkPipelineLayout layout = nullptr;
     VkDescriptorSetLayout descriptorSetLayout = nullptr;
-    VkDescriptorSetLayout passSetLayout= nullptr;
-    uint32_t magicNumber:16;
-    uint32_t usesStaticSamplers :16;
+    VkDescriptorSetLayout passSetLayout = nullptr;
+    uint32_t magicNumber : 16;
+    uint32_t usesStaticSamplers : 16;
   };
 
   HashMap<const char *, RSHandle, hashString32> m_rootRegister;
@@ -120,4 +108,4 @@ private:
   static const uint32_t MAGIC_NUMBER_MASK = ~INDEX_MASK;
 };
 
-} // namespace SirEngine::vk
+}  // namespace SirEngine::vk
