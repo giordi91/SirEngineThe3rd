@@ -127,16 +127,16 @@ void updateForwardPhong(SHADER_QUEUE_FLAGS queueFlag,
   VkDescriptorSet descriptorSet =
       vk::DESCRIPTOR_MANAGER->getDescriptorSet(setHandle);
 
-  VkWriteDescriptorSet writeDescriptorSets[4] = {};
+  VkWriteDescriptorSet writeDescriptorSets[5] = {};
 
-  uint32_t flags = POSITIONS | NORMALS | UV;
-  VkDescriptorBufferInfo bufferInfo[3] = {};
+  uint32_t flags = POSITIONS | NORMALS | UV | TANGENTS;
+  VkDescriptorBufferInfo bufferInfo[4] = {};
   vk::MESH_MANAGER->bindMesh(materialRuntime.meshHandle, writeDescriptorSets,
                              descriptorSet, bufferInfo, flags, 0);
   // root, bufferInfo);
 
   vk::TEXTURE_MANAGER->bindTexture(materialRuntime.albedo,
-                                   &writeDescriptorSets[3], descriptorSet, 3);
+                                   &writeDescriptorSets[4], descriptorSet, 4);
 
   // Execute the writes to update descriptors for this set
   // Note that it's also possible to gather all writes and only run updates
@@ -144,7 +144,7 @@ void updateForwardPhong(SHADER_QUEUE_FLAGS queueFlag,
   // VkWriteDescriptorSet also contains the destination set to be updated
   // For simplicity we will update once per set instead
   // object one off update
-  vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, 4, &writeDescriptorSets[0], 0,
+  vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, 5, &writeDescriptorSets[0], 0,
                          nullptr);
 }
 void bindForwardPhong(uint32_t queueId,
