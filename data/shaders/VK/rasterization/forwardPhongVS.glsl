@@ -42,7 +42,7 @@ layout (set=3,binding=3) buffer tangents
 };
 
 
-layout(location =0) out vec3 outNormal;
+layout(location =0) smooth out vec3 outNormal;
 layout(location =1) out vec3 outTan;
 layout(location =2) out vec2 outUV;
 layout(location =3) out vec3 worldPos;
