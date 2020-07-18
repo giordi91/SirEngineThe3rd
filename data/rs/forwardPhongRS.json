@@ -96,6 +96,56 @@
         ]
       },
       "visibility": "PS"
+    },
+    {
+      "comment": "normal tex",
+      "type": "descriptorTable",
+      "data": {
+        "ranges": [
+          {
+            "type": "SRV",
+            "underlyingResource": "texture",
+            "numDescriptors": 1,
+            "baseRegister": 5
+          }
+        ]
+      },
+      "visibility": "PS"
+    },
+    {
+      "comment": "metallic tex",
+      "type": "descriptorTable",
+      "data": {
+        "ranges": [
+          {
+            "type": "SRV",
+            "underlyingResource": "texture",
+            "numDescriptors": 1,
+            "baseRegister": 6
+          }
+        ]
+      },
+      "visibility": "PS"
+    },
+    {
+      "comment": "roughness tex",
+      "type": "descriptorTable",
+      "data": {
+        "ranges": [
+          {
+            "type": "SRV",
+            "underlyingResource": "texture",
+            "numDescriptors": 1,
+            "baseRegister": 7
+          }
+        ]
+      },
+      "visibility": "PS"
     }
+
+
+
+
+
   ]
 }

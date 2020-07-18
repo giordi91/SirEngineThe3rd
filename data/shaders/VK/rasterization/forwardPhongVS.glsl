@@ -45,6 +45,7 @@ layout (set=3,binding=3) buffer tangents
 layout(location =0) out vec3 outNormal;
 layout(location =1) out vec3 outTan;
 layout(location =2) out vec2 outUV;
+layout(location =3) out vec3 worldPos;
 void VS()
 {
 	//this can't be used becuase seems like is making a copy and the 
@@ -63,5 +64,6 @@ void VS()
 	outUV= uv[gl_VertexIndex];
 
 	gl_Position = cameraBuffer.MVP * position;
+	worldPos = position.xyz;
 }
 
