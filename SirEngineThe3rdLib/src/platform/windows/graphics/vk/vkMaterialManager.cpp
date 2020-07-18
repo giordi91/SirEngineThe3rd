@@ -127,7 +127,7 @@ void updateForwardPhong(SHADER_QUEUE_FLAGS queueFlag,
   VkDescriptorSet descriptorSet =
       vk::DESCRIPTOR_MANAGER->getDescriptorSet(setHandle);
 
-  VkWriteDescriptorSet writeDescriptorSets[5] = {};
+  VkWriteDescriptorSet writeDescriptorSets[8] = {};
 
   uint32_t flags = POSITIONS | NORMALS | UV | TANGENTS;
   VkDescriptorBufferInfo bufferInfo[4] = {};
@@ -137,6 +137,12 @@ void updateForwardPhong(SHADER_QUEUE_FLAGS queueFlag,
 
   vk::TEXTURE_MANAGER->bindTexture(materialRuntime.albedo,
                                    &writeDescriptorSets[4], descriptorSet, 4);
+  vk::TEXTURE_MANAGER->bindTexture(materialRuntime.normal,
+                                   &writeDescriptorSets[5], descriptorSet, 5);
+  vk::TEXTURE_MANAGER->bindTexture(materialRuntime.metallic,
+                                   &writeDescriptorSets[6], descriptorSet, 6);
+  vk::TEXTURE_MANAGER->bindTexture(materialRuntime.roughness,
+                                   &writeDescriptorSets[7], descriptorSet, 7);
 
   // Execute the writes to update descriptors for this set
   // Note that it's also possible to gather all writes and only run updates
@@ -144,241 +150,8 @@ void updateForwardPhong(SHADER_QUEUE_FLAGS queueFlag,
   // VkWriteDescriptorSet also contains the destination set to be updated
   // For simplicity we will update once per set instead
   // object one off update
-  vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, 5, &writeDescriptorSets[0], 0,
+  vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, 8, &writeDescriptorSets[0], 0,
                          nullptr);
-}
-void bindForwardPhong(uint32_t queueId,
-                      const VkMaterialRuntime &materialRuntime,
-                      VkCommandBuffer commandList) {
-  assert(0);
-  // DescriptorHandle setHandle = materialRuntime.descriptorHandles[queueId];
-  // VkDescriptorSet descriptorSet =
-  //    vk::DESCRIPTOR_MANAGER->getDescriptorSet(setHandle);
-
-  // VkDescriptorSet sets[] = {
-  //    vk::PER_FRAME_DESCRIPTOR_SET[globals::CURRENT_FRAME], descriptorSet,
-  //    vk::STATIC_SAMPLER_DESCRIPTOR_SET};
-  //// multiple descriptor sets
-  // vkCmdBindDescriptorSets(commandList, VK_PIPELINE_BIND_POINT_GRAPHICS,
-  //                        vk::PIPELINE_LAYOUT, 0, 3, sets, 0, nullptr);
-}
-void bindForwardPBR(const VkMaterialRuntime &materialRuntime,
-                    VkCommandBuffer commandList) {
-  /*
-const ConstantBufferHandle lightCB = dx12::RENDERING_CONTEXT->getLightCB();
-const auto address =
-    dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(lightCB);
-
-commandList->SetGraphicsRootConstantBufferView(1, address);
-commandList->SetGraphicsRootConstantBufferView(
-    2, materialRuntime.cbVirtualAddress);
-commandList->SetGraphicsRootDescriptorTable(3, materialRuntime.albedo);
-commandList->SetGraphicsRootDescriptorTable(4, materialRuntime.normal);
-commandList->SetGraphicsRootDescriptorTable(5, materialRuntime.metallic);
-commandList->SetGraphicsRootDescriptorTable(6, materialRuntime.roughness);
-
-TextureHandle skyHandle =
-    dx12::RENDERING_CONTEXT->getEnviromentMapIrradianceHandle();
-commandList->SetGraphicsRootDescriptorTable(
-    7, dx12::TEXTURE_MANAGER->getSRVDx12(skyHandle).gpuHandle);
-
-TextureHandle skyRadianceHandle =
-    dx12::RENDERING_CONTEXT->getEnviromentMapRadianceHandle();
-commandList->SetGraphicsRootDescriptorTable(
-    8, dx12::TEXTURE_MANAGER->getSRVDx12(skyRadianceHandle).gpuHandle);
-
-TextureHandle brdfHandle = dx12::RENDERING_CONTEXT->getBrdfHandle();
-commandList->SetGraphicsRootDescriptorTable(
-    9, dx12::TEXTURE_MANAGER->getSRVDx12(brdfHandle).gpuHandle);
-    */
-}
-void bindForwardPhongAlphaCutout(const VkMaterialRuntime &materialRuntime,
-                                 VkCommandBuffer commandList) {
-  /*
-const ConstantBufferHandle lightCB = dx12::RENDERING_CONTEXT->getLightCB();
-const auto address =
-    dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(lightCB);
-
-commandList->SetGraphicsRootConstantBufferView(1, address);
-commandList->SetGraphicsRootConstantBufferView(
-    2, materialRuntime.cbVirtualAddress);
-commandList->SetGraphicsRootDescriptorTable(3, materialRuntime.albedo);
-commandList->SetGraphicsRootDescriptorTable(4, materialRuntime.normal);
-commandList->SetGraphicsRootDescriptorTable(5, materialRuntime.separateAlpha);
-// HARDCODED stencil value might have to think of a nice way to handle this
-
-commandList->OMSetStencilRef(static_cast<uint32_t>(STENCIL_REF::CLEAR));
-*/
-}
-
-void bindParallaxPBR(const VkMaterialRuntime &materialRuntime,
-                     VkCommandBuffer commandList) {
-  /*
-const ConstantBufferHandle lightCB = dx12::RENDERING_CONTEXT->getLightCB();
-const auto address =
-    dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(lightCB);
-
-dx12::RENDERING_CONTEXT->bindCameraBuffer(0);
-
-commandList->SetGraphicsRootConstantBufferView(1, address);
-commandList->SetGraphicsRootConstantBufferView(
-    2, materialRuntime.cbVirtualAddress);
-commandList->SetGraphicsRootDescriptorTable(3, materialRuntime.albedo);
-commandList->SetGraphicsRootDescriptorTable(4, materialRuntime.normal);
-commandList->SetGraphicsRootDescriptorTable(5, materialRuntime.metallic);
-commandList->SetGraphicsRootDescriptorTable(6, materialRuntime.roughness);
-
-TextureHandle skyHandle =
-    dx12::RENDERING_CONTEXT->getEnviromentMapIrradianceHandle();
-commandList->SetGraphicsRootDescriptorTable(
-    7, dx12::TEXTURE_MANAGER->getSRVDx12(skyHandle).gpuHandle);
-
-TextureHandle skyRadianceHandle =
-    dx12::RENDERING_CONTEXT->getEnviromentMapRadianceHandle();
-commandList->SetGraphicsRootDescriptorTable(
-    8, dx12::TEXTURE_MANAGER->getSRVDx12(skyRadianceHandle).gpuHandle);
-
-TextureHandle brdfHandle = dx12::RENDERING_CONTEXT->getBrdfHandle();
-commandList->SetGraphicsRootDescriptorTable(
-    9, dx12::TEXTURE_MANAGER->getSRVDx12(brdfHandle).gpuHandle);
-commandList->SetGraphicsRootDescriptorTable(10, materialRuntime.heightMap);
-
-commandList->SetGraphicsRootDescriptorTable(
-    11, dx12::TEXTURE_MANAGER
-            ->getSRVDx12(globals::DEBUG_FRAME_DATA->directionalShadow)
-            .gpuHandle);
-dx12::MESH_MANAGER->bindMesh(materialRuntime.meshHandle, commandList,
-                             MeshAttributeFlags::ALL, 12);
-                             */
-}
-
-void bindForwardPhongAlphaCutoutSkin(const VkMaterialRuntime &materialRuntime,
-                                     VkCommandBuffer commandList) {
-  /*
-dx12::RENDERING_CONTEXT->bindCameraBuffer(0);
-const ConstantBufferHandle lightCB = dx12::RENDERING_CONTEXT->getLightCB();
-const auto address =
-    dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(lightCB);
-
-commandList->SetGraphicsRootConstantBufferView(1, address);
-commandList->SetGraphicsRootConstantBufferView(
-    2, materialRuntime.cbVirtualAddress);
-commandList->SetGraphicsRootDescriptorTable(3, materialRuntime.albedo);
-commandList->SetGraphicsRootDescriptorTable(4, materialRuntime.normal);
-commandList->SetGraphicsRootDescriptorTable(5, materialRuntime.separateAlpha);
-
-// need to bind the skinning data
-const SkinHandle skHandle = materialRuntime.skinHandle;
-const SkinData &data = globals::SKIN_MANAGER->getSkinData(skHandle);
-// now we have both static buffers, influences and weights
-//
-dx12::BUFFER_MANAGER->bindBufferAsSRVDescriptorTable(data.influencesBuffer,6,commandList);
-
-// frame, binding material should not worry about upload
-dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.influencesBuffer, 6,
-                                              commandList);
-dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.weightsBuffer, 7,
-                                              commandList);
-// binding skinning data
-dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.matricesBuffer, 8,
-                                              commandList);
-dx12::MESH_MANAGER->bindMesh(materialRuntime.meshHandle, commandList,
-                             MeshAttributeFlags::ALL, 9);
-
-// HARDCODED stencil value might have to think of a nice way to handle this
-commandList->OMSetStencilRef(static_cast<uint32_t>(STENCIL_REF::CLEAR));
-*/
-}
-void bindHair(const VkMaterialRuntime &materialRuntime,
-              VkCommandBuffer commandList) {
-  /*
-dx12::RENDERING_CONTEXT->bindCameraBuffer(0);
-
-const ConstantBufferHandle lightCB = dx12::RENDERING_CONTEXT->getLightCB();
-const auto address =
-    dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(lightCB);
-
-commandList->SetGraphicsRootConstantBufferView(1, address);
-commandList->SetGraphicsRootConstantBufferView(
-    2, materialRuntime.cbVirtualAddress);
-commandList->SetGraphicsRootDescriptorTable(3, materialRuntime.albedo);
-commandList->SetGraphicsRootDescriptorTable(4, materialRuntime.normal);
-commandList->SetGraphicsRootDescriptorTable(5, materialRuntime.separateAlpha);
-commandList->SetGraphicsRootDescriptorTable(6, materialRuntime.ao);
-// HARDCODED stencil value might have to think of a nice way to handle this
-commandList->OMSetStencilRef(static_cast<uint32_t>(STENCIL_REF::CLEAR));
-*/
-}
-void bindHairSkin(const VkMaterialRuntime &materialRuntime,
-                  VkCommandBuffer commandList) {
-  /*
-const ConstantBufferHandle lightCB = dx12::RENDERING_CONTEXT->getLightCB();
-const auto address =
-    dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(lightCB);
-
-commandList->SetGraphicsRootConstantBufferView(1, address);
-commandList->SetGraphicsRootConstantBufferView(
-    2, materialRuntime.cbVirtualAddress);
-commandList->SetGraphicsRootDescriptorTable(3, materialRuntime.albedo);
-commandList->SetGraphicsRootDescriptorTable(4, materialRuntime.normal);
-commandList->SetGraphicsRootDescriptorTable(5, materialRuntime.separateAlpha);
-commandList->SetGraphicsRootDescriptorTable(6, materialRuntime.ao);
-
-// need to bind the skinning data
-const SkinHandle skHandle = materialRuntime.skinHandle;
-const SkinData &data = globals::SKIN_MANAGER->getSkinData(skHandle);
-// now we have both static buffers, influences and weights
-//
-dx12::BUFFER_MANAGER->bindBufferAsSRVDescriptorTable(data.influencesBuffer,6,commandList);
-
-// frame, binding material should not worry about upload
-dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.influencesBuffer, 7,
-                                              commandList);
-dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.weightsBuffer, 8,
-                                              commandList);
-
-// binding skinning matrices
-dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.matricesBuffer, 9,
-                                              commandList);
-
-dx12::MESH_MANAGER->bindMesh(materialRuntime.meshHandle, commandList,
-                             MeshAttributeFlags::ALL, 10);
-
-// HARDCODED stencil value might have to think of a nice way to handle this
-commandList->OMSetStencilRef(static_cast<uint32_t>(STENCIL_REF::CLEAR));
-*/
-}
-
-void bindShadowSkin(const VkMaterialRuntime &materialRuntime,
-                    VkCommandBuffer commandList) {
-  /*
-const ConstantBufferHandle lightCB = dx12::RENDERING_CONTEXT->getLightCB();
-const auto address =
-    dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(lightCB);
-
-commandList->SetGraphicsRootConstantBufferView(0, address);
-// need to bind the skinning data
-const SkinHandle skHandle = materialRuntime.skinHandle;
-const SkinData &data = globals::SKIN_MANAGER->getSkinData(skHandle);
-// now we have both static buffers, influences and weights
-//
-dx12::BUFFER_MANAGER->bindBufferAsSRVDescriptorTable(data.influencesBuffer,6,commandList);
-
-// frame, binding material should not worry about upload
-dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.influencesBuffer, 1,
-                                              commandList);
-dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.weightsBuffer, 2,
-                                              commandList);
-// binding skinning data
-dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(data.matricesBuffer, 3,
-                                              commandList);
-
-dx12::MESH_MANAGER->bindMesh(materialRuntime.meshHandle, commandList,
-                             MeshAttributeFlags::POSITIONS, 4);
-// TODO HARDCODED stencil value might have to think of a nice way to handle
-// this
-commandList->OMSetStencilRef(static_cast<uint32_t>(STENCIL_REF::CLEAR));
-*/
 }
 
 void VkMaterialManager::bindMaterial(SHADER_QUEUE_FLAGS queueFlag,
@@ -491,17 +264,17 @@ void VkMaterialManager::updateMaterial(SHADER_QUEUE_FLAGS queueFlag,
     }
     case (SHADER_TYPE_FLAGS::FORWARD_PBR): {
       assert(0);
-      bindForwardPBR(materialRuntime, commandList);
+      //bindForwardPBR(materialRuntime, commandList);
       break;
     }
     case (SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT): {
       assert(0);
-      bindForwardPhongAlphaCutout(materialRuntime, commandList);
+      //bindForwardPhongAlphaCutout(materialRuntime, commandList);
       break;
     }
     case (SHADER_TYPE_FLAGS::HAIR): {
       assert(0);
-      bindHair(materialRuntime, commandList);
+      //bindHair(materialRuntime, commandList);
       break;
     }
     case (SHADER_TYPE_FLAGS::SKINCLUSTER): {
@@ -516,22 +289,22 @@ void VkMaterialManager::updateMaterial(SHADER_QUEUE_FLAGS queueFlag,
     }
     case (SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT_SKIN): {
       assert(0);
-      bindForwardPhongAlphaCutoutSkin(materialRuntime, commandList);
+      //bindForwardPhongAlphaCutoutSkin(materialRuntime, commandList);
       break;
     }
     case (SHADER_TYPE_FLAGS::HAIRSKIN): {
       assert(0);
-      bindHairSkin(materialRuntime, commandList);
+      //bindHairSkin(materialRuntime, commandList);
       break;
     }
     case (SHADER_TYPE_FLAGS::FORWARD_PARALLAX): {
       assert(0);
-      bindParallaxPBR(materialRuntime, commandList);
+      //bindParallaxPBR(materialRuntime, commandList);
       break;
     }
     case (SHADER_TYPE_FLAGS::SHADOW_SKIN_CLUSTER): {
       assert(0);
-      bindShadowSkin(materialRuntime, commandList);
+      //bindShadowSkin(materialRuntime, commandList);
       break;
     }
     case (SHADER_TYPE_FLAGS::FORWARD_PHONG): {
