@@ -3,15 +3,19 @@
     {
       "mesh": "../data/processed/meshes/knightB/jacket.model",
       "material": "../data/materials/knightBJacketForward.json"
-    }  
-  ]
-  ,"t": [
+    },
+    {
+      "mesh": "../data/processed/meshes/pSphere1.model",
+      "material": "../data/materials/rustMaterial.json"
+    }
+  ],
+  "t": [
 
     {
       "mesh": "../data/processed/meshes/knightB/pants.model",
       "material": "../data/materials/knightBPantsForward.json"
     },
-  {
+    {
       "mesh": "../data/processed/meshes/knightB/pants.model",
       "material": "../data/materials/knightBPants.json"
     },

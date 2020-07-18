@@ -8,6 +8,7 @@
   "normal" :  "../data/processed/textures/normal.texture",
   "roughness" :  "../data/processed/textures/roughness.texture",
   "metallic" :  "../data/processed/textures/metallic.texture",
-  "queue" :  ["deferred"],
-  "type" : ["pbr"]
+  "queue" :  ["forward"],
+  "type" : ["forwardPhong"],
+  "isStatic": true 
 }

@@ -26,7 +26,7 @@ layout (set=1,binding = 0) uniform sampler[7] colorSampler;
 
 layout(location=0) out vec4 outputColor;
 
-layout (location = 0) in vec3 normals;
+layout (location = 0) in vec3 inNormal;
 layout (location = 1) in vec3 tans;
 layout (location = 2) in vec2 inUV;
 layout (location = 3) in vec3 worldPos;
@@ -82,12 +82,12 @@ void PS()
    vec2 uv = vec2(inUV.x,1.0f - inUV.y);
    //light direction, going from the frament out, so in this case 
    //the negative directional light data
-   vec3 L = -lightData.lightDir.xyz;
+   vec3 L = normalize(-lightData.lightDir.xyz);
    //the view direction, from the frament to the camera
    vec3 V = normalize(cameraBuffer.position.xyz - worldPos);
    //half way vector
    vec3 H = normalize(L + V );
-   vec3 normal = normals;
+   vec3 normal = normalize(inNormal);
 
    //we don't compute light attenuation for a directional light
    //float dist = length(lightData.lightPosition.xyz - worldPos);
@@ -100,7 +100,7 @@ void PS()
 
    vec3 F0 = vec3(0.04); 
    F0      = mix(F0, albedo, metallic);
-   vec3 fresnel  = fresnelSchlick(max(dot(H, V), 0.0), F0);
+   vec3 fresnel  = fresnelSchlick(max(dot(V, normal), 0.0), F0);
 
    float NDF = DistributionGGX(normal, H, roughness);       
    float G   = GeometrySmith(normal, V, L, roughness); 
