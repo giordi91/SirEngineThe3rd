@@ -55,11 +55,18 @@ void ForwardPlus::setupLight() {
   m_lightCB = globals::CONSTANT_BUFFER_MANAGER->allocate(
       sizeof(DirectionalLightData), 0, &m_light);
 
-  graphics::BindingDescription descriptions[1] = {
+  graphics::BindingDescription descriptions[4] = {
       {0, GRAPHIC_RESOURCE_TYPE::CONSTANT_BUFFER,
-       GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT}};
+       GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT},
+      {1, GRAPHIC_RESOURCE_TYPE::TEXTURE,
+       GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT},
+      {2, GRAPHIC_RESOURCE_TYPE::TEXTURE,
+       GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT},
+      {3, GRAPHIC_RESOURCE_TYPE::TEXTURE,
+       GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT}
+  };
   m_passBindings = globals::BINDING_TABLE_MANAGER->allocateBindingTable(
-      descriptions, 1,
+      descriptions, 4,
       graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED,
       "forwardPlusPassDataBindingTable");
 }
@@ -91,6 +98,17 @@ void ForwardPlus::compute() {
 
   globals::BINDING_TABLE_MANAGER->bindConstantBuffer(m_passBindings, m_lightCB,
                                                      0, 0);
+
+  TextureHandle irradianceHandle = globals::RENDERING_CONTEXT->getEnviromentMapIrradianceHandle();
+  globals::BINDING_TABLE_MANAGER->bindTexture(m_passBindings, irradianceHandle, 1,
+                                                     1, true);
+  TextureHandle radianceHandle = globals::RENDERING_CONTEXT->getEnviromentMapRadianceHandle();
+  globals::BINDING_TABLE_MANAGER->bindTexture(m_passBindings, radianceHandle, 2,
+                                                     2, true);
+  TextureHandle brdfHandle = globals::RENDERING_CONTEXT->getBrdfHandle();
+  globals::BINDING_TABLE_MANAGER->bindTexture(m_passBindings, brdfHandle, 1,
+                                                     3, false);
+
   globals::BINDING_TABLE_MANAGER->bindTable(PSOManager::PER_PASS_BINDING_INDEX,
                                             m_passBindings, m_rs);
 

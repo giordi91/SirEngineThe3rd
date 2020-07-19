@@ -285,7 +285,7 @@ VkDescriptorType getDescriptorType(const nlohmann::json &config) {
   const std::string resource =
       getValueIfInJson(config, ROOT_KEY_RESOURCE, ROOT_DEFAULT_STRING);
   if (type == "SRV") {
-    assert(!resource.empty());
+    assert(!resource.empty() && "a resource needs to definy underlyingResource type in the root signature, please add that to the root signature");
   }
 
   const std::string actualType = type + "-" + resource;
