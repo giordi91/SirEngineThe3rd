@@ -15,9 +15,9 @@ layout (set=3,binding = 5) uniform texture2D tangentTex;
 layout (set=3,binding = 6) uniform texture2D metallicTex;
 layout (set=3,binding = 7) uniform texture2D roughnessTex;
 
-layout (set=3,binding = 8) uniform textureCube skyboxIrradianceTexture;
-layout (set=3,binding = 9) uniform textureCube skyboxRadianceTexture;
-layout (set=3,binding = 9) uniform textureCube brdfTexture;
+layout (set=2,binding = 1) uniform textureCube skyboxIrradianceTexture;
+layout (set=2,binding = 2) uniform textureCube skyboxRadianceTexture;
+layout (set=2,binding = 3) uniform texture2D brdfTexture;
 
 //pass data, lights
 layout (set=2,binding=0) uniform LightData 
@@ -73,7 +73,9 @@ void PS()
    //cosine factor dot(V,N) between the view and the normal. 
    //more correctly it tells how much of the ligth gets reflected and how much gets refracted
    //give the looking direction.
-   vec3 fresnel  = fresnelSchlick(max(dot(V, normal), 0.0), F0);
+   vec3 fresnel  = fresnelSchlick(max(dot(V, H), 0.0), F0, roughness);
+   //outputColor = vec4(fresnel,1.0f);
+   //return;
 
    
    //here we compute the normal distribution, meaning how many (statistically speaking) 
@@ -90,7 +92,7 @@ void PS()
 
    //as we mentioned above the fresnel gives us the amount of light that get reflected,
    //as such assuming total light is 1 we can compute amount of light that gets refracted
-   vec3 kS = fresnel;
+   vec3 kS = fresnelSchlick(max(dot(V, normal), 0.0), F0, roughness);
    vec3 kD = vec3(1.0) - fresnel;
   
    //since metallic surfaces do not deffuse light but fully absorbe it, we are going 
@@ -104,8 +106,26 @@ void PS()
    vec3 lambert = albedo / PI;
    vec3 Lo = (kD *lambert  + specular) * radiance * NdotL;
    
-   //adding the ambient color
-   vec3 ambient = vec3(0.03) * albedo;
+   //adding the ambient color, we sample the irradiance map using the normal texture, we weight the amount based on
+   //the kd
+   vec3 irradiance = texture(samplerCube (skyboxIrradianceTexture, colorSampler[2]), normal).xyz;
+   vec3 diffuse = irradiance*albedo;
+
+
+   //doing specular reflection
+   vec3 reflection = reflect (-V,normal);
+   const float MAX_REFLECTION_LOD =8.0;
+   vec3 prefilteredColor = textureLod(samplerCube (skyboxRadianceTexture, colorSampler[2]),reflection,
+	roughness*MAX_REFLECTION_LOD).xyz;
+
+	vec2 brdf = texture (sampler2D (brdfTexture, colorSampler[2]), vec2(max(dot(normal, V), 0.0), roughness)).xy;
+	vec3 prefilteredAmount = (fresnel * brdf.x + brdf.y);
+    vec3 specularBrdf = prefilteredColor * (kS* brdf.x + brdf.y);
+
+    vec3 ambient = (kD * diffuse + specularBrdf);
+
+
+
    vec3 color   = ambient + Lo;  
 
    outputColor = vec4(color,1.0f);
