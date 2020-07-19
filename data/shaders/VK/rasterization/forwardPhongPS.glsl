@@ -60,25 +60,51 @@ void PS()
    float metallic = texture (sampler2D (metallicTex, colorSampler[2]), uv).x;
    float roughness = texture (sampler2D (roughnessTex, colorSampler[2]), uv).x;
 
+   //the initial F0 is the basic reflectivity when looking straight at the material
+   //zero incidence of the view vector. The base  reflectivity is compute from the IOR (index of refraction)
+   //now the problem is that this computation only really works for not metallic materials (dialectrics)
+   //so to get around that we use the incidence zero reflectivity and approximate such that will work for both
+   //dialectrics and conductors (metallic)
    vec3 F0 = vec3(0.04); 
+   //to note, metallics do not have a common F0, but is tinted, so we use the metallic
+   //property to tin the F0 based on the albedo color.
    F0      = mix(F0, albedo, metallic);
+   //fresnel gives us the reflectance ast grazing angle, that is why we  pass in the 
+   //cosine factor dot(V,N) between the view and the normal. 
+   //more correctly it tells how much of the ligth gets reflected and how much gets refracted
+   //give the looking direction.
    vec3 fresnel  = fresnelSchlick(max(dot(V, normal), 0.0), F0);
 
+   
+   //here we compute the normal distribution, meaning how many (statistically speaking) 
+   //microfactes are aligned to the half vector based on the roughness. Smoother material
+   //will give the bright specular, rough material will have more diffuse appearance
    float NDF = DistributionGGX(normal, H, roughness);       
+   //here we approximate how many of the microfacets self shadow themselves
    float G   = GeometrySmith(normal, V, L, roughness); 
 
+   //computing the cook torrance part of the brdf now that we have all the components
    vec3 numerator    = NDF * G * fresnel;
    float denominator = 4.0 * max(dot(normal, V), 0.0) * max(dot(normal, L), 0.0);
    vec3 specular     = numerator / max(denominator, 0.001);  
 
+   //as we mentioned above the fresnel gives us the amount of light that get reflected,
+   //as such assuming total light is 1 we can compute amount of light that gets refracted
    vec3 kS = fresnel;
    vec3 kD = vec3(1.0) - fresnel;
   
+   //since metallic surfaces do not deffuse light but fully absorbe it, we are going 
+   //to nullify the kd based on how metallic the surfaces is
    kD *= 1.0 - metallic;	
 
+   //scaling the value with the cosine rule
    float NdotL = max(dot(normal, L), 0.0);        
-   vec3 Lo = (kD * albedo / PI + specular) * radiance * NdotL;
+
+   //computing the final brdf value
+   vec3 lambert = albedo / PI;
+   vec3 Lo = (kD *lambert  + specular) * radiance * NdotL;
    
+   //adding the ambient color
    vec3 ambient = vec3(0.03) * albedo;
    vec3 color   = ambient + Lo;  
 
