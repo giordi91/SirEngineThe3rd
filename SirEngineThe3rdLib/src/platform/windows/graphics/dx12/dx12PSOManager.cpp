@@ -102,8 +102,8 @@ PSOCompileResult Dx12PSOManager::loadCachedPSO(const char *path) const {
   memcpy(blob->GetBufferPointer(), ptr, blob->GetBufferSize());
   char *ptrOffset = ptr + blob->GetBufferSize();
   ptrOffset += mapper->psoDescSizeInByte;
-  //TODO remove PSO name which is not used
-  //char *psoPath = ptrOffset;
+  // TODO remove PSO name which is not used
+  // char *psoPath = ptrOffset;
   ptrOffset += mapper->psoNameSizeInByte;
   char *vsPath = mapper->vsShaderNameSize == 0 ? nullptr : ptrOffset;
   ptrOffset += mapper->vsShaderNameSize;
@@ -230,7 +230,7 @@ void Dx12PSOManager::insertInPSOCache(const PSOCompileResult &result) {
       data.pso = result.pso;
       data.topology = TOPOLOGY_TYPE::UNDEFINED;
       data.type = PSOType::COMPUTE;
-      data.root= result.computeDesc->pRootSignature;
+      data.root = result.computeDesc->pRootSignature;
       const PSOHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
       data.magicNumber = MAGIC_NUMBER_COUNTER;
       m_psoRegisterHandle.insert(result.PSOName, handle);
@@ -300,8 +300,16 @@ void Dx12PSOManager::recompilePSOFromShader(const char *shaderName,
         std::string ps =
             getValueIfInJson(jobj, PSO_KEY_PS_SHADER, DEFAULT_STRING);
         assert(!ps.empty());
-        shadersToRecompile.push_back(vs);
-        shadersToRecompile.push_back(ps);
+        auto foundVS =
+            std::find(shadersToRecompile.begin(), shadersToRecompile.end(), vs);
+        if (foundVS == shadersToRecompile.end()) {
+          shadersToRecompile.push_back(vs);
+        }
+        auto foundPS =
+            std::find(shadersToRecompile.begin(), shadersToRecompile.end(), ps);
+        if (foundPS == shadersToRecompile.end()) {
+          shadersToRecompile.push_back(ps);
+        }
         break;
       }
       default: {
@@ -327,14 +335,19 @@ void Dx12PSOManager::recompilePSOFromShader(const char *shaderName,
 
   const char *shaderPath = frameConcatenation(
       globals::ENGINE_CONFIG->m_dataSourcePath, "/shaders/DX12");
+  if (offsetPath != nullptr) {
+    shaderPath = frameConcatenation(offsetPath, shaderPath);
+  }
   for (int i = 0; i < psoCount; ++i) {
     const char *pso = (*psos)[i];
     const PSOCompileResult result = compileRawPSO(pso, shaderPath);
     // need to update the cache
-    updatePSOCache(result.PSOName, result.pso);
-
-    // log
-    compileLog += "Compiled PSO: ";
+    if (result.pso != nullptr) {
+      updatePSOCache(result.PSOName, result.pso);
+      compileLog += "Compiled PSO: ";
+    } else {
+      compileLog += "failed to  recompile PSO: ";
+    }
     compileLog += pso;
     compileLog += "\n";
   }

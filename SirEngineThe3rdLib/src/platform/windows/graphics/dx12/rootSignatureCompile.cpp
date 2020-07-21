@@ -317,11 +317,12 @@ bool shouldBindSamplers(const nlohmann::json &jobj) {
 }
 
 ID3D12RootSignature *enginePerFrameEmptyRS(const char *name) {
-  int extraRegister = 1;
+  //int extraRegister = 0;
 
   // we have one flat descriptor table to bind
+  //one register per the per frame data one register for the pass data
   uint32_t registerCount = 1;
-  std::vector<CD3DX12_ROOT_PARAMETER> rootParams(registerCount + extraRegister);
+  std::vector<CD3DX12_ROOT_PARAMETER> rootParams(registerCount);
   CD3DX12_DESCRIPTOR_RANGE ranges{};
   // create constant buffer for camera values
   int startRegister = 0;

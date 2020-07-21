@@ -48,6 +48,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT umessage, WPARAM wparam,
       // basic shortcut handling
       // 114 is r, we want to reload/recompile shader
       auto code = static_cast<uint32_t>(wparam);
+      /*
       if (code == 114) {
         RequestShaderCompileEvent e;
         ASSERT_CALLBACK_AND_DISPATCH(e);
@@ -58,6 +59,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT umessage, WPARAM wparam,
         ASSERT_CALLBACK_AND_DISPATCH(e);
         return 0;
       }
+      */
 
       globals::INPUT->keyDown(code);
       KeyTypeEvent e{static_cast<uint32_t>(wparam)};
