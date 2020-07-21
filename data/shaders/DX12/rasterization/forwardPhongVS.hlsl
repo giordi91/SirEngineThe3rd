@@ -5,7 +5,7 @@ ConstantBuffer<CameraBuffer> g_cameraBuffer : register(b0,space0);
 StructuredBuffer<float4> g_positions : register(t0,space3);
 StructuredBuffer<float4> g_normals : register(t1,space3);
 StructuredBuffer<float2> g_uvs : register(t2,space3);
-//StructuredBuffer<float4> g_tangents : register(t11,space3);
+StructuredBuffer<float4> g_tangents : register(t3,space3);
 
 
 FullMeshVertexOut VS( uint vid : SV_VertexID)
@@ -20,7 +20,7 @@ FullMeshVertexOut VS( uint vid : SV_VertexID)
     vout.Normal= g_normals[vid].xyz;
 	vout.uv = g_uvs[vid];
 	//vout.tangent = g_tangents[vid].xyz;
-    vout.tangent = float3(0.0f,0.0f,0.0f);
+    vout.tangent = g_tangents[vid].xyz;
     vout.worldPos = p;
     return vout;
 }

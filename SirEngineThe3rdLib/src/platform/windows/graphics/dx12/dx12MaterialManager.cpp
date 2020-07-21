@@ -451,14 +451,20 @@ void updateForwardPhong(const MaterialData &data,
   assert(data.m_materialRuntime.m_tables[currentFlagId].isFlatRoot == true);
 
   // bind mesh  no tangents for now
-  const uint32_t meshFlags = POSITIONS | NORMALS | UV;
+  const uint32_t meshFlags = POSITIONS | NORMALS | UV |TANGENTS;
   dx12::MESH_MANAGER->bindFlatMesh(data.m_materialRuntime.meshHandle,
                                    table.flatDescriptors, meshFlags, 0);
 
   // now bind the texture
   // HARDCODED albedo
   dx12::TEXTURE_MANAGER->createSRV(data.handles.albedo,
-                                   table.flatDescriptors[3], false);
+                                   table.flatDescriptors[4], false);
+  dx12::TEXTURE_MANAGER->createSRV(data.handles.normal,
+                                   table.flatDescriptors[5], false);
+  dx12::TEXTURE_MANAGER->createSRV(data.handles.metallic,
+                                   table.flatDescriptors[6], false);
+  dx12::TEXTURE_MANAGER->createSRV(data.handles.roughness,
+                                   table.flatDescriptors[7], false);
 }
 
 void Dx12MaterialManager::updateMaterial(
