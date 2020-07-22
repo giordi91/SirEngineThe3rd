@@ -5,36 +5,32 @@
       "material": "../data/materials/knightBJacketForward.json"
     },
     {
-      "mesh": "../data/processed/meshes/pSphere1.model",
-      "material": "../data/materials/rustMaterial.json"
-    }
-  ],
-  "t": [
-
-    {
       "mesh": "../data/processed/meshes/knightB/pants.model",
       "material": "../data/materials/knightBPantsForward.json"
     },
     {
-      "mesh": "../data/processed/meshes/knightB/pants.model",
-      "material": "../data/materials/knightBPants.json"
+      "mesh": "../data/processed/meshes/knightB/plates.model",
+      "material": "../data/materials/knightBPlatesForward.json"
     },
     {
-      "mesh": "../data/processed/meshes/knightB/plates.model",
-      "material": "../data/materials/knightBPlates.json"
+      "mesh": "../data/processed/meshes/pSphere1.model",
+      "material": "../data/materials/rustMaterial.json"
     },
     {
       "mesh": "../data/processed/meshes/knightB/belt.model",
-      "material": "../data/materials/knightBBelt.json"
+      "material": "../data/materials/knightBBeltForward.json"
     },
     {
       "mesh": "../data/processed/meshes/knightB/sword.model",
-      "material": "../data/materials/knightBSword.json"
+      "material": "../data/materials/knightBSwordForward.json"
     },
     {
       "mesh": "../data/processed/meshes/knightB/cape.model",
-      "material": "../data/materials/knightBCape.json"
-    },
+      "material": "../data/materials/knightBCapeForward.json"
+    }
+  ],
+  "t": [
+
     {
       "mesh": "../data/processed/meshes/knightB/face.model",
       "material": "../data/materials/knightBFace.json"

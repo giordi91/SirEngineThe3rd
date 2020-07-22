@@ -67,6 +67,7 @@ void ForwardPlus::setupLight() {
   };
   m_passBindings = globals::BINDING_TABLE_MANAGER->allocateBindingTable(
       descriptions, 4,
+      //graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED,
       graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED,
       "forwardPlusPassDataBindingTable");
 }
@@ -106,7 +107,7 @@ void ForwardPlus::compute() {
   globals::BINDING_TABLE_MANAGER->bindTexture(m_passBindings, radianceHandle, 2,
                                                      2, true);
   TextureHandle brdfHandle = globals::RENDERING_CONTEXT->getBrdfHandle();
-  globals::BINDING_TABLE_MANAGER->bindTexture(m_passBindings, brdfHandle, 1,
+  globals::BINDING_TABLE_MANAGER->bindTexture(m_passBindings, brdfHandle, 3,
                                                      3, false);
 
   globals::BINDING_TABLE_MANAGER->bindTable(PSOManager::PER_PASS_BINDING_INDEX,
