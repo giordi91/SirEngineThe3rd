@@ -224,7 +224,7 @@ void VkDebugRenderer::render(TextureHandle input, TextureHandle depth) {
       static_cast<uint32_t>(globals::ENGINE_CONFIG->m_windowWidth),
       static_cast<uint32_t>(globals::ENGINE_CONFIG->m_windowHeight), 0};
   globals::RENDERING_CONTEXT->renderQueueType(config,
-                                              SHADER_QUEUE_FLAGS::DEBUG);
+                                              SHADER_QUEUE_FLAGS::DEBUG,{});
 }
 
 DebugDrawHandle VkDebugRenderer::drawBoundingBoxes(const BoundingBox *data,

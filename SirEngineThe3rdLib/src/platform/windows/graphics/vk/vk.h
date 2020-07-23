@@ -158,39 +158,6 @@ class VkRenderingContext final : public RenderingContext {
   void updateSceneBoundingBox();
   void updateDirectionalLightMatrix();
 
-  /*
-  inline void setEnviromentMap(const TextureHandle enviromentMapHandle) {
-    m_enviromentMapHandle = enviromentMapHandle;
-  }
-
-  inline void setEnviromentMapIrradiance(
-      const TextureHandle enviromentMapIrradianceHandle) {
-    m_enviromentMapIrradianceHandle = enviromentMapIrradianceHandle;
-  }
-
-  inline const DirectionalLightData &getLightData() const { return m_light; };
-  inline void
-  setEnviromentMapRadiance(const TextureHandle enviromentMapRadianceHandle) {
-    m_enviromentMapRadianceHandle = enviromentMapRadianceHandle;
-  };
-  inline TextureHandle getEnviromentMapHandle() const {
-    return m_enviromentMapHandle;
-  }
-  inline TextureHandle getEnviromentMapIrradianceHandle() const {
-    return m_enviromentMapIrradianceHandle;
-  }
-  inline TextureHandle getEnviromentMapRadianceHandle() const {
-    return m_enviromentMapRadianceHandle;
-  }
-  inline void setBrdfHandle(const TextureHandle handle) {
-    m_brdfHandle = handle;
-  }
-  inline TextureHandle getBrdfHandle() const { return m_brdfHandle; }
-
-  inline ConstantBufferHandle getLightCB() const { return m_lightCB; }
-  inline BoundingBox getBoundingBox() const { return m_boundingBox; }
-
-  */
   bool newFrame() override;
   bool dispatchFrame() override;
   bool resize(uint32_t width, uint32_t height) override;
@@ -203,8 +170,8 @@ class VkRenderingContext final : public RenderingContext {
   void addRenderablesToQueue(const RenderableDescription &description) override;
 
   void renderQueueType(const DrawCallConfig &config,
-                       const SHADER_QUEUE_FLAGS flag) override;
-  void renderMaterialType(const SHADER_QUEUE_FLAGS flag) override;
+                       const SHADER_QUEUE_FLAGS flag,
+                       const BindingTableHandle passBindings) override;
   BufferBindingsHandle prepareBindingObject(const FrameBufferBindings &bindings,
                                             const char *name) override;
   void setBindingObject(const BufferBindingsHandle handle) override;
@@ -237,18 +204,6 @@ class VkRenderingContext final : public RenderingContext {
   uint32_t MAGIC_NUMBER_COUNTER = 1;
   SparseMemoryPool<FrameBindingsData> m_bindingsPool;
 
-  /*
-// member variable mostly temporary
-ConstantBufferHandle m_lightBuffer{};
-ConstantBufferHandle m_lightCB{};
-DirectionalLightData m_light;
-TextureHandle m_enviromentMapHandle;
-TextureHandle m_enviromentMapIrradianceHandle;
-TextureHandle m_enviromentMapRadianceHandle;
-TextureHandle m_brdfHandle;
-BoundingBox m_boundingBox;
-DebugDrawHandle m_lightAABBHandle{};
-*/
 };
 
 }  // namespace vk

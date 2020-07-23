@@ -451,7 +451,7 @@ void updateForwardPhong(const MaterialData &data,
   assert(data.m_materialRuntime.m_tables[currentFlagId].isFlatRoot == true);
 
   // bind mesh  no tangents for now
-  const uint32_t meshFlags = POSITIONS | NORMALS | UV |TANGENTS;
+  const uint32_t meshFlags = POSITIONS | NORMALS | UV | TANGENTS;
   dx12::MESH_MANAGER->bindFlatMesh(data.m_materialRuntime.meshHandle,
                                    table.flatDescriptors, meshFlags, 0);
 
@@ -654,7 +654,7 @@ void Dx12MaterialManager::bindConstantBuffer(
       bufferHandle, table.flatDescriptors[descriptorIndex]);
 }
 
-void Dx12MaterialManager::bindRSandPSO(
+ShaderBind Dx12MaterialManager::bindRSandPSO(
     const uint32_t shaderFlags, ID3D12GraphicsCommandList2 *commandList) const {
   // get type flags as int
   constexpr auto mask = static_cast<uint32_t>(~((1 << 16) - 1));
@@ -665,9 +665,10 @@ void Dx12MaterialManager::bindRSandPSO(
   if (found) {
     dx12::ROOT_SIGNATURE_MANAGER->bindGraphicsRS(bind.rs, commandList);
     dx12::PSO_MANAGER->bindPSO(bind.pso, commandList);
-    return;
+    return bind;
   }
   assert(0 && "Could not find requested shader type for PSO /RS bind");
+  return {};
 }
 
 void allocateDescriptorTable(FlatDescriptorTable &table, const RSHandle root) {

@@ -58,7 +58,8 @@ class VkMaterialManager final : public MaterialManager {
   void updateMaterial(SHADER_QUEUE_FLAGS queueFlag, MaterialHandle handle,
                       VkCommandBuffer commandList);
 
-  void bindRSandPSO(uint32_t shaderFlags, VkCommandBuffer commandList);
+  //TODO see note on the dx12 material manager for this function
+  ShaderBind bindRSandPSO(uint32_t shaderFlags, VkCommandBuffer commandList) const;
   VkMaterialManager(const VkMaterialManager &) = delete;
   VkMaterialManager &operator=(const VkMaterialManager &) = delete;
 

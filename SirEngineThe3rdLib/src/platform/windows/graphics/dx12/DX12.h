@@ -225,8 +225,8 @@ class Dx12RenderingContext final : public RenderingContext {
   void addRenderablesToQueue(const Renderable &renderable) override;
   void addRenderablesToQueue(const RenderableDescription &description) override;
   void renderQueueType(const DrawCallConfig &config,
-                       const SHADER_QUEUE_FLAGS flag) override;
-  void renderMaterialType(const SHADER_QUEUE_FLAGS queueFlag) override;
+                       const SHADER_QUEUE_FLAGS flag,
+                       const BindingTableHandle passBindings) override;
   void renderMesh(const MeshHandle handle, bool isIndexed) override;
   void fullScreenPass() override;
   BufferBindingsHandle prepareBindingObject(const FrameBufferBindings &bindings,
@@ -234,8 +234,9 @@ class Dx12RenderingContext final : public RenderingContext {
   void setBindingObject(const BufferBindingsHandle handle) override;
   void clearBindingObject(const BufferBindingsHandle handle) override;
   void freeBindingObject(const BufferBindingsHandle handle) override;
-  void setViewportAndScissor(float offsetX, float offsetY, float width, float height, float minDepth,
-	  float maxDepth) override;
+  void setViewportAndScissor(float offsetX, float offsetY, float width,
+                             float height, float minDepth,
+                             float maxDepth) override;
 
  private:
   inline void assertMagicNumber(const BufferBindingsHandle handle) const {
@@ -246,15 +247,15 @@ class Dx12RenderingContext final : public RenderingContext {
            "invalid magic handle for constant buffer");
   }
 
-public:
+ public:
   void renderProcedural(const uint32_t indexCount) override;
+
  private:
   // member variable mostly temporary
   CameraBuffer m_camBufferCPU{};
   ConstantBufferHandle m_cameraHandle{};
   ConstantBufferHandle m_lightBuffer{};
   DebugDrawHandle m_lightAABBHandle{};
-  ID3D12RootSignature* engineRS;
 
   static constexpr uint32_t RESERVE_SIZE = 400;
   uint32_t MAGIC_NUMBER_COUNTER = 1;

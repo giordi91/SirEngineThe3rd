@@ -62,7 +62,7 @@ void GBufferPassPBR::initialize() {
 void GBufferPassPBR::compute() {
 
   globals::RENDERING_CONTEXT->setBindingObject(m_bindHandle);
-  globals::RENDERING_CONTEXT->renderQueueType({}, SHADER_QUEUE_FLAGS::DEFERRED);
+  globals::RENDERING_CONTEXT->renderQueueType({}, SHADER_QUEUE_FLAGS::DEFERRED,{});
   globals::RENDERING_CONTEXT->clearBindingObject(m_bindHandle);
 }
 

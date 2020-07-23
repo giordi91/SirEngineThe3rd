@@ -308,7 +308,7 @@ void Dx12DebugRenderer::render(const TextureHandle input,
       static_cast<uint32_t>(globals::ENGINE_CONFIG->m_windowWidth),
       static_cast<uint32_t>(globals::ENGINE_CONFIG->m_windowHeight), 0};
   globals::RENDERING_CONTEXT->renderQueueType(config,
-                                              SHADER_QUEUE_FLAGS::DEBUG);
+                                              SHADER_QUEUE_FLAGS::DEBUG,{});
 }
 inline int push3toVec(float *data, float x, float y, float z, int counter) {
   data[counter++] = x;

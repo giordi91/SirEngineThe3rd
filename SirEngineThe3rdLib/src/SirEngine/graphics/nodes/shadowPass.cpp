@@ -60,7 +60,7 @@ void ShadowPass::compute() {
   commandList->RSSetViewports(1, &viewport);
   commandList->RSSetScissorRects(1, &scissorRect);
 
-  globals::RENDERING_CONTEXT->renderQueueType({}, SHADER_QUEUE_FLAGS::SHADOW);
+  globals::RENDERING_CONTEXT->renderQueueType({}, SHADER_QUEUE_FLAGS::SHADOW,{});
 
   // TODO remove this each draw call should set its own
   // Set the viewport and scissor rect.  This needs to be reset whenever the

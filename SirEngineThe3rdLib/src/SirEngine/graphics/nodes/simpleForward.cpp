@@ -56,7 +56,7 @@ void SimpleForward::compute() {
 
   globals::TEXTURE_MANAGER->bindRenderTarget(renderTarget, depth);
 
-  globals::RENDERING_CONTEXT->renderQueueType({}, SHADER_QUEUE_FLAGS::FORWARD);
+  globals::RENDERING_CONTEXT->renderQueueType({}, SHADER_QUEUE_FLAGS::FORWARD,{});
 
   annotateGraphicsEnd();
 }
