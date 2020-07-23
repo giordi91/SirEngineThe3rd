@@ -198,9 +198,9 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   // TODO TEMP HACK LOAD, remove this
   vk::PSO_MANAGER->loadRawPSO("../data/pso/HDRtoSDREffect_PSO.json");
   vk::PSO_MANAGER->loadRawPSO("../data/pso/forwardPhongPSO.json");
-  // vk::PSO_MANAGER->loadRawPSO("../data/pso/grassForwardPSO.json");
-  // vk::PSO_MANAGER->loadRawPSO("../data/pso/debugDrawPointsSingleColorPSO.json");
-  // vk::PSO_MANAGER->loadRawPSO("../data/pso/debugDrawLinesSingleColorPSO.json");
+  vk::PSO_MANAGER->loadRawPSO("../data/pso/grassForwardPSO.json");
+  vk::PSO_MANAGER->loadRawPSO("../data/pso/debugDrawPointsSingleColorPSO.json");
+  vk::PSO_MANAGER->loadRawPSO("../data/pso/debugDrawLinesSingleColorPSO.json");
   vk::PSO_MANAGER->loadRawPSO("../data/pso/skyboxPSO.json");
   vk::PSO_MANAGER->loadRawPSO("../data/pso/gammaAndToneMappingEffect_PSO.json");
 
@@ -301,10 +301,6 @@ void VkRenderingContext::setupCameraForFrame() {
   // memcpy(m_cameraBuffer.data, &m_camBufferCPU, sizeof(m_camBufferCPU));
   globals::CONSTANT_BUFFER_MANAGER->update(m_cameraHandle, &m_camBufferCPU);
 
-}
-
-void VkRenderingContext::bindCameraBuffer(int index=0) const {
-
   VkWriteDescriptorSet writeDescriptorSets = {};
   VkDescriptorBufferInfo bufferInfoUniform = {};
   vk::CONSTANT_BUFFER_MANAGER->bindConstantBuffer(
@@ -314,6 +310,9 @@ void VkRenderingContext::bindCameraBuffer(int index=0) const {
   // camera update
   vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, 1, &writeDescriptorSets, 0,
                          nullptr);
+}
+
+void VkRenderingContext::bindCameraBuffer(int index) const {
   // VkWriteDescriptorSet writeDescriptorSets{};
   // VkDescriptorBufferInfo bufferInfoUniform = {};
   // vk::CONSTANT_BUFFER_MANAGER->bindConstantBuffer(
@@ -620,20 +619,35 @@ void VkRenderingContext::renderQueueType(
       // start rendering it
 
       // bind the corresponding RS and PSO
-      ShaderBind bind = vk::MATERIAL_MANAGER->bindRSandPSO(renderableList.first, commandList);
-
-      bindCameraBuffer();
-      if(passBindings.isHandleValid())
-      {
-        globals::BINDING_TABLE_MANAGER->bindTable(
-            PSOManager::PER_PASS_BINDING_INDEX, passBindings, bind.rs);
-      }
+      ShaderBind bind =
+          vk::MATERIAL_MANAGER->bindRSandPSO(renderableList.first, commandList);
 
       // this is most for debug, it will boil down to nothing in release
       const SHADER_TYPE_FLAGS type =
           MATERIAL_MANAGER->getTypeFlags(renderableList.first);
       const std::string &typeName =
           MATERIAL_MANAGER->getStringFromShaderTypeFlag(type);
+
+      bindCameraBuffer();
+
+      VkDescriptorSet descriptorSet =
+          vk::DESCRIPTOR_MANAGER->getDescriptorSet(PER_FRAME_DATA_HANDLE);
+
+      VkPipelineLayout layout =
+          vk::PIPELINE_LAYOUT_MANAGER->getLayoutFromHandle(bind.rs);
+      assert(layout != nullptr);
+
+      VkDescriptorSet sets[] = {
+          descriptorSet,
+      };
+      // multiple descriptor sets
+      vkCmdBindDescriptorSets(CURRENT_FRAME_COMMAND->m_commandBuffer,
+                              VK_PIPELINE_BIND_POINT_GRAPHICS, layout,
+                              PSOManager::PER_FRAME_DATA_BINDING_INDEX, 1, sets, 0, nullptr);
+      if (passBindings.isHandleValid()) {
+        globals::BINDING_TABLE_MANAGER->bindTable(
+            PSOManager::PER_PASS_BINDING_INDEX, passBindings, bind.rs);
+      }
       annotateGraphicsBegin(typeName.c_str());
 
       // looping each of the object
@@ -652,7 +666,6 @@ void VkRenderingContext::renderQueueType(
     }
   }
 }
-
 
 VkRenderPass createRenderPass(const FrameBufferBindings &bindings,
                               const char *name) {

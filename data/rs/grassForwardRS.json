@@ -1,9 +1,71 @@
 {
   "type": "RASTER",
-  "staticSamplers": false,
+  "staticSamplers": true,
   "useRegisterSpace": true, 
   "staticSamplersVisibility": [ "PS" ],
   "flatDescriptorTable" :  true, 
+  "passConfig": [
+    {
+      "comment": "lighting data",
+      "type": "descriptorTable",
+      "data": {
+        "ranges": [
+          {
+            "type": "CBV",
+            "underlyingResource": "buffer",
+            "numDescriptors": 1,
+            "baseRegister":0 
+          }
+        ]
+      },
+      "visibility": "PS"
+    },
+    {
+      "comment": "irradiance map",
+      "type": "descriptorTable",
+      "visibility": "PS",
+      "data": {
+        "ranges": [
+          {
+            "underlyingResource": "texture",
+            "type": "SRV",
+            "numDescriptors": 1,
+            "baseRegister": 1
+          }
+        ]
+      }
+    },
+    {
+      "comment": "radiance map",
+      "type": "descriptorTable",
+      "visibility": "PS",
+      "data": {
+        "ranges": [
+          {
+            "underlyingResource": "texture",
+            "type": "SRV",
+            "numDescriptors": 1,
+            "baseRegister": 2
+          }
+        ]
+      }
+    },
+    {
+      "comment": "brdf map",
+      "type": "descriptorTable",
+      "visibility": "PS",
+      "data": {
+        "ranges": [
+          {
+            "underlyingResource": "texture",
+            "type": "SRV",
+            "numDescriptors": 1,
+            "baseRegister": 3
+          }
+        ]
+      }
+    }
+  ], 
   "config": [
     {
       "comment": "vertex buffer bound as storage buffer/ positions",

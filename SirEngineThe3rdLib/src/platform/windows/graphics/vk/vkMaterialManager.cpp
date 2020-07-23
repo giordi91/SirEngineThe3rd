@@ -165,12 +165,9 @@ void VkMaterialManager::bindMaterial(SHADER_QUEUE_FLAGS queueFlag,
       vk::DESCRIPTOR_MANAGER->getDescriptorSet(setHandle);
 
   VkDescriptorSet sets[] = {
-      // vk::DESCRIPTOR_MANAGER->getDescriptorSet(PER_FRAME_DATA_HANDLE),
       descriptorSet
-      //, vk::STATIC_SAMPLERS_DESCRIPTOR_SET
   };
-  uint32_t setsToBind =
-      materialRuntime.useStaticSamplers[currentFlagId] ? 3 : 2;
+
   // multiple descriptor sets
   vkCmdBindDescriptorSets(commandList, VK_PIPELINE_BIND_POINT_GRAPHICS,
                           materialRuntime.layouts[currentFlagId],
