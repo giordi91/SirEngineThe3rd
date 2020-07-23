@@ -77,7 +77,7 @@ void Dx12BindingTableManager::bindTable(uint32_t bindingSpace,
   const auto &data = m_bindingTablePool.getConstRef(poolIndex);
 
   auto *commandList = dx12::CURRENT_FRAME_RESOURCE->fc.commandList;
-  dx12::ROOT_SIGNATURE_MANAGER->bindGraphicsRS(rsHandle, commandList);
+  //dx12::ROOT_SIGNATURE_MANAGER->bindGraphicsRS(rsHandle, commandList);
 
   bool isBuffered = isFlagSet(
       data.flags, graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED);

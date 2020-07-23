@@ -189,8 +189,6 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
 
   PIPELINE_LAYOUT_MANAGER = new VkPipelineLayoutManager();
   PIPELINE_LAYOUT_MANAGER->initialize();
-  PIPELINE_LAYOUT_MANAGER->loadSignatureFile(
-      "../data/rs/forwardPlusPassRS.json");
 
   globals::ROOT_SIGNATURE_MANAGER = PIPELINE_LAYOUT_MANAGER;
 
@@ -303,6 +301,10 @@ void VkRenderingContext::setupCameraForFrame() {
   // memcpy(m_cameraBuffer.data, &m_camBufferCPU, sizeof(m_camBufferCPU));
   globals::CONSTANT_BUFFER_MANAGER->update(m_cameraHandle, &m_camBufferCPU);
 
+}
+
+void VkRenderingContext::bindCameraBuffer(int index=0) const {
+
   VkWriteDescriptorSet writeDescriptorSets = {};
   VkDescriptorBufferInfo bufferInfoUniform = {};
   vk::CONSTANT_BUFFER_MANAGER->bindConstantBuffer(
@@ -312,9 +314,6 @@ void VkRenderingContext::setupCameraForFrame() {
   // camera update
   vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, 1, &writeDescriptorSets, 0,
                          nullptr);
-}
-
-void VkRenderingContext::bindCameraBuffer(int index) const {
   // VkWriteDescriptorSet writeDescriptorSets{};
   // VkDescriptorBufferInfo bufferInfoUniform = {};
   // vk::CONSTANT_BUFFER_MANAGER->bindConstantBuffer(
@@ -594,8 +593,9 @@ void VkRenderingContext::addRenderablesToQueue(
   }
 }
 
-void VkRenderingContext::renderQueueType(const DrawCallConfig &config,
-                                         const SHADER_QUEUE_FLAGS flag) {
+void VkRenderingContext::renderQueueType(
+    const DrawCallConfig &config, const SHADER_QUEUE_FLAGS flag,
+    const BindingTableHandle passBindings) {
   const auto &typedQueues = *(reinterpret_cast<VkRenderingQueues *>(queues));
 
   auto *currentFc = CURRENT_FRAME_COMMAND;
@@ -620,7 +620,14 @@ void VkRenderingContext::renderQueueType(const DrawCallConfig &config,
       // start rendering it
 
       // bind the corresponding RS and PSO
-      vk::MATERIAL_MANAGER->bindRSandPSO(renderableList.first, commandList);
+      ShaderBind bind = vk::MATERIAL_MANAGER->bindRSandPSO(renderableList.first, commandList);
+
+      bindCameraBuffer();
+      if(passBindings.isHandleValid())
+      {
+        globals::BINDING_TABLE_MANAGER->bindTable(
+            PSOManager::PER_PASS_BINDING_INDEX, passBindings, bind.rs);
+      }
 
       // this is most for debug, it will boil down to nothing in release
       const SHADER_TYPE_FLAGS type =
@@ -646,9 +653,6 @@ void VkRenderingContext::renderQueueType(const DrawCallConfig &config,
   }
 }
 
-void VkRenderingContext::renderMaterialType(const SHADER_QUEUE_FLAGS flag) {
-  assert(0);
-}
 
 VkRenderPass createRenderPass(const FrameBufferBindings &bindings,
                               const char *name) {

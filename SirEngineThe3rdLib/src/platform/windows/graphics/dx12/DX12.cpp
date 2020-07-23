@@ -213,7 +213,9 @@ bool initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
   globals::PSO_MANAGER = PSO_MANAGER;
 
   if (globals::ENGINE_CONFIG->m_useCachedPSO) {
-    assert(0 && "to used cached pso we need to add root signature information in there");
+    assert(0 &&
+           "to used cached pso we need to add root signature information in "
+           "there");
     PSO_MANAGER->loadCachedPSOInFolder(frameConcatenation(
         globals::ENGINE_CONFIG->m_dataSourcePath, "/processed/pso/DX12"));
   } else {
@@ -399,9 +401,6 @@ bool Dx12RenderingContext::initializeGraphics() {
   m_lightCB = globals::CONSTANT_BUFFER_MANAGER->allocate(
       sizeof(DirectionalLightData), 0, &m_light);
 
-  // get the engine root signature to bind at the beginning of the frame
-  engineRS = enginePerFrameEmptyRS("engineFrame");
-
   return result;
 }
 
@@ -425,17 +424,9 @@ void Dx12RenderingContext::setupCameraForFrame() {
   m_camBufferCPU.perspectiveValues = globals::MAIN_CAMERA->getProjParams();
 
   globals::CONSTANT_BUFFER_MANAGER->update(m_cameraHandle, &m_camBufferCPU);
-  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
-
-  // let us bind the camera at the beginning of the frame
-  auto commandList = currentFc->commandList;
-  D3D12_GPU_DESCRIPTOR_HANDLE handle =
-      dx12::CONSTANT_BUFFER_MANAGER->getConstantBufferDx12Handle(m_cameraHandle)
-          .gpuHandle;
-  commandList->SetGraphicsRootDescriptorTable(0, handle);
 }
 
-void Dx12RenderingContext::bindCameraBuffer(const int index) const {
+void Dx12RenderingContext::bindCameraBuffer(const int index=0) const {
   // assert(0);
   // TODO REMOVE
   // this code should not be called anymore and will need to remove after
@@ -445,7 +436,7 @@ void Dx12RenderingContext::bindCameraBuffer(const int index) const {
   D3D12_GPU_DESCRIPTOR_HANDLE handle =
       dx12::CONSTANT_BUFFER_MANAGER->getConstantBufferDx12Handle(m_cameraHandle)
           .gpuHandle;
-  commandList->SetGraphicsRootDescriptorTable(0, handle);
+  commandList->SetGraphicsRootDescriptorTable(index, handle);
 }
 
 void Dx12RenderingContext::bindCameraBufferCompute(const int index) const {
@@ -623,12 +614,13 @@ void Dx12RenderingContext::addRenderablesToQueue(
   }
 }
 
-void Dx12RenderingContext::renderQueueType(const DrawCallConfig &config,
-                                           const SHADER_QUEUE_FLAGS flag) {
-  const auto &typedQueues = *(reinterpret_cast<Dx12RenderingQueues *>(queues));
+void Dx12RenderingContext::renderQueueType(
+    const DrawCallConfig &config, const SHADER_QUEUE_FLAGS flag,
+    const BindingTableHandle passBindings) {
+  const auto &typedQueues = *(static_cast<Dx12RenderingQueues *>(queues));
 
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
-  auto commandList = currentFc->commandList;
+  ID3D12GraphicsCommandList2* commandList = currentFc->commandList;
 
   for (const auto &renderableList : typedQueues) {
     if (dx12::MATERIAL_MANAGER->isQueueType(renderableList.first, flag)) {
@@ -636,7 +628,20 @@ void Dx12RenderingContext::renderQueueType(const DrawCallConfig &config,
       // start rendering it
 
       // bind the corresponding RS and PSO
-      dx12::MATERIAL_MANAGER->bindRSandPSO(renderableList.first, commandList);
+      ShaderBind bind = dx12::MATERIAL_MANAGER->bindRSandPSO(renderableList.first, commandList);
+
+      // binding the camera
+      D3D12_GPU_DESCRIPTOR_HANDLE handle =
+          dx12::CONSTANT_BUFFER_MANAGER
+              ->getConstantBufferDx12Handle(m_cameraHandle)
+              .gpuHandle;
+      commandList->SetGraphicsRootDescriptorTable(0, handle);
+
+      if (passBindings.isHandleValid()) {
+        // binding the per pass data
+        globals::BINDING_TABLE_MANAGER->bindTable(
+            PSOManager::PER_PASS_BINDING_INDEX, passBindings, bind.rs);
+      }
 
       // this is most for debug, it will boil down to nothing in release
       const SHADER_TYPE_FLAGS type =
@@ -666,9 +671,6 @@ void Dx12RenderingContext::renderQueueType(const DrawCallConfig &config,
   }
 }
 
-void Dx12RenderingContext::renderMaterialType(const SHADER_QUEUE_FLAGS flag) {
-  assert(0);
-}
 
 void Dx12RenderingContext::renderMesh(const MeshHandle handle, bool isIndexed) {
   // get mesh runtime
@@ -808,8 +810,7 @@ void Dx12RenderingContext::setBindingObject(const BufferBindingsHandle handle) {
   }
 }
 
-void Dx12RenderingContext::clearBindingObject(
-    const BufferBindingsHandle ) {
+void Dx12RenderingContext::clearBindingObject(const BufferBindingsHandle) {
   annotateGraphicsEnd();
 }
 
@@ -892,9 +893,6 @@ bool Dx12RenderingContext::newFrame() {
 
   auto *heap = dx12::GLOBAL_CBV_SRV_UAV_HEAP->getResource();
   commandList->SetDescriptorHeaps(1, &heap);
-
-  // let us bind the engine description: so we can bind the camera buffer
-  commandList->SetGraphicsRootSignature(engineRS);
 
   return true;
 }

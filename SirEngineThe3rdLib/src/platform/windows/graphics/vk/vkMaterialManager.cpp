@@ -348,8 +348,9 @@ void beginRenderPass(ShaderBind bind) {
   vkCmdBeginRenderPass(vk::CURRENT_FRAME_COMMAND->m_commandBuffer, &beginInfo,
                        VK_SUBPASS_CONTENTS_INLINE);
 }
-void VkMaterialManager::bindRSandPSO(const uint32_t shaderFlags,
-                                     VkCommandBuffer commandList) {
+ShaderBind VkMaterialManager::bindRSandPSO(const uint32_t shaderFlags,
+                                           const VkCommandBuffer commandList) const
+{
   // get type flags as int
   constexpr auto mask = static_cast<uint32_t>(~((1 << 16) - 1));
   const auto typeFlags = static_cast<uint16_t>((shaderFlags & mask) >> 16);
@@ -359,10 +360,10 @@ void VkMaterialManager::bindRSandPSO(const uint32_t shaderFlags,
   if (found) {
     // beginRenderPass(bind);
     vk::PSO_MANAGER->bindPSO(bind.pso, commandList);
-    return;
+    return bind;
   }
   assert(0 && "Could not find requested shader type for PSO /RS bind");
-  return;
+  return {};
 }
 
 inline VkDescriptorImageInfo getDescriptor(const TextureHandle handle) {

@@ -19,5 +19,4 @@ struct RootCompilerResult {
 RootCompilerResult SIR_ENGINE_API processSignatureFileToBlob(const char *path,
                                                              ID3DBlob **blob);
 RootCompilerResult processSignatureFile(const char *path);
-ID3D12RootSignature *enginePerFrameEmptyRS(const char *name);
 }  // namespace SirEngine::dx12

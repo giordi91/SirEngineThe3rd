@@ -84,8 +84,13 @@ class Dx12MaterialManager final : public MaterialManager {
                           const uint32_t bindingIndex,
                           SHADER_QUEUE_FLAGS queue) override;
 
-  void bindRSandPSO(uint32_t shaderFlags,
-                    ID3D12GraphicsCommandList2 *commandList) const;
+  //TODO I am not super happy about this, there should be an easy way to get access to
+  //the RS and PSO. Here this function is called inside render queue, where I will need
+  //to bind the pass table. To do so i need to convert from shader space to actual
+  //descriptro index, such information is held by the root signature, as such I am
+  //returning that here so I can access it, not as clean as I would like
+  ShaderBind bindRSandPSO(uint32_t shaderFlags,
+                          ID3D12GraphicsCommandList2 *commandList) const;
   Dx12MaterialManager(const Dx12MaterialManager &) = delete;
   Dx12MaterialManager &operator=(const Dx12MaterialManager &) = delete;
 

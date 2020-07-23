@@ -4,8 +4,6 @@
 #include "SirEngine/graphics/bindingTableManager.h"
 #include "SirEngine/graphics/lightManager.h"
 #include "SirEngine/graphics/renderingContext.h"
-#include "SirEngine/psoManager.h"
-#include "SirEngine/rootSignatureManager.h"
 #include "SirEngine/textureManager.h"
 
 namespace SirEngine {
@@ -63,11 +61,10 @@ void ForwardPlus::setupLight() {
       {2, GRAPHIC_RESOURCE_TYPE::TEXTURE,
        GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT},
       {3, GRAPHIC_RESOURCE_TYPE::TEXTURE,
-       GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT}
-  };
+       GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT}};
   m_passBindings = globals::BINDING_TABLE_MANAGER->allocateBindingTable(
       descriptions, 4,
-      //graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED,
+      // graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED,
       graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED,
       "forwardPlusPassDataBindingTable");
 }
@@ -87,10 +84,6 @@ void ForwardPlus::initialize() {
           TextureManager::TEXTURE_ALLOCATION_FLAG_BITS::SHADER_RESOURCE,
       RESOURCE_STATE::DEPTH_RENDER_TARGET);
 
-  // TODO fix this add generic way to load root signature if needed
-  // this is mostly needed for the bindings process
-  m_rs =
-      globals::ROOT_SIGNATURE_MANAGER->getHandleFromName("forwardPlusPassRS");
   setupLight();
 }
 
@@ -100,23 +93,23 @@ void ForwardPlus::compute() {
   globals::BINDING_TABLE_MANAGER->bindConstantBuffer(m_passBindings, m_lightCB,
                                                      0, 0);
 
-  TextureHandle irradianceHandle = globals::RENDERING_CONTEXT->getEnviromentMapIrradianceHandle();
-  globals::BINDING_TABLE_MANAGER->bindTexture(m_passBindings, irradianceHandle, 1,
-                                                     1, true);
-  TextureHandle radianceHandle = globals::RENDERING_CONTEXT->getEnviromentMapRadianceHandle();
+  TextureHandle irradianceHandle =
+      globals::RENDERING_CONTEXT->getEnviromentMapIrradianceHandle();
+  globals::BINDING_TABLE_MANAGER->bindTexture(m_passBindings, irradianceHandle,
+                                              1, 1, true);
+  TextureHandle radianceHandle =
+      globals::RENDERING_CONTEXT->getEnviromentMapRadianceHandle();
   globals::BINDING_TABLE_MANAGER->bindTexture(m_passBindings, radianceHandle, 2,
-                                                     2, true);
+                                              2, true);
   TextureHandle brdfHandle = globals::RENDERING_CONTEXT->getBrdfHandle();
-  globals::BINDING_TABLE_MANAGER->bindTexture(m_passBindings, brdfHandle, 3,
-                                                     3, false);
+  globals::BINDING_TABLE_MANAGER->bindTexture(m_passBindings, brdfHandle, 3, 3,
+                                              false);
 
-  globals::BINDING_TABLE_MANAGER->bindTable(PSOManager::PER_PASS_BINDING_INDEX,
-                                            m_passBindings, m_rs);
-
-  DrawCallConfig config{globals::ENGINE_CONFIG->m_windowWidth,
-                        globals::ENGINE_CONFIG->m_windowHeight, 0};
-  globals::RENDERING_CONTEXT->renderQueueType(config,
-                                              SHADER_QUEUE_FLAGS::FORWARD);
+  DrawCallConfig config{
+      static_cast<uint32_t>(globals::ENGINE_CONFIG->m_windowWidth),
+      static_cast<uint32_t>(globals::ENGINE_CONFIG->m_windowHeight), 0};
+  globals::RENDERING_CONTEXT->renderQueueType(
+      config, SHADER_QUEUE_FLAGS::FORWARD, m_passBindings);
 
   globals::RENDERING_CONTEXT->clearBindingObject(m_bindHandle);
 }

@@ -316,44 +316,6 @@ bool shouldBindSamplers(const nlohmann::json &jobj) {
   return toReturn;
 }
 
-ID3D12RootSignature *enginePerFrameEmptyRS(const char *name) {
-  //int extraRegister = 0;
-
-  // we have one flat descriptor table to bind
-  //one register per the per frame data one register for the pass data
-  uint32_t registerCount = 1;
-  std::vector<CD3DX12_ROOT_PARAMETER> rootParams(registerCount);
-  CD3DX12_DESCRIPTOR_RANGE ranges{};
-  // create constant buffer for camera values
-  int startRegister = 0;
-  ranges.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, startRegister,
-              ENGINE_RESIGSTER_SPACE);
-  rootParams[0].InitAsDescriptorTable(1, &ranges);
-
-  auto samplers = getStaticSamplers();
-
-  // bind staticSamplers
-  D3D12_STATIC_SAMPLER_DESC const *staticSamplers = &samplers[0];
-  UINT numStaticSampers = static_cast<UINT>(samplers.size());
-
-  CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc(
-      static_cast<UINT>(rootParams.size()), rootParams.data(), numStaticSampers,
-      staticSamplers);
-
-  const ROOT_TYPE fileTypeEnum = ROOT_TYPE::RASTER;
-  ID3DBlob *blob = nullptr;
-  blob = serializeRootSignature(rootSignatureDesc);
-
-  ID3D12RootSignature *rootSig;
-  const HRESULT res = SirEngine::dx12::DEVICE->CreateRootSignature(
-      1, blob->GetBufferPointer(), blob->GetBufferSize(),
-      IID_PPV_ARGS(&(rootSig)));
-  assert(res == S_OK);
-  blob->Release();
-  rootSig->SetName(frameConvertWide(name));
-  return rootSig;
-}
-
 void processRootConfiguration(CD3DX12_DESCRIPTOR_RANGE *userRanges,
                               const nlohmann::basic_json<> &subConfig,
                               const uint32_t registerSpace) {

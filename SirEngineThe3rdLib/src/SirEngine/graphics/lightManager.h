@@ -38,7 +38,6 @@ class LightManager {
   }
   [[nodiscard]] ConstantBufferHandle getLightBuffer(const LightHandle handle) {
     uint32_t index = getLightIndex(handle);
-    LIGHT_TYPE type = getLightType(handle);
     uint32_t magic = getLightMagicNumber(handle);
 
     assert(index <= m_directionalLights.size());
