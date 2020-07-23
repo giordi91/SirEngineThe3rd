@@ -81,6 +81,7 @@ void VkTempLayer::initGrass() {
 
   m_grassMaterial = globals::MATERIAL_MANAGER->allocateMaterial(
       "grassMaterial", MaterialManager::ALLOCATE_MATERIAL_FLAG_BITS::NONE,
+
       queues);
   globals::MATERIAL_MANAGER->bindBuffer(m_grassMaterial, m_grassBuffer, 0,
                                         SHADER_QUEUE_FLAGS::FORWARD);
@@ -120,7 +121,7 @@ void VkTempLayer::onAttach() {
   // globals::ASSET_MANAGER->loadScene(globals::ENGINE_CONFIG->m_startScenePath);
   globals::ASSET_MANAGER->loadScene("../data/scenes/tempScene.json");
 
-  // initGrass();
+  initGrass();
 
   alloc =
       new GraphAllocators{globals::STRING_POOL, globals::PERSISTENT_ALLOCATOR};

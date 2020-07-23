@@ -11,7 +11,7 @@ layout (set=0,binding=0) uniform InputData
 	CameraBuffer cameraBuffer;
 }; 
 
-layout (set=1,binding=0) buffer vertices
+layout (set=3,binding=0) buffer vertices
 {
 	vec4 p[];
 };

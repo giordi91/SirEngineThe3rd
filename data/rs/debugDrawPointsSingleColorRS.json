@@ -1,7 +1,8 @@
 {
   "type": "RASTER",
-  "staticSamplers": false,
+  "staticSamplers": true,
   "useRegisterSpace": true,
+  "flatDescriptorTable" :  true, 
   "config": [
     {
       "comment": "debug config",

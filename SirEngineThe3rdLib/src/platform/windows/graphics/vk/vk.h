@@ -153,7 +153,7 @@ class VkRenderingContext final : public RenderingContext {
   bool initializeGraphics() override;
 
   void setupCameraForFrame() override;
-  void bindCameraBuffer(int index) const override;
+  void bindCameraBuffer(int index = 0) const override;
   void bindCameraBufferCompute(int index) const;
   void updateSceneBoundingBox();
   void updateDirectionalLightMatrix();
@@ -203,7 +203,6 @@ class VkRenderingContext final : public RenderingContext {
   static constexpr uint32_t RESERVE_SIZE = 400;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
   SparseMemoryPool<FrameBindingsData> m_bindingsPool;
-
 };
 
 }  // namespace vk
