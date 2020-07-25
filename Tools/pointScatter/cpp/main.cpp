@@ -1,13 +1,15 @@
-#include "nlohmann/json.hpp"
+#include <stdint.h>
+
 #include <array>
 #include <atomic>
 #include <cxxopts/cxxopts.hpp>
 #include <fstream>
 #include <mutex>
 #include <random>
-#include <stdint.h>
 #include <thread>
 #include <vector>
+
+#include "nlohmann/json.hpp"
 
 inline double Distance(double x1, double y1, double x2, double y2,
                        double imageWidth) {
@@ -16,11 +18,9 @@ inline double Distance(double x1, double y1, double x2, double y2,
   double dx = std::abs(double(x2) - double(x1));
   double dy = std::abs(double(y2) - double(y1));
 
-  if (dx > double(imageWidth / 2))
-    dx = double(imageWidth) - dx;
+  if (dx > double(imageWidth / 2)) dx = double(imageWidth) - dx;
 
-  if (dy > double(imageWidth / 2))
-    dy = double(imageWidth) - dy;
+  if (dy > double(imageWidth / 2)) dy = double(imageWidth) - dy;
 
   // returning squared distance cause why not
   return dx * dx + dy * dy;
@@ -64,19 +64,19 @@ void parseConfig(ScatterConfig &config, int argc, char **argv) {
 }
 
 int main(int argc, char **argv) {
-
   ScatterConfig config;
   parseConfig(config, argc, argv);
 
+  std::cout << "wil generate " << config.m_tileCount << " tile with "
+            << config.m_sampleCount << " points each" << std::endl;
   std::vector<std::vector<std::array<double, 2>>> finalPoints;
 
-  std::chrono::high_resolution_clock::time_point begin = std::chrono::steady_clock::now();
-
+  std::chrono::high_resolution_clock::time_point begin =
+      std::chrono::steady_clock::now();
 
   std::mutex m;
 #pragma omp parallel for
   for (int t = 0; t < config.m_tileCount; ++t) {
-
     // init random number generator
     std::seed_seq seed{config.m_seed + t};
     std::mt19937 rng(seed);
@@ -89,14 +89,15 @@ int main(int argc, char **argv) {
     samplesPos.reserve(config.m_sampleCount);
 
     uint32_t counter = 0;
-    uint32_t printThreashold=0;
+    uint32_t printThreashold = 0;
 
     for (uint32_t i = 1; i <= config.m_sampleCount; ++i) {
-
       uint32_t currentThreshold =
-          static_cast<uint32_t>((float(counter) / config.m_sampleCount)*100.0f) /5;
+          static_cast<uint32_t>((float(counter) / config.m_sampleCount) *
+                                100.0f) /
+          5;
       if (currentThreshold > printThreashold) {
-        std::cout << "tile " << t << " progress " << currentThreshold *5<< "%"
+        std::cout << "tile " << t << " progress " << currentThreshold * 5 << "%"
                   << std::endl;
         printThreashold = currentThreshold;
       }
@@ -115,8 +116,7 @@ int main(int argc, char **argv) {
         double minDist = 9999999.0f;
         for (const std::array<double, 2> &samplePos : samplesPos) {
           double dist = Distance(x, y, samplePos[0], samplePos[1], tileSize);
-          if (dist < minDist)
-            minDist = dist;
+          if (dist < minDist) minDist = dist;
         }
 
         if (minDist > bestDistance) {
@@ -146,6 +146,10 @@ int main(int argc, char **argv) {
   std::ofstream out(config.m_outPath);
   out << j.dump(4);
   out.close();
-std::chrono::high_resolution_clock::time_point end = std::chrono::steady_clock::now();
-std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::seconds>(end - begin).count() << "[s]" << std::endl;
+  std::chrono::high_resolution_clock::time_point end =
+      std::chrono::steady_clock::now();
+  std::cout
+      << "Time difference = "
+      << std::chrono::duration_cast<std::chrono::seconds>(end - begin).count()
+      << "[s]" << std::endl;
 }
