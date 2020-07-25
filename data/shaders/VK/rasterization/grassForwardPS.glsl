@@ -9,5 +9,5 @@ void PS()
 {
    //vec2 uv = vec2(inUV.x,1.0f - inUV.y);
    vec4 color= vec4(0,0.8,0,1);
-   outputColor = color;
+   outputColor = vec4(inUV*5.0,0,1);
 }

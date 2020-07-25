@@ -95,7 +95,10 @@ void VkTempLayer::initGrass() {
 
   description.materialHandle = m_grassMaterial;
   //*3 because we render a triangle for now
-  description.primitiveToRender = pointCount * tileCount * 3;
+  int verticesPerTriangle = 3;
+  int trianglesPerBlade = 5;
+  description.primitiveToRender = 15;
+  //description.primitiveToRender = pointCount * tileCount * verticesPerTriangle*trianglesPerBlade;
   globals::RENDERING_CONTEXT->addRenderablesToQueue(description);
 }
 
