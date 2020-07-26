@@ -124,8 +124,10 @@ public:
     const bool isInput = isFlag(*sourcePlug, PlugFlags::PLUG_INPUT);
     ResizableVector<const GPlug *> **connections =
         isInput ? m_inConnections : m_outConnections;
+#if SE_DEBUG
     int count = isInput ? m_inputPlugsCount : m_outputPlugsCount;
     assert(srcIndex < count);
+#endif
     ResizableVector<const GPlug *> *connectionList = connections[srcIndex];
     const int connectionCount = connectionList->size();
     for (int i = 0; i < connectionCount; ++i) {
