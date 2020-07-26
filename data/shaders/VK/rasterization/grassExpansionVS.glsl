@@ -4,6 +4,7 @@
 #extension GL_EXT_shader_8bit_storage: require
 #extension GL_GOOGLE_include_directive: require
 
+#include "../common/constants.glsl"
 #include "../common/structures.glsl"
 
 layout (set=0,binding=0) uniform InputData 
@@ -16,8 +17,6 @@ layout (set=3,binding=0) buffer vertices
 	vec4 p[];
 };
 
-const float width = 0.2;
-const float height = 0.4;
 
     //vec4(1.0f, 0.0f, 0.0f, width), 
     //vec4(0.0f, 1.0f, 0.0f, height), 
@@ -67,7 +66,44 @@ const vec2 bladeUVs[15] = {
 
 };
 
-const vec3 taper = vec3(1.0f, 0.6f ,1.0f);
+const vec3 taper = vec3(0.75f, 0.65f,0.45f);
+
+// Simple noise function, sourced from http://answers.unity.com/answers/624136/view.html
+	// Extended discussion on this function can be found at the following link:
+	// https://forum.unity.com/threads/am-i-over-complicating-this-random-function.454887/#post-2949326
+	// Returns a number in the 0...1 range.
+	float rand(vec3 co)
+	{
+		return fract(sin(dot(co.xyz, vec3(12.9898, 78.233, 53.539))) * 43758.5453);
+	}
+
+    // Construct a rotation matrix that rotates around the provided axis, sourced from:
+	// https://gist.github.com/keijiro/ee439d5e7388f3aafc5296005c8c3f33
+	mat3x3 angleAxis3x3(float angle, vec3 axis)
+	{
+		float c = cos(angle);
+        float s = sin(angle);
+
+		float t = 1 - c;
+		float x = axis.x;
+		float y = axis.y;
+		float z = axis.z;
+
+		return mat3x3(
+			t * x * x + c, t * x * y - s * z, t * x * z + s * y,
+			t * x * y + s * z, t * y * y + c, t * y * z - s * x,
+			t * x * z - s * y, t * y * z + s * x, t * z * z + c
+			);
+	}
+
+
+//config to become a buffer
+const float grassBend = 0.2f;
+const float width = 0.1;
+const float height = 0.6;
+const float widthRandom = 0.02;
+const float heightRandom = 0.1;
+
 
 layout(location =1) out vec2 outUV;
 void VS()
@@ -77,24 +113,36 @@ void VS()
 	vec4 position = p[vid];
 	vec4 offset = vec4(offsets[localId],0.0f);
 
-    //vec2 uv = uvs[vid];
+    //spinning the blade by random amount
+    mat3x3 facingRotationMatrix = angleAxis3x3(rand(position.xyz) * TWO_PI, vec3(0, 1, 0));
+
+    //bending the bleade
+    mat3x3 bendRotationMatrix = angleAxis3x3(rand(position.zzx) * grassBend* PI * 0.5, vec3(1, 0, 0));
+    mat3x3 transformation = facingRotationMatrix * bendRotationMatrix;
+
+    //computing the height and width for the blade
+    float finalHeight = (rand(position.zyx) * 2.0 - 1.0) * heightRandom+ height;
+	float finalWidth = (rand(position.xzy) * 2.0 - 1.0) * widthRandom + width;
+
+
     vec2 uv = bladeUVs[localId];
     
     float a = taper.x * float(uv.y < 0.33f);
     float b = taper.y * float(int (uv.y <= 0.66) & int(uv.y >= 0.33));
-	float c = taper.z * float(uv.y > 0.6666666);
+	float c = taper.z * float(uv.y > 0.66);
 
     float taperValue  = a+ b + c;
 
     //let us compute the triangle we are in
     uint triangleId = localId/6;
-    float  localWidth =  width * taperValue;
+    float  localWidth =  finalWidth* taperValue;
 
     offset.x *=localWidth;
-    offset.y *=height;
+    offset.y *=finalHeight;
     offset.z *=localWidth;
 
-	position+= offset;
+    vec3 rotatedOffset = transformation*offset.xyz;
+	position.xyz += rotatedOffset;
 
 
 	outUV= uv;

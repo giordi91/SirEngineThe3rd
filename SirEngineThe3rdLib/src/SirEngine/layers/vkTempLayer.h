@@ -2,6 +2,7 @@
 
 #include "SirEngine/handle.h"
 #include "SirEngine/layer.h"
+#include "SirEngine/textureManager.h"
 
 namespace SirEngine {
 
@@ -55,5 +56,6 @@ private:
   DebugDrawHandle m_debugHandle{};
   BufferHandle m_grassBuffer;
   MaterialHandle m_grassMaterial;
+  TextureHandle m_windTexture;
 };
 } // namespace SirEngine

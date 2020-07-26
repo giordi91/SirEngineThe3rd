@@ -159,7 +159,9 @@
     "-p ../data/external/textures/bricks/bricks_A.png -o ../data/processed/textures/bricks/bricks_A.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1 -g -m\"",
     "-p ../data/external/textures/bricks/bricks_HEIGHT.png -o ../data/processed/textures/bricks/bricks_HEIGHT.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\"",
     "-p ../data/external/textures/bricks/bricks_N.png -o ../data/processed/textures/bricks/bricks_N.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\"",
-    "-p ../data/external/textures/bricks/bricks_R.png -o ../data/processed/textures/bricks/bricks_R.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\""
+    "-p ../data/external/textures/bricks/bricks_R.png -o ../data/processed/textures/bricks/bricks_R.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\"",
+
+    "-p ../data/external/textures/grass/wind.png -o ../data/processed/textures/grass/wind.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1 -g -m\"",
   ],
   "t": [
       "-p ../data/pso -o ../data/processed/pso --pluginName PSOCompilerPlugin --pluginArgs \"-t DX12 -a -s ../data/shaders/DX12\""

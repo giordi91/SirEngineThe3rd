@@ -21,6 +21,7 @@
 #include "SirEngine/log.h"
 #include "SirEngine/materialManager.h"
 #include "SirEngine/psoManager.h"
+#include "SirEngine/textureManager.h"
 
 namespace SirEngine {
 void VkTempLayer::initGrass() {
@@ -86,6 +87,11 @@ void VkTempLayer::initGrass() {
   globals::MATERIAL_MANAGER->bindBuffer(m_grassMaterial, m_grassBuffer, 0,
                                         SHADER_QUEUE_FLAGS::FORWARD);
 
+  m_windTexture = globals::TEXTURE_MANAGER->loadTexture(
+      "../data/processed/textures/grass/wind.texture");
+  globals::MATERIAL_MANAGER->bindTexture(m_grassMaterial, m_windTexture, 1, 1,
+                                         SHADER_QUEUE_FLAGS::FORWARD, false);
+
   // lets create the needed stuff to add the object to the queue
   RenderableDescription description{};
   description.buffer = m_grassBuffer;
@@ -97,8 +103,9 @@ void VkTempLayer::initGrass() {
   //*3 because we render a triangle for now
   int verticesPerTriangle = 3;
   int trianglesPerBlade = 5;
-  description.primitiveToRender = 15;
-  //description.primitiveToRender = pointCount * tileCount * verticesPerTriangle*trianglesPerBlade;
+  // description.primitiveToRender = 15;
+  description.primitiveToRender =
+      pointCount * tileCount * verticesPerTriangle * trianglesPerBlade;
   globals::RENDERING_CONTEXT->addRenderablesToQueue(description);
 }
 
@@ -200,6 +207,8 @@ void VkTempLayer::onEvent(Event &event) {
 }
 
 void VkTempLayer::clear() {
+  globals::BUFFER_MANAGER->free(m_grassBuffer);
+  globals::TEXTURE_MANAGER->free(m_windTexture);
   globals::RENDERING_GRAPH->clear();
   if (m_debugHandle.isHandleValid()) {
     globals::DEBUG_RENDERER->free(m_debugHandle);
