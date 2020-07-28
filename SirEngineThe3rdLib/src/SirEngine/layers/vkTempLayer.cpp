@@ -26,8 +26,17 @@
 namespace SirEngine {
 void VkTempLayer::initGrass() {
   // lets read the grass file
-  const char *grassFile = "../data/external/grass/points.json";
+  const char *grassFile = "../data/external/grass/pointsOld.json";
+  const char *grassFile2 = "../data/external/grass/points.json";
   auto jobj = getJsonObj(grassFile);
+  auto a = globals::GAME_CLOCK.now();
+  auto jobj2 = getJsonObj(grassFile2);
+  auto b = globals::GAME_CLOCK.now();
+
+	auto fs = b -a;
+    auto d = std::chrono::duration_cast<std::chrono::seconds>(fs);
+    std::cout << d.count() << "s\n";
+	
 
   // compute the amount of memory needed
   const uint32_t tileCount = jobj.size();

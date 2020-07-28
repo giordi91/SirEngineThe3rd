@@ -11,7 +11,7 @@ struct CameraBuffer {
   float vFov;
   float screenWidth;
   float screenHeight;
-  float padding;
+  float time;
 };
 
 //this struct should hold all the data that changes once per frame or less

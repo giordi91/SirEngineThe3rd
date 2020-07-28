@@ -8,10 +8,11 @@ struct CameraBuffer {
   float4x4 VPinverse;
   float4 perspectiveValues;
   float4 position;
+  float4 cameraViewDir;
   float vFov;
   float screenWidth;
   float screenHeight;
-  float padding;
+  float time;
 };
 
 //this struct should hold all the data that changes once per frame or less
