@@ -181,7 +181,7 @@ void createStaticSamplerDescriptorSet() {
   resourceBinding[0].binding = 0;
   resourceBinding[0].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
   resourceBinding[0].descriptorCount = STATIC_SAMPLER_COUNT;
-  resourceBinding[0].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+  resourceBinding[0].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT |VK_SHADER_STAGE_VERTEX_BIT;
   resourceBinding[0].pImmutableSamplers = STATIC_SAMPLERS;
 
   VkDescriptorSetLayoutCreateInfo resourceLayoutInfo[1] = {};

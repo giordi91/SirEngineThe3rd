@@ -297,6 +297,7 @@ void VkRenderingContext::setupCameraForFrame() {
   m_camBufferCPU.VPinverse =
       globals::MAIN_CAMERA->getMVPInverse(glm::mat4(1.0));
   m_camBufferCPU.perspectiveValues = globals::MAIN_CAMERA->getProjParams();
+  m_camBufferCPU.time = globals::GAME_CLOCK.getDeltaFromOrigin() * 1e-9;
 
   // memcpy(m_cameraBuffer.data, &m_camBufferCPU, sizeof(m_camBufferCPU));
   globals::CONSTANT_BUFFER_MANAGER->update(m_cameraHandle, &m_camBufferCPU);

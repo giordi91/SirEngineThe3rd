@@ -17,6 +17,9 @@ layout (set=3,binding=0) buffer vertices
 	vec4 p[];
 };
 
+layout (set=3,binding = 1) uniform texture2D windTex;
+layout (set=1,binding = 0) uniform sampler[7] colorSampler;
+
 
     //vec4(1.0f, 0.0f, 0.0f, width), 
     //vec4(0.0f, 1.0f, 0.0f, height), 
@@ -100,9 +103,13 @@ const vec3 taper = vec3(0.75f, 0.65f,0.45f);
 //config to become a buffer
 const float grassBend = 0.2f;
 const float width = 0.1;
-const float height = 0.6;
+const float height = 1.5;
 const float widthRandom = 0.02;
 const float heightRandom = 0.1;
+const float windStrength = 0.3f;
+const vec2 windFrequency = vec2(0.1,0.1);
+const float bladeForward = 1.0;
+const float bladeCurvatureAmount = 2.0;
 
 
 layout(location =1) out vec2 outUV;
@@ -113,12 +120,28 @@ void VS()
 	vec4 position = p[vid];
 	vec4 offset = vec4(offsets[localId],0.0f);
 
+
+
     //spinning the blade by random amount
     mat3x3 facingRotationMatrix = angleAxis3x3(rand(position.xyz) * TWO_PI, vec3(0, 1, 0));
 
+    //sampling the wind texture
+    //hardcoded range [-15,15]
+    float range = 15;
+
+	vec2 tempUV = vec2((position.x / range)*0.5 + 1,(position.z / range)*0.5 + 1) * 0.1;
+    vec2 windUV = fract( tempUV+ windFrequency* cameraBuffer.time);
+    vec2 windSample = (texture (sampler2D (windTex, colorSampler[2]), windUV).xy * 2 -1)*windStrength;
+	vec3 wind = normalize(vec3(windSample.y, 0, windSample.x));
+    mat3x3 windRotation = angleAxis3x3(PI*0.5 * length(windSample), wind);
+
     //bending the bleade
     mat3x3 bendRotationMatrix = angleAxis3x3(rand(position.zzx) * grassBend* PI * 0.5, vec3(1, 0, 0));
-    mat3x3 transformation = facingRotationMatrix * bendRotationMatrix;
+    mat3x3 transformation =windRotation*facingRotationMatrix * bendRotationMatrix;
+    //mat3x3 transformation =facingRotationMatrix * bendRotationMatrix;
+    //mat3x3 transformation =facingRotationMatrix;
+
+
 
     //computing the height and width for the blade
     float finalHeight = (rand(position.zyx) * 2.0 - 1.0) * heightRandom+ height;
@@ -126,6 +149,9 @@ void VS()
 
 
     vec2 uv = bladeUVs[localId];
+
+	float forward= rand(position.yyz) * bladeForward;
+    float segmentForward = pow(uv.y, bladeCurvatureAmount) * forward;
     
     float a = taper.x * float(uv.y < 0.33f);
     float b = taper.y * float(int (uv.y <= 0.66) & int(uv.y >= 0.33));
@@ -139,9 +165,10 @@ void VS()
 
     offset.x *=localWidth;
     offset.y *=finalHeight;
-    offset.z *=localWidth;
+    offset.z  += segmentForward;
 
     vec3 rotatedOffset = transformation*offset.xyz;
+    //vec3 rotatedOffset = offset.xyz;
 	position.xyz += rotatedOffset;
 
 
