@@ -17,6 +17,13 @@ class ShaderCompileEvent;
 struct Skeleton;
 struct GraphAllocators;
 
+struct GrassConfig
+{
+    glm::vec3 gridOrigin;
+    int tilesPerSide;
+    float tileSize;
+};
+
 namespace dx12 {
 class Texture2D;
 
@@ -57,5 +64,6 @@ private:
   BufferHandle m_grassBuffer;
   MaterialHandle m_grassMaterial;
   TextureHandle m_windTexture;
+  GrassConfig m_grassConfig{};
 };
 } // namespace SirEngine

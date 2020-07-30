@@ -74,7 +74,8 @@ enum BinaryFileType {
   RS = 3,
   SKIN = 4,
   ANIM = 5,
-  PSO = 6
+  PSO = 6,
+  POINT_TILER= 7
 };
 
 SIR_ENGINE_API
@@ -155,4 +156,12 @@ struct PSOMappedData {
   int rootSignatureSize;
   int psoType;
   int topologyType;
+};
+
+struct PointTilerMapperData
+{
+    int tileCount;
+    int pointsPerTile;
+    int nameSizeInByte;
+    int pointsSizeInByte;
 };
