@@ -2,6 +2,7 @@
 
 #include "SirEngine/application.h"
 #include "SirEngine/assetManager.h"
+#include "SirEngine/binary/binaryFile.h"
 #include "SirEngine/bufferManager.h"
 #include "SirEngine/constantBufferManager.h"
 #include "SirEngine/events/debugEvent.h"
@@ -24,21 +25,44 @@
 #include "SirEngine/textureManager.h"
 
 namespace SirEngine {
+
 void VkTempLayer::initGrass() {
-  return;
   // lets read the grass file
   const char *grassFile = "../data/external/grass/pointsOld.json";
-  const char *grassFile2 = "../data/external/grass/points.json";
+  const char *grassFile2 = "../data/processed/grass/grass.points";
   auto jobj = getJsonObj(grassFile);
-  auto a = globals::GAME_CLOCK.now();
-  auto jobj2 = getJsonObj(grassFile2);
-  auto b = globals::GAME_CLOCK.now();
 
-  auto fs = b - a;
-  auto d = std::chrono::duration_cast<std::chrono::seconds>(fs);
-  std::cout << d.count() << "s\n";
+  std::vector<char> binaryData;
+  readAllBytes(grassFile2, binaryData);
 
-  // compute the amount of memory needed
+  const auto *const mapper =
+      getMapperData<PointTilerMapperData>(binaryData.data());
+  const auto *nameData = reinterpret_cast<const char *>(
+      binaryData.data() + sizeof(BinaryFileHeader));
+  const auto *pointData = reinterpret_cast<const float *>(
+      binaryData.data() + sizeof(BinaryFileHeader) + mapper->nameSizeInByte);
+  m_grassConfig.tilesPerSide = 3;
+  m_grassConfig.tileSize= 15;
+
+  std::vector<BoundingBox> tiles;
+  tiles.reserve(m_grassConfig.tilesPerSide * m_grassConfig.tilesPerSide);
+  // let us being by computing the tiles bounding boxes
+  float halfSize = (static_cast<float>(m_grassConfig.tilesPerSide) / 2.0f) *
+                   m_grassConfig.tileSize;
+  glm::vec3 minCorner =
+      m_grassConfig.gridOrigin - glm::vec3{halfSize, 0.0f, halfSize};
+
+  float tw = m_grassConfig.tileSize;
+  for (int tileY = 0; tileY < m_grassConfig.tilesPerSide; ++tileY) {
+    for (int tileX = 0; tileX < m_grassConfig.tilesPerSide; ++tileX) {
+      BoundingBox box;
+      box.min = minCorner + glm::vec3{tw * tileX, 0, tw * tileY};
+      box.max = minCorner + glm::vec3{tw * (tileX + 1), 0.1f, tw * (tileY + 1)};
+      tiles.emplace_back(box);
+    }
+  }
+
+  // OLD stuff
   const uint32_t tileCount = jobj.size();
   assert((tileCount > 0) && "no tiles found in the file");
   // assuming all tiles have same size
@@ -47,9 +71,9 @@ void VkTempLayer::initGrass() {
   const uint64_t totalSize = sizeof(float) * 4 * pointCount * tileCount;
 
   auto *data =
-      reinterpret_cast<float *>(globals::FRAME_ALLOCATOR->allocate(totalSize));
+      static_cast<float *>(globals::FRAME_ALLOCATOR->allocate(totalSize));
 
-  auto *aabbs = reinterpret_cast<BoundingBox *>(
+  auto *aabbs = static_cast<BoundingBox *>(
       globals::FRAME_ALLOCATOR->allocate(sizeof(BoundingBox) * tileCount));
 
   // looping the tiles
@@ -80,7 +104,7 @@ void VkTempLayer::initGrass() {
   }
 
   m_debugHandle = globals::DEBUG_RENDERER->drawBoundingBoxes(
-      aabbs, tileCount, glm::vec4(1, 0, 0, 1), "debugGrassTiles");
+      tiles.data(), tiles.size(), glm::vec4(1, 0, 0, 1), "debugGrassTiles");
   // we have the tiles, good now we want to render the blades
   m_grassBuffer = globals::BUFFER_MANAGER->allocate(
       totalSize, data, "grassBuffer", pointCount * tileCount, sizeof(float) * 4,
@@ -216,8 +240,8 @@ void VkTempLayer::onEvent(Event &event) {
 }
 
 void VkTempLayer::clear() {
-  //globals::BUFFER_MANAGER->free(m_grassBuffer);
-  //globals::TEXTURE_MANAGER->free(m_windTexture);
+  globals::BUFFER_MANAGER->free(m_grassBuffer);
+  globals::TEXTURE_MANAGER->free(m_windTexture);
   globals::RENDERING_GRAPH->clear();
   if (m_debugHandle.isHandleValid()) {
     globals::DEBUG_RENDERER->free(m_debugHandle);

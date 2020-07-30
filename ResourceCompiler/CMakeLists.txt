@@ -44,7 +44,9 @@ project(ResourceCompiler)
 	file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin/data/processed/textures/flatGround)
 	file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin/data/processed/textures/knightB)
 	file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin/data/processed/textures/eye)
+	file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin/data/processed/textures/grass)
 	file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin/data/processed/clip/knightB)
+	file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/bin/data/processed/grass)
 
 	#making sure to add the common cpp flags, that are defined in the main cpp file
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_CXX_FLAGS}")
