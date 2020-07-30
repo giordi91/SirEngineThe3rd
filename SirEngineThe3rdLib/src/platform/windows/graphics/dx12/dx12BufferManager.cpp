@@ -103,9 +103,10 @@ BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInBytes,
   // lets get a data from the pool
   uint32_t index;
   BufferData &data = m_bufferPool.getFreeMemoryData(index);
+  data ={};
 
   if (isUav) {
-    // lets create the decriptor
+    // lets create the descriptor
     dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferUAV(data.uav, data.data,
                                                    numElements, elementSize);
   }
