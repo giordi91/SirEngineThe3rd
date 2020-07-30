@@ -109,7 +109,7 @@ class BufferManagerDx12 final : public BufferManager {
   }
   enum class BufferType { UAV, SRV };
   struct BufferData {
-    ID3D12Resource *data;
+    ID3D12Resource *data = nullptr;
     BufferType type;
     D3D12_RESOURCE_STATES state;
     uint32_t magicNumber;

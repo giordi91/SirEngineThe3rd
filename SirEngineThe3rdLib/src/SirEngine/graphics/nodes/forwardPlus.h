@@ -29,7 +29,7 @@ class ForwardPlus final : public GNode {
   TextureHandle m_depthHandle{};
   BufferBindingsHandle m_bindHandle{};
   LightHandle m_lightHandle{};
-  DirectionalLightData m_light;
+  DirectionalLightData m_light{};
   BindingTableHandle m_passBindings{};
   ConstantBufferHandle m_lightCB{};
 };
