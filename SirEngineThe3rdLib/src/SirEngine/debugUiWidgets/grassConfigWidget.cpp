@@ -1,8 +1,8 @@
 #include "SirEngine/debugUiWidgets/grassConfigWidget.h"
 
 #include "SirEngine/globals.h"
+#include "SirEngine/graphics/techniques/grass.h"
 #include "SirEngine/interopData.h"
-#include "SirEngine/layers/vkTempLayer.h"
 #include "imgui/imgui.h"
 
 namespace SirEngine::debug {

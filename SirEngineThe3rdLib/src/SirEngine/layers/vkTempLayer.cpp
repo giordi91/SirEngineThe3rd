@@ -107,9 +107,6 @@ void VkTempLayer::onDetach() {}
 void VkTempLayer::onUpdate() {
   globals::RENDERING_CONTEXT->setupCameraForFrame();
 
-  /*
-  */
-
   // evaluating rendering graph
   globals::CONSTANT_BUFFER_MANAGER->processBufferedData();
   globals::RENDERING_GRAPH->compute();
