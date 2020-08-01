@@ -19,22 +19,23 @@ void GrassTechnique::setup() {
   const char *grassFile2 = "../data/processed/grass/grass.points";
   auto jobj = getJsonObj(grassFile);
 
-  std::vector<char> binaryData;
-  readAllBytes(grassFile2, binaryData);
+  readAllBytes(grassFile2, m_binaryData);
 
   const auto *const mapper =
-      getMapperData<PointTilerMapperData>(binaryData.data());
+      getMapperData<PointTilerMapperData>(m_binaryData.data());
   const auto *nameData = reinterpret_cast<const char *>(
-      binaryData.data() + sizeof(BinaryFileHeader));
-  const auto *pointData = reinterpret_cast<const float *>(
-      binaryData.data() + sizeof(BinaryFileHeader) + mapper->nameSizeInByte);
+      m_binaryData.data() + sizeof(BinaryFileHeader));
+  auto *pointData = reinterpret_cast<float *>(
+      m_binaryData.data() + sizeof(BinaryFileHeader) + mapper->nameSizeInByte);
   m_grassConfig.tilesPerSide = 3;
   m_grassConfig.tileSize = 15;
+  m_grassConfig.sourceDataTileCount = mapper->tileCount;
+  // used to find changes in config
   m_grassConfigOld = m_grassConfig;
   globals::INTEROP_DATA->registerData("grassConfig", &m_grassConfig);
 
   std::vector<BoundingBox> tiles;
-  tiles.reserve(maxGrassPerSide * maxGrassPerSide);
+  tiles.reserve(MAX_GRASS_PER_SIDE * MAX_GRASS_PER_SIDE);
   // let us being by computing the tiles bounding boxes
   float halfSize = (static_cast<float>(m_grassConfig.tilesPerSide) / 2.0f) *
                    m_grassConfig.tileSize;
@@ -48,9 +49,35 @@ void GrassTechnique::setup() {
       box.min = minCorner + glm::vec3{tw * tileX, 0, tw * tileY};
       box.max = minCorner + glm::vec3{tw * (tileX + 1), 0.1f, tw * (tileY + 1)};
       tiles.emplace_back(box);
+      m_tilesPoints.push_back(box.min);
     }
   }
 
+  int runtimeTilesCount =
+      m_grassConfig.tilesPerSide * m_grassConfig.tilesPerSide;
+  m_tilesIndices.reserve(runtimeTilesCount);
+  for (int tileY = 0; tileY < m_grassConfig.tilesPerSide; ++tileY) {
+    for (int tileX = 0; tileX < m_grassConfig.tilesPerSide; ++tileX) {
+      int value =
+          (rand() * static_cast<int>(m_grassConfig.sourceDataTileCount) /
+           RAND_MAX);
+      m_tilesIndices.push_back(value);
+    }
+  }
+
+  m_windTexture = globals::TEXTURE_MANAGER->loadTexture(
+      "../data/processed/textures/grass/wind.texture");
+
+  m_debugHandle = globals::DEBUG_RENDERER->drawBoundingBoxes(
+      tiles.data(), MAX_GRASS_PER_SIDE * MAX_GRASS_PER_SIDE,
+      glm::vec4(1, 0, 0, 1), "debugGrassTiles");
+
+  m_tilesPointsHandle = globals::BUFFER_MANAGER->allocate(
+      mapper->pointsSizeInByte, pointData, "grassBuffer",
+      mapper->tileCount * mapper->pointsPerTile, sizeof(float) * 3,
+      BufferManager::STORAGE_BUFFER);
+
+  /*
   // OLD stuff
   const uint32_t tileCount = jobj.size();
   assert((tileCount > 0) && "no tiles found in the file");
@@ -92,9 +119,6 @@ void GrassTechnique::setup() {
     tileCounter++;
   }
 
-  m_debugHandle = globals::DEBUG_RENDERER->drawBoundingBoxes(
-      tiles.data(), maxGrassPerSide * maxGrassPerSide, glm::vec4(1, 0, 0, 1),
-      "debugGrassTiles");
 
   // we have the tiles, good now we want to render the blades
   m_grassBuffer = globals::BUFFER_MANAGER->allocate(
@@ -111,8 +135,6 @@ void GrassTechnique::setup() {
   globals::MATERIAL_MANAGER->bindBuffer(m_grassMaterial, m_grassBuffer, 0,
                                         SHADER_QUEUE_FLAGS::FORWARD);
 
-  m_windTexture = globals::TEXTURE_MANAGER->loadTexture(
-      "../data/processed/textures/grass/wind.texture");
   globals::MATERIAL_MANAGER->bindTexture(m_grassMaterial, m_windTexture, 1, 1,
                                          SHADER_QUEUE_FLAGS::FORWARD, false);
 
@@ -131,10 +153,11 @@ void GrassTechnique::setup() {
   description.primitiveToRender =
       pointCount * tileCount * verticesPerTriangle * trianglesPerBlade;
   globals::RENDERING_CONTEXT->addRenderablesToQueue(description);
+  */
 }
 
 void GrassTechnique::render(const BindingTableHandle passHandle) {
-    tileDebug();
+  tileDebug();
 }
 
 void GrassTechnique::clear() {
@@ -150,6 +173,10 @@ void GrassTechnique::clear() {
     globals::DEBUG_RENDERER->free(m_debugHandle);
     m_debugHandle = {0};
   }
+  if (m_tilesPointsHandle.isHandleValid()) {
+    globals::BUFFER_MANAGER->free(m_tilesPointsHandle);
+    m_tilesPointsHandle = {0};
+  }
 }
 
 void GrassTechnique::tileDebug() {
@@ -159,7 +186,7 @@ void GrassTechnique::tileDebug() {
       m_grassConfig.tilesPerSide != m_grassConfigOld.tilesPerSide;
   if (grassTileSizeChanged | grassTileCountChanged) {
     std::vector<BoundingBox> tiles;
-    tiles.reserve(maxGrassPerSide * maxGrassPerSide);
+    tiles.reserve(MAX_GRASS_PER_SIDE * MAX_GRASS_PER_SIDE);
     // let us being by computing the tiles bounding boxes
     float halfSize = (static_cast<float>(m_grassConfig.tilesPerSide) / 2.0f) *
                      m_grassConfig.tileSize;
