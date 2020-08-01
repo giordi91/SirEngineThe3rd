@@ -59,6 +59,7 @@ class DebugRenderer {
   virtual DebugDrawHandle drawBoundingBoxes(const BoundingBox *data, int count,
                                             glm::vec4 color,
                                             const char *debugName) = 0;
+  virtual void updateBoundingBoxesData(DebugDrawHandle handle, const BoundingBox* data, int count)= 0;
 
   virtual DebugDrawHandle drawAnimatedBoundingBoxes(DebugDrawHandle handle,
                                                     BoundingBox *data,

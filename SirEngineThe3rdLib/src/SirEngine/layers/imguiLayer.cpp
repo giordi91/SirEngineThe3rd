@@ -1,6 +1,7 @@
 //#include <Windows.h>
 
 #include "imguiLayer.h"
+
 #include "SirEngine/core.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/log.h"
@@ -35,9 +36,7 @@
 
 namespace SirEngine {
 void ImguiLayer::onAttach() {
-
   if (globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::DX12) {
-
     // need to initialize ImGui dx12
     dx12::DescriptorPair pair;
     dx12::GLOBAL_CBV_SRV_UAV_HEAP->reserveDescriptor(pair);
@@ -160,12 +159,12 @@ void ImguiLayer::onAttach() {
 
   m_renderGraph.initialize(globals::RENDERING_GRAPH);
   m_shaderWidget.initialize();
+  m_grassWidget.initialize();
 }
 
 void ImguiLayer::onDetach() { ImGui_ImplDX12_Shutdown(); }
 
 void ImguiLayer::onUpdate() {
-
   if (!m_shouldShow) {
     return;
   }
@@ -218,6 +217,9 @@ void ImguiLayer::onUpdate() {
       if (ImGui::MenuItem("Shader compiler", nullptr)) {
         m_renderShaderCompiler = !m_renderShaderCompiler;
       }
+      if (ImGui::MenuItem("Grass Tool Config", nullptr)) {
+        m_renderGrassConfig= !m_renderGrassConfig;
+      }
       if (ImGui::MenuItem("Reload scripts", nullptr)) {
         SE_CORE_INFO("reload scripts");
         auto *event = new ReloadScriptsEvent();
@@ -245,6 +247,10 @@ void ImguiLayer::onUpdate() {
   if (m_renderShaderCompiler) {
     m_shaderWidget.render();
   }
+  if (m_renderGrassConfig) {
+    m_grassWidget.render();
+  }
+
   ImGui::End();
   ImGui::Render();
 
@@ -326,7 +332,6 @@ else {
 //} // namespace SirEngine
 
 void ImguiLayer::onEvent(Event &event) {
-
   EventDispatcher dispatcher(event);
   dispatcher.dispatch<KeyTypeEvent>(
       SE_BIND_EVENT_FN(ImguiLayer::onKeyTypeEvent));
@@ -428,4 +433,4 @@ bool ImguiLayer::onRequestCompileEvent(const RequestShaderCompileEvent &) {
   m_shaderWidget.requestCompile();
   return true;
 }
-} // namespace SirEngine
+}  // namespace SirEngine

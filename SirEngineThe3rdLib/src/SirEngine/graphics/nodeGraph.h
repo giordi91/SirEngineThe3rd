@@ -1,9 +1,10 @@
 #pragma once
+#include <cassert>
+#include <cstdint>
+
 #include "SirEngine/core.h"
 #include "SirEngine/memory/resizableVector.h"
 #include "SirEngine/runtimeString.h"
-#include <cassert>
-#include <cstdint>
 
 namespace SirEngine {
 
@@ -30,6 +31,14 @@ struct GPlug final {
   uint32_t flags;
 };
 
+class GNodeCallback {
+ public:
+  virtual ~GNodeCallback() = default;
+  virtual void setup() = 0;
+  virtual void render(BindingTableHandle) = 0;
+  virtual void clear() = 0;
+};
+
 // TODO make node not copyable assignable
 class SIR_ENGINE_API GNode {
 // TODO consider a constexpr inline function instead?
@@ -47,10 +56,10 @@ class SIR_ENGINE_API GNode {
 // extracting the last bit, if one is an input plug
 #define IS_INPUT_PLUG(x) (((1u << 31u) & (x)) > 0)
 
-public:
+ public:
   // interface
   GNode(const char *name, const char *type, const GraphAllocators &allocs)
-      : m_allocs(allocs) {
+      : m_allocs(allocs), m_callbacks(4) {
     m_nodeName = m_allocs.stringPool->allocatePersistent(name);
     m_nodeType = m_allocs.stringPool->allocatePersistent(type);
   };
@@ -73,6 +82,9 @@ public:
 
   inline const char *getName() const { return m_nodeName; }
   inline const char *getType() const { return m_nodeType; }
+  void addCallbackConfig(GNodeCallback *config) {
+    m_callbacks.pushBack(config);
+  };
   inline GPlug *getPlug(const int index) {
     const bool isInput = IS_INPUT_PLUG(index);
     const int plugIndex = PLUG_INDEX(index);
@@ -154,8 +166,8 @@ public:
   inline uint32_t getOutputCount() const { return m_outputPlugsCount; }
 
   // TODO make this friend?
-  const ResizableVector<const GPlug *> *
-  getPlugConnections(const GPlug *plug) const {
+  const ResizableVector<const GPlug *> *getPlugConnections(
+      const GPlug *plug) const {
     const bool isInput = isFlag(*plug, PlugFlags::PLUG_INPUT);
     const int plugIdx = findPlugIndexFromInstance(plug);
     const int plugCount = isInput ? m_inputPlugsCount : m_outputPlugsCount;
@@ -178,14 +190,13 @@ public:
     return -1;
   }
 
-protected:
+ protected:
   inline bool isFlag(const GPlug &plug, const PlugFlags flag) const {
     return (plug.flags & flag) > 0;
   }
   void defaultInitializePlugsAndConnections(
       const int inputCount, const int outputCount,
       const int reserve = DEFAULT_PLUG_CONNECTION_ALLOCATION) {
-
     const int totalCount = inputCount + outputCount;
     auto *plugs = static_cast<GPlug *>(
         m_allocs.allocator->allocate(sizeof(GPlug) * totalCount));
@@ -202,7 +213,7 @@ protected:
       int inputCount, int outputCount,
       int reserve = DEFAULT_PLUG_CONNECTION_ALLOCATION);
 
-protected:
+ protected:
   const GraphAllocators &m_allocs;
   const char *m_nodeName;
   const char *m_nodeType;
@@ -215,6 +226,7 @@ protected:
   static const int DEFAULT_PLUG_CONNECTION_ALLOCATION = 3;
   ResizableVector<const GPlug *> **m_inConnections = nullptr;
   ResizableVector<const GPlug *> **m_outConnections = nullptr;
+  ResizableVector<GNodeCallback *> m_callbacks;
 };
 
 template <typename T>
@@ -231,7 +243,7 @@ inline T getInputConnection(ResizableVector<const GPlug *> **conns,
 }
 template class SIR_ENGINE_API ResizableVector<GNode *>;
 class SIR_ENGINE_API DependencyGraph final {
-public:
+ public:
   DependencyGraph()
       : m_nodes(GRAPH_DEFAULT_RESERVE_SIZE),
         m_linearizedGraph(GRAPH_DEFAULT_RESERVE_SIZE) {}
@@ -243,7 +255,6 @@ public:
   }
 
   inline GNode *findNodeOfType(const char *type) {
-
     const uint32_t nodesCount = m_nodes.size();
     for (uint32_t i = 0; i < nodesCount; ++i) {
       const bool isType = m_nodes.getConstRef(i)->isOfType(type);
@@ -309,7 +320,7 @@ public:
     }
   };
 
-private:
+ private:
   ResizableVector<GNode *> m_nodes;
   GNode *finalNode = nullptr;
   uint32_t m_nodeCounter = 0;
@@ -317,4 +328,4 @@ private:
   static constexpr int GRAPH_DEFAULT_RESERVE_SIZE = 100;
 };
 
-} // namespace SirEngine
+}  // namespace SirEngine

@@ -24,6 +24,7 @@
 #include "platform/windows/graphics/vk/vkShaderManager.h"
 #include "platform/windows/graphics/vk/vkSwapChain.h"
 #include "platform/windows/graphics/vk/vkTextureManager.h"
+#include "SirEngine/interopData.h"
 
 namespace SirEngine::vk {
 VkInstance INSTANCE = nullptr;
@@ -232,6 +233,10 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
 
   globals::ASSET_MANAGER = new AssetManager();
   globals::ASSET_MANAGER->initialize();
+
+
+  globals::INTEROP_DATA = new InteropData();
+  globals::INTEROP_DATA->initialize();
 
   return true;
 }

@@ -3,6 +3,7 @@
 #include "SirEngine/handle.h"
 #include "SirEngine/layer.h"
 #include "SirEngine/textureManager.h"
+#include "SirEngine/graphics/techniques/grass.h"
 
 namespace SirEngine {
 
@@ -17,17 +18,7 @@ class ShaderCompileEvent;
 struct Skeleton;
 struct GraphAllocators;
 
-struct GrassConfig
-{
-    glm::vec3 gridOrigin;
-    int tilesPerSide;
-    float tileSize;
-};
 
-namespace dx12 {
-class Texture2D;
-
-} // namespace dx12
 class SIR_ENGINE_API VkTempLayer final : public Layer {
 public:
   VkTempLayer() : Layer("VkTempLayer") {}
@@ -58,12 +49,7 @@ private:
   float previousX = 0;
   float previousY = 0;
 
-  // TODO temp
   GraphAllocators *alloc;
-  DebugDrawHandle m_debugHandle{};
-  BufferHandle m_grassBuffer;
-  MaterialHandle m_grassMaterial;
-  TextureHandle m_windTexture;
-  GrassConfig m_grassConfig{};
+  graphics::GrassTechnique m_grass;
 };
 } // namespace SirEngine

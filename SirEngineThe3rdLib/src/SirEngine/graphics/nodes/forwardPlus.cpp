@@ -85,6 +85,10 @@ void ForwardPlus::initialize() {
       RESOURCE_STATE::DEPTH_RENDER_TARGET);
 
   setupLight();
+  uint32_t callbackCount = m_callbacks.size();
+  for (int i = 0; i < callbackCount; ++i) {
+    m_callbacks[i]->setup();
+  }
 }
 
 void ForwardPlus::compute() {
@@ -110,6 +114,11 @@ void ForwardPlus::compute() {
       static_cast<uint32_t>(globals::ENGINE_CONFIG->m_windowHeight), 0};
   globals::RENDERING_CONTEXT->renderQueueType(
       config, SHADER_QUEUE_FLAGS::FORWARD, m_passBindings);
+
+  uint32_t callbackCount = m_callbacks.size();
+  for (int i = 0; i < callbackCount; ++i) {
+    m_callbacks[i]->render(m_passBindings);
+  }
 
   globals::RENDERING_CONTEXT->clearBindingObject(m_bindHandle);
 }
@@ -164,6 +173,10 @@ void ForwardPlus::clear() {
   }
   if (m_passBindings.isHandleValid()) {
     globals::BINDING_TABLE_MANAGER->free(m_passBindings);
+  }
+  uint32_t callbackCount = m_callbacks.size();
+  for (int i = 0; i < callbackCount; ++i) {
+    m_callbacks[i]->clear();
   }
 }
 }  // namespace SirEngine
