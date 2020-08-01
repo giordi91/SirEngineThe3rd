@@ -2,9 +2,9 @@
 
 #include "SirEngine/globals.h"
 #include "SirEngine/graphics/renderingContext.h"
+#include "platform/windows/graphics/vk/vkBindingTableManager.h"
 #include "platform/windows/graphics/vk/vkBufferManager.h"
 #include "platform/windows/graphics/vk/vkConstantBufferManager.h"
-#include "platform/windows/graphics/vk/vkBindingTableManager.h"
 #include "platform/windows/graphics/vk/vkMaterialManager.h"
 #include "vk.h"
 
@@ -223,8 +223,8 @@ void VkDebugRenderer::render(TextureHandle input, TextureHandle depth) {
   const DrawCallConfig config{
       static_cast<uint32_t>(globals::ENGINE_CONFIG->m_windowWidth),
       static_cast<uint32_t>(globals::ENGINE_CONFIG->m_windowHeight), 0};
-  globals::RENDERING_CONTEXT->renderQueueType(config,
-                                              SHADER_QUEUE_FLAGS::DEBUG,{});
+  globals::RENDERING_CONTEXT->renderQueueType(config, SHADER_QUEUE_FLAGS::DEBUG,
+                                              {});
 }
 
 DebugDrawHandle VkDebugRenderer::drawBoundingBoxes(const BoundingBox *data,
@@ -282,5 +282,48 @@ DebugDrawHandle VkDebugRenderer::drawMatrix(const glm::mat4 &mat, float size,
                                             const char *debugName) {
   assert(0);
   return {};
+}
+
+void VkDebugRenderer::updateBoundingBoxesData(const DebugDrawHandle handle,
+                                              const BoundingBox *data,
+                                              const int count) {
+  //assertMagicNumber(handle);
+  //assertPoolMagicNumber(handle);
+  const uint32_t idx = getIndexFromHandle(handle);
+  VkDebugPrimitive &debug = m_primitivesPool[idx];
+  BufferHandle bufferHandle = debug.m_bufferHandle;
+  void *mappedData = globals::BUFFER_MANAGER->getMappedData(bufferHandle);
+
+
+  // 12 is the number of lines needed for the AABB, 4 top, 4 bottom, 4
+  // vertical two is because we need two points per line, we are not doing
+  // triangle-strip
+  const int totalSize = 4 * count * 12 * 2;  // here 4 is the xmfloat4
+
+  auto *points = reinterpret_cast<float *>(
+      globals::FRAME_ALLOCATOR->allocate(sizeof(glm::vec4) * count * 12 * 2));
+  int counter = 0;
+  for (int i = 0; i < count; ++i) {
+    assert(counter <= totalSize);
+    const auto &minP = data[i].min;
+    const auto &maxP = data[i].max;
+    counter = drawSquareBetweenTwoPoints(points, minP, maxP, minP.y, counter);
+    counter = drawSquareBetweenTwoPoints(points, minP, maxP, maxP.y, counter);
+
+    // draw vertical lines
+    counter = push4toVec(points, minP, counter);
+    counter = push4toVec(points, minP.x, maxP.y, minP.z, counter);
+    counter = push4toVec(points, maxP.x, minP.y, minP.z, counter);
+    counter = push4toVec(points, maxP.x, maxP.y, minP.z, counter);
+
+    counter = push4toVec(points, maxP.x, minP.y, maxP.z, counter);
+    counter = push4toVec(points, maxP.x, maxP.y, maxP.z, counter);
+
+    counter = push4toVec(points, minP.x, minP.y, maxP.z, counter);
+    counter = push4toVec(points, minP.x, maxP.y, maxP.z, counter);
+    assert(counter <= totalSize);
+  }
+
+  memcpy(mappedData, points, totalSize*sizeof(float));
 }
 }  // namespace SirEngine::vk

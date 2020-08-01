@@ -591,4 +591,9 @@ DebugDrawHandle Dx12DebugRenderer::drawMatrix(const glm::mat4 &mat, float size,
 
   return returnHandle;
 }
+
+void Dx12DebugRenderer::updateBoundingBoxesData(DebugDrawHandle handle, const BoundingBox* data, int count)
+{
+    assert(0);
+}
 }  // namespace SirEngine::dx12

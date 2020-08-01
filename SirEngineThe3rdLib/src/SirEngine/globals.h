@@ -27,6 +27,7 @@ class DebugRenderer;
 class StringPool;
 class StackAllocator;
 class ThreeSizesPool;
+class InteropData;
 
 using PersistantAllocatorType = ThreeSizesPool;
 namespace graphics {
@@ -77,6 +78,7 @@ extern DebugRenderer *DEBUG_RENDERER;
 extern graphics::ShaderManager *SHADER_MANAGER;
 extern graphics::LightManager *LIGHT_MANAGER;
 extern graphics::BindingTableManager *BINDING_TABLE_MANAGER;
+extern InteropData *INTEROP_DATA;
 
 // generic allocators
 extern SIR_ENGINE_API StringPool *STRING_POOL;

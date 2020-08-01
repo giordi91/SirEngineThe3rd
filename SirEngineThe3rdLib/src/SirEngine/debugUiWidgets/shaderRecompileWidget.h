@@ -2,8 +2,7 @@
 #include <string>
 #include <vector>
 
-namespace SirEngine {
-namespace debug {
+namespace SirEngine::debug {
 struct GraphStatus;
 struct ShaderCompileConsole;
 
@@ -29,5 +28,4 @@ struct ShaderCompilerWidget final {
   std::string m_currentSelectedShader;
 };
 
-}  // namespace debug
 }  // namespace SirEngine

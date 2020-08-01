@@ -6,6 +6,7 @@
 #include "SirEngine/debugUiWidgets/shaderRecompileWidget.h"
 #include "SirEngine/graphics/nodeGraph.h"
 #include "SirEngine/layer.h"
+#include "SirEngine/debugUiWidgets/grassConfigWidget.h"
 #if BUILD_VK
 //TODO need to remove this
 #include <vulkan/vulkan.h>
@@ -58,12 +59,14 @@ private:
   debug::MemoryConsumptionWidget m_memoryUsage;
   debug::RenderGraphWidget m_renderGraph;
   debug::ShaderCompilerWidget m_shaderWidget;
+  debug::GrassConfigWidget m_grassWidget;
 
 #if BUILD_AMD
   debug::HWInfoWidget m_hwInfo;
 #endif
   bool m_shouldShow = false;
   bool m_renderShaderCompiler = false;
+  bool m_renderGrassConfig= false;
   // 192 is the `
   static const uint32_t TRIGGER_UI_BUTTON = 192;
 

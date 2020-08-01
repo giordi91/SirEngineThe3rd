@@ -78,6 +78,7 @@ public:
   DebugDrawHandle drawMatrix(const glm::mat4 &mat, float size, glm::vec4 color,
                              const char *debugName) override;
 
+  void updateBoundingBoxesData(DebugDrawHandle handle, const BoundingBox* data, int count) override;
 private:
   static bool isCompound(const DebugDrawHandle handle) {
     return (handle.handle & (1 << 31)) > 0;

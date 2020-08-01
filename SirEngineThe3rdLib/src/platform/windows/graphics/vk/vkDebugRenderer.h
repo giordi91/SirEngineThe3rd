@@ -53,6 +53,7 @@ class VkDebugRenderer : public DebugRenderer {
   DebugDrawHandle drawMatrix(const glm::mat4& mat, float size, glm::vec4 color,
                   const char* debugName) override;
 
+  void updateBoundingBoxesData(DebugDrawHandle handle, const BoundingBox* data, int count) override;
  private:
   inline void assertMagicNumber(const DebugDrawHandle handle) const {
     const uint32_t magic = getMagicFromHandle(handle);

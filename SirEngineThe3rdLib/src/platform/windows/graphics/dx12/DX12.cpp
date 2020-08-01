@@ -26,6 +26,7 @@
 #include "platform/windows/graphics/dx12/dx12SwapChain.h"
 #include "platform/windows/graphics/dx12/dx12TextureManager.h"
 #include "rootSignatureCompile.h"
+#include "SirEngine/interopData.h"
 
 #undef max
 #undef min
@@ -237,6 +238,9 @@ bool initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
 
   globals::ANIMATION_MANAGER = new AnimationManager();
   globals::ANIMATION_MANAGER->init();
+
+  globals::INTEROP_DATA = new InteropData();
+  globals::INTEROP_DATA->initialize();
 
   globals::SKIN_MANAGER = new SkinClusterManager();
   globals::SKIN_MANAGER->init();

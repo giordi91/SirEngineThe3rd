@@ -28,7 +28,7 @@ void *VkBufferManager::getMappedData(const BufferHandle handle) const {
   assertMagicNumber(handle);
   uint32_t idx = getIndexFromHandle(handle);
   const Buffer &data = m_bufferStorage.getConstRef(idx);
-  return data.memory;
+  return data.data;
 }
 
 void VkBufferManager::bindBuffer(BufferHandle handle,
