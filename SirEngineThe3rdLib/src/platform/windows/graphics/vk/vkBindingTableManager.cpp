@@ -4,6 +4,7 @@
 
 #include "platform/windows/graphics/vk/vk.h"
 #include "platform/windows/graphics/vk/vkPSOManager.h"
+#include "vkBufferManager.h"
 #include "vkConstantBufferManager.h"
 #include "vkTextureManager.h"
 
@@ -202,6 +203,29 @@ void VkBindingTableManager::bindConstantBuffer(
   vk::CONSTANT_BUFFER_MANAGER->bindConstantBuffer(
       constantBufferHandle, bufferInfoUniform, bindingIndex,
       &writeDescriptorSets, descriptorSet);
+
+  vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, 1, &writeDescriptorSets, 0,
+                         nullptr);
+}
+
+void VkBindingTableManager::bindBuffer(const BindingTableHandle bindHandle,
+                                       const BufferHandle buffer,
+                                       const uint32_t descriptorIndex,
+                                       const uint32_t bindingIndex) {
+  assertMagicNumber(bindHandle);
+  uint32_t index = getIndexFromHandle(bindHandle);
+  const auto &data = m_bindingTablePool.getConstRef(index);
+
+  assert(data.descriptorHandle.isHandleValid());
+  // the descriptor set is already taking into account whether or not
+  // is buffered, it gives us the correct one we want
+  VkDescriptorSet descriptorSet =
+      vk::DESCRIPTOR_MANAGER->getDescriptorSet(data.descriptorHandle);
+
+  VkWriteDescriptorSet writeDescriptorSets = {};
+  VkDescriptorBufferInfo bufferInfoUniform = {};
+  vk::BUFFER_MANAGER->bindBuffer(buffer, &writeDescriptorSets, descriptorSet,
+                                 bindingIndex);
 
   vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, 1, &writeDescriptorSets, 0,
                          nullptr);

@@ -12,7 +12,7 @@ void GrassConfigWidget::render() {
     return;
   }
 
-  auto* grassConfig = static_cast<graphics::GrassConfig*>(config);
+  auto* grassConfig = static_cast<GrassConfig*>(config);
   if (!ImGui::Begin("Grass Config", &m_opened)) {
     ImGui::End();
     return;

@@ -38,8 +38,9 @@ DebugDrawHandle Dx12DebugRenderer::drawPointsUniformColor(
   // allocate constant buffer
   DebugPointsFixedColor settings{color, size};
   const ConstantBufferHandle chandle =
-      globals::CONSTANT_BUFFER_MANAGER->allocateDynamic(sizeof(settings),
-                                                        &settings);
+      globals::CONSTANT_BUFFER_MANAGER->allocate(
+          sizeof(settings),
+          ConstantBufferManager::CONSTANT_BUFFER_FLAG_BITS::NONE, &settings);
 
   // store it such way that we can render it
   primitive.m_primitiveType = PRIMITIVE_TYPE::POINT;
@@ -102,8 +103,9 @@ DebugDrawHandle Dx12DebugRenderer::drawLinesUniformColor(
   // allocate constant buffer
   DebugPointsFixedColor settings{color, size};
   const ConstantBufferHandle chandle =
-      dx12::CONSTANT_BUFFER_MANAGER->allocateDynamic(sizeof(settings),
-                                                     &settings);
+      globals::CONSTANT_BUFFER_MANAGER->allocate(
+          sizeof(settings),
+          ConstantBufferManager::CONSTANT_BUFFER_FLAG_BITS::NONE, &settings);
 
   // store it such way that we can render it
   primitive.m_primitiveType = PRIMITIVE_TYPE::LINE;
@@ -307,8 +309,8 @@ void Dx12DebugRenderer::render(const TextureHandle input,
   const DrawCallConfig config{
       static_cast<uint32_t>(globals::ENGINE_CONFIG->m_windowWidth),
       static_cast<uint32_t>(globals::ENGINE_CONFIG->m_windowHeight), 0};
-  globals::RENDERING_CONTEXT->renderQueueType(config,
-                                              SHADER_QUEUE_FLAGS::DEBUG,{});
+  globals::RENDERING_CONTEXT->renderQueueType(config, SHADER_QUEUE_FLAGS::DEBUG,
+                                              {});
 }
 inline int push3toVec(float *data, float x, float y, float z, int counter) {
   data[counter++] = x;
@@ -592,8 +594,9 @@ DebugDrawHandle Dx12DebugRenderer::drawMatrix(const glm::mat4 &mat, float size,
   return returnHandle;
 }
 
-void Dx12DebugRenderer::updateBoundingBoxesData(DebugDrawHandle handle, const BoundingBox* data, int count)
-{
-    assert(0);
+void Dx12DebugRenderer::updateBoundingBoxesData(DebugDrawHandle handle,
+                                                const BoundingBox *data,
+                                                int count) {
+  assert(0);
 }
 }  // namespace SirEngine::dx12

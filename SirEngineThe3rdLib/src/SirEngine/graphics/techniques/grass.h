@@ -5,16 +5,10 @@
 
 #include "SirEngine/graphics/nodeGraph.h"
 #include "SirEngine/handle.h"
+#include "SirEngine/graphics/cpuGraphicsStructures.h"
 
 namespace SirEngine::graphics {
 
-struct GrassConfig {
-  glm::vec3 gridOrigin;
-  int tilesPerSide;
-  float tileSize;
-  int sourceDataTileCount;
-  int seed;
-};
 
 class GrassTechnique final : public GNodeCallback {
  public:
@@ -28,12 +22,20 @@ class GrassTechnique final : public GNodeCallback {
  private:
   GrassConfig m_grassConfig{};
   GrassConfig m_grassConfigOld{};
+
   BufferHandle m_grassBuffer{};
   BufferHandle m_tilesPointsHandle{};
   BufferHandle m_tilesIndicesHandle{};
+  ConstantBufferHandle m_grassConfigHandle{};
+  BindingTableHandle m_bindingTable{};
+
+
   MaterialHandle m_grassMaterial{};
   TextureHandle m_windTexture{};
   DebugDrawHandle m_debugHandle{};
+  PSOHandle m_pso;
+  RSHandle m_rs;
+
   std::vector<char> m_binaryData;
   std::vector<glm::vec3> m_tilesPoints;
   std::vector<int> m_tilesIndices;

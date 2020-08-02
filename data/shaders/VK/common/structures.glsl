@@ -81,4 +81,12 @@ struct BoundingBox {
   vec3 max;
   vec2 padding;
 };
+
+struct GrassConfig {
+  vec3 gridOrigin;
+  int tilesPerSide;
+  float tileSize;
+  int sourceDataTileCount;
+  int seed;
+};
 #endif

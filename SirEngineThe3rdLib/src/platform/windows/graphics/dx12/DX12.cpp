@@ -853,6 +853,11 @@ void Dx12RenderingContext::renderProcedural(const uint32_t indexCount) {
   currentFc->commandList->DrawInstanced(indexCount, 1, 0, 0);
 }
 
+void Dx12RenderingContext::bindCameraBuffer(RSHandle) const
+{
+    assert(0);
+}
+
 bool Dx12RenderingContext::newFrame() {
   globals::STRING_POOL->resetFrameMemory();
   globals::FRAME_ALLOCATOR->reset();

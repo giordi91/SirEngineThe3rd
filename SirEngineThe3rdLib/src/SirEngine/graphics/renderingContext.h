@@ -134,6 +134,7 @@ class RenderingContext {
   virtual void clearBindingObject(const BufferBindingsHandle handle) = 0;
   virtual void freeBindingObject(const BufferBindingsHandle handle) = 0;
   virtual void bindCameraBuffer(int index) const = 0;
+  virtual void bindCameraBuffer(RSHandle) const = 0;
 
   inline const RenderingContextCreationSettings &getContextSettings() const {
     return m_settings;

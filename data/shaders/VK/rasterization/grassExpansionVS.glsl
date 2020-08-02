@@ -14,10 +14,19 @@ layout (set=0,binding=0) uniform InputData
 
 layout (set=3,binding=0) buffer vertices
 {
-	vec4 p[];
+	vec2 p[];
+};
+layout (set=3,binding=1) buffer tilesIndices 
+{
+	uint tileId[];
 };
 
-layout (set=3,binding = 1) uniform texture2D windTex;
+layout (set=3,binding = 2) uniform texture2D windTex;
+layout (set=3,binding=3) uniform ConfigData 
+{
+	GrassConfig grassConfig;
+}; 
+
 layout (set=1,binding = 0) uniform sampler[7] colorSampler;
 
 
@@ -110,6 +119,10 @@ const float windStrength = 0.3f;
 const vec2 windFrequency = vec2(0.1,0.1);
 const float bladeForward = 1.0;
 const float bladeCurvatureAmount = 2.0;
+const int pointsPerTile = 500;
+//const int tilesPerSide = 3;
+const vec3 gridOrigin = vec3(0,0,0);
+//const float tileWidth = 15.0f;
 
 
 layout(location =1) out vec2 outUV;
@@ -117,7 +130,17 @@ void VS()
 {
     uint vid = gl_VertexIndex/15;
 	uint localId = gl_VertexIndex%15;
-	vec4 position = p[vid];
+
+    int tileNumber = int(vid/pointsPerTile);
+    float halfSize = grassConfig.tilesPerSide*0.5;
+    float tw = grassConfig.tileSize;
+    vec3 minCorner = gridOrigin - vec3(halfSize,0,halfSize)*tw;
+    float tileX = tileNumber %grassConfig.tilesPerSide;
+    float tileY = tileNumber /grassConfig.tilesPerSide;
+    vec3 tileCorner = minCorner + vec3(tw*(tileX), 0, tw*tileY);
+
+	vec2 tilePos = p[vid];
+    vec3 position = tileCorner + vec3(tilePos.x,0.0f,tilePos.y)*tw;
 	vec4 offset = vec4(offsets[localId],0.0f);
 
 
@@ -174,6 +197,6 @@ void VS()
 
 	outUV= uv;
 
-	gl_Position = cameraBuffer.MVP * (position);
+	gl_Position = cameraBuffer.MVP * (vec4(position,1.0));
 }
 

@@ -326,6 +326,23 @@ void VkRenderingContext::bindCameraBuffer(int index) const {
   //    vk::PER_FRAME_DESCRIPTOR_SET);
 }
 
+void VkRenderingContext::bindCameraBuffer(RSHandle rs) const
+{
+      VkDescriptorSet descriptorSet =
+          vk::DESCRIPTOR_MANAGER->getDescriptorSet(PER_FRAME_DATA_HANDLE);
+
+      VkPipelineLayout layout =
+          vk::PIPELINE_LAYOUT_MANAGER->getLayoutFromHandle(rs);
+      assert(layout != nullptr);
+
+      VkDescriptorSet sets[] = {
+          descriptorSet,
+      };
+      vkCmdBindDescriptorSets(CURRENT_FRAME_COMMAND->m_commandBuffer,
+                              VK_PIPELINE_BIND_POINT_GRAPHICS, layout,
+                              PSOManager::PER_FRAME_DATA_BINDING_INDEX, 1, sets, 0, nullptr);
+}
+
 void waitOnFence(VkFence fence) {
   if (fence == nullptr) {
     return;
@@ -634,22 +651,9 @@ void VkRenderingContext::renderQueueType(
       const std::string &typeName =
           MATERIAL_MANAGER->getStringFromShaderTypeFlag(type);
 
-      bindCameraBuffer();
+      bindCameraBuffer(bind.rs);
 
-      VkDescriptorSet descriptorSet =
-          vk::DESCRIPTOR_MANAGER->getDescriptorSet(PER_FRAME_DATA_HANDLE);
 
-      VkPipelineLayout layout =
-          vk::PIPELINE_LAYOUT_MANAGER->getLayoutFromHandle(bind.rs);
-      assert(layout != nullptr);
-
-      VkDescriptorSet sets[] = {
-          descriptorSet,
-      };
-      // multiple descriptor sets
-      vkCmdBindDescriptorSets(CURRENT_FRAME_COMMAND->m_commandBuffer,
-                              VK_PIPELINE_BIND_POINT_GRAPHICS, layout,
-                              PSOManager::PER_FRAME_DATA_BINDING_INDEX, 1, sets, 0, nullptr);
       if (passBindings.isHandleValid()) {
         globals::BINDING_TABLE_MANAGER->bindTable(
             PSOManager::PER_PASS_BINDING_INDEX, passBindings, bind.rs);
