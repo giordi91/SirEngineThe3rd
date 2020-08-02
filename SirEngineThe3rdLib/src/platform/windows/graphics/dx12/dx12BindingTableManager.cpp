@@ -108,6 +108,12 @@ void Dx12BindingTableManager::bindConstantBuffer(
                                            data.descriptors[index]);
 }
 
+void Dx12BindingTableManager::bindBuffer(const BindingTableHandle bindHandle, const BufferHandle buffer,
+	const uint32_t descriptorIndex, const uint32_t bindingIndex)
+{
+    assert(0);
+}
+
 void Dx12BindingTableManager::free(const BindingTableHandle &bindingTable) {
   // TODO freeing descriptor has never been done properly and is currently not
   // supported at runtime. This method mostly exists for clean up in the vulkan

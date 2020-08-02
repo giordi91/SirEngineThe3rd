@@ -2,17 +2,28 @@
 
 #include "SirEngine/binary/binaryFile.h"
 #include "SirEngine/bufferManager.h"
+#include "SirEngine/constantBufferManager.h"
 #include "SirEngine/fileUtils.h"
+#include "SirEngine/graphics/bindingTableManager.h"
 #include "SirEngine/graphics/debugRenderer.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/interopData.h"
 #include "SirEngine/log.h"
 #include "SirEngine/materialManager.h"
+#include "SirEngine/psoManager.h"
+#include "SirEngine/rootSignatureManager.h"
 #include "SirEngine/textureManager.h"
 
 namespace SirEngine::graphics {
+
+static const char *GRASS_RS = "grassForwardRS";
+static const char *GRASS_PSO = "grassForwardPSO";
+
 void GrassTechnique::setup() {
   SE_CORE_INFO("Setup grass");
+
+  m_rs = globals::ROOT_SIGNATURE_MANAGER->getHandleFromName(GRASS_RS);
+  m_pso = globals::PSO_MANAGER->getHandleFromName(GRASS_PSO);
 
   // lets read the grass file
   const char *grassFile = "../data/external/grass/pointsOld.json";
@@ -36,6 +47,8 @@ void GrassTechnique::setup() {
 
   std::vector<BoundingBox> tiles;
   tiles.reserve(MAX_GRASS_PER_SIDE * MAX_GRASS_PER_SIDE);
+  memset(tiles.data(), 0,
+         MAX_GRASS_PER_SIDE * MAX_GRASS_PER_SIDE * sizeof(BoundingBox));
   // let us being by computing the tiles bounding boxes
   float halfSize = (static_cast<float>(m_grassConfig.tilesPerSide) / 2.0f) *
                    m_grassConfig.tileSize;
@@ -76,6 +89,30 @@ void GrassTechnique::setup() {
       mapper->pointsSizeInByte, pointData, "grassBuffer",
       mapper->tileCount * mapper->pointsPerTile, sizeof(float) * 3,
       BufferManager::STORAGE_BUFFER);
+  m_tilesIndicesHandle = globals::BUFFER_MANAGER->allocate(
+      sizeof(uint32_t) * runtimeTilesCount, m_tilesIndices.data(),
+      "grassTilesIndicesBuffer", runtimeTilesCount, sizeof(uint32_t),
+      BufferManager::STORAGE_BUFFER);
+  m_grassConfigHandle = globals::CONSTANT_BUFFER_MANAGER->allocate(
+      sizeof(m_grassConfig),
+      ConstantBufferManager::CONSTANT_BUFFER_FLAG_BITS::UPDATED_EVERY_FRAME,
+      &m_grassConfig);
+
+  // build binding table
+  graphics::BindingDescription descriptions[4] = {
+      {0, GRAPHIC_RESOURCE_TYPE::READ_BUFFER,  // tiles points
+       GRAPHICS_RESOURCE_VISIBILITY_VERTEX},
+      {1, GRAPHIC_RESOURCE_TYPE::READ_BUFFER,  // tiles ids
+       GRAPHICS_RESOURCE_VISIBILITY_VERTEX},
+      {2, GRAPHIC_RESOURCE_TYPE::TEXTURE,  // wind texture
+       GRAPHICS_RESOURCE_VISIBILITY_VERTEX},
+      {3, GRAPHIC_RESOURCE_TYPE::CONSTANT_BUFFER,  // grass config
+       GRAPHICS_RESOURCE_VISIBILITY_VERTEX},
+  };
+  m_bindingTable = globals::BINDING_TABLE_MANAGER->allocateBindingTable(
+      descriptions, 4,
+      graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED,
+      "grassBindingTable");
 
   /*
   // OLD stuff
@@ -158,6 +195,33 @@ void GrassTechnique::setup() {
 
 void GrassTechnique::render(const BindingTableHandle passHandle) {
   tileDebug();
+
+  globals::CONSTANT_BUFFER_MANAGER->update(m_grassConfigHandle, &m_grassConfig);
+
+  globals::BINDING_TABLE_MANAGER->bindBuffer(m_bindingTable,
+                                             m_tilesPointsHandle, 0, 0);
+  globals::BINDING_TABLE_MANAGER->bindBuffer(m_bindingTable,
+                                             m_tilesIndicesHandle, 1, 1);
+  globals::BINDING_TABLE_MANAGER->bindTexture(m_bindingTable, m_windTexture, 2,
+                                              2, false);
+  globals::BINDING_TABLE_MANAGER->bindConstantBuffer(m_bindingTable,
+                                                     m_grassConfigHandle, 3, 3);
+
+  globals::PSO_MANAGER->bindPSO(m_pso);
+  globals::RENDERING_CONTEXT->bindCameraBuffer(m_rs);
+
+  if (passHandle.isHandleValid()) {
+    globals::BINDING_TABLE_MANAGER->bindTable(
+        PSOManager::PER_PASS_BINDING_INDEX, passHandle, m_rs);
+  }
+  globals::BINDING_TABLE_MANAGER->bindTable(
+      PSOManager::PER_OBJECT_BINDING_INDEX, m_bindingTable, m_rs);
+
+  const int pointsPerBlade = 15;
+  const int pointsPerTile = 500;
+  const int tileCount = m_grassConfig.tilesPerSide * m_grassConfig.tilesPerSide;
+  globals::RENDERING_CONTEXT->renderProcedural(tileCount * pointsPerTile *
+                                               pointsPerBlade);
 }
 
 void GrassTechnique::clear() {
@@ -177,6 +241,14 @@ void GrassTechnique::clear() {
     globals::BUFFER_MANAGER->free(m_tilesPointsHandle);
     m_tilesPointsHandle = {0};
   }
+  if (m_tilesIndicesHandle.isHandleValid()) {
+    globals::BUFFER_MANAGER->free(m_tilesIndicesHandle);
+    m_tilesIndicesHandle = {0};
+  }
+  if (m_bindingTable.isHandleValid()) {
+    globals::BINDING_TABLE_MANAGER->free(m_bindingTable);
+    m_bindingTable = {0};
+  }
 }
 
 void GrassTechnique::tileDebug() {
@@ -187,6 +259,8 @@ void GrassTechnique::tileDebug() {
   if (grassTileSizeChanged | grassTileCountChanged) {
     std::vector<BoundingBox> tiles;
     tiles.reserve(MAX_GRASS_PER_SIDE * MAX_GRASS_PER_SIDE);
+    memset(tiles.data(), 0,
+           MAX_GRASS_PER_SIDE * MAX_GRASS_PER_SIDE * sizeof(BoundingBox));
     // let us being by computing the tiles bounding boxes
     float halfSize = (static_cast<float>(m_grassConfig.tilesPerSide) / 2.0f) *
                      m_grassConfig.tileSize;
@@ -205,10 +279,11 @@ void GrassTechnique::tileDebug() {
     }
 
     globals::DEBUG_RENDERER->updateBoundingBoxesData(
-        m_debugHandle, tiles.data(),
-        m_grassConfig.tilesPerSide * m_grassConfig.tilesPerSide);
+        m_debugHandle, tiles.data(), MAX_GRASS_PER_SIDE * MAX_GRASS_PER_SIDE);
 
     m_grassConfigOld = m_grassConfig;
+
+    // globals::CONSTANT_BUFFER_MANAGER->
   }
 }
 }  // namespace SirEngine::graphics

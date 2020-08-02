@@ -83,19 +83,49 @@
       }
     },
     {
-      "comment": "albedo tex",
+      "comment": "indices of the tiles to sample",
       "type": "descriptorTable",
+      "visibility": "VS",
+      "data": {
+        "ranges": [
+          {
+            "type": "SRV",
+            "underlyingResource": "buffer",
+            "numDescriptors": 1,
+            "baseRegister": 1
+          }
+        ]
+      }
+    },
+    {
+      "comment": "wind flow tex",
+      "type": "descriptorTable",
+      "visibility": "VS",
       "data": {
         "ranges": [
           {
             "type": "SRV",
             "underlyingResource": "texture",
             "numDescriptors": 1,
-            "baseRegister": 1
+            "baseRegister": 2
           }
         ]
-      },
-      "visibility": "VS"
+      }
+    },
+    {
+      "comment": "grass config",
+      "type": "descriptorTable",
+      "visibility": "VS",
+      "data": {
+        "ranges": [
+          {
+            "type": "CBV",
+            "underlyingResource": "buffer",
+            "numDescriptors": 1,
+            "baseRegister":3 
+          }
+        ]
+      }
     }
   ]
 }

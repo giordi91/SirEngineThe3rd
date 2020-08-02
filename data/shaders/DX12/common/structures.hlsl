@@ -82,4 +82,12 @@ struct BoundingBox {
   float3 max;
   float2 padding;
 };
+
+struct GrassConfig {
+  float3 gridOrigin;
+  int tilesPerSide;
+  float tileSize;
+  int sourceDataTileCount;
+  int seed;
+};
 #endif

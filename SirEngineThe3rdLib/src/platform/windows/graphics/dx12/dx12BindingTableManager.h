@@ -37,6 +37,8 @@ class Dx12BindingTableManager : public graphics::BindingTableManager {
                  const RSHandle rsHandle) override;
   void bindConstantBuffer(const BindingTableHandle& bindingTable, const ConstantBufferHandle& constantBufferHandle,
 	  const uint32_t descriptorIndex, const uint32_t bindingIndex) override;
+  void bindBuffer(const BindingTableHandle bindHandle, const BufferHandle buffer, const uint32_t descriptorIndex,
+	  const uint32_t bindingIndex) override;
 
   void free(const BindingTableHandle& bindingTable) override;
  private:
