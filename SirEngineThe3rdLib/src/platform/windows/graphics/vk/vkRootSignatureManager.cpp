@@ -181,7 +181,8 @@ void createStaticSamplerDescriptorSet() {
   resourceBinding[0].binding = 0;
   resourceBinding[0].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
   resourceBinding[0].descriptorCount = STATIC_SAMPLER_COUNT;
-  resourceBinding[0].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT |VK_SHADER_STAGE_VERTEX_BIT;
+  resourceBinding[0].stageFlags =
+      VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT;
   resourceBinding[0].pImmutableSamplers = STATIC_SAMPLERS;
 
   VkDescriptorSetLayoutCreateInfo resourceLayoutInfo[1] = {};
@@ -285,7 +286,9 @@ VkDescriptorType getDescriptorType(const nlohmann::json &config) {
   const std::string resource =
       getValueIfInJson(config, ROOT_KEY_RESOURCE, ROOT_DEFAULT_STRING);
   if (type == "SRV") {
-    assert(!resource.empty() && "a resource needs to definy underlyingResource type in the root signature, please add that to the root signature");
+    assert(!resource.empty() &&
+           "a resource needs to definy underlyingResource type in the root "
+           "signature, please add that to the root signature");
   }
 
   const std::string actualType = type + "-" + resource;
@@ -305,10 +308,24 @@ VkShaderStageFlags getVisibilityFlags(const nlohmann::json &jobj) {
   }
 
   const auto &visibility = found.value();
-  const auto flagFound =
-      STRING_TO_SHADER_FLAGS.find(visibility.get<std::string>());
-  if (flagFound != STRING_TO_SHADER_FLAGS.end()) {
-    return flagFound->second;
+  if (!visibility.is_array()) {
+    const auto flagFound =
+        STRING_TO_SHADER_FLAGS.find(visibility.get<std::string>());
+    if (flagFound != STRING_TO_SHADER_FLAGS.end()) {
+      return flagFound->second;
+    }
+  } else {
+    VkShaderStageFlags toReturn = 0;
+    for (const auto &flag : visibility) {
+      const auto flagFound =
+          STRING_TO_SHADER_FLAGS.find(flag.get<std::string>());
+      if (flagFound != STRING_TO_SHADER_FLAGS.end()) {
+        toReturn |= flagFound->second;
+      }
+    }
+    assert(toReturn != 0 &&
+           "read root signatures visibility flags are null in array");
+    return toReturn;
   }
 
   assert(0 && "could not find requested shader flags");

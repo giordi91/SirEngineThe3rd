@@ -76,7 +76,7 @@ inline VkDescriptorType getResourceType(
 }
 
 inline bool isFlagSet(const uint32_t flags,
-                      const GRAPHIC_RESOURCE_VISIBILITY toCheck) {
+                      const GRAPHIC_RESOURCE_VISIBILITY_BITS toCheck) {
   return (flags & toCheck) > 0;
 }
 

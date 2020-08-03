@@ -115,7 +115,7 @@
     {
       "comment": "grass config",
       "type": "descriptorTable",
-      "visibility": "VS",
+      "visibility": [ "VS", "PS" ],
       "data": {
         "ranges": [
           {
