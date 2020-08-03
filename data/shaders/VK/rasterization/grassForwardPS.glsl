@@ -4,10 +4,6 @@
 
 #include "../common/structures.glsl"
 
-
-const vec3 baseColor = vec3(0.015,0.455,0.026);
-const vec3 topColor = vec3(0.357,0.67,0.09);
-
 layout(location=0) out vec4 outputColor;
 layout (location = 1) in vec2 inUV;
 layout (location = 2) in vec3 inNormal;
