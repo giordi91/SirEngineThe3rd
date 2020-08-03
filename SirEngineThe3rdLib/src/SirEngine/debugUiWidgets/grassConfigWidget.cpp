@@ -41,6 +41,14 @@ void GrassConfigWidget::render() {
   ImGui::SliderFloat("Wind strength", &(grassConfig->windStrength), 0.0001f,
                      1.0f);
   ImGui::DragFloat2("Wind Frequency", &(grassConfig->windFrequency.x),0.01,-1,1);
+  ImGui::Text("Shading config");
+  ImGui::ColorPicker3("Base color", &(grassConfig->baseColor.x));
+  ImGui::ColorPicker3("Tip color", &(grassConfig->tipColor.x));
+  ImGui::SliderFloat("Metalness", &(grassConfig->metalness), 0.0000f,
+                     1.0f);
+  ImGui::SliderFloat("Roughness", &(grassConfig->roughness), 0.0000f,
+                     1.0f);
+
   ImGui::End();
 }
 }  // namespace SirEngine::debug

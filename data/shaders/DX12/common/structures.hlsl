@@ -104,7 +104,13 @@ struct GrassConfig {
   float height;
 
   //wind config
+	float2 windFrequency;
   float windStrength;
-  float2 windFrequency;
+  float padding;
+  //shading
+  float3 baseColor;
+  float roughness;
+  float3 tipColor;
+  float metalness;
 };
 #endif

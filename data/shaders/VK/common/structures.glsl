@@ -87,23 +87,32 @@ struct GrassConfig {
 
   //tile config
   float tileSize;
+
   int tilesPerSide;
   int sourceDataTileCount;
   int seed;
   int pointsPerTile;
+
   int pointsPerSourceTile;
 
   //blade config
   float bladeForward;
   float bladeCurvatureAmount;
   float grassBend;
+
   float widthRandom;
   float heightRandom;
   float width;
   float height;
 
   //wind config
-  float windStrength;
   vec2 windFrequency;
+  float windStrength;
+  float padding;
+  //shading
+  vec3 baseColor;
+  float roughness;
+  vec3 tipColor;
+  float metalness;
 };
 #endif

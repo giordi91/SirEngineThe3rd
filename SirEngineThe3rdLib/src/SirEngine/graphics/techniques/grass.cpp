@@ -22,21 +22,25 @@ static const char *GRASS_PSO = "grassForwardPSO";
 void GrassTechnique::setup() {
   SE_CORE_INFO("Setup grass");
 
-
   m_grassConfig.tilesPerSide = 3;
   m_grassConfig.tileSize = 15;
-  m_grassConfig.grassBend= 0.2f;
-  m_grassConfig.width= 0.1f;
-  m_grassConfig.height= 1.5f;
-  m_grassConfig.widthRandom= 0.02f;
-  m_grassConfig.heightRandom= 0.1f;
-  m_grassConfig.windStrength= 0.3f;
-  m_grassConfig.windFrequency= {0.1,0.1};
-  m_grassConfig.bladeForward= 1.0f;
-  m_grassConfig.bladeCurvatureAmount= 2.0f;
-  m_grassConfig.pointsPerTile= 500;
-  m_grassConfig.pointsPerSourceTile= 10000;
-  m_grassConfig.gridOrigin= {0,0,0};
+  m_grassConfig.grassBend = 0.2f;
+  m_grassConfig.width = 0.1f;
+  m_grassConfig.height = 1.5f;
+  m_grassConfig.widthRandom = 0.02f;
+  m_grassConfig.heightRandom = 0.1f;
+  m_grassConfig.windStrength = 0.3f;
+  m_grassConfig.windFrequency = {0.1, 0.1};
+  m_grassConfig.bladeForward = 1.0f;
+  m_grassConfig.bladeCurvatureAmount = 2.0f;
+  m_grassConfig.pointsPerTile = 500;
+  m_grassConfig.pointsPerSourceTile = 10000;
+  m_grassConfig.gridOrigin = {0, 0, 0};
+  m_grassConfig.metalness= 0.1;
+  m_grassConfig.roughness= 0.6;
+  m_grassConfig.baseColor = {0.015,0.455,0.026};
+  m_grassConfig.tipColor= {0.357,0.67,0.09};
+
 
   m_rs = globals::ROOT_SIGNATURE_MANAGER->getHandleFromName(GRASS_RS);
   m_pso = globals::PSO_MANAGER->getHandleFromName(GRASS_PSO);
@@ -65,7 +69,7 @@ void GrassTechnique::setup() {
   tiles.reserve(MAX_GRASS_PER_SIDE * MAX_GRASS_PER_SIDE);
   memset(tiles.data(), 0,
          MAX_GRASS_PER_SIDE * MAX_GRASS_PER_SIDE * sizeof(BoundingBox));
-  // let us being by computing the tiles bounding boxes
+
   float halfSize = (static_cast<float>(m_grassConfig.tilesPerSide) / 2.0f) *
                    m_grassConfig.tileSize;
   glm::vec3 minCorner =
@@ -82,8 +86,7 @@ void GrassTechnique::setup() {
     }
   }
 
-  int runtimeTilesCount =
-      MAX_GRASS_PER_SIDE*MAX_GRASS_PER_SIDE;
+  int runtimeTilesCount = MAX_GRASS_PER_SIDE * MAX_GRASS_PER_SIDE;
   m_tilesIndices.reserve(runtimeTilesCount);
   for (int tileY = 0; tileY < m_grassConfig.tilesPerSide; ++tileY) {
     for (int tileX = 0; tileX < m_grassConfig.tilesPerSide; ++tileX) {
@@ -123,7 +126,7 @@ void GrassTechnique::setup() {
       {2, GRAPHIC_RESOURCE_TYPE::TEXTURE,  // wind texture
        GRAPHICS_RESOURCE_VISIBILITY_VERTEX},
       {3, GRAPHIC_RESOURCE_TYPE::CONSTANT_BUFFER,  // grass config
-       GRAPHICS_RESOURCE_VISIBILITY_VERTEX},
+       GRAPHICS_RESOURCE_VISIBILITY_VERTEX | GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT},
   };
   m_bindingTable = globals::BINDING_TABLE_MANAGER->allocateBindingTable(
       descriptions, 4,

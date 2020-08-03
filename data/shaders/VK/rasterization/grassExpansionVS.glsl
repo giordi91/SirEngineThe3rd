@@ -80,6 +80,29 @@ const vec2 bladeUVs[15] = {
 
 const vec3 taper = vec3(0.75f, 0.65f,0.45f);
 
+
+/*
+//to test
+float whangHashNoise(uint u, uint v, uint s)
+{
+    //return fract(sin(float(s + (u*1080u + v)%10000u) * 78.233) * 43758.5453);
+    
+    uint seed = (u*1664525u + v) + s;
+    
+    seed  = (seed ^ 61u) ^(seed >> 16u);
+    seed *= 9u;
+    seed  = seed ^(seed >> 4u);
+    seed *= uint(0x27d4eb2d);
+    seed  = seed ^(seed >> 15u);
+    
+    float value = float(seed) *(1.0/4294967296.0);
+    return value;
+}
+*/
+
+
+
+
 // Simple noise function, sourced from http://answers.unity.com/answers/624136/view.html
 	// Extended discussion on this function can be found at the following link:
 	// https://forum.unity.com/threads/am-i-over-complicating-this-random-function.454887/#post-2949326
