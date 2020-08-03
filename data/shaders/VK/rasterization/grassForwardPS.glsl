@@ -7,6 +7,7 @@ const vec3 topColor = vec3(0.357,0.67,0.09);
 
 layout(location=0) out vec4 outputColor;
 layout (location = 1) in vec2 inUV;
+layout (location = 2) in vec3 inNormal;
 
 
 void PS()

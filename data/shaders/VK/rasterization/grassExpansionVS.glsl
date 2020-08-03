@@ -109,34 +109,32 @@ const vec3 taper = vec3(0.75f, 0.65f,0.45f);
 	}
 
 
-//config to become a buffer
-const float grassBend = 0.2f;
-const float width = 0.1;
-const float height = 1.5;
-const float widthRandom = 0.02;
-const float heightRandom = 0.1;
-const float windStrength = 0.3f;
-const vec2 windFrequency = vec2(0.1,0.1);
-const float bladeForward = 1.0;
-const float bladeCurvatureAmount = 2.0;
-const int pointsPerTile = 500;
-//const int tilesPerSide = 3;
-const vec3 gridOrigin = vec3(0,0,0);
-//const float tileWidth = 15.0f;
 
 
 layout(location =1) out vec2 outUV;
+layout(location =2) out vec3 outNormal;
+
 void VS()
 {
+
     uint vid = gl_VertexIndex/15;
 	uint localId = gl_VertexIndex%15;
 
-    int tileNumber = int(vid/pointsPerTile);
-    float halfSize = grassConfig.tilesPerSide*0.5;
+    //grass width/height
+	float width = grassConfig.width;
+	float height = grassConfig.height;
+	float widthRandom = grassConfig.widthRandom;
+	float heightRandom = grassConfig.heightRandom;
+
+
+    int tileNumber = int(vid/grassConfig.pointsPerTile);
+    int tilesPerSide = grassConfig.tilesPerSide;
+    float halfSize = tilesPerSide*0.5;
     float tw = grassConfig.tileSize;
-    vec3 minCorner = gridOrigin - vec3(halfSize,0,halfSize)*tw;
-    float tileX = tileNumber %grassConfig.tilesPerSide;
-    float tileY = tileNumber /grassConfig.tilesPerSide;
+
+    vec3 minCorner = grassConfig.gridOrigin - vec3(halfSize,0,halfSize)*tw;
+    float tileX = tileNumber %tilesPerSide;
+    float tileY = tileNumber /tilesPerSide;
     vec3 tileCorner = minCorner + vec3(tw*(tileX), 0, tw*tileY);
 
 	vec2 tilePos = p[vid];
@@ -149,17 +147,17 @@ void VS()
     mat3x3 facingRotationMatrix = angleAxis3x3(rand(position.xyz) * TWO_PI, vec3(0, 1, 0));
 
     //sampling the wind texture
-    //hardcoded range [-15,15]
-    float range = 15;
+    float range = halfSize*tw; 
 
 	vec2 tempUV = vec2((position.x / range)*0.5 + 1,(position.z / range)*0.5 + 1) * 0.1;
-    vec2 windUV = fract( tempUV+ windFrequency* cameraBuffer.time);
-    vec2 windSample = (texture (sampler2D (windTex, colorSampler[2]), windUV).xy * 2 -1)*windStrength;
+    vec2 windUV = fract( tempUV+ grassConfig.windFrequency* cameraBuffer.time);
+    vec2 windSample = (texture (sampler2D (windTex, colorSampler[2]), windUV).xy * 2 -1)*grassConfig.windStrength;
 	vec3 wind = normalize(vec3(windSample.y, 0, windSample.x));
     mat3x3 windRotation = angleAxis3x3(PI*0.5 * length(windSample), wind);
 
+
     //bending the bleade
-    mat3x3 bendRotationMatrix = angleAxis3x3(rand(position.zzx) * grassBend* PI * 0.5, vec3(1, 0, 0));
+    mat3x3 bendRotationMatrix = angleAxis3x3(rand(position.zzx) * grassConfig.grassBend* PI * 0.5, vec3(1, 0, 0));
     mat3x3 transformation =windRotation*facingRotationMatrix * bendRotationMatrix;
     //mat3x3 transformation =facingRotationMatrix * bendRotationMatrix;
     //mat3x3 transformation =facingRotationMatrix;
@@ -173,8 +171,8 @@ void VS()
 
     vec2 uv = bladeUVs[localId];
 
-	float forward= rand(position.yyz) * bladeForward;
-    float segmentForward = pow(uv.y, bladeCurvatureAmount) * forward;
+	float forward= rand(position.yyz) * grassConfig.bladeForward;
+    float segmentForward = pow(uv.y, grassConfig.bladeCurvatureAmount) * forward;
     
     float a = taper.x * float(uv.y < 0.33f);
     float b = taper.y * float(int (uv.y <= 0.66) & int(uv.y >= 0.33));
@@ -189,6 +187,8 @@ void VS()
     offset.x *=localWidth;
     offset.y *=finalHeight;
     offset.z  += segmentForward;
+
+    vec3 outNormal= normalize(transformation*vec3(0,segmentForward,-1));
 
     vec3 rotatedOffset = transformation*offset.xyz;
     //vec3 rotatedOffset = offset.xyz;
