@@ -142,7 +142,7 @@ BufferHandle VkBufferManager::allocate(const uint32_t sizeInBytes,
   buffer.m_magicNumber = MAGIC_NUMBER_COUNTER++;
   buffer.info.buffer = buffer.buffer;
   buffer.info.offset = 0;
-  buffer.info.range = buffer.allocationSize;
+  buffer.info.range = sizeInBytes;
   // creating a handle
   BufferHandle handle{(buffer.m_magicNumber << 16) | index};
   return handle;

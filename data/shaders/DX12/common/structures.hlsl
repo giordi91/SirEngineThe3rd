@@ -85,9 +85,26 @@ struct BoundingBox {
 
 struct GrassConfig {
   float3 gridOrigin;
-  int tilesPerSide;
+
+  //tile config
   float tileSize;
+  int tilesPerSide;
   int sourceDataTileCount;
   int seed;
+  int pointsPerTile;
+  int pointsPerSourceTile;
+
+  //blade config
+  float bladeForward;
+  float bladeCurvatureAmount;
+  float grassBend;
+  float widthRandom;
+  float heightRandom;
+  float width;
+  float height;
+
+  //wind config
+  float windStrength;
+  float2 windFrequency;
 };
 #endif

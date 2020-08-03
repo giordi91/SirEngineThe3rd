@@ -22,6 +22,22 @@ static const char *GRASS_PSO = "grassForwardPSO";
 void GrassTechnique::setup() {
   SE_CORE_INFO("Setup grass");
 
+
+  m_grassConfig.tilesPerSide = 3;
+  m_grassConfig.tileSize = 15;
+  m_grassConfig.grassBend= 0.2f;
+  m_grassConfig.width= 0.1f;
+  m_grassConfig.height= 1.5f;
+  m_grassConfig.widthRandom= 0.02f;
+  m_grassConfig.heightRandom= 0.1f;
+  m_grassConfig.windStrength= 0.3f;
+  m_grassConfig.windFrequency= {0.1,0.1};
+  m_grassConfig.bladeForward= 1.0f;
+  m_grassConfig.bladeCurvatureAmount= 2.0f;
+  m_grassConfig.pointsPerTile= 500;
+  m_grassConfig.pointsPerSourceTile= 10000;
+  m_grassConfig.gridOrigin= {0,0,0};
+
   m_rs = globals::ROOT_SIGNATURE_MANAGER->getHandleFromName(GRASS_RS);
   m_pso = globals::PSO_MANAGER->getHandleFromName(GRASS_PSO);
 
@@ -67,7 +83,7 @@ void GrassTechnique::setup() {
   }
 
   int runtimeTilesCount =
-      m_grassConfig.tilesPerSide * m_grassConfig.tilesPerSide;
+      MAX_GRASS_PER_SIDE*MAX_GRASS_PER_SIDE;
   m_tilesIndices.reserve(runtimeTilesCount);
   for (int tileY = 0; tileY < m_grassConfig.tilesPerSide; ++tileY) {
     for (int tileX = 0; tileX < m_grassConfig.tilesPerSide; ++tileX) {
@@ -218,7 +234,7 @@ void GrassTechnique::render(const BindingTableHandle passHandle) {
       PSOManager::PER_OBJECT_BINDING_INDEX, m_bindingTable, m_rs);
 
   const int pointsPerBlade = 15;
-  const int pointsPerTile = 500;
+  const int pointsPerTile = m_grassConfig.pointsPerTile;
   const int tileCount = m_grassConfig.tilesPerSide * m_grassConfig.tilesPerSide;
   globals::RENDERING_CONTEXT->renderProcedural(tileCount * pointsPerTile *
                                                pointsPerBlade);
