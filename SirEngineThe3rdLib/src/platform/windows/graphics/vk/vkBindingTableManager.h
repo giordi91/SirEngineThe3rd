@@ -125,7 +125,7 @@ class VkBindingTableManager final : public graphics::BindingTableManager {
   SparseMemoryPool<BindingTableData> m_bindingTablePool;
   uint32_t m_uniformDescriptorCount;
   uint32_t m_imagesDescriptorCount;
-  VkDescriptorPool m_descriptorPool;
+  VkDescriptorPool m_descriptorPool{};
   StackAllocator m_allocator;
 };
 

@@ -9,13 +9,13 @@ namespace SirEngine {
 
 class DeferredLightingPass : public GNode {
 public:
-  enum PLUGS {
-    GEOMETRY_RT = INPUT_PLUG_CODE(0),
-    NORMALS_RT = INPUT_PLUG_CODE(1),
-    SPECULAR_RT = INPUT_PLUG_CODE(2),
-    DEPTH_RT = INPUT_PLUG_CODE(3),
-    DIRECTIONAL_SHADOW_RT = INPUT_PLUG_CODE(4),
-    LIGHTING_RT = OUTPUT_PLUG_CODE(0),
+  enum PLUGS :uint32_t{
+    GEOMETRY_RT = inputPlugCode(0),
+    NORMALS_RT = inputPlugCode(1),
+    SPECULAR_RT = inputPlugCode(2),
+    DEPTH_RT = inputPlugCode(3),
+    DIRECTIONAL_SHADOW_RT = inputPlugCode(4),
+    LIGHTING_RT = outputPlugCode(0),
     COUNT = 6
   };
 

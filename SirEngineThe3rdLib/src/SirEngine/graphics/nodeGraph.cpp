@@ -8,16 +8,16 @@ namespace SirEngine {
 
 bool GNode::connect(const int sourcePlugId, GNode *destinationNode,
                     const int destinationPlugId) {
-  const bool isInput = IS_INPUT_PLUG(sourcePlugId);
+  const bool isInput = isInputPlug(sourcePlugId);
   GPlug *destinationPlug = destinationNode->getPlug(destinationPlugId);
 
   // making sure the in->out or out->in condition is met
-  const PlugFlags requiredDestinationFlag =
-      isInput ? PlugFlags::PLUG_OUTPUT : PlugFlags::PLUG_INPUT;
+  const PLUG_FLAGS requiredDestinationFlag =
+      isInput ? PLUG_FLAGS::PLUG_OUTPUT : PLUG_FLAGS::PLUG_INPUT;
   assert(isFlag(*destinationPlug, requiredDestinationFlag));
 
   // if it is then we are good to go!
-  const int sourceIndex = PLUG_INDEX(sourcePlugId);
+  const int sourceIndex = getPlugIndex(sourcePlugId);
 
   ResizableVector<const GPlug *> **plugPtr =
       isInput ? m_inConnections : m_outConnections;
@@ -29,11 +29,11 @@ bool GNode::connect(const GPlug *sourcePlug, const GPlug *destPlug) {
   assert(sourcePlug->nodePtr == this);
 
   // making sure the in->out or out->in condition is met
-  const bool isInput = isFlag(*sourcePlug, PlugFlags::PLUG_INPUT);
+  const bool isInput = isFlag(*sourcePlug, PLUG_FLAGS::PLUG_INPUT);
 
   // making sure the in->out or out->in condition is met
-  const PlugFlags requiredDestinationFlag =
-      isInput ? PlugFlags::PLUG_OUTPUT : PlugFlags::PLUG_INPUT;
+  const PLUG_FLAGS requiredDestinationFlag =
+      isInput ? PLUG_FLAGS::PLUG_OUTPUT : PLUG_FLAGS::PLUG_INPUT;
   assert(isFlag(*destPlug, requiredDestinationFlag));
 
   const int sourceIndex = findPlugIndexFromInstance(sourcePlug);
@@ -51,9 +51,9 @@ bool GNode::removeConnection(const GPlug *sourcePlug, const GPlug *destPlug) {
   assert(sourcePlug->nodePtr == this);
 
   // making sure the in->out or out->in condition is met
-  const bool isInput = isFlag(*sourcePlug, PlugFlags::PLUG_INPUT);
-  const PlugFlags requiredDestinationFlag =
-      isInput ? PlugFlags::PLUG_OUTPUT : PlugFlags::PLUG_INPUT;
+  const bool isInput = isFlag(*sourcePlug, PLUG_FLAGS::PLUG_INPUT);
+  const PLUG_FLAGS requiredDestinationFlag =
+      isInput ? PLUG_FLAGS::PLUG_OUTPUT : PLUG_FLAGS::PLUG_INPUT;
   assert(isFlag(*destPlug, requiredDestinationFlag));
 
   // first we find the index of the plug, this will allow us to
@@ -85,6 +85,56 @@ bool GNode::removeConnection(const GPlug *sourcePlug, const GPlug *destPlug) {
 
   // connections successfully removed we can return
   return true;
+}
+
+int GNode::isConnected(const int sourceId, GNode* destinationNode, const int destinationPlugId) const
+{
+	const bool isInput = isInputPlug(sourceId);
+	const int plugIndex = getPlugIndex(sourceId);
+
+	const int plugCount = isInput ? m_inputPlugsCount : m_outputPlugsCount;
+	assert(plugIndex < plugCount);
+
+	// fetch the connections and iterate over them
+	ResizableVector<const GPlug*>** connections =
+		isInput ? m_inConnections : m_outConnections;
+
+	GPlug* destinationPlug = destinationNode->getPlug(destinationPlugId);
+
+	// TODO might be worth change this to test all of them and return
+	// instead to have an extra check inside
+	ResizableVector<const GPlug*>* connectionList = connections[plugIndex];
+	const int connectionCount = connectionList->size();
+	for (int i = 0; i < connectionCount; ++i)
+	{
+		if (connectionList->getConstRef(i) == destinationPlug)
+		{
+			return i;
+		}
+	}
+	return -1;
+}
+
+int GNode::isConnected(const GPlug* sourcePlug, const GPlug* destinationPlug) const
+{
+	int srcIndex = findPlugIndexFromInstance(sourcePlug);
+	const bool isInput = isFlag(*sourcePlug, PLUG_FLAGS::PLUG_INPUT);
+	ResizableVector<const GPlug*>** connections =
+		isInput ? m_inConnections : m_outConnections;
+#if SE_DEBUG
+	int count = isInput ? m_inputPlugsCount : m_outputPlugsCount;
+	assert(srcIndex < count);
+#endif
+	ResizableVector<const GPlug*>* connectionList = connections[srcIndex];
+	const int connectionCount = connectionList->size();
+	for (int i = 0; i < connectionCount; ++i)
+	{
+		if (connectionList->getConstRef(i) == destinationPlug)
+		{
+			return i;
+		}
+	}
+	return -1;
 }
 
 void GNode::defaultInitializeConnectionPool(const int inputCount,

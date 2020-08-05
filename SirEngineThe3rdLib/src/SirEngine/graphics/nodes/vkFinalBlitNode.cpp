@@ -12,9 +12,9 @@ VkFinalBlitNode::VkFinalBlitNode(GraphAllocators &allocators)
   // lets create the plugs
   defaultInitializePlugsAndConnections(1, 0);
 
-  GPlug &inTexture= m_inputPlugs[PLUG_INDEX(PLUGS::IN_TEXTURE)];
+  GPlug &inTexture= m_inputPlugs[getPlugIndex(PLUGS::IN_TEXTURE)];
   inTexture.plugValue = 0;
-  inTexture.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
+  inTexture.flags = PLUG_FLAGS::PLUG_INPUT | PLUG_FLAGS::PLUG_TEXTURE;
   inTexture.nodePtr = this;
   inTexture.name = "inTexture";
 }

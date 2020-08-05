@@ -11,15 +11,15 @@ namespace SirEngine {
 ForwardPlus::ForwardPlus(GraphAllocators &allocators)
     : GNode("ForwardPlus", "ForwardPlus", allocators) {
   defaultInitializePlugsAndConnections(0, 2);
-  GPlug &outTexture = m_outputPlugs[PLUG_INDEX(PLUGS::OUT_TEXTURE)];
+  GPlug &outTexture = m_outputPlugs[getPlugIndex(PLUGS::OUT_TEXTURE)];
   outTexture.plugValue = 0;
-  outTexture.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
+  outTexture.flags = PLUG_FLAGS::PLUG_OUTPUT | PLUG_FLAGS::PLUG_TEXTURE;
   outTexture.nodePtr = this;
   outTexture.name = "outTexture";
 
-  GPlug &depthBuffer = m_outputPlugs[PLUG_INDEX(PLUGS::DEPTH_RT)];
+  GPlug &depthBuffer = m_outputPlugs[getPlugIndex(PLUGS::DEPTH_RT)];
   depthBuffer.plugValue = 0;
-  depthBuffer.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
+  depthBuffer.flags = PLUG_FLAGS::PLUG_OUTPUT | PLUG_FLAGS::PLUG_TEXTURE;
   depthBuffer.nodePtr = this;
   depthBuffer.name = "depth";
 }
@@ -87,7 +87,7 @@ void ForwardPlus::initialize() {
   setupLight();
   uint32_t callbackCount = m_callbacks.size();
   for (int i = 0; i < callbackCount; ++i) {
-    m_callbacks[i]->setup();
+    m_callbacks[i].callback->setup(m_callbacks[i].id);
   }
 }
 
@@ -117,7 +117,7 @@ void ForwardPlus::compute() {
 
   uint32_t callbackCount = m_callbacks.size();
   for (int i = 0; i < callbackCount; ++i) {
-    m_callbacks[i]->render(m_passBindings);
+    m_callbacks[i].callback->render(m_callbacks[i].id, m_passBindings);
   }
 
   globals::RENDERING_CONTEXT->clearBindingObject(m_bindHandle);
@@ -175,8 +175,8 @@ void ForwardPlus::clear() {
     globals::BINDING_TABLE_MANAGER->free(m_passBindings);
   }
   uint32_t callbackCount = m_callbacks.size();
-  for (int i = 0; i < callbackCount; ++i) {
-    m_callbacks[i]->clear();
+  for (uint32_t i = 0; i < callbackCount; ++i) {
+    m_callbacks[i].callback->clear(m_callbacks[i].id);
   }
 }
 }  // namespace SirEngine

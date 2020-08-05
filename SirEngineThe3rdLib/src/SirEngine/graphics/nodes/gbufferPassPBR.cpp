@@ -8,27 +8,27 @@ GBufferPassPBR::GBufferPassPBR(GraphAllocators &allocators)
 
   defaultInitializePlugsAndConnections(0, 4);
   // lets create the plugs
-  GPlug &geometryBuffer = m_outputPlugs[PLUG_INDEX(PLUGS::GEOMETRY_RT)];
+  GPlug &geometryBuffer = m_outputPlugs[getPlugIndex(PLUGS::GEOMETRY_RT)];
   geometryBuffer.plugValue = 0;
-  geometryBuffer.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
+  geometryBuffer.flags = PLUG_FLAGS::PLUG_OUTPUT | PLUG_FLAGS::PLUG_TEXTURE;
   geometryBuffer.nodePtr = this;
   geometryBuffer.name = "geometry";
 
-  GPlug &normalBuffer = m_outputPlugs[PLUG_INDEX(PLUGS::NORMALS_RT)];
+  GPlug &normalBuffer = m_outputPlugs[getPlugIndex(PLUGS::NORMALS_RT)];
   normalBuffer.plugValue = 0;
-  normalBuffer.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
+  normalBuffer.flags = PLUG_FLAGS::PLUG_OUTPUT | PLUG_FLAGS::PLUG_TEXTURE;
   normalBuffer.nodePtr = this;
   normalBuffer.name = "normal";
 
-  GPlug &specularBuffer = m_outputPlugs[PLUG_INDEX(PLUGS::SPECULAR_RT)];
+  GPlug &specularBuffer = m_outputPlugs[getPlugIndex(PLUGS::SPECULAR_RT)];
   specularBuffer.plugValue = 0;
-  specularBuffer.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
+  specularBuffer.flags = PLUG_FLAGS::PLUG_OUTPUT | PLUG_FLAGS::PLUG_TEXTURE;
   specularBuffer.nodePtr = this;
   specularBuffer.name = "specular";
 
-  GPlug &depthBuffer = m_outputPlugs[PLUG_INDEX(PLUGS::DEPTH_RT)];
+  GPlug &depthBuffer = m_outputPlugs[getPlugIndex(PLUGS::DEPTH_RT)];
   depthBuffer.plugValue = 0;
-  depthBuffer.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
+  depthBuffer.flags = PLUG_FLAGS::PLUG_OUTPUT | PLUG_FLAGS::PLUG_TEXTURE;
   depthBuffer.nodePtr = this;
   depthBuffer.name = "depth";
 }

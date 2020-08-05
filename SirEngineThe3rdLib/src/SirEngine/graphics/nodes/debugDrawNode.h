@@ -5,15 +5,15 @@
 
 namespace SirEngine {
 class DebugDrawNode final : public GNode {
-public:
-  enum PLUGS {
-    IN_TEXTURE = INPUT_PLUG_CODE(0),
-    DEPTH_RT = INPUT_PLUG_CODE(1),
-    OUT_TEXTURE = OUTPUT_PLUG_CODE(0),
+ public:
+  enum PLUGS : uint32_t {
+    IN_TEXTURE = inputPlugCode(0),
+    DEPTH_RT = inputPlugCode(1),
+    OUT_TEXTURE = outputPlugCode(0),
     COUNT = 2
   };
 
-public:
+ public:
   explicit DebugDrawNode(GraphAllocators &allocators);
   virtual ~DebugDrawNode() = default;
   void initialize() override;
@@ -22,10 +22,11 @@ public:
   void populateNodePorts() override;
 
   void clear() override;
-private:
+
+ private:
   TextureHandle inputRTHandle{};
   TextureHandle inputDepthHandle{};
   BufferBindingsHandle m_bindHandle{};
 };
 
-} // namespace SirEngine
+}  // namespace SirEngine

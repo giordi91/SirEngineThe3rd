@@ -126,6 +126,21 @@
           }
         ]
       }
+    },
+    {
+      "comment": "grass albedo tex",
+      "type": "descriptorTable",
+      "visibility": "PS",
+      "data": {
+        "ranges": [
+          {
+            "type": "SRV",
+            "underlyingResource": "texture",
+            "numDescriptors": 1,
+            "baseRegister": 4
+          }
+        ]
+      }
     }
   ]
 }

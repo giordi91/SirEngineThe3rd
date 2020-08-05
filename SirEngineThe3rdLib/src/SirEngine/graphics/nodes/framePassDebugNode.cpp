@@ -28,15 +28,15 @@ FramePassDebugNode::FramePassDebugNode(GraphAllocators &allocators)
     : GNode("FramePassDebugNode", "FramePassDebugNode", allocators) {
   defaultInitializePlugsAndConnections(1, 1);
   // lets create the plugs
-  GPlug &inTexture = m_inputPlugs[PLUG_INDEX(PLUGS::IN_TEXTURE)];
+  GPlug &inTexture = m_inputPlugs[getPlugIndex(PLUGS::IN_TEXTURE)];
   inTexture.plugValue = 0;
-  inTexture.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
+  inTexture.flags = PLUG_FLAGS::PLUG_INPUT | PLUG_FLAGS::PLUG_TEXTURE;
   inTexture.nodePtr = this;
   inTexture.name = "inTexture";
 
-  GPlug &outTexture = m_outputPlugs[PLUG_INDEX(PLUGS::OUT_TEXTURE)];
+  GPlug &outTexture = m_outputPlugs[getPlugIndex(PLUGS::OUT_TEXTURE)];
   outTexture.plugValue = 0;
-  outTexture.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
+  outTexture.flags = PLUG_FLAGS::PLUG_OUTPUT | PLUG_FLAGS::PLUG_TEXTURE;
   outTexture.nodePtr = this;
   outTexture.name = "outTexture";
 

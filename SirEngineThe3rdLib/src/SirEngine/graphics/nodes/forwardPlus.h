@@ -8,8 +8,8 @@ namespace SirEngine {
 class ForwardPlus final : public GNode {
  public:
   enum PLUGS {
-    OUT_TEXTURE = OUTPUT_PLUG_CODE(0),
-    DEPTH_RT = OUTPUT_PLUG_CODE(1),
+    OUT_TEXTURE = outputPlugCode(0),
+    DEPTH_RT = outputPlugCode(1),
     COUNT = 2,
   };
 

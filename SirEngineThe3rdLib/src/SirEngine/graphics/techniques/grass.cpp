@@ -19,28 +19,30 @@ namespace SirEngine::graphics {
 static const char *GRASS_RS = "grassForwardRS";
 static const char *GRASS_PSO = "grassForwardPSO";
 
-void GrassTechnique::setup() {
-  SE_CORE_INFO("Setup grass");
+void GrassTechnique::setup(const uint32_t id) {
+  if (id != GRASS_TECHNIQUE_FORWARD) {
+    SE_CORE_WARN("Anything other than forward unsupported for grass for now");
+    return;
+  }
 
-  m_grassConfig.tilesPerSide = 3;
-  m_grassConfig.tileSize = 15;
-  m_grassConfig.grassBend = 0.2f;
+  m_grassConfig.tilesPerSide = 25;
+  m_grassConfig.tileSize = 5;
+  m_grassConfig.grassBend = 0.41f;
   m_grassConfig.width = 0.1f;
-  m_grassConfig.height = 1.5f;
+  m_grassConfig.height = 1.0f;
   m_grassConfig.widthRandom = 0.02f;
-  m_grassConfig.heightRandom = 0.1f;
-  m_grassConfig.windStrength = 0.3f;
-  m_grassConfig.windFrequency = {0.1, 0.1};
-  m_grassConfig.bladeForward = 1.0f;
-  m_grassConfig.bladeCurvatureAmount = 2.0f;
+  m_grassConfig.heightRandom = 0.425f;
+  m_grassConfig.windStrength = 0.415f;
+  m_grassConfig.windFrequency = {0.05, 0.05};
+  m_grassConfig.bladeForward = 1.2f;
+  m_grassConfig.bladeCurvatureAmount = 1.3f;
   m_grassConfig.pointsPerTile = 500;
   m_grassConfig.pointsPerSourceTile = 10000;
   m_grassConfig.gridOrigin = {0, 0, 0};
-  m_grassConfig.metalness= 0.1;
-  m_grassConfig.roughness= 0.6;
-  m_grassConfig.baseColor = {0.015,0.455,0.026};
-  m_grassConfig.tipColor= {0.357,0.67,0.09};
-
+  m_grassConfig.metalness = 0.0;
+  m_grassConfig.roughness = 0.338;
+  m_grassConfig.baseColor = {0.02, 0.25, 0.001};
+  m_grassConfig.tipColor = {0.02, 0.13, 0.019};
 
   m_rs = globals::ROOT_SIGNATURE_MANAGER->getHandleFromName(GRASS_RS);
   m_pso = globals::PSO_MANAGER->getHandleFromName(GRASS_PSO);
@@ -54,12 +56,8 @@ void GrassTechnique::setup() {
 
   const auto *const mapper =
       getMapperData<PointTilerMapperData>(m_binaryData.data());
-  const auto *nameData = reinterpret_cast<const char *>(
-      m_binaryData.data() + sizeof(BinaryFileHeader));
   auto *pointData = reinterpret_cast<float *>(
       m_binaryData.data() + sizeof(BinaryFileHeader) + mapper->nameSizeInByte);
-  m_grassConfig.tilesPerSide = 3;
-  m_grassConfig.tileSize = 15;
   m_grassConfig.sourceDataTileCount = mapper->tileCount;
   // used to find changes in config
   m_grassConfigOld = m_grassConfig;
@@ -100,6 +98,9 @@ void GrassTechnique::setup() {
   m_windTexture = globals::TEXTURE_MANAGER->loadTexture(
       "../data/processed/textures/grass/wind.texture");
 
+  m_albedoTexture = globals::TEXTURE_MANAGER->loadTexture(
+      "../data/processed/textures/grass/grassAlbedo.texture");
+
   m_debugHandle = globals::DEBUG_RENDERER->drawBoundingBoxes(
       tiles.data(), MAX_GRASS_PER_SIDE * MAX_GRASS_PER_SIDE,
       glm::vec4(1, 0, 0, 1), "debugGrassTiles");
@@ -118,7 +119,7 @@ void GrassTechnique::setup() {
       &m_grassConfig);
 
   // build binding table
-  graphics::BindingDescription descriptions[4] = {
+  graphics::BindingDescription descriptions[] = {
       {0, GRAPHIC_RESOURCE_TYPE::READ_BUFFER,  // tiles points
        GRAPHICS_RESOURCE_VISIBILITY_VERTEX},
       {1, GRAPHIC_RESOURCE_TYPE::READ_BUFFER,  // tiles ids
@@ -126,93 +127,23 @@ void GrassTechnique::setup() {
       {2, GRAPHIC_RESOURCE_TYPE::TEXTURE,  // wind texture
        GRAPHICS_RESOURCE_VISIBILITY_VERTEX},
       {3, GRAPHIC_RESOURCE_TYPE::CONSTANT_BUFFER,  // grass config
-       GRAPHICS_RESOURCE_VISIBILITY_VERTEX | GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT},
+       GRAPHICS_RESOURCE_VISIBILITY_VERTEX |
+           GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT},
+      {4, GRAPHIC_RESOURCE_TYPE::TEXTURE,  // albedo texture
+       GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT},
   };
   m_bindingTable = globals::BINDING_TABLE_MANAGER->allocateBindingTable(
-      descriptions, 4,
+      descriptions, ARRAYSIZE(descriptions),
       graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED,
       "grassBindingTable");
-
-  /*
-  // OLD stuff
-  const uint32_t tileCount = jobj.size();
-  assert((tileCount > 0) && "no tiles found in the file");
-  // assuming all tiles have same size
-  assertInJson(jobj[0], "points");
-  const uint32_t pointCount = jobj[0]["points"].size();
-  const uint64_t totalSize = sizeof(float) * 4 * pointCount * tileCount;
-
-  auto *data =
-      static_cast<float *>(globals::FRAME_ALLOCATOR->allocate(totalSize));
-
-  auto *aabbs = static_cast<BoundingBox *>(
-      globals::FRAME_ALLOCATOR->allocate(sizeof(BoundingBox) * tileCount));
-
-  // looping the tiles
-  int counter = 0;
-  int tileCounter = 0;
-  for (const auto &tile : jobj) {
-    assertInJson(tile, "aabb");
-    assertInJson(tile, "points");
-    const auto &aabbJ = tile["aabb"];
-    const glm::vec3 minAABB(aabbJ[0][0].get<float>(), aabbJ[0][1].get<float>(),
-                            aabbJ[0][2].get<float>());
-    const glm::vec3 maxAABB(aabbJ[1][0].get<float>(), aabbJ[1][1].get<float>(),
-                            aabbJ[1][2].get<float>());
-    aabbs[tileCounter].min = minAABB;
-    aabbs[tileCounter].max = maxAABB;
-
-    const auto &points = tile["points"];
-    uint32_t currentPointCount = points.size();
-    assert(currentPointCount == pointCount);
-
-    for (uint32_t i = 0; i < currentPointCount; ++i) {
-      data[counter++] = points[i][0].get<float>();
-      data[counter++] = points[i][1].get<float>();
-      data[counter++] = points[i][2].get<float>();
-      data[counter++] = 1;
-    }
-    tileCounter++;
-  }
-
-
-  // we have the tiles, good now we want to render the blades
-  m_grassBuffer = globals::BUFFER_MANAGER->allocate(
-      totalSize, data, "grassBuffer", pointCount * tileCount, sizeof(float) * 4,
-      BufferManager::STORAGE_BUFFER);
-  // setup a material
-
-  const char *queues[5] = {"grassForward", nullptr, nullptr, nullptr, nullptr};
-
-  m_grassMaterial = globals::MATERIAL_MANAGER->allocateMaterial(
-      "grassMaterial", MaterialManager::ALLOCATE_MATERIAL_FLAG_BITS::NONE,
-
-      queues);
-  globals::MATERIAL_MANAGER->bindBuffer(m_grassMaterial, m_grassBuffer, 0,
-                                        SHADER_QUEUE_FLAGS::FORWARD);
-
-  globals::MATERIAL_MANAGER->bindTexture(m_grassMaterial, m_windTexture, 1, 1,
-                                         SHADER_QUEUE_FLAGS::FORWARD, false);
-
-  // lets create the needed stuff to add the object to the queue
-  RenderableDescription description{};
-  description.buffer = m_grassBuffer;
-  description.subranges[0].m_offset = 0;
-  description.subranges[0].m_size = totalSize;
-  description.subragesCount = 1;
-
-  description.materialHandle = m_grassMaterial;
-  //*3 because we render a triangle for now
-  int verticesPerTriangle = 3;
-  int trianglesPerBlade = 5;
-  // description.primitiveToRender = 15;
-  description.primitiveToRender =
-      pointCount * tileCount * verticesPerTriangle * trianglesPerBlade;
-  globals::RENDERING_CONTEXT->addRenderablesToQueue(description);
-  */
 }
 
-void GrassTechnique::render(const BindingTableHandle passHandle) {
+void GrassTechnique::render(const uint32_t id,
+                            const BindingTableHandle passHandle) {
+  if (id != GRASS_TECHNIQUE_FORWARD) {
+    SE_CORE_WARN("Anything other than forward unsupported for grass for now");
+    return;
+  }
   tileDebug();
 
   globals::CONSTANT_BUFFER_MANAGER->update(m_grassConfigHandle, &m_grassConfig);
@@ -225,6 +156,8 @@ void GrassTechnique::render(const BindingTableHandle passHandle) {
                                               2, false);
   globals::BINDING_TABLE_MANAGER->bindConstantBuffer(m_bindingTable,
                                                      m_grassConfigHandle, 3, 3);
+  globals::BINDING_TABLE_MANAGER->bindTexture(m_bindingTable, m_albedoTexture,
+                                              4, 4, false);
 
   globals::PSO_MANAGER->bindPSO(m_pso);
   globals::RENDERING_CONTEXT->bindCameraBuffer(m_rs);
@@ -243,7 +176,11 @@ void GrassTechnique::render(const BindingTableHandle passHandle) {
                                                pointsPerBlade);
 }
 
-void GrassTechnique::clear() {
+void GrassTechnique::clear(const uint32_t id) {
+  if (id != GRASS_TECHNIQUE_FORWARD) {
+    SE_CORE_WARN("Anything other than forward unsupported for grass for now");
+    return;
+  }
   if (m_grassBuffer.isHandleValid()) {
     globals::BUFFER_MANAGER->free(m_grassBuffer);
     m_grassBuffer = {0};
@@ -251,6 +188,10 @@ void GrassTechnique::clear() {
   if (m_windTexture.isHandleValid()) {
     globals::TEXTURE_MANAGER->free(m_windTexture);
     m_windTexture = {0};
+  }
+  if (m_albedoTexture.isHandleValid()) {
+    globals::TEXTURE_MANAGER->free(m_albedoTexture);
+    m_albedoTexture = {0};
   }
   if (m_debugHandle.isHandleValid()) {
     globals::DEBUG_RENDERER->free(m_debugHandle);

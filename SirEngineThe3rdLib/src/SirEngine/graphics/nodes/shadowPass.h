@@ -8,7 +8,7 @@ namespace SirEngine {
 class ShadowPass final : public GNode {
 public:
   enum PLUGS {
-    DIRECTIONAL_SHADOW_RT = OUTPUT_PLUG_CODE(0),
+    DIRECTIONAL_SHADOW_RT = outputPlugCode(0),
     COUNT = 1
   };
 

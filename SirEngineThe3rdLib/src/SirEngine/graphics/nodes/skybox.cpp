@@ -16,21 +16,21 @@ SkyBoxPass::SkyBoxPass(GraphAllocators &allocators)
     : GNode("SkyBoxPass", "SkyBoxPass", allocators) {
   defaultInitializePlugsAndConnections(2, 1);
   // lets create the plugs
-  GPlug &fullscreenPass = m_inputPlugs[PLUG_INDEX(PLUGS::IN_TEXTURE)];
+  GPlug &fullscreenPass = m_inputPlugs[getPlugIndex(PLUGS::IN_TEXTURE)];
   fullscreenPass.plugValue = 0;
-  fullscreenPass.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
+  fullscreenPass.flags = PLUG_FLAGS::PLUG_INPUT | PLUG_FLAGS::PLUG_TEXTURE;
   fullscreenPass.nodePtr = this;
   fullscreenPass.name = "fullscreenPass";
 
-  GPlug &depthBuffer = m_inputPlugs[PLUG_INDEX(PLUGS::DEPTH)];
+  GPlug &depthBuffer = m_inputPlugs[getPlugIndex(PLUGS::DEPTH)];
   depthBuffer.plugValue = 0;
-  depthBuffer.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
+  depthBuffer.flags = PLUG_FLAGS::PLUG_INPUT | PLUG_FLAGS::PLUG_TEXTURE;
   depthBuffer.nodePtr = this;
   depthBuffer.name = "depth";
 
-  GPlug &buffer = m_outputPlugs[PLUG_INDEX(PLUGS::OUT_TEX)];
+  GPlug &buffer = m_outputPlugs[getPlugIndex(PLUGS::OUT_TEX)];
   buffer.plugValue = 0;
-  buffer.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
+  buffer.flags = PLUG_FLAGS::PLUG_OUTPUT | PLUG_FLAGS::PLUG_TEXTURE;
   buffer.nodePtr = this;
   buffer.name = "buffer";
 }

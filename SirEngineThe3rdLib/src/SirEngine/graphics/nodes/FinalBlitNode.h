@@ -6,7 +6,7 @@
 namespace SirEngine {
 class FinalBlitNode final : public GNode {
 public:
-  enum PLUGS { IN_TEXTURE = INPUT_PLUG_CODE(0), COUNT = 1 };
+  enum PLUGS { IN_TEXTURE = inputPlugCode(0), COUNT = 1 };
 public:
   explicit FinalBlitNode(GraphAllocators &allocators);
   virtual ~FinalBlitNode() = default;

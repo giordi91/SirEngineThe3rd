@@ -9,9 +9,9 @@ namespace SirEngine {
 class ProceduralSkyBoxPass : public GNode {
 public:
   enum PLUGS {
-    FULLSCREEN_PASS= INPUT_PLUG_CODE(0),
-    DEPTH_RT = INPUT_PLUG_CODE(1),
-    OUT_TEXTURE = OUTPUT_PLUG_CODE(0),
+    FULLSCREEN_PASS= inputPlugCode(0),
+    DEPTH_RT = inputPlugCode(1),
+    OUT_TEXTURE = outputPlugCode(0),
     COUNT = 3
   };
 public:

@@ -6,15 +6,15 @@
 namespace SirEngine {
 
 class SimpleForward final : public GNode {
-public:
-  enum PLUGS {
-    IN_TEXTURE = INPUT_PLUG_CODE(0),
-    DEPTH_RT = INPUT_PLUG_CODE(1),
-    OUT_TEXTURE = OUTPUT_PLUG_CODE(0),
+ public:
+  enum PLUGS : uint32_t {
+    IN_TEXTURE = inputPlugCode(0),
+    DEPTH_RT = inputPlugCode(1),
+    OUT_TEXTURE = outputPlugCode(0),
     COUNT = 3
   };
 
-public:
+ public:
   explicit SimpleForward(GraphAllocators &allocators);
   virtual ~SimpleForward() { clear(); };
   virtual void initialize() override;
@@ -23,10 +23,10 @@ public:
 
   void populateNodePorts() override;
 
-private:
+ private:
   // handles
   TextureHandle renderTarget{};
   TextureHandle depth{};
 };
 
-} // namespace SirEngine
+}  // namespace SirEngine
