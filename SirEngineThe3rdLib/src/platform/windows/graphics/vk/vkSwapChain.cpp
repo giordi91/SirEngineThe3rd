@@ -7,6 +7,8 @@
 #include <cassert>
 #include <iostream>
 
+#include "vkBindingTableManager.h"
+
 namespace SirEngine::vk {
 
 bool selectDesiredPresentationMode(const VkPhysicalDevice physicalDevice,

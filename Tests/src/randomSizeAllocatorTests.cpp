@@ -1,4 +1,4 @@
-#include "SirEngine/memory/randomSizeAllocator.h"
+#include "SirEngine/memory/cpu/randomSizeAllocator.h"
 #include "catch/catch.hpp"
 
 TEST_CASE("Random size allocator simple allocation", "[memory]") {

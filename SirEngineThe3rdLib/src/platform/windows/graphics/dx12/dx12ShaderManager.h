@@ -3,9 +3,9 @@
 #include <cassert>
 
 #include "SirEngine/graphics/shaderManager.h"
-#include "SirEngine/memory/resizableVector.h"
-#include "SirEngine/memory/stackAllocator.h"
-#include "SirEngine/memory/stringHashMap.h"
+#include "SirEngine/memory/cpu/resizableVector.h"
+#include "SirEngine/memory/cpu/stackAllocator.h"
+#include "SirEngine/memory/cpu/stringHashMap.h"
 
 struct ID3D10Blob;
 namespace SirEngine::dx12 {

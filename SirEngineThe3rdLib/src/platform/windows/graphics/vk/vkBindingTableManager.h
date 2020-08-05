@@ -4,8 +4,8 @@
 #include "SirEngine/globals.h"
 #include "SirEngine/graphics/bindingTableManager.h"
 #include "SirEngine/handle.h"
-#include "SirEngine/memory/sparseMemoryPool.h"
-#include "SirEngine/memory/stackAllocator.h"
+#include "SirEngine/memory/cpu/sparseMemoryPool.h"
+#include "SirEngine/memory/cpu/stackAllocator.h"
 #include "platform/windows/graphics/vk/volk.h"
 
 namespace SirEngine::vk {

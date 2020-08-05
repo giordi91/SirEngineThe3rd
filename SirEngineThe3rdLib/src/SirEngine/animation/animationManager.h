@@ -3,9 +3,9 @@
 #include "SirEngine/clock.h"
 #include "SirEngine/handle.h"
 #include "SirEngine/hashing.h"
-#include "SirEngine/memory/hashMap.h"
-#include "SirEngine/memory/resizableVector.h"
-#include "SirEngine/memory/stringHashMap.h"
+#include "SirEngine/memory/cpu/hashMap.h"
+#include "SirEngine/memory/cpu/resizableVector.h"
+#include "SirEngine/memory/cpu/stringHashMap.h"
 
 namespace SirEngine {
 

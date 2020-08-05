@@ -1,5 +1,5 @@
-#include "SirEngine/memory/resizableVector.h"
-#include "SirEngine/memory/threeSizesPool.h"
+#include "SirEngine/memory/cpu/resizableVector.h"
+#include "SirEngine/memory/cpu/threeSizesPool.h"
 #include "catch/catch.hpp"
 
 TEST_CASE("Vector reserve size", "[memory]") {

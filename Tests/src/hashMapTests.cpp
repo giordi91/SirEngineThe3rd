@@ -1,5 +1,5 @@
 #include "SirEngine/hashing.h"
-#include "SirEngine/memory/hashMap.h"
+#include "SirEngine/memory/cpu/hashMap.h"
 #include "catch/catch.hpp"
 #include <iostream>
 

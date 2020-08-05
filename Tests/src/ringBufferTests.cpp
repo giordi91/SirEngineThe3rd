@@ -1,4 +1,4 @@
-#include "SirEngine/memory/ringBuffer.h"
+#include "SirEngine/memory/cpu/ringBuffer.h"
 #include "catch/catch.hpp"
 #include <iostream>
 

@@ -107,9 +107,9 @@ void GrassTechnique::setup(const uint32_t id) {
   m_groundAlbedoTexture = globals::TEXTURE_MANAGER->loadTexture(
       "../data/processed/textures/grass/grassGround.texture");
 
-  m_debugHandle = globals::DEBUG_RENDERER->drawBoundingBoxes(
-      tiles.data(), MAX_GRASS_PER_SIDE * MAX_GRASS_PER_SIDE,
-      glm::vec4(1, 0, 0, 1), "debugGrassTiles");
+  //m_debugHandle = globals::DEBUG_RENDERER->drawBoundingBoxes(
+  //    tiles.data(), MAX_GRASS_PER_SIDE * MAX_GRASS_PER_SIDE,
+  //    glm::vec4(1, 0, 0, 1), "debugGrassTiles");
 
   m_tilesPointsHandle = globals::BUFFER_MANAGER->allocate(
       mapper->pointsSizeInByte, pointData, "grassBuffer",
@@ -162,7 +162,7 @@ void GrassTechnique::render(const uint32_t id,
     SE_CORE_WARN("Anything other than forward unsupported for grass for now");
     return;
   }
-  tileDebug();
+  //tileDebug();
 
   globals::CONSTANT_BUFFER_MANAGER->update(m_grassConfigHandle, &m_grassConfig);
 

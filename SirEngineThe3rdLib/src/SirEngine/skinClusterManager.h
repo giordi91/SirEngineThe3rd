@@ -1,6 +1,6 @@
 #pragma once
 #include "SirEngine/handle.h"
-#include "memory/SparseMemoryPool.h"
+#include "memory/cpu/SparseMemoryPool.h"
 #include <stdint.h>
 #include <string>
 #include <unordered_map>

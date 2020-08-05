@@ -1,8 +1,8 @@
 #pragma once
 #include "SirEngine/core.h"
 #include "SirEngine/handle.h"
-#include "SirEngine/memory/resizableVector.h"
-#include "SirEngine/memory/stringHashMap.h"
+#include "SirEngine/memory/cpu/resizableVector.h"
+#include "SirEngine/memory/cpu/stringHashMap.h"
 #include <cstdint>
 
 // forward declare

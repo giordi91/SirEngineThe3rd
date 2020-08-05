@@ -3,7 +3,7 @@
 #include <string>
 
 #include "SirEngine/core.h"
-#include "SirEngine/memory/resizableVector.h"
+#include "SirEngine/memory/cpu/resizableVector.h"
 
 struct IDxcCompiler;
 struct IDxcLibrary;

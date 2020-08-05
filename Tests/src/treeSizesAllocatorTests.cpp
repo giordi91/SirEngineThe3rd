@@ -1,4 +1,4 @@
-#include "SirEngine/memory/threeSizesPool.h"
+#include "SirEngine/memory/cpu/threeSizesPool.h"
 #include "catch/catch.hpp"
 
 TEST_CASE("Tree sizes pool basic alloc 1", "[memory]") {

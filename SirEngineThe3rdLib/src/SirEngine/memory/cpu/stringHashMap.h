@@ -4,7 +4,7 @@
 
 #include "SirEngine/globals.h"
 #include "SirEngine/hashing.h"
-#include "SirEngine/memory/hashMap.h"
+#include "SirEngine/memory/cpu/hashMap.h"
 #include "stringPool.h"
 
 namespace SirEngine {

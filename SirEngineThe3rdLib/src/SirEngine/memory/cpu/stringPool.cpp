@@ -1,4 +1,4 @@
-#include "SirEngine/memory/stringPool.h"
+#include "SirEngine/memory/cpu/stringPool.h"
 #include <cstdio>
 #include <cstdlib>
 #include "SirEngine/log.h"

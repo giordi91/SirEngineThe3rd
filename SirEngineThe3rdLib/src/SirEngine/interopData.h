@@ -1,6 +1,6 @@
 #pragma once
 
-#include "SirEngine/memory/stringHashMap.h"
+#include "SirEngine/memory/cpu/stringHashMap.h"
 
 namespace SirEngine {
 

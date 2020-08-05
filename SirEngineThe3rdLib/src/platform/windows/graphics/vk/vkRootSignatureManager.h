@@ -3,8 +3,8 @@
 
 #include "SirEngine/handle.h"
 #include "SirEngine/hashing.h"
-#include "SirEngine/memory/sparseMemoryPool.h"
-#include "SirEngine/memory/stringHashMap.h"
+#include "SirEngine/memory/cpu/sparseMemoryPool.h"
+#include "SirEngine/memory/cpu/stringHashMap.h"
 #include "SirEngine/rootSignatureManager.h"
 #include "vk.h"
 

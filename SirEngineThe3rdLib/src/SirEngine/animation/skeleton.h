@@ -1,6 +1,6 @@
 #pragma once
 #include "SirEngine/globals.h"
-#include "SirEngine/memory/resizableVector.h"
+#include "SirEngine/memory/cpu/resizableVector.h"
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
 namespace SirEngine {

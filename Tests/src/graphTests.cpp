@@ -1,5 +1,5 @@
 #include "SirEngine/graphics/nodeGraph.h"
-#include "SirEngine/memory/resizableVector.h"
+#include "SirEngine/memory/cpu/resizableVector.h"
 #include "catch/catch.hpp"
 #include "graphNodesDefinitions.h"
 

@@ -4,8 +4,8 @@
 
 #include "SirEngine/handle.h"
 #include "SirEngine/materialManager.h"
-#include "SirEngine/memory/sparseMemoryPool.h"
-#include "SirEngine/memory/stringHashMap.h"
+#include "SirEngine/memory/cpu/sparseMemoryPool.h"
+#include "SirEngine/memory/cpu/stringHashMap.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 
 namespace SirEngine::dx12 {

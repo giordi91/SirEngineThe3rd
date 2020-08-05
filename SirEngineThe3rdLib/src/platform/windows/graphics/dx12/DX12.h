@@ -7,7 +7,7 @@
 #include "SirEngine/globals.h"
 #include "SirEngine/graphics/cpuGraphicsStructures.h"
 #include "SirEngine/graphics/renderingContext.h"
-#include "SirEngine/memory/sparseMemoryPool.h"
+#include "SirEngine/memory/cpu/sparseMemoryPool.h"
 
 namespace SirEngine {
 class IdentityManager;

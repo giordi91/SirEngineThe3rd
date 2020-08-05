@@ -1,5 +1,5 @@
 #pragma once
-#include "SirEngine/memory/resizableVector.h"
+#include "SirEngine/memory/cpu/resizableVector.h"
 #include <stdint.h>
 
 namespace SirEngine {

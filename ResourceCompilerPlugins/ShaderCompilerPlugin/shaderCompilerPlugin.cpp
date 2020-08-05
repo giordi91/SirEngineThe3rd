@@ -8,7 +8,7 @@
 #include "SirEngine/binary/binaryFile.h"
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
-#include "SirEngine/memory/stringPool.h"
+#include "SirEngine/memory/cpu/stringPool.h"
 #include "cxxopts/cxxopts.hpp"
 #include "platform/windows/graphics/dx12/shaderCompiler.h"
 

@@ -1,4 +1,4 @@
-#include "SirEngine/memory/stringPool.h"
+#include "SirEngine/memory/cpu/stringPool.h"
 #include "catch/catch.hpp"
 
 TEST_CASE("String pool basic alloc 1 static", "[memory]") {

@@ -4,7 +4,7 @@
 
 #include "SirEngine/bufferManager.h"
 #include "SirEngine/handle.h"
-#include "SirEngine/memory/sparseMemoryPool.h"
+#include "SirEngine/memory/cpu/sparseMemoryPool.h"
 #include "d3dx12.h"
 #include "descriptorHeap.h"
 

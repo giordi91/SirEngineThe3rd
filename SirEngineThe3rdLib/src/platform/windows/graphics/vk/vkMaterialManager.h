@@ -4,8 +4,8 @@
 
 #include "SirEngine/handle.h"
 #include "SirEngine/materialManager.h"
-#include "SirEngine/memory/sparseMemoryPool.h"
-#include "SirEngine/memory/stringHashMap.h"
+#include "SirEngine/memory/cpu/sparseMemoryPool.h"
+#include "SirEngine/memory/cpu/stringHashMap.h"
 #include "platform/windows/graphics/vk/volk.h"
 namespace SirEngine::vk {
 

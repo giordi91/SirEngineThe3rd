@@ -1,7 +1,7 @@
 #pragma once
 #include "SirEngine/graphics/cpuGraphicsStructures.h"
 #include "SirEngine/handle.h"
-#include "SirEngine/memory/resizableVector.h"
+#include "SirEngine/memory/cpu/resizableVector.h"
 
 namespace SirEngine::graphics {
 

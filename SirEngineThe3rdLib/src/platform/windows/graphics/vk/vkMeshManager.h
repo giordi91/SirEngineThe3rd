@@ -6,7 +6,7 @@
 #include "SirEngine/graphics/cpuGraphicsStructures.h"
 #include "SirEngine/graphics/graphicsDefines.h"
 #include "SirEngine/handle.h"
-#include "SirEngine/memory/SparseMemoryPool.h"
+#include "SirEngine/memory/cpu/SparseMemoryPool.h"
 #include "SirEngine/meshManager.h"
 #include "platform/windows/graphics/vk/vkMemory.h"
 #include "platform/windows/graphics/vk/volk.h"
@@ -133,37 +133,6 @@ class VkMeshManager final : public MeshManager {
   inline const std::vector<BoundingBox> &getBoundingBoxes() {
     return m_boundingBoxes;
   }
-
-  /*
-  inline void bindMeshForRender(const MeshHandle handle,
-                                FrameCommand *fc) const {
-    auto vview = getVertexBufferView(handle);
-    auto iview = getIndexBufferView(handle);
-    fc->commandList->IASetIndexBuffer(&iview);
-    fc->commandList->IASetVertexBuffers(0, 1, &vview);
-    fc->commandList->IASetPrimitiveTopology(
-        D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-  }
-  inline void bindMeshRuntimeForRender(const MeshRuntime &runtime,
-                                       FrameCommand *fc) const {
-    fc->commandList->IASetIndexBuffer(&runtime.iview);
-    fc->commandList->IASetVertexBuffers(0, 1, &runtime.vview);
-    fc->commandList->IASetPrimitiveTopology(
-        D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-  }
-  inline void bindMeshAndRender(const MeshHandle handle,
-                                FrameCommand *fc) const {
-    bindMeshForRender(handle, fc);
-    uint32_t meshIndexCount = getIndexCount(handle);
-
-    fc->commandList->DrawIndexedInstanced(meshIndexCount, 1, 0, 0, 0);
-  }
-  inline void bindMeshRuntimeAndRender(const MeshRuntime &runtime,
-                                       FrameCommand *fc) const {
-    bindMeshRuntimeForRender(runtime, fc);
-    fc->commandList->DrawIndexedInstanced(runtime.indexCount, 1, 0, 0, 0);
-  }
-  */
 
  private:
   SparseMemoryPool<MeshData> m_meshPool;

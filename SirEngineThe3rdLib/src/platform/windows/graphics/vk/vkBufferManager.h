@@ -4,8 +4,8 @@
 #include "SirEngine/graphics/graphicsDefines.h"
 #include "SirEngine/handle.h"
 #include "SirEngine/log.h"
-#include "SirEngine/memory/randomSizeAllocator.h"
-#include "SirEngine/memory/sparseMemoryPool.h"
+#include "SirEngine/memory/cpu/randomSizeAllocator.h"
+#include "SirEngine/memory/cpu/sparseMemoryPool.h"
 #include "vkMemory.h"
 
 namespace SirEngine::vk {
@@ -56,7 +56,7 @@ public:
     return m_bufferStorage.getConstRef(idx).buffer;
   }
 
-  void bindBuffer(BufferHandle handle,VkWriteDescriptorSet* write, VkDescriptorSet set, uint32_t bindingIndex);
+  void bindBuffer(BufferHandle handle,VkWriteDescriptorSet* write, VkDescriptorSet set, uint32_t bindingIndex) const;
 
 
 private:

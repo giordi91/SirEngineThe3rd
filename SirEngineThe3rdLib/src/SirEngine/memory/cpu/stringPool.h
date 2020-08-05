@@ -2,8 +2,8 @@
 #include "SirEngine/core.h"
 
 #include <type_traits>
-#include "SirEngine/memory/stackAllocator.h"
-#include "SirEngine/memory/threeSizesPool.h"
+#include "SirEngine/memory/cpu/stackAllocator.h"
+#include "SirEngine/memory/cpu/threeSizesPool.h"
 
 namespace SirEngine {
 
