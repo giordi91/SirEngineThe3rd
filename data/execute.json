@@ -7,6 +7,9 @@
     "-p ../data/shaders/DX12/rasterization/grassForwardPS.hlsl -o ../data/processed/shaders/DX12/rasterization/grassForwardPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
     "-p ../data/pso -o ../data/processed/pso --pluginName PSOCompilerPlugin --pluginArgs \"-t DX12 -a -s ../data/shaders/DX12\"",
 
-    "-p ../data/external/grass/points.json -o ../data/processed/grass/grass.points --pluginName PointTilerCompilerPlugin"
+    "-p ../data/external/grass/points.json -o ../data/processed/grass/grass.points --pluginName PointTilerCompilerPlugin",
+
+    "-p ../data/external/textures/grass/grassAlbedo.png -o ../data/processed/textures/grass/grassAlbedo.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1 -g -m\"",
+    "-p ../data/external/textures/grass/grassNormal.png -o ../data/processed/textures/grass/grassNormal.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1 -g -m\""
   ]
 }

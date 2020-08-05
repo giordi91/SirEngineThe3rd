@@ -19,39 +19,39 @@ DeferredLightingPass::DeferredLightingPass(GraphAllocators &allocators)
   defaultInitializePlugsAndConnections(5, 1);
 
   // lets create the plugs
-  GPlug &geometryBuffer = m_inputPlugs[PLUG_INDEX(PLUGS::GEOMETRY_RT)];
+  GPlug &geometryBuffer = m_inputPlugs[getPlugIndex(PLUGS::GEOMETRY_RT)];
   geometryBuffer.plugValue = 0;
-  geometryBuffer.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
+  geometryBuffer.flags = PLUG_FLAGS::PLUG_INPUT | PLUG_FLAGS::PLUG_TEXTURE;
   geometryBuffer.nodePtr = this;
   geometryBuffer.name = "geometry";
 
-  GPlug &normalBuffer = m_inputPlugs[PLUG_INDEX(PLUGS::NORMALS_RT)];
+  GPlug &normalBuffer = m_inputPlugs[getPlugIndex(PLUGS::NORMALS_RT)];
   normalBuffer.plugValue = 0;
-  normalBuffer.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
+  normalBuffer.flags = PLUG_FLAGS::PLUG_INPUT | PLUG_FLAGS::PLUG_TEXTURE;
   normalBuffer.nodePtr = this;
   normalBuffer.name = "normal";
 
-  GPlug &specularBuffer = m_inputPlugs[PLUG_INDEX(PLUGS::SPECULAR_RT)];
+  GPlug &specularBuffer = m_inputPlugs[getPlugIndex(PLUGS::SPECULAR_RT)];
   specularBuffer.plugValue = 0;
-  specularBuffer.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
+  specularBuffer.flags = PLUG_FLAGS::PLUG_INPUT | PLUG_FLAGS::PLUG_TEXTURE;
   specularBuffer.nodePtr = this;
   specularBuffer.name = "specular";
 
-  GPlug &depthBuffer = m_inputPlugs[PLUG_INDEX(PLUGS::DEPTH_RT)];
+  GPlug &depthBuffer = m_inputPlugs[getPlugIndex(PLUGS::DEPTH_RT)];
   depthBuffer.plugValue = 0;
-  depthBuffer.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
+  depthBuffer.flags = PLUG_FLAGS::PLUG_INPUT | PLUG_FLAGS::PLUG_TEXTURE;
   depthBuffer.nodePtr = this;
   depthBuffer.name = "depth";
 
-  GPlug &shadowBuffer = m_inputPlugs[PLUG_INDEX(PLUGS::DIRECTIONAL_SHADOW_RT)];
+  GPlug &shadowBuffer = m_inputPlugs[getPlugIndex(PLUGS::DIRECTIONAL_SHADOW_RT)];
   shadowBuffer.plugValue = 0;
-  shadowBuffer.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
+  shadowBuffer.flags = PLUG_FLAGS::PLUG_INPUT | PLUG_FLAGS::PLUG_TEXTURE;
   shadowBuffer.nodePtr = this;
   shadowBuffer.name = "shadow";
 
-  GPlug &lightBuffer = m_outputPlugs[PLUG_INDEX(PLUGS::LIGHTING_RT)];
+  GPlug &lightBuffer = m_outputPlugs[getPlugIndex(PLUGS::LIGHTING_RT)];
   lightBuffer.plugValue = 0;
-  lightBuffer.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
+  lightBuffer.flags = PLUG_FLAGS::PLUG_OUTPUT | PLUG_FLAGS::PLUG_TEXTURE;
   lightBuffer.nodePtr = this;
   lightBuffer.name = "lighting";
 
@@ -75,8 +75,8 @@ void DeferredLightingPass::initialize() {
 }
 
 inline TextureHandle getInputConnection(ResizableVector<const GPlug *> **conns,
-                                        int plugId) {
-  const auto conn = conns[PLUG_INDEX(plugId)];
+                                        const int plugId) {
+  const auto conn = conns[GNode::getPlugIndex(plugId)];
 
   // TODO not super safe to do this, might be worth improving this
   assert(conn->size() == 1 && "too many input connections");

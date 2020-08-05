@@ -13,9 +13,9 @@ ShadowPass::ShadowPass(GraphAllocators &allocators)
   defaultInitializePlugsAndConnections(0, 1);
   // lets create the plugs
   GPlug &geometryBuffer =
-      m_outputPlugs[PLUG_INDEX(PLUGS::DIRECTIONAL_SHADOW_RT)];
+      m_outputPlugs[getPlugIndex(PLUGS::DIRECTIONAL_SHADOW_RT)];
   geometryBuffer.plugValue = 0;
-  geometryBuffer.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
+  geometryBuffer.flags = PLUG_FLAGS::PLUG_OUTPUT | PLUG_FLAGS::PLUG_TEXTURE;
   geometryBuffer.nodePtr = this;
   geometryBuffer.name = "shadowRT";
 }

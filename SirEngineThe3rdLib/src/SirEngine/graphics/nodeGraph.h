@@ -8,7 +8,7 @@
 
 namespace SirEngine {
 
-enum PlugFlags {
+enum PLUG_FLAGS {
   PLUG_INPUT = 1,
   PLUG_OUTPUT = 2,
   PLUG_GPU_BUFFER = 4,
@@ -18,45 +18,35 @@ enum PlugFlags {
 };
 
 struct GraphAllocators {
-  StringPool *stringPool;
-  ThreeSizesPool *allocator;
+  StringPool *stringPool = nullptr;
+  ThreeSizesPool *allocator = nullptr;
 };
 
-// new node graph
+//forward declaring the node such that we can use it for defining the plug
 class GNode;
 struct GPlug final {
   GNode *nodePtr = nullptr;
-  const char *name;
-  uint32_t plugValue;
-  uint32_t flags;
+  const char *name = nullptr;
+  uint32_t plugValue = 0;
+  uint32_t flags = 0;
 };
 
 class GNodeCallback {
  public:
   virtual ~GNodeCallback() = default;
-  virtual void setup() = 0;
-  virtual void render(BindingTableHandle) = 0;
-  virtual void clear() = 0;
+  virtual void setup(uint32_t id) = 0;
+  virtual void render(uint32_t id, BindingTableHandle passTable) = 0;
+  virtual void clear(uint32_t id) = 0;
 };
 
 // TODO make node not copyable assignable
 class SIR_ENGINE_API GNode {
-// TODO consider a constexpr inline function instead?
-/**
- * \brief creates a mask for the first 31 bits, masking last one out and
- * extracts \param x 32 bit integer value representing the plug id
- */
-#define PLUG_INDEX(x) (((1u << 31u) - 1u) & (x))
-// sets the last bit of the 32bit value to 1, marking it an input
-#define INPUT_PLUG_CODE(x) ((1u << 31u) | (x))
-// sets the last bit of the 32bit value to 0, marking it an output
-// as of now this does nothing, is pure visual for the programmer, might want to
-// force the last bit to be zero with an & ?
-#define OUTPUT_PLUG_CODE(x) x
-// extracting the last bit, if one is an input plug
-#define IS_INPUT_PLUG(x) (((1u << 31u) & (x)) > 0)
-
  public:
+  GNode(const GNode &) = delete;
+  GNode &operator=(const GNode &) = delete;
+  GNode(GNode &&) = delete;
+  GNode &operator=(GNode &&) = delete;
+
   // interface
   GNode(const char *name, const char *type, const GraphAllocators &allocs)
       : m_allocs(allocs), m_callbacks(4) {
@@ -82,15 +72,15 @@ class SIR_ENGINE_API GNode {
 
   inline const char *getName() const { return m_nodeName; }
   inline const char *getType() const { return m_nodeType; }
-  void addCallbackConfig(GNodeCallback *config) {
-    m_callbacks.pushBack(config);
+  void addCallbackConfig(const uint32_t id, GNodeCallback *config) {
+    m_callbacks.pushBack({config, id});
   };
   inline GPlug *getPlug(const int index) {
-    const bool isInput = IS_INPUT_PLUG(index);
-    const int plugIndex = PLUG_INDEX(index);
+    const bool isInput = isInputPlug(index);
+    const int plugIndex = getPlugIndex(index);
     const int plugCount = isInput ? m_inputPlugsCount : m_outputPlugsCount;
-    const PlugFlags flag =
-        isInput ? PlugFlags::PLUG_INPUT : PlugFlags::PLUG_OUTPUT;
+    const PLUG_FLAGS flag =
+        isInput ? PLUG_FLAGS::PLUG_INPUT : PLUG_FLAGS::PLUG_OUTPUT;
     GPlug *plugs = isInput ? m_inputPlugs : m_outputPlugs;
 
     assert(plugIndex < plugCount);
@@ -106,49 +96,9 @@ class SIR_ENGINE_API GNode {
   inline void setNodeIndex(const uint32_t index) { m_nodeIdx = index; }
 
   int isConnected(const int sourceId, GNode *destinationNode,
-                  const int destinationPlugId) const {
-    const bool isInput = IS_INPUT_PLUG(sourceId);
-    const int plugIndex = PLUG_INDEX(sourceId);
+                  const int destinationPlugId) const;
 
-    const int plugCount = isInput ? m_inputPlugsCount : m_outputPlugsCount;
-    assert(plugIndex < plugCount);
-
-    // fetch the connections and iterate over them
-    ResizableVector<const GPlug *> **connections =
-        isInput ? m_inConnections : m_outConnections;
-
-    GPlug *destinationPlug = destinationNode->getPlug(destinationPlugId);
-
-    // TODO might be worth change this to test all of them and return
-    // instead to have an extra check inside
-    ResizableVector<const GPlug *> *connectionList = connections[plugIndex];
-    const int connectionCount = connectionList->size();
-    for (int i = 0; i < connectionCount; ++i) {
-      if (connectionList->getConstRef(i) == destinationPlug) {
-        return i;
-      }
-    }
-    return -1;
-  }
-
-  int isConnected(const GPlug *sourcePlug, const GPlug *destinationPlug) const {
-    int srcIndex = findPlugIndexFromInstance(sourcePlug);
-    const bool isInput = isFlag(*sourcePlug, PlugFlags::PLUG_INPUT);
-    ResizableVector<const GPlug *> **connections =
-        isInput ? m_inConnections : m_outConnections;
-#if SE_DEBUG
-    int count = isInput ? m_inputPlugsCount : m_outputPlugsCount;
-    assert(srcIndex < count);
-#endif
-    ResizableVector<const GPlug *> *connectionList = connections[srcIndex];
-    const int connectionCount = connectionList->size();
-    for (int i = 0; i < connectionCount; ++i) {
-      if (connectionList->getConstRef(i) == destinationPlug) {
-        return i;
-      }
-    }
-    return -1;
-  }
+  int isConnected(const GPlug *sourcePlug, const GPlug *destinationPlug) const;
 
   inline bool isOfType(const char *type) const {
     return strcmp(m_nodeType, type) == 0;
@@ -168,7 +118,7 @@ class SIR_ENGINE_API GNode {
   // TODO make this friend?
   const ResizableVector<const GPlug *> *getPlugConnections(
       const GPlug *plug) const {
-    const bool isInput = isFlag(*plug, PlugFlags::PLUG_INPUT);
+    const bool isInput = isFlag(*plug, PLUG_FLAGS::PLUG_INPUT);
     const int plugIdx = findPlugIndexFromInstance(plug);
     const int plugCount = isInput ? m_inputPlugsCount : m_outputPlugsCount;
     assert(plugIdx != -1);
@@ -179,7 +129,7 @@ class SIR_ENGINE_API GNode {
   }
 
   int findPlugIndexFromInstance(const GPlug *plug) const {
-    const bool isInput = isFlag(*plug, PlugFlags::PLUG_INPUT);
+    const bool isInput = isFlag(*plug, PLUG_FLAGS::PLUG_INPUT);
     const int count = isInput ? m_inputPlugsCount : m_outputPlugsCount;
     const GPlug *plugs = isInput ? m_inputPlugs : m_outputPlugs;
     for (int i = 0; i < count; ++i) {
@@ -189,9 +139,28 @@ class SIR_ENGINE_API GNode {
     }
     return -1;
   }
+  // plug functions
+  // extract the first 31st bits such that to ignore the input/output flag bit
+  static constexpr uint32_t getPlugIndex(const uint32_t x) {
+    return (((1u << 31u) - 1u) & (x));
+  }
+  // sets the last bit of the 32bit value to 1, marking it an input
+  static constexpr uint32_t inputPlugCode(const uint32_t x) {
+    return ((1u << 31u) | (x));
+  }
+  // sets the last bit of the 32bit value to 0, marking it an output
+  // as of now this does nothing, is pure visual for the programmer, might want
+  // to force the last bit to be zero with an & ?
+  static constexpr uint32_t outputPlugCode(const uint32_t x) {
+    return (~(1u << 31u)) & x;
+  }
+  // extracting the last bit, if one is an input plug
+  static constexpr uint32_t isInputPlug(const uint32_t x) {
+    return (((1u << 31u) & (x)) > 0);
+  }
 
  protected:
-  inline bool isFlag(const GPlug &plug, const PlugFlags flag) const {
+  inline bool isFlag(const GPlug &plug, const PLUG_FLAGS flag) const {
     return (plug.flags & flag) > 0;
   }
   void defaultInitializePlugsAndConnections(
@@ -214,6 +183,11 @@ class SIR_ENGINE_API GNode {
       int reserve = DEFAULT_PLUG_CONNECTION_ALLOCATION);
 
  protected:
+  struct CallbackTracker {
+    GNodeCallback *callback;
+    uint32_t id;
+  };
+
   const GraphAllocators &m_allocs;
   const char *m_nodeName;
   const char *m_nodeType;
@@ -226,13 +200,13 @@ class SIR_ENGINE_API GNode {
   static const int DEFAULT_PLUG_CONNECTION_ALLOCATION = 3;
   ResizableVector<const GPlug *> **m_inConnections = nullptr;
   ResizableVector<const GPlug *> **m_outConnections = nullptr;
-  ResizableVector<GNodeCallback *> m_callbacks;
+  ResizableVector<CallbackTracker> m_callbacks;
 };
 
 template <typename T>
 inline T getInputConnection(ResizableVector<const GPlug *> **conns,
                             const int plugId) {
-  const auto conn = conns[PLUG_INDEX(plugId)];
+  const auto conn = conns[GNode::getPlugIndex(plugId)];
 
   assert(conn->size() != 0 && "no connections on given plug");
   assert(conn->size() == 1 && "too many input connections");

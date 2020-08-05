@@ -8,10 +8,10 @@ namespace SirEngine {
 class GBufferPassPBR final : public GNode {
 public:
   enum PLUGS {
-    GEOMETRY_RT = OUTPUT_PLUG_CODE(0),
-    NORMALS_RT = OUTPUT_PLUG_CODE(1),
-    SPECULAR_RT = OUTPUT_PLUG_CODE(2),
-    DEPTH_RT = OUTPUT_PLUG_CODE(3),
+    GEOMETRY_RT = outputPlugCode(0),
+    NORMALS_RT = outputPlugCode(1),
+    SPECULAR_RT = outputPlugCode(2),
+    DEPTH_RT = outputPlugCode(3),
     COUNT = 4
   };
 

@@ -136,6 +136,7 @@ float whangHashNoise(uint u, uint v, uint s)
 
 layout(location =1) out vec2 outUV;
 layout(location =2) out vec3 outNormal;
+layout (location = 3) out vec3 worldPos;
 
 void VS()
 {
@@ -211,14 +212,14 @@ void VS()
     offset.y *=finalHeight;
     offset.z  += segmentForward;
 
-    vec3 outNormal= normalize(transformation*vec3(0,segmentForward,-1));
+    outNormal= normalize(transformation*vec3(0,segmentForward,-1));
 
     vec3 rotatedOffset = transformation*offset.xyz;
-    //vec3 rotatedOffset = offset.xyz;
 	position.xyz += rotatedOffset;
 
 
 	outUV= uv;
+    worldPos = position;
 
 	gl_Position = cameraBuffer.MVP * (vec4(position,1.0));
 }

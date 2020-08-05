@@ -5,9 +5,9 @@ using namespace SirEngine;
 class LegacyAssetNode final : public SirEngine::GNode {
 public:
   enum PLUGS {
-    MATRICES = OUTPUT_PLUG_CODE(0),
-    MESHES = OUTPUT_PLUG_CODE(1),
-    MATERIALS = OUTPUT_PLUG_CODE(2),
+    MATRICES = outputPlugCode(0),
+    MESHES = outputPlugCode(1),
+    MATERIALS = outputPlugCode(2),
     COUNT = 3
   };
 
@@ -24,21 +24,21 @@ public:
     // setup connection pool
     defaultInitializeConnectionPool(0, 3);
 
-    GPlug &matrices = m_outputPlugs[PLUG_INDEX(PLUGS::MATRICES)];
+    GPlug &matrices = m_outputPlugs[getPlugIndex(PLUGS::MATRICES)];
     matrices.plugValue = 0;
-    matrices.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_CPU_BUFFER;
+    matrices.flags = PLUG_FLAGS::PLUG_OUTPUT | PLUG_FLAGS::PLUG_CPU_BUFFER;
     matrices.nodePtr = this;
     matrices.name = "matrices";
 
-    GPlug &meshes = m_outputPlugs[PLUG_INDEX(PLUGS::MESHES)];
+    GPlug &meshes = m_outputPlugs[getPlugIndex(PLUGS::MESHES)];
     meshes.plugValue = 0;
-    meshes.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_MESHES;
+    meshes.flags = PLUG_FLAGS::PLUG_OUTPUT | PLUG_FLAGS::PLUG_MESHES;
     meshes.nodePtr = this;
     meshes.name = "meshes";
 
-    GPlug &materials = m_outputPlugs[PLUG_INDEX(PLUGS::MATERIALS)];
+    GPlug &materials = m_outputPlugs[getPlugIndex(PLUGS::MATERIALS)];
     materials.plugValue = 0;
-    materials.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_CPU_BUFFER;
+    materials.flags = PLUG_FLAGS::PLUG_OUTPUT | PLUG_FLAGS::PLUG_CPU_BUFFER;
     materials.nodePtr = this;
     materials.name = "materials";
   }
@@ -47,8 +47,8 @@ public:
 class LegacyDebugNode final : public SirEngine::GNode {
 public:
   enum PLUGS {
-    IN_TEXTURE = INPUT_PLUG_CODE(0),
-    OUT_TEXTURE = OUTPUT_PLUG_CODE(0),
+    IN_TEXTURE = inputPlugCode(0),
+    OUT_TEXTURE = outputPlugCode(0),
     COUNT = 2
   };
 
@@ -66,15 +66,15 @@ public:
     // setup connection pool
     defaultInitializeConnectionPool(1, 1);
 
-    GPlug &inTexture = m_inputPlugs[PLUG_INDEX(PLUGS::IN_TEXTURE)];
+    GPlug &inTexture = m_inputPlugs[getPlugIndex(PLUGS::IN_TEXTURE)];
     inTexture.plugValue = 0;
-    inTexture.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
+    inTexture.flags = PLUG_FLAGS::PLUG_INPUT | PLUG_FLAGS::PLUG_TEXTURE;
     inTexture.nodePtr = this;
     inTexture.name = "inTexture";
 
-    GPlug &outTexture = m_outputPlugs[PLUG_INDEX(PLUGS::OUT_TEXTURE)];
+    GPlug &outTexture = m_outputPlugs[getPlugIndex(PLUGS::OUT_TEXTURE)];
     outTexture.plugValue = 0;
-    outTexture.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
+    outTexture.flags = PLUG_FLAGS::PLUG_OUTPUT | PLUG_FLAGS::PLUG_TEXTURE;
     outTexture.nodePtr = this;
     outTexture.name = "outTexture";
   }
@@ -82,7 +82,7 @@ public:
 };
 class LegacyFinalBlitNode final : public SirEngine::GNode {
 public:
-  enum PLUGS { IN_TEXTURE = INPUT_PLUG_CODE(0), COUNT = 1 };
+  enum PLUGS { IN_TEXTURE = inputPlugCode(0), COUNT = 1 };
   LegacyFinalBlitNode(GraphAllocators &allocs)
       : GNode("finalBlit", "FinalBlitNodeProxy", allocs) {
     // lets create the plugs
@@ -96,9 +96,9 @@ public:
     // setup connection pool
     defaultInitializeConnectionPool(1, 0);
 
-    GPlug &inTexture = m_inputPlugs[PLUG_INDEX(PLUGS::IN_TEXTURE)];
+    GPlug &inTexture = m_inputPlugs[getPlugIndex(PLUGS::IN_TEXTURE)];
     inTexture.plugValue = 0;
-    inTexture.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
+    inTexture.flags = PLUG_FLAGS::PLUG_INPUT | PLUG_FLAGS::PLUG_TEXTURE;
     inTexture.nodePtr = this;
     inTexture.name = "inTexture";
   }
@@ -107,13 +107,13 @@ public:
 class LegacyGBufferPassPBR final : public SirEngine::GNode {
 public:
   enum PLUGS {
-    GEOMETRY_RT = OUTPUT_PLUG_CODE(0),
-    NORMALS_RT = OUTPUT_PLUG_CODE(1),
-    SPECULAR_RT = OUTPUT_PLUG_CODE(2),
-    DEPTH_RT = OUTPUT_PLUG_CODE(3),
-    MATRICES = INPUT_PLUG_CODE(0),
-    MESHES = INPUT_PLUG_CODE(1),
-    MATERIALS = INPUT_PLUG_CODE(2),
+    GEOMETRY_RT = outputPlugCode(0),
+    NORMALS_RT = outputPlugCode(1),
+    SPECULAR_RT = outputPlugCode(2),
+    DEPTH_RT = outputPlugCode(3),
+    MATRICES = inputPlugCode(0),
+    MESHES = inputPlugCode(1),
+    MATERIALS = inputPlugCode(2),
     COUNT = 7
   };
 
@@ -130,46 +130,46 @@ public:
     // setup connection pool
     defaultInitializeConnectionPool(3, 4);
 
-    GPlug &geometryBuffer = m_outputPlugs[PLUG_INDEX(PLUGS::GEOMETRY_RT)];
+    GPlug &geometryBuffer = m_outputPlugs[getPlugIndex(PLUGS::GEOMETRY_RT)];
     geometryBuffer.plugValue = 0;
-    geometryBuffer.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
+    geometryBuffer.flags = PLUG_FLAGS::PLUG_OUTPUT | PLUG_FLAGS::PLUG_TEXTURE;
     geometryBuffer.nodePtr = this;
     geometryBuffer.name = "geometry";
 
-    GPlug &normalBuffer = m_outputPlugs[PLUG_INDEX(PLUGS::NORMALS_RT)];
+    GPlug &normalBuffer = m_outputPlugs[getPlugIndex(PLUGS::NORMALS_RT)];
     normalBuffer.plugValue = 0;
-    normalBuffer.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
+    normalBuffer.flags = PLUG_FLAGS::PLUG_OUTPUT | PLUG_FLAGS::PLUG_TEXTURE;
     normalBuffer.nodePtr = this;
     normalBuffer.name = "normal";
 
-    GPlug &specularBuffer = m_outputPlugs[PLUG_INDEX(PLUGS::SPECULAR_RT)];
+    GPlug &specularBuffer = m_outputPlugs[getPlugIndex(PLUGS::SPECULAR_RT)];
     specularBuffer.plugValue = 0;
-    specularBuffer.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
+    specularBuffer.flags = PLUG_FLAGS::PLUG_OUTPUT | PLUG_FLAGS::PLUG_TEXTURE;
     specularBuffer.nodePtr = this;
     specularBuffer.name = "specular";
 
-    GPlug &depthBuffer = m_outputPlugs[PLUG_INDEX(PLUGS::DEPTH_RT)];
+    GPlug &depthBuffer = m_outputPlugs[getPlugIndex(PLUGS::DEPTH_RT)];
     depthBuffer.plugValue = 0;
-    depthBuffer.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
+    depthBuffer.flags = PLUG_FLAGS::PLUG_OUTPUT | PLUG_FLAGS::PLUG_TEXTURE;
     depthBuffer.nodePtr = this;
     depthBuffer.name = "depth";
 
     // lets create the plugs
-    GPlug &matrices = m_inputPlugs[PLUG_INDEX(PLUGS::MATRICES)];
+    GPlug &matrices = m_inputPlugs[getPlugIndex(PLUGS::MATRICES)];
     matrices.plugValue = 0;
-    matrices.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_CPU_BUFFER;
+    matrices.flags = PLUG_FLAGS::PLUG_INPUT | PLUG_FLAGS::PLUG_CPU_BUFFER;
     matrices.nodePtr = this;
     matrices.name = "matrices";
 
-    GPlug &meshes = m_inputPlugs[PLUG_INDEX(PLUGS::MESHES)];
+    GPlug &meshes = m_inputPlugs[getPlugIndex(PLUGS::MESHES)];
     meshes.plugValue = 0;
-    meshes.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_MESHES;
+    meshes.flags = PLUG_FLAGS::PLUG_INPUT | PLUG_FLAGS::PLUG_MESHES;
     meshes.nodePtr = this;
     meshes.name = "meshes";
 
-    GPlug &materials = m_inputPlugs[PLUG_INDEX(PLUGS::MATERIALS)];
+    GPlug &materials = m_inputPlugs[getPlugIndex(PLUGS::MATERIALS)];
     materials.plugValue = 0;
-    materials.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_CPU_BUFFER;
+    materials.flags = PLUG_FLAGS::PLUG_INPUT | PLUG_FLAGS::PLUG_CPU_BUFFER;
     materials.nodePtr = this;
     materials.name = "materials";
   }
@@ -178,7 +178,7 @@ public:
 
 class AssetManagerNode final : public GNode {
 public:
-  enum PLUGS { ASSET_STREAM = OUTPUT_PLUG_CODE(0), COUNT = 1 };
+  enum PLUGS { ASSET_STREAM = outputPlugCode(0), COUNT = 1 };
 
 public:
   AssetManagerNode(GraphAllocators &allocators)
@@ -186,16 +186,16 @@ public:
     // lets create the plugs
     defaultInitializePlugsAndConnections(0, 1);
 
-    GPlug &stream = m_outputPlugs[PLUG_INDEX(PLUGS::ASSET_STREAM)];
+    GPlug &stream = m_outputPlugs[getPlugIndex(PLUGS::ASSET_STREAM)];
     stream.plugValue = 0;
-    stream.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_CPU_BUFFER;
+    stream.flags = PLUG_FLAGS::PLUG_OUTPUT | PLUG_FLAGS::PLUG_CPU_BUFFER;
     stream.nodePtr = this;
     stream.name = "assetStream";
   }
 };
 class FinalBlitNode final : public GNode {
 public:
-  enum PLUGS { IN_TEXTURE = INPUT_PLUG_CODE(0), COUNT = 1 };
+  enum PLUGS { IN_TEXTURE = inputPlugCode(0), COUNT = 1 };
 
 public:
   FinalBlitNode(GraphAllocators &allocators)
@@ -203,9 +203,9 @@ public:
     // lets create the plugs
     defaultInitializePlugsAndConnections(1, 0);
 
-    GPlug &inTexture = m_inputPlugs[PLUG_INDEX(PLUGS::IN_TEXTURE)];
+    GPlug &inTexture = m_inputPlugs[getPlugIndex(PLUGS::IN_TEXTURE)];
     inTexture.plugValue = 0;
-    inTexture.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
+    inTexture.flags = PLUG_FLAGS::PLUG_INPUT | PLUG_FLAGS::PLUG_TEXTURE;
     inTexture.nodePtr = this;
     inTexture.name = "inTexture";
   }
@@ -216,10 +216,10 @@ public:
 class SimpleForward final : public GNode {
 public:
   enum PLUGS {
-    IN_TEXTURE = INPUT_PLUG_CODE(0),
-    DEPTH_RT = INPUT_PLUG_CODE(1),
-    ASSET_STREAM = INPUT_PLUG_CODE(2),
-    OUT_TEXTURE = OUTPUT_PLUG_CODE(0),
+    IN_TEXTURE = inputPlugCode(0),
+    DEPTH_RT = inputPlugCode(1),
+    ASSET_STREAM = inputPlugCode(2),
+    OUT_TEXTURE = outputPlugCode(0),
     COUNT = 4
   };
 
@@ -229,28 +229,28 @@ public:
 
     defaultInitializePlugsAndConnections(3, 1);
     // lets create the plugs
-    GPlug &inTexture = m_inputPlugs[PLUG_INDEX(PLUGS::IN_TEXTURE)];
+    GPlug &inTexture = m_inputPlugs[getPlugIndex(PLUGS::IN_TEXTURE)];
     inTexture.plugValue = 0;
-    inTexture.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
+    inTexture.flags = PLUG_FLAGS::PLUG_INPUT | PLUG_FLAGS::PLUG_TEXTURE;
     inTexture.nodePtr = this;
     inTexture.name = "inTexture";
 
-    GPlug &depthBuffer = m_inputPlugs[PLUG_INDEX(PLUGS::DEPTH_RT)];
+    GPlug &depthBuffer = m_inputPlugs[getPlugIndex(PLUGS::DEPTH_RT)];
     depthBuffer.plugValue = 0;
-    depthBuffer.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
+    depthBuffer.flags = PLUG_FLAGS::PLUG_INPUT | PLUG_FLAGS::PLUG_TEXTURE;
     depthBuffer.nodePtr = this;
     depthBuffer.name = "depthTexture";
 
     // lets create the plugs
-    GPlug &stream = m_inputPlugs[PLUG_INDEX(PLUGS::ASSET_STREAM)];
+    GPlug &stream = m_inputPlugs[getPlugIndex(PLUGS::ASSET_STREAM)];
     stream.plugValue = 0;
-    stream.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_CPU_BUFFER;
+    stream.flags = PLUG_FLAGS::PLUG_INPUT | PLUG_FLAGS::PLUG_CPU_BUFFER;
     stream.nodePtr = this;
     stream.name = "assetStream";
 
-    GPlug &outTexture = m_outputPlugs[PLUG_INDEX(PLUGS::OUT_TEXTURE)];
+    GPlug &outTexture = m_outputPlugs[getPlugIndex(PLUGS::OUT_TEXTURE)];
     outTexture.plugValue = 0;
-    outTexture.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
+    outTexture.flags = PLUG_FLAGS::PLUG_OUTPUT | PLUG_FLAGS::PLUG_TEXTURE;
     outTexture.nodePtr = this;
     outTexture.name = "outTexture";
   };
@@ -260,9 +260,9 @@ public:
 class PostProcessStack final : public GNode {
 public:
   enum PLUGS {
-    IN_TEXTURE = INPUT_PLUG_CODE(0),
-    DEPTH_RT = INPUT_PLUG_CODE(1),
-    OUT_TEXTURE = OUTPUT_PLUG_CODE(0),
+    IN_TEXTURE = inputPlugCode(0),
+    DEPTH_RT = inputPlugCode(1),
+    OUT_TEXTURE = outputPlugCode(0),
     COUNT = 3
   };
 
@@ -271,21 +271,21 @@ public:
       : GNode("PostProcessStack", "PostProcessStack", allocators) {
     defaultInitializePlugsAndConnections(2, 1);
     // lets create the plugs
-    GPlug &inTexture = m_inputPlugs[PLUG_INDEX(PLUGS::IN_TEXTURE)];
+    GPlug &inTexture = m_inputPlugs[getPlugIndex(PLUGS::IN_TEXTURE)];
     inTexture.plugValue = 0;
-    inTexture.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
+    inTexture.flags = PLUG_FLAGS::PLUG_INPUT | PLUG_FLAGS::PLUG_TEXTURE;
     inTexture.nodePtr = this;
     inTexture.name = "inTexture";
 
-    GPlug &depthTexture = m_inputPlugs[PLUG_INDEX(PLUGS::DEPTH_RT)];
+    GPlug &depthTexture = m_inputPlugs[getPlugIndex(PLUGS::DEPTH_RT)];
     depthTexture.plugValue = 0;
-    depthTexture.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
+    depthTexture.flags = PLUG_FLAGS::PLUG_INPUT | PLUG_FLAGS::PLUG_TEXTURE;
     depthTexture.nodePtr = this;
     depthTexture.name = "depthTexture";
 
-    GPlug &outTexture = m_outputPlugs[PLUG_INDEX(PLUGS::OUT_TEXTURE)];
+    GPlug &outTexture = m_outputPlugs[getPlugIndex(PLUGS::OUT_TEXTURE)];
     outTexture.plugValue = 0;
-    outTexture.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
+    outTexture.flags = PLUG_FLAGS::PLUG_OUTPUT | PLUG_FLAGS::PLUG_TEXTURE;
     outTexture.nodePtr = this;
     outTexture.name = "outTexture";
   }
@@ -294,11 +294,11 @@ public:
 class GBufferPassPBR final : public GNode {
 public:
   enum PLUGS {
-    GEOMETRY_RT = OUTPUT_PLUG_CODE(0),
-    NORMALS_RT = OUTPUT_PLUG_CODE(1),
-    SPECULAR_RT = OUTPUT_PLUG_CODE(2),
-    DEPTH_RT = OUTPUT_PLUG_CODE(3),
-    ASSET_STREAM = INPUT_PLUG_CODE(0),
+    GEOMETRY_RT = outputPlugCode(0),
+    NORMALS_RT = outputPlugCode(1),
+    SPECULAR_RT = outputPlugCode(2),
+    DEPTH_RT = outputPlugCode(3),
+    ASSET_STREAM = inputPlugCode(0),
     COUNT = 5
   };
 
@@ -308,34 +308,34 @@ public:
 
     defaultInitializePlugsAndConnections(1, 4);
     // lets create the plugs
-    GPlug &geometryBuffer = m_outputPlugs[PLUG_INDEX(PLUGS::GEOMETRY_RT)];
+    GPlug &geometryBuffer = m_outputPlugs[getPlugIndex(PLUGS::GEOMETRY_RT)];
     geometryBuffer.plugValue = 0;
-    geometryBuffer.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
+    geometryBuffer.flags = PLUG_FLAGS::PLUG_OUTPUT | PLUG_FLAGS::PLUG_TEXTURE;
     geometryBuffer.nodePtr = this;
     geometryBuffer.name = "geometry";
 
-    GPlug &normalBuffer = m_outputPlugs[PLUG_INDEX(PLUGS::NORMALS_RT)];
+    GPlug &normalBuffer = m_outputPlugs[getPlugIndex(PLUGS::NORMALS_RT)];
     normalBuffer.plugValue = 0;
-    normalBuffer.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
+    normalBuffer.flags = PLUG_FLAGS::PLUG_OUTPUT | PLUG_FLAGS::PLUG_TEXTURE;
     normalBuffer.nodePtr = this;
     normalBuffer.name = "normal";
 
-    GPlug &specularBuffer = m_outputPlugs[PLUG_INDEX(PLUGS::SPECULAR_RT)];
+    GPlug &specularBuffer = m_outputPlugs[getPlugIndex(PLUGS::SPECULAR_RT)];
     specularBuffer.plugValue = 0;
-    specularBuffer.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
+    specularBuffer.flags = PLUG_FLAGS::PLUG_OUTPUT | PLUG_FLAGS::PLUG_TEXTURE;
     specularBuffer.nodePtr = this;
     specularBuffer.name = "specular";
 
-    GPlug &depthBuffer = m_outputPlugs[PLUG_INDEX(PLUGS::DEPTH_RT)];
+    GPlug &depthBuffer = m_outputPlugs[getPlugIndex(PLUGS::DEPTH_RT)];
     depthBuffer.plugValue = 0;
-    depthBuffer.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
+    depthBuffer.flags = PLUG_FLAGS::PLUG_OUTPUT | PLUG_FLAGS::PLUG_TEXTURE;
     depthBuffer.nodePtr = this;
     depthBuffer.name = "depth";
 
     // lets create the plugs
-    GPlug &stream = m_inputPlugs[PLUG_INDEX(PLUGS::ASSET_STREAM)];
+    GPlug &stream = m_inputPlugs[getPlugIndex(PLUGS::ASSET_STREAM)];
     stream.plugValue = 0;
-    stream.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_CPU_BUFFER;
+    stream.flags = PLUG_FLAGS::PLUG_INPUT | PLUG_FLAGS::PLUG_CPU_BUFFER;
     stream.nodePtr = this;
     stream.name = "assetStream";
   }
@@ -346,12 +346,12 @@ public:
 class DeferredLightingPass : public GNode {
 public:
   enum PLUGS {
-    GEOMETRY_RT = INPUT_PLUG_CODE(0),
-    NORMALS_RT = INPUT_PLUG_CODE(1),
-    SPECULAR_RT = INPUT_PLUG_CODE(2),
-    DEPTH_RT = INPUT_PLUG_CODE(3),
-    DIRECTIONAL_SHADOW_RT = INPUT_PLUG_CODE(4),
-    LIGHTING_RT = OUTPUT_PLUG_CODE(0),
+    GEOMETRY_RT = inputPlugCode(0),
+    NORMALS_RT = inputPlugCode(1),
+    SPECULAR_RT = inputPlugCode(2),
+    DEPTH_RT = inputPlugCode(3),
+    DIRECTIONAL_SHADOW_RT = inputPlugCode(4),
+    LIGHTING_RT = outputPlugCode(0),
     COUNT = 6
   };
 
@@ -362,40 +362,40 @@ public:
     defaultInitializePlugsAndConnections(5, 1);
 
     // lets create the plugs
-    GPlug &geometryBuffer = m_inputPlugs[PLUG_INDEX(PLUGS::GEOMETRY_RT)];
+    GPlug &geometryBuffer = m_inputPlugs[getPlugIndex(PLUGS::GEOMETRY_RT)];
     geometryBuffer.plugValue = 0;
-    geometryBuffer.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
+    geometryBuffer.flags = PLUG_FLAGS::PLUG_INPUT | PLUG_FLAGS::PLUG_TEXTURE;
     geometryBuffer.nodePtr = this;
     geometryBuffer.name = "geometry";
 
-    GPlug &normalBuffer = m_inputPlugs[PLUG_INDEX(PLUGS::NORMALS_RT)];
+    GPlug &normalBuffer = m_inputPlugs[getPlugIndex(PLUGS::NORMALS_RT)];
     normalBuffer.plugValue = 0;
-    normalBuffer.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
+    normalBuffer.flags = PLUG_FLAGS::PLUG_INPUT | PLUG_FLAGS::PLUG_TEXTURE;
     normalBuffer.nodePtr = this;
     normalBuffer.name = "normal";
 
-    GPlug &specularBuffer = m_inputPlugs[PLUG_INDEX(PLUGS::SPECULAR_RT)];
+    GPlug &specularBuffer = m_inputPlugs[getPlugIndex(PLUGS::SPECULAR_RT)];
     specularBuffer.plugValue = 0;
-    specularBuffer.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
+    specularBuffer.flags = PLUG_FLAGS::PLUG_INPUT | PLUG_FLAGS::PLUG_TEXTURE;
     specularBuffer.nodePtr = this;
     specularBuffer.name = "specular";
 
-    GPlug &depthBuffer = m_inputPlugs[PLUG_INDEX(PLUGS::DEPTH_RT)];
+    GPlug &depthBuffer = m_inputPlugs[getPlugIndex(PLUGS::DEPTH_RT)];
     depthBuffer.plugValue = 0;
-    depthBuffer.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
+    depthBuffer.flags = PLUG_FLAGS::PLUG_INPUT | PLUG_FLAGS::PLUG_TEXTURE;
     depthBuffer.nodePtr = this;
     depthBuffer.name = "depth";
 
     GPlug &shadowBuffer =
-        m_inputPlugs[PLUG_INDEX(PLUGS::DIRECTIONAL_SHADOW_RT)];
+        m_inputPlugs[getPlugIndex(PLUGS::DIRECTIONAL_SHADOW_RT)];
     shadowBuffer.plugValue = 0;
-    shadowBuffer.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
+    shadowBuffer.flags = PLUG_FLAGS::PLUG_INPUT | PLUG_FLAGS::PLUG_TEXTURE;
     shadowBuffer.nodePtr = this;
     shadowBuffer.name = "shadow";
 
-    GPlug &lightBuffer = m_outputPlugs[PLUG_INDEX(PLUGS::LIGHTING_RT)];
+    GPlug &lightBuffer = m_outputPlugs[getPlugIndex(PLUGS::LIGHTING_RT)];
     lightBuffer.plugValue = 0;
-    lightBuffer.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
+    lightBuffer.flags = PLUG_FLAGS::PLUG_OUTPUT | PLUG_FLAGS::PLUG_TEXTURE;
     lightBuffer.nodePtr = this;
     lightBuffer.name = "lighting";
   }
@@ -405,9 +405,9 @@ public:
 class SkyBoxPass : public GNode {
 public:
   enum PLUGS {
-    IN_TEXTURE = INPUT_PLUG_CODE(0),
-    DEPTH = INPUT_PLUG_CODE(1),
-    OUT_TEX = OUTPUT_PLUG_CODE(0),
+    IN_TEXTURE = inputPlugCode(0),
+    DEPTH = inputPlugCode(1),
+    OUT_TEX = outputPlugCode(0),
     COUNT = 3
   };
 
@@ -417,21 +417,21 @@ public:
 
     defaultInitializePlugsAndConnections(2, 1);
     // lets create the plugs
-    GPlug &fullscreenPass = m_inputPlugs[PLUG_INDEX(PLUGS::IN_TEXTURE)];
+    GPlug &fullscreenPass = m_inputPlugs[getPlugIndex(PLUGS::IN_TEXTURE)];
     fullscreenPass.plugValue = 0;
-    fullscreenPass.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
+    fullscreenPass.flags = PLUG_FLAGS::PLUG_INPUT | PLUG_FLAGS::PLUG_TEXTURE;
     fullscreenPass.nodePtr = this;
     fullscreenPass.name = "fullscreenPass";
 
-    GPlug &depthBuffer = m_inputPlugs[PLUG_INDEX(PLUGS::DEPTH)];
+    GPlug &depthBuffer = m_inputPlugs[getPlugIndex(PLUGS::DEPTH)];
     depthBuffer.plugValue = 0;
-    depthBuffer.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
+    depthBuffer.flags = PLUG_FLAGS::PLUG_INPUT | PLUG_FLAGS::PLUG_TEXTURE;
     depthBuffer.nodePtr = this;
     depthBuffer.name = "depth";
 
-    GPlug &buffer = m_outputPlugs[PLUG_INDEX(PLUGS::OUT_TEX)];
+    GPlug &buffer = m_outputPlugs[getPlugIndex(PLUGS::OUT_TEX)];
     buffer.plugValue = 0;
-    buffer.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
+    buffer.flags = PLUG_FLAGS::PLUG_OUTPUT | PLUG_FLAGS::PLUG_TEXTURE;
     buffer.nodePtr = this;
     buffer.name = "buffer";
   }
@@ -441,9 +441,9 @@ public:
 class DebugDrawNode final : public GNode {
 public:
   enum PLUGS {
-    IN_TEXTURE = INPUT_PLUG_CODE(0),
-    DEPTH_RT = INPUT_PLUG_CODE(1),
-    OUT_TEXTURE = OUTPUT_PLUG_CODE(0),
+    IN_TEXTURE = inputPlugCode(0),
+    DEPTH_RT = inputPlugCode(1),
+    OUT_TEXTURE = outputPlugCode(0),
     COUNT = 2
   };
 
@@ -453,21 +453,21 @@ public:
 
     defaultInitializePlugsAndConnections(2, 1);
     // lets create the plugs
-    GPlug &inTexture = m_inputPlugs[PLUG_INDEX(PLUGS::IN_TEXTURE)];
+    GPlug &inTexture = m_inputPlugs[getPlugIndex(PLUGS::IN_TEXTURE)];
     inTexture.plugValue = 0;
-    inTexture.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
+    inTexture.flags = PLUG_FLAGS::PLUG_INPUT | PLUG_FLAGS::PLUG_TEXTURE;
     inTexture.nodePtr = this;
     inTexture.name = "inTexture";
 
-    GPlug &inDepth = m_inputPlugs[PLUG_INDEX(PLUGS::DEPTH_RT)];
+    GPlug &inDepth = m_inputPlugs[getPlugIndex(PLUGS::DEPTH_RT)];
     inDepth.plugValue = 0;
-    inDepth.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_TEXTURE;
+    inDepth.flags = PLUG_FLAGS::PLUG_INPUT | PLUG_FLAGS::PLUG_TEXTURE;
     inDepth.nodePtr = this;
     inDepth.name = "depthTexture";
 
-    GPlug &outTexture = m_outputPlugs[PLUG_INDEX(PLUGS::OUT_TEXTURE)];
+    GPlug &outTexture = m_outputPlugs[getPlugIndex(PLUGS::OUT_TEXTURE)];
     outTexture.plugValue = 0;
-    outTexture.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
+    outTexture.flags = PLUG_FLAGS::PLUG_OUTPUT | PLUG_FLAGS::PLUG_TEXTURE;
     outTexture.nodePtr = this;
     outTexture.name = "outTexture";
   }
@@ -477,8 +477,8 @@ public:
 class ShadowPass final : public GNode {
 public:
   enum PLUGS {
-    DIRECTIONAL_SHADOW_RT = OUTPUT_PLUG_CODE(0),
-    ASSET_STREAM = INPUT_PLUG_CODE(0),
+    DIRECTIONAL_SHADOW_RT = outputPlugCode(0),
+    ASSET_STREAM = inputPlugCode(0),
     COUNT = 2
   };
 
@@ -489,16 +489,16 @@ public:
     defaultInitializePlugsAndConnections(1, 4);
     // lets create the plugs
     GPlug &geometryBuffer =
-        m_outputPlugs[PLUG_INDEX(PLUGS::DIRECTIONAL_SHADOW_RT)];
+        m_outputPlugs[getPlugIndex(PLUGS::DIRECTIONAL_SHADOW_RT)];
     geometryBuffer.plugValue = 0;
-    geometryBuffer.flags = PlugFlags::PLUG_OUTPUT | PlugFlags::PLUG_TEXTURE;
+    geometryBuffer.flags = PLUG_FLAGS::PLUG_OUTPUT | PLUG_FLAGS::PLUG_TEXTURE;
     geometryBuffer.nodePtr = this;
     geometryBuffer.name = "shadowRT";
 
     // lets create the plugs
-    GPlug &stream = m_inputPlugs[PLUG_INDEX(PLUGS::ASSET_STREAM)];
+    GPlug &stream = m_inputPlugs[getPlugIndex(PLUGS::ASSET_STREAM)];
     stream.plugValue = 0;
-    stream.flags = PlugFlags::PLUG_INPUT | PlugFlags::PLUG_CPU_BUFFER;
+    stream.flags = PLUG_FLAGS::PLUG_INPUT | PLUG_FLAGS::PLUG_CPU_BUFFER;
     stream.nodePtr = this;
     stream.name = "assetStream";
   }

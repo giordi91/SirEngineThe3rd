@@ -51,5 +51,6 @@ private:
 
   GraphAllocators *alloc;
   graphics::GrassTechnique m_grass;
+  void(*testLambda)() = nullptr;
 };
 } // namespace SirEngine

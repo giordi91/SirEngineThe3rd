@@ -8,9 +8,9 @@ struct ID3D12RootSignature;
 namespace SirEngine {
 class FramePassDebugNode final : public GNode {
 public:
-  enum PLUGS {
-    IN_TEXTURE = INPUT_PLUG_CODE(0),
-    OUT_TEXTURE = OUTPUT_PLUG_CODE(0),
+  enum PLUGS : uint32_t {
+    IN_TEXTURE = inputPlugCode(0),
+    OUT_TEXTURE = outputPlugCode(0),
     COUNT = 2
   };
 

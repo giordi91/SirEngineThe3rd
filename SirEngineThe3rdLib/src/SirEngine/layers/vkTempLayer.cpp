@@ -27,8 +27,7 @@
 
 namespace SirEngine {
 
-void VkTempLayer::initGrass() {
-}
+void VkTempLayer::initGrass() {}
 
 void VkTempLayer::onAttach() {
   globals::MAIN_CAMERA = new Camera3DPivot();
@@ -68,7 +67,8 @@ void VkTempLayer::onAttach() {
   postProcess->initialize();
 
   // add callback to forward for grass shader
-  forward->addCallbackConfig(&m_grass);
+  forward->addCallbackConfig(graphics::GrassTechnique::GRASS_TECHNIQUE_FORWARD,
+                             &m_grass);
 
   // temporary graph for testing
   globals::RENDERING_GRAPH->addNode(forward);
@@ -131,9 +131,7 @@ void VkTempLayer::onEvent(Event &event) {
   //    SE_BIND_EVENT_FN(VkTempLayer::onReloadScriptEvent));
 }
 
-void VkTempLayer::clear() {
-  globals::RENDERING_GRAPH->clear();
-}
+void VkTempLayer::clear() { globals::RENDERING_GRAPH->clear(); }
 
 bool VkTempLayer::onMouseButtonPressEvent(MouseButtonPressEvent &e) {
   if (e.getMouseButton() == MOUSE_BUTTONS_EVENT::LEFT) {

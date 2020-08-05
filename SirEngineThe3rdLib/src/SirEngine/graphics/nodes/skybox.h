@@ -8,10 +8,10 @@ namespace SirEngine {
 
 class SkyBoxPass : public GNode {
 public:
-  enum PLUGS {
-    IN_TEXTURE = INPUT_PLUG_CODE(0),
-    DEPTH = INPUT_PLUG_CODE(1),
-    OUT_TEX = OUTPUT_PLUG_CODE(0),
+  enum PLUGS :uint32_t{
+    IN_TEXTURE = inputPlugCode(0),
+    DEPTH = inputPlugCode(1),
+    OUT_TEX = outputPlugCode(0),
     COUNT = 3
   };
 

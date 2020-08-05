@@ -33,7 +33,7 @@ void GammaAndToneMappingEffect::initialize() {
 }
 
 void GammaAndToneMappingEffect::render(const TextureHandle input,
-                                       const TextureHandle output,
+                                       const TextureHandle ,
                                        const PostProcessResources &) {
   if (updateConfig) {
     updateConstantBuffer();

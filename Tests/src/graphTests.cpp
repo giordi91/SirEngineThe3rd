@@ -198,15 +198,15 @@ TEST_CASE("remove connection", "[graphics,graph]") {
   const GPlug *outPlugs = asset.getOutputPlugs(outSourceCount);
   int inDestCount;
   const GPlug *inPlugs = gbuffer.getInputPlugs(inDestCount);
-  asset.removeConnection(&outPlugs[PLUG_INDEX(LegacyAssetNode::MESHES)],
-                         &inPlugs[PLUG_INDEX(LegacyGBufferPassPBR::MESHES)]);
+  asset.removeConnection(&outPlugs[GNode::getPlugIndex(LegacyAssetNode::MESHES)],
+                         &inPlugs[GNode::getPlugIndex(LegacyGBufferPassPBR::MESHES)]);
   REQUIRE(res == true);
   res = graph.isConnected(&asset, LegacyAssetNode::MESHES, &gbuffer,
                           LegacyGBufferPassPBR::MESHES);
   REQUIRE(res == false);
 
-  res = graph.connectNodes(&outPlugs[PLUG_INDEX(LegacyAssetNode::MESHES)],
-                           &inPlugs[PLUG_INDEX(LegacyGBufferPassPBR::MESHES)]);
+  res = graph.connectNodes(&outPlugs[GNode::getPlugIndex(LegacyAssetNode::MESHES)],
+                           &inPlugs[GNode::getPlugIndex(LegacyGBufferPassPBR::MESHES)]);
   REQUIRE(res == true);
   res = graph.isConnected(&asset, LegacyAssetNode::MESHES, &gbuffer,
                           LegacyGBufferPassPBR::MESHES);

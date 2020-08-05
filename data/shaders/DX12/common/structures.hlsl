@@ -104,7 +104,7 @@ struct GrassConfig {
   float height;
 
   //wind config
-	float2 windFrequency;
+  float2 windFrequency;
   float windStrength;
   float padding;
   //shading

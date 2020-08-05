@@ -32,10 +32,10 @@ class PostProcessEffect {
 
 class PostProcessStack final : public GNode {
  public:
-  enum PLUGS {
-    IN_TEXTURE = INPUT_PLUG_CODE(0),
-    DEPTH_RT = INPUT_PLUG_CODE(1),
-    OUT_TEXTURE = OUTPUT_PLUG_CODE(0),
+  enum PLUGS :uint32_t {
+    IN_TEXTURE = inputPlugCode(0),
+    DEPTH_RT = inputPlugCode(1),
+    OUT_TEXTURE = outputPlugCode(0),
     COUNT = 3
   };
 
