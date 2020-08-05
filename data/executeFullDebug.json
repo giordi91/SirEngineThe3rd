@@ -1,8 +1,6 @@
 {
   "commands": [
     "-p ../data/meshes/pSphere1.obj -o ../data/processed/meshes/pSphere1.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/meshes/pSphere1.tangents\"",
-    "-p ../data/meshes/skybox.obj -o ../data/processed/meshes/skybox.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/meshes/skybox.tangents\"",
-    "-p ../data/external/meshes/cerberus.obj -o ../data/processed/meshes/cerberus.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/meshes/cerberus.tangents\"",
     "-p ../data/external/meshes/knightB/jacket.obj -o ../data/processed/meshes/knightB/jacket.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/jacket.tangents --skin ../data/external/animation/exported/skin/knightBJacketSkin.json\"",
     "-p ../data/external/meshes/knightB/pants.obj -o ../data/processed/meshes/knightB/pants.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/pants.tangents --skin ../data/external/animation/exported/skin/knightBPantsSkin.json\"",
     "-p ../data/external/meshes/knightB/belt.obj -o ../data/processed/meshes/knightB/belt.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/belt.tangents --skin ../data/external/animation/exported/skin/knightBBeltsSkin.json\"",
@@ -96,6 +94,7 @@
     "-p ../data/rs/forwardParallaxRS.json -o ../data/processed/rs/forwardParallaxRS.root --pluginName rootSignatureCompilerPlugin",
     "-p ../data/rs/shadowSkinClusterRS.json -o ../data/processed/rs/shadowSkinClusterRS.root --pluginName rootSignatureCompilerPlugin",
     "-p ../data/rs/grassForwardRS.json -o ../data/processed/rs/grassForwardRS.root --pluginName rootSignatureCompilerPlugin",
+    "-p ../data/rs/grassPlaneRS.json -o ../data/processed/rs/grassPlaneRS.root --pluginName rootSignatureCompilerPlugin",
     "-p ../data/rs/forwardPlusPassRS.json -o ../data/processed/rs/forwardPlusPassRS.root --pluginName rootSignatureCompilerPlugin",
 
 
@@ -161,7 +160,11 @@
     "-p ../data/external/textures/bricks/bricks_N.png -o ../data/processed/textures/bricks/bricks_N.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\"",
     "-p ../data/external/textures/bricks/bricks_R.png -o ../data/processed/textures/bricks/bricks_R.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\"",
 
-    "-p ../data/external/textures/grass/wind.png -o ../data/processed/textures/grass/wind.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1 -g -m\""
+    "-p ../data/external/textures/grass/wind.png -o ../data/processed/textures/grass/wind.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1 -g -m\"",
+    "-p ../data/external/textures/grass/grassAlbedo.png -o ../data/processed/textures/grass/grassAlbedo.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1 -g -m\"",
+    "-p ../data/external/textures/grass/grassGround.png -o ../data/processed/textures/grass/grassGround.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1 -g -m\"",
+
+    "-p ../data/external/grass/points.json -o ../data/processed/grass/grass.points --pluginName PointTilerCompilerPlugin"
   ],
   "t": [
       "-p ../data/pso -o ../data/processed/pso --pluginName PSOCompilerPlugin --pluginArgs \"-t DX12 -a -s ../data/shaders/DX12\""
