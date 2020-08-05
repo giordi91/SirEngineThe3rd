@@ -18,6 +18,8 @@ namespace SirEngine::graphics {
 
 static const char *GRASS_RS = "grassForwardRS";
 static const char *GRASS_PSO = "grassForwardPSO";
+static const char *GRASS_PLANE_RS = "grassPlaneRS";
+static const char *GRASS_PLANE_PSO = "grassPlanePSO";
 
 void GrassTechnique::setup(const uint32_t id) {
   if (id != GRASS_TECHNIQUE_FORWARD) {
@@ -47,12 +49,13 @@ void GrassTechnique::setup(const uint32_t id) {
   m_rs = globals::ROOT_SIGNATURE_MANAGER->getHandleFromName(GRASS_RS);
   m_pso = globals::PSO_MANAGER->getHandleFromName(GRASS_PSO);
 
-  // lets read the grass file
-  const char *grassFile = "../data/external/grass/pointsOld.json";
-  const char *grassFile2 = "../data/processed/grass/grass.points";
-  auto jobj = getJsonObj(grassFile);
+  m_groundRs = globals::ROOT_SIGNATURE_MANAGER->getHandleFromName(GRASS_PLANE_RS);
+  m_groundPso= globals::PSO_MANAGER->getHandleFromName(GRASS_PLANE_PSO);
 
-  readAllBytes(grassFile2, m_binaryData);
+  // lets read the grass file
+  const char *grassFile = "../data/processed/grass/grass.points";
+
+  readAllBytes(grassFile, m_binaryData);
 
   const auto *const mapper =
       getMapperData<PointTilerMapperData>(m_binaryData.data());
@@ -74,9 +77,9 @@ void GrassTechnique::setup(const uint32_t id) {
       m_grassConfig.gridOrigin - glm::vec3{halfSize, 0.0f, halfSize};
 
   float tw = m_grassConfig.tileSize;
+  BoundingBox box{};
   for (int tileY = 0; tileY < m_grassConfig.tilesPerSide; ++tileY) {
     for (int tileX = 0; tileX < m_grassConfig.tilesPerSide; ++tileX) {
-      BoundingBox box;
       box.min = minCorner + glm::vec3{tw * tileX, 0, tw * tileY};
       box.max = minCorner + glm::vec3{tw * (tileX + 1), 0.1f, tw * (tileY + 1)};
       tiles.emplace_back(box);
@@ -100,6 +103,9 @@ void GrassTechnique::setup(const uint32_t id) {
 
   m_albedoTexture = globals::TEXTURE_MANAGER->loadTexture(
       "../data/processed/textures/grass/grassAlbedo.texture");
+
+  m_groundAlbedoTexture = globals::TEXTURE_MANAGER->loadTexture(
+      "../data/processed/textures/grass/grassGround.texture");
 
   m_debugHandle = globals::DEBUG_RENDERER->drawBoundingBoxes(
       tiles.data(), MAX_GRASS_PER_SIDE * MAX_GRASS_PER_SIDE,
@@ -136,6 +142,18 @@ void GrassTechnique::setup(const uint32_t id) {
       descriptions, ARRAYSIZE(descriptions),
       graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED,
       "grassBindingTable");
+
+  graphics::BindingDescription groundDescriptions[] = {
+      {3, GRAPHIC_RESOURCE_TYPE::CONSTANT_BUFFER,  // grass config
+       GRAPHICS_RESOURCE_VISIBILITY_VERTEX |
+           GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT},
+      {4, GRAPHIC_RESOURCE_TYPE::TEXTURE,  // albedo texture
+       GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT},
+  };
+  m_groundBindingTable = globals::BINDING_TABLE_MANAGER->allocateBindingTable(
+      groundDescriptions, ARRAYSIZE(groundDescriptions),
+      graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED,
+      "grassGroundBindingTable");
 }
 
 void GrassTechnique::render(const uint32_t id,
@@ -174,6 +192,23 @@ void GrassTechnique::render(const uint32_t id,
   const int tileCount = m_grassConfig.tilesPerSide * m_grassConfig.tilesPerSide;
   globals::RENDERING_CONTEXT->renderProcedural(tileCount * pointsPerTile *
                                                pointsPerBlade);
+
+  globals::BINDING_TABLE_MANAGER->bindConstantBuffer(m_groundBindingTable,
+                                                     m_grassConfigHandle, 3, 3);
+  globals::BINDING_TABLE_MANAGER->bindTexture(m_groundBindingTable, m_groundAlbedoTexture,
+                                              4, 4, false);
+  globals::PSO_MANAGER->bindPSO(m_groundPso);
+  globals::RENDERING_CONTEXT->bindCameraBuffer(m_groundRs);
+
+  if (passHandle.isHandleValid()) {
+    globals::BINDING_TABLE_MANAGER->bindTable(
+        PSOManager::PER_PASS_BINDING_INDEX, passHandle, m_rs);
+
+  globals::BINDING_TABLE_MANAGER->bindTable(
+      PSOManager::PER_OBJECT_BINDING_INDEX, m_groundBindingTable, m_groundRs);
+
+  globals::RENDERING_CONTEXT->renderProcedural(6);
+  }
 }
 
 void GrassTechnique::clear(const uint32_t id) {
@@ -193,6 +228,10 @@ void GrassTechnique::clear(const uint32_t id) {
     globals::TEXTURE_MANAGER->free(m_albedoTexture);
     m_albedoTexture = {0};
   }
+  if (m_groundAlbedoTexture.isHandleValid()) {
+    globals::TEXTURE_MANAGER->free(m_groundAlbedoTexture);
+    m_groundAlbedoTexture = {0};
+  }
   if (m_debugHandle.isHandleValid()) {
     globals::DEBUG_RENDERER->free(m_debugHandle);
     m_debugHandle = {0};
@@ -208,6 +247,10 @@ void GrassTechnique::clear(const uint32_t id) {
   if (m_bindingTable.isHandleValid()) {
     globals::BINDING_TABLE_MANAGER->free(m_bindingTable);
     m_bindingTable = {0};
+  }
+  if (m_groundBindingTable.isHandleValid()) {
+    globals::BINDING_TABLE_MANAGER->free(m_groundBindingTable);
+    m_groundBindingTable = {0};
   }
 }
 

@@ -34,13 +34,19 @@ class GrassTechnique final : public GNodeCallback {
   BufferHandle m_tilesIndicesHandle{};
   ConstantBufferHandle m_grassConfigHandle{};
   BindingTableHandle m_bindingTable{};
+  BindingTableHandle m_groundBindingTable{};
 
   MaterialHandle m_grassMaterial{};
   TextureHandle m_windTexture{};
   TextureHandle m_albedoTexture{};
+  TextureHandle m_groundAlbedoTexture{};
   DebugDrawHandle m_debugHandle{};
+
   PSOHandle m_pso;
   RSHandle m_rs;
+
+  PSOHandle m_groundPso;
+  RSHandle m_groundRs;
 
   std::vector<char> m_binaryData;
   std::vector<glm::vec3> m_tilesPoints;
