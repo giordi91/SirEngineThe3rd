@@ -1,6 +1,6 @@
 #pragma once
 
-#include "SirEngine/memory/resizableVector.h"
+#include "SirEngine/memory/cpu/resizableVector.h"
 
 namespace SirEngine::graphics {
 

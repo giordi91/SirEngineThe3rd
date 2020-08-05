@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "SirEngine/graphics/renderingContext.h"
-#include "SirEngine/memory/sparseMemoryPool.h"
+#include "SirEngine/memory/cpu/sparseMemoryPool.h"
 #include "SirEngine/runtimeString.h"
 #include "platform/windows/graphics/vk/volk.h"
 

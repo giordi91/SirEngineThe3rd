@@ -1,4 +1,4 @@
-#include "SirEngine/memory/linearBufferManager.h"
+#include "SirEngine/memory/cpu/linearBufferManager.h"
 #include <memory>
 
 namespace SirEngine {

@@ -7,7 +7,7 @@
 #include "SirEngine/binary/binaryFile.h"
 #include "platform/windows/graphics/vk/vkShaderCompiler.h"
 
-#include "SirEngine/memory/stringPool.h"
+#include "SirEngine/memory/cpu/stringPool.h"
 
 #include <filesystem>
 

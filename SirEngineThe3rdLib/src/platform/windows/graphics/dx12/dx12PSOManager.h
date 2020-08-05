@@ -2,9 +2,9 @@
 
 #include "DX12.h"
 #include "SirEngine/PSOManager.h"
-#include "SirEngine/memory/resizableVector.h"
-#include "SirEngine/memory/sparseMemoryPool.h"
-#include "SirEngine/memory/stringHashMap.h"
+#include "SirEngine/memory/cpu/resizableVector.h"
+#include "SirEngine/memory/cpu/sparseMemoryPool.h"
+#include "SirEngine/memory/cpu/stringHashMap.h"
 #include "nlohmann/json_fwd.hpp"
 #include "platform/windows/graphics/dx12/PSOCompile.h"
 #include "platform/windows/graphics/dx12/d3dx12.h"

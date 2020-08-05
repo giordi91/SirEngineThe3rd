@@ -1,10 +1,10 @@
 #include "platform/windows/graphics/dx12/dx12BindingTableManager.h"
 
 #include "SirEngine/globals.h"
-#include "SirEngine/memory/threeSizesPool.h"
-#include "dx12ConstantBufferManager.h"
-#include "dx12RootSignatureManager.h"
-#include "dx12TextureManager.h"
+#include "SirEngine/memory/cpu/threeSizesPool.h"
+#include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
+#include "platform/windows/graphics/dx12/dx12RootSignatureManager.h"
+#include "platform/windows/graphics/dx12/dx12TextureManager.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/dx12PSOManager.h"
 

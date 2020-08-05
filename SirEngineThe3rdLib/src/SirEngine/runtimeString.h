@@ -1,6 +1,6 @@
 #pragma once
 #include "SirEngine/globals.h"
-#include "SirEngine/memory/stringPool.h"
+#include "SirEngine/memory/cpu/stringPool.h"
 namespace SirEngine {
 inline const char* persistentString(const char* string) {
   return globals::STRING_POOL->allocatePersistent(string);

@@ -6,9 +6,9 @@
 
 #include "SirEngine/PSOManager.h"
 #include "SirEngine/handle.h"
-#include "SirEngine/memory/resizableVector.h"
-#include "SirEngine/memory/sparseMemoryPool.h"
-#include "SirEngine/memory/stringHashMap.h"
+#include "SirEngine/memory/cpu/resizableVector.h"
+#include "SirEngine/memory/cpu/sparseMemoryPool.h"
+#include "SirEngine/memory/cpu/stringHashMap.h"
 #include "platform/windows/graphics/vk/volk.h"
 #include "vkRootSignatureManager.h"
 

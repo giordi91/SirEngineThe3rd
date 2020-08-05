@@ -31,9 +31,10 @@ void *VkBufferManager::getMappedData(const BufferHandle handle) const {
   return data.data;
 }
 
-void VkBufferManager::bindBuffer(BufferHandle handle,
+void VkBufferManager::bindBuffer(const BufferHandle handle,
                                  VkWriteDescriptorSet *write,
-                                 VkDescriptorSet set, uint32_t bindingIndex) {
+                                 const VkDescriptorSet set,
+                                 const uint32_t bindingIndex) const {
   assertMagicNumber(handle);
   uint32_t idx = getIndexFromHandle(handle);
   const Buffer &data = m_bufferStorage.getConstRef(idx);
@@ -41,7 +42,7 @@ void VkBufferManager::bindBuffer(BufferHandle handle,
   write->sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   write->dstSet = set;
   write->dstBinding = bindingIndex;
-  //TODO this should be probably be queried by the buffer data
+  // TODO this should be probably be queried by the buffer data
   write->descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   write->pBufferInfo = &data.info;
   write->descriptorCount = 1;

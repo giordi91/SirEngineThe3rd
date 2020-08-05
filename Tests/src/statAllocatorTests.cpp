@@ -1,4 +1,4 @@
-#include "SirEngine/memory/stackAllocator.h"
+#include "SirEngine/memory/cpu/stackAllocator.h"
 #include "catch/catch.hpp"
 
 TEST_CASE("StackAllocator simple allocation", "[memory]") {

@@ -4,8 +4,8 @@
 #include "SirEngine/graphics/debugRenderer.h"
 #include "SirEngine/handle.h"
 #include "SirEngine/hashing.h"
-#include "SirEngine/memory/hashMap.h"
-#include "SirEngine/memory/sparseMemoryPool.h"
+#include "SirEngine/memory/cpu/hashMap.h"
+#include "SirEngine/memory/cpu/sparseMemoryPool.h"
 
 namespace SirEngine {
 

@@ -1,5 +1,5 @@
 #include "SirEngine/graphics/graphicsDefines.h"
-#include "SirEngine/memory/linearBufferManager.h"
+#include "SirEngine/memory/cpu/linearBufferManager.h"
 #include "catch/catch.hpp"
 
 TEST_CASE("linear buffer manager basic alloc", "[memory]") {

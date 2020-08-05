@@ -1,8 +1,8 @@
 #pragma once
 
 #include "SirEngine/graphics/bindingTableManager.h"
-#include "SirEngine/memory/sparseMemoryPool.h"
-#include "SirEngine/memory/stackAllocator.h"
+#include "SirEngine/memory/cpu/sparseMemoryPool.h"
+#include "SirEngine/memory/cpu/stackAllocator.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 
 namespace SirEngine::dx12 {

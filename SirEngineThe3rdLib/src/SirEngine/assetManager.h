@@ -1,7 +1,7 @@
 #pragma once
 #include "SirEngine/handle.h"
-#include "memory/resizableVector.h"
-#include "memory/sparseMemoryPool.h"
+#include "memory/cpu/resizableVector.h"
+#include "memory/cpu/sparseMemoryPool.h"
 
 namespace SirEngine {
 

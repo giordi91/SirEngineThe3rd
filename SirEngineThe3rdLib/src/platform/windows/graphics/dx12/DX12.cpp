@@ -9,7 +9,7 @@
 #include "SirEngine/graphics/lightManager.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/log.h"
-#include "SirEngine/memory/stringPool.h"
+#include "SirEngine/memory/cpu/stringPool.h"
 #include "SirEngine/runtimeString.h"
 #include "SirEngine/skinClusterManager.h"
 #include "dx12BindingTableManager.h"

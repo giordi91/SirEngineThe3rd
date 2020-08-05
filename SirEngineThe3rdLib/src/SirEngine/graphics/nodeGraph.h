@@ -3,7 +3,7 @@
 #include <cstdint>
 
 #include "SirEngine/core.h"
-#include "SirEngine/memory/resizableVector.h"
+#include "SirEngine/memory/cpu/resizableVector.h"
 #include "SirEngine/runtimeString.h"
 
 namespace SirEngine {

@@ -5,7 +5,7 @@
 #include "DXTK12/ResourceUploadBatch.h"
 #include "SirEngine/graphics/cpuGraphicsStructures.h"
 #include "SirEngine/handle.h"
-#include "SirEngine/memory/sparseMemoryPool.h"
+#include "SirEngine/memory/cpu/sparseMemoryPool.h"
 #include "SirEngine/meshManager.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/d3dx12.h"

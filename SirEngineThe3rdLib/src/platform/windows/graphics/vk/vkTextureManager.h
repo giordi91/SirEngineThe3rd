@@ -4,7 +4,7 @@
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/handle.h"
 #include "SirEngine/layers/vkTempLayer.h"
-#include "SirEngine/memory/SparseMemoryPool.h"
+#include "SirEngine/memory/cpu/SparseMemoryPool.h"
 #include "SirEngine/textureManager.h"
 #include "platform/windows/graphics/vk/volk.h"
 

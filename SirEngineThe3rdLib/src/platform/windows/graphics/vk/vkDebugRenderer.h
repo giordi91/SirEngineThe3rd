@@ -1,8 +1,8 @@
 #pragma once
 #include "SirEngine/graphics/debugRenderer.h"
 #include "SirEngine/materialManager.h"
-#include "SirEngine/memory/hashMap.h"
-#include "SirEngine/memory/sparseMemoryPool.h"
+#include "SirEngine/memory/cpu/hashMap.h"
+#include "SirEngine/memory/cpu/sparseMemoryPool.h"
 
 namespace SirEngine::vk {
 

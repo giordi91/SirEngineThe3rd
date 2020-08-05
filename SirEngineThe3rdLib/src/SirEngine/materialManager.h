@@ -3,7 +3,7 @@
 #include "SirEngine/graphics/graphicsDefines.h"
 #include "SirEngine/handle.h"
 #include "SirEngine/hashing.h"
-#include "SirEngine/memory/hashMap.h"
+#include "SirEngine/memory/cpu/hashMap.h"
 
 namespace SirEngine {
 

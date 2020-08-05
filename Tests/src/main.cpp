@@ -1,7 +1,7 @@
 #define CATCH_CONFIG_RUNNER
 #include "SirEngine/globals.h"
 #include "SirEngine/log.h"
-#include "SirEngine/memory/stringPool.h"
+#include "SirEngine/memory/cpu/stringPool.h"
 #include "catch/catch.hpp"
 
 int main(int argc, char *argv[]) {

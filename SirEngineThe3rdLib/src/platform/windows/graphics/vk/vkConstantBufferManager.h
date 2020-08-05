@@ -1,13 +1,12 @@
 #pragma once
-#include "platform/windows/graphics/vk/volk.h"
 
 #include "SirEngine/constantBufferManager.h"
 #include "SirEngine/graphics/graphicsDefines.h"
 #include "SirEngine/handle.h"
 #include "SirEngine/log.h"
-#include "SirEngine/memory/linearBufferManager.h"
-#include "SirEngine/memory/randomSizeAllocator.h"
-#include "SirEngine/memory/sparseMemoryPool.h"
+#include "SirEngine/memory/cpu/linearBufferManager.h"
+#include "SirEngine/memory/cpu/randomSizeAllocator.h"
+#include "SirEngine/memory/cpu/sparseMemoryPool.h"
 #include "vkMemory.h"
 #include <vector>
 

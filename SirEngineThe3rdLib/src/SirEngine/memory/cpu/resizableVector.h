@@ -1,5 +1,5 @@
 #pragma once
-#include "SirEngine/memory/threeSizesPool.h"
+#include "SirEngine/memory/cpu/threeSizesPool.h"
 #include <cassert>
 #include <cstdint>
 

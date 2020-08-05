@@ -5,8 +5,8 @@
 #include "SirEngine/globals.h"
 #include "SirEngine/handle.h"
 #include "SirEngine/log.h"
-#include "SirEngine/memory/SparseMemoryPool.h"
-#include "SirEngine/memory/randomSizeAllocator.h"
+#include "SirEngine/memory/cpu/SparseMemoryPool.h"
+#include "SirEngine/memory/cpu/randomSizeAllocator.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 
 namespace SirEngine::dx12 {

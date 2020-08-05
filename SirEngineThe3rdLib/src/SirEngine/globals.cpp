@@ -1,7 +1,7 @@
 #include "SirEngine/globals.h"
 
-#include <SirEngine/memory/stringPool.h>
-#include <SirEngine/memory/threeSizesPool.h>
+#include <SirEngine/memory/cpu/stringPool.h>
+#include <SirEngine/memory/cpu/threeSizesPool.h>
 
 #include <cstdint>
 

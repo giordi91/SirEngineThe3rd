@@ -1,4 +1,4 @@
-#include "SirEngine/memory/SparseMemoryPool.h"
+#include "SirEngine/memory/cpu/SparseMemoryPool.h"
 #include "catch/catch.hpp"
 
 struct DummyAlloc {
