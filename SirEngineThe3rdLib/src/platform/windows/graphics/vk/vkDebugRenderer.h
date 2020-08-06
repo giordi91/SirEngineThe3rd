@@ -1,8 +1,10 @@
 #pragma once
 #include "SirEngine/graphics/debugRenderer.h"
-#include "SirEngine/materialManager.h"
 #include "SirEngine/memory/cpu/hashMap.h"
-#include "SirEngine/memory/cpu/sparseMemoryPool.h"
+
+#include "platform/windows/graphics/vk/memory/vkGPUSlabAllocator.h"
+
+#include "SirEngine/materialManager.h"
 
 namespace SirEngine::vk {
 
@@ -53,6 +55,10 @@ class VkDebugRenderer : public DebugRenderer {
   DebugDrawHandle drawMatrix(const glm::mat4& mat, float size, glm::vec4 color,
                   const char* debugName) override;
 
+  void drawLines(float* data, uint32_t sizeInByte, glm::vec4 color, float size,
+	  const char* debugName) override;
+  void newFrame() override;
+
   void updateBoundingBoxesData(DebugDrawHandle handle, const BoundingBox* data, int count) override;
  private:
   inline void assertMagicNumber(const DebugDrawHandle handle) const {
@@ -73,9 +79,15 @@ class VkDebugRenderer : public DebugRenderer {
 
  private:
   static constexpr uint32_t RESERVE_SIZE = 200;
+  static constexpr uint32_t MAX_FRAMES_IN_FLIGHT= 3;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
   SparseMemoryPool<VkDebugPrimitive> m_primitivesPool;
   HashMap<uint32_t, DebugTracker, hashUint32> m_trackers;
+  VKGPUSlabAllocator m_lineSlab[MAX_FRAMES_IN_FLIGHT];
+  uint32_t m_linesPrimitives = 0;
+  PSOHandle m_linePSO;
+  RSHandle m_lineRS;
+  BindingTableHandle m_lineBindHandle;
 };
 
 }  // namespace SirEngine::vk

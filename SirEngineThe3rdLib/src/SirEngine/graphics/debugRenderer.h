@@ -31,6 +31,7 @@ class DebugRenderer {
  public:
   DebugRenderer() = default;
   virtual ~DebugRenderer() = default;
+  virtual void newFrame() = 0;
   DebugRenderer(const DebugRenderer &) = delete;
   DebugRenderer &operator=(const DebugRenderer &) = delete;
   DebugRenderer(DebugRenderer &&) = delete;
@@ -48,6 +49,9 @@ class DebugRenderer {
                                                 uint32_t sizeInByte,
                                                 glm::vec4 color, float size,
                                                 const char *debugName) = 0;
+  virtual void drawLines(float *data, uint32_t sizeInByte, glm::vec4 color,
+                         float size, const char *debugName) = 0;
+
   virtual DebugDrawHandle drawSkeleton(Skeleton *skeleton, glm::vec4 color,
                                        float pointSize) = 0;
   virtual DebugDrawHandle drawAnimatedSkeleton(DebugDrawHandle handle,
@@ -59,7 +63,8 @@ class DebugRenderer {
   virtual DebugDrawHandle drawBoundingBoxes(const BoundingBox *data, int count,
                                             glm::vec4 color,
                                             const char *debugName) = 0;
-  virtual void updateBoundingBoxesData(DebugDrawHandle handle, const BoundingBox* data, int count)= 0;
+  virtual void updateBoundingBoxesData(DebugDrawHandle handle,
+                                       const BoundingBox *data, int count) = 0;
 
   virtual DebugDrawHandle drawAnimatedBoundingBoxes(DebugDrawHandle handle,
                                                     BoundingBox *data,
@@ -70,8 +75,9 @@ class DebugRenderer {
       const DebugDrawHandle handle, const glm::vec3 *data, const int count,
       const glm::vec4 color, const char *debugName) = 0;
 
-  virtual DebugDrawHandle drawMatrix(const glm::mat4 &mat, float size, glm::vec4 color,
-                          const char *debugName) = 0;
+  virtual DebugDrawHandle drawMatrix(const glm::mat4 &mat, float size,
+                                     glm::vec4 color,
+                                     const char *debugName) = 0;
 };
 
 }  // namespace SirEngine

@@ -5,22 +5,6 @@
   "flatDescriptorTable" :  true, 
   "config": [
     {
-      "comment": "debug config",
-      "type": "descriptorTable",
-      "data": {
-        "numberDescriptor": "1",
-        "ranges": [
-          {
-            "type": "CBV",
-            "underlyingResource": "buffer",
-            "numDescriptors": 1,
-            "baseRegister": 1
-          }
-        ]
-      },
-      "visibility": "ALL"
-    },
-    {
       "comment": "input geo",
       "type": "descriptorTable",
       "data": {

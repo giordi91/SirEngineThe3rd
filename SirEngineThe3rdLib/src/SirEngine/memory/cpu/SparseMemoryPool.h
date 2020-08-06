@@ -113,7 +113,7 @@ class SparseMemoryPool final {
     m_allocationCount = 0;
 #if SE_DEBUG
     // clearing the debug memory to zero
-    memset(m_freedMemory, 0, sizeof(T) * m_poolSize);
+    memset(m_freedMemory, 1, sizeof(char) * m_poolSize);
 #endif
   }
 

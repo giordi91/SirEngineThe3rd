@@ -420,7 +420,7 @@ bool VkRenderingContext::newFrame() {
                           vk::ENGINE_PIPELINE_LAYOUT, 0, 2, sets, 0, nullptr);
 
   return true;
-}  // namespace SirEngine::vk
+}  
 
 bool VkRenderingContext::dispatchFrame() {
   assert(CURRENT_FRAME_COMMAND != nullptr);
@@ -487,6 +487,7 @@ bool VkRenderingContext::shutdownGraphic() {
   assert(result);
 
   SHADER_MANAGER->cleanup();
+  DEBUG_RENDERER->cleanup();
   globals::LIGHT_MANAGER->cleanup();
   CONSTANT_BUFFER_MANAGER->cleanup();
 
@@ -887,7 +888,7 @@ void VkRenderingContext::setViewportAndScissor(
   VkViewport viewport{offsetX, height - offsetY, width,
                       -height, minDepth,         maxDepth};
   VkRect2D scissor{
-      {static_cast<uint32_t>(offsetX), static_cast<uint32_t>(offsetY)},
+      {static_cast<int32_t>(offsetX), static_cast<int32_t>(offsetY)},
       {static_cast<uint32_t>(width), static_cast<uint32_t>(height)}};
   vkCmdSetViewport(commandList, 0, 1, &viewport);
   vkCmdSetScissor(commandList, 0, 1, &scissor);

@@ -3,6 +3,7 @@
 
 namespace SirEngine::vk {
 
+// TODO this file seems redundant need to clean it up
 struct Buffer {
   VkBuffer buffer;
   VkDeviceMemory memory;
@@ -13,12 +14,13 @@ struct Buffer {
   uint32_t m_magicNumber;
 };
 
+//TODO should this functions be here?
 // command buffers
-VkCommandBuffer createCommandBuffer(const VkCommandPool pool ,const VkCommandBufferLevel level,
-                                    const bool begin= false);
+VkCommandBuffer createCommandBuffer(const VkCommandPool pool,
+                                    const VkCommandBufferLevel level,
+                                    const bool begin = false);
 
-void flushCommandBuffer(VkCommandPool pool, VkCommandBuffer commandBuffer, const VkQueue queue,
-                        const bool free);
+void flushCommandBuffer(VkCommandPool pool, VkCommandBuffer commandBuffer,
+                        const VkQueue queue, const bool free);
 
-
-} // namespace SirEngine::vk
+}  // namespace SirEngine::vk

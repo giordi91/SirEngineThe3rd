@@ -1,6 +1,7 @@
 #pragma once
-#include "SirEngine/memory/cpu/resizableVector.h"
 #include <stdint.h>
+
+#include "SirEngine/memory/cpu/resizableVector.h"
 
 namespace SirEngine {
 
@@ -32,18 +33,25 @@ struct BufferRangeTracker {
  */
 template class SIR_ENGINE_API ResizableVector<BufferRangeTracker>;
 class SIR_ENGINE_API LinearBufferManager {
-public:
+ public:
   static constexpr uint32_t DEFAULT_ALLOCATION_RESERVE = 64;
 
-public:
+ public:
   explicit LinearBufferManager(
       const uint64_t bufferSizeInBytes,
       const uint32_t preAlloc = DEFAULT_ALLOCATION_RESERVE)
-      : m_bufferSizeInBytes(bufferSizeInBytes), m_allocations(preAlloc),
+      : m_bufferSizeInBytes(bufferSizeInBytes),
+        m_allocations(preAlloc),
         m_freeAllocations(preAlloc){};
 
-  BufferRangeHandle allocate(const uint64_t allocSizeInBytes, const uint32_t alignment);
+  BufferRangeHandle allocate(const uint64_t allocSizeInBytes,
+                             const uint32_t alignment);
   void free(const BufferRangeHandle handle);
+  void clear() {
+    m_allocations.clear();
+    m_freeAllocations.clear();
+    m_allocCount = 0;
+  }
 
   // getters
   [[nodiscard]] uint64_t getBufferSizeInBytes() const {
@@ -54,13 +62,13 @@ public:
     return m_freeAllocations.size();
   }
 
-  [[nodiscard]] const ResizableVector<BufferRangeTracker> *
-  getAllocations() const {
+  [[nodiscard]] const ResizableVector<BufferRangeTracker> *getAllocations()
+      const {
     return &m_allocations;
   }
 
-  [[nodiscard]] BufferRange
-  getBufferRange(const BufferRangeHandle handle) const {
+  [[nodiscard]] BufferRange getBufferRange(
+      const BufferRangeHandle handle) const {
     assertMagicNumber(handle);
     uint32_t idx = getIndexFromHandle(handle);
     assert(idx < m_allocations.size());
@@ -85,7 +93,7 @@ public:
     return false;
   }
 
-private:
+ private:
   inline void assertMagicNumber(const BufferRangeHandle handle) const {
     uint32_t magic = getMagicFromHandle(handle);
     uint32_t idx = getIndexFromHandle(handle);
@@ -104,7 +112,7 @@ private:
     return (h.handle & STANDARD_MAGIC_NUMBER_MASK) >> 16;
   }
 
-private:
+ private:
   uint16_t MAGIC_NUMBER_COUNTER = 1;
 
   uint64_t m_bufferSizeInBytes;
@@ -113,7 +121,7 @@ private:
    * Here we have two data structure that allow to keep track of what is free
    * and what is not. the main idea is that when an allocation is freed, the
    * m_allocations array is not resized, this allows us to keep the handles
-   * indeces static, instead a copy is put in the free allocations, and when
+   * indices static, instead a copy is put in the free allocations, and when
    * that allocations is re-used then it will be put back in place at correct
    * index.
    */
@@ -122,4 +130,4 @@ private:
   uint64_t m_stackPointer = 0;
   uint32_t m_allocCount = 0;
 };
-} // namespace SirEngine
+}  // namespace SirEngine

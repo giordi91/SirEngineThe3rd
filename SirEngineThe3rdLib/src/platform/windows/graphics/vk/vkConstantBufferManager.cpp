@@ -29,7 +29,7 @@ void VkConstantBufferManager::initialize() {
   // initialize at least one slab
   allocateSlab();
 
-  // checking aligment requirements
+  // checking alignment requirements
   // VkPhysicalDeviceLimits::minUniformBufferOffsetAlignment
   VkPhysicalDeviceProperties properties;
   vkGetPhysicalDeviceProperties(vk::PHYSICAL_DEVICE, &properties);

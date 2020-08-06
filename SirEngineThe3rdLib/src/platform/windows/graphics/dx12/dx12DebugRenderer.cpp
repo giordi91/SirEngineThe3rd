@@ -12,6 +12,11 @@ void Dx12DebugRenderer::initialize() {}
 
 void Dx12DebugRenderer::free(DebugDrawHandle handle) { assert(0); }
 
+void Dx12DebugRenderer::drawLines(float* data, uint32_t sizeInByte, glm::vec4 color, float size,
+	const char* debugName)
+{
+}
+
 DebugDrawHandle Dx12DebugRenderer::drawPointsUniformColor(
     float *data, const uint32_t sizeInByte, const glm::vec4 color,
     const float size, const char *debugName) {
@@ -598,5 +603,9 @@ void Dx12DebugRenderer::updateBoundingBoxesData(DebugDrawHandle handle,
                                                 const BoundingBox *data,
                                                 int count) {
   assert(0);
+}
+
+void Dx12DebugRenderer::newFrame()
+{
 }
 }  // namespace SirEngine::dx12

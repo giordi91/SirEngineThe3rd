@@ -32,8 +32,7 @@ struct DebugTracker {
 };
 
 class Dx12DebugRenderer : public DebugRenderer {
-
-public:
+ public:
   // TODO cleanup creation, this is probably going away
   Dx12DebugRenderer()
       : DebugRenderer(), m_trackers(200), m_primitivesPool(200){};
@@ -49,6 +48,8 @@ public:
     // TODO properly implement cleanup
   }
 
+  void drawLines(float *data, uint32_t sizeInByte, glm::vec4 color, float size,
+                 const char *debugName) override;
   DebugDrawHandle drawPointsUniformColor(float *data, uint32_t sizeInByte,
                                          glm::vec4 color, float size,
                                          const char *debugName) override;
@@ -78,8 +79,13 @@ public:
   DebugDrawHandle drawMatrix(const glm::mat4 &mat, float size, glm::vec4 color,
                              const char *debugName) override;
 
-  void updateBoundingBoxesData(DebugDrawHandle handle, const BoundingBox* data, int count) override;
-private:
+  void updateBoundingBoxesData(DebugDrawHandle handle, const BoundingBox *data,
+                               int count) override;
+
+ public:
+  void newFrame() override;
+
+ private:
   static bool isCompound(const DebugDrawHandle handle) {
     return (handle.handle & (1 << 31)) > 0;
   }
@@ -101,11 +107,11 @@ private:
            "invalid magic handle for material data");
   }
 
-private:
+ private:
   HashMap<uint32_t, DebugTracker, hashUint32> m_trackers;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
   SparseMemoryPool<Dx12DebugPrimitive> m_primitivesPool;
 };
 
-} // namespace dx12
-} // namespace SirEngine
+}  // namespace dx12
+}  // namespace SirEngine

@@ -1,7 +1,10 @@
 #include "platform/windows/graphics/vk/vkDebugRenderer.h"
 
+#include "SirEngine/PSOManager.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/graphics/renderingContext.h"
+#include "SirEngine/materialManager.h"
+#include "platform/windows/graphics/dx12/dx12RootSignatureManager.h"
 #include "platform/windows/graphics/vk/vkBindingTableManager.h"
 #include "platform/windows/graphics/vk/vkBufferManager.h"
 #include "platform/windows/graphics/vk/vkConstantBufferManager.h"
@@ -9,8 +12,30 @@
 #include "vk.h"
 
 namespace SirEngine::vk {
+static const char *LINE_RS = "debugDrawLinesSingleColorRS";
+static const char *LINE_PSO = "debugDrawLinesSingleColorPSO";
 
-void VkDebugRenderer::initialize() {}
+void VkDebugRenderer::initialize() {
+  GPUSlabAllocatorInitializeConfig config{};
+  config.initialSlabs = 1;
+  config.allowNewSlabAllocations = true;
+  config.slabSizeInBytes = 16 * MB_TO_BYTE;
+  uint32_t frames = globals::ENGINE_CONFIG->m_frameBufferingCount;
+  assert(frames <= MAX_FRAMES_IN_FLIGHT);
+  for (int i = 0; i < frames; ++i) {
+    m_lineSlab[i].initialize(config);
+  }
+
+  m_lineRS = globals::ROOT_SIGNATURE_MANAGER->getHandleFromName(LINE_RS);
+  m_linePSO = globals::PSO_MANAGER->getHandleFromName(LINE_PSO);
+  // init binding table
+  graphics::BindingDescription descriptions[] = {
+      {0, GRAPHIC_RESOURCE_TYPE::READ_BUFFER,
+       GRAPHICS_RESOURCE_VISIBILITY_VERTEX}};
+  m_lineBindHandle = globals::BINDING_TABLE_MANAGER->allocateBindingTable(
+      descriptions, ARRAYSIZE(descriptions),
+      graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED, "debugLines");
+}
 inline int push3toVec(float *data, const glm::vec4 v, int counter) {
   data[counter++] = v.x;
   data[counter++] = v.y;
@@ -70,7 +95,16 @@ VkDebugRenderer::VkDebugRenderer()
       m_primitivesPool(RESERVE_SIZE),
       m_trackers(RESERVE_SIZE) {}
 
-void VkDebugRenderer::cleanup() {}
+void VkDebugRenderer::cleanup() {
+  for (int i = 0; i < globals::ENGINE_CONFIG->m_frameBufferingCount; ++i) {
+    m_lineSlab[i].cleanup();
+  }
+
+  if(m_lineBindHandle.isHandleValid())
+  {
+	  globals::BINDING_TABLE_MANAGER->free(m_lineBindHandle);
+  }
+}
 
 void VkDebugRenderer::free(const DebugDrawHandle handle) {
   assertMagicNumber(handle);
@@ -220,11 +254,28 @@ DebugDrawHandle VkDebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
 void VkDebugRenderer::render(TextureHandle input, TextureHandle depth) {
   auto commandList = &vk::CURRENT_FRAME_COMMAND->m_commandBuffer;
 
-  const DrawCallConfig config{
+  /*
+   *const DrawCallConfig config{
       static_cast<uint32_t>(globals::ENGINE_CONFIG->m_windowWidth),
       static_cast<uint32_t>(globals::ENGINE_CONFIG->m_windowHeight), 0};
   globals::RENDERING_CONTEXT->renderQueueType(config, SHADER_QUEUE_FLAGS::DEBUG,
                                               {});
+                                              */
+  // globals::RENDERING_CONTEXT->renderProcedural(indexCount);
+  // draw lines
+
+  BufferHandle bhandle = m_lineSlab[globals::CURRENT_FRAME].getBufferHandle(0);
+  globals::BINDING_TABLE_MANAGER->bindBuffer(m_lineBindHandle, bhandle, 0, 0);
+  globals::RENDERING_CONTEXT->bindCameraBuffer(m_lineRS);
+  globals::PSO_MANAGER->bindPSO(m_linePSO);
+  globals::BINDING_TABLE_MANAGER->bindTable(3, m_lineBindHandle,m_lineRS);
+
+  auto w = static_cast<float>(globals::ENGINE_CONFIG->m_windowWidth);
+  auto h = static_cast<float>(globals::ENGINE_CONFIG->m_windowHeight);
+  globals::RENDERING_CONTEXT->setViewportAndScissor(0, 0, w, h, 0, 1.0f);
+  globals::RENDERING_CONTEXT->renderProcedural(m_linesPrimitives);
+
+  // m_linesPrimitives =0;
 }
 
 DebugDrawHandle VkDebugRenderer::drawBoundingBoxes(const BoundingBox *data,
@@ -284,16 +335,47 @@ DebugDrawHandle VkDebugRenderer::drawMatrix(const glm::mat4 &mat, float size,
   return {};
 }
 
+void VkDebugRenderer::drawLines(float *data, const uint32_t sizeInByte,
+                                const glm::vec4 color, float size,
+                                const char *debugName) {
+  // making sure is a multiple of 3, float3 one per point
+  assert((sizeInByte % (sizeof(float) * 3) == 0));
+  int count = sizeInByte / (sizeof(float) * 3);
+
+  // TODO we are going to allocate twice the amount of data, since we are going
+  // to use a float4s one for position and one for colors, this might be
+  // optimized to float3 but needs to be careful
+  // https://giordi91.github.io/post/spirvvec3/
+  uint32_t finalSize = count * 2 * sizeof(float) * 4;
+  auto *paddedData =
+      static_cast<float *>(globals::FRAME_ALLOCATOR->allocate(finalSize));
+
+  for (int i = 0; i < count; ++i) {
+    paddedData[i * 8 + 0] = data[i * 3 + 0];
+    paddedData[i * 8 + 1] = data[i * 3 + 1];
+    paddedData[i * 8 + 2] = data[i * 3 + 2];
+    paddedData[i * 8 + 3] = 1.0f;
+
+    paddedData[i * 8 + 4] = color.x;
+    paddedData[i * 8 + 5] = color.y;
+    paddedData[i * 8 + 6] = color.z;
+    paddedData[i * 8 + 7] = color.w;
+  }
+
+  m_linesPrimitives += count;
+  // ignoring the handle we are going to flush every frame
+  m_lineSlab[globals::CURRENT_FRAME].allocate(finalSize, paddedData);
+}
+
 void VkDebugRenderer::updateBoundingBoxesData(const DebugDrawHandle handle,
                                               const BoundingBox *data,
                                               const int count) {
-  //assertMagicNumber(handle);
-  //assertPoolMagicNumber(handle);
+  // assertMagicNumber(handle);
+  // assertPoolMagicNumber(handle);
   const uint32_t idx = getIndexFromHandle(handle);
   VkDebugPrimitive &debug = m_primitivesPool[idx];
   BufferHandle bufferHandle = debug.m_bufferHandle;
   void *mappedData = globals::BUFFER_MANAGER->getMappedData(bufferHandle);
-
 
   // 12 is the number of lines needed for the AABB, 4 top, 4 bottom, 4
   // vertical two is because we need two points per line, we are not doing
@@ -324,6 +406,11 @@ void VkDebugRenderer::updateBoundingBoxesData(const DebugDrawHandle handle,
     assert(counter <= totalSize);
   }
 
-  memcpy(mappedData, points, totalSize*sizeof(float));
+  memcpy(mappedData, points, totalSize * sizeof(float));
+}
+
+void VkDebugRenderer::newFrame() {
+  m_lineSlab[globals::CURRENT_FRAME].clear();
+  m_linesPrimitives = 0;
 }
 }  // namespace SirEngine::vk
