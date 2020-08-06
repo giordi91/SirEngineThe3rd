@@ -6,7 +6,7 @@ namespace SirEngine {
 
 class BufferManager {
  public:
-  enum BUFFER_FLAGS {
+  enum BUFFER_FLAGS_BITS {
     RANDOM_WRITE = 1,
     INDEX_BUFFER = 2,
     INDIRECT_BUFFER = 4,
@@ -15,6 +15,8 @@ class BufferManager {
     STORAGE_BUFFER = 32,
     GPU_ONLY = 64,
   };
+
+  typedef uint32_t BUFFER_FLAGS;
 
  public:
   BufferManager() = default;
@@ -29,7 +31,7 @@ class BufferManager {
   virtual void free(const BufferHandle handle) = 0;
   virtual BufferHandle allocate(const uint32_t sizeInBytes, void *initData,
                                 const char *name, int numElements,
-                                int elementSize, uint32_t flags) = 0;
+                                int elementSize, BUFFER_FLAGS flags) = 0;
   virtual BufferHandle allocateUpload(const uint32_t sizeInByte,
                                       const uint32_t numElements,
                                       const uint32_t elementSize,

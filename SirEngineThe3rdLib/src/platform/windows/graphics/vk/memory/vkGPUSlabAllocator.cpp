@@ -15,9 +15,10 @@ void VKGPUSlabAllocator::initialize(
 
   // checking alignment requirements
   // VkPhysicalDeviceLimits::minUniformBufferOffsetAlignment
-  VkPhysicalDeviceProperties properties;
-  vkGetPhysicalDeviceProperties(vk::PHYSICAL_DEVICE, &properties);
-  m_requireAlignment = properties.limits.minStorageBufferOffsetAlignment;
+  // VkPhysicalDeviceProperties properties;
+  // vkGetPhysicalDeviceProperties(vk::PHYSICAL_DEVICE, &properties);
+  // m_requireAlignment = properties.limits.minStorageBufferOffsetAlignment;
+  m_requireAlignment = 4;
 }
 
 GPUSlabAllocationHandle VKGPUSlabAllocator::allocate(const uint32_t sizeInBytes,
@@ -35,10 +36,10 @@ GPUSlabAllocationHandle VKGPUSlabAllocator::allocate(const uint32_t sizeInBytes,
   if (initialData != nullptr) {
     // offsetting the pointer by the amount the tracker tells us
     assert(sizeInBytes <= range.m_size);
-    char* ptr = static_cast<char*>(globals::BUFFER_MANAGER->getMappedData(
-	    m_slabs[freeSlab]->handle));
+    char* ptr = static_cast<char*>(
+        globals::BUFFER_MANAGER->getMappedData(m_slabs[freeSlab]->handle));
 
-    //TODO probably we want to do some checks on whether or not is doable
+    // TODO probably we want to do some checks on whether or not is doable
     memcpy(ptr + range.m_offset, initialData, sizeInBytes);
   }
 
@@ -79,17 +80,21 @@ uint32_t VKGPUSlabAllocator::allocateSlab() {
   Slab* slab = new Slab(m_config.slabSizeInBytes);
   m_slabs.pushBack(slab);
 
-  VkPhysicalDeviceMemoryProperties memoryProperties;
-  vkGetPhysicalDeviceMemoryProperties(vk::PHYSICAL_DEVICE, &memoryProperties);
-
   char printbuff[64];
   sprintf(printbuff, "gpuSlab%i", m_slabs.size() - 1);
-
-  BufferHandle handle = globals::BUFFER_MANAGER->allocate(
-      m_config.slabSizeInBytes, nullptr, printbuff, 10, sizeof(float),
-      BufferManager::BUFFER_FLAGS::STORAGE_BUFFER
-      //|BufferManager::BUFFER_FLAGS::UPDATED_EVERY_FRAME
-  );
+  BufferHandle handle;
+  if (globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::VULKAN) {
+    handle = globals::BUFFER_MANAGER->allocate(
+        m_config.slabSizeInBytes, nullptr, printbuff, 10, sizeof(float),
+        BufferManager::BUFFER_FLAGS_BITS::STORAGE_BUFFER
+        //|BufferManager::BUFFER_FLAGS::UPDATED_EVERY_FRAME
+    );
+  } else {
+    handle = globals::BUFFER_MANAGER->allocateUpload(
+        m_config.slabSizeInBytes,
+        m_config.slabSizeInBytes / (sizeof(float) * 4), sizeof(float) * 4,
+        printbuff);
+  }
   slab->handle = handle;
   return m_slabs.size() - 1;
 }

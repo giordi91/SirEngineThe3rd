@@ -51,13 +51,13 @@ void VkBufferManager::bindBuffer(const BufferHandle handle,
 BufferHandle VkBufferManager::allocate(const uint32_t sizeInBytes,
                                        void *initData, const char *name,
                                        const int, const int,
-                                       const uint32_t flags) {
-  bool isRandomWrite = (flags & BUFFER_FLAGS::RANDOM_WRITE) > 0;
-  bool isIndex = (flags & BUFFER_FLAGS::INDEX_BUFFER) > 0;
-  bool isIndirectBuffer = (flags & BUFFER_FLAGS::INDIRECT_BUFFER) > 0;
-  bool isVertexBuffer = (flags & BUFFER_FLAGS::VERTEX_BUFFER) > 0;
-  bool isBuffered = (flags & BUFFER_FLAGS::BUFFERED) > 0;
-  bool isStorage = (flags & BUFFER_FLAGS::STORAGE_BUFFER) > 0;
+                                       const BUFFER_FLAGS flags) {
+  bool isRandomWrite = (flags & BUFFER_FLAGS_BITS::RANDOM_WRITE) > 0;
+  bool isIndex = (flags & BUFFER_FLAGS_BITS::INDEX_BUFFER) > 0;
+  bool isIndirectBuffer = (flags & BUFFER_FLAGS_BITS::INDIRECT_BUFFER) > 0;
+  bool isVertexBuffer = (flags & BUFFER_FLAGS_BITS::VERTEX_BUFFER) > 0;
+  bool isBuffered = (flags & BUFFER_FLAGS_BITS::BUFFERED) > 0;
+  bool isStorage = (flags & BUFFER_FLAGS_BITS::STORAGE_BUFFER) > 0;
   // better be safe than sorry, extensive checks on flags combinations
   assert(!isBuffered && "not supported yet");
   assert(!isIndirectBuffer && "not supported yet");

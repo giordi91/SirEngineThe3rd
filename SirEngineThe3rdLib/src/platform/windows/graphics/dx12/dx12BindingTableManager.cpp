@@ -1,5 +1,7 @@
 #include "platform/windows/graphics/dx12/dx12BindingTableManager.h"
 
+
+#include "dx12BufferManager.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/memory/cpu/threeSizesPool.h"
 #include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
@@ -77,7 +79,7 @@ void Dx12BindingTableManager::bindTable(uint32_t bindingSpace,
   const auto &data = m_bindingTablePool.getConstRef(poolIndex);
 
   auto *commandList = dx12::CURRENT_FRAME_RESOURCE->fc.commandList;
-  //dx12::ROOT_SIGNATURE_MANAGER->bindGraphicsRS(rsHandle, commandList);
+  dx12::ROOT_SIGNATURE_MANAGER->bindGraphicsRS(rsHandle, commandList);
 
   bool isBuffered = isFlagSet(
       data.flags, graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED);
@@ -111,7 +113,17 @@ void Dx12BindingTableManager::bindConstantBuffer(
 void Dx12BindingTableManager::bindBuffer(const BindingTableHandle bindHandle, const BufferHandle buffer,
 	const uint32_t descriptorIndex, const uint32_t bindingIndex)
 {
-    assert(0);
+  assertMagicNumber(bindHandle);
+  uint32_t poolIndex = getIndexFromHandle(bindHandle);
+  const auto &data = m_bindingTablePool.getConstRef(poolIndex);
+
+  bool isBuffered = isFlagSet(
+      data.flags, graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED);
+  uint32_t multiplier = isBuffered ? globals::CURRENT_FRAME : 0;
+  uint32_t index = descriptorIndex + (multiplier * data.descriptionsCount);
+
+  dx12::BUFFER_MANAGER->createSrv(buffer,
+                                  data.descriptors[index],0,true);
 }
 
 void Dx12BindingTableManager::free(const BindingTableHandle &bindingTable) {

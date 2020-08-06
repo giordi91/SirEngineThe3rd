@@ -855,7 +855,12 @@ void Dx12RenderingContext::renderProcedural(const uint32_t indexCount) {
 
 void Dx12RenderingContext::bindCameraBuffer(RSHandle) const
 {
-    assert(0);
+  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
+  auto commandList = currentFc->commandList;
+  D3D12_GPU_DESCRIPTOR_HANDLE handle =
+      dx12::CONSTANT_BUFFER_MANAGER->getConstantBufferDx12Handle(m_cameraHandle)
+          .gpuHandle;
+  commandList->SetGraphicsRootDescriptorTable(PSOManager::PER_FRAME_DATA_BINDING_INDEX, handle);
 }
 
 bool Dx12RenderingContext::newFrame() {
