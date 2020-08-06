@@ -92,7 +92,6 @@ class VkDebugRenderer : public DebugRenderer {
   PSOHandle m_linePSO;
   RSHandle m_lineRS;
   ResizableVector<uint32_t> m_lineBindHandles;
-  
 };
 
 }  // namespace SirEngine::vk

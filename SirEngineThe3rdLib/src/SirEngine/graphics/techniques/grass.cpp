@@ -46,6 +46,7 @@ void GrassTechnique::setup(const uint32_t id) {
   m_grassConfig.baseColor = {0.02, 0.25, 0.001};
   m_grassConfig.tipColor = {0.02, 0.13, 0.019};
 
+  /*
   m_rs = globals::ROOT_SIGNATURE_MANAGER->getHandleFromName(GRASS_RS);
   m_pso = globals::PSO_MANAGER->getHandleFromName(GRASS_PSO);
 
@@ -155,6 +156,7 @@ void GrassTechnique::setup(const uint32_t id) {
       groundDescriptions, ARRAYSIZE(groundDescriptions),
       graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED,
       "grassGroundBindingTable");
+      */
 }
 
 void GrassTechnique::render(const uint32_t id,
@@ -163,18 +165,18 @@ void GrassTechnique::render(const uint32_t id,
     SE_CORE_WARN("Anything other than forward unsupported for grass for now");
     return;
   }
+  /*
   std::vector<glm::vec3> data;
   static float t = 0.0f;
-  data.push_back({0, 0 + sin(t)*3, 0});
-  data.push_back({0, 10 + sin(t)*3, 0});
-  data.push_back({0, 10 + sin(t)*3, 0});
-  data.push_back({0, 10 + sin(t)*3, 10});
-  data.push_back({0, 10 + sin(t)*3, 10});
-  data.push_back({10, 10 + sin(t)*3, 10});
+  data.push_back({0, 0, 0});
+  data.push_back({0, 10, 0});
+  data.push_back({0, 10, 0});
+  data.push_back({0, 10, 10});
+  data.push_back({0, 10, 10});
+  data.push_back({10, 10, 10});
   globals::DEBUG_RENDERER->drawLines(&data[0].x,
                                      sizeof(glm::vec3) * data.size(),
                                      glm::vec4{1, 0, 0, 1}, 0, "");
-  t+=0.001;
   // tileDebug();
 
   globals::CONSTANT_BUFFER_MANAGER->update(m_grassConfigHandle, &m_grassConfig);
@@ -222,6 +224,7 @@ void GrassTechnique::render(const uint32_t id,
 
     globals::RENDERING_CONTEXT->renderProcedural(6);
   }
+  */
 }
 
 void GrassTechnique::clear(const uint32_t id) {

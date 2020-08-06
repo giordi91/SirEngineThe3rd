@@ -2,7 +2,7 @@
   "type": "RASTER",
   "inputLayout": "deferredNull",
   "globalRootSignature": "../data/rs/debugDrawLinesSingleColorRS.json",
-  "VS": "positionOnlyVS",
+  "VS": "positionColorVS",
   "PS": "basicColorPS",
   "blendState": "default",
   "rasterState": "custom",

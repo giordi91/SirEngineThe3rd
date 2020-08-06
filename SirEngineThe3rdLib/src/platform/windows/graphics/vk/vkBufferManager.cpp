@@ -57,11 +57,9 @@ BufferHandle VkBufferManager::allocate(const uint32_t sizeInBytes,
   bool isIndirectBuffer = (flags & BUFFER_FLAGS::INDIRECT_BUFFER) > 0;
   bool isVertexBuffer = (flags & BUFFER_FLAGS::VERTEX_BUFFER) > 0;
   bool isBuffered = (flags & BUFFER_FLAGS::BUFFERED) > 0;
-  bool isUpdatedEveryFrame = (flags & BUFFER_FLAGS::UPDATED_EVERY_FRAME) > 0;
   bool isStorage = (flags & BUFFER_FLAGS::STORAGE_BUFFER) > 0;
   // better be safe than sorry, extensive checks on flags combinations
   assert(!isBuffered && "not supported yet");
-  assert(!isUpdatedEveryFrame && "not supported yet");
   assert(!isIndirectBuffer && "not supported yet");
   assert(!(isVertexBuffer && isIndex) &&
          "canont be both vertex and index buffer");
