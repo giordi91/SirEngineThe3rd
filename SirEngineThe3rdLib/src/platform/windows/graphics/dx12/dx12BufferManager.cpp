@@ -29,45 +29,21 @@ void BufferManagerDx12::free(const BufferHandle handle) {
   }
 }
 
-BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInBytes,
-                                         void *initData, const char *name,
-                                         const int numElements,
-                                         const int elementSize,
-                                         const BUFFER_FLAGS flags) {
-  ID3D12Resource *buffer = nullptr;
-  ID3D12Resource *uploadBuffer = nullptr;
-
-  // must be at least 256 bytes
-  uint32_t actualSize =
-      sizeInBytes % 256 == 0 ? sizeInBytes : ((sizeInBytes / 256) + 1) * 256;
-
-  const bool isUav = (flags & BUFFER_FLAGS_BITS::RANDOM_WRITE) > 0;
-
-  auto heap = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-  auto bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(
-      actualSize, isUav ? D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS
-                        : D3D12_RESOURCE_FLAG_NONE);
-  // Create the actual default buffer resource.
-  HRESULT res = dx12::DEVICE->CreateCommittedResource(
-      &heap, D3D12_HEAP_FLAG_NONE, &bufferDesc,
-      isUav ? D3D12_RESOURCE_STATE_UNORDERED_ACCESS
-            : D3D12_RESOURCE_STATE_COMMON,
-      nullptr, IID_PPV_ARGS(&buffer));
+ID3D12Resource *BufferManagerDx12::allocateCPUVisibleBuffer(
+    const uint32_t actualSize) const {
+  ID3D12Resource *uploadBuffer;
+  HRESULT res;
+  // In order to copy CPU memory data into our default buffer, we need to
+  // create an intermediate upload heap.
+  auto uploadHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+  auto uploadBufferDesc = CD3DX12_RESOURCE_DESC::Buffer(actualSize);
+  res = dx12::DEVICE->CreateCommittedResource(
+      &uploadHeapProperties, D3D12_HEAP_FLAG_NONE, &uploadBufferDesc,
+      D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&uploadBuffer));
   assert(SUCCEEDED(res));
-  buffer->SetName(persistentConvertWide(name));
-  // assert(initData == nullptr);
 
+  /*
   if (initData != nullptr) {
-    // In order to copy CPU memory data into our default buffer, we need to
-    // create an intermediate upload heap.
-    auto uploadHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-    auto uploadBufferDesc = CD3DX12_RESOURCE_DESC::Buffer(actualSize);
-    res = dx12::DEVICE->CreateCommittedResource(
-        &uploadHeapProperties, D3D12_HEAP_FLAG_NONE, &uploadBufferDesc,
-        D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-        IID_PPV_ARGS(&uploadBuffer));
-    assert(SUCCEEDED(res));
-
     // Describe the data we want to copy into the default buffer.
     D3D12_SUBRESOURCE_DATA subResourceData = {};
     subResourceData.pData = initData;
@@ -91,19 +67,121 @@ BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInBytes,
         D3D12_RESOURCE_STATE_GENERIC_READ);
     commandList->ResourceBarrier(1, &postTransition);
 
+    // if it is temporary it means we are using this as intermediate upload
+    // heap, we will free it when the upload is done, as such we will be keeping
+    // track of the upload status with a fence
+    if (temporary) {
+      // Note: uploadBuffer has to be kept alive after the above function calls
+      // because the command list has not been executed yet that performs the
+      // actual copy. The caller can Release the uploadBuffer after it knows the
+      // copy has been executed.
+      m_uploadRequests.emplace_back(
+          UploadRequest{uploadBuffer, dx12::insertFenceToGlobalQueue()});
+    }
+  }
+  */
+  return uploadBuffer;
+}
+
+ID3D12Resource *BufferManagerDx12::allocateGPUVisibleBuffer(
+    const uint32_t actualSize, const bool isUav) {
+  ID3D12Resource *buffer = nullptr;
+  auto heap = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+  auto bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(
+      actualSize, isUav ? D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS
+                        : D3D12_RESOURCE_FLAG_NONE);
+  HRESULT res = dx12::DEVICE->CreateCommittedResource(
+      &heap, D3D12_HEAP_FLAG_NONE, &bufferDesc,
+      isUav ? D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+            : D3D12_RESOURCE_STATE_COMMON,
+      nullptr, IID_PPV_ARGS(&buffer));
+
+  assert(SUCCEEDED(res));
+  return buffer;
+}
+
+void BufferManagerDx12::uploadDataToGPUOnlyBuffer(void *initData,
+                                                  uint32_t actualSize,
+                                                  bool isTemporary,
+                                                  ID3D12Resource *uploadBuffer,
+                                                  ID3D12Resource *buffer) {
+  // Describe the data we want to copy into the default buffer.
+  D3D12_SUBRESOURCE_DATA subResourceData = {};
+  subResourceData.pData = initData;
+  subResourceData.RowPitch = actualSize;
+  subResourceData.SlicePitch = subResourceData.RowPitch;
+
+  // Schedule to copy the data to the default buffer resource.  At a high
+  // level, the helper function UpdateSubresources will copy the CPU memory
+  // into the intermediate upload heap.  Then, using
+  // ID3D12CommandList::CopySubresourceRegion, the intermediate upload heap
+  // data will be copied to mBuffer.
+  auto preTransition = CD3DX12_RESOURCE_BARRIER::Transition(
+      buffer, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
+  auto commandList = dx12::CURRENT_FRAME_RESOURCE->fc.commandList;
+  dx12::CURRENT_FRAME_RESOURCE->fc.commandList->ResourceBarrier(1,
+                                                                &preTransition);
+  UpdateSubresources<1>(commandList, buffer, uploadBuffer, 0, 0, 1,
+                        &subResourceData);
+  auto postTransition = CD3DX12_RESOURCE_BARRIER::Transition(
+      buffer, D3D12_RESOURCE_STATE_COPY_DEST,
+      D3D12_RESOURCE_STATE_GENERIC_READ);
+  commandList->ResourceBarrier(1, &postTransition);
+
+  // if it is temporary it means we are using this as intermediate upload
+  // heap, we will free it when the upload is done, as such we will be
+  // keeping track of the upload status with a fence
+  if (isTemporary) {
+    // Note: uploadBuffer has to be kept alive after the above function
+    // calls because the command list has not been executed yet that
+    // performs the actual copy. The caller can Release the uploadBuffer
+    // after it knows the copy has been executed.
     m_uploadRequests.emplace_back(
         UploadRequest{uploadBuffer, dx12::insertFenceToGlobalQueue()});
-    //// Note: uploadBuffer has to be kept alive after the above function calls
-    //// because the command list has not been executed yet that performs the
-    //// actual copy. The caller can Release the uploadBuffer after it knows the
-    //// copy has been executed.
-    // return defaultBuffer;
+  }
+}
+
+BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInBytes,
+                                         void *initData, const char *name,
+                                         const int numElements,
+                                         const int elementSize,
+                                         const BUFFER_FLAGS flags) {
+  // must be at least 256 bytes
+  uint32_t actualSize =
+      sizeInBytes % 256 == 0 ? sizeInBytes : ((sizeInBytes / 256) + 1) * 256;
+
+  const bool isUav = (flags & BUFFER_FLAGS_BITS::RANDOM_WRITE) > 0;
+  const bool isGpuOnly = (flags & BUFFER_FLAGS_BITS::GPU_ONLY) > 0;
+
+  bool isTemporary = true;
+  ID3D12Resource *uploadBuffer = allocateCPUVisibleBuffer(actualSize);
+
+  ID3D12Resource *buffer = nullptr;
+  void *uploadMappedData = nullptr;
+
+  if (isGpuOnly) {
+    buffer = allocateGPUVisibleBuffer(actualSize, isUav);
+    buffer->SetName(persistentConvertWide(name));
+  } else {
+    HRESULT mapResult = uploadBuffer->Map(0, nullptr, &uploadMappedData);
+    assert(SUCCEEDED(mapResult));
+  }
+
+  // if there is init data we need to take care of that
+  if (initData != nullptr) {
+    if (isGpuOnly) {
+      uploadDataToGPUOnlyBuffer(initData, actualSize, isTemporary, uploadBuffer,
+                                buffer);
+    } else {
+      // we can do a memcpy directly since the buffer is cpu visible
+      memcpy(uploadMappedData, initData, sizeInBytes);
+    }
   }
 
   // lets get a data from the pool
   uint32_t index;
   BufferData &data = m_bufferPool.getFreeMemoryData(index);
-  data ={};
+  data = {};
 
   if (isUav) {
     // lets create the descriptor
@@ -122,6 +200,7 @@ BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInBytes,
   data.type = isUav ? BufferType::UAV : BufferType::SRV;
   data.elementCount = numElements;
   data.elementSize = elementSize;
+  data.mappedData = uploadMappedData;
 
   return handle;
 }
@@ -193,7 +272,8 @@ void BufferManagerDx12::bindBufferAsSRVGraphics(
 
 void BufferManagerDx12::createSrv(const BufferHandle &handle,
                                   DescriptorPair &descriptorPair,
-                                  const uint32_t offset, const bool descriptorExits) const {
+                                  const uint32_t offset,
+                                  const bool descriptorExits) const {
   assertMagicNumber(handle);
   const uint32_t index = getIndexFromHandle(handle);
   const BufferData &data = m_bufferPool.getConstRef(index);
@@ -203,22 +283,24 @@ void BufferManagerDx12::createSrv(const BufferHandle &handle,
 
   dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferSRV(
       descriptorPair, data.data, data.elementCount, data.elementSize,
-      elementOffset,descriptorExits);
+      elementOffset, descriptorExits);
 }
 void BufferManagerDx12::createSrv(const BufferHandle &handle,
                                   DescriptorPair &descriptorPair,
                                   const MemoryRange range,
-                                  const bool descriptorExists, const int elementSize) const {
+                                  const bool descriptorExists,
+                                  const int elementSize) const {
   assertMagicNumber(handle);
   const uint32_t index = getIndexFromHandle(handle);
   const BufferData &data = m_bufferPool.getConstRef(index);
 
-  //the element size of the buffer might not be representative, for example
-  //we might have a single buffer for the whole mesh, but we will make different
-  //SRV out of it, for float4, float2 and so on, so we pass the elementSize from outside
-  //if needed, if none is provided (-1) then we simply use the buffer one
-  int elemSize = elementSize ==  -1 ? data.elementSize : elementSize; 
-  int elementOffset =  (range.m_offset / elemSize);
+  // the element size of the buffer might not be representative, for example
+  // we might have a single buffer for the whole mesh, but we will make
+  // different SRV out of it, for float4, float2 and so on, so we pass the
+  // elementSize from outside if needed, if none is provided (-1) then we simply
+  // use the buffer one
+  int elemSize = elementSize == -1 ? data.elementSize : elementSize;
+  int elementOffset = (range.m_offset / elemSize);
   int elementCount = range.m_size / elemSize;
 
   dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferSRV(

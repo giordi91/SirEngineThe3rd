@@ -43,9 +43,10 @@ class BufferManagerDx12 final : public BufferManager {
                                ID3D12GraphicsCommandList2 *commandList,
                                uint32_t offset = 0) const;
   void createSrv(const BufferHandle &handle, DescriptorPair &descriptorPair,
-                 uint32_t offset = 0, bool descriptorExits =false) const;
+                 uint32_t offset = 0, bool descriptorExits = false) const;
   void createSrv(const BufferHandle &handle, DescriptorPair &descriptorPair,
-                 MemoryRange range,bool descriptorExists=false, int elementSize=-1) const;
+                 MemoryRange range, bool descriptorExists = false,
+                 int elementSize = -1) const;
 
   void bindBufferAsDescriptorTableGrahpics(
       const BufferHandle handle, const int slot,
@@ -61,6 +62,11 @@ class BufferManagerDx12 final : public BufferManager {
   }
 
   void *getMappedData(const BufferHandle handle) const override;
+
+  ID3D12Resource *allocateCPUVisibleBuffer(uint32_t actualSize) const;
+  ID3D12Resource *allocateGPUVisibleBuffer(uint32_t actualSize, bool isUav);
+  void uploadDataToGPUOnlyBuffer(void* initData, uint32_t actualSize, bool isTemporary, ID3D12Resource* uploadBuffer,
+                                 ID3D12Resource* buffer);
 
   inline int bufferUAVTransition(const BufferHandle handle,
                                  D3D12_RESOURCE_BARRIER *barriers,
