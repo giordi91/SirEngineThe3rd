@@ -10,10 +10,11 @@ layout (set=3,binding=1) uniform g_settings
 
 layout(location=0) out vec4 outputColor;
 
+layout (location = 1) in vec4 inColor;
+
 void PS() 
 {
-    //outputColor = color;
-    outputColor = vec4(1,0,0,1);
+    outputColor = inColor;
 }
 
 

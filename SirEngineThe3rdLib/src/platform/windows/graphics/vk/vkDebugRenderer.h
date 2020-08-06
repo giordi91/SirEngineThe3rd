@@ -61,6 +61,9 @@ class VkDebugRenderer : public DebugRenderer {
 
   void updateBoundingBoxesData(DebugDrawHandle handle, const BoundingBox* data, int count) override;
  private:
+
+  void assureLinesTables(int slabCount);
+
   inline void assertMagicNumber(const DebugDrawHandle handle) const {
     const uint32_t magic = getMagicFromHandle(handle);
 
@@ -80,6 +83,7 @@ class VkDebugRenderer : public DebugRenderer {
  private:
   static constexpr uint32_t RESERVE_SIZE = 200;
   static constexpr uint32_t MAX_FRAMES_IN_FLIGHT= 3;
+  static constexpr uint32_t HANDLES_INITIAL_SIZE= 16;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
   SparseMemoryPool<VkDebugPrimitive> m_primitivesPool;
   HashMap<uint32_t, DebugTracker, hashUint32> m_trackers;
@@ -87,7 +91,8 @@ class VkDebugRenderer : public DebugRenderer {
   uint32_t m_linesPrimitives = 0;
   PSOHandle m_linePSO;
   RSHandle m_lineRS;
-  BindingTableHandle m_lineBindHandle;
+  ResizableVector<uint32_t> m_lineBindHandles;
+  
 };
 
 }  // namespace SirEngine::vk

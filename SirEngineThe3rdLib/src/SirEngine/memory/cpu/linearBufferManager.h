@@ -51,6 +51,7 @@ class SIR_ENGINE_API LinearBufferManager {
     m_allocations.clear();
     m_freeAllocations.clear();
     m_allocCount = 0;
+    m_stackPointer = 0;
   }
 
   // getters

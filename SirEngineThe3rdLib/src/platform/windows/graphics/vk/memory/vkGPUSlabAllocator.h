@@ -1,6 +1,6 @@
 #pragma once
-#include "SirEngine/memory/cpu/linearBufferManager.h"
 #include "SirEngine/memory/cpu/SparseMemoryPool.h"
+#include "SirEngine/memory/cpu/linearBufferManager.h"
 #include "SirEngine/memory/gpu/gpuSlabAllocator.h"
 #include "platform/windows/graphics/vk/vkMemory.h"
 
@@ -10,13 +10,13 @@ class VKGPUSlabAllocator final : GPUSlabAllocator {
     explicit Slab(const uint32_t sizeInByte) : m_slabTracker(sizeInByte){};
     LinearBufferManager m_slabTracker;
     vk::Buffer m_buffer{};
-    BufferHandle handle {};
+    BufferHandle handle{};
   };
 
   struct SlabAllocData final {
     BufferRangeHandle m_rangeHandle;
     BufferRange m_range;
-    uint32_t m_version: 16;
+    uint32_t m_version : 16;
     uint32_t m_slabIdx : 16;
   };
 
@@ -25,14 +25,26 @@ class VKGPUSlabAllocator final : GPUSlabAllocator {
       : m_slabs(SLAB_RESERVE_SIZE), m_allocInfoStorage(POOL_RESERVE_SIZE){};
   virtual ~VKGPUSlabAllocator() = default;
   void initialize(GPUSlabAllocatorInitializeConfig config) override;
-  GPUSlabAllocationHandle allocate(uint32_t sizeInBytes, void *initialData) override;
+  GPUSlabAllocationHandle allocate(uint32_t sizeInBytes,
+                                   void *initialData) override;
   void clear() override;
   void *getMappedPtr(GPUSlabAllocationHandle allocHandle) override;
   void cleanup() override;
-  BufferHandle getBufferHandle( uint32_t slabIndex )const
-  {
-	  return m_slabs[slabIndex]->handle;
+  BufferHandle getBufferHandle(const uint32_t slabIndex) const {
+    return m_slabs[slabIndex]->handle;
   }
+  uint32_t getAllocatedBytes(const uint32_t slabIndex) const override {
+    auto allocs =
+        m_slabs.getConstRef(slabIndex)->m_slabTracker.getAllocations();
+    int count = allocs->size();
+    uint32_t total = 0;
+    for (int i = 0; i < count; ++i) {
+      const auto &alloc = allocs->getConstRef(i);
+      total += alloc.m_range.m_size;
+    }
+    return total;
+  };
+  uint32_t getSlabCount() const override { return m_slabs.size(); };
 
   // not copiable/movable
   VKGPUSlabAllocator(const VKGPUSlabAllocator &) = delete;

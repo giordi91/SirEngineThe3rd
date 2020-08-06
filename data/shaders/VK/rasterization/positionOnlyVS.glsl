@@ -20,34 +20,11 @@ layout (set=3,binding=0) buffer positions
 	PointColor pc[];
 };
 
+layout (location = 1) out vec4 outColor;
+
 void VS()
 {
 	vec4 position = pc[gl_VertexIndex].p;
-	if(gl_VertexIndex == 0)
-	{
-	position = vec4(0,0,0,1);
-	}
-	if(gl_VertexIndex == 1)
-	{
-	position = vec4(0,10,0,1);
-	}
-
-	if(gl_VertexIndex == 2)
-	{
-	position = vec4(0,10,0,1);
-	}
-	if(gl_VertexIndex == 3)
-	{
-	position = vec4(0,10,10,1);
-	}
-
-	if(gl_VertexIndex == 4)
-	{
-	position = vec4(0,10,10,1);
-	}
-	if(gl_VertexIndex == 5)
-	{
-	position = vec4(10,10,10,1);
-	}
+	outColor = pc[gl_VertexIndex].c;
 	gl_Position = cameraBuffer.MVP * position;
 }
