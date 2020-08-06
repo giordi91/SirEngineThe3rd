@@ -3,13 +3,12 @@
 #include "SirEngine/binary/binaryFile.h"
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
-#include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
 #include "platform/windows/graphics/dx12/dx12BufferManager.h"
+#include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
 
 namespace SirEngine::dx12 {
 
 MeshHandle Dx12MeshManager::loadMesh(const char *path, bool isInternal) {
-
   SE_CORE_INFO("Loading mesh {0}", path);
   const bool res = fileExists(path);
   assert(res);
@@ -43,7 +42,8 @@ MeshHandle Dx12MeshManager::loadMesh(const char *path, bool isInternal) {
 
     uint32_t totalSize = indexCount * sizeof(int);
     meshData->idxBuffHandle = dx12::BUFFER_MANAGER->allocate(
-        totalSize, indexData, "", totalSize / sizeof(int), sizeof(int), 0);
+        totalSize, indexData, "", totalSize / sizeof(int), sizeof(int),
+        BufferManager::BUFFER_FLAGS_BITS::GPU_ONLY);
     meshData->indexBuffer =
         dx12::BUFFER_MANAGER->getNativeBuffer(meshData->idxBuffHandle);
 
@@ -85,9 +85,10 @@ MeshHandle Dx12MeshManager::loadMesh(const char *path, bool isInternal) {
 
     BufferHandle positionsHandle = dx12::BUFFER_MANAGER->allocate(
         mapper->vertexDataSizeInByte, vertexData, "",
-        mapper->vertexDataSizeInByte / 4, sizeof(float), 0);
+        mapper->vertexDataSizeInByte / 4, sizeof(float),
+        BufferManager::BUFFER_FLAGS_BITS::GPU_ONLY);
 
-    meshRuntime.bufferHandle= positionsHandle;
+    meshRuntime.bufferHandle = positionsHandle;
 
     meshData->meshRuntime = meshRuntime;
 
@@ -101,4 +102,4 @@ MeshHandle Dx12MeshManager::loadMesh(const char *path, bool isInternal) {
 
   return handle;
 }
-} // namespace SirEngine::dx12
+}  // namespace SirEngine::dx12
