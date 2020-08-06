@@ -258,6 +258,16 @@ void VkDebugRenderer::render(TextureHandle input, TextureHandle depth) {
   assureLinesTables(slabCount);
 
   for (int i = 0; i < slabCount; ++i) {
+
+    uint32_t allocatedSize =
+        m_lineSlab[globals::CURRENT_FRAME].getAllocatedBytes(i);
+    assert((allocatedSize % 8 == 0));
+    uint32_t primCount = allocatedSize / (sizeof(float) * 8);
+    if(primCount == 0 )
+    {
+	    continue;
+    }
+
     BufferHandle bhandle =
         m_lineSlab[globals::CURRENT_FRAME].getBufferHandle(i);
     const auto bindHandle = BindingTableHandle{m_lineBindHandles[i]};
@@ -269,10 +279,6 @@ void VkDebugRenderer::render(TextureHandle input, TextureHandle depth) {
     auto w = static_cast<float>(globals::ENGINE_CONFIG->m_windowWidth);
     auto h = static_cast<float>(globals::ENGINE_CONFIG->m_windowHeight);
 
-    uint32_t allocatedSize =
-        m_lineSlab[globals::CURRENT_FRAME].getAllocatedBytes(i);
-    assert((allocatedSize % 8 == 0));
-    uint32_t primCount = allocatedSize / (sizeof(float) * 8);
     globals::RENDERING_CONTEXT->setViewportAndScissor(0, 0, w, h, 0, 1.0f);
     globals::RENDERING_CONTEXT->renderProcedural(primCount);
   }

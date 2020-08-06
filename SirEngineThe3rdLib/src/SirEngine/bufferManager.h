@@ -5,18 +5,18 @@
 namespace SirEngine {
 
 class BufferManager {
-public:
+ public:
   enum BUFFER_FLAGS {
     RANDOM_WRITE = 1,
     INDEX_BUFFER = 2,
     INDIRECT_BUFFER = 4,
     VERTEX_BUFFER = 8,
     BUFFERED = 16,
-    UPDATED_EVERY_FRAME =32,
-    STORAGE_BUFFER =64 
+    STORAGE_BUFFER = 32,
+    GPU_ONLY = 64,
   };
 
-public:
+ public:
   BufferManager() = default;
 
   virtual ~BufferManager() = default;
@@ -31,11 +31,10 @@ public:
                                 const char *name, int numElements,
                                 int elementSize, uint32_t flags) = 0;
   virtual BufferHandle allocateUpload(const uint32_t sizeInByte,
-                              const uint32_t numElements,
-                              const uint32_t elementSize,
-                              const char *name) = 0;
-  virtual void *getMappedData(const BufferHandle handle) const =0;
-
+                                      const uint32_t numElements,
+                                      const uint32_t elementSize,
+                                      const char *name) = 0;
+  virtual void *getMappedData(const BufferHandle handle) const = 0;
 };
 
-} // namespace SirEngine
+}  // namespace SirEngine

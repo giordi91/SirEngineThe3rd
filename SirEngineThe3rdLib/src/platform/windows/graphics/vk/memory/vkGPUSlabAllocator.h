@@ -2,14 +2,14 @@
 #include "SirEngine/memory/cpu/SparseMemoryPool.h"
 #include "SirEngine/memory/cpu/linearBufferManager.h"
 #include "SirEngine/memory/gpu/gpuSlabAllocator.h"
-#include "platform/windows/graphics/vk/vkMemory.h"
+//#include "platform/windows/graphics/vk/vkMemory.h"
 
 namespace SirEngine::vk {
 class VKGPUSlabAllocator final : GPUSlabAllocator {
   struct Slab {
     explicit Slab(const uint32_t sizeInByte) : m_slabTracker(sizeInByte){};
     LinearBufferManager m_slabTracker;
-    vk::Buffer m_buffer{};
+    //vk::Buffer m_buffer{};
     BufferHandle handle{};
   };
 
@@ -34,7 +34,7 @@ class VKGPUSlabAllocator final : GPUSlabAllocator {
     return m_slabs[slabIndex]->handle;
   }
   uint32_t getAllocatedBytes(const uint32_t slabIndex) const override {
-    auto allocs =
+    const auto *allocs =
         m_slabs.getConstRef(slabIndex)->m_slabTracker.getAllocations();
     int count = allocs->size();
     uint32_t total = 0;
