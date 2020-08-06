@@ -62,7 +62,6 @@ void SkyBoxPass::compute() {
   auto w = static_cast<float>(globals::ENGINE_CONFIG->m_windowWidth);
   auto h = static_cast<float>(globals::ENGINE_CONFIG->m_windowHeight);
   globals::RENDERING_CONTEXT->setViewportAndScissor(0, 0, w, h, 0, 0);
-
   globals::RENDERING_CONTEXT->renderProcedural(14);
 
   // finishing the pass

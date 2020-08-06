@@ -109,6 +109,7 @@ void VkTempLayer::onUpdate() {
 
   // evaluating rendering graph
   globals::CONSTANT_BUFFER_MANAGER->processBufferedData();
+  globals::DEBUG_RENDERER->newFrame();
   globals::RENDERING_GRAPH->compute();
 }
 void VkTempLayer::onEvent(Event &event) {

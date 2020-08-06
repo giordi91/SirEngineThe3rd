@@ -49,8 +49,9 @@ void GrassTechnique::setup(const uint32_t id) {
   m_rs = globals::ROOT_SIGNATURE_MANAGER->getHandleFromName(GRASS_RS);
   m_pso = globals::PSO_MANAGER->getHandleFromName(GRASS_PSO);
 
-  m_groundRs = globals::ROOT_SIGNATURE_MANAGER->getHandleFromName(GRASS_PLANE_RS);
-  m_groundPso= globals::PSO_MANAGER->getHandleFromName(GRASS_PLANE_PSO);
+  m_groundRs =
+      globals::ROOT_SIGNATURE_MANAGER->getHandleFromName(GRASS_PLANE_RS);
+  m_groundPso = globals::PSO_MANAGER->getHandleFromName(GRASS_PLANE_PSO);
 
   // lets read the grass file
   const char *grassFile = "../data/processed/grass/grass.points";
@@ -107,7 +108,7 @@ void GrassTechnique::setup(const uint32_t id) {
   m_groundAlbedoTexture = globals::TEXTURE_MANAGER->loadTexture(
       "../data/processed/textures/grass/grassGround.texture");
 
-  //m_debugHandle = globals::DEBUG_RENDERER->drawBoundingBoxes(
+  // m_debugHandle = globals::DEBUG_RENDERER->drawBoundingBoxes(
   //    tiles.data(), MAX_GRASS_PER_SIDE * MAX_GRASS_PER_SIDE,
   //    glm::vec4(1, 0, 0, 1), "debugGrassTiles");
 
@@ -162,7 +163,17 @@ void GrassTechnique::render(const uint32_t id,
     SE_CORE_WARN("Anything other than forward unsupported for grass for now");
     return;
   }
-  //tileDebug();
+  std::vector<glm::vec3> data;
+  data.push_back({0, 0, 0});
+  data.push_back({0, 10, 0});
+  data.push_back({0, 10, 0});
+  data.push_back({0, 10, 10});
+  data.push_back({0, 10, 10});
+  data.push_back({10, 10, 10});
+  globals::DEBUG_RENDERER->drawLines(&data[0].x,
+                                     sizeof(glm::vec3) * data.size(),
+                                     glm::vec4{1, 0, 0, 1}, 0, "");
+  // tileDebug();
 
   globals::CONSTANT_BUFFER_MANAGER->update(m_grassConfigHandle, &m_grassConfig);
 
@@ -195,8 +206,8 @@ void GrassTechnique::render(const uint32_t id,
 
   globals::BINDING_TABLE_MANAGER->bindConstantBuffer(m_groundBindingTable,
                                                      m_grassConfigHandle, 3, 3);
-  globals::BINDING_TABLE_MANAGER->bindTexture(m_groundBindingTable, m_groundAlbedoTexture,
-                                              4, 4, false);
+  globals::BINDING_TABLE_MANAGER->bindTexture(
+      m_groundBindingTable, m_groundAlbedoTexture, 4, 4, false);
   globals::PSO_MANAGER->bindPSO(m_groundPso);
   globals::RENDERING_CONTEXT->bindCameraBuffer(m_groundRs);
 
@@ -204,10 +215,10 @@ void GrassTechnique::render(const uint32_t id,
     globals::BINDING_TABLE_MANAGER->bindTable(
         PSOManager::PER_PASS_BINDING_INDEX, passHandle, m_rs);
 
-  globals::BINDING_TABLE_MANAGER->bindTable(
-      PSOManager::PER_OBJECT_BINDING_INDEX, m_groundBindingTable, m_groundRs);
+    globals::BINDING_TABLE_MANAGER->bindTable(
+        PSOManager::PER_OBJECT_BINDING_INDEX, m_groundBindingTable, m_groundRs);
 
-  globals::RENDERING_CONTEXT->renderProcedural(6);
+    globals::RENDERING_CONTEXT->renderProcedural(6);
   }
 }
 
