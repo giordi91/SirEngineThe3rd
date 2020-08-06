@@ -4,12 +4,12 @@
 #include "SirEngine/globals.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/materialManager.h"
+#include "SirEngine/memory/cpu/resizableVector.h"
 #include "platform/windows/graphics/dx12/dx12RootSignatureManager.h"
 #include "platform/windows/graphics/vk/vkBindingTableManager.h"
 #include "platform/windows/graphics/vk/vkBufferManager.h"
 #include "platform/windows/graphics/vk/vkConstantBufferManager.h"
 #include "platform/windows/graphics/vk/vkMaterialManager.h"
-#include "vk.h"
 
 namespace SirEngine::vk {
 static const char *LINE_RS = "debugDrawLinesSingleColorRS";
@@ -28,13 +28,6 @@ void VkDebugRenderer::initialize() {
 
   m_lineRS = globals::ROOT_SIGNATURE_MANAGER->getHandleFromName(LINE_RS);
   m_linePSO = globals::PSO_MANAGER->getHandleFromName(LINE_PSO);
-  // init binding table
-  graphics::BindingDescription descriptions[] = {
-      {0, GRAPHIC_RESOURCE_TYPE::READ_BUFFER,
-       GRAPHICS_RESOURCE_VISIBILITY_VERTEX}};
-  m_lineBindHandle = globals::BINDING_TABLE_MANAGER->allocateBindingTable(
-      descriptions, ARRAYSIZE(descriptions),
-      graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED, "debugLines");
 }
 inline int push3toVec(float *data, const glm::vec4 v, int counter) {
   data[counter++] = v.x;
@@ -93,17 +86,22 @@ int drawSquareBetweenTwoPoints(float *data, const glm::vec3 minP,
 VkDebugRenderer::VkDebugRenderer()
     : DebugRenderer(),
       m_primitivesPool(RESERVE_SIZE),
-      m_trackers(RESERVE_SIZE) {}
+      m_trackers(RESERVE_SIZE),
+      m_lineBindHandles(HANDLES_INITIAL_SIZE) {}
 
 void VkDebugRenderer::cleanup() {
   for (int i = 0; i < globals::ENGINE_CONFIG->m_frameBufferingCount; ++i) {
     m_lineSlab[i].cleanup();
   }
 
-  if(m_lineBindHandle.isHandleValid())
-  {
-	  globals::BINDING_TABLE_MANAGER->free(m_lineBindHandle);
+  int count = m_lineBindHandles.size();
+  for (int i = 0; i < count; ++i) {
+    BindingTableHandle handle{m_lineBindHandles[i]};
+    if (handle.isHandleValid()) {
+      globals::BINDING_TABLE_MANAGER->free(handle);
+    }
   }
+  m_lineBindHandles.clear();
 }
 
 void VkDebugRenderer::free(const DebugDrawHandle handle) {
@@ -143,97 +141,100 @@ DebugDrawHandle VkDebugRenderer::drawLinesUniformColor(float *data,
                                                        glm::vec4 color,
                                                        float size,
                                                        const char *debugName) {
-  uint32_t index;
-  VkDebugPrimitive &primitive = m_primitivesPool.getFreeMemoryData(index);
+  /*
+uint32_t index;
+VkDebugPrimitive &primitive = m_primitivesPool.getFreeMemoryData(index);
 
-  // allocate vertex buffer
-  assert((sizeInByte % (sizeof(float) * 3)) == 0);
-  const uint32_t elementCount = sizeInByte / (sizeof(float) * 3);
+// allocate vertex buffer
+assert((sizeInByte % (sizeof(float) * 3)) == 0);
+const uint32_t elementCount = sizeInByte / (sizeof(float) * 3);
 
-  const BufferHandle bufferHandle = globals::BUFFER_MANAGER->allocate(
-      sizeInByte, data, debugName, elementCount, sizeof(float) * 3,
-      BufferManager::BUFFER_FLAGS::STORAGE_BUFFER);
-  primitive.m_bufferHandle = bufferHandle;
+const BufferHandle bufferHandle = globals::BUFFER_MANAGER->allocate(
+    sizeInByte, data, debugName, elementCount, sizeof(float) * 3,
+    BufferManager::BUFFER_FLAGS::STORAGE_BUFFER);
+primitive.m_bufferHandle = bufferHandle;
 
-  // allocate constant buffer
-  DebugPointsFixedColor settings{color, size, {0, 0, 0}};
-  const ConstantBufferHandle chandle =
-      globals::CONSTANT_BUFFER_MANAGER->allocate(sizeof(settings), 0,
-                                                 &settings);
+// allocate constant buffer
+DebugPointsFixedColor settings{color, size, {0, 0, 0}};
+const ConstantBufferHandle chandle =
+    globals::CONSTANT_BUFFER_MANAGER->allocate(sizeof(settings), 0,
+                                               &settings);
 
-  RenderableDescription description{};
-  description.buffer = bufferHandle;
-  description.subranges[0].m_offset = 0;
-  description.subranges[0].m_size = sizeInByte;
-  description.subragesCount = 1;
+RenderableDescription description{};
+description.buffer = bufferHandle;
+description.subranges[0].m_offset = 0;
+description.subranges[0].m_size = sizeInByte;
+description.subragesCount = 1;
 
-  const char *queues[5] = {nullptr, nullptr, nullptr, "debugLinesSingleColor",
-                           nullptr};
+const char *queues[5] = {nullptr, nullptr, nullptr, "debugLinesSingleColor",
+                         nullptr};
 
-  description.materialHandle = globals::MATERIAL_MANAGER->allocateMaterial(
-      debugName, MaterialManager::ALLOCATE_MATERIAL_FLAG_BITS::NONE, queues);
-  description.primitiveToRender = elementCount;
+description.materialHandle = globals::MATERIAL_MANAGER->allocateMaterial(
+    debugName, MaterialManager::ALLOCATE_MATERIAL_FLAG_BITS::NONE, queues);
+description.primitiveToRender = elementCount;
 
-  const VkMaterialRuntime &runtime =
-      vk::MATERIAL_MANAGER->getMaterialRuntime(description.materialHandle);
+const VkMaterialRuntime &runtime =
+    vk::MATERIAL_MANAGER->getMaterialRuntime(description.materialHandle);
 
-  // TODO do we need that? we should be able to query from the material
-  // manager for the wanted queue
-  const auto currentFlag = static_cast<uint32_t>(SHADER_QUEUE_FLAGS::DEBUG);
-  const int currentFlagId =
-      static_cast<int>(log2(currentFlag & (-currentFlag)));
+// TODO do we need that? we should be able to query from the material
+// manager for the wanted queue
+const auto currentFlag = static_cast<uint32_t>(SHADER_QUEUE_FLAGS::DEBUG);
+const int currentFlagId =
+    static_cast<int>(log2(currentFlag & (-currentFlag)));
 
-  VkDescriptorSet set = vk::DESCRIPTOR_MANAGER->getDescriptorSet(
-      runtime.descriptorHandles[currentFlagId]);
+VkDescriptorSet set = vk::DESCRIPTOR_MANAGER->getDescriptorSet(
+    runtime.descriptorHandles[currentFlagId]);
 
-  VkWriteDescriptorSet writeDescriptorSet{};
-  VkDescriptorBufferInfo info{};
+VkWriteDescriptorSet writeDescriptorSet{};
+VkDescriptorBufferInfo info{};
 
-  // TODO here two different updates descriptor updates are performed
-  // slower but "cleaner", need to figure out both a nice and fast way
-  // TODO here we can see the difference between a "generic" material set
-  // and the Vulkan aware one, where we can pass in vk structure to be filled
-  // than have one write only
-  globals::MATERIAL_MANAGER->bindBuffer(description.materialHandle,
-                                        primitive.m_bufferHandle, 0,
-                                        SHADER_QUEUE_FLAGS::DEBUG);
+// TODO here two different updates descriptor updates are performed
+// slower but "cleaner", need to figure out both a nice and fast way
+// TODO here we can see the difference between a "generic" material set
+// and the Vulkan aware one, where we can pass in vk structure to be filled
+// than have one write only
+globals::MATERIAL_MANAGER->bindBuffer(description.materialHandle,
+                                      primitive.m_bufferHandle, 0,
+                                      SHADER_QUEUE_FLAGS::DEBUG);
 
-  vk::CONSTANT_BUFFER_MANAGER->bindConstantBuffer(chandle, info, 1,
-                                                  &writeDescriptorSet, set);
+vk::CONSTANT_BUFFER_MANAGER->bindConstantBuffer(chandle, info, 1,
+                                                &writeDescriptorSet, set);
 
-  vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, 1, &writeDescriptorSet, 0,
-                         nullptr);
+vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, 1, &writeDescriptorSet, 0,
+                       nullptr);
 
-  globals::RENDERING_CONTEXT->addRenderablesToQueue(description);
+globals::RENDERING_CONTEXT->addRenderablesToQueue(description);
 
-  // store it such way that we can render it
-  primitive.m_primitiveType = PRIMITIVE_TYPE::LINE;
-  primitive.m_cbHandle = chandle;
-  primitive.m_primitiveToRender = static_cast<int>(elementCount);
-  primitive.m_magicNumber = MAGIC_NUMBER_COUNTER;
+// store it such way that we can render it
+primitive.m_primitiveType = PRIMITIVE_TYPE::LINE;
+primitive.m_cbHandle = chandle;
+primitive.m_primitiveToRender = static_cast<int>(elementCount);
+primitive.m_magicNumber = MAGIC_NUMBER_COUNTER;
 
-  const DebugDrawHandle debugHandle{(MAGIC_NUMBER_COUNTER << 16) | index};
-  ++MAGIC_NUMBER_COUNTER;
+const DebugDrawHandle debugHandle{(MAGIC_NUMBER_COUNTER << 16) | index};
+++MAGIC_NUMBER_COUNTER;
 
-  DebugTracker tracker{};
-  tracker.magicNumber = MAGIC_NUMBER_COUNTER;
-  tracker.mappedData = nullptr;
-  // only one object, this should be renamed to normal counter not compound
-  // simply set to one if not compound
-  tracker.compoundCount = 1;
-  tracker.compoundHandles = reinterpret_cast<DebugDrawHandle *>(
-      globals::PERSISTENT_ALLOCATOR->allocate(sizeof(DebugDrawHandle) * 1));
-  tracker.compoundHandles[0] = debugHandle;
-  tracker.sizeInBtye = sizeInByte;
+DebugTracker tracker{};
+tracker.magicNumber = MAGIC_NUMBER_COUNTER;
+tracker.mappedData = nullptr;
+// only one object, this should be renamed to normal counter not compound
+// simply set to one if not compound
+tracker.compoundCount = 1;
+tracker.compoundHandles = reinterpret_cast<DebugDrawHandle *>(
+    globals::PERSISTENT_ALLOCATOR->allocate(sizeof(DebugDrawHandle) * 1));
+tracker.compoundHandles[0] = debugHandle;
+tracker.sizeInBtye = sizeInByte;
 
-  const DebugDrawHandle trackerHandle{(MAGIC_NUMBER_COUNTER << 16)};
+const DebugDrawHandle trackerHandle{(MAGIC_NUMBER_COUNTER << 16)};
 
-  // registering the tracker
-  m_trackers.insert(trackerHandle.handle, tracker);
+// registering the tracker
+m_trackers.insert(trackerHandle.handle, tracker);
 
-  ++MAGIC_NUMBER_COUNTER;
+++MAGIC_NUMBER_COUNTER;
 
-  return trackerHandle;
+return trackerHandle;
+*/
+  return {};
 }
 
 DebugDrawHandle VkDebugRenderer::drawSkeleton(Skeleton *skeleton,
@@ -252,28 +253,29 @@ DebugDrawHandle VkDebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
 }
 
 void VkDebugRenderer::render(TextureHandle input, TextureHandle depth) {
-  auto commandList = &vk::CURRENT_FRAME_COMMAND->m_commandBuffer;
-
-  /*
-   *const DrawCallConfig config{
-      static_cast<uint32_t>(globals::ENGINE_CONFIG->m_windowWidth),
-      static_cast<uint32_t>(globals::ENGINE_CONFIG->m_windowHeight), 0};
-  globals::RENDERING_CONTEXT->renderQueueType(config, SHADER_QUEUE_FLAGS::DEBUG,
-                                              {});
-                                              */
-  // globals::RENDERING_CONTEXT->renderProcedural(indexCount);
   // draw lines
+  int slabCount = m_lineSlab[globals::CURRENT_FRAME].getSlabCount();
+  assureLinesTables(slabCount);
 
-  BufferHandle bhandle = m_lineSlab[globals::CURRENT_FRAME].getBufferHandle(0);
-  globals::BINDING_TABLE_MANAGER->bindBuffer(m_lineBindHandle, bhandle, 0, 0);
-  globals::RENDERING_CONTEXT->bindCameraBuffer(m_lineRS);
-  globals::PSO_MANAGER->bindPSO(m_linePSO);
-  globals::BINDING_TABLE_MANAGER->bindTable(3, m_lineBindHandle,m_lineRS);
+  for (int i = 0; i < slabCount; ++i) {
+    BufferHandle bhandle =
+        m_lineSlab[globals::CURRENT_FRAME].getBufferHandle(i);
+    const auto bindHandle = BindingTableHandle{m_lineBindHandles[i]};
+    globals::BINDING_TABLE_MANAGER->bindBuffer(bindHandle, bhandle, 0, 0);
+    globals::RENDERING_CONTEXT->bindCameraBuffer(m_lineRS);
+    globals::PSO_MANAGER->bindPSO(m_linePSO);
+    globals::BINDING_TABLE_MANAGER->bindTable(3, bindHandle, m_lineRS);
 
-  auto w = static_cast<float>(globals::ENGINE_CONFIG->m_windowWidth);
-  auto h = static_cast<float>(globals::ENGINE_CONFIG->m_windowHeight);
-  globals::RENDERING_CONTEXT->setViewportAndScissor(0, 0, w, h, 0, 1.0f);
-  globals::RENDERING_CONTEXT->renderProcedural(m_linesPrimitives);
+    auto w = static_cast<float>(globals::ENGINE_CONFIG->m_windowWidth);
+    auto h = static_cast<float>(globals::ENGINE_CONFIG->m_windowHeight);
+
+    uint32_t allocatedSize =
+        m_lineSlab[globals::CURRENT_FRAME].getAllocatedBytes(i);
+    assert((allocatedSize % 8 == 0));
+    uint32_t primCount = allocatedSize / (sizeof(float) * 8);
+    globals::RENDERING_CONTEXT->setViewportAndScissor(0, 0, w, h, 0, 1.0f);
+    globals::RENDERING_CONTEXT->renderProcedural(primCount);
+  }
 
   // m_linesPrimitives =0;
 }
@@ -287,7 +289,7 @@ DebugDrawHandle VkDebugRenderer::drawBoundingBoxes(const BoundingBox *data,
   // triangle-strip
   const int totalSize = 4 * count * 12 * 2;  // here 4 is the xmfloat4
 
-  auto *points = reinterpret_cast<float *>(
+  auto *points = static_cast<float *>(
       globals::FRAME_ALLOCATOR->allocate(sizeof(glm::vec4) * count * 12 * 2));
   int counter = 0;
   for (int i = 0; i < count; ++i) {
@@ -340,7 +342,7 @@ void VkDebugRenderer::drawLines(float *data, const uint32_t sizeInByte,
                                 const char *debugName) {
   // making sure is a multiple of 3, float3 one per point
   assert((sizeInByte % (sizeof(float) * 3) == 0));
-  int count = sizeInByte / (sizeof(float) * 3);
+  uint32_t count = sizeInByte / (sizeof(float) * 3);
 
   // TODO we are going to allocate twice the amount of data, since we are going
   // to use a float4s one for position and one for colors, this might be
@@ -382,7 +384,7 @@ void VkDebugRenderer::updateBoundingBoxesData(const DebugDrawHandle handle,
   // triangle-strip
   const int totalSize = 4 * count * 12 * 2;  // here 4 is the xmfloat4
 
-  auto *points = reinterpret_cast<float *>(
+  auto *points = static_cast<float *>(
       globals::FRAME_ALLOCATOR->allocate(sizeof(glm::vec4) * count * 12 * 2));
   int counter = 0;
   for (int i = 0; i < count; ++i) {
@@ -407,6 +409,23 @@ void VkDebugRenderer::updateBoundingBoxesData(const DebugDrawHandle handle,
   }
 
   memcpy(mappedData, points, totalSize * sizeof(float));
+}
+
+void VkDebugRenderer::assureLinesTables(const int slabCount) {
+  // init binding table
+  graphics::BindingDescription descriptions[] = {
+      {0, GRAPHIC_RESOURCE_TYPE::READ_BUFFER,
+       GRAPHICS_RESOURCE_VISIBILITY_VERTEX}};
+
+  int count = m_lineBindHandles.size();
+  for (int i = count; i < slabCount; ++i) {
+    BindingTableHandle handle =
+        globals::BINDING_TABLE_MANAGER->allocateBindingTable(
+            descriptions, ARRAYSIZE(descriptions),
+            graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED,
+            "debugLines");
+    m_lineBindHandles.pushBack(handle.handle);
+  }
 }
 
 void VkDebugRenderer::newFrame() {
