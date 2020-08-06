@@ -33,7 +33,7 @@ BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInBytes,
                                          void *initData, const char *name,
                                          const int numElements,
                                          const int elementSize,
-                                         const uint32_t flags) {
+                                         const BUFFER_FLAGS flags) {
   ID3D12Resource *buffer = nullptr;
   ID3D12Resource *uploadBuffer = nullptr;
 
@@ -41,7 +41,7 @@ BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInBytes,
   uint32_t actualSize =
       sizeInBytes % 256 == 0 ? sizeInBytes : ((sizeInBytes / 256) + 1) * 256;
 
-  const bool isUav = (flags & BUFFER_FLAGS::RANDOM_WRITE) > 0;
+  const bool isUav = (flags & BUFFER_FLAGS_BITS::RANDOM_WRITE) > 0;
 
   auto heap = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
   auto bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(
@@ -193,7 +193,7 @@ void BufferManagerDx12::bindBufferAsSRVGraphics(
 
 void BufferManagerDx12::createSrv(const BufferHandle &handle,
                                   DescriptorPair &descriptorPair,
-                                  const uint32_t offset) const {
+                                  const uint32_t offset, const bool descriptorExits) const {
   assertMagicNumber(handle);
   const uint32_t index = getIndexFromHandle(handle);
   const BufferData &data = m_bufferPool.getConstRef(index);
@@ -203,7 +203,7 @@ void BufferManagerDx12::createSrv(const BufferHandle &handle,
 
   dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferSRV(
       descriptorPair, data.data, data.elementCount, data.elementSize,
-      elementOffset);
+      elementOffset,descriptorExits);
 }
 void BufferManagerDx12::createSrv(const BufferHandle &handle,
                                   DescriptorPair &descriptorPair,

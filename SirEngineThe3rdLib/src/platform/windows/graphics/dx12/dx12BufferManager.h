@@ -31,7 +31,7 @@ class BufferManagerDx12 final : public BufferManager {
 
   BufferHandle allocate(const uint32_t sizeInByte, void *initData,
                         const char *name, int numElements, int elementSize,
-                        uint32_t flags) override;
+                        BUFFER_FLAGS flags) override;
   BufferHandle allocateUpload(const uint32_t sizeInByte,
                               const uint32_t numElements,
                               const uint32_t elementSize,
@@ -43,7 +43,7 @@ class BufferManagerDx12 final : public BufferManager {
                                ID3D12GraphicsCommandList2 *commandList,
                                uint32_t offset = 0) const;
   void createSrv(const BufferHandle &handle, DescriptorPair &descriptorPair,
-                 uint32_t offset = 0) const;
+                 uint32_t offset = 0, bool descriptorExits =false) const;
   void createSrv(const BufferHandle &handle, DescriptorPair &descriptorPair,
                  MemoryRange range,bool descriptorExists=false, int elementSize=-1) const;
 

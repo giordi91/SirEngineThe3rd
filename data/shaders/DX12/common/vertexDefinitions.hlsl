@@ -62,4 +62,10 @@ struct LocalPositionOnlyVertexOut{
   float4 pos : SV_POSITION;
 };
 
+struct PositionColor
+{
+	float4 position: SV_POSITION ;
+	float4 color: TEXCOORD1;
+};
+
 #endif

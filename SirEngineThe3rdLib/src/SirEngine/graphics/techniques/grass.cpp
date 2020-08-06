@@ -165,7 +165,6 @@ void GrassTechnique::render(const uint32_t id,
     SE_CORE_WARN("Anything other than forward unsupported for grass for now");
     return;
   }
-  /*
   std::vector<glm::vec3> data;
   static float t = 0.0f;
   data.push_back({0, 0, 0});
@@ -179,6 +178,7 @@ void GrassTechnique::render(const uint32_t id,
                                      glm::vec4{1, 0, 0, 1}, 0, "");
   // tileDebug();
 
+  /*
   globals::CONSTANT_BUFFER_MANAGER->update(m_grassConfigHandle, &m_grassConfig);
 
   globals::BINDING_TABLE_MANAGER->bindBuffer(m_bindingTable,

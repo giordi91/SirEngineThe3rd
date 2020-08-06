@@ -13,5 +13,4 @@ SamplerState gsamAnisotropicClamp : register(s5);
 
 float4 PS(PositionOnlyVertexOut input) : SV_TARGET {
   return skyboxTexture.Sample(gsamLinearClamp,input.worldPos.xyz);
-  //return float4(1,0,0,1);
 }

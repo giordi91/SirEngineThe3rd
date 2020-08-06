@@ -30,7 +30,7 @@ public:
   void cleanup() override;
   BufferHandle allocate(const uint32_t sizeInBytes, void *initData,
                         const char *name, const int numElements,
-                        const int elementSize, const uint32_t flags) override;
+                        const int elementSize, const BUFFER_FLAGS flags) override;
 
   void free(BufferHandle handle) override;
   BufferHandle allocateUpload(const uint32_t sizeInByte,

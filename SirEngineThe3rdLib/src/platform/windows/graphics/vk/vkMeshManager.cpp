@@ -56,7 +56,7 @@ MeshHandle VkMeshManager::loadMesh(const char *path, bool isInternal) {
     uint32_t totalSize = indexCount * sizeof(int);
     meshData->idxBuffHandle = vk::BUFFER_MANAGER->allocate(
         totalSize, indexData, "", totalSize / sizeof(int), sizeof(int),
-        BufferManager::BUFFER_FLAGS::INDEX_BUFFER);
+        BufferManager::BUFFER_FLAGS_BITS::INDEX_BUFFER);
 
     meshData->indexBuffer =
         vk::BUFFER_MANAGER->getNativeBuffer(meshData->idxBuffHandle);
@@ -101,7 +101,7 @@ MeshHandle VkMeshManager::loadMesh(const char *path, bool isInternal) {
     BufferHandle positionsHandle = vk::BUFFER_MANAGER->allocate(
         mapper->vertexDataSizeInByte, vertexData, "",
         mapper->vertexDataSizeInByte / 4, sizeof(float),
-        BufferManager::BUFFER_FLAGS::VERTEX_BUFFER);
+        BufferManager::BUFFER_FLAGS_BITS::VERTEX_BUFFER);
     meshData->vtxBuffHandle = positionsHandle;
 
     meshRuntime.vertexBuffer =

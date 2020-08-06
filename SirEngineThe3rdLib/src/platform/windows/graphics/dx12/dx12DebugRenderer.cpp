@@ -1,336 +1,33 @@
 #include "platform/windows/graphics/dx12/dx12DebugRenderer.h"
 
-#include "SirEngine/animation/animationPlayer.h"
-#include "SirEngine/animation/skeleton.h"
-#include "SirEngine/bufferManager.h"
+#include "SirEngine/PSOManager.h"
+#include "SirEngine/globals.h"
 #include "SirEngine/graphics/renderingContext.h"
-#include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
-#include "platform/windows/graphics/dx12/dx12MaterialManager.h"
+#include "SirEngine/materialManager.h"
+#include "SirEngine/memory/cpu/resizableVector.h"
+#include "platform/windows/graphics/dx12/dx12RootSignatureManager.h"
+#include "platform/windows/graphics/vk/vkBindingTableManager.h"
+#include "platform/windows/graphics/vk/vkBufferManager.h"
+#include "platform/windows/graphics/vk/vkConstantBufferManager.h"
+#include "platform/windows/graphics/vk/vkMaterialManager.h"
 
 namespace SirEngine::dx12 {
-void Dx12DebugRenderer::initialize() {}
+static const char *LINE_RS = "debugDrawLinesSingleColorRS";
+static const char *LINE_PSO = "debugDrawLinesSingleColorPSO";
 
-void Dx12DebugRenderer::free(DebugDrawHandle handle) { assert(0); }
-
-void Dx12DebugRenderer::drawLines(float* data, uint32_t sizeInByte, glm::vec4 color, float size,
-	const char* debugName)
-{
-}
-
-DebugDrawHandle Dx12DebugRenderer::drawPointsUniformColor(
-    float *data, const uint32_t sizeInByte, const glm::vec4 color,
-    const float size, const char *debugName) {
-  // TODO : next time we draw points, we need to fix the code to go from vec3 to
-  // vec4 and to bind mesh separately, as buffer and read manually, not input
-  // assembler a anymore
-
-  uint32_t index;
-  Dx12DebugPrimitive &primitive = m_primitivesPool.getFreeMemoryData(index);
-
-  // allocate vertex buffer
-  assert((sizeInByte % (sizeof(float) * 3)) == 0);
-  const uint32_t elementCount = sizeInByte / (sizeof(float) * 3);
-
-  // TODO type of allocation should be dictated by wheter or not is updated on a
-  // per frame basis or not
-  primitive.m_bufferHandle = globals::BUFFER_MANAGER->allocateUpload(
-      sizeInByte, elementCount, sizeof(float) * 3, debugName);
-  void *mappedData =
-      globals::BUFFER_MANAGER->getMappedData(primitive.m_bufferHandle);
-  memcpy(mappedData, data, sizeInByte);
-  primitive.m_sizeInByte = sizeInByte;
-
-  // allocate constant buffer
-  DebugPointsFixedColor settings{color, size};
-  const ConstantBufferHandle chandle =
-      globals::CONSTANT_BUFFER_MANAGER->allocate(
-          sizeof(settings),
-          ConstantBufferManager::CONSTANT_BUFFER_FLAG_BITS::NONE, &settings);
-
-  // store it such way that we can render it
-  primitive.m_primitiveType = PRIMITIVE_TYPE::POINT;
-  primitive.m_cbHandle = chandle;
-  primitive.m_primitiveToRender = elementCount * 6;
-
-  RenderableDescription description{};
-  description.buffer = primitive.m_bufferHandle;
-  description.subranges[0].m_offset = 0;
-  description.subranges[0].m_size = sizeInByte;
-  description.subragesCount = 1;
-
-  const char *queues[5] = {nullptr, nullptr, nullptr, "debugPointsSingleColor",
-                           nullptr};
-  description.materialHandle = globals::MATERIAL_MANAGER->allocateMaterial(
-      debugName, MaterialManager::ALLOCATE_MATERIAL_FLAG_BITS::NONE, queues);
-  description.primitiveToRender = elementCount * 6;
-
-  // generate handle for storing
-  SHADER_QUEUE_FLAGS queue = SHADER_QUEUE_FLAGS::DEBUG;
-  SHADER_TYPE_FLAGS type = SHADER_TYPE_FLAGS::DEBUG_POINTS_SINGLE_COLOR;
-  const uint32_t storeHandle =
-      static_cast<uint32_t>(queue) | (static_cast<uint32_t>(type) << 16);
-
-  // TODO temp const cast. this is due to the fact that material system is not
-  // yet as mature and polished as should be
-  auto &runtime = const_cast<Dx12MaterialRuntime &>(
-      dx12::MATERIAL_MANAGER->getMaterialRuntime(description.materialHandle));
-  runtime.cbVirtualAddress =
-      dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(chandle);
-  runtime.chandle = chandle;
-  runtime.dataHandle = primitive.m_bufferHandle;
-  primitive.m_magicNumber = MAGIC_NUMBER_COUNTER;
-
-  globals::RENDERING_CONTEXT->addRenderablesToQueue(description);
-
-  const DebugDrawHandle debugHandle{(MAGIC_NUMBER_COUNTER << 16) | index};
-  ++MAGIC_NUMBER_COUNTER;
-
-  return debugHandle;
-}
-
-DebugDrawHandle Dx12DebugRenderer::drawLinesUniformColor(
-    float *data, const uint32_t sizeInByte, const glm::vec4 color,
-    const float size, const char *debugName) {
-  uint32_t index;
-  Dx12DebugPrimitive &primitive = m_primitivesPool.getFreeMemoryData(index);
-
-  // allocate vertex buffer
-  assert((sizeInByte % (sizeof(float) * 4)) == 0);
-  const uint32_t elementCount = sizeInByte / (sizeof(float) * 4);
-
-  primitive.m_bufferHandle = globals::BUFFER_MANAGER->allocateUpload(
-      sizeInByte, elementCount, sizeof(float) * 4, debugName);
-  void *mappedData =
-      globals::BUFFER_MANAGER->getMappedData(primitive.m_bufferHandle);
-  memcpy(mappedData, data, sizeInByte);
-  primitive.m_sizeInByte = sizeInByte;
-
-  // allocate constant buffer
-  DebugPointsFixedColor settings{color, size};
-  const ConstantBufferHandle chandle =
-      globals::CONSTANT_BUFFER_MANAGER->allocate(
-          sizeof(settings),
-          ConstantBufferManager::CONSTANT_BUFFER_FLAG_BITS::NONE, &settings);
-
-  // store it such way that we can render it
-  primitive.m_primitiveType = PRIMITIVE_TYPE::LINE;
-  primitive.m_cbHandle = chandle;
-  primitive.m_primitiveToRender = static_cast<int>(elementCount);
-
-  RenderableDescription description{};
-  description.buffer = primitive.m_bufferHandle;
-  description.subranges[0].m_offset = 0;
-  description.subranges[0].m_size = sizeInByte;
-  description.subragesCount = 1;
-
-  const char *queues[5] = {nullptr, nullptr, nullptr, "debugLinesSingleColor",
-                           nullptr};
-
-  description.materialHandle = globals::MATERIAL_MANAGER->allocateMaterial(
-      debugName, MaterialManager::ALLOCATE_MATERIAL_FLAG_BITS::NONE, queues);
-  description.primitiveToRender = elementCount;
-
-  // generate handle for storing
-  SHADER_QUEUE_FLAGS queue = SHADER_QUEUE_FLAGS::DEBUG;
-  SHADER_TYPE_FLAGS type = SHADER_TYPE_FLAGS::DEBUG_LINES_SINGLE_COLOR;
-  const uint32_t storeHandle =
-      static_cast<uint32_t>(queue) | (static_cast<uint32_t>(type) << 16);
-
-  // TODO temp const cast
-  auto &runtime = const_cast<Dx12MaterialRuntime &>(
-      dx12::MATERIAL_MANAGER->getMaterialRuntime(description.materialHandle));
-  runtime.cbVirtualAddress =
-      dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(chandle);
-  runtime.chandle = chandle;
-  runtime.dataHandle = primitive.m_bufferHandle;
-  primitive.m_magicNumber = MAGIC_NUMBER_COUNTER;
-
-  globals::RENDERING_CONTEXT->addRenderablesToQueue(description);
-
-  const DebugDrawHandle debugHandle{(MAGIC_NUMBER_COUNTER << 16) | index};
-  ++MAGIC_NUMBER_COUNTER;
-
-  return debugHandle;
-}
-
-DebugDrawHandle Dx12DebugRenderer::drawSkeleton(Skeleton *skeleton,
-                                                const glm::vec4 color,
-                                                const float pointSize) {
-  const ResizableVector<glm::mat4> &joints = skeleton->m_jointsWolrdInv;
-  // first we need to convert the skeleton to points we can actually render
-  auto *points = reinterpret_cast<glm::vec4 *>(
-      globals::FRAME_ALLOCATOR->allocate(sizeof(glm::vec4) * joints.size()));
-  auto *lines =
-      reinterpret_cast<glm::vec4 *>(globals::FRAME_ALLOCATOR->allocate(
-          sizeof(glm::vec4) * joints.size() * 2));
-
-  const ResizableVector<int> &parentIds = skeleton->m_parentIds;
-  uint32_t lineCounter = 0;
-  for (uint32_t i = 0; i < joints.size(); ++i) {
-    const glm::mat4 &inv = joints[i];
-    const glm::mat4 mat = glm::inverse(inv);
-
-    glm::vec4 pos = mat[3];
-    // DirectX::XMVECTOR scale;
-    // DirectX::XMVECTOR rot;
-    // DirectX::XMMatrixDecompose(&scale, &rot, &pos, mat);
-    points[i] = glm::vec4(pos);
-
-    if (parentIds[i] != -1) {
-      // here we add a line from the parent to the children, might do a more
-      // elaborate joint drawing one day
-      lines[lineCounter] = points[parentIds[i]];
-      lines[lineCounter + 1] = glm::vec4(pos);
-      lineCounter += 2;
-    }
-  }
-  const DebugDrawHandle pointsHandle =
-      drawPointsUniformColor(&points[0].x, joints.size() * sizeof(glm::vec4),
-                             color, pointSize, skeleton->m_name);
-
-  const DebugDrawHandle linesHandle =
-      drawLinesUniformColor(&lines[0].x, lineCounter * sizeof(glm::vec4), color,
-                            pointSize, skeleton->m_name);
-
-  // lets prepare the compound handle
-  // there are two items only lines and points and the points is the first
-  DebugTracker tracker{};
-  tracker.m_compoundCount = 2;
-  // TODO remove this naked allocation use an allocator
-  // being compound we only store the compound count and handles
-  tracker.m_compoundHandles = reinterpret_cast<DebugDrawHandle *>(
-      globals::PERSISTENT_ALLOCATOR->allocate(sizeof(DebugDrawHandle) * 2));
-  tracker.m_compoundHandles[0] = pointsHandle;
-  tracker.m_compoundHandles[1] = linesHandle;
-
-  const uint32_t compoundBit = 1u << 31u;
-  const DebugDrawHandle returnHandle{compoundBit |
-                                     (MAGIC_NUMBER_COUNTER << 16) | 0};
-
-  m_trackers.insert(returnHandle.handle, tracker);
-
-  ++MAGIC_NUMBER_COUNTER;
-  return returnHandle;
-}
-
-DebugDrawHandle Dx12DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
-                                                        AnimationPlayer *state,
-                                                        const glm::vec4 color,
-                                                        float pointSize) {
-  const glm::mat4 *pose = state->getOutPose()->m_worldMat;
-  const uint32_t jointCount = state->getOutPose()->m_skeleton->m_jointCount;
-
-  auto *points = reinterpret_cast<glm::vec4 *>(
-      globals::FRAME_ALLOCATOR->allocate(sizeof(glm::vec4) * jointCount));
-  auto *lines = reinterpret_cast<glm::vec4 *>(
-      globals::FRAME_ALLOCATOR->allocate(sizeof(glm::vec4) * jointCount * 2));
-
-  uint32_t lineCounter = 0;
-
-  for (uint32_t i = 0; i < jointCount; ++i) {
-    const glm::mat4 mat = pose[i];
-    glm::vec4 pos = mat[3];
-    points[i] = glm::vec4(pos);
-
-    const int parentId = state->getOutPose()->m_skeleton->m_parentIds[i];
-    if (parentId != -1) {
-      // here we add a line from the parent to the children, might do a more
-      // elaborate joint drawing one day
-      lines[lineCounter] = points[parentId];
-      lines[lineCounter + 1] = glm::vec4(pos);
-      lineCounter += 2;
-    }
+void Dx12DebugRenderer::initialize() {
+  GPUSlabAllocatorInitializeConfig config{};
+  config.initialSlabs = 1;
+  config.allowNewSlabAllocations = true;
+  config.slabSizeInBytes = 16 * MB_TO_BYTE;
+  uint32_t frames = globals::ENGINE_CONFIG->m_frameBufferingCount;
+  assert(frames <= MAX_FRAMES_IN_FLIGHT);
+  for (int i = 0; i < frames; ++i) {
+    m_lineSlab[i].initialize(config);
   }
 
-  // if handle is null means we need to allocate, if not we reuse the memory
-  if (handle.isHandleValid()) {
-    // we need to allocate the memory
-    // making sure our handle is an actual compound handle
-    assert(isCompound(handle));
-    // extact from the tracker map
-    DebugTracker tracker{};
-    const auto found = m_trackers.get(handle.handle, tracker);
-    assert(found);
-    assert(tracker.m_compoundCount == 2);
-
-    // we have the tracker so we should be able to get out data
-    const DebugDrawHandle pointsHandle = tracker.m_compoundHandles[0];
-    const DebugDrawHandle linesHandle = tracker.m_compoundHandles[1];
-
-    // lets get the trackers out for each one
-    assertPoolMagicNumber(pointsHandle);
-    uint32_t idx = getIndexFromHandle(pointsHandle);
-    const Dx12DebugPrimitive &primitive = m_primitivesPool.getConstRef(idx);
-
-    assert(primitive.m_sizeInByte == (sizeof(glm::vec4) * jointCount));
-    void *mappedData =
-        globals::BUFFER_MANAGER->getMappedData(primitive.m_bufferHandle);
-    memcpy(mappedData, points, primitive.m_sizeInByte);
-
-    assertPoolMagicNumber(linesHandle);
-    idx = getIndexFromHandle(linesHandle);
-    const Dx12DebugPrimitive &linePrimitive = m_primitivesPool.getConstRef(idx);
-
-    assert(linePrimitive.m_sizeInByte == (sizeof(glm::vec4) * lineCounter));
-    mappedData =
-        globals::BUFFER_MANAGER->getMappedData(linePrimitive.m_bufferHandle);
-    memcpy(mappedData, lines, linePrimitive.m_sizeInByte);
-
-    // data is updated we are good to go, returning same handle
-    // since a new one has not been allocated
-    return handle;
-  }
-  DebugDrawHandle pointsHandle = drawPointsUniformColor(
-      &points[0].x, jointCount * sizeof(glm::vec4), color, pointSize,
-      state->getOutPose()->m_skeleton->m_name);
-
-  DebugDrawHandle linesHandle =
-      drawLinesUniformColor(&lines[0].x, lineCounter * sizeof(glm::vec4), color,
-                            pointSize, state->getOutPose()->m_skeleton->m_name);
-
-  // lets prepare the compound handle
-  // there are two items only lines and points and the points is the first
-  DebugTracker tracker{};
-  tracker.m_compoundCount = 2;
-  // being compound we only store the compound count and handles
-  tracker.m_compoundHandles = reinterpret_cast<DebugDrawHandle *>(
-      globals::PERSISTENT_ALLOCATOR->allocate(sizeof(DebugDrawHandle) * 2));
-  tracker.m_compoundHandles[0] = pointsHandle;
-  tracker.m_compoundHandles[1] = linesHandle;
-
-  const uint32_t compoundBit = 1u << 31u;
-  const DebugDrawHandle returnHandle{compoundBit |
-                                     (MAGIC_NUMBER_COUNTER << 16) | 0};
-
-  m_trackers.insert(returnHandle.handle, tracker);
-
-  ++MAGIC_NUMBER_COUNTER;
-
-  return returnHandle;
-}
-
-void Dx12DebugRenderer::render(const TextureHandle input,
-                               const TextureHandle depth) {
-  const DrawCallConfig config{
-      static_cast<uint32_t>(globals::ENGINE_CONFIG->m_windowWidth),
-      static_cast<uint32_t>(globals::ENGINE_CONFIG->m_windowHeight), 0};
-  globals::RENDERING_CONTEXT->renderQueueType(config, SHADER_QUEUE_FLAGS::DEBUG,
-                                              {});
-}
-inline int push3toVec(float *data, float x, float y, float z, int counter) {
-  data[counter++] = x;
-  data[counter++] = y;
-  data[counter++] = z;
-
-  return counter;
-}
-inline int push4toVec(float *data, float x, float y, float z, int counter) {
-  data[counter++] = x;
-  data[counter++] = y;
-  data[counter++] = z;
-  data[counter++] = 1.0f;
-
-  return counter;
+  m_lineRS = globals::ROOT_SIGNATURE_MANAGER->getHandleFromName(LINE_RS);
+  m_linePSO = globals::PSO_MANAGER->getHandleFromName(LINE_PSO);
 }
 inline int push3toVec(float *data, const glm::vec4 v, int counter) {
   data[counter++] = v.x;
@@ -354,6 +51,21 @@ inline int push4toVec(float *data, const glm::vec3 v, int counter) {
 
   return counter;
 }
+inline int push3toVec(float *data, float x, float y, float z, int counter) {
+  data[counter++] = x;
+  data[counter++] = y;
+  data[counter++] = z;
+
+  return counter;
+}
+inline int push4toVec(float *data, float x, float y, float z, int counter) {
+  data[counter++] = x;
+  data[counter++] = y;
+  data[counter++] = z;
+  data[counter++] = 1.0f;
+
+  return counter;
+}
 int drawSquareBetweenTwoPoints(float *data, const glm::vec3 minP,
                                const glm::vec3 maxP, const float y,
                                int counter) {
@@ -371,15 +83,219 @@ int drawSquareBetweenTwoPoints(float *data, const glm::vec3 minP,
   return counter;
 }
 
-DebugDrawHandle Dx12DebugRenderer::drawBoundingBoxes(const BoundingBox *data,
-                                                     int count,
-                                                     const glm::vec4 color,
-                                                     const char *debugName) {
-  // 12 is the number of lines needed for the AABB, 4 top, 4 bottom, 4 vertical
-  // two is because we need two points per line, we are not doing trianglestrip
-  int totalSize = 4 * count * 12 * 2;  // here 4 is the xmfloat4
+Dx12DebugRenderer::Dx12DebugRenderer()
+    : DebugRenderer(),
+      m_primitivesPool(RESERVE_SIZE),
+      m_trackers(RESERVE_SIZE),
+      m_lineBindHandles(HANDLES_INITIAL_SIZE) {}
 
-  auto *points = reinterpret_cast<float *>(
+void Dx12DebugRenderer::cleanup() {
+  for (int i = 0; i < globals::ENGINE_CONFIG->m_frameBufferingCount; ++i) {
+    m_lineSlab[i].cleanup();
+  }
+
+  int count = m_lineBindHandles.size();
+  for (int i = 0; i < count; ++i) {
+    BindingTableHandle handle{m_lineBindHandles[i]};
+    if (handle.isHandleValid()) {
+      globals::BINDING_TABLE_MANAGER->free(handle);
+    }
+  }
+  m_lineBindHandles.clear();
+}
+
+void Dx12DebugRenderer::free(const DebugDrawHandle handle) {
+  assertMagicNumber(handle);
+
+  DebugTracker tracker{};
+  const bool found = m_trackers.get(handle.handle, tracker);
+  assert(found);
+  const int primCount = tracker.compoundCount;
+  for (int i = 0; i < primCount; ++i) {
+    const DebugDrawHandle compHandle = tracker.compoundHandles[i];
+    assertPoolMagicNumber(compHandle);
+    const uint32_t index = getIndexFromHandle(handle);
+    const Dx12DebugPrimitive &prim = m_primitivesPool.getConstRef(index);
+    if (prim.m_bufferHandle.isHandleValid()) {
+      globals::BUFFER_MANAGER->free(prim.m_bufferHandle);
+    }
+    if (prim.m_cbHandle.isHandleValid()) {
+      globals::CONSTANT_BUFFER_MANAGER->free(prim.m_cbHandle);
+    }
+    m_primitivesPool.free(index);
+  }
+  m_trackers.remove(handle.handle);
+}
+
+DebugDrawHandle Dx12DebugRenderer::drawPointsUniformColor(float *data,
+                                                        uint32_t sizeInByte,
+                                                        glm::vec4 color,
+                                                        float size,
+                                                        const char *debugName) {
+  assert(0);
+  return {};
+}
+
+DebugDrawHandle Dx12DebugRenderer::drawLinesUniformColor(float *data,
+                                                       uint32_t sizeInByte,
+                                                       glm::vec4 color,
+                                                       float size,
+                                                       const char *debugName) {
+  /*
+uint32_t index;
+Dx12DebugPrimitive &primitive = m_primitivesPool.getFreeMemoryData(index);
+
+// allocate vertex buffer
+assert((sizeInByte % (sizeof(float) * 3)) == 0);
+const uint32_t elementCount = sizeInByte / (sizeof(float) * 3);
+
+const BufferHandle bufferHandle = globals::BUFFER_MANAGER->allocate(
+    sizeInByte, data, debugName, elementCount, sizeof(float) * 3,
+    BufferManager::BUFFER_FLAGS::STORAGE_BUFFER);
+primitive.m_bufferHandle = bufferHandle;
+
+// allocate constant buffer
+DebugPointsFixedColor settings{color, size, {0, 0, 0}};
+const ConstantBufferHandle chandle =
+    globals::CONSTANT_BUFFER_MANAGER->allocate(sizeof(settings), 0,
+                                               &settings);
+
+RenderableDescription description{};
+description.buffer = bufferHandle;
+description.subranges[0].m_offset = 0;
+description.subranges[0].m_size = sizeInByte;
+description.subragesCount = 1;
+
+const char *queues[5] = {nullptr, nullptr, nullptr, "debugLinesSingleColor",
+                         nullptr};
+
+description.materialHandle = globals::MATERIAL_MANAGER->allocateMaterial(
+    debugName, MaterialManager::ALLOCATE_MATERIAL_FLAG_BITS::NONE, queues);
+description.primitiveToRender = elementCount;
+
+const VkMaterialRuntime &runtime =
+    vk::MATERIAL_MANAGER->getMaterialRuntime(description.materialHandle);
+
+// TODO do we need that? we should be able to query from the material
+// manager for the wanted queue
+const auto currentFlag = static_cast<uint32_t>(SHADER_QUEUE_FLAGS::DEBUG);
+const int currentFlagId =
+    static_cast<int>(log2(currentFlag & (-currentFlag)));
+
+VkDescriptorSet set = vk::DESCRIPTOR_MANAGER->getDescriptorSet(
+    runtime.descriptorHandles[currentFlagId]);
+
+VkWriteDescriptorSet writeDescriptorSet{};
+VkDescriptorBufferInfo info{};
+
+// TODO here two different updates descriptor updates are performed
+// slower but "cleaner", need to figure out both a nice and fast way
+// TODO here we can see the difference between a "generic" material set
+// and the Vulkan aware one, where we can pass in vk structure to be filled
+// than have one write only
+globals::MATERIAL_MANAGER->bindBuffer(description.materialHandle,
+                                      primitive.m_bufferHandle, 0,
+                                      SHADER_QUEUE_FLAGS::DEBUG);
+
+vk::CONSTANT_BUFFER_MANAGER->bindConstantBuffer(chandle, info, 1,
+                                                &writeDescriptorSet, set);
+
+vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, 1, &writeDescriptorSet, 0,
+                       nullptr);
+
+globals::RENDERING_CONTEXT->addRenderablesToQueue(description);
+
+// store it such way that we can render it
+primitive.m_primitiveType = PRIMITIVE_TYPE::LINE;
+primitive.m_cbHandle = chandle;
+primitive.m_primitiveToRender = static_cast<int>(elementCount);
+primitive.m_magicNumber = MAGIC_NUMBER_COUNTER;
+
+const DebugDrawHandle debugHandle{(MAGIC_NUMBER_COUNTER << 16) | index};
+++MAGIC_NUMBER_COUNTER;
+
+DebugTracker tracker{};
+tracker.magicNumber = MAGIC_NUMBER_COUNTER;
+tracker.mappedData = nullptr;
+// only one object, this should be renamed to normal counter not compound
+// simply set to one if not compound
+tracker.compoundCount = 1;
+tracker.compoundHandles = reinterpret_cast<DebugDrawHandle *>(
+    globals::PERSISTENT_ALLOCATOR->allocate(sizeof(DebugDrawHandle) * 1));
+tracker.compoundHandles[0] = debugHandle;
+tracker.sizeInBtye = sizeInByte;
+
+const DebugDrawHandle trackerHandle{(MAGIC_NUMBER_COUNTER << 16)};
+
+// registering the tracker
+m_trackers.insert(trackerHandle.handle, tracker);
+
+++MAGIC_NUMBER_COUNTER;
+
+return trackerHandle;
+*/
+  return {};
+}
+
+DebugDrawHandle Dx12DebugRenderer::drawSkeleton(Skeleton *skeleton,
+                                              glm::vec4 color,
+                                              float pointSize) {
+  assert(0);
+  return {};
+}
+
+DebugDrawHandle Dx12DebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
+                                                      AnimationPlayer *state,
+                                                      glm::vec4 color,
+                                                      float pointSize) {
+  assert(0);
+  return {};
+}
+
+void Dx12DebugRenderer::render(TextureHandle input, TextureHandle depth) {
+  // draw lines
+  int slabCount = m_lineSlab[globals::CURRENT_FRAME].getSlabCount();
+  assureLinesTables(slabCount);
+
+  for (int i = 0; i < slabCount; ++i) {
+
+    uint32_t allocatedSize =
+        m_lineSlab[globals::CURRENT_FRAME].getAllocatedBytes(i);
+    assert((allocatedSize % 8 == 0));
+    uint32_t primCount = allocatedSize / (sizeof(float) * 8);
+    if(primCount == 0 )
+    {
+	    continue;
+    }
+
+    BufferHandle bhandle =
+        m_lineSlab[globals::CURRENT_FRAME].getBufferHandle(i);
+    const auto bindHandle = BindingTableHandle{m_lineBindHandles[i]};
+    globals::BINDING_TABLE_MANAGER->bindBuffer(bindHandle, bhandle, 0, 0);
+    globals::RENDERING_CONTEXT->bindCameraBuffer(m_lineRS);
+    globals::PSO_MANAGER->bindPSO(m_linePSO);
+    globals::BINDING_TABLE_MANAGER->bindTable(3, bindHandle, m_lineRS);
+
+    auto w = static_cast<float>(globals::ENGINE_CONFIG->m_windowWidth);
+    auto h = static_cast<float>(globals::ENGINE_CONFIG->m_windowHeight);
+
+    globals::RENDERING_CONTEXT->setViewportAndScissor(0, 0, w, h, 0, 1.0f);
+    globals::RENDERING_CONTEXT->renderProcedural(primCount);
+  }
+
+  // m_linesPrimitives =0;
+}
+
+DebugDrawHandle Dx12DebugRenderer::drawBoundingBoxes(const BoundingBox *data,
+                                                   const int count,
+                                                   const glm::vec4 color,
+                                                   const char *debugName) {
+  // 12 is the number of lines needed for the AABB, 4 top, 4 bottom, 4
+  // vertical two is because we need two points per line, we are not doing
+  // triangle-strip
+  const int totalSize = 4 * count * 12 * 2;  // here 4 is the xmfloat4
+
+  auto *points = static_cast<float *>(
       globals::FRAME_ALLOCATOR->allocate(sizeof(glm::vec4) * count * 12 * 2));
   int counter = 0;
   for (int i = 0; i < count; ++i) {
@@ -402,27 +318,80 @@ DebugDrawHandle Dx12DebugRenderer::drawBoundingBoxes(const BoundingBox *data,
     counter = push4toVec(points, minP.x, maxP.y, maxP.z, counter);
     assert(counter <= totalSize);
   }
-  drawLinesUniformColor(points, totalSize * sizeof(float), color,
-                        static_cast<float>(totalSize), debugName);
-
-  // this is not compound;
-  const int compoundBit = 0;
-  const DebugDrawHandle returnHandle{compoundBit |
-                                     (MAGIC_NUMBER_COUNTER << 16) | 0};
-  ++MAGIC_NUMBER_COUNTER;
-  return returnHandle;
+  return drawLinesUniformColor(points, totalSize * sizeof(float), color,
+                               static_cast<float>(totalSize), debugName);
 }
 
 DebugDrawHandle Dx12DebugRenderer::drawAnimatedBoundingBoxes(
     DebugDrawHandle handle, BoundingBox *data, int count, glm::vec4 color,
     const char *debugName) {
-  // first get AABB data
-  // 12 is the number of lines needed for the AABB, 4 top, 4 bottom, 4 vertical
-  // two is because we need two points per line, we are not doing trianglestrip
-  int totalSize = 3 * count * 12 * 2;  // here 3 is the xmfloat3
+  assert(0);
+  return {};
+}
 
-  auto *points = reinterpret_cast<float *>(
-      globals::FRAME_ALLOCATOR->allocate(sizeof(glm::vec3) * count * 12 * 2));
+DebugDrawHandle Dx12DebugRenderer::drawAnimatedBoundingBoxFromFullPoints(
+    const DebugDrawHandle handle, const glm::vec3 *data, const int count,
+    const glm::vec4 color, const char *debugName) {
+  assert(0);
+  return {};
+}
+
+DebugDrawHandle Dx12DebugRenderer::drawMatrix(const glm::mat4 &mat, float size,
+                                            glm::vec4 color,
+                                            const char *debugName) {
+  assert(0);
+  return {};
+}
+
+void Dx12DebugRenderer::drawLines(float *data, const uint32_t sizeInByte,
+                                const glm::vec4 color, float size,
+                                const char *debugName) {
+  // making sure is a multiple of 3, float3 one per point
+  assert((sizeInByte % (sizeof(float) * 3) == 0));
+  uint32_t count = sizeInByte / (sizeof(float) * 3);
+
+  // TODO we are going to allocate twice the amount of data, since we are going
+  // to use a float4s one for position and one for colors, this might be
+  // optimized to float3 but needs to be careful
+  // https://giordi91.github.io/post/spirvvec3/
+  uint32_t finalSize = count * 2 * sizeof(float) * 4;
+  auto *paddedData =
+      static_cast<float *>(globals::FRAME_ALLOCATOR->allocate(finalSize));
+
+  for (int i = 0; i < count; ++i) {
+    paddedData[i * 8 + 0] = data[i * 3 + 0];
+    paddedData[i * 8 + 1] = data[i * 3 + 1];
+    paddedData[i * 8 + 2] = data[i * 3 + 2];
+    paddedData[i * 8 + 3] = 1.0f;
+
+    paddedData[i * 8 + 4] = color.x;
+    paddedData[i * 8 + 5] = color.y;
+    paddedData[i * 8 + 6] = color.z;
+    paddedData[i * 8 + 7] = color.w;
+  }
+
+  m_linesPrimitives += count;
+  // ignoring the handle we are going to flush every frame
+  m_lineSlab[globals::CURRENT_FRAME].allocate(finalSize, paddedData);
+}
+
+void Dx12DebugRenderer::updateBoundingBoxesData(const DebugDrawHandle handle,
+                                              const BoundingBox *data,
+                                              const int count) {
+  // assertMagicNumber(handle);
+  // assertPoolMagicNumber(handle);
+  const uint32_t idx = getIndexFromHandle(handle);
+  Dx12DebugPrimitive &debug = m_primitivesPool[idx];
+  BufferHandle bufferHandle = debug.m_bufferHandle;
+  void *mappedData = globals::BUFFER_MANAGER->getMappedData(bufferHandle);
+
+  // 12 is the number of lines needed for the AABB, 4 top, 4 bottom, 4
+  // vertical two is because we need two points per line, we are not doing
+  // triangle-strip
+  const int totalSize = 4 * count * 12 * 2;  // here 4 is the xmfloat4
+
+  auto *points = static_cast<float *>(
+      globals::FRAME_ALLOCATOR->allocate(sizeof(glm::vec4) * count * 12 * 2));
   int counter = 0;
   for (int i = 0; i < count; ++i) {
     assert(counter <= totalSize);
@@ -432,180 +401,41 @@ DebugDrawHandle Dx12DebugRenderer::drawAnimatedBoundingBoxes(
     counter = drawSquareBetweenTwoPoints(points, minP, maxP, maxP.y, counter);
 
     // draw vertical lines
-    counter = push3toVec(points, minP, counter);
-    counter = push3toVec(points, minP.x, maxP.y, minP.z, counter);
-    counter = push3toVec(points, maxP.x, minP.y, minP.z, counter);
-    counter = push3toVec(points, maxP.x, maxP.y, minP.z, counter);
+    counter = push4toVec(points, minP, counter);
+    counter = push4toVec(points, minP.x, maxP.y, minP.z, counter);
+    counter = push4toVec(points, maxP.x, minP.y, minP.z, counter);
+    counter = push4toVec(points, maxP.x, maxP.y, minP.z, counter);
 
-    counter = push3toVec(points, maxP.x, minP.y, maxP.z, counter);
-    counter = push3toVec(points, maxP.x, maxP.y, maxP.z, counter);
+    counter = push4toVec(points, maxP.x, minP.y, maxP.z, counter);
+    counter = push4toVec(points, maxP.x, maxP.y, maxP.z, counter);
 
-    counter = push3toVec(points, minP.x, minP.y, maxP.z, counter);
-    counter = push3toVec(points, minP.x, maxP.y, maxP.z, counter);
+    counter = push4toVec(points, minP.x, minP.y, maxP.z, counter);
+    counter = push4toVec(points, minP.x, maxP.y, maxP.z, counter);
     assert(counter <= totalSize);
   }
 
-  assert(0);
-  /*
-  if (handle.isHandleValid()) {
-    // lets get the trackers out for each one
-    const auto found = m_trackers.find(handle.handle);
-    assert(found != m_trackers.end());
-    assert(found->second.compoundCount == 0);
+  memcpy(mappedData, points, totalSize * sizeof(float));
+}
 
-    const DebugTracker &tracker = found->second;
-    assert(tracker.sizeInBtye == (sizeof(float) * totalSize));
-    memcpy(tracker.mappedData, points, tracker.sizeInBtye);
-    return handle;
+void Dx12DebugRenderer::assureLinesTables(const int slabCount) {
+  // init binding table
+  graphics::BindingDescription descriptions[] = {
+      {0, GRAPHIC_RESOURCE_TYPE::READ_BUFFER,
+       GRAPHICS_RESOURCE_VISIBILITY_VERTEX}};
 
-  } else {
-    const DebugDrawHandle outHandle =
-        drawLinesUniformColor(points, totalSize * sizeof(float), color,
-                              static_cast<float>(totalSize), debugName);
-
-    return outHandle;
+  int count = m_lineBindHandles.size();
+  for (int i = count; i < slabCount; ++i) {
+    BindingTableHandle handle =
+        globals::BINDING_TABLE_MANAGER->allocateBindingTable(
+            descriptions, ARRAYSIZE(descriptions),
+            graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED,
+            "debugLines");
+    m_lineBindHandles.pushBack(handle.handle);
   }
-  */
-  return {};
 }
 
-DebugDrawHandle Dx12DebugRenderer::drawAnimatedBoundingBoxFromFullPoints(
-    const DebugDrawHandle handle, const glm::vec3 *data, const int count,
-    const glm::vec4 color, const char *debugName) {
-  // first get AABB data
-  // 12 is the number of lines needed for the AABB, 4 top, 4 bottom, 4 vertical
-  // two is because we need two points per line, we are not doing trianglestrip
-  const int totalSize = 4 * count * 12 * 2;  // here 4 is the xmfloat3
-
-  auto *points = reinterpret_cast<float *>(
-      globals::FRAME_ALLOCATOR->allocate(sizeof(glm::vec4) * count * 12 * 2));
-  int counter = 0;
-
-  // draw vertical lines
-  counter = push4toVec(points, data[0], counter);
-  counter = push4toVec(points, data[2], counter);
-  counter = push4toVec(points, data[0], counter);
-  counter = push4toVec(points, data[3], counter);
-  counter = push4toVec(points, data[0], counter);
-  counter = push4toVec(points, data[4], counter);
-  counter = push4toVec(points, data[2], counter);
-  counter = push4toVec(points, data[6], counter);
-  counter = push4toVec(points, data[4], counter);
-  counter = push4toVec(points, data[6], counter);
-  counter = push4toVec(points, data[2], counter);
-  counter = push4toVec(points, data[5], counter);
-  counter = push4toVec(points, data[3], counter);
-  counter = push4toVec(points, data[7], counter);
-  counter = push4toVec(points, data[3], counter);
-  counter = push4toVec(points, data[5], counter);
-  counter = push4toVec(points, data[1], counter);
-  counter = push4toVec(points, data[6], counter);
-  counter = push4toVec(points, data[1], counter);
-  counter = push4toVec(points, data[5], counter);
-  counter = push4toVec(points, data[1], counter);
-  counter = push4toVec(points, data[7], counter);
-  counter = push4toVec(points, data[4], counter);
-  counter = push4toVec(points, data[7], counter);
-
-  assert(counter <= totalSize);
-
-  if (handle.isHandleValid()) {
-    // should not be a compound
-    assert((handle.handle & (1 << 31)) == 0);
-    // lets get the trackers out for each one
-    DebugTracker tracker{};
-    const bool found = m_trackers.get(handle.handle, tracker);
-    assert(found);
-    assert(tracker.m_compoundCount == 1);
-
-    const DebugDrawHandle dHandle = tracker.m_compoundHandles[0];
-    assert(dHandle.isHandleValid());
-    assertPoolMagicNumber(dHandle);
-    uint32_t index = getIndexFromHandle(dHandle);
-    const Dx12DebugPrimitive &prim = m_primitivesPool.getConstRef(index);
-    // assert(prim.sizeInBtye == (sizeof(float) * totalSize));
-
-    void *mappedData =
-        globals::BUFFER_MANAGER->getMappedData(prim.m_bufferHandle);
-    memcpy(mappedData, points, prim.m_sizeInByte);
-    return handle;
-  }
-  const DebugDrawHandle linesHandle =
-      drawLinesUniformColor(points, totalSize * sizeof(float), color,
-                            static_cast<float>(totalSize), debugName);
-  // lets prepare the compound handle
-  // there are two items only lines and points and the points is the first
-  DebugTracker tracker{};
-  tracker.m_compoundCount = 1;
-  // TODO
-  // if compound is 1 or even 2.... should I just reuse the pointer memory? is a
-  // bit wasteful to realloc just one handle
-  tracker.m_compoundHandles = reinterpret_cast<DebugDrawHandle *>(
-      globals::PERSISTENT_ALLOCATOR->allocate(sizeof(DebugDrawHandle)));
-  tracker.m_compoundHandles[0] = linesHandle;
-
-  const DebugDrawHandle returnHandle{(MAGIC_NUMBER_COUNTER << 16) | 0};
-  ++MAGIC_NUMBER_COUNTER;
-
-  m_trackers.insert(returnHandle.handle, tracker);
-
-  return returnHandle;
-}
-
-DebugDrawHandle Dx12DebugRenderer::drawMatrix(const glm::mat4 &mat, float size,
-                                              glm::vec4 color,
-                                              const char *debugName) {
-  const int totalSize =
-      4 * 2 * 3;  // 3 axis, each with two points, 4 floats each point
-  auto *points = reinterpret_cast<float *>(
-      globals::FRAME_ALLOCATOR->allocate(sizeof(float) * totalSize));
-
-  int counter = 0;
-  // start with z axis
-  glm::vec4 scaledZ = mat[2] * (size * 2.5f);
-  glm::vec4 movedPosZ = mat[3] + scaledZ;
-  counter = push4toVec(points, mat[3], counter);
-  counter = push4toVec(points, movedPosZ, counter);
-
-  glm::vec4 scaledX = mat[0] * size;
-  glm::vec4 movedPosX = mat[3] + scaledX;
-  counter = push4toVec(points, mat[3], counter);
-  counter = push4toVec(points, movedPosX, counter);
-
-  glm::vec4 scaledY = (mat[1] * (size * 1.5f));
-  glm::vec4 movedPosY = mat[3] + scaledY;
-  counter = push4toVec(points, mat[3], counter);
-  counter = push4toVec(points, movedPosY, counter);
-
-  DebugDrawHandle linesHandle = drawLinesUniformColor(
-      points, totalSize * sizeof(float), color, totalSize, debugName);
-
-  // lets prepare the compound handle
-  // there are two items only lines and points and the points is the first
-  DebugTracker tracker{};
-  tracker.m_compoundCount = 1;
-  // TODO
-  // if compound is 1 or even 2.... should I just reuse the pointer memory? is a
-  // bit wasteful to realloc just one handle
-  tracker.m_compoundHandles = reinterpret_cast<DebugDrawHandle *>(
-      globals::PERSISTENT_ALLOCATOR->allocate(sizeof(DebugDrawHandle)));
-  tracker.m_compoundHandles[0] = linesHandle;
-
-  const DebugDrawHandle returnHandle{(MAGIC_NUMBER_COUNTER << 16) | 0};
-  ++MAGIC_NUMBER_COUNTER;
-
-  m_trackers.insert(returnHandle.handle, tracker);
-
-  return returnHandle;
-}
-
-void Dx12DebugRenderer::updateBoundingBoxesData(DebugDrawHandle handle,
-                                                const BoundingBox *data,
-                                                int count) {
-  assert(0);
-}
-
-void Dx12DebugRenderer::newFrame()
-{
+void Dx12DebugRenderer::newFrame() {
+  m_lineSlab[globals::CURRENT_FRAME].clear();
+  m_linesPrimitives = 0;
 }
 }  // namespace SirEngine::dx12
