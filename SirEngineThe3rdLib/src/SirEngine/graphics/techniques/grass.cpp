@@ -149,9 +149,10 @@ void GrassTechnique::render(const uint32_t id,
   data.push_back({0, 10, 10});
   data.push_back({0, 10, 10});
   data.push_back({10, 10, 10});
-  globals::DEBUG_RENDERER->drawLines(
-      &data[0].x, sizeof(glm::vec3) * data.size(), glm::vec4{1, 0, 0, 1});
-  tileDebug();
+  //globals::DEBUG_RENDERER->drawLines(
+  //    &data[0].x, sizeof(glm::vec3) * data.size(), glm::vec4{1, 0, 0, 1});
+  //tileDebug();
+
 
   globals::CONSTANT_BUFFER_MANAGER->update(m_grassConfigHandle, &m_grassConfig);
 
