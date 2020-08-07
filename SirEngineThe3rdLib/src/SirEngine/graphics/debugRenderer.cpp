@@ -83,8 +83,8 @@ int drawSquareBetweenTwoPoints(float *data, const glm::vec3 minP,
   return counter;
 }
 int drawSquareBetweenTwoPointsSize3(float *data, const glm::vec3 minP,
-                               const glm::vec3 maxP, const float y,
-                               int counter) {
+                                    const glm::vec3 maxP, const float y,
+                                    int counter) {
   counter = push3toVec(data, minP.x, y, minP.z, counter);
   counter = push3toVec(data, maxP.x, y, minP.z, counter);
 
@@ -177,8 +177,10 @@ void DebugRenderer::drawBoundingBoxes(const BoundingBox *data, const int count,
     assert(counter <= totalSize);
     const auto &minP = data[i].min;
     const auto &maxP = data[i].max;
-    counter = drawSquareBetweenTwoPointsSize3(points, minP, maxP, minP.y, counter);
-    counter = drawSquareBetweenTwoPointsSize3(points, minP, maxP, maxP.y, counter);
+    counter =
+        drawSquareBetweenTwoPointsSize3(points, minP, maxP, minP.y, counter);
+    counter =
+        drawSquareBetweenTwoPointsSize3(points, minP, maxP, maxP.y, counter);
 
     // draw vertical lines
     counter = push3toVec(points, minP, counter);
@@ -243,8 +245,10 @@ void DebugRenderer::drawLines(float *data, const uint32_t sizeInByte,
     paddedData[i * 8 + 7] = color.w;
   }
 
-  m_linesPrimitives += count;
   // ignoring the handle we are going to flush every frame
+  // in the future we can use a stack allocator which would be more suitable
+  // but the slab allocator was the best bang for the buck, since can be re-used
+  // in many places
   m_lineSlab[globals::CURRENT_FRAME].allocate(finalSize, paddedData);
 }
 
@@ -265,8 +269,5 @@ void DebugRenderer::assureLinesTables(const int slabCount) {
   }
 }
 
-void DebugRenderer::newFrame() {
-  m_lineSlab[globals::CURRENT_FRAME].clear();
-  m_linesPrimitives = 0;
-}
+void DebugRenderer::newFrame() { m_lineSlab[globals::CURRENT_FRAME].clear(); }
 }  // namespace SirEngine

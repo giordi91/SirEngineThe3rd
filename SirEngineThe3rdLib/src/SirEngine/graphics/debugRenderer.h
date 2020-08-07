@@ -58,7 +58,7 @@ class DebugRenderer {
   static constexpr uint32_t MAX_FRAMES_IN_FLIGHT = 3;
   static constexpr uint32_t HANDLES_INITIAL_SIZE = 16;
   GPUSlabAllocator m_lineSlab[MAX_FRAMES_IN_FLIGHT];
-  uint32_t m_linesPrimitives = 0;
+
   PSOHandle m_linePSO;
   RSHandle m_lineRS;
   ResizableVector<uint32_t> m_lineBindHandles;

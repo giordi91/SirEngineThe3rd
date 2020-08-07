@@ -135,15 +135,15 @@ bool createVulkanInstance(std::vector<char const *> const &desiredExtensions,
       static_cast<uint32_t>(desiredExtensions.size()),
       desiredExtensions.data()};
 
-#if _DEBUG
-  const char *layers[] = {
-      // NOTE Khronos layer name changed with 1.135 Vulkan SDK
-      // VK_LAYER_LUNARG_standard_validation"
-      "VK_LAYER_KHRONOS_validation",
-  };
-  instanceCreateInfo.ppEnabledLayerNames = layers;
-  instanceCreateInfo.enabledLayerCount = ARRAYSIZE(layers);
-#endif
+//#if _DEBUG
+//  const char *layers[] = {
+//      // NOTE Khronos layer name changed with 1.135 Vulkan SDK
+//      // VK_LAYER_LUNARG_standard_validation"
+//      "VK_LAYER_KHRONOS_validation",
+//  };
+//  instanceCreateInfo.ppEnabledLayerNames = layers;
+//  instanceCreateInfo.enabledLayerCount = ARRAYSIZE(layers);
+//#endif
 
   uint32_t layerCount;
   vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
