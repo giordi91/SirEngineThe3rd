@@ -1,13 +1,12 @@
 #pragma once
 #include <glm/glm.hpp>
 
-
-#include "platform/windows/graphics/vk/memory/vkGPUSlabAllocator.h"
 #include "SirEngine/graphics/debugRenderer.h"
 #include "SirEngine/handle.h"
 #include "SirEngine/hashing.h"
 #include "SirEngine/memory/cpu/hashMap.h"
-#include "SirEngine/memory/cpu/sparseMemoryPool.h"
+#include "SirEngine/memory/cpu/SparseMemoryPool.h"
+#include "SirEngine/memory/gpu/gpuSlabAllocator.h"
 
 namespace SirEngine {
 
@@ -62,15 +61,16 @@ class Dx12DebugRenderer : public DebugRenderer {
       const DebugDrawHandle handle, const glm::vec3* data, const int count,
       const glm::vec4 color, const char* debugName) override;
   DebugDrawHandle drawMatrix(const glm::mat4& mat, float size, glm::vec4 color,
-                  const char* debugName) override;
+                             const char* debugName) override;
 
   void drawLines(float* data, uint32_t sizeInByte, glm::vec4 color, float size,
-	  const char* debugName) override;
+                 const char* debugName) override;
   void newFrame() override;
 
-  void updateBoundingBoxesData(DebugDrawHandle handle, const BoundingBox* data, int count) override;
- private:
+  void updateBoundingBoxesData(DebugDrawHandle handle, const BoundingBox* data,
+                               int count) override;
 
+ private:
   void assureLinesTables(int slabCount);
 
   inline void assertMagicNumber(const DebugDrawHandle handle) const {
@@ -91,12 +91,12 @@ class Dx12DebugRenderer : public DebugRenderer {
 
  private:
   static constexpr uint32_t RESERVE_SIZE = 200;
-  static constexpr uint32_t MAX_FRAMES_IN_FLIGHT= 3;
-  static constexpr uint32_t HANDLES_INITIAL_SIZE= 16;
+  static constexpr uint32_t MAX_FRAMES_IN_FLIGHT = 3;
+  static constexpr uint32_t HANDLES_INITIAL_SIZE = 16;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
   SparseMemoryPool<Dx12DebugPrimitive> m_primitivesPool;
   HashMap<uint32_t, DebugTracker, hashUint32> m_trackers;
-  vk::VKGPUSlabAllocator m_lineSlab[MAX_FRAMES_IN_FLIGHT];
+  GPUSlabAllocator m_lineSlab[MAX_FRAMES_IN_FLIGHT];
   uint32_t m_linesPrimitives = 0;
   PSOHandle m_linePSO;
   RSHandle m_lineRS;
