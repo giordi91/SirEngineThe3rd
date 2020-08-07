@@ -46,7 +46,6 @@ void GrassTechnique::setup(const uint32_t id) {
   m_grassConfig.baseColor = {0.02, 0.25, 0.001};
   m_grassConfig.tipColor = {0.02, 0.13, 0.019};
 
-  /*
   m_rs = globals::ROOT_SIGNATURE_MANAGER->getHandleFromName(GRASS_RS);
   m_pso = globals::PSO_MANAGER->getHandleFromName(GRASS_PSO);
 
@@ -68,6 +67,7 @@ void GrassTechnique::setup(const uint32_t id) {
   m_grassConfigOld = m_grassConfig;
   globals::INTEROP_DATA->registerData("grassConfig", &m_grassConfig);
 
+  /*
   std::vector<BoundingBox> tiles;
   tiles.reserve(MAX_GRASS_PER_SIDE * MAX_GRASS_PER_SIDE);
   memset(tiles.data(), 0,
@@ -173,10 +173,9 @@ void GrassTechnique::render(const uint32_t id,
   data.push_back({0, 10, 10});
   data.push_back({0, 10, 10});
   data.push_back({10, 10, 10});
-  globals::DEBUG_RENDERER->drawLines(&data[0].x,
-                                     sizeof(glm::vec3) * data.size(),
-                                     glm::vec4{1, 0, 0, 1}, 0, "");
-  // tileDebug();
+  globals::DEBUG_RENDERER->drawLines(
+      &data[0].x, sizeof(glm::vec3) * data.size(), glm::vec4{1, 0, 0, 1});
+  tileDebug();
 
   /*
   globals::CONSTANT_BUFFER_MANAGER->update(m_grassConfigHandle, &m_grassConfig);
@@ -248,10 +247,6 @@ void GrassTechnique::clear(const uint32_t id) {
     globals::TEXTURE_MANAGER->free(m_groundAlbedoTexture);
     m_groundAlbedoTexture = {0};
   }
-  if (m_debugHandle.isHandleValid()) {
-    globals::DEBUG_RENDERER->free(m_debugHandle);
-    m_debugHandle = {0};
-  }
   if (m_tilesPointsHandle.isHandleValid()) {
     globals::BUFFER_MANAGER->free(m_tilesPointsHandle);
     m_tilesPointsHandle = {0};
@@ -271,38 +266,30 @@ void GrassTechnique::clear(const uint32_t id) {
 }
 
 void GrassTechnique::tileDebug() {
-  bool grassTileSizeChanged =
-      abs(m_grassConfig.tileSize - m_grassConfigOld.tileSize) > 0.001;
-  bool grassTileCountChanged =
-      m_grassConfig.tilesPerSide != m_grassConfigOld.tilesPerSide;
-  if (grassTileSizeChanged | grassTileCountChanged) {
-    std::vector<BoundingBox> tiles;
-    tiles.reserve(MAX_GRASS_PER_SIDE * MAX_GRASS_PER_SIDE);
-    memset(tiles.data(), 0,
-           MAX_GRASS_PER_SIDE * MAX_GRASS_PER_SIDE * sizeof(BoundingBox));
-    // let us being by computing the tiles bounding boxes
-    float halfSize = (static_cast<float>(m_grassConfig.tilesPerSide) / 2.0f) *
-                     m_grassConfig.tileSize;
-    glm::vec3 minCorner =
-        m_grassConfig.gridOrigin - glm::vec3{halfSize, 0.0f, halfSize};
 
-    float tw = m_grassConfig.tileSize;
-    for (int tileY = 0; tileY < m_grassConfig.tilesPerSide; ++tileY) {
-      for (int tileX = 0; tileX < m_grassConfig.tilesPerSide; ++tileX) {
-        BoundingBox box;
-        box.min = minCorner + glm::vec3{tw * tileX, 0, tw * tileY};
-        box.max =
-            minCorner + glm::vec3{tw * (tileX + 1), 0.1f, tw * (tileY + 1)};
-        tiles.emplace_back(box);
-      }
+  m_tiles.clear();
+  m_tiles.reserve(MAX_GRASS_PER_SIDE * MAX_GRASS_PER_SIDE);
+  // memset(m_tiles.data(), 0,
+  //       MAX_GRASS_PER_SIDE * MAX_GRASS_PER_SIDE * sizeof(BoundingBox));
+  // let us being by computing the tiles bounding boxes
+  float halfSize = (static_cast<float>(m_grassConfig.tilesPerSide) / 2.0f) *
+                   m_grassConfig.tileSize;
+  glm::vec3 minCorner =
+      m_grassConfig.gridOrigin - glm::vec3{halfSize, 0.0f, halfSize};
+
+  float tw = m_grassConfig.tileSize;
+  for (int tileY = 0; tileY < m_grassConfig.tilesPerSide; ++tileY) {
+    for (int tileX = 0; tileX < m_grassConfig.tilesPerSide; ++tileX) {
+      BoundingBox box;
+      box.min = minCorner + glm::vec3{tw * tileX, 0, tw * tileY};
+      box.max = minCorner + glm::vec3{tw * (tileX + 1), 0.1f, tw * (tileY + 1)};
+      m_tiles.emplace_back(box);
     }
-
-    globals::DEBUG_RENDERER->updateBoundingBoxesData(
-        m_debugHandle, tiles.data(), MAX_GRASS_PER_SIDE * MAX_GRASS_PER_SIDE);
-
-    m_grassConfigOld = m_grassConfig;
-
-    // globals::CONSTANT_BUFFER_MANAGER->
   }
+  globals::DEBUG_RENDERER->drawBoundingBoxes(
+      m_tiles.data(), m_grassConfig.tilesPerSide * m_grassConfig.tilesPerSide,
+      glm::vec4(1, 0, 0, 1));
+
+  m_grassConfigOld = m_grassConfig;
 }
 }  // namespace SirEngine::graphics

@@ -40,7 +40,6 @@ class GrassTechnique final : public GNodeCallback {
   TextureHandle m_windTexture{};
   TextureHandle m_albedoTexture{};
   TextureHandle m_groundAlbedoTexture{};
-  DebugDrawHandle m_debugHandle{};
 
   PSOHandle m_pso;
   RSHandle m_rs;
@@ -53,5 +52,6 @@ class GrassTechnique final : public GNodeCallback {
   std::vector<int> m_tilesIndices;
 
   static const uint32_t MAX_GRASS_PER_SIDE = 60;
+  std::vector<BoundingBox> m_tiles;
 };
 }  // namespace SirEngine::graphics
