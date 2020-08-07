@@ -6,7 +6,6 @@
 #include "SirEngine/graphics/cpuGraphicsStructures.h"
 #include "SirEngine/graphics/nodeGraph.h"
 #include "SirEngine/handle.h"
-#include "SirEngine/log.h"
 
 namespace SirEngine::graphics {
 
@@ -36,7 +35,6 @@ class GrassTechnique final : public GNodeCallback {
   BindingTableHandle m_bindingTable{};
   BindingTableHandle m_groundBindingTable{};
 
-  MaterialHandle m_grassMaterial{};
   TextureHandle m_windTexture{};
   TextureHandle m_albedoTexture{};
   TextureHandle m_groundAlbedoTexture{};

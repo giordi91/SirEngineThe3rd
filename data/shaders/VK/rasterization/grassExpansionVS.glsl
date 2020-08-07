@@ -30,9 +30,6 @@ layout (set=3,binding=3) uniform ConfigData
 layout (set=1,binding = 0) uniform sampler[7] colorSampler;
 
 
-    //vec4(1.0f, 0.0f, 0.0f, width), 
-    //vec4(0.0f, 1.0f, 0.0f, height), 
-    //vec4(-1.0f, 0.0f, 0.0f, width), 
 const vec3 offsets[15] = {
     vec3(-0.5f, 0.0f, 0.0f), 
     vec3(0.5f, 0.0f, 0.0f), 
