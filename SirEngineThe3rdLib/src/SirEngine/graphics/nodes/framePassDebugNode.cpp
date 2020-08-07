@@ -3,7 +3,6 @@
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/handle.h"
 #include "platform/windows/graphics/dx12/Dx12PSOManager.h"
-#include "platform/windows/graphics/dx12/dx12DebugRenderer.h"
 #include "platform/windows/graphics/dx12/dx12BufferManager.h"
 #include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
 #include "platform/windows/graphics/dx12/dx12RootSignatureManager.h"
