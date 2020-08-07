@@ -43,12 +43,12 @@ class GPUSlabAllocator final {
     const auto *allocs =
         m_slabs.getConstRef(slabIndex)->m_slabTracker.getAllocations();
     int count = allocs->size();
-    uint32_t total = 0;
+    uint64_t total = 0;
     for (int i = 0; i < count; ++i) {
       const auto &alloc = allocs->getConstRef(i);
       total += alloc.m_range.m_size;
     }
-    return total;
+    return static_cast<uint32_t>(total);
   };
   uint32_t getSlabCount() const { return m_slabs.size(); };
 

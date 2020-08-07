@@ -10,7 +10,6 @@
 #include "SirEngine/graphics/camera.h"
 #include "SirEngine/graphics/nodeGraph.h"
 #include "platform/windows/graphics/dx12/DX12.h"
-#include "platform/windows/graphics/dx12/dx12DebugRenderer.h"
 
 #include "SirEngine/events/renderGraphEvent.h"
 #include "SirEngine/events/shaderCompileEvent.h"
@@ -35,6 +34,7 @@
 #include "SirEngine/graphics/nodes/shadowPass.h"
 #include "SirEngine/scripting/scriptingContext.h"
 #include <SirEngine/events/scriptingEvent.h>
+#include <SirEngine/graphics/debugRenderer.h>
 
 namespace SirEngine {
 
@@ -140,12 +140,12 @@ void Graphics3DLayer::onAttach() {
 
 
   auto light = globals::RENDERING_CONTEXT->getLightData();
-  dx12::DEBUG_RENDERER->drawMatrix(light.localToWorld, 3.0f,
+  globals::DEBUG_RENDERER->drawMatrix(light.localToWorld, 3.0f,
                                    glm::vec4(1, 0, 0, 1), "");
 
   uint32_t bbcount;
   auto data = dx12::MESH_MANAGER->getBoundingBoxes(bbcount);
-  dx12::DEBUG_RENDERER->drawBoundingBoxes((BoundingBox *)data, bbcount,
+  globals::DEBUG_RENDERER->drawBoundingBoxes((BoundingBox *)data, bbcount,
                                           glm::vec4(1, 0, 0, 1), "");
   // dx12::DEBUG_RENDERER->drawMatrix(
   //    globals::MAIN_CAMERA->getViewInverse(DirectX::XMMatrixIdentity()), 3.0f,

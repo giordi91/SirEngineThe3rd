@@ -15,7 +15,6 @@
 #include "platform/windows/graphics/vk/vkBindingTableManager.h"
 #include "platform/windows/graphics/vk/vkBufferManager.h"
 #include "platform/windows/graphics/vk/vkConstantBufferManager.h"
-#include "platform/windows/graphics/vk/vkDebugRenderer.h"
 #include "platform/windows/graphics/vk/vkLoad.h"
 #include "platform/windows/graphics/vk/vkMaterialManager.h"
 #include "platform/windows/graphics/vk/vkMeshManager.h"
@@ -25,6 +24,7 @@
 #include "platform/windows/graphics/vk/vkSwapChain.h"
 #include "platform/windows/graphics/vk/vkTextureManager.h"
 #include "SirEngine/interopData.h"
+#include "SirEngine/graphics/debugRenderer.h"
 
 namespace SirEngine::vk {
 VkInstance INSTANCE = nullptr;
@@ -228,9 +228,8 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
       globals::ENGINE_CONFIG->m_dataSourcePath, "/materials/types"));
   globals::MATERIAL_MANAGER = MATERIAL_MANAGER;
 
-  DEBUG_RENDERER = new VkDebugRenderer();
-  DEBUG_RENDERER->initialize();
-  globals::DEBUG_RENDERER = DEBUG_RENDERER;
+  globals::DEBUG_RENDERER = new DebugRenderer();
+  globals::DEBUG_RENDERER->initialize();
 
   globals::ASSET_MANAGER = new AssetManager();
   globals::ASSET_MANAGER->initialize();
@@ -487,7 +486,7 @@ bool VkRenderingContext::shutdownGraphic() {
   assert(result);
 
   SHADER_MANAGER->cleanup();
-  DEBUG_RENDERER->cleanup();
+  globals::DEBUG_RENDERER->cleanup();
   globals::LIGHT_MANAGER->cleanup();
   CONSTANT_BUFFER_MANAGER->cleanup();
 

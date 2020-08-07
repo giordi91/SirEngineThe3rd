@@ -1,4 +1,4 @@
-#include "platform/windows/graphics/vk/vkDebugRenderer.h"
+#include "SirEngine/graphics/debugRenderer.h"
 
 #include "SirEngine/PSOManager.h"
 #include "SirEngine/globals.h"
@@ -11,11 +11,11 @@
 #include "platform/windows/graphics/vk/vkConstantBufferManager.h"
 #include "platform/windows/graphics/vk/vkMaterialManager.h"
 
-namespace SirEngine::vk {
+namespace SirEngine {
 static const char *LINE_RS = "debugDrawLinesSingleColorRS";
 static const char *LINE_PSO = "debugDrawLinesSingleColorPSO";
 
-void VkDebugRenderer::initialize() {
+void DebugRenderer::initialize() {
   GPUSlabAllocatorInitializeConfig config{};
   config.initialSlabs = 1;
   config.allowNewSlabAllocations = true;
@@ -83,13 +83,13 @@ int drawSquareBetweenTwoPoints(float *data, const glm::vec3 minP,
   return counter;
 }
 
-VkDebugRenderer::VkDebugRenderer()
-    : DebugRenderer(),
+DebugRenderer::DebugRenderer()
+    : 
       m_primitivesPool(RESERVE_SIZE),
       m_trackers(RESERVE_SIZE),
       m_lineBindHandles(HANDLES_INITIAL_SIZE) {}
 
-void VkDebugRenderer::cleanup() {
+void DebugRenderer::cleanup() {
   for (int i = 0; i < globals::ENGINE_CONFIG->m_frameBufferingCount; ++i) {
     m_lineSlab[i].cleanup();
   }
@@ -104,7 +104,7 @@ void VkDebugRenderer::cleanup() {
   m_lineBindHandles.clear();
 }
 
-void VkDebugRenderer::free(const DebugDrawHandle handle) {
+void DebugRenderer::free(const DebugDrawHandle handle) {
   assertMagicNumber(handle);
 
   DebugTracker tracker{};
@@ -127,7 +127,7 @@ void VkDebugRenderer::free(const DebugDrawHandle handle) {
   m_trackers.remove(handle.handle);
 }
 
-DebugDrawHandle VkDebugRenderer::drawPointsUniformColor(float *data,
+DebugDrawHandle DebugRenderer::drawPointsUniformColor(float *data,
                                                         uint32_t sizeInByte,
                                                         glm::vec4 color,
                                                         float size,
@@ -136,123 +136,14 @@ DebugDrawHandle VkDebugRenderer::drawPointsUniformColor(float *data,
   return {};
 }
 
-DebugDrawHandle VkDebugRenderer::drawLinesUniformColor(float *data,
-                                                       uint32_t sizeInByte,
-                                                       glm::vec4 color,
-                                                       float size,
-                                                       const char *debugName) {
-  /*
-uint32_t index;
-VkDebugPrimitive &primitive = m_primitivesPool.getFreeMemoryData(index);
-
-// allocate vertex buffer
-assert((sizeInByte % (sizeof(float) * 3)) == 0);
-const uint32_t elementCount = sizeInByte / (sizeof(float) * 3);
-
-const BufferHandle bufferHandle = globals::BUFFER_MANAGER->allocate(
-    sizeInByte, data, debugName, elementCount, sizeof(float) * 3,
-    BufferManager::BUFFER_FLAGS::STORAGE_BUFFER);
-primitive.m_bufferHandle = bufferHandle;
-
-// allocate constant buffer
-DebugPointsFixedColor settings{color, size, {0, 0, 0}};
-const ConstantBufferHandle chandle =
-    globals::CONSTANT_BUFFER_MANAGER->allocate(sizeof(settings), 0,
-                                               &settings);
-
-RenderableDescription description{};
-description.buffer = bufferHandle;
-description.subranges[0].m_offset = 0;
-description.subranges[0].m_size = sizeInByte;
-description.subragesCount = 1;
-
-const char *queues[5] = {nullptr, nullptr, nullptr, "debugLinesSingleColor",
-                         nullptr};
-
-description.materialHandle = globals::MATERIAL_MANAGER->allocateMaterial(
-    debugName, MaterialManager::ALLOCATE_MATERIAL_FLAG_BITS::NONE, queues);
-description.primitiveToRender = elementCount;
-
-const VkMaterialRuntime &runtime =
-    vk::MATERIAL_MANAGER->getMaterialRuntime(description.materialHandle);
-
-// TODO do we need that? we should be able to query from the material
-// manager for the wanted queue
-const auto currentFlag = static_cast<uint32_t>(SHADER_QUEUE_FLAGS::DEBUG);
-const int currentFlagId =
-    static_cast<int>(log2(currentFlag & (-currentFlag)));
-
-VkDescriptorSet set = vk::DESCRIPTOR_MANAGER->getDescriptorSet(
-    runtime.descriptorHandles[currentFlagId]);
-
-VkWriteDescriptorSet writeDescriptorSet{};
-VkDescriptorBufferInfo info{};
-
-// TODO here two different updates descriptor updates are performed
-// slower but "cleaner", need to figure out both a nice and fast way
-// TODO here we can see the difference between a "generic" material set
-// and the Vulkan aware one, where we can pass in vk structure to be filled
-// than have one write only
-globals::MATERIAL_MANAGER->bindBuffer(description.materialHandle,
-                                      primitive.m_bufferHandle, 0,
-                                      SHADER_QUEUE_FLAGS::DEBUG);
-
-vk::CONSTANT_BUFFER_MANAGER->bindConstantBuffer(chandle, info, 1,
-                                                &writeDescriptorSet, set);
-
-vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, 1, &writeDescriptorSet, 0,
-                       nullptr);
-
-globals::RENDERING_CONTEXT->addRenderablesToQueue(description);
-
-// store it such way that we can render it
-primitive.m_primitiveType = PRIMITIVE_TYPE::LINE;
-primitive.m_cbHandle = chandle;
-primitive.m_primitiveToRender = static_cast<int>(elementCount);
-primitive.m_magicNumber = MAGIC_NUMBER_COUNTER;
-
-const DebugDrawHandle debugHandle{(MAGIC_NUMBER_COUNTER << 16) | index};
-++MAGIC_NUMBER_COUNTER;
-
-DebugTracker tracker{};
-tracker.magicNumber = MAGIC_NUMBER_COUNTER;
-tracker.mappedData = nullptr;
-// only one object, this should be renamed to normal counter not compound
-// simply set to one if not compound
-tracker.compoundCount = 1;
-tracker.compoundHandles = reinterpret_cast<DebugDrawHandle *>(
-    globals::PERSISTENT_ALLOCATOR->allocate(sizeof(DebugDrawHandle) * 1));
-tracker.compoundHandles[0] = debugHandle;
-tracker.sizeInBtye = sizeInByte;
-
-const DebugDrawHandle trackerHandle{(MAGIC_NUMBER_COUNTER << 16)};
-
-// registering the tracker
-m_trackers.insert(trackerHandle.handle, tracker);
-
-++MAGIC_NUMBER_COUNTER;
-
-return trackerHandle;
-*/
-  return {};
-}
-
-DebugDrawHandle VkDebugRenderer::drawSkeleton(Skeleton *skeleton,
+DebugDrawHandle DebugRenderer::drawSkeleton(Skeleton *skeleton,
                                               glm::vec4 color,
                                               float pointSize) {
   assert(0);
   return {};
 }
 
-DebugDrawHandle VkDebugRenderer::drawAnimatedSkeleton(DebugDrawHandle handle,
-                                                      AnimationPlayer *state,
-                                                      glm::vec4 color,
-                                                      float pointSize) {
-  assert(0);
-  return {};
-}
-
-void VkDebugRenderer::render(TextureHandle input, TextureHandle depth) {
+void DebugRenderer::render(TextureHandle input, TextureHandle depth) {
   // draw lines
   int slabCount = m_lineSlab[globals::CURRENT_FRAME].getSlabCount();
   assureLinesTables(slabCount);
@@ -286,7 +177,7 @@ void VkDebugRenderer::render(TextureHandle input, TextureHandle depth) {
   // m_linesPrimitives =0;
 }
 
-DebugDrawHandle VkDebugRenderer::drawBoundingBoxes(const BoundingBox *data,
+DebugDrawHandle DebugRenderer::drawBoundingBoxes(const BoundingBox *data,
                                                    const int count,
                                                    const glm::vec4 color,
                                                    const char *debugName) {
@@ -318,32 +209,35 @@ DebugDrawHandle VkDebugRenderer::drawBoundingBoxes(const BoundingBox *data,
     counter = push4toVec(points, minP.x, maxP.y, maxP.z, counter);
     assert(counter <= totalSize);
   }
-  return drawLinesUniformColor(points, totalSize * sizeof(float), color,
+  /*
+  return drawLines(points, totalSize * sizeof(float), color,
                                static_cast<float>(totalSize), debugName);
+                               */
+  return {};
 }
 
-DebugDrawHandle VkDebugRenderer::drawAnimatedBoundingBoxes(
+DebugDrawHandle DebugRenderer::drawAnimatedBoundingBoxes(
     DebugDrawHandle handle, BoundingBox *data, int count, glm::vec4 color,
     const char *debugName) {
   assert(0);
   return {};
 }
 
-DebugDrawHandle VkDebugRenderer::drawAnimatedBoundingBoxFromFullPoints(
+DebugDrawHandle DebugRenderer::drawAnimatedBoundingBoxFromFullPoints(
     const DebugDrawHandle handle, const glm::vec3 *data, const int count,
     const glm::vec4 color, const char *debugName) {
   assert(0);
   return {};
 }
 
-DebugDrawHandle VkDebugRenderer::drawMatrix(const glm::mat4 &mat, float size,
+DebugDrawHandle DebugRenderer::drawMatrix(const glm::mat4 &mat, float size,
                                             glm::vec4 color,
                                             const char *debugName) {
   assert(0);
   return {};
 }
 
-void VkDebugRenderer::drawLines(float *data, const uint32_t sizeInByte,
+void DebugRenderer::drawLines(float *data, const uint32_t sizeInByte,
                                 const glm::vec4 color, float size,
                                 const char *debugName) {
   // making sure is a multiple of 3, float3 one per point
@@ -375,7 +269,7 @@ void VkDebugRenderer::drawLines(float *data, const uint32_t sizeInByte,
   m_lineSlab[globals::CURRENT_FRAME].allocate(finalSize, paddedData);
 }
 
-void VkDebugRenderer::updateBoundingBoxesData(const DebugDrawHandle handle,
+void DebugRenderer::updateBoundingBoxesData(const DebugDrawHandle handle,
                                               const BoundingBox *data,
                                               const int count) {
   // assertMagicNumber(handle);
@@ -417,7 +311,7 @@ void VkDebugRenderer::updateBoundingBoxesData(const DebugDrawHandle handle,
   memcpy(mappedData, points, totalSize * sizeof(float));
 }
 
-void VkDebugRenderer::assureLinesTables(const int slabCount) {
+void DebugRenderer::assureLinesTables(const int slabCount) {
   // init binding table
   graphics::BindingDescription descriptions[] = {
       {0, GRAPHIC_RESOURCE_TYPE::READ_BUFFER,
@@ -434,7 +328,7 @@ void VkDebugRenderer::assureLinesTables(const int slabCount) {
   }
 }
 
-void VkDebugRenderer::newFrame() {
+void DebugRenderer::newFrame() {
   m_lineSlab[globals::CURRENT_FRAME].clear();
   m_linesPrimitives = 0;
 }
