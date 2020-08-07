@@ -17,7 +17,6 @@
 #include "platform/windows/graphics/dx12/dx12Adapter.h"
 #include "platform/windows/graphics/dx12/dx12BufferManager.h"
 #include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
-#include "platform/windows/graphics/dx12/dx12DebugRenderer.h"
 #include "platform/windows/graphics/dx12/dx12MaterialManager.h"
 #include "platform/windows/graphics/dx12/dx12MeshManager.h"
 #include "platform/windows/graphics/dx12/dx12PSOManager.h"
@@ -25,8 +24,8 @@
 #include "platform/windows/graphics/dx12/dx12ShaderManager.h"
 #include "platform/windows/graphics/dx12/dx12SwapChain.h"
 #include "platform/windows/graphics/dx12/dx12TextureManager.h"
-#include "rootSignatureCompile.h"
 #include "SirEngine/interopData.h"
+#include "SirEngine/graphics/debugRenderer.h"
 
 #undef max
 #undef min
@@ -232,9 +231,8 @@ bool initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
       globals::ENGINE_CONFIG->m_dataSourcePath, "/materials/types"));
   globals::MATERIAL_MANAGER = MATERIAL_MANAGER;
 
-  DEBUG_RENDERER = new Dx12DebugRenderer();
-  DEBUG_RENDERER->initialize();
-  globals::DEBUG_RENDERER = DEBUG_RENDERER;
+  globals::DEBUG_RENDERER = new DebugRenderer();
+  globals::DEBUG_RENDERER->initialize();
 
   globals::ANIMATION_MANAGER = new AnimationManager();
   globals::ANIMATION_MANAGER->init();
@@ -551,7 +549,7 @@ void Dx12RenderingContext::updateDirectionalLightMatrix() {
 
   // we have the bounding box in light space we want to render it
   m_lightAABBHandle =
-      dx12::DEBUG_RENDERER->drawAnimatedBoundingBoxFromFullPoints(
+      globals::DEBUG_RENDERER->drawAnimatedBoundingBoxFromFullPoints(
           m_lightAABBHandle, expanded, 1, glm::vec4(1, 0, 0, 1), "");
 
   // we can now use min max to generate the projection matrix needed;

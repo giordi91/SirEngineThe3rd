@@ -1,15 +1,15 @@
 #include "SirEngine/animation/luaStatePlayer.h"
+
 #include "SirEngine/animation/animationClip.h"
 #include "SirEngine/animation/animationManager.h"
 #include "SirEngine/animation/animationManipulation.h"
 #include "SirEngine/animation/skeleton.h"
-#include "SirEngine/scripting/scriptingContext.h"
-
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/graphics/debugRenderer.h"
 #include "SirEngine/input.h"
 #include "SirEngine/log.h"
 #include "SirEngine/runtimeString.h"
+#include "SirEngine/scripting/scriptingContext.h"
 
 extern "C" {
 #include <lua/lua.h>
@@ -122,7 +122,6 @@ void LuaStatePlayer::init(AnimationManager *manager,
 }
 
 void LuaStatePlayer::evaluateStateMachine() {
-
   // execute the lua state machine
   lua_State *state = globals::SCRIPTING_CONTEXT->getContext();
   lua_getglobal(state, EVALUATE_FUNCTION_NAME);
@@ -216,7 +215,6 @@ void LuaStatePlayer::updateTransform() {
 }
 
 void LuaStatePlayer::evaluate(const int64_t stampNS) {
-
   updateTransform();
 
   // if the queue is too full we just prevent the state machine from evaluating
@@ -227,7 +225,6 @@ void LuaStatePlayer::evaluate(const int64_t stampNS) {
 
   // let us check if there is any transition to be done
   if (m_currentTransition == nullptr && m_transitionsQueue.empty()) {
-
     // no transition to make, let us perform a simple animation evaluation
     AnimationEvalRequest eval{currentAnim,      m_outPose,    stampNS,
                               m_startTimeStamp, m_multiplier, true,
@@ -259,14 +256,16 @@ void LuaStatePlayer::evaluate(const int64_t stampNS) {
       m_transitionsQueue.pop();
     }
   }
-  static DebugDrawHandle handle{};
-  handle = globals::DEBUG_RENDERER->drawAnimatedSkeleton(
-      handle, this, glm::vec4{0, 1, 0, 1}, 0.1f);
+
+  // TODO use the new debug renderer and please not use static handle
+  // this is a left over from testing but still...
+  // static DebugDrawHandle handle{};
+  // handle = globals::DEBUG_RENDERER->drawAnimatedSkeleton(
+  //    handle, this, glm::vec4{0, 1, 0, 1}, 0.1f);
 }
 
 bool LuaStatePlayer::performTransition(Transition *transition,
                                        const int64_t timeStamp) {
-
   // let us first fetch the clip from the animation manager, I am not
   // particularly happy about this fetch based on string, BUT I will worry
   // once the profile shows is an actual problem for now this will do
@@ -279,7 +278,6 @@ bool LuaStatePlayer::performTransition(Transition *transition,
   const double frameLenInMS = clip->m_frameRate * 1000.0;
 
   if (transition->m_status == TRANSITION_STATUS::NEW) {
-
     // we have a brand new transition, there are few parameters that needs to be
     // computed
     // first figure out at which frame we are going to transition the current
@@ -299,8 +297,8 @@ bool LuaStatePlayer::performTransition(Transition *transition,
     // need to happen we can compute an offset in nanoseconds
     int deltaFrames =
         transition->m_transitionFrameSrc -
-        currentFrame; // delta from the frame we are currently at and the frame
-                      // the main animation will start the transition
+        currentFrame;  // delta from the frame we are currently at and the frame
+                       // the main animation will start the transition
 
     // next we compute the time stamp at which the transition will start to
     // evaluate
@@ -361,7 +359,6 @@ bool LuaStatePlayer::performTransition(Transition *transition,
   // it means we are waiting for our designated frame and we just keep
   // playing current animation
   if (timeStamp >= transition->m_startTransitionTime) {
-
     // lets compute the interpoaltion factor for the two animations
     const auto range = static_cast<double>(transition->m_endTransitionTime -
                                            transition->m_startTransitionTime);
@@ -413,7 +410,7 @@ void LuaStatePlayer::submitInterpRequest(const int64_t timeStamp,
   srcRequest.m_originTime = m_startTimeStamp;
   srcRequest.m_multiplier = 1.0f;
   srcRequest.m_transform =
-      m_transform; // not used since convert to global is off
+      m_transform;  // not used since convert to global is off
   evaluateAnim(&srcRequest);
 
   // now we interpolate the destination
@@ -425,7 +422,7 @@ void LuaStatePlayer::submitInterpRequest(const int64_t timeStamp,
   destRequest.m_originTime = transition->m_destAnimStartTimeStamp;
   destRequest.m_multiplier = 1.0f;
   destRequest.m_transform =
-      m_transform; // not used since convert to global is off
+      m_transform;  // not used since convert to global is off
   evaluateAnim(&destRequest);
 
   // now we need to interpolate not two frames but to existing poses
@@ -449,4 +446,4 @@ uint32_t LuaStatePlayer::getJointCount() const {
   return skeleton->m_jointCount;
 }
 
-} // namespace SirEngine
+}  // namespace SirEngine
