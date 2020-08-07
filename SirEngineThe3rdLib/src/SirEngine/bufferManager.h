@@ -32,10 +32,6 @@ class BufferManager {
   virtual BufferHandle allocate(const uint32_t sizeInBytes, void *initData,
                                 const char *name, int numElements,
                                 int elementSize, BUFFER_FLAGS flags) = 0;
-  virtual BufferHandle allocateUpload(const uint32_t sizeInByte,
-                                      const uint32_t numElements,
-                                      const uint32_t elementSize,
-                                      const char *name) = 0;
   virtual void *getMappedData(const BufferHandle handle) const = 0;
 };
 

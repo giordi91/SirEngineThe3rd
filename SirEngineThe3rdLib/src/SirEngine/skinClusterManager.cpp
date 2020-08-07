@@ -51,8 +51,10 @@ SkinHandle SkinClusterManager::loadSkinCluster(
     const AnimationPlayer *animConfig =
         globals::ANIMATION_MANAGER->getConfig(animHandle);
     const uint32_t jointCount = animConfig->getJointCount();
-    const BufferHandle matricesHandle = globals::BUFFER_MANAGER->allocateUpload(
-        jointCount * sizeof(float) * 16, jointCount, sizeof(float) * 16, "");
+    const BufferHandle matricesHandle = globals::BUFFER_MANAGER->allocate(
+        jointCount * sizeof(float) * 16, nullptr, "skinningMatrices",
+        jointCount, sizeof(float) * 16,
+        BufferManager::BUFFER_FLAGS_BITS::STORAGE_BUFFER);
 
     uint32_t index;
     SkinData &data = m_skinPool.getFreeMemoryData(index);

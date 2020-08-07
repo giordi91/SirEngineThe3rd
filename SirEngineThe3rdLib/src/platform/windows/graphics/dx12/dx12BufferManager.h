@@ -32,10 +32,6 @@ class BufferManagerDx12 final : public BufferManager {
   BufferHandle allocate(const uint32_t sizeInByte, void *initData,
                         const char *name, int numElements, int elementSize,
                         BUFFER_FLAGS flags) override;
-  BufferHandle allocateUpload(const uint32_t sizeInByte,
-                              const uint32_t numElements,
-                              const uint32_t elementSize,
-                              const char *name) override;
 
   void bindBuffer(BufferHandle handle, int slot,
                   ID3D12GraphicsCommandList2 *commandList) const;
@@ -63,9 +59,9 @@ class BufferManagerDx12 final : public BufferManager {
 
   void *getMappedData(const BufferHandle handle) const override;
 
-  ID3D12Resource *allocateCPUVisibleBuffer(uint32_t actualSize) const;
-  ID3D12Resource *allocateGPUVisibleBuffer(uint32_t actualSize, bool isUav);
-  void uploadDataToGPUOnlyBuffer(void* initData, uint32_t actualSize, bool isTemporary, ID3D12Resource* uploadBuffer,
+  ID3D12Resource *allocateCpuVisibleBuffer(uint32_t actualSize) const;
+  ID3D12Resource *allocateGpuVisibleBuffer(uint32_t actualSize, bool isUav);
+  void uploadDataToGpuOnlyBuffer(void* initData, uint32_t actualSize, bool isTemporary, ID3D12Resource* uploadBuffer,
                                  ID3D12Resource* buffer);
 
   inline int bufferUAVTransition(const BufferHandle handle,

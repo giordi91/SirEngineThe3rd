@@ -29,7 +29,7 @@ void BufferManagerDx12::free(const BufferHandle handle) {
   }
 }
 
-ID3D12Resource *BufferManagerDx12::allocateCPUVisibleBuffer(
+ID3D12Resource *BufferManagerDx12::allocateCpuVisibleBuffer(
     const uint32_t actualSize) const {
   ID3D12Resource *uploadBuffer;
   HRESULT res;
@@ -83,7 +83,7 @@ ID3D12Resource *BufferManagerDx12::allocateCPUVisibleBuffer(
   return uploadBuffer;
 }
 
-ID3D12Resource *BufferManagerDx12::allocateGPUVisibleBuffer(
+ID3D12Resource *BufferManagerDx12::allocateGpuVisibleBuffer(
     const uint32_t actualSize, const bool isUav) {
   ID3D12Resource *buffer = nullptr;
   auto heap = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
@@ -100,7 +100,7 @@ ID3D12Resource *BufferManagerDx12::allocateGPUVisibleBuffer(
   return buffer;
 }
 
-void BufferManagerDx12::uploadDataToGPUOnlyBuffer(void *initData,
+void BufferManagerDx12::uploadDataToGpuOnlyBuffer(void *initData,
                                                   uint32_t actualSize,
                                                   bool isTemporary,
                                                   ID3D12Resource *uploadBuffer,
@@ -153,14 +153,14 @@ BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInBytes,
   const bool isUav = (flags & BUFFER_FLAGS_BITS::RANDOM_WRITE) > 0;
   const bool isGpuOnly = (flags & BUFFER_FLAGS_BITS::GPU_ONLY) > 0;
 
-  bool isTemporary = true;
-  ID3D12Resource *uploadBuffer = allocateCPUVisibleBuffer(actualSize);
+  bool isTemporary = isGpuOnly;
+  ID3D12Resource *uploadBuffer = allocateCpuVisibleBuffer(actualSize);
 
   ID3D12Resource *buffer = nullptr;
   void *uploadMappedData = nullptr;
 
   if (isGpuOnly) {
-    buffer = allocateGPUVisibleBuffer(actualSize, isUav);
+    buffer = allocateGpuVisibleBuffer(actualSize, isUav);
     buffer->SetName(persistentConvertWide(name));
   } else {
     HRESULT mapResult = uploadBuffer->Map(0, nullptr, &uploadMappedData);
@@ -170,7 +170,7 @@ BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInBytes,
   // if there is init data we need to take care of that
   if (initData != nullptr) {
     if (isGpuOnly) {
-      uploadDataToGPUOnlyBuffer(initData, actualSize, isTemporary, uploadBuffer,
+      uploadDataToGpuOnlyBuffer(initData, actualSize, isTemporary, uploadBuffer,
                                 buffer);
     } else {
       // we can do a memcpy directly since the buffer is cpu visible
@@ -182,6 +182,8 @@ BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInBytes,
   uint32_t index;
   BufferData &data = m_bufferPool.getFreeMemoryData(index);
   data = {};
+  //if the buffer is not temporary we need to use the upload buffer
+  data.data = isTemporary ? buffer : uploadBuffer;
 
   if (isUav) {
     // lets create the descriptor
@@ -194,7 +196,6 @@ BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInBytes,
   // data is now loaded need to create handle etc
   BufferHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
   data.magicNumber = MAGIC_NUMBER_COUNTER;
-  data.data = buffer;
   data.state = isUav ? D3D12_RESOURCE_STATE_UNORDERED_ACCESS
                      : D3D12_RESOURCE_STATE_GENERIC_READ;
   data.type = isUav ? BufferType::UAV : BufferType::SRV;
@@ -205,6 +206,7 @@ BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInBytes,
   return handle;
 }
 
+/*
 // TODO this is bad practice, this is used for the matrices of skin cluster,
 // and copied every frame, this should be buffered!
 BufferHandle BufferManagerDx12::allocateUpload(const uint32_t sizeInByte,
@@ -244,6 +246,7 @@ BufferHandle BufferManagerDx12::allocateUpload(const uint32_t sizeInByte,
 
   return handle;
 }
+*/
 
 void BufferManagerDx12::bindBuffer(
     const BufferHandle handle, const int slot,

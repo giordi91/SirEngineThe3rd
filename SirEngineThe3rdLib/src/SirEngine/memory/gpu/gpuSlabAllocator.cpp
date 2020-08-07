@@ -1,36 +1,30 @@
-#include "platform/windows/graphics/vk/memory/vkGPUSlabAllocator.h"
+
+#include "SirEngine/memory/gpu/gpuSlabAllocator.h"
 
 #include "SirEngine/bufferManager.h"
 #include "SirEngine/log.h"
 #include "platform/windows/graphics/vk/vk.h"
 
-namespace SirEngine::vk {
-void VKGPUSlabAllocator::initialize(
+namespace SirEngine {
+void GPUSlabAllocator::initialize(
     const GPUSlabAllocatorInitializeConfig config) {
   m_config = config;
   uint32_t allocCount = m_config.initialSlabs == 0 ? 1 : m_config.initialSlabs;
   for (uint32_t i = 0; i < allocCount; ++i) {
     allocateSlab();
   }
-
-  // checking alignment requirements
-  // VkPhysicalDeviceLimits::minUniformBufferOffsetAlignment
-  // VkPhysicalDeviceProperties properties;
-  // vkGetPhysicalDeviceProperties(vk::PHYSICAL_DEVICE, &properties);
-  // m_requireAlignment = properties.limits.minStorageBufferOffsetAlignment;
-  m_requireAlignment = 4;
 }
 
-GPUSlabAllocationHandle VKGPUSlabAllocator::allocate(const uint32_t sizeInBytes,
-                                                     void* initialData) {
+GPUSlabAllocationHandle GPUSlabAllocator::allocate(const uint32_t sizeInBytes,
+                                                   void* initialData) {
   // search the slabs, slabs per frame are exactly identical, searching one will
   // yield the same result of searching all of them
   const int freeSlab = getFreeSlabIndex(sizeInBytes);
 
   BufferRangeHandle handle{};
   BufferRange range{};
-  handle = m_slabs[freeSlab]->m_slabTracker.allocate(sizeInBytes,
-                                                     m_requireAlignment);
+  handle = m_slabs[freeSlab]->m_slabTracker.allocate(
+      sizeInBytes, m_config.allocationsRequestAligment);
   range = m_slabs[freeSlab]->m_slabTracker.getBufferRange(handle);
   // copying the data if we have a valid pointer
   if (initialData != nullptr) {
@@ -57,7 +51,7 @@ GPUSlabAllocationHandle VKGPUSlabAllocator::allocate(const uint32_t sizeInBytes,
   return outHandle;
 }
 
-void VKGPUSlabAllocator::clear() {
+void GPUSlabAllocator::clear() {
   // assert(0);
   for (int i = 0; i < m_slabs.size(); ++i) {
     m_slabs[i]->m_slabTracker.clear();
@@ -65,41 +59,34 @@ void VKGPUSlabAllocator::clear() {
   m_allocInfoStorage.clear();
 }
 
-void* VKGPUSlabAllocator::getMappedPtr(GPUSlabAllocationHandle allocHandle) {
+void* GPUSlabAllocator::getMappedPtr(GPUSlabAllocationHandle allocHandle) {
   return nullptr;
 }
 
-void VKGPUSlabAllocator::cleanup() {
+void GPUSlabAllocator::cleanup() {
   int count = m_slabs.size();
   for (int i = 0; i < count; ++i) {
     globals::BUFFER_MANAGER->free(m_slabs[i]->handle);
   }
 }
 
-uint32_t VKGPUSlabAllocator::allocateSlab() {
+uint32_t GPUSlabAllocator::allocateSlab() {
   Slab* slab = new Slab(m_config.slabSizeInBytes);
   m_slabs.pushBack(slab);
 
   char printbuff[64];
   sprintf(printbuff, "gpuSlab%i", m_slabs.size() - 1);
   BufferHandle handle;
-  if (globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::VULKAN) {
-    handle = globals::BUFFER_MANAGER->allocate(
-        m_config.slabSizeInBytes, nullptr, printbuff, 10, sizeof(float),
-        BufferManager::BUFFER_FLAGS_BITS::STORAGE_BUFFER
-        //|BufferManager::BUFFER_FLAGS::UPDATED_EVERY_FRAME
-    );
-  } else {
-    handle = globals::BUFFER_MANAGER->allocateUpload(
-        m_config.slabSizeInBytes,
-        m_config.slabSizeInBytes / (sizeof(float) * 4), sizeof(float) * 4,
-        printbuff);
-  }
-  slab->handle = handle;
+  int numberOfElments = m_config.slabSizeInBytes / (sizeof(float) * 4);
+  int elementSize = sizeof(float) * 4;
+
+  slab->handle = globals::BUFFER_MANAGER->allocate(
+      m_config.slabSizeInBytes, nullptr, printbuff, numberOfElments,
+      elementSize, BufferManager::BUFFER_FLAGS_BITS::STORAGE_BUFFER);
   return m_slabs.size() - 1;
 }
 
-int VKGPUSlabAllocator::getFreeSlabIndex(const uint32_t allocSize) {
+int GPUSlabAllocator::getFreeSlabIndex(const uint32_t allocSize) {
   int freeSlab = -1;
   for (uint32_t i = 0; i < m_slabs.size(); ++i) {
     bool canAllocate = m_slabs[i]->m_slabTracker.canAllocate(allocSize);
@@ -117,4 +104,4 @@ int VKGPUSlabAllocator::getFreeSlabIndex(const uint32_t allocSize) {
   return allocateSlab();
 }
 
-}  // namespace SirEngine::vk
+}  // namespace SirEngine

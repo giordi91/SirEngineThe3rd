@@ -2,8 +2,8 @@
 #include "SirEngine/graphics/debugRenderer.h"
 #include "SirEngine/memory/cpu/hashMap.h"
 
-#include "platform/windows/graphics/vk/memory/vkGPUSlabAllocator.h"
 
+#include "SirEngine/memory/gpu/gpuSlabAllocator.h"
 #include "SirEngine/materialManager.h"
 
 namespace SirEngine::vk {
@@ -87,7 +87,7 @@ class VkDebugRenderer : public DebugRenderer {
   uint32_t MAGIC_NUMBER_COUNTER = 1;
   SparseMemoryPool<VkDebugPrimitive> m_primitivesPool;
   HashMap<uint32_t, DebugTracker, hashUint32> m_trackers;
-  VKGPUSlabAllocator m_lineSlab[MAX_FRAMES_IN_FLIGHT];
+  GPUSlabAllocator m_lineSlab[MAX_FRAMES_IN_FLIGHT];
   uint32_t m_linesPrimitives = 0;
   PSOHandle m_linePSO;
   RSHandle m_lineRS;

@@ -33,13 +33,6 @@ public:
                         const int elementSize, const BUFFER_FLAGS flags) override;
 
   void free(BufferHandle handle) override;
-  BufferHandle allocateUpload(const uint32_t sizeInByte,
-                              const uint32_t numElements,
-                              const uint32_t elementSize,
-                              const char *name) override {
-    assert(0);
-    return {};
-  };
 
   void* getMappedData(const BufferHandle handle) const override;
 
