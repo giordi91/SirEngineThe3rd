@@ -144,9 +144,9 @@ void Graphics3DLayer::onAttach() {
                                    glm::vec4(1, 0, 0, 1), "");
 
   uint32_t bbcount;
-  auto data = dx12::MESH_MANAGER->getBoundingBoxes(bbcount);
+  const auto* data = dx12::MESH_MANAGER->getBoundingBoxes(bbcount);
   globals::DEBUG_RENDERER->drawBoundingBoxes((BoundingBox *)data, bbcount,
-                                          glm::vec4(1, 0, 0, 1), "");
+                                          glm::vec4(1, 0, 0, 1));
   // dx12::DEBUG_RENDERER->drawMatrix(
   //    globals::MAIN_CAMERA->getViewInverse(DirectX::XMMatrixIdentity()), 3.0f,
   //    DirectX::XMFLOAT4(1, 0, 0, 1), "");
