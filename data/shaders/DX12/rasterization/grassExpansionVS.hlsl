@@ -16,26 +16,26 @@ SamplerState gsamAnisotropicWrap : register(s4);
 SamplerState gsamAnisotropicClamp : register(s5);
 
 
-static const float3 offsets[15] = {
-    float3(-0.5f, 0.0f, 0.0f), 
-    float3(0.5f, 0.0f, 0.0f), 
-    float3(-0.5f, 0.33333f, 0.0f), 
+static const float2 offsets[15] = {
+    float2(-0.5f, 0.0f), 
+    float2(0.5f, 0.0f), 
+    float2(-0.5f, 0.33333f), 
 
-    float3(0.5f, 0.0f, 0.0f), 
-    float3(0.5f, 0.333333f, 0.0f), 
-    float3(-0.5f, 0.33333f, 0.0f), 
+    float2(0.5f, 0.0f), 
+    float2(0.5f, 0.333333f), 
+    float2(-0.5f, 0.33333f), 
 
-    float3(-0.5f, 0.33333f, 0.0f), 
-    float3(0.5f, 0.333333f, 0.0f), 
-    float3(-0.5f, 0.66666f, 0.0f), 
+    float2(-0.5f, 0.33333f), 
+    float2(0.5f, 0.333333f), 
+    float2(-0.5f, 0.66666f), 
 
-    float3(0.5f, 0.333333f, 0.0f), 
-    float3(0.5f, 0.66666, 0.0f), 
-    float3(-0.5f, 0.66666, 0.0f), 
+    float2(0.5f, 0.333333f), 
+    float2(0.5f, 0.66666), 
+    float2(-0.5f, 0.66666), 
 
-    float3(-0.5f, 0.66666, 0.0f), 
-    float3(0.5f, 0.66666, 0.0f), 
-    float3(0.0f, 1.0f, 0.0f) 
+    float2(-0.5f, 0.66666), 
+    float2(0.5f, 0.66666), 
+    float2(0.0f, 1.0f) 
 };
 
 static const float2 bladeUVs[15] = {
@@ -94,9 +94,9 @@ static const float3 taper = float3(0.75f, 0.65f,0.45f);
 	}
 
 
-PositionOnlyVertexOut VS(uint id : SV_VertexID)
+PosNormalUVVertexOut VS(uint id : SV_VertexID)
 {
-    PositionOnlyVertexOut vout;
+    PosNormalUVVertexOut vout;
     uint vid = id/15;
 	uint localId = id%15;
 	float2 bufferPos = points[vid];
@@ -117,9 +117,7 @@ PositionOnlyVertexOut VS(uint id : SV_VertexID)
     float tileY = tileNumber /tilesPerSide;
     float3 tileCorner = minCorner + float3(tw*(tileX), 0, tw*tileY);
 
-
-
-	float4 offset = float4(offsets[localId],0);
+	float4 offset = float4(offsets[localId],0,0);
     float3 position = tileCorner + float3(bufferPos.x, 0.0, bufferPos.y)*tw ;
 
     //spinning the blade by random amount
@@ -133,9 +131,6 @@ PositionOnlyVertexOut VS(uint id : SV_VertexID)
 	float3 wind = normalize(float3(windSample.y, 0, windSample.x));
     float3x3 windRotation = angleAxis3x3(PI*0.5 * length(windSample), wind);
 
-
-
-		
     //bending the blade
     float3x3 bendRotationMatrix = angleAxis3x3(rand(position.zzx) * grassConfig.grassBend* PI * 0.5, float3(1, 0, 0));
 
@@ -163,31 +158,15 @@ PositionOnlyVertexOut VS(uint id : SV_VertexID)
     offset.x *=localWidth;
     offset.y *=finalHeight;
     offset.z  += segmentForward;
-    //offset.z  += 0.0f;
-
-
-
 		
     float3x3 transformation =mul(mul(bendRotationMatrix,facingRotationMatrix),windRotation); 
-
     float3 rotatedOffset = mul(offset.xyz,transformation);
     position += rotatedOffset;
-	
+
     vout.worldPos = float4(position,1.0);
-    vout.pos  = mul(float4(position,1.0),  g_cameraBuffer.MVP) ;
-    /*
-    float3 offset = offsets[id % 6] * g_settings.pointSize;
-
-    float3 up = { 0, 1, 0 };
-    float3 view = float3(g_cameraBuffer.ViewMatrix._31, g_cameraBuffer.
-    ViewMatrix._31, g_cameraBuffer.ViewMatrix._31);
-
-    offset = mul(offset, (float3x3) g_cameraBuffer.ViewMatrix) + points[id / 6].xyz;
-
-	// Transform to homogeneous clip space.
-    vout.worldPos = float4(offset, 1.0);
-    vout.pos = mul(vout.worldPos, g_cameraBuffer.MVP);
-    */
+    vout.PosH  = mul(float4(position,1.0),  g_cameraBuffer.MVP) ;
+    vout.Normal = normalize(float4(mul(float3(0,segmentForward,-1),transformation),0));
+    vout.uv = uv;
 	
     return vout;
 }

@@ -26,6 +26,13 @@ struct PosNormalVertexOut
 	float4 PosH  : SV_POSITION;
     float4 Normal: Normal;
 };
+struct PosNormalUVVertexOut 
+{
+	float4 PosH  : SV_POSITION;
+    float4 Normal: Normal;
+	float4 worldPos: POSITION;
+    float2 uv : TEXCOORD;
+};
 
 
 struct FullMeshVertexOut

@@ -8,6 +8,8 @@
 #include <string>
 #include <thread>
 
+#include "SirEngine/log.h"
+
 
 namespace SirEngine {
 namespace debug {
