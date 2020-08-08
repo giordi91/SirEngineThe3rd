@@ -180,7 +180,7 @@ void GrassTechnique::render(const uint32_t id,
   const int pointsPerBlade = 15;
   const int pointsPerTile = m_grassConfig.pointsPerTile;
   const int tileCount = m_grassConfig.tilesPerSide * m_grassConfig.tilesPerSide;
-  //globals::RENDERING_CONTEXT->renderProcedural(15);
+
   globals::RENDERING_CONTEXT->renderProcedural(tileCount * pointsPerTile *
                                                pointsPerBlade);
   /*

@@ -1,4 +1,5 @@
 #include "SirEngine/graphics/nodes/framePassDebugNode.h"
+
 #include "SirEngine/graphics/debugAnnotations.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/handle.h"
@@ -141,8 +142,9 @@ void blitDepthDebug(const TextureHandle input,
       input, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, barriers, counter);
   counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
       handleToWriteOn, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, counter);
-  counter = dx12::BUFFER_MANAGER->transitionBufferIfNeeded(
-      buffer, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, barriers, counter);
+  // Todo this needs to be rewritten in a cross platform way
+  // counter = dx12::BUFFER_MANAGER->transitionBufferIfNeeded(
+  //    buffer, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, barriers, counter);
   if (counter) {
     commandList->ResourceBarrier(counter, barriers);
   }
@@ -180,59 +182,59 @@ void FramePassDebugNode::populateNodePorts() {
 void FramePassDebugNode::blitDebugFrame(
     const TextureHandle handleToWriteOn) const {
   switch (m_index) {
-  case (DebugIndex::GBUFFER): {
-    const TextureHandle input = globals::DEBUG_FRAME_DATA->geometryBuffer;
-    checkHandle(input, handleToWriteOn);
-    blitBuffer(input, handleToWriteOn, m_gbufferPSOHandle, m_rs,
-               m_constBufferHandle);
-    break;
-  }
-  case (DebugIndex::NORMAL_BUFFER): {
-    const TextureHandle input = globals::DEBUG_FRAME_DATA->normalBuffer;
-    checkHandle(input, handleToWriteOn);
-    blitBuffer(input, handleToWriteOn, m_normalPSOHandle, m_rs,
-               m_constBufferHandle);
-    break;
-  }
-  case (DebugIndex::METALLIC_BUFFER): {
-    const TextureHandle input = globals::DEBUG_FRAME_DATA->specularBuffer;
-    checkHandle(input, handleToWriteOn);
-    blitBuffer(input, handleToWriteOn, m_metallicPSOHandle, m_rs,
-               m_constBufferHandle);
-    break;
-  }
-  case (DebugIndex::ROUGHNESS_BUFFER): {
-    const TextureHandle input = globals::DEBUG_FRAME_DATA->specularBuffer;
-    checkHandle(input, handleToWriteOn);
-    blitBuffer(input, handleToWriteOn, m_roughnessPSOHandle, m_rs,
-               m_constBufferHandle);
-    break;
-  }
-  case (DebugIndex::THICKNESS_BUFFER): {
-    const TextureHandle input = globals::DEBUG_FRAME_DATA->specularBuffer;
-    checkHandle(input, handleToWriteOn);
-    blitBuffer(input, handleToWriteOn, m_thicknessPSOHandle, m_rs,
-               m_constBufferHandle);
-    break;
-  }
-  case (DebugIndex::GBUFFER_DEPTH): {
-    const TextureHandle input = globals::DEBUG_FRAME_DATA->gbufferDepth;
-    checkHandle(input, handleToWriteOn);
-    reduceDepth(globals::DEBUG_FRAME_DATA->gbufferDepth);
-    blitDepthDebug(input, handleToWriteOn, m_reduceBufferHandle,
-                   m_depthPSOHandle, m_rs, m_constBufferHandle,
-                   m_reduceBufferHandle);
-    break;
-  }
-  case (DebugIndex::GBUFFER_STENCIL): {
-    const TextureHandle input = globals::DEBUG_FRAME_DATA->gbufferDepth;
-    blitStencilDebug(input, handleToWriteOn, m_stencilPSOHandle, m_rs,
-                     m_config);
-    break;
-  }
-  default:
-    // assert(0 && "no valid pass to debug");
-    break;
+    case (DebugIndex::GBUFFER): {
+      const TextureHandle input = globals::DEBUG_FRAME_DATA->geometryBuffer;
+      checkHandle(input, handleToWriteOn);
+      blitBuffer(input, handleToWriteOn, m_gbufferPSOHandle, m_rs,
+                 m_constBufferHandle);
+      break;
+    }
+    case (DebugIndex::NORMAL_BUFFER): {
+      const TextureHandle input = globals::DEBUG_FRAME_DATA->normalBuffer;
+      checkHandle(input, handleToWriteOn);
+      blitBuffer(input, handleToWriteOn, m_normalPSOHandle, m_rs,
+                 m_constBufferHandle);
+      break;
+    }
+    case (DebugIndex::METALLIC_BUFFER): {
+      const TextureHandle input = globals::DEBUG_FRAME_DATA->specularBuffer;
+      checkHandle(input, handleToWriteOn);
+      blitBuffer(input, handleToWriteOn, m_metallicPSOHandle, m_rs,
+                 m_constBufferHandle);
+      break;
+    }
+    case (DebugIndex::ROUGHNESS_BUFFER): {
+      const TextureHandle input = globals::DEBUG_FRAME_DATA->specularBuffer;
+      checkHandle(input, handleToWriteOn);
+      blitBuffer(input, handleToWriteOn, m_roughnessPSOHandle, m_rs,
+                 m_constBufferHandle);
+      break;
+    }
+    case (DebugIndex::THICKNESS_BUFFER): {
+      const TextureHandle input = globals::DEBUG_FRAME_DATA->specularBuffer;
+      checkHandle(input, handleToWriteOn);
+      blitBuffer(input, handleToWriteOn, m_thicknessPSOHandle, m_rs,
+                 m_constBufferHandle);
+      break;
+    }
+    case (DebugIndex::GBUFFER_DEPTH): {
+      const TextureHandle input = globals::DEBUG_FRAME_DATA->gbufferDepth;
+      checkHandle(input, handleToWriteOn);
+      reduceDepth(globals::DEBUG_FRAME_DATA->gbufferDepth);
+      blitDepthDebug(input, handleToWriteOn, m_reduceBufferHandle,
+                     m_depthPSOHandle, m_rs, m_constBufferHandle,
+                     m_reduceBufferHandle);
+      break;
+    }
+    case (DebugIndex::GBUFFER_STENCIL): {
+      const TextureHandle input = globals::DEBUG_FRAME_DATA->gbufferDepth;
+      blitStencilDebug(input, handleToWriteOn, m_stencilPSOHandle, m_rs,
+                       m_config);
+      break;
+    }
+    default:
+      // assert(0 && "no valid pass to debug");
+      break;
   }
 }
 
@@ -251,9 +253,11 @@ void FramePassDebugNode::reduceDepth(const TextureHandle source) const {
   int counter = 0;
   counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
       source, D3D12_RESOURCE_STATE_GENERIC_READ, barriers, counter);
-  counter = dx12::BUFFER_MANAGER->transitionBufferIfNeeded(
-      m_reduceBufferHandle, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, barriers,
-      counter);
+  // TODO need to rewrite this once we support
+  // cross platform api properly
+  //counter = dx12::BUFFER_MANAGER->transitionBufferIfNeeded(
+  //    m_reduceBufferHandle, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, barriers,
+  //    counter);
 
   if (counter) {
     commandList->ResourceBarrier(counter, barriers);
@@ -323,4 +327,4 @@ void FramePassDebugNode::compute() {
 #endif
   annotateGraphicsEnd();
 }
-} // namespace SirEngine
+}  // namespace SirEngine

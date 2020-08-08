@@ -131,7 +131,9 @@ void PS()
    vec3 finalC = ambient + Lo;  
    //finalC = dot(normal,L) < 0.0? albedo*0.1 : finalC;
 
-   outputColor = vec4(finalC*clamp(pow(inUV.y + 0.2,3),0,1),1.0f);
-   //outputColor = vec4(dot(normal,H),0,0,1.0f);
+   //hear we are using the v value to diminis the light received by the blades 
+   //due to be missing shadows
+   float attenuationFactor =clamp(pow(inUV.y + 0.2,3);
+   outputColor = vec4(finalC*attenuationFactor,0,1),1.0f);
 
 }

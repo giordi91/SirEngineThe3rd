@@ -42,7 +42,7 @@ float4 PS(PosNormalUVVertexOut pin) : SV_Target {
    //so to get around that we use the incidence zero reflectivity and approximate such that will work for both
    //dialectrics and conductors (metallic)
    float3 F0 = float3(0.04,0.04,0.04); 
-   //to note, metallics do not have a common F0, but is tinted, so we use the metallic
+   //to note, metallic materials do not have a common F0, but is tinted, so we use the metallic
    //property to tin the F0 based on the albedo color.
    F0      = lerp(F0, albedo, metallic);
    //fresnel gives us the reflectance ast grazing angle, that is why we  pass in the 
@@ -92,5 +92,8 @@ float4 PS(PosNormalUVVertexOut pin) : SV_Target {
 	
   float3 ambient = (kD * diffuse + specularBrdf);
   float3 finalC = ambient + Lo;  
-  return float4(finalC*saturate(pow(pin.uv.y +0.2,3)),1.0f);
+  //hear we are using the v value to diminis the light received by the blades 
+  //due to be missing shadows
+  float3 attenuationFactor = saturate(pow(pin.uv.y +0.2,3));
+  return float4(finalC*attenuationFactor,1.0f);
 }

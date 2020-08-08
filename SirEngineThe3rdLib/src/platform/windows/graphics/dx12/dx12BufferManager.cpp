@@ -42,44 +42,6 @@ ID3D12Resource *BufferManagerDx12::allocateCpuVisibleBuffer(
       D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&uploadBuffer));
   assert(SUCCEEDED(res));
 
-  /*
-  if (initData != nullptr) {
-    // Describe the data we want to copy into the default buffer.
-    D3D12_SUBRESOURCE_DATA subResourceData = {};
-    subResourceData.pData = initData;
-    subResourceData.RowPitch = actualSize;
-    subResourceData.SlicePitch = subResourceData.RowPitch;
-
-    // Schedule to copy the data to the default buffer resource.  At a high
-    // level, the helper function UpdateSubresources will copy the CPU memory
-    // into the intermediate upload heap.  Then, using
-    // ID3D12CommandList::CopySubresourceRegion, the intermediate upload heap
-    // data will be copied to mBuffer.
-    auto preTransition = CD3DX12_RESOURCE_BARRIER::Transition(
-        buffer, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
-    auto commandList = dx12::CURRENT_FRAME_RESOURCE->fc.commandList;
-    dx12::CURRENT_FRAME_RESOURCE->fc.commandList->ResourceBarrier(
-        1, &preTransition);
-    UpdateSubresources<1>(commandList, buffer, uploadBuffer, 0, 0, 1,
-                          &subResourceData);
-    auto postTransition = CD3DX12_RESOURCE_BARRIER::Transition(
-        buffer, D3D12_RESOURCE_STATE_COPY_DEST,
-        D3D12_RESOURCE_STATE_GENERIC_READ);
-    commandList->ResourceBarrier(1, &postTransition);
-
-    // if it is temporary it means we are using this as intermediate upload
-    // heap, we will free it when the upload is done, as such we will be keeping
-    // track of the upload status with a fence
-    if (temporary) {
-      // Note: uploadBuffer has to be kept alive after the above function calls
-      // because the command list has not been executed yet that performs the
-      // actual copy. The caller can Release the uploadBuffer after it knows the
-      // copy has been executed.
-      m_uploadRequests.emplace_back(
-          UploadRequest{uploadBuffer, dx12::insertFenceToGlobalQueue()});
-    }
-  }
-  */
   return uploadBuffer;
 }
 
@@ -182,7 +144,7 @@ BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInBytes,
   uint32_t index;
   BufferData &data = m_bufferPool.getFreeMemoryData(index);
   data = {};
-  //if the buffer is not temporary we need to use the upload buffer
+  // if the buffer is not temporary we need to use the upload buffer
   data.data = isTemporary ? buffer : uploadBuffer;
 
   if (isUav) {
@@ -202,51 +164,10 @@ BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInBytes,
   data.elementCount = numElements;
   data.elementSize = elementSize;
   data.mappedData = uploadMappedData;
+  data.flags = flags;
 
   return handle;
 }
-
-/*
-// TODO this is bad practice, this is used for the matrices of skin cluster,
-// and copied every frame, this should be buffered!
-BufferHandle BufferManagerDx12::allocateUpload(const uint32_t sizeInByte,
-                                               const uint32_t numElements,
-                                               const uint32_t elementSize,
-                                               const char *name) {
-  uint32_t actualSize =
-      sizeInByte % 256 == 0 ? sizeInByte : ((sizeInByte / 256) + 1) * 256;
-
-  ID3D12Resource *uploadBuffer = nullptr;
-  auto uploadHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-  auto uploadBufferDesc = CD3DX12_RESOURCE_DESC::Buffer(actualSize);
-  HRESULT res = dx12::DEVICE->CreateCommittedResource(
-      &uploadHeapProperties, D3D12_HEAP_FLAG_NONE, &uploadBufferDesc,
-      D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&uploadBuffer));
-  assert(SUCCEEDED(res));
-  uploadBuffer->SetName(persistentConvertWide(name));
-
-  // lets get a data from the pool
-  uint32_t index;
-  BufferData &data = m_bufferPool.getFreeMemoryData(index);
-
-  // data is now loaded need to create handle etc
-  BufferHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
-  data.magicNumber = MAGIC_NUMBER_COUNTER;
-  data.data = uploadBuffer;
-  data.state = D3D12_RESOURCE_STATE_GENERIC_READ;
-  data.type = BufferType::SRV;
-  data.elementCount = numElements;
-  data.elementSize = elementSize;
-
-  dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferSRV(data.srv, data.data,
-                                                 numElements, elementSize);
-
-  HRESULT mapResult = uploadBuffer->Map(0, nullptr, &data.mappedData);
-  assert(SUCCEEDED(mapResult));
-
-  return handle;
-}
-*/
 
 void BufferManagerDx12::bindBuffer(
     const BufferHandle handle, const int slot,
@@ -327,6 +248,7 @@ void *BufferManagerDx12::getMappedData(const BufferHandle handle) const {
   assertMagicNumber(handle);
   const uint32_t index = getIndexFromHandle(handle);
   const BufferData &data = m_bufferPool.getConstRef(index);
+  assert((data.flags &BUFFER_FLAGS_BITS::GPU_ONLY )==0);
   return data.mappedData;
 }
 
