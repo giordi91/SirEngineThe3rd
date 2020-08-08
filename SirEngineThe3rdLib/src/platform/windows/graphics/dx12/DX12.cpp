@@ -407,24 +407,27 @@ bool Dx12RenderingContext::initializeGraphics() {
 
   return result;
 }
+void updateCamera(Camera3DPivot *camera, CameraBuffer &buffer, float vFov) {
+  buffer.vFov = vFov;
+
+  auto pos = camera->getPosition();
+  buffer.position = glm::vec4(pos, 1.0f);
+
+  buffer.MVP = glm::transpose(camera->getMVP(glm::mat4(1.0)));
+  buffer.ViewMatrix = glm::transpose(camera->getViewInverse(glm::mat4(1.0)));
+  buffer.VPinverse = glm::transpose(camera->getMVPInverse(glm::mat4(1.0)));
+  buffer.perspectiveValues = camera->getProjParams();
+}
 
 void Dx12RenderingContext::setupCameraForFrame() {
   globals::MAIN_CAMERA->updateCamera();
   // TODO fix this hardcoded parameter
-  auto &mainCamera = m_frameData.m_mainCamera;
-  mainCamera.vFov = 60.0f;
-  static_cast<float>(globals::ENGINE_CONFIG->m_windowHeight);
-  auto pos = globals::MAIN_CAMERA->getPosition();
-  mainCamera.position = glm::vec4(pos, 1.0f);
+  float vFov = 60.0f;
 
-  mainCamera.MVP = glm::transpose(globals::MAIN_CAMERA->getMVP(glm::mat4(1.0)));
-  mainCamera.ViewMatrix =
-      glm::transpose(globals::MAIN_CAMERA->getViewInverse(glm::mat4(1.0)));
-  mainCamera.VPinverse =
-      glm::transpose(globals::MAIN_CAMERA->getMVPInverse(glm::mat4(1.0)));
-  mainCamera.perspectiveValues = globals::MAIN_CAMERA->getProjParams();
-  //temporary copy to active and main camera;
-  m_frameData.m_activeCamera = mainCamera;
+  updateCamera(globals::MAIN_CAMERA, m_frameData.m_mainCamera, vFov);
+  updateCamera(globals::ACTIVE_CAMERA, m_frameData.m_activeCamera, vFov);
+
+  // temporary copy to active and main camera;
   m_frameData.screenWidth =
       static_cast<float>(globals::ENGINE_CONFIG->m_windowWidth);
   m_frameData.screenHeight = m_frameData.time =

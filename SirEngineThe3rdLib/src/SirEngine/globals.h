@@ -47,6 +47,8 @@ struct DebugFrameData {
 };
 
 extern Camera3DPivot *MAIN_CAMERA;
+extern Camera3DPivot *DEBUG_CAMERA;
+extern Camera3DPivot *ACTIVE_CAMERA;
 extern Clock<std::chrono::nanoseconds> GAME_CLOCK;
 extern uint64_t LAST_FRAME_TIME_NS;
 extern uint32_t TOTAL_NUMBER_OF_FRAMES;

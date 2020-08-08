@@ -9,6 +9,8 @@
 
 namespace SirEngine::globals {
 Camera3DPivot *MAIN_CAMERA = nullptr;
+Camera3DPivot *DEBUG_CAMERA = nullptr;
+Camera3DPivot *ACTIVE_CAMERA = nullptr;
 Clock<std::chrono::nanoseconds> GAME_CLOCK{};
 uint64_t LAST_FRAME_TIME_NS = 0;
 uint32_t TOTAL_NUMBER_OF_FRAMES = 0;

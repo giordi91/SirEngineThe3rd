@@ -1,7 +1,7 @@
 #include "../common/vertexDefinitions.hlsl"
 #include "../common/structures.hlsl"
 
-ConstantBuffer<CameraBuffer> g_camera: register(b0,space0);
+ConstantBuffer<FrameData> g_frameData: register(b0,space0);
 ConstantBuffer<GrassConfig> grassConfig: register(b3,space3);
 
 static const float4 arrBasePos[6] = {
@@ -23,7 +23,7 @@ FullScreenVertexOut VS( uint vid : SV_VertexID) {
   float3 localPos = float3(p.x,0.0f,p.y);
   float3 position = grassConfig.gridOrigin + ((halfSize*tw)*localPos);
   
-  vout.pos = mul(float4( position,1.0f),g_camera.MVP);
+  vout.pos = mul(float4( position,1.0f),g_frameData.m_activeCamera.MVP);
   vout.uv = p.zw;
   return vout;
 }

@@ -6,6 +6,7 @@
 #include "SirEngine/bufferManager.h"
 #include "SirEngine/constantBufferManager.h"
 #include "SirEngine/events/debugEvent.h"
+#include "SirEngine/events/keyboardEvent.h"
 #include "SirEngine/events/mouseEvent.h"
 #include "SirEngine/events/shaderCompileEvent.h"
 #include "SirEngine/fileUtils.h"
@@ -19,11 +20,10 @@
 #include "SirEngine/graphics/postProcess/effects/gammaAndToneMappingEffect.h"
 #include "SirEngine/graphics/postProcess/postProcessStack.h"
 #include "SirEngine/graphics/renderingContext.h"
+#include "SirEngine/input.h"
 #include "SirEngine/interopData.h"
 #include "SirEngine/log.h"
-#include "SirEngine/materialManager.h"
 #include "SirEngine/psoManager.h"
-#include "SirEngine/textureManager.h"
 
 namespace SirEngine {
 
@@ -31,6 +31,8 @@ void VkTempLayer::initGrass() {}
 
 void VkTempLayer::onAttach() {
   globals::MAIN_CAMERA = new Camera3DPivot();
+  globals::DEBUG_CAMERA = new Camera3DPivot();
+  globals::ACTIVE_CAMERA = globals::MAIN_CAMERA;
   // globals::MAIN_CAMERA->setLookAt(0, 125, 0);
   // globals::MAIN_CAMERA->setPosition(00, 125, 60);
   // camera in dx12 has negate panX and rotateX, unsure why, might be because
@@ -41,10 +43,14 @@ void VkTempLayer::onAttach() {
       -0.01f * negate, 0.01f, 0.012f * negate, 0.012f, -0.07f,
   };
   globals::MAIN_CAMERA->setManipulationMultipliers(camConfig);
-
   globals::MAIN_CAMERA->setLookAt(0, 15, 0);
   globals::MAIN_CAMERA->setPosition(0, 15, 15);
   globals::MAIN_CAMERA->updateCamera();
+
+  globals::DEBUG_CAMERA->setManipulationMultipliers(camConfig);
+  globals::DEBUG_CAMERA->setLookAt(0, 15, 0);
+  globals::DEBUG_CAMERA->setPosition(0, 15, 15);
+  globals::DEBUG_CAMERA->updateCamera();
 
   globals::RENDERING_CONTEXT->flush();
   globals::RENDERING_CONTEXT->resetGlobalCommandList();
@@ -120,6 +126,8 @@ void VkTempLayer::onEvent(Event &event) {
       SE_BIND_EVENT_FN(VkTempLayer::onMouseButtonReleaseEvent));
   dispatcher.dispatch<MouseMoveEvent>(
       SE_BIND_EVENT_FN(VkTempLayer::onMouseMoveEvent));
+  dispatcher.dispatch<KeyboardReleaseEvent>(
+      SE_BIND_EVENT_FN(VkTempLayer::onKeyboardReleaseEvent));
   // dispatcher.dispatch<DebugLayerChanged>(
   //    SE_BIND_EVENT_FN(VkTempLayer::onDebugLayerEvent));
   dispatcher.dispatch<WindowResizeEvent>(
@@ -166,11 +174,11 @@ bool VkTempLayer::onMouseMoveEvent(MouseMoveEvent &e) {
   const float deltaX = previousX - e.getX();
   const float deltaY = previousY - e.getY();
   if (leftDown) {
-    globals::MAIN_CAMERA->rotCamera(deltaX, deltaY);
+    globals::ACTIVE_CAMERA->rotCamera(deltaX, deltaY);
   } else if (middleDown) {
-    globals::MAIN_CAMERA->panCamera(deltaX, deltaY);
+    globals::ACTIVE_CAMERA->panCamera(deltaX, deltaY);
   } else if (rightDown) {
-    globals::MAIN_CAMERA->zoomCamera(deltaX);
+    globals::ACTIVE_CAMERA->zoomCamera(deltaX);
   }
 
   // storing old position
@@ -178,6 +186,23 @@ bool VkTempLayer::onMouseMoveEvent(MouseMoveEvent &e) {
   previousY = e.getY();
   return true;
 }
+
+bool VkTempLayer::onKeyboardReleaseEvent(KeyboardReleaseEvent &e) {
+  // TODO use keycodes
+  int cCode = 67;
+  int shiftCode = 16;
+  bool isShiftDown = globals::INPUT->isKeyDown(shiftCode);
+  if (isShiftDown & (e.getKeyCode() == 67)) {
+    SE_CORE_INFO("swapping driving camera {}", e.getKeyCode());
+    globals::ACTIVE_CAMERA = globals::ACTIVE_CAMERA == globals::MAIN_CAMERA
+                                 ? globals::DEBUG_CAMERA
+                                 : globals::MAIN_CAMERA;
+    return true;
+  }
+
+  return false;
+}
+
 /*
 void removeDebugNode(DependencyGraph *graph, GNode *debugNode) {
   // disconnect input
