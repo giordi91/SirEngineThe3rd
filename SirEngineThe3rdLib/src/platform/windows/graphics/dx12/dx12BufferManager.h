@@ -33,8 +33,6 @@ class BufferManagerDx12 final : public BufferManager {
   void *getMappedData(const BufferHandle handle) const override;
 
   // dx12 specific functions
-  void bindBuffer(BufferHandle handle, int slot,
-                  ID3D12GraphicsCommandList2 *commandList) const;
   void bindBufferAsSRVGraphics(BufferHandle handle, int slot,
                                ID3D12GraphicsCommandList2 *commandList,
                                uint32_t offset = 0) const;
@@ -44,9 +42,6 @@ class BufferManagerDx12 final : public BufferManager {
                  MemoryRange range, bool descriptorExists = false,
                  int elementSize = -1) const;
 
-  void bindBufferAsDescriptorTableGrahpics(
-      const BufferHandle handle, const int slot,
-      ID3D12GraphicsCommandList2 *commandList, uint32_t offset) const;
 
   inline int bufferUAVTransition(const BufferHandle handle,
                                  D3D12_RESOURCE_BARRIER *barriers,
@@ -76,16 +71,12 @@ class BufferManagerDx12 final : public BufferManager {
                magic &&
            "invalid magic handle for constant buffer");
   }
-  enum class BufferType { UAV, SRV };
 
   struct BufferData {
     ID3D12Resource *data = nullptr;
     void *mappedData = nullptr;
-    BufferType type;
     D3D12_RESOURCE_STATES state;
     uint32_t magicNumber;
-    DescriptorPair srv;
-    DescriptorPair uav;
     uint32_t elementCount;
     uint32_t elementSize;
     uint32_t flags;

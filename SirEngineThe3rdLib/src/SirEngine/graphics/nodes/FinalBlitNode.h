@@ -16,8 +16,10 @@ public:
   void clear() override;
 private:
   TextureHandle inputRTHandle;
-  MaterialHandle m_matHandle{};
   BufferBindingsHandle m_bindHandle{};
+  BindingTableHandle m_bindingTable;
+  PSOHandle m_pso;
+  RSHandle m_rs;
 };
 
 } // namespace SirEngine

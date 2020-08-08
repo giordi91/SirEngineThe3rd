@@ -52,17 +52,6 @@ static const std::unordered_map<std::string, SirEngine::SHADER_TYPE_FLAGS>
         {"skin", SirEngine::SHADER_TYPE_FLAGS::SKIN},
         {"hair", SirEngine::SHADER_TYPE_FLAGS::HAIR},
         {"hairSkin", SirEngine::SHADER_TYPE_FLAGS::HAIRSKIN},
-        {"debugLinesColors", SirEngine::SHADER_TYPE_FLAGS::DEBUG_LINES_COLORS},
-        {"debugLinesSingleColor",
-         SirEngine::SHADER_TYPE_FLAGS::DEBUG_LINES_SINGLE_COLOR},
-        {"debugPointsColors",
-         SirEngine::SHADER_TYPE_FLAGS::DEBUG_POINTS_COLORS},
-        {"debugPointsSingleColor",
-         SirEngine::SHADER_TYPE_FLAGS::DEBUG_POINTS_SINGLE_COLOR},
-        {"debugTrianglesColors",
-         SirEngine::SHADER_TYPE_FLAGS::DEBUG_TRIANGLE_COLORS},
-        {"debugTrianglesSingleColor",
-         SirEngine::SHADER_TYPE_FLAGS::DEBUG_TRIANGLE_SINGLE_COLOR},
         {"skinCluster", SirEngine::SHADER_TYPE_FLAGS::SKINCLUSTER},
         {"skinSkinCluster", SirEngine::SHADER_TYPE_FLAGS::SKINSKINCLUSTER},
         {"forwardPhongAlphaCutoutSkin",
@@ -70,10 +59,6 @@ static const std::unordered_map<std::string, SirEngine::SHADER_TYPE_FLAGS>
         {"forwardParallax", SirEngine::SHADER_TYPE_FLAGS::FORWARD_PARALLAX},
         {"shadowSkinCluster",
          SirEngine::SHADER_TYPE_FLAGS::SHADOW_SKIN_CLUSTER},
-        {"HDRtoSDREffect", SirEngine::SHADER_TYPE_FLAGS::HDR_TO_SDR},
-        {"grassForward", SirEngine::SHADER_TYPE_FLAGS::GRASS_FORWARD},
-        {"skybox", SirEngine::SHADER_TYPE_FLAGS::SKYBOX},
-        {"gammaAndToneMapping", SirEngine::SHADER_TYPE_FLAGS::GAMMA_AND_TONE_MAPPING},
     };
 static const std::unordered_map<SirEngine::SHADER_TYPE_FLAGS, std::string>
     TYPE_FLAGS_TO_STRING{
@@ -85,17 +70,6 @@ static const std::unordered_map<SirEngine::SHADER_TYPE_FLAGS, std::string>
         {SirEngine::SHADER_TYPE_FLAGS::SKIN, "skin"},
         {SirEngine::SHADER_TYPE_FLAGS::HAIR, "hair"},
         {SirEngine::SHADER_TYPE_FLAGS::HAIRSKIN, "hairSkin"},
-        {SirEngine::SHADER_TYPE_FLAGS::DEBUG_LINES_COLORS, "debugLinesColors"},
-        {SirEngine::SHADER_TYPE_FLAGS::DEBUG_LINES_SINGLE_COLOR,
-         "debugLinesSingleColor"},
-        {SirEngine::SHADER_TYPE_FLAGS::DEBUG_POINTS_COLORS,
-         "debugPointsColors"},
-        {SirEngine::SHADER_TYPE_FLAGS::DEBUG_POINTS_SINGLE_COLOR,
-         "debugPointsSingleColor"},
-        {SirEngine::SHADER_TYPE_FLAGS::DEBUG_TRIANGLE_COLORS,
-         "debugTrianglesColors"},
-        {SirEngine::SHADER_TYPE_FLAGS::DEBUG_TRIANGLE_SINGLE_COLOR,
-         "debugTrianglesSingleColor"},
         {SirEngine::SHADER_TYPE_FLAGS::SKINCLUSTER, "skinCluster"},
         {SirEngine::SHADER_TYPE_FLAGS::SKINSKINCLUSTER, "skinSkinCluster"},
         {SirEngine::SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT_SKIN,
@@ -103,10 +77,7 @@ static const std::unordered_map<SirEngine::SHADER_TYPE_FLAGS, std::string>
         {SirEngine::SHADER_TYPE_FLAGS::FORWARD_PARALLAX, "forwardParallax"},
         {SirEngine::SHADER_TYPE_FLAGS::SHADOW_SKIN_CLUSTER,
          "shadowSkinCluster"},
-        {SirEngine::SHADER_TYPE_FLAGS::HDR_TO_SDR, "HDRtoSDREffect"},
-        {SirEngine::SHADER_TYPE_FLAGS::GRASS_FORWARD, "grassForward"},
-        {SirEngine::SHADER_TYPE_FLAGS::SKYBOX, "skybox"},
-        {SirEngine::SHADER_TYPE_FLAGS::GAMMA_AND_TONE_MAPPING, "gammaAndToneMapping"}};
+    };
 
 }  // namespace materialKeys
 

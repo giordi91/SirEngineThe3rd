@@ -277,7 +277,8 @@ void FramePassDebugNode::reduceDepth(const TextureHandle source) const {
   //           .gpuHandle);
 
   dx12::RENDERING_CONTEXT->bindCameraBufferCompute(0);
-  dx12::BUFFER_MANAGER->bindBuffer(m_reduceBufferHandle, 1, commandList);
+  //TODO this has been removed and will need to be rewritten
+  //dx12::BUFFER_MANAGER->bindBuffer(m_reduceBufferHandle, 1, commandList);
   // first we kick the clear
   dx12::PSO_MANAGER->bindPSO(m_depthReduceClearPSOHandle, commandList);
   commandList->Dispatch(1, 1, 1);

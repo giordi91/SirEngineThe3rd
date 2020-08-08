@@ -21,12 +21,6 @@ void BufferManagerDx12::free(const BufferHandle handle) {
   BufferData &data = m_bufferPool[index];
   data.data->Release();
 
-  if (data.srv.cpuHandle.ptr != 0) {
-    dx12::GLOBAL_CBV_SRV_UAV_HEAP->freeDescriptor(data.srv);
-  }
-  if (data.uav.cpuHandle.ptr != 0) {
-    dx12::GLOBAL_CBV_SRV_UAV_HEAP->freeDescriptor(data.uav);
-  }
 }
 
 ID3D12Resource *BufferManagerDx12::allocateCpuVisibleBuffer(
@@ -147,20 +141,11 @@ BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInBytes,
   // if the buffer is not temporary we need to use the upload buffer
   data.data = isTemporary ? buffer : uploadBuffer;
 
-  if (isUav) {
-    // lets create the descriptor
-    dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferUAV(data.uav, data.data,
-                                                   numElements, elementSize);
-  }
-  dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferSRV(data.srv, data.data,
-                                                 numElements, elementSize);
-
   // data is now loaded need to create handle etc
   BufferHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
   data.magicNumber = MAGIC_NUMBER_COUNTER;
   data.state = isUav ? D3D12_RESOURCE_STATE_UNORDERED_ACCESS
                      : D3D12_RESOURCE_STATE_GENERIC_READ;
-  data.type = isUav ? BufferType::UAV : BufferType::SRV;
   data.elementCount = numElements;
   data.elementSize = elementSize;
   data.mappedData = uploadMappedData;
@@ -169,20 +154,6 @@ BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInBytes,
   return handle;
 }
 
-void BufferManagerDx12::bindBuffer(
-    const BufferHandle handle, const int slot,
-    ID3D12GraphicsCommandList2 *commandList) const {
-  assertMagicNumber(handle);
-  uint32_t index = getIndexFromHandle(handle);
-  const BufferData &data = m_bufferPool.getConstRef(index);
-
-  // TODO FIX THIS, this never worked LOL
-  D3D12_GPU_DESCRIPTOR_HANDLE toBind =
-      data.type == BufferType::UAV ? data.uav.gpuHandle : data.srv.gpuHandle;
-  // commandList->SetComputeRootDescriptorTable(slot, toBind);
-  commandList->SetComputeRootUnorderedAccessView(
-      slot, data.data->GetGPUVirtualAddress());
-}
 void BufferManagerDx12::bindBufferAsSRVGraphics(
     const BufferHandle handle, const int slot,
     ID3D12GraphicsCommandList2 *commandList, uint32_t offset) const {
@@ -232,17 +203,6 @@ void BufferManagerDx12::createSrv(const BufferHandle &handle,
       descriptorExists);
 }
 
-void BufferManagerDx12::bindBufferAsDescriptorTableGrahpics(
-    const BufferHandle handle, const int slot,
-    ID3D12GraphicsCommandList2 *commandList, const uint32_t offset) const {
-  assertMagicNumber(handle);
-  uint32_t index = getIndexFromHandle(handle);
-  const BufferData &data = m_bufferPool.getConstRef(index);
-
-  commandList->SetGraphicsRootDescriptorTable(2, data.srv.gpuHandle);
-  // commandList->SetGraphicsRootShaderResourceView(
-  //    slot, data.data->GetGPUVirtualAddress() + offset);
-}
 
 void *BufferManagerDx12::getMappedData(const BufferHandle handle) const {
   assertMagicNumber(handle);

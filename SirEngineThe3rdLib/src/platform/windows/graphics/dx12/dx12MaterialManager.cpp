@@ -302,36 +302,6 @@ void bindShadowSkin(const Dx12MaterialRuntime &materialRuntime,
   // this
   commandList->OMSetStencilRef(static_cast<uint32_t>(STENCIL_REF::CLEAR));
 }
-void bindDebugLinesSingleColor(const Dx12MaterialRuntime &materialRuntime,
-                               ID3D12GraphicsCommandList2 *commandList) {
-  dx12::RENDERING_CONTEXT->bindCameraBuffer(0);
-  commandList->SetGraphicsRootDescriptorTable(
-      1, dx12::CONSTANT_BUFFER_MANAGER
-             ->getConstantBufferDx12Handle(materialRuntime.chandle)
-             .gpuHandle);
-
-  commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
-  BufferHandle handle = materialRuntime.dataHandle;
-  dx12::BUFFER_MANAGER->bindBufferAsDescriptorTableGrahpics(handle, 2,
-                                                            commandList, 0);
-  // commandList->SetGraphicsRootDescriptorTable(
-  //    2, materialRuntime.meshHandle.srv.gpuHandle);
-}
-void bindDebugPointsSingleColor(const Dx12MaterialRuntime &materialRuntime,
-                                ID3D12GraphicsCommandList2 *commandList) {
-  dx12::RENDERING_CONTEXT->bindCameraBuffer(0);
-  commandList->SetGraphicsRootDescriptorTable(
-      1, dx12::CONSTANT_BUFFER_MANAGER
-             ->getConstantBufferDx12Handle(materialRuntime.chandle)
-             .gpuHandle);
-
-  commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-  BufferHandle handle = materialRuntime.dataHandle;
-  dx12::BUFFER_MANAGER->bindBufferAsDescriptorTableGrahpics(handle, 2,
-                                                            commandList, 0);
-  // commandList->SetGraphicsRootDescriptorTable(
-  //    2, materialRuntime.meshHandle.srv.gpuHandle);
-}
 
 void bindFlatDescriptorMaterial(const Dx12MaterialRuntime &materialRuntime,
                                 ID3D12GraphicsCommandList2 *commandList,
@@ -413,19 +383,6 @@ void Dx12MaterialManager::bindMaterial(
     }
     case (SHADER_TYPE_FLAGS::SHADOW_SKIN_CLUSTER): {
       bindShadowSkin(materialRuntime, commandList);
-      break;
-    }
-    case (SHADER_TYPE_FLAGS::DEBUG_LINES_SINGLE_COLOR): {
-      bindDebugLinesSingleColor(materialRuntime, commandList);
-      break;
-    }
-    case (SHADER_TYPE_FLAGS::DEBUG_POINTS_SINGLE_COLOR): {
-      bindDebugPointsSingleColor(materialRuntime, commandList);
-      break;
-    }
-    case (SHADER_TYPE_FLAGS::GRASS_FORWARD): {
-      bindFlatDescriptorMaterial(materialRuntime, commandList, queueFlag,
-                                 bind.rs);
       break;
     }
     case (SHADER_TYPE_FLAGS::FORWARD_PHONG): {
@@ -533,22 +490,6 @@ void Dx12MaterialManager::updateMaterial(
     case (SHADER_TYPE_FLAGS::SHADOW_SKIN_CLUSTER): {
       assert(0);
       bindShadowSkin(materialRuntime, commandList);
-      break;
-    }
-    case (SHADER_TYPE_FLAGS::DEBUG_LINES_SINGLE_COLOR): {
-      assert(0);
-      bindDebugLinesSingleColor(materialRuntime, commandList);
-      break;
-    }
-    case (SHADER_TYPE_FLAGS::DEBUG_POINTS_SINGLE_COLOR): {
-      assert(0);
-      bindDebugPointsSingleColor(materialRuntime, commandList);
-      break;
-    }
-    case (SHADER_TYPE_FLAGS::GRASS_FORWARD): {
-      assert(0);
-      bindFlatDescriptorMaterial(materialRuntime, commandList, queueFlag,
-                                 bind.rs);
       break;
     }
     case (SHADER_TYPE_FLAGS::FORWARD_PHONG): {
