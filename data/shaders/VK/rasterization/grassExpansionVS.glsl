@@ -9,7 +9,7 @@
 
 layout (set=0,binding=0) uniform InputData 
 {
-	CameraBuffer cameraBuffer;
+	FrameData frameData;
 }; 
 
 layout (set=3,binding=0) buffer vertices
@@ -171,7 +171,7 @@ void VS()
     float range = halfSize*tw; 
 
 	vec2 tempUV = vec2((position.x / range)*0.5 + 1,(position.z / range)*0.5 + 1) * 0.1;
-    vec2 windUV = fract( tempUV+ grassConfig.windFrequency* cameraBuffer.time);
+    vec2 windUV = fract( tempUV+ grassConfig.windFrequency* frameData.time);
     vec2 windSample = (texture (sampler2D (windTex, colorSampler[2]), windUV).xy * 2 -1)*grassConfig.windStrength;
 	vec3 wind = normalize(vec3(windSample.y, 0, windSample.x));
     mat3x3 windRotation = angleAxis3x3(PI*0.5 * length(windSample), wind);
@@ -218,6 +218,6 @@ void VS()
 	outUV= uv;
     worldPos = position;
 
-	gl_Position = cameraBuffer.MVP * (vec4(position,1.0));
+	gl_Position = frameData.m_activeCamera.MVP * (vec4(position,1.0));
 }
 

@@ -9,15 +9,17 @@ struct CameraBuffer {
   vec4 position;
   vec4 cameraViewDir;
   float vFov;
-  float screenWidth;
-  float screenHeight;
-  float time;
+  vec3 padding;
 };
 
 //this struct should hold all the data that changes once per frame or less
 struct FrameData
 {
-    CameraBuffer m_camera;
+    CameraBuffer m_mainCamera;
+    CameraBuffer m_activeCamera;
+    float time;
+    float screenWidth;
+    float screenHeight;
 };
 
 struct DirectionalLightData {

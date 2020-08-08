@@ -1,7 +1,7 @@
 #include "../common/structures.hlsl"
 #include "../common/vertexDefinitions.hlsl"
 
-ConstantBuffer<CameraBuffer> g_cameraBuffer : register(b0,space0);
+ConstantBuffer<FrameData> g_frameData : register(b0,space0);
 
 float3 createCube( uint vertexID)
 {
@@ -18,9 +18,9 @@ PositionOnlyVertexOut VS(uint vid : SV_VertexID)
 	
     float4 pos = float4(createCube(vid) - float3(0.5,0.5,0.5),1.0);
     //offsetting  the position such that the skybox is always on the camera
-    float4 offsetPos = pos +g_cameraBuffer.position;
+    float4 offsetPos = pos +g_frameData.m_activeCamera.position;
     offsetPos.w = 1.0f;
-    vout.pos = mul(offsetPos, g_cameraBuffer.MVP);
+    vout.pos = mul(offsetPos, g_frameData.m_activeCamera.MVP);
     vout.worldPos = pos;
     return vout;
 }

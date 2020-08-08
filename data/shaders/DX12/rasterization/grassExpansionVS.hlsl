@@ -1,7 +1,7 @@
 #include "../common/structures.hlsl"
 #include "../common/vertexDefinitions.hlsl"
 
-ConstantBuffer<CameraBuffer> g_cameraBuffer : register(b0, space0);
+ConstantBuffer<FrameData> g_frameData : register(b0, space0);
 ConstantBuffer<GrassConfig> grassConfig: register(b3, space3);
 StructuredBuffer<float2> points : register(t0, space3);
 StructuredBuffer<uint> tileIndices: register(t1, space3);
@@ -126,7 +126,7 @@ PosNormalUVVertexOut VS(uint id : SV_VertexID)
     //wind computation
     float range = halfSize*tw; 
 	float2 tempUV = float2((position.x / range)*0.5 + 1,(position.z / range)*0.5 + 1) * 0.1;
-    float2 windUV = frac( tempUV+ grassConfig.windFrequency* g_cameraBuffer.time);
+    float2 windUV = frac( tempUV+ grassConfig.windFrequency* g_frameData.time);
     float2 windSample = windTex.SampleLevel(gsamLinearClamp, windUV,0).xy;
 	float3 wind = normalize(float3(windSample.y, 0, windSample.x));
     float3x3 windRotation = angleAxis3x3(PI*0.5 * length(windSample), wind);
@@ -164,7 +164,7 @@ PosNormalUVVertexOut VS(uint id : SV_VertexID)
     position += rotatedOffset;
 
     vout.worldPos = float4(position,1.0);
-    vout.PosH  = mul(float4(position,1.0),  g_cameraBuffer.MVP) ;
+    vout.PosH  = mul(float4(position,1.0),  g_frameData.m_activeCamera.MVP) ;
     vout.Normal = normalize(float4(mul(float3(0,segmentForward,-1),transformation),0));
     vout.uv = uv;
 	

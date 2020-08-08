@@ -2,7 +2,7 @@
 #include "../common/vertexDefinitions.hlsl"
 #include "../common/pbr.hlsl"
 
-ConstantBuffer<CameraBuffer> g_cameraBuffer : register(b0, space0);
+ConstantBuffer<FrameData> g_frameData : register(b0, space0);
 ConstantBuffer<DirectionalLightData> g_dirLightData : register(b0, space2);
 
 ConstantBuffer<GrassConfig> grassConfig : register(b3, space3);
@@ -24,7 +24,7 @@ float4 PS(PosNormalUVVertexOut pin) : SV_Target {
    //the negative directional light data
    float3 L = normalize(-g_dirLightData.lightDir.xyz);
    //the view direction, from the frament to the camera
-   float3 V = normalize(g_cameraBuffer.position.xyz - pin.worldPos.xyz);
+   float3 V = normalize(g_frameData.m_activeCamera.position.xyz - pin.worldPos.xyz);
    //half way vector
    float3 H = normalize(L + V );
    float3 normal = normalize(dot(pin.Normal.xyz,L) < 0.0 ? -pin.Normal.xyz: pin.Normal.xyz);

@@ -8,7 +8,7 @@ struct VertexOut {
 
 Texture2D sourceTexture : register(t0,space3);
 Texture2D depthTex : register(t1,space3);
-ConstantBuffer<CameraBuffer> g_camera: register(b0, space0);
+ConstantBuffer<FrameData> g_frameData: register(b0, space0);
 ConstantBuffer<SSSSSConfig> g_config: register(b0, space3);
 
 SamplerState gsamPointWrap : register(s0);
@@ -19,13 +19,13 @@ SamplerState gsamAnisotropicWrap : register(s4);
 SamplerState gsamAnisotropicClamp : register(s5);
 
 inline float ConvertZToLinearDepth(float depth) {
-  float linearDepth = g_camera.perspectiveValues.z / (depth + g_camera.perspectiveValues.w);
+  float linearDepth = g_frameData.m_activeCamera.perspectiveValues.z / (depth + g_frameData.m_activeCamera.perspectiveValues.w);
   return linearDepth;
 }
 float4 PS(VertexOut pin) : SV_Target {
   float w[7] = {0.006, 0.061, 0.242, 0.382, 0.242, 0.061, 0.006};
 
-  float2 pixelSize = float2(1.0f, 1.0f) / float2(g_camera.screenWidth, g_camera.screenHeight);
+  float2 pixelSize = float2(1.0f, 1.0f) / float2(g_frameData.screenWidth, g_frameData.screenHeight);
 
   float depth = ( depthTex.Sample(gsamPointClamp, pin.uv).r);
   depth = ConvertZToLinearDepth(depth); 

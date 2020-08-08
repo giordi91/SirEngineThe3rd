@@ -6,8 +6,10 @@
 #include "SirEngine/engineConfig.h"
 #include "SirEngine/graphics/camera.h"
 #include "SirEngine/graphics/debugAnnotations.h"
+#include "SirEngine/graphics/debugRenderer.h"
 #include "SirEngine/graphics/lightManager.h"
 #include "SirEngine/graphics/renderingContext.h"
+#include "SirEngine/interopData.h"
 #include "SirEngine/log.h"
 #include "SirEngine/memory/cpu/stringPool.h"
 #include "SirEngine/runtimeString.h"
@@ -24,8 +26,6 @@
 #include "platform/windows/graphics/dx12/dx12ShaderManager.h"
 #include "platform/windows/graphics/dx12/dx12SwapChain.h"
 #include "platform/windows/graphics/dx12/dx12TextureManager.h"
-#include "SirEngine/interopData.h"
-#include "SirEngine/graphics/debugRenderer.h"
 
 #undef max
 #undef min
@@ -80,22 +80,22 @@ void createFrameCommand(FrameCommand *fc) {
 
 bool initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
                             const uint32_t height) {
-// lets enable debug layer if needed
-/*
-#if defined(DEBUG) || defined(_DEBUG)
-  {
-    const HRESULT result =
-        D3D12GetDebugInterface(IID_PPV_ARGS(&DEBUG_CONTROLLER));
-    if (FAILED(result)) {
-      return false;
+  // lets enable debug layer if needed
+  /*
+  #if defined(DEBUG) || defined(_DEBUG)
+    {
+      const HRESULT result =
+          D3D12GetDebugInterface(IID_PPV_ARGS(&DEBUG_CONTROLLER));
+      if (FAILED(result)) {
+        return false;
+      }
+      DEBUG_CONTROLLER->EnableDebugLayer();
+      // ID3D12Debug1 *debug1;
+      // DEBUG_CONTROLLER->QueryInterface(IID_PPV_ARGS(&debug1));
+      // debug1->SetEnableGPUBasedValidation(true);
     }
-    DEBUG_CONTROLLER->EnableDebugLayer();
-    // ID3D12Debug1 *debug1;
-    // DEBUG_CONTROLLER->QueryInterface(IID_PPV_ARGS(&debug1));
-    // debug1->SetEnableGPUBasedValidation(true);
-  }
-#endif
-*/
+  #endif
+  */
 
   HRESULT result = CreateDXGIFactory1(IID_PPV_ARGS(&DXGI_FACTORY));
   if (FAILED(result)) {
@@ -377,7 +377,7 @@ bool Dx12RenderingContext::initializeGraphics() {
   // initialize camera and light
   // ask for the camera buffer handle;
   m_cameraHandle =
-      globals::CONSTANT_BUFFER_MANAGER->allocate(sizeof(CameraBuffer));
+      globals::CONSTANT_BUFFER_MANAGER->allocate(sizeof(m_frameData));
 
   float intensity = 4.0f;
   m_light.lightColor = {intensity, intensity, intensity, 1.0f};
@@ -411,27 +411,29 @@ bool Dx12RenderingContext::initializeGraphics() {
 void Dx12RenderingContext::setupCameraForFrame() {
   globals::MAIN_CAMERA->updateCamera();
   // TODO fix this hardcoded parameter
-  m_camBufferCPU.vFov = 60.0f;
-  m_camBufferCPU.screenWidth =
-      static_cast<float>(globals::ENGINE_CONFIG->m_windowWidth);
-  m_camBufferCPU.screenHeight =
-      static_cast<float>(globals::ENGINE_CONFIG->m_windowHeight);
+  auto &mainCamera = m_frameData.m_mainCamera;
+  mainCamera.vFov = 60.0f;
+  static_cast<float>(globals::ENGINE_CONFIG->m_windowHeight);
   auto pos = globals::MAIN_CAMERA->getPosition();
-  m_camBufferCPU.position = glm::vec4(pos, 1.0f);
+  mainCamera.position = glm::vec4(pos, 1.0f);
 
-  m_camBufferCPU.MVP =
-      glm::transpose(globals::MAIN_CAMERA->getMVP(glm::mat4(1.0)));
-  m_camBufferCPU.ViewMatrix =
+  mainCamera.MVP = glm::transpose(globals::MAIN_CAMERA->getMVP(glm::mat4(1.0)));
+  mainCamera.ViewMatrix =
       glm::transpose(globals::MAIN_CAMERA->getViewInverse(glm::mat4(1.0)));
-  m_camBufferCPU.VPinverse =
+  mainCamera.VPinverse =
       glm::transpose(globals::MAIN_CAMERA->getMVPInverse(glm::mat4(1.0)));
-  m_camBufferCPU.perspectiveValues = globals::MAIN_CAMERA->getProjParams();
-  m_camBufferCPU.time = globals::GAME_CLOCK.getDeltaFromOrigin() * 1e-9;
+  mainCamera.perspectiveValues = globals::MAIN_CAMERA->getProjParams();
+  //temporary copy to active and main camera;
+  m_frameData.m_activeCamera = mainCamera;
+  m_frameData.screenWidth =
+      static_cast<float>(globals::ENGINE_CONFIG->m_windowWidth);
+  m_frameData.screenHeight = m_frameData.time =
+      globals::GAME_CLOCK.getDeltaFromOrigin() * 1e-9;
 
-  globals::CONSTANT_BUFFER_MANAGER->update(m_cameraHandle, &m_camBufferCPU);
+  globals::CONSTANT_BUFFER_MANAGER->update(m_cameraHandle, &m_frameData);
 }
 
-void Dx12RenderingContext::bindCameraBuffer(const int index=0) const {
+void Dx12RenderingContext::bindCameraBuffer(const int index = 0) const {
   // assert(0);
   // TODO REMOVE
   // this code should not be called anymore and will need to remove after
@@ -625,7 +627,7 @@ void Dx12RenderingContext::renderQueueType(
   const auto &typedQueues = *(static_cast<Dx12RenderingQueues *>(queues));
 
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
-  ID3D12GraphicsCommandList2* commandList = currentFc->commandList;
+  ID3D12GraphicsCommandList2 *commandList = currentFc->commandList;
 
   for (const auto &renderableList : typedQueues) {
     if (dx12::MATERIAL_MANAGER->isQueueType(renderableList.first, flag)) {
@@ -633,7 +635,8 @@ void Dx12RenderingContext::renderQueueType(
       // start rendering it
 
       // bind the corresponding RS and PSO
-      ShaderBind bind = dx12::MATERIAL_MANAGER->bindRSandPSO(renderableList.first, commandList);
+      ShaderBind bind = dx12::MATERIAL_MANAGER->bindRSandPSO(
+          renderableList.first, commandList);
 
       // binding the camera
       D3D12_GPU_DESCRIPTOR_HANDLE handle =
@@ -675,7 +678,6 @@ void Dx12RenderingContext::renderQueueType(
     }
   }
 }
-
 
 void Dx12RenderingContext::renderMesh(const MeshHandle handle, bool isIndexed) {
   // get mesh runtime
@@ -854,14 +856,14 @@ void Dx12RenderingContext::renderProcedural(const uint32_t indexCount) {
   currentFc->commandList->DrawInstanced(indexCount, 1, 0, 0);
 }
 
-void Dx12RenderingContext::bindCameraBuffer(RSHandle) const
-{
+void Dx12RenderingContext::bindCameraBuffer(RSHandle) const {
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
   D3D12_GPU_DESCRIPTOR_HANDLE handle =
       dx12::CONSTANT_BUFFER_MANAGER->getConstantBufferDx12Handle(m_cameraHandle)
           .gpuHandle;
-  commandList->SetGraphicsRootDescriptorTable(PSOManager::PER_FRAME_DATA_BINDING_INDEX, handle);
+  commandList->SetGraphicsRootDescriptorTable(
+      PSOManager::PER_FRAME_DATA_BINDING_INDEX, handle);
 }
 
 bool Dx12RenderingContext::newFrame() {

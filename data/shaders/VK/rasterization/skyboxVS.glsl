@@ -6,7 +6,7 @@
 
 layout (set=0,binding=0) uniform InputData 
 {
-	CameraBuffer cameraBuffer;
+	FrameData frameData;
 }; 
 
 vec3 createCube( uint vertexID)
@@ -25,9 +25,9 @@ void VS()
 	//the cube is in the range 0-1, we want it in the range -0.5 0.5 around the origin
 	//so we translate it back to compensate for that
 	vec4 position  = vec4((createCube(gl_VertexIndex) - vec3(0.5,0.5,0.5)),1.0);
-	vec4 offsetPos = position+ cameraBuffer.position;
+	vec4 offsetPos = position+ frameData.m_activeCamera.position;
 	offsetPos.w = 1.0;
-	gl_Position = cameraBuffer.MVP * offsetPos;
+	gl_Position = frameData.m_activeCamera.MVP * offsetPos;
 	worldPos = position;
 
 }
