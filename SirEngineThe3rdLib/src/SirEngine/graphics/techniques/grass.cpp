@@ -12,7 +12,6 @@
 #include "SirEngine/psoManager.h"
 #include "SirEngine/rootSignatureManager.h"
 #include "SirEngine/textureManager.h"
-#include "SirEngine/log.h"
 
 namespace SirEngine::graphics {
 
@@ -67,7 +66,6 @@ void GrassTechnique::setup(const uint32_t id) {
   m_grassConfigOld = m_grassConfig;
   globals::INTEROP_DATA->registerData("grassConfig", &m_grassConfig);
 
-
   int runtimeTilesCount = MAX_GRASS_PER_SIDE * MAX_GRASS_PER_SIDE;
   m_tilesIndices.reserve(runtimeTilesCount);
   for (int tileY = 0; tileY < m_grassConfig.tilesPerSide; ++tileY) {
@@ -79,7 +77,7 @@ void GrassTechnique::setup(const uint32_t id) {
     }
   }
 
-  //load the textures
+  // load the textures
   m_windTexture = globals::TEXTURE_MANAGER->loadTexture(
       "../data/processed/textures/grass/wind.texture");
 
@@ -89,11 +87,11 @@ void GrassTechnique::setup(const uint32_t id) {
   m_groundAlbedoTexture = globals::TEXTURE_MANAGER->loadTexture(
       "../data/processed/textures/grass/grassGround.texture");
 
-  //load the buffers
+  // load the buffers
   m_tilesPointsHandle = globals::BUFFER_MANAGER->allocate(
       mapper->pointsSizeInByte, pointData, "grassBuffer",
       mapper->tileCount * mapper->pointsPerTile, sizeof(float) * 2,
-      BufferManager::STORAGE_BUFFER |BufferManager::GPU_ONLY);
+      BufferManager::STORAGE_BUFFER | BufferManager::GPU_ONLY);
   m_tilesIndicesHandle = globals::BUFFER_MANAGER->allocate(
       sizeof(uint32_t) * runtimeTilesCount, m_tilesIndices.data(),
       "grassTilesIndicesBuffer", runtimeTilesCount, sizeof(uint32_t),
@@ -149,10 +147,9 @@ void GrassTechnique::render(const uint32_t id,
   data.push_back({0, 10, 10});
   data.push_back({0, 10, 10});
   data.push_back({10, 10, 10});
-  //globals::DEBUG_RENDERER->drawLines(
+  // globals::DEBUG_RENDERER->drawLines(
   //    &data[0].x, sizeof(glm::vec3) * data.size(), glm::vec4{1, 0, 0, 1});
-  //tileDebug();
-
+  // tileDebug();
 
   globals::CONSTANT_BUFFER_MANAGER->update(m_grassConfigHandle, &m_grassConfig);
 
@@ -183,25 +180,22 @@ void GrassTechnique::render(const uint32_t id,
 
   globals::RENDERING_CONTEXT->renderProcedural(tileCount * pointsPerTile *
                                                pointsPerBlade);
-  /*
 
   globals::BINDING_TABLE_MANAGER->bindConstantBuffer(m_groundBindingTable,
-                                                     m_grassConfigHandle, 3, 3);
+                                                     m_grassConfigHandle, 0, 3);
   globals::BINDING_TABLE_MANAGER->bindTexture(
-      m_groundBindingTable, m_groundAlbedoTexture, 4, 4, false);
+      m_groundBindingTable, m_groundAlbedoTexture, 1, 4, false);
   globals::PSO_MANAGER->bindPSO(m_groundPso);
   globals::RENDERING_CONTEXT->bindCameraBuffer(m_groundRs);
 
   if (passHandle.isHandleValid()) {
     globals::BINDING_TABLE_MANAGER->bindTable(
         PSOManager::PER_PASS_BINDING_INDEX, passHandle, m_rs);
-
-    globals::BINDING_TABLE_MANAGER->bindTable(
-        PSOManager::PER_OBJECT_BINDING_INDEX, m_groundBindingTable, m_groundRs);
-
-    globals::RENDERING_CONTEXT->renderProcedural(6);
   }
-  */
+  globals::BINDING_TABLE_MANAGER->bindTable(
+      PSOManager::PER_OBJECT_BINDING_INDEX, m_groundBindingTable, m_groundRs);
+
+  globals::RENDERING_CONTEXT->renderProcedural(6);
 }
 
 void GrassTechnique::clear(const uint32_t id) {
@@ -244,7 +238,6 @@ void GrassTechnique::clear(const uint32_t id) {
 }
 
 void GrassTechnique::tileDebug() {
-
   m_tiles.clear();
   m_tiles.reserve(MAX_GRASS_PER_SIDE * MAX_GRASS_PER_SIDE);
 
