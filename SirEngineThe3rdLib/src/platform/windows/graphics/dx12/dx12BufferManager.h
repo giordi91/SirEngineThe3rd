@@ -8,8 +8,7 @@
 #include "d3dx12.h"
 #include "descriptorHeap.h"
 
-namespace SirEngine {
-namespace dx12 {
+namespace SirEngine::dx12 {
 class BufferManagerDx12 final : public BufferManager {
   struct UploadRequest {
     ID3D12Resource *uploadBuffer;
@@ -23,16 +22,17 @@ class BufferManagerDx12 final : public BufferManager {
   ID3D12Resource *getNativeBuffer(const BufferHandle bufferHandle);
   BufferManagerDx12(const BufferManagerDx12 &) = delete;
   BufferManagerDx12 &operator=(const BufferManagerDx12 &) = delete;
-  void free(const BufferHandle handle) override;
-  // this function only exists to have api consistency
 
+  // interface
+  void free(const BufferHandle handle) override;
   void initialize() override{};
   void cleanup() override{};
-
   BufferHandle allocate(const uint32_t sizeInByte, void *initData,
                         const char *name, int numElements, int elementSize,
                         BUFFER_FLAGS flags) override;
+  void *getMappedData(const BufferHandle handle) const override;
 
+  // dx12 specific functions
   void bindBuffer(BufferHandle handle, int slot,
                   ID3D12GraphicsCommandList2 *commandList) const;
   void bindBufferAsSRVGraphics(BufferHandle handle, int slot,
@@ -48,22 +48,6 @@ class BufferManagerDx12 final : public BufferManager {
       const BufferHandle handle, const int slot,
       ID3D12GraphicsCommandList2 *commandList, uint32_t offset) const;
 
-  BufferHandle getBufferFromName(const std::string &name) const {
-    const auto found = m_nameToHandle.find(name);
-    if (found != m_nameToHandle.end()) {
-      return found->second;
-    }
-
-    return BufferHandle{0};
-  }
-
-  void *getMappedData(const BufferHandle handle) const override;
-
-  ID3D12Resource *allocateCpuVisibleBuffer(uint32_t actualSize) const;
-  ID3D12Resource *allocateGpuVisibleBuffer(uint32_t actualSize, bool isUav);
-  void uploadDataToGpuOnlyBuffer(void* initData, uint32_t actualSize, bool isTemporary, ID3D12Resource* uploadBuffer,
-                                 ID3D12Resource* buffer);
-
   inline int bufferUAVTransition(const BufferHandle handle,
                                  D3D12_RESOURCE_BARRIER *barriers,
                                  int counter) const {
@@ -75,33 +59,16 @@ class BufferManagerDx12 final : public BufferManager {
     ++counter;
     return counter;
   }
-  inline int transitionBufferIfNeeded(const BufferHandle handle,
-                                      const D3D12_RESOURCE_STATES wantedState,
-                                      D3D12_RESOURCE_BARRIER *barriers,
-                                      int counter) {
-    assertMagicNumber(handle);
-    uint32_t index = getIndexFromHandle(handle);
-    BufferData &data = m_bufferPool[index];
 
-    auto state = data.state;
-    if (state != wantedState) {
-      barriers[counter] =
-          CD3DX12_RESOURCE_BARRIER::Transition(data.data, state, wantedState);
-      data.state = wantedState;
-      ++counter;
-    }
-    return counter;
-  }
   void clearUploadRequests();
 
-  // inline BufferHandle getHandleFromName(const char *name) {
-  //  auto found = m_nameToHandle.find(name);
-  //  if (found != m_nameToHandle.end()) {
-  //    return found->second;
-  //  }
-  //  return BufferHandle{0};
-  //}
  private:
+  ID3D12Resource *allocateCpuVisibleBuffer(uint32_t actualSize) const;
+  ID3D12Resource *allocateGpuVisibleBuffer(uint32_t actualSize, bool isUav);
+  void uploadDataToGpuOnlyBuffer(void *initData, uint32_t actualSize,
+                                 bool isTemporary, ID3D12Resource *uploadBuffer,
+                                 ID3D12Resource *buffer);
+
   inline void assertMagicNumber(const BufferHandle handle) const {
     uint32_t magic = getMagicFromHandle(handle);
     uint32_t idx = getIndexFromHandle(handle);
@@ -110,8 +77,10 @@ class BufferManagerDx12 final : public BufferManager {
            "invalid magic handle for constant buffer");
   }
   enum class BufferType { UAV, SRV };
+
   struct BufferData {
     ID3D12Resource *data = nullptr;
+    void *mappedData = nullptr;
     BufferType type;
     D3D12_RESOURCE_STATES state;
     uint32_t magicNumber;
@@ -119,7 +88,7 @@ class BufferManagerDx12 final : public BufferManager {
     DescriptorPair uav;
     uint32_t elementCount;
     uint32_t elementSize;
-    void *mappedData = nullptr;
+    uint32_t flags;
   };
 
   static const int RESERVE_SIZE = 200;
@@ -128,5 +97,4 @@ class BufferManagerDx12 final : public BufferManager {
   std::vector<UploadRequest> m_uploadRequests;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
 };
-}  // namespace dx12
-}  // namespace SirEngine
+}  // namespace SirEngine::dx12
