@@ -285,25 +285,19 @@ bool VkRenderingContext::initializeGraphics() {
 }
 
 void VkRenderingContext::setupCameraForFrame() {
-  globals::MAIN_CAMERA->updateCamera();
-  // TODO fix this hardcoded parameter
-  auto &mainCamera = m_frameData.m_mainCamera;
-  mainCamera.vFov = 60.0f;
-  auto pos = globals::MAIN_CAMERA->getPosition();
-  mainCamera.position = glm::vec4(pos, 1.0f);
+  globals::ACTIVE_CAMERA->updateCamera();
 
-  mainCamera.MVP = globals::MAIN_CAMERA->getMVP(glm::mat4(1.0));
-  mainCamera.ViewMatrix =
-      globals::MAIN_CAMERA->getViewInverse(glm::mat4(1.0));
-  mainCamera.VPinverse =
-      globals::MAIN_CAMERA->getMVPInverse(glm::mat4(1.0));
-  mainCamera.perspectiveValues = globals::MAIN_CAMERA->getProjParams();
+  m_frameData.m_mainCamera = globals::MAIN_CAMERA->getCameraBuffer();
+  m_frameData.m_activeCamera = globals::ACTIVE_CAMERA->getCameraBuffer();
+
   m_frameData.screenWidth =
       static_cast<float>(globals::ENGINE_CONFIG->m_windowWidth);
   m_frameData.screenHeight =
       static_cast<float>(globals::ENGINE_CONFIG->m_windowHeight);
-  m_frameData.time = globals::GAME_CLOCK.getDeltaFromOrigin() * 1e-9;
-  m_frameData.m_activeCamera = mainCamera;
+  m_frameData.time =
+      static_cast<float>(globals::GAME_CLOCK.getDeltaFromOrigin() * 1e-9);
+
+  globals::CONSTANT_BUFFER_MANAGER->update(m_cameraHandle, &m_frameData);
 
   // memcpy(m_cameraBuffer.data, &m_camBufferCPU, sizeof(m_camBufferCPU));
   globals::CONSTANT_BUFFER_MANAGER->update(m_cameraHandle, &m_frameData);

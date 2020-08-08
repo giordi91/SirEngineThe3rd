@@ -231,6 +231,8 @@ bool Graphics3DLayer::onMouseButtonReleaseEvent(MouseButtonReleaseEvent &e) {
 }
 
 bool Graphics3DLayer::onMouseMoveEvent(MouseMoveEvent &e) {
+    //old
+    /*
   const float deltaX = previousX - e.getX();
   const float deltaY = previousY - e.getY();
   if (leftDown) {
@@ -244,6 +246,8 @@ bool Graphics3DLayer::onMouseMoveEvent(MouseMoveEvent &e) {
   // storing old position
   previousX = e.getX();
   previousY = e.getY();
+  */
+
   return true;
 }
 void removeDebugNode(DependencyGraph *graph, GNode *debugNode) {
