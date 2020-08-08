@@ -17,7 +17,7 @@ public:
 private:
   TextureHandle inputRTHandle;
   BufferBindingsHandle m_bindHandle{};
-  BindingTableHandle m_bindingTable;
+  BindingTableHandle m_bindingTable{};
   PSOHandle m_pso;
   RSHandle m_rs;
 };

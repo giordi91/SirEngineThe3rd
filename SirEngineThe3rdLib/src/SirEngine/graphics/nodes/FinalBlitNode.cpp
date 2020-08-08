@@ -23,17 +23,7 @@ FinalBlitNode::FinalBlitNode(GraphAllocators &allocators)
   inTexture.nodePtr = this;
   inTexture.name = "inTexture";
 
-  m_rs = globals::ROOT_SIGNATURE_MANAGER->getHandleFromName(HDR_RS);
-  m_pso = globals::PSO_MANAGER->getHandleFromName(HDR_PSO);
 
-  graphics::BindingDescription descriptions[2] = {
-      {1, GRAPHIC_RESOURCE_TYPE::TEXTURE,
-       GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT},
-  };
-  m_bindingTable = globals::BINDING_TABLE_MANAGER->allocateBindingTable(
-      descriptions, sizeof(descriptions),
-      graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED,
-      "HDRtoSDREffect");
 }
 
 void FinalBlitNode::compute() {
@@ -55,7 +45,23 @@ void FinalBlitNode::compute() {
   globals::RENDERING_CONTEXT->clearBindingObject(m_bindHandle);
 }
 
-void FinalBlitNode::initialize() {}
+void FinalBlitNode::initialize()
+{
+  m_rs = globals::ROOT_SIGNATURE_MANAGER->getHandleFromName(HDR_RS);
+  m_pso = globals::PSO_MANAGER->getHandleFromName(HDR_PSO);
+
+  graphics::BindingDescription descriptions[2] = {
+      {0, GRAPHIC_RESOURCE_TYPE::TEXTURE,
+       GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT},
+      {2, GRAPHIC_RESOURCE_TYPE::CONSTANT_BUFFER,
+       GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT},
+  };
+  m_bindingTable = globals::BINDING_TABLE_MANAGER->allocateBindingTable(
+      descriptions, 2,
+      graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED,
+      "HDRtoSDREffect");
+	
+}
 
 void FinalBlitNode::populateNodePorts() {
   inputRTHandle =
