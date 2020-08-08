@@ -253,7 +253,8 @@ class Dx12RenderingContext final : public RenderingContext {
   void bindCameraBuffer(RSHandle) const override;
  private:
   // member variable mostly temporary
-  CameraBuffer m_camBufferCPU{};
+  //CameraBuffer m_camBufferCPU{};
+  FrameData m_frameData{};
   ConstantBufferHandle m_cameraHandle{};
   ConstantBufferHandle m_lightBuffer{};
   DebugDrawHandle m_lightAABBHandle{};

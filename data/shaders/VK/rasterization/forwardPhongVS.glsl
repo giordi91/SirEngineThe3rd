@@ -7,22 +7,11 @@
 #include "../common/structures.glsl"
 
 
-//struct Vertex {
-//  float vx, vy, vz;
-//  uint8_t nx, ny, nz, nw;
-//  float tu, tv;
-//};
-//
-//layout (binding=0) buffer Vertices
-//{ 
-//	Vertex vertices[];
-//};
 layout (set=0,binding=0) uniform InputData 
 {
-	CameraBuffer cameraBuffer;
+	FrameData frameData;
 }; 
 
-//struct normal{uint8_t nx, ny, nz, nw;};
 
 layout (set=3,binding=0) buffer vertices
 {
@@ -63,7 +52,7 @@ void VS()
 	outTan= tans[gl_VertexIndex].xyz;
 	outUV= uv[gl_VertexIndex];
 
-	gl_Position = cameraBuffer.MVP * position;
+	gl_Position = frameData.m_activeCamera.MVP * position;
 	worldPos = position.xyz;
 }
 

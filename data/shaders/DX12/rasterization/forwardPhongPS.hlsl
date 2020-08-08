@@ -3,7 +3,7 @@
 #include "../common/pbr.hlsl"
 #include "../common/normals.hlsl"
 
-ConstantBuffer<CameraBuffer> g_cameraBuffer : register(b0,space0);
+ConstantBuffer<FrameData> g_frameData : register(b0,space0);
 ConstantBuffer<DirectionalLightData> g_dirLightData : register(b0, space2);
 
 Texture2D albedoTex : register(t4, space3);
@@ -41,7 +41,7 @@ float4 PS(FullMeshVertexOut pin) : SV_Target {
   float3 worldPos = pin.worldPos.xyz;
   // camera vector
   float3 ldir = normalize(-g_dirLightData.lightDir.xyz);
-  float3 toEyeDir = normalize(g_cameraBuffer.position.xyz - worldPos);
+  float3 toEyeDir = normalize(g_frameData.m_activeCamera.position.xyz - worldPos);
   float3 halfWay = normalize(toEyeDir + ldir);
   float3 reflected = reflect(-toEyeDir, pin.Normal);
  // fresnel slick, ratio between specular and diffuse, it is tintend on

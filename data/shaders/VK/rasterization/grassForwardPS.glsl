@@ -12,7 +12,7 @@ layout (location = 3) in vec3 worldPos;
 
 layout (set=0,binding=0) uniform InputData 
 {
-	CameraBuffer cameraBuffer;
+	FrameData frameData;
 }; 
 
 //pass data, lights
@@ -44,7 +44,7 @@ void PS()
    //the negative directional light data
    vec3 L = normalize(-lightData.lightDir.xyz);
    //the view direction, from the frament to the camera
-   vec3 V = normalize(cameraBuffer.position.xyz - worldPos);
+   vec3 V = normalize(frameData.m_activeCamera.position.xyz - worldPos);
    //half way vector
    vec3 H = normalize(L + V );
    vec3 normal = normalize(dot(inNormal,L) < 0.0 ? -inNormal : inNormal);
@@ -133,7 +133,7 @@ void PS()
 
    //hear we are using the v value to diminis the light received by the blades 
    //due to be missing shadows
-   float attenuationFactor =clamp(pow(inUV.y + 0.2,3);
-   outputColor = vec4(finalC*attenuationFactor,0,1),1.0f);
+   float attenuationFactor =clamp(pow(inUV.y + 0.2,3),0,1);
+   outputColor = vec4(finalC*attenuationFactor,1.0f);
 
 }

@@ -7,7 +7,7 @@
 
 layout (set=0,binding=0) uniform InputData 
 {
-	CameraBuffer cameraBuffer;
+	FrameData frameData;
 }; 
 
 layout (set=3,binding = 4) uniform texture2D albedoTex;
@@ -42,7 +42,7 @@ void PS()
    //the negative directional light data
    vec3 L = normalize(-lightData.lightDir.xyz);
    //the view direction, from the frament to the camera
-   vec3 V = normalize(cameraBuffer.position.xyz - worldPos);
+   vec3 V = normalize(frameData.m_activeCamera.position.xyz - worldPos);
    //half way vector
    vec3 H = normalize(L + V );
 

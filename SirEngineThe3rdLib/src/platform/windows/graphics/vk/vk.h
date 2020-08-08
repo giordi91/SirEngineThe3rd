@@ -200,7 +200,7 @@ class VkRenderingContext final : public RenderingContext {
  private:
   void *queues = nullptr;
   ConstantBufferHandle m_cameraHandle{};
-  CameraBuffer m_camBufferCPU{};
+  FrameData m_frameData{};
   static constexpr uint32_t RESERVE_SIZE = 400;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
   SparseMemoryPool<FrameBindingsData> m_bindingsPool;

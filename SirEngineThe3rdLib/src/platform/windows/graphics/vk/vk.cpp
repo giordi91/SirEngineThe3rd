@@ -278,7 +278,7 @@ bool VkRenderingContext::initializeGraphics() {
   }
 
   m_cameraHandle = globals::CONSTANT_BUFFER_MANAGER->allocate(
-      sizeof(CameraBuffer),
+      sizeof(FrameData),
       ConstantBufferManager::CONSTANT_BUFFER_FLAG_BITS::UPDATED_EVERY_FRAME,
       nullptr);
   return result;
@@ -287,24 +287,26 @@ bool VkRenderingContext::initializeGraphics() {
 void VkRenderingContext::setupCameraForFrame() {
   globals::MAIN_CAMERA->updateCamera();
   // TODO fix this hardcoded parameter
-  m_camBufferCPU.vFov = 60.0f;
-  m_camBufferCPU.screenWidth =
-      static_cast<float>(globals::ENGINE_CONFIG->m_windowWidth);
-  m_camBufferCPU.screenHeight =
-      static_cast<float>(globals::ENGINE_CONFIG->m_windowHeight);
+  auto &mainCamera = m_frameData.m_mainCamera;
+  mainCamera.vFov = 60.0f;
   auto pos = globals::MAIN_CAMERA->getPosition();
-  m_camBufferCPU.position = glm::vec4(pos, 1.0f);
+  mainCamera.position = glm::vec4(pos, 1.0f);
 
-  m_camBufferCPU.MVP = globals::MAIN_CAMERA->getMVP(glm::mat4(1.0));
-  m_camBufferCPU.ViewMatrix =
+  mainCamera.MVP = globals::MAIN_CAMERA->getMVP(glm::mat4(1.0));
+  mainCamera.ViewMatrix =
       globals::MAIN_CAMERA->getViewInverse(glm::mat4(1.0));
-  m_camBufferCPU.VPinverse =
+  mainCamera.VPinverse =
       globals::MAIN_CAMERA->getMVPInverse(glm::mat4(1.0));
-  m_camBufferCPU.perspectiveValues = globals::MAIN_CAMERA->getProjParams();
-  m_camBufferCPU.time = globals::GAME_CLOCK.getDeltaFromOrigin() * 1e-9;
+  mainCamera.perspectiveValues = globals::MAIN_CAMERA->getProjParams();
+  m_frameData.screenWidth =
+      static_cast<float>(globals::ENGINE_CONFIG->m_windowWidth);
+  m_frameData.screenHeight =
+      static_cast<float>(globals::ENGINE_CONFIG->m_windowHeight);
+  m_frameData.time = globals::GAME_CLOCK.getDeltaFromOrigin() * 1e-9;
+  m_frameData.m_activeCamera = mainCamera;
 
   // memcpy(m_cameraBuffer.data, &m_camBufferCPU, sizeof(m_camBufferCPU));
-  globals::CONSTANT_BUFFER_MANAGER->update(m_cameraHandle, &m_camBufferCPU);
+  globals::CONSTANT_BUFFER_MANAGER->update(m_cameraHandle, &m_frameData);
 
   VkWriteDescriptorSet writeDescriptorSets = {};
   VkDescriptorBufferInfo bufferInfoUniform = {};
