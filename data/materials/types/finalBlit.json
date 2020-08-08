@@ -1,6 +1,0 @@
-{
-  "pso" :  "HDRtoSDREffect_PSO", 
-  "rs"  :  "finalBlit_RS",
-  "type" : "HDRtoSDREffect"
-}
-

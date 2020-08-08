@@ -1,10 +1,16 @@
 
 #include "SirEngine/graphics/nodes/FinalBlitNode.h"
 
+#include "SirEngine/graphics/bindingTableManager.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/materialManager.h"
+#include "SirEngine/psoManager.h"
+#include "SirEngine/rootSignatureManager.h"
 
 namespace SirEngine {
+
+static const char *HDR_RS = "finalBlit_RS";
+static const char *HDR_PSO = "HDRtoSDREffect_PSO";
 
 FinalBlitNode::FinalBlitNode(GraphAllocators &allocators)
     : GNode("FinalBlit", "FinalBlit", allocators) {
@@ -16,15 +22,32 @@ FinalBlitNode::FinalBlitNode(GraphAllocators &allocators)
   inTexture.flags = PLUG_FLAGS::PLUG_INPUT | PLUG_FLAGS::PLUG_TEXTURE;
   inTexture.nodePtr = this;
   inTexture.name = "inTexture";
+
+  m_rs = globals::ROOT_SIGNATURE_MANAGER->getHandleFromName(HDR_RS);
+  m_pso = globals::PSO_MANAGER->getHandleFromName(HDR_PSO);
+
+  graphics::BindingDescription descriptions[2] = {
+      {1, GRAPHIC_RESOURCE_TYPE::TEXTURE,
+       GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT},
+  };
+  m_bindingTable = globals::BINDING_TABLE_MANAGER->allocateBindingTable(
+      descriptions, sizeof(descriptions),
+      graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED,
+      "HDRtoSDREffect");
 }
 
 void FinalBlitNode::compute() {
   // this will take care of binding the back buffer and the input and transition
   // both the back buffer  and input texture
   globals::RENDERING_CONTEXT->setBindingObject(m_bindHandle);
+
+  globals::BINDING_TABLE_MANAGER->bindTexture(m_bindingTable, inputRTHandle, 0,
+                                              0, false);
+  globals::BINDING_TABLE_MANAGER->bindTable(
+      PSOManager::PER_OBJECT_BINDING_INDEX, m_bindingTable, m_rs);
+
+  globals::PSO_MANAGER->bindPSO(m_pso);
   // next we bind the material, this will among other things bind the pso and rs
-  globals::MATERIAL_MANAGER->bindMaterial(m_matHandle,
-                                          SHADER_QUEUE_FLAGS::CUSTOM);
   // finally we submit a fullscreen pass
   globals::RENDERING_CONTEXT->fullScreenPass();
 
@@ -32,15 +55,7 @@ void FinalBlitNode::compute() {
   globals::RENDERING_CONTEXT->clearBindingObject(m_bindHandle);
 }
 
-void FinalBlitNode::initialize() {
-  const char *queues[5] = {nullptr, nullptr, nullptr, nullptr,
-                           "HDRtoSDREffect"};
-  m_matHandle = globals::MATERIAL_MANAGER->allocateMaterial(
-      "HDRtoSDREffect", 0,
-      queues
-
-  );
-}
+void FinalBlitNode::initialize() {}
 
 void FinalBlitNode::populateNodePorts() {
   inputRTHandle =
@@ -56,7 +71,7 @@ void FinalBlitNode::populateNodePorts() {
   bindings.width = globals::ENGINE_CONFIG->m_windowWidth;
   bindings.height = globals::ENGINE_CONFIG->m_windowHeight;
 
-  bindings.extraBindings = reinterpret_cast<RTBinding *>(
+  bindings.extraBindings = static_cast<RTBinding *>(
       globals::PERSISTENT_ALLOCATOR->allocate(sizeof(RTBinding)));
   bindings.extraBindingsCount = 1;
   bindings.extraBindings[0].handle = inputRTHandle;
@@ -68,18 +83,13 @@ void FinalBlitNode::populateNodePorts() {
 
   m_bindHandle = globals::RENDERING_CONTEXT->prepareBindingObject(
       bindings, "EndOfFrameBlit");
-
-  // we also need to bind the input resource, which is the texture we want to
-  // blit
-  globals::MATERIAL_MANAGER->bindTexture(m_matHandle, inputRTHandle, 0,0,
-                                         SHADER_QUEUE_FLAGS::CUSTOM,false);
 }
 
 void FinalBlitNode::clear() {
   // TODO why do i need the guard?, clear somehow gets called before
   // the initialize and populateNodesPorts
-  if (m_matHandle.isHandleValid()) {
-    globals::MATERIAL_MANAGER->free(m_matHandle);
+  if (m_bindingTable.isHandleValid()) {
+    globals::BINDING_TABLE_MANAGER->free(m_bindingTable);
   }
   if (m_bindHandle.isHandleValid()) {
     globals::RENDERING_CONTEXT->freeBindingObject(m_bindHandle);
