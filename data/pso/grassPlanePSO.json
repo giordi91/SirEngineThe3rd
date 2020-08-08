@@ -6,7 +6,7 @@
   "rasterState": "custom",
   "rasterStateConfig": { "cullMode": "NONE" },
   "blendState": "default",
-  "depthStencilState": "default",
+  "depthStencilState": "custom",
   "depthStencilStateConfig": {
     "depthEnabled": true,
     "depthFunc": "GREATER",

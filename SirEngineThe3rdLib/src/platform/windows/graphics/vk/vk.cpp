@@ -8,7 +8,9 @@
 #include "SirEngine/globals.h"
 #include "SirEngine/graphics/camera.h"
 #include "SirEngine/graphics/debugAnnotations.h"
+#include "SirEngine/graphics/debugRenderer.h"
 #include "SirEngine/graphics/lightManager.h"
+#include "SirEngine/interopData.h"
 #include "SirEngine/log.h"
 #include "SirEngine/runtimeString.h"
 #include "platform/windows/graphics/vk/vkAdapter.h"
@@ -23,8 +25,6 @@
 #include "platform/windows/graphics/vk/vkShaderManager.h"
 #include "platform/windows/graphics/vk/vkSwapChain.h"
 #include "platform/windows/graphics/vk/vkTextureManager.h"
-#include "SirEngine/interopData.h"
-#include "SirEngine/graphics/debugRenderer.h"
 
 namespace SirEngine::vk {
 VkInstance INSTANCE = nullptr;
@@ -201,7 +201,7 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   vk::PSO_MANAGER->loadRawPSO("../data/pso/forwardPhongPSO.json");
   vk::PSO_MANAGER->loadRawPSO("../data/pso/grassForwardPSO.json");
   vk::PSO_MANAGER->loadRawPSO("../data/pso/grassPlanePSO.json");
-  //vk::PSO_MANAGER->loadRawPSO("../data/pso/debugDrawPointsSingleColorPSO.json");
+  // vk::PSO_MANAGER->loadRawPSO("../data/pso/debugDrawPointsSingleColorPSO.json");
   vk::PSO_MANAGER->loadRawPSO("../data/pso/debugDrawLinesSingleColorPSO.json");
   vk::PSO_MANAGER->loadRawPSO("../data/pso/skyboxPSO.json");
   vk::PSO_MANAGER->loadRawPSO("../data/pso/gammaAndToneMappingEffect_PSO.json");
@@ -233,7 +233,6 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
 
   globals::ASSET_MANAGER = new AssetManager();
   globals::ASSET_MANAGER->initialize();
-
 
   globals::INTEROP_DATA = new InteropData();
   globals::INTEROP_DATA->initialize();
@@ -326,21 +325,20 @@ void VkRenderingContext::bindCameraBuffer(int index) const {
   //    vk::PER_FRAME_DESCRIPTOR_SET);
 }
 
-void VkRenderingContext::bindCameraBuffer(RSHandle rs) const
-{
-      VkDescriptorSet descriptorSet =
-          vk::DESCRIPTOR_MANAGER->getDescriptorSet(PER_FRAME_DATA_HANDLE);
+void VkRenderingContext::bindCameraBuffer(RSHandle rs) const {
+  VkDescriptorSet descriptorSet =
+      vk::DESCRIPTOR_MANAGER->getDescriptorSet(PER_FRAME_DATA_HANDLE);
 
-      VkPipelineLayout layout =
-          vk::PIPELINE_LAYOUT_MANAGER->getLayoutFromHandle(rs);
-      assert(layout != nullptr);
+  VkPipelineLayout layout =
+      vk::PIPELINE_LAYOUT_MANAGER->getLayoutFromHandle(rs);
+  assert(layout != nullptr);
 
-      VkDescriptorSet sets[] = {
-          descriptorSet,
-      };
-      vkCmdBindDescriptorSets(CURRENT_FRAME_COMMAND->m_commandBuffer,
-                              VK_PIPELINE_BIND_POINT_GRAPHICS, layout,
-                              PSOManager::PER_FRAME_DATA_BINDING_INDEX, 1, sets, 0, nullptr);
+  VkDescriptorSet sets[] = {
+      descriptorSet,
+  };
+  vkCmdBindDescriptorSets(
+      CURRENT_FRAME_COMMAND->m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+      layout, PSOManager::PER_FRAME_DATA_BINDING_INDEX, 1, sets, 0, nullptr);
 }
 
 void waitOnFence(VkFence fence) {
@@ -419,7 +417,7 @@ bool VkRenderingContext::newFrame() {
                           vk::ENGINE_PIPELINE_LAYOUT, 0, 2, sets, 0, nullptr);
 
   return true;
-}  
+}
 
 bool VkRenderingContext::dispatchFrame() {
   assert(CURRENT_FRAME_COMMAND != nullptr);
@@ -654,7 +652,6 @@ void VkRenderingContext::renderQueueType(
 
       bindCameraBuffer(bind.rs);
 
-
       if (passBindings.isHandleValid()) {
         globals::BINDING_TABLE_MANAGER->bindTable(
             PSOManager::PER_PASS_BINDING_INDEX, passBindings, bind.rs);
@@ -828,7 +825,7 @@ VkFramebuffer *createFrameBuffer(VkRenderPass pass,
                                  &(frameBuffers[swap])));
   }
   return frameBuffers;
-}  // namespace SirEngine::vk
+}
 
 BufferBindingsHandle VkRenderingContext::prepareBindingObject(
     const FrameBufferBindings &bindings, const char *name) {
