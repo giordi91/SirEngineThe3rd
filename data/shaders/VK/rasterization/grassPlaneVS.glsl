@@ -9,7 +9,7 @@
 
 layout (set=0,binding=0) uniform InputData 
 {
-	CameraBuffer cameraBuffer;
+	FrameData frameData;
 }; 
 
 layout (set=3,binding=3) uniform ConfigData 
@@ -47,6 +47,6 @@ void VS()
 	outUV = data.zw;
     worldPos = position;
 	outNormal = vec3(0,1,0);
-	gl_Position = cameraBuffer.MVP * (vec4(position,1.0));
+	gl_Position = frameData.m_activeCamera.MVP * (vec4(position,1.0));
 }
 

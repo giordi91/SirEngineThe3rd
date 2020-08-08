@@ -11,6 +11,7 @@ class ReloadScriptsEvent;
 class DebugRenderConfigChanged;
 class MouseButtonPressEvent;
 class MouseButtonReleaseEvent;
+class KeyboardReleaseEvent;
 class MouseMoveEvent;
 class WindowResizeEvent;
 class DebugLayerChanged;
@@ -35,6 +36,7 @@ private:
   bool onMouseButtonPressEvent(MouseButtonPressEvent &e);
   bool onMouseButtonReleaseEvent(MouseButtonReleaseEvent &e);
   bool onMouseMoveEvent(MouseMoveEvent &e);
+  bool onKeyboardReleaseEvent(KeyboardReleaseEvent &e);
   bool onDebugLayerEvent(DebugLayerChanged &e);
   bool onResizeEvent(WindowResizeEvent &e);
   bool onDebugConfigChanged(DebugRenderConfigChanged &e);
