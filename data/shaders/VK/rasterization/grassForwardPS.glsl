@@ -38,8 +38,6 @@ layout (set=2,binding = 3) uniform texture2D brdfTexture;
 
 void PS()
 {
-   //vec2 uv = vec2(inUV.x,1.0f - inUV.y);
-   vec4 color= vec4(mix(grassConfig.baseColor,grassConfig.tipColor,inUV.y),1.0f);
 
 
    //light direction, going from the frament out, so in this case 
@@ -49,14 +47,13 @@ void PS()
    vec3 V = normalize(cameraBuffer.position.xyz - worldPos);
    //half way vector
    vec3 H = normalize(L + V );
-   vec3 normal = dot(inNormal,L) < 0.0 ? -inNormal : inNormal;
+   vec3 normal = normalize(dot(inNormal,L) < 0.0 ? -inNormal : inNormal);
 
    //we don't compute light attenuation for a directional light
    //float dist = length(lightData.lightPosition.xyz - worldPos);
    //float attenuation = 1.0/ dist;
    float attenuation = 1.0;
    vec3 radiance = attenuation *lightData.lightColor.xyz;
-   //vec3 albedo = color.xyz;
    vec3 albedo = texture (sampler2D (albedoTex, colorSampler[2]), inUV).xyz;
    float metallic = grassConfig.metalness;
    float roughness = grassConfig.roughness;
@@ -135,5 +132,6 @@ void PS()
    //finalC = dot(normal,L) < 0.0? albedo*0.1 : finalC;
 
    outputColor = vec4(finalC*clamp(pow(inUV.y + 0.2,3),0,1),1.0f);
+   //outputColor = vec4(dot(normal,H),0,0,1.0f);
 
 }
