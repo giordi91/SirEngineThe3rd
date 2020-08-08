@@ -407,31 +407,19 @@ bool Dx12RenderingContext::initializeGraphics() {
 
   return result;
 }
-void updateCamera(Camera3DPivot *camera, CameraBuffer &buffer, float vFov) {
-  buffer.vFov = vFov;
-
-  auto pos = camera->getPosition();
-  buffer.position = glm::vec4(pos, 1.0f);
-
-  buffer.MVP = glm::transpose(camera->getMVP(glm::mat4(1.0)));
-  buffer.ViewMatrix = glm::transpose(camera->getViewInverse(glm::mat4(1.0)));
-  buffer.VPinverse = glm::transpose(camera->getMVPInverse(glm::mat4(1.0)));
-  buffer.perspectiveValues = camera->getProjParams();
-}
 
 void Dx12RenderingContext::setupCameraForFrame() {
-  globals::MAIN_CAMERA->updateCamera();
-  // TODO fix this hardcoded parameter
-  float vFov = 60.0f;
+  globals::ACTIVE_CAMERA->updateCamera();
 
-  updateCamera(globals::MAIN_CAMERA, m_frameData.m_mainCamera, vFov);
-  updateCamera(globals::ACTIVE_CAMERA, m_frameData.m_activeCamera, vFov);
+  m_frameData.m_mainCamera = globals::MAIN_CAMERA->getCameraBuffer();
+  m_frameData.m_activeCamera = globals::ACTIVE_CAMERA->getCameraBuffer();
 
-  // temporary copy to active and main camera;
   m_frameData.screenWidth =
       static_cast<float>(globals::ENGINE_CONFIG->m_windowWidth);
-  m_frameData.screenHeight = m_frameData.time =
-      globals::GAME_CLOCK.getDeltaFromOrigin() * 1e-9;
+  m_frameData.screenHeight =
+      static_cast<float>(globals::ENGINE_CONFIG->m_windowHeight);
+  m_frameData.time =
+      static_cast<float>(globals::GAME_CLOCK.getDeltaFromOrigin() * 1e-9);
 
   globals::CONSTANT_BUFFER_MANAGER->update(m_cameraHandle, &m_frameData);
 }

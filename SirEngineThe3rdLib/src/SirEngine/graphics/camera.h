@@ -1,8 +1,11 @@
 #pragma once
+
 #include "SirEngine/engineConfig.h"
 #include "SirEngine/globals.h"
-
+#include "SirEngine/graphics/cpuGraphicsStructures.h"
+#include "SirEngine/input.h"
 #include "SirEngine/matrix.h"
+#include "graphicsDefines.h"
 
 namespace SirEngine {
 
@@ -14,24 +17,84 @@ struct CameraManipulationConfig {
   float m_zoomMult;
 };
 
-class Camera3DPivot final {
+class CameraController {
+ public:
+  CameraController() = default;
+  virtual ~CameraController() = default;
 
-public:
-  Camera3DPivot() = default;
-  ~Camera3DPivot() = default;
+  void setManipulationMultipliers(const CameraManipulationConfig& config) {
+    m_config = config;
+  };
+  [[nodiscard]] const CameraBuffer& getCameraBuffer() const {
+    return m_cameraBuffer;
+  }
+  void setCameraPhyisicalParameters(const float vfovDegrees, const float nearP,
+                                    const float farP) {
+    m_vfov = vfovDegrees * TO_RAD;
+    m_near = nearP;
+    m_far = farP;
+  }
 
-  void setManipulationMultipliers(const CameraManipulationConfig& config){m_config = config;};
-  void panCamera(float deltaX, float deltaY);
-  void rotCamera(float deltaX, float deltaY);
-  void zoomCamera(float deltaX);
-  glm::mat4 getMVP(glm::mat4 modelM) const;
-  glm::mat4 getMVPInverse(glm::mat4 modelM) const;
-  glm::mat4 getViewInverse(glm::mat4 modelM) const;
+  virtual void updateCamera() = 0;
+
+ protected:
+  float m_vfov = SE_PI / 4.0f;
+  float m_near = 0.001f;
+  float m_far = 100.0f;
+  CameraBuffer m_cameraBuffer{};
+  CameraManipulationConfig m_config{1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
+};
+
+class Camera3DPivot final : public CameraController {
+ public:
+  Camera3DPivot() : CameraController(){};
+  virtual ~Camera3DPivot() = default;
 
   void spinCameraWorldYAxis(float angleInDegrees);
 
-  void updateCamera() {
-    // m_viewMatrix = DirectX::XMMatrixLookAtLH(posV, lookAtPosV, upVector);
+  void manipulateCamera() {
+    const float deltaX = previousX - globals::INPUT->m_mousePosX;
+    const float deltaY = previousY - globals::INPUT->m_mousePosY;
+    bool leftDown = globals::INPUT->m_mouse[MOUSE_BUTTONS::LEFT];
+    bool middleDown = globals::INPUT->m_mouse[MOUSE_BUTTONS::MIDDLE];
+    bool rightDown = globals::INPUT->m_mouse[MOUSE_BUTTONS::RIGHT];
+    if (leftDown) {
+      globals::ACTIVE_CAMERA->rotCamera(deltaX, deltaY);
+    } else if (middleDown) {
+      globals::ACTIVE_CAMERA->panCamera(deltaX, deltaY);
+    } else if (rightDown) {
+      globals::ACTIVE_CAMERA->zoomCamera(deltaX);
+    }
+
+    // storing old position
+    previousX = globals::INPUT->m_mousePosX;
+    previousY = globals::INPUT->m_mousePosY;
+  }
+
+  void updateCameraBuffer() {
+    m_cameraBuffer.vFov = m_vfov;
+
+    auto pos = getPosition();
+    m_cameraBuffer.position = glm::vec4(pos, 1.0f);
+
+    // not super happy about this, but it is better to do it here, so
+    // computation is consistent and we only transpose to the very end
+    if (globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::VULKAN) {
+      m_cameraBuffer.MVP = getMVP(glm::mat4(1.0));
+      m_cameraBuffer.ViewMatrix = getViewInverse(glm::mat4(1.0));
+      m_cameraBuffer.VPinverse = getMVPInverse(glm::mat4(1.0));
+    } else {
+      m_cameraBuffer.MVP = glm::transpose(getMVP(glm::mat4(1.0)));
+      m_cameraBuffer.ViewMatrix =
+          glm::transpose(getViewInverse(glm::mat4(1.0)));
+      m_cameraBuffer.VPinverse = glm::transpose(getMVPInverse(glm::mat4(1.0)));
+    }
+    m_cameraBuffer.perspectiveValues = getProjParams();
+  }
+
+  void updateCamera() override {
+    manipulateCamera();
+    updateCameraBuffer();
   }
 
   [[nodiscard]] glm::vec3 getPosition() const { return glm::vec3(posV); }
@@ -45,14 +108,21 @@ public:
     lookAtPosV = glm::vec4(x, y, z, 1.0f);
   }
 
-private:
+ private:
+  void panCamera(float deltaX, float deltaY);
+  void rotCamera(float deltaX, float deltaY);
+  void zoomCamera(float deltaX);
+  glm::mat4 getMVP(glm::mat4 modelM) const;
+  glm::mat4 getMVPInverse(glm::mat4 modelM) const;
+  glm::mat4 getViewInverse(glm::mat4 modelM) const;
+
+ private:
   // Constants
   static constexpr glm::vec3 UP_VECTOR{0.0f, 1.0f, 0.0f};
-  CameraManipulationConfig m_config{1.0f,1.0f,1.0f,1.0f,1.0f};
-  //static constexpr float MOUSE_ROT_SPEED = 0.012f;
-  //static constexpr float MOUSE_PAN_SPEED = 0.07f;
 
   glm::vec4 posV;
   glm::vec4 lookAtPosV;
+  float previousX = 0;
+  float previousY = 0;
 };
-} // namespace SirEngine
+}  // namespace SirEngine
