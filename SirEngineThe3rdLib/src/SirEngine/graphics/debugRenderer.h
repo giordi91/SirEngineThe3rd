@@ -3,8 +3,6 @@
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
 
-#include "SirEngine/materialManager.h"
-#include "SirEngine/memory/cpu/hashMap.h"
 #include "SirEngine/memory/gpu/gpuSlabAllocator.h"
 
 enum class PRIMITIVE_TYPE { TRIANGLE, LINE, POINT };
@@ -12,7 +10,7 @@ enum class PRIMITIVE_TYPE { TRIANGLE, LINE, POINT };
 struct BoundingBox;
 
 namespace SirEngine {
-// forward declare
+class CameraController;
 struct Skeleton;
 class AnimationPlayer;
 
@@ -49,6 +47,7 @@ class DebugRenderer {
   void drawBoundingBoxes(const BoundingBox* data, int count, glm::vec4 color);
   void drawLines(float* data, uint32_t sizeInByte, glm::vec4 color);
   void newFrame();
+  void drawCamera(const CameraController* camera, glm::vec4 color);
 
  private:
   void assureLinesTables(int slabCount);

@@ -6,7 +6,7 @@
 
 layout (set=0,binding=0) uniform InputData 
 {
-	CameraBuffer cameraBuffer;
+	FrameData frameData;
 }; 
 
 struct PointColor
@@ -26,5 +26,5 @@ void VS()
 {
 	vec4 position = pc[gl_VertexIndex].p;
 	outColor = pc[gl_VertexIndex].c;
-	gl_Position = cameraBuffer.MVP * position;
+	gl_Position = frameData.m_activeCamera.MVP * position;
 }

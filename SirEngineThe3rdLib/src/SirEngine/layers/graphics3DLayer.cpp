@@ -1,40 +1,39 @@
 #include "SirEngine/layers/graphics3DLayer.h"
+
+#include <SirEngine/events/scriptingEvent.h>
+#include <SirEngine/graphics/debugRenderer.h>
+
 #include "SirEngine/animation/animationManager.h"
 #include "SirEngine/animation/animationPlayer.h"
 #include "SirEngine/animation/skeleton.h"
 #include "SirEngine/application.h"
 #include "SirEngine/assetManager.h"
+#include "SirEngine/engineConfig.h"
 #include "SirEngine/events/debugEvent.h"
 #include "SirEngine/events/mouseEvent.h"
+#include "SirEngine/events/renderGraphEvent.h"
+#include "SirEngine/events/shaderCompileEvent.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/graphics/camera.h"
 #include "SirEngine/graphics/nodeGraph.h"
-#include "platform/windows/graphics/dx12/DX12.h"
-
-#include "SirEngine/events/renderGraphEvent.h"
-#include "SirEngine/events/shaderCompileEvent.h"
 #include "SirEngine/graphics/nodes/FinalBlitNode.h"
 #include "SirEngine/graphics/nodes/debugDrawNode.h"
 #include "SirEngine/graphics/nodes/deferredLighting.h"
 #include "SirEngine/graphics/nodes/framePassDebugNode.h"
 #include "SirEngine/graphics/nodes/gbufferPassPBR.h"
+#include "SirEngine/graphics/nodes/shadowPass.h"
 #include "SirEngine/graphics/nodes/simpleForward.h"
 #include "SirEngine/graphics/nodes/skybox.h"
 #include "SirEngine/graphics/postProcess/effects/SSSSSEffect.h"
 #include "SirEngine/graphics/postProcess/effects/gammaAndToneMappingEffect.h"
 #include "SirEngine/graphics/postProcess/postProcessStack.h"
 #include "SirEngine/graphics/renderingContext.h"
-
+#include "SirEngine/scripting/scriptingContext.h"
 #include "SirEngine/skinClusterManager.h"
+#include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/Dx12PSOManager.h"
 #include "platform/windows/graphics/dx12/dx12BufferManager.h"
 #include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
-
-#include "SirEngine/engineConfig.h"
-#include "SirEngine/graphics/nodes/shadowPass.h"
-#include "SirEngine/scripting/scriptingContext.h"
-#include <SirEngine/events/scriptingEvent.h>
-#include <SirEngine/graphics/debugRenderer.h>
 
 namespace SirEngine {
 
@@ -138,15 +137,14 @@ void Graphics3DLayer::onAttach() {
 
   globals::RENDERING_GRAPH->finalizeGraph();
 
-
   auto light = globals::RENDERING_CONTEXT->getLightData();
   globals::DEBUG_RENDERER->drawMatrix(light.localToWorld, 3.0f,
-                                   glm::vec4(1, 0, 0, 1), "");
+                                      glm::vec4(1, 0, 0, 1), "");
 
   uint32_t bbcount;
-  const auto* data = dx12::MESH_MANAGER->getBoundingBoxes(bbcount);
+  const auto *data = dx12::MESH_MANAGER->getBoundingBoxes(bbcount);
   globals::DEBUG_RENDERER->drawBoundingBoxes((BoundingBox *)data, bbcount,
-                                          glm::vec4(1, 0, 0, 1));
+                                             glm::vec4(1, 0, 0, 1));
   // dx12::DEBUG_RENDERER->drawMatrix(
   //    globals::MAIN_CAMERA->getViewInverse(DirectX::XMMatrixIdentity()), 3.0f,
   //    DirectX::XMFLOAT4(1, 0, 0, 1), "");
@@ -157,7 +155,6 @@ void Graphics3DLayer::onAttach() {
 }
 void Graphics3DLayer::onDetach() {}
 void Graphics3DLayer::onUpdate() {
-
   globals::SCRIPTING_CONTEXT->runScriptSlot(SCRIPT_CALLBACK_SLOT::PRE_ANIM);
   globals::ANIMATION_MANAGER->evaluate();
 
@@ -171,8 +168,8 @@ void Graphics3DLayer::onUpdate() {
   // setting up camera for the frame
   globals::CONSTANT_BUFFER_MANAGER->processBufferedData();
   globals::RENDERING_CONTEXT->setupCameraForFrame();
-  //TODO this has been removed and should be handled differently
-  //dx12::RENDERING_CONTEXT->setupLightingForFrame();
+  // TODO this has been removed and should be handled differently
+  // dx12::RENDERING_CONTEXT->setupLightingForFrame();
   // evaluating rendering graph
   globals::RENDERING_GRAPH->compute();
 
@@ -230,26 +227,7 @@ bool Graphics3DLayer::onMouseButtonReleaseEvent(MouseButtonReleaseEvent &e) {
   return false;
 }
 
-bool Graphics3DLayer::onMouseMoveEvent(MouseMoveEvent &e) {
-    //old
-    /*
-  const float deltaX = previousX - e.getX();
-  const float deltaY = previousY - e.getY();
-  if (leftDown) {
-    globals::MAIN_CAMERA->rotCamera(deltaX, deltaY);
-  } else if (middleDown) {
-    globals::MAIN_CAMERA->panCamera(deltaX, deltaY);
-  } else if (rightDown) {
-    globals::MAIN_CAMERA->zoomCamera(deltaX);
-  }
-
-  // storing old position
-  previousX = e.getX();
-  previousY = e.getY();
-  */
-
-  return true;
-}
+bool Graphics3DLayer::onMouseMoveEvent(MouseMoveEvent &e) { return false; }
 void removeDebugNode(DependencyGraph *graph, GNode *debugNode) {
   // disconnect input
   assert(debugNode->isOfType("FramePassDebugNode"));
@@ -282,7 +260,6 @@ void removeDebugNode(DependencyGraph *graph, GNode *debugNode) {
   delete debugNode;
 }
 void addDebugNode(DependencyGraph *graph, GNode *debugNode) {
-
   assert(debugNode->isOfType("FramePassDebugNode"));
   assert(graph->getFinalNode() != nullptr);
 
@@ -314,47 +291,47 @@ void addDebugNode(DependencyGraph *graph, GNode *debugNode) {
 bool Graphics3DLayer::onDebugLayerEvent(DebugLayerChanged &e) {
   dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
   switch (e.getLayer()) {
-  case (0): {
-    // if we have 0, we have no layer to debug so we can just check if there
-    // there is a debug node and remove it
-    const GNode *debugNode =
-        globals::RENDERING_GRAPH->findNodeOfType("FramePassDebugNode");
-    if (debugNode == nullptr) { // no debug we are good
-      return true;
-    }
+    case (0): {
+      // if we have 0, we have no layer to debug so we can just check if there
+      // there is a debug node and remove it
+      const GNode *debugNode =
+          globals::RENDERING_GRAPH->findNodeOfType("FramePassDebugNode");
+      if (debugNode == nullptr) {  // no debug we are good
+        return true;
+      }
 
-    removeDebugNode(globals::RENDERING_GRAPH, const_cast<GNode *>(debugNode));
-    globals::RENDERING_GRAPH->finalizeGraph();
-    RenderGraphChanged *graphE = new RenderGraphChanged();
-    globals::APPLICATION->queueEventForEndOfFrame(graphE);
-    return true;
-  }
-  case (1):
-  case (2):
-  case (3):
-  case (4):
-  case (5):
-  case (6):
-  case (7): {
-    // lets add debug
-    const GNode *debugNode =
-        globals::RENDERING_GRAPH->findNodeOfType("FramePassDebugNode");
-    // debug already there, maybe i just need to change configuration?
-    if (debugNode != nullptr) { // no debug we are good
-      static_cast<FramePassDebugNode *>(const_cast<GNode *>(debugNode))
-          ->setDebugIndex(e.getLayer());
+      removeDebugNode(globals::RENDERING_GRAPH, const_cast<GNode *>(debugNode));
+      globals::RENDERING_GRAPH->finalizeGraph();
+      RenderGraphChanged *graphE = new RenderGraphChanged();
+      globals::APPLICATION->queueEventForEndOfFrame(graphE);
       return true;
     }
-    // lest add a debug node
-    // TODO move the allocator inside the graph? not sure yet
-    auto debug = new FramePassDebugNode(*alloc);
-    debug->setDebugIndex(e.getLayer());
-    addDebugNode(globals::RENDERING_GRAPH, debug);
-    globals::RENDERING_GRAPH->finalizeGraph();
-    auto *graphE = new RenderGraphChanged();
-    globals::APPLICATION->queueEventForEndOfFrame(graphE);
-    return true;
-  }
+    case (1):
+    case (2):
+    case (3):
+    case (4):
+    case (5):
+    case (6):
+    case (7): {
+      // lets add debug
+      const GNode *debugNode =
+          globals::RENDERING_GRAPH->findNodeOfType("FramePassDebugNode");
+      // debug already there, maybe i just need to change configuration?
+      if (debugNode != nullptr) {  // no debug we are good
+        static_cast<FramePassDebugNode *>(const_cast<GNode *>(debugNode))
+            ->setDebugIndex(e.getLayer());
+        return true;
+      }
+      // lest add a debug node
+      // TODO move the allocator inside the graph? not sure yet
+      auto debug = new FramePassDebugNode(*alloc);
+      debug->setDebugIndex(e.getLayer());
+      addDebugNode(globals::RENDERING_GRAPH, debug);
+      globals::RENDERING_GRAPH->finalizeGraph();
+      auto *graphE = new RenderGraphChanged();
+      globals::APPLICATION->queueEventForEndOfFrame(graphE);
+      return true;
+    }
   }
   return false;
 }
@@ -384,4 +361,4 @@ bool Graphics3DLayer::onReloadScriptEvent(ReloadScriptsEvent &) {
   globals::SCRIPTING_CONTEXT->reloadContext();
   return true;
 }
-} // namespace SirEngine
+}  // namespace SirEngine
