@@ -1,15 +1,14 @@
 #include "SirEngine/graphics/debugRenderer.h"
 
-#include "SirEngine/PSOManager.h"
 #include "SirEngine/globals.h"
+#include "SirEngine/graphics/bindingTableManager.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/materialManager.h"
 #include "SirEngine/memory/cpu/resizableVector.h"
-#include "platform/windows/graphics/dx12/dx12RootSignatureManager.h"
-#include "platform/windows/graphics/vk/vkBindingTableManager.h"
-#include "platform/windows/graphics/vk/vkBufferManager.h"
-#include "platform/windows/graphics/vk/vkConstantBufferManager.h"
-#include "platform/windows/graphics/vk/vkMaterialManager.h"
+#include "SirEngine/memory/cpu/stackAllocator.h"
+#include "SirEngine/psoManager.h"
+#include "SirEngine/rootSignatureManager.h"
+#include "camera.h"
 
 namespace SirEngine {
 static const char *LINE_RS = "debugDrawLinesSingleColorRS";
@@ -40,6 +39,17 @@ inline int push3toVec(float *data, const glm::vec3 v, int counter) {
   data[counter++] = v.x;
   data[counter++] = v.y;
   data[counter++] = v.z;
+
+  return counter;
+}
+
+inline int push3toVec(float *data, const glm::vec3 v, int counter,
+                      const glm::mat4x4 matrix) {
+  glm::vec4 modified = matrix * glm::vec4{v.x, v.y, v.z, 1.0f};
+
+  data[counter++] = modified.x;
+  data[counter++] = modified.y;
+  data[counter++] = modified.z;
 
   return counter;
 }
@@ -171,7 +181,7 @@ void DebugRenderer::drawBoundingBoxes(const BoundingBox *data, const int count,
   const int totalSize = 3 * count * 12 * 2;  // here 3 is the xmfloat4
 
   auto *points = static_cast<float *>(
-      globals::FRAME_ALLOCATOR->allocate(sizeof(glm::vec4) * count * 12 * 2));
+      globals::FRAME_ALLOCATOR->allocate(sizeof(glm::vec3) * count * 12 * 2));
   int counter = 0;
   for (int i = 0; i < count; ++i) {
     assert(counter <= totalSize);
@@ -254,7 +264,7 @@ void DebugRenderer::drawLines(float *data, const uint32_t sizeInByte,
 
 void DebugRenderer::assureLinesTables(const int slabCount) {
   // init binding table
-  graphics::BindingDescription descriptions[] = {
+  graphics::BindingDescription descriptions[1] = {
       {0, GRAPHIC_RESOURCE_TYPE::READ_BUFFER,
        GRAPHICS_RESOURCE_VISIBILITY_VERTEX}};
 
@@ -262,7 +272,7 @@ void DebugRenderer::assureLinesTables(const int slabCount) {
   for (int i = count; i < slabCount; ++i) {
     BindingTableHandle handle =
         globals::BINDING_TABLE_MANAGER->allocateBindingTable(
-            descriptions, ARRAYSIZE(descriptions),
+            descriptions, 1,
             graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED,
             "debugLines");
     m_lineBindHandles.pushBack(handle.handle);
@@ -270,4 +280,95 @@ void DebugRenderer::assureLinesTables(const int slabCount) {
 }
 
 void DebugRenderer::newFrame() { m_lineSlab[globals::CURRENT_FRAME].clear(); }
+
+void DebugRenderer::drawCamera(const CameraController *camera,
+                               glm::vec4 color) {
+  // 12 is the number of lines needed for the AABB, 4 top, 4 bottom, 4
+  // vertical two is because we need two points per line, we are not doing
+  // line-strip
+  int count = 2;
+  int linesPerBox = 12;
+  auto *points = static_cast<float *>(globals::FRAME_ALLOCATOR->allocate(
+      sizeof(glm::vec3) * count * linesPerBox * 2));
+  int counter = 0;
+  const auto &minP = glm::vec3(0, 0, 0);
+  const auto &maxP = glm::vec3(10, 10, 10);
+
+  glm::mat4x4 cameraM = camera->getViewInverse(glm::mat4x4(1.0f));
+  // frustum
+  const CameraBuffer &buffer = camera->getCameraBuffer();
+  float angle = camera->getVfov();
+
+  // NOTE at one point this might be something that the camera decides?
+  float aspsectRatio =
+      static_cast<float>(globals::ENGINE_CONFIG->m_windowWidth) /
+      static_cast<float>(globals::ENGINE_CONFIG->m_windowWidth);
+  float apiCompensateFactor =  globals::ENGINE_CONFIG->m_graphicsAPI==GRAPHIC_API::DX12? -1 : 1;
+  float nnear = camera->getNear()*apiCompensateFactor ;
+  float hnear = 2.0f * tanf(angle / 2.0f) * nnear;
+  float wnear = hnear * aspsectRatio;
+
+  float ffar = camera->getFar()*apiCompensateFactor;
+  float hfar = 2.0f * tanf(angle / 2.0f) * ffar;
+  float wfar = hfar * aspsectRatio;
+
+  float hnearhalf = hnear / 2.0f;
+  float wnearhalf = wnear / 2.0f;
+
+  float hfarhalf = hfar / 2.0f;
+  float wfarhalf = wfar / 2.0f;
+
+  // near plane
+  counter =
+      push3toVec(points, glm::vec3{wnearhalf, -hnearhalf, -nnear}, counter,cameraM);
+  counter =
+      push3toVec(points, glm::vec3{wnearhalf, hnearhalf, -nnear}, counter,cameraM);
+
+  counter =
+      push3toVec(points, glm::vec3{wnearhalf, hnearhalf, -nnear}, counter,cameraM);
+  counter =
+      push3toVec(points, glm::vec3{-wnearhalf, hnearhalf, -nnear}, counter,cameraM);
+
+  counter =
+      push3toVec(points, glm::vec3{-wnearhalf, hnearhalf, -nnear}, counter,cameraM);
+  counter =
+      push3toVec(points, glm::vec3{-wnearhalf, -hnearhalf, -nnear}, counter,cameraM);
+
+  counter =
+      push3toVec(points, glm::vec3{-wnearhalf, -hnearhalf, -nnear}, counter,cameraM);
+  counter =
+      push3toVec(points, glm::vec3{wnearhalf, -hnearhalf, -nnear}, counter,cameraM);
+
+  // far plane
+  counter = push3toVec(points, glm::vec3{wfarhalf, -hfarhalf, -ffar}, counter,cameraM);
+  counter = push3toVec(points, glm::vec3{wfarhalf, hfarhalf, -ffar}, counter,cameraM);
+
+  counter = push3toVec(points, glm::vec3{wfarhalf, hfarhalf, -ffar}, counter,cameraM);
+  counter = push3toVec(points, glm::vec3{-wfarhalf, hfarhalf, -ffar}, counter,cameraM);
+
+  counter = push3toVec(points, glm::vec3{-wfarhalf, hfarhalf, -ffar}, counter,cameraM);
+  counter = push3toVec(points, glm::vec3{-wfarhalf, -hfarhalf, -ffar}, counter,cameraM);
+
+  counter = push3toVec(points, glm::vec3{-wfarhalf, -hfarhalf, -ffar}, counter,cameraM);
+  counter = push3toVec(points, glm::vec3{wfarhalf, -hfarhalf, -ffar}, counter,cameraM);
+
+  // sides
+  counter = push3toVec(points, glm::vec3{wfarhalf, hfarhalf, -ffar}, counter,cameraM);
+  counter =
+      push3toVec(points, glm::vec3{wnearhalf, hnearhalf, -nnear}, counter,cameraM);
+
+  counter = push3toVec(points, glm::vec3{wfarhalf, -hfarhalf, -ffar}, counter,cameraM);
+  counter =
+      push3toVec(points, glm::vec3{wnearhalf, -hnearhalf, -nnear}, counter,cameraM);
+
+  counter = push3toVec(points, glm::vec3{-wfarhalf, hfarhalf, -ffar}, counter,cameraM);
+  counter =
+      push3toVec(points, glm::vec3{-wnearhalf, hnearhalf, -nnear}, counter,cameraM);
+
+  counter = push3toVec(points, glm::vec3{-wfarhalf, -hfarhalf, -ffar}, counter,cameraM);
+  counter =
+      push3toVec(points, glm::vec3{-wnearhalf, -hnearhalf, -nnear}, counter,cameraM);
+
+  return drawLines(points, counter * sizeof(float), color);
+}
 }  // namespace SirEngine

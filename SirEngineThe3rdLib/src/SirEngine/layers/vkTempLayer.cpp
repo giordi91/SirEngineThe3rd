@@ -43,13 +43,13 @@ void VkTempLayer::onAttach() {
       -0.01f * negate, 0.01f, 0.012f * negate, 0.012f, -0.07f,
   };
   globals::MAIN_CAMERA->setManipulationMultipliers(camConfig);
-  globals::MAIN_CAMERA->setCameraPhyisicalParameters(60.0f, 0.01, 1000.0f);
+  globals::MAIN_CAMERA->setCameraPhyisicalParameters(60.0f, 0.1, 200.0f);
   globals::MAIN_CAMERA->setLookAt(0, 15, 0);
   globals::MAIN_CAMERA->setPosition(0, 15, 15);
   globals::MAIN_CAMERA->updateCamera();
 
   globals::DEBUG_CAMERA->setManipulationMultipliers(camConfig);
-  globals::DEBUG_CAMERA->setCameraPhyisicalParameters(60.0f, 0.01, 1000.0f);
+  globals::DEBUG_CAMERA->setCameraPhyisicalParameters(60.0f, 0.1, 200.0f);
   globals::DEBUG_CAMERA->setLookAt(0, 15, 0);
   globals::DEBUG_CAMERA->setPosition(0, 15, 15);
   globals::DEBUG_CAMERA->updateCamera();
@@ -114,10 +114,15 @@ void VkTempLayer::onAttach() {
 void VkTempLayer::onDetach() {}
 void VkTempLayer::onUpdate() {
   globals::RENDERING_CONTEXT->setupCameraForFrame();
-
   // evaluating rendering graph
   globals::CONSTANT_BUFFER_MANAGER->processBufferedData();
   globals::DEBUG_RENDERER->newFrame();
+
+  if (globals::ACTIVE_CAMERA == globals::DEBUG_CAMERA) {
+    globals::DEBUG_RENDERER->drawCamera(globals::MAIN_CAMERA,
+                                        glm::vec4(1, 1, 1, 1));
+  }
+
   globals::RENDERING_GRAPH->compute();
 }
 void VkTempLayer::onEvent(Event &event) {

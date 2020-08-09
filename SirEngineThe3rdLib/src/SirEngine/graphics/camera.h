@@ -34,8 +34,12 @@ class CameraController {
     m_near = nearP;
     m_far = farP;
   }
+  inline float getVfov()const {return m_vfov;}
+  inline float getNear ()const {return m_near;}
+  inline float getFar ()const {return m_far;}
 
   virtual void updateCamera() = 0;
+  virtual glm::mat4 getViewInverse(glm::mat4 modelM) const =0;
 
  protected:
   float m_vfov = SE_PI / 4.0f;
@@ -108,13 +112,14 @@ class Camera3DPivot final : public CameraController {
     lookAtPosV = glm::vec4(x, y, z, 1.0f);
   }
 
+  glm::mat4 getViewInverse(glm::mat4 modelM) const override;
+
  private:
   void panCamera(float deltaX, float deltaY);
   void rotCamera(float deltaX, float deltaY);
   void zoomCamera(float deltaX);
   glm::mat4 getMVP(glm::mat4 modelM) const;
   glm::mat4 getMVPInverse(glm::mat4 modelM) const;
-  glm::mat4 getViewInverse(glm::mat4 modelM) const;
 
  private:
   // Constants
