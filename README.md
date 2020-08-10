@@ -104,13 +104,25 @@ I have started doing a lot of work to port the dx12 engine to Vulkan.
 * working camera in VK
 * updated imgui to latest
 
-![alt text](./images/06_VK01.png "moving")
+![alt text](./images/06_VK01.png "vk")
 
 ** Run the compiler **
 ```
 C:\WORK_IN_PROGRESS\C\directX\SirEngineThe3rd\build2019>cd bin\release && ResourceCompiler.exe -e ../data/executeFullDeb
 ug.json && cd ../..
 ```
+
+## 0.7.0 <a name="v070"/>
+This release was a huge push in the Vulkan back end and cleanup.
+
+* Rewritten binding system by using "BindingTables" that allowed generic cross platform bindings, only some system use it. Will propagate over time
+* Added vulkan skybox, post processing and full pbr shader.
+* Added grass shader in both vk and dx12
+* Rewritten completely DebugRenderer, now based on slabs that needs to be filled every frame, much simpler and cross platform
+* Written a GPU Slab allocator that sits on top of a cleaned up and enanched buffer menager. This allows to move a lot of stuff from being API specific to be API agnostic (like the DebugRenderer). Other system will follow soon
+* Introduced Main and Active camera to start working on debugging culling.
+
+![alt text](./images/07_grass.gif"grass")
 
 ***Credits***
 

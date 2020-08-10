@@ -2,7 +2,7 @@
 
 #include <glm/gtx/transform.hpp>
 
-#include "../../../../Tests/src/graphNodesDefinitions.h"
+
 #include "SirEngine/engineConfig.h"
 #include "SirEngine/matrix.h"
 #include "glm/glm.hpp"
@@ -49,6 +49,7 @@ void Camera3DPivot::spinCameraWorldYAxis(const float angleInDegrees) {
   compensatedPosition = rotationMatrix * compensatedPosition;
   posV = compensatedPosition + lookAtPosV;
 }
+
 
 glm::vec4 Camera3DPivot::getProjParams() const {
   // preparing camera values for deferred
