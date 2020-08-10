@@ -16,7 +16,6 @@ class GPUSlabAllocator final {
   struct Slab {
     explicit Slab(const uint32_t sizeInByte) : m_slabTracker(sizeInByte){};
     LinearBufferManager m_slabTracker;
-    // vk::Buffer m_buffer{};
     BufferHandle handle{};
   };
 

@@ -11,8 +11,7 @@ enum MOUSE_BUTTONS {
 
 };
 class Input final {
-
-public:
+ public:
   static constexpr int SIZE_OF_KEYS = 256;
   Input() = default;
   ~Input() = default;
@@ -63,5 +62,7 @@ public:
   float m_mousePosY = 0;
   uint32_t m_keys[SIZE_OF_KEYS]{};
   uint32_t m_keysPrev[SIZE_OF_KEYS]{};
+  bool m_uiCapturingMouse = false;
+  bool m_uiCapturingKeyboard = false;
 };
-} // namespace SirEngine
+}  // namespace SirEngine

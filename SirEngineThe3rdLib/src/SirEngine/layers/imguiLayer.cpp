@@ -25,6 +25,7 @@
 #endif
 
 #include "SirEngine/application.h"
+#include "SirEngine/input.h"
 #include "SirEngine/events/applicationEvent.h"
 #include "SirEngine/events/event.h"
 #include "SirEngine/events/keyboardEvent.h"
@@ -371,6 +372,7 @@ void ImguiLayer::clear() {
 bool ImguiLayer::onMouseButtonPressEvent(const MouseButtonPressEvent &e) const {
   ImGuiIO &io = ImGui::GetIO();
   io.MouseDown[static_cast<int>(e.getMouseButton())] = true;
+  globals::INPUT->m_uiCapturingMouse =io.WantCaptureMouse; 
   return io.WantCaptureMouse;
 }
 bool ImguiLayer::onMouseButtonReleaseEvent(
@@ -382,12 +384,14 @@ bool ImguiLayer::onMouseButtonReleaseEvent(
 bool ImguiLayer::onMouseMoveEvent(const MouseMoveEvent &e) const {
   ImGuiIO &io = ImGui::GetIO();
   io.MousePos = ImVec2(e.getX(), e.getY());
+  globals::INPUT->m_uiCapturingMouse =io.WantCaptureMouse; 
   return io.WantCaptureMouse;
 }
 bool ImguiLayer::onMouseScrolledEvent(const MouseScrollEvent &e) const {
   ImGuiIO &io = ImGui::GetIO();
   io.MouseWheelH += e.getOffsetX();
   io.MouseWheel += e.getOffsetY();
+  globals::INPUT->m_uiCapturingMouse =io.WantCaptureMouse; 
   return io.WantCaptureMouse;
 }
 bool ImguiLayer::onKeyPressedEvent(const KeyboardPressEvent &e) {
@@ -397,11 +401,13 @@ bool ImguiLayer::onKeyPressedEvent(const KeyboardPressEvent &e) {
   if (c == TRIGGER_UI_BUTTON) {
     m_shouldShow = !m_shouldShow;
   }
+  globals::INPUT->m_uiCapturingKeyboard =io.WantCaptureKeyboard; 
   return io.WantCaptureKeyboard;
 }
 bool ImguiLayer::onKeyReleasedEvent(const KeyboardReleaseEvent &e) const {
   ImGuiIO &io = ImGui::GetIO();
   io.KeysDown[e.getKeyCode()] = false;
+  globals::INPUT->m_uiCapturingKeyboard =io.WantCaptureKeyboard; 
   return io.WantCaptureKeyboard;
 }
 bool ImguiLayer::onWindowResizeEvent(const WindowResizeEvent &e) const {
@@ -416,6 +422,7 @@ bool ImguiLayer::onWindowResizeEvent(const WindowResizeEvent &e) const {
 bool ImguiLayer::onKeyTypeEvent(const KeyTypeEvent &e) const {
   ImGuiIO &io = ImGui::GetIO();
   io.AddInputCharacter(static_cast<uint16_t>(e.getKeyCode()));
+  globals::INPUT->m_uiCapturingKeyboard =io.WantCaptureKeyboard; 
   return io.WantCaptureKeyboard;
 }
 

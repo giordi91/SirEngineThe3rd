@@ -139,17 +139,7 @@ void GrassTechnique::render(const uint32_t id,
     SE_CORE_WARN("Anything other than forward unsupported for grass for now");
     return;
   }
-  std::vector<glm::vec3> data;
-  static float t = 0.0f;
-  data.push_back({0, 0, 0});
-  data.push_back({0, 10, 0});
-  data.push_back({0, 10, 0});
-  data.push_back({0, 10, 10});
-  data.push_back({0, 10, 10});
-  data.push_back({10, 10, 10});
-  // globals::DEBUG_RENDERER->drawLines(
-  //    &data[0].x, sizeof(glm::vec3) * data.size(), glm::vec4{1, 0, 0, 1});
-  // tileDebug();
+  tileDebug();
 
   globals::CONSTANT_BUFFER_MANAGER->update(m_grassConfigHandle, &m_grassConfig);
 
