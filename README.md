@@ -123,7 +123,7 @@ This release was a huge push in the Vulkan back end and cleanup.
 * Written a GPU Slab allocator that sits on top of a cleaned up and enanched buffer menager. This allows to move a lot of stuff from being API specific to be API agnostic (like the DebugRenderer). Other system will follow soon
 * Introduced Main and Active camera to start working on debugging culling.
 
-![alt text](./images/07_grass.gif"grass")
+![alt text](./images/07_grass.gif "grass")
 
 ***Credits***
 
