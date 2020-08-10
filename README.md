@@ -23,6 +23,7 @@ Here a I will keep a chronological list of the progress:
 [0.4.0: Fully skinned character](#v040)  
 [0.5.0: Scripted character animation](#v050)  
 [0.6.0: VK port PT 1](#v060)  
+[0.7.0: VK port PT 2 and grass](#v070)  
 
 ## 0.1.0 <a name="v010"/>
 This version is the most basic version of the engine, but starts to put togheter the foundation of the engine:
