@@ -183,6 +183,9 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   SHADER_MANAGER->loadShadersInFolder(
       frameConcatenation(globals::ENGINE_CONFIG->m_dataSourcePath,
                          "/processed/shaders/VK/rasterization"));
+  SHADER_MANAGER->loadShadersInFolder(
+      frameConcatenation(globals::ENGINE_CONFIG->m_dataSourcePath,
+                         "/processed/shaders/VK/compute"));
 
   globals::SHADER_MANAGER = vk::SHADER_MANAGER;
 
@@ -201,7 +204,7 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   vk::PSO_MANAGER->loadRawPSO("../data/pso/forwardPhongPSO.json");
   vk::PSO_MANAGER->loadRawPSO("../data/pso/grassForwardPSO.json");
   vk::PSO_MANAGER->loadRawPSO("../data/pso/grassPlanePSO.json");
-  // vk::PSO_MANAGER->loadRawPSO("../data/pso/debugDrawPointsSingleColorPSO.json");
+  vk::PSO_MANAGER->loadRawPSO("../data/pso/edgedetect_PSO.json");
   vk::PSO_MANAGER->loadRawPSO("../data/pso/debugDrawLinesSingleColorPSO.json");
   vk::PSO_MANAGER->loadRawPSO("../data/pso/skyboxPSO.json");
   vk::PSO_MANAGER->loadRawPSO("../data/pso/gammaAndToneMappingEffect_PSO.json");

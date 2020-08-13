@@ -5,7 +5,6 @@
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
 #include "platform/windows/graphics/vk/vk.h"
-//#include "platform/windows/graphics/vk/vkRootSignatureManager.h"
 #include "platform/windows/graphics/vk/vkShaderManager.h"
 
 namespace SirEngine::vk {
@@ -117,32 +116,45 @@ void getShaderStageCreateInfo(const nlohmann::json &jobj,
                               int &shaderStageCount,
                               VkPSOCompileResult &result) {
   // we have a raster pso lets pull out the shader stages
-  const std::string vsFile =
-      getValueIfInJson(jobj, PSO_KEY_VS_SHADER, DEFAULT_STRING);
-  assert(!vsFile.empty());
-  int id = shaderStageCount++;
-  // fill up shader binding
-  result.VSName = frameString(vsFile.c_str());
+  const std::string type = getValueIfInJson(jobj, PSO_KEY_TYPE, DEFAULT_STRING);
+  if (type == PSO_KEY_TYPE_COMPUTE) {
+    const std::string cmpFile =
+        getValueIfInJson(jobj, PSO_KEY_SHADER_NAME, DEFAULT_STRING);
+    result.CSName = frameString(cmpFile.c_str());
+    stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    stages[0].stage = VK_SHADER_STAGE_COMPUTE_BIT;
+    stages[0].module = vk::SHADER_MANAGER->getShaderFromName(cmpFile.c_str());
+    stages[0].pName = PSO_CS_SHADER_ENTRY_POINT;
+    stages[0].flags = 0;
 
-  // this allows us to change constants at pipeline creation time,
-  // this can allow for example to change compute shaders group size
-  // and possibly allow brute force benchmarks with different group sizes(CS
-  // only) vsInfo.pSpecializationInfo;
-  stages[id].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-  stages[id].stage = VK_SHADER_STAGE_VERTEX_BIT;
-  stages[id].module = vk::SHADER_MANAGER->getShaderFromName(vsFile.c_str());
-  stages[id].pName = PSO_VS_SHADER_ENTRY_POINT;
+  } else {
+    const std::string vsFile =
+        getValueIfInJson(jobj, PSO_KEY_VS_SHADER, DEFAULT_STRING);
+    assert(!vsFile.empty());
+    int id = shaderStageCount++;
+    // fill up shader binding
+    result.VSName = frameString(vsFile.c_str());
 
-  const std::string psFile =
-      getValueIfInJson(jobj, PSO_KEY_PS_SHADER, DEFAULT_STRING);
-  if (!psFile.empty()) {
-    id = shaderStageCount++;
-
+    // this allows us to change constants at pipeline creation time,
+    // this can allow for example to change compute shaders group size
+    // and possibly allow brute force benchmarks with different group sizes(CS
+    // only) vsInfo.pSpecializationInfo;
     stages[id].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    stages[id].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-    stages[id].module = vk::SHADER_MANAGER->getShaderFromName(psFile.c_str());
-    stages[id].pName = PSO_PS_SHADER_ENTRY_POINT;
-    result.PSName = frameString(psFile.c_str());
+    stages[id].stage = VK_SHADER_STAGE_VERTEX_BIT;
+    stages[id].module = vk::SHADER_MANAGER->getShaderFromName(vsFile.c_str());
+    stages[id].pName = PSO_VS_SHADER_ENTRY_POINT;
+
+    const std::string psFile =
+        getValueIfInJson(jobj, PSO_KEY_PS_SHADER, DEFAULT_STRING);
+    if (!psFile.empty()) {
+      id = shaderStageCount++;
+
+      stages[id].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+      stages[id].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+      stages[id].module = vk::SHADER_MANAGER->getShaderFromName(psFile.c_str());
+      stages[id].pName = PSO_PS_SHADER_ENTRY_POINT;
+      result.PSName = frameString(psFile.c_str());
+    }
   }
 }
 
@@ -499,8 +511,7 @@ PSOHandle VkPSOManager::insertInPSOCache(const VkPSOCompileResult &result) {
 }
 
 VkPSOCompileResult VkPSOManager::processRasterPSO(
-    const char *filePath, const nlohmann::json &jobj,
-    VkPipelineVertexInputStateCreateInfo *vertexInfo) const {
+    const char *filePath, const nlohmann::json &jobj) const {
   // creating a compile result that will be later used for caching
   VkPSOCompileResult compileResult{};
   compileResult.psoType = PSO_TYPE::RASTER;
@@ -586,8 +597,8 @@ VkPSOCompileResult VkPSOManager::processRasterPSO(
       VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
   createInfo.stageCount = shaderStageCount;
   createInfo.pStages = stages;
-  createInfo.pVertexInputState =
-      vertexInfo != nullptr ? vertexInfo : &vertexInputCreateInfo;
+  // we are not using vertex state, but vertex pulling
+  createInfo.pVertexInputState = &vertexInputCreateInfo;
   createInfo.pInputAssemblyState = &inputAssemblyCreateInfo;
   createInfo.pViewportState = &viewportCreateInfo;
   createInfo.pRasterizationState = &rasterInfo;
@@ -667,6 +678,55 @@ PSOHandle VkPSOManager::loadRawPSO(const char *file) {
   return insertInPSOCache(compileResult);
 }
 
+VkPSOCompileResult VkPSOManager::processComputePSO(const char *filePath,
+                                                   const nlohmann::json &jobj) {
+  // creating a compile result that will be later used for caching
+  VkPSOCompileResult compileResult{};
+  compileResult.psoType = PSO_TYPE::COMPUTE;
+  compileResult.PSOFullPathFile = frameString(filePath);
+
+  // load root signature
+  const std::string rootFile =
+      getValueIfInJson(jobj, PSO_KEY_GLOBAL_ROOT, DEFAULT_STRING);
+  assert(!rootFile.empty());
+  compileResult.rootSignature = frameString(rootFile.c_str());
+
+  const std::string fileName = getFileName(filePath);
+
+  RSHandle layoutHandle =
+      vk::PIPELINE_LAYOUT_MANAGER->loadSignatureFile(rootFile.c_str());
+  auto *layout = vk::PIPELINE_LAYOUT_MANAGER->getLayoutFromHandle(layoutHandle);
+
+  VkPipelineShaderStageCreateInfo stage{};
+  int shaderStageCount = 0;
+  getShaderStageCreateInfo(jobj, &stage, shaderStageCount, compileResult);
+
+  VkPipelineCreateFlags pipelineFlags = 0;
+
+  VkComputePipelineCreateInfo pipelineInfo = {
+      VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO,
+      nullptr,
+      pipelineFlags,
+      stage,
+      layout,
+      nullptr,
+      0};
+
+  VkPipeline pipeline = nullptr;
+  VkResult result = vkCreateComputePipelines(
+      vk::LOGICAL_DEVICE, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline);
+
+  assert(result == VK_SUCCESS);
+  assert(pipeline);
+  SET_DEBUG_NAME(pipeline, VK_OBJECT_TYPE_PIPELINE,
+                 frameConcatenation(fileName.c_str(), "Pipeline"));
+
+  compileResult.pso = pipeline;
+  compileResult.renderPass = nullptr;
+  compileResult.pipelineLayout = layout;
+  return compileResult;
+}
+
 VkPSOCompileResult VkPSOManager::compileRawPSO(const char *file) {
   const std::string fileName = getFileName(file);
   auto jobj = getJsonObj(file);
@@ -682,11 +742,10 @@ VkPSOCompileResult VkPSOManager::compileRawPSO(const char *file) {
       break;
     }
     case PSO_TYPE::RASTER: {
-      return processRasterPSO(file, jobj, nullptr);
+      return processRasterPSO(file, jobj);
     }
     case PSO_TYPE::COMPUTE: {
-      assert(0 && "Unsupported PSO type");
-      break;
+      return processComputePSO(file, jobj);
     }
     case PSO_TYPE::INVALID: {
       assert(0 && "Unsupported PSO type");

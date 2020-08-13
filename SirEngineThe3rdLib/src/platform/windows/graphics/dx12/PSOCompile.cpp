@@ -1,7 +1,6 @@
 #include "platform/windows/graphics/dx12/PSOCompile.h"
 
 #include "SirEngine/fileUtils.h"
-#include "SirEngine/graphics/nodes/framePassDebugNode.h"
 #include "SirEngine/log.h"
 #include "dx12SwapChain.h"
 #include "platform/windows/graphics/dx12/DX12.h"
@@ -9,6 +8,7 @@
 #include "platform/windows/graphics/dx12/dxgiFormatsDefine.h"
 #include "rootSignatureCompile.h"
 #include "shaderCompiler.h"
+#include "SirEngine/runtimeString.h"
 
 namespace SirEngine::dx12 {
 static const std::string PSO_KEY_GLOBAL_ROOT = "globalRootSignature";

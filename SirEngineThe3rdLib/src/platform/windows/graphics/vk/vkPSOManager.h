@@ -60,6 +60,8 @@ class VkPSOManager final : public PSOManager {
   void loadCachedPSOInFolder(const char *directory) override;
   // TODO temporary function to be removed once the load rawPSO In folder works
   PSOHandle loadRawPSO(const char *file);
+  VkPSOCompileResult processComputePSO(const char *file,
+                                       const nlohmann::json &jobj);
   VkPSOCompileResult compileRawPSO(const char *file);
 
   void recompilePSOFromShader(const char *shaderName,
@@ -128,8 +130,7 @@ class VkPSOManager final : public PSOManager {
   }
 
   VkPSOCompileResult processRasterPSO(
-      const char *filePath, const nlohmann::json &jobj,
-      VkPipelineVertexInputStateCreateInfo *vertexInfo) const;
+      const char *filePath, const nlohmann::json &jobj) const;
 
   void updatePSOCache(const char *name, const VkPSOCompileResult &result);
 

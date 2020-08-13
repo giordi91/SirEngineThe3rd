@@ -1,14 +1,9 @@
 {
   "type": "COMPUTE",
-  "staticSamplers": false,
+  "staticSamplers": true,
   "useRegisterSpace": true,
+  "flatDescriptorTable": true,
   "config": [
-    {
-      "comment": "reduction buffer",
-      "type": "UAV",
-      "data": { "baseRegister": 0 },
-      "visibility": "ALL"
-    },
     {
       "comment": "source texture",
       "type": "descriptorTable",
@@ -18,6 +13,19 @@
             "type": "SRV",
             "numDescriptors": 1,
             "baseRegister": 0
+          }
+        ]
+      }
+    },
+    {
+      "comment": "out texture",
+      "type": "descriptorTable",
+      "data": {
+        "ranges": [
+          {
+            "type": "SRV",
+            "numDescriptors": 1,
+            "baseRegister": 1
           }
         ]
       }
