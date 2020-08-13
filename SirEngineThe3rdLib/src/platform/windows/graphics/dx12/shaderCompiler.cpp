@@ -5,6 +5,7 @@
 
 // NOTE to work, dxcapi needs to happen after windows.h
 #include <Windows.h>
+//#include <atlbase.h>
 #include <d3dcompiler.h>
 #include <dxcapi.h>
 
@@ -24,6 +25,9 @@ DXCShaderCompiler::DXCShaderCompiler() {
   // allocating the library for utility functions
   DxcCreateInstance(CLSID_DxcLibrary, __uuidof(IDxcLibrary),
                     (void **)&pLibrary);
+
+  DxcCreateInstance(CLSID_DxcValidator, __uuidof(IDxcValidator),
+                    (void **)&pValidator);
 
   // create a standard include handle, that resolves files using reltive path
   // to the file being compiled
@@ -93,6 +97,7 @@ ShaderCompileResult DXCShaderCompiler::compileShader(const char *shaderPath,
   IDxcBlobEncoding *pPrintBlob;
   pResult->GetErrorBuffer(&pPrintBlob);
 
+
   size_t printBlobSize = pPrintBlob->GetBufferSize();
   const char *outLog = nullptr;
 
@@ -100,7 +105,6 @@ ShaderCompileResult DXCShaderCompiler::compileShader(const char *shaderPath,
     outLog = frameConcatenation(
         static_cast<char *>(pPrintBlob->GetBufferPointer()), "\n");
   }
-
 
   if (FAILED(hrCompilation)) {
     SE_CORE_ERROR("ERROR_LOG:\n {0}", outLog);
@@ -116,6 +120,31 @@ ShaderCompileResult DXCShaderCompiler::compileShader(const char *shaderPath,
   IDxcBlob *pResultBlob;
   pResult->GetResult(&pResultBlob);
 
+  /*
+  //NOTE Tried to get validation to work but does not seem to do much unluckily
+  // I must be doing something wrong, since I had a shader that on shader playground would not
+  //pass validation
+  CComPtr<IDxcOperationResult> pValResult;
+  HRESULT validationResult = pValidator->Validate(pResultBlob,DxcValidatorFlags_InPlaceEdit,&pValResult);
+  assert(SUCCEEDED(validationResult));
+
+  IDxcBlobEncoding *pPrintBlobValidation;
+  pValResult->GetErrorBuffer(&pPrintBlobValidation);
+  IDxcBlob *pResultBlob2;
+  pValResult->GetResult(&pResultBlob2);
+  HRESULT rr;
+  pValResult->GetStatus(&rr);
+
+  size_t printBlobSizeValidation = pPrintBlobValidation->GetBufferSize();
+  if (printBlobSizeValidation) {
+    outLog = frameConcatenation(
+        static_cast<char *>(pPrintBlobValidation->GetBufferPointer()), "\n");
+      
+    SE_CORE_ERROR("ERROR_LOG:\n {0}", outLog);
+    return {nullptr, outLog};
+  }
+  */
+
   // here we just copy to a regular blob so we dont have to leak out the IDXC
   // interface
   ID3DBlob *blob;
@@ -130,11 +159,11 @@ ShaderCompileResult DXCShaderCompiler::compileShader(const char *shaderPath,
 
   stringFree(program);
 
-  return {blob,outLog};
+  return {blob, outLog};
 }
 unsigned int DXCShaderCompiler::getShaderFlags(const ShaderArgs &shaderArgs) {
   unsigned int flags = 0;
-  flags |= (shaderArgs.debug ? SHADER_FLAGS::DEBUG : 0);
+  flags |= (shaderArgs.debug ? SHADER_FLAGS::SHADER_DEBUG : 0);
 
   return flags;
 }

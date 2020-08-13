@@ -280,7 +280,7 @@ VkShaderModule VkShaderCompiler::compileToShaderModule(const char *shaderPath,
 }
 uint32_t VkShaderCompiler::getShaderFlags(const VkShaderArgs &shaderArgs) {
   uint32_t flags = 0;
-  flags |= (shaderArgs.debug ? SHADER_FLAGS::DEBUG : 0);
+  flags |= (shaderArgs.debug ? SHADER_FLAGS::SHADER_DEBUG : 0);
 
   return flags;
 }

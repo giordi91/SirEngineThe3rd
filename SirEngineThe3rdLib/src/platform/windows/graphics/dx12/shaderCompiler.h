@@ -1,12 +1,12 @@
 #include <d3dcommon.h>
 
-#include <string>
 
 #include "SirEngine/core.h"
 #include "SirEngine/memory/cpu/resizableVector.h"
 
 struct IDxcCompiler;
 struct IDxcLibrary;
+struct IDxcValidator;
 struct IDxcIncludeHandler;
 
 namespace SirEngine {
@@ -44,6 +44,7 @@ class SIR_ENGINE_API DXCShaderCompiler {
  private:
   IDxcCompiler *pCompiler = nullptr;
   IDxcLibrary *pLibrary = nullptr;
+  IDxcValidator *pValidator= nullptr;
   IDxcIncludeHandler *includeHandle = nullptr;
 };
 

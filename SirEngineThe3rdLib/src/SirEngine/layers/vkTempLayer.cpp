@@ -22,7 +22,6 @@
 #include "SirEngine/interopData.h"
 #include "SirEngine/log.h"
 #include "SirEngine/psoManager.h"
-#include "SirEngine/graphics/postProcess/effects/edgeDetect.h"
 
 namespace SirEngine {
 
@@ -69,8 +68,6 @@ void VkTempLayer::onAttach() {
   auto *const debugDraw = new DebugDrawNode(*alloc);
   auto *const finalBlit = new FinalBlitNode(*alloc);
   auto *postProcess = new PostProcessStack(*alloc);
-  //postProcess->allocateRenderPass<EdgeDetectEffect>(
-  //    "EdgeDetect");
   postProcess->allocateRenderPass<GammaAndToneMappingEffect>(
       "GammaToneMapping");
   postProcess->initialize();
