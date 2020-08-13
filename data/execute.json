@@ -1,26 +1,9 @@
 {
   "commands": [
     "-p ../data/shaders/VK/rasterization/grassExpansionVS.glsl -o ../data/processed/shaders/VK/rasterization/grassExpansionVS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \"",
-    "-p ../data/shaders/VK/rasterization/grassForwardPS.glsl -o ../data/processed/shaders/VK/rasterization/grassForwardPS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d \"",
-    "-p ../data/shaders/VK/rasterization/grassPlaneVS.glsl -o ../data/processed/shaders/VK/rasterization/grassPlaneVS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \"",
-    "-p ../data/shaders/VK/rasterization/grassPlanePS.glsl -o ../data/processed/shaders/VK/rasterization/grassPlanePS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d \"",
-    "-p ../data/shaders/VK/rasterization/basicColor.glsl -o ../data/processed/shaders/VK/rasterization/basicColorPS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d \"",
-    "-p ../data/shaders/VK/rasterization/positionOnlyVS.glsl -o ../data/processed/shaders/VK/rasterization/positionOnlyVS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \"",
-    "-p ../data/shaders/VK/rasterization/positionColorVS.glsl -o ../data/processed/shaders/VK/rasterization/positionColorVS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \"",
-    "-p ../data/rs/grassForwardRS.json -o ../data/processed/rs/grassForwardRS.root --pluginName rootSignatureCompilerPlugin",
-    "-p ../data/shaders/DX12/rasterization/grassExpansionVS.hlsl -o ../data/processed/shaders/DX12/rasterization/grassExpansionVS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t vs_6_2  -e VS -d \"",
-    "-p ../data/shaders/DX12/rasterization/positionColorVS.hlsl -o ../data/processed/shaders/DX12/rasterization/positionColorVS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t vs_6_2  -e VS -d \"",
-    "-p ../data/shaders/DX12/rasterization/grassPlaneVS.hlsl -o ../data/processed/shaders/DX12/rasterization/grassPlaneVS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t vs_6_2  -e VS -d \"",
-    "-p ../data/shaders/DX12/rasterization/grassForwardPS.hlsl -o ../data/processed/shaders/DX12/rasterization/grassForwardPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
-    "-p ../data/shaders/DX12/rasterization/basicColorPS.hlsl -o ../data/processed/shaders/DX12/rasterization/basicColorPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
-    "-p ../data/shaders/DX12/rasterization/grassPlanePS.hlsl -o ../data/processed/shaders/DX12/rasterization/grassPlanePS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
+    "-p ../data/shaders/VK/compute/edgedetect.glsl -o ../data/processed/shaders/VK/compute/edgedetect.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t compute -d \"",
 
-    "-p ../data/pso -o ../data/processed/pso --pluginName PSOCompilerPlugin --pluginArgs \"-t DX12 -a -s ../data/shaders/DX12\"",
-
-    "-p ../data/external/grass/points.json -o ../data/processed/grass/grass.points --pluginName PointTilerCompilerPlugin",
-    "-p ../data/external/textures/grass/grassAlbedo.png -o ../data/processed/textures/grass/grassAlbedo.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1 -g -m\"",
-    "-p ../data/external/textures/grass/grassGround.png -o ../data/processed/textures/grass/grassGround.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1 -g -m\""
-
+    "-p ../data/pso -o ../data/processed/pso --pluginName PSOCompilerPlugin --pluginArgs \"-t DX12 -a -s ../data/shaders/DX12\""
   ],
   "comment": [
   ] 

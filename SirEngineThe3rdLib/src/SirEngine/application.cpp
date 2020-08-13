@@ -1,15 +1,15 @@
 #include "SirEngine/application.h"
+
+#include <random>
+
 #include "SirEngine/globals.h"
+#include "SirEngine/input.h"
 #include "SirEngine/layer.h"
 #include "SirEngine/log.h"
 #include "engineConfig.h"
 #include "fileUtils.h"
-#include "layers/graphics3DLayer.h"
-#include "layers/imguiLayer.h"
-#include <random>
-
-#include "SirEngine/input.h"
 #include "graphics/renderingContext.h"
+#include "layers/imguiLayer.h"
 #include "layers/vkTempLayer.h"
 
 namespace SirEngine {
@@ -17,7 +17,6 @@ namespace SirEngine {
 static const char *CONFIG_PATH = "../data/engineConfig.json";
 
 Application::Application() {
-
   // this is in charge to start up the engine basic systems
 
   EngineInitializationConfig engineConfig{};
@@ -61,18 +60,11 @@ Application::Application() {
   m_queuedEndOfFrameEvents[1].totalSize = RESERVE_ALLOC_EVENT_QUEUE;
   m_queuedEndOfFrameEventsCurrent = &m_queuedEndOfFrameEvents[0];
 
-  if (globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::DX12) {
-    imGuiLayer = new ImguiLayer();
-    //graphicsLayer = new Graphics3DLayer();
-    graphicsLayer = new VkTempLayer();
-    m_layerStack.pushLayer(graphicsLayer);
-    m_layerStack.pushLayer(imGuiLayer);
-  } else {
-    graphicsLayer = new VkTempLayer();
-    m_layerStack.pushLayer(graphicsLayer);
-    imGuiLayer = new ImguiLayer();
-    m_layerStack.pushLayer(imGuiLayer);
-  }
+  imGuiLayer = new ImguiLayer();
+  graphicsLayer = new VkTempLayer();
+  m_layerStack.pushLayer(graphicsLayer);
+  m_layerStack.pushLayer(imGuiLayer);
+
   globals::APPLICATION = this;
 }
 
@@ -122,7 +114,7 @@ void Application::queueEventForEndOfFrame(Event *e) const {
 }
 void Application::onEvent(Event &e) {
   // close event dispatch
-  //SE_CORE_INFO("{0}", e.toString());
+  // SE_CORE_INFO("{0}", e.toString());
   EventDispatcher dispatcher(e);
   dispatcher.dispatch<WindowCloseEvent>(
       [this](WindowCloseEvent &e) -> bool { return (this->onCloseWindow(e)); });
@@ -173,4 +165,4 @@ bool Application::onResizeWindow(WindowResizeEvent &e) {
 }
 
 void Application::pushLayer(Layer *layer) { m_layerStack.pushLayer(layer); }
-} // namespace SirEngine
+}  // namespace SirEngine

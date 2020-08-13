@@ -279,7 +279,8 @@ VkDescriptorSetLayout getEmptyLayout(const char *name) {
   return emptyLayout;
 }
 
-VkDescriptorType getDescriptorType(const nlohmann::json &config) {
+VkDescriptorType getDescriptorType(const nlohmann::json &config,
+                                   VkShaderStageFlags flags) {
   const std::string type =
       getValueIfInJson(config, ROOT_KEY_TYPE, ROOT_DEFAULT_STRING);
   assert(!type.empty());
@@ -295,6 +296,10 @@ VkDescriptorType getDescriptorType(const nlohmann::json &config) {
   // sampler the map
   const auto found = STRING_TO_DESCRIPTOR_TYPE.find(actualType);
   if (found != STRING_TO_DESCRIPTOR_TYPE.end()) {
+    if (actualType == "SRV-texture" &&
+        ((flags & VkShaderStageFlagBits::VK_SHADER_STAGE_COMPUTE_BIT) > 0)) {
+      return VkDescriptorType::VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+    }
     return found->second;
   }
 
@@ -379,13 +384,15 @@ void processConfig(const nlohmann::json &jobj,
 
   assert(bindingIdx != -1);
   assert(descriptorCount != -1);
-  VkDescriptorType descriptorType = getDescriptorType(range);
+
+  binding->stageFlags = getVisibilityFlags(jobj);
+  VkDescriptorType descriptorType =
+      getDescriptorType(range, binding->stageFlags);
   assert(descriptorType != VK_DESCRIPTOR_TYPE_MAX_ENUM);
 
   binding->binding = bindingIdx;
   binding->descriptorType = descriptorType;
   binding->descriptorCount = descriptorCount;
-  binding->stageFlags = getVisibilityFlags(jobj);
 }
 
 RSHandle VkPipelineLayoutManager::loadSignatureFile(const char *file) {

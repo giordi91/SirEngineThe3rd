@@ -81,7 +81,6 @@ void createFrameCommand(FrameCommand *fc) {
 bool initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
                             const uint32_t height) {
   // lets enable debug layer if needed
-  /*
   #if defined(DEBUG) || defined(_DEBUG)
     {
       const HRESULT result =
@@ -95,7 +94,6 @@ bool initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
       // debug1->SetEnableGPUBasedValidation(true);
     }
   #endif
-  */
 
   HRESULT result = CreateDXGIFactory1(IID_PPV_ARGS(&DXGI_FACTORY));
   if (FAILED(result)) {
