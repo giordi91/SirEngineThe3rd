@@ -659,7 +659,7 @@ void Dx12RenderingContext::renderQueueType(
 
         // TODO temp check, needs to change
         bool isDebug = dx12::MATERIAL_MANAGER->isQueueType(
-            renderableList.first, SHADER_QUEUE_FLAGS::DEBUG);
+            renderableList.first, SHADER_QUEUE_FLAGS::QUEUE_DEBUG);
         dx12::MESH_MANAGER->render(renderable.m_meshRuntime, currentFc,
                                    !isDebug);
       }

@@ -25,7 +25,7 @@ struct SIR_ENGINE_API AdapterRequestConfig {
 };
 
 enum class SHADER_TYPE { VERTEX = 0, FRAGMENT, COMPUTE, INVALID };
-enum SHADER_FLAGS { DEBUG = 1 };
+enum SHADER_FLAGS { SHADER_DEBUG = 1 };
 
 // angles
 static constexpr float SE_PI = 3.14159265358979323846f;
@@ -40,7 +40,7 @@ enum class SHADER_QUEUE_FLAGS {
   FORWARD = 1 << 0,
   DEFERRED = 1 << 1,
   SHADOW = 1 << 2,
-  DEBUG = 1 << 3,
+  QUEUE_DEBUG = 1 << 3,
   CUSTOM = 1 << 4,
 };
 

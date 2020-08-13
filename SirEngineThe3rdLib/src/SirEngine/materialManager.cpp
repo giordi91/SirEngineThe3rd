@@ -39,7 +39,7 @@ static const std::unordered_map<std::string, SirEngine::SHADER_QUEUE_FLAGS>
         {"forward", SirEngine::SHADER_QUEUE_FLAGS::FORWARD},
         {"deferred", SirEngine::SHADER_QUEUE_FLAGS::DEFERRED},
         {"shadow", SirEngine::SHADER_QUEUE_FLAGS::SHADOW},
-        {"debug", SirEngine::SHADER_QUEUE_FLAGS::DEBUG},
+        {"debug", SirEngine::SHADER_QUEUE_FLAGS::QUEUE_DEBUG},
         {"custom", SirEngine::SHADER_QUEUE_FLAGS::CUSTOM},
     };
 static const std::unordered_map<std::string, SirEngine::SHADER_TYPE_FLAGS>

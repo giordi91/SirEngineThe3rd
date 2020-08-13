@@ -137,7 +137,7 @@ const char *Dx12ShaderManager::recompileShader(const char *path,
 
   ShaderMetadata *meta = blob.metadata;
   ShaderArgs args;
-  args.debug = meta->shaderFlags & SHADER_FLAGS::DEBUG;
+  args.debug = meta->shaderFlags & SHADER_FLAGS::SHADER_DEBUG;
   args.entryPoint = meta->entryPoint;
   args.type = meta->type;
   args.compilerArgs = meta->compilerArgs;
