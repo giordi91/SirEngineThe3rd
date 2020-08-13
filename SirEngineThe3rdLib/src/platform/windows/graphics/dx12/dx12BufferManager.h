@@ -36,12 +36,14 @@ class BufferManagerDx12 final : public BufferManager {
   void bindBufferAsSRVGraphics(BufferHandle handle, int slot,
                                ID3D12GraphicsCommandList2 *commandList,
                                uint32_t offset = 0) const;
+
+  void createUav(const BufferHandle &buffer, DescriptorPair &descriptor,
+                 int offset, bool descriptorExits);
   void createSrv(const BufferHandle &handle, DescriptorPair &descriptorPair,
                  uint32_t offset = 0, bool descriptorExits = false) const;
   void createSrv(const BufferHandle &handle, DescriptorPair &descriptorPair,
                  MemoryRange range, bool descriptorExists = false,
                  int elementSize = -1) const;
-
 
   inline int bufferUAVTransition(const BufferHandle handle,
                                  D3D12_RESOURCE_BARRIER *barriers,

@@ -252,7 +252,7 @@ const std::string ROOT_KEY_STATIC_SAMPLERS = "staticSamplers";
 
 const std::unordered_map<std::string, VkDescriptorType>
     STRING_TO_DESCRIPTOR_TYPE{
-        {"UAV", VkDescriptorType::VK_DESCRIPTOR_TYPE_STORAGE_BUFFER},
+        {"UAV-buffer", VkDescriptorType::VK_DESCRIPTOR_TYPE_STORAGE_BUFFER},
         {"SRV-texture", VkDescriptorType::VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE},
         {"SRV-buffer", VkDescriptorType::VK_DESCRIPTOR_TYPE_STORAGE_BUFFER},
         {"CBV-buffer", VkDescriptorType::VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER},

@@ -22,7 +22,7 @@ class Dx12RootSignatureManager final : public RootSignatureManager {
   Dx12RootSignatureManager &operator=(const Dx12RootSignatureManager &) =
       delete;
   ~Dx12RootSignatureManager() = default;
-  void initialize() override{};
+  void initialize() override {}
   void cleanup() override;
   void loadSignaturesInFolder(const char *directory) override;
   void loadSignatureBinaryFile(const char *file) override;
@@ -49,6 +49,14 @@ class Dx12RootSignatureManager final : public RootSignatureManager {
     const RSData &data = m_rsPool.getConstRef(index);
     commandList->SetGraphicsRootSignature(data.rs);
   }
+  void bindComputeRS(const RSHandle &rsHandle,
+                     ID3D12GraphicsCommandList2 *commandList) const {
+    assertMagicNumber(rsHandle);
+    const uint32_t index = getIndexFromHandle(rsHandle);
+    const RSData &data = m_rsPool.getConstRef(index);
+    commandList->SetComputeRootSignature(data.rs);
+  };
+  ;
   inline bool isFlatRoot(const RSHandle handle) const {
     assertMagicNumber(handle);
     const uint32_t index = getIndexFromHandle(handle);
@@ -67,13 +75,14 @@ class Dx12RootSignatureManager final : public RootSignatureManager {
     if (!result) {
       // TODO change this back to asserting once vulkan port is stable
       SE_CORE_ERROR("Could not find resquested RS {0}", name);
+      return {};
     }
     RSHandle value;
     m_rootRegister.get(name, value);
     return value;
   }
 
-  uint32_t getBindingSlot(const RSHandle handle, const uint32_t space)
+  int getBindingSlot(const RSHandle handle, const uint32_t space) const
   {
     assertMagicNumber(handle);
     const uint32_t index = getIndexFromHandle(handle);
@@ -96,7 +105,7 @@ class Dx12RootSignatureManager final : public RootSignatureManager {
     uint32_t magicNumber : 16;
     uint32_t descriptorCount : 15;
     uint32_t isFlatRoot : 1;
-    int16_t bindingSlots[4] = {-1, -1, -1,-1};
+    int16_t bindingSlots[4] = {-1, -1, -1, -1};
   };
 
   HashMap<const char *, RSHandle, hashString32> m_rootRegister;

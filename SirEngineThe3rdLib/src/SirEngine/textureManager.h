@@ -26,7 +26,8 @@ class TextureManager {
     RENDER_TARGET = 4,
     SHADER_RESOURCE = 8,
     COPY_SOURCE = 16,
-    COPY_DEST = 32
+    COPY_DEST = 32,
+    STORAGE_RESOURCE = 64,
   };
   typedef uint32_t TEXTURE_ALLOCATION_FLAGS;
 

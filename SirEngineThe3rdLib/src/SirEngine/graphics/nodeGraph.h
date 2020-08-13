@@ -35,7 +35,8 @@ class GNodeCallback {
  public:
   virtual ~GNodeCallback() = default;
   virtual void setup(uint32_t id) = 0;
-  virtual void render(uint32_t id, BindingTableHandle passTable) = 0;
+  virtual void prePassRender(uint32_t id) = 0;
+  virtual void passRender(uint32_t id, BindingTableHandle passTable) = 0;
   virtual void clear(uint32_t id) = 0;
 };
 

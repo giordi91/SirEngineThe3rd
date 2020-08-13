@@ -41,7 +41,8 @@ class SIR_ENGINE_API VkTextureManager final : public TextureManager {
   virtual void free(const TextureHandle handle) override;
   virtual TextureHandle allocateTexture(uint32_t width, uint32_t height,
                                         RenderTargetFormat format,
-                                        const char *name, TEXTURE_ALLOCATION_FLAGS allocFlags,
+                                        const char *name,
+                                        TEXTURE_ALLOCATION_FLAGS allocFlags,
                                         RESOURCE_STATE finalState) override;
   virtual void bindRenderTarget(TextureHandle handle,
                                 TextureHandle depth) override;
@@ -72,9 +73,11 @@ class SIR_ENGINE_API VkTextureManager final : public TextureManager {
 
   void bindTexture(const TextureHandle &handle,
                    VkWriteDescriptorSet *writeDescriptorSets,
-                   VkDescriptorSet descriptorSet, uint32_t bindSlot
-                   //, VkImageLayout layout = VK_IMAGE_LAYOUT_UNDEFINED
-  ) {
+                   const VkDescriptorSet descriptorSet, const uint32_t bindSlot,
+                   const bool isCompute = false
+
+  ) const
+  {
     assertMagicNumber(handle);
     const uint32_t idx = getIndexFromHandle(handle);
     const auto &data = m_texturePool.getConstRef(idx);
@@ -87,7 +90,9 @@ class SIR_ENGINE_API VkTextureManager final : public TextureManager {
     writeDescriptorSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writeDescriptorSets[0].dstSet = descriptorSet;
     writeDescriptorSets[0].dstBinding = bindSlot;
-    writeDescriptorSets[0].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+    writeDescriptorSets[0].descriptorType =
+        isCompute ? VK_DESCRIPTOR_TYPE_STORAGE_IMAGE
+                  : VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
     writeDescriptorSets[0].pImageInfo = &data.srv;
     writeDescriptorSets[0].descriptorCount = 1;
   };

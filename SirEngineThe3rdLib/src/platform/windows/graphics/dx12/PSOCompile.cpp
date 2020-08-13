@@ -247,33 +247,6 @@ void getRasterShaderNameFromPSO(const nlohmann::json &jobj, std::string &vs,
   assert(!ps.empty());
 }
 
-// void processGlobalRootSignature(
-//    nlohmann::json &jobj, CD3DX12_STATE_OBJECT_DESC &pipe) {
-//  const std::string globalRootSignatureName =
-//      getValueIfInJson(jobj, PSO_KEY_GLOBAL_ROOT, DEFAULT_STRING);
-//  assert(!globalRootSignatureName.empty());
-//
-//  auto globalRootSignature =
-//      pipe.CreateSubobject<CD3DX12_GLOBAL_ROOT_SIGNATURE_SUBOBJECT>();
-//  auto *globalS =
-//      rs_manager->getRootSignatureFromName(globalRootSignatureName.c_str());
-//  globalRootSignature->SetRootSignature(globalS);
-//}
-// void PSOManager::processPipelineConfig(nlohmann::json &jobj,
-//                                       CD3DX12_STATE_OBJECT_DESC &pipe) const
-//                                       {
-//  int defaultInt = -1;
-//  int maxRecursionDepth =
-//      getValueIfInJson(jobj, PSO_KEY_MAX_RECURSION, defaultInt);
-//  assert(maxRecursionDepth != -1);
-//  // Pipeline config
-//  // Defines the maximum TraceRay() recursion depth.
-//  auto pipelineConfig =
-//      pipe.CreateSubobject<CD3DX12_RAYTRACING_PIPELINE_CONFIG_SUBOBJECT>();
-//  // PERFORMANCE TIP: Set max recursion depth as low as needed
-//  // as drivers may apply optimization strategies for low recursion depths.
-//  pipelineConfig->Config(maxRecursionDepth);
-//}
 
 PSOCompileResult processComputePSO(nlohmann::json &jobj, const char *path,
                                    const char *shaderPath) {
@@ -314,6 +287,7 @@ PSOCompileResult processComputePSO(nlohmann::json &jobj, const char *path,
   cdesc->Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
   HRESULT result =
       dx12::DEVICE->CreateComputePipelineState(cdesc, IID_PPV_ARGS(&pso));
+  HRESULT rr = dx12::DEVICE->GetDeviceRemovedReason();
   assert(SUCCEEDED(result));
 
   const std::string name = getFileName(path);

@@ -60,7 +60,7 @@ DescriptorHandle VkBindingTableManager::allocate(
 }
 
 inline VkDescriptorType getResourceType(
-    const GRAPHIC_RESOURCE_TYPE resourceType) {
+    const GRAPHIC_RESOURCE_TYPE resourceType, VkShaderStageFlags stage) {
   switch (resourceType) {
     case GRAPHIC_RESOURCE_TYPE::READ_BUFFER:
       return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
@@ -68,8 +68,12 @@ inline VkDescriptorType getResourceType(
       return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     case GRAPHIC_RESOURCE_TYPE::CONSTANT_BUFFER:
       return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    case GRAPHIC_RESOURCE_TYPE::TEXTURE:
-      return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+    case GRAPHIC_RESOURCE_TYPE::TEXTURE: {
+      bool isCompute =
+          (stage & VkShaderStageFlagBits::VK_SHADER_STAGE_COMPUTE_BIT) > 0;
+      return isCompute ? VK_DESCRIPTOR_TYPE_STORAGE_IMAGE
+                       : VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+    }
     default:
       assert(0 && "resource not yet supported");
   }
@@ -100,18 +104,18 @@ BindingTableHandle VkBindingTableManager::allocateBindingTable(
   // allocate enough memory to host the bindings
   int allocSize = sizeof(VkDescriptorSetLayoutBinding) * count;
   // allocating enough memory of the set layout binding
-  auto *bindings = reinterpret_cast<VkDescriptorSetLayoutBinding *>(
+  auto *bindings = static_cast<VkDescriptorSetLayoutBinding *>(
       globals::FRAME_ALLOCATOR->allocate(allocSize));
   // zeroing out
   memset(bindings, 0, allocSize);
 
   // now we convert the bindings from generic description to vulkan bindings
   for (uint32_t i = 0; i < count; ++i) {
+    bindings[i].stageFlags = getVisibilityFlags(descriptions[i].m_visibility);
     bindings[i].binding = descriptions[i].m_bindingIndex;
     bindings[i].descriptorType =
-        getResourceType(descriptions[i].m_resourceType);
+        getResourceType(descriptions[i].m_resourceType, bindings[i].stageFlags);
     bindings[i].descriptorCount = 1;
-    bindings[i].stageFlags = getVisibilityFlags(descriptions[i].m_visibility);
   }
 
   // creating a layout
@@ -146,6 +150,7 @@ BindingTableHandle VkBindingTableManager::allocateBindingTable(
   data.magicNumber = MAGIC_NUMBER_COUNTER++;
   data.descriptions = descriptrionMemory;
   data.descriptorHandle = descriptorHandle;
+  data.descriptionCount = count;
   data.flags = flags;
 
   return {data.magicNumber << 16 | poolIdx};
@@ -158,7 +163,18 @@ void VkBindingTableManager::bindTexture(const BindingTableHandle bindHandle,
                                         const bool isCube) {
   assertMagicNumber(bindHandle);
   uint32_t index = getIndexFromHandle(bindHandle);
-  const auto &data = m_bindingTablePool.getConstRef(index);
+  const BindingTableData &data = m_bindingTablePool.getConstRef(index);
+
+  bool isCompute = false;
+  for (uint32_t i = 0; i < data.descriptionCount; ++i) {
+    bool isTexture =
+        data.descriptions[i].m_resourceType == GRAPHIC_RESOURCE_TYPE::TEXTURE;
+    bool isCorrectIndex = data.descriptions[i].m_bindingIndex == bindingIndex;
+    bool visibilityCompute = data.descriptions[i].m_visibility ==
+                             GRAPHICS_RESOURCE_VISIBILITY_COMPUTE;
+    bool finalCondition = isTexture & isCorrectIndex & visibilityCompute;
+    isCompute |= finalCondition;
+  }
 
   assert(data.descriptorHandle.isHandleValid());
   // the descriptor set is already taking into account whether or not
@@ -172,7 +188,7 @@ void VkBindingTableManager::bindTexture(const BindingTableHandle bindHandle,
   VkWriteDescriptorSet writeDescriptorSets{};
 
   vk::TEXTURE_MANAGER->bindTexture(texture, &writeDescriptorSets, descriptorSet,
-                                   bindingIndex);
+                                   bindingIndex, isCompute);
 
   // Execute the writes to update descriptors for this set
   // Note that it's also possible to gather all writes and only run updates
@@ -233,13 +249,10 @@ void VkBindingTableManager::bindBuffer(const BindingTableHandle bindHandle,
 
 void VkBindingTableManager::bindTable(const uint32_t bindingSpace,
                                       const BindingTableHandle bindHandle,
-                                      const RSHandle rsHandle) {
+                                      const RSHandle rsHandle, bool isCompute) {
   assertMagicNumber(bindHandle);
   uint32_t index = getIndexFromHandle(bindHandle);
   const auto &data = m_bindingTablePool.getConstRef(index);
-
-  // vk::PSO_MANAGER->bindPSO(psoHandle,
-  // CURRENT_FRAME_COMMAND->m_commandBuffer);
 
   DescriptorHandle descriptorHandle = data.descriptorHandle;
   // data.m_materialRuntime.descriptorHandles[currentFlagId];
@@ -254,10 +267,11 @@ void VkBindingTableManager::bindTable(const uint32_t bindingSpace,
   VkDescriptorSet sets[] = {
       descriptorSet,
   };
+  VkPipelineBindPoint bindPoint = isCompute ? VK_PIPELINE_BIND_POINT_COMPUTE
+                                            : VK_PIPELINE_BIND_POINT_GRAPHICS;
   // multiple descriptor sets
-  vkCmdBindDescriptorSets(CURRENT_FRAME_COMMAND->m_commandBuffer,
-                          VK_PIPELINE_BIND_POINT_GRAPHICS, layout, bindingSpace,
-                          1, sets, 0, nullptr);
+  vkCmdBindDescriptorSets(CURRENT_FRAME_COMMAND->m_commandBuffer, bindPoint,
+                          layout, bindingSpace, 1, sets, 0, nullptr);
 }
 
 void VkBindingTableManager::free(const BindingTableHandle &bindingTable) {

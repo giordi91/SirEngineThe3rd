@@ -61,8 +61,10 @@ uint32_t DescriptorHeap::allocateDescriptor(
   return descriptorIndexToUse;
 }
 
-uint32_t DescriptorHeap::createBufferCBV(DescriptorPair &pair, ID3D12Resource *resource,
-                           int totalSizeInByte,bool descriptorExists) {
+uint32_t DescriptorHeap::createBufferCBV(DescriptorPair &pair,
+                                         ID3D12Resource *resource,
+                                         int totalSizeInByte,
+                                         bool descriptorExists) {
   D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
   cbvDesc.BufferLocation = resource->GetGPUVirtualAddress();
   cbvDesc.SizeInBytes = totalSizeInByte;
@@ -140,7 +142,8 @@ uint32_t DescriptorHeap::createTexture2DUAV(DescriptorPair &pair,
 
 uint32_t DescriptorHeap::createTextureCubeSRV(DescriptorPair &pair,
                                               ID3D12Resource *resource,
-                                              DXGI_FORMAT format, bool descriptorExists) {
+                                              DXGI_FORMAT format,
+                                              bool descriptorExists) {
   uint32_t descriptorIndex;
 
   if (!descriptorExists) {
@@ -233,6 +236,7 @@ uint32_t DescriptorHeap::createBufferSRV(
     srvDesc.Buffer.StructureByteStride = elementSize;
     srvDesc.Buffer.FirstElement = elementOffset;
   }
+
   uint32_t descriptorIndex;
   if (!descriptorExists) {
     descriptorIndex = allocateDescriptor(&pair.cpuHandle);
@@ -253,21 +257,41 @@ uint32_t DescriptorHeap::createBufferSRV(
   return descriptorIndex;
 };
 
-uint32_t DescriptorHeap::createBufferUAV(DescriptorPair &pair,
-                                         ID3D12Resource *resource,
-                                         uint32_t numElements,
-                                         uint32_t elementSize) {
-  // SRV
-  D3D12_UNORDERED_ACCESS_VIEW_DESC srvDesc = {};
-  srvDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
-  srvDesc.Buffer.FirstElement = 0;
-  srvDesc.Buffer.NumElements = numElements;
-  srvDesc.Buffer.StructureByteStride = elementSize;
+uint32_t DescriptorHeap::createBufferUAV(
+    DescriptorPair &pair, ID3D12Resource *resource, uint32_t numElements,
+    uint32_t elementSize, uint32_t elementOffset, bool descriptorExists) {
 
-  // srvDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_RAW;
+  D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+  uavDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+  uavDesc.Buffer.FirstElement = 0;
+  uavDesc.Buffer.NumElements = numElements;
+  uavDesc.Buffer.StructureByteStride = elementSize;
 
-  uint32_t descriptorIndex = allocateDescriptor(&pair.cpuHandle);
-  DEVICE->CreateUnorderedAccessView(resource, nullptr, &srvDesc,
+  uavDesc.Buffer.NumElements = numElements;
+  if (elementSize == 0) {
+    uavDesc.Format = DXGI_FORMAT_R32_TYPELESS;
+    uavDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_RAW;
+    uavDesc.Buffer.StructureByteStride = 0;
+    uavDesc.Buffer.FirstElement = elementOffset;
+
+  } else {
+    uavDesc.Format = DXGI_FORMAT_UNKNOWN;
+    uavDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
+    uavDesc.Buffer.StructureByteStride = elementSize;
+    uavDesc.Buffer.FirstElement = elementOffset;
+  }
+
+  uint32_t descriptorIndex;
+  if (!descriptorExists) {
+    descriptorIndex = allocateDescriptor(&pair.cpuHandle);
+  } else {
+    // reconstruct the descriptor index using pointers
+    auto descriptorHeapCpuBase = getCPUStart();
+    descriptorIndex =
+        (pair.cpuHandle.ptr - descriptorHeapCpuBase.ptr) / m_descriptorSize;
+  }
+
+  DEVICE->CreateUnorderedAccessView(resource, nullptr, &uavDesc,
                                     pair.cpuHandle);
   pair.gpuHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(getGPUStart(), descriptorIndex,
                                                  m_descriptorSize);

@@ -1,14 +1,13 @@
 #include "platform/windows/graphics/dx12/dx12BindingTableManager.h"
 
-
-#include "dx12BufferManager.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/memory/cpu/threeSizesPool.h"
+#include "dx12BufferManager.h"
+#include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
+#include "platform/windows/graphics/dx12/dx12PSOManager.h"
 #include "platform/windows/graphics/dx12/dx12RootSignatureManager.h"
 #include "platform/windows/graphics/dx12/dx12TextureManager.h"
-#include "platform/windows/graphics/dx12/descriptorHeap.h"
-#include "platform/windows/graphics/dx12/dx12PSOManager.h"
 
 namespace SirEngine::dx12 {
 void Dx12BindingTableManager::initialize() {}
@@ -71,15 +70,21 @@ void Dx12BindingTableManager::bindTexture(const BindingTableHandle bindHandle,
   dx12::TEXTURE_MANAGER->createSRV(texture, pair, isCube);
 }
 
-void Dx12BindingTableManager::bindTable(uint32_t bindingSpace,
+void Dx12BindingTableManager::bindTable(const uint32_t bindingSpace,
                                         const BindingTableHandle bindHandle,
-                                        const RSHandle rsHandle) {
+                                        const RSHandle rsHandle,
+                                        const bool isCompute) {
   assertMagicNumber(bindHandle);
   uint32_t poolIndex = getIndexFromHandle(bindHandle);
   const auto &data = m_bindingTablePool.getConstRef(poolIndex);
 
   auto *commandList = dx12::CURRENT_FRAME_RESOURCE->fc.commandList;
+  if(!isCompute){
   dx12::ROOT_SIGNATURE_MANAGER->bindGraphicsRS(rsHandle, commandList);
+  } else
+  {
+	dx12::ROOT_SIGNATURE_MANAGER->bindComputeRS(rsHandle, commandList);
+  }
 
   bool isBuffered = isFlagSet(
       data.flags, graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED);
@@ -87,16 +92,22 @@ void Dx12BindingTableManager::bindTable(uint32_t bindingSpace,
   uint32_t index = 0 + (multiplier * data.descriptionsCount);
   DescriptorPair &pair = data.descriptors[index];
 
-  uint32_t bindSlot =
+  int bindSlot =
       dx12::ROOT_SIGNATURE_MANAGER->getBindingSlot(rsHandle, bindingSpace);
   assert(bindSlot != -1);
+
+  if(!isCompute){
   commandList->SetGraphicsRootDescriptorTable(bindSlot, pair.gpuHandle);
+  } else
+  {
+  commandList->SetComputeRootDescriptorTable(bindSlot, pair.gpuHandle);
+  }
 }
 
 void Dx12BindingTableManager::bindConstantBuffer(
     const BindingTableHandle &bindingTable,
     const ConstantBufferHandle &constantBufferHandle,
-    const uint32_t descriptorIndex, const uint32_t ) {
+    const uint32_t descriptorIndex, const uint32_t) {
   assertMagicNumber(bindingTable);
   uint32_t poolIndex = getIndexFromHandle(bindingTable);
   const auto &data = m_bindingTablePool.getConstRef(poolIndex);
@@ -110,9 +121,10 @@ void Dx12BindingTableManager::bindConstantBuffer(
                                            data.descriptors[index]);
 }
 
-void Dx12BindingTableManager::bindBuffer(const BindingTableHandle bindHandle, const BufferHandle buffer,
-	const uint32_t descriptorIndex, const uint32_t bindingIndex)
-{
+void Dx12BindingTableManager::bindBuffer(const BindingTableHandle bindHandle,
+                                         const BufferHandle buffer,
+                                         const uint32_t descriptorIndex,
+                                         const uint32_t bindingIndex) {
   assertMagicNumber(bindHandle);
   uint32_t poolIndex = getIndexFromHandle(bindHandle);
   const auto &data = m_bindingTablePool.getConstRef(poolIndex);
@@ -122,8 +134,22 @@ void Dx12BindingTableManager::bindBuffer(const BindingTableHandle bindHandle, co
   uint32_t multiplier = isBuffered ? globals::CURRENT_FRAME : 0;
   uint32_t index = descriptorIndex + (multiplier * data.descriptionsCount);
 
-  dx12::BUFFER_MANAGER->createSrv(buffer,
-                                  data.descriptors[index],0,true);
+  bool isUAV = false;
+  for (uint32_t i = 0; i < data.descriptionsCount; ++i) {
+    bool isRW=
+        data.descriptions[i].m_resourceType == GRAPHIC_RESOURCE_TYPE::READWRITE_BUFFER;
+    bool isCorrectIndex = data.descriptions[i].m_bindingIndex == bindingIndex;
+    bool finalCondition = isRW& isCorrectIndex;
+    isUAV |= finalCondition;
+  }
+
+  if(isUAV)
+  {
+	dx12::BUFFER_MANAGER->createUav(buffer, data.descriptors[index], 0, true);
+  } else
+  {
+	dx12::BUFFER_MANAGER->createSrv(buffer, data.descriptors[index], 0, true);
+  }
 }
 
 void Dx12BindingTableManager::free(const BindingTableHandle &bindingTable) {
