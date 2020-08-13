@@ -38,16 +38,16 @@ class BindingTableManager {
                            const uint32_t descriptorIndex,
                            const uint32_t bindingIndex, const bool isCube) = 0;
   virtual void bindBuffer(const BindingTableHandle bindHandle,
-                           const BufferHandle buffer,
-                           const uint32_t descriptorIndex,
-                           const uint32_t bindingIndex) = 0;
-  virtual void bindConstantBuffer(const BindingTableHandle &bindingTable,
-                          const ConstantBufferHandle &constantBufferHandle,
+                          const BufferHandle buffer,
                           const uint32_t descriptorIndex,
-                          const uint32_t bindingIndex) =0;
+                          const uint32_t bindingIndex) = 0;
+  virtual void bindConstantBuffer(
+      const BindingTableHandle &bindingTable,
+      const ConstantBufferHandle &constantBufferHandle,
+      const uint32_t descriptorIndex, const uint32_t bindingIndex) = 0;
 
   virtual void bindTable(uint32_t bindSpace,
                          const BindingTableHandle bindHandle,
-                         const RSHandle rsHandle) = 0;
+                         const RSHandle rsHandle, bool isCompute = false) = 0;
 };
 }  // namespace SirEngine::graphics

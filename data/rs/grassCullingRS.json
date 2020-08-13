@@ -1,0 +1,39 @@
+{
+  "type": "COMPUTE",
+  "staticSamplers": true,
+  "useRegisterSpace": true,
+  "flatDescriptorTable": true,
+  "passConfig": [], 
+  "config": [
+    {
+      "comment": "source texture",
+      "type": "descriptorTable",
+      "visibility": "CS",
+      "data": {
+        "ranges": [
+          {
+            "type": "SRV",
+            "numDescriptors": 1,
+            "baseRegister": 0,
+            "underlyingResource": "buffer"
+          }
+        ]
+      }
+    },
+    {
+      "visibility": "CS",
+      "comment": "destination texture",
+      "type": "descriptorTable",
+      "data": {
+        "ranges": [
+          {
+            "type": "UAV",
+            "numDescriptors": 1,
+            "baseRegister": 1,
+            "underlyingResource": "buffer"
+          }
+        ]
+      }
+    }
+  ]
+}

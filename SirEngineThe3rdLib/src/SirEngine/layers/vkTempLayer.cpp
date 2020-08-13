@@ -3,9 +3,7 @@
 #include "SirEngine/application.h"
 #include "SirEngine/assetManager.h"
 #include "SirEngine/binary/binaryFile.h"
-#include "SirEngine/bufferManager.h"
 #include "SirEngine/constantBufferManager.h"
-#include "SirEngine/events/debugEvent.h"
 #include "SirEngine/events/keyboardEvent.h"
 #include "SirEngine/events/mouseEvent.h"
 #include "SirEngine/events/shaderCompileEvent.h"
@@ -24,6 +22,7 @@
 #include "SirEngine/interopData.h"
 #include "SirEngine/log.h"
 #include "SirEngine/psoManager.h"
+#include "SirEngine/graphics/postProcess/effects/edgeDetect.h"
 
 namespace SirEngine {
 
@@ -70,6 +69,8 @@ void VkTempLayer::onAttach() {
   auto *const debugDraw = new DebugDrawNode(*alloc);
   auto *const finalBlit = new FinalBlitNode(*alloc);
   auto *postProcess = new PostProcessStack(*alloc);
+  //postProcess->allocateRenderPass<EdgeDetectEffect>(
+  //    "EdgeDetect");
   postProcess->allocateRenderPass<GammaAndToneMappingEffect>(
       "GammaToneMapping");
   postProcess->initialize();

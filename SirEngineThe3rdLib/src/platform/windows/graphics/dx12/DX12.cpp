@@ -80,20 +80,20 @@ void createFrameCommand(FrameCommand *fc) {
 
 bool initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
                             const uint32_t height) {
-  // lets enable debug layer if needed
-  #if defined(DEBUG) || defined(_DEBUG)
-    {
-      const HRESULT result =
-          D3D12GetDebugInterface(IID_PPV_ARGS(&DEBUG_CONTROLLER));
-      if (FAILED(result)) {
-        return false;
-      }
-      DEBUG_CONTROLLER->EnableDebugLayer();
-      // ID3D12Debug1 *debug1;
-      // DEBUG_CONTROLLER->QueryInterface(IID_PPV_ARGS(&debug1));
-      // debug1->SetEnableGPUBasedValidation(true);
+// lets enable debug layer if needed
+#if defined(DEBUG) || defined(_DEBUG)
+  {
+    const HRESULT result =
+        D3D12GetDebugInterface(IID_PPV_ARGS(&DEBUG_CONTROLLER));
+    if (FAILED(result)) {
+      return false;
     }
-  #endif
+    DEBUG_CONTROLLER->EnableDebugLayer();
+    // ID3D12Debug1 *debug1;
+    // DEBUG_CONTROLLER->QueryInterface(IID_PPV_ARGS(&debug1));
+    // debug1->SetEnableGPUBasedValidation(true);
+  }
+#endif
 
   HRESULT result = CreateDXGIFactory1(IID_PPV_ARGS(&DXGI_FACTORY));
   if (FAILED(result)) {
@@ -853,6 +853,14 @@ void Dx12RenderingContext::bindCameraBuffer(RSHandle) const {
           .gpuHandle;
   commandList->SetGraphicsRootDescriptorTable(
       PSOManager::PER_FRAME_DATA_BINDING_INDEX, handle);
+}
+
+void Dx12RenderingContext::dispatchCompute(const uint32_t blockX,
+                                           const uint32_t blockY,
+                                           const uint32_t blockZ) {
+  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
+  auto commandList = currentFc->commandList;
+  commandList->Dispatch(blockX, blockY, blockZ);
 }
 
 bool Dx12RenderingContext::newFrame() {

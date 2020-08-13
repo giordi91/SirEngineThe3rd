@@ -20,6 +20,9 @@ static const char *GRASS_PSO = "grassForwardPSO";
 static const char *GRASS_PLANE_RS = "grassPlaneRS";
 static const char *GRASS_PLANE_PSO = "grassPlanePSO";
 
+static const char *GRASS_CULL_RS = "grassCullingRS";
+static const char *GRASS_CULL_PSO = "grassCullingPSO";
+
 void GrassTechnique::setup(const uint32_t id) {
   if (id != GRASS_TECHNIQUE_FORWARD) {
     SE_CORE_WARN("Anything other than forward unsupported for grass for now");
@@ -51,6 +54,9 @@ void GrassTechnique::setup(const uint32_t id) {
   m_groundRs =
       globals::ROOT_SIGNATURE_MANAGER->getHandleFromName(GRASS_PLANE_RS);
   m_groundPso = globals::PSO_MANAGER->getHandleFromName(GRASS_PLANE_PSO);
+  m_grassCullRs =
+      globals::ROOT_SIGNATURE_MANAGER->getHandleFromName(GRASS_CULL_RS);
+  m_grassCullPso = globals::PSO_MANAGER->getHandleFromName(GRASS_CULL_PSO);
 
   // lets read the grass file
   const char *grassFile = "../data/processed/grass/grass.points";
@@ -131,15 +137,46 @@ void GrassTechnique::setup(const uint32_t id) {
       groundDescriptions, ARRAYSIZE(groundDescriptions),
       graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED,
       "grassGroundBindingTable");
+
+  graphics::BindingDescription cullingDescription[2] = {
+      {0, GRAPHIC_RESOURCE_TYPE::READ_BUFFER,
+       GRAPHICS_RESOURCE_VISIBILITY_COMPUTE},
+      {1, GRAPHIC_RESOURCE_TYPE::READWRITE_BUFFER,
+       GRAPHICS_RESOURCE_VISIBILITY_COMPUTE}};
+  m_cullinngBindingTable = globals::BINDING_TABLE_MANAGER->allocateBindingTable(
+      cullingDescription, 2,
+      graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_NONE,
+      "grassCullingBindingTable");
+
+  std::vector<int> data;
+  for (int i = 0; i < 32; ++i) {
+    data.push_back(i);
+  }
+
+  m_cullingInBuffer = globals::BUFFER_MANAGER->allocate(
+      sizeof(int) * 32, data.data(), "cullingInput", 32, sizeof(int),
+      BufferManager::BUFFER_FLAGS_BITS::GPU_ONLY |
+          BufferManager::BUFFER_FLAGS_BITS::STORAGE_BUFFER);
+
+  m_cullingOutBuffer = globals::BUFFER_MANAGER->allocate(
+      sizeof(int) * 32, nullptr, "cullingOutput", 32, sizeof(int),
+      BufferManager::BUFFER_FLAGS_BITS::GPU_ONLY |
+          BufferManager::BUFFER_FLAGS_BITS::STORAGE_BUFFER |
+          BufferManager::BUFFER_FLAGS_BITS::RANDOM_WRITE);
+
+  globals::BINDING_TABLE_MANAGER->bindBuffer(m_cullinngBindingTable,
+                                             m_cullingInBuffer, 0, 0);
+  globals::BINDING_TABLE_MANAGER->bindBuffer(m_cullinngBindingTable,
+                                             m_cullingOutBuffer, 1, 1);
 }
 
-void GrassTechnique::render(const uint32_t id,
-                            const BindingTableHandle passHandle) {
+void GrassTechnique::passRender(const uint32_t id,
+                                const BindingTableHandle passHandle) {
   if (id != GRASS_TECHNIQUE_FORWARD) {
     SE_CORE_WARN("Anything other than forward unsupported for grass for now");
     return;
   }
-  tileDebug();
+  // tileDebug();
 
   globals::CONSTANT_BUFFER_MANAGER->update(m_grassConfigHandle, &m_grassConfig);
 
@@ -197,6 +234,14 @@ void GrassTechnique::clear(const uint32_t id) {
     globals::BUFFER_MANAGER->free(m_grassBuffer);
     m_grassBuffer = {0};
   }
+  if (m_cullingInBuffer.isHandleValid()) {
+    globals::BUFFER_MANAGER->free(m_cullingInBuffer);
+    m_cullingInBuffer = {0};
+  }
+  if (m_cullingOutBuffer.isHandleValid()) {
+    globals::BUFFER_MANAGER->free(m_cullingOutBuffer);
+    m_cullingOutBuffer = {0};
+  }
   if (m_windTexture.isHandleValid()) {
     globals::TEXTURE_MANAGER->free(m_windTexture);
     m_windTexture = {0};
@@ -225,6 +270,21 @@ void GrassTechnique::clear(const uint32_t id) {
     globals::BINDING_TABLE_MANAGER->free(m_groundBindingTable);
     m_groundBindingTable = {0};
   }
+  if (m_cullinngBindingTable.isHandleValid()) {
+    globals::BINDING_TABLE_MANAGER->free(m_cullinngBindingTable);
+    m_cullinngBindingTable = {0};
+  }
+}
+
+void GrassTechnique::prePassRender(uint32_t id) { performCulling(); }
+
+void GrassTechnique::performCulling() {
+  globals::PSO_MANAGER->bindPSO(m_grassCullPso);
+  globals::BINDING_TABLE_MANAGER->bindTable(
+      PSOManager::PER_OBJECT_BINDING_INDEX, m_cullinngBindingTable,
+      m_grassCullRs, true);
+
+  globals::RENDERING_CONTEXT->dispatchCompute(2, 1, 1);
 }
 
 void GrassTechnique::tileDebug() {

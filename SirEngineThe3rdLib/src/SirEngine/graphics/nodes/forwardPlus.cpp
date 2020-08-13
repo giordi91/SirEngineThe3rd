@@ -86,12 +86,19 @@ void ForwardPlus::initialize() {
 
   setupLight();
   uint32_t callbackCount = m_callbacks.size();
-  for (int i = 0; i < callbackCount; ++i) {
+  for (uint32_t i = 0; i < callbackCount; ++i) {
     m_callbacks[i].callback->setup(m_callbacks[i].id);
   }
 }
 
 void ForwardPlus::compute() {
+
+    //prepass callbacks
+  uint32_t callbackCount = m_callbacks.size();
+  for (uint32_t i = 0; i < callbackCount; ++i) {
+    m_callbacks[i].callback->prePassRender(m_callbacks[i].id);
+  }
+
   globals::RENDERING_CONTEXT->setBindingObject(m_bindHandle);
 
   globals::BINDING_TABLE_MANAGER->bindConstantBuffer(m_passBindings, m_lightCB,
@@ -115,9 +122,8 @@ void ForwardPlus::compute() {
   globals::RENDERING_CONTEXT->renderQueueType(
       config, SHADER_QUEUE_FLAGS::FORWARD, m_passBindings);
 
-  uint32_t callbackCount = m_callbacks.size();
-  for (int i = 0; i < callbackCount; ++i) {
-    m_callbacks[i].callback->render(m_callbacks[i].id, m_passBindings);
+  for (uint32_t i = 0; i < callbackCount; ++i) {
+    m_callbacks[i].callback->passRender(m_callbacks[i].id, m_passBindings);
   }
 
   globals::RENDERING_CONTEXT->clearBindingObject(m_bindHandle);

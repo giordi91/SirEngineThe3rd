@@ -67,11 +67,15 @@ class VkPSOManager final : public PSOManager {
   void recompilePSOFromShader(const char *shaderName,
                               const char *getOffsetPath) override;
   inline void bindPSO(const PSOHandle handle,
-                      VkCommandBuffer commandList) const {
+                      const VkCommandBuffer commandList) const {
     assertMagicNumber(handle);
     const uint32_t index = getIndexFromHandle(handle);
     const PSOData &data = m_psoPool.getConstRef(index);
-    vkCmdBindPipeline(commandList, VK_PIPELINE_BIND_POINT_GRAPHICS, data.pso);
+    VkPipelineBindPoint bindPoint = data.topology != TOPOLOGY_TYPE::UNDEFINED
+                                        ? VK_PIPELINE_BIND_POINT_GRAPHICS
+                                        : VK_PIPELINE_BIND_POINT_COMPUTE;
+
+    vkCmdBindPipeline(commandList, bindPoint, data.pso);
   }
   inline VkPipeline getPipelineFromHandle(const PSOHandle handle) const {
     assertMagicNumber(handle);
@@ -129,8 +133,8 @@ class VkPSOManager final : public PSOManager {
            "invalid magic handle for constant buffer");
   }
 
-  VkPSOCompileResult processRasterPSO(
-      const char *filePath, const nlohmann::json &jobj) const;
+  VkPSOCompileResult processRasterPSO(const char *filePath,
+                                      const nlohmann::json &jobj) const;
 
   void updatePSOCache(const char *name, const VkPSOCompileResult &result);
 

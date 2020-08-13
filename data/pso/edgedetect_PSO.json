@@ -1,5 +1,0 @@
-{
-  "type": "COMPUTE",
-  "globalRootSignature": "../data/rs/edgedetect_RS.json",
-  "shaderName": "edgedetect"
-}

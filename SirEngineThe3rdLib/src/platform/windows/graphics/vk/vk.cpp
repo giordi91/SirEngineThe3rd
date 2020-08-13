@@ -204,7 +204,7 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   vk::PSO_MANAGER->loadRawPSO("../data/pso/forwardPhongPSO.json");
   vk::PSO_MANAGER->loadRawPSO("../data/pso/grassForwardPSO.json");
   vk::PSO_MANAGER->loadRawPSO("../data/pso/grassPlanePSO.json");
-  vk::PSO_MANAGER->loadRawPSO("../data/pso/edgedetect_PSO.json");
+  vk::PSO_MANAGER->loadRawPSO("../data/pso/grassCullingPSO.json");
   vk::PSO_MANAGER->loadRawPSO("../data/pso/debugDrawLinesSingleColorPSO.json");
   vk::PSO_MANAGER->loadRawPSO("../data/pso/skyboxPSO.json");
   vk::PSO_MANAGER->loadRawPSO("../data/pso/gammaAndToneMappingEffect_PSO.json");
@@ -893,6 +893,14 @@ void VkRenderingContext::renderProcedural(const uint32_t indexCount) {
   auto *currentFc = CURRENT_FRAME_COMMAND;
   VkCommandBuffer commandList = currentFc->m_commandBuffer;
   vkCmdDraw(commandList, indexCount, 1, 0, 0);
+}
+
+void VkRenderingContext::dispatchCompute(const uint32_t blockX,
+                                         const uint32_t blockY,
+                                         const uint32_t blockZ) {
+  auto *currentFc = CURRENT_FRAME_COMMAND;
+  VkCommandBuffer commandList = currentFc->m_commandBuffer;
+  vkCmdDispatch(commandList, blockX, blockY, blockZ);
 }
 
 int vkBarrier(int counter, VkImageMemoryBarrier *barriers,

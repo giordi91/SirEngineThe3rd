@@ -165,6 +165,21 @@ void BufferManagerDx12::bindBufferAsSRVGraphics(
       slot, data.data->GetGPUVirtualAddress() + offset);
 }
 
+void BufferManagerDx12::createUav(const BufferHandle& buffer, DescriptorPair& descriptor, int offset,
+	bool descriptorExits)
+{
+  assertMagicNumber(buffer);
+  const uint32_t index = getIndexFromHandle(buffer);
+  const BufferData &data = m_bufferPool.getConstRef(index);
+
+  // we need to check what the offset in elements is
+  uint32_t elementOffset = offset / data.elementSize;
+
+  dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferUAV(
+      descriptor, data.data, data.elementCount, data.elementSize,
+      elementOffset, descriptorExits);
+}
+
 void BufferManagerDx12::createSrv(const BufferHandle &handle,
                                   DescriptorPair &descriptorPair,
                                   const uint32_t offset,

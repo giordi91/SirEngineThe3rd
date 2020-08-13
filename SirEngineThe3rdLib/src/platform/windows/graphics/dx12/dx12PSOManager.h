@@ -55,31 +55,35 @@ class Dx12PSOManager final : public PSOManager {
         commandList->SetComputeRootSignature(data.root);
       }
     }
-    // TODO move this to the bind pso
-    switch (data.topology) {
-      case (TOPOLOGY_TYPE::TRIANGLE): {
-        commandList->IASetPrimitiveTopology(
-            D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-        break;
+
+    //this is not inside the bindroot because we there might be the  case where
+  	//we are not binding the root and still want to set the topology accordingly
+    if (data.type == PSOType::RASTER) {
+      switch (data.topology) {
+        case (TOPOLOGY_TYPE::TRIANGLE): {
+          commandList->IASetPrimitiveTopology(
+              D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+          break;
+        }
+        case TOPOLOGY_TYPE::UNDEFINED: {
+          assert(0 && "trying to bind undefined topology");
+          return;
+        }
+        case TOPOLOGY_TYPE::LINE: {
+          commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
+          break;
+        }
+        case TOPOLOGY_TYPE::LINE_STRIP: {
+          commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINESTRIP);
+          break;
+        }
+        case TOPOLOGY_TYPE::TRIANGLE_STRIP: {
+          commandList->IASetPrimitiveTopology(
+              D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+          break;
+        }
+        default:;
       }
-      case TOPOLOGY_TYPE::UNDEFINED: {
-        assert(0 && "trying to bind undefined topology");
-        return;
-      }
-      case TOPOLOGY_TYPE::LINE: {
-        commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
-        break;
-      }
-      case TOPOLOGY_TYPE::LINE_STRIP: {
-        commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINESTRIP);
-        break;
-      }
-      case TOPOLOGY_TYPE::TRIANGLE_STRIP: {
-        commandList->IASetPrimitiveTopology(
-            D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-        break;
-      }
-      default:;
     }
   }
   void bindPSO(const PSOHandle handle) const override {

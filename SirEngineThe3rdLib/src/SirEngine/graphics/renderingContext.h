@@ -118,7 +118,8 @@ class RenderingContext {
   virtual void addRenderablesToQueue(
       const RenderableDescription &description) = 0;
   virtual void renderQueueType(const DrawCallConfig &config,
-                               const SHADER_QUEUE_FLAGS flag,BindingTableHandle passBindings) = 0;
+                               const SHADER_QUEUE_FLAGS flag,
+                               BindingTableHandle passBindings) = 0;
   virtual void renderMesh(const MeshHandle handle, bool isIndexed) = 0;
   virtual void renderProcedural(const uint32_t indexCount) = 0;
   virtual void setViewportAndScissor(float offsetX, float offsetY, float width,
@@ -135,6 +136,8 @@ class RenderingContext {
   virtual void freeBindingObject(const BufferBindingsHandle handle) = 0;
   virtual void bindCameraBuffer(int index) const = 0;
   virtual void bindCameraBuffer(RSHandle) const = 0;
+  virtual void dispatchCompute(uint32_t blockX, uint32_t blockY,
+                               uint32_t blockW) = 0;
 
   inline const RenderingContextCreationSettings &getContextSettings() const {
     return m_settings;

@@ -653,6 +653,7 @@ TextureHandle VkTextureManager::allocateTexture(
   bool isRT = (allocFlags & TEXTURE_ALLOCATION_FLAG_BITS::RENDER_TARGET) > 0;
   bool isSrc = (allocFlags & TEXTURE_ALLOCATION_FLAG_BITS::COPY_SOURCE) > 0;
   bool isDest = (allocFlags & TEXTURE_ALLOCATION_FLAG_BITS::COPY_DEST) > 0;
+  bool isStorage= (allocFlags & TEXTURE_ALLOCATION_FLAG_BITS::STORAGE_RESOURCE) > 0;
   bool isShader =
       (allocFlags & TEXTURE_ALLOCATION_FLAG_BITS::SHADER_RESOURCE) > 0;
   bool isDepth = (allocFlags & TEXTURE_ALLOCATION_FLAG_BITS::DEPTH_TEXTURE) > 0;
@@ -661,6 +662,7 @@ TextureHandle VkTextureManager::allocateTexture(
   imageUsageFlags |= isDest ? VK_IMAGE_USAGE_TRANSFER_DST_BIT : 0;
   imageUsageFlags |= isShader ? VK_IMAGE_USAGE_SAMPLED_BIT : 0;
   imageUsageFlags |= isDepth ? VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT : 0;
+  imageUsageFlags |= isStorage? VK_IMAGE_USAGE_STORAGE_BIT: 0;
 
   const std::string textureName = getFileName(name);
 

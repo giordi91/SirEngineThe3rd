@@ -24,6 +24,7 @@ class VkBindingTableManager final : public graphics::BindingTableManager {
     VkDescriptorSetLayout layout;
     DescriptorHandle descriptorHandle;
     graphics::BINDING_TABLE_FLAGS flags;
+    uint32_t descriptionCount;
     uint32_t magicNumber;
   };
 
@@ -97,7 +98,7 @@ class VkBindingTableManager final : public graphics::BindingTableManager {
 	  const uint32_t bindingIndex) override;
 
   void bindTable(uint32_t bindingSpace, const BindingTableHandle bindHandle,
-                 const RSHandle rsHandle) override;
+                 const RSHandle rsHandle, bool isCompute =false) override;
   void free(const BindingTableHandle& bindingTable) override;
 
  private:
