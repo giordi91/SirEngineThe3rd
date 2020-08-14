@@ -223,11 +223,9 @@ class Dx12RenderingContext final : public RenderingContext {
   void executeGlobalCommandList() override;
   void resetGlobalCommandList() override;
   void addRenderablesToQueue(const Renderable &renderable) override;
-  void addRenderablesToQueue(const RenderableDescription &description) override;
   void renderQueueType(const DrawCallConfig &config,
                        const SHADER_QUEUE_FLAGS flag,
                        const BindingTableHandle passBindings) override;
-  void renderMesh(const MeshHandle handle, bool isIndexed) override;
   void fullScreenPass() override;
   BufferBindingsHandle prepareBindingObject(const FrameBufferBindings &bindings,
                                             const char *name) override;
@@ -251,10 +249,12 @@ class Dx12RenderingContext final : public RenderingContext {
   void renderProcedural(const uint32_t indexCount) override;
 
   void bindCameraBuffer(RSHandle) const override;
-  void dispatchCompute(uint32_t blockX, uint32_t blockY, uint32_t blockW) override;
+  void dispatchCompute(uint32_t blockX, uint32_t blockY,
+                       uint32_t blockW) override;
+
  private:
   // member variable mostly temporary
-  //CameraBuffer m_camBufferCPU{};
+  // CameraBuffer m_camBufferCPU{};
   FrameData m_frameData{};
   ConstantBufferHandle m_cameraHandle{};
   ConstantBufferHandle m_lightBuffer{};

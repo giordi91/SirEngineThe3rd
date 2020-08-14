@@ -153,13 +153,16 @@ void GrassTechnique::setup(const uint32_t id) {
     data.push_back(i);
   }
 
+  int totalMaxTiles = MAX_GRASS_PER_SIDE * MAX_GRASS_PER_SIDE;
   m_cullingInBuffer = globals::BUFFER_MANAGER->allocate(
-      sizeof(int) * 32, data.data(), "cullingInput", 32, sizeof(int),
+      sizeof(int) * totalMaxTiles, data.data(), "cullingInput", totalMaxTiles,
+      sizeof(int),
       BufferManager::BUFFER_FLAGS_BITS::GPU_ONLY |
           BufferManager::BUFFER_FLAGS_BITS::STORAGE_BUFFER);
 
   m_cullingOutBuffer = globals::BUFFER_MANAGER->allocate(
-      sizeof(int) * 32, nullptr, "cullingOutput", 32, sizeof(int),
+      sizeof(int) * totalMaxTiles, nullptr, "cullingOutput", totalMaxTiles,
+      sizeof(int),
       BufferManager::BUFFER_FLAGS_BITS::GPU_ONLY |
           BufferManager::BUFFER_FLAGS_BITS::STORAGE_BUFFER |
           BufferManager::BUFFER_FLAGS_BITS::RANDOM_WRITE);

@@ -145,7 +145,7 @@ ShaderCompileResult DXCShaderCompiler::compileShader(const char *shaderPath,
   }
   */
 
-  // here we just copy to a regular blob so we dont have to leak out the IDXC
+  // here we just copy to a regular blob so we don't have to leak out the IDXC
   // interface
   ID3DBlob *blob;
   const HRESULT hr = D3DCreateBlob(pResultBlob->GetBufferSize(), &blob);

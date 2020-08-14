@@ -14,7 +14,7 @@ namespace SirEngine {
 
 RenderingContext *
 createWindowsRenderingContext(const RenderingContextCreationSettings &settings,
-                              uint32_t width, uint32_t height) {
+                              const uint32_t width, const uint32_t height) {
   if (!RenderingContext::isApiSupported(settings.graphicsAPI)) {
     // TODO convert code to name
     SE_CORE_ERROR("Requested api is not supported on system, API code: {0}",

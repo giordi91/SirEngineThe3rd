@@ -1,8 +1,15 @@
 #ifndef STRUCTURES_HLSL
 #define STRUCTURES_HLSL
 
+struct Plane
+{
+	float4 position;
+    float4 normal;
+};
+
 
 struct CameraBuffer {
+  Plane frustum[6];
   float4x4 MVP;
   float4x4 ViewMatrix;
   float4x4 VPinverse;
