@@ -21,7 +21,7 @@ void DebugRenderer::initialize() {
   config.slabSizeInBytes = 16 * MB_TO_BYTE;
   uint32_t frames = globals::ENGINE_CONFIG->m_frameBufferingCount;
   assert(frames <= MAX_FRAMES_IN_FLIGHT);
-  for (int i = 0; i < frames; ++i) {
+  for (uint32_t i = 0; i < frames; ++i) {
     m_lineSlab[i].initialize(config);
   }
 
@@ -288,29 +288,28 @@ void DebugRenderer::drawCamera(const CameraController *camera,
   // line-strip
   int count = 2;
   int linesPerBox = 12;
+  int normalsCount = 6;
   auto *points = static_cast<float *>(globals::FRAME_ALLOCATOR->allocate(
-      sizeof(glm::vec3) * count * linesPerBox * 2));
+      sizeof(glm::vec3) * count * linesPerBox * 2 + (normalsCount * 2)));
   int counter = 0;
-  const auto &minP = glm::vec3(0, 0, 0);
-  const auto &maxP = glm::vec3(10, 10, 10);
 
   glm::mat4x4 cameraM = camera->getViewInverse(glm::mat4x4(1.0f));
   // frustum
-  const CameraBuffer &buffer = camera->getCameraBuffer();
   float angle = camera->getVfov();
 
   // NOTE at one point this might be something that the camera decides?
   float aspsectRatio =
       static_cast<float>(globals::ENGINE_CONFIG->m_windowWidth) /
-      static_cast<float>(globals::ENGINE_CONFIG->m_windowWidth);
-  float apiCompensateFactor =  globals::ENGINE_CONFIG->m_graphicsAPI==GRAPHIC_API::DX12? -1 : 1;
-  float nnear = camera->getNear()*apiCompensateFactor ;
+      static_cast<float>(globals::ENGINE_CONFIG->m_windowHeight);
+  float apiCompensateFactor =
+      globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::DX12 ? 1 : -1;
+  float nnear = camera->getNear() * apiCompensateFactor;
   float hnear = 2.0f * tanf(angle / 2.0f) * nnear;
-  float wnear = hnear * aspsectRatio;
+  float wnear = -hnear * aspsectRatio;
 
-  float ffar = camera->getFar()*apiCompensateFactor;
+  float ffar = camera->getFar() * apiCompensateFactor;
   float hfar = 2.0f * tanf(angle / 2.0f) * ffar;
-  float wfar = hfar * aspsectRatio;
+  float wfar = -hfar * aspsectRatio;
 
   float hnearhalf = hnear / 2.0f;
   float wnearhalf = wnear / 2.0f;
@@ -319,56 +318,91 @@ void DebugRenderer::drawCamera(const CameraController *camera,
   float wfarhalf = wfar / 2.0f;
 
   // near plane
-  counter =
-      push3toVec(points, glm::vec3{wnearhalf, -hnearhalf, -nnear}, counter,cameraM);
-  counter =
-      push3toVec(points, glm::vec3{wnearhalf, hnearhalf, -nnear}, counter,cameraM);
+  counter = push3toVec(points, glm::vec3{wnearhalf, -hnearhalf, nnear},
+                       counter, cameraM);
+  counter = push3toVec(points, glm::vec3{wnearhalf, hnearhalf, nnear}, counter,
+                       cameraM);
 
-  counter =
-      push3toVec(points, glm::vec3{wnearhalf, hnearhalf, -nnear}, counter,cameraM);
-  counter =
-      push3toVec(points, glm::vec3{-wnearhalf, hnearhalf, -nnear}, counter,cameraM);
+  counter = push3toVec(points, glm::vec3{wnearhalf, hnearhalf, nnear}, counter,
+                       cameraM);
+  counter = push3toVec(points, glm::vec3{-wnearhalf, hnearhalf, nnear},
+                       counter, cameraM);
 
-  counter =
-      push3toVec(points, glm::vec3{-wnearhalf, hnearhalf, -nnear}, counter,cameraM);
-  counter =
-      push3toVec(points, glm::vec3{-wnearhalf, -hnearhalf, -nnear}, counter,cameraM);
+  counter = push3toVec(points, glm::vec3{-wnearhalf, hnearhalf, nnear},
+                       counter, cameraM);
+  counter = push3toVec(points, glm::vec3{-wnearhalf, -hnearhalf, nnear},
+                       counter, cameraM);
 
-  counter =
-      push3toVec(points, glm::vec3{-wnearhalf, -hnearhalf, -nnear}, counter,cameraM);
-  counter =
-      push3toVec(points, glm::vec3{wnearhalf, -hnearhalf, -nnear}, counter,cameraM);
+  counter = push3toVec(points, glm::vec3{-wnearhalf, -hnearhalf, nnear},
+                       counter, cameraM);
+  counter = push3toVec(points, glm::vec3{wnearhalf, -hnearhalf, nnear},
+                       counter, cameraM);
 
   // far plane
-  counter = push3toVec(points, glm::vec3{wfarhalf, -hfarhalf, -ffar}, counter,cameraM);
-  counter = push3toVec(points, glm::vec3{wfarhalf, hfarhalf, -ffar}, counter,cameraM);
+  counter = push3toVec(points, glm::vec3{wfarhalf, -hfarhalf, ffar}, counter,
+                       cameraM);
+  counter = push3toVec(points, glm::vec3{wfarhalf, hfarhalf, ffar}, counter,
+                       cameraM);
 
-  counter = push3toVec(points, glm::vec3{wfarhalf, hfarhalf, -ffar}, counter,cameraM);
-  counter = push3toVec(points, glm::vec3{-wfarhalf, hfarhalf, -ffar}, counter,cameraM);
+  counter = push3toVec(points, glm::vec3{wfarhalf, hfarhalf, ffar}, counter,
+                       cameraM);
+  counter = push3toVec(points, glm::vec3{-wfarhalf, hfarhalf, ffar}, counter,
+                       cameraM);
 
-  counter = push3toVec(points, glm::vec3{-wfarhalf, hfarhalf, -ffar}, counter,cameraM);
-  counter = push3toVec(points, glm::vec3{-wfarhalf, -hfarhalf, -ffar}, counter,cameraM);
+  counter = push3toVec(points, glm::vec3{-wfarhalf, hfarhalf, ffar}, counter,
+                       cameraM);
+  counter = push3toVec(points, glm::vec3{-wfarhalf, -hfarhalf, ffar}, counter,
+                       cameraM);
 
-  counter = push3toVec(points, glm::vec3{-wfarhalf, -hfarhalf, -ffar}, counter,cameraM);
-  counter = push3toVec(points, glm::vec3{wfarhalf, -hfarhalf, -ffar}, counter,cameraM);
+  counter = push3toVec(points, glm::vec3{-wfarhalf, -hfarhalf, ffar}, counter,
+                       cameraM);
+  counter = push3toVec(points, glm::vec3{wfarhalf, -hfarhalf, ffar}, counter,
+                       cameraM);
 
   // sides
-  counter = push3toVec(points, glm::vec3{wfarhalf, hfarhalf, -ffar}, counter,cameraM);
-  counter =
-      push3toVec(points, glm::vec3{wnearhalf, hnearhalf, -nnear}, counter,cameraM);
+  counter = push3toVec(points, glm::vec3{wfarhalf, hfarhalf, ffar}, counter,
+                       cameraM);
+  counter = push3toVec(points, glm::vec3{wnearhalf, hnearhalf, nnear}, counter,
+                       cameraM);
 
-  counter = push3toVec(points, glm::vec3{wfarhalf, -hfarhalf, -ffar}, counter,cameraM);
-  counter =
-      push3toVec(points, glm::vec3{wnearhalf, -hnearhalf, -nnear}, counter,cameraM);
+  counter = push3toVec(points, glm::vec3{wfarhalf, -hfarhalf, ffar}, counter,
+                       cameraM);
+  counter = push3toVec(points, glm::vec3{wnearhalf, -hnearhalf, nnear},
+                       counter, cameraM);
 
-  counter = push3toVec(points, glm::vec3{-wfarhalf, hfarhalf, -ffar}, counter,cameraM);
-  counter =
-      push3toVec(points, glm::vec3{-wnearhalf, hnearhalf, -nnear}, counter,cameraM);
+  counter = push3toVec(points, glm::vec3{-wfarhalf, hfarhalf, ffar}, counter,
+                       cameraM);
+  counter = push3toVec(points, glm::vec3{-wnearhalf, hnearhalf, nnear},
+                       counter, cameraM);
 
-  counter = push3toVec(points, glm::vec3{-wfarhalf, -hfarhalf, -ffar}, counter,cameraM);
-  counter =
-      push3toVec(points, glm::vec3{-wnearhalf, -hnearhalf, -nnear}, counter,cameraM);
+  counter = push3toVec(points, glm::vec3{-wfarhalf, -hfarhalf, ffar}, counter,
+                       cameraM);
+  counter = push3toVec(points, glm::vec3{-wnearhalf, -hnearhalf, nnear},
+                       counter, cameraM);
 
+  // drawing camera normals
+  Plane planes[6];
+  camera->getFrustum(planes);
+  glm::vec3 viewDir = camera->getViewDirection();
+  float pushOffset = 0.5f;
+  for (int i = 0; i < 6; ++i) {
+    // let us push the normal a bit in
+    // project the view direction onto the plane and offset by that direction
+    float amount = glm::dot(viewDir, glm::vec3(planes[i].normal));
+    glm::vec3 pushDir =
+        glm::normalize(viewDir - (glm::vec3(planes[i].normal) * amount)) *
+        pushOffset;
+    // since we offset based on the view direction, plane 4,5 are far and near
+    // respectively and we would project to nothing and then normalize so we skip
+    // it
+    pushDir = i < 4 ? pushDir : glm::vec3{};
+
+    counter =
+        push3toVec(points, glm::vec3(planes[i].position) + pushDir, counter);
+    counter = push3toVec(
+        points, glm::vec3(planes[i].position + planes[i].normal) + pushDir,
+        counter);
+  }
   return drawLines(points, counter * sizeof(float), color);
 }
 }  // namespace SirEngine

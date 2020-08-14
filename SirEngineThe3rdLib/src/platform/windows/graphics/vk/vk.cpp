@@ -288,6 +288,7 @@ bool VkRenderingContext::initializeGraphics() {
 }
 
 void VkRenderingContext::setupCameraForFrame() {
+
   globals::ACTIVE_CAMERA->updateCamera();
 
   m_frameData.m_mainCamera = globals::MAIN_CAMERA->getCameraBuffer();
@@ -576,43 +577,6 @@ void VkRenderingContext::addRenderablesToQueue(const Renderable &renderable) {
   }
 }
 
-void VkRenderingContext::addRenderablesToQueue(
-    const RenderableDescription &description) {
-  auto *typedQueues = reinterpret_cast<VkRenderingQueues *>(queues);
-
-  VkRenderable vkRenderable{};
-
-  const VkMaterialRuntime &materialRuntime =
-      vk::MATERIAL_MANAGER->getMaterialRuntime(description.materialHandle);
-
-  vkRenderable.m_materialRuntime = materialRuntime;
-  VkMeshRuntime meshRuntime{};
-  meshRuntime.indexBuffer = nullptr;
-  meshRuntime.indexCount = description.primitiveToRender;
-  meshRuntime.positionRange = description.subranges[0];
-  meshRuntime.positionRange = description.subranges[0];
-  meshRuntime.normalsRange = description.subragesCount > 0
-                                 ? description.subranges[1]
-                                 : MemoryRange{0, 0};
-  meshRuntime.uvRange = description.subragesCount > 1 ? description.subranges[2]
-                                                      : MemoryRange{0, 0};
-  meshRuntime.tangentsRange = description.subragesCount > 2
-                                  ? description.subranges[3]
-                                  : MemoryRange{0, 0};
-  meshRuntime.vertexBuffer =
-      vk::BUFFER_MANAGER->getNativeBuffer(description.buffer);
-
-  vkRenderable.m_meshRuntime = meshRuntime;
-  // store the renderable on each queue
-  for (int i = 0; i < MaterialManager::QUEUE_COUNT; ++i) {
-    const uint32_t flag = materialRuntime.shaderQueueTypeFlags[i];
-
-    if (flag != INVALID_QUEUE_TYPE_FLAGS) {
-      (*typedQueues)[flag].emplace_back(vkRenderable);
-    }
-  }
-}
-
 void VkRenderingContext::renderQueueType(
     const DrawCallConfig &config, const SHADER_QUEUE_FLAGS flag,
     const BindingTableHandle passBindings) {
@@ -858,13 +822,6 @@ void VkRenderingContext::freeBindingObject(const BufferBindingsHandle handle) {
   m_bindingsPool.free(idx);
 }
 
-void VkRenderingContext::renderMesh(const MeshHandle handle, bool isIndexed) {
-  const VkMeshRuntime &runtime = vk::MESH_MANAGER->getMeshRuntime(handle);
-
-  auto *currentFc = CURRENT_FRAME_COMMAND;
-  VkCommandBuffer commandList = currentFc->m_commandBuffer;
-  VkMeshManager::renderMesh(runtime, commandList);
-}
 
 void VkRenderingContext::fullScreenPass() {
   VkCommandBuffer buffer = vk::CURRENT_FRAME_COMMAND->m_commandBuffer;

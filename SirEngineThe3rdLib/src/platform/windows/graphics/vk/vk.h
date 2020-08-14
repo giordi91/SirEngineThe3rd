@@ -168,7 +168,6 @@ class VkRenderingContext final : public RenderingContext {
   void executeGlobalCommandList() override;
   void resetGlobalCommandList() override;
   void addRenderablesToQueue(const Renderable &renderable) override;
-  void addRenderablesToQueue(const RenderableDescription &description) override;
 
   void renderQueueType(const DrawCallConfig &config,
                        const SHADER_QUEUE_FLAGS flag,
@@ -178,9 +177,7 @@ class VkRenderingContext final : public RenderingContext {
   void setBindingObject(const BufferBindingsHandle handle) override;
   void clearBindingObject(const BufferBindingsHandle handle) override;
   void freeBindingObject(const BufferBindingsHandle handle) override;
-  void renderMesh(const MeshHandle handle, bool isIndexed) override;
   void fullScreenPass() override;
-  ;
 
  private:
   inline void assertMagicNumber(const BufferBindingsHandle handle) const {

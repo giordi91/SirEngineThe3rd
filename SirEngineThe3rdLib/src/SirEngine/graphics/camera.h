@@ -40,6 +40,8 @@ class CameraController {
 
   virtual void updateCamera() = 0;
   virtual glm::mat4 getViewInverse(glm::mat4 modelM) const = 0;
+  virtual void getFrustum(Plane* planes) const = 0;
+  virtual glm::vec3 getViewDirection() const = 0;
 
  protected:
   float m_vfov = SE_PI / 4.0f;
@@ -93,11 +95,13 @@ class Camera3DPivot final : public CameraController {
           glm::transpose(getViewInverse(glm::mat4(1.0)));
       m_cameraBuffer.VPinverse = glm::transpose(getMVPInverse(glm::mat4(1.0)));
     }
+    getFrustum(m_cameraBuffer.frustum);
+    m_cameraBuffer.cameraViewDir = glm::vec4(getViewDirection(), 0.0);
+    m_cameraBuffer.position = glm::vec4(getPosition(), 1.0);
     m_cameraBuffer.perspectiveValues = getProjParams();
   }
 
   void updateCamera() override {
-
     if (!globals::INPUT->m_uiCapturingMouse) {
       manipulateCamera();
       updateCameraBuffer();
@@ -116,6 +120,8 @@ class Camera3DPivot final : public CameraController {
   }
 
   glm::mat4 getViewInverse(glm::mat4 modelM) const override;
+  void getFrustum(Plane* outPlanes) const override;
+  glm::vec3 getViewDirection() const override;
 
  private:
   void panCamera(float deltaX, float deltaY);

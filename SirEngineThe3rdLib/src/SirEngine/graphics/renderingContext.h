@@ -115,12 +115,9 @@ class RenderingContext {
   virtual void executeGlobalCommandList() = 0;
   virtual void resetGlobalCommandList() = 0;
   virtual void addRenderablesToQueue(const Renderable &renderable) = 0;
-  virtual void addRenderablesToQueue(
-      const RenderableDescription &description) = 0;
   virtual void renderQueueType(const DrawCallConfig &config,
                                const SHADER_QUEUE_FLAGS flag,
                                BindingTableHandle passBindings) = 0;
-  virtual void renderMesh(const MeshHandle handle, bool isIndexed) = 0;
   virtual void renderProcedural(const uint32_t indexCount) = 0;
   virtual void setViewportAndScissor(float offsetX, float offsetY, float width,
                                      float height, float minDepth,

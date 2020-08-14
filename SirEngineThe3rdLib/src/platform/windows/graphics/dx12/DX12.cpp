@@ -575,40 +575,6 @@ void Dx12RenderingContext::addRenderablesToQueue(const Renderable &renderable) {
   }
 }
 
-void Dx12RenderingContext::addRenderablesToQueue(
-    const RenderableDescription &description) {
-  auto *typedQueues = reinterpret_cast<Dx12RenderingQueues *>(queues);
-
-  Dx12Renderable dx12Renderable{};
-
-  const Dx12MaterialRuntime &materialRuntime =
-      dx12::MATERIAL_MANAGER->getMaterialRuntime(description.materialHandle);
-
-  Dx12MeshRuntime runtime{};
-  runtime.bufferHandle = description.buffer;
-  runtime.indexCount = description.primitiveToRender;
-  runtime.positionRange = description.subranges[0];
-  runtime.positionRange = description.subranges[0];
-  runtime.normalsRange = description.subragesCount > 0
-                             ? description.subranges[1]
-                             : MemoryRange{0, 0};
-  runtime.uvRange = description.subragesCount > 1 ? description.subranges[2]
-                                                  : MemoryRange{0, 0};
-  runtime.tangentsRange = description.subragesCount > 2
-                              ? description.subranges[3]
-                              : MemoryRange{0, 0};
-  dx12Renderable.m_meshRuntime = runtime;
-  dx12Renderable.m_materialRuntime = materialRuntime;
-
-  // store the renderable on each queue
-  for (int i = 0; i < MaterialManager::QUEUE_COUNT; ++i) {
-    const uint32_t flag = materialRuntime.shaderQueueTypeFlags[i];
-
-    if (flag != INVALID_QUEUE_TYPE_FLAGS) {
-      (*typedQueues)[flag].emplace_back(dx12Renderable);
-    }
-  }
-}
 
 void Dx12RenderingContext::renderQueueType(
     const DrawCallConfig &config, const SHADER_QUEUE_FLAGS flag,
@@ -668,13 +634,6 @@ void Dx12RenderingContext::renderQueueType(
   }
 }
 
-void Dx12RenderingContext::renderMesh(const MeshHandle handle, bool isIndexed) {
-  // get mesh runtime
-  const Dx12MeshRuntime runtime = dx12::MESH_MANAGER->getMeshRuntime(handle);
-  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
-  currentFc->commandList->IASetIndexBuffer(&runtime.iview);
-  dx12::MESH_MANAGER->render(runtime, currentFc, isIndexed);
-}
 
 void Dx12RenderingContext::fullScreenPass() {
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;

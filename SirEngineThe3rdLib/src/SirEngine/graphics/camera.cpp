@@ -2,7 +2,6 @@
 
 #include <glm/gtx/transform.hpp>
 
-
 #include "SirEngine/engineConfig.h"
 #include "SirEngine/matrix.h"
 #include "glm/glm.hpp"
@@ -38,6 +37,79 @@ glm::mat4 Camera3DPivot::getViewInverse(const glm::mat4 modelM) const {
   return glm::inverse(viewMatrix) * modelM;
 }
 
+void Camera3DPivot::getFrustum(Plane* outPlanes) const {
+  glm::mat4x4 cameraM = getViewInverse(glm::mat4x4(1.0f));
+
+  float angle = getVfov();
+  float aspsectRatio =
+      static_cast<float>(globals::ENGINE_CONFIG->m_windowWidth) /
+      static_cast<float>(globals::ENGINE_CONFIG->m_windowHeight);
+  float apiCompensateFactor =
+      globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::DX12 ? 1 : -1;
+  float nnear = getNear() * apiCompensateFactor;
+  float hnear = 2.0f * tanf(angle / 2.0f) * glm::abs(nnear);
+  //flipping hnear because we are going left
+  float wnear = -hnear * aspsectRatio;
+
+  float ffar = getFar() * apiCompensateFactor;
+  float hfar = 2.0f * tanf(angle / 2.0f) * glm::abs(ffar);
+  //flipping hfar because we are going left
+  float wfar = -hfar * aspsectRatio;
+
+  float hnearhalf = hnear / 2.0f;
+  float wnearhalf = wnear / 2.0f;
+
+  float hfarhalf = hfar / 2.0f;
+  float wfarhalf = wfar / 2.0f;
+
+  glm::vec4 camPos = glm::vec4(getPosition(), 1);
+  glm::vec3 viewDir = getViewDirection();
+
+  // compute the four near points
+  glm::vec4 topLeft{wnearhalf, hnearhalf, nnear, 1.0f};
+  glm::vec4 topRight{-wnearhalf, hnearhalf, nnear, 1.0f};
+  glm::vec4 bottomLeft{wnearhalf, -hnearhalf, nnear, 1.0f};
+  glm::vec4 bottomRight{-wnearhalf, -hnearhalf, nnear, 1.0f};
+
+  glm::vec4 wTopLeft = (cameraM * topLeft) - camPos;
+  glm::vec4 wTopRight = (cameraM * topRight) - camPos;
+
+  glm::vec4 wBottomLeft = (cameraM * bottomLeft) - camPos;
+  glm::vec4 wBottomRight = (cameraM * bottomRight) - camPos;
+
+  outPlanes[0].normal = -apiCompensateFactor*glm::vec4(
+      glm::normalize(glm::cross(glm::vec3(wTopLeft), glm::vec3(wBottomLeft))),
+      0.0);
+  outPlanes[1].normal = apiCompensateFactor*glm::vec4(
+      glm::normalize(glm::cross(glm::vec3(wTopRight), glm::vec3(wBottomRight))),
+      0.0);
+  outPlanes[2].normal = apiCompensateFactor*glm::vec4(
+      glm::normalize(glm::cross(glm::vec3(wTopLeft), glm::vec3(wTopRight))),
+      0.0);
+  outPlanes[3].normal =
+      -apiCompensateFactor*glm::vec4(glm::normalize(glm::cross(glm::vec3(wBottomLeft),
+                                           glm::vec3(wBottomRight))),
+                 0.0);
+  outPlanes[4].normal = glm::vec4(viewDir, 0.0);
+  outPlanes[5].normal = glm::vec4(-viewDir, 0.0);
+
+
+  // setting positions
+  outPlanes[0].position = cameraM*((topLeft + bottomLeft) * 0.5f);
+  outPlanes[1].position = cameraM*((topRight + bottomRight) * 0.5f);
+  outPlanes[2].position = cameraM*((topLeft + topRight) * 0.5f);
+  outPlanes[3].position = cameraM*((bottomLeft + bottomRight) * 0.5f);
+  outPlanes[4].position = camPos + glm::vec4(viewDir * getFar(), 0);
+  outPlanes[5].position = camPos + glm::vec4(viewDir * getNear(), 0);
+}
+
+glm::vec3 Camera3DPivot::getViewDirection() const {
+
+  float apiCompensateFactor =
+      globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::DX12 ? 1 : -1;
+  return apiCompensateFactor* glm::vec3(getViewInverse(glm::mat4(1))[2]);
+}
+
 void Camera3DPivot::spinCameraWorldYAxis(const float angleInDegrees) {
   // this is a pivot camera, we want to rotate around the pivot
   auto rotationMatrix =
@@ -49,7 +121,6 @@ void Camera3DPivot::spinCameraWorldYAxis(const float angleInDegrees) {
   compensatedPosition = rotationMatrix * compensatedPosition;
   posV = compensatedPosition + lookAtPosV;
 }
-
 
 glm::vec4 Camera3DPivot::getProjParams() const {
   // preparing camera values for deferred
