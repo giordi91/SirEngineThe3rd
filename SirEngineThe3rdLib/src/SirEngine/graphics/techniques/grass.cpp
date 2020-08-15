@@ -23,6 +23,51 @@ static const char *GRASS_PLANE_PSO = "grassPlanePSO";
 static const char *GRASS_CULL_RS = "grassCullingRS";
 static const char *GRASS_CULL_PSO = "grassCullingPSO";
 
+void GrassTechnique::buildBindingTables() {
+  // build binding table
+  graphics::BindingDescription descriptions[] = {
+      {0, GRAPHIC_RESOURCE_TYPE::READ_BUFFER,  // tiles points
+       GRAPHICS_RESOURCE_VISIBILITY_VERTEX},
+      {1, GRAPHIC_RESOURCE_TYPE::READ_BUFFER,  // tiles ids
+       GRAPHICS_RESOURCE_VISIBILITY_VERTEX},
+      {2, GRAPHIC_RESOURCE_TYPE::TEXTURE,  // wind texture
+       GRAPHICS_RESOURCE_VISIBILITY_VERTEX},
+      {3, GRAPHIC_RESOURCE_TYPE::CONSTANT_BUFFER,  // grass config
+       GRAPHICS_RESOURCE_VISIBILITY_VERTEX |
+           GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT},
+      {4, GRAPHIC_RESOURCE_TYPE::TEXTURE,  // albedo texture
+       GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT},
+  };
+  m_bindingTable = globals::BINDING_TABLE_MANAGER->allocateBindingTable(
+      descriptions, ARRAYSIZE(descriptions),
+      graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED,
+      "grassBindingTable");
+
+  graphics::BindingDescription groundDescriptions[] = {
+      {3, GRAPHIC_RESOURCE_TYPE::CONSTANT_BUFFER,  // grass config
+       GRAPHICS_RESOURCE_VISIBILITY_VERTEX |
+           GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT},
+      {4, GRAPHIC_RESOURCE_TYPE::TEXTURE,  // albedo texture
+       GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT},
+  };
+  m_groundBindingTable = globals::BINDING_TABLE_MANAGER->allocateBindingTable(
+      groundDescriptions, ARRAYSIZE(groundDescriptions),
+      graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED,
+      "grassGroundBindingTable");
+
+  graphics::BindingDescription cullingDescription[3] = {
+      {0, GRAPHIC_RESOURCE_TYPE::READ_BUFFER,
+       GRAPHICS_RESOURCE_VISIBILITY_COMPUTE},
+      {1, GRAPHIC_RESOURCE_TYPE::READWRITE_BUFFER,
+       GRAPHICS_RESOURCE_VISIBILITY_COMPUTE},
+      {2, GRAPHIC_RESOURCE_TYPE::CONSTANT_BUFFER,
+       GRAPHICS_RESOURCE_VISIBILITY_COMPUTE}};
+  m_cullinngBindingTable = globals::BINDING_TABLE_MANAGER->allocateBindingTable(
+      cullingDescription, 3,
+      graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED,
+      "grassCullingBindingTable");
+}
+
 void GrassTechnique::setup(const uint32_t id) {
   if (id != GRASS_TECHNIQUE_FORWARD) {
     SE_CORE_WARN("Anything other than forward unsupported for grass for now");
@@ -74,12 +119,25 @@ void GrassTechnique::setup(const uint32_t id) {
 
   int runtimeTilesCount = MAX_GRASS_PER_SIDE * MAX_GRASS_PER_SIDE;
   m_tilesIndices.reserve(runtimeTilesCount);
+  m_tilePositions.reserve(runtimeTilesCount);
+
+  // computing the min corner for the grid
+  int tilesPerSide = m_grassConfig.tilesPerSide;
+  float halfSize = tilesPerSide * 0.5f;
+  float tw = m_grassConfig.tileSize;
+
+  glm::vec3 minCorner =
+      m_grassConfig.gridOrigin - glm::vec3(halfSize, 0, halfSize) * tw;
+
   for (int tileY = 0; tileY < m_grassConfig.tilesPerSide; ++tileY) {
     for (int tileX = 0; tileX < m_grassConfig.tilesPerSide; ++tileX) {
       int value =
           (rand() * static_cast<int>(m_grassConfig.sourceDataTileCount) /
            RAND_MAX);
       m_tilesIndices.push_back(value);
+
+      auto pos = minCorner + glm::vec3(tw * tileX, 0, tw * tileY);
+      m_tilePositions.emplace_back(glm::vec4(pos, 1.0));
     }
   }
 
@@ -107,70 +165,40 @@ void GrassTechnique::setup(const uint32_t id) {
       ConstantBufferManager::CONSTANT_BUFFER_FLAG_BITS::UPDATED_EVERY_FRAME,
       &m_grassConfig);
 
-  // build binding table
-  graphics::BindingDescription descriptions[] = {
-      {0, GRAPHIC_RESOURCE_TYPE::READ_BUFFER,  // tiles points
-       GRAPHICS_RESOURCE_VISIBILITY_VERTEX},
-      {1, GRAPHIC_RESOURCE_TYPE::READ_BUFFER,  // tiles ids
-       GRAPHICS_RESOURCE_VISIBILITY_VERTEX},
-      {2, GRAPHIC_RESOURCE_TYPE::TEXTURE,  // wind texture
-       GRAPHICS_RESOURCE_VISIBILITY_VERTEX},
-      {3, GRAPHIC_RESOURCE_TYPE::CONSTANT_BUFFER,  // grass config
-       GRAPHICS_RESOURCE_VISIBILITY_VERTEX |
-           GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT},
-      {4, GRAPHIC_RESOURCE_TYPE::TEXTURE,  // albedo texture
-       GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT},
-  };
-  m_bindingTable = globals::BINDING_TABLE_MANAGER->allocateBindingTable(
-      descriptions, ARRAYSIZE(descriptions),
-      graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED,
-      "grassBindingTable");
+  buildBindingTables();
 
-  graphics::BindingDescription groundDescriptions[] = {
-      {3, GRAPHIC_RESOURCE_TYPE::CONSTANT_BUFFER,  // grass config
-       GRAPHICS_RESOURCE_VISIBILITY_VERTEX |
-           GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT},
-      {4, GRAPHIC_RESOURCE_TYPE::TEXTURE,  // albedo texture
-       GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT},
-  };
-  m_groundBindingTable = globals::BINDING_TABLE_MANAGER->allocateBindingTable(
-      groundDescriptions, ARRAYSIZE(groundDescriptions),
-      graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED,
-      "grassGroundBindingTable");
-
-  graphics::BindingDescription cullingDescription[2] = {
-      {0, GRAPHIC_RESOURCE_TYPE::READ_BUFFER,
-       GRAPHICS_RESOURCE_VISIBILITY_COMPUTE},
-      {1, GRAPHIC_RESOURCE_TYPE::READWRITE_BUFFER,
-       GRAPHICS_RESOURCE_VISIBILITY_COMPUTE}};
-  m_cullinngBindingTable = globals::BINDING_TABLE_MANAGER->allocateBindingTable(
-      cullingDescription, 2,
-      graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_NONE,
-      "grassCullingBindingTable");
-
-  std::vector<int> data;
-  for (int i = 0; i < 32; ++i) {
-    data.push_back(i);
-  }
-
-  int totalMaxTiles = MAX_GRASS_PER_SIDE * MAX_GRASS_PER_SIDE;
   m_cullingInBuffer = globals::BUFFER_MANAGER->allocate(
-      sizeof(int) * totalMaxTiles, data.data(), "cullingInput", totalMaxTiles,
-      sizeof(int),
+      sizeof(glm::vec4) * runtimeTilesCount, m_tilePositions.data(),
+      "cullingInput", runtimeTilesCount, sizeof(glm::vec4),
       BufferManager::BUFFER_FLAGS_BITS::GPU_ONLY |
           BufferManager::BUFFER_FLAGS_BITS::STORAGE_BUFFER);
 
   m_cullingOutBuffer = globals::BUFFER_MANAGER->allocate(
-      sizeof(int) * totalMaxTiles, nullptr, "cullingOutput", totalMaxTiles,
-      sizeof(int),
+      sizeof(int) * runtimeTilesCount, nullptr, "cullingOutput",
+      runtimeTilesCount, sizeof(int),
       BufferManager::BUFFER_FLAGS_BITS::GPU_ONLY |
           BufferManager::BUFFER_FLAGS_BITS::STORAGE_BUFFER |
           BufferManager::BUFFER_FLAGS_BITS::RANDOM_WRITE);
 
-  globals::BINDING_TABLE_MANAGER->bindBuffer(m_cullinngBindingTable,
-                                             m_cullingInBuffer, 0, 0);
-  globals::BINDING_TABLE_MANAGER->bindBuffer(m_cullinngBindingTable,
-                                             m_cullingOutBuffer, 1, 1);
+}
+
+void GrassTechnique::renderGroundPlane(const BindingTableHandle passHandle) {
+  // render the ground plane
+  globals::BINDING_TABLE_MANAGER->bindConstantBuffer(m_groundBindingTable,
+                                                     m_grassConfigHandle, 0, 3);
+  globals::BINDING_TABLE_MANAGER->bindTexture(
+      m_groundBindingTable, m_groundAlbedoTexture, 1, 4, false);
+  globals::PSO_MANAGER->bindPSO(m_groundPso);
+  globals::RENDERING_CONTEXT->bindCameraBuffer(m_groundRs);
+
+  if (passHandle.isHandleValid()) {
+    globals::BINDING_TABLE_MANAGER->bindTable(
+        PSOManager::PER_PASS_BINDING_INDEX, passHandle, m_rs);
+  }
+  globals::BINDING_TABLE_MANAGER->bindTable(
+      PSOManager::PER_OBJECT_BINDING_INDEX, m_groundBindingTable, m_groundRs);
+
+  globals::RENDERING_CONTEXT->renderProcedural(6);
 }
 
 void GrassTechnique::passRender(const uint32_t id,
@@ -179,7 +207,7 @@ void GrassTechnique::passRender(const uint32_t id,
     SE_CORE_WARN("Anything other than forward unsupported for grass for now");
     return;
   }
-  // tileDebug();
+  tileDebug();
 
   globals::CONSTANT_BUFFER_MANAGER->update(m_grassConfigHandle, &m_grassConfig);
 
@@ -211,21 +239,7 @@ void GrassTechnique::passRender(const uint32_t id,
   globals::RENDERING_CONTEXT->renderProcedural(tileCount * pointsPerTile *
                                                pointsPerBlade);
 
-  globals::BINDING_TABLE_MANAGER->bindConstantBuffer(m_groundBindingTable,
-                                                     m_grassConfigHandle, 0, 3);
-  globals::BINDING_TABLE_MANAGER->bindTexture(
-      m_groundBindingTable, m_groundAlbedoTexture, 1, 4, false);
-  globals::PSO_MANAGER->bindPSO(m_groundPso);
-  globals::RENDERING_CONTEXT->bindCameraBuffer(m_groundRs);
-
-  if (passHandle.isHandleValid()) {
-    globals::BINDING_TABLE_MANAGER->bindTable(
-        PSOManager::PER_PASS_BINDING_INDEX, passHandle, m_rs);
-  }
-  globals::BINDING_TABLE_MANAGER->bindTable(
-      PSOManager::PER_OBJECT_BINDING_INDEX, m_groundBindingTable, m_groundRs);
-
-  globals::RENDERING_CONTEXT->renderProcedural(6);
+  // renderGroundPlane(passHandle);
 }
 
 void GrassTechnique::clear(const uint32_t id) {
@@ -282,11 +296,21 @@ void GrassTechnique::clear(const uint32_t id) {
 void GrassTechnique::prePassRender(uint32_t id) { performCulling(); }
 
 void GrassTechnique::performCulling() {
+
+  globals::BINDING_TABLE_MANAGER->bindBuffer(m_cullinngBindingTable,
+                                             m_cullingInBuffer, 0, 0);
+  globals::BINDING_TABLE_MANAGER->bindBuffer(m_cullinngBindingTable,
+                                             m_cullingOutBuffer, 1, 1);
+  globals::BINDING_TABLE_MANAGER->bindConstantBuffer(m_cullinngBindingTable,
+                                             m_grassConfigHandle, 2, 2);
+
   globals::PSO_MANAGER->bindPSO(m_grassCullPso);
+  globals::RENDERING_CONTEXT->bindCameraBuffer(m_grassCullRs,true);
   globals::BINDING_TABLE_MANAGER->bindTable(
       PSOManager::PER_OBJECT_BINDING_INDEX, m_cullinngBindingTable,
       m_grassCullRs, true);
 
+  assert(0 && "use correct number of blocks");
   globals::RENDERING_CONTEXT->dispatchCompute(2, 1, 1);
 }
 

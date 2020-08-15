@@ -6,7 +6,7 @@
   "passConfig": [], 
   "config": [
     {
-      "comment": "source texture",
+      "comment": "input tile positions",
       "type": "descriptorTable",
       "visibility": "CS",
       "data": {
@@ -22,7 +22,7 @@
     },
     {
       "visibility": "CS",
-      "comment": "destination texture",
+      "comment": "output buffer",
       "type": "descriptorTable",
       "data": {
         "ranges": [
@@ -34,6 +34,22 @@
           }
         ]
       }
+    },
+    {
+      "visibility": "CS",
+      "comment": "grass config",
+      "type": "descriptorTable",
+      "data": {
+        "ranges": [
+          {
+            "type": "CBV",
+            "underlyingResource": "buffer",
+            "numDescriptors": 1,
+            "baseRegister":2 
+          }
+        ]
+      }
     }
+
   ]
 }

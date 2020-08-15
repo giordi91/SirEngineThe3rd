@@ -208,9 +208,7 @@ class Dx12RenderingContext final : public RenderingContext {
   bool initializeGraphics() override;
 
   void setupCameraForFrame() override;
-  void bindCameraBuffer(int index) const override;
 
-  void bindCameraBufferCompute(int index) const;
   void updateSceneBoundingBox();
   void updateDirectionalLightMatrix();
 
@@ -248,7 +246,7 @@ class Dx12RenderingContext final : public RenderingContext {
  public:
   void renderProcedural(const uint32_t indexCount) override;
 
-  void bindCameraBuffer(RSHandle) const override;
+  void bindCameraBuffer(RSHandle, bool isCompute =false) const override;
   void dispatchCompute(uint32_t blockX, uint32_t blockY,
                        uint32_t blockW) override;
 

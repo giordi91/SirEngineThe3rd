@@ -131,8 +131,7 @@ class RenderingContext {
   virtual void setBindingObject(const BufferBindingsHandle handle) = 0;
   virtual void clearBindingObject(const BufferBindingsHandle handle) = 0;
   virtual void freeBindingObject(const BufferBindingsHandle handle) = 0;
-  virtual void bindCameraBuffer(int index) const = 0;
-  virtual void bindCameraBuffer(RSHandle) const = 0;
+  virtual void bindCameraBuffer(RSHandle, bool compute=false) const = 0;
   virtual void dispatchCompute(uint32_t blockX, uint32_t blockY,
                                uint32_t blockW) = 0;
 

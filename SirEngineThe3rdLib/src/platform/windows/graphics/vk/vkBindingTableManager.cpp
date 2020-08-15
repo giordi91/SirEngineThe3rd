@@ -76,6 +76,7 @@ inline VkDescriptorType getResourceType(
     }
     default:
       assert(0 && "resource not yet supported");
+      return VK_DESCRIPTOR_TYPE_MAX_ENUM;
   }
 }
 

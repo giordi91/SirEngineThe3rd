@@ -15,7 +15,7 @@ namespace SirEngine::dx12 {
 
 void bindPBR(const Dx12MaterialRuntime &materialRuntime,
              ID3D12GraphicsCommandList2 *commandList) {
-  dx12::RENDERING_CONTEXT->bindCameraBuffer(0);
+  //dx12::RENDERING_CONTEXT->bindCameraBuffer(0);
 
   commandList->SetGraphicsRootConstantBufferView(
       1, materialRuntime.cbVirtualAddress);
@@ -27,7 +27,7 @@ void bindPBR(const Dx12MaterialRuntime &materialRuntime,
 
 void bindSkinning(const Dx12MaterialRuntime &materialRuntime,
                   ID3D12GraphicsCommandList2 *commandList) {
-  dx12::RENDERING_CONTEXT->bindCameraBuffer(0);
+  //dx12::RENDERING_CONTEXT->bindCameraBuffer(0);
 
   commandList->SetGraphicsRootConstantBufferView(
       1, materialRuntime.cbVirtualAddress);
@@ -73,7 +73,7 @@ void bindSkin(const Dx12MaterialRuntime &materialRuntime,
 }
 void bindSkinSkinning(const Dx12MaterialRuntime &materialRuntime,
                       ID3D12GraphicsCommandList2 *commandList) {
-  dx12::RENDERING_CONTEXT->bindCameraBuffer(0);
+  //dx12::RENDERING_CONTEXT->bindCameraBuffer(0);
   commandList->SetGraphicsRootConstantBufferView(
       1, materialRuntime.cbVirtualAddress);
   commandList->SetGraphicsRootDescriptorTable(2, materialRuntime.albedo);
@@ -152,7 +152,7 @@ void bindParallaxPBR(const Dx12MaterialRuntime &materialRuntime,
   const auto address =
       dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(lightCB);
 
-  dx12::RENDERING_CONTEXT->bindCameraBuffer(0);
+  //dx12::RENDERING_CONTEXT->bindCameraBuffer(0);
 
   commandList->SetGraphicsRootConstantBufferView(1, address);
   commandList->SetGraphicsRootConstantBufferView(
@@ -187,7 +187,7 @@ void bindParallaxPBR(const Dx12MaterialRuntime &materialRuntime,
 
 void bindForwardPhongAlphaCutoutSkin(const Dx12MaterialRuntime &materialRuntime,
                                      ID3D12GraphicsCommandList2 *commandList) {
-  dx12::RENDERING_CONTEXT->bindCameraBuffer(0);
+  //dx12::RENDERING_CONTEXT->bindCameraBuffer(0);
   const ConstantBufferHandle lightCB = dx12::RENDERING_CONTEXT->getLightCB();
   const auto address =
       dx12::CONSTANT_BUFFER_MANAGER->getVirtualAddress(lightCB);
@@ -221,7 +221,7 @@ void bindForwardPhongAlphaCutoutSkin(const Dx12MaterialRuntime &materialRuntime,
 }
 void bindHair(const Dx12MaterialRuntime &materialRuntime,
               ID3D12GraphicsCommandList2 *commandList) {
-  dx12::RENDERING_CONTEXT->bindCameraBuffer(0);
+  //dx12::RENDERING_CONTEXT->bindCameraBuffer(0);
 
   const ConstantBufferHandle lightCB = dx12::RENDERING_CONTEXT->getLightCB();
   const auto address =
