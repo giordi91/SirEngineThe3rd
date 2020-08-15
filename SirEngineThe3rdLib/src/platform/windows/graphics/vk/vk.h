@@ -153,8 +153,7 @@ class VkRenderingContext final : public RenderingContext {
   bool initializeGraphics() override;
 
   void setupCameraForFrame() override;
-  void bindCameraBuffer(int index = 0) const override;
-  void bindCameraBuffer(RSHandle) const override;
+  void bindCameraBuffer(RSHandle, bool isCompute=false) const override;
   void bindCameraBufferCompute(int index) const;
   void updateSceneBoundingBox();
   void updateDirectionalLightMatrix();

@@ -317,15 +317,7 @@ void VkRenderingContext::setupCameraForFrame() {
                          nullptr);
 }
 
-void VkRenderingContext::bindCameraBuffer(int index) const {
-  // VkWriteDescriptorSet writeDescriptorSets{};
-  // VkDescriptorBufferInfo bufferInfoUniform = {};
-  // vk::CONSTANT_BUFFER_MANAGER->bindConstantBuffer(
-  //    m_cameraHandle, bufferInfoUniform, 0, &writeDescriptorSets,
-  //    vk::PER_FRAME_DESCRIPTOR_SET);
-}
-
-void VkRenderingContext::bindCameraBuffer(RSHandle rs) const {
+void VkRenderingContext::bindCameraBuffer(const RSHandle rs, bool isCompute) const {
   VkDescriptorSet descriptorSet =
       vk::DESCRIPTOR_MANAGER->getDescriptorSet(PER_FRAME_DATA_HANDLE);
 
@@ -336,8 +328,9 @@ void VkRenderingContext::bindCameraBuffer(RSHandle rs) const {
   VkDescriptorSet sets[] = {
       descriptorSet,
   };
+  auto bindPoint = isCompute ?VK_PIPELINE_BIND_POINT_COMPUTE : VK_PIPELINE_BIND_POINT_GRAPHICS;
   vkCmdBindDescriptorSets(
-      CURRENT_FRAME_COMMAND->m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+      CURRENT_FRAME_COMMAND->m_commandBuffer, bindPoint,
       layout, PSOManager::PER_FRAME_DATA_BINDING_INDEX, 1, sets, 0, nullptr);
 }
 

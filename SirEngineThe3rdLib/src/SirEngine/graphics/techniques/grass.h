@@ -23,6 +23,8 @@ class GrassTechnique final : public GNodeCallback {
 	 static constexpr uint32_t GRASS_TECHNIQUE_SHADOW = 2;
 
  private:
+  void buildBindingTables();
+  void renderGroundPlane(BindingTableHandle passHandle);
   void performCulling();
   void tileDebug();
 
@@ -50,6 +52,7 @@ class GrassTechnique final : public GNodeCallback {
   std::vector<char> m_binaryData;
   std::vector<glm::vec3> m_tilesPoints;
   std::vector<int> m_tilesIndices;
+  std::vector<glm::vec4> m_tilePositions;
   BindingTableHandle m_cullinngBindingTable{};
   RSHandle m_grassCullRs{};
   PSOHandle m_grassCullPso{};

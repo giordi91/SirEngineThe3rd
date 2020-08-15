@@ -147,7 +147,6 @@ void VS()
 	float widthRandom = grassConfig.widthRandom;
 	float heightRandom = grassConfig.heightRandom;
 
-
     int tileNumber = int(vid/grassConfig.pointsPerTile);
     int tilesPerSide = grassConfig.tilesPerSide;
     float halfSize = tilesPerSide*0.5;

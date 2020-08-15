@@ -422,28 +422,6 @@ void Dx12RenderingContext::setupCameraForFrame() {
   globals::CONSTANT_BUFFER_MANAGER->update(m_cameraHandle, &m_frameData);
 }
 
-void Dx12RenderingContext::bindCameraBuffer(const int index = 0) const {
-  // assert(0);
-  // TODO REMOVE
-  // this code should not be called anymore and will need to remove after
-  // transition of the whole multi-backend
-  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
-  auto commandList = currentFc->commandList;
-  D3D12_GPU_DESCRIPTOR_HANDLE handle =
-      dx12::CONSTANT_BUFFER_MANAGER->getConstantBufferDx12Handle(m_cameraHandle)
-          .gpuHandle;
-  commandList->SetGraphicsRootDescriptorTable(index, handle);
-}
-
-void Dx12RenderingContext::bindCameraBufferCompute(const int index) const {
-  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
-  auto commandList = currentFc->commandList;
-  commandList->SetComputeRootDescriptorTable(
-      index,
-      dx12::CONSTANT_BUFFER_MANAGER->getConstantBufferDx12Handle(m_cameraHandle)
-          .gpuHandle);
-}
-
 void Dx12RenderingContext::updateSceneBoundingBox() {
   uint32_t boxesCount = 0;
   const BoundingBox *boxes = dx12::MESH_MANAGER->getBoundingBoxes(boxesCount);
@@ -575,7 +553,6 @@ void Dx12RenderingContext::addRenderablesToQueue(const Renderable &renderable) {
   }
 }
 
-
 void Dx12RenderingContext::renderQueueType(
     const DrawCallConfig &config, const SHADER_QUEUE_FLAGS flag,
     const BindingTableHandle passBindings) {
@@ -633,7 +610,6 @@ void Dx12RenderingContext::renderQueueType(
     }
   }
 }
-
 
 void Dx12RenderingContext::fullScreenPass() {
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
@@ -779,7 +755,6 @@ void Dx12RenderingContext::freeBindingObject(
 
   m_bindingsPool.free(idx);
 }
-
 auto Dx12RenderingContext::setViewportAndScissor(
     const float offsetX, const float offsetY, const float width,
     const float height, const float minDepth, const float maxDepth) -> void {
@@ -804,7 +779,9 @@ void Dx12RenderingContext::renderProcedural(const uint32_t indexCount) {
   currentFc->commandList->DrawInstanced(indexCount, 1, 0, 0);
 }
 
-void Dx12RenderingContext::bindCameraBuffer(RSHandle) const {
+void Dx12RenderingContext::bindCameraBuffer(RSHandle,
+                                            const bool isCompute) const {
+  assert(!isCompute);
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
   D3D12_GPU_DESCRIPTOR_HANDLE handle =
