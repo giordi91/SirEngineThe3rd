@@ -26,6 +26,10 @@ layout (set=3,binding=3) uniform ConfigData
 {
 	GrassConfig grassConfig;
 }; 
+layout (set=3,binding=5) buffer tilesCulling
+{
+	uint cullTileId[];
+};
 
 layout (set=1,binding = 0) uniform sampler[7] colorSampler;
 
@@ -148,6 +152,9 @@ void VS()
 	float heightRandom = grassConfig.heightRandom;
 
     int tileNumber = int(vid/grassConfig.pointsPerTile);
+
+    uint notCulled = cullTileId[tileNumber];
+
     int tilesPerSide = grassConfig.tilesPerSide;
     float halfSize = tilesPerSide*0.5;
     float tw = grassConfig.tileSize;
@@ -212,6 +219,7 @@ void VS()
 
     vec3 rotatedOffset = transformation*offset.xyz;
 	position.xyz += rotatedOffset;
+    position.xyz  *= notCulled;
 
 
 	outUV= uv;

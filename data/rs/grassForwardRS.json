@@ -141,6 +141,21 @@
           }
         ]
       }
+    },
+    {
+      "comment": "culled tiles",
+      "type": "descriptorTable",
+      "visibility": "VS",
+      "data": {
+        "ranges": [
+          {
+            "type": "SRV",
+            "numDescriptors": 1,
+            "baseRegister": 5,
+            "underlyingResource": "buffer"
+          }
+        ]
+      }
     }
   ]
 }

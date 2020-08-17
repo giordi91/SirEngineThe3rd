@@ -70,7 +70,7 @@ debugCallback2(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
 bool isExtensionSupported(
     std::vector<VkExtensionProperties> const &availableExtensions,
     char const *const extension) {
-  for (auto &availableExtension : availableExtensions) {
+  for (const auto& availableExtension : availableExtensions) {
     if (strstr(availableExtension.extensionName, extension)) {
       return true;
     }
