@@ -24,7 +24,7 @@ class GrassTechnique final : public GNodeCallback {
 
  private:
   void buildBindingTables();
-  void renderGroundPlane(BindingTableHandle passHandle);
+  void renderGroundPlane(BindingTableHandle passHandle) const;
   void performCulling();
   void tileDebug();
 

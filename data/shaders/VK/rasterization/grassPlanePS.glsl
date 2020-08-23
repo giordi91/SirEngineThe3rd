@@ -11,8 +11,9 @@ layout (location = 3) in vec3 worldPos;
 
 layout (set=0,binding=0) uniform InputData 
 {
-	CameraBuffer cameraBuffer;
+	FrameData frameData;
 }; 
+
 
 //pass data, lights
 layout (set=2,binding=0) uniform LightData 

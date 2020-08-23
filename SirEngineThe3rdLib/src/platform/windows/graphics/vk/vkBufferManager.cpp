@@ -6,6 +6,13 @@
 #include "vkMemory.h"
 
 namespace SirEngine::vk {
+static const VkAccessFlags FLAGS_TO_ACCESS_BITS[] = {
+    VK_ACCESS_FLAG_BITS_MAX_ENUM, VK_ACCESS_MEMORY_WRITE_BIT,
+    VK_ACCESS_MEMORY_READ_BIT};
+
+static const VkPipelineStageFlags FLAGS_TO_STAGE_BITS[] = {
+    VK_PIPELINE_STAGE_FLAG_BITS_MAX_ENUM, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
+    VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT};
 
 void VkBufferManager::initialize() {
   m_randomAlloc.initialize(RANDOM_ALLOC_RESERVE);
@@ -46,6 +53,26 @@ void VkBufferManager::bindBuffer(const BufferHandle handle,
   write->descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
   write->pBufferInfo = &data.info;
   write->descriptorCount = 1;
+}
+
+void VkBufferManager::transitionBuffer(const BufferHandle handle,
+                                       const BufferTransition &transition) {
+  const Buffer &bufferData = getBufferData(handle);
+  VkBufferMemoryBarrier barrier{
+      VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+      nullptr,
+      FLAGS_TO_ACCESS_BITS[transition.sourceState],
+      FLAGS_TO_ACCESS_BITS[transition.destinationState],
+      VK_QUEUE_FAMILY_IGNORED,
+      VK_QUEUE_FAMILY_IGNORED,
+      bufferData.buffer,
+      0,
+      bufferData.size};
+  vkCmdPipelineBarrier(vk::CURRENT_FRAME_COMMAND->m_commandBuffer,
+                       FLAGS_TO_STAGE_BITS[transition.sourceStage],
+                       FLAGS_TO_STAGE_BITS[transition.destinationStage],
+                       VK_DEPENDENCY_BY_REGION_BIT, 0, nullptr, 1, &barrier, 0,
+                       nullptr);
 }
 
 BufferHandle VkBufferManager::allocate(const uint32_t sizeInBytes,
@@ -146,35 +173,5 @@ BufferHandle VkBufferManager::allocate(const uint32_t sizeInBytes,
   BufferHandle handle{(buffer.m_magicNumber << 16) | index};
   return handle;
 }
-
-/*
-void VkBufferManager::update(const ConstantBufferHandle handle, void *data) {
-  assertMagicNumber(handle);
-  uint32_t idx = getIndexFromHandle(handle);
-  const ConstantBufferData &buffData = m_allocInfoStorage.getConstRef(idx);
-
-  bool isBuffered = isFlagSet(buffData.m_flags, BUFFERED);
-  // for now supporting only buffered
-  assert(isBuffered == true);
-
-  bool updatedEveryFrame = isFlagSet(buffData.m_flags, UPDATED_EVERY_FRAME);
-
-  // if we override it every frame, there is no point in doing the whole
-  // buffered thing which a lot more expensive
-  if (updatedEveryFrame) {
-    int slabIndex = buffData.m_slabIdx;
-    const Slab &slab = m_perFrameSlabs[globals::CURRENT_FRAME][slabIndex];
-    assert(data != nullptr);
-    memcpy(static_cast<char *>(slab.m_buffer.data) + buffData.m_range.m_offset,
-           data, buffData.m_range.m_size);
-    return;
-  }
-
-  bool submitBufferedRequest = !updatedEveryFrame && isBuffered;
-  if (submitBufferedRequest) {
-    // we need to do the proper
-    assert(0);
-  }
-}*/
 
 }  // namespace SirEngine::vk
