@@ -151,9 +151,11 @@ void VS()
 	float widthRandom = grassConfig.widthRandom;
 	float heightRandom = grassConfig.heightRandom;
 
-    int tileNumber = int(vid/grassConfig.pointsPerTile);
+    //int tileNumber = int(vid/grassConfig.pointsPerTile);
+    int cullIndex = int(vid/grassConfig.pointsPerTile);
+    int tileNumber = int(cullTileId[cullIndex+4]);
 
-    uint notCulled = cullTileId[tileNumber];
+    //uint notCulled = cullTileId[tileNumber];
 
     int tilesPerSide = grassConfig.tilesPerSide;
     float halfSize = tilesPerSide*0.5;
@@ -164,7 +166,9 @@ void VS()
     float tileY = tileNumber /tilesPerSide;
     vec3 tileCorner = minCorner + vec3(tw*(tileX), 0, tw*tileY);
 
-	vec2 tilePos = p[vid];
+    int tempOffset = 0;//(tileNumber %50) *grassConfig.pointsPerTile ;
+    int inTilePosIdx = int(vid%grassConfig.pointsPerTile);
+	vec2 tilePos = p[inTilePosIdx + tempOffset];
     vec3 position = tileCorner + vec3(tilePos.x,0.0f,tilePos.y)*tw;
 	vec4 offset = vec4(offsets[localId],0.0f);
 
@@ -244,7 +248,7 @@ void VS()
 
     vec3 rotatedOffset = transformation*offset.xyz;
 	position.xyz += rotatedOffset;
-    position.xyz  *= notCulled;
+    //position.xyz  *= tileNumber > 300 ? 0 : 1;
 
 
 	outUV= uv;

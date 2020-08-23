@@ -1,0 +1,69 @@
+{
+  "type": "COMPUTE",
+  "staticSamplers": true,
+  "useRegisterSpace": true,
+  "flatDescriptorTable": true,
+  "passConfig": [], 
+  "config": [
+    {
+      "comment": "input vote",
+      "type": "descriptorTable",
+      "visibility": "CS",
+      "data": {
+        "ranges": [
+          {
+            "type": "SRV",
+            "numDescriptors": 1,
+            "baseRegister": 0,
+            "underlyingResource": "buffer"
+          }
+        ]
+      }
+    },
+    {
+      "visibility": "CS",
+      "comment": "output tiles indices",
+      "type": "descriptorTable",
+      "data": {
+        "ranges": [
+          {
+            "type": "UAV",
+            "numDescriptors": 1,
+            "baseRegister": 1,
+            "underlyingResource": "buffer"
+          }
+        ]
+      }
+    },
+    {
+      "visibility": "CS",
+      "comment": "grass config",
+      "type": "descriptorTable",
+      "data": {
+        "ranges": [
+          {
+            "type": "CBV",
+            "underlyingResource": "buffer",
+            "numDescriptors": 1,
+            "baseRegister":2 
+          }
+        ]
+      }
+    },
+    {
+      "visibility": "CS",
+      "comment": "input tiles indices",
+      "type": "descriptorTable",
+      "data": {
+        "ranges": [
+          {
+            "type": "SRV",
+            "numDescriptors": 1,
+            "baseRegister": 3,
+            "underlyingResource": "buffer"
+          }
+        ]
+      }
+    }
+  ]
+}

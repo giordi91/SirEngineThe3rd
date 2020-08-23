@@ -54,10 +54,14 @@ class GrassTechnique final : public GNodeCallback {
   std::vector<int> m_tilesIndices;
   std::vector<glm::vec4> m_tilePositions;
   BindingTableHandle m_cullinngBindingTable{};
+  BindingTableHandle m_scanBindingTable{};
   RSHandle m_grassCullRs{};
   PSOHandle m_grassCullPso{};
+  RSHandle m_grassCullScanRs{};
+  PSOHandle m_grassCullScanPso{};
   BufferHandle m_cullingInBuffer{};
   BufferHandle m_cullingOutBuffer{};
+  BufferHandle m_outTiles{};
 
   static const uint32_t MAX_GRASS_PER_SIDE = 60;
   std::vector<BoundingBox> m_tiles;

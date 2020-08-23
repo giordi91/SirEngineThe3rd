@@ -1,0 +1,5 @@
+{
+  "type": "COMPUTE",
+  "globalRootSignature": "../data/rs/grassCullingScanRS.json",
+  "shaderName": "grassCullingScan"
+}

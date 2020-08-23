@@ -114,6 +114,26 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
     logPhysicalDevice(PHYSICAL_DEVICE);
   }
 
+  // assert ballots extensions are available
+
+  VkPhysicalDeviceSubgroupProperties subgroupProperties;
+  subgroupProperties.sType =
+      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_PROPERTIES;
+  subgroupProperties.pNext = NULL;
+
+  VkPhysicalDeviceProperties2 physicalDeviceProperties;
+  physicalDeviceProperties.sType =
+      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+  physicalDeviceProperties.pNext = &subgroupProperties;
+
+  vkGetPhysicalDeviceProperties2(PHYSICAL_DEVICE, &physicalDeviceProperties);
+  assert(((subgroupProperties.supportedOperations &
+             VK_SUBGROUP_FEATURE_VOTE_BIT) > 0) &&
+         "gpu does not support wave vote instructions");
+  assert(((subgroupProperties.supportedOperations &
+             VK_SUBGROUP_FEATURE_BALLOT_BIT) > 0) &&
+         "gpu does not support wave ballot instructions");
+
   GRAPHICS_QUEUE_FAMILY = adapterResult.m_graphicsQueueFamilyIndex;
   PRESENTATION_QUEUE_FAMILY = adapterResult.m_presentQueueFamilyIndex;
 
@@ -205,6 +225,7 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   vk::PSO_MANAGER->loadRawPSO("../data/pso/grassForwardPSO.json");
   vk::PSO_MANAGER->loadRawPSO("../data/pso/grassPlanePSO.json");
   vk::PSO_MANAGER->loadRawPSO("../data/pso/grassCullingPSO.json");
+  vk::PSO_MANAGER->loadRawPSO("../data/pso/grassCullingScanPSO.json");
   vk::PSO_MANAGER->loadRawPSO("../data/pso/debugDrawLinesSingleColorPSO.json");
   vk::PSO_MANAGER->loadRawPSO("../data/pso/skyboxPSO.json");
   vk::PSO_MANAGER->loadRawPSO("../data/pso/gammaAndToneMappingEffect_PSO.json");
@@ -288,7 +309,6 @@ bool VkRenderingContext::initializeGraphics() {
 }
 
 void VkRenderingContext::setupCameraForFrame() {
-
   globals::ACTIVE_CAMERA->updateCamera();
 
   m_frameData.m_mainCamera = globals::MAIN_CAMERA->getCameraBuffer();
@@ -317,7 +337,8 @@ void VkRenderingContext::setupCameraForFrame() {
                          nullptr);
 }
 
-void VkRenderingContext::bindCameraBuffer(const RSHandle rs, bool isCompute) const {
+void VkRenderingContext::bindCameraBuffer(const RSHandle rs,
+                                          bool isCompute) const {
   VkDescriptorSet descriptorSet =
       vk::DESCRIPTOR_MANAGER->getDescriptorSet(PER_FRAME_DATA_HANDLE);
 
@@ -328,10 +349,11 @@ void VkRenderingContext::bindCameraBuffer(const RSHandle rs, bool isCompute) con
   VkDescriptorSet sets[] = {
       descriptorSet,
   };
-  auto bindPoint = isCompute ?VK_PIPELINE_BIND_POINT_COMPUTE : VK_PIPELINE_BIND_POINT_GRAPHICS;
-  vkCmdBindDescriptorSets(
-      CURRENT_FRAME_COMMAND->m_commandBuffer, bindPoint,
-      layout, PSOManager::PER_FRAME_DATA_BINDING_INDEX, 1, sets, 0, nullptr);
+  auto bindPoint = isCompute ? VK_PIPELINE_BIND_POINT_COMPUTE
+                             : VK_PIPELINE_BIND_POINT_GRAPHICS;
+  vkCmdBindDescriptorSets(CURRENT_FRAME_COMMAND->m_commandBuffer, bindPoint,
+                          layout, PSOManager::PER_FRAME_DATA_BINDING_INDEX, 1,
+                          sets, 0, nullptr);
 }
 
 void waitOnFence(VkFence fence) {
@@ -814,7 +836,6 @@ void VkRenderingContext::freeBindingObject(const BufferBindingsHandle handle) {
 
   m_bindingsPool.free(idx);
 }
-
 
 void VkRenderingContext::fullScreenPass() {
   VkCommandBuffer buffer = vk::CURRENT_FRAME_COMMAND->m_commandBuffer;
