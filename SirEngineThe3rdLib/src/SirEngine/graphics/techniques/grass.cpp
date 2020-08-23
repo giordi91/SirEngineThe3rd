@@ -22,6 +22,8 @@ static const char *GRASS_PLANE_PSO = "grassPlanePSO";
 
 static const char *GRASS_CULL_RS = "grassCullingRS";
 static const char *GRASS_CULL_PSO = "grassCullingPSO";
+static const char *GRASS_CULL_SCAN_RS = "grassCullingScanRS";
+static const char *GRASS_CULL_SCAN_PSO = "grassCullingScanPSO";
 
 void GrassTechnique::buildBindingTables() {
   // build binding table
@@ -68,6 +70,21 @@ void GrassTechnique::buildBindingTables() {
       cullingDescription, 3,
       graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED,
       "grassCullingBindingTable");
+
+  graphics::BindingDescription scanDescription[4] = {
+      {0, GRAPHIC_RESOURCE_TYPE::READ_BUFFER,
+       GRAPHICS_RESOURCE_VISIBILITY_COMPUTE},
+      {1, GRAPHIC_RESOURCE_TYPE::READWRITE_BUFFER,
+       GRAPHICS_RESOURCE_VISIBILITY_COMPUTE},
+      {2, GRAPHIC_RESOURCE_TYPE::CONSTANT_BUFFER,
+       GRAPHICS_RESOURCE_VISIBILITY_COMPUTE},
+      {3, GRAPHIC_RESOURCE_TYPE::READ_BUFFER,
+       GRAPHICS_RESOURCE_VISIBILITY_COMPUTE},
+  };
+  m_scanBindingTable = globals::BINDING_TABLE_MANAGER->allocateBindingTable(
+      scanDescription, 4,
+      graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_NONE,
+      "grassScanBindingTable");
 }
 
 void GrassTechnique::setup(const uint32_t id) {
@@ -104,6 +121,10 @@ void GrassTechnique::setup(const uint32_t id) {
   m_grassCullRs =
       globals::ROOT_SIGNATURE_MANAGER->getHandleFromName(GRASS_CULL_RS);
   m_grassCullPso = globals::PSO_MANAGER->getHandleFromName(GRASS_CULL_PSO);
+  m_grassCullScanRs =
+      globals::ROOT_SIGNATURE_MANAGER->getHandleFromName(GRASS_CULL_SCAN_RS);
+  m_grassCullScanPso =
+      globals::PSO_MANAGER->getHandleFromName(GRASS_CULL_SCAN_PSO);
 
   // lets read the grass file
   const char *grassFile = "../data/processed/grass/grass.points";
@@ -175,12 +196,35 @@ void GrassTechnique::setup(const uint32_t id) {
       BufferManager::BUFFER_FLAGS_BITS::GPU_ONLY |
           BufferManager::BUFFER_FLAGS_BITS::STORAGE_BUFFER);
 
+  std::vector<int> t;
+  for (int i = 0; i < runtimeTilesCount; ++i) {
+    t.push_back(i % 2);
+  }
   m_cullingOutBuffer = globals::BUFFER_MANAGER->allocate(
-      sizeof(int) * runtimeTilesCount, nullptr, "cullingOutput",
+      // sizeof(int) * runtimeTilesCount, nullptr, "cullingOutput",
+      sizeof(int) * runtimeTilesCount, t.data(), "cullingOutput",
       runtimeTilesCount, sizeof(int),
       BufferManager::BUFFER_FLAGS_BITS::GPU_ONLY |
           BufferManager::BUFFER_FLAGS_BITS::STORAGE_BUFFER |
           BufferManager::BUFFER_FLAGS_BITS::RANDOM_WRITE);
+
+  m_outTiles = globals::BUFFER_MANAGER->allocate(
+      // sizeof(int) * runtimeTilesCount, nullptr, "cullingOutput",
+      sizeof(int) * runtimeTilesCount, nullptr, "tilesOutput",
+      runtimeTilesCount, sizeof(int),
+      BufferManager::BUFFER_FLAGS_BITS::GPU_ONLY |
+          BufferManager::BUFFER_FLAGS_BITS::STORAGE_BUFFER |
+          BufferManager::BUFFER_FLAGS_BITS::RANDOM_WRITE);
+
+  // binding
+  globals::BINDING_TABLE_MANAGER->bindBuffer(m_scanBindingTable,
+                                             m_cullingOutBuffer, 0, 0);
+  globals::BINDING_TABLE_MANAGER->bindBuffer(m_scanBindingTable, m_outTiles, 1,
+                                             1);
+  globals::BINDING_TABLE_MANAGER->bindConstantBuffer(m_scanBindingTable,
+                                                     m_grassConfigHandle, 2, 2);
+  globals::BINDING_TABLE_MANAGER->bindBuffer(m_scanBindingTable,
+                                             m_tilesIndicesHandle, 3, 3);
 }
 
 void GrassTechnique::renderGroundPlane(
@@ -223,7 +267,9 @@ void GrassTechnique::passRender(const uint32_t id,
                                                      m_grassConfigHandle, 3, 3);
   globals::BINDING_TABLE_MANAGER->bindTexture(m_bindingTable, m_albedoTexture,
                                               4, 4, false);
-  globals::BINDING_TABLE_MANAGER->bindBuffer(m_bindingTable, m_cullingOutBuffer,
+  //globals::BINDING_TABLE_MANAGER->bindBuffer(m_bindingTable, m_cullingOutBuffer,
+  //                                           5, 5);
+  globals::BINDING_TABLE_MANAGER->bindBuffer(m_bindingTable, m_outTiles,
                                              5, 5);
 
   globals::BINDING_TABLE_MANAGER->bindTable(
@@ -300,7 +346,7 @@ void GrassTechnique::clear(const uint32_t id) {
 void GrassTechnique::prePassRender(uint32_t id) { performCulling(); }
 
 void GrassTechnique::performCulling() {
-
+  /*
   globals::BUFFER_MANAGER->transitionBuffer(
       m_cullingOutBuffer,
       {
@@ -329,6 +375,36 @@ void GrassTechnique::performCulling() {
 
   globals::BUFFER_MANAGER->transitionBuffer(
       m_cullingOutBuffer,
+      {
+          BufferManager::BUFFER_BARRIER_STATE_BITS::BUFFER_STATE_WRITE,
+          BufferManager::BUFFER_BARRIER_STATE_BITS::BUFFER_STATE_READ,
+          BufferManager::BUFFER_BARRIER_STAGE_BITS::BUFFER_STAGE_COMPUTE,
+          BufferManager::BUFFER_BARRIER_STAGE_BITS::BUFFER_STAGE_GRAPHICS,
+      });
+      */
+  globals::BUFFER_MANAGER->transitionBuffer(
+      m_outTiles,
+      {
+          BufferManager::BUFFER_BARRIER_STATE_BITS::BUFFER_STATE_READ,
+          BufferManager::BUFFER_BARRIER_STATE_BITS::BUFFER_STATE_WRITE,
+          BufferManager::BUFFER_BARRIER_STAGE_BITS::BUFFER_STAGE_GRAPHICS,
+          BufferManager::BUFFER_BARRIER_STAGE_BITS::BUFFER_STAGE_COMPUTE,
+      });
+
+  globals::PSO_MANAGER->bindPSO(m_grassCullScanPso);
+  globals::RENDERING_CONTEXT->bindCameraBuffer(m_grassCullScanRs, true);
+  globals::BINDING_TABLE_MANAGER->bindTable(
+      PSOManager::PER_OBJECT_BINDING_INDEX, m_scanBindingTable,
+      m_grassCullScanRs, true);
+
+  int totalTiles = m_grassConfig.tilesPerSide * m_grassConfig.tilesPerSide;
+  int groupSize = 64;
+  int groupX = totalTiles % groupSize == 0 ? totalTiles / groupSize
+                                           : totalTiles / groupSize + 1;
+  globals::RENDERING_CONTEXT->dispatchCompute(groupX, 1, 1);
+
+  globals::BUFFER_MANAGER->transitionBuffer(
+      m_outTiles,
       {
           BufferManager::BUFFER_BARRIER_STATE_BITS::BUFFER_STATE_WRITE,
           BufferManager::BUFFER_BARRIER_STATE_BITS::BUFFER_STATE_READ,
