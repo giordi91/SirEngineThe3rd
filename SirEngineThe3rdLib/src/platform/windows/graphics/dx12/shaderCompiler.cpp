@@ -5,7 +5,7 @@
 
 // NOTE to work, dxcapi needs to happen after windows.h
 #include <Windows.h>
-//#include <atlbase.h>
+#include <atlbase.h>  // used for CCOM
 #include <d3dcompiler.h>
 #include <dxcapi.h>
 
@@ -26,6 +26,7 @@ DXCShaderCompiler::DXCShaderCompiler() {
   DxcCreateInstance(CLSID_DxcLibrary, __uuidof(IDxcLibrary),
                     (void **)&pLibrary);
 
+  //allocating validator
   DxcCreateInstance(CLSID_DxcValidator, __uuidof(IDxcValidator),
                     (void **)&pValidator);
 
@@ -37,16 +38,18 @@ DXCShaderCompiler::DXCShaderCompiler() {
 DXCShaderCompiler::~DXCShaderCompiler() {
   pCompiler->Release();
   pLibrary->Release();
+  pValidator->Release();
   includeHandle->Release();
 }
-
 ShaderCompileResult DXCShaderCompiler::compileShader(const char *shaderPath,
                                                      ShaderArgs &shaderArgs) {
   // creating a blob of data with the content of the shader
+  //just a temporary frame allocation converting from char* to wchar*
   const wchar_t *wshader = frameConvertWide(shaderPath);
   IDxcOperationResult *pResult;
 
   uint32_t fileSize;
+  //loading the file into a temporary pool from disc
   const char *program = persistentFileLoad(shaderPath, fileSize);
   if (program == nullptr) {
     return {nullptr, nullptr};
@@ -102,7 +105,7 @@ ShaderCompileResult DXCShaderCompiler::compileShader(const char *shaderPath,
   const char *outLog = nullptr;
 
   if (printBlobSize != 0) {
-    outLog = frameConcatenation(
+   outLog = frameConcatenation(
         static_cast<char *>(pPrintBlob->GetBufferPointer()), "\n");
   }
 
@@ -120,21 +123,27 @@ ShaderCompileResult DXCShaderCompiler::compileShader(const char *shaderPath,
   IDxcBlob *pResultBlob;
   pResult->GetResult(&pResultBlob);
 
-  /*
+  //NORMALLY here I would be done just some extra meddling around to just convert IDxcBlob
+  //to an IBlob but here I am trying to do the validation
+
   //NOTE Tried to get validation to work but does not seem to do much unluckily
   // I must be doing something wrong, since I had a shader that on shader playground would not
   //pass validation
   CComPtr<IDxcOperationResult> pValResult;
+  //Here I tried with and without validation flags, no difference.
   HRESULT validationResult = pValidator->Validate(pResultBlob,DxcValidatorFlags_InPlaceEdit,&pValResult);
   assert(SUCCEEDED(validationResult));
 
   IDxcBlobEncoding *pPrintBlobValidation;
   pValResult->GetErrorBuffer(&pPrintBlobValidation);
-  IDxcBlob *pResultBlob2;
-  pValResult->GetResult(&pResultBlob2);
-  HRESULT rr;
-  pValResult->GetStatus(&rr);
 
+  //this was just me trying stuff, to figure out why I would get no error whatsoever
+  IDxcBlob *pResultBlob2; //iirc pResultBlob2 is empty
+  pValResult->GetResult(&pResultBlob2);
+  HRESULT rr;//status returned was OK
+  pValResult->GetStatus(&rr); 
+
+  //size here is 0 and no error was reported
   size_t printBlobSizeValidation = pPrintBlobValidation->GetBufferSize();
   if (printBlobSizeValidation) {
     outLog = frameConcatenation(
@@ -143,7 +152,8 @@ ShaderCompileResult DXCShaderCompiler::compileShader(const char *shaderPath,
     SE_CORE_ERROR("ERROR_LOG:\n {0}", outLog);
     return {nullptr, outLog};
   }
-  */
+
+  //here is where the code would continue if no validation was in place
 
   // here we just copy to a regular blob so we don't have to leak out the IDXC
   // interface
@@ -153,6 +163,7 @@ ShaderCompileResult DXCShaderCompiler::compileShader(const char *shaderPath,
   memcpy(blob->GetBufferPointer(), pResultBlob->GetBufferPointer(),
          pResultBlob->GetBufferSize());
   pResult->Release();
+  auto x= blob->GetBufferPointer(); 
   int size = pResultBlob->GetBufferSize();
   pResult->Release();
   pResultBlob->Release();

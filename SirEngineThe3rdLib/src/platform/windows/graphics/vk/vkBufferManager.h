@@ -60,6 +60,8 @@ private:
            "invalid magic handle for constant buffer");
   }
 
+public:
+  void transitionBuffer(const BufferHandle handle, const BufferTransition& transition) override;
 private:
   SparseMemoryPool<vk::Buffer> m_bufferStorage;
   static const uint32_t RESERVE_SIZE = 400;

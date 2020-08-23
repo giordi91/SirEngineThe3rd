@@ -192,7 +192,6 @@ previousY = e.getY();
 
 bool VkTempLayer::onKeyboardReleaseEvent(KeyboardReleaseEvent &e) {
   // TODO use keycodes
-  int cCode = 67;
   int shiftCode = 16;
   bool isShiftDown = globals::INPUT->isKeyDown(shiftCode);
   if (isShiftDown & (e.getKeyCode() == 67)) {

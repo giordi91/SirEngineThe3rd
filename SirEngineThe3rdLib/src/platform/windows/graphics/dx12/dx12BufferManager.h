@@ -74,6 +74,10 @@ class BufferManagerDx12 final : public BufferManager {
            "invalid magic handle for constant buffer");
   }
 
+public:
+  void transitionBuffer(const BufferHandle handle, const BufferTransition& transition) override;
+
+private:
   struct BufferData {
     ID3D12Resource *data = nullptr;
     void *mappedData = nullptr;

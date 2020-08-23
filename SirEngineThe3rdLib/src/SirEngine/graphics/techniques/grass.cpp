@@ -13,10 +13,6 @@
 #include "SirEngine/rootSignatureManager.h"
 #include "SirEngine/textureManager.h"
 
-// TEMP
-#include "platform/windows/graphics/vk/vk.h"
-#include "platform/windows/graphics/vk/vkBufferManager.h"
-
 namespace SirEngine::graphics {
 
 static const char *GRASS_RS = "grassForwardRS";
@@ -187,7 +183,8 @@ void GrassTechnique::setup(const uint32_t id) {
           BufferManager::BUFFER_FLAGS_BITS::RANDOM_WRITE);
 }
 
-void GrassTechnique::renderGroundPlane(const BindingTableHandle passHandle) {
+void GrassTechnique::renderGroundPlane(
+    const BindingTableHandle passHandle) const {
   // render the ground plane
   globals::BINDING_TABLE_MANAGER->bindConstantBuffer(m_groundBindingTable,
                                                      m_grassConfigHandle, 0, 3);
@@ -226,8 +223,8 @@ void GrassTechnique::passRender(const uint32_t id,
                                                      m_grassConfigHandle, 3, 3);
   globals::BINDING_TABLE_MANAGER->bindTexture(m_bindingTable, m_albedoTexture,
                                               4, 4, false);
-  globals::BINDING_TABLE_MANAGER->bindBuffer(m_bindingTable,
-                                             m_cullingOutBuffer, 5, 5);
+  globals::BINDING_TABLE_MANAGER->bindBuffer(m_bindingTable, m_cullingOutBuffer,
+                                             5, 5);
 
   globals::BINDING_TABLE_MANAGER->bindTable(
       PSOManager::PER_OBJECT_BINDING_INDEX, m_bindingTable, m_rs);
@@ -246,7 +243,7 @@ void GrassTechnique::passRender(const uint32_t id,
   globals::RENDERING_CONTEXT->renderProcedural(tileCount * pointsPerTile *
                                                pointsPerBlade);
 
-  // renderGroundPlane(passHandle);
+  renderGroundPlane(passHandle);
 }
 
 void GrassTechnique::clear(const uint32_t id) {
@@ -303,22 +300,15 @@ void GrassTechnique::clear(const uint32_t id) {
 void GrassTechnique::prePassRender(uint32_t id) { performCulling(); }
 
 void GrassTechnique::performCulling() {
-  auto bufferData = vk::BUFFER_MANAGER->getBufferData(m_cullingOutBuffer);
 
-  VkBufferMemoryBarrier barrier{VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
-                                nullptr,
-                                VkAccessFlagBits::VK_ACCESS_MEMORY_READ_BIT,
-                                VkAccessFlagBits::VK_ACCESS_MEMORY_WRITE_BIT,
-                                VK_QUEUE_FAMILY_IGNORED,
-                                VK_QUEUE_FAMILY_IGNORED,
-                                bufferData.buffer,
-                                0,
-                                bufferData.size};
-  vkCmdPipelineBarrier(
-      vk::CURRENT_FRAME_COMMAND->m_commandBuffer,
-      VkPipelineStageFlagBits::VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
-      VkPipelineStageFlagBits::VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-      VK_DEPENDENCY_BY_REGION_BIT, 0, nullptr, 1, &barrier, 0, nullptr);
+  globals::BUFFER_MANAGER->transitionBuffer(
+      m_cullingOutBuffer,
+      {
+          BufferManager::BUFFER_BARRIER_STATE_BITS::BUFFER_STATE_READ,
+          BufferManager::BUFFER_BARRIER_STATE_BITS::BUFFER_STATE_WRITE,
+          BufferManager::BUFFER_BARRIER_STAGE_BITS::BUFFER_STAGE_GRAPHICS,
+          BufferManager::BUFFER_BARRIER_STAGE_BITS::BUFFER_STAGE_COMPUTE,
+      });
 
   globals::BINDING_TABLE_MANAGER->bindBuffer(m_cullinngBindingTable,
                                              m_cullingInBuffer, 0, 0);
@@ -333,25 +323,18 @@ void GrassTechnique::performCulling() {
       PSOManager::PER_OBJECT_BINDING_INDEX, m_cullinngBindingTable,
       m_grassCullRs, true);
 
-  //assert(0 && "use correct number of blocks");
-  int totalTiles = m_grassConfig.tilesPerSide*m_grassConfig.tilesPerSide;
-  int groupX = totalTiles % 16 == 0 ? totalTiles / 16 : totalTiles / 16 + 1; 
+  int totalTiles = m_grassConfig.tilesPerSide * m_grassConfig.tilesPerSide;
+  int groupX = totalTiles % 16 == 0 ? totalTiles / 16 : totalTiles / 16 + 1;
   globals::RENDERING_CONTEXT->dispatchCompute(groupX, 1, 1);
 
-  VkBufferMemoryBarrier barrier2{VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
-                                nullptr,
-                                VkAccessFlagBits::VK_ACCESS_MEMORY_WRITE_BIT,
-                                VkAccessFlagBits::VK_ACCESS_MEMORY_READ_BIT,
-                                VK_QUEUE_FAMILY_IGNORED,
-                                VK_QUEUE_FAMILY_IGNORED,
-                                bufferData.buffer,
-                                0,
-                                bufferData.size};
-  vkCmdPipelineBarrier(
-      vk::CURRENT_FRAME_COMMAND->m_commandBuffer,
-      VkPipelineStageFlagBits::VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-      VkPipelineStageFlagBits::VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
-      VK_DEPENDENCY_BY_REGION_BIT, 0, nullptr, 1, &barrier2, 0, nullptr);
+  globals::BUFFER_MANAGER->transitionBuffer(
+      m_cullingOutBuffer,
+      {
+          BufferManager::BUFFER_BARRIER_STATE_BITS::BUFFER_STATE_WRITE,
+          BufferManager::BUFFER_BARRIER_STATE_BITS::BUFFER_STATE_READ,
+          BufferManager::BUFFER_BARRIER_STAGE_BITS::BUFFER_STAGE_COMPUTE,
+          BufferManager::BUFFER_BARRIER_STAGE_BITS::BUFFER_STAGE_GRAPHICS,
+      });
 }
 
 void GrassTechnique::tileDebug() {

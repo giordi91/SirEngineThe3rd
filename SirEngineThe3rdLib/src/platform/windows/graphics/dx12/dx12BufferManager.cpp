@@ -97,6 +97,11 @@ void BufferManagerDx12::uploadDataToGpuOnlyBuffer(void *initData,
   }
 }
 
+void BufferManagerDx12::transitionBuffer(const BufferHandle handle, const BufferTransition& transition)
+{
+    assert(0);
+}
+
 BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInBytes,
                                          void *initData, const char *name,
                                          const int numElements,

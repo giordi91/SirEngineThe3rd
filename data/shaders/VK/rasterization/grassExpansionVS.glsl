@@ -173,14 +173,40 @@ void VS()
     //spinning the blade by random amount
     mat3x3 facingRotationMatrix = angleAxis3x3(rand(position.xyz) * TWO_PI, vec3(0, 1, 0));
 
+    vec2 uv = bladeUVs[localId];
+
     //sampling the wind texture
     float range = halfSize*tw; 
 
+    /*
 	vec2 tempUV = vec2((position.x / range)*0.5 + 1,(position.z / range)*0.5 + 1) * 0.1;
     vec2 windUV = fract( tempUV+ grassConfig.windFrequency* frameData.time);
-    vec2 windSample = (texture (sampler2D (windTex, colorSampler[2]), windUV).xy * 2 -1)*grassConfig.windStrength;
-	vec3 wind = normalize(vec3(windSample.y, 0, windSample.x));
-    mat3x3 windRotation = angleAxis3x3(PI*0.5 * length(windSample), wind);
+    vec2 windSample = (texture (sampler2D (windTex, colorSampler[2]), windUV).xy*2 -1  );
+	vec3 wind = normalize(vec3(windSample.x, 0, windSample.y));
+    vec3 windOffset = 
+    mat3x3 windRotation = angleAxis3x3(mix(-PI*0.5*grassConfig.windStrength,PI*0.5*grassConfig.windStrength, length(windSample)), wind);
+    */
+
+    /*
+    //Double sample
+	vec2 tempUV = vec2((position.x / range)*0.5 + 1,(position.z / range)*0.5 + 1)*0.2 ;
+    vec2 windUV = fract( tempUV+ grassConfig.windFrequency* frameData.time);
+    vec2 windSample = (texture (sampler2D (windTex, colorSampler[2]), windUV).xy*2 -1  );
+	//vec3 wind = normalize(vec3(windSample.x, 0, windSample.y));
+    vec2 windOffset = 0.01*uv.y *windSample    + windUV;
+    windSample = (texture (sampler2D (windTex, colorSampler[2]), windOffset).xy*2 -1  );
+	vec3 wind = normalize(vec3(windSample.x, 0, windSample.y));
+    mat3x3 windRotation = angleAxis3x3(mix(-PI*0.5*grassConfig.windStrength,PI*0.5*grassConfig.windStrength, length(windSample)), wind);
+    */
+
+	vec2 tempUV = vec2((position.x / range)*0.5 + 1,(position.z / range)*0.5 + 1)*0.2 ;
+    vec2 windUV = fract( tempUV+ grassConfig.windFrequency* frameData.time);
+    //vec2 windSample = (texture (sampler2D (windTex, colorSampler[2]), windUV).xy*2 -1  );
+	//vec3 wind = normalize(vec3(windSample.x, 0, windSample.y));
+    vec2 windOffset = -0.15*uv.y *grassConfig.windFrequency + windUV;
+    vec2 windSample = (texture (sampler2D (windTex, colorSampler[2]), windOffset).xy*2 -1  );
+	vec3 wind = normalize(vec3(windSample.x, 0, windSample.y));
+    mat3x3 windRotation = angleAxis3x3(mix(-PI*0.5*grassConfig.windStrength,PI*0.5*grassConfig.windStrength, length(windSample)), wind);
 
 
     //bending the bleade
@@ -196,7 +222,6 @@ void VS()
 	float finalWidth = (rand(position.xzy) * 2.0 - 1.0) * widthRandom + width;
 
 
-    vec2 uv = bladeUVs[localId];
 
 	float forward= rand(position.yyz) * grassConfig.bladeForward;
     float segmentForward = pow(uv.y, grassConfig.bladeCurvatureAmount) * forward;

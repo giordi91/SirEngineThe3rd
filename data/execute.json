@@ -3,6 +3,7 @@
     "-p ../data/shaders/VK/rasterization/grassExpansionVS.glsl -o ../data/processed/shaders/VK/rasterization/grassExpansionVS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \"",
     "-p ../data/shaders/VK/compute/edgedetect.glsl -o ../data/processed/shaders/VK/compute/edgedetect.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t compute -d \"",
     "-p ../data/shaders/VK/compute/grassCulling.glsl -o ../data/processed/shaders/VK/compute/grassCulling.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t compute -d \"",
+    "-p ../data/shaders/DX12/compute/dummy.hlsl -o ../data/processed/shaders/DX12/compute/dummy.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t cs_6_2  -e CS -d \"",
     "-p ../data/shaders/DX12/compute/grassCulling.hlsl -o ../data/processed/shaders/DX12/compute/grassCulling.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t cs_6_2  -e CS -d \"",
     "-p ../data/rs/grassCullingRS.json -o ../data/processed/rs/grassCullingRS.root --pluginName rootSignatureCompilerPlugin"
   ],
