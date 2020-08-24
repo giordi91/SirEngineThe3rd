@@ -28,7 +28,7 @@ layout (set=3,binding=3) uniform ConfigData
 }; 
 layout (set=3,binding=5) buffer tilesCulling
 {
-	uint cullTileId[];
+	ivec2 cullTileId[];
 };
 
 layout (set=1,binding = 0) uniform sampler[7] colorSampler;
@@ -153,7 +153,8 @@ void VS()
 
     //int tileNumber = int(vid/grassConfig.pointsPerTile);
     int cullIndex = int(vid/grassConfig.pointsPerTile);
-    int tileNumber = int(cullTileId[cullIndex+4]);
+    ivec2 cullTileData = cullTileId[cullIndex+4];
+    int tileNumber = int(cullTileData.x);
 
     //uint notCulled = cullTileId[tileNumber];
 
@@ -166,7 +167,7 @@ void VS()
     float tileY = tileNumber /tilesPerSide;
     vec3 tileCorner = minCorner + vec3(tw*(tileX), 0, tw*tileY);
 
-    int tempOffset = 0;//(tileNumber %50) *grassConfig.pointsPerTile ;
+    int tempOffset = cullTileData.y *grassConfig.pointsPerTile ;
     int inTilePosIdx = int(vid%grassConfig.pointsPerTile);
 	vec2 tilePos = p[inTilePosIdx + tempOffset];
     vec3 position = tileCorner + vec3(tilePos.x,0.0f,tilePos.y)*tw;
