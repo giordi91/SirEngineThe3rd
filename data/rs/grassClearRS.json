@@ -1,0 +1,23 @@
+{
+  "type": "COMPUTE",
+  "staticSamplers": true,
+  "useRegisterSpace": true,
+  "flatDescriptorTable": true,
+  "passConfig": [], 
+  "config": [
+    {
+      "comment": "to clear",
+      "type": "descriptorTable",
+      "visibility": "CS",
+      "data": {
+        "ranges": [
+          {
+            "type": "UAV",
+            "numDescriptors": 1,
+            "baseRegister": 0,
+            "underlyingResource": "buffer"
+          }
+        ]
+      }
+    }  ]
+}

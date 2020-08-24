@@ -128,10 +128,10 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
 
   vkGetPhysicalDeviceProperties2(PHYSICAL_DEVICE, &physicalDeviceProperties);
   assert(((subgroupProperties.supportedOperations &
-             VK_SUBGROUP_FEATURE_VOTE_BIT) > 0) &&
+           VK_SUBGROUP_FEATURE_VOTE_BIT) > 0) &&
          "gpu does not support wave vote instructions");
   assert(((subgroupProperties.supportedOperations &
-             VK_SUBGROUP_FEATURE_BALLOT_BIT) > 0) &&
+           VK_SUBGROUP_FEATURE_BALLOT_BIT) > 0) &&
          "gpu does not support wave ballot instructions");
 
   GRAPHICS_QUEUE_FAMILY = adapterResult.m_graphicsQueueFamilyIndex;
@@ -225,6 +225,7 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   vk::PSO_MANAGER->loadRawPSO("../data/pso/grassForwardPSO.json");
   vk::PSO_MANAGER->loadRawPSO("../data/pso/grassPlanePSO.json");
   vk::PSO_MANAGER->loadRawPSO("../data/pso/grassCullingPSO.json");
+  vk::PSO_MANAGER->loadRawPSO("../data/pso/grassClearPSO.json");
   vk::PSO_MANAGER->loadRawPSO("../data/pso/grassCullingScanPSO.json");
   vk::PSO_MANAGER->loadRawPSO("../data/pso/debugDrawLinesSingleColorPSO.json");
   vk::PSO_MANAGER->loadRawPSO("../data/pso/skyboxPSO.json");
@@ -872,6 +873,14 @@ void VkRenderingContext::dispatchCompute(const uint32_t blockX,
   auto *currentFc = CURRENT_FRAME_COMMAND;
   VkCommandBuffer commandList = currentFc->m_commandBuffer;
   vkCmdDispatch(commandList, blockX, blockY, blockZ);
+}
+
+void VkRenderingContext::renderProceduralIndirect(
+    const BufferHandle &argsBuffer) {
+  auto *currentFc = CURRENT_FRAME_COMMAND;
+  VkCommandBuffer commandList = currentFc->m_commandBuffer;
+  auto bufferData = vk::BUFFER_MANAGER->getBufferData(argsBuffer);
+  vkCmdDrawIndirect(commandList, bufferData.buffer, 0, 1, 0);
 }
 
 int vkBarrier(int counter, VkImageMemoryBarrier *barriers,

@@ -85,6 +85,15 @@ void GrassTechnique::buildBindingTables() {
       scanDescription, 4,
       graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_NONE,
       "grassScanBindingTable");
+
+  graphics::BindingDescription clearDescription[1] = {
+      {0, GRAPHIC_RESOURCE_TYPE::READWRITE_BUFFER,
+       GRAPHICS_RESOURCE_VISIBILITY_COMPUTE},
+  };
+  m_clearBindingTable = globals::BINDING_TABLE_MANAGER->allocateBindingTable(
+      clearDescription, 1,
+      graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_NONE,
+      "clearBindingTable");
 }
 
 void GrassTechnique::setup(const uint32_t id) {
@@ -125,6 +134,9 @@ void GrassTechnique::setup(const uint32_t id) {
       globals::ROOT_SIGNATURE_MANAGER->getHandleFromName(GRASS_CULL_SCAN_RS);
   m_grassCullScanPso =
       globals::PSO_MANAGER->getHandleFromName(GRASS_CULL_SCAN_PSO);
+  m_grassClearRs =
+      globals::ROOT_SIGNATURE_MANAGER->getHandleFromName("grassClearRS");
+  m_grassClearPso = globals::PSO_MANAGER->getHandleFromName("grassClearPSO");
 
   // lets read the grass file
   const char *grassFile = "../data/processed/grass/grass.points";
@@ -191,27 +203,32 @@ void GrassTechnique::setup(const uint32_t id) {
   buildBindingTables();
 
   m_cullingInBuffer = globals::BUFFER_MANAGER->allocate(
-      sizeof(glm::vec4) * runtimeTilesCount, m_tilePositions.data(),
+      sizeof(glm::vec4) * runtimeTilesCount + 64, m_tilePositions.data(),
       "cullingInput", runtimeTilesCount, sizeof(glm::vec4),
       BufferManager::BUFFER_FLAGS_BITS::GPU_ONLY |
           BufferManager::BUFFER_FLAGS_BITS::STORAGE_BUFFER);
 
-  std::vector<int> t;
-  for (int i = 0; i < runtimeTilesCount; ++i) {
-    t.push_back(i % 2);
-  }
   m_cullingOutBuffer = globals::BUFFER_MANAGER->allocate(
       // sizeof(int) * runtimeTilesCount, nullptr, "cullingOutput",
-      sizeof(int) * runtimeTilesCount, t.data(), "cullingOutput",
+      sizeof(int) * runtimeTilesCount + 64, nullptr, "cullingOutput",
       runtimeTilesCount, sizeof(int),
       BufferManager::BUFFER_FLAGS_BITS::GPU_ONLY |
           BufferManager::BUFFER_FLAGS_BITS::STORAGE_BUFFER |
           BufferManager::BUFFER_FLAGS_BITS::RANDOM_WRITE);
 
+  static constexpr uint32_t SUPPORT_DATA_OFFSET = 16;
   m_outTiles = globals::BUFFER_MANAGER->allocate(
       // sizeof(int) * runtimeTilesCount, nullptr, "cullingOutput",
-      sizeof(int) * runtimeTilesCount, nullptr, "tilesOutput",
-      runtimeTilesCount, sizeof(int),
+      sizeof(int) * runtimeTilesCount + (SUPPORT_DATA_OFFSET * 2), nullptr,
+      "tilesOutput", runtimeTilesCount, sizeof(int),
+      BufferManager::BUFFER_FLAGS_BITS::GPU_ONLY |
+          BufferManager::BUFFER_FLAGS_BITS::STORAGE_BUFFER |
+          BufferManager::BUFFER_FLAGS_BITS::RANDOM_WRITE |
+          BufferManager::BUFFER_FLAGS_BITS::INDIRECT_BUFFER);
+
+  m_atomicBuffer = globals::BUFFER_MANAGER->allocate(
+      // sizeof(int) * runtimeTilesCount, nullptr, "cullingOutput",
+      sizeof(int) * 256, nullptr, "tilesOutput", runtimeTilesCount, sizeof(int),
       BufferManager::BUFFER_FLAGS_BITS::GPU_ONLY |
           BufferManager::BUFFER_FLAGS_BITS::STORAGE_BUFFER |
           BufferManager::BUFFER_FLAGS_BITS::RANDOM_WRITE);
@@ -225,6 +242,9 @@ void GrassTechnique::setup(const uint32_t id) {
                                                      m_grassConfigHandle, 2, 2);
   globals::BINDING_TABLE_MANAGER->bindBuffer(m_scanBindingTable,
                                              m_tilesIndicesHandle, 3, 3);
+
+  globals::BINDING_TABLE_MANAGER->bindBuffer(m_clearBindingTable,
+                                             m_outTiles, 0, 0);
 }
 
 void GrassTechnique::renderGroundPlane(
@@ -286,8 +306,9 @@ void GrassTechnique::passRender(const uint32_t id,
   const int pointsPerTile = m_grassConfig.pointsPerTile;
   const int tileCount = m_grassConfig.tilesPerSide * m_grassConfig.tilesPerSide;
 
-  globals::RENDERING_CONTEXT->renderProcedural(tileCount * pointsPerTile *
-                                               pointsPerBlade);
+  //globals::RENDERING_CONTEXT->renderProcedural(tileCount * pointsPerTile *
+  //                                             pointsPerBlade);
+  globals::RENDERING_CONTEXT->renderProceduralIndirect(m_outTiles);
 
   renderGroundPlane(passHandle);
 }
@@ -403,6 +424,32 @@ void GrassTechnique::performCulling() {
   groupX = totalTiles % groupSize == 0 ? totalTiles / groupSize
                                        : totalTiles / groupSize + 1;
   globals::RENDERING_CONTEXT->dispatchCompute(groupX, 1, 1);
+
+  globals::BUFFER_MANAGER->transitionBuffer(
+      m_outTiles,
+      {
+          BufferManager::BUFFER_BARRIER_STATE_BITS::BUFFER_STATE_WRITE,
+          BufferManager::BUFFER_BARRIER_STATE_BITS::BUFFER_STATE_READ,
+          BufferManager::BUFFER_BARRIER_STAGE_BITS::BUFFER_STAGE_COMPUTE,
+          BufferManager::BUFFER_BARRIER_STAGE_BITS::BUFFER_STAGE_GRAPHICS,
+      });
+
+  globals::BUFFER_MANAGER->transitionBuffer(
+      m_outTiles,
+      {
+          BufferManager::BUFFER_BARRIER_STATE_BITS::BUFFER_STATE_READ,
+          BufferManager::BUFFER_BARRIER_STATE_BITS::BUFFER_STATE_WRITE,
+          BufferManager::BUFFER_BARRIER_STAGE_BITS::BUFFER_STAGE_GRAPHICS,
+          BufferManager::BUFFER_BARRIER_STAGE_BITS::BUFFER_STAGE_COMPUTE,
+      });
+
+  globals::PSO_MANAGER->bindPSO(m_grassClearPso);
+  globals::RENDERING_CONTEXT->bindCameraBuffer(m_grassClearRs, true);
+  globals::BINDING_TABLE_MANAGER->bindTable(
+      PSOManager::PER_OBJECT_BINDING_INDEX, m_clearBindingTable, m_grassClearRs,
+      true);
+
+  globals::RENDERING_CONTEXT->dispatchCompute(1, 1, 1);
 
   globals::BUFFER_MANAGER->transitionBuffer(
       m_outTiles,
