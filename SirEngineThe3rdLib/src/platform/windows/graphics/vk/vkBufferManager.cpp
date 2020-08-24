@@ -87,7 +87,7 @@ BufferHandle VkBufferManager::allocate(const uint32_t sizeInBytes,
   bool isStorage = (flags & BUFFER_FLAGS_BITS::STORAGE_BUFFER) > 0;
   // better be safe than sorry, extensive checks on flags combinations
   assert(!isBuffered && "not supported yet");
-  assert(!isIndirectBuffer && "not supported yet");
+  //assert(!isIndirectBuffer && "not supported yet");
   assert(!(isVertexBuffer && isIndex) &&
          "canont be both vertex and index buffer");
 
@@ -96,6 +96,7 @@ BufferHandle VkBufferManager::allocate(const uint32_t sizeInBytes,
   usage |= isIndex ? VK_BUFFER_USAGE_INDEX_BUFFER_BIT : 0;
   usage |= isIndirectBuffer ? VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT : 0;
   usage |= isVertexBuffer | isStorage ? VK_BUFFER_USAGE_STORAGE_BUFFER_BIT : 0;
+  usage |= isIndirectBuffer ? VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT:0;
 
   VkBufferCreateInfo createInfo{VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};
   createInfo.size = sizeInBytes;

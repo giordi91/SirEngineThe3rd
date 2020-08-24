@@ -799,6 +799,11 @@ void Dx12RenderingContext::dispatchCompute(const uint32_t blockX,
   commandList->Dispatch(blockX, blockY, blockZ);
 }
 
+void Dx12RenderingContext::renderProceduralIndirect(const BufferHandle& argsBuffer)
+{
+    assert(0);
+}
+
 bool Dx12RenderingContext::newFrame() {
   globals::STRING_POOL->resetFrameMemory();
   globals::FRAME_ALLOCATOR->reset();

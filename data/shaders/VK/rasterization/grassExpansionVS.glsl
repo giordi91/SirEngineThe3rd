@@ -133,6 +133,7 @@ float whangHashNoise(uint u, uint v, uint s)
 	}
 
 
+const int SUPPORT_DATA_OFFSET = 16;
 
 
 layout(location =1) out vec2 outUV;
@@ -153,7 +154,7 @@ void VS()
 
     //int tileNumber = int(vid/grassConfig.pointsPerTile);
     int cullIndex = int(vid/grassConfig.pointsPerTile);
-    ivec2 cullTileData = cullTileId[cullIndex+4];
+    ivec2 cullTileData = cullTileId[cullIndex+SUPPORT_DATA_OFFSET];
     int tileNumber = int(cullTileData.x);
 
     //uint notCulled = cullTileId[tileNumber];

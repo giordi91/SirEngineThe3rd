@@ -119,6 +119,7 @@ class RenderingContext {
                                const SHADER_QUEUE_FLAGS flag,
                                BindingTableHandle passBindings) = 0;
   virtual void renderProcedural(const uint32_t indexCount) = 0;
+  virtual void renderProceduralIndirect(const BufferHandle& argsBuffer)=0;
   virtual void setViewportAndScissor(float offsetX, float offsetY, float width,
                                      float height, float minDepth,
                                      float maxDepth) = 0;

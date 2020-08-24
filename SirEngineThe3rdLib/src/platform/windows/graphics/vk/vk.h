@@ -194,6 +194,7 @@ class VkRenderingContext final : public RenderingContext {
   void renderProcedural(const uint32_t indexCount) override;
 
   void dispatchCompute(uint32_t blockX, uint32_t blockY, uint32_t blockZ) override;
+  void renderProceduralIndirect(const BufferHandle& argsBuffer) override;
  private:
   void *queues = nullptr;
   ConstantBufferHandle m_cameraHandle{};
