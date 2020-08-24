@@ -267,10 +267,10 @@ void GrassTechnique::passRender(const uint32_t id,
                                                      m_grassConfigHandle, 3, 3);
   globals::BINDING_TABLE_MANAGER->bindTexture(m_bindingTable, m_albedoTexture,
                                               4, 4, false);
-  //globals::BINDING_TABLE_MANAGER->bindBuffer(m_bindingTable, m_cullingOutBuffer,
+  // globals::BINDING_TABLE_MANAGER->bindBuffer(m_bindingTable,
+  // m_cullingOutBuffer,
   //                                           5, 5);
-  globals::BINDING_TABLE_MANAGER->bindBuffer(m_bindingTable, m_outTiles,
-                                             5, 5);
+  globals::BINDING_TABLE_MANAGER->bindBuffer(m_bindingTable, m_outTiles, 5, 5);
 
   globals::BINDING_TABLE_MANAGER->bindTable(
       PSOManager::PER_OBJECT_BINDING_INDEX, m_bindingTable, m_rs);
@@ -346,7 +346,7 @@ void GrassTechnique::clear(const uint32_t id) {
 void GrassTechnique::prePassRender(uint32_t id) { performCulling(); }
 
 void GrassTechnique::performCulling() {
-  /*
+  // here we compute the surviving tiles
   globals::BUFFER_MANAGER->transitionBuffer(
       m_cullingOutBuffer,
       {
@@ -381,7 +381,7 @@ void GrassTechnique::performCulling() {
           BufferManager::BUFFER_BARRIER_STAGE_BITS::BUFFER_STAGE_COMPUTE,
           BufferManager::BUFFER_BARRIER_STAGE_BITS::BUFFER_STAGE_GRAPHICS,
       });
-      */
+
   globals::BUFFER_MANAGER->transitionBuffer(
       m_outTiles,
       {
@@ -391,16 +391,17 @@ void GrassTechnique::performCulling() {
           BufferManager::BUFFER_BARRIER_STAGE_BITS::BUFFER_STAGE_COMPUTE,
       });
 
+  // here we compact the surviving tiles
   globals::PSO_MANAGER->bindPSO(m_grassCullScanPso);
   globals::RENDERING_CONTEXT->bindCameraBuffer(m_grassCullScanRs, true);
   globals::BINDING_TABLE_MANAGER->bindTable(
       PSOManager::PER_OBJECT_BINDING_INDEX, m_scanBindingTable,
       m_grassCullScanRs, true);
 
-  int totalTiles = m_grassConfig.tilesPerSide * m_grassConfig.tilesPerSide;
+  totalTiles = m_grassConfig.tilesPerSide * m_grassConfig.tilesPerSide;
   int groupSize = 64;
-  int groupX = totalTiles % groupSize == 0 ? totalTiles / groupSize
-                                           : totalTiles / groupSize + 1;
+  groupX = totalTiles % groupSize == 0 ? totalTiles / groupSize
+                                       : totalTiles / groupSize + 1;
   globals::RENDERING_CONTEXT->dispatchCompute(groupX, 1, 1);
 
   globals::BUFFER_MANAGER->transitionBuffer(

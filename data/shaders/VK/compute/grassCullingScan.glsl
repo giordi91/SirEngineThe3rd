@@ -21,7 +21,7 @@ layout (set=3,binding=0) buffer inVote
 //holds the indices of the tiles that survived
 layout (set=3,binding=1) buffer outData 
 {
-	int outValue[];
+	ivec2 outValue[];
 };
 
 layout (set=3,binding=2) uniform ConfigData 
@@ -50,27 +50,25 @@ void CS()
 
   //perform the atomic increase
   if(gl_LocalInvocationID.x ==63){
-	offset = atomicAdd(outValue[0],scan);
+	offset = atomicAdd(outValue[0].x,scan);
   }
   memoryBarrierShared();
-   barrier();
   int actualOffset = offset;
 
   if(v != 0 )
   {
-	outValue[actualOffset + scan + SUPPORT_DATA_OFFSET] = int(gl_GlobalInvocationID.x);
+	outValue[actualOffset + scan + SUPPORT_DATA_OFFSET] = 
+	ivec2(int(gl_GlobalInvocationID.x),int(tileIds[gl_GlobalInvocationID.x]));
   }
- barrier();
 	//outValue[gl_GlobalInvocationID.x + SUPPORT_DATA_OFFSET] = actualOffset;
 	int count = 0;
 
 	if(gl_LocalInvocationID.x ==0){
-		count = atomicAdd(outValue[1],1);
+		count = atomicAdd(outValue[1].x,1);
 	 }
-	 barrier();
 	if(gl_LocalInvocationID.x ==0 && count == 11)
 	{
-		outValue[0] = 0;
-		outValue[1] = 0;
+		outValue[0].x = 0;
+		outValue[1].x = 0;
 	}
 }
