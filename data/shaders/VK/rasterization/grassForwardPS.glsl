@@ -38,8 +38,6 @@ layout (set=2,binding = 3) uniform texture2D brdfTexture;
 
 void PS()
 {
-
-
    //light direction, going from the frament out, so in this case 
    //the negative directional light data
    vec3 L = normalize(-lightData.lightDir.xyz);

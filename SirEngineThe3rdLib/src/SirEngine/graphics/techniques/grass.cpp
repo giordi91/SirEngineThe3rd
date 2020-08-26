@@ -243,8 +243,8 @@ void GrassTechnique::setup(const uint32_t id) {
   globals::BINDING_TABLE_MANAGER->bindBuffer(m_scanBindingTable,
                                              m_tilesIndicesHandle, 3, 3);
 
-  globals::BINDING_TABLE_MANAGER->bindBuffer(m_clearBindingTable,
-                                             m_outTiles, 0, 0);
+  globals::BINDING_TABLE_MANAGER->bindBuffer(m_clearBindingTable, m_outTiles, 0,
+                                             0);
 }
 
 void GrassTechnique::renderGroundPlane(
@@ -306,7 +306,7 @@ void GrassTechnique::passRender(const uint32_t id,
   const int pointsPerTile = m_grassConfig.pointsPerTile;
   const int tileCount = m_grassConfig.tilesPerSide * m_grassConfig.tilesPerSide;
 
-  //globals::RENDERING_CONTEXT->renderProcedural(tileCount * pointsPerTile *
+  // globals::RENDERING_CONTEXT->renderProcedural(tileCount * pointsPerTile *
   //                                             pointsPerBlade);
   globals::RENDERING_CONTEXT->renderProceduralIndirect(m_outTiles);
 
@@ -425,6 +425,7 @@ void GrassTechnique::performCulling() {
                                        : totalTiles / groupSize + 1;
   globals::RENDERING_CONTEXT->dispatchCompute(groupX, 1, 1);
 
+  /*
   globals::BUFFER_MANAGER->transitionBuffer(
       m_outTiles,
       {
@@ -440,6 +441,16 @@ void GrassTechnique::performCulling() {
           BufferManager::BUFFER_BARRIER_STATE_BITS::BUFFER_STATE_READ,
           BufferManager::BUFFER_BARRIER_STATE_BITS::BUFFER_STATE_WRITE,
           BufferManager::BUFFER_BARRIER_STAGE_BITS::BUFFER_STAGE_GRAPHICS,
+          BufferManager::BUFFER_BARRIER_STAGE_BITS::BUFFER_STAGE_COMPUTE,
+      });
+  */
+
+  globals::BUFFER_MANAGER->transitionBuffer(
+      m_outTiles,
+      {
+          BufferManager::BUFFER_BARRIER_STATE_BITS::BUFFER_STATE_WRITE,
+          BufferManager::BUFFER_BARRIER_STATE_BITS::BUFFER_STATE_WRITE,
+          BufferManager::BUFFER_BARRIER_STAGE_BITS::BUFFER_STAGE_COMPUTE,
           BufferManager::BUFFER_BARRIER_STAGE_BITS::BUFFER_STAGE_COMPUTE,
       });
 

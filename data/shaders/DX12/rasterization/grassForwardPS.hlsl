@@ -29,7 +29,6 @@ float4 PS(PosNormalUVVertexOut pin) : SV_Target {
    float3 H = normalize(L + V );
    float3 normal = normalize(dot(pin.Normal.xyz,L) < 0.0 ? -pin.Normal.xyz: pin.Normal.xyz);
 
-
    float attenuation = 1.0;
    float3 radiance = attenuation *g_dirLightData.lightColor.xyz;
    float3 albedo = albedoTex.Sample(gsamLinearClamp, pin.uv).xyz;
