@@ -33,8 +33,6 @@ layout (set=3,binding=3) buffer tileIndices
 	int tileIds[];
 };
 
-shared int offset;
-shared int count;
 const int SUPPORT_DATA_ATOMIC_OFFSET = 8;
 const int SUPPORT_DATA_OFFSET = 16;
 
@@ -51,15 +49,15 @@ void CS()
   int scan = subgroupInclusiveAdd(v);
 
   //perform the atomic increase
+  int offset =0;
   if(gl_LocalInvocationID.x ==63){
 	offset = atomicAdd(outValue[SUPPORT_DATA_ATOMIC_OFFSET].x,scan);
   }
-  memoryBarrierShared();
-  int actualOffset = offset;
+  offset = subgroupBroadcast(offset,63);
 
   if(v != 0 )
   {
-	outValue[actualOffset + scan + SUPPORT_DATA_OFFSET-1] = 
+	outValue[offset + scan + SUPPORT_DATA_OFFSET-1] = 
 	ivec2(int(gl_GlobalInvocationID.x),int(tileIds[gl_GlobalInvocationID.x]));
   }
 }

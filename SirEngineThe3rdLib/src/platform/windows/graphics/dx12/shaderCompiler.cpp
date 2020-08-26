@@ -163,8 +163,6 @@ ShaderCompileResult DXCShaderCompiler::compileShader(const char *shaderPath,
   memcpy(blob->GetBufferPointer(), pResultBlob->GetBufferPointer(),
          pResultBlob->GetBufferSize());
   pResult->Release();
-  auto x= blob->GetBufferPointer(); 
-  int size = pResultBlob->GetBufferSize();
   pResult->Release();
   pResultBlob->Release();
 
