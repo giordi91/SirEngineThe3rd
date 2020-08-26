@@ -6,17 +6,16 @@
 #extension GL_KHR_shader_subgroup_arithmetic: require 
 
 #include "../common/structures.glsl"
+#include "../common/utility.glsl"
 
-/*
-layout (set=0,binding=0) uniform InputData 
+layout (set=0,binding=0) uniform inFrameData 
 {
 	FrameData frameData;
 }; 
-*/
 
-layout (set=3,binding=0) buffer inVote
+layout (set=3,binding=0) buffer inTileData
 {
-	int vote[];
+	vec4 inputTilePositions[];
 };
 //holds the indices of the tiles that survived
 layout (set=3,binding=1) buffer outData 
@@ -24,11 +23,11 @@ layout (set=3,binding=1) buffer outData
 	ivec2 outValue[];
 };
 
-layout (set=3,binding=2) uniform ConfigData 
+layout (set=3,binding=2) uniform inConfigData 
 {
 	GrassConfig grassConfig;
 }; 
-layout (set=3,binding=3) buffer tileIndices 
+layout (set=3,binding=3) buffer inTileIndices 
 {
 	int tileIds[];
 };
@@ -36,28 +35,73 @@ layout (set=3,binding=3) buffer tileIndices
 const int SUPPORT_DATA_ATOMIC_OFFSET = 8;
 const int SUPPORT_DATA_OFFSET = 16;
 
+
+int isTileVisiable(vec3 tilePos)
+{
+	vec3 aabbScale = vec3(grassConfig.tileSize, 
+						   grassConfig.height + grassConfig.heightRandom,
+						   grassConfig.tileSize);
+
+	int vote = 0;
+	for(int v=0; v < 8; ++v)
+	{
+		vec3 pos = createCube(v) * aabbScale;
+		vec3 wp= tilePos + pos;
+		int planeVote = 1;
+		for (uint p = 0; p < 6; ++p) {
+			vec3 pNormal = frameData.m_mainCamera.frustum[p].normal.xyz;
+			vec3 pPos = frameData.m_mainCamera.frustum[p].position.xyz;
+			//normals is pointing out the volume, so if the dot product is positive
+			//means the point is out of the bounding box
+			float dist = dot(pNormal, wp.xyz - pPos);
+			//if the point is out of the planes it means is not contained with the bounding box
+			//to be inside needs to be inside all the planes
+			//so as long distance is negative (point inside) we keep anding a 1, keeping the 
+			//value alive, if only one point is out, then we and a 0, setting the value to zero
+			//forever
+			planeVote = planeVote & ((dist > 0.0f) ? 0 : 1);
+		}
+		//if the point survived then we or it in, since we just need one point surviving 
+		//to make the cull fail
+		vote = vote | planeVote;
+	}
+	return vote;
+}
+
+
+shared int offset;
+
 layout (local_size_x = 64,local_size_y =1) in;
 void CS()
 {	
+
+  vec3 tilePos = inputTilePositions[gl_GlobalInvocationID.x].xyz;
+  int vote = 1;//isTileVisiable(tilePos);
+
+
   //if the value is not in range we reduce it to 0 so won't affect the scan and 
   //we don't need a defensive branch, we allocate enough memory anyway to the multiple
   //of the group
   int totalTiles = grassConfig.tilesPerSide*grassConfig.tilesPerSide;
   int isInRange = int(gl_GlobalInvocationID.x < totalTiles);
-  int v = vote[gl_GlobalInvocationID.x] * isInRange;
+  vote *= isInRange;
+  //int v = vote[gl_GlobalInvocationID.x] * isInRange;
   //need to fix for 64-32 wave size 
-  int scan = subgroupInclusiveAdd(v);
+  int scan = subgroupInclusiveAdd(vote);
 
   //perform the atomic increase
-  int offset =0;
+  //int offset =0;
   if(gl_LocalInvocationID.x ==63){
 	offset = atomicAdd(outValue[SUPPORT_DATA_ATOMIC_OFFSET].x,scan);
   }
-  offset = subgroupBroadcast(offset,63);
+  barrier();
+  //offset = subgroupBroadcast(offset,63);
+  int actualOffset = offset;
+  barrier();
 
-  if(v != 0 )
+  if(vote != 0 )
   {
-	outValue[offset + scan + SUPPORT_DATA_OFFSET-1] = 
+	outValue[actualOffset + scan + SUPPORT_DATA_OFFSET-1] = 
 	ivec2(int(gl_GlobalInvocationID.x),int(tileIds[gl_GlobalInvocationID.x]));
   }
 }
