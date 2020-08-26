@@ -20,8 +20,6 @@ static const char *GRASS_PSO = "grassForwardPSO";
 static const char *GRASS_PLANE_RS = "grassPlaneRS";
 static const char *GRASS_PLANE_PSO = "grassPlanePSO";
 
-static const char *GRASS_CULL_RS = "grassCullingRS";
-static const char *GRASS_CULL_PSO = "grassCullingPSO";
 static const char *GRASS_CULL_SCAN_RS = "grassCullingScanRS";
 static const char *GRASS_CULL_SCAN_PSO = "grassCullingScanPSO";
 
@@ -58,18 +56,6 @@ void GrassTechnique::buildBindingTables() {
       groundDescriptions, ARRAYSIZE(groundDescriptions),
       graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED,
       "grassGroundBindingTable");
-
-  graphics::BindingDescription cullingDescription[3] = {
-      {0, GRAPHIC_RESOURCE_TYPE::READ_BUFFER,
-       GRAPHICS_RESOURCE_VISIBILITY_COMPUTE},
-      {1, GRAPHIC_RESOURCE_TYPE::READWRITE_BUFFER,
-       GRAPHICS_RESOURCE_VISIBILITY_COMPUTE},
-      {2, GRAPHIC_RESOURCE_TYPE::CONSTANT_BUFFER,
-       GRAPHICS_RESOURCE_VISIBILITY_COMPUTE}};
-  m_cullinngBindingTable = globals::BINDING_TABLE_MANAGER->allocateBindingTable(
-      cullingDescription, 3,
-      graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED,
-      "grassCullingBindingTable");
 
   graphics::BindingDescription scanDescription[4] = {
       {0, GRAPHIC_RESOURCE_TYPE::READ_BUFFER,
@@ -127,9 +113,6 @@ void GrassTechnique::setup(const uint32_t id) {
   m_groundRs =
       globals::ROOT_SIGNATURE_MANAGER->getHandleFromName(GRASS_PLANE_RS);
   m_groundPso = globals::PSO_MANAGER->getHandleFromName(GRASS_PLANE_PSO);
-  m_grassCullRs =
-      globals::ROOT_SIGNATURE_MANAGER->getHandleFromName(GRASS_CULL_RS);
-  m_grassCullPso = globals::PSO_MANAGER->getHandleFromName(GRASS_CULL_PSO);
   m_grassCullScanRs =
       globals::ROOT_SIGNATURE_MANAGER->getHandleFromName(GRASS_CULL_SCAN_RS);
   m_grassCullScanPso =
@@ -208,14 +191,6 @@ void GrassTechnique::setup(const uint32_t id) {
       BufferManager::BUFFER_FLAGS_BITS::GPU_ONLY |
           BufferManager::BUFFER_FLAGS_BITS::STORAGE_BUFFER);
 
-  m_cullingOutBuffer = globals::BUFFER_MANAGER->allocate(
-      // sizeof(int) * runtimeTilesCount, nullptr, "cullingOutput",
-      sizeof(int) * runtimeTilesCount + 64, nullptr, "cullingOutput",
-      runtimeTilesCount, sizeof(int),
-      BufferManager::BUFFER_FLAGS_BITS::GPU_ONLY |
-          BufferManager::BUFFER_FLAGS_BITS::STORAGE_BUFFER |
-          BufferManager::BUFFER_FLAGS_BITS::RANDOM_WRITE);
-
   static constexpr uint32_t SUPPORT_DATA_OFFSET = 16;
   m_outTiles = globals::BUFFER_MANAGER->allocate(
       // sizeof(int) * runtimeTilesCount, nullptr, "cullingOutput",
@@ -226,16 +201,9 @@ void GrassTechnique::setup(const uint32_t id) {
           BufferManager::BUFFER_FLAGS_BITS::RANDOM_WRITE |
           BufferManager::BUFFER_FLAGS_BITS::INDIRECT_BUFFER);
 
-  m_atomicBuffer = globals::BUFFER_MANAGER->allocate(
-      // sizeof(int) * runtimeTilesCount, nullptr, "cullingOutput",
-      sizeof(int) * 256, nullptr, "tilesOutput", runtimeTilesCount, sizeof(int),
-      BufferManager::BUFFER_FLAGS_BITS::GPU_ONLY |
-          BufferManager::BUFFER_FLAGS_BITS::STORAGE_BUFFER |
-          BufferManager::BUFFER_FLAGS_BITS::RANDOM_WRITE);
-
   // binding
   globals::BINDING_TABLE_MANAGER->bindBuffer(m_scanBindingTable,
-                                             m_cullingOutBuffer, 0, 0);
+                                             m_cullingInBuffer, 0, 0);
   globals::BINDING_TABLE_MANAGER->bindBuffer(m_scanBindingTable, m_outTiles, 1,
                                              1);
   globals::BINDING_TABLE_MANAGER->bindConstantBuffer(m_scanBindingTable,
@@ -326,10 +294,7 @@ void GrassTechnique::clear(const uint32_t id) {
     globals::BUFFER_MANAGER->free(m_cullingInBuffer);
     m_cullingInBuffer = {0};
   }
-  if (m_cullingOutBuffer.isHandleValid()) {
-    globals::BUFFER_MANAGER->free(m_cullingOutBuffer);
-    m_cullingOutBuffer = {0};
-  }
+
   if (m_windTexture.isHandleValid()) {
     globals::TEXTURE_MANAGER->free(m_windTexture);
     m_windTexture = {0};
@@ -350,6 +315,10 @@ void GrassTechnique::clear(const uint32_t id) {
     globals::BUFFER_MANAGER->free(m_tilesIndicesHandle);
     m_tilesIndicesHandle = {0};
   }
+  if (m_outTiles.isHandleValid()) {
+    globals::BUFFER_MANAGER->free(m_outTiles);
+    m_outTiles= {0};
+  }
   if (m_bindingTable.isHandleValid()) {
     globals::BINDING_TABLE_MANAGER->free(m_bindingTable);
     m_bindingTable = {0};
@@ -358,9 +327,13 @@ void GrassTechnique::clear(const uint32_t id) {
     globals::BINDING_TABLE_MANAGER->free(m_groundBindingTable);
     m_groundBindingTable = {0};
   }
-  if (m_cullinngBindingTable.isHandleValid()) {
-    globals::BINDING_TABLE_MANAGER->free(m_cullinngBindingTable);
-    m_cullinngBindingTable = {0};
+  if (m_scanBindingTable.isHandleValid()) {
+    globals::BINDING_TABLE_MANAGER->free(m_scanBindingTable);
+    m_scanBindingTable = {0};
+  }
+  if (m_clearBindingTable.isHandleValid()) {
+    globals::BINDING_TABLE_MANAGER->free(m_clearBindingTable);
+    m_clearBindingTable= {0};
   }
 }
 
@@ -368,40 +341,6 @@ void GrassTechnique::prePassRender(uint32_t id) { performCulling(); }
 
 void GrassTechnique::performCulling() {
   // here we compute the surviving tiles
-  globals::BUFFER_MANAGER->transitionBuffer(
-      m_cullingOutBuffer,
-      {
-          BufferManager::BUFFER_BARRIER_STATE_BITS::BUFFER_STATE_READ,
-          BufferManager::BUFFER_BARRIER_STATE_BITS::BUFFER_STATE_WRITE,
-          BufferManager::BUFFER_BARRIER_STAGE_BITS::BUFFER_STAGE_GRAPHICS,
-          BufferManager::BUFFER_BARRIER_STAGE_BITS::BUFFER_STAGE_COMPUTE,
-      });
-
-  globals::BINDING_TABLE_MANAGER->bindBuffer(m_cullinngBindingTable,
-                                             m_cullingInBuffer, 0, 0);
-  globals::BINDING_TABLE_MANAGER->bindBuffer(m_cullinngBindingTable,
-                                             m_cullingOutBuffer, 1, 1);
-  globals::BINDING_TABLE_MANAGER->bindConstantBuffer(m_cullinngBindingTable,
-                                                     m_grassConfigHandle, 2, 2);
-
-  globals::PSO_MANAGER->bindPSO(m_grassCullPso);
-  globals::RENDERING_CONTEXT->bindCameraBuffer(m_grassCullRs, true);
-  globals::BINDING_TABLE_MANAGER->bindTable(
-      PSOManager::PER_OBJECT_BINDING_INDEX, m_cullinngBindingTable,
-      m_grassCullRs, true);
-
-  int totalTiles = m_grassConfig.tilesPerSide * m_grassConfig.tilesPerSide;
-  int groupX = totalTiles % 16 == 0 ? totalTiles / 16 : totalTiles / 16 + 1;
-  globals::RENDERING_CONTEXT->dispatchCompute(groupX, 1, 1);
-
-  globals::BUFFER_MANAGER->transitionBuffer(
-      m_cullingOutBuffer,
-      {
-          BufferManager::BUFFER_BARRIER_STATE_BITS::BUFFER_STATE_WRITE,
-          BufferManager::BUFFER_BARRIER_STATE_BITS::BUFFER_STATE_READ,
-          BufferManager::BUFFER_BARRIER_STAGE_BITS::BUFFER_STAGE_COMPUTE,
-          BufferManager::BUFFER_BARRIER_STAGE_BITS::BUFFER_STAGE_GRAPHICS,
-      });
 
   globals::BUFFER_MANAGER->transitionBuffer(
       m_outTiles,
@@ -419,31 +358,11 @@ void GrassTechnique::performCulling() {
       PSOManager::PER_OBJECT_BINDING_INDEX, m_scanBindingTable,
       m_grassCullScanRs, true);
 
-  totalTiles = m_grassConfig.tilesPerSide * m_grassConfig.tilesPerSide;
+  int totalTiles = m_grassConfig.tilesPerSide * m_grassConfig.tilesPerSide;
   int groupSize = 64;
-  groupX = totalTiles % groupSize == 0 ? totalTiles / groupSize
+  int groupX = totalTiles % groupSize == 0 ? totalTiles / groupSize
                                        : totalTiles / groupSize + 1;
   globals::RENDERING_CONTEXT->dispatchCompute(groupX, 1, 1);
-
-  /*
-  globals::BUFFER_MANAGER->transitionBuffer(
-      m_outTiles,
-      {
-          BufferManager::BUFFER_BARRIER_STATE_BITS::BUFFER_STATE_WRITE,
-          BufferManager::BUFFER_BARRIER_STATE_BITS::BUFFER_STATE_READ,
-          BufferManager::BUFFER_BARRIER_STAGE_BITS::BUFFER_STAGE_COMPUTE,
-          BufferManager::BUFFER_BARRIER_STAGE_BITS::BUFFER_STAGE_GRAPHICS,
-      });
-
-  globals::BUFFER_MANAGER->transitionBuffer(
-      m_outTiles,
-      {
-          BufferManager::BUFFER_BARRIER_STATE_BITS::BUFFER_STATE_READ,
-          BufferManager::BUFFER_BARRIER_STATE_BITS::BUFFER_STATE_WRITE,
-          BufferManager::BUFFER_BARRIER_STAGE_BITS::BUFFER_STAGE_GRAPHICS,
-          BufferManager::BUFFER_BARRIER_STAGE_BITS::BUFFER_STAGE_COMPUTE,
-      });
-  */
 
   globals::BUFFER_MANAGER->transitionBuffer(
       m_outTiles,
