@@ -69,14 +69,14 @@ int isTileVisiable(vec3 tilePos)
 }
 
 
+shared int accum;
 shared int offset;
-
 layout (local_size_x = 64,local_size_y =1) in;
 void CS()
 {	
 
   vec3 tilePos = inputTilePositions[gl_GlobalInvocationID.x].xyz;
-  int vote = 1;//isTileVisiable(tilePos);
+  int vote = isTileVisiable(tilePos);
 
 
   //if the value is not in range we reduce it to 0 so won't affect the scan and 
@@ -85,9 +85,17 @@ void CS()
   int totalTiles = grassConfig.tilesPerSide*grassConfig.tilesPerSide;
   int isInRange = int(gl_GlobalInvocationID.x < totalTiles);
   vote *= isInRange;
-  //int v = vote[gl_GlobalInvocationID.x] * isInRange;
-  //need to fix for 64-32 wave size 
+
   int scan = subgroupInclusiveAdd(vote);
+  if(gl_SubgroupSize == 32 )
+  {
+	  if( gl_LocalInvocationID.x ==31) { accum = scan; }
+	  barrier();
+	  if(gl_LocalInvocationID.x >= 32)
+	  {
+		scan += accum;
+	  }
+  }
 
   //perform the atomic increase
   //int offset =0;
@@ -97,7 +105,6 @@ void CS()
   barrier();
   //offset = subgroupBroadcast(offset,63);
   int actualOffset = offset;
-  barrier();
 
   if(vote != 0 )
   {

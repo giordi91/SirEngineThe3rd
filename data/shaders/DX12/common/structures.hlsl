@@ -28,7 +28,7 @@ struct FrameData
     float time;
     float screenWidth;
     float screenHeight;
-    float padding;
+    int frameCount;
 };
 
 struct DirectionalLightData {

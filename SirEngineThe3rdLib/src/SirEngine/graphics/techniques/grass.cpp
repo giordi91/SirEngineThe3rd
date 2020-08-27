@@ -88,7 +88,7 @@ void GrassTechnique::setup(const uint32_t id) {
     return;
   }
 
-  m_grassConfig.tilesPerSide = 25;
+  m_grassConfig.tilesPerSide = 32;
   m_grassConfig.tileSize = 5;
   m_grassConfig.grassBend = 0.41f;
   m_grassConfig.width = 0.1f;

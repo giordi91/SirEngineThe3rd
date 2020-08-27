@@ -126,6 +126,7 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
       VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
   physicalDeviceProperties.pNext = &subgroupProperties;
 
+
   vkGetPhysicalDeviceProperties2(PHYSICAL_DEVICE, &physicalDeviceProperties);
   assert(((subgroupProperties.supportedOperations &
            VK_SUBGROUP_FEATURE_VOTE_BIT) > 0) &&
@@ -133,6 +134,7 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   assert(((subgroupProperties.supportedOperations &
            VK_SUBGROUP_FEATURE_BALLOT_BIT) > 0) &&
          "gpu does not support wave ballot instructions");
+
 
   GRAPHICS_QUEUE_FAMILY = adapterResult.m_graphicsQueueFamilyIndex;
   PRESENTATION_QUEUE_FAMILY = adapterResult.m_presentQueueFamilyIndex;
@@ -321,10 +323,8 @@ void VkRenderingContext::setupCameraForFrame() {
       static_cast<float>(globals::ENGINE_CONFIG->m_windowHeight);
   m_frameData.time =
       static_cast<float>(globals::GAME_CLOCK.getDeltaFromOrigin() * 1e-9);
+  m_frameData.frameCount = globals::TOTAL_NUMBER_OF_FRAMES;
 
-  globals::CONSTANT_BUFFER_MANAGER->update(m_cameraHandle, &m_frameData);
-
-  // memcpy(m_cameraBuffer.data, &m_camBufferCPU, sizeof(m_camBufferCPU));
   globals::CONSTANT_BUFFER_MANAGER->update(m_cameraHandle, &m_frameData);
 
   VkWriteDescriptorSet writeDescriptorSets = {};

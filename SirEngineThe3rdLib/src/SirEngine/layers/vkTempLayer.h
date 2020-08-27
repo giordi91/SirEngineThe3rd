@@ -42,7 +42,6 @@ private:
   bool onDebugConfigChanged(DebugRenderConfigChanged &e);
   bool onShaderCompileEvent(ShaderCompileEvent &e);
   bool onReloadScriptEvent(ReloadScriptsEvent &e);
-  void initGrass();
 
   // camera event control
   bool leftDown = false;

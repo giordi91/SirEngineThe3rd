@@ -25,7 +25,6 @@
 
 namespace SirEngine {
 
-void VkTempLayer::initGrass() {}
 
 void VkTempLayer::onAttach() {
   globals::MAIN_CAMERA = new Camera3DPivot();
@@ -57,7 +56,6 @@ void VkTempLayer::onAttach() {
   // globals::ASSET_MANAGER->loadScene(globals::ENGINE_CONFIG->m_startScenePath);
   globals::ASSET_MANAGER->loadScene("../data/scenes/tempScene.json");
 
-  initGrass();
 
   alloc =
       new GraphAllocators{globals::STRING_POOL, globals::PERSISTENT_ALLOCATOR};
@@ -111,6 +109,7 @@ void VkTempLayer::onAttach() {
 
 void VkTempLayer::onDetach() {}
 void VkTempLayer::onUpdate() {
+    SE_CORE_ERROR("{}",globals::TOTAL_NUMBER_OF_FRAMES);
   globals::RENDERING_CONTEXT->setupCameraForFrame();
   // evaluating rendering graph
   globals::CONSTANT_BUFFER_MANAGER->processBufferedData();

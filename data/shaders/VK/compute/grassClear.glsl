@@ -18,7 +18,8 @@ layout (local_size_x = 1,local_size_y =1) in;
 void CS()
 {	
 
-values[0].x = values[SUPPORT_DATA_ATOMIC_OFFSET].x*15*500;
+values[0].x = (values[SUPPORT_DATA_ATOMIC_OFFSET].x )*15*500;
+//values[0].x = (values[SUPPORT_DATA_ATOMIC_OFFSET].x + int(gl_SubgroupSize ==32)*15)*15*500;
 values[0].y = 1;
 values[1].x = 0;
 values[1].y = 0;

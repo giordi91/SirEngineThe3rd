@@ -232,6 +232,16 @@ void VkConstantBufferManager::update(const ConstantBufferHandle handle,
     assert(data != nullptr);
     memcpy(static_cast<char *>(slab.m_buffer.data) + buffData.m_range.m_offset,
            data, buffData.m_range.m_size);
+    /*
+    VkMappedMemoryRange range{};
+    range.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+    range.pNext = nullptr;
+    range.memory = slab.m_buffer.memory;
+    range.offset = buffData.m_range.m_offset;
+    range.size = 960;
+
+    vkFlushMappedMemoryRanges(LOGICAL_DEVICE, 1, &range);
+    */
     return;
   }
 
