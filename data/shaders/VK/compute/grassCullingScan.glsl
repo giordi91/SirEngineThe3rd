@@ -70,13 +70,14 @@ int isTileVisiable(vec3 tilePos)
 
 
 shared int offset;
+shared int accum;
 
 layout (local_size_x = 64,local_size_y =1) in;
 void CS()
 {	
 
   vec3 tilePos = inputTilePositions[gl_GlobalInvocationID.x].xyz;
-  int vote = 1;//isTileVisiable(tilePos);
+  int vote = isTileVisiable(tilePos);
 
 
   //if the value is not in range we reduce it to 0 so won't affect the scan and 
@@ -88,6 +89,19 @@ void CS()
   //int v = vote[gl_GlobalInvocationID.x] * isInRange;
   //need to fix for 64-32 wave size 
   int scan = subgroupInclusiveAdd(vote);
+  if(gl_SubgroupSize == 32 )
+  {
+      memoryBarrierShared();
+      if( gl_LocalInvocationID.x ==31) { accum = scan; }
+      memoryBarrierShared();
+      barrier();
+      if(gl_LocalInvocationID.x >= 32)
+      {
+    	scan += accum;
+      }
+      memoryBarrierShared();
+      barrier();
+  }
 
   //perform the atomic increase
   //int offset =0;

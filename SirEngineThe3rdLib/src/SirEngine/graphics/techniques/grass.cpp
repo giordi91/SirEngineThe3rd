@@ -381,13 +381,13 @@ void GrassTechnique::performCulling() {
 
   globals::RENDERING_CONTEXT->dispatchCompute(1, 1, 1);
 
-  globals::BUFFER_MANAGER->transitionBuffer(
+   globals::BUFFER_MANAGER->transitionBuffer(
       m_outTiles,
       {
           BufferManager::BUFFER_BARRIER_STATE_BITS::BUFFER_STATE_WRITE,
-          BufferManager::BUFFER_BARRIER_STATE_BITS::BUFFER_STATE_READ,
+          BufferManager::BUFFER_BARRIER_STATE_BITS::BUFFER_STATE_INDIRECT_DRAW,
           BufferManager::BUFFER_BARRIER_STAGE_BITS::BUFFER_STAGE_COMPUTE,
-          BufferManager::BUFFER_BARRIER_STAGE_BITS::BUFFER_STAGE_GRAPHICS,
+          BufferManager::BUFFER_BARRIER_STAGE_BITS::BUFFER_STAGE_INDIRECT_DRAW,
       });
 }
 

@@ -8,11 +8,11 @@
 namespace SirEngine::vk {
 static const VkAccessFlags FLAGS_TO_ACCESS_BITS[] = {
     VK_ACCESS_FLAG_BITS_MAX_ENUM, VK_ACCESS_MEMORY_WRITE_BIT,
-    VK_ACCESS_MEMORY_READ_BIT};
+    VK_ACCESS_MEMORY_READ_BIT, VK_ACCESS_INDIRECT_COMMAND_READ_BIT};
 
 static const VkPipelineStageFlags FLAGS_TO_STAGE_BITS[] = {
     VK_PIPELINE_STAGE_FLAG_BITS_MAX_ENUM, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
-    VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT};
+    VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT};
 
 void VkBufferManager::initialize() {
   m_randomAlloc.initialize(RANDOM_ALLOC_RESERVE);
@@ -87,7 +87,7 @@ BufferHandle VkBufferManager::allocate(const uint32_t sizeInBytes,
   bool isStorage = (flags & BUFFER_FLAGS_BITS::STORAGE_BUFFER) > 0;
   // better be safe than sorry, extensive checks on flags combinations
   assert(!isBuffered && "not supported yet");
-  //assert(!isIndirectBuffer && "not supported yet");
+  // assert(!isIndirectBuffer && "not supported yet");
   assert(!(isVertexBuffer && isIndex) &&
          "canont be both vertex and index buffer");
 
@@ -96,7 +96,7 @@ BufferHandle VkBufferManager::allocate(const uint32_t sizeInBytes,
   usage |= isIndex ? VK_BUFFER_USAGE_INDEX_BUFFER_BIT : 0;
   usage |= isIndirectBuffer ? VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT : 0;
   usage |= isVertexBuffer | isStorage ? VK_BUFFER_USAGE_STORAGE_BUFFER_BIT : 0;
-  usage |= isIndirectBuffer ? VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT:0;
+  usage |= isIndirectBuffer ? VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT : 0;
 
   VkBufferCreateInfo createInfo{VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};
   createInfo.size = sizeInBytes;
