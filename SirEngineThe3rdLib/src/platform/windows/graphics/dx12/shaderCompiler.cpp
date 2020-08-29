@@ -26,7 +26,7 @@ DXCShaderCompiler::DXCShaderCompiler() {
   DxcCreateInstance(CLSID_DxcLibrary, __uuidof(IDxcLibrary),
                     (void **)&pLibrary);
 
-  //allocating validator
+  // allocating validator
   DxcCreateInstance(CLSID_DxcValidator, __uuidof(IDxcValidator),
                     (void **)&pValidator);
 
@@ -44,12 +44,18 @@ DXCShaderCompiler::~DXCShaderCompiler() {
 ShaderCompileResult DXCShaderCompiler::compileShader(const char *shaderPath,
                                                      ShaderArgs &shaderArgs) {
   // creating a blob of data with the content of the shader
-  //just a temporary frame allocation converting from char* to wchar*
+  // just a temporary frame allocation converting from char* to wchar*
   const wchar_t *wshader = frameConvertWide(shaderPath);
   IDxcOperationResult *pResult;
 
+  std::string p = shaderPath;
+  bool fromGLSL = false;
+  if (p.find(".spv.hlsl") != std::string::npos) {
+    fromGLSL = true;
+  }
+
   uint32_t fileSize;
-  //loading the file into a temporary pool from disc
+  // loading the file into a temporary pool from disc
   const char *program = persistentFileLoad(shaderPath, fileSize);
   if (program == nullptr) {
     return {nullptr, nullptr};
@@ -83,10 +89,11 @@ ShaderCompileResult DXCShaderCompiler::compileShader(const char *shaderPath,
 
   // kick the compilation
   pCompiler->Compile(
-      pSource,                // program text
-      wshader,                // file name, mostly for error messages
-      shaderArgs.entryPoint,  // entry point function
-      shaderArgs.type,        // target profile
+      pSource,  // program text
+      wshader,  // file name, mostly for error messages
+      fromGLSL ? frameConvertWide("main")
+               : shaderArgs.entryPoint,          // entry point function
+      shaderArgs.type,                           // target profile
       const_cast<LPCWSTR *>(finalFlags.data()),  // compilation arguments
       flagsCount,     // number of compilation arguments
       nullptr, 0,     // name/value defines and their count
@@ -100,12 +107,11 @@ ShaderCompileResult DXCShaderCompiler::compileShader(const char *shaderPath,
   IDxcBlobEncoding *pPrintBlob;
   pResult->GetErrorBuffer(&pPrintBlob);
 
-
   size_t printBlobSize = pPrintBlob->GetBufferSize();
   const char *outLog = nullptr;
 
   if (printBlobSize != 0) {
-   outLog = frameConcatenation(
+    outLog = frameConcatenation(
         static_cast<char *>(pPrintBlob->GetBufferPointer()), "\n");
   }
 
@@ -123,37 +129,42 @@ ShaderCompileResult DXCShaderCompiler::compileShader(const char *shaderPath,
   IDxcBlob *pResultBlob;
   pResult->GetResult(&pResultBlob);
 
-  //NORMALLY here I would be done just some extra meddling around to just convert IDxcBlob
-  //to an IBlob but here I am trying to do the validation
+  // NORMALLY here I would be done just some extra meddling around to just
+  // convert IDxcBlob to an IBlob but here I am trying to do the validation
 
-  //NOTE Tried to get validation to work but does not seem to do much unluckily
-  // I must be doing something wrong, since I had a shader that on shader playground would not
-  //pass validation
+  // NOTE Tried to get validation to work but does not seem to do much unluckily
+  // I must be doing something wrong, since I had a shader that on shader
+  // playground would not
+  // pass validation
   CComPtr<IDxcOperationResult> pValResult;
-  //Here I tried with and without validation flags, no difference.
-  HRESULT validationResult = pValidator->Validate(pResultBlob,DxcValidatorFlags_InPlaceEdit,&pValResult);
+  // Here I tried with and without validation flags, no difference.
+  HRESULT validationResult = pValidator->Validate(
+      pResultBlob, DxcValidatorFlags_InPlaceEdit, &pValResult);
   assert(SUCCEEDED(validationResult));
 
   IDxcBlobEncoding *pPrintBlobValidation;
   pValResult->GetErrorBuffer(&pPrintBlobValidation);
 
-  //this was just me trying stuff, to figure out why I would get no error whatsoever
-  IDxcBlob *pResultBlob2; //iirc pResultBlob2 is empty
+  // this was just me trying stuff, to figure out why I would get no error
+  // whatsoever
+  IDxcBlob *pResultBlob2;  // iirc pResultBlob2 is empty
   pValResult->GetResult(&pResultBlob2);
-  HRESULT rr;//status returned was OK
-  pValResult->GetStatus(&rr); 
+  HRESULT rr;  // status returned was OK
+  pValResult->GetStatus(&rr);
 
-  //size here is 0 and no error was reported
-  size_t printBlobSizeValidation = pPrintBlobValidation->GetBufferSize();
-  if (printBlobSizeValidation) {
-    outLog = frameConcatenation(
-        static_cast<char *>(pPrintBlobValidation->GetBufferPointer()), "\n");
-      
-    SE_CORE_ERROR("ERROR_LOG:\n {0}", outLog);
-    return {nullptr, outLog};
+  if (pPrintBlobValidation != nullptr) {
+    // size here is 0 and no error was reported
+    size_t printBlobSizeValidation = pPrintBlobValidation->GetBufferSize();
+    if (printBlobSizeValidation) {
+      outLog = frameConcatenation(
+          static_cast<char *>(pPrintBlobValidation->GetBufferPointer()), "\n");
+
+      SE_CORE_ERROR("ERROR_LOG:\n {0}", outLog);
+      return {nullptr, outLog};
+    }
   }
 
-  //here is where the code would continue if no validation was in place
+  // here is where the code would continue if no validation was in place
 
   // here we just copy to a regular blob so we don't have to leak out the IDXC
   // interface

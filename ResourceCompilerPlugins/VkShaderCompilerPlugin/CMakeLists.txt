@@ -46,6 +46,10 @@ project(VkShaderCompilerPlugin)
 	target_link_libraries(${PROJECT_NAME}  debug OGLCompilerd optimized OGLCompiler)
 	target_link_libraries(${PROJECT_NAME}  debug OSDependentd optimized OSDependent)
 	target_link_libraries(${PROJECT_NAME}  debug SPIRVd optimized SPIRV)
+	target_link_libraries(${PROJECT_NAME}  debug spirv-cross-cored optimized spirv-cross-core)
+	target_link_libraries(${PROJECT_NAME}  debug spirv-cross-cppd optimized spirv-cross-cpp)
+	target_link_libraries(${PROJECT_NAME}  debug spirv-cross-hlsld optimized spirv-cross-hlsl)
+	target_link_libraries(${PROJECT_NAME}  debug spirv-cross-glsld optimized spirv-cross-glsl)
 
 	#This madness is needed because in order to have a plugin folder inside the 
 	#output dir, I have to do a post copy, by default on windows it adds a Debug/Release 

@@ -2,13 +2,13 @@
 
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
+#include "SirEngine/runtimeString.h"
 #include "dx12SwapChain.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/d3dx12.h"
 #include "platform/windows/graphics/dx12/dxgiFormatsDefine.h"
 #include "rootSignatureCompile.h"
 #include "shaderCompiler.h"
-#include "SirEngine/runtimeString.h"
 
 namespace SirEngine::dx12 {
 static const std::string PSO_KEY_GLOBAL_ROOT = "globalRootSignature";
@@ -247,7 +247,6 @@ void getRasterShaderNameFromPSO(const nlohmann::json &jobj, std::string &vs,
   assert(!ps.empty());
 }
 
-
 PSOCompileResult processComputePSO(nlohmann::json &jobj, const char *path,
                                    const char *shaderPath) {
   // lets process the PSO for a compute shader which is quite simple
@@ -273,6 +272,16 @@ PSOCompileResult processComputePSO(nlohmann::json &jobj, const char *path,
   csArgs.entryPoint = L"CS";
   csArgs.debug = true;
   csArgs.type = L"cs_6_2";
+  if (!fileExists(csPath)) {
+    // try get the spv one
+    const char *CSnameAndExtension2 =
+        frameConcatenation(shaderName.c_str(), ".spv.hlsl");
+    const char *csPath2 =
+        frameConcatenation(shaderPath, CSnameAndExtension2, "/../../processed/shaders/VK/compute/");
+    if (fileExists(csPath2)) {
+      csPath = csPath2;
+    }
+  }
 
   ShaderCompileResult compileResult = compiler.compileShader(csPath, csArgs);
 
@@ -339,6 +348,30 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj, const char *path,
   const char *PSnameAndExtension = frameConcatenation(PSname.c_str(), ".hlsl");
   const char *psPath =
       frameConcatenation(shaderPath, PSnameAndExtension, "/rasterization/");
+  if(!fileExists(vsPath))
+  {
+    // try get the spv one
+    const char *VSnameAndExtension2 =
+        frameConcatenation(VSname.c_str(), ".spv.hlsl");
+    const char *vsPath2 =
+        frameConcatenation(shaderPath, VSnameAndExtension2, "/../../processed/shaders/VK/rasterization/");
+    if (fileExists(vsPath2)) {
+      vsPath = vsPath2;
+    }
+	  
+  }
+  if(!fileExists(psPath))
+  {
+    // try get the spv one
+    const char *PSnameAndExtension2 =
+        frameConcatenation(PSname.c_str(), ".spv.hlsl");
+    const char *psPath2 =
+        frameConcatenation(shaderPath, PSnameAndExtension2, "/../../processed/shaders/VK/rasterization/");
+    if (fileExists(psPath2)) {
+      psPath = psPath2;
+    }
+	  
+  }
 
   // we have the shader name, we need to find it.
   // TODO not ideal, should this be an engine config? realistically I am not
