@@ -13,19 +13,19 @@ layout (set=0,binding=0) uniform InputData
 }; 
 
 
-layout (set=3,binding=0) buffer vertices
+layout (set=3,binding=0) buffer readonly vertices
 {
 	vec4 p[];
 };
-layout (set=3,binding=1) buffer normals 
+layout (set=3,binding=1) buffer readonly normals 
 {
 	vec4 n[];
 };
-layout (set=3,binding=2) buffer uvs 
+layout (set=3,binding=2) buffer readonly uvs 
 {
 	vec2 uv[];
 };
-layout (set=3,binding=3) buffer tangents 
+layout (set=3,binding=3) buffer readonly tangents 
 {
 	vec4 tans[];
 };

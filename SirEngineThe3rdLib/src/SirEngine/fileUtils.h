@@ -14,9 +14,9 @@
 // NOTE: requires c++17 filesystem
 inline void listFilesInFolder(const char *folderPath,
                               std::vector<std::string> &filePaths,
-                              std::string extension = "NONE") {
+                              const std::string extension = "NONE") {
   bool shouldFilter = extension != "NONE";
-  std::string _extension = "." + extension;
+  const std::string _extension = "." + extension;
   auto program_p = std::filesystem::path(folderPath);
   auto dirIt = std::filesystem::directory_iterator(program_p);
   for (auto p : dirIt) {

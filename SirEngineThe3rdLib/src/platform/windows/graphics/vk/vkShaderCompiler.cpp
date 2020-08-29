@@ -1,15 +1,20 @@
 #include "platform/windows/graphics/vk/vkShaderCompiler.h"
+
+#include <cassert>
+
 #include "SirEngine/binary/binaryFile.h"
 #include "SirEngine/runtimeString.h"
 #include "platform/windows/graphics/vk/vk.h"
 #include "platform/windows/graphics/vk/volk.h"
-#include <cassert>
 
 #undef max
-#include "SirEngine/log.h"
 #include <SPIRV/GlslangToSpv.h>
 #include <StandAlone/DirStackFileIncluder.h>
 #include <glslang/Public/ShaderLang.h>
+
+#include <SPIRV-CROSS/spirv_hlsl.hpp>
+
+#include "SirEngine/log.h"
 
 namespace SirEngine::vk {
 
@@ -150,7 +155,7 @@ VkShaderCompiler::~VkShaderCompiler() { glslang::FinalizeProcess(); }
 const char *getEntryPointFromType(SHADER_TYPE type) {
   const auto found = TYPE_TO_ENTRY_POINT.find(type);
   if (found != TYPE_TO_ENTRY_POINT.end()) {
-	  return found->second;
+    return found->second;
   }
   return nullptr;
 };
@@ -158,7 +163,6 @@ const char *getEntryPointFromType(SHADER_TYPE type) {
 SpirVBlob VkShaderCompiler::compileToSpirV(const char *shaderPath,
                                            VkShaderArgs &shaderArgs,
                                            std::string *log) const {
-
   uint32_t fileSize;
   const char *fileContent = frameFileLoad(shaderPath, fileSize);
 
@@ -167,13 +171,13 @@ SpirVBlob VkShaderCompiler::compileToSpirV(const char *shaderPath,
   glslang::TShader shader(shaderType);
 
   shader.setStrings(&fileContent, 1);
-  //TODO investigate why any entry point other than main does not work
+  // TODO investigate why any entry point other than main does not work
   const char *entryPoint = getEntryPointFromType(shaderArgs.type);
   assert(entryPoint != nullptr);
   shader.setEntryPoint(entryPoint);
   shader.setSourceEntryPoint(entryPoint);
 
-  int clientInputSemanticsVersion = 110; // maps to, say, #define VULKAN 110
+  int clientInputSemanticsVersion = 110;  // maps to, say, #define VULKAN 110
   glslang::EShTargetClientVersion vulkanClientVersion =
       glslang::EShTargetVulkan_1_1;
   glslang::EShTargetLanguageVersion targetVersion = glslang::EShTargetSpv_1_3;
@@ -253,7 +257,49 @@ SpirVBlob VkShaderCompiler::compileToSpirV(const char *shaderPath,
   auto sizeInByte = static_cast<uint32_t>(spirV.size() * sizeof(uint32_t));
   void *blobMemory = globals::FRAME_ALLOCATOR->allocate(sizeInByte);
   memcpy(blobMemory, spirV.data(), sizeInByte);
+
   return {blobMemory, static_cast<uint32_t>(sizeInByte)};
+}
+
+std::string VkShaderCompiler::compileToHlsl(const char *shaderPath,
+                                            VkShaderArgs &shaderArgs,
+                                            std::string *log) const {
+  SpirVBlob blob = compileToSpirV(shaderPath, shaderArgs, log);
+  std::vector<unsigned int> spirV;
+  spirV.resize(blob.sizeInByte/4);
+  memcpy(spirV.data(), blob.memory, blob.sizeInByte);
+
+  // Read SPIR-V from disk or similar.
+  spirv_cross::CompilerHLSL hlsl(spirV);
+
+  // The SPIR-V is now parsed, and we can perform reflection on it.
+  spirv_cross::ShaderResources hlslsresources = hlsl.get_shader_resources();
+
+  // Get all sampled images in the shader.
+  for (auto &resource : hlslsresources.sampled_images) {
+    unsigned set =
+        hlsl.get_decoration(resource.id, spv::DecorationDescriptorSet);
+    unsigned binding = hlsl.get_decoration(resource.id, spv::DecorationBinding);
+    printf("Image %s at set = %u, binding = %u\n", resource.name.c_str(), set,
+           binding);
+
+    // Modify the decoration to prepare it for GLSL.
+    hlsl.unset_decoration(resource.id, spv::DecorationDescriptorSet);
+
+    // Some arbitrary remapping if we want.
+    hlsl.set_decoration(resource.id, spv::DecorationBinding,
+                        set * 16 + binding);
+  }
+
+  // Set some options.
+  spirv_cross::CompilerHLSL::Options options;
+  options.shader_model = 62;
+  options.enable_16bit_types = true;
+  hlsl.set_hlsl_options(options);
+
+  // Compile to GLSL, ready to give to GL driver.
+  std::string source = hlsl.compile();
+  return source;
 }
 
 VkShaderModule VkShaderCompiler::spirvToShaderModule(const SpirVBlob &blob) {
@@ -272,9 +318,8 @@ VkShaderModule VkShaderCompiler::compileToShaderModule(const char *shaderPath,
                                                        VkShaderArgs &shaderArgs,
                                                        std::string *log) const {
   const SpirVBlob shader = compileToSpirV(shaderPath, shaderArgs, log);
-  if(shader.memory == nullptr || shader.sizeInByte ==0)
-  {
-      return nullptr;
+  if (shader.memory == nullptr || shader.sizeInByte == 0) {
+    return nullptr;
   }
   return spirvToShaderModule(shader);
 }
@@ -292,4 +337,4 @@ SHADER_TYPE VkShaderCompiler::getShaderTypeFromName(const char *name) {
   }
   return SHADER_TYPE::INVALID;
 }
-} // namespace SirEngine::vk
+}  // namespace SirEngine::vk

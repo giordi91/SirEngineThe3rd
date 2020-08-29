@@ -1,15 +1,14 @@
 #include "vkShaderCompilerPlugin.h"
-#include "SirEngine/fileUtils.h"
-#include "SirEngine/log.h"
-#include "cxxopts/cxxopts.hpp"
+
+#include <filesystem>
 
 #include "SirEngine/argsUtils.h"
 #include "SirEngine/binary/binaryFile.h"
-#include "platform/windows/graphics/vk/vkShaderCompiler.h"
-
+#include "SirEngine/fileUtils.h"
+#include "SirEngine/log.h"
 #include "SirEngine/memory/cpu/stringPool.h"
-
-#include <filesystem>
+#include "cxxopts/cxxopts.hpp"
+#include "platform/windows/graphics/vk/vkShaderCompiler.h"
 
 const std::string PLUGIN_NAME = "vkShaderCompilerPlugin";
 const unsigned int VERSION_MAJOR = 0;
@@ -65,36 +64,9 @@ splitCompilerArgs(strippedCargs,
   return true;
 }
 
-bool processShader(const std::string &assetPath, const std::string &outputPath,
-                   const std::string &args) {
-  // processing plugins args
-  SirEngine::vk::VkShaderArgs shaderArgs;
-
-  // checking IO files exits
-  bool exits = fileExists(assetPath);
-  if (!exits) {
-    SE_CORE_ERROR("{0} : could not find path/file {1}", PLUGIN_NAME, assetPath);
-  }
-
-  exits = filePathExists(outputPath);
-  if (!exits) {
-    SE_CORE_ERROR("{0} : could not find path/file {1}", PLUGIN_NAME,
-                  outputPath);
-  }
-
-  // process arguments, needs to happen after initialization because allocators
-  // are used
-  bool result = processArgs(args, shaderArgs);
-  if (!result) {
-    return false;
-  }
-  if (shaderArgs.type == SirEngine::SHADER_TYPE::INVALID) {
-    SE_CORE_ERROR("{0}: Could not parse shader type, type is invalid",
-                  PLUGIN_NAME);
-  }
-
-  SirEngine::vk::VkShaderCompiler compiler;
-  std::string log;
+void compileSpirV(const std::string &assetPath, const std::string &outputPath,
+                  SirEngine::vk::VkShaderArgs &shaderArgs,
+                  SirEngine::vk::VkShaderCompiler &compiler, std::string &log) {
   SirEngine::vk::SpirVBlob blob =
       compiler.compileToSpirV(assetPath.c_str(), shaderArgs, &log);
 
@@ -111,21 +83,21 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
 
   std::string entryPoint;
   switch (shaderArgs.type) {
-  case SirEngine::SHADER_TYPE::VERTEX: {
-    entryPoint = "VS";
-    break;
-  }
-  case SirEngine::SHADER_TYPE::FRAGMENT: {
-    entryPoint = "PS";
-    break;
-  }
-  case SirEngine::SHADER_TYPE::COMPUTE: {
-    entryPoint = "CS";
-    break;
-  }
-  case SirEngine::SHADER_TYPE::INVALID: {
-  }
-  default:;
+    case SirEngine::SHADER_TYPE::VERTEX: {
+      entryPoint = "VS";
+      break;
+    }
+    case SirEngine::SHADER_TYPE::FRAGMENT: {
+      entryPoint = "PS";
+      break;
+    }
+    case SirEngine::SHADER_TYPE::COMPUTE: {
+      entryPoint = "CS";
+      break;
+    }
+    case SirEngine::SHADER_TYPE::INVALID: {
+    }
+    default:;
   }
   // what we want to do is to store the data in this way
   //| shader | shader type | shader entry point | shader path | mapper |
@@ -180,6 +152,48 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
   request.mapperDataSizeInByte = sizeof(ShaderMapperData);
 
   writeBinaryFile(request);
+}
+
+bool processShader(const std::string &assetPath, const std::string &outputPath,
+                   const std::string &args) {
+  // processing plugins args
+  SirEngine::vk::VkShaderArgs shaderArgs;
+
+  // checking IO files exits
+  bool exits = fileExists(assetPath);
+  if (!exits) {
+    SE_CORE_ERROR("{0} : could not find path/file {1}", PLUGIN_NAME, assetPath);
+  }
+
+  exits = filePathExists(outputPath);
+  if (!exits) {
+    SE_CORE_ERROR("{0} : could not find path/file {1}", PLUGIN_NAME,
+                  outputPath);
+  }
+
+  // process arguments, needs to happen after initialization because allocators
+  // are used
+  bool result = processArgs(args, shaderArgs);
+  if (!result) {
+    return false;
+  }
+  if (shaderArgs.type == SirEngine::SHADER_TYPE::INVALID) {
+    SE_CORE_ERROR("{0}: Could not parse shader type, type is invalid",
+                  PLUGIN_NAME);
+  }
+
+  SirEngine::vk::VkShaderCompiler compiler;
+  std::string log;
+  std::string ext = getFileExtension(outputPath);
+  if (ext != ".hlsl") {
+    compileSpirV(assetPath, outputPath, shaderArgs, compiler, log);
+  } else {
+    std::string hlslSource =
+        compiler.compileToHlsl(assetPath.c_str(), shaderArgs, &log);
+    std::ofstream out(outputPath);
+    out << hlslSource;
+    out.close();
+  }
 
   SE_CORE_INFO("Shader successfully compiled ---> {0}", outputPath);
   return true;

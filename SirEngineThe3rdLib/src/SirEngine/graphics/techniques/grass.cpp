@@ -237,6 +237,7 @@ void GrassTechnique::renderGroundPlane(
 
 void GrassTechnique::passRender(const uint32_t id,
                                 const BindingTableHandle passHandle) {
+  return;
   if (id != GRASS_TECHNIQUE_FORWARD) {
     SE_CORE_WARN("Anything other than forward unsupported for grass for now");
     return;
@@ -317,7 +318,7 @@ void GrassTechnique::clear(const uint32_t id) {
   }
   if (m_outTiles.isHandleValid()) {
     globals::BUFFER_MANAGER->free(m_outTiles);
-    m_outTiles= {0};
+    m_outTiles = {0};
   }
   if (m_bindingTable.isHandleValid()) {
     globals::BINDING_TABLE_MANAGER->free(m_bindingTable);
@@ -333,7 +334,7 @@ void GrassTechnique::clear(const uint32_t id) {
   }
   if (m_clearBindingTable.isHandleValid()) {
     globals::BINDING_TABLE_MANAGER->free(m_clearBindingTable);
-    m_clearBindingTable= {0};
+    m_clearBindingTable = {0};
   }
 }
 
@@ -342,6 +343,7 @@ void GrassTechnique::prePassRender(uint32_t id) { performCulling(); }
 void GrassTechnique::performCulling() {
   // here we compute the surviving tiles
 
+  return;
   globals::BUFFER_MANAGER->transitionBuffer(
       m_outTiles,
       {
@@ -361,7 +363,7 @@ void GrassTechnique::performCulling() {
   int totalTiles = m_grassConfig.tilesPerSide * m_grassConfig.tilesPerSide;
   int groupSize = 64;
   int groupX = totalTiles % groupSize == 0 ? totalTiles / groupSize
-                                       : totalTiles / groupSize + 1;
+                                           : totalTiles / groupSize + 1;
   globals::RENDERING_CONTEXT->dispatchCompute(groupX, 1, 1);
 
   globals::BUFFER_MANAGER->transitionBuffer(
@@ -381,7 +383,7 @@ void GrassTechnique::performCulling() {
 
   globals::RENDERING_CONTEXT->dispatchCompute(1, 1, 1);
 
-   globals::BUFFER_MANAGER->transitionBuffer(
+  globals::BUFFER_MANAGER->transitionBuffer(
       m_outTiles,
       {
           BufferManager::BUFFER_BARRIER_STATE_BITS::BUFFER_STATE_WRITE,
