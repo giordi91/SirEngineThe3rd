@@ -344,22 +344,23 @@ void GrassTechnique::prePassRender(uint32_t id) { performCulling(); }
 void GrassTechnique::performCulling() {
   // here we compute the surviving tiles
 
-  return;
-  globals::BUFFER_MANAGER->transitionBuffer(
-      m_outTiles,
-      {
-          BufferManager::BUFFER_BARRIER_STATE_BITS::BUFFER_STATE_READ,
-          BufferManager::BUFFER_BARRIER_STATE_BITS::BUFFER_STATE_WRITE,
-          BufferManager::BUFFER_BARRIER_STAGE_BITS::BUFFER_STAGE_GRAPHICS,
-          BufferManager::BUFFER_BARRIER_STAGE_BITS::BUFFER_STAGE_COMPUTE,
-      });
+  /*
+globals::BUFFER_MANAGER->transitionBuffer(
+    m_outTiles,
+    {
+        BufferManager::BUFFER_BARRIER_STATE_BITS::BUFFER_STATE_READ,
+        BufferManager::BUFFER_BARRIER_STATE_BITS::BUFFER_STATE_WRITE,
+        BufferManager::BUFFER_BARRIER_STAGE_BITS::BUFFER_STAGE_GRAPHICS,
+        BufferManager::BUFFER_BARRIER_STAGE_BITS::BUFFER_STAGE_COMPUTE,
+    });
+    */
 
   // here we compact the surviving tiles
   globals::PSO_MANAGER->bindPSO(m_grassCullScanPso);
-  globals::RENDERING_CONTEXT->bindCameraBuffer(m_grassCullScanRs, true);
   globals::BINDING_TABLE_MANAGER->bindTable(
       PSOManager::PER_OBJECT_BINDING_INDEX, m_scanBindingTable,
       m_grassCullScanRs, true);
+  globals::RENDERING_CONTEXT->bindCameraBuffer(m_grassCullScanRs, true);
 
   int totalTiles = m_grassConfig.tilesPerSide * m_grassConfig.tilesPerSide;
   int groupSize = 64;
@@ -383,6 +384,7 @@ void GrassTechnique::performCulling() {
       true);
 
   globals::RENDERING_CONTEXT->dispatchCompute(1, 1, 1);
+  return;
 
   globals::BUFFER_MANAGER->transitionBuffer(
       m_outTiles,
