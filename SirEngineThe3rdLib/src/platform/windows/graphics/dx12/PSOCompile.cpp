@@ -343,6 +343,8 @@ const char *getRasterizationShaderPath(const char *shaderPath,
     if (fileExists(path2)) {
       path = path2;
     }
+  } else {
+    int x = 0;
   }
   return path;
 }
