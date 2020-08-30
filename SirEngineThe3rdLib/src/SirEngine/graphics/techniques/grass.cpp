@@ -384,7 +384,6 @@ globals::BUFFER_MANAGER->transitionBuffer(
       true);
 
   globals::RENDERING_CONTEXT->dispatchCompute(1, 1, 1);
-  return;
 
   globals::BUFFER_MANAGER->transitionBuffer(
       m_outTiles,
