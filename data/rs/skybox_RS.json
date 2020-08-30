@@ -1,8 +1,7 @@
 {
   "type": "RASTER",
   "staticSamplers": true,
-  "useRegisterSpace": true,
-  "flatDescriptorTable": true,
+  "staticSamplersBound": true,
   "passConfig": [], 
   "config": [
     {

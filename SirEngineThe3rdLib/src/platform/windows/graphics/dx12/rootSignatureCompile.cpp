@@ -162,6 +162,98 @@ std::array<const CD3DX12_STATIC_SAMPLER_DESC, 7> getStaticSamplers() {
           anisotropicWrap, anisotropicClamp, shadowPCFClamp};
 }
 
+std::array<const D3D12_SAMPLER_DESC, 7> getSamplers() {
+  // Applications usually only need a handful of samplers.  So just define them
+  // all up front and keep them available as part of the root signature.
+
+  const D3D12_SAMPLER_DESC pointWrap{
+      D3D12_FILTER_MIN_MAG_MIP_POINT,   // filter
+      D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressU
+      D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressV
+      D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+      0.0f,
+      1,
+      D3D12_COMPARISON_FUNC_ALWAYS,
+      {},
+      0,
+      D3D12_FLOAT32_MAX,
+  };  // addressW
+
+  const D3D12_SAMPLER_DESC pointClamp{
+      D3D12_FILTER_MIN_MAG_MIP_POINT,    // filter
+      D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressU
+      D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressV
+      D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
+      0.0f,
+      1,
+      D3D12_COMPARISON_FUNC_ALWAYS,
+      {},
+      0,
+      D3D12_FLOAT32_MAX,
+  };
+
+  const D3D12_SAMPLER_DESC linearWrap{
+      D3D12_FILTER_MIN_MAG_MIP_LINEAR,  // filter
+      D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressU
+      D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressV
+      D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+      0.0f,
+      1,
+      D3D12_COMPARISON_FUNC_ALWAYS,
+      {},
+      0,
+      D3D12_FLOAT32_MAX};  // addressW
+
+  const D3D12_SAMPLER_DESC linearClamp{
+      D3D12_FILTER_MIN_MAG_MIP_LINEAR,   // filter
+      D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressU
+      D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressV
+      D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
+      0.0f,
+      1,
+      D3D12_COMPARISON_FUNC_ALWAYS,
+      {},
+      0,
+      D3D12_FLOAT32_MAX};
+
+  const D3D12_SAMPLER_DESC anisotropicWrap{
+      D3D12_FILTER_ANISOTROPIC,         // filter
+      D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressU
+      D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressV
+      D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressW
+      0.0f,
+      8,
+      D3D12_COMPARISON_FUNC_ALWAYS,
+      {},
+      0,
+      D3D12_FLOAT32_MAX};
+
+  const D3D12_SAMPLER_DESC anisotropicClamp{
+      D3D12_FILTER_ANISOTROPIC,          // filter
+      D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressU
+      D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressV
+      D3D12_TEXTURE_ADDRESS_MODE_CLAMP,  // addressW
+      0.0f,
+      8,
+      D3D12_COMPARISON_FUNC_ALWAYS,
+      {},
+      0,
+      D3D12_FLOAT32_MAX};
+
+  const D3D12_SAMPLER_DESC shadowPCFClamp{
+      D3D12_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT,  // filter
+      D3D12_TEXTURE_ADDRESS_MODE_BORDER,                 // addressU
+      D3D12_TEXTURE_ADDRESS_MODE_BORDER,                 // addressV
+      D3D12_TEXTURE_ADDRESS_MODE_BORDER,                 // addressW
+      0.0f,                                              // mipLODBias
+      16,
+      D3D12_COMPARISON_FUNC_GREATER,
+      D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK};  // maxAnisotropy
+
+  return {pointWrap,       pointClamp,       linearWrap,    linearClamp,
+          anisotropicWrap, anisotropicClamp, shadowPCFClamp};
+}
+
 void processSRV(nlohmann::json &jobj, CD3DX12_ROOT_PARAMETER &param,
                 bool useRegister, const uint32_t registerSpace) {
   int defaultInt = -1;
@@ -373,7 +465,13 @@ RootCompilerResult flatTablesRS(nlohmann::json jobj, const std::string &name,
   }
   const std::string tempKey = "useRegisterSpace";
   const std::string tempKey2 = "passConfig";
-  bool useRegister = getValueIfInJson(jobj, tempKey, false);
+  bool useRegister = getValueIfInJson(jobj, tempKey, true);
+
+  bool bound = false;
+  auto bfound = jobj.find("staticSamplersBound");
+  if (bfound != jobj.end()) {
+    bound = bfound.value().get<bool>();
+  }
 
   // not using register not supported anymore, will be fixed over time
   assert(useRegister == true);
@@ -391,6 +489,7 @@ RootCompilerResult flatTablesRS(nlohmann::json jobj, const std::string &name,
   uint32_t registerCount = 1;
   registerCount += hasPassConfig ? 1 : 0;
   registerCount += hasConfig ? 1 : 0;
+  registerCount += bound ? 1 : 0;
   std::vector<CD3DX12_ROOT_PARAMETER> rootParams(registerCount);
   CD3DX12_DESCRIPTOR_RANGE ranges{};
   if (useRegister) {
@@ -399,9 +498,14 @@ RootCompilerResult flatTablesRS(nlohmann::json jobj, const std::string &name,
     ranges.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, startRegister,
                 ENGINE_RESIGSTER_SPACE);
     rootParams[0].InitAsDescriptorTable(1, &ranges);
+
+    // create the samplers slot
+    if (bound) {
+      // create the samplers
+    }
   }
   int configIndex =
-      0 + static_cast<int>(hasPassConfig) + static_cast<int>(hasConfig);
+      0 + bound + static_cast<int>(hasPassConfig) + static_cast<int>(hasConfig);
 
   int userCounter = 0;
   CD3DX12_DESCRIPTOR_RANGE *userRanges = nullptr;
@@ -409,7 +513,8 @@ RootCompilerResult flatTablesRS(nlohmann::json jobj, const std::string &name,
     auto &configValue = jobj[ROOT_KEY_CONFIG];
     userRanges = new CD3DX12_DESCRIPTOR_RANGE[configValue.size()]{};
     for (auto &subConfig : configValue) {
-      processRootConfiguration(&userRanges[userCounter], subConfig, PSOManager::PER_OBJECT_BINDING_INDEX);
+      processRootConfiguration(&userRanges[userCounter], subConfig,
+                               PSOManager::PER_OBJECT_BINDING_INDEX);
       ++userCounter;
     }
     rootParams[configIndex].InitAsDescriptorTable(userCounter, userRanges);
@@ -420,21 +525,35 @@ RootCompilerResult flatTablesRS(nlohmann::json jobj, const std::string &name,
     passRanges = new CD3DX12_DESCRIPTOR_RANGE[passConfig.size()]{};
     int passCounter = 0;
     for (auto &subConfig : passConfig) {
-      processRootConfiguration(&passRanges[passCounter], subConfig,PSOManager::PER_PASS_BINDING_INDEX);
+      processRootConfiguration(&passRanges[passCounter], subConfig,
+                               PSOManager::PER_PASS_BINDING_INDEX);
       ++passCounter;
     }
-    //Magic number here is one because if we have a per pass index the descriptor will be 1, zero will be
-  	//the per frame data
-    rootParams[1].InitAsDescriptorTable(passCounter, passRanges);
+    // Magic number here is one because if we have a per pass index the
+    // descriptor will be 1, zero will be the per frame data
+    rootParams[1 + bound].InitAsDescriptorTable(passCounter, passRanges);
   }
 
   UINT numStaticSampers = 0;
   D3D12_STATIC_SAMPLER_DESC const *staticSamplers = nullptr;
   auto samplers = getStaticSamplers();
 
-  if (shouldBindSamplers(jobj)) {
-    staticSamplers = &samplers[0];
-    numStaticSampers = static_cast<UINT>(samplers.size());
+  CD3DX12_DESCRIPTOR_RANGE normalSamplersDesc;
+  bool useStaticSampler = shouldBindSamplers(jobj);
+  if (useStaticSampler) {
+    if (!bound) {
+      staticSamplers = &samplers[0];
+      numStaticSampers = static_cast<UINT>(samplers.size());
+    } else {
+      auto normalSamplers = getSamplers();
+      int samplersCount = normalSamplers.size();
+      int baseRegiser = 0;
+      int space = 1;
+      normalSamplersDesc.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER,
+                              samplersCount, baseRegiser, space);
+
+      rootParams[1].InitAsDescriptorTable(1, &normalSamplersDesc);
+    }
   }
 
   CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc(
@@ -472,8 +591,8 @@ RootCompilerResult flatTablesRS(nlohmann::json jobj, const std::string &name,
       fileTypeEnum,
       true,
       static_cast<uint16_t>(userCounter),
-      {0, -1, static_cast<uint16_t>(hasPassConfig ? 1 : -1),
-       static_cast<uint16_t>(hasPassConfig ? 2 : 1)}};
+      {0, bound ? 1 : -1, static_cast<uint16_t>(hasPassConfig ? 1 + bound : -1),
+       static_cast<uint16_t>(bound + hasPassConfig +1 )}};
 }
 
 RootCompilerResult multipleTablesRS(nlohmann::json jobj,
@@ -509,11 +628,13 @@ RootCompilerResult multipleTablesRS(nlohmann::json jobj,
     SUB_ROOT_TYPES configType = getTypeEnum(configTypeValueString);
     switch (configType) {
       case (SUB_ROOT_TYPES::CONSTANT): {
-        processConstant(subConfig, rootParams[counter], useRegister, registerSpace);
+        processConstant(subConfig, rootParams[counter], useRegister,
+                        registerSpace);
         break;
       }
       case (SUB_ROOT_TYPES::DESCRIPTOR_TABLE): {
-        processDescriptorTable(subConfig, rootParams[counter], useRegister, registerSpace);
+        processDescriptorTable(subConfig, rootParams[counter], useRegister,
+                               registerSpace);
         break;
       }
       case (SUB_ROOT_TYPES::SRV): {
@@ -584,13 +705,7 @@ RootCompilerResult processSignatureFileToBlob(const char *path,
 
   // assert(jobj.find(ROOT_KEY_CONFIG) != jobj.end());
 
-  const std::string flatDescriptorTableKey = "flatDescriptorTable";
-  bool isFlatTable = getValueIfInJson(jobj, flatDescriptorTableKey, false);
-  if (isFlatTable) {
-    return flatTablesRS(jobj, name, blob);
-  } else {
-    return multipleTablesRS(jobj, name, blob);
-  }
+  return flatTablesRS(jobj, name, blob);
 }
 
 RootCompilerResult processSignatureFile(const char *path) {

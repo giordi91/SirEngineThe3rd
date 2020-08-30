@@ -1,6 +1,9 @@
 #pragma once
+#include <array>
 #include <d3d12.h>
 
+
+#include "d3dx12.h"
 #include "SirEngine/core.h"
 #include "stdint.h"
 
@@ -15,6 +18,8 @@ struct RootCompilerResult {
   uint16_t descriptorCount;
   int16_t bindingSlots[4] = {-1, -1, -1,-1};
 };
+std::array<const CD3DX12_STATIC_SAMPLER_DESC, 7> getStaticSamplers(); 
+std::array<const D3D12_SAMPLER_DESC, 7> getSamplers(); 
 
 RootCompilerResult SIR_ENGINE_API processSignatureFileToBlob(const char *path,
                                                              ID3DBlob **blob);

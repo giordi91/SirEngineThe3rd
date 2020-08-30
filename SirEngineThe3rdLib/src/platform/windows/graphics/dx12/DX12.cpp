@@ -26,6 +26,7 @@
 #include "platform/windows/graphics/dx12/dx12ShaderManager.h"
 #include "platform/windows/graphics/dx12/dx12SwapChain.h"
 #include "platform/windows/graphics/dx12/dx12TextureManager.h"
+#include "rootSignatureCompile.h"
 
 #undef max
 #undef min
@@ -40,6 +41,7 @@ UINT64 CURRENT_FENCE = 0;
 DescriptorHeap *GLOBAL_CBV_SRV_UAV_HEAP = nullptr;
 DescriptorHeap *GLOBAL_RTV_HEAP = nullptr;
 DescriptorHeap *GLOBAL_DSV_HEAP = nullptr;
+DescriptorHeap *GLOBAL_SAMPLER_HEAP = nullptr;
 ID3D12CommandQueue *GLOBAL_COMMAND_QUEUE = nullptr;
 ID3D12Fence *GLOBAL_FENCE = nullptr;
 Dx12SwapChain *SWAP_CHAIN = nullptr;
@@ -56,6 +58,7 @@ BufferManagerDx12 *BUFFER_MANAGER = nullptr;
 Dx12DebugRenderer *DEBUG_RENDERER = nullptr;
 Dx12RenderingContext *RENDERING_CONTEXT = nullptr;
 Dx12BindingTableManager *BINDING_TABLE_MANAGER = nullptr;
+int STATIC_SAMPLERS_COUNT = -1;
 
 struct Dx12Renderable {
   Dx12MeshRuntime m_meshRuntime;
@@ -76,6 +79,16 @@ void createFrameCommand(FrameCommand *fc) {
   assert(SUCCEEDED(result));
   fc->commandList->Close();
   fc->isListOpen = false;
+}
+
+void allocateStaticSampelers() {
+  auto samplers = getSamplers();
+  STATIC_SAMPLERS_COUNT = samplers.size();
+  for (int i = 0; i < STATIC_SAMPLERS_COUNT; ++i) {
+    D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptor;
+    GLOBAL_SAMPLER_HEAP->allocateDescriptor(&cpuDescriptor);
+    DEVICE->CreateSampler(&samplers[i], cpuDescriptor);
+  }
 }
 
 bool initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
@@ -159,10 +172,15 @@ bool initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
   GLOBAL_CBV_SRV_UAV_HEAP->initializeAsCBVSRVUAV(1000);
 
   GLOBAL_RTV_HEAP = new DescriptorHeap();
-  GLOBAL_RTV_HEAP->initializeAsRTV(20);
+  GLOBAL_RTV_HEAP->initializeAsRtv(20);
 
   GLOBAL_DSV_HEAP = new DescriptorHeap();
-  GLOBAL_DSV_HEAP->initializeAsDSV(20);
+  GLOBAL_DSV_HEAP->initializeAsDsv(20);
+
+  GLOBAL_SAMPLER_HEAP = new DescriptorHeap();
+  GLOBAL_SAMPLER_HEAP->initializeAsSampler(16);
+
+  allocateStaticSampelers();
 
   for (int i = 0; i < FRAME_BUFFERS_COUNT; ++i) {
     createFrameCommand(&FRAME_RESOURCES[i].fc);
@@ -582,6 +600,14 @@ void Dx12RenderingContext::renderQueueType(
         globals::BINDING_TABLE_MANAGER->bindTable(
             PSOManager::PER_PASS_BINDING_INDEX, passBindings, bind.rs);
       }
+      // binding samplers
+      int samplersBindSlot =
+          dx12::ROOT_SIGNATURE_MANAGER->getBindingSlot(bind.rs, 1);
+      if (samplersBindSlot != -1) {
+        auto samplersHandle = dx12::GLOBAL_SAMPLER_HEAP->getGpuStart();
+        commandList->SetGraphicsRootDescriptorTable(samplersBindSlot,
+                                                   samplersHandle);
+      }
 
       // this is most for debug, it will boil down to nothing in release
       const SHADER_TYPE_FLAGS type =
@@ -799,9 +825,9 @@ void Dx12RenderingContext::dispatchCompute(const uint32_t blockX,
   commandList->Dispatch(blockX, blockY, blockZ);
 }
 
-void Dx12RenderingContext::renderProceduralIndirect(const BufferHandle& argsBuffer)
-{
-    assert(0);
+void Dx12RenderingContext::renderProceduralIndirect(
+    const BufferHandle &argsBuffer) {
+  assert(0);
 }
 
 bool Dx12RenderingContext::newFrame() {
@@ -846,8 +872,9 @@ bool Dx12RenderingContext::newFrame() {
   commandList->RSSetViewports(1, dx12::SWAP_CHAIN->getViewport());
   commandList->RSSetScissorRects(1, dx12::SWAP_CHAIN->getScissorRect());
 
-  auto *heap = dx12::GLOBAL_CBV_SRV_UAV_HEAP->getResource();
-  commandList->SetDescriptorHeaps(1, &heap);
+  ID3D12DescriptorHeap *heaps[2] = {GLOBAL_CBV_SRV_UAV_HEAP->getResource(),
+                                    GLOBAL_SAMPLER_HEAP->getResource()};
+  commandList->SetDescriptorHeaps(2, heaps);
 
   return true;
 }

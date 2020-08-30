@@ -152,22 +152,22 @@ class Dx12MeshManager final : public MeshManager {
       // definition
       dx12::BUFFER_MANAGER->createSrv(
           runtime.bufferHandle, pairs[startIndex + 0], runtime.positionRange,
-          true, sizeof(float) * 4);
+          true, sizeof(float) );
     }
     if ((flags & MESH_ATTRIBUTE_FLAGS::NORMALS) > 0) {
       dx12::BUFFER_MANAGER->createSrv(
           runtime.bufferHandle, pairs[startIndex + 1], runtime.normalsRange,
-          true, sizeof(float) * 4);
+          true, sizeof(float) );
     }
     if ((flags & MESH_ATTRIBUTE_FLAGS::UV) > 0) {
       dx12::BUFFER_MANAGER->createSrv(runtime.bufferHandle,
                                       pairs[startIndex + 2], runtime.uvRange,
-                                      true, sizeof(float) * 2);
+                                      true, sizeof(float) );
     }
     if ((flags & MESH_ATTRIBUTE_FLAGS::TANGENTS) > 0) {
       dx12::BUFFER_MANAGER->createSrv(
           runtime.bufferHandle, pairs[startIndex + 3], runtime.tangentsRange,
-          true, sizeof(float) * 4);
+          true, sizeof(float));
     }
   }
 

@@ -79,11 +79,10 @@ void Dx12BindingTableManager::bindTable(const uint32_t bindingSpace,
   const auto &data = m_bindingTablePool.getConstRef(poolIndex);
 
   auto *commandList = dx12::CURRENT_FRAME_RESOURCE->fc.commandList;
-  if(!isCompute){
-  dx12::ROOT_SIGNATURE_MANAGER->bindGraphicsRS(rsHandle, commandList);
-  } else
-  {
-	dx12::ROOT_SIGNATURE_MANAGER->bindComputeRS(rsHandle, commandList);
+  if (!isCompute) {
+    dx12::ROOT_SIGNATURE_MANAGER->bindGraphicsRS(rsHandle, commandList);
+  } else {
+    dx12::ROOT_SIGNATURE_MANAGER->bindComputeRS(rsHandle, commandList);
   }
 
   bool isBuffered = isFlagSet(
@@ -96,11 +95,23 @@ void Dx12BindingTableManager::bindTable(const uint32_t bindingSpace,
       dx12::ROOT_SIGNATURE_MANAGER->getBindingSlot(rsHandle, bindingSpace);
   assert(bindSlot != -1);
 
-  if(!isCompute){
-  commandList->SetGraphicsRootDescriptorTable(bindSlot, pair.gpuHandle);
-  } else
-  {
-  commandList->SetComputeRootDescriptorTable(bindSlot, pair.gpuHandle);
+  if (!isCompute) {
+    commandList->SetGraphicsRootDescriptorTable(bindSlot, pair.gpuHandle);
+  } else {
+    commandList->SetComputeRootDescriptorTable(bindSlot, pair.gpuHandle);
+  }
+  // let us bind the samplers
+  int samplersBindSlot =
+      dx12::ROOT_SIGNATURE_MANAGER->getBindingSlot(rsHandle, 1);
+  if (samplersBindSlot != -1) {
+    auto samplersHandle = dx12::GLOBAL_SAMPLER_HEAP->getGpuStart();
+    if (!isCompute) {
+      commandList->SetGraphicsRootDescriptorTable(samplersBindSlot,
+                                                  samplersHandle);
+    } else {
+      commandList->SetComputeRootDescriptorTable(samplersBindSlot,
+                                                 samplersHandle);
+    }
   }
 }
 
@@ -136,19 +147,17 @@ void Dx12BindingTableManager::bindBuffer(const BindingTableHandle bindHandle,
 
   bool isUAV = false;
   for (uint32_t i = 0; i < data.descriptionsCount; ++i) {
-    bool isRW=
-        data.descriptions[i].m_resourceType == GRAPHIC_RESOURCE_TYPE::READWRITE_BUFFER;
+    bool isRW = data.descriptions[i].m_resourceType ==
+                GRAPHIC_RESOURCE_TYPE::READWRITE_BUFFER;
     bool isCorrectIndex = data.descriptions[i].m_bindingIndex == bindingIndex;
-    bool finalCondition = isRW& isCorrectIndex;
+    bool finalCondition = isRW & isCorrectIndex;
     isUAV |= finalCondition;
   }
 
-  if(isUAV)
-  {
-	dx12::BUFFER_MANAGER->createUav(buffer, data.descriptors[index], 0, true);
-  } else
-  {
-	dx12::BUFFER_MANAGER->createSrv(buffer, data.descriptors[index], 0, true);
+  if (isUAV) {
+    dx12::BUFFER_MANAGER->createUav(buffer, data.descriptors[index], 0, true);
+  } else {
+    dx12::BUFFER_MANAGER->createSrv(buffer, data.descriptors[index], 0, true);
   }
 }
 

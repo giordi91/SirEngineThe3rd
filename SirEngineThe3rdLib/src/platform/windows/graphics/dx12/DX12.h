@@ -119,6 +119,7 @@ extern UINT64 CURRENT_FENCE;
 extern DescriptorHeap *GLOBAL_CBV_SRV_UAV_HEAP;
 extern DescriptorHeap *GLOBAL_RTV_HEAP;
 extern DescriptorHeap *GLOBAL_DSV_HEAP;
+extern DescriptorHeap *GLOBAL_SAMPLER_HEAP;
 extern ID3D12CommandQueue *GLOBAL_COMMAND_QUEUE;
 extern ID3D12Fence *GLOBAL_FENCE;
 extern Dx12SwapChain *SWAP_CHAIN;
@@ -136,6 +137,7 @@ extern BufferManagerDx12 *BUFFER_MANAGER;
 extern Dx12DebugRenderer *DEBUG_RENDERER;
 extern Dx12RenderingContext *RENDERING_CONTEXT;
 extern Dx12BindingTableManager *BINDING_TABLE_MANAGER;
+extern int STATIC_SAMPLERS_COUNT;
 
 inline UINT64 insertFenceToGlobalQueue() {
   // Advance the fence value to mark commands up to this fence point.

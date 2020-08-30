@@ -1,5 +1,10 @@
 {
   "commands": [
+    "-p ../data/rs/skybox_RS.json -o ../data/processed/rs/skybox_RS.root --pluginName rootSignatureCompilerPlugin",
+    "-p ../data/shaders/VK/rasterization/skyboxVS.glsl -o ../data/processed/shaders/VK/rasterization/skyboxVS.spv.hlsl --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \"",
+    "-p ../data/shaders/VK/rasterization/skyboxPS.glsl -o ../data/processed/shaders/VK/rasterization/skyboxPS.spv.hlsl --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d \"",
+    "-p ../data/processed/shaders/VK/rasterization/skyboxPS.spv.hlsl -o ../data/processed/shaders/DX12/rasterization/skyboxPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
+    "-p ../data/processed/shaders/VK/rasterization/skyboxVS.spv.hlsl -o ../data/processed/shaders/DX12/rasterization/skyboxVS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t vs_6_2  -e VS -d \"",
     "-p ../data/shaders/VK/compute/grassCullingScan.glsl -o ../data/processed/shaders/VK/compute/grassCullingScan.spv.hlsl--pluginName vkShaderCompilerPlugin --pluginArgs \"-t compute -d \"",
     "-p ../data/shaders/VK/rasterization/grassExpansionVS.glsl -o ../data/processed/shaders/VK/rasterization/grassExpansionVS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \"",
     "-p ../data/shaders/VK/rasterization/forwardPhongVS.glsl -o ../data/processed/shaders/VK/rasterization/forwardPhongVS.spv.hlsl --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \"",
@@ -12,7 +17,8 @@
     "-p ../data/shaders/DX12/compute/grassCulling.hlsl -o ../data/processed/shaders/DX12/compute/grassCulling.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t cs_6_2  -e CS -d \"",
     "-p ../data/processed/shaders/VK/compute/grassCullingScan.spv.hlsl -o ../data/processed/shaders/DX12/compute/grassCullingScan.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t cs_6_2  -e CS -d \"",
     "-p ../data/processed/shaders/VK/compute/grassClear.spv.hlsl -o ../data/processed/shaders/DX12/compute/grassClearScan.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t cs_6_2  -e CS -d \"",
-    "-p ../data/rs/grassCullingRS.json -o ../data/processed/rs/grassCullingRS.root --pluginName rootSignatureCompilerPlugin"
+    "-p ../data/rs/grassCullingRS.json -o ../data/processed/rs/grassCullingRS.root --pluginName rootSignatureCompilerPlugin",
+    "-p ../data/rs/forwardPhongRS.json -o ../data/processed/rs/forwardPhongRS.root --pluginName rootSignatureCompilerPlugin"
   ],
   "comment": [
     "-p ../data/pso -o ../data/processed/pso --pluginName PSOCompilerPlugin --pluginArgs \"-t DX12 -a -s ../data/shaders/DX12\""

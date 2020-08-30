@@ -3,6 +3,7 @@
   "staticSamplers": true,
   "useRegisterSpace": true,
   "flatDescriptorTable" :  true, 
+  "staticSamplersBound": true,
   "staticSamplersVisibility": [ "PS" ],
   "passConfig": [
     {
