@@ -1,9 +1,10 @@
 {
   "type": "RASTER",
   "staticSamplers": true,
-  "useRegisterSpace": true, 
-  "staticSamplersVisibility": [ "PS" ],
+  "staticSamplersBound": true,
+  "useRegisterSpace": true,
   "flatDescriptorTable" :  true, 
+  "staticSamplersVisibility": [ "PS" ],
   "passConfig": [
     {
       "comment": "lighting data",

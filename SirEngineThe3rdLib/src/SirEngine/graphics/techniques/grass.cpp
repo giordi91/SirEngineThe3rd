@@ -227,7 +227,7 @@ void GrassTechnique::renderGroundPlane(
 
   if (passHandle.isHandleValid()) {
     globals::BINDING_TABLE_MANAGER->bindTable(
-        PSOManager::PER_PASS_BINDING_INDEX, passHandle, m_rs);
+        PSOManager::PER_PASS_BINDING_INDEX, passHandle, m_groundRs);
   }
   globals::BINDING_TABLE_MANAGER->bindTable(
       PSOManager::PER_OBJECT_BINDING_INDEX, m_groundBindingTable, m_groundRs);
@@ -242,6 +242,7 @@ void GrassTechnique::passRender(const uint32_t id,
     return;
   }
   tileDebug();
+  renderGroundPlane(passHandle);
   return;
 
   globals::CONSTANT_BUFFER_MANAGER->update(m_grassConfigHandle, &m_grassConfig);

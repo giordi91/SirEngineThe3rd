@@ -1,5 +1,12 @@
 {
   "commands": [
+    "-p ../data/shaders/VK/rasterization/grassPlaneVS.glsl -o ../data/processed/shaders/VK/rasterization/grassPlaneVS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \"",
+    "-p ../data/shaders/VK/rasterization/grassPlanePS.glsl -o ../data/processed/shaders/VK/rasterization/grassPlanePS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d \"",
+    "-p ../data/shaders/VK/rasterization/grassPlaneVS.glsl -o ../data/processed/shaders/VK/rasterization/grassPlaneVS.spv.hlsl --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \"",
+    "-p ../data/shaders/VK/rasterization/grassPlanePS.glsl -o ../data/processed/shaders/VK/rasterization/grassPlanePS.spv.hlsl --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d \"",
+    "-p ../data/processed/shaders/VK/rasterization/grassPlaneVS.spv.hlsl -o ../data/processed/shaders/DX12/rasterization/grassPlaneVS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t vs_6_2  -e VS -d \"",
+    "-p ../data/processed/shaders/VK/rasterization/grassPlanePS.spv.hlsl -o ../data/processed/shaders/DX12/rasterization/grassPlanePS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
+
     "-p ../data/shaders/VK/rasterization/basicColor.glsl -o ../data/processed/shaders/VK/rasterization/basicColorPS.spv.hlsl --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d \"",
     "-p ../data/processed/shaders/VK/rasterization/basicColorPS.spv.hlsl -o ../data/processed/shaders/DX12/rasterization/basicColorPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
     "-p ../data/shaders/VK/rasterization/positionColorVS.glsl -o ../data/processed/shaders/VK/rasterization/positionColorVS.spv.hlsl --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \"",
@@ -8,6 +15,7 @@
     "-p ../data/processed/shaders/VK/rasterization/HDRtoSDREffectPS.spv.hlsl -o ../data/processed/shaders/DX12/rasterization/HDRtoSDREffectPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
     "-p ../data/shaders/VK/rasterization/fullScreenQuadVS.glsl -o ../data/processed/shaders/VK/rasterization/fullScreenQuadVS.spv.hlsl --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \"",
     "-p ../data/processed/shaders/VK/rasterization/fullScreenQuadVS.spv.hlsl -o ../data/processed/shaders/DX12/rasterization/fullScreenQuadVS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t vs_6_2  -e VS -d \"",
+    "-p ../data/shaders/VK/rasterization/gammaAndToneMappingEffectPS.glsl -o ../data/processed/shaders/VK/rasterization/gammaAndToneMappingEffectPS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d \"",
     "-p ../data/shaders/VK/rasterization/gammaAndToneMappingEffectPS.glsl -o ../data/processed/shaders/VK/rasterization/gammaAndToneMappingEffectPS.spv.hlsl --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d \"",
     "-p ../data/processed/shaders/VK/rasterization/gammaAndToneMappingEffectPS.spv.hlsl -o ../data/processed/shaders/DX12/rasterization/gammaAndToneMappingEffectPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
     "-p ../data/rs/skybox_RS.json -o ../data/processed/rs/skybox_RS.root --pluginName rootSignatureCompilerPlugin",
@@ -31,7 +39,8 @@
     "-p ../data/rs/forwardPhongRS.json -o ../data/processed/rs/forwardPhongRS.root --pluginName rootSignatureCompilerPlugin",
     "-p ../data/rs/standardPostProcessEffect_RS.json -o ../data/processed/rs/standardPostProcessEffect_RS.root --pluginName rootSignatureCompilerPlugin",
     "-p ../data/rs/finalBlit_RS.json -o ../data/processed/rs/finalBlit_RS.root --pluginName rootSignatureCompilerPlugin",
-    "-p ../data/rs/debugDrawLinesSingleColorRS.json -o ../data/processed/rs/debugDrawLinesSingleColorRS.root --pluginName rootSignatureCompilerPlugin"
+    "-p ../data/rs/debugDrawLinesSingleColorRS.json -o ../data/processed/rs/debugDrawLinesSingleColorRS.root --pluginName rootSignatureCompilerPlugin",
+    "-p ../data/rs/grassPlaneRS.json -o ../data/processed/rs/grassPlaneRS.root --pluginName rootSignatureCompilerPlugin"
   ],
   "comment": [
     "-p ../data/pso -o ../data/processed/pso --pluginName PSOCompilerPlugin --pluginArgs \"-t DX12 -a -s ../data/shaders/DX12\""
