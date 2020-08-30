@@ -247,31 +247,12 @@ void getRasterShaderNameFromPSO(const nlohmann::json &jobj, std::string &vs,
   assert(!ps.empty());
 }
 
-PSOCompileResult processComputePSO(nlohmann::json &jobj, const char *path,
-                                   const char *shaderPath) {
-  // lets process the PSO for a compute shader which is quite simple
-  const std::string globalRootSignatureName =
-      getValueIfInJson(jobj, PSO_KEY_GLOBAL_ROOT, DEFAULT_STRING);
-  assert(!globalRootSignatureName.empty());
-
-  const std::string shaderName =
-      getValueIfInJson(jobj, PSO_KEY_SHADER_NAME, DEFAULT_STRING);
-  assert(!shaderName.empty());
-
+const char *getComputeShaderPath(const char *shaderPath,
+                                 const std::string shaderName) {
   const char *CSnameAndExtension =
       frameConcatenation(shaderName.c_str(), ".hlsl");
   const char *csPath =
       frameConcatenation(shaderPath, CSnameAndExtension, "/compute/");
-
-  auto resultCompile = processSignatureFile(globalRootSignatureName.c_str());
-  auto rootS = resultCompile.root;
-
-  // compiling the shader
-  DXCShaderCompiler compiler;
-  ShaderArgs csArgs;
-  csArgs.entryPoint = L"CS";
-  csArgs.debug = true;
-  csArgs.type = L"cs_6_2";
   if (!fileExists(csPath)) {
     // try get the spv one
     const char *CSnameAndExtension2 =
@@ -283,6 +264,31 @@ PSOCompileResult processComputePSO(nlohmann::json &jobj, const char *path,
       csPath = csPath2;
     }
   }
+  return csPath;
+}
+
+PSOCompileResult processComputePSO(nlohmann::json &jobj, const char *path,
+                                   const char *shaderPath) {
+  // lets process the PSO for a compute shader which is quite simple
+  const std::string globalRootSignatureName =
+      getValueIfInJson(jobj, PSO_KEY_GLOBAL_ROOT, DEFAULT_STRING);
+  assert(!globalRootSignatureName.empty());
+
+  const std::string shaderName =
+      getValueIfInJson(jobj, PSO_KEY_SHADER_NAME, DEFAULT_STRING);
+  assert(!shaderName.empty());
+
+  auto resultCompile = processSignatureFile(globalRootSignatureName.c_str());
+  auto rootS = resultCompile.root;
+
+  // compiling the shader
+  DXCShaderCompiler compiler;
+  ShaderArgs csArgs;
+  csArgs.entryPoint = L"CS";
+  csArgs.debug = true;
+  csArgs.type = L"cs_6_2";
+
+  const char *csPath = getComputeShaderPath(shaderPath, shaderName);
 
   ShaderCompileResult compileResult = compiler.compileShader(csPath, csArgs);
   if (compileResult.blob == nullptr) {

@@ -8,12 +8,12 @@
 #include "../common/structures.glsl"
 #include "../common/utility.glsl"
 
-layout (set=0,binding=0) uniform inFrameData 
+layout (set=0,binding=0) uniform readonly inFrameData 
 {
 	FrameData frameData;
 }; 
 
-layout (set=3,binding=0) buffer inTileData
+layout (set=3,binding=0) buffer readonly inTileData
 {
 	vec4 inputTilePositions[];
 };
@@ -27,7 +27,7 @@ layout (set=3,binding=2) uniform inConfigData
 {
 	GrassConfig grassConfig;
 }; 
-layout (set=3,binding=3) buffer inTileIndices 
+layout (set=3,binding=3) buffer readonly inTileIndices 
 {
 	int tileIds[];
 };

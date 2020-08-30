@@ -20,7 +20,6 @@ void BufferManagerDx12::free(const BufferHandle handle) {
   uint32_t index = getIndexFromHandle(handle);
   BufferData &data = m_bufferPool[index];
   data.data->Release();
-
 }
 
 ID3D12Resource *BufferManagerDx12::allocateCpuVisibleBuffer(
@@ -97,9 +96,49 @@ void BufferManagerDx12::uploadDataToGpuOnlyBuffer(void *initData,
   }
 }
 
-void BufferManagerDx12::transitionBuffer(const BufferHandle handle, const BufferTransition& transition)
-{
-    assert(0);
+void BufferManagerDx12::transitionBuffer(const BufferHandle handle,
+                                         const BufferTransition &transition) {
+  assertMagicNumber(handle);
+  const uint32_t index = getIndexFromHandle(handle);
+  const BufferData &data = m_bufferPool.getConstRef(index);
+  D3D12_RESOURCE_BARRIER barrier{};
+
+  if (transition.sourceState == BUFFER_STATE_WRITE &&
+      transition.destinationState == BUFFER_STATE_WRITE &&
+      transition.sourceStage == BUFFER_STAGE_COMPUTE &&
+      transition.destinationStage == BUFFER_STAGE_COMPUTE) {
+    barrier.UAV.pResource = data.data;
+    barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+    auto commandList = dx12::CURRENT_FRAME_RESOURCE->fc.commandList;
+    commandList->ResourceBarrier(1, &barrier);
+    return;
+  }
+
+  D3D12_RESOURCE_STATES sourceState;
+  if (transition.sourceState == BUFFER_STATE_READ &&
+      transition.sourceStage == BUFFER_STAGE_GRAPHICS) {
+    sourceState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE |
+                  D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+  }
+  if (transition.sourceState == BUFFER_STATE_READ &&
+      transition.sourceStage == BUFFER_STAGE_COMPUTE) {
+    sourceState = D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+  }
+  if (transition.sourceState == BUFFER_STATE_WRITE) {
+    sourceState = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+  }
+
+  if (transition.destinationState == BUFFER_STATE_INDIRECT_DRAW) {
+    assert(transition.sourceState != D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
+    barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+        data.data, D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+        D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
+  } else {
+    barrier.UAV.pResource = data.data;
+    barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+  }
+  auto commandList = dx12::CURRENT_FRAME_RESOURCE->fc.commandList;
+  commandList->ResourceBarrier(1, &barrier);
 }
 
 BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInBytes,
@@ -170,9 +209,9 @@ void BufferManagerDx12::bindBufferAsSRVGraphics(
       slot, data.data->GetGPUVirtualAddress() + offset);
 }
 
-void BufferManagerDx12::createUav(const BufferHandle& buffer, DescriptorPair& descriptor, int offset,
-	bool descriptorExits)
-{
+void BufferManagerDx12::createUav(const BufferHandle &buffer,
+                                  DescriptorPair &descriptor, int offset,
+                                  bool descriptorExits) {
   assertMagicNumber(buffer);
   const uint32_t index = getIndexFromHandle(buffer);
   const BufferData &data = m_bufferPool.getConstRef(index);
@@ -181,8 +220,8 @@ void BufferManagerDx12::createUav(const BufferHandle& buffer, DescriptorPair& de
   uint32_t elementOffset = offset / data.elementSize;
 
   dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferUAV(
-      descriptor, data.data, data.elementCount, data.elementSize,
-      elementOffset, descriptorExits);
+      descriptor, data.data, data.elementCount, data.elementSize, elementOffset,
+      descriptorExits);
 }
 
 void BufferManagerDx12::createSrv(const BufferHandle &handle,
@@ -223,12 +262,11 @@ void BufferManagerDx12::createSrv(const BufferHandle &handle,
       descriptorExists);
 }
 
-
 void *BufferManagerDx12::getMappedData(const BufferHandle handle) const {
   assertMagicNumber(handle);
   const uint32_t index = getIndexFromHandle(handle);
   const BufferData &data = m_bufferPool.getConstRef(index);
-  assert((data.flags &BUFFER_FLAGS_BITS::GPU_ONLY )==0);
+  assert((data.flags & BUFFER_FLAGS_BITS::GPU_ONLY) == 0);
   return data.mappedData;
 }
 
