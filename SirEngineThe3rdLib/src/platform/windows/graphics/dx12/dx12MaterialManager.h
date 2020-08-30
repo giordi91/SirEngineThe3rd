@@ -123,7 +123,7 @@ class Dx12MaterialManager final : public MaterialManager {
   }
   void Dx12MaterialManager::updateMaterial(
       SHADER_QUEUE_FLAGS queueFlag, const MaterialData &data,
-      ID3D12GraphicsCommandList2 *commandList);
+      ID3D12GraphicsCommandList2 *commandList) const;
 
  private:
   HashMap<const char *, MaterialHandle, hashString32> m_nameToHandle;
