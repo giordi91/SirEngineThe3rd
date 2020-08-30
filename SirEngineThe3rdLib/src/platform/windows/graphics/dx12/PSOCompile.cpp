@@ -277,18 +277,17 @@ PSOCompileResult processComputePSO(nlohmann::json &jobj, const char *path,
     const char *CSnameAndExtension2 =
         frameConcatenation(shaderName.c_str(), ".spv.hlsl");
     const char *csPath2 =
-        frameConcatenation(shaderPath, CSnameAndExtension2, "/../../processed/shaders/VK/compute/");
+        frameConcatenation(shaderPath, CSnameAndExtension2,
+                           "/../../processed/shaders/VK/compute/");
     if (fileExists(csPath2)) {
       csPath = csPath2;
     }
   }
 
   ShaderCompileResult compileResult = compiler.compileShader(csPath, csArgs);
-  if(compileResult.blob == nullptr)
-  {
-      return {};
+  if (compileResult.blob == nullptr) {
+    return {};
   }
-
 
   D3D12_SHADER_BYTECODE computeShaderByteCode{
       compileResult.blob->GetBufferPointer(),
@@ -329,23 +328,23 @@ TOPOLOGY_TYPE convertStringToEngineTopologyType(const std::string &topology) {
   return TOPOLOGY_TYPE::UNDEFINED;
 }
 
-const char* getRasterizationShaderPath(const char* shaderPath, const std::string& name)
-{
-	const char *nameAndExtension = frameConcatenation(name.c_str(), ".hlsl");
-	const char* path = frameConcatenation(shaderPath, nameAndExtension, "/rasterization/");
-	if(!fileExists(path))
-	{
-		// try get the spv version 
-		const char *VSnameAndExtension2 =
-			frameConcatenation(name.c_str(), ".spv.hlsl");
-		const char *path2 =
-			frameConcatenation(shaderPath, VSnameAndExtension2, "/../../processed/shaders/VK/rasterization/");
-		if (fileExists(path2)) {
-			path = path2;
-		}
-	  
-	}
-    return path;
+const char *getRasterizationShaderPath(const char *shaderPath,
+                                       const std::string &name) {
+  const char *nameAndExtension = frameConcatenation(name.c_str(), ".hlsl");
+  const char *path =
+      frameConcatenation(shaderPath, nameAndExtension, "/rasterization/");
+  if (!fileExists(path)) {
+    // try get the spv version
+    const char *VSnameAndExtension2 =
+        frameConcatenation(name.c_str(), ".spv.hlsl");
+    const char *path2 =
+        frameConcatenation(shaderPath, VSnameAndExtension2,
+                           "/../../processed/shaders/VK/rasterization/");
+    if (fileExists(path2)) {
+      path = path2;
+    }
+  }
+  return path;
 }
 
 PSOCompileResult processRasterPSO(nlohmann::json &jobj, const char *path,
@@ -365,10 +364,9 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj, const char *path,
   const std::string PSname =
       getValueIfInJson(jobj, PSO_KEY_PS_SHADER, DEFAULT_STRING);
 
-  const char* vsPath = getRasterizationShaderPath(shaderPath, VSname);
-  const char* psPath = getRasterizationShaderPath(shaderPath, PSname);
+  const char *vsPath = getRasterizationShaderPath(shaderPath, VSname);
+  const char *psPath = getRasterizationShaderPath(shaderPath, PSname);
 
-  // we have the shader name, we need to find it.
   // TODO not ideal, should this be an engine config? realistically I am not
   // going to support either mix and match or different versions, everything
   // needs to compile for the latest
