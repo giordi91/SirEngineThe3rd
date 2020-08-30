@@ -12,21 +12,27 @@ class SIR_ENGINE_API DescriptorHeap {
   DescriptorHeap() = default;
   ~DescriptorHeap();
   bool initialize(int size, D3D12_DESCRIPTOR_HEAP_TYPE type);
-  inline bool initializeAsCBVSRVUAV(int size) {
+  inline bool initializeAsCBVSRVUAV(const int size) {
     return initialize(size, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
   }
 
-  inline bool initializeAsRTV(int size) {
+  inline bool initializeAsRtv(const int size) {
     return initialize(size, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
   }
 
-  inline bool initializeAsDSV(int size) {
+  inline bool initializeAsSampler(const int size) {
+    return initialize(size, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
+  };
+
+  inline bool initializeAsDsv(const int size) {
     return initialize(size, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
   }
-  inline D3D12_GPU_DESCRIPTOR_HANDLE getGPUStart() {
+  inline D3D12_GPU_DESCRIPTOR_HANDLE getGpuStart() const
+  {
     return m_heap->GetGPUDescriptorHandleForHeapStart();
   }
-  inline D3D12_CPU_DESCRIPTOR_HANDLE getCPUStart() {
+  inline D3D12_CPU_DESCRIPTOR_HANDLE getCpuStart() const
+  {
     return m_heap->GetCPUDescriptorHandleForHeapStart();
   }
   inline size_t getHeapSize() const { return m_freeList.size(); }
@@ -35,7 +41,7 @@ class SIR_ENGINE_API DescriptorHeap {
   }
   inline size_t getFreeHandleCount() const { return m_freeListIdx; }
   inline ID3D12DescriptorHeap **getAddressOff() { return &m_heap; }
-  inline ID3D12DescriptorHeap *getResource() { return m_heap; }
+  inline ID3D12DescriptorHeap *getResource() const { return m_heap; }
   inline D3D12_DESCRIPTOR_HEAP_DESC getDesc() const {
     return m_heap->GetDesc();
   }
@@ -73,13 +79,12 @@ class SIR_ENGINE_API DescriptorHeap {
                            uint32_t numElements, uint32_t elementSize,
                            uint32_t elementOffset = 0,
                            bool descriptorExists = false);
-  uint32_t createBufferUAV(DescriptorPair &pair,
-                                         ID3D12Resource *resource,
-                                         uint32_t numElements,
-                                         uint32_t elementSize, uint32_t elementOffset ,bool descriptorExists);
+  uint32_t createBufferUAV(DescriptorPair &pair, ID3D12Resource *resource,
+                           uint32_t numElements, uint32_t elementSize,
+                           uint32_t elementOffset, bool descriptorExists);
 
   uint32_t createBufferCBV(DescriptorPair &pair, ID3D12Resource *resource,
-                           int totalSizeInByte,bool descriptorExists = false);
+                           int totalSizeInByte, bool descriptorExists = false);
 
   int reserveDescriptor(DescriptorPair &pair);
   int reserveDescriptors(DescriptorPair *pair, uint32_t count);
@@ -99,7 +104,6 @@ class SIR_ENGINE_API DescriptorHeap {
   uint32_t m_descriptorSize = 0;
   D3D12_DESCRIPTOR_HEAP_TYPE m_type;
 
-  //
   std::vector<unsigned int> m_freeList;
   unsigned int m_freeListIdx = 0;
 };

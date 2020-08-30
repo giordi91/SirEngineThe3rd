@@ -56,6 +56,7 @@ void SkyBoxPass::compute() {
       PSOManager::PER_OBJECT_BINDING_INDEX, m_bindingTable, m_rs);
 
   globals::PSO_MANAGER->bindPSO(m_pso);
+  globals::RENDERING_CONTEXT->bindCameraBuffer(m_rs);
 
   // we clamp the viewport depth to the far plan. this means no matter how big
   // our sphere is it will be pushed to the far plane without artifacts:

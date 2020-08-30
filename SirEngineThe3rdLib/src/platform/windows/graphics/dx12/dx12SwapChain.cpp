@@ -85,7 +85,7 @@ bool Dx12SwapChain::resize(FrameCommand *command, const int width,
   // resetting the current back buffer
   m_currentBackBuffer = 0;
 
-  CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHeapHandle(GLOBAL_RTV_HEAP->getCPUStart());
+  CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHeapHandle(GLOBAL_RTV_HEAP->getCpuStart());
 
   for (UINT i = 0; i < FRAME_BUFFERS_COUNT; i++) {
     ID3D12Resource *resource;
