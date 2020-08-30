@@ -5,8 +5,8 @@
 
 #include "../common/structures.glsl"
 
-layout (set=3,binding = 1) uniform texture2D colorTexture;
-layout (set=3,binding=2) uniform InputData 
+layout (set=3,binding = 0) uniform texture2D colorTexture;
+layout (set=3,binding=1) uniform InputData 
 {
 	GammaToneMappingConfig g_config;
 }; 

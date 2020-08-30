@@ -22,9 +22,9 @@ void GammaAndToneMappingEffect::initialize() {
       sizeof(GammaToneMappingConfig), 0, &m_config);
 
   graphics::BindingDescription descriptions[2] = {
-      {1, GRAPHIC_RESOURCE_TYPE::TEXTURE,
+      {0, GRAPHIC_RESOURCE_TYPE::TEXTURE,
        GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT},
-      {2, GRAPHIC_RESOURCE_TYPE::CONSTANT_BUFFER,
+      {1, GRAPHIC_RESOURCE_TYPE::CONSTANT_BUFFER,
        GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT}};
   m_bindingTable = globals::BINDING_TABLE_MANAGER->allocateBindingTable(
       descriptions, 2,
@@ -39,10 +39,10 @@ void GammaAndToneMappingEffect::render(const TextureHandle input,
     updateConstantBuffer();
   }
   globals::PSO_MANAGER->bindPSO(m_pso);
-  globals::BINDING_TABLE_MANAGER->bindTexture(m_bindingTable, input, 0, 1,
+  globals::BINDING_TABLE_MANAGER->bindTexture(m_bindingTable, input, 0, 0,
                                               false);
   globals::BINDING_TABLE_MANAGER->bindConstantBuffer(
-      m_bindingTable, m_constantBufferHandle, 1, 2);
+      m_bindingTable, m_constantBufferHandle, 1, 1);
   globals::BINDING_TABLE_MANAGER->bindTable(
       PSOManager::PER_OBJECT_BINDING_INDEX, m_bindingTable, m_rs);
   globals::RENDERING_CONTEXT->fullScreenPass();

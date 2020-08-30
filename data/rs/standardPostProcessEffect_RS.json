@@ -1,6 +1,7 @@
 {
   "type": "RASTER",
   "staticSamplers": true,
+  "staticSamplersBound": true,
   "useRegisterSpace": true,
   "flatDescriptorTable" :  true, 
   "config": [
@@ -13,7 +14,7 @@
             "type": "SRV",
             "underlyingResource": "texture",
             "numDescriptors": 1,
-            "baseRegister": 1
+            "baseRegister": 0
           }
         ]
       },
@@ -28,7 +29,7 @@
             "type": "CBV",
             "underlyingResource": "buffer",
             "numDescriptors": 1,
-            "baseRegister":2 
+            "baseRegister":1 
           }
         ]
       },

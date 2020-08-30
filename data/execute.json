@@ -1,5 +1,11 @@
 {
   "commands": [
+    "-p ../data/shaders/VK/rasterization/HDRtoSDREffectPS.glsl -o ../data/processed/shaders/VK/rasterization/HDRtoSDREffectPS.spv.hlsl--pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d \"",
+    "-p ../data/processed/shaders/VK/rasterization/HDRtoSDREffectPS.spv.hlsl -o ../data/processed/shaders/DX12/rasterization/HDRtoSDREffectPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
+    "-p ../data/shaders/VK/rasterization/fullScreenQuadVS.glsl -o ../data/processed/shaders/VK/rasterization/fullScreenQuadVS.spv.hlsl --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \"",
+    "-p ../data/processed/shaders/VK/rasterization/fullScreenQuadVS.spv.hlsl -o ../data/processed/shaders/DX12/rasterization/fullScreenQuadVS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t vs_6_2  -e VS -d \"",
+    "-p ../data/shaders/VK/rasterization/gammaAndToneMappingEffectPS.glsl -o ../data/processed/shaders/VK/rasterization/gammaAndToneMappingEffectPS.spv.hlsl --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d \"",
+    "-p ../data/processed/shaders/VK/rasterization/gammaAndToneMappingEffectPS.spv.hlsl -o ../data/processed/shaders/DX12/rasterization/gammaAndToneMappingEffectPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
     "-p ../data/rs/skybox_RS.json -o ../data/processed/rs/skybox_RS.root --pluginName rootSignatureCompilerPlugin",
     "-p ../data/shaders/VK/rasterization/skyboxVS.glsl -o ../data/processed/shaders/VK/rasterization/skyboxVS.spv.hlsl --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \"",
     "-p ../data/shaders/VK/rasterization/skyboxPS.glsl -o ../data/processed/shaders/VK/rasterization/skyboxPS.spv.hlsl --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d \"",
@@ -18,7 +24,9 @@
     "-p ../data/processed/shaders/VK/compute/grassCullingScan.spv.hlsl -o ../data/processed/shaders/DX12/compute/grassCullingScan.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t cs_6_2  -e CS -d \"",
     "-p ../data/processed/shaders/VK/compute/grassClear.spv.hlsl -o ../data/processed/shaders/DX12/compute/grassClearScan.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t cs_6_2  -e CS -d \"",
     "-p ../data/rs/grassCullingRS.json -o ../data/processed/rs/grassCullingRS.root --pluginName rootSignatureCompilerPlugin",
-    "-p ../data/rs/forwardPhongRS.json -o ../data/processed/rs/forwardPhongRS.root --pluginName rootSignatureCompilerPlugin"
+    "-p ../data/rs/forwardPhongRS.json -o ../data/processed/rs/forwardPhongRS.root --pluginName rootSignatureCompilerPlugin",
+    "-p ../data/rs/standardPostProcessEffect_RS.json -o ../data/processed/rs/standardPostProcessEffect_RS.root --pluginName rootSignatureCompilerPlugin",
+    "-p ../data/rs/finalBlit_RS.json -o ../data/processed/rs/finalBlit_RS.root --pluginName rootSignatureCompilerPlugin"
   ],
   "comment": [
     "-p ../data/pso -o ../data/processed/pso --pluginName PSOCompilerPlugin --pluginArgs \"-t DX12 -a -s ../data/shaders/DX12\""
