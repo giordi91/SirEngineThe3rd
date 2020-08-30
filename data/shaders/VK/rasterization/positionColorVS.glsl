@@ -15,7 +15,7 @@ struct PointColor
 	vec4 c;
 };
 
-layout (set=3,binding=0) buffer positions 
+layout (set=3,binding=0) buffer readonly positions 
 {
 	PointColor pc[];
 };

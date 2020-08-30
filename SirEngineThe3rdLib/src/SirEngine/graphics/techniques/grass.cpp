@@ -237,12 +237,12 @@ void GrassTechnique::renderGroundPlane(
 
 void GrassTechnique::passRender(const uint32_t id,
                                 const BindingTableHandle passHandle) {
-  return;
   if (id != GRASS_TECHNIQUE_FORWARD) {
     SE_CORE_WARN("Anything other than forward unsupported for grass for now");
     return;
   }
   tileDebug();
+  return;
 
   globals::CONSTANT_BUFFER_MANAGER->update(m_grassConfigHandle, &m_grassConfig);
 
