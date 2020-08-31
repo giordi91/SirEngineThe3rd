@@ -1,5 +1,12 @@
 {
   "commands": [
+    "-p ../data/shaders/VK/rasterization/grassForwardPS.glsl -o ../data/processed/shaders/VK/rasterization/grassForwardPS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d \"",
+    "-p ../data/shaders/VK/rasterization/grassForwardPS.glsl -o ../data/processed/shaders/VK/rasterization/grassForwardPS.spv.hlsl --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d \"",
+    "-p ../data/processed/shaders/VK/rasterization/grassForwardPS.spv.hlsl -o ../data/processed/shaders/DX12/rasterization/grassForwardPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
+
+    "-p ../data/shaders/VK/rasterization/grassExpansionVS.glsl -o ../data/processed/shaders/VK/rasterization/grassExpansionVS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \"",
+    "-p ../data/shaders/VK/rasterization/grassExpansionVS.glsl -o ../data/processed/shaders/VK/rasterization/grassExpansionVS.spv.hlsl --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \"",
+    "-p ../data/processed/shaders/VK/rasterization/grassExpansionVS.spv.hlsl -o ../data/processed/shaders/DX12/rasterization/grassExpansionVS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t vs_6_2  -e VS -d \"",
     "-p ../data/shaders/VK/rasterization/grassPlaneVS.glsl -o ../data/processed/shaders/VK/rasterization/grassPlaneVS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \"",
     "-p ../data/shaders/VK/rasterization/grassPlanePS.glsl -o ../data/processed/shaders/VK/rasterization/grassPlanePS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d \"",
     "-p ../data/shaders/VK/rasterization/grassPlaneVS.glsl -o ../data/processed/shaders/VK/rasterization/grassPlaneVS.spv.hlsl --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \"",
@@ -39,7 +46,8 @@
     "-p ../data/rs/debugDrawLinesSingleColorRS.json -o ../data/processed/rs/debugDrawLinesSingleColorRS.root --pluginName rootSignatureCompilerPlugin",
     "-p ../data/rs/grassPlaneRS.json -o ../data/processed/rs/grassPlaneRS.root --pluginName rootSignatureCompilerPlugin",
     "-p ../data/rs/grassCullingScanRS.json -o ../data/processed/rs/grassCullingScanRS.root --pluginName rootSignatureCompilerPlugin",
-    "-p ../data/rs/grassClearRS.json -o ../data/processed/rs/grassClearRS.root --pluginName rootSignatureCompilerPlugin"
+    "-p ../data/rs/grassClearRS.json -o ../data/processed/rs/grassClearRS.root --pluginName rootSignatureCompilerPlugin",
+    "-p ../data/rs/grassForwardRS.json -o ../data/processed/rs/grassForwardRS.root --pluginName rootSignatureCompilerPlugin"
   ],
   "comment": [
     "-p ../data/pso -o ../data/processed/pso --pluginName PSOCompilerPlugin --pluginArgs \"-t DX12 -a -s ../data/shaders/DX12\""

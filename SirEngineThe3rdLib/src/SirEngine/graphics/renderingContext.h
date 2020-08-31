@@ -119,7 +119,8 @@ class RenderingContext {
                                const SHADER_QUEUE_FLAGS flag,
                                BindingTableHandle passBindings) = 0;
   virtual void renderProcedural(const uint32_t indexCount) = 0;
-  virtual void renderProceduralIndirect(const BufferHandle& argsBuffer)=0;
+  virtual void renderProceduralIndirect(const BufferHandle &argsBuffer,
+                                        const RSHandle handle) = 0;
   virtual void setViewportAndScissor(float offsetX, float offsetY, float width,
                                      float height, float minDepth,
                                      float maxDepth) = 0;
@@ -132,7 +133,7 @@ class RenderingContext {
   virtual void setBindingObject(const BufferBindingsHandle handle) = 0;
   virtual void clearBindingObject(const BufferBindingsHandle handle) = 0;
   virtual void freeBindingObject(const BufferBindingsHandle handle) = 0;
-  virtual void bindCameraBuffer(RSHandle, bool compute=false) const = 0;
+  virtual void bindCameraBuffer(RSHandle, bool compute = false) const = 0;
   virtual void dispatchCompute(uint32_t blockX, uint32_t blockY,
                                uint32_t blockW) = 0;
 

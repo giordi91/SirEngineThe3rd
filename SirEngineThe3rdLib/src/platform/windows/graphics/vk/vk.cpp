@@ -876,7 +876,7 @@ void VkRenderingContext::dispatchCompute(const uint32_t blockX,
 }
 
 void VkRenderingContext::renderProceduralIndirect(
-    const BufferHandle &argsBuffer) {
+    const BufferHandle &argsBuffer, const RSHandle handle) {
   auto *currentFc = CURRENT_FRAME_COMMAND;
   VkCommandBuffer commandList = currentFc->m_commandBuffer;
   auto bufferData = vk::BUFFER_MANAGER->getBufferData(argsBuffer);

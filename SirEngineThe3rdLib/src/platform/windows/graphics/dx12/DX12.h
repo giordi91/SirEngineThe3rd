@@ -248,11 +248,13 @@ class Dx12RenderingContext final : public RenderingContext {
  public:
   void renderProcedural(const uint32_t indexCount) override;
 
-  void bindCameraBuffer(RSHandle, bool isCompute =false) const override;
+  void bindCameraBuffer(RSHandle, bool isCompute = false) const override;
   void dispatchCompute(uint32_t blockX, uint32_t blockY,
                        uint32_t blockW) override;
 
-  void renderProceduralIndirect(const BufferHandle& argsBuffer) override;
+  void renderProceduralIndirect(const BufferHandle &argsBuffer,
+                                const RSHandle handle) override;
+
  private:
   // member variable mostly temporary
   // CameraBuffer m_camBufferCPU{};

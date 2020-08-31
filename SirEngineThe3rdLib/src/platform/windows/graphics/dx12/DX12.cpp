@@ -606,7 +606,7 @@ void Dx12RenderingContext::renderQueueType(
       if (samplersBindSlot != -1) {
         auto samplersHandle = dx12::GLOBAL_SAMPLER_HEAP->getGpuStart();
         commandList->SetGraphicsRootDescriptorTable(samplersBindSlot,
-                                                   samplersHandle);
+                                                    samplersHandle);
       }
 
       // this is most for debug, it will boil down to nothing in release
@@ -812,14 +812,12 @@ void Dx12RenderingContext::bindCameraBuffer(RSHandle,
   D3D12_GPU_DESCRIPTOR_HANDLE handle =
       dx12::CONSTANT_BUFFER_MANAGER->getConstantBufferDx12Handle(m_cameraHandle)
           .gpuHandle;
-  if(!isCompute){
-  commandList->SetGraphicsRootDescriptorTable(
-      PSOManager::PER_FRAME_DATA_BINDING_INDEX, handle);
-  } else
-  {
-  commandList->SetComputeRootDescriptorTable(
-      PSOManager::PER_FRAME_DATA_BINDING_INDEX, handle);
-	  
+  if (!isCompute) {
+    commandList->SetGraphicsRootDescriptorTable(
+        PSOManager::PER_FRAME_DATA_BINDING_INDEX, handle);
+  } else {
+    commandList->SetComputeRootDescriptorTable(
+        PSOManager::PER_FRAME_DATA_BINDING_INDEX, handle);
   }
 }
 
@@ -832,8 +830,29 @@ void Dx12RenderingContext::dispatchCompute(const uint32_t blockX,
 }
 
 void Dx12RenderingContext::renderProceduralIndirect(
-    const BufferHandle &argsBuffer) {
-  assert(0);
+    const BufferHandle &argsBuffer, const RSHandle handle) {
+  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
+
+  static bool init = 0;
+  static ID3D12CommandSignature *m_command = nullptr;
+  if (!init) {
+    D3D12_INDIRECT_ARGUMENT_DESC Args[1];
+    Args[0].Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW;
+
+    D3D12_COMMAND_SIGNATURE_DESC ProgramDesc;
+    ProgramDesc.ByteStride = 36;
+    ProgramDesc.NumArgumentDescs = 1;
+    ProgramDesc.pArgumentDescs = Args;
+    ProgramDesc.NodeMask = 0;//if single gpu set to 0;
+    ID3D12RootSignature *root =
+        dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromHandle(handle);
+    DEVICE->CreateCommandSignature(&ProgramDesc, nullptr,
+                                   IID_PPV_ARGS(&m_command));
+    init = true;
+  }
+
+  ID3D12Resource *buff = dx12::BUFFER_MANAGER->getNativeBuffer(argsBuffer);
+  currentFc->commandList->ExecuteIndirect(m_command, 1, buff, 0, nullptr, 0);
 }
 
 bool Dx12RenderingContext::newFrame() {

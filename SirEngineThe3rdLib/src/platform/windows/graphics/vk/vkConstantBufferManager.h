@@ -1,14 +1,16 @@
 #pragma once
 
+#include <unordered_map>
+
 #include "SirEngine/constantBufferManager.h"
 #include "SirEngine/graphics/graphicsDefines.h"
 #include "SirEngine/handle.h"
-#include "SirEngine/log.h"
 #include "SirEngine/memory/cpu/linearBufferManager.h"
 #include "SirEngine/memory/cpu/randomSizeAllocator.h"
 #include "SirEngine/memory/cpu/sparseMemoryPool.h"
 #include "vkMemory.h"
 #include <vector>
+#include "SirEngine/globals.h"
 
 namespace SirEngine::vk {
 

@@ -4,6 +4,7 @@
 
 #include "platform/windows/graphics/vk/vk.h"
 #include "vkMemory.h"
+#include "SirEngine/log.h"
 
 namespace SirEngine::vk {
 

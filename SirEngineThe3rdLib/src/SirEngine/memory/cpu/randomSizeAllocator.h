@@ -1,7 +1,6 @@
 #pragma once
 #include <cassert>
 
-#include "SirEngine/globals.h"
 #include "vector"
 namespace SirEngine {
 
