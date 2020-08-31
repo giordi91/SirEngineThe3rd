@@ -153,7 +153,7 @@ class VkRenderingContext final : public RenderingContext {
   bool initializeGraphics() override;
 
   void setupCameraForFrame() override;
-  void bindCameraBuffer(RSHandle, bool isCompute=false) const override;
+  void bindCameraBuffer(RSHandle, bool isCompute = false) const override;
   void bindCameraBufferCompute(int index) const;
   void updateSceneBoundingBox();
   void updateDirectionalLightMatrix();
@@ -193,8 +193,11 @@ class VkRenderingContext final : public RenderingContext {
                              float maxDepth) override;
   void renderProcedural(const uint32_t indexCount) override;
 
-  void dispatchCompute(uint32_t blockX, uint32_t blockY, uint32_t blockZ) override;
-  void renderProceduralIndirect(const BufferHandle& argsBuffer) override;
+  void dispatchCompute(uint32_t blockX, uint32_t blockY,
+                       uint32_t blockZ) override;
+  void renderProceduralIndirect(const BufferHandle &argsBuffer,
+                                const RSHandle handle) override;
+
  private:
   void *queues = nullptr;
   ConstantBufferHandle m_cameraHandle{};

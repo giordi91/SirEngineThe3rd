@@ -242,8 +242,6 @@ void GrassTechnique::passRender(const uint32_t id,
     return;
   }
   tileDebug();
-  renderGroundPlane(passHandle);
-  return;
 
   globals::CONSTANT_BUFFER_MANAGER->update(m_grassConfigHandle, &m_grassConfig);
 
@@ -257,9 +255,6 @@ void GrassTechnique::passRender(const uint32_t id,
                                                      m_grassConfigHandle, 3, 3);
   globals::BINDING_TABLE_MANAGER->bindTexture(m_bindingTable, m_albedoTexture,
                                               4, 4, false);
-  // globals::BINDING_TABLE_MANAGER->bindBuffer(m_bindingTable,
-  // m_cullingOutBuffer,
-  //                                           5, 5);
   globals::BINDING_TABLE_MANAGER->bindBuffer(m_bindingTable, m_outTiles, 5, 5);
 
   globals::BINDING_TABLE_MANAGER->bindTable(
@@ -278,7 +273,7 @@ void GrassTechnique::passRender(const uint32_t id,
 
   // globals::RENDERING_CONTEXT->renderProcedural(tileCount * pointsPerTile *
   //                                             pointsPerBlade);
-  globals::RENDERING_CONTEXT->renderProceduralIndirect(m_outTiles);
+  globals::RENDERING_CONTEXT->renderProceduralIndirect(m_outTiles, m_rs);
 
   renderGroundPlane(passHandle);
 }

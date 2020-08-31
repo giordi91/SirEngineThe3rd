@@ -12,11 +12,11 @@ layout (set=0,binding=0) uniform InputData
 	FrameData frameData;
 }; 
 
-layout (set=3,binding=0) buffer vertices
+layout (set=3,binding=0) buffer readonly vertices
 {
 	vec2 p[];
 };
-layout (set=3,binding=1) buffer tilesIndices 
+layout (set=3,binding=1) buffer readonly tilesIndices 
 {
 	uint tileId[];
 };
@@ -26,7 +26,7 @@ layout (set=3,binding=3) uniform ConfigData
 {
 	GrassConfig grassConfig;
 }; 
-layout (set=3,binding=5) buffer tilesCulling
+layout (set=3,binding=5) buffer readonly tilesCulling
 {
 	ivec2 cullTileId[];
 };
@@ -173,7 +173,6 @@ void VS()
 	vec2 tilePos = p[inTilePosIdx + tempOffset];
     vec3 position = tileCorner + vec3(tilePos.x,0.0f,tilePos.y)*tw;
 	vec4 offset = vec4(offsets[localId],0.0f);
-
 
 
     //spinning the blade by random amount
