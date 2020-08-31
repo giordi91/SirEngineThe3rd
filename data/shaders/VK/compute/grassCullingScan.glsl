@@ -71,8 +71,9 @@ int isTileVisiable(vec3 tilePos)
 
 shared int offset;
 shared int accum;
+const int BLOCK_SIZE = 64;
 
-layout (local_size_x = 64,local_size_y =1) in;
+layout (local_size_x = BLOCK_SIZE ,local_size_y =1) in;
 void CS()
 {	
 
@@ -89,6 +90,33 @@ void CS()
   //int v = vote[gl_GlobalInvocationID.x] * isInRange;
   //need to fix for 64-32 wave size 
   int scan = subgroupInclusiveAdd(vote);
+
+
+  uint wavesPerBlock =  64 / gl_SubgroupSize;
+
+  if(gl_LocalInvocationID.x ==0)
+  {
+	accum =0;
+  }
+  memoryBarrierShared();
+
+  for(int i =1; i <wavesPerBlock;++i)
+  {
+	uint waveDelimiter = (gl_SubgroupSize*i) -1;
+	if(gl_LocalInvocationID.x == waveDelimiter)
+	{
+	  //copy to local memory
+	  accum += scan;
+	}
+    memoryBarrierShared();
+  //barrier();
+	if(gl_LocalInvocationID.x > waveDelimiter )
+	{
+		scan += accum;
+	}
+  }
+
+  /*
   if(gl_SubgroupSize == 32 )
   {
       memoryBarrierShared();
@@ -102,6 +130,7 @@ void CS()
       memoryBarrierShared();
       barrier();
   }
+  */
 
   //perform the atomic increase
   //int offset =0;
@@ -111,7 +140,6 @@ void CS()
   barrier();
   //offset = subgroupBroadcast(offset,63);
   int actualOffset = offset;
-  barrier();
 
   if(vote != 0 )
   {
