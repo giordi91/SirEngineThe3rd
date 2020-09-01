@@ -81,7 +81,7 @@ void createFrameCommand(FrameCommand *fc) {
   fc->isListOpen = false;
 }
 
-void allocateStaticSampelers() {
+void allocateSamplers() {
   auto samplers = getSamplers();
   STATIC_SAMPLERS_COUNT = samplers.size();
   for (int i = 0; i < STATIC_SAMPLERS_COUNT; ++i) {
@@ -91,7 +91,7 @@ void allocateStaticSampelers() {
   }
 }
 
-bool initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
+bool Dx12RenderingContext::initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
                             const uint32_t height) {
 // lets enable debug layer if needed
 #if defined(DEBUG) || defined(_DEBUG)
@@ -180,7 +180,7 @@ bool initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
   GLOBAL_SAMPLER_HEAP = new DescriptorHeap();
   GLOBAL_SAMPLER_HEAP->initializeAsSampler(16);
 
-  allocateStaticSampelers();
+  allocateSamplers();
 
   for (int i = 0; i < FRAME_BUFFERS_COUNT; ++i) {
     createFrameCommand(&FRAME_RESOURCES[i].fc);
@@ -279,6 +279,17 @@ bool initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
   } else {
     SE_CORE_INFO("Requested HEADLESS client, no swapchain is initialized");
   }
+  // create the draw indirect commands
+  D3D12_INDIRECT_ARGUMENT_DESC Args[1];
+  Args[0].Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW;
+
+  D3D12_COMMAND_SIGNATURE_DESC ProgramDesc;
+  ProgramDesc.ByteStride = 36;
+  ProgramDesc.NumArgumentDescs = 1;
+  ProgramDesc.pArgumentDescs = Args;
+  ProgramDesc.NodeMask = 0;  // if single gpu set to 0;
+  DEVICE->CreateCommandSignature(&ProgramDesc, nullptr,
+                                 IID_PPV_ARGS(&m_commandIndirect));
 
   return true;
 }
@@ -833,26 +844,9 @@ void Dx12RenderingContext::renderProceduralIndirect(
     const BufferHandle &argsBuffer, const RSHandle handle) {
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
 
-  static bool init = 0;
-  static ID3D12CommandSignature *m_command = nullptr;
-  if (!init) {
-    D3D12_INDIRECT_ARGUMENT_DESC Args[1];
-    Args[0].Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW;
-
-    D3D12_COMMAND_SIGNATURE_DESC ProgramDesc;
-    ProgramDesc.ByteStride = 36;
-    ProgramDesc.NumArgumentDescs = 1;
-    ProgramDesc.pArgumentDescs = Args;
-    ProgramDesc.NodeMask = 0;//if single gpu set to 0;
-    ID3D12RootSignature *root =
-        dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromHandle(handle);
-    DEVICE->CreateCommandSignature(&ProgramDesc, nullptr,
-                                   IID_PPV_ARGS(&m_command));
-    init = true;
-  }
-
   ID3D12Resource *buff = dx12::BUFFER_MANAGER->getNativeBuffer(argsBuffer);
-  currentFc->commandList->ExecuteIndirect(m_command, 1, buff, 0, nullptr, 0);
+  currentFc->commandList->ExecuteIndirect(m_commandIndirect, 1, buff, 0,
+                                          nullptr, 0);
 }
 
 bool Dx12RenderingContext::newFrame() {

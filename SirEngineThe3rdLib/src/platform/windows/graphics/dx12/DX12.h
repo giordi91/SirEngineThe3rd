@@ -237,6 +237,7 @@ class Dx12RenderingContext final : public RenderingContext {
                              float maxDepth) override;
 
  private:
+  bool initializeGraphicsDx12(BaseWindow *wnd, uint32_t width, uint32_t height);
   inline void assertMagicNumber(const BufferBindingsHandle handle) const {
     const uint32_t magic = getMagicFromHandle(handle);
     const uint32_t idx = getIndexFromHandle(handle);
@@ -266,6 +267,7 @@ class Dx12RenderingContext final : public RenderingContext {
   static constexpr uint32_t RESERVE_SIZE = 400;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
   SparseMemoryPool<FrameBindingsData> m_bindingsPool;
+  ID3D12CommandSignature *m_commandIndirect = nullptr;
 
   // TODO possibly find a better way to handle this don't want to leak the std
   // map type out I cannot use my hash map because is quite basic and does not
