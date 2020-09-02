@@ -224,7 +224,6 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   vk::PSO_MANAGER->loadRawPSO("../data/pso/forwardPhongPSO.json");
   vk::PSO_MANAGER->loadRawPSO("../data/pso/grassForwardPSO.json");
   vk::PSO_MANAGER->loadRawPSO("../data/pso/grassPlanePSO.json");
-  vk::PSO_MANAGER->loadRawPSO("../data/pso/grassCullingPSO.json");
   vk::PSO_MANAGER->loadRawPSO("../data/pso/grassClearPSO.json");
   vk::PSO_MANAGER->loadRawPSO("../data/pso/grassCullingScanPSO.json");
   vk::PSO_MANAGER->loadRawPSO("../data/pso/debugDrawLinesSingleColorPSO.json");
