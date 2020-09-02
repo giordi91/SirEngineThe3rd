@@ -339,16 +339,14 @@ void GrassTechnique::prePassRender(uint32_t) { performCulling(); }
 void GrassTechnique::performCulling() {
   // here we compute the surviving tiles
 
-  /*
-globals::BUFFER_MANAGER->transitionBuffer(
-    m_outTiles,
-    {
-        BufferManager::BUFFER_BARRIER_STATE_BITS::BUFFER_STATE_READ,
-        BufferManager::BUFFER_BARRIER_STATE_BITS::BUFFER_STATE_WRITE,
-        BufferManager::BUFFER_BARRIER_STAGE_BITS::BUFFER_STAGE_GRAPHICS,
-        BufferManager::BUFFER_BARRIER_STAGE_BITS::BUFFER_STAGE_COMPUTE,
-    });
-    */
+  globals::BUFFER_MANAGER->transitionBuffer(
+      m_outTiles,
+      {
+          BufferManager::BUFFER_BARRIER_STATE_BITS::BUFFER_STATE_READ,
+          BufferManager::BUFFER_BARRIER_STATE_BITS::BUFFER_STATE_WRITE,
+          BufferManager::BUFFER_BARRIER_STAGE_BITS::BUFFER_STAGE_GRAPHICS,
+          BufferManager::BUFFER_BARRIER_STAGE_BITS::BUFFER_STAGE_COMPUTE,
+      });
 
   // here we compact the surviving tiles
   globals::PSO_MANAGER->bindPSO(m_grassCullScanPso);
