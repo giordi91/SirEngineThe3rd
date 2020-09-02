@@ -171,22 +171,7 @@ bool VkTempLayer::onMouseButtonReleaseEvent(MouseButtonReleaseEvent &e) {
   return false;
 }
 
-bool VkTempLayer::onMouseMoveEvent(MouseMoveEvent &e) {
-  /*
-const float deltaX = previousX - e.getX();
-const float deltaY = previousY - e.getY();
-if (leftDown) {
-  globals::ACTIVE_CAMERA->rotCamera(deltaX, deltaY);
-} else if (middleDown) {
-  globals::ACTIVE_CAMERA->panCamera(deltaX, deltaY);
-} else if (rightDown) {
-  globals::ACTIVE_CAMERA->zoomCamera(deltaX);
-}
-
-// storing old position
-previousX = e.getX();
-previousY = e.getY();
-*/
+bool VkTempLayer::onMouseMoveEvent(MouseMoveEvent &) {
   return true;
 }
 
@@ -205,7 +190,7 @@ bool VkTempLayer::onKeyboardReleaseEvent(KeyboardReleaseEvent &e) {
   return false;
 }
 
-bool VkTempLayer::onResizeEvent(WindowResizeEvent &e) {
+bool VkTempLayer::onResizeEvent(WindowResizeEvent &) {
   // need to recreate the frame buffer, this is temporary
   // TODO re-add resizing
   // createRenderTargetAndFrameBuffer(globals::ENGINE_CONFIG->m_windowWidth,

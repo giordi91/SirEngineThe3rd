@@ -75,8 +75,9 @@ int main(int argc, char **argv) {
       std::chrono::steady_clock::now();
 
   std::mutex m;
+  int count = static_cast<int>(config.m_tileCount);
 #pragma omp parallel for
-  for (int t = 0; t < config.m_tileCount; ++t) {
+  for (int t = 0; t < count; ++t) {
     // init random number generator
     std::seed_seq seed{config.m_seed + t};
     std::mt19937 rng(seed);
@@ -93,8 +94,8 @@ int main(int argc, char **argv) {
 
     for (uint32_t i = 1; i <= config.m_sampleCount; ++i) {
       uint32_t currentThreshold =
-          static_cast<uint32_t>((float(counter) / config.m_sampleCount) *
-                                100.0f) /
+          static_cast<uint32_t>(
+              (static_cast<float>(counter) / config.m_sampleCount) * 100.0f) /
           5;
       if (currentThreshold > printThreashold) {
         std::cout << "tile " << t << " progress " << currentThreshold * 5 << "%"
@@ -103,26 +104,28 @@ int main(int argc, char **argv) {
       }
 
       // keep the candidate that is farthest from it's closest point
-      size_t numCandidates =
-          samplesPos.size() * c_blueNoiseSampleMultiplier + 1;
+      auto numCandidates = static_cast<size_t>(
+          samplesPos.size() * c_blueNoiseSampleMultiplier + 1);
       double bestDistance = 0.0f;
       double bestCandidateX = 0;
       double bestCandidateY = 0;
       for (size_t candidate = 0; candidate < numCandidates; ++candidate) {
-        size_t x = dist(rng);
-        size_t y = dist(rng);
+        auto x = static_cast<size_t>(dist(rng));
+        auto y = static_cast<size_t>(dist(rng));
 
         // calculate the closest distance from this point to an existing sample
         double minDist = 9999999.0f;
         for (const std::array<double, 2> &samplePos : samplesPos) {
-          double dist = Distance(x, y, samplePos[0], samplePos[1], tileSize);
-          if (dist < minDist) minDist = dist;
+          double newDist =
+              Distance(static_cast<double>(x), static_cast<double>(y),
+                       samplePos[0], samplePos[1], tileSize);
+          if (newDist < minDist) minDist = newDist;
         }
 
         if (minDist > bestDistance) {
           bestDistance = minDist;
-          bestCandidateX = x;
-          bestCandidateY = y;
+          bestCandidateX = static_cast<double>(x);
+          bestCandidateY = static_cast<double>(y);
         }
       }
       // normalizing point and pushing back
@@ -131,7 +134,7 @@ int main(int argc, char **argv) {
     }
 
     size_t sampleCount = samplesPos.size();
-    for (int p = 0; p < sampleCount; ++p) {
+    for (size_t p = 0; p < sampleCount; ++p) {
       samplesPos[p][0] /= tileSize;
       samplesPos[p][1] /= tileSize;
     }

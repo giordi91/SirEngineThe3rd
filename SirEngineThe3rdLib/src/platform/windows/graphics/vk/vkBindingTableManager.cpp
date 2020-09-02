@@ -161,7 +161,7 @@ void VkBindingTableManager::bindTexture(const BindingTableHandle bindHandle,
                                         const TextureHandle texture,
                                         const uint32_t descriptorIndex,
                                         const uint32_t bindingIndex,
-                                        const bool isCube) {
+                                        const bool ) {
   assertMagicNumber(bindHandle);
   uint32_t index = getIndexFromHandle(bindHandle);
   const BindingTableData &data = m_bindingTablePool.getConstRef(index);

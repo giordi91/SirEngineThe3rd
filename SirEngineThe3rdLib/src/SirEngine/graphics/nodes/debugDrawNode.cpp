@@ -33,7 +33,7 @@ void DebugDrawNode::initialize() {}
 
 void DebugDrawNode::compute() {
   globals::RENDERING_CONTEXT->setBindingObject(m_bindHandle);
-  globals::DEBUG_RENDERER->render(inputRTHandle, inputDepthHandle);
+  globals::DEBUG_RENDERER->render();
   globals::RENDERING_CONTEXT->clearBindingObject(m_bindHandle);
 
   m_outputPlugs[0].plugValue = inputRTHandle.handle;

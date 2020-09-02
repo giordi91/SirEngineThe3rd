@@ -53,14 +53,10 @@ GPUSlabAllocationHandle GPUSlabAllocator::allocate(const uint32_t sizeInBytes,
 
 void GPUSlabAllocator::clear() {
   // assert(0);
-  for (int i = 0; i < m_slabs.size(); ++i) {
+  for (uint32_t i = 0; i < m_slabs.size(); ++i) {
     m_slabs[i]->m_slabTracker.clear();
   }
   m_allocInfoStorage.clear();
-}
-
-void* GPUSlabAllocator::getMappedPtr(GPUSlabAllocationHandle allocHandle) {
-  return nullptr;
 }
 
 void GPUSlabAllocator::cleanup() {
@@ -76,7 +72,6 @@ uint32_t GPUSlabAllocator::allocateSlab() {
 
   char printbuff[64];
   sprintf(printbuff, "gpuSlab%i", m_slabs.size() - 1);
-  BufferHandle handle;
   int numberOfElments = m_config.slabSizeInBytes / (sizeof(float) * 4);
   int elementSize = sizeof(float) * 4;
 

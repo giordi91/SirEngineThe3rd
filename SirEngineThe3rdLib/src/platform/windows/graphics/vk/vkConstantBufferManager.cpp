@@ -2,9 +2,9 @@
 
 #include <random>
 
+#include "SirEngine/log.h"
 #include "platform/windows/graphics/vk/vk.h"
 #include "vkMemory.h"
-#include "SirEngine/log.h"
 
 namespace SirEngine::vk {
 
@@ -34,7 +34,8 @@ void VkConstantBufferManager::initialize() {
   // VkPhysicalDeviceLimits::minUniformBufferOffsetAlignment
   VkPhysicalDeviceProperties properties;
   vkGetPhysicalDeviceProperties(vk::PHYSICAL_DEVICE, &properties);
-  m_requireAlignment = properties.limits.minUniformBufferOffsetAlignment;
+  m_requireAlignment =
+      static_cast<uint32_t>(properties.limits.minUniformBufferOffsetAlignment);
 }
 
 void destroyBuffer(const VkDevice device, const Buffer &buffer) {
@@ -44,7 +45,7 @@ void destroyBuffer(const VkDevice device, const Buffer &buffer) {
 
 void VkConstantBufferManager::cleanup() {
   for (uint32_t i = 0; i < vk::SWAP_CHAIN_IMAGE_COUNT; ++i) {
-    for (int pf = 0; pf < m_allocatedSlabs; ++pf) {
+    for (uint32_t pf = 0; pf < m_allocatedSlabs; ++pf) {
       Slab *slab = &m_perFrameSlabs[i][pf];
       destroyBuffer(vk::LOGICAL_DEVICE, slab->m_buffer);
       // created with placement new, need to call destructor directly,
@@ -106,19 +107,13 @@ bool VkConstantBufferManager::free(const ConstantBufferHandle handle) {
 
   int slabIdx = buffData.m_slabIdx;
   // first let us free the tracker
-  for (int i = 0; i < vk::SWAP_CHAIN_IMAGE_COUNT; ++i) {
+  for (uint32_t i = 0; i < vk::SWAP_CHAIN_IMAGE_COUNT; ++i) {
     m_perFrameSlabs[i][slabIdx].m_slabTracker.free(buffData.m_rangeHandle);
   }
   // next we just need to free the pool
   m_allocInfoStorage.free(idx);
 
   return false;
-}
-
-ConstantBufferHandle VkConstantBufferManager::allocateDynamic(
-    const uint32_t sizeInBytes, void *inputData) {
-  assert(0);
-  return {};
 }
 
 inline uint32_t padTo256BytesMultiple(const uint32_t size) {
@@ -252,7 +247,9 @@ void VkConstantBufferManager::update(const ConstantBufferHandle handle,
   ConstantBufferedData buffRequest;
 
   // setting data on the buffer request
-  buffRequest.dataAllocHandle = m_randomAlloc.allocate(buffData.m_range.m_size);
+  assert(buffData.m_range.m_size < 65535);
+  buffRequest.dataAllocHandle =
+      m_randomAlloc.allocate(static_cast<uint16_t>(buffData.m_range.m_size));
   buffRequest.handle = handle;
 
   // perform current update, that is why we use frame buffer count -1
@@ -268,11 +265,6 @@ void VkConstantBufferManager::update(const ConstantBufferHandle handle,
   memcpy(m_randomAlloc.getPointer(buffRequest.dataAllocHandle), data,
          buffData.m_range.m_size);
   m_bufferedRequests[handle.handle] = buffRequest;
-}
-
-void VkConstantBufferManager::updateConstantBufferBuffered(
-    const ConstantBufferHandle handle, void *dataToUpload) {
-  assert(0);
 }
 
 void VkConstantBufferManager::processBufferedData() {

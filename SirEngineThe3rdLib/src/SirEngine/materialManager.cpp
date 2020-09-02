@@ -139,7 +139,7 @@ static void parseQueueTypeFlags(uint32_t *outFlags,
 }
 
 MaterialManager::PreliminaryMaterialParse MaterialManager::parseMaterial(
-    const char *path, const MeshHandle meshHandle,
+    const char *path, const MeshHandle,
     const SkinHandle skinHandle) {
   // for materials we do not perform the check whether is loaded or not
   // each object is going to get it s own material copy.
@@ -254,7 +254,6 @@ MaterialManager::PreliminaryMaterialParse MaterialManager::parseMaterial(
   texHandles.skinHandle = skinHandle;
   texHandles.height = heightTex;
 
-  uint32_t shaderQueueTypeFlags;
   PreliminaryMaterialParse toReturn;
   toReturn.mat = mat;
   toReturn.handles = texHandles;

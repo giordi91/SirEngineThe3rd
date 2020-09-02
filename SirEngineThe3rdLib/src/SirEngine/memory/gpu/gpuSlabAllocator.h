@@ -33,7 +33,6 @@ class GPUSlabAllocator final {
   void initialize(GPUSlabAllocatorInitializeConfig config);
   GPUSlabAllocationHandle allocate(uint32_t sizeInBytes, void *initialData);
   void clear();
-  void *getMappedPtr(GPUSlabAllocationHandle allocHandle);
   void cleanup();
   BufferHandle getBufferHandle(const uint32_t slabIndex) const {
     return m_slabs[slabIndex]->handle;

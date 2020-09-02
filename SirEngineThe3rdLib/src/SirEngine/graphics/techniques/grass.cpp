@@ -273,7 +273,7 @@ void GrassTechnique::passRender(const uint32_t id,
 
   // globals::RENDERING_CONTEXT->renderProcedural(tileCount * pointsPerTile *
   //                                             pointsPerBlade);
-  globals::RENDERING_CONTEXT->renderProceduralIndirect(m_outTiles, m_rs);
+  globals::RENDERING_CONTEXT->renderProceduralIndirect(m_outTiles);
 
   renderGroundPlane(passHandle);
 }
@@ -334,7 +334,7 @@ void GrassTechnique::clear(const uint32_t id) {
   }
 }
 
-void GrassTechnique::prePassRender(uint32_t id) { performCulling(); }
+void GrassTechnique::prePassRender(uint32_t) { performCulling(); }
 
 void GrassTechnique::performCulling() {
   // here we compute the surviving tiles

@@ -120,60 +120,6 @@ bool Dx12ConstantBufferManager::free(ConstantBufferHandle handle) {
 
   return false;
 }
-// TODO remove legacy
-ConstantBufferHandle Dx12ConstantBufferManager::allocateDynamic(
-    const uint32_t sizeInBytes, void *inputData) {
-  assert(0);
-  return {};
-  /*
-// allocate dynamics takes into account we could have multiple frame in
-// flight and we don not want to override the value meanwhile is still in
-// use, so multiple version are allocated same number of flame inflight the
-// engine is using
-
-// must be at least 256 bytes, size is clamped if too small
-const uint32_t actualSize =
-    sizeInBytes % 256 == 0 ? sizeInBytes : ((sizeInBytes / 256) + 1) * 256;
-
-// finding a free block in the pool
-uint32_t index;
-ConstantBufferDataDynamic &data = m_dynamicStorage.getFreeMemoryData(index);
-
-const ConstantBufferHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
-
-// here we allocate the N constant buffers
-for (int i = 0; i < FRAME_BUFFERS_COUNT; ++i) {
-  data.cbData[i].mapped = false;
-  data.cbData[i].size = sizeInBytes;
-
-  // create the upload buffer
-  auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-  auto bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(actualSize);
-
-  dx12::DEVICE->CreateCommittedResource(
-      &heapProperties, D3D12_HEAP_FLAG_NONE, &bufferDesc,
-      D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-      IID_PPV_ARGS(&data.cbData[i].resource));
-
-  // allocating a descriptor
-  DescriptorPair pair{};
-  dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferCBV(
-      pair, data.cbData[i].resource, actualSize);
-  // map the buffer and copy the memory over
-  mapConstantBuffer(data.cbData[i]);
-  if (inputData != nullptr) {
-    memcpy(data.cbData[i].mappedData, inputData, sizeInBytes);
-  }
-
-  data.cbData[i].pair = pair;
-  data.cbData[i].magicNumber = MAGIC_NUMBER_COUNTER;
-  // m_dynamicStorage[i].push_back(data);
-  assert(data.cbData[i].resource != nullptr);
-}
-++MAGIC_NUMBER_COUNTER;
-return handle;
-*/
-}
 
 ConstantBufferHandle Dx12ConstantBufferManager::allocate(
     const uint32_t sizeInBytes, const CONSTANT_BUFFER_FLAGS flags,
@@ -188,9 +134,8 @@ ConstantBufferHandle Dx12ConstantBufferManager::allocate(
       sizeInBytes % 256 == 0 ? sizeInBytes : ((sizeInBytes / 256) + 1) * 256;
 
   // finding a free block in the pool
-  uint32_t index = -1;
+  uint32_t index = static_cast<uint32_t>(-1);
   ConstantBufferDataDynamic &data = m_dynamicStorage.getFreeMemoryData(index);
-
   const ConstantBufferHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
 
   // here we allocate the N constant buffers
@@ -242,39 +187,6 @@ void Dx12ConstantBufferManager::updateConstantBufferNotBuffered(
   memcpy(data.mappedData, dataToUpload, data.size);
 }
 
-void Dx12ConstantBufferManager::updateConstantBufferBuffered(
-    const ConstantBufferHandle handle, void *dataToUpload) {
-  assert(0);
-  /*
-// check if we have any other request for this buffer if so we clear it
-const auto found = m_bufferedRequests.find(handle.handle);
-if (found != m_bufferedRequests.end()) {
-  // lets clear up the allocation
-  m_randomAlloc.freeAllocation(found->second.dataAllocHandle);
-}
-
-// lets create a new request
-ConstantBufferedData buffRequest;
-assertMagicNumber(handle);
-const uint32_t index = getIndexFromHandle(handle);
-buffRequest.poolIndex = index;
-
-const ConstantBufferData data =
-    m_dynamicStorage[index].cbData[globals::CURRENT_FRAME];
-
-// setting data on the buffer request
-buffRequest.dataAllocHandle = m_randomAlloc.allocate(data.size);
-buffRequest.handle = handle;
-
-// perform current update, that is why we use frame buffer count -1
-buffRequest.counter = FRAME_BUFFERS_COUNT - 1;
-updateConstantBufferNotBuffered(handle, dataToUpload);
-// copying data in storage so we can keep track of it
-memcpy(m_randomAlloc.getPointer(buffRequest.dataAllocHandle), dataToUpload,
-       data.size);
-m_bufferedRequests[handle.handle] = buffRequest;
-*/
-}
 
 void Dx12ConstantBufferManager::processBufferedData() {
   std::vector<int> processedIdxs;

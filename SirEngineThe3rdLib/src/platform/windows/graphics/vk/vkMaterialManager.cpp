@@ -67,9 +67,7 @@ void VkMaterialManager::bindMaterial(SHADER_QUEUE_FLAGS queueFlag,
   VkDescriptorSet descriptorSet =
       vk::DESCRIPTOR_MANAGER->getDescriptorSet(setHandle);
 
-  VkDescriptorSet sets[] = {
-      descriptorSet
-  };
+  VkDescriptorSet sets[] = {descriptorSet};
 
   // multiple descriptor sets
   vkCmdBindDescriptorSets(commandList, VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -127,9 +125,8 @@ void beginRenderPass(ShaderBind bind) {
   vkCmdBeginRenderPass(vk::CURRENT_FRAME_COMMAND->m_commandBuffer, &beginInfo,
                        VK_SUBPASS_CONTENTS_INLINE);
 }
-ShaderBind VkMaterialManager::bindRSandPSO(const uint32_t shaderFlags,
-                                           const VkCommandBuffer commandList) const
-{
+ShaderBind VkMaterialManager::bindRSandPSO(
+    const uint32_t shaderFlags, const VkCommandBuffer commandList) const {
   // get type flags as int
   constexpr auto mask = static_cast<uint32_t>(~((1 << 16) - 1));
   const auto typeFlags = static_cast<uint16_t>((shaderFlags & mask) >> 16);
@@ -245,7 +242,6 @@ void VkMaterialManager::releaseAllMaterialsAndRelatedResources() {
   int count = m_nameToHandle.binCount();
   for (int i = 0; i < count; ++i) {
     if (m_nameToHandle.isBinUsed(i)) {
-      const char *key = m_nameToHandle.getKeyAtBin(i);
       MaterialHandle value = m_nameToHandle.getValueAtBin(i);
 
       // now that we have the handle we can get the data
@@ -309,8 +305,8 @@ MaterialHandle VkMaterialManager::allocateMaterial(
     materialData.m_materialRuntime.descriptorHandles[i] = descriptorHandle;
     materialData.m_materialRuntime.layouts[i] =
         vk::PIPELINE_LAYOUT_MANAGER->getLayoutFromHandle(bind.rs);
-    materialData.m_materialRuntime.useStaticSamplers[i] =
-        vk::PIPELINE_LAYOUT_MANAGER->usesStaticSamplers(bind.rs);
+    materialData.m_materialRuntime.useStaticSamplers[i] = static_cast<uint8_t>(
+        vk::PIPELINE_LAYOUT_MANAGER->usesStaticSamplers(bind.rs));
     SHADER_QUEUE_FLAGS queueType = static_cast<SHADER_QUEUE_FLAGS>(1 << i);
     materialData.m_materialRuntime.shaderQueueTypeFlags[i] =
         getQueueTypeFlags(queueType, shaderType);
@@ -401,7 +397,7 @@ void VkMaterialManager::bindMaterial(const MaterialHandle handle,
   uint32_t flags = data.m_materialRuntime.shaderQueueTypeFlags[currentFlagId];
   SHADER_TYPE_FLAGS type = getTypeFlags(flags);
   ShaderBind bind;
-  bool found = m_shaderTypeToShaderBind.get(static_cast<uint32_t>(type), bind);
+  bool found = m_shaderTypeToShaderBind.get(static_cast<uint16_t>(type), bind);
   assert(found);
 
   vk::PSO_MANAGER->bindPSO(bind.pso, CURRENT_FRAME_COMMAND->m_commandBuffer);

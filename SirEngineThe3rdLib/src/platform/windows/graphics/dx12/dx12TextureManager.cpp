@@ -359,7 +359,7 @@ void Dx12TextureManager::clearDepth(const TextureHandle depth,
 
   CURRENT_FRAME_RESOURCE->fc.commandList->ClearDepthStencilView(
       data.rtsrv.cpuHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL,
-      depthValue, stencilValue, 0, nullptr);
+      depthValue, static_cast<uint8_t>(stencilValue), 0, nullptr);
 }
 
 void Dx12TextureManager::clearRT(const TextureHandle handle,

@@ -45,22 +45,14 @@ void Camera3DPivot::getFrustum(Plane* outPlanes) const {
       static_cast<float>(globals::ENGINE_CONFIG->m_windowWidth) /
       static_cast<float>(globals::ENGINE_CONFIG->m_windowHeight);
   float apiCompensateFactor =
-      globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::DX12 ? 1 : -1;
+      globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::DX12 ? 1.0f : -1.0f;
   float nnear = getNear() * apiCompensateFactor;
   float hnear = 2.0f * tanf(angle / 2.0f) * glm::abs(nnear);
   //flipping hnear because we are going left
   float wnear = -hnear * aspsectRatio;
 
-  float ffar = getFar() * apiCompensateFactor;
-  float hfar = 2.0f * tanf(angle / 2.0f) * glm::abs(ffar);
-  //flipping hfar because we are going left
-  float wfar = -hfar * aspsectRatio;
-
   float hnearhalf = hnear / 2.0f;
   float wnearhalf = wnear / 2.0f;
-
-  float hfarhalf = hfar / 2.0f;
-  float wfarhalf = wfar / 2.0f;
 
   glm::vec4 camPos = glm::vec4(getPosition(), 1);
   glm::vec3 viewDir = getViewDirection();
@@ -106,7 +98,7 @@ void Camera3DPivot::getFrustum(Plane* outPlanes) const {
 glm::vec3 Camera3DPivot::getViewDirection() const {
 
   float apiCompensateFactor =
-      globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::DX12 ? 1 : -1;
+      globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::DX12 ? 1.0f : -1.0f;
   return apiCompensateFactor* glm::vec3(getViewInverse(glm::mat4(1))[2]);
 }
 

@@ -31,7 +31,7 @@ BufferRangeHandle LinearBufferManager::allocate(const uint64_t allocSizeInBytes,
     // if we are here means the allocation could fit!
     range.m_range.m_size = allocSizeInBytes;
     range.m_magicNumber = MAGIC_NUMBER_COUNTER++;
-    range.m_allocIndex = i;
+    range.m_allocIndex = static_cast<uint16_t>(i);
     // we need to move it back into the free
     m_allocations[range.m_allocIndex] = range;
     m_freeAllocations.removeByPatchingFromLast(i);

@@ -112,12 +112,12 @@ int drawSquareBetweenTwoPointsSize3(float *data, const glm::vec3 minP,
 DebugRenderer::DebugRenderer() : m_lineBindHandles(HANDLES_INITIAL_SIZE) {}
 
 void DebugRenderer::cleanup() {
-  for (int i = 0; i < globals::ENGINE_CONFIG->m_frameBufferingCount; ++i) {
+  for (uint32_t i = 0; i < globals::ENGINE_CONFIG->m_frameBufferingCount; ++i) {
     m_lineSlab[i].cleanup();
   }
 
-  int count = m_lineBindHandles.size();
-  for (int i = 0; i < count; ++i) {
+  uint32_t count = m_lineBindHandles.size();
+  for (uint32_t i = 0; i < count; ++i) {
     BindingTableHandle handle{m_lineBindHandles[i]};
     if (handle.isHandleValid()) {
       globals::BINDING_TABLE_MANAGER->free(handle);
@@ -128,22 +128,8 @@ void DebugRenderer::cleanup() {
 
 void DebugRenderer::free() {}
 
-DebugDrawHandle DebugRenderer::drawPointsUniformColor(float *data,
-                                                      uint32_t sizeInByte,
-                                                      glm::vec4 color,
-                                                      float size,
-                                                      const char *debugName) {
-  assert(0);
-  return {};
-}
 
-DebugDrawHandle DebugRenderer::drawSkeleton(Skeleton *skeleton, glm::vec4 color,
-                                            float pointSize) {
-  assert(0);
-  return {};
-}
-
-void DebugRenderer::render(TextureHandle input, TextureHandle depth) {
+void DebugRenderer::render() {
   // draw lines
   int slabCount = m_lineSlab[globals::CURRENT_FRAME].getSlabCount();
   assureLinesTables(slabCount);
@@ -208,28 +194,7 @@ void DebugRenderer::drawBoundingBoxes(const BoundingBox *data, const int count,
   return drawLines(points, totalSize * sizeof(float), color);
 }
 
-DebugDrawHandle DebugRenderer::drawAnimatedBoundingBoxes(
-    DebugDrawHandle handle, BoundingBox *data, int count, glm::vec4 color,
-    const char *debugName) {
-  assert(0);
-  return {};
-}
-
-DebugDrawHandle DebugRenderer::drawAnimatedBoundingBoxFromFullPoints(
-    const DebugDrawHandle handle, const glm::vec3 *data, const int count,
-    const glm::vec4 color, const char *debugName) {
-  assert(0);
-  return {};
-}
-
-DebugDrawHandle DebugRenderer::drawMatrix(const glm::mat4 &mat, float size,
-                                          glm::vec4 color,
-                                          const char *debugName) {
-  assert(0);
-  return {};
-}
-
-void DebugRenderer::drawLines(float *data, const uint32_t sizeInByte,
+void DebugRenderer::drawLines(const float *data, const uint32_t sizeInByte,
                               const glm::vec4 color) {
   // making sure is a multiple of 3, float3 one per point
   assert((sizeInByte % (sizeof(float) * 3) == 0));
@@ -243,7 +208,7 @@ void DebugRenderer::drawLines(float *data, const uint32_t sizeInByte,
   auto *paddedData =
       static_cast<float *>(globals::FRAME_ALLOCATOR->allocate(finalSize));
 
-  for (int i = 0; i < count; ++i) {
+  for (uint32_t i = 0; i < count; ++i) {
     paddedData[i * 8 + 0] = data[i * 3 + 0];
     paddedData[i * 8 + 1] = data[i * 3 + 1];
     paddedData[i * 8 + 2] = data[i * 3 + 2];
@@ -302,7 +267,7 @@ void DebugRenderer::drawCamera(const CameraController *camera,
       static_cast<float>(globals::ENGINE_CONFIG->m_windowWidth) /
       static_cast<float>(globals::ENGINE_CONFIG->m_windowHeight);
   float apiCompensateFactor =
-      globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::DX12 ? 1 : -1;
+      globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::DX12 ? 1.0f : -1.0f;
   float nnear = camera->getNear() * apiCompensateFactor;
   float hnear = 2.0f * tanf(angle / 2.0f) * nnear;
   float wnear = -hnear * aspsectRatio;
