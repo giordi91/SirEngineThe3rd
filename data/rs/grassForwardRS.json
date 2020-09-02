@@ -1,162 +1,89 @@
 {
   "type": "RASTER",
   "staticSamplers": true,
-  "staticSamplersBound": true,
-  "useRegisterSpace": true, 
   "staticSamplersVisibility": [ "PS" ],
-  "flatDescriptorTable" :  true, 
   "passConfig": [
     {
       "comment": "lighting data",
-      "type": "descriptorTable",
-      "data": {
-        "ranges": [
-          {
-            "type": "CBV",
-            "underlyingResource": "buffer",
-            "numDescriptors": 1,
-            "baseRegister":0 
-          }
-        ]
-      },
+      "type": "CBV",
+      "underlyingResource": "buffer",
+      "numDescriptors": 1,
+      "baseRegister":0,
       "visibility": "PS"
     },
     {
       "comment": "irradiance map",
-      "type": "descriptorTable",
       "visibility": "PS",
-      "data": {
-        "ranges": [
-          {
-            "underlyingResource": "texture",
-            "type": "SRV",
-            "numDescriptors": 1,
-            "baseRegister": 1
-          }
-        ]
-      }
+      "underlyingResource": "texture",
+      "type": "SRV",
+      "numDescriptors": 1,
+      "baseRegister": 1
     },
     {
       "comment": "radiance map",
-      "type": "descriptorTable",
       "visibility": "PS",
-      "data": {
-        "ranges": [
-          {
-            "underlyingResource": "texture",
-            "type": "SRV",
-            "numDescriptors": 1,
-            "baseRegister": 2
-          }
-        ]
-      }
+      "underlyingResource": "texture",
+      "type": "SRV",
+      "numDescriptors": 1,
+      "baseRegister": 2
     },
     {
       "comment": "brdf map",
-      "type": "descriptorTable",
       "visibility": "PS",
-      "data": {
-        "ranges": [
-          {
-            "underlyingResource": "texture",
-            "type": "SRV",
-            "numDescriptors": 1,
-            "baseRegister": 3
-          }
-        ]
-      }
+      "underlyingResource": "texture",
+      "type": "SRV",
+      "numDescriptors": 1,
+      "baseRegister": 3
     }
   ], 
   "config": [
     {
       "comment": "vertex buffer bound as storage buffer/ positions",
-      "type": "descriptorTable",
       "visibility": "VS",
-      "data": {
-        "ranges": [
-          {
-            "type": "SRV",
-            "underlyingResource": "buffer",
-            "numDescriptors": 1,
-            "baseRegister": 0
-          }
-        ]
-      }
+      "type": "SRV",
+      "underlyingResource": "buffer",
+      "numDescriptors": 1,
+      "baseRegister": 0
     },
     {
       "comment": "indices of the tiles to sample",
-      "type": "descriptorTable",
       "visibility": "VS",
-      "data": {
-        "ranges": [
-          {
-            "type": "SRV",
-            "underlyingResource": "buffer",
-            "numDescriptors": 1,
-            "baseRegister": 1
-          }
-        ]
-      }
+      "type": "SRV",
+      "underlyingResource": "buffer",
+      "numDescriptors": 1,
+      "baseRegister": 1
     },
     {
       "comment": "wind flow tex",
-      "type": "descriptorTable",
       "visibility": "VS",
-      "data": {
-        "ranges": [
-          {
-            "type": "SRV",
-            "underlyingResource": "texture",
-            "numDescriptors": 1,
-            "baseRegister": 2
-          }
-        ]
-      }
+      "type": "SRV",
+      "underlyingResource": "texture",
+      "numDescriptors": 1,
+      "baseRegister": 2
     },
     {
       "comment": "grass config",
-      "type": "descriptorTable",
       "visibility": [ "VS", "PS" ],
-      "data": {
-        "ranges": [
-          {
-            "type": "CBV",
-            "underlyingResource": "buffer",
-            "numDescriptors": 1,
-            "baseRegister":3 
-          }
-        ]
-      }
+      "type": "CBV",
+      "underlyingResource": "buffer",
+      "numDescriptors": 1,
+      "baseRegister":3 
     },
     {
       "comment": "grass albedo tex",
-      "type": "descriptorTable",
       "visibility": "PS",
-      "data": {
-        "ranges": [
-          {
-            "type": "SRV",
-            "underlyingResource": "texture",
-            "numDescriptors": 1,
-            "baseRegister": 4
-          }
-        ]
-      }
+      "type": "SRV",
+      "underlyingResource": "texture",
+      "numDescriptors": 1,
+      "baseRegister": 4
     },
     {
       "comment": "culled tiles",
-      "type": "descriptorTable",
       "visibility": "VS",
-      "data": {
-        "ranges": [
-          {
-            "type": "SRV",
-            "numDescriptors": 1,
-            "baseRegister": 5,
-            "underlyingResource": "buffer"
-          }
-        ]
-      }
+      "type": "SRV",
+      "numDescriptors": 1,
+      "baseRegister": 5,
+      "underlyingResource": "buffer"
     }
   ]
 }

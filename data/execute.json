@@ -47,7 +47,8 @@
     "-p ../data/rs/grassPlaneRS.json -o ../data/processed/rs/grassPlaneRS.root --pluginName rootSignatureCompilerPlugin",
     "-p ../data/rs/grassCullingScanRS.json -o ../data/processed/rs/grassCullingScanRS.root --pluginName rootSignatureCompilerPlugin",
     "-p ../data/rs/grassClearRS.json -o ../data/processed/rs/grassClearRS.root --pluginName rootSignatureCompilerPlugin",
-    "-p ../data/rs/grassForwardRS.json -o ../data/processed/rs/grassForwardRS.root --pluginName rootSignatureCompilerPlugin"
+    "-p ../data/rs/grassForwardRS.json -o ../data/processed/rs/grassForwardRS.root --pluginName rootSignatureCompilerPlugin",
+    "-p ../data/rs/skybox_RS.json -o ../data/processed/rs/skybox_RS.root --pluginName rootSignatureCompilerPlugin"
   ],
   "comment": [
     "-p ../data/pso -o ../data/processed/pso --pluginName PSOCompilerPlugin --pluginArgs \"-t DX12 -a -s ../data/shaders/DX12\""

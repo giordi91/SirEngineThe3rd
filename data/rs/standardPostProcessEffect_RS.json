@@ -1,38 +1,21 @@
 {
   "type": "RASTER",
   "staticSamplers": true,
-  "staticSamplersBound": true,
-  "useRegisterSpace": true,
-  "flatDescriptorTable" :  true, 
   "config": [
     {
       "comment": "input texture to sample",
-      "type": "descriptorTable",
-      "data": {
-        "ranges": [
-          {
-            "type": "SRV",
-            "underlyingResource": "texture",
-            "numDescriptors": 1,
-            "baseRegister": 0
-          }
-        ]
-      },
+      "type": "SRV",
+      "underlyingResource": "texture",
+      "numDescriptors": 1,
+      "baseRegister": 0,
       "visibility": "PS"
     },
     {
       "comment": "constant buffer for configuring the pass",
-      "type": "descriptorTable",
-      "data": {
-        "ranges": [
-          {
-            "type": "CBV",
-            "underlyingResource": "buffer",
-            "numDescriptors": 1,
-            "baseRegister":1 
-          }
-        ]
-      },
+      "type": "CBV",
+      "underlyingResource": "buffer",
+      "numDescriptors": 1,
+      "baseRegister":1,
       "visibility": "PS"
     }
   ],

@@ -12,7 +12,6 @@
 
 namespace SirEngine::dx12 {
 static const std::string PSO_KEY_GLOBAL_ROOT = "globalRootSignature";
-static const std::string PSO_KEY_MAX_RECURSION = "maxRecursionDepth";
 static const std::string PSO_KEY_TYPE = "type";
 static const std::string PSO_KEY_TYPE_DXR = "DXR";
 static const std::string PSO_KEY_TYPE_RASTER = "RASTER";

@@ -1,23 +1,15 @@
 {
   "type": "RASTER",
   "staticSamplers": true,
-  "staticSamplersBound": true,
   "passConfig": [], 
   "config": [
     {
       "comment": "albedo tex",
-      "type": "descriptorTable",
       "visibility": "PS",
-      "data": {
-        "ranges": [
-          {
-            "type": "SRV",
-            "underlyingResource": "texture",
-            "numDescriptors": 1,
-            "baseRegister": 1
-          }
-        ]
-      }
+      "type": "SRV",
+      "underlyingResource": "texture",
+      "numDescriptors": 1,
+      "baseRegister": 1
     }
   ]
 }
