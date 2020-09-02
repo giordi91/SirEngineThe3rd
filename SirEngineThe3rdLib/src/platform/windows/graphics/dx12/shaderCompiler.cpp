@@ -14,8 +14,8 @@
 
 namespace SirEngine::dx12 {
 
-LPCWSTR COMPILATION_FLAGS_DEBUG[] = {L"/Zi", L"/Od"};
-LPCWSTR COMPILATION_FLAGS[] = {L"/O3"};
+LPCWSTR COMPILATION_FLAGS_DEBUG[] = {L"/Zi", L"/Od",L"-enable-16bit-types"};
+LPCWSTR COMPILATION_FLAGS[] = {L"/O3", L"-enable-16bit-types"};
 
 DXCShaderCompiler::DXCShaderCompiler() {
   // lets create an instance of the compiler

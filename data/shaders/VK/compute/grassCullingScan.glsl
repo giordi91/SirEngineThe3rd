@@ -4,9 +4,19 @@
 #extension GL_KHR_shader_subgroup_ballot: enable
 #extension GL_KHR_shader_subgroup_vote: enable
 #extension GL_KHR_shader_subgroup_arithmetic: require 
+#extension GL_EXT_shader_16bit_storage: require
+#extension GL_EXT_shader_explicit_arithmetic_types :require
+#extension GL_EXT_shader_explicit_arithmetic_types_int16:require
 
 #include "../common/structures.glsl"
 #include "../common/utility.glsl"
+
+struct GrassCullingResult
+{
+    int tileIndex; 
+	uint16_t tilePointsId; 
+	uint16_t LOD; 
+};
 
 layout (set=0,binding=0) uniform readonly inFrameData 
 {
@@ -20,7 +30,7 @@ layout (set=3,binding=0) buffer readonly inTileData
 //holds the indices of the tiles that survived
 layout (set=3,binding=1) buffer outData 
 {
-	ivec2 outValue[];
+	GrassCullingResult outValue[];
 };
 
 layout (set=3,binding=2) uniform inConfigData 
@@ -118,7 +128,7 @@ void CS()
 
   //perform the atomic increase
   if(gl_LocalInvocationID.x ==63){
-	offset = atomicAdd(outValue[SUPPORT_DATA_ATOMIC_OFFSET].x,scan);
+	offset = atomicAdd(outValue[SUPPORT_DATA_ATOMIC_OFFSET].tileIndex ,scan);
   }
   barrier();
   //if we did not have to support multiple wave len we could 
@@ -128,7 +138,11 @@ void CS()
 
   if(vote != 0 )
   {
-	outValue[actualOffset + scan + SUPPORT_DATA_OFFSET-1] = 
-	ivec2(int(gl_GlobalInvocationID.x),int(tileIds[gl_GlobalInvocationID.x]));
+    GrassCullingResult res;
+	res.tileIndex = int(gl_GlobalInvocationID.x);
+	res.tilePointsId = uint16_t(tileIds[gl_GlobalInvocationID.x]);
+	res.LOD = uint16_t(0);
+
+	outValue[actualOffset + scan + SUPPORT_DATA_OFFSET-1] =  res;
   }
 }

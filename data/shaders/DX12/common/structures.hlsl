@@ -98,10 +98,12 @@ struct GrassConfig {
 
   //tile config
   float tileSize;
+
   int tilesPerSide;
   int sourceDataTileCount;
   int seed;
   int pointsPerTile;
+
   int pointsPerSourceTile;
 
   //blade config
@@ -122,5 +124,8 @@ struct GrassConfig {
   float roughness;
   float3 tipColor;
   float metalness;
+
+  //lods
+  float4 lodThresholds;
 };
 #endif

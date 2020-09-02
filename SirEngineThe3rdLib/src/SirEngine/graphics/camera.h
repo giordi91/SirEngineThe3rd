@@ -83,19 +83,10 @@ class Camera3DPivot final : public CameraController {
     auto pos = getPosition();
     m_cameraBuffer.position = glm::vec4(pos, 1.0f);
 
-    // not super happy about this, but it is better to do it here, so
-    // computation is consistent and we only transpose to the very end
-    // if (globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::VULKAN) {
     m_cameraBuffer.MVP = getMVP(glm::mat4(1.0));
     m_cameraBuffer.ViewMatrix = getViewInverse(glm::mat4(1.0));
     m_cameraBuffer.VPinverse = getMVPInverse(glm::mat4(1.0));
-    //}
-    // else {
-    //  m_cameraBuffer.MVP = getMVP(glm::mat4(1.0));
-    //  m_cameraBuffer.ViewMatrix =
-    //      getViewInverse(glm::mat4(1.0));
-    //  m_cameraBuffer.VPinverse = getMVPInverse(glm::mat4(1.0));
-    //}
+
     getFrustum(m_cameraBuffer.frustum);
     m_cameraBuffer.cameraViewDir = glm::vec4(getViewDirection(), 0.0);
     m_cameraBuffer.position = glm::vec4(getPosition(), 1.0);

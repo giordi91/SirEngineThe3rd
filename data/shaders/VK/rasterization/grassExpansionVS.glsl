@@ -3,6 +3,9 @@
 #extension GL_EXT_shader_16bit_storage: require
 #extension GL_EXT_shader_8bit_storage: require
 #extension GL_GOOGLE_include_directive: require
+#extension GL_EXT_shader_16bit_storage: require
+#extension GL_EXT_shader_explicit_arithmetic_types :require
+#extension GL_EXT_shader_explicit_arithmetic_types_int16:require
 
 #include "../common/constants.glsl"
 #include "../common/structures.glsl"
@@ -26,9 +29,16 @@ layout (set=3,binding=3) uniform ConfigData
 {
 	GrassConfig grassConfig;
 }; 
+
+struct GrassCullingResult
+{
+    int tileIndex; 
+	uint16_t tilePointsId; 
+	uint16_t LOD; 
+};
 layout (set=3,binding=5) buffer readonly tilesCulling
 {
-	ivec2 cullTileId[];
+	GrassCullingResult cullTileId[];
 };
 
 layout (set=1,binding = 0) uniform sampler[7] colorSampler;
@@ -154,8 +164,8 @@ void VS()
 
     //int tileNumber = int(vid/grassConfig.pointsPerTile);
     int cullIndex = int(vid/grassConfig.pointsPerTile);
-    ivec2 cullTileData = cullTileId[cullIndex+SUPPORT_DATA_OFFSET];
-    int tileNumber = int(cullTileData.x);
+    GrassCullingResult cullTileData = cullTileId[cullIndex+SUPPORT_DATA_OFFSET];
+    int tileNumber = int(cullTileData.tileIndex);
 
     //uint notCulled = cullTileId[tileNumber];
 
@@ -168,7 +178,7 @@ void VS()
     float tileY = tileNumber /tilesPerSide;
     vec3 tileCorner = minCorner + vec3(tw*(tileX), 0, tw*tileY);
 
-    int tempOffset = cullTileData.y *grassConfig.pointsPerTile ;
+    int tempOffset = cullTileData.tilePointsId *grassConfig.pointsPerTile ;
     int inTilePosIdx = int(vid%grassConfig.pointsPerTile);
 	vec2 tilePos = p[inTilePosIdx + tempOffset];
     vec3 position = tileCorner + vec3(tilePos.x,0.0f,tilePos.y)*tw;

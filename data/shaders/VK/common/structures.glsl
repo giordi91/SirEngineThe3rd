@@ -103,6 +103,7 @@ struct GrassConfig {
   int seed;
   int pointsPerTile;
 
+
   int pointsPerSourceTile;
 
   //blade config
@@ -124,5 +125,9 @@ struct GrassConfig {
   float roughness;
   vec3 tipColor;
   float metalness;
+
+  //lods
+  vec4 lodThresholds;
 };
+
 #endif
