@@ -235,10 +235,8 @@ const std::string ROOT_KEY_CONFIG = "config";
 const std::string ROOT_KEY_PASS_CONFIG = "passConfig";
 const std::string ROOT_KEY_NAME = "name";
 const std::string ROOT_KEY_TYPE = "type";
-const std::string ROOT_KEY_DATA = "data";
 const std::string ROOT_KEY_RESOURCE = "underlyingResource";
 const std::string ROOT_KEY_NUM_DESCRIPTOR = "numDescriptors";
-const std::string ROOT_KEY_RANGES = "ranges";
 const std::string ROOT_KEY_SET = "sets";
 const std::string ROOT_KEY_REGISTER = "register";
 const std::string ROOT_KEY_BASE_REGISTER = "baseRegister";
@@ -373,21 +371,15 @@ void VkPipelineLayoutManager::loadSignatureBinaryFile(const char *file) {
 
 void processConfig(const nlohmann::json &jobj,
                    VkDescriptorSetLayoutBinding *binding) {
-  const auto &ranges = jobj[ROOT_KEY_DATA][ROOT_KEY_RANGES];
-  assert(
-      ranges.size() == 1 &&
-      "Currently ranges bigger than one are not supported in the VK backend");
-  const auto &range = ranges[0];
-
-  int bindingIdx = getValueIfInJson(range, ROOT_KEY_BASE_REGISTER, -1);
-  int descriptorCount = getValueIfInJson(range, ROOT_KEY_NUM_DESCRIPTOR, -1);
+  int bindingIdx = getValueIfInJson(jobj, ROOT_KEY_BASE_REGISTER, -1);
+  int descriptorCount = getValueIfInJson(jobj, ROOT_KEY_NUM_DESCRIPTOR, -1);
 
   assert(bindingIdx != -1);
   assert(descriptorCount != -1);
 
   binding->stageFlags = getVisibilityFlags(jobj);
   VkDescriptorType descriptorType =
-      getDescriptorType(range, binding->stageFlags);
+      getDescriptorType(jobj, binding->stageFlags);
   assert(descriptorType != VK_DESCRIPTOR_TYPE_MAX_ENUM);
 
   binding->binding = bindingIdx;
@@ -501,15 +493,9 @@ RSHandle VkPipelineLayoutManager::loadSignatureFile(const char *file) {
     passDescriptorLayout = getEmptyLayout(passname);
   }
 
-  // we are going to use multiple layouts if static samplers are requested
-  // (which is always the case)
-  bool useStaticSamplers =
-      getValueIfInJson(jobj, ROOT_KEY_STATIC_SAMPLERS, false);
-  // always allocating two layouts, and dynamically changing how many layouts
-  // we use depending on user config
-  assert(
-      useStaticSamplers &&
-      "if not using static sampler we need an empty layout for the samplers");
+  //we always bind the samplers, worst case we don't bind them, we might
+  //want to optimize this in the future
+  bool useStaticSamplers = true;
   VkDescriptorSetLayout layouts[4] = {
       PER_FRAME_LAYOUT,
       STATIC_SAMPLERS_LAYOUT,
