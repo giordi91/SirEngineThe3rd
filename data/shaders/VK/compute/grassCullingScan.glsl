@@ -116,29 +116,14 @@ void CS()
 	}
   }
 
-  /*
-  if(gl_SubgroupSize == 32 )
-  {
-      memoryBarrierShared();
-      if( gl_LocalInvocationID.x ==31) { accum = scan; }
-      memoryBarrierShared();
-      barrier();
-      if(gl_LocalInvocationID.x >= 32)
-      {
-    	scan += accum;
-      }
-      memoryBarrierShared();
-      barrier();
-  }
-  */
-
   //perform the atomic increase
-  //int offset =0;
   if(gl_LocalInvocationID.x ==63){
 	offset = atomicAdd(outValue[SUPPORT_DATA_ATOMIC_OFFSET].x,scan);
   }
   barrier();
-  //offset = subgroupBroadcast(offset,63);
+  //if we did not have to support multiple wave len we could 
+  //use a wave broadcast but won't work with waves smaller than the
+  //block size
   int actualOffset = offset;
 
   if(vote != 0 )

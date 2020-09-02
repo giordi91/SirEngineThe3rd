@@ -1,197 +1,105 @@
 {
   "type": "RASTER",
   "staticSamplers": true,
-  "useRegisterSpace": true,
-  "flatDescriptorTable" :  true, 
-  "staticSamplersBound": true,
   "staticSamplersVisibility": [ "PS" ],
   "passConfig": [
     {
       "comment": "lighting data",
-      "type": "descriptorTable",
-      "data": {
-        "ranges": [
-          {
-            "type": "CBV",
-            "underlyingResource": "buffer",
-            "numDescriptors": 1,
-            "baseRegister":0 
-          }
-        ]
-      },
+      "type": "CBV",
+      "underlyingResource": "buffer",
+      "numDescriptors": 1,
+      "baseRegister":0,
       "visibility": "PS"
     },
     {
       "comment": "irradiance map",
-      "type": "descriptorTable",
       "visibility": "PS",
-      "data": {
-        "ranges": [
-          {
-            "underlyingResource": "texture",
-            "type": "SRV",
-            "numDescriptors": 1,
-            "baseRegister": 1
-          }
-        ]
-      }
+      "underlyingResource": "texture",
+      "type": "SRV",
+      "numDescriptors": 1,
+      "baseRegister": 1
     },
     {
       "comment": "radiance map",
-      "type": "descriptorTable",
       "visibility": "PS",
-      "data": {
-        "ranges": [
-          {
-            "underlyingResource": "texture",
-            "type": "SRV",
-            "numDescriptors": 1,
-            "baseRegister": 2
-          }
-        ]
-      }
+      "underlyingResource": "texture",
+      "type": "SRV",
+      "numDescriptors": 1,
+      "baseRegister": 2
     },
     {
       "comment": "brdf map",
-      "type": "descriptorTable",
       "visibility": "PS",
-      "data": {
-        "ranges": [
-          {
-            "underlyingResource": "texture",
-            "type": "SRV",
-            "numDescriptors": 1,
-            "baseRegister": 3
-          }
-        ]
-      }
+      "underlyingResource": "texture",
+      "type": "SRV",
+      "numDescriptors": 1,
+      "baseRegister": 3
     }
   ], 
   "config": [
     {
       "comment": "vertex buffer bound as storage buffer/ positions",
-      "type": "descriptorTable",
       "visibility": "VS",
-      "data": {
-        "ranges": [
-          {
-            "type": "SRV",
-            "underlyingResource": "buffer",
-            "numDescriptors": 1,
-            "baseRegister": 0
-          }
-        ]
-      }
+      "type": "SRV",
+      "underlyingResource": "buffer",
+      "numDescriptors": 1,
+      "baseRegister": 0
     },
     {
       "comment": "vertex buffer bound as storage buffer/ normals",
-      "type": "descriptorTable",
       "visibility": "VS",
-      "data": {
-        "ranges": [
-          {
-            "type": "SRV",
-            "underlyingResource": "buffer",
-            "numDescriptors": 1,
-            "baseRegister": 1
-          }
-        ]
-      }
+      "type": "SRV",
+      "underlyingResource": "buffer",
+      "numDescriptors": 1,
+      "baseRegister": 1
     },
     {
       "comment": "vertex buffer bound as storage buffer/ uvs",
-      "type": "descriptorTable",
       "visibility": "VS",
-      "data": {
-        "ranges": [
-          {
-            "type": "SRV",
-            "underlyingResource": "buffer",
-            "numDescriptors": 1,
-            "baseRegister": 2
-          }
-        ]
-      }
+      "type": "SRV",
+      "underlyingResource": "buffer",
+      "numDescriptors": 1,
+      "baseRegister": 2
     },
     {
       "comment": "vertex buffer bound as storage buffer/ tangents",
-      "type": "descriptorTable",
       "visibility": "VS",
-      "data": {
-        "ranges": [
-          {
-            "type": "SRV",
-            "underlyingResource": "buffer",
-            "numDescriptors": 1,
-            "baseRegister": 3
-          }
-        ]
-      }
+      "type": "SRV",
+      "underlyingResource": "buffer",
+      "numDescriptors": 1,
+      "baseRegister": 3
     },
     {
       "comment": "albedo tex",
-      "type": "descriptorTable",
-      "data": {
-        "ranges": [
-          {
-            "type": "SRV",
-            "underlyingResource": "texture",
-            "numDescriptors": 1,
-            "baseRegister": 4
-          }
-        ]
-      },
+      "type": "SRV",
+      "underlyingResource": "texture",
+      "numDescriptors": 1,
+      "baseRegister": 4,
       "visibility": "PS"
     },
     {
       "comment": "normal tex",
-      "type": "descriptorTable",
-      "data": {
-        "ranges": [
-          {
-            "type": "SRV",
-            "underlyingResource": "texture",
-            "numDescriptors": 1,
-            "baseRegister": 5
-          }
-        ]
-      },
+      "type": "SRV",
+      "underlyingResource": "texture",
+      "numDescriptors": 1,
+      "baseRegister": 5,
       "visibility": "PS"
     },
     {
       "comment": "metallic tex",
-      "type": "descriptorTable",
-      "data": {
-        "ranges": [
-          {
-            "type": "SRV",
-            "underlyingResource": "texture",
-            "numDescriptors": 1,
-            "baseRegister": 6
-          }
-        ]
-      },
+      "type": "SRV",
+      "underlyingResource": "texture",
+      "numDescriptors": 1,
+      "baseRegister": 6,
       "visibility": "PS"
     },
     {
       "comment": "roughness tex",
-      "type": "descriptorTable",
-      "data": {
-        "ranges": [
-          {
-            "type": "SRV",
-            "underlyingResource": "texture",
-            "numDescriptors": 1,
-            "baseRegister": 7
-          }
-        ]
-      },
+      "type": "SRV",
+      "underlyingResource": "texture",
+      "numDescriptors": 1,
+      "baseRegister": 7,
       "visibility": "PS"
     }
-
-
-
-
-
   ]
 }
