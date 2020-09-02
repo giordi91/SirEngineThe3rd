@@ -56,7 +56,7 @@ MeshHandle Dx12MeshManager::loadMesh(const char *path, bool isInternal) {
       glm::vec3 maxP = {mapper->boundingBox[3], mapper->boundingBox[4],
                         mapper->boundingBox[5]};
       BoundingBox box{minP, maxP};
-      meshData->entityID = m_boundingBoxes.size();
+      static_cast<uint32_t>(meshData->entityID = m_boundingBoxes.size());
       m_boundingBoxes.push_back(box);
     }
 
@@ -76,12 +76,6 @@ MeshHandle Dx12MeshManager::loadMesh(const char *path, bool isInternal) {
     // storing the handle and increasing the magic count
     m_nameToHandle[name] = handle;
     ++MAGIC_NUMBER_COUNTER;
-
-    // new stuff
-    int newVertexCount = mapper->vertexCount;
-
-    int positionSize = newVertexCount * 4 * sizeof(float);
-    auto *ptr = (char *)vertexData;
 
     BufferHandle positionsHandle = dx12::BUFFER_MANAGER->allocate(
         mapper->vertexDataSizeInByte, vertexData, "",

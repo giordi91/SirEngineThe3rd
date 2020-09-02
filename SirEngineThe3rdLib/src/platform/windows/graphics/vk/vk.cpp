@@ -797,7 +797,6 @@ VkFramebuffer *createFrameBuffer(VkRenderPass pass,
     createInfo.width = bindings.width;
     createInfo.height = bindings.height;
     createInfo.layers = 1;
-    VkFramebuffer buffer;
 
     VK_CHECK(vkCreateFramebuffer(vk::LOGICAL_DEVICE, &createInfo, nullptr,
                                  &(frameBuffers[swap])));
@@ -875,7 +874,7 @@ void VkRenderingContext::dispatchCompute(const uint32_t blockX,
 }
 
 void VkRenderingContext::renderProceduralIndirect(
-    const BufferHandle &argsBuffer, const RSHandle handle) {
+    const BufferHandle &argsBuffer) {
   auto *currentFc = CURRENT_FRAME_COMMAND;
   VkCommandBuffer commandList = currentFc->m_commandBuffer;
   auto bufferData = vk::BUFFER_MANAGER->getBufferData(argsBuffer);

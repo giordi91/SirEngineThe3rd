@@ -70,7 +70,7 @@ MeshHandle VkMeshManager::loadMesh(const char *path, bool isInternal) {
       glm::vec3 maxP = {mapper->boundingBox[3], mapper->boundingBox[4],
                         mapper->boundingBox[5]};
       BoundingBox box{minP, maxP};
-      meshData->entityID = m_boundingBoxes.size();
+      meshData->entityID = static_cast<uint32_t>(m_boundingBoxes.size());
       m_boundingBoxes.push_back(box);
     }
 
@@ -91,12 +91,6 @@ MeshHandle VkMeshManager::loadMesh(const char *path, bool isInternal) {
     // storing the handle and increasing the magic count
     m_nameToHandle[name] = handle;
     ++MAGIC_NUMBER_COUNTER;
-
-    // new stuff
-    int newVertexCount = mapper->vertexCount;
-
-    int positionSize = newVertexCount * 4 * sizeof(float);
-    auto *ptr = (char *)vertexData;
 
     BufferHandle positionsHandle = vk::BUFFER_MANAGER->allocate(
         mapper->vertexDataSizeInByte, vertexData, "",
@@ -126,7 +120,6 @@ void VkMeshManager::bindMesh(const MeshHandle handle, VkWriteDescriptorSet *set,
                              VkDescriptorBufferInfo *info,
                              const uint32_t bindFlags,
                              const uint32_t startIdx) {
-  uint32_t magic = getMagicFromHandle(handle);
   uint32_t idx = getIndexFromHandle(handle);
   const MeshData &data = m_meshPool.getConstRef(idx);
 

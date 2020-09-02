@@ -340,16 +340,14 @@ const char *getRasterizationShaderPath(const char *shaderPath,
       frameConcatenation(shaderPath, nameAndExtension, "/rasterization/");
   if (!fileExists(path)) {
     // try get the spv version
-    const char *VSnameAndExtension2 =
+    nameAndExtension =
         frameConcatenation(name.c_str(), ".spv.hlsl");
     const char *path2 =
-        frameConcatenation(shaderPath, VSnameAndExtension2,
+        frameConcatenation(shaderPath, nameAndExtension,
                            "/../../processed/shaders/VK/rasterization/");
     if (fileExists(path2)) {
       path = path2;
     }
-  } else {
-    int x = 0;
   }
   return path;
 }

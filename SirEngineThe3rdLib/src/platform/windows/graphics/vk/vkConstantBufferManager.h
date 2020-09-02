@@ -36,9 +36,6 @@ public:
   VkConstantBufferManager(const VkConstantBufferManager &) = delete;
   VkConstantBufferManager &operator=(const VkConstantBufferManager &) = delete;
 
-  //TODO remove
-  virtual ConstantBufferHandle allocateDynamic(uint32_t sizeInBytes,
-                                               void *data = nullptr) override;
 
   ConstantBufferHandle allocate(uint32_t sizeInBytes,
                                 CONSTANT_BUFFER_FLAGS flags = 0,
@@ -46,13 +43,6 @@ public:
   void update(ConstantBufferHandle handle, void *data) override;
 
   bool free(ConstantBufferHandle handle) override;
-
-  //virtual void
-  //updateConstantBufferNotBuffered(const ConstantBufferHandle handle,
-  //                                void *dataToUpload) override;
-
-  virtual void updateConstantBufferBuffered(const ConstantBufferHandle handle,
-                                            void *dataToUpload) override;
 
   // this function should be called at the beginning of the frame, if there is
   // any buffered constant buffer will be dealt with

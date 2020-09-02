@@ -25,8 +25,6 @@ class Dx12ConstantBufferManager final : public ConstantBufferManager {
   Dx12ConstantBufferManager &operator=(const Dx12ConstantBufferManager &) =
       delete;
 
-  ConstantBufferHandle allocateDynamic(uint32_t sizeInBytes,
-                                       void *inputData = nullptr) override;
   ConstantBufferHandle allocate(uint32_t sizeInBytes,
                                 CONSTANT_BUFFER_FLAGS flags = 0,
                                 void *data = nullptr) override;
@@ -51,11 +49,9 @@ class Dx12ConstantBufferManager final : public ConstantBufferManager {
         .resource->GetGPUVirtualAddress();
   }
 
+ private:
   virtual void updateConstantBufferNotBuffered(
       const ConstantBufferHandle handle, void *dataToUpload);
-
-  virtual void updateConstantBufferBuffered(const ConstantBufferHandle handle,
-                                            void *dataToUpload) override;
 
   // this function should be called at the beginning of the frame, if there is
   // any buffered constant buffer will be dealt with
@@ -125,7 +121,7 @@ class Dx12ConstantBufferManager final : public ConstantBufferManager {
   static const uint32_t RESERVE_SIZE = 400;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
   RandomSizeAllocator m_randomAlloc;
-  //TODO this should be a vector not a map
+  // TODO this should be a vector not a map
   std::unordered_map<uint32_t, ConstantBufferedData> m_bufferedRequests;
   std::vector<uint32_t> m_bufferToFree;
 };

@@ -3,15 +3,14 @@
 
 #include "platform/windows/graphics/dx12/d3dx12.h"
 
-namespace SirEngine {
-namespace dx12 {
+namespace SirEngine::dx12 {
 bool DescriptorHeap::initialize(int size, D3D12_DESCRIPTOR_HEAP_TYPE type) {
   D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
 
   // might need to extend this for more customization
   D3D12_DESCRIPTOR_HEAP_FLAGS shaderVisible =
-      (type == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV |
-       type == D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER)
+      (type == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV) |
+              (type == D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER)
           ? D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE
           : D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
   // arbitrary magic number, need to see how to handle this
@@ -76,8 +75,8 @@ uint32_t DescriptorHeap::createBufferCBV(DescriptorPair &pair,
   } else {
     // reconstruct the descriptor index using pointers
     auto descriptorHeapCpuBase = getCpuStart();
-    descriptorIndex =
-        (pair.cpuHandle.ptr - descriptorHeapCpuBase.ptr) / m_descriptorSize;
+    descriptorIndex = static_cast<uint32_t>(
+        (pair.cpuHandle.ptr - descriptorHeapCpuBase.ptr) / m_descriptorSize);
   }
 
   DEVICE->CreateConstantBufferView(&cbvDesc, pair.cpuHandle);
@@ -101,8 +100,8 @@ uint32_t DescriptorHeap::createTexture2DSRV(DescriptorPair &pair,
   } else {
     // reconstruct the descriptor index using pointers
     auto descriptorHeapCpuBase = getCpuStart();
-    descriptorIndex =
-        (pair.cpuHandle.ptr - descriptorHeapCpuBase.ptr) / m_descriptorSize;
+    descriptorIndex = static_cast<uint32_t>(
+        (pair.cpuHandle.ptr - descriptorHeapCpuBase.ptr) / m_descriptorSize);
   }
 
   D3D12_RESOURCE_DESC desc = resource->GetDesc();
@@ -152,8 +151,8 @@ uint32_t DescriptorHeap::createTextureCubeSRV(DescriptorPair &pair,
   } else {
     // reconstruct the descriptor index using pointers
     auto descriptorHeapCpuBase = getCpuStart();
-    descriptorIndex =
-        (pair.cpuHandle.ptr - descriptorHeapCpuBase.ptr) / m_descriptorSize;
+    descriptorIndex = static_cast<uint32_t>(
+        (pair.cpuHandle.ptr - descriptorHeapCpuBase.ptr) / m_descriptorSize);
   }
 
   D3D12_RESOURCE_DESC desc = resource->GetDesc();
@@ -244,8 +243,8 @@ uint32_t DescriptorHeap::createBufferSRV(
   } else {
     // reconstruct the descriptor index using pointers
     auto descriptorHeapCpuBase = getCpuStart();
-    descriptorIndex =
-        (pair.cpuHandle.ptr - descriptorHeapCpuBase.ptr) / m_descriptorSize;
+    descriptorIndex = static_cast<uint32_t>(
+        (pair.cpuHandle.ptr - descriptorHeapCpuBase.ptr) / m_descriptorSize);
   }
 
   DEVICE->CreateShaderResourceView(resource, &srvDesc, pair.cpuHandle);
@@ -288,7 +287,7 @@ uint32_t DescriptorHeap::createBufferUAV(
     // reconstruct the descriptor index using pointers
     auto descriptorHeapCpuBase = getCpuStart();
     descriptorIndex =
-        (pair.cpuHandle.ptr - descriptorHeapCpuBase.ptr) / m_descriptorSize;
+       static_cast<uint32_t>((pair.cpuHandle.ptr - descriptorHeapCpuBase.ptr) / m_descriptorSize);
   }
 
   DEVICE->CreateUnorderedAccessView(resource, nullptr, &uavDesc,
@@ -316,5 +315,4 @@ uint32_t createRTVSRV(DescriptorHeap *heap, ID3D12Resource *resource,
 
   return descriptorIndex;
 }
-}  // namespace dx12
-}  // namespace SirEngine
+}  // namespace SirEngine::dx12

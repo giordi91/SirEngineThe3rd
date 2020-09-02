@@ -14,7 +14,7 @@ class CameraController;
 struct Skeleton;
 class AnimationPlayer;
 
-class DebugRenderer {
+class DebugRenderer final {
  public:
   DebugRenderer();
   virtual ~DebugRenderer() = default;
@@ -22,30 +22,14 @@ class DebugRenderer {
   DebugRenderer& operator=(const DebugRenderer&) = delete;
   DebugRenderer(DebugRenderer&&) = delete;
   DebugRenderer& operator=(DebugRenderer&&) = delete;
-  // override interface
+
   void initialize();
   void cleanup();
-
   void free();
-  DebugDrawHandle drawPointsUniformColor(float* data, uint32_t sizeInByte,
-                                         glm::vec4 color, float size,
-                                         const char* debugName);
-  DebugDrawHandle drawSkeleton(Skeleton* skeleton, glm::vec4 color,
-                               float pointSize);
 
-  void render(TextureHandle input, TextureHandle depth);
-  DebugDrawHandle drawAnimatedBoundingBoxes(DebugDrawHandle handle,
-                                            BoundingBox* data, int count,
-                                            glm::vec4 color,
-                                            const char* debugName);
-  DebugDrawHandle drawAnimatedBoundingBoxFromFullPoints(
-      const DebugDrawHandle handle, const glm::vec3* data, const int count,
-      const glm::vec4 color, const char* debugName);
-  DebugDrawHandle drawMatrix(const glm::mat4& mat, float size, glm::vec4 color,
-                             const char* debugName);
-
+  void render();
   void drawBoundingBoxes(const BoundingBox* data, int count, glm::vec4 color);
-  void drawLines(float* data, uint32_t sizeInByte, glm::vec4 color);
+  void drawLines(const float* data, uint32_t sizeInByte, glm::vec4 color);
   void newFrame();
   void drawCamera(const CameraController* camera, glm::vec4 color);
 

@@ -50,12 +50,12 @@ void Dx12MaterialManager::bindMaterial(
 
   ShaderBind bind;
   bool found = m_shaderTypeToShaderBind.get(static_cast<uint16_t>(type), bind);
+  assert(found);
   assert(type == SHADER_TYPE_FLAGS::FORWARD_PHONG);
   bindFlatDescriptorMaterial(materialRuntime, commandList, queueFlag, bind.rs);
 }
 
 void updateForwardPhong(const MaterialData &data,
-                        ID3D12GraphicsCommandList2 *commandList,
                         SHADER_QUEUE_FLAGS queueFlag) {
   const auto queueFlagInt = static_cast<int>(queueFlag);
   const auto currentFlagId =
@@ -90,13 +90,13 @@ void Dx12MaterialManager::updateMaterial(
       static_cast<int>(log2(queueFlagInt & -queueFlagInt));
   const SHADER_TYPE_FLAGS type =
       getTypeFlags(data.m_materialRuntime.shaderQueueTypeFlags[currentFlagId]);
-  auto &materialRuntime = data.m_materialRuntime;
 
   ShaderBind bind;
   bool found = m_shaderTypeToShaderBind.get(static_cast<uint16_t>(type), bind);
+  assert(found);
   switch (type) {
     case (SHADER_TYPE_FLAGS::FORWARD_PHONG): {
-      updateForwardPhong(data, commandList, queueFlag);
+      updateForwardPhong(data, queueFlag);
       break;
     }
     default: {

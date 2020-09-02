@@ -83,7 +83,7 @@ void createFrameCommand(FrameCommand *fc) {
 
 void allocateSamplers() {
   auto samplers = getSamplers();
-  STATIC_SAMPLERS_COUNT = samplers.size();
+  STATIC_SAMPLERS_COUNT = static_cast<uint32_t>(samplers.size());
   for (int i = 0; i < STATIC_SAMPLERS_COUNT; ++i) {
     D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptor;
     GLOBAL_SAMPLER_HEAP->allocateDescriptor(&cpuDescriptor);
@@ -549,9 +549,9 @@ void Dx12RenderingContext::updateDirectionalLightMatrix() {
   }
 
   // we have the bounding box in light space we want to render it
-  m_lightAABBHandle =
-      globals::DEBUG_RENDERER->drawAnimatedBoundingBoxFromFullPoints(
-          m_lightAABBHandle, expanded, 1, glm::vec4(1, 0, 0, 1), "");
+  //m_lightAABBHandle =
+  //    globals::DEBUG_RENDERER->drawAnimatedBoundingBoxFromFullPoints(
+  //        m_lightAABBHandle, expanded, 1, glm::vec4(1, 0, 0, 1), "");
 
   // we can now use min max to generate the projection matrix needed;
   auto ortho =
@@ -841,7 +841,7 @@ void Dx12RenderingContext::dispatchCompute(const uint32_t blockX,
 }
 
 void Dx12RenderingContext::renderProceduralIndirect(
-    const BufferHandle &argsBuffer, const RSHandle handle) {
+    const BufferHandle &argsBuffer) {
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
 
   ID3D12Resource *buff = dx12::BUFFER_MANAGER->getNativeBuffer(argsBuffer);

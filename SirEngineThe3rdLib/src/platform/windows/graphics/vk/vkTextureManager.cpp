@@ -373,7 +373,6 @@ bool VkTextureManager::loadTextureFromFile(const char *name, VkFormat format,
     // load cube texture
     gli::texture_cube tex2D(tex);
     assert(!tex2D.empty());
-    auto f = tex2D.format();
 
     gli::gl GL(gli::gl::PROFILE_GL33);
     gli::gl::format const translatedFormat = GL.translate(tex2D.format(),tex2D.swizzles());

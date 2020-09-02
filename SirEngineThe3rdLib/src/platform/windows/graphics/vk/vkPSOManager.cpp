@@ -833,8 +833,6 @@ void VkPSOManager::recompilePSOFromShader(const char *shaderName,
   // used
   globals::RENDERING_CONTEXT->flush();
 
-  const char *shaderPath = frameConcatenation(
-      globals::ENGINE_CONFIG->m_dataSourcePath, "/shaders/vk");
   for (int i = 0; i < psoCount; ++i) {
     const char *pso = (*psos)[i];
     const auto result = compileRawPSO(pso);

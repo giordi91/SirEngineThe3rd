@@ -56,7 +56,8 @@ project(ShaderCompilerPlugin)
 	MESSAGE(STATUS "---------------------------------------------> ${VS_TOOLKIT_PATH}${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}/x64")
 
 	SET(DXIL_DLL_PATH "${VS_TOOLKIT_PATH}${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}/x64/dxil.dll")
-	SET(DXC_DLL_PATH "${VS_TOOLKIT_PATH}${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}/x64/dxcompiler.dll")
+	#Temporarly removedcopy of the dxcompiler, the one coming from the windows folder is too old, leveraging the one coming from vk for now
+	#SET(DXC_DLL_PATH "${VS_TOOLKIT_PATH}${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}/x64/dxcompiler.dll")
 
 	if(EXISTS ${DXIL_DLL_PATH})
 		add_custom_command(

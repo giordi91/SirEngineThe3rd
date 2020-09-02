@@ -17,13 +17,12 @@ FinalBlitNode::FinalBlitNode(GraphAllocators &allocators)
   // lets create the plugs
   defaultInitializePlugsAndConnections(1, 0);
 
-  GPlug &inTexture = m_inputPlugs[getPlugIndex(PLUGS::IN_TEXTURE)];
+  GPlug &inTexture =
+      m_inputPlugs[getPlugIndex(static_cast<uint32_t>(PLUGS::IN_TEXTURE))];
   inTexture.plugValue = 0;
   inTexture.flags = PLUG_FLAGS::PLUG_INPUT | PLUG_FLAGS::PLUG_TEXTURE;
   inTexture.nodePtr = this;
   inTexture.name = "inTexture";
-
-
 }
 
 void FinalBlitNode::compute() {
@@ -45,8 +44,7 @@ void FinalBlitNode::compute() {
   globals::RENDERING_CONTEXT->clearBindingObject(m_bindHandle);
 }
 
-void FinalBlitNode::initialize()
-{
+void FinalBlitNode::initialize() {
   m_rs = globals::ROOT_SIGNATURE_MANAGER->getHandleFromName(HDR_RS);
   m_pso = globals::PSO_MANAGER->getHandleFromName(HDR_PSO);
 
@@ -60,7 +58,6 @@ void FinalBlitNode::initialize()
       descriptions, 2,
       graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED,
       "HDRtoSDREffect");
-	
 }
 
 void FinalBlitNode::populateNodePorts() {
