@@ -48,6 +48,21 @@ void GrassConfigWidget::render() {
                      1.0f);
   ImGui::SliderFloat("Roughness", &(grassConfig->roughness), 0.0000f,
                      1.0f);
+  ImGui::Text("Lod config");
+  ImGui::SliderFloat("Lod1 Distance", &(grassConfig->lodThresholds.x), 0.0001f,
+                     200.0f);
+  ImGui::SliderFloat("Lod2 Distance", &(grassConfig->lodThresholds.y), 0.0001f,
+                     200.0f);
+  ImGui::SliderFloat("Lod3 Distance", &(grassConfig->lodThresholds.z), 0.0001f,
+                     200.0f);
+  ImGui::SliderFloat("Lod0 blades ", &(grassConfig->pointsPerTileLod.x), 1.0f,
+                     10000.0f);
+  ImGui::SliderFloat("Lod1 blades ", &(grassConfig->pointsPerTileLod.y), 1.0f,
+                     10000.0f);
+  ImGui::SliderFloat("Lod2 blades ", &(grassConfig->pointsPerTileLod.z), 1.0f,
+                     10000.0f);
+  ImGui::SliderFloat("Lod3 blades ", &(grassConfig->pointsPerTileLod.w), 1.0f,
+                     10000.0f);
 
   ImGui::End();
 }
