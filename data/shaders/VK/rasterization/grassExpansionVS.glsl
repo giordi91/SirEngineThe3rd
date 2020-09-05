@@ -190,7 +190,7 @@ void VS()
     float tileY = tileNumber /tilesPerSide;
     vec3 tileCorner = minCorner + vec3(tw*(tileX), 0, tw*tileY);
 
-    int tempOffset = cullTileData.tilePointsId *pointInTile;
+    int tempOffset = cullTileData.tilePointsId *grassConfig.pointsPerSourceTile;
     int inTilePosIdx = int(vid%pointInTile);
 	vec2 tilePos = p[inTilePosIdx + tempOffset];
     vec3 position = tileCorner + vec3(tilePos.x,0.0f,tilePos.y)*tw;

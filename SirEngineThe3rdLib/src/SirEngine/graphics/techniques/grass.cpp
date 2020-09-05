@@ -114,7 +114,7 @@ void GrassTechnique::setup(const uint32_t id) {
   m_grassConfig.baseColor = {0.02, 0.25, 0.001};
   m_grassConfig.tipColor = {0.02, 0.13, 0.019};
   m_grassConfig.lodThresholds = {40, 70, 110, 0};
-  m_grassConfig.pointsPerTileLod= {500, 300, 100, 50};
+  m_grassConfig.pointsPerTileLod= {500, 300, 200, 100};
 
   m_rs = globals::ROOT_SIGNATURE_MANAGER->getHandleFromName(GRASS_RS);
   m_pso = globals::PSO_MANAGER->getHandleFromName(GRASS_PSO);
@@ -334,6 +334,12 @@ void GrassTechnique::clear(const uint32_t id) {
     globals::BUFFER_MANAGER->free(m_outTiles);
     m_outTiles = {0};
   }
+  if (m_lodBuffer[0].isHandleValid()) {
+    for (int i = 0; i < 4; ++i) {
+      globals::BUFFER_MANAGER->free(m_lodBuffer[i]);
+      m_lodBuffer[i] = {0};
+    }
+  }
   if (m_bindingTable[0].isHandleValid()) {
     for (int i = 0; i < 4; ++i) {
       globals::BINDING_TABLE_MANAGER->free(m_bindingTable[i]);
@@ -352,6 +358,7 @@ void GrassTechnique::clear(const uint32_t id) {
     globals::BINDING_TABLE_MANAGER->free(m_clearBindingTable);
     m_clearBindingTable = {0};
   }
+
 }
 
 void GrassTechnique::prePassRender(uint32_t) { performCulling(); }
