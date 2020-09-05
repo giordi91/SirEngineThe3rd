@@ -128,6 +128,7 @@ struct GrassConfig {
 
   //lods
   vec4 lodThresholds;
+  vec4 pointsPerTileLod;
 };
 
 #endif

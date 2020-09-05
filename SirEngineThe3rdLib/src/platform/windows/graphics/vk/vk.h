@@ -195,7 +195,8 @@ class VkRenderingContext final : public RenderingContext {
 
   void dispatchCompute(uint32_t blockX, uint32_t blockY,
                        uint32_t blockZ) override;
-  void renderProceduralIndirect(const BufferHandle &argsBuffer) override;
+  void renderProceduralIndirect(const BufferHandle &argsBuffer,
+                                uint32_t offset = 0) override;
 
  private:
   void *queues = nullptr;

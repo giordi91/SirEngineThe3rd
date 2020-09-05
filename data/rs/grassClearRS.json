@@ -9,6 +9,14 @@
       "numDescriptors": 1,
       "baseRegister": 0,
       "underlyingResource": "buffer"
-    }  
+    },  
+    {
+      "comment": "grass config",
+      "visibility": [ "CS" ],
+      "type": "CBV",
+      "underlyingResource": "buffer",
+      "numDescriptors": 1,
+      "baseRegister":1 
+    }
   ]
 }
