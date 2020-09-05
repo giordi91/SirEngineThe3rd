@@ -91,8 +91,9 @@ void allocateSamplers() {
   }
 }
 
-bool Dx12RenderingContext::initializeGraphicsDx12(BaseWindow *wnd, const uint32_t width,
-                            const uint32_t height) {
+bool Dx12RenderingContext::initializeGraphicsDx12(BaseWindow *wnd,
+                                                  const uint32_t width,
+                                                  const uint32_t height) {
 // lets enable debug layer if needed
 #if defined(DEBUG) || defined(_DEBUG)
   {
@@ -549,7 +550,7 @@ void Dx12RenderingContext::updateDirectionalLightMatrix() {
   }
 
   // we have the bounding box in light space we want to render it
-  //m_lightAABBHandle =
+  // m_lightAABBHandle =
   //    globals::DEBUG_RENDERER->drawAnimatedBoundingBoxFromFullPoints(
   //        m_lightAABBHandle, expanded, 1, glm::vec4(1, 0, 0, 1), "");
 
@@ -841,11 +842,11 @@ void Dx12RenderingContext::dispatchCompute(const uint32_t blockX,
 }
 
 void Dx12RenderingContext::renderProceduralIndirect(
-    const BufferHandle &argsBuffer) {
+    const BufferHandle &argsBuffer, const uint32_t offset) {
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
 
   ID3D12Resource *buff = dx12::BUFFER_MANAGER->getNativeBuffer(argsBuffer);
-  currentFc->commandList->ExecuteIndirect(m_commandIndirect, 1, buff, 0,
+  currentFc->commandList->ExecuteIndirect(m_commandIndirect, 1, buff, offset,
                                           nullptr, 0);
 }
 

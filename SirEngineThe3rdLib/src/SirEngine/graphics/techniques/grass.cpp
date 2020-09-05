@@ -39,11 +39,16 @@ void GrassTechnique::buildBindingTables() {
        GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT},
       {5, GRAPHIC_RESOURCE_TYPE::READ_BUFFER,  // tiles ids
        GRAPHICS_RESOURCE_VISIBILITY_VERTEX},
+      {6, GRAPHIC_RESOURCE_TYPE::READ_BUFFER,  // lod buffer
+       GRAPHICS_RESOURCE_VISIBILITY_VERTEX},
   };
-  m_bindingTable = globals::BINDING_TABLE_MANAGER->allocateBindingTable(
-      descriptions, ARRAYSIZE(descriptions),
-      graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED,
-      "grassBindingTable");
+
+  for (int i = 0; i < 4; ++i) {
+    m_bindingTable[i] = globals::BINDING_TABLE_MANAGER->allocateBindingTable(
+        descriptions, ARRAYSIZE(descriptions),
+        graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED,
+        "grassBindingTable");
+  }
 
   graphics::BindingDescription groundDescriptions[] = {
       {3, GRAPHIC_RESOURCE_TYPE::CONSTANT_BUFFER,  // grass config
@@ -72,13 +77,15 @@ void GrassTechnique::buildBindingTables() {
       graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_NONE,
       "grassScanBindingTable");
 
-  graphics::BindingDescription clearDescription[1] = {
+  graphics::BindingDescription clearDescription[2] = {
       {0, GRAPHIC_RESOURCE_TYPE::READWRITE_BUFFER,
+       GRAPHICS_RESOURCE_VISIBILITY_COMPUTE},
+      {1, GRAPHIC_RESOURCE_TYPE::CONSTANT_BUFFER,
        GRAPHICS_RESOURCE_VISIBILITY_COMPUTE},
   };
   m_clearBindingTable = globals::BINDING_TABLE_MANAGER->allocateBindingTable(
-      clearDescription, 1,
-      graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_NONE,
+      clearDescription, 2,
+      graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED,
       "clearBindingTable");
 }
 
@@ -106,7 +113,8 @@ void GrassTechnique::setup(const uint32_t id) {
   m_grassConfig.roughness = 0.338;
   m_grassConfig.baseColor = {0.02, 0.25, 0.001};
   m_grassConfig.tipColor = {0.02, 0.13, 0.019};
-  m_grassConfig.lodThresholds = {15, 30, 40, 0};
+  m_grassConfig.lodThresholds = {40, 70, 110, 0};
+  m_grassConfig.pointsPerTileLod= {500, 300, 100, 50};
 
   m_rs = globals::ROOT_SIGNATURE_MANAGER->getHandleFromName(GRASS_RS);
   m_pso = globals::PSO_MANAGER->getHandleFromName(GRASS_PSO);
@@ -176,7 +184,7 @@ void GrassTechnique::setup(const uint32_t id) {
       mapper->tileCount * mapper->pointsPerTile, sizeof(float) * 2,
       BufferManager::STORAGE_BUFFER | BufferManager::GPU_ONLY);
   m_tilesIndicesHandle = globals::BUFFER_MANAGER->allocate(
-      sizeof(uint32_t) * runtimeTilesCount, m_tilesIndices.data(),
+      sizeof(uint32_t) * runtimeTilesCount + 64, m_tilesIndices.data(),
       "grassTilesIndicesBuffer", runtimeTilesCount, sizeof(uint32_t),
       BufferManager::STORAGE_BUFFER);
   m_grassConfigHandle = globals::CONSTANT_BUFFER_MANAGER->allocate(
@@ -193,14 +201,26 @@ void GrassTechnique::setup(const uint32_t id) {
           BufferManager::BUFFER_FLAGS_BITS::STORAGE_BUFFER);
 
   static constexpr uint32_t SUPPORT_DATA_OFFSET = 16;
+  // multiplying by 4 because we have 4 lods
+  int worstCaseNumberOfTiles = runtimeTilesCount * 4;
+  // five is from the fact we have 4 lods atomic spaced out and our indirect
+  // buffers also to note we are using size of
+  int supportData = SUPPORT_DATA_OFFSET * 5;
   m_outTiles = globals::BUFFER_MANAGER->allocate(
-      // sizeof(int) * runtimeTilesCount, nullptr, "cullingOutput",
-      sizeof(int) * runtimeTilesCount + (SUPPORT_DATA_OFFSET * 2), nullptr,
+      sizeof(uint64_t) * (supportData + worstCaseNumberOfTiles), nullptr,
       "tilesOutput", runtimeTilesCount, sizeof(int),
       BufferManager::BUFFER_FLAGS_BITS::GPU_ONLY |
           BufferManager::BUFFER_FLAGS_BITS::STORAGE_BUFFER |
           BufferManager::BUFFER_FLAGS_BITS::RANDOM_WRITE |
           BufferManager::BUFFER_FLAGS_BITS::INDIRECT_BUFFER);
+
+  // 4 bindings for the LODs
+  for (uint32_t i = 0; i < 4; ++i) {
+    m_lodBuffer[i] = globals::BUFFER_MANAGER->allocate(
+        sizeof(int32_t), &i, "lodBuffer", 1, sizeof(int),
+        BufferManager::BUFFER_FLAGS_BITS::GPU_ONLY |
+            BufferManager::BUFFER_FLAGS_BITS::STORAGE_BUFFER);
+  }
 
   // binding
   globals::BINDING_TABLE_MANAGER->bindBuffer(m_scanBindingTable,
@@ -212,8 +232,6 @@ void GrassTechnique::setup(const uint32_t id) {
   globals::BINDING_TABLE_MANAGER->bindBuffer(m_scanBindingTable,
                                              m_tilesIndicesHandle, 3, 3);
 
-  globals::BINDING_TABLE_MANAGER->bindBuffer(m_clearBindingTable, m_outTiles, 0,
-                                             0);
 }
 
 void GrassTechnique::renderGroundPlane(
@@ -246,35 +264,34 @@ void GrassTechnique::passRender(const uint32_t id,
 
   globals::CONSTANT_BUFFER_MANAGER->update(m_grassConfigHandle, &m_grassConfig);
 
-  globals::BINDING_TABLE_MANAGER->bindBuffer(m_bindingTable,
-                                             m_tilesPointsHandle, 0, 0);
-  globals::BINDING_TABLE_MANAGER->bindBuffer(m_bindingTable,
-                                             m_tilesIndicesHandle, 1, 1);
-  globals::BINDING_TABLE_MANAGER->bindTexture(m_bindingTable, m_windTexture, 2,
-                                              2, false);
-  globals::BINDING_TABLE_MANAGER->bindConstantBuffer(m_bindingTable,
-                                                     m_grassConfigHandle, 3, 3);
-  globals::BINDING_TABLE_MANAGER->bindTexture(m_bindingTable, m_albedoTexture,
-                                              4, 4, false);
-  globals::BINDING_TABLE_MANAGER->bindBuffer(m_bindingTable, m_outTiles, 5, 5);
+  for (int i = 0; i < 4; ++i) {
+    globals::BINDING_TABLE_MANAGER->bindBuffer(m_bindingTable[i],
+                                               m_tilesPointsHandle, 0, 0);
+    globals::BINDING_TABLE_MANAGER->bindBuffer(m_bindingTable[i],
+                                               m_tilesIndicesHandle, 1, 1);
+    globals::BINDING_TABLE_MANAGER->bindTexture(m_bindingTable[i],
+                                                m_windTexture, 2, 2, false);
+    globals::BINDING_TABLE_MANAGER->bindConstantBuffer(
+        m_bindingTable[i], m_grassConfigHandle, 3, 3);
+    globals::BINDING_TABLE_MANAGER->bindTexture(m_bindingTable[i],
+                                                m_albedoTexture, 4, 4, false);
+    globals::BINDING_TABLE_MANAGER->bindBuffer(m_bindingTable[i], m_outTiles, 5,
+                                               5);
+    globals::BINDING_TABLE_MANAGER->bindBuffer(m_bindingTable[i],
+                                               m_lodBuffer[i], 6, 6);
 
-  globals::BINDING_TABLE_MANAGER->bindTable(
-      PSOManager::PER_OBJECT_BINDING_INDEX, m_bindingTable, m_rs);
-  globals::PSO_MANAGER->bindPSO(m_pso);
-  globals::RENDERING_CONTEXT->bindCameraBuffer(m_rs);
-
-  if (passHandle.isHandleValid()) {
     globals::BINDING_TABLE_MANAGER->bindTable(
-        PSOManager::PER_PASS_BINDING_INDEX, passHandle, m_rs);
+        PSOManager::PER_OBJECT_BINDING_INDEX, m_bindingTable[i], m_rs);
+    globals::PSO_MANAGER->bindPSO(m_pso);
+    globals::RENDERING_CONTEXT->bindCameraBuffer(m_rs);
+
+    if (passHandle.isHandleValid()) {
+      globals::BINDING_TABLE_MANAGER->bindTable(
+          PSOManager::PER_PASS_BINDING_INDEX, passHandle, m_rs);
+    }
+
+    globals::RENDERING_CONTEXT->renderProceduralIndirect(m_outTiles,i*sizeof(int)*4);
   }
-
-  const int pointsPerBlade = 15;
-  const int pointsPerTile = m_grassConfig.pointsPerTile;
-  const int tileCount = m_grassConfig.tilesPerSide * m_grassConfig.tilesPerSide;
-
-  // globals::RENDERING_CONTEXT->renderProcedural(tileCount * pointsPerTile *
-  //                                             pointsPerBlade);
-  globals::RENDERING_CONTEXT->renderProceduralIndirect(m_outTiles);
 
   renderGroundPlane(passHandle);
 }
@@ -317,9 +334,11 @@ void GrassTechnique::clear(const uint32_t id) {
     globals::BUFFER_MANAGER->free(m_outTiles);
     m_outTiles = {0};
   }
-  if (m_bindingTable.isHandleValid()) {
-    globals::BINDING_TABLE_MANAGER->free(m_bindingTable);
-    m_bindingTable = {0};
+  if (m_bindingTable[0].isHandleValid()) {
+    for (int i = 0; i < 4; ++i) {
+      globals::BINDING_TABLE_MANAGER->free(m_bindingTable[i]);
+      m_bindingTable[i] = {0};
+    }
   }
   if (m_groundBindingTable.isHandleValid()) {
     globals::BINDING_TABLE_MANAGER->free(m_groundBindingTable);
@@ -373,6 +392,10 @@ void GrassTechnique::performCulling() {
 
   globals::PSO_MANAGER->bindPSO(m_grassClearPso);
   globals::RENDERING_CONTEXT->bindCameraBuffer(m_grassClearRs, true);
+  globals::BINDING_TABLE_MANAGER->bindBuffer(m_clearBindingTable, m_outTiles, 0,
+                                             0);
+  globals::BINDING_TABLE_MANAGER->bindConstantBuffer(m_clearBindingTable, m_grassConfigHandle, 1,
+                                             1);
   globals::BINDING_TABLE_MANAGER->bindTable(
       PSOManager::PER_OBJECT_BINDING_INDEX, m_clearBindingTable, m_grassClearRs,
       true);

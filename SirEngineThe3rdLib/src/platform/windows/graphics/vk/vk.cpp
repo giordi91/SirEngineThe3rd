@@ -874,11 +874,11 @@ void VkRenderingContext::dispatchCompute(const uint32_t blockX,
 }
 
 void VkRenderingContext::renderProceduralIndirect(
-    const BufferHandle &argsBuffer) {
+    const BufferHandle &argsBuffer, const uint32_t offset) {
   auto *currentFc = CURRENT_FRAME_COMMAND;
   VkCommandBuffer commandList = currentFc->m_commandBuffer;
   auto bufferData = vk::BUFFER_MANAGER->getBufferData(argsBuffer);
-  vkCmdDrawIndirect(commandList, bufferData.buffer, 0, 1, 0);
+  vkCmdDrawIndirect(commandList, bufferData.buffer, offset, 1, sizeof(int) * 4);
 }
 
 int vkBarrier(int counter, VkImageMemoryBarrier *barriers,

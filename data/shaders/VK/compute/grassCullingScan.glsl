@@ -42,8 +42,11 @@ layout (set=3,binding=3) buffer readonly inTileIndices
 	int tileIds[];
 };
 
-const int SUPPORT_DATA_ATOMIC_OFFSET = 8;
-const int SUPPORT_DATA_OFFSET = 16;
+const int SUPPORT_DATA_ATOMIC_OFFSET0 = 8;
+const int SUPPORT_DATA_ATOMIC_OFFSET1 = 16;
+const int SUPPORT_DATA_ATOMIC_OFFSET2 = 24;
+const int SUPPORT_DATA_ATOMIC_OFFSET3 = 32;
+const int SUPPORT_DATA_OFFSET = 40;
 
 
 int isTileVisiable(vec3 tilePos)
@@ -100,12 +103,11 @@ shared int offset;
 shared int accum;
 const int BLOCK_SIZE = 64;
 
-layout (local_size_x = BLOCK_SIZE ,local_size_y =1) in;
-void CS()
-{	
 
-  vec3 tilePos = inputTilePositions[gl_GlobalInvocationID.x].xyz;
-  int vote = isTileVisiable(tilePos);
+
+void scanLod(int cullVote, int lod, int wantedLod,int lodAtomicIndex)
+{
+  int vote = lod ==wantedLod ? cullVote: 0;
 
 
   //if the value is not in range we reduce it to 0 so won't affect the scan and 
@@ -114,10 +116,87 @@ void CS()
   int totalTiles = grassConfig.tilesPerSide*grassConfig.tilesPerSide;
   int isInRange = int(gl_GlobalInvocationID.x < totalTiles);
   vote *= isInRange;
-  //int v = vote[gl_GlobalInvocationID.x] * isInRange;
-  //need to fix for 64-32 wave size 
+
+
+  //perform the scan now
   int scan = subgroupInclusiveAdd(vote);
 
+  uint wavesPerBlock =  64 / gl_SubgroupSize;
+
+  if(gl_LocalInvocationID.x ==0)
+  {
+	accum =0;
+  }
+  barrier();
+
+  for(int i =1; i <wavesPerBlock;++i)
+  {
+	uint waveDelimiter = (gl_SubgroupSize*i) -1;
+	if(gl_LocalInvocationID.x == waveDelimiter)
+	{
+	  //copy to local memory
+	  accum += scan;
+	}
+	barrier();
+	if(gl_LocalInvocationID.x > waveDelimiter )
+	{
+		scan += accum;
+	}
+  }
+
+  //perform the atomic increase
+  if(gl_LocalInvocationID.x ==63){
+	offset = atomicAdd(outValue[lodAtomicIndex].tileIndex ,scan);
+  }
+  barrier();
+  //if we did not have to support multiple wave len we could 
+  //use a wave broadcast but won't work with waves smaller than the
+  //block size
+  int actualOffset = offset;
+
+
+  if((vote != 0) )
+  {
+    GrassCullingResult res;
+	res.tileIndex = int(gl_GlobalInvocationID.x);
+	res.tilePointsId = uint16_t(tileIds[gl_GlobalInvocationID.x]);
+	res.LOD = int16_t(lod);
+
+	outValue[actualOffset + scan + SUPPORT_DATA_OFFSET + ( lod*totalTiles)-1] =  res;
+  }
+}
+
+
+
+layout (local_size_x = BLOCK_SIZE ,local_size_y =1) in;
+void CS()
+{	
+
+  vec3 tilePos = inputTilePositions[gl_GlobalInvocationID.x].xyz;
+  int cullVote = isTileVisiable(tilePos);
+  uint16_t LOD = getLOD(tilePos);
+
+  scanLod(cullVote, LOD, 0,SUPPORT_DATA_ATOMIC_OFFSET0);
+  barrier();
+  scanLod(cullVote, LOD, 1,SUPPORT_DATA_ATOMIC_OFFSET1);
+  barrier();
+  scanLod(cullVote, LOD, 2,SUPPORT_DATA_ATOMIC_OFFSET2);
+  barrier();
+  scanLod(cullVote, LOD, 3,SUPPORT_DATA_ATOMIC_OFFSET3);
+  /*
+  int vote = LOD==0? cullVote: 0;
+
+
+  //if the value is not in range we reduce it to 0 so won't affect the scan and 
+  //we don't need a defensive branch, we allocate enough memory anyway to the multiple
+  //of the group
+  int totalTiles = grassConfig.tilesPerSide*grassConfig.tilesPerSide;
+  int isInRange = int(gl_GlobalInvocationID.x < totalTiles);
+  vote *= isInRange;
+
+
+  //perform the scan now
+  int scan = subgroupInclusiveAdd(vote);
 
   uint wavesPerBlock =  64 / gl_SubgroupSize;
 
@@ -136,7 +215,6 @@ void CS()
 	  accum += scan;
 	}
     memoryBarrierShared();
-  //barrier();
 	if(gl_LocalInvocationID.x > waveDelimiter )
 	{
 		scan += accum;
@@ -145,7 +223,7 @@ void CS()
 
   //perform the atomic increase
   if(gl_LocalInvocationID.x ==63){
-	offset = atomicAdd(outValue[SUPPORT_DATA_ATOMIC_OFFSET].tileIndex ,scan);
+	offset = atomicAdd(outValue[SUPPORT_DATA_ATOMIC_OFFSET1].tileIndex ,scan);
   }
   barrier();
   //if we did not have to support multiple wave len we could 
@@ -153,9 +231,8 @@ void CS()
   //block size
   int actualOffset = offset;
 
-  uint16_t LOD = getLOD(tilePos);
 
-  if(vote != 0 )
+  if((vote != 0) )
   {
     GrassCullingResult res;
 	res.tileIndex = int(gl_GlobalInvocationID.x);
@@ -164,4 +241,5 @@ void CS()
 
 	outValue[actualOffset + scan + SUPPORT_DATA_OFFSET-1] =  res;
   }
+  */
 }

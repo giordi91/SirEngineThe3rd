@@ -134,10 +134,12 @@ void PS()
    //due to be missing shadows
    float attenuationFactor =clamp(pow(inUV.y + 0.2,3),0,1);
    
-   //outputColor = vec4(finalC*attenuationFactor,1.0f);
-   if(lod ==0) { outputColor = vec4(1,0,0,1);}
-   if(lod ==1) { outputColor = vec4(0,1,0,1);}
-   if(lod ==2) { outputColor = vec4(0,0,1,1);}
-   if(lod ==3) { outputColor = vec4(1,0,1,1);}
+   outputColor = vec4(finalC*attenuationFactor,1.0f);
+   if(false){
+	   if(lod ==0) { outputColor = vec4(1,0,0,1);}
+	   if(lod ==1) { outputColor = vec4(0,1,0,1);}
+	   if(lod ==2) { outputColor = vec4(0,0,1,1);}
+	   if(lod ==3) { outputColor = vec4(1,0,1,1);}
+   }
 
 }

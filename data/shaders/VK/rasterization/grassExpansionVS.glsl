@@ -7,6 +7,8 @@
 #extension GL_EXT_shader_explicit_arithmetic_types :require
 #extension GL_EXT_shader_explicit_arithmetic_types_int16:require
 
+
+
 #include "../common/constants.glsl"
 #include "../common/structures.glsl"
 
@@ -41,29 +43,34 @@ layout (set=3,binding=5) buffer readonly tilesCulling
 	GrassCullingResult cullTileId[];
 };
 
+layout (set=3,binding=6) buffer readonly lodData 
+{
+	uint lodToUse[];
+};
+
 layout (set=1,binding = 0) uniform sampler[7] colorSampler;
 
 
-const vec3 offsets[15] = {
-    vec3(-0.5f, 0.0f, 0.0f), 
-    vec3(0.5f, 0.0f, 0.0f), 
-    vec3(-0.5f, 0.33333f, 0.0f), 
+const vec2 offsets[15] = {
+    vec2(-0.5f, 0.0f), 
+    vec2(0.5f, 0.0f), 
+    vec2(-0.5f, 0.33333f), 
 
-    vec3(0.5f, 0.0f, 0.0f), 
-    vec3(0.5f, 0.333333f, 0.0f), 
-    vec3(-0.5f, 0.33333f, 0.0f), 
+    vec2(0.5f, 0.0f), 
+    vec2(0.5f, 0.333333f), 
+    vec2(-0.5f, 0.33333f), 
 
-    vec3(-0.5f, 0.33333f, 0.0f), 
-    vec3(0.5f, 0.333333f, 0.0f), 
-    vec3(-0.5f, 0.66666f, 0.0f), 
+    vec2(-0.5f, 0.33333f), 
+    vec2(0.5f, 0.333333f), 
+    vec2(-0.5f, 0.66666f), 
 
-    vec3(0.5f, 0.333333f, 0.0f), 
-    vec3(0.5f, 0.66666, 0.0f), 
-    vec3(-0.5f, 0.66666, 0.0f), 
+    vec2(0.5f, 0.333333f), 
+    vec2(0.5f, 0.66666), 
+    vec2(-0.5f, 0.66666), 
 
-    vec3(-0.5f, 0.66666, 0.0f), 
-    vec3(0.5f, 0.66666, 0.0f), 
-    vec3(0.0f, 1.0f, 0.0f) 
+    vec2(-0.5f, 0.66666), 
+    vec2(0.5f, 0.66666), 
+    vec2(0.0f, 1.0f) 
 };
 
 const vec2 bladeUVs[15] = {
@@ -143,7 +150,7 @@ float whangHashNoise(uint u, uint v, uint s)
 	}
 
 
-const int SUPPORT_DATA_OFFSET = 16;
+const int SUPPORT_DATA_OFFSET = 40;
 
 
 layout(location =1) out vec2 outUV;
@@ -153,7 +160,6 @@ layout (location = 4) out int lod;
 
 void VS()
 {
-
     uint vid = gl_VertexIndex/15;
 	uint localId = gl_VertexIndex%15;
 
@@ -163,9 +169,14 @@ void VS()
 	float widthRandom = grassConfig.widthRandom;
 	float heightRandom = grassConfig.heightRandom;
 
+
+    int inLod = int(lodToUse[0]);
+    int totalTiles = grassConfig.tilesPerSide*grassConfig.tilesPerSide;
+    int lodOffset = totalTiles *inLod ;
     //int tileNumber = int(vid/grassConfig.pointsPerTile);
-    int cullIndex = int(vid/grassConfig.pointsPerTile);
-    GrassCullingResult cullTileData = cullTileId[cullIndex+SUPPORT_DATA_OFFSET];
+    int pointInTile = int(grassConfig.pointsPerTileLod[inLod]);
+    int cullIndex = int(vid/pointInTile);
+    GrassCullingResult cullTileData = cullTileId[cullIndex+SUPPORT_DATA_OFFSET + lodOffset];
     int tileNumber = int(cullTileData.tileIndex);
 
     //uint notCulled = cullTileId[tileNumber];
@@ -179,11 +190,11 @@ void VS()
     float tileY = tileNumber /tilesPerSide;
     vec3 tileCorner = minCorner + vec3(tw*(tileX), 0, tw*tileY);
 
-    int tempOffset = cullTileData.tilePointsId *grassConfig.pointsPerTile ;
-    int inTilePosIdx = int(vid%grassConfig.pointsPerTile);
+    int tempOffset = cullTileData.tilePointsId *pointInTile;
+    int inTilePosIdx = int(vid%pointInTile);
 	vec2 tilePos = p[inTilePosIdx + tempOffset];
     vec3 position = tileCorner + vec3(tilePos.x,0.0f,tilePos.y)*tw;
-	vec4 offset = vec4(offsets[localId],0.0f);
+	vec4 offset = vec4(offsets[localId],0.0f,0.0f);
 
 
     //spinning the blade by random amount
@@ -265,7 +276,8 @@ void VS()
 
 	outUV= uv;
     worldPos = position;
-    lod = cullTileData.LOD;
+    //lod = cullTileData.LOD;
+    lod = int(lodToUse[0]);
 
 	gl_Position = frameData.m_activeCamera.MVP * (vec4(position,1.0));
 }

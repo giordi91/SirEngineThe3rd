@@ -127,5 +127,6 @@ struct GrassConfig {
 
   //lods
   float4 lodThresholds;
+  float4 pointsPerTileLod;
 };
 #endif

@@ -84,6 +84,14 @@
       "numDescriptors": 1,
       "baseRegister": 5,
       "underlyingResource": "buffer"
+    },
+    {
+      "comment": "lod to use",
+      "visibility": "VS",
+      "type": "SRV",
+      "numDescriptors": 1,
+      "baseRegister": 6,
+      "underlyingResource": "buffer"
     }
   ]
 }

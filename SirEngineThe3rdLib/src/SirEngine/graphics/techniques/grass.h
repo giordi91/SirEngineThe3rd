@@ -14,13 +14,13 @@ class GrassTechnique final : public GNodeCallback {
   GrassTechnique() = default;
   virtual ~GrassTechnique() = default;
   void setup(uint32_t id) override;
-  void passRender(uint32_t id ,BindingTableHandle passHandle) override;
+  void passRender(uint32_t id, BindingTableHandle passHandle) override;
   void clear(uint32_t id) override;
   void prePassRender(uint32_t id) override;
 
  public:
-	 static constexpr uint32_t GRASS_TECHNIQUE_FORWARD = 1;
-	 static constexpr uint32_t GRASS_TECHNIQUE_SHADOW = 2;
+  static constexpr uint32_t GRASS_TECHNIQUE_FORWARD = 1;
+  static constexpr uint32_t GRASS_TECHNIQUE_SHADOW = 2;
 
  private:
   void buildBindingTables();
@@ -36,7 +36,7 @@ class GrassTechnique final : public GNodeCallback {
   BufferHandle m_tilesPointsHandle{};
   BufferHandle m_tilesIndicesHandle{};
   ConstantBufferHandle m_grassConfigHandle{};
-  BindingTableHandle m_bindingTable{};
+  BindingTableHandle m_bindingTable[4]={};
   BindingTableHandle m_groundBindingTable{};
 
   TextureHandle m_windTexture{};
@@ -61,6 +61,7 @@ class GrassTechnique final : public GNodeCallback {
   PSOHandle m_grassClearPso{};
   BufferHandle m_cullingInBuffer{};
   BufferHandle m_outTiles{};
+  BufferHandle m_lodBuffer[4] = {};
 
   static const uint32_t MAX_GRASS_PER_SIDE = 60;
   std::vector<BoundingBox> m_tiles;
