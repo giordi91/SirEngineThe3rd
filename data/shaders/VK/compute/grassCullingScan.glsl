@@ -78,6 +78,23 @@ int isTileVisiable(vec3 tilePos)
 	return vote;
 }
 
+uint16_t getLOD(vec3 tilePos)
+{
+
+	vec3 aabbScale = vec3(grassConfig.tileSize, 
+						   grassConfig.height + grassConfig.heightRandom,
+						   grassConfig.tileSize);
+	vec3 center = tilePos + (aabbScale*0.5);
+	float dist = length(center - frameData.m_mainCamera.position.xyz);
+	//find which lod slot are we in
+	int lod1 = int(dist > grassConfig.lodThresholds.x) & int(dist <=grassConfig.lodThresholds.y);
+	int lod2 = int(dist > grassConfig.lodThresholds.y) & int(dist <=grassConfig.lodThresholds.z);
+	int lod3 = int(dist > grassConfig.lodThresholds.z); 
+	int finalLod = lod1 + (lod2*2)+ (lod3*3);
+
+	return uint16_t(finalLod);
+}
+
 
 shared int offset;
 shared int accum;
@@ -136,12 +153,14 @@ void CS()
   //block size
   int actualOffset = offset;
 
+  uint16_t LOD = getLOD(tilePos);
+
   if(vote != 0 )
   {
     GrassCullingResult res;
 	res.tileIndex = int(gl_GlobalInvocationID.x);
 	res.tilePointsId = uint16_t(tileIds[gl_GlobalInvocationID.x]);
-	res.LOD = uint16_t(0);
+	res.LOD = LOD;
 
 	outValue[actualOffset + scan + SUPPORT_DATA_OFFSET-1] =  res;
   }

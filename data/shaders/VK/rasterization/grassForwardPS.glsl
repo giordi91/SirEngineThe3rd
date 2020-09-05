@@ -9,6 +9,7 @@ layout(location=0) out vec4 outputColor;
 layout (location = 1) in vec2 inUV;
 layout (location = 2) in vec3 inNormal;
 layout (location = 3) in vec3 worldPos;
+layout (location = 4) flat in int lod;
 
 layout (set=0,binding=0) uniform InputData 
 {
@@ -132,6 +133,11 @@ void PS()
    //hear we are using the v value to diminis the light received by the blades 
    //due to be missing shadows
    float attenuationFactor =clamp(pow(inUV.y + 0.2,3),0,1);
-   outputColor = vec4(finalC*attenuationFactor,1.0f);
+   
+   //outputColor = vec4(finalC*attenuationFactor,1.0f);
+   if(lod ==0) { outputColor = vec4(1,0,0,1);}
+   if(lod ==1) { outputColor = vec4(0,1,0,1);}
+   if(lod ==2) { outputColor = vec4(0,0,1,1);}
+   if(lod ==3) { outputColor = vec4(1,0,1,1);}
 
 }

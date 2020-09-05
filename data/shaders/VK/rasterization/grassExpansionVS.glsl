@@ -149,6 +149,7 @@ const int SUPPORT_DATA_OFFSET = 16;
 layout(location =1) out vec2 outUV;
 layout(location =2) out vec3 outNormal;
 layout (location = 3) out vec3 worldPos;
+layout (location = 4) out int lod;
 
 void VS()
 {
@@ -264,6 +265,7 @@ void VS()
 
 	outUV= uv;
     worldPos = position;
+    lod = cullTileData.LOD;
 
 	gl_Position = frameData.m_activeCamera.MVP * (vec4(position,1.0));
 }
