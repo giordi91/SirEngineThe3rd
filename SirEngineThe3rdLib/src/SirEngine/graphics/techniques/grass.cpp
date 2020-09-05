@@ -106,6 +106,7 @@ void GrassTechnique::setup(const uint32_t id) {
   m_grassConfig.roughness = 0.338;
   m_grassConfig.baseColor = {0.02, 0.25, 0.001};
   m_grassConfig.tipColor = {0.02, 0.13, 0.019};
+  m_grassConfig.lodThresholds = {15, 30, 40, 0};
 
   m_rs = globals::ROOT_SIGNATURE_MANAGER->getHandleFromName(GRASS_RS);
   m_pso = globals::PSO_MANAGER->getHandleFromName(GRASS_PSO);
