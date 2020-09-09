@@ -121,7 +121,7 @@ bool createVulkanInstance(std::vector<char const *> const &desiredExtensions,
                                        nullptr,
                                        applicationName,
                                        VK_MAKE_VERSION(1, 0, 0),
-                                       "Vulkan Cookbook",
+                                       "Sir Engine",
                                        VK_MAKE_VERSION(1, 0, 0),
                                        VK_API_VERSION_1_1};
 

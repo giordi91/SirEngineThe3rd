@@ -3,7 +3,9 @@
     {
       "mesh": "../data/processed/meshes/knightB/jacket.model",
       "material": "../data/materials/knightBJacketForward.json"
-    },
+    }
+  ],
+  "t": [
     {
       "mesh": "../data/processed/meshes/knightB/pants.model",
       "material": "../data/materials/knightBPantsForward.json"
@@ -27,10 +29,7 @@
     {
       "mesh": "../data/processed/meshes/knightB/cape.model",
       "material": "../data/materials/knightBCapeForward.json"
-    }
-  ],
-  "t": [
-
+    },
     {
       "mesh": "../data/processed/meshes/knightB/face.model",
       "material": "../data/materials/knightBFace.json"

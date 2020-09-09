@@ -19,10 +19,12 @@ struct VkMaterialRuntime final {
   VkDescriptorImageInfo separateAlpha;
   VkDescriptorImageInfo heightMap;
   VkDescriptorImageInfo ao;
-  uint32_t shaderQueueTypeFlags[MaterialManager::QUEUE_COUNT] = {
-      INVALID_QUEUE_TYPE_FLAGS, INVALID_QUEUE_TYPE_FLAGS,
-      INVALID_QUEUE_TYPE_FLAGS, INVALID_QUEUE_TYPE_FLAGS,
-      INVALID_QUEUE_TYPE_FLAGS};
+  // uint32_t shaderQueueTypeFlags[MaterialManager::QUEUE_COUNT] = {
+  //    INVALID_QUEUE_TYPE_FLAGS, INVALID_QUEUE_TYPE_FLAGS,
+  //    INVALID_QUEUE_TYPE_FLAGS, INVALID_QUEUE_TYPE_FLAGS,
+  //    INVALID_QUEUE_TYPE_FLAGS};
+
+  ShaderBind shaderQueueTypeFlags2[MaterialManager::QUEUE_COUNT] = {};
   SkinHandle skinHandle;
   MeshHandle meshHandle;
   DescriptorHandle descriptorHandles[5]{{}, {}, {}, {}, {}};
@@ -58,11 +60,14 @@ class VkMaterialManager final : public MaterialManager {
   void updateMaterial(SHADER_QUEUE_FLAGS queueFlag, MaterialHandle handle,
                       VkCommandBuffer commandList);
 
-  //TODO see note on the dx12 material manager for this function
-  ShaderBind bindRSandPSO(uint32_t shaderFlags, VkCommandBuffer commandList) const;
+  // TODO see note on the dx12 material manager for this function
+  ShaderBind bindRSandPSO(uint64_t shaderFlags,
+                          const VkMaterialRuntime &runtime,
+                          VkCommandBuffer commandList) const;
   VkMaterialManager(const VkMaterialManager &) = delete;
   VkMaterialManager &operator=(const VkMaterialManager &) = delete;
 
+  void parseQueue(uint32_t *queues);
   MaterialHandle loadMaterial(const char *path, const MeshHandle meshHandle,
                               const SkinHandle skinHandle) override;
 

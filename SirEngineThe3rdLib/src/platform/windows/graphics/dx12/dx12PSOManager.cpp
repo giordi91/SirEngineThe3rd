@@ -58,7 +58,7 @@ void Dx12PSOManager::loadRawPSOInFolder(const char *directory) {
       globals::ENGINE_CONFIG->m_dataSourcePath, "/shaders/DX12");
   for (const auto &p : paths) {
     PSOCompileResult result = compileRawPSO(p.c_str(), shaderPath);
-    if (result.psoType == PSOType::INVALID) {
+    if (result.psoType == PSO_TYPE::INVALID) {
       SE_CORE_ERROR("Could not compile PSO: {0}", p);
     }
     insertInPSOCache(result);
@@ -115,12 +115,12 @@ PSOCompileResult Dx12PSOManager::loadCachedPSO(const char *path) const {
   char *rootSignature = mapper->rootSignatureSize == 0 ? nullptr : ptrOffset;
   ptrOffset += mapper->rootSignatureSize;
 
-  auto psoEnum = static_cast<PSOType>(mapper->psoType);
+  auto psoEnum = static_cast<PSO_TYPE>(mapper->psoType);
 
   ID3D12PipelineState *state = nullptr;
   PSOCompileResult result{};
 
-  if (psoEnum == PSOType::RASTER) {
+  if (psoEnum == PSO_TYPE::RASTER) {
     auto *desc = reinterpret_cast<D3D12_GRAPHICS_PIPELINE_STATE_DESC *>(
         ptr + blob->GetBufferSize());
     desc->CachedPSO.pCachedBlob = blob->GetBufferPointer();
@@ -140,7 +140,7 @@ PSOCompileResult Dx12PSOManager::loadCachedPSO(const char *path) const {
         DEVICE->CreateGraphicsPipelineState(desc, IID_PPV_ARGS(&state));
     assert(SUCCEEDED(psoResult));
 
-    result.psoType = PSOType::RASTER;
+    result.psoType = PSO_TYPE::RASTER;
     result.CSName = nullptr;
     result.VSName = persistentString(vsPath);
     result.PSName = persistentString(psPath);
@@ -159,7 +159,7 @@ PSOCompileResult Dx12PSOManager::loadCachedPSO(const char *path) const {
     HRESULT psoResult =
         DEVICE->CreateComputePipelineState(desc, IID_PPV_ARGS(&state));
     assert(SUCCEEDED(psoResult));
-    result.psoType = PSOType::COMPUTE;
+    result.psoType = PSO_TYPE::COMPUTE;
     result.CSName = persistentString(csPath);
     result.VSName = nullptr;
     result.PSName = nullptr;
@@ -167,7 +167,6 @@ PSOCompileResult Dx12PSOManager::loadCachedPSO(const char *path) const {
 
   result.pso = state;
   result.PSOFullPathFile = persistentString(path);
-  result.PSOName = persistentString(getFileName(path).c_str());
   // ONLY PART OF THE STRUCT IS FILLED, SINCE THE RESULT WILL BE USED ONLY FOR
   // RUNTIME CACHING
   return result;
@@ -187,9 +186,9 @@ void Dx12PSOManager::updatePSOCache(const char *name,
 
 void Dx12PSOManager::insertInPSOCache(const PSOCompileResult &result) {
   switch (result.psoType) {
-    case PSOType::DXR:
+    case PSO_TYPE::DXR:
       break;
-    case PSOType::RASTER: {
+    case PSO_TYPE::RASTER: {
       bool hasShader = m_shaderToPSOFile.containsKey(result.VSName);
       if (!hasShader) {
         m_shaderToPSOFile.insert(result.VSName,
@@ -212,28 +211,42 @@ void Dx12PSOManager::insertInPSOCache(const PSOCompileResult &result) {
       // generating and storing the handle
       uint32_t index;
       PSOData &data = m_psoPool.getFreeMemoryData(index);
+
+      const std::string rootName = getFileName(result.rootSignature);
+      RSHandle rsHandle =
+          dx12::ROOT_SIGNATURE_MANAGER->getHandleFromName(rootName.c_str());
+      data.rsHandle = rsHandle;
+
       data.pso = result.pso;
       data.topology = result.topologyType;
       data.root = result.graphicDesc->pRootSignature;
-      data.type = PSOType::RASTER;
+      data.type = PSO_TYPE::RASTER;
       const PSOHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
       data.magicNumber = MAGIC_NUMBER_COUNTER;
-      m_psoRegisterHandle.insert(result.PSOName, handle);
+      const std::string psoName = getFileName(result.PSOFullPathFile);
+      m_psoRegisterHandle.insert(psoName.c_str(), handle);
       ++MAGIC_NUMBER_COUNTER;
       break;
     }
-    case PSOType::COMPUTE: {
+    case PSO_TYPE::COMPUTE: {
       // can probably wrap this into a function to make it less verbose
       // generating and storing the handle
       uint32_t index;
       PSOData &data = m_psoPool.getFreeMemoryData(index);
+
+      const std::string rootName = getFileName(result.rootSignature);
+      RSHandle rsHandle =
+          dx12::ROOT_SIGNATURE_MANAGER->getHandleFromName(rootName.c_str());
+      data.rsHandle = rsHandle;
+
       data.pso = result.pso;
       data.topology = TOPOLOGY_TYPE::UNDEFINED;
-      data.type = PSOType::COMPUTE;
+      data.type = PSO_TYPE::COMPUTE;
       data.root = result.computeDesc->pRootSignature;
       const PSOHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
       data.magicNumber = MAGIC_NUMBER_COUNTER;
-      m_psoRegisterHandle.insert(result.PSOName, handle);
+      const std::string psoName = getFileName(result.PSOFullPathFile);
+      m_psoRegisterHandle.insert(psoName.c_str(), handle);
 
       ++MAGIC_NUMBER_COUNTER;
 
@@ -252,7 +265,7 @@ void Dx12PSOManager::insertInPSOCache(const PSOCompileResult &result) {
       list->pushBack(persistentString(result.PSOFullPathFile));
       break;
     }
-    case PSOType::INVALID:
+    case PSO_TYPE::INVALID:
       break;
     default:;
   }
@@ -280,20 +293,20 @@ void Dx12PSOManager::recompilePSOFromShader(const char *shaderName,
 
     const std::string psoTypeString =
         getValueIfInJson(jobj, PSO_KEY_TYPE, DEFAULT_STRING);
-    const PSOType psoType = convertStringPSOTypeToEnum(psoTypeString.c_str());
+    const PSO_TYPE psoType = convertStringPSOTypeToEnum(psoTypeString.c_str());
     switch (psoType) {
-      case (PSOType::COMPUTE): {
+      case (PSO_TYPE::COMPUTE): {
         const std::string computeName =
             getValueIfInJson(jobj, PSO_KEY_SHADER_NAME, DEFAULT_STRING);
         assert(!computeName.empty());
         shadersToRecompile.push_back(computeName);
         break;
       }
-      // case (PSOType::DXR): {
+      // case (PSO_TYPE::DXR): {
       //  processDXRPSO(jobj, path);
       //  break;
       //}
-      case (PSOType::RASTER): {
+      case (PSO_TYPE::RASTER): {
         std::string vs =
             getValueIfInJson(jobj, PSO_KEY_VS_SHADER, DEFAULT_STRING);
         assert(!vs.empty());
@@ -343,7 +356,8 @@ void Dx12PSOManager::recompilePSOFromShader(const char *shaderName,
     const PSOCompileResult result = compileRawPSO(pso, shaderPath);
     // need to update the cache
     if (result.pso != nullptr) {
-      updatePSOCache(result.PSOName, result.pso);
+      const std::string psoName = getFileName(result.PSOFullPathFile);
+      updatePSOCache(psoName.c_str(), result.pso);
       compileLog += "Compiled PSO: ";
     } else {
       compileLog += "failed to  recompile PSO: ";

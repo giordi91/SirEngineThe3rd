@@ -1,5 +1,5 @@
 {
   "pso" :  "forwardPhongPSO", 
   "rs"  :  "forwardPhongRS",
-  "type" : "forwardPhong"
+  "type" : "forwardPhongPSO"
 }

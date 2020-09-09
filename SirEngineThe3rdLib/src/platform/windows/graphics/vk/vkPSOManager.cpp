@@ -456,6 +456,11 @@ PSOHandle VkPSOManager::insertInPSOCache(const VkPSOCompileResult &result) {
       // make sure to internalize the string
       list->pushBack(persistentString(result.PSOFullPathFile));
 
+
+      //let us find the RS
+      const std::string rsName = getFileName(result.rootSignature);
+      RSHandle rsHandle = vk::PIPELINE_LAYOUT_MANAGER->getHandleFromName(rsName.c_str());
+
       // generating and storing the handle
       uint32_t index;
       PSOData &data = m_psoPool.getFreeMemoryData(index);
@@ -463,6 +468,7 @@ PSOHandle VkPSOManager::insertInPSOCache(const VkPSOCompileResult &result) {
       data.topology = result.topologyType;
       data.renderPass = result.renderPass;
       data.layout = result.pipelineLayout;
+      data.rootSignature = rsHandle;
       const PSOHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
       data.magicNumber = MAGIC_NUMBER_COUNTER;
       m_psoRegisterHandle.insert(
@@ -836,6 +842,10 @@ void VkPSOManager::recompilePSOFromShader(const char *shaderName,
   for (int i = 0; i < psoCount; ++i) {
     const char *pso = (*psos)[i];
     const auto result = compileRawPSO(pso);
+
+
+
+
     // need to update the cache
     updatePSOCache(getFileName(result.PSOFullPathFile).c_str(), result);
 

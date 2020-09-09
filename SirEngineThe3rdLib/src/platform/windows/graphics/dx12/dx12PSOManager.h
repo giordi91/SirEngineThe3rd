@@ -17,7 +17,8 @@ class Dx12PSOManager final : public PSOManager {
     uint32_t magicNumber;
     TOPOLOGY_TYPE topology;
     ID3D12RootSignature *root;
-    PSOType type;
+    RSHandle rsHandle;
+    PSO_TYPE type;
   };
 
  public:
@@ -49,16 +50,17 @@ class Dx12PSOManager final : public PSOManager {
     const PSOData &data = m_psoPool.getConstRef(index);
     commandList->SetPipelineState(data.pso);
     if (bindRoot) {
-      if (data.type == PSOType::RASTER) {
+      if (data.type == PSO_TYPE::RASTER) {
         commandList->SetGraphicsRootSignature(data.root);
       } else {
         commandList->SetComputeRootSignature(data.root);
       }
     }
 
-    //this is not inside the bindroot because we there might be the  case where
-  	//we are not binding the root and still want to set the topology accordingly
-    if (data.type == PSOType::RASTER) {
+    // this is not inside the bindroot because we there might be the  case where
+    // we are not binding the root and still want to set the topology
+    // accordingly
+    if (data.type == PSO_TYPE::RASTER) {
       switch (data.topology) {
         case (TOPOLOGY_TYPE::TRIANGLE): {
           commandList->IASetPrimitiveTopology(
@@ -93,6 +95,12 @@ class Dx12PSOManager final : public PSOManager {
 
   PSOHandle getHandleFromName(const char *name) const override;
   TOPOLOGY_TYPE getTopology(const PSOHandle psoHandle) const;
+  RSHandle getRS(const PSOHandle handle) const override {
+    assertMagicNumber(handle);
+    const uint32_t index = getIndexFromHandle(handle);
+    const PSOData &data = m_psoPool.getConstRef(index);
+    return data.rsHandle;
+  }
 
  private:
   // debugging function to be able to print to console the composition of a

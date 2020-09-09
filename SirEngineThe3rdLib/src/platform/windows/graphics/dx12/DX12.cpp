@@ -65,7 +65,7 @@ struct Dx12Renderable {
   Dx12MaterialRuntime m_materialRuntime;
 };
 
-typedef std::unordered_map<uint32_t, std::vector<Dx12Renderable>>
+typedef std::unordered_map<uint64_t, std::vector<Dx12Renderable>>
     Dx12RenderingQueues;
 
 void createFrameCommand(FrameCommand *fc) {
@@ -575,10 +575,21 @@ void Dx12RenderingContext::addRenderablesToQueue(const Renderable &renderable) {
   dx12Renderable.m_meshRuntime = meshRuntime;
   // store the renderable on each queue
   for (int i = 0; i < MaterialManager::QUEUE_COUNT; ++i) {
+    /*
     const uint32_t flag = materialRuntime.shaderQueueTypeFlags[i];
 
     if (flag != INVALID_QUEUE_TYPE_FLAGS) {
       (*typedQueues)[flag].emplace_back(dx12Renderable);
+    }
+    */
+    if (materialRuntime.shaderQueueTypeFlags2[i].pso.isHandleValid()) {
+      // compute flag, is going to be a compbination of the index and the
+      // psohandle
+      uint64_t pso =
+          ((uint64_t)materialRuntime.shaderQueueTypeFlags2[i].pso.handle) << 32;
+      uint64_t queue = (1ull << i);
+      uint64_t key = queue | pso;
+      (*typedQueues)[key].emplace_back(dx12Renderable);
     }
   }
 }
@@ -597,8 +608,12 @@ void Dx12RenderingContext::renderQueueType(
       // start rendering it
 
       // bind the corresponding RS and PSO
+      //ShaderBind bind = dx12::MATERIAL_MANAGER->bindRSandPSO(
+      //    renderableList.first, commandList);
+
       ShaderBind bind = dx12::MATERIAL_MANAGER->bindRSandPSO(
-          renderableList.first, commandList);
+          renderableList.first, renderableList.second[0].m_materialRuntime,
+          commandList);
 
       // binding the camera
       D3D12_GPU_DESCRIPTOR_HANDLE handle =
@@ -622,11 +637,11 @@ void Dx12RenderingContext::renderQueueType(
       }
 
       // this is most for debug, it will boil down to nothing in release
-      const SHADER_TYPE_FLAGS type =
-          dx12::MATERIAL_MANAGER->getTypeFlags(renderableList.first);
-      const std::string &typeName =
-          dx12::MATERIAL_MANAGER->getStringFromShaderTypeFlag(type);
-      annotateGraphicsBegin(typeName.c_str());
+      //const SHADER_TYPE_FLAGS type =
+      //    dx12::MATERIAL_MANAGER->getTypeFlags(renderableList.first);
+      //const std::string &typeName =
+      //    dx12::MATERIAL_MANAGER->getStringFromShaderTypeFlag(type);
+      //annotateGraphicsBegin(typeName.c_str());
 
       // looping each of the object
       const size_t count = renderableList.second.size();
@@ -644,7 +659,7 @@ void Dx12RenderingContext::renderQueueType(
         dx12::MESH_MANAGER->render(renderable.m_meshRuntime, currentFc,
                                    !isDebug);
       }
-      annotateGraphicsEnd();
+      //annotateGraphicsEnd();
     }
   }
 }

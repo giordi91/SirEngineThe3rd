@@ -76,6 +76,8 @@ class MaterialManager {
         INVALID_QUEUE_TYPE_FLAGS, INVALID_QUEUE_TYPE_FLAGS,
         INVALID_QUEUE_TYPE_FLAGS, INVALID_QUEUE_TYPE_FLAGS,
         INVALID_QUEUE_TYPE_FLAGS};
+    const char *shaderQueueTypeFlagsStr[QUEUE_COUNT] = {
+        nullptr, nullptr, nullptr, nullptr, nullptr};
     // defines whether or not we expect the material to change, if not we can
     // save some resource allocations
     bool isStatic = false;
@@ -113,10 +115,10 @@ class MaterialManager {
   virtual void bindBuffer(MaterialHandle matHandle, BufferHandle texHandle,
                           uint32_t bindingIndex, SHADER_QUEUE_FLAGS queue) = 0;
   virtual void bindConstantBuffer(MaterialHandle handle,
-                          ConstantBufferHandle bufferHandle,
-                          const uint32_t descriptorIndex,
-                          const uint32_t bindingIndex,
-                          SHADER_QUEUE_FLAGS queue) = 0;
+                                  ConstantBufferHandle bufferHandle,
+                                  const uint32_t descriptorIndex,
+                                  const uint32_t bindingIndex,
+                                  SHADER_QUEUE_FLAGS queue) = 0;
 
   // TODO clean this. The issue is, we need two indices to bind the mesh
   // one is the binding index, meaning which slot in the shader is referring to.
@@ -160,11 +162,21 @@ class MaterialManager {
     const uint32_t queueFlags = flags & mask;
     return queueFlags;
   }
+  static inline uint64_t getQueueFlags(const uint64_t flags) {
+    constexpr uint64_t mask = (1ll << 16) - 1ll;
+    const uint64_t queueFlags = flags & mask;
+    return queueFlags;
+  }
 
   static inline bool isQueueType(const uint32_t flags,
                                  const SHADER_QUEUE_FLAGS queue) {
     const uint32_t queueFlags = getQueueFlags(flags);
     return (queueFlags & static_cast<uint32_t>(queue)) > 0;
+  }
+  static inline bool isQueueType(const uint64_t flags,
+                                 const SHADER_QUEUE_FLAGS queue) {
+    const uint64_t queueFlags = getQueueFlags(flags);
+    return (queueFlags & static_cast<uint64_t>(queue)) > 0;
   }
 
   // combines the queue and shader type flags together
