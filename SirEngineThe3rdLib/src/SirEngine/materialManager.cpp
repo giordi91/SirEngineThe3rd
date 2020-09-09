@@ -1,5 +1,6 @@
 #include "SirEngine/materialManager.h"
 
+#include <SPIRV-CROSS/spirv_cross.hpp>
 #include <cassert>
 #include <string>
 #include <unordered_map>
@@ -11,6 +12,7 @@
 #include "SirEngine/rootSignatureManager.h"
 #include "SirEngine/textureManager.h"
 #include "memory/cpu/stringPool.h"
+#include "platform/windows/graphics/vk/vkShaderCompiler.h"
 #include "runtimeString.h"
 
 namespace SirEngine {
@@ -323,6 +325,125 @@ void MaterialManager::loadTypesInFolder(const char *folder) {
   for (const auto &p : paths) {
     loadTypeFile(p.c_str());
   }
+}
+static const std::string PSO_TYPE_KEY = "type";
+static const std::string PSO_TYPE_RASTER = "RASTER";
+static const std::string PSO_TYPE_COMPUTE = "COMPUTE";
+static const std::string PSO_VS_KEY = "VS";
+static const std::string PSO_PS_KEY = "PS";
+static const std::string DEFAULT_STRING = "";
+static const std::string PSO_ROOT_KEY = "globalRootSignature";
+
+MaterialMetadata processComputeMetadata(const nlohmann::json &jobj) {
+  assert(0);
+  return {};
+}
+std::string loadFile(const char *path) {
+  std::ifstream st(path);
+  std::stringstream sBuffer;
+  sBuffer << st.rdbuf();
+  return sBuffer.str();
+}
+
+MaterialMetadata processShader(const char *shaderName, SHADER_TYPE type) {
+  vk::VkShaderCompiler vkCompiler;
+  std::string log;
+  vk::SpirVBlob blob =
+      vkCompiler.compileToSpirV(shaderName, vk::VkShaderArgs{true, type}, &log);
+
+  std::vector<unsigned int> spirV;
+  spirV.resize(blob.sizeInByte / 4);
+  memcpy(spirV.data(), blob.memory, blob.sizeInByte);
+  spirv_cross::Compiler comp(spirV);
+
+  spirv_cross::ShaderResources res = comp.get_shader_resources();
+
+  int totalCount = res.separate_images.size() + res.storage_buffers.size() +
+                   res.uniform_buffers.size();
+  uint32_t allocSize = sizeof(MaterialResource) * totalCount;
+  auto *memory = static_cast<MaterialResource *>(
+      globals::FRAME_ALLOCATOR->allocate(allocSize));
+
+  int counter = 0;
+  // SE_CORE_INFO("Images");
+  for (const auto &image : res.separate_images) {
+    auto set = static_cast<uint16_t>(
+        comp.get_decoration(image.id, spv::DecorationDescriptorSet));
+    auto binding = static_cast<uint16_t>(
+        comp.get_decoration(image.id, spv::DecorationBinding));
+    // SE_CORE_INFO("--> name: {}, set: {}, bind:{}", image.name, set, binding);
+
+    memory[counter++] = {MATERIAL_RESOURCE_TYPE::TEXTURE, set, binding,
+                         frameString(image.name.c_str())};
+  }
+
+  // SE_CORE_INFO("ssbo");
+  for (const auto &image : res.storage_buffers) {
+    auto set = static_cast<uint16_t>(
+        comp.get_decoration(image.id, spv::DecorationDescriptorSet));
+    auto binding = static_cast<uint16_t>(
+        comp.get_decoration(image.id, spv::DecorationBinding));
+    // SE_CORE_INFO("--> name: {}, set: {}, bind:{}", image.name, set, binding);
+    memory[counter++] = {MATERIAL_RESOURCE_TYPE::BUFFER, set, binding,
+                         frameString(image.name.c_str())};
+  }
+
+  // SE_CORE_INFO("constant buffers");
+  for (const auto &image : res.uniform_buffers) {
+    auto set = static_cast<uint16_t>(
+        comp.get_decoration(image.id, spv::DecorationDescriptorSet));
+    auto binding = static_cast<uint16_t>(
+        comp.get_decoration(image.id, spv::DecorationBinding));
+    // SE_CORE_INFO("--> name: {}, set: {}, bind:{}", image.name, set, binding);
+    memory[counter++] = {MATERIAL_RESOURCE_TYPE::CONSTANT_BUFFER, set, binding,
+                         frameString(image.name.c_str())};
+  }
+  return {memory, static_cast<uint32_t>(totalCount)};
+}
+MaterialMetadata processRasterMetadata(const nlohmann::json &jobj) {
+  assertInJson(jobj, PSO_VS_KEY);
+
+  const std::string &vsName =
+      getValueIfInJson(jobj, PSO_VS_KEY, DEFAULT_STRING);
+  const std::string &psName =
+      getValueIfInJson(jobj, PSO_PS_KEY, DEFAULT_STRING);
+  const std::string vsPath =
+      "../data/shaders/VK/rasterization/" + vsName + ".glsl";
+  assert(fileExists(vsPath));
+  MaterialMetadata vsMeta = processShader(vsPath.c_str(), SHADER_TYPE::VERTEX);
+
+  MaterialMetadata psMeta;
+  if (!psName.empty()) {
+    const std::string psPath =
+        "../data/shaders/VK/rasterization/" + psName + ".glsl";
+    assert(fileExists(psPath));
+    psMeta = processShader(psPath.c_str(), SHADER_TYPE::FRAGMENT);
+  }
+
+  // let us merge
+  MaterialResource space0[16];
+  MaterialResource space2[16];
+  MaterialResource space3[32];
+  MaterialResource *resources[4] = {&space0[0], nullptr, &space2[0],
+                                    &space3[0]};
+  int counters[4] = {0, 0, 0, 0};
+  for (int i = 0; i < vsMeta.resourceCount; ++i) {
+    const MaterialResource &res = vsMeta.resources[i];
+    resources[res.set][counters[res.set]++] = res;
+  }
+
+  return {};
+}
+
+MaterialMetadata extractMetadata(const char *psoPath) {
+  auto jobj = getJsonObj(psoPath);
+  assertInJson(jobj, PSO_TYPE_KEY);
+
+  const std::string &psoType = jobj[PSO_TYPE_KEY].get<std::string>();
+  if (psoType == PSO_TYPE_RASTER) {
+    return processRasterMetadata(jobj);
+  }
+  return processComputeMetadata(jobj);
 }
 
 }  // namespace SirEngine

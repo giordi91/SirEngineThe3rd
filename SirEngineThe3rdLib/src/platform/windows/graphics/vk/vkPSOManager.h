@@ -13,7 +13,6 @@
 #include "vkRootSignatureManager.h"
 
 namespace SirEngine::vk {
-// TODO move this to graphics define and use the same for both dx12 and vk
 
 struct SIR_ENGINE_API VkPSOCompileResult {
   VkPipeline pso = nullptr;
@@ -28,6 +27,7 @@ struct SIR_ENGINE_API VkPSOCompileResult {
   VkRenderPass renderPass;
   VkPipelineLayout pipelineLayout;
 };
+
 
 // TODO make it not copyable assignable
 class VkPSOManager final : public PSOManager {
