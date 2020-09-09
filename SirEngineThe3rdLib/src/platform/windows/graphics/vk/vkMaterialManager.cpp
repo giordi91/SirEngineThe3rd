@@ -79,19 +79,7 @@ void VkMaterialManager::updateMaterial(SHADER_QUEUE_FLAGS queueFlag,
                                        const MaterialHandle handle,
                                        VkCommandBuffer commandList) {
   const VkMaterialRuntime &materialRuntime = getMaterialRuntime(handle);
-  int queueFlagInt = static_cast<int>(queueFlag);
-  int currentFlagId = static_cast<int>(log2(queueFlagInt & -queueFlagInt));
-  const SHADER_TYPE_FLAGS type =
-      getTypeFlags(materialRuntime.shaderQueueTypeFlags[currentFlagId]);
-  switch (type) {
-    case (SHADER_TYPE_FLAGS::FORWARD_PHONG): {
-      updateForwardPhong(queueFlag, materialRuntime);
-      break;
-    }
-    default: {
-      assert(0 && "could not find material type");
-    }
-  }
+  updateForwardPhong(queueFlag, materialRuntime);
 }
 
 void VkMaterialManager::bindMaterial(SHADER_QUEUE_FLAGS queueFlag,
@@ -126,18 +114,27 @@ void beginRenderPass(ShaderBind bind) {
                        VK_SUBPASS_CONTENTS_INLINE);
 }
 ShaderBind VkMaterialManager::bindRSandPSO(
-    const uint32_t shaderFlags, const VkCommandBuffer commandList) const {
+    const uint64_t shaderFlags, const VkMaterialRuntime &runtime,
+    const VkCommandBuffer commandList) const {
   // get type flags as int
-  constexpr auto mask = static_cast<uint32_t>(~((1 << 16) - 1));
-  const auto typeFlags = static_cast<uint16_t>((shaderFlags & mask) >> 16);
+  constexpr auto mask = static_cast<uint64_t>(~((1ull << 32ull) - 1ull));
+  const auto typeFlags = static_cast<uint64_t>((uint64_t(shaderFlags) & mask) >> 32ll);
 
-  ShaderBind bind;
+  for (int i = 0; i < QUEUE_COUNT; ++i) {
+    if (runtime.shaderQueueTypeFlags2[i].pso.handle == typeFlags) {
+      ShaderBind bind = runtime.shaderQueueTypeFlags2[i];
+      vk::PSO_MANAGER->bindPSO(bind.pso, commandList);
+      return bind;
+    }
+  }
+  /*
   bool found = m_shaderTypeToShaderBind.get(typeFlags, bind);
   if (found) {
     // beginRenderPass(bind);
     vk::PSO_MANAGER->bindPSO(bind.pso, commandList);
     return bind;
   }
+  */
   assert(0 && "Could not find requested shader type for PSO /RS bind");
   return {};
 }
@@ -146,6 +143,8 @@ inline VkDescriptorImageInfo getDescriptor(const TextureHandle handle) {
   return handle.isHandleValid() ? vk::TEXTURE_MANAGER->getSrvDescriptor(handle)
                                 : VkDescriptorImageInfo{};
 }
+
+void VkMaterialManager::parseQueue(uint32_t *queues) {}
 
 MaterialHandle VkMaterialManager::loadMaterial(const char *path,
                                                const MeshHandle meshHandle,
@@ -173,8 +172,17 @@ MaterialHandle VkMaterialManager::loadMaterial(const char *path,
   matCpu.skinHandle = skinHandle;
   matCpu.meshHandle = meshHandle;
 
-  memcpy(&matCpu.shaderQueueTypeFlags, parse.shaderQueueTypeFlags,
-         sizeof(uint32_t) * QUEUE_COUNT);
+  for (uint32_t i = 0; i < QUEUE_COUNT; ++i) {
+    const char *value = parse.shaderQueueTypeFlagsStr[i];
+    if (value != nullptr) {
+      PSOHandle pso = globals::PSO_MANAGER->getHandleFromName(value);
+      RSHandle rs = globals::PSO_MANAGER->getRS(pso);
+      matCpu.shaderQueueTypeFlags2[i] = ShaderBind{rs, pso};
+    }
+  }
+
+  // memcpy(&matCpu.shaderQueueTypeFlags, parse.shaderQueueTypeFlags,
+  //       sizeof(uint32_t) * QUEUE_COUNT);
 
   materialData.handles.cbHandle = globals::CONSTANT_BUFFER_MANAGER->allocate(
       sizeof(Material), 0, &parse.mat);
@@ -194,25 +202,28 @@ MaterialHandle VkMaterialManager::loadMaterial(const char *path,
 
   // looping the queues
   for (int i = 0; i < QUEUE_COUNT; ++i) {
-    uint32_t queue = matCpu.shaderQueueTypeFlags[i];
-    if (queue == INVALID_QUEUE_TYPE_FLAGS) {
+    // uint32_t queue = matCpu.shaderQueueTypeFlags[i];
+    // if (queue == INVALID_QUEUE_TYPE_FLAGS) {
+    //  continue;
+    //}
+    if (!matCpu.shaderQueueTypeFlags2[i].pso.isHandleValid()) {
       continue;
     }
-    const auto queueType = getQueueFlags(queue);
-    const auto typeFlags = static_cast<uint16_t>((queue & mask) >> 16);
-    ShaderBind bind{};
-    bool found = m_shaderTypeToShaderBind.get(typeFlags, bind);
+    // const auto queueType = getQueueFlags(queue);
+    // const auto typeFlags = static_cast<uint16_t>((queue & mask) >> 16);
+    ShaderBind bind = matCpu.shaderQueueTypeFlags2[i];
+    // bool found = m_shaderTypeToShaderBind.get(typeFlags, bind);
 
-    if (!found) {
-      assert(0 && "could not find needed root signature");
-    }
+    // if (!found) {
+    //  assert(0 && "could not find needed root signature");
+    //}
     uint32_t flags =
         parse.isStatic
             ? 0
             : graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED;
 
     const char *shaderTypeName =
-        getStringFromShaderTypeFlag(static_cast<SHADER_TYPE_FLAGS>(typeFlags));
+        getStringFromShaderTypeFlag(static_cast<SHADER_TYPE_FLAGS>(1 << i));
     const char *descriptorName =
         frameConcatenation(name.c_str(), shaderTypeName, "-");
     DescriptorHandle descriptorHandle =
@@ -224,11 +235,10 @@ MaterialHandle VkMaterialManager::loadMaterial(const char *path,
 
     if (parse.isStatic) {
       // it is static lets bind the material right away
-      updateMaterial(static_cast<SHADER_QUEUE_FLAGS>(getQueueFlags(queue)),
-                     handle, vk::CURRENT_FRAME_COMMAND->m_commandBuffer);
+      updateMaterial(static_cast<SHADER_QUEUE_FLAGS>(1 << i), handle,
+                     vk::CURRENT_FRAME_COMMAND->m_commandBuffer);
     }
   }
-
   return handle;
 }
 
@@ -276,6 +286,7 @@ void VkMaterialManager::releaseAllMaterialsAndRelatedResources() {
 MaterialHandle VkMaterialManager::allocateMaterial(
     const char *name, const ALLOCATE_MATERIAL_FLAGS flags,
     const char *materialsPerQueue[QUEUE_COUNT]) {
+  assert(0);
   // empty material
   uint32_t index;
   VkMaterialData &materialData =
@@ -308,8 +319,8 @@ MaterialHandle VkMaterialManager::allocateMaterial(
     materialData.m_materialRuntime.useStaticSamplers[i] = static_cast<uint8_t>(
         vk::PIPELINE_LAYOUT_MANAGER->usesStaticSamplers(bind.rs));
     SHADER_QUEUE_FLAGS queueType = static_cast<SHADER_QUEUE_FLAGS>(1 << i);
-    materialData.m_materialRuntime.shaderQueueTypeFlags[i] =
-        getQueueTypeFlags(queueType, shaderType);
+    // materialData.m_materialRuntime.shaderQueueTypeFlags[i] =
+    //    getQueueTypeFlags(queueType, shaderType);
   }
   materialData.name = persistentString(name);
   materialData.magicNumber = MAGIC_NUMBER_COUNTER++;
@@ -393,12 +404,13 @@ void VkMaterialManager::bindMaterial(const MaterialHandle handle,
   const auto currentFlag = static_cast<uint32_t>(queue);
   int currentFlagId = static_cast<int>(log2(currentFlag & -currentFlag));
 
-  // find the PSO, should this be part of the runtime directly?
-  uint32_t flags = data.m_materialRuntime.shaderQueueTypeFlags[currentFlagId];
-  SHADER_TYPE_FLAGS type = getTypeFlags(flags);
-  ShaderBind bind;
-  bool found = m_shaderTypeToShaderBind.get(static_cast<uint16_t>(type), bind);
-  assert(found);
+  //// find the PSO, should this be part of the runtime directly?
+  // uint32_t flags =
+  // data.m_materialRuntime.shaderQueueTypeFlags[currentFlagId];
+  // SHADER_TYPE_FLAGS type = getTypeFlags(flags);
+  ShaderBind bind = data.m_materialRuntime.shaderQueueTypeFlags2[currentFlagId];
+  // bool found = m_shaderTypeToShaderBind.get(static_cast<uint16_t>(type),
+  // bind); assert(found);
 
   vk::PSO_MANAGER->bindPSO(bind.pso, CURRENT_FRAME_COMMAND->m_commandBuffer);
 

@@ -62,7 +62,7 @@ struct VkRenderable {
   VkMaterialRuntime m_materialRuntime{};
 };
 
-typedef std::unordered_map<uint32_t, std::vector<VkRenderable>>
+typedef std::unordered_map<uint64_t, std::vector<VkRenderable>>
     VkRenderingQueues;
 
 bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
@@ -584,11 +584,19 @@ void VkRenderingContext::addRenderablesToQueue(const Renderable &renderable) {
   vkRenderable.m_meshRuntime = meshRuntime;
   // store the renderable on each queue
   for (int i = 0; i < MaterialManager::QUEUE_COUNT; ++i) {
-    const uint32_t flag = materialRuntime.shaderQueueTypeFlags[i];
-
-    if (flag != INVALID_QUEUE_TYPE_FLAGS) {
-      (*typedQueues)[flag].emplace_back(vkRenderable);
+    // const uint32_t flag = materialRuntime.shaderQueueTypeFlags[i];
+    if (materialRuntime.shaderQueueTypeFlags2[i].pso.isHandleValid()) {
+      // compute flag, is going to be a compbination of the index and the
+      // psohandle
+      uint64_t pso = ((uint64_t)materialRuntime.shaderQueueTypeFlags2[i].pso.handle)<<32;
+      uint64_t queue = (1ull << i) ;
+      uint64_t key = queue | pso;
+      (*typedQueues)[key].emplace_back(vkRenderable);
     }
+
+    // if (flag != INVALID_QUEUE_TYPE_FLAGS) {
+    //  (*typedQueues)[flag].emplace_back(vkRenderable);
+    //}
   }
 }
 
@@ -619,14 +627,16 @@ void VkRenderingContext::renderQueueType(
       // start rendering it
 
       // bind the corresponding RS and PSO
-      ShaderBind bind =
-          vk::MATERIAL_MANAGER->bindRSandPSO(renderableList.first, commandList);
+
+      ShaderBind bind = vk::MATERIAL_MANAGER->bindRSandPSO(
+          renderableList.first, renderableList.second[0].m_materialRuntime,
+          commandList);
 
       // this is most for debug, it will boil down to nothing in release
-      const SHADER_TYPE_FLAGS type =
-          MATERIAL_MANAGER->getTypeFlags(renderableList.first);
-      const std::string &typeName =
-          MATERIAL_MANAGER->getStringFromShaderTypeFlag(type);
+      //const SHADER_TYPE_FLAGS type =
+      //    MATERIAL_MANAGER->getTypeFlags(renderableList.first);
+      //const std::string &typeName =
+      //    MATERIAL_MANAGER->getStringFromShaderTypeFlag(type);
 
       bindCameraBuffer(bind.rs);
 
@@ -634,7 +644,7 @@ void VkRenderingContext::renderQueueType(
         globals::BINDING_TABLE_MANAGER->bindTable(
             PSOManager::PER_PASS_BINDING_INDEX, passBindings, bind.rs);
       }
-      annotateGraphicsBegin(typeName.c_str());
+      //annotateGraphicsBegin(typeName.c_str());
 
       // looping each of the object
       const size_t count = renderableList.second.size();
@@ -648,7 +658,7 @@ void VkRenderingContext::renderQueueType(
 
         MESH_MANAGER->renderMesh(renderable.m_meshRuntime, commandList);
       }
-      annotateGraphicsEnd();
+      //annotateGraphicsEnd();
     }
   }
 }

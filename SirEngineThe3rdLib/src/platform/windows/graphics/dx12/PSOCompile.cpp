@@ -49,10 +49,10 @@ static const std::string SWAP_CHAIN_FORMAT_KEY = "SWAP_CHAIN_FORMAT";
 
 static const int DEFAULT_INT = -1;
 static const bool DEFAULT_BOOL = false;
-static const std::unordered_map<std::string, PSOType> STRING_TO_PSO_TYPE{
-    {PSO_KEY_TYPE_DXR, PSOType::DXR},
-    {PSO_KEY_TYPE_COMPUTE, PSOType::COMPUTE},
-    {PSO_KEY_TYPE_RASTER, PSOType::RASTER},
+static const std::unordered_map<std::string, PSO_TYPE> STRING_TO_PSO_TYPE{
+    {PSO_KEY_TYPE_DXR, PSO_TYPE::DXR},
+    {PSO_KEY_TYPE_COMPUTE, PSO_TYPE::COMPUTE},
+    {PSO_KEY_TYPE_RASTER, PSO_TYPE::RASTER},
 };
 
 static const std::unordered_map<std::string, D3D12_COMPARISON_FUNC>
@@ -99,9 +99,9 @@ static const std::unordered_map<std::string, TOPOLOGY_TYPE>
         {"line", TOPOLOGY_TYPE::LINE},
 };
 
-PSOType convertStringPSOTypeToEnum(const char *type) {
+PSO_TYPE convertStringPSOTypeToEnum(const char *type) {
   const auto found = STRING_TO_PSO_TYPE.find(type);
-  return (found != STRING_TO_PSO_TYPE.end() ? found->second : PSOType::INVALID);
+  return (found != STRING_TO_PSO_TYPE.end() ? found->second : PSO_TYPE::INVALID);
 }
 
 inline DXGI_FORMAT convertStringToDXGIFormat(const std::string &format) {
@@ -311,11 +311,10 @@ PSOCompileResult processComputePSO(nlohmann::json &jobj, const char *path,
   return PSOCompileResult{cdesc,
                           nullptr,
                           pso,
-                          PSOType::COMPUTE,
+                          PSO_TYPE::COMPUTE,
                           nullptr,
                           nullptr,
                           frameString(shaderName.c_str()),
-                          frameString(name.c_str()),
                           frameString(path),
                           nullptr,
                           frameString(globalRootSignatureName.c_str()),
@@ -484,11 +483,10 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj, const char *path,
   return PSOCompileResult{nullptr,
                           psoDesc,
                           pso,
-                          PSOType::RASTER,
+                          PSO_TYPE::RASTER,
                           frameString(VSname.c_str()),
                           frameString(PSname.c_str()),
                           nullptr,
-                          frameString(name.c_str()),
                           frameString(path),
                           frameString(layoutString.c_str()),
                           frameString(rootSignatureString.c_str()),
@@ -502,18 +500,18 @@ PSOCompileResult compileRawPSO(const char *path, const char *shaderPath) {
   const std::string psoTypeString =
       getValueIfInJson(jobj, PSO_KEY_TYPE, DEFAULT_STRING);
   assert(!psoTypeString.empty());
-  const PSOType psoType = convertStringPSOTypeToEnum(psoTypeString.c_str());
+  const PSO_TYPE psoType = convertStringPSOTypeToEnum(psoTypeString.c_str());
 
   switch (psoType) {
-    case (PSOType::COMPUTE): {
+    case (PSO_TYPE::COMPUTE): {
       return processComputePSO(jobj, path, shaderPath);
       break;
     }
-    case (PSOType::DXR): {
+    case (PSO_TYPE::DXR): {
       assert(0);
       break;
     }
-    case (PSOType::RASTER): {
+    case (PSO_TYPE::RASTER): {
       return processRasterPSO(jobj, path, shaderPath);
       break;
     }
@@ -522,7 +520,7 @@ PSOCompileResult compileRawPSO(const char *path, const char *shaderPath) {
       break;
     }
   }
-  return PSOCompileResult{nullptr, nullptr, nullptr, PSOType::INVALID};
+  return PSOCompileResult{nullptr, nullptr, nullptr, PSO_TYPE::INVALID};
 }
 
 }  // namespace SirEngine::dx12

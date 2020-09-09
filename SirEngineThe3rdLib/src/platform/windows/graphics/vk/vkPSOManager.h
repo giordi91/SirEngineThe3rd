@@ -14,7 +14,6 @@
 
 namespace SirEngine::vk {
 // TODO move this to graphics define and use the same for both dx12 and vk
-enum class PSO_TYPE { DXR = 0, RASTER, COMPUTE, INVALID };
 
 struct SIR_ENGINE_API VkPSOCompileResult {
   VkPipeline pso = nullptr;
@@ -48,7 +47,7 @@ class VkPSOManager final : public PSOManager {
         m_psoRegisterHandle(RESERVE_SIZE),
         m_shaderToPSOFile(RESERVE_SIZE),
         m_psoPool(RESERVE_SIZE){};
-  virtual ~VkPSOManager() = default;
+  ~VkPSOManager() override = default;
 
   VkPSOManager(const VkPSOManager &) = delete;
   VkPSOManager &operator=(const VkPSOManager &) = delete;
@@ -107,22 +106,15 @@ class VkPSOManager final : public PSOManager {
   void bindPSO(const PSOHandle handle) const override {
     VkCommandBuffer buffer = vk::CURRENT_FRAME_COMMAND->m_commandBuffer;
     bindPSO(handle, buffer);
+  }
+  RSHandle getRS(const PSOHandle handle) const override {
+    assertMagicNumber(handle);
+    const uint32_t index = getIndexFromHandle(handle);
+    const PSOData &data = m_psoPool.getConstRef(index);
+    return data.rootSignature;
   };
 
  private:
-  // PSOCompileResult processComputePSO(nlohmann::json &jobj,
-  //                                   const std::string &path);
-  // PSOCompileResult processRasterPSO(nlohmann::json &jobj,
-  //                                  const std::string &path);
-
-  // void processGlobalRootSignature(nlohmann::json &jobj,
-  //                                CD3DX12_STATE_OBJECT_DESC &pipe) const;
-  // void processPipelineConfig(nlohmann::json &jobj,
-  //                           CD3DX12_STATE_OBJECT_DESC &pipe) const;
-  // PSOCompileResult loadCachedPSO(const char *path);
-
- private:
-  // void updatePSOCache(const char *name, ID3D12PipelineState *pso);
   PSOHandle insertInPSOCache(const VkPSOCompileResult &result);
 
   inline void assertMagicNumber(const PSOHandle handle) const {

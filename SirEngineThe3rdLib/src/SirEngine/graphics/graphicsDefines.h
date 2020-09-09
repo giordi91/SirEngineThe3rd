@@ -17,6 +17,7 @@ inline const uint32_t VENDOR_ID[] = {
     0xFFFF   // NONE
 };
 enum class GRAPHIC_API { DX12 = 0, VULKAN = 1, UNKNOWN };
+enum class PSO_TYPE { DXR = 0, RASTER, COMPUTE, INVALID };
 
 struct SIR_ENGINE_API AdapterRequestConfig {
   ADAPTER_VENDOR m_vendor;

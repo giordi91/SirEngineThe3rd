@@ -10,6 +10,8 @@
 #include "SirEngine/log.h"
 #include "SirEngine/rootSignatureManager.h"
 #include "SirEngine/textureManager.h"
+#include "memory/cpu/stringPool.h"
+#include "runtimeString.h"
 
 namespace SirEngine {
 namespace materialKeys {
@@ -44,21 +46,7 @@ static const std::unordered_map<std::string, SirEngine::SHADER_QUEUE_FLAGS>
     };
 static const std::unordered_map<std::string, SirEngine::SHADER_TYPE_FLAGS>
     STRING_TO_TYPE_FLAGS{
-        {"pbr", SirEngine::SHADER_TYPE_FLAGS::PBR},
-        {"forwardPbr", SirEngine::SHADER_TYPE_FLAGS::FORWARD_PBR},
-        {"forwardPhong", SirEngine::SHADER_TYPE_FLAGS::FORWARD_PHONG},
-        {"forwardPhongAlphaCutout",
-         SirEngine::SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT},
-        {"skin", SirEngine::SHADER_TYPE_FLAGS::SKIN},
-        {"hair", SirEngine::SHADER_TYPE_FLAGS::HAIR},
-        {"hairSkin", SirEngine::SHADER_TYPE_FLAGS::HAIRSKIN},
-        {"skinCluster", SirEngine::SHADER_TYPE_FLAGS::SKINCLUSTER},
-        {"skinSkinCluster", SirEngine::SHADER_TYPE_FLAGS::SKINSKINCLUSTER},
-        {"forwardPhongAlphaCutoutSkin",
-         SirEngine::SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT_SKIN},
-        {"forwardParallax", SirEngine::SHADER_TYPE_FLAGS::FORWARD_PARALLAX},
-        {"shadowSkinCluster",
-         SirEngine::SHADER_TYPE_FLAGS::SHADOW_SKIN_CLUSTER},
+        {"forwardPhongPSO", SirEngine::SHADER_TYPE_FLAGS::FORWARD_PHONG},
     };
 static const std::unordered_map<SirEngine::SHADER_TYPE_FLAGS, std::string>
     TYPE_FLAGS_TO_STRING{
@@ -138,9 +126,36 @@ static void parseQueueTypeFlags(uint32_t *outFlags,
   }
 }
 
+static void parseQueueTypeFlags2(const char **outFlags,
+                                 const nlohmann::json &jobj) {
+  if (jobj.find(materialKeys::QUEUE) == jobj.end()) {
+    assert(0 && "cannot find queue flags in material");
+    return;
+  }
+  if (jobj.find(materialKeys::TYPE) == jobj.end()) {
+    assert(0 && "cannot find types in material");
+    return;
+  }
+
+  // extract the queue flags, that flag is a bit field for an
+  // uint16, which is merged with the material type which
+  // is a normal increasing uint16
+  const auto &qjobj = jobj[materialKeys::QUEUE];
+  const auto &tjobj = jobj[materialKeys::TYPE];
+  assert(qjobj.size() == tjobj.size());
+
+  for (size_t i = 0; i < qjobj.size(); ++i) {
+    const auto stringFlag = qjobj[i].get<std::string>();
+    const uint32_t currentFlag = stringToActualQueueFlag(stringFlag);
+    int currentFlagId = static_cast<int>(log2(currentFlag & -currentFlag));
+
+    const auto stringType = tjobj[i].get<std::string>();
+    outFlags[currentFlagId] = frameString(stringType.c_str());
+  }
+}
+
 MaterialManager::PreliminaryMaterialParse MaterialManager::parseMaterial(
-    const char *path, const MeshHandle,
-    const SkinHandle skinHandle) {
+    const char *path, const MeshHandle, const SkinHandle skinHandle) {
   // for materials we do not perform the check whether is loaded or not
   // each object is going to get it s own material copy.
   // if that starts to be an issue we will add extra logic to deal with this.
@@ -258,7 +273,7 @@ MaterialManager::PreliminaryMaterialParse MaterialManager::parseMaterial(
   toReturn.mat = mat;
   toReturn.handles = texHandles;
   toReturn.isStatic = isStatic;
-  parseQueueTypeFlags(toReturn.shaderQueueTypeFlags, jobj);
+  parseQueueTypeFlags2(toReturn.shaderQueueTypeFlagsStr, jobj);
 
   return toReturn;
 }
@@ -276,6 +291,7 @@ const char *MaterialManager::getStringFromShaderTypeFlag(
   return unknown->second.c_str();
 }
 void MaterialManager::loadTypeFile(const char *path) {
+  return;
   const auto jObj = getJsonObj(path);
   SE_CORE_INFO("[Engine]: Loading Material Type from: {0}", path);
 

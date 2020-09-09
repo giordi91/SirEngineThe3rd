@@ -15,8 +15,7 @@ namespace SirEngine::dx12 {
 
 void bindFlatDescriptorMaterial(const Dx12MaterialRuntime &materialRuntime,
                                 ID3D12GraphicsCommandList2 *commandList,
-                                SHADER_QUEUE_FLAGS queueFlag,
-                                const RSHandle rsHandle) {
+                                SHADER_QUEUE_FLAGS queueFlag) {
   const auto queueFlagInt = static_cast<int>(queueFlag);
   const auto currentFlagId =
       static_cast<int>(log2(queueFlagInt & -queueFlagInt));
@@ -25,7 +24,8 @@ void bindFlatDescriptorMaterial(const Dx12MaterialRuntime &materialRuntime,
   // let us bind the descriptor table
   // we look up the binding slot for the per object based on root signature
   int bindSlot = dx12::ROOT_SIGNATURE_MANAGER->getBindingSlot(
-      rsHandle, PSOManager::PER_OBJECT_BINDING_INDEX);
+      materialRuntime.shaderQueueTypeFlags2[currentFlagId].rs,
+      PSOManager::PER_OBJECT_BINDING_INDEX);
   assert(bindSlot != -1);
   commandList->SetGraphicsRootDescriptorTable(
       bindSlot,
@@ -42,17 +42,19 @@ void bindFlatDescriptorMaterial(const Dx12MaterialRuntime &materialRuntime,
 void Dx12MaterialManager::bindMaterial(
     SHADER_QUEUE_FLAGS queueFlag, const Dx12MaterialRuntime &materialRuntime,
     ID3D12GraphicsCommandList2 *commandList) const {
-  const auto queueFlagInt = static_cast<int>(queueFlag);
-  const auto currentFlagId =
-      static_cast<int>(log2(queueFlagInt & -queueFlagInt));
-  const SHADER_TYPE_FLAGS type =
-      getTypeFlags(materialRuntime.shaderQueueTypeFlags[currentFlagId]);
+  /*
+const auto queueFlagInt = static_cast<int>(queueFlag);
+const auto currentFlagId =
+    static_cast<int>(log2(queueFlagInt & -queueFlagInt));
+const SHADER_TYPE_FLAGS type =
+    getTypeFlags(materialRuntime.shaderQueueTypeFlags[currentFlagId]);
 
-  ShaderBind bind;
-  bool found = m_shaderTypeToShaderBind.get(static_cast<uint16_t>(type), bind);
-  assert(found);
-  assert(type == SHADER_TYPE_FLAGS::FORWARD_PHONG);
-  bindFlatDescriptorMaterial(materialRuntime, commandList, queueFlag, bind.rs);
+ShaderBind bind;
+bool found = m_shaderTypeToShaderBind.get(static_cast<uint16_t>(type), bind);
+assert(found);
+assert(type == SHADER_TYPE_FLAGS::FORWARD_PHONG);
+*/
+  bindFlatDescriptorMaterial(materialRuntime, commandList, queueFlag);
 }
 
 void updateForwardPhong(const MaterialData &data,
@@ -85,24 +87,26 @@ void updateForwardPhong(const MaterialData &data,
 void Dx12MaterialManager::updateMaterial(
     SHADER_QUEUE_FLAGS queueFlag, const MaterialData &data,
     ID3D12GraphicsCommandList2 *commandList) const {
-  const auto queueFlagInt = static_cast<int>(queueFlag);
-  const auto currentFlagId =
-      static_cast<int>(log2(queueFlagInt & -queueFlagInt));
-  const SHADER_TYPE_FLAGS type =
-      getTypeFlags(data.m_materialRuntime.shaderQueueTypeFlags[currentFlagId]);
+  /*
+const auto queueFlagInt = static_cast<int>(queueFlag);
+const auto currentFlagId =
+    static_cast<int>(log2(queueFlagInt & -queueFlagInt));
+const SHADER_TYPE_FLAGS type =
+    getTypeFlags(data.m_materialRuntime.shaderQueueTypeFlags[currentFlagId]);
 
-  ShaderBind bind;
-  bool found = m_shaderTypeToShaderBind.get(static_cast<uint16_t>(type), bind);
-  assert(found);
-  switch (type) {
-    case (SHADER_TYPE_FLAGS::FORWARD_PHONG): {
-      updateForwardPhong(data, queueFlag);
-      break;
-    }
-    default: {
-      assert(0 && "could not find material type");
-    }
+ShaderBind bind;
+bool found = m_shaderTypeToShaderBind.get(static_cast<uint16_t>(type), bind);
+assert(found);
+switch (type) {
+  case (SHADER_TYPE_FLAGS::FORWARD_PHONG): {
+    break;
   }
+  default: {
+    assert(0 && "could not find material type");
+  }
+}
+*/
+  updateForwardPhong(data, queueFlag);
 }
 
 void Dx12MaterialManager::bindTexture(const MaterialHandle matHandle,
@@ -190,17 +194,28 @@ void Dx12MaterialManager::bindConstantBuffer(
 }
 
 ShaderBind Dx12MaterialManager::bindRSandPSO(
-    const uint32_t shaderFlags, ID3D12GraphicsCommandList2 *commandList) const {
+    const uint64_t shaderFlags, const Dx12MaterialRuntime &runtime,
+    ID3D12GraphicsCommandList2 *commandList) const {
   // get type flags as int
-  constexpr auto mask = static_cast<uint32_t>(~((1 << 16) - 1));
-  const auto typeFlags = static_cast<uint16_t>((shaderFlags & mask) >> 16);
+  constexpr auto mask = static_cast<uint64_t>(~((1ull << 32ull) - 1ull));
+  const auto typeFlags = static_cast<uint64_t>((shaderFlags & mask) >> 32ull);
 
+  /*
   ShaderBind bind;
   bool found = m_shaderTypeToShaderBind.get(typeFlags, bind);
   if (found) {
     dx12::ROOT_SIGNATURE_MANAGER->bindGraphicsRS(bind.rs, commandList);
     dx12::PSO_MANAGER->bindPSO(bind.pso, commandList);
     return bind;
+  }
+  */
+  for (int i = 0; i < QUEUE_COUNT; ++i) {
+    if (runtime.shaderQueueTypeFlags2[i].pso.handle == typeFlags) {
+      ShaderBind bind = runtime.shaderQueueTypeFlags2[i];
+      dx12::ROOT_SIGNATURE_MANAGER->bindGraphicsRS(bind.rs, commandList);
+      dx12::PSO_MANAGER->bindPSO(bind.pso, commandList);
+      return bind;
+    }
   }
   assert(0 && "Could not find requested shader type for PSO /RS bind");
   return {};
@@ -327,8 +342,16 @@ MaterialHandle Dx12MaterialManager::loadMaterial(const char *path,
   matCpu.heightMap = materialData.heightSrv.gpuHandle;
   matCpu.meshHandle = meshHandle;
 
-  memcpy(&matCpu.shaderQueueTypeFlags, parse.shaderQueueTypeFlags,
-         sizeof(uint32_t) * 4);
+  // memcpy(&matCpu.shaderQueueTypeFlags, parse.shaderQueueTypeFlags,
+  //       sizeof(uint32_t) * 4);
+  for (uint32_t i = 0; i < QUEUE_COUNT; ++i) {
+    const char *value = parse.shaderQueueTypeFlagsStr[i];
+    if (value != nullptr) {
+      PSOHandle pso = globals::PSO_MANAGER->getHandleFromName(value);
+      RSHandle rs = globals::PSO_MANAGER->getRS(pso);
+      matCpu.shaderQueueTypeFlags2[i] = ShaderBind{rs, pso};
+    }
+  }
 
   // we need to allocate  constant buffer
   // TODO should this be static constant buffer? investigate
@@ -343,16 +366,21 @@ MaterialHandle Dx12MaterialManager::loadMaterial(const char *path,
 
   // check if is flat material
   for (uint32_t i = 0; i < QUEUE_COUNT; ++i) {
-    if (parse.shaderQueueTypeFlags[i] == INVALID_QUEUE_TYPE_FLAGS) {
+    // if (parse.shaderQueueTypeFlags[i] == INVALID_QUEUE_TYPE_FLAGS) {
+    //  continue;
+    //}
+
+    if (!matCpu.shaderQueueTypeFlags2[i].pso.isHandleValid()) {
       continue;
     }
     // get the type of shader
-    const SHADER_TYPE_FLAGS type = getTypeFlags(parse.shaderQueueTypeFlags[i]);
-    // get the rs
-    ShaderBind bind;
-    bool found =
-        m_shaderTypeToShaderBind.get(static_cast<uint16_t>(type), bind);
-    assert(found);
+    // const SHADER_TYPE_FLAGS type =
+    // getTypeFlags(parse.shaderQueueTypeFlags[i]);
+    //// get the rs
+    ShaderBind bind = matCpu.shaderQueueTypeFlags2[i];
+    // bool found =
+    //    m_shaderTypeToShaderBind.get(static_cast<uint16_t>(type), bind);
+    // assert(found);
     assert(bind.pso.isHandleValid());
     assert(bind.rs.isHandleValid());
 
@@ -367,9 +395,10 @@ MaterialHandle Dx12MaterialManager::loadMaterial(const char *path,
                             bind.rs);
 
     // we have a flat root but we actually need to setup the data
-    SHADER_QUEUE_FLAGS queueFlags =
-        static_cast<SHADER_QUEUE_FLAGS>(parse.shaderQueueTypeFlags[i]);
-    updateMaterial(queueFlags, materialData, nullptr);
+    // SHADER_QUEUE_FLAGS queueFlags =
+    //    static_cast<SHADER_QUEUE_FLAGS>(parse.shaderQueueTypeFlags[i]);
+    updateMaterial(static_cast<SHADER_QUEUE_FLAGS>(1 << i), materialData,
+                   nullptr);
   }
 
   MaterialHandle handle{(materialData.magicNumber << 16) | (index)};

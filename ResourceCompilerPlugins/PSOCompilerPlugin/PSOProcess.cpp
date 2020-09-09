@@ -15,7 +15,7 @@ SirEngine::dx12::PSOCompileResult processPSO(const char *path, const char* shade
         IID_PPV_ARGS(&SirEngine::dx12::DEBUG_CONTROLLER));
     if (FAILED(controllerResult)) {
       return SirEngine::dx12::PSOCompileResult{
-          nullptr, nullptr, nullptr, SirEngine::dx12::PSOType::INVALID};
+          nullptr, nullptr, nullptr, SirEngine::PSO_TYPE::INVALID};
     }
     SirEngine::dx12::DEBUG_CONTROLLER->EnableDebugLayer();
   }

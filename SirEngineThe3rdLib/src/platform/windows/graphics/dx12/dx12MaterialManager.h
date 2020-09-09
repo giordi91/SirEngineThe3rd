@@ -33,6 +33,7 @@ struct Dx12MaterialRuntime final {
       INVALID_QUEUE_TYPE_FLAGS, INVALID_QUEUE_TYPE_FLAGS,
       INVALID_QUEUE_TYPE_FLAGS, INVALID_QUEUE_TYPE_FLAGS,
       INVALID_QUEUE_TYPE_FLAGS};
+  ShaderBind shaderQueueTypeFlags2[MaterialManager::QUEUE_COUNT] = {};
   SkinHandle skinHandle;
   MeshHandle meshHandle;
   FlatDescriptorTable m_tables[MaterialManager::QUEUE_COUNT];
@@ -84,12 +85,14 @@ class Dx12MaterialManager final : public MaterialManager {
                           const uint32_t bindingIndex,
                           SHADER_QUEUE_FLAGS queue) override;
 
-  //TODO I am not super happy about this, there should be an easy way to get access to
-  //the RS and PSO. Here this function is called inside render queue, where I will need
-  //to bind the pass table. To do so i need to convert from shader space to actual
-  //descriptro index, such information is held by the root signature, as such I am
-  //returning that here so I can access it, not as clean as I would like
-  ShaderBind bindRSandPSO(uint32_t shaderFlags,
+  // TODO I am not super happy about this, there should be an easy way to get
+  // access to the RS and PSO. Here this function is called inside render queue,
+  // where I will need to bind the pass table. To do so i need to convert from
+  // shader space to actual descriptro index, such information is held by the
+  // root signature, as such I am returning that here so I can access it, not as
+  // clean as I would like
+  ShaderBind bindRSandPSO(const uint64_t shaderFlags,
+                          const Dx12MaterialRuntime &runtime,
                           ID3D12GraphicsCommandList2 *commandList) const;
   Dx12MaterialManager(const Dx12MaterialManager &) = delete;
   Dx12MaterialManager &operator=(const Dx12MaterialManager &) = delete;

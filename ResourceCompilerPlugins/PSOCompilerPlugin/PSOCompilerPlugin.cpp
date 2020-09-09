@@ -96,7 +96,7 @@ bool compileAndSavePSO(const std::string &assetPath,
   ptrPos += blob->GetBufferSize();
 
   // second we copy the structure description
-  if (result.psoType == SirEngine::dx12::PSOType::RASTER) {
+  if (result.psoType == SirEngine::PSO_TYPE::RASTER) {
     memcpy(bulkDataPtr + ptrPos, result.graphicDesc, graphicsSize);
   } else {
     memcpy(bulkDataPtr + ptrPos, result.computeDesc, computeSize);
