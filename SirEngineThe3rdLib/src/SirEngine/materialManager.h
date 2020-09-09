@@ -63,6 +63,20 @@ enum class SHADER_TYPE_FLAGS {
   FORWARD_PARALLAX,
   SHADOW_SKIN_CLUSTER,
 };
+enum class MATERIAL_RESOURCE_TYPE { TEXTURE, CONSTANT_BUFFER, BUFFER };
+
+struct MaterialResource {
+  MATERIAL_RESOURCE_TYPE type;
+  uint16_t set;
+  uint16_t binding;
+  const char* name;
+};
+struct MaterialMetadata {
+  MaterialResource *resources;
+  uint32_t resourceCount;
+};
+
+MaterialMetadata SIR_ENGINE_API extractMetadata(const char *psoPath);
 
 class MaterialManager {
  public:
