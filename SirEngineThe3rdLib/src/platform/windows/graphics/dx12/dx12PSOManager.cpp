@@ -213,11 +213,9 @@ void Dx12PSOManager::insertInPSOCache(const PSOCompileResult &result) {
       PSOData &data = m_psoPool.getFreeMemoryData(index);
 
       const std::string rootName = getFileName(result.rootSignature);
-      RSHandle rsHandle =
-          dx12::ROOT_SIGNATURE_MANAGER->getHandleFromName(rootName.c_str());
-      data.rsHandle = rsHandle;
 
       data.pso = result.pso;
+      data.rsHandle = result.rsHandle;
       data.topology = result.topologyType;
       data.root = result.graphicDesc->pRootSignature;
       data.type = PSO_TYPE::RASTER;
@@ -240,6 +238,7 @@ void Dx12PSOManager::insertInPSOCache(const PSOCompileResult &result) {
       data.rsHandle = rsHandle;
 
       data.pso = result.pso;
+      data.rsHandle = result.rsHandle;
       data.topology = TOPOLOGY_TYPE::UNDEFINED;
       data.type = PSO_TYPE::COMPUTE;
       data.root = result.computeDesc->pRootSignature;

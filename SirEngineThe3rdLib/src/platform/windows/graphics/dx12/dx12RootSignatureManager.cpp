@@ -75,7 +75,30 @@ void Dx12RootSignatureManager::loadSignatureBinaryFile(const char *file) {
   }
 }
 
+RSHandle Dx12RootSignatureManager::loadSignatureFromMeta(
+    const char *path, MaterialMetadata *metadata) {
+  RootCompilerResult result = processSignatureFile2(path, metadata);
+  const std::string name = getFileName(path);
+
+  // generate the handle
+  uint32_t index;
+  RSData &rsdata = m_rsPool.getFreeMemoryData(index);
+  rsdata.rs = result.root;
+  const RSHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
+  rsdata.magicNumber = MAGIC_NUMBER_COUNTER;
+  rsdata.isFlatRoot = true;
+  rsdata.descriptorCount = result.descriptorCount;
+  rsdata.bindingSlots[0] = result.bindingSlots[0];
+  rsdata.bindingSlots[1] = result.bindingSlots[1];
+  rsdata.bindingSlots[2] = result.bindingSlots[2];
+  rsdata.bindingSlots[3] = result.bindingSlots[3];
+  m_rootRegister.insert(name.c_str(), handle);
+  ++MAGIC_NUMBER_COUNTER;
+  return handle;
+}  
+
 void Dx12RootSignatureManager::loadSignaturesInFolder(const char *directory) {
+  return;
   std::vector<std::string> paths;
   listFilesInFolder(directory, paths, "root");
 

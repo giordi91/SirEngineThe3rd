@@ -2,7 +2,9 @@
 
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
+#include "SirEngine/materialManager.h"
 #include "SirEngine/runtimeString.h"
+#include "dx12RootSignatureManager.h"
 #include "dx12SwapChain.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/d3dx12.h"
@@ -101,7 +103,8 @@ static const std::unordered_map<std::string, TOPOLOGY_TYPE>
 
 PSO_TYPE convertStringPSOTypeToEnum(const char *type) {
   const auto found = STRING_TO_PSO_TYPE.find(type);
-  return (found != STRING_TO_PSO_TYPE.end() ? found->second : PSO_TYPE::INVALID);
+  return (found != STRING_TO_PSO_TYPE.end() ? found->second
+                                            : PSO_TYPE::INVALID);
 }
 
 inline DXGI_FORMAT convertStringToDXGIFormat(const std::string &format) {
@@ -268,6 +271,15 @@ const char *getComputeShaderPath(const char *shaderPath,
 
 PSOCompileResult processComputePSO(nlohmann::json &jobj, const char *path,
                                    const char *shaderPath) {
+
+  // find the input layout
+
+  const std::string fileName = getFileName(path);
+  MaterialMetadata metadata = extractMetadata(path);
+
+  RSHandle rsHandle =
+      dx12::ROOT_SIGNATURE_MANAGER->loadSignatureFromMeta(path, &metadata);
+  auto rootS = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromHandle(rsHandle);
   // lets process the PSO for a compute shader which is quite simple
   const std::string globalRootSignatureName =
       getValueIfInJson(jobj, PSO_KEY_GLOBAL_ROOT, DEFAULT_STRING);
@@ -276,9 +288,6 @@ PSOCompileResult processComputePSO(nlohmann::json &jobj, const char *path,
   const std::string shaderName =
       getValueIfInJson(jobj, PSO_KEY_SHADER_NAME, DEFAULT_STRING);
   assert(!shaderName.empty());
-
-  auto resultCompile = processSignatureFile(globalRootSignatureName.c_str());
-  auto rootS = resultCompile.root;
 
   // compiling the shader
   DXCShaderCompiler compiler;
@@ -311,6 +320,7 @@ PSOCompileResult processComputePSO(nlohmann::json &jobj, const char *path,
   return PSOCompileResult{cdesc,
                           nullptr,
                           pso,
+                          rsHandle,
                           PSO_TYPE::COMPUTE,
                           nullptr,
                           nullptr,
@@ -339,8 +349,7 @@ const char *getRasterizationShaderPath(const char *shaderPath,
       frameConcatenation(shaderPath, nameAndExtension, "/rasterization/");
   if (!fileExists(path)) {
     // try get the spv version
-    nameAndExtension =
-        frameConcatenation(name.c_str(), ".spv.hlsl");
+    nameAndExtension = frameConcatenation(name.c_str(), ".spv.hlsl");
     const char *path2 =
         frameConcatenation(shaderPath, nameAndExtension,
                            "/../../processed/shaders/VK/rasterization/");
@@ -360,8 +369,16 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj, const char *path,
   const std::string rootSignatureString =
       getValueIfInJson(jobj, PSO_KEY_GLOBAL_ROOT, DEFAULT_STRING);
 
-  auto resultCompile = processSignatureFile(rootSignatureString.c_str());
-  ID3D12RootSignature *rootSignature = resultCompile.root;
+  const std::string fileName = getFileName(path);
+  MaterialMetadata metadata = extractMetadata(path);
+
+  // auto resultCompile = processSignatureFile(rootSignatureString.c_str());
+  RSHandle rsHandle =
+      dx12::ROOT_SIGNATURE_MANAGER->loadSignatureFromMeta(path, &metadata);
+
+  // auto resultCompile = processSignatureFile2(path,&metadata);
+  ID3D12RootSignature *rootSignature =
+      dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromHandle(rsHandle);
 
   const std::string VSname =
       getValueIfInJson(jobj, PSO_KEY_VS_SHADER, DEFAULT_STRING);
@@ -483,6 +500,7 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj, const char *path,
   return PSOCompileResult{nullptr,
                           psoDesc,
                           pso,
+                          rsHandle,
                           PSO_TYPE::RASTER,
                           frameString(VSname.c_str()),
                           frameString(PSname.c_str()),
@@ -520,7 +538,7 @@ PSOCompileResult compileRawPSO(const char *path, const char *shaderPath) {
       break;
     }
   }
-  return PSOCompileResult{nullptr, nullptr, nullptr, PSO_TYPE::INVALID};
+  return PSOCompileResult{nullptr, nullptr, nullptr, {}, PSO_TYPE::INVALID};
 }
 
 }  // namespace SirEngine::dx12

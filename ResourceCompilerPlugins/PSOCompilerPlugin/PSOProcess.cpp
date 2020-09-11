@@ -1,13 +1,15 @@
 #include "PSOProcess.h"
+
+#include <cassert>
+
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
 #include "platform/windows/graphics/dx12/PSOCompile.h"
 #include "platform/windows/graphics/dx12/d3dx12.h"
 #include "platform/windows/graphics/dx12/dx12Adapter.h"
-#include <cassert>
 
-SirEngine::dx12::PSOCompileResult processPSO(const char *path, const char* shaderPath) {
-
+SirEngine::dx12::PSOCompileResult processPSO(const char *path,
+                                             const char *shaderPath) {
   // init graphics
 #if defined(DEBUG) || defined(_DEBUG)
   {
@@ -15,7 +17,7 @@ SirEngine::dx12::PSOCompileResult processPSO(const char *path, const char* shade
         IID_PPV_ARGS(&SirEngine::dx12::DEBUG_CONTROLLER));
     if (FAILED(controllerResult)) {
       return SirEngine::dx12::PSOCompileResult{
-          nullptr, nullptr, nullptr, SirEngine::PSO_TYPE::INVALID};
+          nullptr, nullptr, nullptr, {}, SirEngine::PSO_TYPE::INVALID};
     }
     SirEngine::dx12::DEBUG_CONTROLLER->EnableDebugLayer();
   }
@@ -56,7 +58,7 @@ SirEngine::dx12::PSOCompileResult processPSO(const char *path, const char* shade
   // COMPILING
   SirEngine::dx12::PSOCompileResult buildResult =
       SirEngine::dx12::compileRawPSO(path, shaderPath);
-  //cleanup 
+  // cleanup
   adapterResult.m_device->Release();
   adapterResult.m_physicalDevice->Release();
   DXGI_FACTORY->Release();

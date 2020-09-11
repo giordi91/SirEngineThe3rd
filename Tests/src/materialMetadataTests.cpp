@@ -22,6 +22,8 @@ TEST_CASE("metadata parse 1", "[material]") {
   REQUIRE(metadata.objectResources[0].binding == 0);
   REQUIRE(metadata.objectResources[0].visibility ==
           SirEngine::GRAPHICS_RESOURCE_VISIBILITY_VERTEX);
+  REQUIRE(metadata.objectResources[0].flags ==
+          SirEngine::MATERIAL_RESOURCE_FLAGS::READ_ONLY);
 
   REQUIRE(metadata.objectResources[1].type ==
           SirEngine::MATERIAL_RESOURCE_TYPE::BUFFER);
@@ -30,6 +32,8 @@ TEST_CASE("metadata parse 1", "[material]") {
   REQUIRE(metadata.objectResources[1].binding == 1);
   REQUIRE(metadata.objectResources[1].visibility ==
           SirEngine::GRAPHICS_RESOURCE_VISIBILITY_VERTEX);
+  REQUIRE(metadata.objectResources[1].flags ==
+          SirEngine::MATERIAL_RESOURCE_FLAGS::READ_ONLY);
 
   REQUIRE(metadata.objectResources[2].type ==
           SirEngine::MATERIAL_RESOURCE_TYPE::TEXTURE);
@@ -54,7 +58,7 @@ TEST_CASE("metadata parse 1", "[material]") {
   REQUIRE(metadata.objectResources[4].set == 3);
   REQUIRE(metadata.objectResources[4].binding == 4);
   REQUIRE(metadata.objectResources[4].visibility ==
-           SirEngine::GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT);
+          SirEngine::GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT);
 
   REQUIRE(metadata.objectResources[5].type ==
           SirEngine::MATERIAL_RESOURCE_TYPE::BUFFER);
@@ -63,6 +67,8 @@ TEST_CASE("metadata parse 1", "[material]") {
   REQUIRE(metadata.objectResources[5].binding == 5);
   REQUIRE(metadata.objectResources[5].visibility ==
           SirEngine::GRAPHICS_RESOURCE_VISIBILITY_VERTEX);
+  REQUIRE(metadata.objectResources[5].flags ==
+          SirEngine::MATERIAL_RESOURCE_FLAGS::READ_ONLY);
 
   REQUIRE(metadata.objectResources[6].type ==
           SirEngine::MATERIAL_RESOURCE_TYPE::BUFFER);
@@ -71,4 +77,6 @@ TEST_CASE("metadata parse 1", "[material]") {
   REQUIRE(metadata.objectResources[6].binding == 6);
   REQUIRE(metadata.objectResources[6].visibility ==
           SirEngine::GRAPHICS_RESOURCE_VISIBILITY_VERTEX);
+  REQUIRE(metadata.objectResources[6].flags ==
+          SirEngine::MATERIAL_RESOURCE_FLAGS::READ_ONLY);
 }
