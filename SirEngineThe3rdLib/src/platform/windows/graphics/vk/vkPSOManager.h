@@ -28,7 +28,6 @@ struct SIR_ENGINE_API VkPSOCompileResult {
   VkPipelineLayout pipelineLayout;
 };
 
-
 // TODO make it not copyable assignable
 class VkPSOManager final : public PSOManager {
   struct PSOData {
@@ -57,8 +56,6 @@ class VkPSOManager final : public PSOManager {
   void cleanup() override;
   void loadRawPSOInFolder(const char *directory) override;
   void loadCachedPSOInFolder(const char *directory) override;
-  // TODO temporary function to be removed once the load rawPSO In folder works
-  PSOHandle loadRawPSO(const char *file);
   VkPSOCompileResult processComputePSO(const char *file,
                                        const nlohmann::json &jobj);
   VkPSOCompileResult compileRawPSO(const char *file);
@@ -82,19 +79,22 @@ class VkPSOManager final : public PSOManager {
     const PSOData &data = m_psoPool.getConstRef(index);
     return data.pso;
   }
-  VkRenderPass getRenderPassFromHandle(const PSOHandle handle) const {
+
+  [[nodiscard]] VkRenderPass getRenderPassFromHandle(
+      const PSOHandle handle) const {
     assertMagicNumber(handle);
     const uint32_t index = getIndexFromHandle(handle);
     const PSOData &data = m_psoPool.getConstRef(index);
     return data.renderPass;
   }
-  RSHandle getRootSignatureHandleFromPSOHandle(const PSOHandle handle) const {
+  inline RSHandle getRootSignatureHandleFromPSOHandle(const PSOHandle handle) const {
     assertMagicNumber(handle);
     const uint32_t index = getIndexFromHandle(handle);
     const PSOData &data = m_psoPool.getConstRef(index);
     return data.rootSignature;
   }
-  VkPipelineLayout getPipelineLayoutFromPSOHandle(
+  
+  inline VkPipelineLayout getPipelineLayoutFromPSOHandle(
       const PSOHandle handle) const {
     assertMagicNumber(handle);
     const uint32_t index = getIndexFromHandle(handle);

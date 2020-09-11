@@ -220,15 +220,7 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   PSO_MANAGER->initialize();
   globals::PSO_MANAGER = PSO_MANAGER;
   // TODO TEMP HACK LOAD, remove this
-  vk::PSO_MANAGER->loadRawPSO("../data/pso/HDRtoSDREffect_PSO.json");
-  vk::PSO_MANAGER->loadRawPSO("../data/pso/forwardPhongPSO.json");
-  vk::PSO_MANAGER->loadRawPSO("../data/pso/grassForwardPSO.json");
-  vk::PSO_MANAGER->loadRawPSO("../data/pso/grassPlanePSO.json");
-  vk::PSO_MANAGER->loadRawPSO("../data/pso/grassClearPSO.json");
-  vk::PSO_MANAGER->loadRawPSO("../data/pso/grassCullingScanPSO.json");
-  vk::PSO_MANAGER->loadRawPSO("../data/pso/debugDrawLinesSingleColorPSO.json");
-  vk::PSO_MANAGER->loadRawPSO("../data/pso/skyboxPSO.json");
-  vk::PSO_MANAGER->loadRawPSO("../data/pso/gammaAndToneMappingEffect_PSO.json");
+  vk::PSO_MANAGER->loadRawPSOInFolder("../data/pso");
 
   CONSTANT_BUFFER_MANAGER = new VkConstantBufferManager();
   CONSTANT_BUFFER_MANAGER->initialize();
@@ -588,8 +580,9 @@ void VkRenderingContext::addRenderablesToQueue(const Renderable &renderable) {
     if (materialRuntime.shaderQueueTypeFlags2[i].pso.isHandleValid()) {
       // compute flag, is going to be a compbination of the index and the
       // psohandle
-      uint64_t pso = ((uint64_t)materialRuntime.shaderQueueTypeFlags2[i].pso.handle)<<32;
-      uint64_t queue = (1ull << i) ;
+      uint64_t pso =
+          static_cast<uint64_t>(materialRuntime.shaderQueueTypeFlags2[i].pso.handle) << 32;
+      uint64_t queue = (1ull << i);
       uint64_t key = queue | pso;
       (*typedQueues)[key].emplace_back(vkRenderable);
     }
@@ -603,16 +596,16 @@ void VkRenderingContext::addRenderablesToQueue(const Renderable &renderable) {
 void VkRenderingContext::renderQueueType(
     const DrawCallConfig &config, const SHADER_QUEUE_FLAGS flag,
     const BindingTableHandle passBindings) {
-  const auto &typedQueues = *(reinterpret_cast<VkRenderingQueues *>(queues));
+  const auto &typedQueues = *(static_cast<VkRenderingQueues *>(queues));
 
   auto *currentFc = CURRENT_FRAME_COMMAND;
-  auto commandList = currentFc->m_commandBuffer;
+  VkCommandBuffer commandList = currentFc->m_commandBuffer;
 
   // draw calls go here
   VkViewport viewport{0,
-                      float(config.height),
-                      float(config.width),
-                      -float(config.height),
+                      static_cast<float>(config.height),
+                      static_cast<float>(config.width),
+                      -static_cast<float>(config.height),
                       0.0f,
                       1.0f};
   VkRect2D scissor{{0, 0},
@@ -633,9 +626,9 @@ void VkRenderingContext::renderQueueType(
           commandList);
 
       // this is most for debug, it will boil down to nothing in release
-      //const SHADER_TYPE_FLAGS type =
+      // const SHADER_TYPE_FLAGS type =
       //    MATERIAL_MANAGER->getTypeFlags(renderableList.first);
-      //const std::string &typeName =
+      // const std::string &typeName =
       //    MATERIAL_MANAGER->getStringFromShaderTypeFlag(type);
 
       bindCameraBuffer(bind.rs);
@@ -644,7 +637,7 @@ void VkRenderingContext::renderQueueType(
         globals::BINDING_TABLE_MANAGER->bindTable(
             PSOManager::PER_PASS_BINDING_INDEX, passBindings, bind.rs);
       }
-      //annotateGraphicsBegin(typeName.c_str());
+      // annotateGraphicsBegin(typeName.c_str());
 
       // looping each of the object
       const size_t count = renderableList.second.size();
@@ -658,7 +651,7 @@ void VkRenderingContext::renderQueueType(
 
         MESH_MANAGER->renderMesh(renderable.m_meshRuntime, commandList);
       }
-      //annotateGraphicsEnd();
+      // annotateGraphicsEnd();
     }
   }
 }

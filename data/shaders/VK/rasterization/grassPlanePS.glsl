@@ -20,6 +20,9 @@ layout (set=2,binding=0) uniform LightData
 {
 	DirectionalLightData lightData;
 }; 
+layout (set=2,binding = 1) uniform textureCube skyboxIrradianceTexture;
+layout (set=2,binding = 2) uniform textureCube skyboxRadianceTexture;
+layout (set=2,binding = 3) uniform texture2D brdfTexture;
 
 layout (set=3,binding=3) uniform ConfigData 
 {

@@ -8,6 +8,10 @@
 #include "SirEngine/rootSignatureManager.h"
 #include "vk.h"
 
+namespace SirEngine {
+struct MaterialMetadata;
+}
+
 namespace SirEngine::vk {
 
 #define STATIC_SAMPLER_COUNT 7
@@ -37,6 +41,7 @@ class VkPipelineLayoutManager final : public RootSignatureManager {
   void loadSignaturesInFolder(const char *directory) override;
   void loadSignatureBinaryFile(const char *file) override;
   RSHandle loadSignatureFile(const char *file);
+  RSHandle loadSignatureFile(const char *name, MaterialMetadata *metadata);
 
   inline VkPipelineLayout getLayoutFromName(const char *name) const {
     const RSHandle handle = getHandleFromName(name);

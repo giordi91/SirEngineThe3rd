@@ -4,6 +4,7 @@
 #include "SirEngine/events/shaderCompileEvent.h"
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
+#include "SirEngine/materialManager.h"
 #include "platform/windows/graphics/vk/vk.h"
 #include "platform/windows/graphics/vk/vkShaderManager.h"
 
@@ -456,10 +457,10 @@ PSOHandle VkPSOManager::insertInPSOCache(const VkPSOCompileResult &result) {
       // make sure to internalize the string
       list->pushBack(persistentString(result.PSOFullPathFile));
 
-
-      //let us find the RS
+      // let us find the RS
       const std::string rsName = getFileName(result.rootSignature);
-      RSHandle rsHandle = vk::PIPELINE_LAYOUT_MANAGER->getHandleFromName(rsName.c_str());
+      RSHandle rsHandle =
+          vk::PIPELINE_LAYOUT_MANAGER->getHandleFromName(rsName.c_str());
 
       // generating and storing the handle
       uint32_t index;
@@ -527,13 +528,17 @@ VkPSOCompileResult VkPSOManager::processRasterPSO(
   const std::string rootFile =
       getValueIfInJson(jobj, PSO_KEY_GLOBAL_ROOT, DEFAULT_STRING);
   assert(!rootFile.empty());
-  compileResult.rootSignature = frameString(rootFile.c_str());
 
   const std::string fileName = getFileName(filePath);
 
-  RSHandle layoutHandle =
-      vk::PIPELINE_LAYOUT_MANAGER->loadSignatureFile(rootFile.c_str());
-  auto *layout = vk::PIPELINE_LAYOUT_MANAGER->getLayoutFromHandle(layoutHandle);
+  MaterialMetadata metadata = extractMetadata(filePath);
+  RSHandle layoutHandle2 =
+      vk::PIPELINE_LAYOUT_MANAGER->loadSignatureFile(fileName.c_str(),&metadata);
+  compileResult.rootSignature = frameString(fileName.c_str());
+
+  //RSHandle layoutHandle =
+  //    vk::PIPELINE_LAYOUT_MANAGER->loadSignatureFile(rootFile.c_str());
+  auto *layout = vk::PIPELINE_LAYOUT_MANAGER->getLayoutFromHandle(layoutHandle2);
 
   // load shader stage
   // here we define all the stages of the pipeline
@@ -668,21 +673,16 @@ void VkPSOManager::cleanup() {
   vkDestroyDescriptorSetLayout(vk::LOGICAL_DEVICE, PER_FRAME_LAYOUT, nullptr);
 }
 
-void VkPSOManager::loadRawPSOInFolder(const char *directory) { assert(0); }
+void VkPSOManager::loadRawPSOInFolder(const char *directory) {
+  std::vector<std::string> paths;
+  listFilesInFolder(directory, paths, "json");
+  for (const auto &p : paths) {
+    auto compileResult = compileRawPSO(p.c_str());
+    insertInPSOCache(compileResult);
+  }
+}
 
 void VkPSOManager::loadCachedPSOInFolder(const char *directory) { assert(0); }
-
-PSOHandle VkPSOManager::loadRawPSO(const char *file) {
-  const std::string fileName = getFileName(file);
-  PSOHandle handle;
-  bool result = m_psoRegisterHandle.get(fileName.c_str(), handle);
-  if (result) {
-    return handle;
-  }
-
-  auto compileResult = compileRawPSO(file);
-  return insertInPSOCache(compileResult);
-}
 
 VkPSOCompileResult VkPSOManager::processComputePSO(const char *filePath,
                                                    const nlohmann::json &jobj) {
@@ -695,13 +695,17 @@ VkPSOCompileResult VkPSOManager::processComputePSO(const char *filePath,
   const std::string rootFile =
       getValueIfInJson(jobj, PSO_KEY_GLOBAL_ROOT, DEFAULT_STRING);
   assert(!rootFile.empty());
-  compileResult.rootSignature = frameString(rootFile.c_str());
 
   const std::string fileName = getFileName(filePath);
 
-  RSHandle layoutHandle =
-      vk::PIPELINE_LAYOUT_MANAGER->loadSignatureFile(rootFile.c_str());
-  auto *layout = vk::PIPELINE_LAYOUT_MANAGER->getLayoutFromHandle(layoutHandle);
+  MaterialMetadata metadata = extractMetadata(filePath);
+  RSHandle layoutHandle2 =
+      vk::PIPELINE_LAYOUT_MANAGER->loadSignatureFile(fileName.c_str(),&metadata);
+  compileResult.rootSignature = frameString(fileName.c_str());
+
+  //RSHandle layoutHandle =
+  //    vk::PIPELINE_LAYOUT_MANAGER->loadSignatureFile(rootFile.c_str());
+  auto *layout = vk::PIPELINE_LAYOUT_MANAGER->getLayoutFromHandle(layoutHandle2);
 
   VkPipelineShaderStageCreateInfo stage{};
   int shaderStageCount = 0;
@@ -842,9 +846,6 @@ void VkPSOManager::recompilePSOFromShader(const char *shaderName,
   for (int i = 0; i < psoCount; ++i) {
     const char *pso = (*psos)[i];
     const auto result = compileRawPSO(pso);
-
-
-
 
     // need to update the cache
     updatePSOCache(getFileName(result.PSOFullPathFile).c_str(), result);

@@ -3,6 +3,7 @@
 #include "SirEngine/binary/binaryFile.h"
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
+#include "SirEngine/materialManager.h"
 #include "platform/windows/graphics/vk/vkBindingTableManager.h"
 
 namespace SirEngine::vk {
@@ -277,6 +278,29 @@ VkDescriptorSetLayout getEmptyLayout(const char *name) {
   return emptyLayout;
 }
 
+VkDescriptorType getDescriptorType(const MATERIAL_RESOURCE_TYPE type,
+                                   const VkShaderStageFlags flags) {
+  switch (type) {
+    case MATERIAL_RESOURCE_TYPE::BUFFER: {
+      return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    }
+    case MATERIAL_RESOURCE_TYPE::TEXTURE: {
+      if ((flags & VkShaderStageFlagBits::VK_SHADER_STAGE_COMPUTE_BIT) > 0) {
+        return VkDescriptorType::VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+      }
+      return VkDescriptorType::VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+    }
+    case MATERIAL_RESOURCE_TYPE::CONSTANT_BUFFER: {
+      return VkDescriptorType::VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    }
+    default: {
+      assert(0 && "unsupported material resource type");
+      return VkDescriptorType::VK_DESCRIPTOR_TYPE_MAX_ENUM;
+    }
+  }
+  return VK_DESCRIPTOR_TYPE_MAX_ENUM;
+}
+
 VkDescriptorType getDescriptorType(const nlohmann::json &config,
                                    VkShaderStageFlags flags) {
   const std::string type =
@@ -302,6 +326,22 @@ VkDescriptorType getDescriptorType(const nlohmann::json &config,
   }
 
   return VK_DESCRIPTOR_TYPE_MAX_ENUM;
+}
+
+VkShaderStageFlags getVisibilityFlags2(
+    const GRAPHIC_RESOURCE_VISIBILITY visibility) {
+  VkShaderStageFlags flags = 0;
+
+  flags |= (visibility & GRAPHICS_RESOURCE_VISIBILITY_VERTEX) > 0
+               ? VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT
+               : 0;
+  flags |= (visibility & GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT) > 0
+               ? VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT
+               : 0;
+  flags |= (visibility & GRAPHICS_RESOURCE_VISIBILITY_COMPUTE) > 0
+               ? VkShaderStageFlagBits::VK_SHADER_STAGE_COMPUTE_BIT
+               : 0;
+  return flags;
 }
 
 VkShaderStageFlags getVisibilityFlags(const nlohmann::json &jobj) {
@@ -369,6 +409,18 @@ void VkPipelineLayoutManager::loadSignatureBinaryFile(const char *file) {
   assert(0);
 }
 
+void processConfig(const MaterialResource &meta,
+                   VkDescriptorSetLayoutBinding *binding) {
+  binding->stageFlags = getVisibilityFlags2(meta.visibility);
+  VkDescriptorType descriptorType =
+      getDescriptorType(meta.type, binding->stageFlags);
+  assert(descriptorType != VK_DESCRIPTOR_TYPE_MAX_ENUM);
+
+  binding->binding = meta.binding;
+  binding->descriptorType = descriptorType;
+  binding->descriptorCount = 1;
+}
+
 void processConfig(const nlohmann::json &jobj,
                    VkDescriptorSetLayoutBinding *binding) {
   int bindingIdx = getValueIfInJson(jobj, ROOT_KEY_BASE_REGISTER, -1);
@@ -385,6 +437,129 @@ void processConfig(const nlohmann::json &jobj,
   binding->binding = bindingIdx;
   binding->descriptorType = descriptorType;
   binding->descriptorCount = descriptorCount;
+}
+
+RSHandle VkPipelineLayoutManager::loadSignatureFile(
+    const char *name, MaterialMetadata *metadata) {
+  // From spec:  The pipeline layout represents a sequence of descriptor sets
+  // with each having a specific layout.
+  // this is the same as root signature in DX12
+  VkPipelineLayoutCreateInfo layoutInfo = {
+      VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
+
+  // check the number of bindings
+  bool hasConfig = metadata->objectResourceCount != 0;
+  VkDescriptorSetLayout descriptorLayout = nullptr;
+  if (hasConfig) {
+    int allocSize =
+        sizeof(VkDescriptorSetLayoutBinding) * metadata->objectResourceCount;
+    // allocating enough memory of the set layout binding
+    auto *bindings = reinterpret_cast<VkDescriptorSetLayoutBinding *>(
+        globals::FRAME_ALLOCATOR->allocate(allocSize));
+    // zeroing out
+    memset(bindings, 0, allocSize);
+
+    // we support at most 3 descriptor set
+    // 0 = per frame data
+    // 1 = static samplers
+    // 2 = per pass data
+    // 3 = per object data
+    // everything in the config bindings will be for per object data, the
+    // object the per  frame data is defined by the engine and will be a
+    // different descriptor set
+
+    for (uint32_t i = 0; i < metadata->objectResourceCount; ++i) {
+      const auto &meta = metadata->objectResources[i];
+      processConfig(meta, &bindings[i]);
+    }
+    // passing in the "root signature"
+    VkDescriptorSetLayoutCreateInfo descriptorInfo{
+        VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
+
+    descriptorInfo.bindingCount = metadata->objectResourceCount;
+    descriptorInfo.pBindings = bindings;
+
+    // can be freed
+    vkCreateDescriptorSetLayout(vk::LOGICAL_DEVICE, &descriptorInfo, nullptr,
+                                &descriptorLayout);
+    SET_DEBUG_NAME(descriptorLayout, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT,
+                   frameConcatenation(name, "DescriptorLayout"));
+  } else {
+    const char *passname =
+        frameConcatenation(name, "PerObjectDescriptorLayoutEmpty");
+    descriptorLayout = getEmptyLayout(passname);
+  }
+
+  bool passFound = metadata->passResourceCount != 0;
+  VkDescriptorSetLayout passDescriptorLayout = nullptr;
+  bool usePassEmpty = true;
+  if (passFound) {
+    const auto passConfigLen = metadata->passResourceCount;
+
+    if (passConfigLen > 0) {
+      // if we have both a passConfig and is not empty we are going to process
+      // it and not use an empty pass config
+      usePassEmpty = false;
+      int passAllocSize = sizeof(VkDescriptorSetLayoutBinding) * passConfigLen;
+      // allocating enough memory of the set layout binding
+      auto *passBindings = static_cast<VkDescriptorSetLayoutBinding *>(
+          globals::FRAME_ALLOCATOR->allocate(passAllocSize));
+      // zeroing out
+      memset(passBindings, 0, passAllocSize);
+      for (uint32_t i = 0; i < passConfigLen; ++i) {
+        const auto &currentConfigJ = metadata->passResources[i];
+        processConfig(currentConfigJ, &passBindings[i]);
+      }
+
+      // passing in the "root signature"
+      VkDescriptorSetLayoutCreateInfo passDescriptorInfo{
+          VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
+
+      passDescriptorInfo.bindingCount = passConfigLen;
+      passDescriptorInfo.pBindings = passBindings;
+
+      vkCreateDescriptorSetLayout(vk::LOGICAL_DEVICE, &passDescriptorInfo,
+                                  nullptr, &passDescriptorLayout);
+      SET_DEBUG_NAME(passDescriptorLayout, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT,
+                     frameConcatenation(name, "PassDescriptorLayout"));
+    }
+  }
+
+  if (usePassEmpty) {
+    const char *passname =
+        frameConcatenation(name, "PassDescriptorLayoutEmpty");
+    passDescriptorLayout = getEmptyLayout(passname);
+  }
+
+  // we always bind the samplers, worst case we don't bind them, we might
+  // want to optimize this in the future
+  bool useStaticSamplers = true;
+  VkDescriptorSetLayout layouts[4] = {
+      PER_FRAME_LAYOUT,
+      STATIC_SAMPLERS_LAYOUT,
+      passDescriptorLayout,
+      descriptorLayout,
+  };
+  layoutInfo.setLayoutCount = 3 + (useStaticSamplers ? 1 : 0);
+  layoutInfo.pSetLayouts = layouts;
+
+  // generate the handle
+  uint32_t index;
+  LayoutData &rsdata = m_rsPool.getFreeMemoryData(index);
+  vkCreatePipelineLayout(vk::LOGICAL_DEVICE, &layoutInfo, nullptr,
+                         &rsdata.layout);
+  SET_DEBUG_NAME(rsdata.layout, VK_OBJECT_TYPE_PIPELINE_LAYOUT,
+                 frameConcatenation(name, "PipelineLayout"));
+
+  const RSHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
+  rsdata.magicNumber = MAGIC_NUMBER_COUNTER;
+  rsdata.descriptorSetLayout = descriptorLayout;
+  rsdata.usesStaticSamplers = useStaticSamplers;
+  rsdata.passSetLayout = passDescriptorLayout;
+  m_rootRegister.insert(name, handle);
+  ++MAGIC_NUMBER_COUNTER;
+
+  return handle;
 }
 
 RSHandle VkPipelineLayoutManager::loadSignatureFile(const char *file) {
@@ -493,8 +668,8 @@ RSHandle VkPipelineLayoutManager::loadSignatureFile(const char *file) {
     passDescriptorLayout = getEmptyLayout(passname);
   }
 
-  //we always bind the samplers, worst case we don't bind them, we might
-  //want to optimize this in the future
+  // we always bind the samplers, worst case we don't bind them, we might
+  // want to optimize this in the future
   bool useStaticSamplers = true;
   VkDescriptorSetLayout layouts[4] = {
       PER_FRAME_LAYOUT,

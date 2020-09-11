@@ -67,13 +67,18 @@ enum class MATERIAL_RESOURCE_TYPE { TEXTURE, CONSTANT_BUFFER, BUFFER };
 
 struct MaterialResource {
   MATERIAL_RESOURCE_TYPE type;
+  GRAPHIC_RESOURCE_VISIBILITY visibility;
   uint16_t set;
   uint16_t binding;
-  const char* name;
+  const char *name;
 };
 struct MaterialMetadata {
-  MaterialResource *resources;
-  uint32_t resourceCount;
+  MaterialResource *objectResources;
+  MaterialResource *frameResources;
+  MaterialResource *passResources;
+  uint32_t objectResourceCount;
+  uint32_t frameResourceCount;
+  uint32_t passResourceCount;
 };
 
 MaterialMetadata SIR_ENGINE_API extractMetadata(const char *psoPath);

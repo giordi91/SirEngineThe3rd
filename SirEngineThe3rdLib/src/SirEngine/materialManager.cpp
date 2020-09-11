@@ -331,21 +331,27 @@ static const std::string PSO_TYPE_RASTER = "RASTER";
 static const std::string PSO_TYPE_COMPUTE = "COMPUTE";
 static const std::string PSO_VS_KEY = "VS";
 static const std::string PSO_PS_KEY = "PS";
+static const std::string PSO_CS_KEY = "shaderName";
 static const std::string DEFAULT_STRING = "";
-static const std::string PSO_ROOT_KEY = "globalRootSignature";
-
-MaterialMetadata processComputeMetadata(const nlohmann::json &jobj) {
-  assert(0);
-  return {};
-}
-std::string loadFile(const char *path) {
-  std::ifstream st(path);
-  std::stringstream sBuffer;
-  sBuffer << st.rdbuf();
-  return sBuffer.str();
-}
 
 MaterialMetadata processShader(const char *shaderName, SHADER_TYPE type) {
+  GRAPHIC_RESOURCE_VISIBILITY visibility = 0;
+  switch (type) {
+    case SHADER_TYPE::VERTEX: {
+      visibility = GRAPHICS_RESOURCE_VISIBILITY_VERTEX;
+      break;
+    }
+    case SHADER_TYPE::FRAGMENT: {
+      visibility = GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT;
+      break;
+    }
+    case SHADER_TYPE::COMPUTE: {
+      visibility = GRAPHICS_RESOURCE_VISIBILITY_COMPUTE;
+      break;
+    }
+  }
+  assert(visibility && "wrong visibility found for shader type");
+
   vk::VkShaderCompiler vkCompiler;
   std::string log;
   vk::SpirVBlob blob =
@@ -373,8 +379,8 @@ MaterialMetadata processShader(const char *shaderName, SHADER_TYPE type) {
         comp.get_decoration(image.id, spv::DecorationBinding));
     // SE_CORE_INFO("--> name: {}, set: {}, bind:{}", image.name, set, binding);
 
-    memory[counter++] = {MATERIAL_RESOURCE_TYPE::TEXTURE, set, binding,
-                         frameString(image.name.c_str())};
+    memory[counter++] = {MATERIAL_RESOURCE_TYPE::TEXTURE, visibility, set,
+                         binding, frameString(image.name.c_str())};
   }
 
   // SE_CORE_INFO("ssbo");
@@ -384,8 +390,8 @@ MaterialMetadata processShader(const char *shaderName, SHADER_TYPE type) {
     auto binding = static_cast<uint16_t>(
         comp.get_decoration(image.id, spv::DecorationBinding));
     // SE_CORE_INFO("--> name: {}, set: {}, bind:{}", image.name, set, binding);
-    memory[counter++] = {MATERIAL_RESOURCE_TYPE::BUFFER, set, binding,
-                         frameString(image.name.c_str())};
+    memory[counter++] = {MATERIAL_RESOURCE_TYPE::BUFFER, visibility, set,
+                         binding, frameString(image.name.c_str())};
   }
 
   // SE_CORE_INFO("constant buffers");
@@ -395,11 +401,74 @@ MaterialMetadata processShader(const char *shaderName, SHADER_TYPE type) {
     auto binding = static_cast<uint16_t>(
         comp.get_decoration(image.id, spv::DecorationBinding));
     // SE_CORE_INFO("--> name: {}, set: {}, bind:{}", image.name, set, binding);
-    memory[counter++] = {MATERIAL_RESOURCE_TYPE::CONSTANT_BUFFER, set, binding,
-                         frameString(image.name.c_str())};
+    memory[counter++] = {MATERIAL_RESOURCE_TYPE::CONSTANT_BUFFER, visibility,
+                         set, binding, frameString(image.name.c_str())};
   }
-  return {memory, static_cast<uint32_t>(totalCount)};
+  return {memory, nullptr, nullptr, static_cast<uint32_t>(totalCount), 0, 0};
 }
+
+MaterialMetadata processComputeMetadata(const nlohmann::json &jobj) {
+  assertInJson(jobj, PSO_CS_KEY);
+
+  const std::string &name = getValueIfInJson(jobj, PSO_CS_KEY, DEFAULT_STRING);
+  const std::string path = "../data/shaders/VK/compute/" + name + ".glsl";
+  assert(fileExists(path));
+  MaterialMetadata meta = processShader(path.c_str(), SHADER_TYPE::COMPUTE);
+
+  // let us merge
+  MaterialResource space0[16];
+  MaterialResource space2[16];
+  MaterialResource space3[32];
+  MaterialResource *resources[4] = {&space0[0], nullptr, &space2[0],
+                                    &space3[0]};
+  int counters[4] = {0, 0, 0, 0};
+  int maxCounters[4] = {16, 0, 16, 32};
+  for (uint32_t i = 0; i < meta.objectResourceCount; ++i) {
+    MaterialResource &res = meta.objectResources[i];
+    res.name = persistentString(res.name);
+    resources[res.set][counters[res.set]++] = res;
+    assert(counters[res.set] < maxCounters[res.set]);
+  }
+  std::sort(space0, space0 + counters[0],
+            [](const MaterialResource &lhs, const MaterialResource &rhs) {
+              return lhs.binding < rhs.binding;
+            });
+  std::sort(space2, space2 + counters[2],
+            [](const MaterialResource &lhs, const MaterialResource &rhs) {
+              return lhs.binding < rhs.binding;
+            });
+  std::sort(space3, space3 + counters[3],
+            [](const MaterialResource &lhs, const MaterialResource &rhs) {
+              return lhs.binding < rhs.binding;
+            });
+  MaterialMetadata toReturn{};
+  toReturn.frameResources =
+      static_cast<MaterialResource *>(globals::PERSISTENT_ALLOCATOR->allocate(
+          sizeof(MaterialResource) * counters[0]));
+  toReturn.frameResourceCount = counters[0];
+  toReturn.passResources =
+      static_cast<MaterialResource *>(globals::PERSISTENT_ALLOCATOR->allocate(
+          sizeof(MaterialResource) * counters[2]));
+  toReturn.passResourceCount = counters[2];
+  toReturn.objectResources =
+      static_cast<MaterialResource *>(globals::PERSISTENT_ALLOCATOR->allocate(
+          sizeof(MaterialResource) * counters[3]));
+  toReturn.objectResourceCount = counters[3];
+  memcpy(toReturn.frameResources, space0,
+         sizeof(MaterialResource) * counters[0]);
+  memcpy(toReturn.passResources, space2,
+         sizeof(MaterialResource) * counters[2]);
+  memcpy(toReturn.objectResources, space3,
+         sizeof(MaterialResource) * counters[3]);
+  return toReturn;
+}
+std::string loadFile(const char *path) {
+  std::ifstream st(path);
+  std::stringstream sBuffer;
+  sBuffer << st.rdbuf();
+  return sBuffer.str();
+}
+
 MaterialMetadata processRasterMetadata(const nlohmann::json &jobj) {
   assertInJson(jobj, PSO_VS_KEY);
 
@@ -427,12 +496,68 @@ MaterialMetadata processRasterMetadata(const nlohmann::json &jobj) {
   MaterialResource *resources[4] = {&space0[0], nullptr, &space2[0],
                                     &space3[0]};
   int counters[4] = {0, 0, 0, 0};
-  for (int i = 0; i < vsMeta.resourceCount; ++i) {
-    const MaterialResource &res = vsMeta.resources[i];
+  int maxCounters[4] = {16, 0, 16, 32};
+  for (uint32_t i = 0; i < vsMeta.objectResourceCount; ++i) {
+    MaterialResource &res = vsMeta.objectResources[i];
+    res.name = persistentString(res.name);
     resources[res.set][counters[res.set]++] = res;
+    assert(counters[res.set] < maxCounters[res.set]);
   }
-
-  return {};
+  // merging in ps
+  if (!psName.empty()) {
+    for (uint32_t i = 0; i < psMeta.objectResourceCount; ++i) {
+      MaterialResource &res = psMeta.objectResources[i];
+      // check if is unique
+      int currCounter = maxCounters[res.set];
+      bool skip = false;
+      for (uint32_t x = 0; x < currCounter; ++x) {
+        auto &currRes = resources[res.set][x];
+        if (currRes.set == res.set && currRes.binding == res.binding) {
+          skip = true;
+          currRes.visibility |= GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT;
+          break;
+        }
+      }
+      if (skip) {
+        continue;
+      }
+      res.name = persistentString(res.name);
+      resources[res.set][counters[res.set]++] = res;
+      assert(counters[res.set] < maxCounters[res.set]);
+    }
+  }
+  std::sort(space0, space0 + counters[0],
+            [](const MaterialResource &lhs, const MaterialResource &rhs) {
+              return lhs.binding < rhs.binding;
+            });
+  std::sort(space2, space2 + counters[2],
+            [](const MaterialResource &lhs, const MaterialResource &rhs) {
+              return lhs.binding < rhs.binding;
+            });
+  std::sort(space3, space3 + counters[3],
+            [](const MaterialResource &lhs, const MaterialResource &rhs) {
+              return lhs.binding < rhs.binding;
+            });
+  MaterialMetadata toReturn{};
+  toReturn.frameResources =
+      static_cast<MaterialResource *>(globals::PERSISTENT_ALLOCATOR->allocate(
+          sizeof(MaterialResource) * counters[0]));
+  toReturn.frameResourceCount = counters[0];
+  toReturn.passResources =
+      static_cast<MaterialResource *>(globals::PERSISTENT_ALLOCATOR->allocate(
+          sizeof(MaterialResource) * counters[2]));
+  toReturn.passResourceCount = counters[2];
+  toReturn.objectResources =
+      static_cast<MaterialResource *>(globals::PERSISTENT_ALLOCATOR->allocate(
+          sizeof(MaterialResource) * counters[3]));
+  toReturn.objectResourceCount = counters[3];
+  memcpy(toReturn.frameResources, space0,
+         sizeof(MaterialResource) * counters[0]);
+  memcpy(toReturn.passResources, space2,
+         sizeof(MaterialResource) * counters[2]);
+  memcpy(toReturn.objectResources, space3,
+         sizeof(MaterialResource) * counters[3]);
+  return toReturn;
 }
 
 MaterialMetadata extractMetadata(const char *psoPath) {
@@ -441,7 +566,8 @@ MaterialMetadata extractMetadata(const char *psoPath) {
 
   const std::string &psoType = jobj[PSO_TYPE_KEY].get<std::string>();
   if (psoType == PSO_TYPE_RASTER) {
-    return processRasterMetadata(jobj);
+    auto t = processRasterMetadata(jobj);
+    return t;
   }
   return processComputeMetadata(jobj);
 }

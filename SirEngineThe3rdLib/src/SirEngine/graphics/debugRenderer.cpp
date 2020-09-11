@@ -11,7 +11,7 @@
 #include "camera.h"
 
 namespace SirEngine {
-static const char *LINE_RS = "debugDrawLinesSingleColorRS";
+static const char *LINE_RS = "debugDrawLinesSingleColorPSO";
 static const char *LINE_PSO = "debugDrawLinesSingleColorPSO";
 
 void DebugRenderer::initialize() {

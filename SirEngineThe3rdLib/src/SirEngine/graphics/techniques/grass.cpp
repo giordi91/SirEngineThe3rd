@@ -15,12 +15,12 @@
 
 namespace SirEngine::graphics {
 
-static const char *GRASS_RS = "grassForwardRS";
+static const char *GRASS_RS = "grassForwardPSO";
 static const char *GRASS_PSO = "grassForwardPSO";
-static const char *GRASS_PLANE_RS = "grassPlaneRS";
+static const char *GRASS_PLANE_RS = "grassPlanePSO";
 static const char *GRASS_PLANE_PSO = "grassPlanePSO";
 
-static const char *GRASS_CULL_SCAN_RS = "grassCullingScanRS";
+static const char *GRASS_CULL_SCAN_RS = "grassCullingScanPSO";
 static const char *GRASS_CULL_SCAN_PSO = "grassCullingScanPSO";
 
 void GrassTechnique::buildBindingTables() {
@@ -114,7 +114,7 @@ void GrassTechnique::setup(const uint32_t id) {
   m_grassConfig.baseColor = {0.02, 0.25, 0.001};
   m_grassConfig.tipColor = {0.02, 0.13, 0.019};
   m_grassConfig.lodThresholds = {40, 70, 110, 0};
-  m_grassConfig.pointsPerTileLod= {500, 300, 200, 100};
+  m_grassConfig.pointsPerTileLod = {500, 300, 200, 100};
 
   m_rs = globals::ROOT_SIGNATURE_MANAGER->getHandleFromName(GRASS_RS);
   m_pso = globals::PSO_MANAGER->getHandleFromName(GRASS_PSO);
@@ -127,7 +127,7 @@ void GrassTechnique::setup(const uint32_t id) {
   m_grassCullScanPso =
       globals::PSO_MANAGER->getHandleFromName(GRASS_CULL_SCAN_PSO);
   m_grassClearRs =
-      globals::ROOT_SIGNATURE_MANAGER->getHandleFromName("grassClearRS");
+      globals::ROOT_SIGNATURE_MANAGER->getHandleFromName("grassClearPSO");
   m_grassClearPso = globals::PSO_MANAGER->getHandleFromName("grassClearPSO");
 
   // lets read the grass file
@@ -231,7 +231,6 @@ void GrassTechnique::setup(const uint32_t id) {
                                                      m_grassConfigHandle, 2, 2);
   globals::BINDING_TABLE_MANAGER->bindBuffer(m_scanBindingTable,
                                              m_tilesIndicesHandle, 3, 3);
-
 }
 
 void GrassTechnique::renderGroundPlane(
@@ -290,7 +289,8 @@ void GrassTechnique::passRender(const uint32_t id,
           PSOManager::PER_PASS_BINDING_INDEX, passHandle, m_rs);
     }
 
-    globals::RENDERING_CONTEXT->renderProceduralIndirect(m_outTiles,i*sizeof(int)*4);
+    globals::RENDERING_CONTEXT->renderProceduralIndirect(m_outTiles,
+                                                         i * sizeof(int) * 4);
   }
 
   renderGroundPlane(passHandle);
@@ -358,10 +358,11 @@ void GrassTechnique::clear(const uint32_t id) {
     globals::BINDING_TABLE_MANAGER->free(m_clearBindingTable);
     m_clearBindingTable = {0};
   }
-
 }
 
-void GrassTechnique::prePassRender(uint32_t) { performCulling(); }
+void GrassTechnique::prePassRender(uint32_t) {
+  performCulling();
+}
 
 void GrassTechnique::performCulling() {
   // here we compute the surviving tiles
@@ -401,8 +402,8 @@ void GrassTechnique::performCulling() {
   globals::RENDERING_CONTEXT->bindCameraBuffer(m_grassClearRs, true);
   globals::BINDING_TABLE_MANAGER->bindBuffer(m_clearBindingTable, m_outTiles, 0,
                                              0);
-  globals::BINDING_TABLE_MANAGER->bindConstantBuffer(m_clearBindingTable, m_grassConfigHandle, 1,
-                                             1);
+  globals::BINDING_TABLE_MANAGER->bindConstantBuffer(m_clearBindingTable,
+                                                     m_grassConfigHandle, 1, 1);
   globals::BINDING_TABLE_MANAGER->bindTable(
       PSOManager::PER_OBJECT_BINDING_INDEX, m_clearBindingTable, m_grassClearRs,
       true);

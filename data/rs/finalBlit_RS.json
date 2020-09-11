@@ -9,14 +9,6 @@
       "numDescriptors": 1,
       "baseRegister": 0,
       "visibility": "PS"
-    },
-    {
-      "comment": "constant buffer for configuring the pass",
-      "type": "CBV",
-      "underlyingResource": "buffer",
-      "numDescriptors": 1,
-      "baseRegister":2,
-      "visibility": "PS"
     }
   ],
   "flags": []
