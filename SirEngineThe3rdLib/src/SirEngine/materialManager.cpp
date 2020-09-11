@@ -379,19 +379,33 @@ MaterialMetadata processShader(const char *shaderName, SHADER_TYPE type) {
         comp.get_decoration(image.id, spv::DecorationBinding));
     // SE_CORE_INFO("--> name: {}, set: {}, bind:{}", image.name, set, binding);
 
-    memory[counter++] = {MATERIAL_RESOURCE_TYPE::TEXTURE, visibility, set,
-                         binding, frameString(image.name.c_str())};
+    memory[counter++] = {MATERIAL_RESOURCE_TYPE::TEXTURE,
+                         visibility,
+                         frameString(image.name.c_str()),
+                         MATERIAL_RESOURCE_FLAGS::NONE,
+                         set,
+                         binding};
   }
 
-  // SE_CORE_INFO("ssbo");
-  for (const auto &image : res.storage_buffers) {
+  for (const auto &buff : res.storage_buffers) {
     auto set = static_cast<uint16_t>(
-        comp.get_decoration(image.id, spv::DecorationDescriptorSet));
+        comp.get_decoration(buff.id, spv::DecorationDescriptorSet));
     auto binding = static_cast<uint16_t>(
-        comp.get_decoration(image.id, spv::DecorationBinding));
-    // SE_CORE_INFO("--> name: {}, set: {}, bind:{}", image.name, set, binding);
-    memory[counter++] = {MATERIAL_RESOURCE_TYPE::BUFFER, visibility, set,
-                         binding, frameString(image.name.c_str())};
+        comp.get_decoration(buff.id, spv::DecorationBinding));
+
+    spirv_cross::Bitset bufferFlags = comp.get_buffer_block_flags(buff.id);
+    bool readonly = bufferFlags.get(spv::DecorationNonWritable);
+
+    auto flags = readonly ? MATERIAL_RESOURCE_FLAGS::READ_ONLY
+                          : MATERIAL_RESOURCE_FLAGS::NONE;
+    memory[counter++] = {
+        MATERIAL_RESOURCE_TYPE::BUFFER,
+        visibility,
+        frameString(buff.name.c_str()),
+        flags,
+        set,
+        binding,
+    };
   }
 
   // SE_CORE_INFO("constant buffers");
@@ -401,8 +415,12 @@ MaterialMetadata processShader(const char *shaderName, SHADER_TYPE type) {
     auto binding = static_cast<uint16_t>(
         comp.get_decoration(image.id, spv::DecorationBinding));
     // SE_CORE_INFO("--> name: {}, set: {}, bind:{}", image.name, set, binding);
-    memory[counter++] = {MATERIAL_RESOURCE_TYPE::CONSTANT_BUFFER, visibility,
-                         set, binding, frameString(image.name.c_str())};
+    memory[counter++] = {MATERIAL_RESOURCE_TYPE::CONSTANT_BUFFER,
+                         visibility,
+                         frameString(image.name.c_str()),
+                         MATERIAL_RESOURCE_FLAGS::NONE,
+                         set,
+                         binding};
   }
   return {memory, nullptr, nullptr, static_cast<uint32_t>(totalCount), 0, 0};
 }

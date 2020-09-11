@@ -64,13 +64,15 @@ enum class SHADER_TYPE_FLAGS {
   SHADOW_SKIN_CLUSTER,
 };
 enum class MATERIAL_RESOURCE_TYPE { TEXTURE, CONSTANT_BUFFER, BUFFER };
+enum class MATERIAL_RESOURCE_FLAGS { NONE = 0, READ_ONLY = 1 };
 
 struct MaterialResource {
   MATERIAL_RESOURCE_TYPE type;
   GRAPHIC_RESOURCE_VISIBILITY visibility;
+  const char *name;
+  MATERIAL_RESOURCE_FLAGS flags;
   uint16_t set;
   uint16_t binding;
-  const char *name;
 };
 struct MaterialMetadata {
   MaterialResource *objectResources;

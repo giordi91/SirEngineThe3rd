@@ -7,6 +7,10 @@
 #include "SirEngine/core.h"
 #include "stdint.h"
 
+namespace SirEngine {
+	struct MaterialMetadata;
+}
+
 namespace SirEngine::dx12 {
 enum class ROOT_TYPE { RASTER = 0, COMPUTE = 1, DXR = 2, NULL_TYPE };
 struct RootCompilerResult {
@@ -24,4 +28,6 @@ std::array<const D3D12_SAMPLER_DESC, 7> getSamplers();
 RootCompilerResult SIR_ENGINE_API processSignatureFileToBlob(const char *path,
                                                              ID3DBlob **blob);
 RootCompilerResult processSignatureFile(const char *path);
+RootCompilerResult processSignatureFile2(const char *path,
+                                        MaterialMetadata *metadata);
 }  // namespace SirEngine::dx12

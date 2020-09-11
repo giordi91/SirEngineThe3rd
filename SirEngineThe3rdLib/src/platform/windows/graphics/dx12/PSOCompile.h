@@ -3,12 +3,14 @@
 
 #include "SirEngine/core.h"
 #include "SirEngine/graphics/graphicsDefines.h"
+#include "SirEngine/handle.h"
 
 namespace SirEngine::dx12 {
 struct SIR_ENGINE_API PSOCompileResult {
   D3D12_COMPUTE_PIPELINE_STATE_DESC *computeDesc = nullptr;
   D3D12_GRAPHICS_PIPELINE_STATE_DESC *graphicDesc = nullptr;
   ID3D12PipelineState *pso = nullptr;
+  RSHandle rsHandle = {};
   PSO_TYPE psoType = PSO_TYPE::INVALID;
   const char *VSName = nullptr;
   const char *PSName = nullptr;
@@ -24,6 +26,5 @@ struct SIR_ENGINE_API PSOCompileResult {
 PSOCompileResult SIR_ENGINE_API compileRawPSO(const char *path,
                                               const char *shaderPath);
 PSO_TYPE convertStringPSOTypeToEnum(const char *type);
-
 
 }  // namespace SirEngine::dx12

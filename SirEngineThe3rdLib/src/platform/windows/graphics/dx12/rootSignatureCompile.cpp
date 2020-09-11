@@ -7,6 +7,7 @@
 #include "SirEngine/PSOManager.h"
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
+#include "SirEngine/materialManager.h"
 #include "SirEngine/runtimeString.h"
 #include "nlohmann/json.hpp"
 #include "platform/windows/graphics/dx12/DX12.h"
@@ -70,6 +71,28 @@ getTypeEnum(const std::string &type) {
   }
   assert(0 && "could not convert root type from string to enum");
   return SUB_ROOT_TYPES::NULL_TYPE;
+}
+
+SUB_ROOT_TYPES
+getTypeEnum(MATERIAL_RESOURCE_TYPE type, MATERIAL_RESOURCE_FLAGS flags) {
+  switch (type) {
+    case MATERIAL_RESOURCE_TYPE::TEXTURE: {
+      return SUB_ROOT_TYPES::SRV;
+    }
+    case MATERIAL_RESOURCE_TYPE::CONSTANT_BUFFER: {
+      return SUB_ROOT_TYPES::CBV;
+    }
+    case MATERIAL_RESOURCE_TYPE::BUFFER: {
+      return (static_cast<uint32_t>(flags) &
+              static_cast<uint32_t>(MATERIAL_RESOURCE_FLAGS::READ_ONLY) > 0)
+                 ? SUB_ROOT_TYPES::SRV
+                 : SUB_ROOT_TYPES::UAV;
+    }
+    default: {
+      assert(0 && "descriptor type not suppoerted");
+      return SUB_ROOT_TYPES::NULL_TYPE;
+    }
+  }
 }
 ROOT_TYPE getFileTypeEnum(const std::string &type) {
   auto found = STRING_TO_ROOT_TYPE.find(type);
@@ -266,6 +289,12 @@ void initDescriptorAsUAV(const nlohmann::json &jobj,
   descriptor.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, count, startRegister,
                   registerSpace);
 }
+void initDescriptorAsUAV(const MaterialResource &metadata,
+                         CD3DX12_DESCRIPTOR_RANGE &descriptor) {
+  int startRegister = metadata.binding;
+  descriptor.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, startRegister,
+                  metadata.set);
+}
 
 void initDescriptorAsSRV(const nlohmann::json &jobj,
                          CD3DX12_DESCRIPTOR_RANGE &descriptor,
@@ -279,6 +308,13 @@ void initDescriptorAsSRV(const nlohmann::json &jobj,
   descriptor.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, count, startRegister,
                   registerSpace);
 }
+void initDescriptorAsSRV(const MaterialResource &metadata,
+                         CD3DX12_DESCRIPTOR_RANGE &descriptor) {
+  int startRegister = metadata.binding;
+  assert(startRegister != -1);
+  descriptor.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, startRegister,
+                  metadata.set);
+}
 
 void initDescriptorAsConstant(const nlohmann::json &jobj,
                               CD3DX12_DESCRIPTOR_RANGE &descriptor,
@@ -291,6 +327,12 @@ void initDescriptorAsConstant(const nlohmann::json &jobj,
   assert(startRegister != -1);
   descriptor.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, count, startRegister,
                   registerSpace);
+}
+void initDescriptorAsConstant(const MaterialResource &metadata,
+                              CD3DX12_DESCRIPTOR_RANGE &descriptor) {
+  int startRegister = metadata.binding;
+  descriptor.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, startRegister,
+                  metadata.set);
 }
 
 ID3DBlob *serializeRootSignature(D3D12_ROOT_SIGNATURE_DESC &desc) {
@@ -341,6 +383,29 @@ void processRootConfiguration(CD3DX12_DESCRIPTOR_RANGE *userRanges,
     }
     case (SUB_ROOT_TYPES::UAV): {
       initDescriptorAsUAV(subConfig, *userRanges, registerSpace);
+      break;
+    }
+    default: {
+      assert(0 && "descriptor type not supported");
+    }
+  }
+}
+void processRootConfiguration(CD3DX12_DESCRIPTOR_RANGE *userRanges,
+                              const MaterialResource &metadata,
+                              const uint32_t registerSpace) {
+  SUB_ROOT_TYPES configType = getTypeEnum(metadata.type, metadata.flags);
+
+  switch (configType) {
+    case (SUB_ROOT_TYPES::CBV): {
+      initDescriptorAsConstant(metadata, *userRanges);
+      break;
+    }
+    case (SUB_ROOT_TYPES::SRV): {
+      initDescriptorAsSRV(metadata, *userRanges);
+      break;
+    }
+    case (SUB_ROOT_TYPES::UAV): {
+      initDescriptorAsUAV(metadata, *userRanges);
       break;
     }
     default: {
@@ -477,11 +542,118 @@ RootCompilerResult processSignatureFileToBlob(const char *path,
   const std::string &name = getFileName(path);
   return flatTablesRS(jobj, name, blob);
 }
+RootCompilerResult processSignatureFileToBlob(const char *path, ID3DBlob **blob,
+                                              MaterialMetadata *metadata) {
+  const std::string &name = getFileName(path);
+  // bool useStaticSampler = shouldBindSamplers(jobj);
+  bool useStaticSampler = true;
+
+  // checking if we have pass definition, if not we shift the indeces
+  bool hasPassConfig = metadata->passResourceCount != 0;
+  bool hasConfig = metadata->objectResourceCount != 0;
+
+  // we have one flat descriptor table to bind
+  uint32_t registerCount = 1;
+  registerCount += hasPassConfig ? 1 : 0;
+  registerCount += hasConfig ? 1 : 0;
+  registerCount += useStaticSampler ? 1 : 0;
+  std::vector<CD3DX12_ROOT_PARAMETER> rootParams(registerCount);
+  CD3DX12_DESCRIPTOR_RANGE ranges{};
+
+  // create constant buffer for camera values
+  int startRegister = 0;
+  ranges.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, startRegister,
+              ENGINE_RESIGSTER_SPACE);
+  rootParams[0].InitAsDescriptorTable(1, &ranges);
+
+  // this is per object config
+  int configIndex = 0 + useStaticSampler + static_cast<int>(hasPassConfig) +
+                    static_cast<int>(hasConfig);
+
+  int userCounter = 0;
+  CD3DX12_DESCRIPTOR_RANGE *userRanges = nullptr;
+  if (hasConfig) {
+    userRanges = new CD3DX12_DESCRIPTOR_RANGE[metadata->objectResourceCount]{};
+    for (int i = 0; i < metadata->objectResourceCount; ++i) {
+      const auto &subConfig = metadata->objectResources[i];
+      processRootConfiguration(&userRanges[userCounter], subConfig,
+                               PSOManager::PER_OBJECT_BINDING_INDEX);
+      ++userCounter;
+    }
+    rootParams[configIndex].InitAsDescriptorTable(userCounter, userRanges);
+  }
+  CD3DX12_DESCRIPTOR_RANGE *passRanges = nullptr;
+  if (hasPassConfig) {
+    passRanges = new CD3DX12_DESCRIPTOR_RANGE[metadata->passResourceCount]{};
+    int passCounter = 0;
+    for (int i = 0; i < metadata->passResourceCount; ++i) {
+      const auto &subConfig = metadata->passResources[i];
+      processRootConfiguration(&passRanges[passCounter], subConfig,
+                               PSOManager::PER_PASS_BINDING_INDEX);
+      ++passCounter;
+    }
+    // Magic number here is one because if we have a per pass index the
+    // descriptor will be 1, zero will be the per frame data
+    rootParams[1ll + useStaticSampler].InitAsDescriptorTable(passCounter,
+                                                             passRanges);
+  }
+
+  UINT numStaticSampers = 0;
+  D3D12_STATIC_SAMPLER_DESC const *staticSamplers = nullptr;
+  auto samplers = getStaticSamplers();
+
+  CD3DX12_DESCRIPTOR_RANGE normalSamplersDesc;
+  if (useStaticSampler) {
+    auto normalSamplers = getSamplers();
+    int samplersCount = static_cast<int>(normalSamplers.size());
+    int baseRegiser = 0;
+    int space = 1;
+    normalSamplersDesc.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, samplersCount,
+                            baseRegiser, space);
+
+    rootParams[1].InitAsDescriptorTable(1, &normalSamplersDesc);
+  }
+
+  CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc(
+      static_cast<UINT>(rootParams.size()), rootParams.data(), numStaticSampers,
+      staticSamplers);
+
+  //processRootFlags(jobj, rootSignatureDesc);
+
+  //const ROOT_TYPE fileTypeEnum = getFileTypeEnum(fileType);
+  (*blob) = serializeRootSignature(rootSignatureDesc);
+
+  return RootCompilerResult{
+      frameString(name.c_str()),
+      nullptr,
+      ROOT_TYPE::NULL_TYPE, //TODO need to see if this is needed, the pso should know about it
+      true,
+      static_cast<uint16_t>(userCounter),
+      {0, useStaticSampler ? 1 : -1,
+       static_cast<uint16_t>(hasPassConfig ? 1 + useStaticSampler : -1),
+       static_cast<uint16_t>(useStaticSampler + hasPassConfig + 1)}};
+  return {};
+}
 
 RootCompilerResult processSignatureFile(const char *path) {
   ID3D12RootSignature *rootSig;
   ID3DBlob *blob;
   RootCompilerResult compilerResult = processSignatureFileToBlob(path, &blob);
+  const HRESULT res = SirEngine::dx12::DEVICE->CreateRootSignature(
+      1, blob->GetBufferPointer(), blob->GetBufferSize(),
+      IID_PPV_ARGS(&(rootSig)));
+  assert(res == S_OK);
+  blob->Release();
+  compilerResult.root = rootSig;
+  return compilerResult;
+}
+
+RootCompilerResult processSignatureFile2(const char *path,
+                                         MaterialMetadata *metadata) {
+  ID3D12RootSignature *rootSig;
+  ID3DBlob *blob;
+  RootCompilerResult compilerResult =
+      processSignatureFileToBlob(path, &blob, metadata);
   const HRESULT res = SirEngine::dx12::DEVICE->CreateRootSignature(
       1, blob->GetBufferPointer(), blob->GetBufferSize(),
       IID_PPV_ARGS(&(rootSig)));
