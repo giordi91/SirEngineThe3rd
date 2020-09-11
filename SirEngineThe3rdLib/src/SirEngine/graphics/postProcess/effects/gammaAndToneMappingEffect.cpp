@@ -9,7 +9,7 @@
 #include "SirEngine/rootSignatureManager.h"
 
 namespace SirEngine {
-static const char *GAMMA_TONE_RS = "standardPostProcessEffect_RS";
+static const char *GAMMA_TONE_RS = "gammaAndToneMappingEffect_PSO";
 static const char *GAMMA_TONE_PSO = "gammaAndToneMappingEffect_PSO";
 void GammaAndToneMappingEffect::initialize() {
   m_rs = globals::ROOT_SIGNATURE_MANAGER->getHandleFromName(GAMMA_TONE_RS);

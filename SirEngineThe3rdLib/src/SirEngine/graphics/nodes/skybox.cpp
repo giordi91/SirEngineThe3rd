@@ -9,7 +9,7 @@
 #include "SirEngine/rootSignatureManager.h"
 
 namespace SirEngine {
-static const char *SKYBOX_RS = "skybox_RS";
+static const char *SKYBOX_RS = "skyboxPSO";
 static const char *SKYBOX_PSO = "skyboxPSO";
 
 SkyBoxPass::SkyBoxPass(GraphAllocators &allocators)

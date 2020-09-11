@@ -9,7 +9,7 @@
 
 namespace SirEngine {
 
-static const char *HDR_RS = "finalBlit_RS";
+static const char *HDR_RS = "HDRtoSDREffect_PSO";
 static const char *HDR_PSO = "HDRtoSDREffect_PSO";
 
 FinalBlitNode::FinalBlitNode(GraphAllocators &allocators)
@@ -32,10 +32,10 @@ void FinalBlitNode::compute() {
 
   globals::BINDING_TABLE_MANAGER->bindTexture(m_bindingTable, inputRTHandle, 0,
                                               0, false);
+  globals::PSO_MANAGER->bindPSO(m_pso);
   globals::BINDING_TABLE_MANAGER->bindTable(
       PSOManager::PER_OBJECT_BINDING_INDEX, m_bindingTable, m_rs);
 
-  globals::PSO_MANAGER->bindPSO(m_pso);
   // next we bind the material, this will among other things bind the pso and rs
   // finally we submit a fullscreen pass
   globals::RENDERING_CONTEXT->fullScreenPass();
@@ -48,14 +48,12 @@ void FinalBlitNode::initialize() {
   m_rs = globals::ROOT_SIGNATURE_MANAGER->getHandleFromName(HDR_RS);
   m_pso = globals::PSO_MANAGER->getHandleFromName(HDR_PSO);
 
-  graphics::BindingDescription descriptions[2] = {
+  graphics::BindingDescription descriptions[1] = {
       {0, GRAPHIC_RESOURCE_TYPE::TEXTURE,
-       GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT},
-      {2, GRAPHIC_RESOURCE_TYPE::CONSTANT_BUFFER,
-       GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT},
-  };
+       GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT}};
+
   m_bindingTable = globals::BINDING_TABLE_MANAGER->allocateBindingTable(
-      descriptions, 2,
+      descriptions, 1,
       graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED,
       "HDRtoSDREffect");
 }
