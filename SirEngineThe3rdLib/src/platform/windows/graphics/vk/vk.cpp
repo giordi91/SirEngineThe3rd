@@ -240,8 +240,6 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
 
   MATERIAL_MANAGER = new VkMaterialManager();
   MATERIAL_MANAGER->inititialize();
-  MATERIAL_MANAGER->loadTypesInFolder(frameConcatenation(
-      globals::ENGINE_CONFIG->m_dataSourcePath, "/materials/types"));
   globals::MATERIAL_MANAGER = MATERIAL_MANAGER;
 
   globals::DEBUG_RENDERER = new DebugRenderer();

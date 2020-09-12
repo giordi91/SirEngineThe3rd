@@ -271,10 +271,7 @@ const char *getComputeShaderPath(const char *shaderPath,
 
 PSOCompileResult processComputePSO(nlohmann::json &jobj, const char *path,
                                    const char *shaderPath) {
-  // find the input layout
-
   const std::string fileName = getFileName(path);
-  // MaterialMetadata metadata = extractMetadata(path);
   MaterialMetadata metadata = loadMetadata(path, GRAPHIC_API::DX12);
 
   RSHandle rsHandle =

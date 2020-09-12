@@ -46,7 +46,7 @@ struct VkMaterialData {
 class VkMaterialManager final : public MaterialManager {
  public:
   VkMaterialManager()
-      : MaterialManager(RESERVE_SIZE),
+      : MaterialManager(),
         m_nameToHandle(RESERVE_SIZE),
         m_materialTextureHandles(RESERVE_SIZE){};
   ~VkMaterialManager() = default;
@@ -96,9 +96,6 @@ class VkMaterialManager final : public MaterialManager {
   }
 
  public:
-  MaterialHandle allocateMaterial(
-      const char *name, ALLOCATE_MATERIAL_FLAGS flags,
-      const char *materialsPerQueue[QUEUE_COUNT]) override;
 
   void bindTexture(const MaterialHandle matHandle,
                    const TextureHandle texHandle,

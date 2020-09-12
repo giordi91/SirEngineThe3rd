@@ -59,7 +59,7 @@ struct MaterialData {
 class Dx12MaterialManager final : public MaterialManager {
  public:
   Dx12MaterialManager()
-      : MaterialManager(RESERVE_SIZE),
+      : MaterialManager(),
         m_nameToHandle(RESERVE_SIZE),
         m_materialTextureHandles(RESERVE_SIZE){};
   ~Dx12MaterialManager() = default;
@@ -101,12 +101,6 @@ class Dx12MaterialManager final : public MaterialManager {
                     const Dx12MaterialRuntime &runtime,
                     ID3D12GraphicsCommandList2 *commandList) const;
 
-  // a material can be processed in different queues, we can provide a material
-  // per queue, check SHADER_QUEUE_FLAGS to see available queues. The argument
-  // will be a const char* that will be parsed to a shader type
-  MaterialHandle allocateMaterial(
-      const char *name, ALLOCATE_MATERIAL_FLAGS flags,
-      const char *materialsPerQueue[QUEUE_COUNT]) override;
   MaterialHandle loadMaterial(const char *path, const MeshHandle meshHandle,
                               const SkinHandle skinHandle) override;
   void free(MaterialHandle handle) override;

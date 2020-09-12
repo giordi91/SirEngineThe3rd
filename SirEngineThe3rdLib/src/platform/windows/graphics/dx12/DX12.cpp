@@ -247,8 +247,6 @@ bool Dx12RenderingContext::initializeGraphicsDx12(BaseWindow *wnd,
   // types
   MATERIAL_MANAGER = new Dx12MaterialManager();
   MATERIAL_MANAGER->inititialize();
-  MATERIAL_MANAGER->loadTypesInFolder(frameConcatenation(
-      globals::ENGINE_CONFIG->m_dataSourcePath, "/materials/types"));
   globals::MATERIAL_MANAGER = MATERIAL_MANAGER;
 
   globals::DEBUG_RENDERER = new DebugRenderer();
