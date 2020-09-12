@@ -59,7 +59,7 @@ void updateForwardPhong(SHADER_QUEUE_FLAGS queueFlag,
 
 void VkMaterialManager::bindMaterial(SHADER_QUEUE_FLAGS queueFlag,
                                      const VkMaterialRuntime &materialRuntime,
-                                     VkCommandBuffer commandList) {
+                                     const VkCommandBuffer commandList) {
   int queueFlagInt = static_cast<int>(queueFlag);
   int currentFlagId = static_cast<int>(log2(queueFlagInt & -queueFlagInt));
 
@@ -75,7 +75,7 @@ void VkMaterialManager::bindMaterial(SHADER_QUEUE_FLAGS queueFlag,
                           PSOManager::PER_OBJECT_BINDING_INDEX, 1, sets, 0,
                           nullptr);
 }
-void VkMaterialManager::updateMaterial(SHADER_QUEUE_FLAGS queueFlag,
+void VkMaterialManager::updateMaterial(const SHADER_QUEUE_FLAGS queueFlag,
                                        const MaterialHandle handle,
                                        VkCommandBuffer commandList) {
   const VkMaterialRuntime &materialRuntime = getMaterialRuntime(handle);
@@ -118,7 +118,8 @@ ShaderBind VkMaterialManager::bindRSandPSO(
     const VkCommandBuffer commandList) const {
   // get type flags as int
   constexpr auto mask = static_cast<uint64_t>(~((1ull << 32ull) - 1ull));
-  const auto typeFlags = static_cast<uint64_t>((uint64_t(shaderFlags) & mask) >> 32ll);
+  const auto typeFlags =
+      static_cast<uint64_t>((uint64_t(shaderFlags) & mask) >> 32ll);
 
   for (int i = 0; i < QUEUE_COUNT; ++i) {
     if (runtime.shaderQueueTypeFlags2[i].pso.handle == typeFlags) {
@@ -197,33 +198,18 @@ MaterialHandle VkMaterialManager::loadMaterial(const char *path,
   MaterialHandle handle{(materialData.magicNumber << 16) | (index)};
   m_nameToHandle.insert(name.c_str(), handle);
 
-  // allocate the descriptor set
-  constexpr auto mask = static_cast<uint32_t>(~((1 << 16) - 1));
-
   // looping the queues
   for (int i = 0; i < QUEUE_COUNT; ++i) {
-    // uint32_t queue = matCpu.shaderQueueTypeFlags[i];
-    // if (queue == INVALID_QUEUE_TYPE_FLAGS) {
-    //  continue;
-    //}
     if (!matCpu.shaderQueueTypeFlags2[i].pso.isHandleValid()) {
       continue;
     }
-    // const auto queueType = getQueueFlags(queue);
-    // const auto typeFlags = static_cast<uint16_t>((queue & mask) >> 16);
     ShaderBind bind = matCpu.shaderQueueTypeFlags2[i];
-    // bool found = m_shaderTypeToShaderBind.get(typeFlags, bind);
-
-    // if (!found) {
-    //  assert(0 && "could not find needed root signature");
-    //}
     uint32_t flags =
         parse.isStatic
             ? 0
             : graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED;
 
-    const char *shaderTypeName =
-        getStringFromShaderTypeFlag(static_cast<SHADER_TYPE_FLAGS>(1 << i));
+    const char *shaderTypeName = parse.shaderQueueTypeFlagsStr[i];
     const char *descriptorName =
         frameConcatenation(name.c_str(), shaderTypeName, "-");
     DescriptorHandle descriptorHandle =
@@ -281,52 +267,6 @@ void VkMaterialManager::releaseAllMaterialsAndRelatedResources() {
       }
     }
   }
-}
-
-MaterialHandle VkMaterialManager::allocateMaterial(
-    const char *name, const ALLOCATE_MATERIAL_FLAGS flags,
-    const char *materialsPerQueue[QUEUE_COUNT]) {
-  assert(0);
-  // empty material
-  uint32_t index;
-  VkMaterialData &materialData =
-      m_materialTextureHandles.getFreeMemoryData(index);
-
-  for (int i = 0; i < QUEUE_COUNT; ++i) {
-    if (materialsPerQueue[i] == nullptr) {
-      continue;
-    }
-    // from the type we can get the PSO
-    const char *type = materialsPerQueue[i];
-    uint16_t shaderType = parseTypeFlags(type);
-    ShaderBind bind{};
-    bool found = m_shaderTypeToShaderBind.get(shaderType, bind);
-    assert(found && "could not find requested material type");
-    assert(bind.pso.isHandleValid());
-    assert(bind.rs.isHandleValid());
-
-    // allocating a descriptor set for the material
-    bool isBuffered = (flags & ALLOCATE_MATERIAL_FLAG_BITS::BUFFERED) > 0;
-    graphics::BINDING_TABLE_FLAGS descriptorFlags =
-        isBuffered ? graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED
-                   : 0;
-    DescriptorHandle descriptorHandle =
-        vk::DESCRIPTOR_MANAGER->allocate(bind.rs, descriptorFlags, name);
-
-    materialData.m_materialRuntime.descriptorHandles[i] = descriptorHandle;
-    materialData.m_materialRuntime.layouts[i] =
-        vk::PIPELINE_LAYOUT_MANAGER->getLayoutFromHandle(bind.rs);
-    materialData.m_materialRuntime.useStaticSamplers[i] = static_cast<uint8_t>(
-        vk::PIPELINE_LAYOUT_MANAGER->usesStaticSamplers(bind.rs));
-    SHADER_QUEUE_FLAGS queueType = static_cast<SHADER_QUEUE_FLAGS>(1 << i);
-    // materialData.m_materialRuntime.shaderQueueTypeFlags[i] =
-    //    getQueueTypeFlags(queueType, shaderType);
-  }
-  materialData.name = persistentString(name);
-  materialData.magicNumber = MAGIC_NUMBER_COUNTER++;
-  MaterialHandle handle{(materialData.magicNumber << 16) | (index)};
-  m_nameToHandle.insert(name, handle);
-  return handle;
 }
 
 void VkMaterialManager::bindTexture(const MaterialHandle matHandle,

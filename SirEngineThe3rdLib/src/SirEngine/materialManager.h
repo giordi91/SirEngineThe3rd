@@ -48,21 +48,6 @@ struct Material final {
   float metallicMult;
 };
 
-enum class SHADER_TYPE_FLAGS {
-  UNKNOWN = 0,
-  PBR,
-  SKIN,
-  FORWARD_PBR,
-  FORWARD_PHONG,
-  FORWARD_PHONG_ALPHA_CUTOUT_SKIN,
-  FORWARD_PHONG_ALPHA_CUTOUT,
-  HAIR,
-  SKINCLUSTER,
-  SKINSKINCLUSTER,
-  HAIRSKIN,
-  FORWARD_PARALLAX,
-  SHADOW_SKIN_CLUSTER,
-};
 enum class MATERIAL_RESOURCE_TYPE { TEXTURE, CONSTANT_BUFFER, BUFFER };
 enum class MATERIAL_RESOURCE_FLAGS { NONE = 0, READ_ONLY = 1 };
 
@@ -84,7 +69,8 @@ struct MaterialMetadata {
 };
 
 MaterialMetadata SIR_ENGINE_API extractMetadata(const char *psoPath);
-MaterialMetadata SIR_ENGINE_API loadMetadata(const char *psoPath, GRAPHIC_API api);
+MaterialMetadata SIR_ENGINE_API loadMetadata(const char *psoPath,
+                                             GRAPHIC_API api);
 
 class MaterialManager {
  public:
@@ -106,24 +92,18 @@ class MaterialManager {
   };
 
  public:
-  enum ALLOCATE_MATERIAL_FLAG_BITS { NONE = 0, BUFFERED = 1 };
   typedef uint32_t ALLOCATE_MATERIAL_FLAGS;
 
  public:
-  explicit MaterialManager(const uint32_t reserveSize)
-      : m_shaderTypeToShaderBind(reserveSize){};
+  MaterialManager() = default;
   virtual ~MaterialManager() = default;
 
-  void loadTypesInFolder(const char *folder);
   MaterialManager(const MaterialManager &) = delete;
   MaterialManager &operator=(const MaterialManager &) = delete;
 
   virtual void inititialize() = 0;
   virtual void cleanup() = 0;
 
-  virtual MaterialHandle allocateMaterial(
-      const char *name, ALLOCATE_MATERIAL_FLAGS flags,
-      const char *materialsPerQueue[QUEUE_COUNT]) = 0;
   virtual MaterialHandle loadMaterial(const char *path,
                                       const MeshHandle meshHandle,
                                       const SkinHandle skinHandle) = 0;
@@ -165,36 +145,12 @@ class MaterialManager {
 
   virtual void free(MaterialHandle handle) = 0;
 
-  static inline SHADER_TYPE_FLAGS getTypeFlags(const uint32_t flags) {
-    // here we are creating a mask for the fist 16 bits, then we flip it
-    // such that we are going to mask the upper 16 bits
-    constexpr uint32_t mask = static_cast<uint32_t>(~((1 << 16) - 1));
-    const uint32_t typeFlags = (flags & mask) >> 16;
-    return static_cast<SHADER_TYPE_FLAGS>(typeFlags);
-  }
-
-  static inline bool isShaderOfType(const uint32_t flags,
-                                    const SHADER_TYPE_FLAGS type) {
-    const SHADER_TYPE_FLAGS typeFlags = getTypeFlags(flags);
-    return typeFlags == type;
-  }
-
-  static inline uint32_t getQueueFlags(const uint32_t flags) {
-    constexpr uint32_t mask = (1 << 16) - 1;
-    const uint32_t queueFlags = flags & mask;
-    return queueFlags;
-  }
   static inline uint64_t getQueueFlags(const uint64_t flags) {
     constexpr uint64_t mask = (1ll << 16) - 1ll;
     const uint64_t queueFlags = flags & mask;
     return queueFlags;
   }
 
-  static inline bool isQueueType(const uint32_t flags,
-                                 const SHADER_QUEUE_FLAGS queue) {
-    const uint32_t queueFlags = getQueueFlags(flags);
-    return (queueFlags & static_cast<uint32_t>(queue)) > 0;
-  }
   static inline bool isQueueType(const uint64_t flags,
                                  const SHADER_QUEUE_FLAGS queue) {
     const uint64_t queueFlags = getQueueFlags(flags);
@@ -212,18 +168,10 @@ class MaterialManager {
     return flags;
   }
 
-  static uint16_t parseTypeFlags(const char *stringType);
-
-  static const char *getStringFromShaderTypeFlag(SHADER_TYPE_FLAGS type);
-
  protected:
   static PreliminaryMaterialParse parseMaterial(const char *path,
                                                 const MeshHandle meshHandle,
                                                 const SkinHandle skinHandle);
-  void loadTypeFile(const char *path);
-
- protected:
-  HashMap<uint16_t, ShaderBind, hashUint16> m_shaderTypeToShaderBind;
 };
 
 }  // namespace SirEngine

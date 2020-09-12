@@ -237,56 +237,6 @@ void allocateDescriptorTable(FlatDescriptorTable &table, const RSHandle root) {
   table.flatDescriptors = descriptors;
 }
 
-MaterialHandle Dx12MaterialManager::allocateMaterial(
-    const char *name, ALLOCATE_MATERIAL_FLAGS flags,
-    const char *materialsPerQueue[QUEUE_COUNT]) {
-  // from the type we can get the PSO
-  // TODO clean this up properly
-  for (int i = 0; i < QUEUE_COUNT; ++i) {
-    if (materialsPerQueue[i] == nullptr) {
-      continue;
-    }
-    uint16_t shaderType = parseTypeFlags(materialsPerQueue[i]);
-    ShaderBind bind;
-    bool found = m_shaderTypeToShaderBind.get(shaderType, bind);
-    assert(found && "could not find requested material type");
-    assert(bind.pso.isHandleValid() &&
-           "could find the material type but no PSO, does the correct material "
-           "exists for HLSL?");
-
-    // empty material
-    uint32_t index;
-    MaterialData &materialData =
-        m_materialTextureHandles.getFreeMemoryData(index);
-    materialData.magicNumber = MAGIC_NUMBER_COUNTER++;
-    materialData.m_materialRuntime.m_tables[i].isFlatRoot = false;
-    materialData.m_materialRuntime.m_tables[i].descriptorCount = 0;
-    materialData.m_materialRuntime.m_tables[i].flatDescriptors = nullptr;
-
-    // now we check whether is a flat table or not, if it is
-    // we allocate the corresponding descriptors
-    RSHandle root = bind.rs;
-    bool isFlatRoot = dx12::ROOT_SIGNATURE_MANAGER->isFlatRoot(root);
-    if (isFlatRoot) {
-      allocateDescriptorTable(materialData.m_materialRuntime.m_tables[i], root);
-    }
-
-    // this will be used when we need to bind the material
-    materialData.m_psoHandle = bind.pso;
-    materialData.m_rsHandle = bind.rs;
-
-    // adding correct queue
-    const auto queueType = static_cast<SHADER_QUEUE_FLAGS>(1 << i);
-    materialData.m_materialRuntime.shaderQueueTypeFlags[i] =
-        getQueueTypeFlags(queueType, shaderType);
-
-    const MaterialHandle handle{(materialData.magicNumber << 16) | (index)};
-    m_nameToHandle.insert(name, handle);
-    return handle;
-  }
-  assert(0);
-  return {};
-}
 
 MaterialHandle Dx12MaterialManager::loadMaterial(const char *path,
                                                  const MeshHandle meshHandle,

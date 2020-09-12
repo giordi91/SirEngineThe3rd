@@ -9,7 +9,6 @@
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/log.h"
-#include "SirEngine/rootSignatureManager.h"
 #include "SirEngine/textureManager.h"
 #include "binary/binaryFile.h"
 #include "memory/cpu/stringPool.h"
@@ -17,6 +16,13 @@
 #include "runtimeString.h"
 
 namespace SirEngine {
+static const std::string PSO_TYPE_KEY = "type";
+static const std::string PSO_TYPE_RASTER = "RASTER";
+static const std::string PSO_TYPE_COMPUTE = "COMPUTE";
+static const std::string PSO_VS_KEY = "VS";
+static const std::string PSO_PS_KEY = "PS";
+static const std::string PSO_CS_KEY = "shaderName";
+
 namespace materialKeys {
 static const char *KD = "kd";
 static const char *KS = "ks";
@@ -47,29 +53,6 @@ static const std::unordered_map<std::string, SirEngine::SHADER_QUEUE_FLAGS>
         {"debug", SirEngine::SHADER_QUEUE_FLAGS::QUEUE_DEBUG},
         {"custom", SirEngine::SHADER_QUEUE_FLAGS::CUSTOM},
     };
-static const std::unordered_map<std::string, SirEngine::SHADER_TYPE_FLAGS>
-    STRING_TO_TYPE_FLAGS{
-        {"forwardPhongPSO", SirEngine::SHADER_TYPE_FLAGS::FORWARD_PHONG},
-    };
-static const std::unordered_map<SirEngine::SHADER_TYPE_FLAGS, std::string>
-    TYPE_FLAGS_TO_STRING{
-        {SirEngine::SHADER_TYPE_FLAGS::PBR, "pbr"},
-        {SirEngine::SHADER_TYPE_FLAGS::FORWARD_PBR, "forwardPbr"},
-        {SirEngine::SHADER_TYPE_FLAGS::FORWARD_PHONG, "forwardPhong"},
-        {SirEngine::SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT,
-         "forwardPhongAlphaCutout"},
-        {SirEngine::SHADER_TYPE_FLAGS::SKIN, "skin"},
-        {SirEngine::SHADER_TYPE_FLAGS::HAIR, "hair"},
-        {SirEngine::SHADER_TYPE_FLAGS::HAIRSKIN, "hairSkin"},
-        {SirEngine::SHADER_TYPE_FLAGS::SKINCLUSTER, "skinCluster"},
-        {SirEngine::SHADER_TYPE_FLAGS::SKINSKINCLUSTER, "skinSkinCluster"},
-        {SirEngine::SHADER_TYPE_FLAGS::FORWARD_PHONG_ALPHA_CUTOUT_SKIN,
-         "forwardPhongAlphaCutoutSkin"},
-        {SirEngine::SHADER_TYPE_FLAGS::FORWARD_PARALLAX, "forwardParallax"},
-        {SirEngine::SHADER_TYPE_FLAGS::SHADOW_SKIN_CLUSTER,
-         "shadowSkinCluster"},
-    };
-
 }  // namespace materialKeys
 
 inline uint32_t stringToActualQueueFlag(const std::string &flag) {
@@ -79,54 +62,6 @@ inline uint32_t stringToActualQueueFlag(const std::string &flag) {
   }
   assert(0 && "could not map requested queue flag");
   return 0;
-}
-inline uint16_t stringToActualTypeFlag(const std::string &flag) {
-  const auto found = materialKeys::STRING_TO_TYPE_FLAGS.find(flag);
-  if (found != materialKeys::STRING_TO_TYPE_FLAGS.end()) {
-    return static_cast<uint16_t>(found->second);
-  }
-  assert(0 && "could not map requested type flag");
-  return 0;
-}
-
-uint16_t MaterialManager::parseTypeFlags(const char *stringType) {
-  const uint16_t typeFlag = stringToActualTypeFlag(stringType);
-  return typeFlag;
-}
-
-static void parseQueueTypeFlags(uint32_t *outFlags,
-                                const nlohmann::json &jobj) {
-  if (jobj.find(materialKeys::QUEUE) == jobj.end()) {
-    assert(0 && "cannot find queue flags in material");
-    return;
-  }
-  if (jobj.find(materialKeys::TYPE) == jobj.end()) {
-    assert(0 && "cannot find types in material");
-    return;
-  }
-
-  // extract the queue flags, that flag is a bit field for an
-  // uint16, which is merged with the material type which
-  // is a normal increasing uint16
-  const auto &qjobj = jobj[materialKeys::QUEUE];
-  const auto &tjobj = jobj[materialKeys::TYPE];
-  assert(qjobj.size() == tjobj.size());
-
-  for (size_t i = 0; i < qjobj.size(); ++i) {
-    uint32_t flags = 0;
-    const auto stringFlag = qjobj[i].get<std::string>();
-    const uint32_t currentFlag = stringToActualQueueFlag(stringFlag);
-    flags |= currentFlag;
-
-    int currentFlagId = static_cast<int>(log2(currentFlag & -currentFlag));
-
-    const auto stringType = tjobj[i].get<std::string>();
-    const uint32_t typeFlag =
-        MaterialManager::parseTypeFlags(stringType.c_str());
-    flags = typeFlag << 16 | flags;
-
-    outFlags[currentFlagId] = flags;
-  }
 }
 
 static void parseQueueTypeFlags2(const char **outFlags,
@@ -281,60 +216,6 @@ MaterialManager::PreliminaryMaterialParse MaterialManager::parseMaterial(
   return toReturn;
 }
 
-const char *MaterialManager::getStringFromShaderTypeFlag(
-    const SHADER_TYPE_FLAGS type) {
-  const auto found = materialKeys::TYPE_FLAGS_TO_STRING.find(type);
-  if (found != materialKeys::TYPE_FLAGS_TO_STRING.end()) {
-    return found->second.c_str();
-  }
-
-  assert(0 && "Could not find flag");
-  const auto unknown =
-      materialKeys::TYPE_FLAGS_TO_STRING.find(SHADER_TYPE_FLAGS::UNKNOWN);
-  return unknown->second.c_str();
-}
-void MaterialManager::loadTypeFile(const char *path) {
-  return;
-  const auto jObj = getJsonObj(path);
-  SE_CORE_INFO("[Engine]: Loading Material Type from: {0}", path);
-
-  const std::string rsString = getValueIfInJson(jObj, materialKeys::RS_KEY,
-                                                materialKeys::DEFAULT_STRING);
-  const std::string psoString = getValueIfInJson(jObj, materialKeys::PSO_KEY,
-                                                 materialKeys::DEFAULT_STRING);
-
-  assert(!rsString.empty() && "root signature is emtpy in material type");
-  assert(!psoString.empty() && "pso  is emtpy in material type");
-
-  // get the handles
-  const PSOHandle psoHandle =
-      globals::PSO_MANAGER->getHandleFromName(psoString.c_str());
-  const RSHandle rsHandle =
-      globals::ROOT_SIGNATURE_MANAGER->getHandleFromName(rsString.c_str());
-
-  std::string name = getFileName(path);
-
-  const std::string type = jObj[materialKeys::TYPE].get<std::string>();
-  const uint16_t flags = MaterialManager::parseTypeFlags(type.c_str());
-  m_shaderTypeToShaderBind.insert(flags, ShaderBind{rsHandle, psoHandle});
-}
-
-void MaterialManager::loadTypesInFolder(const char *folder) {
-  std::vector<std::string> paths;
-  listFilesInFolder(folder, paths, "json");
-
-  for (const auto &p : paths) {
-    loadTypeFile(p.c_str());
-  }
-}
-static const std::string PSO_TYPE_KEY = "type";
-static const std::string PSO_TYPE_RASTER = "RASTER";
-static const std::string PSO_TYPE_COMPUTE = "COMPUTE";
-static const std::string PSO_VS_KEY = "VS";
-static const std::string PSO_PS_KEY = "PS";
-static const std::string PSO_CS_KEY = "shaderName";
-static const std::string DEFAULT_STRING = "";
-
 MaterialMetadata processShader(const char *shaderName, SHADER_TYPE type) {
   GRAPHIC_RESOURCE_VISIBILITY visibility = 0;
   switch (type) {
@@ -350,6 +231,8 @@ MaterialMetadata processShader(const char *shaderName, SHADER_TYPE type) {
       visibility = GRAPHICS_RESOURCE_VISIBILITY_COMPUTE;
       break;
     }
+    default:
+      assert(0 && "unsupported visibilty");
   }
   assert(visibility && "wrong visibility found for shader type");
 
@@ -429,7 +312,8 @@ MaterialMetadata processShader(const char *shaderName, SHADER_TYPE type) {
 MaterialMetadata processComputeMetadata(const nlohmann::json &jobj) {
   assertInJson(jobj, PSO_CS_KEY);
 
-  const std::string &name = getValueIfInJson(jobj, PSO_CS_KEY, DEFAULT_STRING);
+  const std::string &name =
+      getValueIfInJson(jobj, PSO_CS_KEY, materialKeys::DEFAULT_STRING);
   const std::string path = "../data/shaders/VK/compute/" + name + ".glsl";
   assert(fileExists(path));
   MaterialMetadata meta = processShader(path.c_str(), SHADER_TYPE::COMPUTE);
@@ -492,9 +376,9 @@ MaterialMetadata processRasterMetadata(const nlohmann::json &jobj) {
   assertInJson(jobj, PSO_VS_KEY);
 
   const std::string &vsName =
-      getValueIfInJson(jobj, PSO_VS_KEY, DEFAULT_STRING);
+      getValueIfInJson(jobj, PSO_VS_KEY, materialKeys::DEFAULT_STRING);
   const std::string &psName =
-      getValueIfInJson(jobj, PSO_PS_KEY, DEFAULT_STRING);
+      getValueIfInJson(jobj, PSO_PS_KEY, materialKeys::DEFAULT_STRING);
   const std::string vsPath =
       "../data/shaders/VK/rasterization/" + vsName + ".glsl";
   assert(fileExists(vsPath));
