@@ -525,20 +525,22 @@ VkPSOCompileResult VkPSOManager::processRasterPSO(
   compileResult.PSOFullPathFile = frameString(filePath);
 
   // load root signature
-  const std::string rootFile =
-      getValueIfInJson(jobj, PSO_KEY_GLOBAL_ROOT, DEFAULT_STRING);
-  assert(!rootFile.empty());
-
   const std::string fileName = getFileName(filePath);
 
-  MaterialMetadata metadata = extractMetadata(filePath);
-  RSHandle layoutHandle2 =
-      vk::PIPELINE_LAYOUT_MANAGER->loadSignatureFile(fileName.c_str(),&metadata);
+  MaterialMetadata metadata = loadMetadata(filePath, GRAPHIC_API::VULKAN);
+  // if (fileName == "forwardPhongPSO") {
+  //  int x = 0;
+  //} else {
+  //  metadata = extractMetadata(filePath);
+  //}
+  RSHandle layoutHandle2 = vk::PIPELINE_LAYOUT_MANAGER->loadSignatureFile(
+      fileName.c_str(), &metadata);
   compileResult.rootSignature = frameString(fileName.c_str());
 
-  //RSHandle layoutHandle =
+  // RSHandle layoutHandle =
   //    vk::PIPELINE_LAYOUT_MANAGER->loadSignatureFile(rootFile.c_str());
-  auto *layout = vk::PIPELINE_LAYOUT_MANAGER->getLayoutFromHandle(layoutHandle2);
+  auto *layout =
+      vk::PIPELINE_LAYOUT_MANAGER->getLayoutFromHandle(layoutHandle2);
 
   // load shader stage
   // here we define all the stages of the pipeline
@@ -698,14 +700,15 @@ VkPSOCompileResult VkPSOManager::processComputePSO(const char *filePath,
 
   const std::string fileName = getFileName(filePath);
 
-  MaterialMetadata metadata = extractMetadata(filePath);
-  RSHandle layoutHandle2 =
-      vk::PIPELINE_LAYOUT_MANAGER->loadSignatureFile(fileName.c_str(),&metadata);
+  MaterialMetadata metadata = loadMetadata(filePath, GRAPHIC_API::VULKAN);
+  RSHandle layoutHandle2 = vk::PIPELINE_LAYOUT_MANAGER->loadSignatureFile(
+      fileName.c_str(), &metadata);
   compileResult.rootSignature = frameString(fileName.c_str());
 
-  //RSHandle layoutHandle =
+  // RSHandle layoutHandle =
   //    vk::PIPELINE_LAYOUT_MANAGER->loadSignatureFile(rootFile.c_str());
-  auto *layout = vk::PIPELINE_LAYOUT_MANAGER->getLayoutFromHandle(layoutHandle2);
+  auto *layout =
+      vk::PIPELINE_LAYOUT_MANAGER->getLayoutFromHandle(layoutHandle2);
 
   VkPipelineShaderStageCreateInfo stage{};
   int shaderStageCount = 0;

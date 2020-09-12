@@ -271,15 +271,16 @@ const char *getComputeShaderPath(const char *shaderPath,
 
 PSOCompileResult processComputePSO(nlohmann::json &jobj, const char *path,
                                    const char *shaderPath) {
-
   // find the input layout
 
   const std::string fileName = getFileName(path);
-  MaterialMetadata metadata = extractMetadata(path);
+  // MaterialMetadata metadata = extractMetadata(path);
+  MaterialMetadata metadata = loadMetadata(path, GRAPHIC_API::DX12);
 
   RSHandle rsHandle =
       dx12::ROOT_SIGNATURE_MANAGER->loadSignatureFromMeta(path, &metadata);
-  auto rootS = dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromHandle(rsHandle);
+  ID3D12RootSignature *rootS =
+      dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromHandle(rsHandle);
   // lets process the PSO for a compute shader which is quite simple
   const std::string globalRootSignatureName =
       getValueIfInJson(jobj, PSO_KEY_GLOBAL_ROOT, DEFAULT_STRING);
@@ -370,7 +371,8 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj, const char *path,
       getValueIfInJson(jobj, PSO_KEY_GLOBAL_ROOT, DEFAULT_STRING);
 
   const std::string fileName = getFileName(path);
-  MaterialMetadata metadata = extractMetadata(path);
+  // MaterialMetadata metadata = extractMetadata(path);
+  MaterialMetadata metadata = loadMetadata(path, GRAPHIC_API::DX12);
 
   // auto resultCompile = processSignatureFile(rootSignatureString.c_str());
   RSHandle rsHandle =

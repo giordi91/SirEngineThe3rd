@@ -233,10 +233,6 @@ void Dx12PSOManager::insertInPSOCache(const PSOCompileResult &result) {
       PSOData &data = m_psoPool.getFreeMemoryData(index);
 
       const std::string rootName = getFileName(result.rootSignature);
-      RSHandle rsHandle =
-          dx12::ROOT_SIGNATURE_MANAGER->getHandleFromName(rootName.c_str());
-      data.rsHandle = rsHandle;
-
       data.pso = result.pso;
       data.rsHandle = result.rsHandle;
       data.topology = TOPOLOGY_TYPE::UNDEFINED;

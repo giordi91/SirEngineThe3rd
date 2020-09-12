@@ -9,6 +9,6 @@
   "roughness" :  "../data/processed/textures/knightB/cape_R.texture",
   "metallic" :  "../data/processed/textures/knightB/cape_M.texture",
   "queue" :  ["forward"],
-  "type" : ["forwardPhong"],
+  "type" : ["forwardPhongPSO"],
   "isStatic": true 
 }

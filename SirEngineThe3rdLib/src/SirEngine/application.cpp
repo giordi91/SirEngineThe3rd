@@ -85,7 +85,7 @@ void Application::run() {
     // update input to cache current input for next frame
     globals::INPUT->swapFrameKey();
 
-    const auto currentQueue = m_queuedEndOfFrameEventsCurrent;
+    EventQueue *currentQueue = m_queuedEndOfFrameEventsCurrent;
     flipEndOfFrameQueue();
     for (uint32_t i = 0; i < currentQueue->allocCount; ++i) {
       onEvent(*(currentQueue->events[i]));

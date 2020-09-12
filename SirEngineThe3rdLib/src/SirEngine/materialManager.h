@@ -84,6 +84,7 @@ struct MaterialMetadata {
 };
 
 MaterialMetadata SIR_ENGINE_API extractMetadata(const char *psoPath);
+MaterialMetadata SIR_ENGINE_API loadMetadata(const char *psoPath, GRAPHIC_API api);
 
 class MaterialManager {
  public:

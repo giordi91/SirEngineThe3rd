@@ -65,7 +65,9 @@ bool SIR_ENGINE_API readAllBytes(const std::string &filename,
   X(RS)                   \
   X(SKIN)                 \
   X(ANIM)                 \
-  X(PSO)
+  X(PSO)                  \
+  X(POINT_TILER)          \
+  X(MATERIAL_METADATA)
 
 enum BinaryFileType {
   NONE = 0,
@@ -75,7 +77,8 @@ enum BinaryFileType {
   SKIN = 4,
   ANIM = 5,
   PSO = 6,
-  POINT_TILER= 7
+  POINT_TILER = 7,
+  MATERIAL_METADATA = 8
 };
 
 SIR_ENGINE_API
@@ -126,7 +129,7 @@ struct RootSignatureMappedData final {
   uint32_t type : 8;
   uint32_t isFlatRoot : 8;
   uint32_t flatRootSignatureCount : 16;
-  int16_t  bindingSlots[4]={-1,-1,-1,-1};
+  int16_t bindingSlots[4] = {-1, -1, -1, -1};
 };
 
 struct SkinMapperData {
@@ -157,11 +160,18 @@ struct PSOMappedData {
   int psoType;
   int topologyType;
 };
+struct MaterialMappedData {
+  uint32_t objectResourceCount;
+  uint32_t frameResourceCount;
+  uint32_t passResourceCount;
+  uint32_t objectResourceDataOffset;
+  uint32_t frameResourceDataOffset;
+  uint32_t passResourceDataOffset;
+};
 
-struct PointTilerMapperData
-{
-    int tileCount;
-    int pointsPerTile;
-    int nameSizeInByte;
-    int pointsSizeInByte;
+struct PointTilerMapperData {
+  int tileCount;
+  int pointsPerTile;
+  int nameSizeInByte;
+  int pointsSizeInByte;
 };
