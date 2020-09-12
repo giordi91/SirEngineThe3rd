@@ -3,6 +3,7 @@
 
 namespace SirEngine {
 
+struct MaterialMetadata;
 class PSOManager {
  public:
   PSOManager() = default;
@@ -21,8 +22,9 @@ class PSOManager {
                                       const char *getOffsetPath) = 0;
 
   virtual PSOHandle getHandleFromName(const char *name) const = 0;
-  virtual RSHandle getRS(const PSOHandle pso) const= 0;
+  virtual RSHandle getRS(const PSOHandle pso) const = 0;
   virtual void bindPSO(PSOHandle handle) const = 0;
+  virtual const MaterialMetadata *getMetadata(const PSOHandle &handle) = 0;
 
  public:
   static const uint32_t PER_FRAME_DATA_BINDING_INDEX = 0;

@@ -39,6 +39,8 @@ class Dx12BindingTableManager : public graphics::BindingTableManager {
 	  const uint32_t descriptorIndex, const uint32_t bindingIndex) override;
   void bindBuffer(const BindingTableHandle bindHandle, const BufferHandle buffer, const uint32_t descriptorIndex,
 	  const uint32_t bindingIndex) override;
+  void bindMesh(const BindingTableHandle bindHandle, const MeshHandle mesh,
+	  const MESH_ATTRIBUTE_FLAGS meshFlags) override;
 
   void free(const BindingTableHandle& bindingTable) override;
  private:

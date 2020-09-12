@@ -42,8 +42,8 @@ class VkBindingTableManager final : public graphics::BindingTableManager {
 	    m_imagesDescriptorCount(imagesDescriptorCount)
   {
 	  m_allocator.initialize(10 * MB_TO_BYTE);
-  };
-  ~VkBindingTableManager() = default;
+  }
+  ~VkBindingTableManager() override = default;
   VkBindingTableManager(const VkBindingTableManager &) = delete;
   VkBindingTableManager &operator=(const VkBindingTableManager &) = delete;
   VkBindingTableManager(VkBindingTableManager &&) = delete;
@@ -91,6 +91,8 @@ class VkBindingTableManager final : public graphics::BindingTableManager {
   void bindTexture(const BindingTableHandle bindHandle,
                    const TextureHandle texture, const uint32_t descriptorIndex,
                    const uint32_t bindingIndex, const bool isCube) override;
+  void bindMesh(const BindingTableHandle bindHandle, const MeshHandle mesh,
+	  const MESH_ATTRIBUTE_FLAGS meshFlags) override;
 
   void bindConstantBuffer(const BindingTableHandle& bindingTable, const ConstantBufferHandle& constantBufferHandle,
 	  const uint32_t descriptorIndex, const uint32_t bindingIndex) override;
@@ -119,6 +121,7 @@ class VkBindingTableManager final : public graphics::BindingTableManager {
 #endif
   }
 
+public:
  private:
   static const uint32_t RESERVE_SIZE = 400;
   uint32_t MAGIC_NUMBER_COUNTER = 1;

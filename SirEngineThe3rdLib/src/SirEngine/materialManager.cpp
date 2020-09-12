@@ -24,10 +24,6 @@ static const std::string PSO_PS_KEY = "PS";
 static const std::string PSO_CS_KEY = "shaderName";
 
 namespace materialKeys {
-static const char *KD = "kd";
-static const char *KS = "ks";
-static const char *KA = "ka";
-static const char *SHINESS = "shiness";
 static const char *ALBEDO = "albedo";
 static const char *NORMAL = "normal";
 static const char *METALLIC = "metallic";
@@ -101,13 +97,7 @@ MaterialManager::PreliminaryMaterialParse MaterialManager::parseMaterial(
   const std::string name = getFileName(path);
 
   auto jobj = getJsonObj(path);
-  glm::vec4 zero{0.0f, 0.0f, 0.0f, 0.0f};
-  glm::vec4 kd = getValueIfInJson(jobj, materialKeys::KD, zero);
-  glm::vec4 ka = getValueIfInJson(jobj, materialKeys::KA, zero);
-  glm::vec4 ks = getValueIfInJson(jobj, materialKeys::KS, zero);
-  float zeroFloat = 0.0f;
   float oneFloat = 1.0f;
-  float shininess = getValueIfInJson(jobj, materialKeys::SHINESS, zeroFloat);
   float roughnessMult =
       getValueIfInJson(jobj, materialKeys::ROUGHNESS_MULT, oneFloat);
   float metallicMult =
@@ -183,16 +173,6 @@ MaterialManager::PreliminaryMaterialParse MaterialManager::parseMaterial(
   }
 
   Material mat{};
-  mat.kDR = kd.x;
-  mat.kDG = kd.y;
-  mat.kDB = kd.z;
-  mat.kAR = ka.x;
-  mat.kAG = ka.y;
-  mat.kAB = ka.z;
-  mat.kSR = ks.x;
-  mat.kSG = ks.y;
-  mat.kSB = ks.z;
-  mat.shiness = shininess;
   mat.roughnessMult = roughnessMult;
   mat.metallicMult = metallicMult;
 

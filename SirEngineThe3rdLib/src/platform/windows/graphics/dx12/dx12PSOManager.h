@@ -101,6 +101,10 @@ class Dx12PSOManager final : public PSOManager {
     const PSOData &data = m_psoPool.getConstRef(index);
     return data.rsHandle;
   }
+  const MaterialMetadata *getMetadata(const PSOHandle &handle) override {
+    assert(0);
+    return nullptr;
+  }
 
  private:
   // debugging function to be able to print to console the composition of a

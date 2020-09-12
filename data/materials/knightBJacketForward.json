@@ -1,9 +1,31 @@
 {
-  "kd" : [1.0,1.0,1.0,1.0],
-  "ks" : [1.0,1.0,1.0,1.0],
-  "ka" : [0.1,0.1,0.1,1.0],
-  "pbr" : [1.0,1.0,0.1,1.0],
-  "shiness":200.0,
+  "resources": [
+    {
+      "type": "texture",
+      "bindingName" : "albedoTex",
+      "resourcePath" : "../data/processed/textures/knightB/jacket_A.texture"
+    },
+    {
+      "type": "texture",
+      "bindingName" : "tangentTex",
+      "resourcePath" : "../data/processed/textures/knightB/jacket_N.texture"
+    },
+    {
+      "type": "texture",
+      "bindingName" : "roughnessTex",
+      "resourcePath" : "../data/processed/textures/knightB/jacket_R.texture"
+    },
+    {
+      "type": "texture",
+      "bindingName": "metallicTex",
+      "resourcePath": "../data/processed/textures/knightB/jacket_M.texture"
+    },
+    {
+      "type": "mesh",
+      "bindingName": "",
+      "resourcePath": "../data/processed/meshes/knightB/jacket.model"
+    }
+  ],
   "albedo" :  "../data/processed/textures/knightB/jacket_A.texture",
   "normal" :  "../data/processed/textures/knightB/jacket_N.texture",
   "roughness" :  "../data/processed/textures/knightB/jacket_R.texture",

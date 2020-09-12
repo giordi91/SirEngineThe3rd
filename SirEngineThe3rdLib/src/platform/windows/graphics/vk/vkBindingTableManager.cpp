@@ -6,6 +6,7 @@
 #include "platform/windows/graphics/vk/vkPSOManager.h"
 #include "vkBufferManager.h"
 #include "vkConstantBufferManager.h"
+#include "vkMeshManager.h"
 #include "vkTextureManager.h"
 
 namespace SirEngine::vk {
@@ -161,7 +162,7 @@ void VkBindingTableManager::bindTexture(const BindingTableHandle bindHandle,
                                         const TextureHandle texture,
                                         const uint32_t descriptorIndex,
                                         const uint32_t bindingIndex,
-                                        const bool ) {
+                                        const bool) {
   assertMagicNumber(bindHandle);
   uint32_t index = getIndexFromHandle(bindHandle);
   const BindingTableData &data = m_bindingTablePool.getConstRef(index);
@@ -198,6 +199,32 @@ void VkBindingTableManager::bindTexture(const BindingTableHandle bindHandle,
   // For simplicity we will update once per set instead
   // object one off update
   vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, 1, &writeDescriptorSets, 0,
+                         nullptr);
+}
+
+void VkBindingTableManager::bindMesh(const BindingTableHandle bindHandle,
+                                     const MeshHandle mesh,
+                                     const MESH_ATTRIBUTE_FLAGS meshFlags) {
+  assertMagicNumber(bindHandle);
+  uint32_t index = getIndexFromHandle(bindHandle);
+  const auto &data = m_bindingTablePool.getConstRef(index);
+
+  assert(data.descriptorHandle.isHandleValid());
+  // the descriptor set is already taking into account whether or not
+  // is buffered, it gives us the correct one we want
+  VkDescriptorSet descriptorSet =
+      vk::DESCRIPTOR_MANAGER->getDescriptorSet(data.descriptorHandle);
+
+  VkWriteDescriptorSet writeDescriptorSets[4] = {};
+  VkDescriptorBufferInfo bufferInfo[4] = {};
+  /*
+      vk::BUFFER_MANAGER->bindBuffer(buffer, &writeDescriptorSets,
+     descriptorSet, bindingIndex);
+                                 */
+
+  vk::MESH_MANAGER->bindMesh(mesh, writeDescriptorSets, descriptorSet,
+                             bufferInfo, meshFlags, 0);
+  vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, 4, writeDescriptorSets, 0,
                          nullptr);
 }
 

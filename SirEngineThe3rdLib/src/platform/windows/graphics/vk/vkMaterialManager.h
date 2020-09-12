@@ -2,27 +2,16 @@
 
 #include <cassert>
 
+#include "SirEngine/graphics/bindingTableManager.h"
 #include "SirEngine/handle.h"
 #include "SirEngine/materialManager.h"
 #include "SirEngine/memory/cpu/sparseMemoryPool.h"
 #include "SirEngine/memory/cpu/stringHashMap.h"
 #include "platform/windows/graphics/vk/volk.h"
+
 namespace SirEngine::vk {
 
 struct VkMaterialRuntime final {
-  VkDescriptorBufferInfo cbVirtualAddress;
-  VkDescriptorImageInfo albedo;
-  VkDescriptorImageInfo normal;
-  VkDescriptorImageInfo metallic;
-  VkDescriptorImageInfo roughness;
-  VkDescriptorImageInfo thickness;
-  VkDescriptorImageInfo separateAlpha;
-  VkDescriptorImageInfo heightMap;
-  VkDescriptorImageInfo ao;
-  // uint32_t shaderQueueTypeFlags[MaterialManager::QUEUE_COUNT] = {
-  //    INVALID_QUEUE_TYPE_FLAGS, INVALID_QUEUE_TYPE_FLAGS,
-  //    INVALID_QUEUE_TYPE_FLAGS, INVALID_QUEUE_TYPE_FLAGS,
-  //    INVALID_QUEUE_TYPE_FLAGS};
 
   ShaderBind shaderQueueTypeFlags2[MaterialManager::QUEUE_COUNT] = {};
   SkinHandle skinHandle;
@@ -30,6 +19,7 @@ struct VkMaterialRuntime final {
   DescriptorHandle descriptorHandles[5]{{}, {}, {}, {}, {}};
   VkPipelineLayout layouts[5]{nullptr, nullptr, nullptr, nullptr};
   uint8_t useStaticSamplers[5]{1, 1, 1, 1, 1};
+  BindingTableHandle bindingHandle[MaterialManager::QUEUE_COUNT]{};
 };
 
 struct VkMaterialData {
@@ -43,22 +33,21 @@ struct VkMaterialData {
   const char *name = nullptr;
 };
 
+
 class VkMaterialManager final : public MaterialManager {
  public:
   VkMaterialManager()
       : MaterialManager(),
         m_nameToHandle(RESERVE_SIZE),
-        m_materialTextureHandles(RESERVE_SIZE){};
-  ~VkMaterialManager() = default;
-  void inititialize() override{};
+        m_materialTextureHandles(RESERVE_SIZE) {}
+  ~VkMaterialManager() override = default;
+  void inititialize() override {}
   void cleanup() override{};
   void bindMaterial(SHADER_QUEUE_FLAGS queueFlag, const MaterialHandle handle,
                     VkCommandBuffer commandList);
   void bindMaterial(SHADER_QUEUE_FLAGS queueFlag,
                     const VkMaterialRuntime &materialRuntime,
                     VkCommandBuffer commandList);
-  void updateMaterial(SHADER_QUEUE_FLAGS queueFlag, MaterialHandle handle,
-                      VkCommandBuffer commandList);
 
   // TODO see note on the dx12 material manager for this function
   ShaderBind bindRSandPSO(uint64_t shaderFlags,
@@ -96,7 +85,6 @@ class VkMaterialManager final : public MaterialManager {
   }
 
  public:
-
   void bindTexture(const MaterialHandle matHandle,
                    const TextureHandle texHandle,
                    const uint32_t descriptorIndex, const uint32_t bindingIndex,
@@ -124,6 +112,7 @@ class VkMaterialManager final : public MaterialManager {
   uint32_t MAGIC_NUMBER_COUNTER = 1;
 
   SparseMemoryPool<VkMaterialData> m_materialTextureHandles;
+  graphics::BindingDescription descriptions[16];
 };
 
 }  // namespace SirEngine::vk
