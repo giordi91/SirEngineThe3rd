@@ -11,6 +11,7 @@
 #include "SirEngine/log.h"
 #include "SirEngine/rootSignatureManager.h"
 #include "SirEngine/textureManager.h"
+#include "binary/binaryFile.h"
 #include "memory/cpu/stringPool.h"
 #include "platform/windows/graphics/vk/vkShaderCompiler.h"
 #include "runtimeString.h"
@@ -584,10 +585,95 @@ MaterialMetadata extractMetadata(const char *psoPath) {
 
   const std::string &psoType = jobj[PSO_TYPE_KEY].get<std::string>();
   if (psoType == PSO_TYPE_RASTER) {
-    auto t = processRasterMetadata(jobj);
-    return t;
+    return processRasterMetadata(jobj);
   }
   return processComputeMetadata(jobj);
+}
+
+MaterialMetadata loadBinaryMetadata(const std::string &psoPath) {
+  std::vector<char> binaryData;
+  readAllBytes(psoPath, binaryData);
+
+  const auto *const mapper =
+      getMapperData<MaterialMappedData>(binaryData.data());
+  char *data =
+      reinterpret_cast<char *>(binaryData.data() + sizeof(BinaryFileHeader));
+
+  MaterialMetadata outData{};
+  uint32_t objectSize = mapper->objectResourceCount * sizeof(MaterialResource);
+  uint32_t frameSize = mapper->frameResourceCount * sizeof(MaterialResource);
+  uint32_t passSize = mapper->passResourceCount * sizeof(MaterialResource);
+
+  outData.objectResources = static_cast<MaterialResource *>(
+      globals::PERSISTENT_ALLOCATOR->allocate(objectSize));
+  outData.frameResources =
+      static_cast<MaterialResource *>(globals::PERSISTENT_ALLOCATOR->allocate(
+          mapper->frameResourceCount * sizeof(MaterialResource)));
+  outData.passResources =
+      static_cast<MaterialResource *>(globals::PERSISTENT_ALLOCATOR->allocate(
+          mapper->passResourceCount * sizeof(MaterialResource)));
+
+  memcpy(outData.objectResources, data + mapper->objectResourceDataOffset,
+         objectSize);
+  memcpy(outData.frameResources, data + mapper->frameResourceDataOffset,
+         frameSize);
+  memcpy(outData.passResources, data + mapper->passResourceDataOffset,
+         passSize);
+
+  // finally we need to patch the names, names are at the beginning of the
+  // buffer one after the other
+  uint32_t offset = 0;
+  int counter = 0;
+  int objectCount = static_cast<int>(mapper->objectResourceCount);
+  int upToFrameCount = static_cast<int>(mapper->objectResourceCount +
+                                        mapper->frameResourceCount);
+  int upToPassCount =
+      static_cast<int>(upToFrameCount + mapper->passResourceCount);
+
+  while (offset < mapper->objectResourceDataOffset) {
+    // let us find the len of the string
+    uint32_t len = static_cast<uint32_t>(strlen(data + offset));
+    const char *name = persistentString(data + offset);
+    // patch it in the right place
+    if (counter < objectCount) {
+      outData.objectResources[counter].name = name;
+    } else if (counter < upToFrameCount) {
+      int idx = counter - objectCount;
+      assert(idx >= 0);
+      outData.frameResources[idx].name = name;
+    } else if (counter < upToPassCount) {
+      int idx = counter - upToFrameCount;
+      assert(idx >= 0);
+      outData.passResources[idx].name = name;
+    }
+    offset += (len + 1);
+    ++counter;
+  }
+  // patching the count of objects
+  outData.objectResourceCount = mapper->objectResourceCount;
+  outData.frameResourceCount = mapper->frameResourceCount;
+  outData.passResourceCount = mapper->passResourceCount;
+
+  return outData;
+}
+
+MaterialMetadata loadMetadata(const char *psoPath, GRAPHIC_API api) {
+  std::filesystem::path p(psoPath);
+  p.replace_extension(".metadata");
+  std::string finalP;
+  if (api == GRAPHIC_API::VULKAN) {
+    finalP = std::string("../data/processed/pso/VK/") + p.filename().string();
+  } else {
+    finalP = std::string("../data/processed/pso/DX12/") + p.filename().string();
+  }
+  if (std::filesystem::exists(finalP)) {
+    return loadBinaryMetadata(finalP);
+  }
+  SE_CORE_WARN(
+      "Could not find compiled metadata for given PSO: {}\nextracting from "
+      "source",
+      psoPath);
+  return extractMetadata(psoPath);
 }
 
 }  // namespace SirEngine

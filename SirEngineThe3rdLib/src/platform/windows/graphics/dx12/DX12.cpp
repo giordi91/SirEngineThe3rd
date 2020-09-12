@@ -223,6 +223,7 @@ bool Dx12RenderingContext::initializeGraphicsDx12(BaseWindow *wnd,
   globals::LIGHT_MANAGER = new graphics::LightManager();
 
   ROOT_SIGNATURE_MANAGER = new Dx12RootSignatureManager();
+  //TODO old
   ROOT_SIGNATURE_MANAGER->loadSignaturesInFolder(frameConcatenation(
       globals::ENGINE_CONFIG->m_dataSourcePath, "/processed/rs"));
   globals::ROOT_SIGNATURE_MANAGER = ROOT_SIGNATURE_MANAGER;
