@@ -122,7 +122,7 @@ class VkMeshManager final : public MeshManager {
            "invalid magic handle for constant buffer");
 #endif
   }
-  inline MeshHandle getHandleFromName(const char *name) {
+  MeshHandle getHandleFromName(const char *name) override {
     auto found = m_nameToHandle.find(name);
     if (found != m_nameToHandle.end()) {
       return found->second;

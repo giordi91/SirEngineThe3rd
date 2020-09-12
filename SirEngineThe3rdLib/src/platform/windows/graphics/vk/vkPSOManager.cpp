@@ -465,6 +465,7 @@ PSOHandle VkPSOManager::insertInPSOCache(const VkPSOCompileResult &result) {
       // generating and storing the handle
       uint32_t index;
       PSOData &data = m_psoPool.getFreeMemoryData(index);
+      data.metadata = result.metadata;
       data.pso = result.pso;
       data.topology = result.topologyType;
       data.renderPass = result.renderPass;
@@ -484,6 +485,7 @@ PSOHandle VkPSOManager::insertInPSOCache(const VkPSOCompileResult &result) {
       uint32_t index;
       PSOData &data = m_psoPool.getFreeMemoryData(index);
       data.pso = result.pso;
+      data.metadata = result.metadata;
       data.topology = TOPOLOGY_TYPE::UNDEFINED;
       const PSOHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
       data.magicNumber = MAGIC_NUMBER_COUNTER;
@@ -536,6 +538,7 @@ VkPSOCompileResult VkPSOManager::processRasterPSO(
   RSHandle layoutHandle2 = vk::PIPELINE_LAYOUT_MANAGER->loadSignatureFile(
       fileName.c_str(), &metadata);
   compileResult.rootSignature = frameString(fileName.c_str());
+  compileResult.metadata = metadata;
 
   // RSHandle layoutHandle =
   //    vk::PIPELINE_LAYOUT_MANAGER->loadSignatureFile(rootFile.c_str());
@@ -704,6 +707,7 @@ VkPSOCompileResult VkPSOManager::processComputePSO(const char *filePath,
   RSHandle layoutHandle2 = vk::PIPELINE_LAYOUT_MANAGER->loadSignatureFile(
       fileName.c_str(), &metadata);
   compileResult.rootSignature = frameString(fileName.c_str());
+  compileResult.metadata = metadata;
 
   // RSHandle layoutHandle =
   //    vk::PIPELINE_LAYOUT_MANAGER->loadSignatureFile(rootFile.c_str());

@@ -161,6 +161,13 @@ void Dx12BindingTableManager::bindBuffer(const BindingTableHandle bindHandle,
   }
 }
 
+void Dx12BindingTableManager::bindMesh(const BindingTableHandle bindHandle,
+                                       const MeshHandle mesh,
+                                       const MESH_ATTRIBUTE_FLAGS meshFlags) {
+  assert(0);
+
+}
+
 void Dx12BindingTableManager::free(const BindingTableHandle &bindingTable) {
   // TODO freeing descriptor has never been done properly and is currently not
   // supported at runtime. This method mostly exists for clean up in the vulkan

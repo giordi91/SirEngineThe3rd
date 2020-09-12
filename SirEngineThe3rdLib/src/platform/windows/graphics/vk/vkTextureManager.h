@@ -130,7 +130,6 @@ class SIR_ENGINE_API VkTextureManager final : public TextureManager {
   }
 
  private:
-  std::unordered_map<std::string, TextureHandle> m_nameToHandle;
   SparseMemoryPool<VkTexture2D> m_texturePool;
 
   // default texture

@@ -79,7 +79,8 @@ class Dx12MeshManager final : public MeshManager {
     assert(pair.type == DescriptorType::SRV);
     dx12::GLOBAL_CBV_SRV_UAV_HEAP->freeDescriptor(pair);
   }
-  inline MeshHandle getHandleFromName(const char *name) {
+  //TODO make const
+  MeshHandle getHandleFromName(const char *name) override {
     auto found = m_nameToHandle.find(name);
     if (found != m_nameToHandle.end()) {
       return found->second;
@@ -152,17 +153,17 @@ class Dx12MeshManager final : public MeshManager {
       // definition
       dx12::BUFFER_MANAGER->createSrv(
           runtime.bufferHandle, pairs[startIndex + 0], runtime.positionRange,
-          true, sizeof(float) );
+          true, sizeof(float));
     }
     if ((flags & MESH_ATTRIBUTE_FLAGS::NORMALS) > 0) {
       dx12::BUFFER_MANAGER->createSrv(
           runtime.bufferHandle, pairs[startIndex + 1], runtime.normalsRange,
-          true, sizeof(float) );
+          true, sizeof(float));
     }
     if ((flags & MESH_ATTRIBUTE_FLAGS::UV) > 0) {
       dx12::BUFFER_MANAGER->createSrv(runtime.bufferHandle,
                                       pairs[startIndex + 2], runtime.uvRange,
-                                      true, sizeof(float) );
+                                      true, sizeof(float));
     }
     if ((flags & MESH_ATTRIBUTE_FLAGS::TANGENTS) > 0) {
       dx12::BUFFER_MANAGER->createSrv(
@@ -200,8 +201,7 @@ class Dx12MeshManager final : public MeshManager {
   }
 
   static void bindMeshRuntimeAndRender(const Dx12MeshRuntime &runtime,
-                                              FrameCommand *fc)
-  {
+                                       FrameCommand *fc) {
     dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(
         runtime.bufferHandle, 9, fc->commandList,
         runtime.positionRange.m_offset);

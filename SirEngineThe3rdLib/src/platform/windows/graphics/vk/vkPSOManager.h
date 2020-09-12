@@ -6,6 +6,7 @@
 
 #include "SirEngine/PSOManager.h"
 #include "SirEngine/handle.h"
+#include "SirEngine/materialManager.h"
 #include "SirEngine/memory/cpu/resizableVector.h"
 #include "SirEngine/memory/cpu/sparseMemoryPool.h"
 #include "SirEngine/memory/cpu/stringHashMap.h"
@@ -26,6 +27,7 @@ struct SIR_ENGINE_API VkPSOCompileResult {
   TOPOLOGY_TYPE topologyType;
   VkRenderPass renderPass;
   VkPipelineLayout pipelineLayout;
+  MaterialMetadata metadata;
 };
 
 // TODO make it not copyable assignable
@@ -37,6 +39,7 @@ class VkPSOManager final : public PSOManager {
     RSHandle rootSignature;
     uint32_t magicNumber;
     TOPOLOGY_TYPE topology;
+    MaterialMetadata metadata;
   };
 
  public:
@@ -79,6 +82,12 @@ class VkPSOManager final : public PSOManager {
     const PSOData &data = m_psoPool.getConstRef(index);
     return data.pso;
   }
+  const MaterialMetadata *getMetadata(const PSOHandle &handle) override {
+    assertMagicNumber(handle);
+    const uint32_t index = getIndexFromHandle(handle);
+    const PSOData &data = m_psoPool.getConstRef(index);
+    return &data.metadata;
+  };
 
   [[nodiscard]] VkRenderPass getRenderPassFromHandle(
       const PSOHandle handle) const {
@@ -87,13 +96,14 @@ class VkPSOManager final : public PSOManager {
     const PSOData &data = m_psoPool.getConstRef(index);
     return data.renderPass;
   }
-  inline RSHandle getRootSignatureHandleFromPSOHandle(const PSOHandle handle) const {
+  inline RSHandle getRootSignatureHandleFromPSOHandle(
+      const PSOHandle handle) const {
     assertMagicNumber(handle);
     const uint32_t index = getIndexFromHandle(handle);
     const PSOData &data = m_psoPool.getConstRef(index);
     return data.rootSignature;
   }
-  
+
   inline VkPipelineLayout getPipelineLayoutFromPSOHandle(
       const PSOHandle handle) const {
     assertMagicNumber(handle);

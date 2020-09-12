@@ -30,26 +30,14 @@ enum class STENCIL_REF { CLEAR = 0, SSSSS = 1 };
 
 // TODO revise this struct
 struct Material final {
-  float kDR;
-  float kDG;
-  float kDB;
-  float dPadding;
-  float kAR;
-  float kAG;
-  float kAB;
-  float aPadding;
-  float kSR;
-  float kSG;
-  float kSB;
-  float sPadding;
-  float shiness;
   float reflective;
   float roughnessMult;
   float metallicMult;
+  float padding;
 };
 
 enum class MATERIAL_RESOURCE_TYPE { TEXTURE, CONSTANT_BUFFER, BUFFER };
-enum class MATERIAL_RESOURCE_FLAGS { NONE = 0, READ_ONLY = 1 };
+enum class MATERIAL_RESOURCE_FLAGS { NONE = 0, READ_ONLY = 1};
 
 struct MaterialResource {
   MATERIAL_RESOURCE_TYPE type;

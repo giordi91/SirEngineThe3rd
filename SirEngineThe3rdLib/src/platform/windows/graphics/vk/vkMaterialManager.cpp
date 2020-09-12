@@ -11,51 +11,9 @@
 #include "platform/windows/graphics/vk/vkConstantBufferManager.h"
 #include "platform/windows/graphics/vk/vkMeshManager.h"
 #include "platform/windows/graphics/vk/vkPSOManager.h"
-#include "platform/windows/graphics/vk/vkRootSignatureManager.h"
 #include "platform/windows/graphics/vk/vkTextureManager.h"
 
 namespace SirEngine::vk {
-
-void updateForwardPhong(SHADER_QUEUE_FLAGS queueFlag,
-                        const VkMaterialRuntime &materialRuntime) {
-  // Update the descriptor set with the actual descriptors matching shader
-  // bindings set in the layout
-  // this far we defined just what descriptor we wanted and how they were setup,
-  // now we need to actually define the content of those descriptors, the actual
-  // resources
-
-  int queueFlagInt = static_cast<int>(queueFlag);
-  int currentFlagId = static_cast<int>(log2(queueFlagInt & -queueFlagInt));
-  DescriptorHandle setHandle = materialRuntime.descriptorHandles[currentFlagId];
-  VkDescriptorSet descriptorSet =
-      vk::DESCRIPTOR_MANAGER->getDescriptorSet(setHandle);
-
-  VkWriteDescriptorSet writeDescriptorSets[8] = {};
-
-  uint32_t flags = POSITIONS | NORMALS | UV | TANGENTS;
-  VkDescriptorBufferInfo bufferInfo[4] = {};
-  vk::MESH_MANAGER->bindMesh(materialRuntime.meshHandle, writeDescriptorSets,
-                             descriptorSet, bufferInfo, flags, 0);
-  // root, bufferInfo);
-
-  vk::TEXTURE_MANAGER->bindTexture(materialRuntime.albedo,
-                                   &writeDescriptorSets[4], descriptorSet, 4);
-  vk::TEXTURE_MANAGER->bindTexture(materialRuntime.normal,
-                                   &writeDescriptorSets[5], descriptorSet, 5);
-  vk::TEXTURE_MANAGER->bindTexture(materialRuntime.metallic,
-                                   &writeDescriptorSets[6], descriptorSet, 6);
-  vk::TEXTURE_MANAGER->bindTexture(materialRuntime.roughness,
-                                   &writeDescriptorSets[7], descriptorSet, 7);
-
-  // Execute the writes to update descriptors for this set
-  // Note that it's also possible to gather all writes and only run updates
-  // once, even for multiple sets This is possible because each
-  // VkWriteDescriptorSet also contains the destination set to be updated
-  // For simplicity we will update once per set instead
-  // object one off update
-  vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, 8, &writeDescriptorSets[0], 0,
-                         nullptr);
-}
 
 void VkMaterialManager::bindMaterial(SHADER_QUEUE_FLAGS queueFlag,
                                      const VkMaterialRuntime &materialRuntime,
@@ -63,25 +21,10 @@ void VkMaterialManager::bindMaterial(SHADER_QUEUE_FLAGS queueFlag,
   int queueFlagInt = static_cast<int>(queueFlag);
   int currentFlagId = static_cast<int>(log2(queueFlagInt & -queueFlagInt));
 
-  DescriptorHandle setHandle = materialRuntime.descriptorHandles[currentFlagId];
-  VkDescriptorSet descriptorSet =
-      vk::DESCRIPTOR_MANAGER->getDescriptorSet(setHandle);
-
-  VkDescriptorSet sets[] = {descriptorSet};
-
-  // multiple descriptor sets
-  vkCmdBindDescriptorSets(commandList, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                          materialRuntime.layouts[currentFlagId],
-                          PSOManager::PER_OBJECT_BINDING_INDEX, 1, sets, 0,
-                          nullptr);
+  auto handle = materialRuntime.bindingHandle[currentFlagId];
+  auto rs = materialRuntime.shaderQueueTypeFlags2[currentFlagId].rs;
+  globals::BINDING_TABLE_MANAGER->bindTable(3, handle, rs, false);
 }
-void VkMaterialManager::updateMaterial(const SHADER_QUEUE_FLAGS queueFlag,
-                                       const MaterialHandle handle,
-                                       VkCommandBuffer commandList) {
-  const VkMaterialRuntime &materialRuntime = getMaterialRuntime(handle);
-  updateForwardPhong(queueFlag, materialRuntime);
-}
-
 void VkMaterialManager::bindMaterial(SHADER_QUEUE_FLAGS queueFlag,
                                      const MaterialHandle handle,
                                      VkCommandBuffer commandList) {
@@ -128,14 +71,6 @@ ShaderBind VkMaterialManager::bindRSandPSO(
       return bind;
     }
   }
-  /*
-  bool found = m_shaderTypeToShaderBind.get(typeFlags, bind);
-  if (found) {
-    // beginRenderPass(bind);
-    vk::PSO_MANAGER->bindPSO(bind.pso, commandList);
-    return bind;
-  }
-  */
   assert(0 && "Could not find requested shader type for PSO /RS bind");
   return {};
 }
@@ -146,6 +81,20 @@ inline VkDescriptorImageInfo getDescriptor(const TextureHandle handle) {
 }
 
 void VkMaterialManager::parseQueue(uint32_t *queues) {}
+
+uint32_t findBindingIndex(const MaterialMetadata *meta,
+                          const std::string &bindName) {
+  uint32_t count = meta->objectResourceCount;
+  for (int i = 0; i < count; ++i) {
+    const auto &resource = meta->objectResources[i];
+    bool result = strcmp(resource.name, bindName.c_str()) == 0;
+    if (result) {
+      return i;
+    }
+  }
+  assert(0 && "could not find binding name");
+  return 9999;
+}
 
 MaterialHandle VkMaterialManager::loadMaterial(const char *path,
                                                const MeshHandle meshHandle,
@@ -162,14 +111,6 @@ MaterialHandle VkMaterialManager::loadMaterial(const char *path,
   const MaterialDataHandles &handles = materialData.handles;
 
   VkMaterialRuntime matCpu{};
-  matCpu.albedo = getDescriptor(handles.albedo);
-  matCpu.normal = getDescriptor(handles.normal);
-  matCpu.metallic = getDescriptor(handles.metallic);
-  matCpu.roughness = getDescriptor(handles.roughness);
-  matCpu.thickness = getDescriptor(handles.thickness);
-  matCpu.separateAlpha = getDescriptor(handles.separateAlpha);
-  matCpu.ao = getDescriptor(handles.ao);
-  matCpu.heightMap = getDescriptor(handles.height);
   matCpu.skinHandle = skinHandle;
   matCpu.meshHandle = meshHandle;
 
@@ -182,49 +123,110 @@ MaterialHandle VkMaterialManager::loadMaterial(const char *path,
     }
   }
 
-  // memcpy(&matCpu.shaderQueueTypeFlags, parse.shaderQueueTypeFlags,
-  //       sizeof(uint32_t) * QUEUE_COUNT);
-
   materialData.handles.cbHandle = globals::CONSTANT_BUFFER_MANAGER->allocate(
       sizeof(Material), 0, &parse.mat);
 
-  matCpu.cbVirtualAddress = vk::CONSTANT_BUFFER_MANAGER->getBufferDescriptor(
-      materialData.handles.cbHandle);
-
   materialData.magicNumber = MAGIC_NUMBER_COUNTER++;
-  materialData.m_materialRuntime = matCpu;
 
   const std::string name = getFileName(path);
   MaterialHandle handle{(materialData.magicNumber << 16) | (index)};
   m_nameToHandle.insert(name.c_str(), handle);
 
-  // looping the queues
-  for (int i = 0; i < QUEUE_COUNT; ++i) {
+  // parse material resources
+
+  auto jobj = getJsonObj(path);
+  assert(jobj.find("resources") != jobj.end());
+  const auto &bindingResources = jobj["resources"];
+
+  // NEW code avoiding the old crap
+  for (uint32_t i = 0; i < QUEUE_COUNT; ++i) {
     if (!matCpu.shaderQueueTypeFlags2[i].pso.isHandleValid()) {
       continue;
     }
     ShaderBind bind = matCpu.shaderQueueTypeFlags2[i];
+
     uint32_t flags =
         parse.isStatic
             ? 0
             : graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED;
 
-    const char *shaderTypeName = parse.shaderQueueTypeFlagsStr[i];
-    const char *descriptorName =
-        frameConcatenation(name.c_str(), shaderTypeName, "-");
-    DescriptorHandle descriptorHandle =
-        vk::DESCRIPTOR_MANAGER->allocate(bind.rs, flags, descriptorName);
+    const MaterialMetadata *meta = vk::PSO_MANAGER->getMetadata(bind.pso);
 
-    materialData.m_materialRuntime.descriptorHandles[i] = descriptorHandle;
-    materialData.m_materialRuntime.layouts[i] =
-        vk::PIPELINE_LAYOUT_MANAGER->getLayoutFromHandle(bind.rs);
+    uint32_t objectsCount = meta->objectResourceCount;
+    // zeroing out memory jsut to be safe
+    memset(descriptions, 0,
+           sizeof(graphics::BindingDescription) * objectsCount);
+    for (uint32_t obj = 0; obj < objectsCount; ++obj) {
+      const MaterialResource &res = meta->objectResources[obj];
+      auto type = res.type;
+      GRAPHIC_RESOURCE_TYPE graphicsType;
+      switch (type) {
+        case MATERIAL_RESOURCE_TYPE::TEXTURE: {
+          graphicsType = GRAPHIC_RESOURCE_TYPE::TEXTURE;
+          break;
+        }
+        case MATERIAL_RESOURCE_TYPE::CONSTANT_BUFFER: {
+          graphicsType = GRAPHIC_RESOURCE_TYPE::CONSTANT_BUFFER;
+          break;
+        }
+        case MATERIAL_RESOURCE_TYPE::BUFFER: {
+          bool readOnly =
+              (static_cast<uint32_t>(res.flags) &
+               static_cast<uint32_t>(MATERIAL_RESOURCE_FLAGS::READ_ONLY)) > 0;
+          if (readOnly) {
+            graphicsType = GRAPHIC_RESOURCE_TYPE::READ_BUFFER;
+          } else {
+            graphicsType = GRAPHIC_RESOURCE_TYPE::READWRITE_BUFFER;
+          }
+          break;
+        }
+      }
+      descriptions[obj] = {res.binding, graphicsType, res.visibility};
+    }
 
-    if (parse.isStatic) {
-      // it is static lets bind the material right away
-      updateMaterial(static_cast<SHADER_QUEUE_FLAGS>(1 << i), handle,
-                     vk::CURRENT_FRAME_COMMAND->m_commandBuffer);
+    std::string bindingName = name + "-bindingTable";
+    BindingTableHandle bindingTable =
+        globals::BINDING_TABLE_MANAGER->allocateBindingTable(
+            descriptions, objectsCount,
+            parse.isStatic
+                ? graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_NONE
+                : graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED,
+            bindingName.c_str());
+    matCpu.bindingHandle[i] = bindingTable;
+
+    // update material
+    const std::string vertices = "vertices";
+    const std::string normals = "normals";
+    const std::string uvs = "uvs";
+    const std::string tangents = "tangents";
+
+    for (const auto &subRes : bindingResources) {
+      const auto type = subRes["type"].get<std::string>();
+      const auto bName = subRes["bindingName"].get<std::string>();
+      const auto resPath = subRes["resourcePath"].get<std::string>();
+
+      const std::string resName = getFileName(resPath);
+      if (type == "texture") {
+        TextureHandle tHandle =
+            globals::TEXTURE_MANAGER->getHandleFromName(resName.c_str());
+
+        uint32_t bindingIdx = findBindingIndex(meta, bName);
+
+        globals::BINDING_TABLE_MANAGER->bindTexture(
+            matCpu.bindingHandle[i], tHandle, bindingIdx, bindingIdx, false);
+      } else if (type == "mesh") {
+        MeshHandle mHandle =
+            globals::MESH_MANAGER->getHandleFromName(resPath.c_str());
+        auto meshFlags = static_cast<MESH_ATTRIBUTE_FLAGS>(POSITIONS | NORMALS |
+                                                           UV | TANGENTS);
+
+        globals::BINDING_TABLE_MANAGER->bindMesh(matCpu.bindingHandle[i],
+                                                 mHandle, meshFlags);
+      }
     }
   }
+  materialData.m_materialRuntime = matCpu;
+
   return handle;
 }
 
@@ -351,6 +353,7 @@ void VkMaterialManager::bindMaterial(const MaterialHandle handle,
   ShaderBind bind = data.m_materialRuntime.shaderQueueTypeFlags2[currentFlagId];
   // bool found = m_shaderTypeToShaderBind.get(static_cast<uint16_t>(type),
   // bind); assert(found);
+  /*
 
   vk::PSO_MANAGER->bindPSO(bind.pso, CURRENT_FRAME_COMMAND->m_commandBuffer);
 
@@ -368,6 +371,10 @@ void VkMaterialManager::bindMaterial(const MaterialHandle handle,
   vkCmdBindDescriptorSets(
       CURRENT_FRAME_COMMAND->m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
       layout, PSOManager::PER_OBJECT_BINDING_INDEX, 1, sets, 0, nullptr);
+  */
+
+  globals::BINDING_TABLE_MANAGER->bindTable(
+      3, data.m_materialRuntime.bindingHandle[currentFlagId], bind.rs, false);
 }
 
 void VkMaterialManager::free(const MaterialHandle handle) {

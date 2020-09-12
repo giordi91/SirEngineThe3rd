@@ -1,5 +1,6 @@
 #pragma once
 #include "SirEngine/handle.h"
+#include "SirEngine/meshManager.h"
 #include "graphicsDefines.h"
 
 namespace SirEngine::graphics {
@@ -41,6 +42,9 @@ class BindingTableManager {
                           const BufferHandle buffer,
                           const uint32_t descriptorIndex,
                           const uint32_t bindingIndex) = 0;
+  virtual void bindMesh(const BindingTableHandle bindHandle,
+                        const MeshHandle mesh,
+                        const MESH_ATTRIBUTE_FLAGS meshFlags) = 0;
   virtual void bindConstantBuffer(
       const BindingTableHandle &bindingTable,
       const ConstantBufferHandle &constantBufferHandle,
