@@ -22,6 +22,18 @@ static const std::string PSO_TYPE_COMPUTE = "COMPUTE";
 static const std::string PSO_VS_KEY = "VS";
 static const std::string PSO_PS_KEY = "PS";
 static const std::string PSO_CS_KEY = "shaderName";
+static const std::string PSO_MESH_VERTICES_KEY = "vertices";
+static const std::string PSO_MESH_NORMALS_KEY = "normals";
+static const std::string PSO_MESH_UVS_KEY = "uvs";
+static const std::string PSO_MESH_TANGENTS_KEY = "tangents";
+
+static const std::unordered_map<std::string, MATERIAL_RESOURCE_FLAGS>
+    nameToMeshFlag{
+        {PSO_MESH_VERTICES_KEY, MATERIAL_RESOURCE_FLAGS::MESH_VERTICES},
+        {PSO_MESH_NORMALS_KEY, MATERIAL_RESOURCE_FLAGS::MESH_NORMALS},
+        {PSO_MESH_UVS_KEY, MATERIAL_RESOURCE_FLAGS::MESH_UVS},
+        {PSO_MESH_TANGENTS_KEY, MATERIAL_RESOURCE_FLAGS::MESH_TANGENTS},
+    };
 
 namespace materialKeys {
 static const char *ALBEDO = "albedo";
@@ -196,6 +208,14 @@ MaterialManager::PreliminaryMaterialParse MaterialManager::parseMaterial(
   return toReturn;
 }
 
+MATERIAL_RESOURCE_FLAGS getMeshFlags(const std::string &name) {
+  const auto found = nameToMeshFlag.find(name);
+  if (found != nameToMeshFlag.end()) {
+    return found->second;
+  }
+  return MATERIAL_RESOURCE_FLAGS::NONE;
+}
+
 MaterialMetadata processShader(const char *shaderName, SHADER_TYPE type) {
   GRAPHIC_RESOURCE_VISIBILITY visibility = 0;
   switch (type) {
@@ -235,13 +255,11 @@ MaterialMetadata processShader(const char *shaderName, SHADER_TYPE type) {
       globals::FRAME_ALLOCATOR->allocate(allocSize));
 
   int counter = 0;
-  // SE_CORE_INFO("Images");
   for (const auto &image : res.separate_images) {
     auto set = static_cast<uint16_t>(
         comp.get_decoration(image.id, spv::DecorationDescriptorSet));
     auto binding = static_cast<uint16_t>(
         comp.get_decoration(image.id, spv::DecorationBinding));
-    // SE_CORE_INFO("--> name: {}, set: {}, bind:{}", image.name, set, binding);
 
     memory[counter++] = {MATERIAL_RESOURCE_TYPE::TEXTURE,
                          visibility,
@@ -260,8 +278,15 @@ MaterialMetadata processShader(const char *shaderName, SHADER_TYPE type) {
     spirv_cross::Bitset bufferFlags = comp.get_buffer_block_flags(buff.id);
     bool readonly = bufferFlags.get(spv::DecorationNonWritable);
 
-    auto flags = readonly ? MATERIAL_RESOURCE_FLAGS::READ_ONLY
-                          : MATERIAL_RESOURCE_FLAGS::NONE;
+    MATERIAL_RESOURCE_FLAGS flags = readonly
+                                        ? MATERIAL_RESOURCE_FLAGS::READ_ONLY
+                                        : MATERIAL_RESOURCE_FLAGS::NONE;
+    MATERIAL_RESOURCE_FLAGS meshFlags = type == SHADER_TYPE::VERTEX
+                                            ? getMeshFlags(buff.name)
+                                            : MATERIAL_RESOURCE_FLAGS::NONE;
+    flags = static_cast<MATERIAL_RESOURCE_FLAGS>(
+        static_cast<uint32_t>(flags) | static_cast<uint32_t>(meshFlags));
+
     memory[counter++] = {
         MATERIAL_RESOURCE_TYPE::BUFFER,
         visibility,
@@ -272,13 +297,11 @@ MaterialMetadata processShader(const char *shaderName, SHADER_TYPE type) {
     };
   }
 
-  // SE_CORE_INFO("constant buffers");
   for (const auto &image : res.uniform_buffers) {
     auto set = static_cast<uint16_t>(
         comp.get_decoration(image.id, spv::DecorationDescriptorSet));
     auto binding = static_cast<uint16_t>(
         comp.get_decoration(image.id, spv::DecorationBinding));
-    // SE_CORE_INFO("--> name: {}, set: {}, bind:{}", image.name, set, binding);
     memory[counter++] = {MATERIAL_RESOURCE_TYPE::CONSTANT_BUFFER,
                          visibility,
                          frameString(image.name.c_str()),
@@ -352,7 +375,64 @@ std::string loadFile(const char *path) {
   return sBuffer.str();
 }
 
-MaterialMetadata processRasterMetadata(const nlohmann::json &jobj) {
+MaterialMeshBinding validateMeshData(const char *name,
+                                     const MaterialResource *vsMeta,
+                                     int count) {
+  // we want to build an array of resources bindings, one per mesh binding type
+  // we next want to check they have consecutive values, because it is what the
+  // binding system expects
+  int slots[4] = {-1, -1, -1, -1};
+  uint32_t outFlags = 0;
+
+  int counter = 0;
+  for (int i = 0; i < count; ++i) {
+    const auto &meta = vsMeta[i];
+    auto flags = static_cast<uint32_t>(meta.flags);
+    if ((flags &
+         static_cast<uint32_t>(MATERIAL_RESOURCE_FLAGS::MESH_VERTICES)) > 0) {
+      assert(counter < 4);
+      slots[counter++] = meta.binding;
+      outFlags |= MESH_ATTRIBUTE_FLAGS::POSITIONS;
+    }
+    if ((flags & static_cast<uint32_t>(MATERIAL_RESOURCE_FLAGS::MESH_NORMALS)) >
+        0) {
+      assert(counter < 4);
+      slots[counter++] = meta.binding;
+      outFlags |= MESH_ATTRIBUTE_FLAGS::NORMALS;
+    }
+    if ((flags & static_cast<uint32_t>(MATERIAL_RESOURCE_FLAGS::MESH_UVS)) >
+        0) {
+      assert(counter < 4);
+      slots[counter++] = meta.binding;
+      outFlags |= MESH_ATTRIBUTE_FLAGS::UV;
+    }
+    if ((flags &
+         static_cast<uint32_t>(MATERIAL_RESOURCE_FLAGS::MESH_TANGENTS)) > 0) {
+      assert(counter < 4);
+      slots[counter++] = meta.binding;
+      outFlags |= MESH_ATTRIBUTE_FLAGS::TANGENTS;
+    }
+  }
+  if (slots[0] == -1) {
+    return {-1, MESH_ATTRIBUTE_NONE};
+  }
+
+  // lets validate the assumption that they are consecutive
+  for (int i = 1; i < counter; ++i) {
+    int prev = slots[i - 1];
+    int curr = slots[i];
+    if ((curr - prev) != 1) {
+      SE_CORE_ERROR("Mesh validation failed for {}", name);
+      SE_CORE_ERROR(
+          "expected consecutive slots but found previous {} and current {}",
+          prev, curr);
+    }
+  }
+  return {slots[0], static_cast<MESH_ATTRIBUTE_FLAGS>(outFlags)};
+}
+
+MaterialMetadata processRasterMetadata(const char *path,
+                                       const nlohmann::json &jobj) {
   assertInJson(jobj, PSO_VS_KEY);
 
   const std::string &vsName =
@@ -421,7 +501,11 @@ MaterialMetadata processRasterMetadata(const nlohmann::json &jobj) {
             [](const MaterialResource &lhs, const MaterialResource &rhs) {
               return lhs.binding < rhs.binding;
             });
+
+  MaterialMeshBinding meshBinding = validateMeshData(path, space3, counters[3]);
+
   MaterialMetadata toReturn{};
+  toReturn.meshBinding = meshBinding;
   toReturn.frameResources =
       static_cast<MaterialResource *>(globals::PERSISTENT_ALLOCATOR->allocate(
           sizeof(MaterialResource) * counters[0]));
@@ -449,7 +533,7 @@ MaterialMetadata extractMetadata(const char *psoPath) {
 
   const std::string &psoType = jobj[PSO_TYPE_KEY].get<std::string>();
   if (psoType == PSO_TYPE_RASTER) {
-    return processRasterMetadata(jobj);
+    return processRasterMetadata(psoPath, jobj);
   }
   return processComputeMetadata(jobj);
 }
@@ -517,6 +601,9 @@ MaterialMetadata loadBinaryMetadata(const std::string &psoPath) {
   outData.objectResourceCount = mapper->objectResourceCount;
   outData.frameResourceCount = mapper->frameResourceCount;
   outData.passResourceCount = mapper->passResourceCount;
+  outData.meshBinding =
+      MaterialMeshBinding{mapper->meshBinding,
+                          static_cast<MESH_ATTRIBUTE_FLAGS>(mapper->meshFlags)};
 
   return outData;
 }

@@ -204,6 +204,7 @@ void VkBindingTableManager::bindTexture(const BindingTableHandle bindHandle,
 
 void VkBindingTableManager::bindMesh(const BindingTableHandle bindHandle,
                                      const MeshHandle mesh,
+                                     const uint32_t startIndex,
                                      const MESH_ATTRIBUTE_FLAGS meshFlags) {
   assertMagicNumber(bindHandle);
   uint32_t index = getIndexFromHandle(bindHandle);
@@ -223,7 +224,7 @@ void VkBindingTableManager::bindMesh(const BindingTableHandle bindHandle,
                                  */
 
   vk::MESH_MANAGER->bindMesh(mesh, writeDescriptorSets, descriptorSet,
-                             bufferInfo, meshFlags, 0);
+                             bufferInfo, meshFlags, startIndex);
   vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, 4, writeDescriptorSets, 0,
                          nullptr);
 }

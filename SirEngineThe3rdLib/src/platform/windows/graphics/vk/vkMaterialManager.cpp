@@ -16,8 +16,7 @@
 namespace SirEngine::vk {
 
 void VkMaterialManager::bindMaterial(SHADER_QUEUE_FLAGS queueFlag,
-                                     const VkMaterialRuntime &materialRuntime,
-                                     const VkCommandBuffer commandList) {
+                                     const VkMaterialRuntime &materialRuntime) {
   int queueFlagInt = static_cast<int>(queueFlag);
   int currentFlagId = static_cast<int>(log2(queueFlagInt & -queueFlagInt));
 
@@ -26,10 +25,9 @@ void VkMaterialManager::bindMaterial(SHADER_QUEUE_FLAGS queueFlag,
   globals::BINDING_TABLE_MANAGER->bindTable(3, handle, rs, false);
 }
 void VkMaterialManager::bindMaterial(SHADER_QUEUE_FLAGS queueFlag,
-                                     const MaterialHandle handle,
-                                     VkCommandBuffer commandList) {
+                                     const MaterialHandle handle) {
   const VkMaterialRuntime &materialRuntime = getMaterialRuntime(handle);
-  bindMaterial(queueFlag, materialRuntime, commandList);
+  bindMaterial(queueFlag, materialRuntime);
 }
 
 void beginRenderPass(ShaderBind bind) {
@@ -57,8 +55,7 @@ void beginRenderPass(ShaderBind bind) {
                        VK_SUBPASS_CONTENTS_INLINE);
 }
 ShaderBind VkMaterialManager::bindRSandPSO(
-    const uint64_t shaderFlags, const VkMaterialRuntime &runtime,
-    const VkCommandBuffer commandList) const {
+    const uint64_t shaderFlags, const VkMaterialRuntime &runtime) const {
   // get type flags as int
   constexpr auto mask = static_cast<uint64_t>(~((1ull << 32ull) - 1ull));
   const auto typeFlags =
@@ -67,7 +64,7 @@ ShaderBind VkMaterialManager::bindRSandPSO(
   for (int i = 0; i < QUEUE_COUNT; ++i) {
     if (runtime.shaderQueueTypeFlags2[i].pso.handle == typeFlags) {
       ShaderBind bind = runtime.shaderQueueTypeFlags2[i];
-      vk::PSO_MANAGER->bindPSO(bind.pso, commandList);
+      vk::PSO_MANAGER->bindPSO(bind.pso);
       return bind;
     }
   }
@@ -195,11 +192,6 @@ MaterialHandle VkMaterialManager::loadMaterial(const char *path,
     matCpu.bindingHandle[i] = bindingTable;
 
     // update material
-    const std::string vertices = "vertices";
-    const std::string normals = "normals";
-    const std::string uvs = "uvs";
-    const std::string tangents = "tangents";
-
     for (const auto &subRes : bindingResources) {
       const auto type = subRes["type"].get<std::string>();
       const auto bName = subRes["bindingName"].get<std::string>();
@@ -217,11 +209,10 @@ MaterialHandle VkMaterialManager::loadMaterial(const char *path,
       } else if (type == "mesh") {
         MeshHandle mHandle =
             globals::MESH_MANAGER->getHandleFromName(resPath.c_str());
-        auto meshFlags = static_cast<MESH_ATTRIBUTE_FLAGS>(POSITIONS | NORMALS |
-                                                           UV | TANGENTS);
 
-        globals::BINDING_TABLE_MANAGER->bindMesh(matCpu.bindingHandle[i],
-                                                 mHandle, meshFlags);
+        globals::BINDING_TABLE_MANAGER->bindMesh(
+            matCpu.bindingHandle[i], mHandle, meta->meshBinding.binding,
+            meta->meshBinding.flags);
       }
     }
   }
@@ -346,32 +337,7 @@ void VkMaterialManager::bindMaterial(const MaterialHandle handle,
   const auto currentFlag = static_cast<uint32_t>(queue);
   int currentFlagId = static_cast<int>(log2(currentFlag & -currentFlag));
 
-  //// find the PSO, should this be part of the runtime directly?
-  // uint32_t flags =
-  // data.m_materialRuntime.shaderQueueTypeFlags[currentFlagId];
-  // SHADER_TYPE_FLAGS type = getTypeFlags(flags);
   ShaderBind bind = data.m_materialRuntime.shaderQueueTypeFlags2[currentFlagId];
-  // bool found = m_shaderTypeToShaderBind.get(static_cast<uint16_t>(type),
-  // bind); assert(found);
-  /*
-
-  vk::PSO_MANAGER->bindPSO(bind.pso, CURRENT_FRAME_COMMAND->m_commandBuffer);
-
-  DescriptorHandle descriptorHandle =
-      data.m_materialRuntime.descriptorHandles[currentFlagId];
-  assert(descriptorHandle.isHandleValid());
-  VkDescriptorSet descriptorSet =
-      vk::DESCRIPTOR_MANAGER->getDescriptorSet(descriptorHandle);
-
-  VkPipelineLayout layout = data.m_materialRuntime.layouts[currentFlagId];
-  assert(layout != nullptr);
-
-  VkDescriptorSet sets[] = {descriptorSet};
-  // multiple descriptor sets
-  vkCmdBindDescriptorSets(
-      CURRENT_FRAME_COMMAND->m_commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-      layout, PSOManager::PER_OBJECT_BINDING_INDEX, 1, sets, 0, nullptr);
-  */
 
   globals::BINDING_TABLE_MANAGER->bindTable(
       3, data.m_materialRuntime.bindingHandle[currentFlagId], bind.rs, false);

@@ -43,7 +43,7 @@ class BindingTableManager {
                           const uint32_t descriptorIndex,
                           const uint32_t bindingIndex) = 0;
   virtual void bindMesh(const BindingTableHandle bindHandle,
-                        const MeshHandle mesh,
+                        const MeshHandle mesh, const uint32_t startIndex,
                         const MESH_ATTRIBUTE_FLAGS meshFlags) = 0;
   virtual void bindConstantBuffer(
       const BindingTableHandle &bindingTable,

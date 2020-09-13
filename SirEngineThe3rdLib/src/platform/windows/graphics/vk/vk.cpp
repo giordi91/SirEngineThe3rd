@@ -620,8 +620,7 @@ void VkRenderingContext::renderQueueType(
       // bind the corresponding RS and PSO
 
       ShaderBind bind = vk::MATERIAL_MANAGER->bindRSandPSO(
-          renderableList.first, renderableList.second[0].m_materialRuntime,
-          commandList);
+          renderableList.first, renderableList.second[0].m_materialRuntime);
 
       // this is most for debug, it will boil down to nothing in release
       // const SHADER_TYPE_FLAGS type =
@@ -644,8 +643,7 @@ void VkRenderingContext::renderQueueType(
         const VkRenderable &renderable = currRenderables[i];
 
         // bind material data like textures etc, then render
-        MATERIAL_MANAGER->bindMaterial(flag, renderable.m_materialRuntime,
-                                       commandList);
+        MATERIAL_MANAGER->bindMaterial(flag, renderable.m_materialRuntime);
 
         MESH_MANAGER->renderMesh(renderable.m_meshRuntime, commandList);
       }
