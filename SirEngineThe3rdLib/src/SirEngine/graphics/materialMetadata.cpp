@@ -65,8 +65,8 @@ MaterialMetadata processShader(const char *shaderName, SHADER_TYPE type) {
 
   vk::VkShaderCompiler vkCompiler;
   std::string log;
-  vk::SpirVBlob blob =
-      vkCompiler.compileToSpirV(shaderName, vk::VkShaderArgs{true, type}, &log);
+  vk::VkShaderArgs args{true, type};
+  vk::SpirVBlob blob = vkCompiler.compileToSpirV(shaderName, args, &log);
 
   std::vector<unsigned int> spirV;
   spirV.resize(blob.sizeInByte / 4);
@@ -75,8 +75,9 @@ MaterialMetadata processShader(const char *shaderName, SHADER_TYPE type) {
 
   spirv_cross::ShaderResources res = comp.get_shader_resources();
 
-  int totalCount = res.separate_images.size() + res.storage_buffers.size() +
-                   res.uniform_buffers.size();
+  uint32_t totalCount = static_cast<uint32_t>(res.separate_images.size() +
+                                                  res.storage_buffers.size() +
+                                                  res.uniform_buffers.size());
   uint32_t allocSize = sizeof(MaterialResource) * totalCount;
   auto *memory = static_cast<MaterialResource *>(
       globals::FRAME_ALLOCATOR->allocate(allocSize));
@@ -270,7 +271,7 @@ MaterialMetadata processRasterMetadata(const char *path,
   assert(fileExists(vsPath));
   MaterialMetadata vsMeta = processShader(vsPath.c_str(), SHADER_TYPE::VERTEX);
 
-  MaterialMetadata psMeta;
+  MaterialMetadata psMeta = {};
   if (!psName.empty()) {
     const std::string psPath =
         "../data/shaders/VK/rasterization/" + psName + ".glsl";
@@ -299,8 +300,8 @@ MaterialMetadata processRasterMetadata(const char *path,
       // check if is unique
       int currCounter = maxCounters[res.set];
       bool skip = false;
-      for (uint32_t x = 0; x < currCounter; ++x) {
-        auto &currRes = resources[res.set][x];
+      for (int bindIdx = 0; bindIdx < currCounter; ++bindIdx) {
+        auto &currRes = resources[res.set][bindIdx];
         if (currRes.set == res.set && currRes.binding == res.binding) {
           skip = true;
           currRes.visibility |= GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT;
@@ -406,7 +407,7 @@ MaterialMetadata loadBinaryMetadata(const char *psoPath) {
 
   while (offset < mapper->objectResourceDataOffset) {
     // let us find the len of the string
-    uint32_t len = static_cast<uint32_t>(strlen(data + offset));
+    auto len = static_cast<uint32_t>(strlen(data + offset));
     const char *name = persistentString(data + offset);
     // patch it in the right place
     if (counter < objectCount) {
@@ -434,7 +435,8 @@ MaterialMetadata loadBinaryMetadata(const char *psoPath) {
   return outData;
 }
 
-graphics::MaterialMetadata loadMetadata(const char *psoPath, const GRAPHIC_API api) {
+graphics::MaterialMetadata loadMetadata(const char *psoPath,
+                                        const GRAPHIC_API api) {
   std::filesystem::path p(psoPath);
   p.replace_extension(".metadata");
   std::string finalP;

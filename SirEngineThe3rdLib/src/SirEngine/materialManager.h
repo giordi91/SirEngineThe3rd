@@ -2,11 +2,14 @@
 
 #include <cassert>
 
+
+#include "engineMath.h"
 #include "SirEngine/graphics/bindingTableManager.h"
 #include "SirEngine/handle.h"
 #include "SirEngine/materialManager.h"
 #include "SirEngine/memory/cpu/sparseMemoryPool.h"
 #include "SirEngine/memory/cpu/stringHashMap.h"
+#include "graphics/materialMetadata.h"
 
 namespace SirEngine {
 
@@ -18,19 +21,21 @@ struct ShaderBind {
 enum class STENCIL_REF { CLEAR = 0, SSSSS = 1 };
 #define INVALID_QUEUE_TYPE_FLAGS 0xFFFFFFFF
 
-
-
-static constexpr uint32_t QUEUE_COUNT = 5;
-struct MaterialRuntime final {
-  ShaderBind shaderQueueTypeFlags[QUEUE_COUNT] = {};
-  SkinHandle skinHandle;
-  MeshHandle meshHandle;
-  BindingTableHandle bindingHandle[QUEUE_COUNT]{};
+// This is a material binding coming from a file
+struct MaterialSourceBinding {
+  const char *type;
+  const char *bindingName;
+  const char *resourcePath;
 };
 
+static constexpr uint32_t QUEUE_COUNT = 5;
+
 struct MaterialData {
-  MaterialRuntime m_materialRuntime;
-  uint32_t magicNumber;
+  MaterialSourceBinding *materialBinding;
+  uint32_t materialBindingCount : 16;
+  ShaderBind shaderBindPerQueue[QUEUE_COUNT] = {};
+  BindingTableHandle bindingHandle[QUEUE_COUNT]{};
+  uint32_t magicNumber : 16;
   const char *name = nullptr;
 };
 
@@ -44,7 +49,7 @@ class MaterialManager {
   MaterialManager &operator=(const MaterialManager &) = delete;
 
   void inititialize() {}
-  void cleanup() { releaseAllMaterialsAndRelatedResources(); }
+  void cleanup();
 
   void bindMaterial(MaterialHandle handle, SHADER_QUEUE_FLAGS queue);
   void free(MaterialHandle handle);
@@ -60,25 +65,30 @@ class MaterialManager {
     const uint64_t queueFlags = getQueueFlags(flags);
     return (queueFlags & static_cast<uint64_t>(queue)) > 0;
   }
-  // TODO see note on the dx12 material manager for this function
   ShaderBind bindRSandPSO(const uint64_t shaderFlags,
                           const MaterialHandle handle) const;
 
-  MaterialHandle loadMaterial(const char *path, const MeshHandle meshHandle,
-                              const SkinHandle skinHandle);
+  void buildBindingTableDefinitionFromMetadta(
+      const graphics::MaterialMetadata *meta);
+  MaterialHandle loadMaterial(const char *path);
 
-  [[nodiscard]] const MaterialRuntime &getMaterialRuntime(
+  [[nodiscard]] const MaterialData &getMaterialData(
       const MaterialHandle handle) const {
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
-    return m_materialTextureHandles.getConstRef(index).m_materialRuntime;
+    return m_materialTextureHandles.getConstRef(index);
   }
+  inline PSOHandle getmaterialPSO(const MaterialHandle handle,
+                                  SHADER_QUEUE_FLAGS queue) const {
+    assertMagicNumber(handle);
+    uint32_t index = getIndexFromHandle(handle);
+    const auto &data = m_materialTextureHandles.getConstRef(index);
+    int queueIdx = getFirstBitSet(static_cast<uint32_t>(queue));
+    assert(queueIdx < QUEUE_COUNT);
+    return data.shaderBindPerQueue[queueIdx].pso;
+  };
 
  private:
-  // called only on shutdown, main goal is to release GPU resources to
-  // ease up the validation layer
-  void releaseAllMaterialsAndRelatedResources();
-
   inline void assertMagicNumber(const MaterialHandle handle) const {
     const uint32_t magic = getMagicFromHandle(handle);
     const uint32_t idx = getIndexFromHandle(handle);
@@ -86,18 +96,17 @@ class MaterialManager {
            "invalid magic handle for material data");
   }
 
- private:
   struct PreliminaryMaterialParse {
     const char *shaderQueueTypeFlagsStr[QUEUE_COUNT] = {
         nullptr, nullptr, nullptr, nullptr, nullptr};
+    MaterialSourceBinding *sourceBindings;
+    uint32_t sourceBindingsCount;
     // defines whether or not we expect the material to change, if not we can
     // save some resource allocations
     bool isStatic = false;
   };
-  PreliminaryMaterialParse MaterialManager::parseMaterial(
-      const char *path, const MeshHandle, const SkinHandle skinHandle);
+  PreliminaryMaterialParse parseMaterial(const char *path);
 
- private:
   HashMap<const char *, MaterialHandle, hashString32> m_nameToHandle;
   static const uint32_t RESERVE_SIZE = 200;
   uint32_t MAGIC_NUMBER_COUNTER = 1;

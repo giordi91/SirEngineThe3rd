@@ -3,7 +3,7 @@
 #include <glm/gtx/transform.hpp>
 
 #include "SirEngine/engineConfig.h"
-#include "SirEngine/matrix.h"
+#include "SirEngine/engineMath.h"
 #include "glm/glm.hpp"
 
 namespace SirEngine {

@@ -4,7 +4,7 @@
 #include "SirEngine/globals.h"
 #include "SirEngine/graphics/cpuGraphicsStructures.h"
 #include "SirEngine/input.h"
-#include "SirEngine/matrix.h"
+#include "SirEngine/engineMath.h"
 #include "graphicsDefines.h"
 
 namespace SirEngine {

@@ -91,8 +91,8 @@ AssetDataHandle AssetManager::loadAsset(const char *path) {
       skinHandle =
           globals::SKIN_MANAGER->loadSkinCluster(skinPath.c_str(), animHandle);
     }
-    MaterialHandle matHandle = globals::MATERIAL_MANAGER->loadMaterial(
-        materialString.c_str(), mHandle, skinHandle);
+    MaterialHandle matHandle =
+        globals::MATERIAL_MANAGER->loadMaterial(materialString.c_str());
     renderable.m_materialHandle = matHandle;
 
     globals::RENDERING_CONTEXT->addRenderablesToQueue(renderable);

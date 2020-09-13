@@ -37,6 +37,6 @@ struct MaterialMetadata {
 MaterialMetadata SIR_ENGINE_API extractMetadata(const char *psoPath);
 MaterialMetadata SIR_ENGINE_API loadMetadata(const char *psoPath,
                                              GRAPHIC_API api);
-MaterialMetadata loadBinaryMetadata(const const char* psoPath);
+MaterialMetadata loadBinaryMetadata(const char* psoPath);
 
 }  // namespace SirEngine::graphics

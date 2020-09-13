@@ -4,11 +4,10 @@
 #include <string>
 #include <unordered_map>
 
-#include "SirEngine/PSOManager.h"
+#include "SirEngine/psoManager.h"
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/graphics/materialMetadata.h"
 #include "SirEngine/log.h"
-#include "SirEngine/materialManager.h"
 #include "SirEngine/runtimeString.h"
 #include "nlohmann/json.hpp"
 #include "platform/windows/graphics/dx12/DX12.h"
@@ -621,9 +620,6 @@ RootCompilerResult processSignatureFileToBlob(
       static_cast<UINT>(rootParams.size()), rootParams.data(), numStaticSampers,
       staticSamplers);
 
-  // processRootFlags(jobj, rootSignatureDesc);
-
-  // const ROOT_TYPE fileTypeEnum = getFileTypeEnum(fileType);
   (*blob) = serializeRootSignature(rootSignatureDesc);
 
   return RootCompilerResult{
@@ -634,9 +630,8 @@ RootCompilerResult processSignatureFileToBlob(
       true,
       static_cast<uint16_t>(userCounter),
       {0, useStaticSampler ? 1 : -1,
-       static_cast<uint16_t>(hasPassConfig ? 1 + useStaticSampler : -1),
-       static_cast<uint16_t>(useStaticSampler + hasPassConfig + 1)}};
-  return {};
+       static_cast<int16_t>(hasPassConfig ? 1 + useStaticSampler : -1),
+       static_cast<int16_t>(useStaticSampler + hasPassConfig + 1)}};
 }
 
 RootCompilerResult processSignatureFile(const char *path) {
