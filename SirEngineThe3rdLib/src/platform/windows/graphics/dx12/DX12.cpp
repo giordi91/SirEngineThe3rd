@@ -11,6 +11,7 @@
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/interopData.h"
 #include "SirEngine/log.h"
+#include "SirEngine/materialManager.h"
 #include "SirEngine/memory/cpu/stringPool.h"
 #include "SirEngine/runtimeString.h"
 #include "SirEngine/skinClusterManager.h"
@@ -19,7 +20,6 @@
 #include "platform/windows/graphics/dx12/dx12Adapter.h"
 #include "platform/windows/graphics/dx12/dx12BufferManager.h"
 #include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
-#include "platform/windows/graphics/dx12/dx12MaterialManager.h"
 #include "platform/windows/graphics/dx12/dx12MeshManager.h"
 #include "platform/windows/graphics/dx12/dx12PSOManager.h"
 #include "platform/windows/graphics/dx12/dx12RootSignatureManager.h"
@@ -27,7 +27,6 @@
 #include "platform/windows/graphics/dx12/dx12SwapChain.h"
 #include "platform/windows/graphics/dx12/dx12TextureManager.h"
 #include "rootSignatureCompile.h"
-#include "platform/windows/graphics/vk/vkMaterialManager.h"
 
 #undef max
 #undef min
@@ -50,7 +49,6 @@ FrameResource FRAME_RESOURCES[FRAME_BUFFERS_COUNT];
 FrameResource *CURRENT_FRAME_RESOURCE = nullptr;
 Dx12TextureManager *TEXTURE_MANAGER = nullptr;
 Dx12MeshManager *MESH_MANAGER = nullptr;
-vk::VkMaterialManager *MATERIAL_MANAGER = nullptr;
 Dx12ConstantBufferManager *CONSTANT_BUFFER_MANAGER = nullptr;
 Dx12ShaderManager *SHADER_MANAGER = nullptr;
 Dx12PSOManager *PSO_MANAGER = nullptr;
@@ -246,9 +244,8 @@ bool Dx12RenderingContext::initializeGraphicsDx12(BaseWindow *wnd,
 
   // mesh manager needs to load after pso and RS since it initialize material
   // types
-  MATERIAL_MANAGER = new vk::VkMaterialManager();
-  MATERIAL_MANAGER->inititialize();
-  globals::MATERIAL_MANAGER = MATERIAL_MANAGER;
+  globals::MATERIAL_MANAGER = new MaterialManager();
+  globals::MATERIAL_MANAGER->inititialize();
 
   globals::DEBUG_RENDERER = new DebugRenderer();
   globals::DEBUG_RENDERER->initialize();
@@ -566,8 +563,9 @@ void Dx12RenderingContext::addRenderablesToQueue(const Renderable &renderable) {
 
   Dx12Renderable dx12Renderable{};
 
-  const vk::VkMaterialRuntime &materialRuntime =
-      MATERIAL_MANAGER->getMaterialRuntime(renderable.m_materialHandle);
+  const MaterialRuntime &materialRuntime =
+      globals::MATERIAL_MANAGER->getMaterialRuntime(
+          renderable.m_materialHandle);
   const Dx12MeshRuntime &meshRuntime =
       dx12::MESH_MANAGER->getMeshRuntime(renderable.m_meshHandle);
 
@@ -604,7 +602,7 @@ void Dx12RenderingContext::renderQueueType(
   ID3D12GraphicsCommandList2 *commandList = currentFc->commandList;
 
   for (const auto &renderableList : typedQueues) {
-    if (dx12::MATERIAL_MANAGER->isQueueType(renderableList.first, flag)) {
+    if (globals::MATERIAL_MANAGER->isQueueType(renderableList.first, flag)) {
       // now that we know the material goes in the the deferred queue we can
       // start rendering it
 
@@ -612,7 +610,7 @@ void Dx12RenderingContext::renderQueueType(
       // ShaderBind bind = dx12::MATERIAL_MANAGER->bindRSandPSO(
       //    renderableList.first, commandList);
 
-      ShaderBind bind = MATERIAL_MANAGER->bindRSandPSO(
+      ShaderBind bind = globals::MATERIAL_MANAGER->bindRSandPSO(
           renderableList.first, renderableList.second[0].m_materialHandle);
 
       // binding the camera
@@ -643,12 +641,10 @@ void Dx12RenderingContext::renderQueueType(
         const Dx12Renderable &renderable = currRenderables[i];
 
         // bind material data like textures etc, then render
-        dx12::MATERIAL_MANAGER->bindMaterial(renderable.m_materialHandle, flag);
+        globals::MATERIAL_MANAGER->bindMaterial(renderable.m_materialHandle,
+                                                flag);
 
-        // TODO temp check, needs to change
-        bool isDebug = dx12::MATERIAL_MANAGER->isQueueType(
-            renderableList.first, SHADER_QUEUE_FLAGS::QUEUE_DEBUG);
-        dx12::MESH_MANAGER->render(renderable.m_meshHandle, currentFc);
+        MESH_MANAGER->render(renderable.m_meshHandle, currentFc);
       }
       // annotateGraphicsEnd();
     }
