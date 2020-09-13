@@ -12,6 +12,8 @@ class MeshManager {
   MeshManager() = default;
   MeshManager(const MeshManager &) = delete;
   MeshManager &operator=(const MeshManager &) = delete;
+  virtual void initialize() = 0;
+  virtual void cleanup() = 0;
 
   // TODO fix is internal
   virtual MeshHandle loadMesh(const char *path, bool isInternal = false) = 0;

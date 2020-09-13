@@ -64,7 +64,7 @@ struct Dx12Renderable {
   MaterialHandle m_materialHandle;
 };
 
-typedef std::unordered_map<uint64_t, std::vector<Dx12Renderable>>
+typedef std::unordered_map<uint64_t, std::vector<Renderable>>
     Dx12RenderingQueues;
 
 void createFrameCommand(FrameCommand *fc) {
@@ -561,34 +561,17 @@ void Dx12RenderingContext::updateDirectionalLightMatrix() {
 void Dx12RenderingContext::addRenderablesToQueue(const Renderable &renderable) {
   auto *typedQueues = reinterpret_cast<Dx12RenderingQueues *>(queues);
 
-  Dx12Renderable dx12Renderable{};
-
-  const MaterialRuntime &materialRuntime =
-      globals::MATERIAL_MANAGER->getMaterialRuntime(
-          renderable.m_materialHandle);
-  const Dx12MeshRuntime &meshRuntime =
-      dx12::MESH_MANAGER->getMeshRuntime(renderable.m_meshHandle);
-
-  // dx12Renderable.m_materialRuntime = materialRuntime;
-  dx12Renderable.m_materialHandle = renderable.m_materialHandle;
-  dx12Renderable.m_meshHandle = renderable.m_meshHandle;
   // store the renderable on each queue
   for (int i = 0; i < MaterialManager::QUEUE_COUNT; ++i) {
-    /*
-    const uint32_t flag = materialRuntime.shaderQueueTypeFlags[i];
-
-    if (flag != INVALID_QUEUE_TYPE_FLAGS) {
-      (*typedQueues)[flag].emplace_back(dx12Renderable);
-    }
-    */
-    if (materialRuntime.shaderQueueTypeFlags[i].pso.isHandleValid()) {
-      // compute flag, is going to be a compbination of the index and the
+    PSOHandle pso = globals::MATERIAL_MANAGER->getmaterialPSO(
+        renderable.m_materialHandle, static_cast<SHADER_QUEUE_FLAGS>(1 << i));
+    if (pso.isHandleValid()) {
+      // compute flag, is going to be a combination: of the index and the
       // psohandle
-      uint64_t pso =
-          static_cast<uint64_t>(materialRuntime.shaderQueueTypeFlags[i].pso.handle) << 32;
+      uint64_t psoHash = static_cast<uint64_t>(pso.handle) << 32;
       uint64_t queue = (1ull << i);
-      uint64_t key = queue | pso;
-      (*typedQueues)[key].emplace_back(dx12Renderable);
+      uint64_t key = queue | psoHash;
+      (*typedQueues)[key].emplace_back(renderable);
     }
   }
 }
@@ -636,9 +619,9 @@ void Dx12RenderingContext::renderQueueType(
 
       // looping each of the object
       const size_t count = renderableList.second.size();
-      const Dx12Renderable *currRenderables = renderableList.second.data();
+      const Renderable *currRenderables = renderableList.second.data();
       for (size_t i = 0; i < count; ++i) {
-        const Dx12Renderable &renderable = currRenderables[i];
+        const Renderable &renderable = currRenderables[i];
 
         // bind material data like textures etc, then render
         globals::MATERIAL_MANAGER->bindMaterial(renderable.m_materialHandle,

@@ -56,12 +56,7 @@ uint32_t GRAPHICS_QUEUE_FAMILY = 0;
 uint32_t PRESENTATION_QUEUE_FAMILY = 0;
 bool DEBUG_MARKERS_ENABLED = false;
 
-struct VkRenderable {
-  MeshHandle m_meshHandle{};
-  MaterialHandle m_materialHandle{};
-};
-
-typedef std::unordered_map<uint64_t, std::vector<VkRenderable>>
+typedef std::unordered_map<uint64_t, std::vector<Renderable>>
     VkRenderingQueues;
 
 bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
@@ -500,24 +495,11 @@ bool VkRenderingContext::shutdownGraphic() {
                          nullptr);
     vkDestroyFence(LOGICAL_DEVICE, FRAME_COMMAND[i].m_endOfFrameFence, nullptr);
   }
-  // destroying environment texture handles
-  if (m_enviromentMapHandle.isHandleValid()) {
-    vk::TEXTURE_MANAGER->free(m_enviromentMapHandle);
-  }
-  if (m_enviromentMapIrradianceHandle.isHandleValid()) {
-    vk::TEXTURE_MANAGER->free(m_enviromentMapIrradianceHandle);
-  }
-  if (m_enviromentMapRadianceHandle.isHandleValid()) {
-    vk::TEXTURE_MANAGER->free(m_enviromentMapRadianceHandle);
-  }
-  if (m_brdfHandle.isHandleValid()) {
-    vk::TEXTURE_MANAGER->free(m_brdfHandle);
-  }
-
   // clean up manager
   PIPELINE_LAYOUT_MANAGER->cleanup();
   PSO_MANAGER->cleanup();
 
+  MESH_MANAGER->cleanup();
   globals::MATERIAL_MANAGER->cleanup();
 
   TEXTURE_MANAGER->cleanup();
@@ -560,25 +542,17 @@ void VkRenderingContext::resetGlobalCommandList() {
 void VkRenderingContext::addRenderablesToQueue(const Renderable &renderable) {
   auto *typedQueues = static_cast<VkRenderingQueues *>(queues);
 
-  VkRenderable vkRenderable{};
-
-  const MaterialRuntime &materialRuntime =
-      globals::MATERIAL_MANAGER->getMaterialRuntime(renderable.m_materialHandle);
-
-  vkRenderable.m_materialHandle = renderable.m_materialHandle;
-  vkRenderable.m_meshHandle = renderable.m_meshHandle;
   // store the renderable on each queue
   for (int i = 0; i < MaterialManager::QUEUE_COUNT; ++i) {
-    // const uint32_t flag = materialRuntime.shaderQueueTypeFlags[i];
-    if (materialRuntime.shaderQueueTypeFlags[i].pso.isHandleValid()) {
-      // compute flag, is going to be a combination of the index and the
+    PSOHandle pso = globals::MATERIAL_MANAGER->getmaterialPSO(
+        renderable.m_materialHandle, static_cast<SHADER_QUEUE_FLAGS>(1 << i));
+    if (pso.isHandleValid()) {
+      // compute flag, is going to be a combination: of the index and the
       // psohandle
-      uint64_t pso = static_cast<uint64_t>(
-                         materialRuntime.shaderQueueTypeFlags[i].pso.handle)
-                     << 32;
+      uint64_t psoHash = static_cast<uint64_t>(pso.handle) << 32;
       uint64_t queue = (1ull << i);
-      uint64_t key = queue | pso;
-      (*typedQueues)[key].emplace_back(vkRenderable);
+      uint64_t key = queue | psoHash;
+      (*typedQueues)[key].emplace_back(renderable);
     }
   }
 }
@@ -630,12 +604,13 @@ void VkRenderingContext::renderQueueType(
 
       // looping each of the object
       const size_t count = renderableList.second.size();
-      const VkRenderable *currRenderables = renderableList.second.data();
+      const Renderable *currRenderables = renderableList.second.data();
       for (size_t i = 0; i < count; ++i) {
-        const VkRenderable &renderable = currRenderables[i];
+        const Renderable &renderable = currRenderables[i];
 
         // bind material data like textures etc, then render
-        globals::MATERIAL_MANAGER->bindMaterial(renderable.m_materialHandle,flag);
+        globals::MATERIAL_MANAGER->bindMaterial(renderable.m_materialHandle,
+                                                flag);
 
         MESH_MANAGER->renderMesh(renderable.m_meshHandle, commandList);
       }
@@ -791,6 +766,9 @@ VkFramebuffer *createFrameBuffer(VkRenderPass pass,
 
     VK_CHECK(vkCreateFramebuffer(vk::LOGICAL_DEVICE, &createInfo, nullptr,
                                  &(frameBuffers[swap])));
+
+    SET_DEBUG_NAME(frameBuffers[swap], VK_OBJECT_TYPE_FRAMEBUFFER,
+                   frameConcatenation(name, "Memory"));
   }
   return frameBuffers;
 }

@@ -1,34 +1,22 @@
 
 #include "SirEngine/materialManager.h"
 
-#include <SPIRV-CROSS/spirv_cross.hpp>
 #include <cassert>
 #include <string>
 #include <unordered_map>
 
-#include "SirEngine/PSOManager.h"
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/globals.h"
-#include "SirEngine/graphics/debugAnnotations.h"
 #include "SirEngine/graphics/materialMetadata.h"
 #include "SirEngine/log.h"
 #include "SirEngine/psoManager.h"
 #include "SirEngine/rootSignatureManager.h"
-#include "SirEngine/skinClusterManager.h"
+#include "SirEngine/runtimeString.h"
 #include "SirEngine/textureManager.h"
-#include "binary/binaryFile.h"
-#include "memory/cpu/stringPool.h"
-#include "nlohmann/json.hpp"
-#include "platform/windows/graphics/vk/vkShaderCompiler.h"
-#include "runtimeString.h"
 
 namespace SirEngine {
 
 namespace materialKeys {
-static const char *SEPARATE_ALPHA = "separateAlpha";
-static const char *ROUGHNESS_MULT = "roughnessMult";
-static const char *METALLIC_MULT = "metallicMult";
-static const char *THICKNESS = "thickness";
 static const char *QUEUE = "queue";
 static const char *TYPE = "type";
 static const char *RS_KEY = "rs";
@@ -48,15 +36,15 @@ static const std::unordered_map<std::string, SirEngine::SHADER_QUEUE_FLAGS>
 
 ShaderBind MaterialManager::bindRSandPSO(const uint64_t shaderFlags,
                                          const MaterialHandle handle) const {
-  const auto &runtime = getMaterialRuntime(handle);
+  const auto &runtime = getMaterialData(handle);
   // get type flags as int
   constexpr auto mask = static_cast<uint64_t>(~((1ull << 32ull) - 1ull));
   const auto typeFlags = static_cast<uint64_t>(
       (static_cast<uint64_t>(shaderFlags) & mask) >> 32ll);
 
   for (int i = 0; i < QUEUE_COUNT; ++i) {
-    if (runtime.shaderQueueTypeFlags[i].pso.handle == typeFlags) {
-      ShaderBind bind = runtime.shaderQueueTypeFlags[i];
+    if (runtime.shaderBindPerQueue[i].pso.handle == typeFlags) {
+      ShaderBind bind = runtime.shaderBindPerQueue[i];
       globals::ROOT_SIGNATURE_MANAGER->bindGraphicsRS(bind.rs);
       globals::PSO_MANAGER->bindPSO(bind.pso);
       return bind;
@@ -69,7 +57,7 @@ ShaderBind MaterialManager::bindRSandPSO(const uint64_t shaderFlags,
 uint32_t findBindingIndex(const graphics::MaterialMetadata *meta,
                           const std::string &bindName) {
   uint32_t count = meta->objectResourceCount;
-  for (int i = 0; i < count; ++i) {
+  for (uint32_t i = 0; i < count; ++i) {
     const auto &resource = meta->objectResources[i];
     bool result = strcmp(resource.name, bindName.c_str()) == 0;
     if (result) {
@@ -80,25 +68,54 @@ uint32_t findBindingIndex(const graphics::MaterialMetadata *meta,
   return 9999;
 }
 
-MaterialHandle MaterialManager::loadMaterial(const char *path,
-                                             const MeshHandle meshHandle,
-                                             const SkinHandle skinHandle) {
-  PreliminaryMaterialParse parse = parseMaterial(path, meshHandle, skinHandle);
+void MaterialManager::buildBindingTableDefinitionFromMetadta(
+    const graphics::MaterialMetadata *meta) {
+  uint32_t objectsCount = meta->objectResourceCount;
+  // zeroing out memory jsut to be safe
+  memset(m_descriptions, 0,
+         sizeof(graphics::BindingDescription) * objectsCount);
+  for (uint32_t obj = 0; obj < objectsCount; ++obj) {
+    const graphics::MaterialResource &res = meta->objectResources[obj];
+    auto type = res.type;
+    GRAPHIC_RESOURCE_TYPE graphicsType = GRAPHIC_RESOURCE_TYPE::NONE;
+    switch (type) {
+      case graphics::MATERIAL_RESOURCE_TYPE::TEXTURE: {
+        graphicsType = GRAPHIC_RESOURCE_TYPE::TEXTURE;
+        break;
+      }
+      case graphics::MATERIAL_RESOURCE_TYPE::CONSTANT_BUFFER: {
+        graphicsType = GRAPHIC_RESOURCE_TYPE::CONSTANT_BUFFER;
+        break;
+      }
+      case graphics::MATERIAL_RESOURCE_TYPE::BUFFER: {
+        bool readOnly = (static_cast<uint32_t>(res.flags) &
+                         static_cast<uint32_t>(
+                             graphics::MATERIAL_RESOURCE_FLAGS::READ_ONLY)) > 0;
+        if (readOnly) {
+          graphicsType = GRAPHIC_RESOURCE_TYPE::READ_BUFFER;
+        } else {
+          graphicsType = GRAPHIC_RESOURCE_TYPE::READWRITE_BUFFER;
+        }
+        break;
+      }
+    }
+    m_descriptions[obj] = {res.binding, graphicsType, res.visibility};
+  }
+}
+
+MaterialHandle MaterialManager::loadMaterial(const char *path) {
+  PreliminaryMaterialParse parse = parseMaterial(path);
 
   uint32_t index;
   MaterialData &materialData =
       m_materialTextureHandles.getFreeMemoryData(index);
-
-  MaterialRuntime matCpu{};
-  matCpu.skinHandle = skinHandle;
-  matCpu.meshHandle = meshHandle;
 
   for (uint32_t i = 0; i < QUEUE_COUNT; ++i) {
     const char *value = parse.shaderQueueTypeFlagsStr[i];
     if (value != nullptr) {
       PSOHandle pso = globals::PSO_MANAGER->getHandleFromName(value);
       RSHandle rs = globals::PSO_MANAGER->getRS(pso);
-      matCpu.shaderQueueTypeFlags[i] = ShaderBind{rs, pso};
+      materialData.shaderBindPerQueue[i] = ShaderBind{rs, pso};
     }
   }
 
@@ -108,95 +125,53 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
   MaterialHandle handle{(materialData.magicNumber << 16) | (index)};
   m_nameToHandle.insert(name.c_str(), handle);
 
-  // parse material resources
-  auto jobj = getJsonObj(path);
-  assert(jobj.find("resources") != jobj.end());
-  const auto &bindingResources = jobj["resources"];
-
   // NEW code avoiding the old crap
   for (uint32_t i = 0; i < QUEUE_COUNT; ++i) {
-    if (!matCpu.shaderQueueTypeFlags[i].pso.isHandleValid()) {
+    if (!materialData.shaderBindPerQueue[i].pso.isHandleValid()) {
       continue;
     }
-    ShaderBind bind = matCpu.shaderQueueTypeFlags[i];
-
-    uint32_t flags =
-        parse.isStatic
-            ? 0
-            : graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED;
+    ShaderBind bind = materialData.shaderBindPerQueue[i];
 
     const graphics::MaterialMetadata *meta =
         globals::PSO_MANAGER->getMetadata(bind.pso);
 
-    uint32_t objectsCount = meta->objectResourceCount;
-    // zeroing out memory jsut to be safe
-    memset(m_descriptions, 0,
-           sizeof(graphics::BindingDescription) * objectsCount);
-    for (uint32_t obj = 0; obj < objectsCount; ++obj) {
-      const graphics::MaterialResource &res = meta->objectResources[obj];
-      auto type = res.type;
-      GRAPHIC_RESOURCE_TYPE graphicsType;
-      switch (type) {
-        case graphics::MATERIAL_RESOURCE_TYPE::TEXTURE: {
-          graphicsType = GRAPHIC_RESOURCE_TYPE::TEXTURE;
-          break;
-        }
-        case graphics::MATERIAL_RESOURCE_TYPE::CONSTANT_BUFFER: {
-          graphicsType = GRAPHIC_RESOURCE_TYPE::CONSTANT_BUFFER;
-          break;
-        }
-        case graphics::MATERIAL_RESOURCE_TYPE::BUFFER: {
-          bool readOnly =
-              (static_cast<uint32_t>(res.flags) &
-               static_cast<uint32_t>(
-                   graphics::MATERIAL_RESOURCE_FLAGS::READ_ONLY)) > 0;
-          if (readOnly) {
-            graphicsType = GRAPHIC_RESOURCE_TYPE::READ_BUFFER;
-          } else {
-            graphicsType = GRAPHIC_RESOURCE_TYPE::READWRITE_BUFFER;
-          }
-          break;
-        }
-      }
-      m_descriptions[obj] = {res.binding, graphicsType, res.visibility};
-    }
+    buildBindingTableDefinitionFromMetadta(meta);
 
     std::string bindingName = name + "-bindingTable";
     BindingTableHandle bindingTable =
         globals::BINDING_TABLE_MANAGER->allocateBindingTable(
-            m_descriptions, objectsCount,
+            m_descriptions, meta->objectResourceCount,
             parse.isStatic
                 ? graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_NONE
                 : graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED,
             bindingName.c_str());
-    matCpu.bindingHandle[i] = bindingTable;
+    materialData.bindingHandle[i] = bindingTable;
 
     // update material
-    for (const auto &subRes : bindingResources) {
-      const auto type = subRes["type"].get<std::string>();
-      const auto bName = subRes["bindingName"].get<std::string>();
-      const auto resPath = subRes["resourcePath"].get<std::string>();
 
-      const std::string resName = getFileName(resPath);
-      if (type == "texture") {
+    for (uint32_t res = 0; res < parse.sourceBindingsCount; ++res) {
+      const MaterialSourceBinding &matBinding = parse.sourceBindings[res];
+      if (strcmp(matBinding.type, "texture") == 0) {
         TextureHandle tHandle =
-            globals::TEXTURE_MANAGER->loadTexture(resPath.c_str());
+            globals::TEXTURE_MANAGER->loadTexture(matBinding.resourcePath);
 
-        uint32_t bindingIdx = findBindingIndex(meta, bName);
+        uint32_t bindingIdx = findBindingIndex(meta, matBinding.bindingName);
 
         globals::BINDING_TABLE_MANAGER->bindTexture(
-            matCpu.bindingHandle[i], tHandle, bindingIdx, bindingIdx, false);
-      } else if (type == "mesh") {
+            materialData.bindingHandle[i], tHandle, bindingIdx, bindingIdx,
+            false);
+      } else if (strcmp(matBinding.type, "mesh") == 0) {
         MeshHandle mHandle =
-            globals::MESH_MANAGER->getHandleFromName(resPath.c_str());
+            globals::MESH_MANAGER->getHandleFromName(matBinding.resourcePath);
 
         globals::BINDING_TABLE_MANAGER->bindMesh(
-            matCpu.bindingHandle[i], mHandle, meta->meshBinding.binding,
+            materialData.bindingHandle[i], mHandle, meta->meshBinding.binding,
             meta->meshBinding.flags);
       }
     }
   }
-  materialData.m_materialRuntime = matCpu;
+  materialData.materialBindingCount = parse.sourceBindingsCount;
+  materialData.materialBinding = parse.sourceBindings;
 
   return handle;
 }
@@ -207,7 +182,7 @@ inline void freeTextureIfNeeded(const TextureHandle handle) {
   }
 }
 
-void MaterialManager::releaseAllMaterialsAndRelatedResources() {
+void MaterialManager::cleanup() {
   int count = m_nameToHandle.binCount();
   for (int i = 0; i < count; ++i) {
     if (m_nameToHandle.isBinUsed(i)) {
@@ -218,11 +193,10 @@ void MaterialManager::releaseAllMaterialsAndRelatedResources() {
       const uint32_t index = getIndexFromHandle(value);
       const MaterialData &data = m_materialTextureHandles.getConstRef(index);
 
-      // NOTE constant buffers don't need to be free singularly since the
-      // rendering context will allocate in bulk
-
-      if (data.m_materialRuntime.meshHandle.isHandleValid()) {
-        globals::MESH_MANAGER->free(data.m_materialRuntime.meshHandle);
+      for (uint32_t q = 0; q < QUEUE_COUNT; ++q) {
+        if (data.bindingHandle[q].isHandleValid()) {
+          globals::BINDING_TABLE_MANAGER->free(data.bindingHandle[q]);
+        }
       }
     }
   }
@@ -235,16 +209,15 @@ void MaterialManager::bindMaterial(const MaterialHandle handle,
   const auto &data = m_materialTextureHandles.getConstRef(index);
 
   const auto currentFlag = static_cast<uint32_t>(queue);
-  int currentFlagId = static_cast<int>(log2(currentFlag & -currentFlag));
+  int currentFlagId = getFirstBitSet(currentFlag);
 
-  ShaderBind bind = data.m_materialRuntime.shaderQueueTypeFlags[currentFlagId];
+  ShaderBind bind = data.shaderBindPerQueue[currentFlagId];
 
   globals::BINDING_TABLE_MANAGER->bindTable(
-      3, data.m_materialRuntime.bindingHandle[currentFlagId], bind.rs, false);
+      3, data.bindingHandle[currentFlagId], bind.rs, false);
 }
 
 void MaterialManager::free(const MaterialHandle handle) {
-  // TODO properly cleanup the resources
   assertMagicNumber(handle);
   uint32_t index = getIndexFromHandle(handle);
   const auto &data = m_materialTextureHandles.getConstRef(index);
@@ -286,7 +259,7 @@ static void parseQueueTypeFlags(const char **outFlags,
   for (size_t i = 0; i < qjobj.size(); ++i) {
     const auto stringFlag = qjobj[i].get<std::string>();
     const uint32_t currentFlag = stringToActualQueueFlag(stringFlag);
-    int currentFlagId = static_cast<int>(log2(currentFlag & -currentFlag));
+    int currentFlagId = getFirstBitSet(currentFlag);
 
     const auto stringType = tjobj[i].get<std::string>();
     outFlags[currentFlagId] = frameString(stringType.c_str());
@@ -294,7 +267,7 @@ static void parseQueueTypeFlags(const char **outFlags,
 }
 
 MaterialManager::PreliminaryMaterialParse MaterialManager::parseMaterial(
-    const char *path, const MeshHandle, const SkinHandle skinHandle) {
+    const char *path) {
   // for materials we do not perform the check whether is loaded or not
   // each object is going to get it s own material copy.
   // if that starts to be an issue we will add extra logic to deal with this.
@@ -302,18 +275,32 @@ MaterialManager::PreliminaryMaterialParse MaterialManager::parseMaterial(
   const std::string name = getFileName(path);
 
   auto jobj = getJsonObj(path);
-  float oneFloat = 1.0f;
-  float roughnessMult =
-      getValueIfInJson(jobj, materialKeys::ROUGHNESS_MULT, oneFloat);
-  float metallicMult =
-      getValueIfInJson(jobj, materialKeys::METALLIC_MULT, oneFloat);
   bool isStatic = getValueIfInJson(jobj, materialKeys::IS_STATIC_KEY, false);
 
   PreliminaryMaterialParse toReturn;
   toReturn.isStatic = isStatic;
   parseQueueTypeFlags(toReturn.shaderQueueTypeFlagsStr, jobj);
+
+  // parse material resources
+  assert(jobj.find("resources") != jobj.end());
+  const auto &bindingResources = jobj["resources"];
+  uint32_t count = static_cast<uint32_t>(bindingResources.size());
+  auto *bindings = static_cast<MaterialSourceBinding *>(
+      globals::PERSISTENT_ALLOCATOR->allocate(sizeof(MaterialSourceBinding) *
+                                              count));
+  for (uint32_t i = 0; i < count; ++i) {
+    const auto &subRes = bindingResources[i];
+    const auto type = subRes["type"].get<std::string>();
+    const auto bName = subRes["bindingName"].get<std::string>();
+    const auto resPath = subRes["resourcePath"].get<std::string>();
+    bindings[i].type = persistentString(type.c_str());
+    bindings[i].bindingName = persistentString(bName.c_str());
+    bindings[i].resourcePath = persistentString(resPath.c_str());
+  }
+  toReturn.sourceBindings = bindings;
+  toReturn.sourceBindingsCount = count;
+
   return toReturn;
 }
-
 
 }  // namespace SirEngine

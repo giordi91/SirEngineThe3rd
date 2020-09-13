@@ -41,7 +41,8 @@ class VkPipelineLayoutManager final : public RootSignatureManager {
   void loadSignaturesInFolder(const char *directory) override;
   void loadSignatureBinaryFile(const char *file) override;
   RSHandle loadSignatureFile(const char *file);
-  RSHandle loadSignatureFile(const char *name, graphics::MaterialMetadata *metadata);
+  RSHandle loadSignatureFile(const char *name,
+                             graphics::MaterialMetadata *metadata);
 
   inline VkPipelineLayout getLayoutFromName(const char *name) const {
     const RSHandle handle = getHandleFromName(name);
@@ -79,15 +80,9 @@ class VkPipelineLayoutManager final : public RootSignatureManager {
       const VkDescriptorSetLayout perFrameLayout,
       const VkDescriptorSetLayout samplersLayout);
   //{}
-  void bindGraphicsRS(const RSHandle handle) const override {}
+  void bindGraphicsRS(const RSHandle) const override {}
 
  private:
-  inline uint32_t getIndexFromHandle(const RSHandle h) const {
-    return h.handle & INDEX_MASK;
-  }
-  inline uint32_t getMagicFromHandle(const RSHandle h) const {
-    return (h.handle & MAGIC_NUMBER_MASK) >> 16;
-  }
   inline void assertMagicNumber(const RSHandle handle) const {
     const uint32_t magic = getMagicFromHandle(handle);
     const uint32_t idx = getIndexFromHandle(handle);

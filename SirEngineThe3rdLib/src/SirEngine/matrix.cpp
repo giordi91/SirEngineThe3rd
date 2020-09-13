@@ -1,7 +1,7 @@
 // NOTE needed in order to get range between 0-1 and have inverted depth working
 // properly in vulkan
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include "SirEngine/matrix.h"
+#include "SirEngine/engineMath.h"
 
 #include <DirectXMath.h>
 

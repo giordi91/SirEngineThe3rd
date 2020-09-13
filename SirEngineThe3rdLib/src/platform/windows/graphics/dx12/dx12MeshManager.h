@@ -46,6 +46,9 @@ class Dx12MeshManager final : public MeshManager {
   virtual ~Dx12MeshManager() {  // assert(m_meshPool.assertEverythingDealloc());
   }
 
+  void initialize() override{};
+  void cleanup() override{};
+
   Dx12MeshManager(const Dx12MeshManager &) = delete;
   Dx12MeshManager &operator=(const Dx12MeshManager &) = delete;
 

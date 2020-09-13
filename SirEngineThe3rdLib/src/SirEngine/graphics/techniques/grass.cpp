@@ -310,18 +310,10 @@ void GrassTechnique::clear(const uint32_t id) {
     m_cullingInBuffer = {0};
   }
 
-  if (m_windTexture.isHandleValid()) {
-    globals::TEXTURE_MANAGER->free(m_windTexture);
-    m_windTexture = {0};
-  }
-  if (m_albedoTexture.isHandleValid()) {
-    globals::TEXTURE_MANAGER->free(m_albedoTexture);
-    m_albedoTexture = {0};
-  }
-  if (m_groundAlbedoTexture.isHandleValid()) {
-    globals::TEXTURE_MANAGER->free(m_groundAlbedoTexture);
-    m_groundAlbedoTexture = {0};
-  }
+  m_windTexture = {0};
+  m_albedoTexture = {0};
+  m_groundAlbedoTexture = {0};
+
   if (m_tilesPointsHandle.isHandleValid()) {
     globals::BUFFER_MANAGER->free(m_tilesPointsHandle);
     m_tilesPointsHandle = {0};
@@ -360,9 +352,7 @@ void GrassTechnique::clear(const uint32_t id) {
   }
 }
 
-void GrassTechnique::prePassRender(uint32_t) {
-  performCulling();
-}
+void GrassTechnique::prePassRender(uint32_t) { performCulling(); }
 
 void GrassTechnique::performCulling() {
   // here we compute the surviving tiles

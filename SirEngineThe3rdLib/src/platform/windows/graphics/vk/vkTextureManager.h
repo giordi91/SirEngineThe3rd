@@ -76,12 +76,10 @@ class SIR_ENGINE_API VkTextureManager final : public TextureManager {
                    const VkDescriptorSet descriptorSet, const uint32_t bindSlot,
                    const bool isCompute = false
 
-  ) const
-  {
+  ) const {
     assertMagicNumber(handle);
     const uint32_t idx = getIndexFromHandle(handle);
     const auto &data = m_texturePool.getConstRef(idx);
-
 
     writeDescriptorSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writeDescriptorSets[0].dstSet = descriptorSet;
@@ -121,7 +119,8 @@ class SIR_ENGINE_API VkTextureManager final : public TextureManager {
   inline void assertMagicNumber(const TextureHandle handle) const {
     const uint32_t magic = getMagicFromHandle(handle);
     const uint32_t idx = getIndexFromHandle(handle);
-    assert(m_texturePool.getConstRef(idx).magicNumber == magic &&
+    auto const &ref = m_texturePool.getConstRef(idx);
+    assert(ref.magicNumber == magic &&
            "invalid magic handle for constant buffer");
   }
 

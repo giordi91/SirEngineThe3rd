@@ -299,7 +299,6 @@ VkDescriptorType getDescriptorType(const graphics::MATERIAL_RESOURCE_TYPE type,
       return VkDescriptorType::VK_DESCRIPTOR_TYPE_MAX_ENUM;
     }
   }
-  return VK_DESCRIPTOR_TYPE_MAX_ENUM;
 }
 
 VkDescriptorType getDescriptorType(const nlohmann::json &config,

@@ -29,12 +29,9 @@ static std::unordered_map<RenderTargetFormat, VkFormat>
 // TODO This value come from the texture compiler which spits out dxgi formats,
 // should fix this at one point?
 static std::unordered_map<int, VkFormat> BC_INT_FORMAT_TO_VK_FORMAT{
-    {44,VK_FORMAT_B8G8R8A8_UNORM},
-    {50, VK_FORMAT_B8G8R8A8_SRGB},
-    {71, VK_FORMAT_BC1_RGBA_UNORM_BLOCK},
-    {72, VK_FORMAT_BC1_RGBA_SRGB_BLOCK},
-    {77, VK_FORMAT_BC3_UNORM_BLOCK},
-    {78, VK_FORMAT_BC3_SRGB_BLOCK},
+    {44, VK_FORMAT_B8G8R8A8_UNORM},       {50, VK_FORMAT_B8G8R8A8_SRGB},
+    {71, VK_FORMAT_BC1_RGBA_UNORM_BLOCK}, {72, VK_FORMAT_BC1_RGBA_SRGB_BLOCK},
+    {77, VK_FORMAT_BC3_UNORM_BLOCK},      {78, VK_FORMAT_BC3_SRGB_BLOCK},
 };
 
 inline VkFormat convertRTFormatToVKFormat(const RenderTargetFormat format) {
@@ -375,7 +372,8 @@ bool VkTextureManager::loadTextureFromFile(const char *name, VkFormat format,
     assert(!tex2D.empty());
 
     gli::gl GL(gli::gl::PROFILE_GL33);
-    gli::gl::format const translatedFormat = GL.translate(tex2D.format(),tex2D.swizzles());
+    gli::gl::format const translatedFormat =
+        GL.translate(tex2D.format(), tex2D.swizzles());
 
     const std::string textureName = getFileName(name);
 
@@ -445,7 +443,7 @@ bool VkTextureManager::loadTextureFromFile(const char *name, VkFormat format,
     imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
     imageCreateInfo.format = format;
 
-    //imageCreateInfo.format = VkFormat::VK_FORMAT_B8G8R8A8_SRGB;
+    // imageCreateInfo.format = VkFormat::VK_FORMAT_B8G8R8A8_SRGB;
     imageCreateInfo.mipLevels = outTexture.mipLevels;
     imageCreateInfo.arrayLayers = 6;
     imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -573,14 +571,14 @@ bool VkTextureManager::loadTextureFromFile(const char *name, VkFormat format,
   }
 }
 
-//TODO review clean this up a bit
+// TODO review clean this up a bit
 TextureHandle VkTextureManager::loadTexture(const char *path,
                                             const bool cubeMap) {
   const bool res = fileExists(path);
   assert(res);
 
   const auto jobj = getJsonObj(path);
-  //TODO we need to store this info
+  // TODO we need to store this info
   const bool isCube = getValueIfInJson(jobj, TEXTURE_CUBE_KEY, DEFAULT_BOOL);
   const bool isGamma = getValueIfInJson(jobj, TEXTURE_GAMMA_KEY, DEFAULT_BOOL);
   const bool hasMips =
@@ -637,7 +635,7 @@ void VkTextureManager::free(const TextureHandle handle) {
   vkDestroyImageView(vk::LOGICAL_DEVICE, data.view, nullptr);
   vkFreeMemory(vk::LOGICAL_DEVICE, data.deviceMemory, nullptr);
   // invalidating magic number
-  data.magicNumber = 0;
+  data = {};
   // adding the index to the free list
   m_texturePool.free(index);
 }
@@ -654,7 +652,8 @@ TextureHandle VkTextureManager::allocateTexture(
   bool isRT = (allocFlags & TEXTURE_ALLOCATION_FLAG_BITS::RENDER_TARGET) > 0;
   bool isSrc = (allocFlags & TEXTURE_ALLOCATION_FLAG_BITS::COPY_SOURCE) > 0;
   bool isDest = (allocFlags & TEXTURE_ALLOCATION_FLAG_BITS::COPY_DEST) > 0;
-  bool isStorage= (allocFlags & TEXTURE_ALLOCATION_FLAG_BITS::STORAGE_RESOURCE) > 0;
+  bool isStorage =
+      (allocFlags & TEXTURE_ALLOCATION_FLAG_BITS::STORAGE_RESOURCE) > 0;
   bool isShader =
       (allocFlags & TEXTURE_ALLOCATION_FLAG_BITS::SHADER_RESOURCE) > 0;
   bool isDepth = (allocFlags & TEXTURE_ALLOCATION_FLAG_BITS::DEPTH_TEXTURE) > 0;
@@ -663,7 +662,7 @@ TextureHandle VkTextureManager::allocateTexture(
   imageUsageFlags |= isDest ? VK_IMAGE_USAGE_TRANSFER_DST_BIT : 0;
   imageUsageFlags |= isShader ? VK_IMAGE_USAGE_SAMPLED_BIT : 0;
   imageUsageFlags |= isDepth ? VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT : 0;
-  imageUsageFlags |= isStorage? VK_IMAGE_USAGE_STORAGE_BIT: 0;
+  imageUsageFlags |= isStorage ? VK_IMAGE_USAGE_STORAGE_BIT : 0;
 
   const std::string textureName = getFileName(name);
 
@@ -879,5 +878,12 @@ void VkTextureManager::cleanup() {
   vkDestroyImage(vk::LOGICAL_DEVICE, data.image, nullptr);
   vkDestroyImageView(vk::LOGICAL_DEVICE, data.view, nullptr);
   vkFreeMemory(vk::LOGICAL_DEVICE, data.deviceMemory, nullptr);
+  data = {};
+  m_texturePool.free(index);
+
+  for (const auto &tex : m_nameToHandle) {
+    const std::string f = tex.first;
+    free(tex.second);
+  }
 }
 }  // namespace SirEngine::vk

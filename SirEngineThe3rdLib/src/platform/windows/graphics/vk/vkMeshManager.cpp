@@ -7,7 +7,13 @@
 #include "platform/windows/graphics/vk/vkBufferManager.h"
 
 namespace SirEngine::vk {
-vk::Buffer VkMeshManager::getVertexBuffer(const MeshHandle &handle) {
+void VkMeshManager::cleanup() {
+  for (const auto &toDel : m_nameToHandle) {
+    free(toDel.second);
+  }
+}
+
+vk::Buffer VkMeshManager::getVertexBuffer(const MeshHandle &handle) const {
   assertMagicNumber(handle);
   uint32_t index = getIndexFromHandle(handle);
   const MeshData &data = m_meshPool.getConstRef(index);
@@ -55,7 +61,8 @@ MeshHandle VkMeshManager::loadMesh(const char *path, bool isInternal) {
 
     uint32_t totalSize = indexCount * sizeof(int);
     meshData->idxBuffHandle = vk::BUFFER_MANAGER->allocate(
-        totalSize, indexData, "", totalSize / sizeof(int), sizeof(int),
+        totalSize, indexData, frameConcatenation(name.c_str(), "-indexBuffer"),
+        totalSize / sizeof(int), sizeof(int),
         BufferManager::BUFFER_FLAGS_BITS::INDEX_BUFFER);
 
     meshData->indexBuffer =
@@ -93,8 +100,9 @@ MeshHandle VkMeshManager::loadMesh(const char *path, bool isInternal) {
     ++MAGIC_NUMBER_COUNTER;
 
     BufferHandle positionsHandle = vk::BUFFER_MANAGER->allocate(
-        mapper->vertexDataSizeInByte, vertexData, "",
-        mapper->vertexDataSizeInByte / 4, sizeof(float),
+        mapper->vertexDataSizeInByte, vertexData,
+        frameConcatenation(name.c_str(), "-meshBuffer"),
+        static_cast<int>(mapper->vertexDataSizeInByte / 4u), sizeof(float),
         BufferManager::BUFFER_FLAGS_BITS::VERTEX_BUFFER);
     meshData->vtxBuffHandle = positionsHandle;
 
@@ -184,7 +192,7 @@ void VkMeshManager::free(const MeshHandle handle) {
   vk::BUFFER_MANAGER->free(data.vtxBuffHandle);
   vk::BUFFER_MANAGER->free(data.idxBuffHandle);
   // invalidating magic number
-  data.magicNumber = 0;
+  data = {};
   // adding the index to the free list
   m_meshPool.free(index);
 }

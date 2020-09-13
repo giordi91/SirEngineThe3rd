@@ -49,9 +49,11 @@ class VkMeshManager final : public MeshManager {
     m_nameToHandle.reserve(RESERVE_SIZE);
     m_uploadRequests.reserve(RESERVE_SIZE);
   }
-  ~VkMeshManager() {  // assert(m_meshPool.assertEverythingDealloc());
+  ~VkMeshManager() override {  // assert(m_meshPool.assertEverythingDealloc());
   }
 
+  void initialize() override{};
+  void cleanup() override;
   inline uint32_t getIndexCount(const MeshHandle &handle) const {
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
@@ -59,7 +61,7 @@ class VkMeshManager final : public MeshManager {
     return data.indexCount;
   }
 
-  vk::Buffer getVertexBuffer(const MeshHandle &handle);
+  vk::Buffer getVertexBuffer(const MeshHandle &handle) const;
   vk::Buffer getIndexBuffer(const MeshHandle &handle);
   const MeshData &getMeshData(const MeshHandle &handle) {
     assertMagicNumber(handle);
@@ -120,14 +122,15 @@ class VkMeshManager final : public MeshManager {
     return MeshHandle{0};
   }
 
-  inline const std::vector<BoundingBox> &getBoundingBoxes() {
+  inline const std::vector<BoundingBox> &getBoundingBoxes() const {
     return m_boundingBoxes;
   }
 
  private:
   SparseMemoryPool<MeshData> m_meshPool;
-
+  //TODO change this for a custom hash map
   std::unordered_map<std::string, MeshHandle> m_nameToHandle;
+
   static const uint32_t RESERVE_SIZE = 200;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
   std::vector<MeshUploadResource> m_uploadRequests;
