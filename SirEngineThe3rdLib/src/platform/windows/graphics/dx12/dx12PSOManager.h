@@ -8,6 +8,7 @@
 #include "nlohmann/json_fwd.hpp"
 #include "platform/windows/graphics/dx12/PSOCompile.h"
 #include "platform/windows/graphics/dx12/d3dx12.h"
+#include "SirEngine/materialManager.h"
 
 namespace SirEngine::dx12 {
 
@@ -19,6 +20,7 @@ class Dx12PSOManager final : public PSOManager {
     ID3D12RootSignature *root;
     RSHandle rsHandle;
     PSO_TYPE type;
+    MaterialMetadata metadata;
   };
 
  public:
@@ -102,8 +104,10 @@ class Dx12PSOManager final : public PSOManager {
     return data.rsHandle;
   }
   const MaterialMetadata *getMetadata(const PSOHandle &handle) override {
-    assert(0);
-    return nullptr;
+    assertMagicNumber(handle);
+    const uint32_t index = getIndexFromHandle(handle);
+    const PSOData &data = m_psoPool.getConstRef(index);
+    return &data.metadata;
   }
 
  private:

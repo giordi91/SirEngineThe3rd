@@ -6,6 +6,7 @@
 #include "SirEngine/skinClusterManager.h"
 #include "SirEngine/textureManager.h"
 #include "nlohmann/json.hpp"
+#include "SirEngine/rootSignatureManager.h"
 
 namespace SirEngine::vk {
 
@@ -35,6 +36,7 @@ ShaderBind VkMaterialManager::bindRSandPSO(const uint64_t shaderFlags,
   for (int i = 0; i < QUEUE_COUNT; ++i) {
     if (runtime.shaderQueueTypeFlags2[i].pso.handle == typeFlags) {
       ShaderBind bind = runtime.shaderQueueTypeFlags2[i];
+      globals::ROOT_SIGNATURE_MANAGER->bindGraphicsRS(bind.rs);
       globals::PSO_MANAGER->bindPSO(bind.pso);
       return bind;
     }

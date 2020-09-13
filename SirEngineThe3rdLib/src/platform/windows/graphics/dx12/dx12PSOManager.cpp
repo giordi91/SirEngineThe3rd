@@ -214,6 +214,7 @@ void Dx12PSOManager::insertInPSOCache(const PSOCompileResult &result) {
 
       const std::string rootName = getFileName(result.rootSignature);
 
+      data.metadata = result.metadata;
       data.pso = result.pso;
       data.rsHandle = result.rsHandle;
       data.topology = result.topologyType;
@@ -234,6 +235,7 @@ void Dx12PSOManager::insertInPSOCache(const PSOCompileResult &result) {
 
       const std::string rootName = getFileName(result.rootSignature);
       data.pso = result.pso;
+      data.metadata = result.metadata;
       data.rsHandle = result.rsHandle;
       data.topology = TOPOLOGY_TYPE::UNDEFINED;
       data.type = PSO_TYPE::COMPUTE;

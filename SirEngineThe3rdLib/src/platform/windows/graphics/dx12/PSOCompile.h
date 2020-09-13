@@ -4,6 +4,7 @@
 #include "SirEngine/core.h"
 #include "SirEngine/graphics/graphicsDefines.h"
 #include "SirEngine/handle.h"
+#include "SirEngine/materialManager.h"
 
 namespace SirEngine::dx12 {
 struct SIR_ENGINE_API PSOCompileResult {
@@ -19,6 +20,7 @@ struct SIR_ENGINE_API PSOCompileResult {
   const char *inputLayout = nullptr;
   const char *rootSignature = nullptr;
   TOPOLOGY_TYPE topologyType;
+  MaterialMetadata metadata;
 };
 
 // loads a PSO json definition and compiles everything from scratch
