@@ -1,5 +1,7 @@
 #include "platform/windows/graphics/dx12/dx12BindingTableManager.h"
 
+#include <catch/catch.hpp>
+
 #include "SirEngine/globals.h"
 #include "SirEngine/memory/cpu/threeSizesPool.h"
 #include "dx12BufferManager.h"
@@ -9,8 +11,6 @@
 #include "platform/windows/graphics/dx12/dx12PSOManager.h"
 #include "platform/windows/graphics/dx12/dx12RootSignatureManager.h"
 #include "platform/windows/graphics/dx12/dx12TextureManager.h"
-
-#include <catch/catch.hpp>
 
 namespace SirEngine::dx12 {
 void Dx12BindingTableManager::initialize() {}
@@ -83,9 +83,9 @@ void Dx12BindingTableManager::bindTable(const uint32_t bindingSpace,
 
   auto *commandList = dx12::CURRENT_FRAME_RESOURCE->fc.commandList;
   if (!isCompute) {
-    dx12::ROOT_SIGNATURE_MANAGER->bindGraphicsRS(rsHandle, commandList);
+    dx12::ROOT_SIGNATURE_MANAGER->bindGraphicsRS(rsHandle);
   } else {
-    dx12::ROOT_SIGNATURE_MANAGER->bindComputeRS(rsHandle, commandList);
+    dx12::ROOT_SIGNATURE_MANAGER->bindComputeRS(rsHandle);
   }
 
   bool isBuffered = isFlagSet(
@@ -178,8 +178,8 @@ void Dx12BindingTableManager::bindMesh(const BindingTableHandle bindHandle,
   uint32_t multiplier = isBuffered ? globals::CURRENT_FRAME : 0;
   uint32_t index = (multiplier * data.descriptionsCount);
 
-  dx12::MESH_MANAGER->bindFlatMesh(mesh, &data.descriptors[index],
-                                   meshFlags, startIndex);
+  dx12::MESH_MANAGER->bindFlatMesh(mesh, &data.descriptors[index], meshFlags,
+                                   startIndex);
 }
 
 void Dx12BindingTableManager::free(const BindingTableHandle &bindingTable) {

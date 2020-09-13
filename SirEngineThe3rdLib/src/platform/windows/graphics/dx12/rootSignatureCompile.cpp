@@ -634,18 +634,6 @@ RootCompilerResult processSignatureFileToBlob(
        static_cast<int16_t>(useStaticSampler + hasPassConfig + 1)}};
 }
 
-RootCompilerResult processSignatureFile(const char *path) {
-  ID3D12RootSignature *rootSig;
-  ID3DBlob *blob;
-  RootCompilerResult compilerResult = processSignatureFileToBlob(path, &blob);
-  const HRESULT res = SirEngine::dx12::DEVICE->CreateRootSignature(
-      1, blob->GetBufferPointer(), blob->GetBufferSize(),
-      IID_PPV_ARGS(&(rootSig)));
-  assert(res == S_OK);
-  blob->Release();
-  compilerResult.root = rootSig;
-  return compilerResult;
-}
 
 RootCompilerResult processSignatureFile2(const char *path,
                                          graphics::MaterialMetadata *metadata) {
