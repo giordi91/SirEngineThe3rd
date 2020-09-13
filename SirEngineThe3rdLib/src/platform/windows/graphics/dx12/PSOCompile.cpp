@@ -1,8 +1,8 @@
 #include "platform/windows/graphics/dx12/PSOCompile.h"
 
 #include "SirEngine/fileUtils.h"
+#include "SirEngine/graphics/materialMetadata.h"
 #include "SirEngine/log.h"
-#include "SirEngine/materialManager.h"
 #include "SirEngine/runtimeString.h"
 #include "dx12RootSignatureManager.h"
 #include "dx12SwapChain.h"
@@ -272,7 +272,8 @@ const char *getComputeShaderPath(const char *shaderPath,
 PSOCompileResult processComputePSO(nlohmann::json &jobj, const char *path,
                                    const char *shaderPath) {
   const std::string fileName = getFileName(path);
-  MaterialMetadata metadata = loadMetadata(path, GRAPHIC_API::DX12);
+  graphics::MaterialMetadata metadata =
+      graphics::loadMetadata(path, GRAPHIC_API::DX12);
 
   RSHandle rsHandle =
       dx12::ROOT_SIGNATURE_MANAGER->loadSignatureFromMeta(path, &metadata);
@@ -370,7 +371,8 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj, const char *path,
 
   const std::string fileName = getFileName(path);
   // MaterialMetadata metadata = extractMetadata(path);
-  MaterialMetadata metadata = loadMetadata(path, GRAPHIC_API::DX12);
+  graphics::MaterialMetadata metadata =
+      graphics::loadMetadata(path, GRAPHIC_API::DX12);
 
   // auto resultCompile = processSignatureFile(rootSignatureString.c_str());
   RSHandle rsHandle =

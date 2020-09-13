@@ -8,7 +8,7 @@
 #include "SirEngine/rootSignatureManager.h"
 #include "vk.h"
 
-namespace SirEngine {
+namespace SirEngine::graphics {
 struct MaterialMetadata;
 }
 
@@ -41,7 +41,7 @@ class VkPipelineLayoutManager final : public RootSignatureManager {
   void loadSignaturesInFolder(const char *directory) override;
   void loadSignatureBinaryFile(const char *file) override;
   RSHandle loadSignatureFile(const char *file);
-  RSHandle loadSignatureFile(const char *name, MaterialMetadata *metadata);
+  RSHandle loadSignatureFile(const char *name, graphics::MaterialMetadata *metadata);
 
   inline VkPipelineLayout getLayoutFromName(const char *name) const {
     const RSHandle handle = getHandleFromName(name);
