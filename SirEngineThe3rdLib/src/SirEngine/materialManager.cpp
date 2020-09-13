@@ -151,6 +151,7 @@ MaterialHandle MaterialManager::loadMaterial(const char *path) {
 
     for (uint32_t res = 0; res < parse.sourceBindingsCount; ++res) {
       const MaterialSourceBinding &matBinding = parse.sourceBindings[res];
+      const std::string name = getFileName(matBinding.resourcePath);
       if (strcmp(matBinding.type, "texture") == 0) {
         TextureHandle tHandle =
             globals::TEXTURE_MANAGER->loadTexture(matBinding.resourcePath);
@@ -162,7 +163,7 @@ MaterialHandle MaterialManager::loadMaterial(const char *path) {
             false);
       } else if (strcmp(matBinding.type, "mesh") == 0) {
         MeshHandle mHandle =
-            globals::MESH_MANAGER->getHandleFromName(matBinding.resourcePath);
+            globals::MESH_MANAGER->getHandleFromName(name.c_str());
 
         globals::BINDING_TABLE_MANAGER->bindMesh(
             materialData.bindingHandle[i], mHandle, meta->meshBinding.binding,
