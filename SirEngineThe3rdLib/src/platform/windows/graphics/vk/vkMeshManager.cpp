@@ -128,6 +128,7 @@ void VkMeshManager::bindMesh(const MeshHandle handle, VkWriteDescriptorSet *set,
                              VkDescriptorBufferInfo *info,
                              const uint32_t bindFlags,
                              const uint32_t startIdx) {
+  assertMagicNumber(handle);
   uint32_t idx = getIndexFromHandle(handle);
   const MeshData &data = m_meshPool.getConstRef(idx);
 

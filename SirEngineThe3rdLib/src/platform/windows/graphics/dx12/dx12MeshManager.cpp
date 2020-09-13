@@ -17,7 +17,7 @@ MeshHandle Dx12MeshManager::loadMesh(const char *path, bool isInternal) {
   MeshData *meshData;
   MeshHandle handle{};
 
-  const auto found = m_nameToHandle.find(path);
+  const auto found = m_nameToHandle.find(name);
   if (found == m_nameToHandle.end()) {
     std::vector<char> binaryData;
     readAllBytes(path, binaryData);
@@ -74,7 +74,7 @@ MeshHandle Dx12MeshManager::loadMesh(const char *path, bool isInternal) {
     meshRuntime.tangentsRange = mapper->tangentsRange;
 
     // storing the handle and increasing the magic count
-    m_nameToHandle[path] = handle;
+    m_nameToHandle[name] = handle;
     ++MAGIC_NUMBER_COUNTER;
 
     BufferHandle positionsHandle = dx12::BUFFER_MANAGER->allocate(
