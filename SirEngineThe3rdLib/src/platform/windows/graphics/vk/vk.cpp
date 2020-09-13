@@ -59,7 +59,7 @@ bool DEBUG_MARKERS_ENABLED = false;
 
 struct VkRenderable {
   VkMeshRuntime m_meshRuntime{};
-  VkMaterialRuntime m_materialRuntime{};
+  MaterialHandle m_materialHandle{};
 };
 
 typedef std::unordered_map<uint64_t, std::vector<VkRenderable>>
@@ -570,7 +570,7 @@ void VkRenderingContext::addRenderablesToQueue(const Renderable &renderable) {
   const VkMeshRuntime &meshRuntime =
       vk::MESH_MANAGER->getMeshRuntime(renderable.m_meshHandle);
 
-  vkRenderable.m_materialRuntime = materialRuntime;
+  vkRenderable.m_materialHandle = renderable.m_materialHandle;
   vkRenderable.m_meshRuntime = meshRuntime;
   // store the renderable on each queue
   for (int i = 0; i < MaterialManager::QUEUE_COUNT; ++i) {
@@ -578,8 +578,9 @@ void VkRenderingContext::addRenderablesToQueue(const Renderable &renderable) {
     if (materialRuntime.shaderQueueTypeFlags2[i].pso.isHandleValid()) {
       // compute flag, is going to be a compbination of the index and the
       // psohandle
-      uint64_t pso =
-          static_cast<uint64_t>(materialRuntime.shaderQueueTypeFlags2[i].pso.handle) << 32;
+      uint64_t pso = static_cast<uint64_t>(
+                         materialRuntime.shaderQueueTypeFlags2[i].pso.handle)
+                     << 32;
       uint64_t queue = (1ull << i);
       uint64_t key = queue | pso;
       (*typedQueues)[key].emplace_back(vkRenderable);
@@ -620,7 +621,7 @@ void VkRenderingContext::renderQueueType(
       // bind the corresponding RS and PSO
 
       ShaderBind bind = vk::MATERIAL_MANAGER->bindRSandPSO(
-          renderableList.first, renderableList.second[0].m_materialRuntime);
+          renderableList.first, renderableList.second[0].m_materialHandle);
 
       // this is most for debug, it will boil down to nothing in release
       // const SHADER_TYPE_FLAGS type =
@@ -643,7 +644,7 @@ void VkRenderingContext::renderQueueType(
         const VkRenderable &renderable = currRenderables[i];
 
         // bind material data like textures etc, then render
-        MATERIAL_MANAGER->bindMaterial(flag, renderable.m_materialRuntime);
+        MATERIAL_MANAGER->bindMaterial(flag, renderable.m_materialHandle);
 
         MESH_MANAGER->renderMesh(renderable.m_meshRuntime, commandList);
       }
