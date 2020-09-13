@@ -584,6 +584,8 @@ void Dx12RenderingContext::renderQueueType(
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   ID3D12GraphicsCommandList2 *commandList = currentFc->commandList;
 
+  setViewportAndScissor(0, 0, config.width, config.height, 0, 1);
+
   for (const auto &renderableList : typedQueues) {
     if (globals::MATERIAL_MANAGER->isQueueType(renderableList.first, flag)) {
       // now that we know the material goes in the the deferred queue we can

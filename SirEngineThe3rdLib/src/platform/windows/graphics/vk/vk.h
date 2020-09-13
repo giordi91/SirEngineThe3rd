@@ -1,12 +1,12 @@
 #pragma once
 #include <vulkan/vulkan.h>
 
-#include <vector>
+
+#include "platform/windows/graphics/vk/volk.h"
 
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/memory/cpu/sparseMemoryPool.h"
 #include "SirEngine/runtimeString.h"
-#include "platform/windows/graphics/vk/volk.h"
 
 namespace SirEngine {
 namespace vk {
@@ -152,9 +152,6 @@ class VkRenderingContext final : public RenderingContext {
 
   void setupCameraForFrame() override;
   void bindCameraBuffer(RSHandle, bool isCompute = false) const override;
-  void bindCameraBufferCompute(int index) const;
-  void updateSceneBoundingBox();
-  void updateDirectionalLightMatrix();
 
   bool newFrame() override;
   bool dispatchFrame() override;
@@ -176,16 +173,6 @@ class VkRenderingContext final : public RenderingContext {
   void freeBindingObject(const BufferBindingsHandle handle) override;
   void fullScreenPass() override;
 
- private:
-  inline void assertMagicNumber(const BufferBindingsHandle handle) const {
-    const uint32_t magic = getMagicFromHandle(handle);
-    const uint32_t idx = getIndexFromHandle(handle);
-    assert(static_cast<uint32_t>(
-               m_bindingsPool.getConstRef(idx).m_magicNumber) == magic &&
-           "invalid magic handle for constant buffer");
-  }
-
- public:
   void setViewportAndScissor(float offsetX, float offsetY, float width,
                              float height, float minDepth,
                              float maxDepth) override;
@@ -195,6 +182,16 @@ class VkRenderingContext final : public RenderingContext {
                        uint32_t blockZ) override;
   void renderProceduralIndirect(const BufferHandle &argsBuffer,
                                 uint32_t offset = 0) override;
+
+ private:
+  inline void assertMagicNumber(const BufferBindingsHandle handle) const {
+    const uint32_t magic = getMagicFromHandle(handle);
+    const uint32_t idx = getIndexFromHandle(handle);
+    assert(static_cast<uint32_t>(
+               m_bindingsPool.getConstRef(idx).m_magicNumber) == magic &&
+           "invalid magic handle for constant buffer");
+  }
+
 
  private:
   void *queues = nullptr;

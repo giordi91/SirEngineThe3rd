@@ -56,8 +56,7 @@ uint32_t GRAPHICS_QUEUE_FAMILY = 0;
 uint32_t PRESENTATION_QUEUE_FAMILY = 0;
 bool DEBUG_MARKERS_ENABLED = false;
 
-typedef std::unordered_map<uint64_t, std::vector<Renderable>>
-    VkRenderingQueues;
+typedef std::unordered_map<uint64_t, std::vector<Renderable>> VkRenderingQueues;
 
 bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
                           const uint32_t height) {
@@ -566,17 +565,7 @@ void VkRenderingContext::renderQueueType(
   VkCommandBuffer commandList = currentFc->m_commandBuffer;
 
   // draw calls go here
-  VkViewport viewport{0,
-                      static_cast<float>(config.height),
-                      static_cast<float>(config.width),
-                      -static_cast<float>(config.height),
-                      0.0f,
-                      1.0f};
-  VkRect2D scissor{{0, 0},
-                   {static_cast<uint32_t>(config.width),
-                    static_cast<uint32_t>(config.height)}};
-  vkCmdSetViewport(commandList, 0, 1, &viewport);
-  vkCmdSetScissor(commandList, 0, 1, &scissor);
+  setViewportAndScissor(0, 0, config.width, config.height, 0, 1);
 
   for (const auto &renderableList : typedQueues) {
     if (globals::MATERIAL_MANAGER->isQueueType(renderableList.first, flag)) {
@@ -587,12 +576,6 @@ void VkRenderingContext::renderQueueType(
 
       ShaderBind bind = globals::MATERIAL_MANAGER->bindRSandPSO(
           renderableList.first, renderableList.second[0].m_materialHandle);
-
-      // this is most for debug, it will boil down to nothing in release
-      // const SHADER_TYPE_FLAGS type =
-      //    MATERIAL_MANAGER->getTypeFlags(renderableList.first);
-      // const std::string &typeName =
-      //    MATERIAL_MANAGER->getStringFromShaderTypeFlag(type);
 
       bindCameraBuffer(bind.rs);
 
