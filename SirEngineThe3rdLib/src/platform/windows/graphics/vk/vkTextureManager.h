@@ -82,10 +82,6 @@ class SIR_ENGINE_API VkTextureManager final : public TextureManager {
     const uint32_t idx = getIndexFromHandle(handle);
     const auto &data = m_texturePool.getConstRef(idx);
 
-    // auto desc = data.descriptor;
-    // if (layout != VK_IMAGE_LAYOUT_UNDEFINED) {
-    //    desc.imageLayout = layout;
-    //}
 
     writeDescriptorSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writeDescriptorSets[0].dstSet = descriptorSet;
