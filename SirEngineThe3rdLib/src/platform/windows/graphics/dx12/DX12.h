@@ -10,9 +10,6 @@
 #include "SirEngine/memory/cpu/sparseMemoryPool.h"
 
 namespace SirEngine {
-namespace vk {
-class VkMaterialManager;
-}
 
 class IdentityManager;
 class BaseWindow;
@@ -132,7 +129,6 @@ extern FrameResource *CURRENT_FRAME_RESOURCE;
 // resource managers
 extern Dx12TextureManager *TEXTURE_MANAGER;
 extern Dx12MeshManager *MESH_MANAGER;
-extern vk::VkMaterialManager *MATERIAL_MANAGER;
 extern Dx12ConstantBufferManager *CONSTANT_BUFFER_MANAGER;
 extern Dx12ShaderManager *SHADER_MANAGER;
 extern Dx12RootSignatureManager *ROOT_SIGNATURE_MANAGER;

@@ -12,13 +12,13 @@
 #include "SirEngine/graphics/lightManager.h"
 #include "SirEngine/interopData.h"
 #include "SirEngine/log.h"
+#include "SirEngine/materialManager.h"
 #include "SirEngine/runtimeString.h"
 #include "platform/windows/graphics/vk/vkAdapter.h"
 #include "platform/windows/graphics/vk/vkBindingTableManager.h"
 #include "platform/windows/graphics/vk/vkBufferManager.h"
 #include "platform/windows/graphics/vk/vkConstantBufferManager.h"
 #include "platform/windows/graphics/vk/vkLoad.h"
-#include "platform/windows/graphics/vk/vkMaterialManager.h"
 #include "platform/windows/graphics/vk/vkMeshManager.h"
 #include "platform/windows/graphics/vk/vkPSOManager.h"
 #include "platform/windows/graphics/vk/vkRootSignatureManager.h"
@@ -47,7 +47,6 @@ VkPipelineLayoutManager *PIPELINE_LAYOUT_MANAGER = nullptr;
 VkBufferManager *BUFFER_MANAGER = nullptr;
 VkMeshManager *MESH_MANAGER = nullptr;
 VkTextureManager *TEXTURE_MANAGER = nullptr;
-VkMaterialManager *MATERIAL_MANAGER = nullptr;
 VkBindingTableManager *DESCRIPTOR_MANAGER = nullptr;
 VkDebugRenderer *DEBUG_RENDERER = nullptr;
 uint32_t SWAP_CHAIN_IMAGE_COUNT = 0;
@@ -58,7 +57,7 @@ uint32_t PRESENTATION_QUEUE_FAMILY = 0;
 bool DEBUG_MARKERS_ENABLED = false;
 
 struct VkRenderable {
-  MeshHandle m_meshHandle {};
+  MeshHandle m_meshHandle{};
   MaterialHandle m_materialHandle{};
 };
 
@@ -238,9 +237,8 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   TEXTURE_MANAGER->initialize();
   globals::TEXTURE_MANAGER = TEXTURE_MANAGER;
 
-  MATERIAL_MANAGER = new VkMaterialManager();
-  MATERIAL_MANAGER->inititialize();
-  globals::MATERIAL_MANAGER = MATERIAL_MANAGER;
+  globals::MATERIAL_MANAGER = new MaterialManager();
+  globals::MATERIAL_MANAGER->inititialize();
 
   globals::DEBUG_RENDERER = new DebugRenderer();
   globals::DEBUG_RENDERER->initialize();
@@ -520,7 +518,7 @@ bool VkRenderingContext::shutdownGraphic() {
   PIPELINE_LAYOUT_MANAGER->cleanup();
   PSO_MANAGER->cleanup();
 
-  MATERIAL_MANAGER->releaseAllMaterialsAndRelatedResources();
+  globals::MATERIAL_MANAGER->releaseAllMaterialsAndRelatedResources();
 
   TEXTURE_MANAGER->cleanup();
   DESCRIPTOR_MANAGER->cleanup();
@@ -565,11 +563,11 @@ void VkRenderingContext::addRenderablesToQueue(const Renderable &renderable) {
 
   VkRenderable vkRenderable{};
 
-  const VkMaterialRuntime &materialRuntime =
-      vk::MATERIAL_MANAGER->getMaterialRuntime(renderable.m_materialHandle);
+  const MaterialRuntime &materialRuntime =
+      globals::MATERIAL_MANAGER->getMaterialRuntime(renderable.m_materialHandle);
 
   vkRenderable.m_materialHandle = renderable.m_materialHandle;
-  vkRenderable.m_meshHandle= renderable.m_meshHandle;
+  vkRenderable.m_meshHandle = renderable.m_meshHandle;
   // store the renderable on each queue
   for (int i = 0; i < MaterialManager::QUEUE_COUNT; ++i) {
     // const uint32_t flag = materialRuntime.shaderQueueTypeFlags[i];
@@ -608,13 +606,13 @@ void VkRenderingContext::renderQueueType(
   vkCmdSetScissor(commandList, 0, 1, &scissor);
 
   for (const auto &renderableList : typedQueues) {
-    if (MATERIAL_MANAGER->isQueueType(renderableList.first, flag)) {
+    if (globals::MATERIAL_MANAGER->isQueueType(renderableList.first, flag)) {
       // now that we know the material goes in the the deferred queue we can
       // start rendering it
 
       // bind the corresponding RS and PSO
 
-      ShaderBind bind = vk::MATERIAL_MANAGER->bindRSandPSO(
+      ShaderBind bind = globals::MATERIAL_MANAGER->bindRSandPSO(
           renderableList.first, renderableList.second[0].m_materialHandle);
 
       // this is most for debug, it will boil down to nothing in release
@@ -638,7 +636,7 @@ void VkRenderingContext::renderQueueType(
         const VkRenderable &renderable = currRenderables[i];
 
         // bind material data like textures etc, then render
-        MATERIAL_MANAGER->bindMaterial(flag, renderable.m_materialHandle);
+        globals::MATERIAL_MANAGER->bindMaterial(flag, renderable.m_materialHandle);
 
         MESH_MANAGER->renderMesh(renderable.m_meshHandle, commandList);
       }
