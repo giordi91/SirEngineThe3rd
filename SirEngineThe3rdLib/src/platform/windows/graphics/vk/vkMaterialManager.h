@@ -7,17 +7,14 @@
 #include "SirEngine/materialManager.h"
 #include "SirEngine/memory/cpu/sparseMemoryPool.h"
 #include "SirEngine/memory/cpu/stringHashMap.h"
-#include "platform/windows/graphics/vk/volk.h"
 
 namespace SirEngine::vk {
 
 struct VkMaterialRuntime final {
-
   ShaderBind shaderQueueTypeFlags2[MaterialManager::QUEUE_COUNT] = {};
   SkinHandle skinHandle;
   MeshHandle meshHandle;
   DescriptorHandle descriptorHandles[5]{{}, {}, {}, {}, {}};
-  VkPipelineLayout layouts[5]{nullptr, nullptr, nullptr, nullptr};
   uint8_t useStaticSamplers[5]{1, 1, 1, 1, 1};
   BindingTableHandle bindingHandle[MaterialManager::QUEUE_COUNT]{};
 };
@@ -33,7 +30,6 @@ struct VkMaterialData {
   const char *name = nullptr;
 };
 
-
 class VkMaterialManager final : public MaterialManager {
  public:
   VkMaterialManager()
@@ -43,16 +39,13 @@ class VkMaterialManager final : public MaterialManager {
   ~VkMaterialManager() override = default;
   void inititialize() override {}
   void cleanup() override{};
-  void bindMaterial(SHADER_QUEUE_FLAGS queueFlag, const MaterialHandle handle,
-                    VkCommandBuffer commandList);
+  void bindMaterial(SHADER_QUEUE_FLAGS queueFlag, const MaterialHandle handle);
   void bindMaterial(SHADER_QUEUE_FLAGS queueFlag,
-                    const VkMaterialRuntime &materialRuntime,
-                    VkCommandBuffer commandList);
+                    const VkMaterialRuntime &materialRuntime);
 
   // TODO see note on the dx12 material manager for this function
   ShaderBind bindRSandPSO(uint64_t shaderFlags,
-                          const VkMaterialRuntime &runtime,
-                          VkCommandBuffer commandList) const;
+                          const VkMaterialRuntime &runtime) const;
   VkMaterialManager(const VkMaterialManager &) = delete;
   VkMaterialManager &operator=(const VkMaterialManager &) = delete;
 

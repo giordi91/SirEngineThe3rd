@@ -120,6 +120,8 @@ bool compileAndSavePSO(const std::string &assetPath,
   mapped.objectResourceCount = metadata.objectResourceCount;
   mapped.frameResourceCount = metadata.frameResourceCount;
   mapped.passResourceCount = metadata.passResourceCount;
+  mapped.meshBinding = metadata.meshBinding.binding;
+  mapped.meshFlags = metadata.meshBinding.flags;
 
   // writing the data
   // writing binary file
@@ -343,6 +345,8 @@ bool compileVK(const std::string &assetPath, const std::string &outputPath,
   mapped.objectResourceCount = metadata.objectResourceCount;
   mapped.frameResourceCount = metadata.frameResourceCount;
   mapped.passResourceCount = metadata.passResourceCount;
+  mapped.meshBinding = metadata.meshBinding.binding;
+  mapped.meshFlags = metadata.meshBinding.flags;
 
   // writing the data
   // writing binary file
@@ -374,7 +378,7 @@ bool compileAllVK(const std::string &assetPath, const std::string &outputPath,
   for (auto &path : filePaths) {
     const std::string fileName = getFileName(path);
     const std::string currOutputPath =
-        outputPath + graphicsDirectory + fileName + ".pso";
+        outputPath + graphicsDirectory + fileName + ".metadata";
     compileVK(path, currOutputPath, target, shaderPath);
   }
   return true;

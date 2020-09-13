@@ -5,13 +5,6 @@
 namespace SirEngine {
 
 // TODO move this to graphics defines
-enum MESH_ATTRIBUTE_FLAGS {
-  POSITIONS = 1,
-  NORMALS = 2,
-  UV = 4,
-  TANGENTS = 8,
-  ALL = 15
-};
 
 class MeshManager {
  public:

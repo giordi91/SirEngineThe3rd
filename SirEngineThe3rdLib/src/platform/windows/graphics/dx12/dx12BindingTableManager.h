@@ -34,15 +34,20 @@ class Dx12BindingTableManager : public graphics::BindingTableManager {
                    const uint32_t bindingIndex, const bool isCube) override;
 
   void bindTable(uint32_t bindingSpace, const BindingTableHandle bindHandle,
-                 const RSHandle rsHandle, bool isCompute= false) override;
-  void bindConstantBuffer(const BindingTableHandle& bindingTable, const ConstantBufferHandle& constantBufferHandle,
-	  const uint32_t descriptorIndex, const uint32_t bindingIndex) override;
-  void bindBuffer(const BindingTableHandle bindHandle, const BufferHandle buffer, const uint32_t descriptorIndex,
-	  const uint32_t bindingIndex) override;
+                 const RSHandle rsHandle, bool isCompute = false) override;
+  void bindConstantBuffer(const BindingTableHandle& bindingTable,
+                          const ConstantBufferHandle& constantBufferHandle,
+                          const uint32_t descriptorIndex,
+                          const uint32_t bindingIndex) override;
+  void bindBuffer(const BindingTableHandle bindHandle,
+                  const BufferHandle buffer, const uint32_t descriptorIndex,
+                  const uint32_t bindingIndex) override;
   void bindMesh(const BindingTableHandle bindHandle, const MeshHandle mesh,
-	  const MESH_ATTRIBUTE_FLAGS meshFlags) override;
+                const uint32_t startIndex,
+                const MESH_ATTRIBUTE_FLAGS meshFlags) override;
 
   void free(const BindingTableHandle& bindingTable) override;
+
  private:
   inline void assertMagicNumber(const BindingTableHandle handle) {
     const uint32_t magic = getMagicFromHandle(handle);

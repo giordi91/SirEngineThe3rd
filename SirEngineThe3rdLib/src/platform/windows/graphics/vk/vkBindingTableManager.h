@@ -36,12 +36,11 @@ class VkBindingTableManager final : public graphics::BindingTableManager {
  public:
   VkBindingTableManager(const uint32_t uniformDescriptorCount,
                         const uint32_t imagesDescriptorCount)
-	  : m_descriptorDataPool(RESERVE_SIZE),
-	    m_bindingTablePool(RESERVE_SIZE),
-	    m_uniformDescriptorCount(uniformDescriptorCount),
-	    m_imagesDescriptorCount(imagesDescriptorCount)
-  {
-	  m_allocator.initialize(10 * MB_TO_BYTE);
+      : m_descriptorDataPool(RESERVE_SIZE),
+        m_bindingTablePool(RESERVE_SIZE),
+        m_uniformDescriptorCount(uniformDescriptorCount),
+        m_imagesDescriptorCount(imagesDescriptorCount) {
+    m_allocator.initialize(10 * MB_TO_BYTE);
   }
   ~VkBindingTableManager() override = default;
   VkBindingTableManager(const VkBindingTableManager &) = delete;
@@ -92,16 +91,20 @@ class VkBindingTableManager final : public graphics::BindingTableManager {
                    const TextureHandle texture, const uint32_t descriptorIndex,
                    const uint32_t bindingIndex, const bool isCube) override;
   void bindMesh(const BindingTableHandle bindHandle, const MeshHandle mesh,
-	  const MESH_ATTRIBUTE_FLAGS meshFlags) override;
+                const uint32_t startIndex,
+                const MESH_ATTRIBUTE_FLAGS meshFlags) override;
 
-  void bindConstantBuffer(const BindingTableHandle& bindingTable, const ConstantBufferHandle& constantBufferHandle,
-	  const uint32_t descriptorIndex, const uint32_t bindingIndex) override;
-  void bindBuffer(const BindingTableHandle bindHandle, const BufferHandle buffer, const uint32_t descriptorIndex,
-	  const uint32_t bindingIndex) override;
+  void bindConstantBuffer(const BindingTableHandle &bindingTable,
+                          const ConstantBufferHandle &constantBufferHandle,
+                          const uint32_t descriptorIndex,
+                          const uint32_t bindingIndex) override;
+  void bindBuffer(const BindingTableHandle bindHandle,
+                  const BufferHandle buffer, const uint32_t descriptorIndex,
+                  const uint32_t bindingIndex) override;
 
   void bindTable(uint32_t bindingSpace, const BindingTableHandle bindHandle,
-                 const RSHandle rsHandle, bool isCompute =false) override;
-  void free(const BindingTableHandle& bindingTable) override;
+                 const RSHandle rsHandle, bool isCompute = false) override;
+  void free(const BindingTableHandle &bindingTable) override;
 
  private:
   inline void assertMagicNumber(const DescriptorHandle handle) const {
@@ -121,7 +124,7 @@ class VkBindingTableManager final : public graphics::BindingTableManager {
 #endif
   }
 
-public:
+ public:
  private:
   static const uint32_t RESERVE_SIZE = 400;
   uint32_t MAGIC_NUMBER_COUNTER = 1;

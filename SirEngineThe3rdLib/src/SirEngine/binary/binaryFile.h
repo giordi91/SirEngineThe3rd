@@ -167,6 +167,8 @@ struct MaterialMappedData {
   uint32_t objectResourceDataOffset;
   uint32_t frameResourceDataOffset;
   uint32_t passResourceDataOffset;
+  int meshBinding;
+  uint32_t meshFlags;
 };
 
 struct PointTilerMapperData {

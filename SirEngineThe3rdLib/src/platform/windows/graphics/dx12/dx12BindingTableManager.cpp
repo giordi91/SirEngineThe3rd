@@ -162,8 +162,9 @@ void Dx12BindingTableManager::bindBuffer(const BindingTableHandle bindHandle,
 }
 
 void Dx12BindingTableManager::bindMesh(const BindingTableHandle bindHandle,
-                                       const MeshHandle mesh,
-                                       const MESH_ATTRIBUTE_FLAGS meshFlags) {
+                                     const MeshHandle mesh,
+                                     const uint32_t startIndex,
+                                     const MESH_ATTRIBUTE_FLAGS meshFlags) {
   assert(0);
 
 }
