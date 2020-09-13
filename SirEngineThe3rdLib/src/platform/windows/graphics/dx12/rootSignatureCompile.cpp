@@ -6,6 +6,7 @@
 
 #include "SirEngine/PSOManager.h"
 #include "SirEngine/fileUtils.h"
+#include "SirEngine/graphics/materialMetadata.h"
 #include "SirEngine/log.h"
 #include "SirEngine/materialManager.h"
 #include "SirEngine/runtimeString.h"
@@ -74,17 +75,19 @@ getTypeEnum(const std::string &type) {
 }
 
 SUB_ROOT_TYPES
-getTypeEnum(MATERIAL_RESOURCE_TYPE type, MATERIAL_RESOURCE_FLAGS flags) {
+getTypeEnum(graphics::MATERIAL_RESOURCE_TYPE type,
+            graphics::MATERIAL_RESOURCE_FLAGS flags) {
   switch (type) {
-    case MATERIAL_RESOURCE_TYPE::TEXTURE: {
+    case graphics::MATERIAL_RESOURCE_TYPE::TEXTURE: {
       return SUB_ROOT_TYPES::SRV;
     }
-    case MATERIAL_RESOURCE_TYPE::CONSTANT_BUFFER: {
+    case graphics::MATERIAL_RESOURCE_TYPE::CONSTANT_BUFFER: {
       return SUB_ROOT_TYPES::CBV;
     }
-    case MATERIAL_RESOURCE_TYPE::BUFFER: {
+    case graphics::MATERIAL_RESOURCE_TYPE::BUFFER: {
       return (static_cast<uint32_t>(flags) &
-              static_cast<uint32_t>(MATERIAL_RESOURCE_FLAGS::READ_ONLY) > 0)
+              static_cast<uint32_t>(
+                  graphics::MATERIAL_RESOURCE_FLAGS::READ_ONLY) > 0)
                  ? SUB_ROOT_TYPES::SRV
                  : SUB_ROOT_TYPES::UAV;
     }
@@ -289,7 +292,7 @@ void initDescriptorAsUAV(const nlohmann::json &jobj,
   descriptor.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, count, startRegister,
                   registerSpace);
 }
-void initDescriptorAsUAV(const MaterialResource &metadata,
+void initDescriptorAsUAV(const graphics::MaterialResource &metadata,
                          CD3DX12_DESCRIPTOR_RANGE &descriptor) {
   int startRegister = metadata.binding;
   descriptor.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, startRegister,
@@ -308,7 +311,7 @@ void initDescriptorAsSRV(const nlohmann::json &jobj,
   descriptor.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, count, startRegister,
                   registerSpace);
 }
-void initDescriptorAsSRV(const MaterialResource &metadata,
+void initDescriptorAsSRV(const graphics::MaterialResource &metadata,
                          CD3DX12_DESCRIPTOR_RANGE &descriptor) {
   int startRegister = metadata.binding;
   assert(startRegister != -1);
@@ -328,7 +331,7 @@ void initDescriptorAsConstant(const nlohmann::json &jobj,
   descriptor.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, count, startRegister,
                   registerSpace);
 }
-void initDescriptorAsConstant(const MaterialResource &metadata,
+void initDescriptorAsConstant(const graphics::MaterialResource &metadata,
                               CD3DX12_DESCRIPTOR_RANGE &descriptor) {
   int startRegister = metadata.binding;
   descriptor.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, startRegister,
@@ -391,7 +394,7 @@ void processRootConfiguration(CD3DX12_DESCRIPTOR_RANGE *userRanges,
   }
 }
 void processRootConfiguration(CD3DX12_DESCRIPTOR_RANGE *userRanges,
-                              const MaterialResource &metadata,
+                              const graphics::MaterialResource &metadata,
                               const uint32_t registerSpace) {
   SUB_ROOT_TYPES configType = getTypeEnum(metadata.type, metadata.flags);
 
@@ -542,8 +545,8 @@ RootCompilerResult processSignatureFileToBlob(const char *path,
   const std::string &name = getFileName(path);
   return flatTablesRS(jobj, name, blob);
 }
-RootCompilerResult processSignatureFileToBlob(const char *path, ID3DBlob **blob,
-                                              MaterialMetadata *metadata) {
+RootCompilerResult processSignatureFileToBlob(
+    const char *path, ID3DBlob **blob, graphics::MaterialMetadata *metadata) {
   const std::string &name = getFileName(path);
   // bool useStaticSampler = shouldBindSamplers(jobj);
   bool useStaticSampler = true;
@@ -618,15 +621,16 @@ RootCompilerResult processSignatureFileToBlob(const char *path, ID3DBlob **blob,
       static_cast<UINT>(rootParams.size()), rootParams.data(), numStaticSampers,
       staticSamplers);
 
-  //processRootFlags(jobj, rootSignatureDesc);
+  // processRootFlags(jobj, rootSignatureDesc);
 
-  //const ROOT_TYPE fileTypeEnum = getFileTypeEnum(fileType);
+  // const ROOT_TYPE fileTypeEnum = getFileTypeEnum(fileType);
   (*blob) = serializeRootSignature(rootSignatureDesc);
 
   return RootCompilerResult{
       frameString(name.c_str()),
       nullptr,
-      ROOT_TYPE::NULL_TYPE, //TODO need to see if this is needed, the pso should know about it
+      ROOT_TYPE::NULL_TYPE,  // TODO need to see if this is needed, the pso
+                             // should know about it
       true,
       static_cast<uint16_t>(userCounter),
       {0, useStaticSampler ? 1 : -1,
@@ -649,7 +653,7 @@ RootCompilerResult processSignatureFile(const char *path) {
 }
 
 RootCompilerResult processSignatureFile2(const char *path,
-                                         MaterialMetadata *metadata) {
+                                         graphics::MaterialMetadata *metadata) {
   ID3D12RootSignature *rootSig;
   ID3DBlob *blob;
   RootCompilerResult compilerResult =

@@ -529,7 +529,8 @@ VkPSOCompileResult VkPSOManager::processRasterPSO(
   // load root signature
   const std::string fileName = getFileName(filePath);
 
-  MaterialMetadata metadata = loadMetadata(filePath, GRAPHIC_API::VULKAN);
+  graphics::MaterialMetadata metadata =
+      graphics::loadMetadata(filePath, GRAPHIC_API::VULKAN);
   // if (fileName == "forwardPhongPSO") {
   //  int x = 0;
   //} else {
@@ -703,7 +704,8 @@ VkPSOCompileResult VkPSOManager::processComputePSO(const char *filePath,
 
   const std::string fileName = getFileName(filePath);
 
-  MaterialMetadata metadata = loadMetadata(filePath, GRAPHIC_API::VULKAN);
+  graphics::MaterialMetadata metadata =
+      graphics::loadMetadata(filePath, GRAPHIC_API::VULKAN);
   RSHandle layoutHandle2 = vk::PIPELINE_LAYOUT_MANAGER->loadSignatureFile(
       fileName.c_str(), &metadata);
   compileResult.rootSignature = frameString(fileName.c_str());

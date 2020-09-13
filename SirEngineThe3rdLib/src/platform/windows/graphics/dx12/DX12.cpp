@@ -581,11 +581,11 @@ void Dx12RenderingContext::addRenderablesToQueue(const Renderable &renderable) {
       (*typedQueues)[flag].emplace_back(dx12Renderable);
     }
     */
-    if (materialRuntime.shaderQueueTypeFlags2[i].pso.isHandleValid()) {
+    if (materialRuntime.shaderQueueTypeFlags[i].pso.isHandleValid()) {
       // compute flag, is going to be a compbination of the index and the
       // psohandle
       uint64_t pso =
-          ((uint64_t)materialRuntime.shaderQueueTypeFlags2[i].pso.handle) << 32;
+          static_cast<uint64_t>(materialRuntime.shaderQueueTypeFlags[i].pso.handle) << 32;
       uint64_t queue = (1ull << i);
       uint64_t key = queue | pso;
       (*typedQueues)[key].emplace_back(dx12Renderable);

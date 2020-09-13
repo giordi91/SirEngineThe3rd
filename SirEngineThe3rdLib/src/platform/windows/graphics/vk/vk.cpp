@@ -518,14 +518,13 @@ bool VkRenderingContext::shutdownGraphic() {
   PIPELINE_LAYOUT_MANAGER->cleanup();
   PSO_MANAGER->cleanup();
 
-  globals::MATERIAL_MANAGER->releaseAllMaterialsAndRelatedResources();
+  globals::MATERIAL_MANAGER->cleanup();
 
   TEXTURE_MANAGER->cleanup();
   DESCRIPTOR_MANAGER->cleanup();
 
   vkDestroyDevice(LOGICAL_DEVICE, nullptr);
   vkDestroySurfaceKHR(INSTANCE, SURFACE, nullptr);
-  // vkDestroyDebugReportCallbackEXT(INSTANCE, DEBUG_CALLBACK, nullptr);
   vkDestroyDebugUtilsMessengerEXT(INSTANCE, DEBUG_CALLBACK2, nullptr);
   vkDestroyInstance(INSTANCE, nullptr);
   return true;
@@ -559,7 +558,7 @@ void VkRenderingContext::resetGlobalCommandList() {
 }
 
 void VkRenderingContext::addRenderablesToQueue(const Renderable &renderable) {
-  auto *typedQueues = reinterpret_cast<VkRenderingQueues *>(queues);
+  auto *typedQueues = static_cast<VkRenderingQueues *>(queues);
 
   VkRenderable vkRenderable{};
 
@@ -571,11 +570,11 @@ void VkRenderingContext::addRenderablesToQueue(const Renderable &renderable) {
   // store the renderable on each queue
   for (int i = 0; i < MaterialManager::QUEUE_COUNT; ++i) {
     // const uint32_t flag = materialRuntime.shaderQueueTypeFlags[i];
-    if (materialRuntime.shaderQueueTypeFlags2[i].pso.isHandleValid()) {
-      // compute flag, is going to be a compbination of the index and the
+    if (materialRuntime.shaderQueueTypeFlags[i].pso.isHandleValid()) {
+      // compute flag, is going to be a combination of the index and the
       // psohandle
       uint64_t pso = static_cast<uint64_t>(
-                         materialRuntime.shaderQueueTypeFlags2[i].pso.handle)
+                         materialRuntime.shaderQueueTypeFlags[i].pso.handle)
                      << 32;
       uint64_t queue = (1ull << i);
       uint64_t key = queue | pso;
@@ -636,7 +635,7 @@ void VkRenderingContext::renderQueueType(
         const VkRenderable &renderable = currRenderables[i];
 
         // bind material data like textures etc, then render
-        globals::MATERIAL_MANAGER->bindMaterial(flag, renderable.m_materialHandle);
+        globals::MATERIAL_MANAGER->bindMaterial(renderable.m_materialHandle,flag);
 
         MESH_MANAGER->renderMesh(renderable.m_meshHandle, commandList);
       }

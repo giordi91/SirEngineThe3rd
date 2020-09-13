@@ -12,7 +12,7 @@
 #include "SirEngine/memory/cpu/stringHashMap.h"
 #include "SirEngine/rootSignatureManager.h"
 
-namespace SirEngine {
+namespace SirEngine::graphics {
 struct MaterialMetadata;
 }
 
@@ -32,7 +32,8 @@ class Dx12RootSignatureManager final : public RootSignatureManager {
   void loadSignaturesInFolder(const char *directory) override;
   void loadSignatureBinaryFile(const char *file) override;
 
-  RSHandle loadSignatureFromMeta(const char *name, MaterialMetadata *metadata);
+  RSHandle loadSignatureFromMeta(const char *name,
+                                 graphics::MaterialMetadata *metadata);
 
   inline ID3D12RootSignature *getRootSignatureFromName(const char *name) const {
     const RSHandle handle = getHandleFromName(name);

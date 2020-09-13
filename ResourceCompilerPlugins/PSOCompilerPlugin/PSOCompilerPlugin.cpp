@@ -50,13 +50,13 @@ bool compileAndSavePSO(const std::string &assetPath,
                        const std::string &shaderPath) {
   // for now we do not support pso compilation BUT we can export all the
   // metadata stuff
-  SirEngine::MaterialMetadata metadata =
-      SirEngine::extractMetadata(assetPath.c_str());
+  SirEngine::graphics::MaterialMetadata metadata =
+      SirEngine::graphics::extractMetadata(assetPath.c_str());
   // need to serialize metadata
   uint32_t structSize =
       (metadata.objectResourceCount + metadata.frameResourceCount +
        metadata.passResourceCount) *
-      sizeof(SirEngine::MaterialResource);
+      sizeof(SirEngine::graphics::MaterialResource);
   uint32_t stringSizes = 0;
   for (uint32_t i = 0; i < metadata.objectResourceCount; ++i) {
     stringSizes += (strlen(metadata.objectResources[i].name) + 1);
@@ -100,18 +100,20 @@ bool compileAndSavePSO(const std::string &assetPath,
 
   MaterialMappedData mapped{};
   // we copied the strings and now can copy the array data
-  uint32_t size =
-      metadata.objectResourceCount * sizeof(SirEngine::MaterialResource);
+  uint32_t size = metadata.objectResourceCount *
+                  sizeof(SirEngine::graphics::MaterialResource);
   memcpy(data.data() + counter, metadata.objectResources, size);
   mapped.objectResourceDataOffset = counter;
   counter += size;
 
-  size = metadata.frameResourceCount * sizeof(SirEngine::MaterialResource);
+  size = metadata.frameResourceCount *
+         sizeof(SirEngine::graphics::MaterialResource);
   memcpy(data.data() + counter, metadata.frameResources, size);
   mapped.frameResourceDataOffset = counter;
   counter += size;
 
-  size = metadata.passResourceCount * sizeof(SirEngine::MaterialResource);
+  size = metadata.passResourceCount *
+         sizeof(SirEngine::graphics::MaterialResource);
   memcpy(data.data() + counter, metadata.passResources, size);
   mapped.passResourceDataOffset = counter;
   counter += size;
@@ -275,13 +277,13 @@ bool compileVK(const std::string &assetPath, const std::string &outputPath,
                const std::string &target, const std::string &shaderPath) {
   // for now we do not support pso compilation BUT we can export all the
   // metadata stuff
-  SirEngine::MaterialMetadata metadata =
-      SirEngine::extractMetadata(assetPath.c_str());
+  SirEngine::graphics::MaterialMetadata metadata =
+      SirEngine::graphics::extractMetadata(assetPath.c_str());
   // need to serialize metadata
   uint32_t structSize =
       (metadata.objectResourceCount + metadata.frameResourceCount +
        metadata.passResourceCount) *
-      sizeof(SirEngine::MaterialResource);
+      sizeof(SirEngine::graphics::MaterialResource);
   uint32_t stringSizes = 0;
   for (uint32_t i = 0; i < metadata.objectResourceCount; ++i) {
     stringSizes += (strlen(metadata.objectResources[i].name) + 1);
@@ -325,18 +327,20 @@ bool compileVK(const std::string &assetPath, const std::string &outputPath,
 
   MaterialMappedData mapped{};
   // we copied the strings and now can copy the array data
-  uint32_t size =
-      metadata.objectResourceCount * sizeof(SirEngine::MaterialResource);
+  uint32_t size = metadata.objectResourceCount *
+                  sizeof(SirEngine::graphics::MaterialResource);
   memcpy(data.data() + counter, metadata.objectResources, size);
   mapped.objectResourceDataOffset = counter;
   counter += size;
 
-  size = metadata.frameResourceCount * sizeof(SirEngine::MaterialResource);
+  size = metadata.frameResourceCount *
+         sizeof(SirEngine::graphics::MaterialResource);
   memcpy(data.data() + counter, metadata.frameResources, size);
   mapped.frameResourceDataOffset = counter;
   counter += size;
 
-  size = metadata.passResourceCount * sizeof(SirEngine::MaterialResource);
+  size = metadata.passResourceCount *
+         sizeof(SirEngine::graphics::MaterialResource);
   memcpy(data.data() + counter, metadata.passResources, size);
   mapped.passResourceDataOffset = counter;
   counter += size;

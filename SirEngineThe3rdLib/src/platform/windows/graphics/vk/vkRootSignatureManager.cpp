@@ -5,6 +5,7 @@
 #include "SirEngine/log.h"
 #include "SirEngine/materialManager.h"
 #include "platform/windows/graphics/vk/vkBindingTableManager.h"
+#include "SirEngine/graphics/materialMetadata.h"
 
 namespace SirEngine::vk {
 
@@ -278,19 +279,19 @@ VkDescriptorSetLayout getEmptyLayout(const char *name) {
   return emptyLayout;
 }
 
-VkDescriptorType getDescriptorType(const MATERIAL_RESOURCE_TYPE type,
+VkDescriptorType getDescriptorType(const graphics::MATERIAL_RESOURCE_TYPE type,
                                    const VkShaderStageFlags flags) {
   switch (type) {
-    case MATERIAL_RESOURCE_TYPE::BUFFER: {
+    case graphics::MATERIAL_RESOURCE_TYPE::BUFFER: {
       return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     }
-    case MATERIAL_RESOURCE_TYPE::TEXTURE: {
+    case graphics::MATERIAL_RESOURCE_TYPE::TEXTURE: {
       if ((flags & VkShaderStageFlagBits::VK_SHADER_STAGE_COMPUTE_BIT) > 0) {
         return VkDescriptorType::VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
       }
       return VkDescriptorType::VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
     }
-    case MATERIAL_RESOURCE_TYPE::CONSTANT_BUFFER: {
+    case graphics::MATERIAL_RESOURCE_TYPE::CONSTANT_BUFFER: {
       return VkDescriptorType::VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     }
     default: {
@@ -409,7 +410,7 @@ void VkPipelineLayoutManager::loadSignatureBinaryFile(const char *file) {
   assert(0);
 }
 
-void processConfig(const MaterialResource &meta,
+void processConfig(const graphics::MaterialResource &meta,
                    VkDescriptorSetLayoutBinding *binding) {
   binding->stageFlags = getVisibilityFlags2(meta.visibility);
   VkDescriptorType descriptorType =
@@ -440,7 +441,7 @@ void processConfig(const nlohmann::json &jobj,
 }
 
 RSHandle VkPipelineLayoutManager::loadSignatureFile(
-    const char *name, MaterialMetadata *metadata) {
+    const char *name, graphics::MaterialMetadata *metadata) {
   // From spec:  The pipeline layout represents a sequence of descriptor sets
   // with each having a specific layout.
   // this is the same as root signature in DX12

@@ -76,7 +76,7 @@ void Dx12RootSignatureManager::loadSignatureBinaryFile(const char *file) {
 }
 
 RSHandle Dx12RootSignatureManager::loadSignatureFromMeta(
-    const char *path, MaterialMetadata *metadata) {
+    const char *path, graphics::MaterialMetadata *metadata) {
   RootCompilerResult result = processSignatureFile2(path, metadata);
   const std::string name = getFileName(path);
 
@@ -95,7 +95,7 @@ RSHandle Dx12RootSignatureManager::loadSignatureFromMeta(
   m_rootRegister.insert(name.c_str(), handle);
   ++MAGIC_NUMBER_COUNTER;
   return handle;
-}  
+}
 
 void Dx12RootSignatureManager::loadSignaturesInFolder(const char *directory) {
   return;

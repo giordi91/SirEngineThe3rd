@@ -5,8 +5,8 @@
 #include <string>
 
 #include "SirEngine/PSOManager.h"
+#include "SirEngine/graphics/materialMetadata.h"
 #include "SirEngine/handle.h"
-#include "SirEngine/materialManager.h"
 #include "SirEngine/memory/cpu/resizableVector.h"
 #include "SirEngine/memory/cpu/sparseMemoryPool.h"
 #include "SirEngine/memory/cpu/stringHashMap.h"
@@ -27,7 +27,7 @@ struct SIR_ENGINE_API VkPSOCompileResult {
   TOPOLOGY_TYPE topologyType;
   VkRenderPass renderPass;
   VkPipelineLayout pipelineLayout;
-  MaterialMetadata metadata;
+  graphics::MaterialMetadata metadata;
 };
 
 // TODO make it not copyable assignable
@@ -39,7 +39,7 @@ class VkPSOManager final : public PSOManager {
     RSHandle rootSignature;
     uint32_t magicNumber;
     TOPOLOGY_TYPE topology;
-    MaterialMetadata metadata;
+    graphics::MaterialMetadata metadata;
   };
 
  public:
@@ -82,7 +82,7 @@ class VkPSOManager final : public PSOManager {
     const PSOData &data = m_psoPool.getConstRef(index);
     return data.pso;
   }
-  const MaterialMetadata *getMetadata(const PSOHandle &handle) override {
+  const graphics::MaterialMetadata *getMetadata(const PSOHandle &handle) override {
     assertMagicNumber(handle);
     const uint32_t index = getIndexFromHandle(handle);
     const PSOData &data = m_psoPool.getConstRef(index);
