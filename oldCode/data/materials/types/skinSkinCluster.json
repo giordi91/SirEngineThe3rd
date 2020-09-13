@@ -1,5 +1,0 @@
-{
-  "pso" :  "gbufferPBRSkinSkinningPSO", 
-  "rs"  :  "gbufferPBRSkinSkinningRS",
-  "type" : "skinSkinCluster"
-}

@@ -565,7 +565,8 @@ void VkRenderingContext::renderQueueType(
   VkCommandBuffer commandList = currentFc->m_commandBuffer;
 
   // draw calls go here
-  setViewportAndScissor(0, 0, config.width, config.height, 0, 1);
+  setViewportAndScissor(0, 0, static_cast<float>(config.width),
+                        static_cast<float>(config.height), 0, 1);
 
   for (const auto &renderableList : typedQueues) {
     if (globals::MATERIAL_MANAGER->isQueueType(renderableList.first, flag)) {
