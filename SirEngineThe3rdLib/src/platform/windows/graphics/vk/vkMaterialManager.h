@@ -44,8 +44,8 @@ class VkMaterialManager final : public MaterialManager {
                     const VkMaterialRuntime &materialRuntime);
 
   // TODO see note on the dx12 material manager for this function
-  ShaderBind bindRSandPSO(uint64_t shaderFlags,
-                          const VkMaterialRuntime &runtime) const;
+  ShaderBind bindRSandPSO(const uint64_t shaderFlags,
+                          const MaterialHandle handle) const;
   VkMaterialManager(const VkMaterialManager &) = delete;
   VkMaterialManager &operator=(const VkMaterialManager &) = delete;
 
@@ -54,7 +54,8 @@ class VkMaterialManager final : public MaterialManager {
                               const SkinHandle skinHandle) override;
 
   // vk methods
-  const VkMaterialRuntime &getMaterialRuntime(const MaterialHandle handle) {
+  const VkMaterialRuntime &getMaterialRuntime(
+      const MaterialHandle handle) const {
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
     return m_materialTextureHandles.getConstRef(index).m_materialRuntime;
@@ -70,10 +71,10 @@ class VkMaterialManager final : public MaterialManager {
   void releaseAllMaterialsAndRelatedResources();
 
  private:
-  inline void assertMagicNumber(const MaterialHandle handle) {
+  inline void assertMagicNumber(const MaterialHandle handle) const {
     const uint32_t magic = getMagicFromHandle(handle);
     const uint32_t idx = getIndexFromHandle(handle);
-    assert(m_materialTextureHandles[idx].magicNumber == magic &&
+    assert(m_materialTextureHandles.getConstRef(idx).magicNumber == magic &&
            "invalid magic handle for material data");
   }
 
