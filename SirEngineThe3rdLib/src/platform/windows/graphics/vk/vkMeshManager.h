@@ -80,17 +80,7 @@ class VkMeshManager final : public MeshManager {
 
   inline void renderMesh(const MeshHandle handle,
                          const VkCommandBuffer commandBuffer) const {
-    assertMagicNumber(handle);
-    uint32_t index = getIndexFromHandle(handle);
-    const MeshData &data = m_meshPool.getConstRef(index);
-
-    vkCmdBindIndexBuffer(commandBuffer, data.indexBuffer, 0,
-                         VK_INDEX_TYPE_UINT32);
-    vkCmdDrawIndexed(commandBuffer, data.indexCount, 1, 0, 0, 0);
-  };
-
-  static inline void renderMesh(const VkMeshRuntime& runtime,
-                                const VkCommandBuffer commandBuffer) {
+    const auto &runtime = getMeshRuntime(handle);
     if (runtime.indexBuffer != nullptr) {
       vkCmdBindIndexBuffer(commandBuffer, runtime.indexBuffer, 0,
                            VK_INDEX_TYPE_UINT32);

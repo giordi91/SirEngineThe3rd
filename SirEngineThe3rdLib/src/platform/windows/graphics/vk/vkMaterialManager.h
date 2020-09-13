@@ -54,7 +54,7 @@ class VkMaterialManager final : public MaterialManager {
                               const SkinHandle skinHandle) override;
 
   // vk methods
-  const VkMaterialRuntime &getMaterialRuntime(
+  [[nodiscard]] const VkMaterialRuntime &getMaterialRuntime(
       const MaterialHandle handle) const {
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);

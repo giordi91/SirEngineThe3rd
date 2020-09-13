@@ -30,7 +30,7 @@ ShaderBind VkMaterialManager::bindRSandPSO(const uint64_t shaderFlags,
   // get type flags as int
   constexpr auto mask = static_cast<uint64_t>(~((1ull << 32ull) - 1ull));
   const auto typeFlags =
-      static_cast<uint64_t>((uint64_t(shaderFlags) & mask) >> 32ll);
+      static_cast<uint64_t>((static_cast<uint64_t>(shaderFlags) & mask) >> 32ll);
 
   for (int i = 0; i < QUEUE_COUNT; ++i) {
     if (runtime.shaderQueueTypeFlags2[i].pso.handle == typeFlags) {

@@ -61,8 +61,8 @@ Dx12BindingTableManager *BINDING_TABLE_MANAGER = nullptr;
 int STATIC_SAMPLERS_COUNT = -1;
 
 struct Dx12Renderable {
-  Dx12MeshRuntime m_meshRuntime;
-  Dx12MaterialRuntime m_materialRuntime;
+  MeshHandle m_meshHandle;
+  MaterialHandle m_materialHandle;
 };
 
 typedef std::unordered_map<uint64_t, std::vector<Dx12Renderable>>
@@ -223,7 +223,7 @@ bool Dx12RenderingContext::initializeGraphicsDx12(BaseWindow *wnd,
   globals::LIGHT_MANAGER = new graphics::LightManager();
 
   ROOT_SIGNATURE_MANAGER = new Dx12RootSignatureManager();
-  //TODO old
+  // TODO old
   ROOT_SIGNATURE_MANAGER->loadSignaturesInFolder(frameConcatenation(
       globals::ENGINE_CONFIG->m_dataSourcePath, "/processed/rs"));
   globals::ROOT_SIGNATURE_MANAGER = ROOT_SIGNATURE_MANAGER;
@@ -570,8 +570,9 @@ void Dx12RenderingContext::addRenderablesToQueue(const Renderable &renderable) {
   const Dx12MeshRuntime &meshRuntime =
       dx12::MESH_MANAGER->getMeshRuntime(renderable.m_meshHandle);
 
-  dx12Renderable.m_materialRuntime = materialRuntime;
-  dx12Renderable.m_meshRuntime = meshRuntime;
+  // dx12Renderable.m_materialRuntime = materialRuntime;
+  dx12Renderable.m_materialHandle = renderable.m_materialHandle;
+  dx12Renderable.m_meshHandle = renderable.m_meshHandle;
   // store the renderable on each queue
   for (int i = 0; i < MaterialManager::QUEUE_COUNT; ++i) {
     /*
@@ -607,11 +608,11 @@ void Dx12RenderingContext::renderQueueType(
       // start rendering it
 
       // bind the corresponding RS and PSO
-      //ShaderBind bind = dx12::MATERIAL_MANAGER->bindRSandPSO(
+      // ShaderBind bind = dx12::MATERIAL_MANAGER->bindRSandPSO(
       //    renderableList.first, commandList);
 
       ShaderBind bind = dx12::MATERIAL_MANAGER->bindRSandPSO(
-          renderableList.first, renderableList.second[0].m_materialRuntime,
+          renderableList.first, renderableList.second[0].m_materialHandle,
           commandList);
 
       // binding the camera
@@ -635,13 +636,6 @@ void Dx12RenderingContext::renderQueueType(
                                                     samplersHandle);
       }
 
-      // this is most for debug, it will boil down to nothing in release
-      //const SHADER_TYPE_FLAGS type =
-      //    dx12::MATERIAL_MANAGER->getTypeFlags(renderableList.first);
-      //const std::string &typeName =
-      //    dx12::MATERIAL_MANAGER->getStringFromShaderTypeFlag(type);
-      //annotateGraphicsBegin(typeName.c_str());
-
       // looping each of the object
       const size_t count = renderableList.second.size();
       const Dx12Renderable *currRenderables = renderableList.second.data();
@@ -649,16 +643,14 @@ void Dx12RenderingContext::renderQueueType(
         const Dx12Renderable &renderable = currRenderables[i];
 
         // bind material data like textures etc, then render
-        dx12::MATERIAL_MANAGER->bindMaterial(flag, renderable.m_materialRuntime,
-                                             commandList);
+        dx12::MATERIAL_MANAGER->bindMaterial(renderable.m_materialHandle, flag);
 
         // TODO temp check, needs to change
         bool isDebug = dx12::MATERIAL_MANAGER->isQueueType(
             renderableList.first, SHADER_QUEUE_FLAGS::QUEUE_DEBUG);
-        dx12::MESH_MANAGER->render(renderable.m_meshRuntime, currentFc,
-                                   !isDebug);
+        dx12::MESH_MANAGER->render(renderable.m_meshHandle, currentFc);
       }
-      //annotateGraphicsEnd();
+      // annotateGraphicsEnd();
     }
   }
 }
