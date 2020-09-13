@@ -194,9 +194,10 @@ void Dx12MaterialManager::bindConstantBuffer(
 }
 
 ShaderBind Dx12MaterialManager::bindRSandPSO(
-    const uint64_t shaderFlags, const Dx12MaterialRuntime &runtime,
+    const uint64_t shaderFlags, const MaterialHandle handle,
     ID3D12GraphicsCommandList2 *commandList) const {
   // get type flags as int
+    const auto& runtime = getMaterialRuntime(handle);
   constexpr auto mask = static_cast<uint64_t>(~((1ull << 32ull) - 1ull));
   const auto typeFlags = static_cast<uint64_t>((shaderFlags & mask) >> 32ull);
 
@@ -361,6 +362,14 @@ MaterialHandle Dx12MaterialManager::loadMaterial(const char *path,
 
 void Dx12MaterialManager::bindMaterial(const MaterialHandle handle,
                                        SHADER_QUEUE_FLAGS queue) {
+
+
+
+    const auto& materialRuntime = getMaterialRuntime(handle);
+  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
+  auto commandList = currentFc->commandList;
+  bindFlatDescriptorMaterial(materialRuntime, commandList, queue);;
+  /*
   assertMagicNumber(handle);
   uint32_t index = getIndexFromHandle(handle);
   const auto &data = m_materialTextureHandles.getConstRef(index);
@@ -407,6 +416,7 @@ void Dx12MaterialManager::bindMaterial(const MaterialHandle handle,
     }
     default:;
   }
+  */
 }
 
 void Dx12MaterialManager::free(const MaterialHandle handle) {

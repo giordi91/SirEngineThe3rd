@@ -92,7 +92,7 @@ class Dx12MaterialManager final : public MaterialManager {
   // root signature, as such I am returning that here so I can access it, not as
   // clean as I would like
   ShaderBind bindRSandPSO(const uint64_t shaderFlags,
-                          const Dx12MaterialRuntime &runtime,
+                          const MaterialHandle handle,
                           ID3D12GraphicsCommandList2 *commandList) const;
   Dx12MaterialManager(const Dx12MaterialManager &) = delete;
   Dx12MaterialManager &operator=(const Dx12MaterialManager &) = delete;
@@ -105,17 +105,18 @@ class Dx12MaterialManager final : public MaterialManager {
                               const SkinHandle skinHandle) override;
   void free(MaterialHandle handle) override;
 
-  const Dx12MaterialRuntime &getMaterialRuntime(const MaterialHandle handle) {
+  const Dx12MaterialRuntime &getMaterialRuntime(
+      const MaterialHandle handle) const {
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
     return m_materialTextureHandles.getConstRef(index).m_materialRuntime;
   }
 
  private:
-  inline void assertMagicNumber(const MaterialHandle handle) {
+  inline void assertMagicNumber(const MaterialHandle handle) const {
     const uint32_t magic = getMagicFromHandle(handle);
     const uint32_t idx = getIndexFromHandle(handle);
-    assert(m_materialTextureHandles[idx].magicNumber == magic &&
+    assert(m_materialTextureHandles.getConstRef(idx).magicNumber == magic &&
            "invalid magic handle for constant buffer");
   }
   void Dx12MaterialManager::updateMaterial(

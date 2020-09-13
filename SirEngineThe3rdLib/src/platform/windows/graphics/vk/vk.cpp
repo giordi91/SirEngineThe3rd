@@ -58,7 +58,7 @@ uint32_t PRESENTATION_QUEUE_FAMILY = 0;
 bool DEBUG_MARKERS_ENABLED = false;
 
 struct VkRenderable {
-  VkMeshRuntime m_meshRuntime{};
+  MeshHandle m_meshHandle {};
   MaterialHandle m_materialHandle{};
 };
 
@@ -567,11 +567,9 @@ void VkRenderingContext::addRenderablesToQueue(const Renderable &renderable) {
 
   const VkMaterialRuntime &materialRuntime =
       vk::MATERIAL_MANAGER->getMaterialRuntime(renderable.m_materialHandle);
-  const VkMeshRuntime &meshRuntime =
-      vk::MESH_MANAGER->getMeshRuntime(renderable.m_meshHandle);
 
   vkRenderable.m_materialHandle = renderable.m_materialHandle;
-  vkRenderable.m_meshRuntime = meshRuntime;
+  vkRenderable.m_meshHandle= renderable.m_meshHandle;
   // store the renderable on each queue
   for (int i = 0; i < MaterialManager::QUEUE_COUNT; ++i) {
     // const uint32_t flag = materialRuntime.shaderQueueTypeFlags[i];
@@ -585,10 +583,6 @@ void VkRenderingContext::addRenderablesToQueue(const Renderable &renderable) {
       uint64_t key = queue | pso;
       (*typedQueues)[key].emplace_back(vkRenderable);
     }
-
-    // if (flag != INVALID_QUEUE_TYPE_FLAGS) {
-    //  (*typedQueues)[flag].emplace_back(vkRenderable);
-    //}
   }
 }
 
@@ -646,7 +640,7 @@ void VkRenderingContext::renderQueueType(
         // bind material data like textures etc, then render
         MATERIAL_MANAGER->bindMaterial(flag, renderable.m_materialHandle);
 
-        MESH_MANAGER->renderMesh(renderable.m_meshRuntime, commandList);
+        MESH_MANAGER->renderMesh(renderable.m_meshHandle, commandList);
       }
       // annotateGraphicsEnd();
     }
