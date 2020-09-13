@@ -26,11 +26,9 @@ class Dx12RootSignatureManager final : public RootSignatureManager {
   Dx12RootSignatureManager(const Dx12RootSignatureManager &) = delete;
   Dx12RootSignatureManager &operator=(const Dx12RootSignatureManager &) =
       delete;
-  ~Dx12RootSignatureManager() = default;
+  ~Dx12RootSignatureManager() override = default;
   void initialize() override {}
   void cleanup() override;
-  void loadSignaturesInFolder(const char *directory) override;
-  void loadSignatureBinaryFile(const char *file) override;
 
   RSHandle loadSignatureFromMeta(const char *name,
                                  graphics::MaterialMetadata *metadata);
@@ -58,32 +56,13 @@ class Dx12RootSignatureManager final : public RootSignatureManager {
     commandList->SetGraphicsRootSignature(data.rs);
   }
 
-  inline void bindGraphicsRS(const RSHandle handle,
-                             ID3D12GraphicsCommandList2 *commandList) const {
-    assertMagicNumber(handle);
-    const uint32_t index = getIndexFromHandle(handle);
-    const RSData &data = m_rsPool.getConstRef(index);
-    commandList->SetGraphicsRootSignature(data.rs);
-  }
-  void bindComputeRS(const RSHandle &rsHandle,
-                     ID3D12GraphicsCommandList2 *commandList) const {
+  void bindComputeRS(const RSHandle &rsHandle) const {
     assertMagicNumber(rsHandle);
     const uint32_t index = getIndexFromHandle(rsHandle);
     const RSData &data = m_rsPool.getConstRef(index);
+    auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
+    ID3D12GraphicsCommandList2 *commandList = currentFc->commandList;
     commandList->SetComputeRootSignature(data.rs);
-  };
-  ;
-  inline bool isFlatRoot(const RSHandle handle) const {
-    assertMagicNumber(handle);
-    const uint32_t index = getIndexFromHandle(handle);
-    const RSData &data = m_rsPool.getConstRef(index);
-    return data.isFlatRoot > 0;
-  }
-  inline uint32_t getDescriptorCount(const RSHandle handle) const {
-    assertMagicNumber(handle);
-    const uint32_t index = getIndexFromHandle(handle);
-    const RSData &data = m_rsPool.getConstRef(index);
-    return data.descriptorCount;
   }
 
   RSHandle getHandleFromName(const char *name) const {

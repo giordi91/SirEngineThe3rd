@@ -32,7 +32,7 @@ DescriptorHandle VkBindingTableManager::allocate(
   uint32_t count = isBuffered ? vk::SWAP_CHAIN_IMAGE_COUNT : 1;
 
   // allocate enough memory for the sets
-  auto sets = reinterpret_cast<VkDescriptorSet *>(
+  auto* sets = static_cast<VkDescriptorSet *>(
       globals::PERSISTENT_ALLOCATOR->allocate(sizeof(VkDescriptorSet) * count));
 
   char countStr[2];

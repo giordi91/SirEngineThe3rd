@@ -23,8 +23,6 @@ class RootSignatureManager {
   virtual ~RootSignatureManager() = default;
   virtual void initialize() = 0;
   virtual void cleanup() = 0;
-  virtual void loadSignaturesInFolder(const char *directory) = 0;
-  virtual void loadSignatureBinaryFile(const char *file) = 0;
   virtual void bindGraphicsRS(const RSHandle handle) const = 0;
 
   virtual RSHandle getHandleFromName(const char *name) const = 0;

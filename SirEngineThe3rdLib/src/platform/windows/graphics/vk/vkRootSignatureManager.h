@@ -38,9 +38,6 @@ class VkPipelineLayoutManager final : public RootSignatureManager {
   void initialize() override;
   ;
   void cleanup() override;
-  void loadSignaturesInFolder(const char *directory) override;
-  void loadSignatureBinaryFile(const char *file) override;
-  RSHandle loadSignatureFile(const char *file);
   RSHandle loadSignatureFile(const char *name,
                              graphics::MaterialMetadata *metadata);
 
@@ -69,17 +66,9 @@ class VkPipelineLayoutManager final : public RootSignatureManager {
     return data.layout;
   }
 
-  inline uint16_t usesStaticSamplers(const RSHandle handle) const {
-    assertMagicNumber(handle);
-    const uint32_t index = getIndexFromHandle(handle);
-    const LayoutData &data = m_rsPool.getConstRef(index);
-    return data.usesStaticSamplers;
-  }
-
   static VkPipelineLayout createEngineLayout(
       const VkDescriptorSetLayout perFrameLayout,
       const VkDescriptorSetLayout samplersLayout);
-  //{}
   void bindGraphicsRS(const RSHandle) const override {}
 
  private:
