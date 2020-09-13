@@ -573,12 +573,14 @@ bool VkTextureManager::loadTextureFromFile(const char *name, VkFormat format,
   }
 }
 
+//TODO review clean this up a bit
 TextureHandle VkTextureManager::loadTexture(const char *path,
                                             const bool cubeMap) {
   const bool res = fileExists(path);
   assert(res);
 
   const auto jobj = getJsonObj(path);
+  //TODO we need to store this info
   const bool isCube = getValueIfInJson(jobj, TEXTURE_CUBE_KEY, DEFAULT_BOOL);
   const bool isGamma = getValueIfInJson(jobj, TEXTURE_GAMMA_KEY, DEFAULT_BOOL);
   const bool hasMips =

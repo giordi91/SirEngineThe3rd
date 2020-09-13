@@ -1,12 +1,5 @@
 
-#include "SirEngine/psoManager.h"
 #include "SirEngine/materialManager.h"
-#include "SirEngine/fileUtils.h"
-#include "SirEngine/graphics/debugAnnotations.h"
-#include "SirEngine/skinClusterManager.h"
-#include "SirEngine/textureManager.h"
-#include "nlohmann/json.hpp"
-#include "SirEngine/rootSignatureManager.h"
 
 #include <SPIRV-CROSS/spirv_cross.hpp>
 #include <cassert>
@@ -16,10 +9,15 @@
 #include "SirEngine/PSOManager.h"
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/globals.h"
+#include "SirEngine/graphics/debugAnnotations.h"
 #include "SirEngine/log.h"
+#include "SirEngine/psoManager.h"
+#include "SirEngine/rootSignatureManager.h"
+#include "SirEngine/skinClusterManager.h"
 #include "SirEngine/textureManager.h"
 #include "binary/binaryFile.h"
 #include "memory/cpu/stringPool.h"
+#include "nlohmann/json.hpp"
 #include "platform/windows/graphics/vk/vkShaderCompiler.h"
 #include "runtimeString.h"
 
@@ -44,12 +42,6 @@ static const std::unordered_map<std::string, MATERIAL_RESOURCE_FLAGS>
     };
 
 namespace materialKeys {
-static const char *ALBEDO = "albedo";
-static const char *NORMAL = "normal";
-static const char *METALLIC = "metallic";
-static const char *ROUGHNESS = "roughness";
-static const char *HEIGHT = "height";
-static const char *AO = "ao";
 static const char *SEPARATE_ALPHA = "separateAlpha";
 static const char *ROUGHNESS_MULT = "roughnessMult";
 static const char *METALLIC_MULT = "metallicMult";
@@ -71,9 +63,8 @@ static const std::unordered_map<std::string, SirEngine::SHADER_QUEUE_FLAGS>
     };
 }  // namespace materialKeys
 
-
 void MaterialManager::bindMaterial(SHADER_QUEUE_FLAGS queueFlag,
-                                     const MaterialRuntime &materialRuntime) {
+                                   const MaterialRuntime &materialRuntime) {
   int queueFlagInt = static_cast<int>(queueFlag);
   int currentFlagId = static_cast<int>(log2(queueFlagInt & -queueFlagInt));
 
@@ -82,18 +73,18 @@ void MaterialManager::bindMaterial(SHADER_QUEUE_FLAGS queueFlag,
   globals::BINDING_TABLE_MANAGER->bindTable(3, handle, rs, false);
 }
 void MaterialManager::bindMaterial(SHADER_QUEUE_FLAGS queueFlag,
-                                     const MaterialHandle handle) {
+                                   const MaterialHandle handle) {
   const MaterialRuntime &materialRuntime = getMaterialRuntime(handle);
   bindMaterial(queueFlag, materialRuntime);
 }
 
 ShaderBind MaterialManager::bindRSandPSO(const uint64_t shaderFlags,
-                                           const MaterialHandle handle) const {
+                                         const MaterialHandle handle) const {
   const auto &runtime = getMaterialRuntime(handle);
   // get type flags as int
   constexpr auto mask = static_cast<uint64_t>(~((1ull << 32ull) - 1ull));
-  const auto typeFlags =
-      static_cast<uint64_t>((static_cast<uint64_t>(shaderFlags) & mask) >> 32ll);
+  const auto typeFlags = static_cast<uint64_t>(
+      (static_cast<uint64_t>(shaderFlags) & mask) >> 32ll);
 
   for (int i = 0; i < QUEUE_COUNT; ++i) {
     if (runtime.shaderQueueTypeFlags2[i].pso.handle == typeFlags) {
@@ -106,8 +97,6 @@ ShaderBind MaterialManager::bindRSandPSO(const uint64_t shaderFlags,
   assert(0 && "Could not find requested shader type for PSO /RS bind");
   return {};
 }
-
-void MaterialManager::parseQueue(uint32_t *queues) {}
 
 uint32_t findBindingIndex(const MaterialMetadata *meta,
                           const std::string &bindName) {
@@ -124,8 +113,8 @@ uint32_t findBindingIndex(const MaterialMetadata *meta,
 }
 
 MaterialHandle MaterialManager::loadMaterial(const char *path,
-                                               const MeshHandle meshHandle,
-                                               const SkinHandle skinHandle) {
+                                             const MeshHandle meshHandle,
+                                             const SkinHandle skinHandle) {
   PreliminaryMaterialParse parse = parseMaterial(path, meshHandle, skinHandle);
 
   uint32_t index;
@@ -133,9 +122,6 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
       m_materialTextureHandles.getFreeMemoryData(index);
 
   materialData.m_material = parse.mat;
-  materialData.handles = parse.handles;
-
-  const MaterialDataHandles &handles = materialData.handles;
 
   MaterialRuntime matCpu{};
   matCpu.skinHandle = skinHandle;
@@ -150,10 +136,6 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
     }
   }
 
-  /*
-  materialData.handles.cbHandle = globals::CONSTANT_BUFFER_MANAGER->allocate(
-      sizeof(Material), 0, &parse.mat);
-      */
 
   materialData.magicNumber = MAGIC_NUMBER_COUNTER++;
 
@@ -232,7 +214,7 @@ MaterialHandle MaterialManager::loadMaterial(const char *path,
       const std::string resName = getFileName(resPath);
       if (type == "texture") {
         TextureHandle tHandle =
-            globals::TEXTURE_MANAGER->getHandleFromName(resName.c_str());
+            globals::TEXTURE_MANAGER->loadTexture(resPath.c_str());
 
         uint32_t bindingIdx = findBindingIndex(meta, bName);
 
@@ -269,23 +251,9 @@ void MaterialManager::releaseAllMaterialsAndRelatedResources() {
       assertMagicNumber(value);
       const uint32_t index = getIndexFromHandle(value);
       const MaterialData &data = m_materialTextureHandles.getConstRef(index);
-      freeTextureIfNeeded(data.handles.albedo);
-      freeTextureIfNeeded(data.handles.normal);
-      freeTextureIfNeeded(data.handles.metallic);
-      freeTextureIfNeeded(data.handles.roughness);
-      freeTextureIfNeeded(data.handles.thickness);
-      freeTextureIfNeeded(data.handles.separateAlpha);
-      freeTextureIfNeeded(data.handles.ao);
-      freeTextureIfNeeded(data.handles.height);
 
       // NOTE constant buffers don't need to be free singularly since the
       // rendering context will allocate in bulk
-
-      if (data.handles.skinHandle.isHandleValid()) {
-        // do not free this yet, need to figure out how
-        assert(0);
-        // globals::SKIN_MANAGER->free(data.handles.skinHandle);
-      }
 
       if (data.m_materialRuntime.meshHandle.isHandleValid()) {
         globals::MESH_MANAGER->free(data.m_materialRuntime.meshHandle);
@@ -294,78 +262,8 @@ void MaterialManager::releaseAllMaterialsAndRelatedResources() {
   }
 }
 
-void MaterialManager::bindTexture(const MaterialHandle matHandle,
-                                    const TextureHandle texHandle,
-                                    const uint32_t descriptorIndex,
-                                    const uint32_t bindingIndex,
-                                    SHADER_QUEUE_FLAGS queue,
-                                    const bool isCubeMap) {
-  /*
-assertMagicNumber(matHandle);
-uint32_t index = getIndexFromHandle(matHandle);
-const auto &data = m_materialTextureHandles.getConstRef(index);
-
-const auto currentFlag = static_cast<uint32_t>(queue);
-int currentFlagId = static_cast<int>(log2(currentFlag & -currentFlag));
-
-// this is the descriptor for our correct queue
-DescriptorHandle descriptorHandle =
-    data.m_materialRuntime.descriptorHandles[currentFlagId];
-assert(descriptorHandle.isHandleValid());
-// the descriptor set is already taking into account whether or not
-// is buffered, it gives us the correct one we want
-VkDescriptorSet descriptorSet =
-    vk::DESCRIPTOR_MANAGER->getDescriptorSet(descriptorHandle);
-
-// assert(!vk::DESCRIPTOR_MANAGER->isBuffered(descriptorHandle) &&
-//       "buffered not yet implemented");
-
-VkWriteDescriptorSet writeDescriptorSets{};
-
-vk::TEXTURE_MANAGER->bindTexture(texHandle, &writeDescriptorSets,
-                                 descriptorSet, bindingIndex);
-
-// Execute the writes to update descriptors for this set
-// Note that it's also possible to gather all writes and only run updates
-// once, even for multiple sets This is possible because each
-// VkWriteDescriptorSet also contains the destination set to be updated
-// For simplicity we will update once per set instead
-// object one off update
-vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, 1, &writeDescriptorSets, 0,
-                       nullptr);
-   */
-}
-
-void MaterialManager::bindBuffer(MaterialHandle matHandle,
-                                   BufferHandle bufferHandle,
-                                   uint32_t bindingIndex,
-                                   SHADER_QUEUE_FLAGS queue) {
-    /*
-  assertMagicNumber(matHandle);
-  uint32_t index = getIndexFromHandle(matHandle);
-  const auto &data = m_materialTextureHandles.getConstRef(index);
-
-  const uint32_t currentFlag = static_cast<uint32_t>(queue);
-  int currentFlagId = static_cast<int>(log2(currentFlag & -currentFlag));
-
-  DescriptorHandle descriptorHandle =
-      data.m_materialRuntime.descriptorHandles[currentFlagId];
-  assert(descriptorHandle.isHandleValid());
-  VkDescriptorSet descriptorSet =
-      vk::DESCRIPTOR_MANAGER->getDescriptorSet(descriptorHandle);
-
-  VkWriteDescriptorSet writeDescriptorSets{};
-
-  globals::BUFFER_MANAGER->bindBuffer(bufferHandle, &writeDescriptorSets,
-                                 descriptorSet, bindingIndex);
-
-  vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, 1, &writeDescriptorSets, 0,
-                         nullptr);
-                         */
-}
-
 void MaterialManager::bindMaterial(const MaterialHandle handle,
-                                     SHADER_QUEUE_FLAGS queue) {
+                                   SHADER_QUEUE_FLAGS queue) {
   assertMagicNumber(handle);
   uint32_t index = getIndexFromHandle(handle);
   const auto &data = m_materialTextureHandles.getConstRef(index);
@@ -390,70 +288,6 @@ void MaterialManager::free(const MaterialHandle handle) {
   }
 
   m_materialTextureHandles.free(index);
-}
-
-void MaterialManager::bindMesh(const MaterialHandle handle,
-                                 const MeshHandle meshHandle,
-                                 const uint32_t descriptorIndex,
-                                 const uint32_t bindingIndex,
-                                 const uint32_t meshBindFlags,
-                                 SHADER_QUEUE_FLAGS queue) {
-  /*
-const auto &materialRuntime = getMaterialRuntime(handle);
-int queueFlagInt = static_cast<int>(queue);
-int currentFlagId = static_cast<int>(log2(queueFlagInt & -queueFlagInt));
-DescriptorHandle setHandle = materialRuntime.descriptorHandles[currentFlagId];
-VkDescriptorSet descriptorSet =
-    vk::DESCRIPTOR_MANAGER->getDescriptorSet(setHandle);
-
-// TODO here we are assuming always four sets might have to rework this
-VkWriteDescriptorSet writeDescriptorSets[4] = {};
-
-VkDescriptorBufferInfo bufferInfo[3] = {};
-globals::MESH_MANAGER->bindMesh(meshHandle, &writeDescriptorSets[bindingIndex],
-                           descriptorSet, bufferInfo, meshBindFlags,
-                           bindingIndex);
-
-int setPos = (meshBindFlags & MESH_ATTRIBUTE_FLAGS::POSITIONS) > 0 ? 1 : 0;
-int setNormals = (meshBindFlags & MESH_ATTRIBUTE_FLAGS::NORMALS) > 0 ? 1 : 0;
-int setUV = (meshBindFlags & MESH_ATTRIBUTE_FLAGS::UV) > 0 ? 1 : 0;
-int setTangents =
-    (meshBindFlags & MESH_ATTRIBUTE_FLAGS::TANGENTS) > 0 ? 1 : 0;
-
-int toBind = setPos + setNormals + setUV + setTangents;
-
-// Execute the writes to update descriptors for this set
-// Note that it's also possible to gather all writes and only run updates
-// once, even for multiple sets This is possible because each
-// VkWriteDescriptorSet also contains the destination set to be updated
-// For simplicity we will update once per set instead
-// object one off update
-vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, toBind, &writeDescriptorSets[0], 0,
-                       nullptr);
-                       */
-}
-
-void MaterialManager::bindConstantBuffer(
-    const MaterialHandle handle, const ConstantBufferHandle bufferHandle,
-    const uint32_t descriptorIndex, const uint32_t bindingIndex,
-    SHADER_QUEUE_FLAGS queue) {
-  /*
-const auto &materialRuntime = getMaterialRuntime(handle);
-int queueFlagInt = static_cast<int>(queue);
-int currentFlagId = static_cast<int>(log2(queueFlagInt & -queueFlagInt));
-DescriptorHandle setHandle = materialRuntime.descriptorHandles[currentFlagId];
-VkDescriptorSet descriptorSet =
-    vk::DESCRIPTOR_MANAGER->getDescriptorSet(setHandle);
-
-VkWriteDescriptorSet writeDescriptorSets = {};
-VkDescriptorBufferInfo bufferInfoUniform = {};
-vk::CONSTANT_BUFFER_MANAGER->bindConstantBuffer(
-    bufferHandle, bufferInfoUniform, bindingIndex, &writeDescriptorSets,
-    descriptorSet);
-
-vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, 1, &writeDescriptorSets, 0,
-                       nullptr);
-                       */
 }
 
 
@@ -511,91 +345,13 @@ MaterialManager::PreliminaryMaterialParse MaterialManager::parseMaterial(
   bool isStatic = getValueIfInJson(jobj, materialKeys::IS_STATIC_KEY, false);
 
   const std::string empty;
-  const std::string albedoName =
-      getValueIfInJson(jobj, materialKeys::ALBEDO, empty);
-  const std::string normalName =
-      getValueIfInJson(jobj, materialKeys::NORMAL, empty);
-  const std::string metallicName =
-      getValueIfInJson(jobj, materialKeys::METALLIC, empty);
-  const std::string roughnessName =
-      getValueIfInJson(jobj, materialKeys::ROUGHNESS, empty);
-  const std::string thicknessName =
-      getValueIfInJson(jobj, materialKeys::THICKNESS, empty);
-  const std::string separateAlphaName =
-      getValueIfInJson(jobj, materialKeys::SEPARATE_ALPHA, empty);
-  const std::string heightName =
-      getValueIfInJson(jobj, materialKeys::HEIGHT, empty);
-  const std::string aoName = getValueIfInJson(jobj, materialKeys::AO, empty);
-
-  TextureHandle albedoTex{0};
-  TextureHandle normalTex{0};
-  TextureHandle metallicTex{0};
-  TextureHandle roughnessTex{0};
-  TextureHandle thicknessTex{0};
-  TextureHandle separateAlphaTex{0};
-  TextureHandle heightTex{0};
-  TextureHandle aoTex{0};
-
-  if (!albedoName.empty()) {
-    albedoTex = globals::TEXTURE_MANAGER->loadTexture(albedoName.c_str());
-  } else {
-    albedoTex = globals::TEXTURE_MANAGER->getWhiteTexture();
-  }
-  if (!normalName.empty()) {
-    normalTex = globals::TEXTURE_MANAGER->loadTexture(normalName.c_str());
-  } else {
-    normalTex = globals::TEXTURE_MANAGER->getWhiteTexture();
-  }
-  if (!metallicName.empty()) {
-    metallicTex = globals::TEXTURE_MANAGER->loadTexture(metallicName.c_str());
-  } else {
-    metallicTex = globals::TEXTURE_MANAGER->getWhiteTexture();
-  }
-  if (!roughnessName.empty()) {
-    roughnessTex = globals::TEXTURE_MANAGER->loadTexture(roughnessName.c_str());
-  } else {
-    roughnessTex = globals::TEXTURE_MANAGER->getWhiteTexture();
-  }
-  if (!thicknessName.empty()) {
-    thicknessTex = globals::TEXTURE_MANAGER->loadTexture(thicknessName.c_str());
-  } else {
-    thicknessTex = globals::TEXTURE_MANAGER->getWhiteTexture();
-  }
-  if (!separateAlphaName.empty()) {
-    separateAlphaTex =
-        globals::TEXTURE_MANAGER->loadTexture(separateAlphaName.c_str());
-  } else {
-    separateAlphaTex = globals::TEXTURE_MANAGER->getWhiteTexture();
-  }
-  if (!aoName.empty()) {
-    aoTex = globals::TEXTURE_MANAGER->loadTexture(aoName.c_str());
-  } else {
-    aoTex = globals::TEXTURE_MANAGER->getWhiteTexture();
-  }
-  if (!heightName.empty()) {
-    heightTex = globals::TEXTURE_MANAGER->loadTexture(heightName.c_str());
-  } else {
-    heightTex = globals::TEXTURE_MANAGER->getWhiteTexture();
-  }
 
   Material mat{};
   mat.roughnessMult = roughnessMult;
   mat.metallicMult = metallicMult;
 
-  MaterialDataHandles texHandles{};
-  texHandles.albedo = albedoTex;
-  texHandles.normal = normalTex;
-  texHandles.metallic = metallicTex;
-  texHandles.roughness = roughnessTex;
-  texHandles.thickness = thicknessTex;
-  texHandles.separateAlpha = separateAlphaTex;
-  texHandles.ao = aoTex;
-  texHandles.skinHandle = skinHandle;
-  texHandles.height = heightTex;
-
   PreliminaryMaterialParse toReturn;
   toReturn.mat = mat;
-  toReturn.handles = texHandles;
   toReturn.isStatic = isStatic;
   parseQueueTypeFlags2(toReturn.shaderQueueTypeFlagsStr, jobj);
 
@@ -1021,4 +777,4 @@ MaterialMetadata loadMetadata(const char *psoPath, GRAPHIC_API api) {
   return extractMetadata(psoPath);
 }
 
-}  // namespace SirEngine::vk
+}  // namespace SirEngine

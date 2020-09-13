@@ -15,19 +15,6 @@ struct ShaderBind {
   PSOHandle pso;
 };
 
-struct MaterialDataHandles {
-  TextureHandle albedo;
-  TextureHandle normal;
-  TextureHandle metallic;
-  TextureHandle roughness;
-  TextureHandle thickness;
-  TextureHandle separateAlpha;
-  TextureHandle ao;
-  TextureHandle height;
-  ConstantBufferHandle cbHandle;
-  SkinHandle skinHandle;
-};
-
 enum class STENCIL_REF { CLEAR = 0, SSSSS = 1 };
 #define INVALID_QUEUE_TYPE_FLAGS 0xFFFFFFFF
 
@@ -82,7 +69,6 @@ struct MaterialRuntime final {
 };
 
 struct MaterialData {
-  MaterialDataHandles handles;
   Material m_material;
   MaterialRuntime m_materialRuntime;
   // PSOHandle m_psoHandle;
@@ -124,21 +110,14 @@ class MaterialManager {
   MaterialManager(const MaterialManager &) = delete;
   MaterialManager &operator=(const MaterialManager &) = delete;
 
-  void parseQueue(uint32_t *queues);
   MaterialHandle loadMaterial(const char *path, const MeshHandle meshHandle,
                               const SkinHandle skinHandle);
 
-  // vk methods
   [[nodiscard]] const MaterialRuntime &getMaterialRuntime(
       const MaterialHandle handle) const {
     assertMagicNumber(handle);
     uint32_t index = getIndexFromHandle(handle);
     return m_materialTextureHandles.getConstRef(index).m_materialRuntime;
-  }
-  const MaterialData &getMaterialData(const MaterialHandle handle) {
-    assertMagicNumber(handle);
-    uint32_t index = getIndexFromHandle(handle);
-    return m_materialTextureHandles.getConstRef(index);
   }
 
   // called only on shutdown, main goal is to release GPU resources to
@@ -154,30 +133,12 @@ class MaterialManager {
   }
 
  public:
-  void bindTexture(const MaterialHandle matHandle,
-                   const TextureHandle texHandle,
-                   const uint32_t descriptorIndex, const uint32_t bindingIndex,
-                   SHADER_QUEUE_FLAGS queue, const bool isCubeMap);
-  void bindBuffer(MaterialHandle matHandle, BufferHandle bufferHandle,
-                  uint32_t bindingIndex, SHADER_QUEUE_FLAGS queue);
-
   void bindMaterial(MaterialHandle handle, SHADER_QUEUE_FLAGS queue);
   void free(MaterialHandle handle);
-
-  void bindMesh(const MaterialHandle handle, const MeshHandle texHandle,
-                const uint32_t descriptorIndex, const uint32_t bindingIndex,
-                const uint32_t meshBindFlags, SHADER_QUEUE_FLAGS queue);
-
-  void bindConstantBuffer(MaterialHandle handle,
-                          ConstantBufferHandle bufferHandle,
-                          const uint32_t descriptorIndex,
-                          const uint32_t bindingIndex,
-                          SHADER_QUEUE_FLAGS queue);
 
  private:
   struct PreliminaryMaterialParse {
     Material mat;
-    MaterialDataHandles handles;
     uint32_t shaderQueueTypeFlags[QUEUE_COUNT] = {
         INVALID_QUEUE_TYPE_FLAGS, INVALID_QUEUE_TYPE_FLAGS,
         INVALID_QUEUE_TYPE_FLAGS, INVALID_QUEUE_TYPE_FLAGS,
