@@ -326,7 +326,8 @@ PSOCompileResult processComputePSO(nlohmann::json &jobj, const char *path,
                           frameString(path),
                           nullptr,
                           frameString(globalRootSignatureName.c_str()),
-                          TOPOLOGY_TYPE::UNDEFINED};
+                          TOPOLOGY_TYPE::UNDEFINED,
+                          metadata};
 }
 
 TOPOLOGY_TYPE convertStringToEngineTopologyType(const std::string &topology) {
@@ -507,7 +508,8 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj, const char *path,
                           frameString(path),
                           frameString(layoutString.c_str()),
                           frameString(rootSignatureString.c_str()),
-                          engineTopologyType};
+                          engineTopologyType,
+                          metadata};
 }
 
 PSOCompileResult compileRawPSO(const char *path, const char *shaderPath) {

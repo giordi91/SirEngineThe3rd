@@ -79,7 +79,7 @@ class Dx12MeshManager final : public MeshManager {
     assert(pair.type == DescriptorType::SRV);
     dx12::GLOBAL_CBV_SRV_UAV_HEAP->freeDescriptor(pair);
   }
-  //TODO make const
+  // TODO make const
   MeshHandle getHandleFromName(const char *name) override {
     auto found = m_nameToHandle.find(name);
     if (found != m_nameToHandle.end()) {
@@ -139,6 +139,9 @@ class Dx12MeshManager final : public MeshManager {
   }
   void render(const MeshHandle handle, FrameCommand *currentFc) const {
     const Dx12MeshRuntime &runtime = getMeshRuntime(handle);
+    currentFc->commandList->IASetIndexBuffer(&runtime.iview);
+    currentFc->commandList->IASetPrimitiveTopology(
+        D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     currentFc->commandList->DrawIndexedInstanced(runtime.indexCount, 1, 0, 0,
                                                  0);
   }
@@ -235,6 +238,7 @@ class Dx12MeshManager final : public MeshManager {
  private:
   SparseMemoryPool<MeshData> m_meshPool;
 
+  // change this unordered map
   std::unordered_map<std::string, MeshHandle> m_nameToHandle;
   static const uint32_t RESERVE_SIZE = 200;
   uint32_t MAGIC_NUMBER_COUNTER = 1;

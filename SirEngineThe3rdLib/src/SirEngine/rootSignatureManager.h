@@ -6,21 +6,14 @@ namespace SirEngine {
 
 enum class ROOT_FILE_TYPE { NULL_TYPE, RASTER = 1, COMPUTE = 2, DXR = 3 };
 
-struct RootDefinition
-{
-	ROOT_FILE_TYPE rootType;
-
-	
+struct RootDefinition {
+  ROOT_FILE_TYPE rootType;
 };
 
-struct RootComponentDefinition
-{
-	
-};
+struct RootComponentDefinition {};
 
 class RootSignatureManager {
-
-public:
+ public:
   RootSignatureManager() = default;
   RootSignatureManager(const RootSignatureManager &) = delete;
   RootSignatureManager &operator=(const RootSignatureManager &) = delete;
@@ -28,11 +21,12 @@ public:
   RootSignatureManager &operator=(RootSignatureManager &&) = delete;
 
   virtual ~RootSignatureManager() = default;
-  virtual void initialize() =0;
+  virtual void initialize() = 0;
   virtual void cleanup() = 0;
   virtual void loadSignaturesInFolder(const char *directory) = 0;
   virtual void loadSignatureBinaryFile(const char *file) = 0;
+  virtual void bindGraphicsRS(const RSHandle handle) const = 0;
 
   virtual RSHandle getHandleFromName(const char *name) const = 0;
 };
-} // namespace SirEngine
+}  // namespace SirEngine

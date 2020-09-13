@@ -79,6 +79,7 @@ class VkPipelineLayoutManager final : public RootSignatureManager {
       const VkDescriptorSetLayout perFrameLayout,
       const VkDescriptorSetLayout samplersLayout);
   //{}
+  void bindGraphicsRS(const RSHandle handle) const override {}
 
  private:
   inline uint32_t getIndexFromHandle(const RSHandle h) const {

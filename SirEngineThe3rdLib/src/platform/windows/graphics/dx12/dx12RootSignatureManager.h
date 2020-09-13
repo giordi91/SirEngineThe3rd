@@ -4,6 +4,7 @@
 
 #include <cassert>
 
+#include "DX12.h"
 #include "SirEngine/handle.h"
 #include "SirEngine/hashing.h"
 #include "SirEngine/log.h"
@@ -12,7 +13,7 @@
 #include "SirEngine/rootSignatureManager.h"
 
 namespace SirEngine {
-	struct MaterialMetadata;
+struct MaterialMetadata;
 }
 
 namespace SirEngine {
@@ -31,7 +32,7 @@ class Dx12RootSignatureManager final : public RootSignatureManager {
   void loadSignaturesInFolder(const char *directory) override;
   void loadSignatureBinaryFile(const char *file) override;
 
-  RSHandle loadSignatureFromMeta(const char* name, MaterialMetadata* metadata);
+  RSHandle loadSignatureFromMeta(const char *name, MaterialMetadata *metadata);
 
   inline ID3D12RootSignature *getRootSignatureFromName(const char *name) const {
     const RSHandle handle = getHandleFromName(name);
@@ -46,6 +47,14 @@ class Dx12RootSignatureManager final : public RootSignatureManager {
     const uint32_t index = getIndexFromHandle(handle);
     const RSData &data = m_rsPool.getConstRef(index);
     return data.rs;
+  }
+  void bindGraphicsRS(const RSHandle handle) const override {
+    assertMagicNumber(handle);
+    const uint32_t index = getIndexFromHandle(handle);
+    const RSData &data = m_rsPool.getConstRef(index);
+    auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
+    ID3D12GraphicsCommandList2 *commandList = currentFc->commandList;
+    commandList->SetGraphicsRootSignature(data.rs);
   }
 
   inline void bindGraphicsRS(const RSHandle handle,
@@ -88,8 +97,7 @@ class Dx12RootSignatureManager final : public RootSignatureManager {
     return value;
   }
 
-  int getBindingSlot(const RSHandle handle, const uint32_t space) const
-  {
+  int getBindingSlot(const RSHandle handle, const uint32_t space) const {
     assertMagicNumber(handle);
     const uint32_t index = getIndexFromHandle(handle);
     const RSData &data = m_rsPool.getConstRef(index);

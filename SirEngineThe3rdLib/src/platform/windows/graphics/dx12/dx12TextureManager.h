@@ -155,7 +155,6 @@ class SIR_ENGINE_API Dx12TextureManager final : public TextureManager {
   }
 
  private:
-  std::unordered_map<std::string, TextureHandle> m_nameToHandle;
   DirectX::ResourceUploadBatch batch;
   SparseMemoryPool<TextureData> m_texturePool;
 

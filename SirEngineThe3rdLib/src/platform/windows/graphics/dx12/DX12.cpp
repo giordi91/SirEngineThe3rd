@@ -27,6 +27,7 @@
 #include "platform/windows/graphics/dx12/dx12SwapChain.h"
 #include "platform/windows/graphics/dx12/dx12TextureManager.h"
 #include "rootSignatureCompile.h"
+#include "platform/windows/graphics/vk/vkMaterialManager.h"
 
 #undef max
 #undef min
@@ -49,7 +50,7 @@ FrameResource FRAME_RESOURCES[FRAME_BUFFERS_COUNT];
 FrameResource *CURRENT_FRAME_RESOURCE = nullptr;
 Dx12TextureManager *TEXTURE_MANAGER = nullptr;
 Dx12MeshManager *MESH_MANAGER = nullptr;
-Dx12MaterialManager *MATERIAL_MANAGER = nullptr;
+vk::VkMaterialManager *MATERIAL_MANAGER = nullptr;
 Dx12ConstantBufferManager *CONSTANT_BUFFER_MANAGER = nullptr;
 Dx12ShaderManager *SHADER_MANAGER = nullptr;
 Dx12PSOManager *PSO_MANAGER = nullptr;
@@ -245,7 +246,7 @@ bool Dx12RenderingContext::initializeGraphicsDx12(BaseWindow *wnd,
 
   // mesh manager needs to load after pso and RS since it initialize material
   // types
-  MATERIAL_MANAGER = new Dx12MaterialManager();
+  MATERIAL_MANAGER = new vk::VkMaterialManager();
   MATERIAL_MANAGER->inititialize();
   globals::MATERIAL_MANAGER = MATERIAL_MANAGER;
 
@@ -565,8 +566,8 @@ void Dx12RenderingContext::addRenderablesToQueue(const Renderable &renderable) {
 
   Dx12Renderable dx12Renderable{};
 
-  const Dx12MaterialRuntime &materialRuntime =
-      dx12::MATERIAL_MANAGER->getMaterialRuntime(renderable.m_materialHandle);
+  const vk::VkMaterialRuntime &materialRuntime =
+      MATERIAL_MANAGER->getMaterialRuntime(renderable.m_materialHandle);
   const Dx12MeshRuntime &meshRuntime =
       dx12::MESH_MANAGER->getMeshRuntime(renderable.m_meshHandle);
 
@@ -611,9 +612,8 @@ void Dx12RenderingContext::renderQueueType(
       // ShaderBind bind = dx12::MATERIAL_MANAGER->bindRSandPSO(
       //    renderableList.first, commandList);
 
-      ShaderBind bind = dx12::MATERIAL_MANAGER->bindRSandPSO(
-          renderableList.first, renderableList.second[0].m_materialHandle,
-          commandList);
+      ShaderBind bind = MATERIAL_MANAGER->bindRSandPSO(
+          renderableList.first, renderableList.second[0].m_materialHandle);
 
       // binding the camera
       D3D12_GPU_DESCRIPTOR_HANDLE handle =

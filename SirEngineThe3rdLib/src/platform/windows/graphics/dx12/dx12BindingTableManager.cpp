@@ -3,11 +3,14 @@
 #include "SirEngine/globals.h"
 #include "SirEngine/memory/cpu/threeSizesPool.h"
 #include "dx12BufferManager.h"
+#include "dx12MeshManager.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
 #include "platform/windows/graphics/dx12/dx12PSOManager.h"
 #include "platform/windows/graphics/dx12/dx12RootSignatureManager.h"
 #include "platform/windows/graphics/dx12/dx12TextureManager.h"
+
+#include <catch/catch.hpp>
 
 namespace SirEngine::dx12 {
 void Dx12BindingTableManager::initialize() {}
@@ -162,11 +165,21 @@ void Dx12BindingTableManager::bindBuffer(const BindingTableHandle bindHandle,
 }
 
 void Dx12BindingTableManager::bindMesh(const BindingTableHandle bindHandle,
-                                     const MeshHandle mesh,
-                                     const uint32_t startIndex,
-                                     const MESH_ATTRIBUTE_FLAGS meshFlags) {
-  assert(0);
+                                       const MeshHandle mesh,
+                                       const uint32_t startIndex,
+                                       const MESH_ATTRIBUTE_FLAGS meshFlags) {
+  assertMagicNumber(bindHandle);
+  uint32_t poolIndex = getIndexFromHandle(bindHandle);
+  const auto &data = m_bindingTablePool.getConstRef(poolIndex);
 
+  bool isBuffered = isFlagSet(
+      data.flags, graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED);
+  assert(isBuffered == 0);
+  uint32_t multiplier = isBuffered ? globals::CURRENT_FRAME : 0;
+  uint32_t index = (multiplier * data.descriptionsCount);
+
+  dx12::MESH_MANAGER->bindFlatMesh(mesh, &data.descriptors[index],
+                                   meshFlags, startIndex);
 }
 
 void Dx12BindingTableManager::free(const BindingTableHandle &bindingTable) {
