@@ -68,7 +68,6 @@ class Dx12RootSignatureManager final : public RootSignatureManager {
   RSHandle getHandleFromName(const char *name) const {
     bool result = m_rootRegister.containsKey(name);
     if (!result) {
-      // TODO change this back to asserting once vulkan port is stable
       SE_CORE_ERROR("Could not find resquested RS {0}", name);
       return {};
     }

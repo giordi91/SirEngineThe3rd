@@ -126,7 +126,7 @@ bool processModel(const std::string &assetPath, const std::string &outputPath,
   std::vector<float> data;
   // uint32_t floatVertexCount = static_cast<uint32_t>(model.vertexCount) *
   // stride;
-  auto floatVertexCount = static_cast<uint32_t>(model.vertices.size());
+  int floatVertexCount = static_cast<float>(model.vertices.size());
   size_t indicesCount = model.indices.size();
   size_t totalSizeFloat = floatVertexCount + indicesCount;
   size_t totalSizeByte = totalSizeFloat * sizeof(float);

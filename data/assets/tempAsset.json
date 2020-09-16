@@ -23,8 +23,15 @@
     {
       "mesh": "../data/processed/meshes/knightB/cape.model",
       "material": "../data/materials/knightBCapeForward.json"
+    },
+    {
+      "mesh": "../data/processed/meshes/trees/tree01/tree01Branches.model",
+      "material": "../data/materials/tree01BarkMaterial.json"
+    },
+    {
+      "mesh": "../data/processed/meshes/trees/tree01/tree01Leaves.model",
+      "material": "../data/materials/tree01LeavesMaterial.json"
     }
-
   ],
   "t": [
     {
