@@ -1,0 +1,32 @@
+{
+  "resources": [
+    {
+      "type": "texture",
+      "bindingName": "albedoTex",
+      "resourcePath": "../data/processed/textures/trees/tree01/bark_A.texture"
+    },
+    {
+      "type": "texture",
+      "bindingName": "tangentTex",
+      "resourcePath": "../data/processed/textures/trees/tree01/bark_N.texture"
+    },
+    {
+      "type": "texture",
+      "bindingName": "roughnessTex",
+      "resourcePath": "../data/processed/textures/trees/tree01/bark_R.texture"
+    },
+    {
+      "type": "texture",
+      "bindingName": "metallicTex",
+      "resourcePath": "../data/processed/textures/black.texture"
+    },
+    {
+      "type": "mesh",
+      "bindingName": "",
+      "resourcePath": "../data/processed/meshes/trees/tree01/tree01Branches.model"
+    }
+  ],
+  "queue" :  ["forward"],
+  "type" : ["forwardPhongPSO"],
+  "isStatic": true 
+}
