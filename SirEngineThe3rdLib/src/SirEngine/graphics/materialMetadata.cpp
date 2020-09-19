@@ -366,7 +366,7 @@ MaterialMetadata processRasterMetadata(const char *path,
     for (uint32_t i = 0; i < psMeta.objectResourceCount; ++i) {
       MaterialResource &res = psMeta.objectResources[i];
       // check if is unique
-      int currCounter = maxCounters[res.set];
+      int currCounter = counters[res.set];
       bool skip = false;
       for (int bindIdx = 0; bindIdx < currCounter; ++bindIdx) {
         auto &currRes = resources[res.set][bindIdx];

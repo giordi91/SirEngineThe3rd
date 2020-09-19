@@ -1,6 +1,47 @@
 {
   "commands": [
-    "-p ../data/pso -o ../data/processed/pso --pluginName PSOCompilerPlugin --pluginArgs \"-t VK -a -s ../data/shaders/VK\""
+    "-p ../data/pso -o ../data/processed/pso --pluginName PSOCompilerPlugin --pluginArgs \"-t VK -a -s ../data/shaders/VK\"",
+    "-p ../data/pso -o ../data/processed/pso --pluginName PSOCompilerPlugin --pluginArgs \"-t DX12 -a -s ../data/shaders/VK\"",
+
+    "-p ../data/shaders/VK/rasterization/grassExpansionVS.glsl -o ../data/processed/shaders/VK/rasterization/grassExpansionVS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \"",
+    "-p ../data/shaders/VK/rasterization/grassForwardPS.glsl -o ../data/processed/shaders/VK/rasterization/grassForwardPS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d \"",
+    "-p ../data/shaders/VK/rasterization/grassForwardPS.glsl -o ../data/processed/shaders/VK/rasterization/grassForwardPS.spv.hlsl --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d \"",
+    "-p ../data/processed/shaders/VK/rasterization/grassForwardPS.spv.hlsl -o ../data/processed/shaders/DX12/rasterization/grassForwardPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
+
+    "-p ../data/shaders/VK/rasterization/grassExpansionVS.glsl -o ../data/processed/shaders/VK/rasterization/grassExpansionVS.spv.hlsl --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \"",
+    "-p ../data/processed/shaders/VK/rasterization/grassExpansionVS.spv.hlsl -o ../data/processed/shaders/DX12/rasterization/grassExpansionVS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t vs_6_2  -e VS -d \"",
+    "-p ../data/shaders/VK/rasterization/grassPlaneVS.glsl -o ../data/processed/shaders/VK/rasterization/grassPlaneVS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \"",
+    "-p ../data/shaders/VK/rasterization/grassPlanePS.glsl -o ../data/processed/shaders/VK/rasterization/grassPlanePS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d \"",
+    "-p ../data/shaders/VK/rasterization/grassPlaneVS.glsl -o ../data/processed/shaders/VK/rasterization/grassPlaneVS.spv.hlsl --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \"",
+    "-p ../data/shaders/VK/rasterization/grassPlanePS.glsl -o ../data/processed/shaders/VK/rasterization/grassPlanePS.spv.hlsl --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d \"",
+    "-p ../data/processed/shaders/VK/rasterization/grassPlaneVS.spv.hlsl -o ../data/processed/shaders/DX12/rasterization/grassPlaneVS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t vs_6_2  -e VS -d \"",
+    "-p ../data/processed/shaders/VK/rasterization/grassPlanePS.spv.hlsl -o ../data/processed/shaders/DX12/rasterization/grassPlanePS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
+
+    "-p ../data/shaders/VK/rasterization/basicColorPS.glsl -o ../data/processed/shaders/VK/rasterization/basicColorPS.spv.hlsl --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d \"",
+    "-p ../data/processed/shaders/VK/rasterization/basicColorPS.spv.hlsl -o ../data/processed/shaders/DX12/rasterization/basicColorPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
+    "-p ../data/shaders/VK/rasterization/positionColorVS.glsl -o ../data/processed/shaders/VK/rasterization/positionColorVS.spv.hlsl --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \"",
+    "-p ../data/processed/shaders/VK/rasterization/positionColorVS.spv.hlsl -o ../data/processed/shaders/DX12/rasterization/positionColorVS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t vs_6_2  -e VS -d \"",
+    "-p ../data/shaders/VK/rasterization/HDRtoSDREffectPS.glsl -o ../data/processed/shaders/VK/rasterization/HDRtoSDREffectPS.spv.hlsl--pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d \"",
+    "-p ../data/processed/shaders/VK/rasterization/HDRtoSDREffectPS.spv.hlsl -o ../data/processed/shaders/DX12/rasterization/HDRtoSDREffectPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
+    "-p ../data/shaders/VK/rasterization/fullScreenQuadVS.glsl -o ../data/processed/shaders/VK/rasterization/fullScreenQuadVS.spv.hlsl --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \"",
+    "-p ../data/processed/shaders/VK/rasterization/fullScreenQuadVS.spv.hlsl -o ../data/processed/shaders/DX12/rasterization/fullScreenQuadVS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t vs_6_2  -e VS -d \"",
+    "-p ../data/shaders/VK/rasterization/gammaAndToneMappingEffectPS.glsl -o ../data/processed/shaders/VK/rasterization/gammaAndToneMappingEffectPS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d \"",
+    "-p ../data/shaders/VK/rasterization/gammaAndToneMappingEffectPS.glsl -o ../data/processed/shaders/VK/rasterization/gammaAndToneMappingEffectPS.spv.hlsl --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d \"",
+    "-p ../data/processed/shaders/VK/rasterization/gammaAndToneMappingEffectPS.spv.hlsl -o ../data/processed/shaders/DX12/rasterization/gammaAndToneMappingEffectPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
+    "-p ../data/shaders/VK/rasterization/skyboxVS.glsl -o ../data/processed/shaders/VK/rasterization/skyboxVS.spv.hlsl --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \"",
+    "-p ../data/shaders/VK/rasterization/skyboxPS.glsl -o ../data/processed/shaders/VK/rasterization/skyboxPS.spv.hlsl --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d \"",
+    "-p ../data/processed/shaders/VK/rasterization/skyboxPS.spv.hlsl -o ../data/processed/shaders/DX12/rasterization/skyboxPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
+    "-p ../data/processed/shaders/VK/rasterization/skyboxVS.spv.hlsl -o ../data/processed/shaders/DX12/rasterization/skyboxVS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t vs_6_2  -e VS -d \"",
+    "-p ../data/shaders/VK/compute/grassCullingScan.glsl -o ../data/processed/shaders/VK/compute/grassCullingScan.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t compute -d \"",
+    "-p ../data/shaders/VK/compute/grassCullingScan.glsl -o ../data/processed/shaders/VK/compute/grassCullingScan.spv.hlsl--pluginName vkShaderCompilerPlugin --pluginArgs \"-t compute -d \"",
+    "-p ../data/shaders/VK/rasterization/grassExpansionVS.glsl -o ../data/processed/shaders/VK/rasterization/grassExpansionVS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \"",
+    "-p ../data/shaders/VK/rasterization/forwardPhongVS.glsl -o ../data/processed/shaders/VK/rasterization/forwardPhongVS.spv.hlsl --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \"",
+    "-p ../data/shaders/VK/rasterization/forwardPhongPS.glsl -o ../data/processed/shaders/VK/rasterization/forwardPhongPS.spv.hlsl --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d \"",
+    "-p ../data/shaders/VK/compute/edgedetect.glsl -o ../data/processed/shaders/VK/compute/edgedetect.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t compute -d \"",
+    "-p ../data/shaders/VK/compute/grassClear.glsl -o ../data/processed/shaders/VK/compute/grassClear.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t compute -d \"",
+    "-p ../data/shaders/VK/compute/grassClear.glsl -o ../data/processed/shaders/VK/compute/grassClear.spv.hlsl --pluginName vkShaderCompilerPlugin --pluginArgs \"-t compute -d \"",
+    "-p ../data/processed/shaders/VK/compute/grassCullingScan.spv.hlsl -o ../data/processed/shaders/DX12/compute/grassCullingScan.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t cs_6_2  -e CS -d \"",
+    "-p ../data/processed/shaders/VK/compute/grassClear.spv.hlsl -o ../data/processed/shaders/DX12/compute/grassClearScan.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t cs_6_2  -e CS -d \""
 
   ],
   "comment": [
