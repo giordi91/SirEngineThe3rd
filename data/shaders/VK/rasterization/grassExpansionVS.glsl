@@ -277,7 +277,7 @@ void VS()
 	outUV= uv;
     worldPos = position;
     //lod = cullTileData.LOD;
-    lod = int(lodToUse[0]);
+    lod = int(tileNumber);
 
 	gl_Position = frameData.m_activeCamera.MVP * (vec4(position,1.0));
 }

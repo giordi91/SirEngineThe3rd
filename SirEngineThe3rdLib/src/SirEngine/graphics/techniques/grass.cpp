@@ -208,7 +208,7 @@ void GrassTechnique::setup(const uint32_t id) {
   int supportData = SUPPORT_DATA_OFFSET * 5;
   m_outTiles = globals::BUFFER_MANAGER->allocate(
       sizeof(uint64_t) * (supportData + worstCaseNumberOfTiles), nullptr,
-      "tilesOutput", runtimeTilesCount, sizeof(int),
+      "tilesOutput", runtimeTilesCount*8, sizeof(char),
       BufferManager::BUFFER_FLAGS_BITS::GPU_ONLY |
           BufferManager::BUFFER_FLAGS_BITS::STORAGE_BUFFER |
           BufferManager::BUFFER_FLAGS_BITS::RANDOM_WRITE |
