@@ -94,6 +94,27 @@ inline glm::vec4 getValueIfInJson(const nlohmann::json &data,
   }
   return defValue;
 }
+template <>
+inline glm::vec3 getValueIfInJson(const nlohmann::json &data,
+                                  const std::string &key,
+                                  const glm::vec3 &defValue) {
+  if (data.find(key) != data.end()) {
+    auto &vec = data[key];
+    return glm::vec3(vec[0].get<float>(), vec[1].get<float>(),
+                     vec[2].get<float>());
+  }
+  return defValue;
+}
+template <>
+inline glm::vec2 getValueIfInJson(const nlohmann::json &data,
+                                  const std::string &key,
+                                  const glm::vec2 &defValue) {
+  if (data.find(key) != data.end()) {
+    auto &vec = data[key];
+    return glm::vec2(vec[0].get<float>(), vec[1].get<float>());
+  }
+  return defValue;
+}
 
 template <>
 inline glm::quat getValueIfInJson(const nlohmann::json &data,
@@ -108,17 +129,6 @@ inline glm::quat getValueIfInJson(const nlohmann::json &data,
   return defValue;
 }
 
-template <>
-inline glm::vec3 getValueIfInJson(const nlohmann::json &data,
-                                  const std::string &key,
-                                  const glm::vec3 &defValue) {
-  if (data.find(key) != data.end()) {
-    auto &vec = data[key];
-    return glm::vec3(vec[0].get<float>(), vec[1].get<float>(),
-                     vec[2].get<float>());
-  }
-  return defValue;
-}
 inline void assertInJson(const nlohmann::json &jobj, const std::string &key) {
   const auto found = jobj.find(key);
   assert(found != jobj.end());
