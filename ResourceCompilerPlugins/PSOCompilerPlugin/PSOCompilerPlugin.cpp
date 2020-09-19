@@ -4,6 +4,7 @@
 #include "SirEngine/argsUtils.h"
 #include "SirEngine/binary/binaryFile.h"
 #include "SirEngine/fileUtils.h"
+#include "SirEngine/globals.h"
 #include "SirEngine/log.h"
 #include "SirEngine/materialManager.h"
 #include "cxxopts/cxxopts.hpp"
@@ -57,7 +58,7 @@ bool compileAndSavePSO(const std::string &assetPath,
       (metadata.objectResourceCount + metadata.frameResourceCount +
        metadata.passResourceCount) *
       sizeof(SirEngine::graphics::MaterialResource);
-  uint32_t stringSizes = 0;
+  size_t stringSizes = 0;
   for (uint32_t i = 0; i < metadata.objectResourceCount; ++i) {
     stringSizes += (strlen(metadata.objectResources[i].name) + 1);
   }
@@ -67,33 +68,33 @@ bool compileAndSavePSO(const std::string &assetPath,
   for (uint32_t i = 0; i < metadata.passResourceCount; ++i) {
     stringSizes += (strlen(metadata.passResources[i].name) + 1);
   }
-  uint32_t totalSize = structSize += stringSizes;
+  size_t totalSize = structSize + stringSizes;
   std::vector<uint8_t> data;
   data.resize(totalSize);
 
-  uint32_t counter = 0;
+  size_t counter = 0;
   for (uint32_t i = 0; i < metadata.objectResourceCount; ++i) {
     size_t len = strlen(metadata.objectResources[i].name) + 1;
-    memcpy(data.data() + counter, metadata.objectResources[i].name, len);
-    // patching the pointer with an offset pointer from the start
-    metadata.objectResources[i].name =
-        reinterpret_cast<const char *>((data.data() + counter) - data.data());
+    // memcpy(data.data() + counter, metadata.objectResources[i].name, len);
+    //// patching the pointer with an offset pointer from the start
+    // metadata.objectResources[i].name =
+    //    reinterpret_cast<const char *>((data.data() + counter) - data.data());
     counter += len;
   }
   for (uint32_t i = 0; i < metadata.frameResourceCount; ++i) {
     size_t len = strlen(metadata.frameResources[i].name) + 1;
-    memcpy(data.data() + counter, metadata.frameResources[i].name, len);
-    // patching the pointer with an offset pointer from the start
-    metadata.frameResources[i].name =
-        reinterpret_cast<const char *>((data.data() + counter) - data.data());
+    // memcpy(data.data() + counter, metadata.frameResources[i].name, len);
+    //// patching the pointer with an offset pointer from the start
+    // metadata.frameResources[i].name =
+    //    reinterpret_cast<const char *>((data.data() + counter) - data.data());
     counter += len;
   }
   for (uint32_t i = 0; i < metadata.passResourceCount; ++i) {
     size_t len = strlen(metadata.passResources[i].name) + 1;
-    memcpy(data.data() + counter, metadata.passResources[i].name, len);
-    // patching the pointer with an offset pointer from the start
-    metadata.passResources[i].name =
-        reinterpret_cast<const char *>((data.data() + counter) - data.data());
+    // memcpy(data.data() + counter, metadata.passResources[i].name, len);
+    //// patching the pointer with an offset pointer from the start
+    // metadata.passResources[i].name =
+    //    reinterpret_cast<const char *>((data.data() + counter) - data.data());
     counter += len;
   }
   assert(counter == stringSizes);
@@ -103,19 +104,19 @@ bool compileAndSavePSO(const std::string &assetPath,
   uint32_t size = metadata.objectResourceCount *
                   sizeof(SirEngine::graphics::MaterialResource);
   memcpy(data.data() + counter, metadata.objectResources, size);
-  mapped.objectResourceDataOffset = counter;
+  mapped.objectResourceDataOffset = static_cast<uint32_t>(counter);
   counter += size;
 
   size = metadata.frameResourceCount *
          sizeof(SirEngine::graphics::MaterialResource);
   memcpy(data.data() + counter, metadata.frameResources, size);
-  mapped.frameResourceDataOffset = counter;
+  mapped.frameResourceDataOffset = static_cast<uint32_t>(counter);
   counter += size;
 
   size = metadata.passResourceCount *
          sizeof(SirEngine::graphics::MaterialResource);
   memcpy(data.data() + counter, metadata.passResources, size);
-  mapped.passResourceDataOffset = counter;
+  mapped.passResourceDataOffset = static_cast<uint32_t>(counter);
   counter += size;
 
   assert(counter == totalSize);
@@ -280,69 +281,67 @@ bool compileVK(const std::string &assetPath, const std::string &outputPath,
   SirEngine::graphics::MaterialMetadata metadata =
       SirEngine::graphics::extractMetadata(assetPath.c_str());
   // need to serialize metadata
-  uint32_t structSize =
+  size_t structSize =
       (metadata.objectResourceCount + metadata.frameResourceCount +
        metadata.passResourceCount) *
       sizeof(SirEngine::graphics::MaterialResource);
-  uint32_t stringSizes = 0;
+  size_t uniformsMetaSize = 0;
+
+  // we only store the values for the object resource count
+  // pass data and frame data are handled by the engine directly
   for (uint32_t i = 0; i < metadata.objectResourceCount; ++i) {
-    stringSizes += (strlen(metadata.objectResources[i].name) + 1);
+    if (metadata.objectResources[i].type ==
+        SirEngine::graphics::MATERIAL_RESOURCE_TYPE::CONSTANT_BUFFER) {
+      uniformsMetaSize +=
+          sizeof(SirEngine::graphics::MaterialMetadataStructMember) *
+          metadata.objectResources[i].extension.uniform.membersCount;
+    }
   }
-  for (uint32_t i = 0; i < metadata.frameResourceCount; ++i) {
-    stringSizes += (strlen(metadata.frameResources[i].name) + 1);
-  }
-  for (uint32_t i = 0; i < metadata.passResourceCount; ++i) {
-    stringSizes += (strlen(metadata.passResources[i].name) + 1);
-  }
-  uint32_t totalSize = structSize += stringSizes;
+
+  uint32_t totalSize = structSize + uniformsMetaSize;
   std::vector<uint8_t> data;
   data.resize(totalSize);
 
-  uint32_t counter = 0;
+  size_t counter = 0;
+
   for (uint32_t i = 0; i < metadata.objectResourceCount; ++i) {
-    size_t len = strlen(metadata.objectResources[i].name) + 1;
-    memcpy(data.data() + counter, metadata.objectResources[i].name, len);
-    // patching the pointer with an offset pointer from the start
-    metadata.objectResources[i].name =
-        reinterpret_cast<const char *>((data.data() + counter) - data.data());
-    counter += len;
+    //if the object is a constant buffer it comes with a uniform metadata
+  	//we have have to write on disk and patch the pointer
+    if (metadata.objectResources[i].type ==
+        SirEngine::graphics::MATERIAL_RESOURCE_TYPE::CONSTANT_BUFFER) {
+      auto size = sizeof(SirEngine::graphics::MaterialMetadataStructMember) *
+                  metadata.objectResources[i].extension.uniform.membersCount;
+      memcpy(data.data() + counter,
+             metadata.objectResources[i].extension.uniform.members, size);
+      // replacing the data with a pointer which represent the offset
+      void *oldPtr = metadata.objectResources[i].extension.uniform.members;
+      metadata.objectResources[i].extension.uniform.members =
+          reinterpret_cast<SirEngine::graphics::MaterialMetadataStructMember *>(
+              (data.data() + counter) - data.data());
+
+      SirEngine::globals::PERSISTENT_ALLOCATOR->free(oldPtr);
+      counter += size;
+    }
   }
-  for (uint32_t i = 0; i < metadata.frameResourceCount; ++i) {
-    size_t len = strlen(metadata.frameResources[i].name) + 1;
-    memcpy(data.data() + counter, metadata.frameResources[i].name, len);
-    // patching the pointer with an offset pointer from the start
-    metadata.frameResources[i].name =
-        reinterpret_cast<const char *>((data.data() + counter) - data.data());
-    counter += len;
-  }
-  for (uint32_t i = 0; i < metadata.passResourceCount; ++i) {
-    size_t len = strlen(metadata.passResources[i].name) + 1;
-    memcpy(data.data() + counter, metadata.passResources[i].name, len);
-    // patching the pointer with an offset pointer from the start
-    metadata.passResources[i].name =
-        reinterpret_cast<const char *>((data.data() + counter) - data.data());
-    counter += len;
-  }
-  assert(counter == stringSizes);
 
   MaterialMappedData mapped{};
   // we copied the strings and now can copy the array data
   uint32_t size = metadata.objectResourceCount *
                   sizeof(SirEngine::graphics::MaterialResource);
   memcpy(data.data() + counter, metadata.objectResources, size);
-  mapped.objectResourceDataOffset = counter;
+  mapped.objectResourceDataOffset = static_cast<uint32_t>(counter);
   counter += size;
 
   size = metadata.frameResourceCount *
          sizeof(SirEngine::graphics::MaterialResource);
   memcpy(data.data() + counter, metadata.frameResources, size);
-  mapped.frameResourceDataOffset = counter;
+  mapped.frameResourceDataOffset = static_cast<uint32_t>(counter);
   counter += size;
 
   size = metadata.passResourceCount *
          sizeof(SirEngine::graphics::MaterialResource);
   memcpy(data.data() + counter, metadata.passResources, size);
-  mapped.passResourceDataOffset = counter;
+  mapped.passResourceDataOffset = static_cast<uint32_t>(counter);
   counter += size;
 
   assert(counter == totalSize);

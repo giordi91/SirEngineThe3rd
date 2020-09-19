@@ -1,15 +1,23 @@
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/globals.h"
-#include "SirEngine/log.h"
 #include "SirEngine/graphics/materialMetadata.h"
+#include "SirEngine/log.h"
 #include "SirEngine/memory/cpu/stackAllocator.h"
 #include "catch/catch.hpp"
+
+bool isFlagSet(SirEngine::graphics::MATERIAL_RESOURCE_FLAGS flags,
+               SirEngine::graphics::MATERIAL_RESOURCE_FLAGS wantedFlag) {
+  auto flagsCast = static_cast<uint32_t>(flags);
+  auto wantedCast = static_cast<uint32_t>(wantedFlag);
+  return (flagsCast & wantedCast) > 0;
+}
 
 TEST_CASE("metadata parse 1", "[material]") {
   const char* path = "../testData/grassForwardPSO.json";
   SirEngine::globals::FRAME_ALLOCATOR = new SirEngine::StackAllocator();
   SirEngine::globals::FRAME_ALLOCATOR->initialize(1024 * 1024 * 10);
-  SirEngine::graphics::MaterialMetadata metadata = SirEngine::graphics::extractMetadata(path);
+  SirEngine::graphics::MaterialMetadata metadata =
+      SirEngine::graphics::extractMetadata(path);
 
   REQUIRE(metadata.objectResourceCount == 7);
   REQUIRE(metadata.frameResourceCount == 1);
@@ -22,8 +30,8 @@ TEST_CASE("metadata parse 1", "[material]") {
   REQUIRE(metadata.objectResources[0].binding == 0);
   REQUIRE(metadata.objectResources[0].visibility ==
           SirEngine::GRAPHICS_RESOURCE_VISIBILITY_VERTEX);
-  REQUIRE(metadata.objectResources[0].flags ==
-          SirEngine::graphics::MATERIAL_RESOURCE_FLAGS::READ_ONLY);
+  REQUIRE(isFlagSet(metadata.objectResources[0].flags,
+                    SirEngine::graphics::MATERIAL_RESOURCE_FLAGS::READ_ONLY));
 
   REQUIRE(metadata.objectResources[1].type ==
           SirEngine::graphics::MATERIAL_RESOURCE_TYPE::BUFFER);
@@ -32,8 +40,8 @@ TEST_CASE("metadata parse 1", "[material]") {
   REQUIRE(metadata.objectResources[1].binding == 1);
   REQUIRE(metadata.objectResources[1].visibility ==
           SirEngine::GRAPHICS_RESOURCE_VISIBILITY_VERTEX);
-  REQUIRE(metadata.objectResources[1].flags ==
-          SirEngine::graphics::MATERIAL_RESOURCE_FLAGS::READ_ONLY);
+  REQUIRE(isFlagSet(metadata.objectResources[1].flags,
+                    SirEngine::graphics::MATERIAL_RESOURCE_FLAGS::READ_ONLY));
 
   REQUIRE(metadata.objectResources[2].type ==
           SirEngine::graphics::MATERIAL_RESOURCE_TYPE::TEXTURE);
@@ -67,8 +75,8 @@ TEST_CASE("metadata parse 1", "[material]") {
   REQUIRE(metadata.objectResources[5].binding == 5);
   REQUIRE(metadata.objectResources[5].visibility ==
           SirEngine::GRAPHICS_RESOURCE_VISIBILITY_VERTEX);
-  REQUIRE(metadata.objectResources[5].flags ==
-          SirEngine::graphics::MATERIAL_RESOURCE_FLAGS::READ_ONLY);
+  REQUIRE(isFlagSet(metadata.objectResources[5].flags,
+                    SirEngine::graphics::MATERIAL_RESOURCE_FLAGS::READ_ONLY));
 
   REQUIRE(metadata.objectResources[6].type ==
           SirEngine::graphics::MATERIAL_RESOURCE_TYPE::BUFFER);
@@ -77,6 +85,6 @@ TEST_CASE("metadata parse 1", "[material]") {
   REQUIRE(metadata.objectResources[6].binding == 6);
   REQUIRE(metadata.objectResources[6].visibility ==
           SirEngine::GRAPHICS_RESOURCE_VISIBILITY_VERTEX);
-  REQUIRE(metadata.objectResources[6].flags ==
-          SirEngine::graphics::MATERIAL_RESOURCE_FLAGS::READ_ONLY);
+  REQUIRE(isFlagSet(metadata.objectResources[6].flags,
+                    SirEngine::graphics::MATERIAL_RESOURCE_FLAGS::READ_ONLY));
 }
