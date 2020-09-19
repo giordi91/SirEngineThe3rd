@@ -2,13 +2,12 @@
 
 #include <cassert>
 
-
-#include "engineMath.h"
 #include "SirEngine/graphics/bindingTableManager.h"
 #include "SirEngine/handle.h"
 #include "SirEngine/materialManager.h"
 #include "SirEngine/memory/cpu/sparseMemoryPool.h"
 #include "SirEngine/memory/cpu/stringHashMap.h"
+#include "engineMath.h"
 #include "graphics/materialMetadata.h"
 
 namespace SirEngine {
@@ -21,11 +20,19 @@ struct ShaderBind {
 enum class STENCIL_REF { CLEAR = 0, SSSSS = 1 };
 #define INVALID_QUEUE_TYPE_FLAGS 0xFFFFFFFF
 
+struct MaterialSourceSubBinding {
+  char name[32];
+  NUMERICAL_DATA_TYPE type;
+  int sizeInByte;
+  char value[64];
+};
 // This is a material binding coming from a file
 struct MaterialSourceBinding {
-  const char *type;
-  const char *bindingName;
-  const char *resourcePath;
+  const char *type = nullptr;
+  const char *bindingName = nullptr;
+  const char *resourcePath = nullptr;
+  MaterialSourceSubBinding *subBinding = nullptr;
+  uint32_t subBindingCount = 0;
 };
 
 static constexpr uint32_t QUEUE_COUNT = 5;
@@ -105,6 +112,7 @@ class MaterialManager {
     // save some resource allocations
     bool isStatic = false;
   };
+
   PreliminaryMaterialParse parseMaterial(const char *path);
 
   HashMap<const char *, MaterialHandle, hashString32> m_nameToHandle;

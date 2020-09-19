@@ -32,7 +32,31 @@ static const std::unordered_map<std::string, SirEngine::SHADER_QUEUE_FLAGS>
         {"debug", SirEngine::SHADER_QUEUE_FLAGS::QUEUE_DEBUG},
         {"custom", SirEngine::SHADER_QUEUE_FLAGS::CUSTOM},
     };
+static const std::unordered_map<std::string, SirEngine::NUMERICAL_DATA_TYPE>
+    STRING_TO_NUMERICAL_TYPE{
+        {"undefined", NUMERICAL_DATA_TYPE::UNDEFINED},
+        {"float", NUMERICAL_DATA_TYPE::FLOAT},
+        {"int", NUMERICAL_DATA_TYPE::INT},
+        {"boolean", NUMERICAL_DATA_TYPE::BOOLEAN},
+        {"vec2", NUMERICAL_DATA_TYPE::VEC2},
+        {"vec3", NUMERICAL_DATA_TYPE::VEC3},
+        {"vec4", NUMERICAL_DATA_TYPE::VEC4},
+        {"mat3", NUMERICAL_DATA_TYPE::MAT3},
+        {"mat4", NUMERICAL_DATA_TYPE::MAT4},
+        {"int16", NUMERICAL_DATA_TYPE::INT16},
+        {"float16", NUMERICAL_DATA_TYPE::FLOAT16},
+    };
 }  // namespace materialKeys
+
+static const std::unordered_map<NUMERICAL_DATA_TYPE, uint32_t>
+    NUMERICAL_TYPE_TO_SIZE{
+        {NUMERICAL_DATA_TYPE::UNDEFINED, 0}, {NUMERICAL_DATA_TYPE::FLOAT, 4},
+        {NUMERICAL_DATA_TYPE::INT, 4},       {NUMERICAL_DATA_TYPE::BOOLEAN, 1},
+        {NUMERICAL_DATA_TYPE::VEC2, 8},      {NUMERICAL_DATA_TYPE::VEC3, 12},
+        {NUMERICAL_DATA_TYPE::VEC4, 16},     {NUMERICAL_DATA_TYPE::MAT3, 36},
+        {NUMERICAL_DATA_TYPE::MAT4, 64},     {NUMERICAL_DATA_TYPE::INT16, 2},
+        {NUMERICAL_DATA_TYPE::FLOAT16, 2},
+    };
 
 ShaderBind MaterialManager::bindRSandPSO(const uint64_t shaderFlags,
                                          const MaterialHandle handle) const {
@@ -148,7 +172,6 @@ MaterialHandle MaterialManager::loadMaterial(const char *path) {
     materialData.bindingHandle[i] = bindingTable;
 
     // update material
-
     for (uint32_t res = 0; res < parse.sourceBindingsCount; ++res) {
       const MaterialSourceBinding &matBinding = parse.sourceBindings[res];
       const std::string name = getFileName(matBinding.resourcePath);
@@ -267,6 +290,111 @@ static void parseQueueTypeFlags(const char **outFlags,
   }
 }
 
+NUMERICAL_DATA_TYPE getNumericalDatatype(const std::string &type) {
+  auto found = materialKeys::STRING_TO_NUMERICAL_TYPE.find(type);
+  if (found != materialKeys::STRING_TO_NUMERICAL_TYPE.end()) {
+    return found->second;
+  }
+  SE_CORE_ERROR("Invalid numerical string type {}", type);
+  return NUMERICAL_DATA_TYPE::UNDEFINED;
+}
+
+uint32_t getNumericalTypeSize(NUMERICAL_DATA_TYPE type) {
+  auto found = NUMERICAL_TYPE_TO_SIZE.find(type);
+  if (found != NUMERICAL_TYPE_TO_SIZE.end()) {
+    return found->second;
+  }
+  SE_CORE_ERROR("Invalid numerical type, cannot look up the size: {}",
+                static_cast<uint32_t>(type));
+  return 0;
+}
+
+void extractDataFromType(const nlohmann::json &jobj,
+                         MaterialSourceSubBinding &materialSourceSubBinding,
+                         const NUMERICAL_DATA_TYPE type, uint32_t size) {
+  switch (type) {
+    case NUMERICAL_DATA_TYPE::FLOAT: {
+      float data = jobj["value"].get<float>();
+      memcpy(&materialSourceSubBinding.value[0], &data, size);
+      return;
+    }
+    case NUMERICAL_DATA_TYPE::INT: {
+      int data = jobj["value"].get<int>();
+      memcpy(&materialSourceSubBinding.value[0], &data, size);
+      return;
+    }
+    case NUMERICAL_DATA_TYPE::BOOLEAN: {
+      bool data = jobj["value"].get<bool>();
+      memcpy(&materialSourceSubBinding.value[0], &data, size);
+      return;
+    }
+    case NUMERICAL_DATA_TYPE::VEC2: {
+      glm::vec2 data = getValueIfInJson(jobj, "value", glm::vec2{});
+      memcpy(&materialSourceSubBinding.value[0], &data, size);
+      return;
+    }
+    case NUMERICAL_DATA_TYPE::VEC3: {
+      glm::vec3 data = getValueIfInJson(jobj, "value", glm::vec3{});
+      memcpy(&materialSourceSubBinding.value[0], &data, size);
+      break;
+    }
+    case NUMERICAL_DATA_TYPE::VEC4: {
+      glm::vec4 data = getValueIfInJson(jobj, "value", glm::vec4{});
+      memcpy(&materialSourceSubBinding.value[0], &data, size);
+      return;
+    }
+    case NUMERICAL_DATA_TYPE::MAT3: {
+      assert(0);
+      return;
+    }
+    case NUMERICAL_DATA_TYPE::MAT4: {
+      glm::mat4 data = getValueIfInJson(jobj, "value", glm::mat4{});
+      memcpy(&materialSourceSubBinding.value[0], &data, size);
+      return;
+    }
+    case NUMERICAL_DATA_TYPE::INT16: {
+      auto data = jobj["value"].get<int16_t>();
+      memcpy(&materialSourceSubBinding.value[0], &data, size);
+      return;
+    }
+    case NUMERICAL_DATA_TYPE::FLOAT16: {
+      assert(0);
+      return;
+    }
+    case NUMERICAL_DATA_TYPE::UNDEFINED:
+    default: {
+      assert(0);
+      return;
+    }
+  }
+}
+
+void parseConstantBuffer(MaterialSourceBinding *binding,
+                         const nlohmann::json &resource) {
+  const auto &content = resource["uniformContent"];
+  size_t count = content.size();
+  auto *uniformData = static_cast<MaterialSourceSubBinding *>(
+      globals::PERSISTENT_ALLOCATOR->allocate(sizeof(MaterialSourceSubBinding) *
+                                              count));
+  for (uint32_t i = 0; i < count; ++i) {
+    const auto &subResource = content[i];
+    const auto &name = subResource["name"].get<std::string>();
+    const auto &strType = subResource["type"].get<std::string>();
+    NUMERICAL_DATA_TYPE type = getNumericalDatatype(strType);
+    uint32_t datasize = getNumericalTypeSize(type);
+    assert(type != NUMERICAL_DATA_TYPE::UNDEFINED);
+    assert(datasize != 0);
+    extractDataFromType(subResource, uniformData[i], type, datasize);
+    uniformData[i].type = type;
+    uniformData[i].sizeInByte = datasize;
+    assert(name.size() <= 31);
+    memcpy(uniformData[i].name, name.c_str(), name.size());
+    uniformData[i].name[name.size()] = '\0';
+  }
+  binding->subBinding = uniformData;
+  binding->subBindingCount = count;
+}
+
 MaterialManager::PreliminaryMaterialParse MaterialManager::parseMaterial(
     const char *path) {
   // for materials we do not perform the check whether is loaded or not
@@ -297,6 +425,10 @@ MaterialManager::PreliminaryMaterialParse MaterialManager::parseMaterial(
     bindings[i].type = persistentString(type.c_str());
     bindings[i].bindingName = persistentString(bName.c_str());
     bindings[i].resourcePath = persistentString(resPath.c_str());
+
+    if (strcmp(bindings[i].type, "constantBuffer") == 0) {
+      parseConstantBuffer(&bindings[i], subRes);
+    }
   }
   toReturn.sourceBindings = bindings;
   toReturn.sourceBindingsCount = count;

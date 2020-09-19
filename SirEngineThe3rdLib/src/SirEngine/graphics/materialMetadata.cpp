@@ -43,9 +43,90 @@ MATERIAL_RESOURCE_FLAGS getMeshFlags(const std::string &name) {
   return MATERIAL_RESOURCE_FLAGS::NONE;
 }
 
+NUMERICAL_DATA_TYPE getDatatype(spirv_cross::SPIRType::BaseType base, int width,
+                                uint32_t set) {
+  switch (base) {
+    case spirv_cross::SPIRType::Boolean: {
+      return NUMERICAL_DATA_TYPE::BOOLEAN;
+    }
+    case spirv_cross::SPIRType::Short:
+    case spirv_cross::SPIRType::UShort: {
+      return NUMERICAL_DATA_TYPE::INT16;
+    }
+    case spirv_cross::SPIRType::Int:
+    case spirv_cross::SPIRType::UInt: {
+      return NUMERICAL_DATA_TYPE::INT;
+    }
+    case spirv_cross::SPIRType::Half: {
+      return NUMERICAL_DATA_TYPE::FLOAT16;
+    }
+    case spirv_cross::SPIRType::Float: {
+      switch (width) {
+        case (1): {
+          return NUMERICAL_DATA_TYPE::FLOAT;
+        }
+        case (2): {
+          return NUMERICAL_DATA_TYPE::VEC2;
+        }
+        case (3): {
+          return NUMERICAL_DATA_TYPE::VEC3;
+        }
+        case (4): {
+          return NUMERICAL_DATA_TYPE::VEC4;
+        }
+        case (9): {
+          return NUMERICAL_DATA_TYPE::MAT3;
+        }
+        case (16): {
+          return NUMERICAL_DATA_TYPE::MAT4;
+        }
+        default: {
+          if (set == 3) {
+            SE_CORE_ERROR(
+                "Unsupported width for float type in constant buffer type {}",
+                width);
+          }
+          return NUMERICAL_DATA_TYPE::UNDEFINED;
+        }
+      }
+    }
+    case spirv_cross::SPIRType::Struct: {
+      if (set == 3) {
+        SE_CORE_ERROR(
+            "Unsupported nested struct  in constant buffer in object space "
+            "reflection");
+      }
+      break;
+    }
+
+    case spirv_cross::SPIRType::Int64:
+    case spirv_cross::SPIRType::UInt64:
+    case spirv_cross::SPIRType::AtomicCounter:
+    case spirv_cross::SPIRType::Double:
+
+    case spirv_cross::SPIRType::Image:
+    case spirv_cross::SPIRType::SampledImage:
+    case spirv_cross::SPIRType::Sampler:
+    case spirv_cross::SPIRType::AccelerationStructure:
+    case spirv_cross::SPIRType::RayQuery:
+    case spirv_cross::SPIRType::ControlPointArray:
+    case spirv_cross::SPIRType::Char:
+    case spirv_cross::SPIRType::Unknown:
+    case spirv_cross::SPIRType::Void:
+    case spirv_cross::SPIRType::SByte:
+    case spirv_cross::SPIRType::UByte:
+    default: {
+      SE_CORE_ERROR("Unsupported base type in constant buffer type {}",
+                    static_cast<uint32_t>(spirv_cross::SPIRType::UByte));
+      assert(0);
+      return NUMERICAL_DATA_TYPE::UNDEFINED;
+    }
+  }
+}
+
 MaterialMetadataUniform extractUniformBufferOffset(
-    spirv_cross::Compiler &comp, const spirv_cross::Resource &uniform) {
-  SE_CORE_INFO("Extracting uniform offsets for: {}", uniform.name);
+    spirv_cross::Compiler &comp, const spirv_cross::Resource &uniform,
+    uint32_t set) {
   const spirv_cross::SPIRType &base_type = comp.get_type(uniform.base_type_id);
   const spirv_cross::SPIRType &type = comp.get_type(uniform.type_id);
 
@@ -84,6 +165,8 @@ MaterialMetadataUniform extractUniformBufferOffset(
     assert(name.size() <= 31);
     outStructMember[i].offset = offset;
     outStructMember[i].size = member_size;
+    outStructMember[i].datatype = getDatatype(
+        memberType.basetype, memberType.vecsize * memberType.columns, set);
     memcpy(&outStructMember[i].name[0], name.c_str(), name.size());
     outStructMember[i].name[name.size()] = '\0';
   }
@@ -193,7 +276,7 @@ MaterialMetadata processShader(const char *shaderName, SHADER_TYPE type) {
 
     // we need to extract the offset of the datatype
     MaterialMetadataUniform uniformMetadata =
-        extractUniformBufferOffset(comp, uniform);
+        extractUniformBufferOffset(comp, uniform, set);
 
     memory[counter] = {{},
                        uniformMetadata,
@@ -377,6 +460,8 @@ MaterialMetadata processRasterMetadata(const char *path,
         }
       }
       if (skip) {
+        // we don't extract metadata for materials constant buffer which are not
+        // on a per object space
         if (res.type == MATERIAL_RESOURCE_TYPE::CONSTANT_BUFFER) {
           // free the unused uniform metadata
           globals::PERSISTENT_ALLOCATOR->free(res.extension.uniform.members);
