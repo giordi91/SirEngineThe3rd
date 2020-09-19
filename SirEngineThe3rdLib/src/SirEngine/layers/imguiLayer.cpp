@@ -332,6 +332,8 @@ else {
 */
 //} // namespace SirEngine
 
+
+#define SE_BIND_EVENT_FN(fn) std::bind(&fn, this, std::placeholders::_1)
 void ImguiLayer::onEvent(Event &event) {
   EventDispatcher dispatcher(event);
   dispatcher.dispatch<KeyTypeEvent>(
@@ -357,6 +359,7 @@ void ImguiLayer::onEvent(Event &event) {
   dispatcher.dispatch<RequestShaderCompileEvent>(
       SE_BIND_EVENT_FN(ImguiLayer::onRequestCompileEvent));
 }
+#undef SE_BIND_EVENT_FN
 
 void ImguiLayer::clear() {
 #if BUILD_VK

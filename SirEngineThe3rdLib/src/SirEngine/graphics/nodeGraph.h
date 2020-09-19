@@ -5,6 +5,7 @@
 #include "SirEngine/core.h"
 #include "SirEngine/memory/cpu/resizableVector.h"
 #include "SirEngine/runtimeString.h"
+#include "SirEngine/handle.h"
 
 namespace SirEngine {
 

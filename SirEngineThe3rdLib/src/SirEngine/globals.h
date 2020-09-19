@@ -1,5 +1,4 @@
 #pragma once
-#include "SirEngine/handle.h"
 #include "clock.h"
 #include "core.h"
 
@@ -38,13 +37,6 @@ class BindingTableManager;
 
 namespace globals {
 
-struct DebugFrameData {
-  TextureHandle geometryBuffer;
-  TextureHandle normalBuffer;
-  TextureHandle specularBuffer;
-  TextureHandle gbufferDepth;
-  TextureHandle directionalShadow;
-};
 
 extern Camera3DPivot *MAIN_CAMERA;
 extern Camera3DPivot *DEBUG_CAMERA;
@@ -66,7 +58,6 @@ extern TextureManager *TEXTURE_MANAGER;
 extern AssetManager *ASSET_MANAGER;
 extern Application *APPLICATION;
 extern RenderingContext *RENDERING_CONTEXT;
-extern DebugFrameData *DEBUG_FRAME_DATA;
 extern SIR_ENGINE_API AnimationManager *ANIMATION_MANAGER;
 extern SkinClusterManager *SKIN_MANAGER;
 extern ScriptingContext *SCRIPTING_CONTEXT;

@@ -5,7 +5,6 @@
 
 #include <cstdint>
 
-#include "engineConfig.h"
 
 namespace SirEngine::globals {
 Camera3DPivot *MAIN_CAMERA = nullptr;
@@ -23,7 +22,6 @@ TextureManager *TEXTURE_MANAGER = nullptr;
 AssetManager *ASSET_MANAGER = nullptr;
 Application *APPLICATION = nullptr;
 RenderingContext *RENDERING_CONTEXT = nullptr;
-DebugFrameData *DEBUG_FRAME_DATA = nullptr;
 AnimationManager *ANIMATION_MANAGER = nullptr;
 SkinClusterManager *SKIN_MANAGER = nullptr;
 ScriptingContext *SCRIPTING_CONTEXT = nullptr;

@@ -371,6 +371,14 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj, const char *path,
 
   const std::string fileName = getFileName(path);
   // MaterialMetadata metadata = extractMetadata(path);
+  const std::string VSname =
+      getValueIfInJson(jobj, PSO_KEY_VS_SHADER, DEFAULT_STRING);
+  const std::string PSname =
+      getValueIfInJson(jobj, PSO_KEY_PS_SHADER, DEFAULT_STRING);
+
+  if(VSname == "grassExpansionVS") {
+    int x =0;
+  }
   graphics::MaterialMetadata metadata =
       graphics::loadMetadata(path, GRAPHIC_API::DX12);
 
@@ -382,10 +390,6 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj, const char *path,
   ID3D12RootSignature *rootSignature =
       dx12::ROOT_SIGNATURE_MANAGER->getRootSignatureFromHandle(rsHandle);
 
-  const std::string VSname =
-      getValueIfInJson(jobj, PSO_KEY_VS_SHADER, DEFAULT_STRING);
-  const std::string PSname =
-      getValueIfInJson(jobj, PSO_KEY_PS_SHADER, DEFAULT_STRING);
 
   const char *vsPath = getRasterizationShaderPath(shaderPath, VSname);
   const char *psPath = getRasterizationShaderPath(shaderPath, PSname);

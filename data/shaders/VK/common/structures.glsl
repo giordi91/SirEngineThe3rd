@@ -131,4 +131,14 @@ struct GrassConfig {
   vec4 pointsPerTileLod;
 };
 
+struct ForwardPBRMaterial
+{
+    vec4 albedoUVConfig;
+    vec4 normalUVConfig;
+    vec4 metallicUVConfig;
+    vec4 roughnessUVConfig;
+    vec2 metalRoughMultiplier;
+    vec2 padding;
+};
+
 #endif

@@ -81,8 +81,8 @@ void createFrameCommand(FrameCommand *fc) {
 }
 
 void allocateSamplers() {
-  auto samplers = getSamplers();
-  STATIC_SAMPLERS_COUNT = static_cast<uint32_t>(samplers.size());
+  const D3D12_SAMPLER_DESC *samplers = getSamplers();
+  STATIC_SAMPLERS_COUNT = static_cast<uint32_t>(getSamplersCount());
   for (int i = 0; i < STATIC_SAMPLERS_COUNT; ++i) {
     D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptor;
     GLOBAL_SAMPLER_HEAP->allocateDescriptor(&cpuDescriptor);
@@ -256,8 +256,6 @@ bool Dx12RenderingContext::initializeGraphicsDx12(BaseWindow *wnd,
 
   globals::SKIN_MANAGER = new SkinClusterManager();
   globals::SKIN_MANAGER->init();
-
-  globals::DEBUG_FRAME_DATA = new globals::DebugFrameData();
 
   const bool isHeadless = (wnd == nullptr) | (width == 0) | (height == 0);
 

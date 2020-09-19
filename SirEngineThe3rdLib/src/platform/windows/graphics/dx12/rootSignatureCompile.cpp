@@ -4,10 +4,10 @@
 #include <string>
 #include <unordered_map>
 
-#include "SirEngine/psoManager.h"
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/graphics/materialMetadata.h"
 #include "SirEngine/log.h"
+#include "SirEngine/psoManager.h"
 #include "SirEngine/runtimeString.h"
 #include "nlohmann/json.hpp"
 #include "platform/windows/graphics/dx12/DX12.h"
@@ -187,11 +187,12 @@ std::array<const CD3DX12_STATIC_SAMPLER_DESC, 7> getStaticSamplers() {
           anisotropicWrap, anisotropicClamp, shadowPCFClamp};
 }
 
-std::array<const D3D12_SAMPLER_DESC, 7> getSamplers() {
+static D3D12_SAMPLER_DESC STATIC_SAMPLERS[7];
+const D3D12_SAMPLER_DESC *getSamplers() {
   // Applications usually only need a handful of samplers.  So just define them
   // all up front and keep them available as part of the root signature.
 
-  const D3D12_SAMPLER_DESC pointWrap{
+  D3D12_SAMPLER_DESC pointWrap{
       D3D12_FILTER_MIN_MAG_MIP_POINT,   // filter
       D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressU
       D3D12_TEXTURE_ADDRESS_MODE_WRAP,  // addressV
@@ -275,8 +276,16 @@ std::array<const D3D12_SAMPLER_DESC, 7> getSamplers() {
       D3D12_COMPARISON_FUNC_GREATER,
       D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK};  // maxAnisotropy
 
-  return {pointWrap,       pointClamp,       linearWrap,    linearClamp,
-          anisotropicWrap, anisotropicClamp, shadowPCFClamp};
+  STATIC_SAMPLERS[0] = pointWrap;
+  STATIC_SAMPLERS[1] = pointClamp;
+  STATIC_SAMPLERS[2] = linearWrap;
+  STATIC_SAMPLERS[3] = linearClamp;
+  STATIC_SAMPLERS[4] = anisotropicWrap;
+  STATIC_SAMPLERS[5] = anisotropicClamp;
+  STATIC_SAMPLERS[6] = shadowPCFClamp;
+  return STATIC_SAMPLERS;
+  // return {pointWrap,       pointClamp,       linearWrap,    linearClamp,
+  //        anisotropicWrap, anisotropicClamp, shadowPCFClamp};
 }
 
 void initDescriptorAsUAV(const nlohmann::json &jobj,
@@ -504,12 +513,11 @@ RootCompilerResult flatTablesRS(nlohmann::json jobj, const std::string &name,
 
   UINT numStaticSampers = 0;
   D3D12_STATIC_SAMPLER_DESC const *staticSamplers = nullptr;
-  auto samplers = getStaticSamplers();
 
   CD3DX12_DESCRIPTOR_RANGE normalSamplersDesc;
   if (useStaticSampler) {
-    auto normalSamplers = getSamplers();
-    int samplersCount = static_cast<int>(normalSamplers.size());
+    const D3D12_SAMPLER_DESC *normalSamplers = getSamplers();
+    int samplersCount = static_cast<int>(getSamplersCount());
     int baseRegiser = 0;
     int space = 1;
     normalSamplersDesc.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, samplersCount,
@@ -602,12 +610,11 @@ RootCompilerResult processSignatureFileToBlob(
 
   UINT numStaticSampers = 0;
   D3D12_STATIC_SAMPLER_DESC const *staticSamplers = nullptr;
-  auto samplers = getStaticSamplers();
 
   CD3DX12_DESCRIPTOR_RANGE normalSamplersDesc;
   if (useStaticSampler) {
     auto normalSamplers = getSamplers();
-    int samplersCount = static_cast<int>(normalSamplers.size());
+    int samplersCount = static_cast<int>(getSamplersCount());
     int baseRegiser = 0;
     int space = 1;
     normalSamplersDesc.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, samplersCount,
@@ -633,7 +640,6 @@ RootCompilerResult processSignatureFileToBlob(
        static_cast<int16_t>(hasPassConfig ? 1 + useStaticSampler : -1),
        static_cast<int16_t>(useStaticSampler + hasPassConfig + 1)}};
 }
-
 
 RootCompilerResult processSignatureFile2(const char *path,
                                          graphics::MaterialMetadata *metadata) {

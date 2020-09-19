@@ -1,10 +1,4 @@
 
-#ifdef _WIN32
-#include <Windows.h>
-#define LIBRARY_TYPE HMODULE
-#elif defined __linux
-#define LIBRARY_TYPE void *
-#endif
 #include <vulkan/vulkan.h>
 
 #include <vector>
