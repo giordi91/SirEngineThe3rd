@@ -62,7 +62,8 @@ project(SirEngineThe3rdLib)
 
 	#lets add specific windows build definitions
 	if (WIN32)
-		add_compile_definitions(NO_MIN_MAX _CRT_NONSTDC_NO_DEPRECATE)
+		#TODO add D3DX12_NO_STATE_OBJECT_HELPERS
+		add_compile_definitions(NO_MIN_MAX _CRT_NONSTDC_NO_DEPRECATE )
 		if(${BUILD_AMD})
 			add_compile_definitions(BUILD_AMD SE_PLATFORM_WINDOWS SE_BUILD_DLL _CRT_SECURE_NO_WARNINGS _UNICODE QUIT_ESCAPE GRAPHICS_API=DX12)
 		else(${BUILD_AMD})

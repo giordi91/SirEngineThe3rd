@@ -43,6 +43,61 @@ MATERIAL_RESOURCE_FLAGS getMeshFlags(const std::string &name) {
   return MATERIAL_RESOURCE_FLAGS::NONE;
 }
 
+MaterialMetadataUniform extractUniformBufferOffset(
+    spirv_cross::Compiler &comp, const spirv_cross::Resource &uniform) {
+  SE_CORE_INFO("Extracting uniform offsets for: {}", uniform.name);
+  const spirv_cross::SPIRType &base_type = comp.get_type(uniform.base_type_id);
+  const spirv_cross::SPIRType &type = comp.get_type(uniform.type_id);
+
+  // here should be the outer block, we want to go to the inner type;
+  spirv_cross::SPIRType strType = comp.get_type(type.member_types[0]);
+  const std::string &strName = comp.get_name(type.member_types[0]);
+
+  size_t count = strType.member_types.size();
+
+  auto *outStructMember = static_cast<MaterialMetadataStructMember *>(
+      globals::PERSISTENT_ALLOCATOR->allocate(
+          count * sizeof(MaterialMetadataStructMember)));
+
+  size_t structSize = comp.get_declared_struct_size(strType);
+  for (size_t i = 0; i < count; ++i) {
+    const spirv_cross::SPIRType &memberType =
+        comp.get_type(strType.member_types[i]);
+    size_t member_size = comp.get_declared_struct_member_size(strType, i);
+
+    // Get member offset within this struct.
+    size_t offset = comp.type_struct_member_offset(strType, i);
+
+    if (!memberType.array.empty()) {
+      // Get array stride, e.g. float4 foo[]; Will have array stride of 16
+      // bytes.
+      size_t array_stride = comp.type_struct_member_array_stride(strType, i);
+    }
+
+    if (memberType.columns > 1) {
+      // Get bytes stride between columns (if column major), for float4x4 -> 16
+      // bytes.
+      size_t matrix_stride = comp.type_struct_member_matrix_stride(strType, i);
+    }
+    const std::string &name = comp.get_member_name(strType.self, i);
+
+    assert(name.size() <= 31);
+    outStructMember[i].offset = offset;
+    outStructMember[i].size = member_size;
+    memcpy(&outStructMember[i].name[0], name.c_str(), name.size());
+    outStructMember[i].name[name.size()] = '\0';
+  }
+  // assert(type.name.size() <=31);
+  MaterialMetadataUniform toReturn{};
+  toReturn.members = outStructMember;
+  toReturn.membersCount = count;
+  assert(strName.size() <= 31);
+  memcpy(&toReturn.name[0], strName.c_str(), strName.size());
+  toReturn.name[strName.size()] = '\0';
+  toReturn.structSize = structSize;
+  return toReturn;
+}
+
 MaterialMetadata processShader(const char *shaderName, SHADER_TYPE type) {
   GRAPHIC_RESOURCE_VISIBILITY visibility = 0;
   switch (type) {
@@ -75,9 +130,9 @@ MaterialMetadata processShader(const char *shaderName, SHADER_TYPE type) {
 
   spirv_cross::ShaderResources res = comp.get_shader_resources();
 
-  uint32_t totalCount = static_cast<uint32_t>(res.separate_images.size() +
-                                                  res.storage_buffers.size() +
-                                                  res.uniform_buffers.size());
+  auto totalCount = static_cast<uint32_t>(res.separate_images.size() +
+                                          res.storage_buffers.size() +
+                                          res.uniform_buffers.size());
   uint32_t allocSize = sizeof(MaterialResource) * totalCount;
   auto *memory = static_cast<MaterialResource *>(
       globals::FRAME_ALLOCATOR->allocate(allocSize));
@@ -89,12 +144,18 @@ MaterialMetadata processShader(const char *shaderName, SHADER_TYPE type) {
     auto binding = static_cast<uint16_t>(
         comp.get_decoration(image.id, spv::DecorationBinding));
 
-    memory[counter++] = {MATERIAL_RESOURCE_TYPE::TEXTURE,
-                         visibility,
-                         frameString(image.name.c_str()),
-                         MATERIAL_RESOURCE_FLAGS::NONE,
-                         set,
-                         binding};
+    memory[counter] = {{},
+                       {},
+                       MATERIAL_RESOURCE_TYPE::TEXTURE,
+                       visibility,
+                       // frameString(image.name.c_str()),
+                       MATERIAL_RESOURCE_FLAGS::NONE,
+                       set,
+                       binding};
+    assert(image.name.size() <= 31);
+    memcpy(memory[counter].name, image.name.c_str(), image.name.size());
+    memory[counter].name[image.name.size()] = '\0';
+    counter += 1;
   }
 
   for (const auto &buff : res.storage_buffers) {
@@ -115,27 +176,36 @@ MaterialMetadata processShader(const char *shaderName, SHADER_TYPE type) {
     flags = static_cast<MATERIAL_RESOURCE_FLAGS>(
         static_cast<uint32_t>(flags) | static_cast<uint32_t>(meshFlags));
 
-    memory[counter++] = {
-        MATERIAL_RESOURCE_TYPE::BUFFER,
-        visibility,
-        frameString(buff.name.c_str()),
-        flags,
-        set,
-        binding,
-    };
+    memory[counter] = {{},         {},    MATERIAL_RESOURCE_TYPE::BUFFER,
+                       visibility, flags, set,
+                       binding};
+    assert(buff.name.size() <= 31);
+    memcpy(memory[counter].name, buff.name.c_str(), buff.name.size());
+    memory[counter].name[buff.name.size()] = '\0';
+    counter += 1;
   }
 
-  for (const auto &image : res.uniform_buffers) {
+  for (const auto &uniform : res.uniform_buffers) {
     auto set = static_cast<uint16_t>(
-        comp.get_decoration(image.id, spv::DecorationDescriptorSet));
+        comp.get_decoration(uniform.id, spv::DecorationDescriptorSet));
     auto binding = static_cast<uint16_t>(
-        comp.get_decoration(image.id, spv::DecorationBinding));
-    memory[counter++] = {MATERIAL_RESOURCE_TYPE::CONSTANT_BUFFER,
-                         visibility,
-                         frameString(image.name.c_str()),
-                         MATERIAL_RESOURCE_FLAGS::NONE,
-                         set,
-                         binding};
+        comp.get_decoration(uniform.id, spv::DecorationBinding));
+
+    // we need to extract the offset of the datatype
+    MaterialMetadataUniform uniformMetadata =
+        extractUniformBufferOffset(comp, uniform);
+
+    memory[counter] = {{},
+                       uniformMetadata,
+                       MATERIAL_RESOURCE_TYPE::CONSTANT_BUFFER,
+                       visibility,
+                       MATERIAL_RESOURCE_FLAGS::NONE,
+                       set,
+                       binding};
+    assert(uniform.name.size() <= 31);
+    memcpy(memory[counter].name, uniform.name.c_str(), uniform.name.size());
+    memory[counter].name[uniform.name.size()] = '\0';
+    counter += 1;
   }
   return {memory, nullptr, nullptr, static_cast<uint32_t>(totalCount), 0, 0};
 }
@@ -158,7 +228,6 @@ MaterialMetadata processComputeMetadata(const nlohmann::json &jobj) {
   int maxCounters[4] = {16, 0, 16, 32};
   for (uint32_t i = 0; i < meta.objectResourceCount; ++i) {
     MaterialResource &res = meta.objectResources[i];
-    res.name = persistentString(res.name);
     resources[res.set][counters[res.set]++] = res;
     assert(counters[res.set] < maxCounters[res.set]);
   }
@@ -279,7 +348,7 @@ MaterialMetadata processRasterMetadata(const char *path,
     psMeta = processShader(psPath.c_str(), SHADER_TYPE::FRAGMENT);
   }
 
-  // let us merge
+  // we want to merge both vertex and fragment shader data and remove duplicates
   MaterialResource space0[16];
   MaterialResource space2[16];
   MaterialResource space3[32];
@@ -289,7 +358,6 @@ MaterialMetadata processRasterMetadata(const char *path,
   int maxCounters[4] = {16, 0, 16, 32};
   for (uint32_t i = 0; i < vsMeta.objectResourceCount; ++i) {
     MaterialResource &res = vsMeta.objectResources[i];
-    res.name = persistentString(res.name);
     resources[res.set][counters[res.set]++] = res;
     assert(counters[res.set] < maxCounters[res.set]);
   }
@@ -309,9 +377,12 @@ MaterialMetadata processRasterMetadata(const char *path,
         }
       }
       if (skip) {
+        if (res.type == MATERIAL_RESOURCE_TYPE::CONSTANT_BUFFER) {
+          // free the unused uniform metadata
+          globals::PERSISTENT_ALLOCATOR->free(res.extension.uniform.members);
+        }
         continue;
       }
-      res.name = persistentString(res.name);
       resources[res.set][counters[res.set]++] = res;
       assert(counters[res.set] < maxCounters[res.set]);
     }
@@ -395,34 +466,22 @@ MaterialMetadata loadBinaryMetadata(const char *psoPath) {
   memcpy(outData.passResources, data + mapper->passResourceDataOffset,
          passSize);
 
-  // finally we need to patch the names, names are at the beginning of the
-  // buffer one after the other
-  uint32_t offset = 0;
-  int counter = 0;
-  int objectCount = static_cast<int>(mapper->objectResourceCount);
-  int upToFrameCount = static_cast<int>(mapper->objectResourceCount +
-                                        mapper->frameResourceCount);
-  int upToPassCount =
-      static_cast<int>(upToFrameCount + mapper->passResourceCount);
-
-  while (offset < mapper->objectResourceDataOffset) {
-    // let us find the len of the string
-    auto len = static_cast<uint32_t>(strlen(data + offset));
-    const char *name = persistentString(data + offset);
-    // patch it in the right place
-    if (counter < objectCount) {
-      outData.objectResources[counter].name = name;
-    } else if (counter < upToFrameCount) {
-      int idx = counter - objectCount;
-      assert(idx >= 0);
-      outData.frameResources[idx].name = name;
-    } else if (counter < upToPassCount) {
-      int idx = counter - upToFrameCount;
-      assert(idx >= 0);
-      outData.passResources[idx].name = name;
+  // first of all we load in memory the whole block of uniforms metadata
+  auto uniformSize = mapper->objectResourceDataOffset;
+  if (uniformSize != 0) {
+    auto *uniformData = static_cast<char *>(
+        globals::PERSISTENT_ALLOCATOR->allocate(uniformSize));
+    memcpy(uniformData, data, uniformSize);
+    for (int i = 0; i < mapper->objectResourceCount; ++i) {
+      MaterialResource &res = outData.objectResources[i];
+      if (res.type == MATERIAL_RESOURCE_TYPE::CONSTANT_BUFFER) {
+        // we need to patch the pointer
+        auto offset = reinterpret_cast<size_t>(res.extension.uniform.members);
+        res.extension.uniform.members =
+            reinterpret_cast<MaterialMetadataStructMember *>(uniformData +
+                                                             offset);
+      }
     }
-    offset += (len + 1);
-    ++counter;
   }
   // patching the count of objects
   outData.objectResourceCount = mapper->objectResourceCount;

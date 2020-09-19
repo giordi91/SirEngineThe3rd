@@ -1,5 +1,9 @@
 {
   "commands": [
+    "-p ../data/pso -o ../data/processed/pso --pluginName PSOCompilerPlugin --pluginArgs \"-t VK -a -s ../data/shaders/VK\""
+
+  ],
+  "comment": [
     "-p ../data/external/meshes/trees/tree01/tree01Branches.obj -o ../data/processed/meshes/trees/tree01/tree01Branches.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/trees/tree01/tree01Branches.tangents \"",
     "-p ../data/external/meshes/trees/tree01/tree01Leaves.obj -o ../data/processed/meshes/trees/tree01/tree01Leaves.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/trees/tree01/tree01Leaves.tangents \"",
 
@@ -10,9 +14,5 @@
     "-p ../data/external/textures/trees/tree01/branch_A.png -o ../data/processed/textures/trees/tree01/branch_A.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT1 -g -m\"",
     "-p ../data/external/textures/trees/tree01/branch_N.png -o ../data/processed/textures/trees/tree01/branch_N.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\"",
     "-p ../data/external/textures/trees/tree01/branch_R.png -o ../data/processed/textures/trees/tree01/branch_R.dds --pluginName textureCompilerPlugin --pluginArgs \"-f DXT5  -m\""
-
-  ],
-  "comment": [
-    "-p ../data/pso -o ../data/processed/pso --pluginName PSOCompilerPlugin --pluginArgs \"-t VK -a -s ../data/shaders/VK\""
   ] 
 }
