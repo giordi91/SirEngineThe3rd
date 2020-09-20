@@ -13,6 +13,7 @@
 #include "SirEngine/rootSignatureManager.h"
 #include "SirEngine/runtimeString.h"
 #include "SirEngine/textureManager.h"
+#include "constantBufferManager.h"
 
 namespace SirEngine {
 
@@ -127,6 +128,30 @@ void MaterialManager::buildBindingTableDefinitionFromMetadta(
   }
 }
 
+int findIndexInObjectMaterialBinding(const char *const bindingName,
+                                     const graphics::MaterialMetadata *meta) {
+  uint32_t count = meta->objectResourceCount;
+  for (uint32_t i = 0; i < count; ++i) {
+    if (strcmp(bindingName, meta->objectResources[i].name) == 0) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+int findIndexOfConstantBufferMember(
+    const char *name, const graphics::MaterialResource &objResource) {
+  uint32_t count = objResource.extension.uniform.membersCount;
+  for (uint32_t i = 0; i < count; ++i) {
+    const graphics::MaterialMetadataStructMember &member =
+        objResource.extension.uniform.members[i];
+    if (strcmp(member.name, name) == 0) {
+      return i;
+    }
+  }
+  return -1;
+}
+
 MaterialHandle MaterialManager::loadMaterial(const char *path) {
   PreliminaryMaterialParse parse = parseMaterial(path);
 
@@ -149,7 +174,6 @@ MaterialHandle MaterialManager::loadMaterial(const char *path) {
   MaterialHandle handle{(materialData.magicNumber << 16) | (index)};
   m_nameToHandle.insert(name.c_str(), handle);
 
-  // NEW code avoiding the old crap
   for (uint32_t i = 0; i < QUEUE_COUNT; ++i) {
     if (!materialData.shaderBindPerQueue[i].pso.isHandleValid()) {
       continue;
@@ -162,6 +186,9 @@ MaterialHandle MaterialManager::loadMaterial(const char *path) {
     buildBindingTableDefinitionFromMetadta(meta);
 
     std::string bindingName = name + "-bindingTable";
+    assert(parse.isStatic &&
+           "we do not support yet dynamic materials from assets");
+
     BindingTableHandle bindingTable =
         globals::BINDING_TABLE_MANAGER->allocateBindingTable(
             m_descriptions, meta->objectResourceCount,
@@ -173,11 +200,12 @@ MaterialHandle MaterialManager::loadMaterial(const char *path) {
 
     // update material
     for (uint32_t res = 0; res < parse.sourceBindingsCount; ++res) {
-      const MaterialSourceBinding &matBinding = parse.sourceBindings[res];
-      const std::string name = getFileName(matBinding.resourcePath);
+      MaterialSourceBinding &matBinding = parse.sourceBindings[res];
+      const std::string resName = getFileName(matBinding.resourcePath);
       if (strcmp(matBinding.type, "texture") == 0) {
         TextureHandle tHandle =
             globals::TEXTURE_MANAGER->loadTexture(matBinding.resourcePath);
+        matBinding.resourceHandle = tHandle.handle;
 
         uint32_t bindingIdx = findBindingIndex(meta, matBinding.bindingName);
 
@@ -186,11 +214,49 @@ MaterialHandle MaterialManager::loadMaterial(const char *path) {
             false);
       } else if (strcmp(matBinding.type, "mesh") == 0) {
         MeshHandle mHandle =
-            globals::MESH_MANAGER->getHandleFromName(name.c_str());
+            globals::MESH_MANAGER->getHandleFromName(resName.c_str());
+        matBinding.resourceHandle = mHandle.handle;
 
         globals::BINDING_TABLE_MANAGER->bindMesh(
             materialData.bindingHandle[i], mHandle, meta->meshBinding.binding,
             meta->meshBinding.flags);
+      } else if (strcmp(matBinding.type, "constantBuffer") == 0) {
+        // allocate the necessary constant buffer
+        uint32_t arrayIndex =
+            findIndexInObjectMaterialBinding(matBinding.bindingName, meta);
+        const auto &objResource = meta->objectResources[arrayIndex];
+        assert(objResource.type ==
+               graphics::MATERIAL_RESOURCE_TYPE::CONSTANT_BUFFER);
+        uint32_t bufferSize = objResource.extension.uniform.structSize;
+        char *loadedData =
+            static_cast<char *>(globals::FRAME_ALLOCATOR->allocate(bufferSize));
+
+        // we have the cpu data we need to load the data in there
+        int subCount = matBinding.subBindingCount;
+        for (int s = 0; s < subCount; ++s) {
+          const MaterialSourceSubBinding &sub = matBinding.subBinding[s];
+          // need to find the offset in the shader
+          int constantIdx =
+              findIndexOfConstantBufferMember(sub.name, objResource);
+          assert(constantIdx != -1);
+          assert(objResource.extension.uniform.members[constantIdx].size ==
+                 sub.sizeInByte);
+
+          int offset =
+              objResource.extension.uniform.members[constantIdx].offset;
+          memcpy(loadedData + offset, sub.value, sub.sizeInByte);
+        }
+
+        ConstantBufferHandle cHandle =
+            globals::CONSTANT_BUFFER_MANAGER->allocate(
+                bufferSize,
+                ConstantBufferManager::CONSTANT_BUFFER_FLAG_BITS::NONE,
+                loadedData);
+        matBinding.resourceHandle = cHandle.handle;
+
+        uint32_t bindingIdx = findBindingIndex(meta, matBinding.bindingName);
+        globals::BINDING_TABLE_MANAGER->bindConstantBuffer(
+            materialData.bindingHandle[i], cHandle, bindingIdx, bindingIdx);
       }
     }
   }

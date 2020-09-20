@@ -4,6 +4,8 @@
 #include "../common/structures.glsl"
 #include "../common/pbr.glsl"
 #include "../common/normals.glsl"
+#include "../common/utility.glsl"
+
 
 layout (set=0,binding=0) uniform InputData 
 {
@@ -52,16 +54,16 @@ void PS()
 	//extract the normal taking into account the normal map
 	vec3 geometricNormal = normalize(inNormal);
 	vec3 tangent = normalize(tans);
-	vec3 normal = sampleNormalMap(colorSampler[2], tangentTex, geometricNormal,tangent , uv);
+	vec3 normal = sampleNormalMap(colorSampler[2], tangentTex, geometricNormal,tangent , remapUV( uv,material.normalTexConfig));
 
 	//we don't compute light attenuation for a directional light
 	//float dist = length(lightData.lightPosition.xyz - worldPos);
 	//float attenuation = 1.0/ dist;
 	float attenuation = 1.0;
 	vec3 radiance = attenuation *lightData.lightColor.xyz;
-	vec3 albedo = texture (sampler2D (albedoTex, colorSampler[2]), uv).xyz;
-	float metallic = texture (sampler2D (metallicTex, colorSampler[2]), uv).x;
-	float roughness = texture (sampler2D (roughnessTex, colorSampler[2]), uv).x;
+	vec3 albedo = texture (sampler2D (albedoTex, colorSampler[2]),remapUV( uv,material.albedoTexConfig)).xyz;
+	float metallic = texture (sampler2D (metallicTex, colorSampler[2]), remapUV( uv,material.metallicTexConfig)).x * material.metalRoughMult.x;
+	float roughness = texture (sampler2D (roughnessTex, colorSampler[2]), remapUV( uv,material.roughnessTexConfig)).x * material.metalRoughMult.y;
 
 	//the initial F0 is the basic reflectivity when looking straight at the material
 	//zero incidence of the view vector. The base  reflectivity is compute from the IOR (index of refraction)
