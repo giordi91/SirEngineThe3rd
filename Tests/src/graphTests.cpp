@@ -198,15 +198,19 @@ TEST_CASE("remove connection", "[graphics,graph]") {
   const GPlug *outPlugs = asset.getOutputPlugs(outSourceCount);
   int inDestCount;
   const GPlug *inPlugs = gbuffer.getInputPlugs(inDestCount);
-  asset.removeConnection(&outPlugs[GNode::getPlugIndex(LegacyAssetNode::MESHES)],
-                         &inPlugs[GNode::getPlugIndex(LegacyGBufferPassPBR::MESHES)]);
+  asset.removeConnection(&outPlugs[GNode::getPlugIndex(
+                             static_cast<uint32_t>(LegacyAssetNode::MESHES))],
+                         &inPlugs[GNode::getPlugIndex(static_cast<uint32_t>(
+                             LegacyGBufferPassPBR::MESHES))]);
   REQUIRE(res == true);
   res = graph.isConnected(&asset, LegacyAssetNode::MESHES, &gbuffer,
                           LegacyGBufferPassPBR::MESHES);
   REQUIRE(res == false);
 
-  res = graph.connectNodes(&outPlugs[GNode::getPlugIndex(LegacyAssetNode::MESHES)],
-                           &inPlugs[GNode::getPlugIndex(LegacyGBufferPassPBR::MESHES)]);
+  res = graph.connectNodes(&outPlugs[GNode::getPlugIndex(
+                               static_cast<uint32_t>(LegacyAssetNode::MESHES))],
+                           &inPlugs[GNode::getPlugIndex(static_cast<uint32_t>(
+                               LegacyGBufferPassPBR::MESHES))]);
   REQUIRE(res == true);
   res = graph.isConnected(&asset, LegacyAssetNode::MESHES, &gbuffer,
                           LegacyGBufferPassPBR::MESHES);
@@ -237,7 +241,6 @@ TEST_CASE("remove node", "[graphics,graph]") {
 }
 
 TEST_CASE("sort graph 1", "[graphics,graph]") {
-
   StringPool stringPool(1024 * 1024 * 10);
   ThreeSizesPool allocator(1024 * 1024 * 10);
   GraphAllocators allocs{&stringPool, &allocator};
@@ -344,5 +347,5 @@ TEST_CASE("sort graph 1", "[graphics,graph]") {
   REQUIRE(postProcessIdx < debugDrawIdx);
   REQUIRE(simpleForwardIdx < postProcessIdx);
   REQUIRE(lightingIdx < simpleForwardIdx);
-  REQUIRE(gbufferIdx< lightingIdx);
+  REQUIRE(gbufferIdx < lightingIdx);
 }

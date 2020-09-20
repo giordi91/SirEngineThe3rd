@@ -1,7 +1,6 @@
 #pragma once
 #include "SirEngine/memory/cpu/threeSizesPool.h"
 #include <cassert>
-#include <cstdint>
 
 namespace SirEngine {
 
