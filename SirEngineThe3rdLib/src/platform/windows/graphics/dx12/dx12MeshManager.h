@@ -1,14 +1,11 @@
 #pragma once
 
-#include <vector>
-
 #include "DXTK12/ResourceUploadBatch.h"
 #include "SirEngine/graphics/cpuGraphicsStructures.h"
 #include "SirEngine/handle.h"
+#include "SirEngine/memory/cpu/resizableVector.h"
 #include "SirEngine/memory/cpu/sparseMemoryPool.h"
 #include "SirEngine/meshManager.h"
-#include "platform/windows/graphics/dx12/DX12.h"
-#include "platform/windows/graphics/dx12/d3dx12.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/dx12BufferManager.h"
 
@@ -40,11 +37,13 @@ class Dx12MeshManager final : public MeshManager {
   };
 
  public:
-  Dx12MeshManager() : m_meshPool(RESERVE_SIZE), batch(dx12::DEVICE) {
+  Dx12MeshManager()
+      : m_meshPool(RESERVE_SIZE),
+        batch(dx12::DEVICE),
+        m_boundingBoxes(RESERVE_SIZE) {
     m_nameToHandle.reserve(RESERVE_SIZE);
   }
-  virtual ~Dx12MeshManager() {  // assert(m_meshPool.assertEverythingDealloc());
-  }
+  virtual ~Dx12MeshManager() override = default;
 
   void initialize() override{};
   void cleanup() override{};
@@ -52,38 +51,9 @@ class Dx12MeshManager final : public MeshManager {
   Dx12MeshManager(const Dx12MeshManager &) = delete;
   Dx12MeshManager &operator=(const Dx12MeshManager &) = delete;
 
-  // TODO fix is internal
-  MeshHandle loadMesh(const char *path, bool isInternal = false) override;
+  MeshHandle loadMesh(const char *path) override;
 
-  DescriptorPair getSRVIndexBuffer(MeshHandle handle) const {
-    assertMagicNumber(handle);
-    uint32_t index = getIndexFromHandle(handle);
-    const MeshData &data = m_meshPool.getConstRef(index);
-    DescriptorPair pair;
-    dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferSRV(
-        pair, data.indexBuffer, data.indexCount, sizeof(int));
-    return pair;
-  }
-
-  inline D3D12_INDEX_BUFFER_VIEW getIndexBufferView(MeshHandle handle) const {
-    assertMagicNumber(handle);
-    uint32_t index = getIndexFromHandle(handle);
-    const MeshData &data = m_meshPool.getConstRef(index);
-
-    D3D12_INDEX_BUFFER_VIEW ibv;
-    ibv.BufferLocation = data.indexBuffer->GetGPUVirtualAddress();
-    ibv.Format = DXGI_FORMAT_R32_UINT;
-    ibv.SizeInBytes = data.indexCount * sizeof(int);
-    return ibv;
-  }
-
-  void freeSRV(MeshHandle handle, DescriptorPair pair) const {
-    assertMagicNumber(handle);
-    assert(pair.type == DescriptorType::SRV);
-    dx12::GLOBAL_CBV_SRV_UAV_HEAP->freeDescriptor(pair);
-  }
-  // TODO make const
-  MeshHandle getHandleFromName(const char *name) override {
+  MeshHandle getHandleFromName(const char *name) const override {
     auto found = m_nameToHandle.find(name);
     if (found != m_nameToHandle.end()) {
       return found->second;
@@ -108,13 +78,6 @@ class Dx12MeshManager final : public MeshManager {
     return m_boundingBoxes.data();
   }
 
-  inline void bindMeshRuntimeForRender(const Dx12MeshRuntime &runtime,
-                                       FrameCommand *fc) const {
-    fc->commandList->IASetIndexBuffer(&runtime.iview);
-    fc->commandList->IASetPrimitiveTopology(
-        D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-  }
-
   [[nodiscard]] const Dx12MeshRuntime &getMeshRuntime(
       const MeshHandle &handle) const {
     assertMagicNumber(handle);
@@ -122,15 +85,6 @@ class Dx12MeshManager final : public MeshManager {
     const MeshData &data = m_meshPool.getConstRef(index);
     return data.meshRuntime;
   }
-  void bindMeshRuntimeAndRenderPosOnly(const Dx12MeshRuntime &meshRuntime,
-                                       FrameCommand *currentFc) const {
-    bindMeshRuntimeForRender(meshRuntime, currentFc);
-
-    dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(
-        meshRuntime.bufferHandle, 4, currentFc->commandList,
-        meshRuntime.positionRange.m_offset);
-  }
-
   static void render(const Dx12MeshRuntime &meshRuntime,
                      FrameCommand *currentFc, const bool indexed = true) {
     if (indexed) {
@@ -178,56 +132,6 @@ class Dx12MeshManager final : public MeshManager {
     }
   }
 
-  inline void bindMesh(const MeshHandle handle,
-                       ID3D12GraphicsCommandList2 *commandList,
-                       const uint32_t flags, const uint32_t startIndex) const {
-    const Dx12MeshRuntime &runtime = getMeshRuntime(handle);
-    if ((flags & MESH_ATTRIBUTE_FLAGS::POSITIONS) > 0) {
-      dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(
-          runtime.bufferHandle, startIndex + 0, commandList,
-          runtime.positionRange.m_offset);
-    }
-    if ((flags & MESH_ATTRIBUTE_FLAGS::NORMALS) > 0) {
-      dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(
-          runtime.bufferHandle, startIndex + 1, commandList,
-          runtime.normalsRange.m_offset);
-    }
-    if ((flags & MESH_ATTRIBUTE_FLAGS::UV) > 0) {
-      dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(runtime.bufferHandle,
-                                                    startIndex + 2, commandList,
-                                                    runtime.uvRange.m_offset);
-    }
-    if ((flags & MESH_ATTRIBUTE_FLAGS::TANGENTS) > 0) {
-      dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(
-          runtime.bufferHandle, startIndex + 3, commandList,
-          runtime.tangentsRange.m_offset);
-    }
-    commandList->IASetIndexBuffer(&runtime.iview);
-    commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-  }
-
-  static void bindMeshRuntimeAndRender(const Dx12MeshRuntime &runtime,
-                                       FrameCommand *fc) {
-    dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(
-        runtime.bufferHandle, 9, fc->commandList,
-        runtime.positionRange.m_offset);
-    dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(
-        runtime.bufferHandle, 10, fc->commandList,
-        runtime.normalsRange.m_offset);
-    dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(
-        runtime.bufferHandle, 11, fc->commandList, runtime.uvRange.m_offset);
-    dx12::BUFFER_MANAGER->bindBufferAsSRVGraphics(
-        runtime.bufferHandle, 12, fc->commandList,
-        runtime.tangentsRange.m_offset);
-    fc->commandList->DrawIndexedInstanced(runtime.indexCount, 1, 0, 0, 0);
-  }
-
-  inline void bindMeshRuntimeAndRender(const MeshHandle &handle,
-                                       FrameCommand *fc) const {
-    const Dx12MeshRuntime &runtime = getMeshRuntime(handle);
-    bindMeshRuntimeAndRender(runtime, fc);
-  }
-
  private:
   inline void assertMagicNumber(const MeshHandle handle) const {
 #ifdef SE_DEBUG
@@ -246,7 +150,7 @@ class Dx12MeshManager final : public MeshManager {
   static const uint32_t RESERVE_SIZE = 200;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
   DirectX::ResourceUploadBatch batch;
-  std::vector<BoundingBox> m_boundingBoxes;
+  ResizableVector<BoundingBox> m_boundingBoxes;
 };
 
 }  // namespace dx12

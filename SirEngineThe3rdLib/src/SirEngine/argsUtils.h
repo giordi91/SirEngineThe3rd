@@ -1,15 +1,20 @@
 #pragma once
-#include "SirEngine/memory/cpu/resizableVector.h"
-#include "runtimeString.h"
 #include <regex>
 #include <string>
 #include <vector>
 
+#include "SirEngine/memory/cpu/resizableVector.h"
+#include "runtimeString.h"
+
 // regex used to pars plugin arguments
+//NOTE this was changed with a double escape because the compiler was
+//complaining about it, if weird stuff starts happening with the regex arguments
+// check this (the one slash dot , instead of slash slash dot
+ //"([\./_a-zA-Z0-9]+)|"  // matches the path
 static const std::regex ARGS_REGEX(
-    "(--*[a-zA-Z]+)|"                        // this is for the arguments
-    "([\./_a-zA-Z0-9]+)|"                    // matches the path
-    "(\".+\")"); // this will be used to match sub arguments wrapped in quotes
+    "(--*[a-zA-Z]+)|"      // this is for the arguments
+    "([\\./_a-zA-Z0-9]+)|"  // matches the path
+    "(\".+\")");  // this will be used to match sub arguments wrapped in quotes
 
 struct SplitArgs {
   int argc = -1;
@@ -18,7 +23,7 @@ struct SplitArgs {
 };
 
 // This function is in charge to grab a string and split it up in
-// a way that resamble the input argc argv from the main function
+// a way that resemble: the input argc argv from the main function
 // the reason for that is mostly that we are dealing with a library
 // that nicely parses argc/argv, but can't be initialized from a string.
 // when we forward args of plugins to a plugin, it is in string format and

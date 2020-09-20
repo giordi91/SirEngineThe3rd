@@ -124,9 +124,7 @@ bool processModel(const std::string &assetPath, const std::string &outputPath,
   */
 
   std::vector<float> data;
-  // uint32_t floatVertexCount = static_cast<uint32_t>(model.vertexCount) *
-  // stride;
-  int floatVertexCount = static_cast<float>(model.vertices.size());
+  auto floatVertexCount = static_cast<int>(model.vertices.size());
   size_t indicesCount = model.indices.size();
   size_t totalSizeFloat = floatVertexCount + indicesCount;
   size_t totalSizeByte = totalSizeFloat * sizeof(float);
@@ -144,7 +142,7 @@ bool processModel(const std::string &assetPath, const std::string &outputPath,
       static_cast<unsigned int>(indicesCount * sizeof(float));
   mapperData.vertexDataSizeInByte = floatVertexCount * sizeof(float);
   mapperData.vertexCount = model.vertexCount;
-  mapperData.indexCount= indicesCount;
+  mapperData.indexCount= static_cast<uint32_t>(indicesCount);
   mapperData.positionRange = model.positionRange;
   mapperData.normalsRange= model.normalsRange;
   mapperData.uvRange= model.uvRange;

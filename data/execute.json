@@ -1,5 +1,19 @@
 {
   "commands": [
+    "-p ../data/meshes/pSphere1.obj -o ../data/processed/meshes/pSphere1.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/meshes/pSphere1.tangents\"",
+    "-p ../data/external/meshes/knightB/jacket.obj -o ../data/processed/meshes/knightB/jacket.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/jacket.tangents --skin ../data/external/animation/exported/skin/knightBJacketSkin.json\"",
+    "-p ../data/external/meshes/knightB/pants.obj -o ../data/processed/meshes/knightB/pants.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/pants.tangents --skin ../data/external/animation/exported/skin/knightBPantsSkin.json\"",
+    "-p ../data/external/meshes/knightB/belt.obj -o ../data/processed/meshes/knightB/belt.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/belt.tangents --skin ../data/external/animation/exported/skin/knightBBeltsSkin.json\"",
+    "-p ../data/external/meshes/knightB/plates.obj -o ../data/processed/meshes/knightB/plates.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/plates.tangents --skin ../data/external/animation/exported/skin/knightBPlatesSkin.json\"",
+    "-p ../data/external/meshes/knightB/cape.obj -o ../data/processed/meshes/knightB/cape.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/cape.tangents\"",
+    "-p ../data/external/meshes/knightB/sword.obj -o ../data/processed/meshes/knightB/sword.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/sword.tangents\"",
+    "-p ../data/external/meshes/knightB/face.obj -o ../data/processed/meshes/knightB/face.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/face.tangents --skin ../data/external/animation/exported/skin/knightBFaceSkin.json \"",
+    "-p ../data/external/meshes/knightB/eyeLashes.obj -o ../data/processed/meshes/knightB/eyeLashes.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/eyeLashes.tangents --skin ../data/external/animation/exported/skin/knightBLashesSkin.json \"",
+    "-p ../data/external/meshes/knightB/eyeBalls.obj -o ../data/processed/meshes/knightB/eyeBalls.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/eyeBalls.tangents\"",
+    "-p ../data/external/meshes/knightB/eyeCornea.obj -o ../data/processed/meshes/knightB/eyeCornea.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/eyeCornea.tangents\"",
+    "-p ../data/external/meshes/knightB/eyeNew.obj -o ../data/processed/meshes/knightB/eyeNew.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/eyeNew.tangents --skin ../data/external/animation/exported/skin/knightBEyeSkin.json\"",
+    "-p ../data/external/meshes/knightB/hair.obj -o ../data/processed/meshes/knightB/hair.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/hair.tangents --skin ../data/external/animation/exported/skin/knightBHairSkin.json\"",
+
     "-p ../data/pso -o ../data/processed/pso --pluginName PSOCompilerPlugin --pluginArgs \"-t VK -a -s ../data/shaders/VK\"",
     "-p ../data/pso -o ../data/processed/pso --pluginName PSOCompilerPlugin --pluginArgs \"-t DX12 -a -s ../data/shaders/VK\"",
 

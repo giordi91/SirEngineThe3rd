@@ -35,7 +35,6 @@ class VkShaderManager : public graphics::ShaderManager {
   // right now this is empty, is kept here for the time being
   // just for symmetry with the other managers
   void initialize() override;
-  void loadShaderFile(const char *path) override;
   void loadShadersInFolder(const char *directory) override;
   void cleanup() override;
 

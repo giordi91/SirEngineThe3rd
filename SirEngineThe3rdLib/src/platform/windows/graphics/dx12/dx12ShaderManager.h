@@ -60,7 +60,6 @@ class Dx12ShaderManager final : public graphics::ShaderManager {
   Dx12ShaderManager &operator=(Dx12ShaderManager &&other) =
       delete;  // move assignment
 
-  void loadShaderFile(const char *path) override;
   void loadShaderBinaryFile(const char *path) override;
   const char *recompileShader(const char *path, const char *offsetPath,
                               bool &result) override;

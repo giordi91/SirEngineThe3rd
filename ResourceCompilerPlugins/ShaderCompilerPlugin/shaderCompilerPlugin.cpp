@@ -101,7 +101,6 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
     return false;
   }
 
-  int size = compileResult.blob->GetBufferSize();
   // save the file by building a binary request
   BinaryFileWriteRequest request;
   request.fileType = BinaryFileType::SHADER;
