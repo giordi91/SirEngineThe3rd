@@ -60,7 +60,7 @@ class VkPSOManager final : public PSOManager {
   void loadRawPSOInFolder(const char *directory) override;
   void loadCachedPSOInFolder(const char *directory) override;
   VkPSOCompileResult processComputePSO(const char *file,
-                                       const nlohmann::json &jobj);
+                                       const nlohmann::json &jobj) const;
   VkPSOCompileResult compileRawPSO(const char *file);
 
   void recompilePSOFromShader(const char *shaderName,

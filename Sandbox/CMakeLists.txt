@@ -18,6 +18,12 @@ project(Sandbox)
 		add_compile_definitions(SE_PLATFORM_WINDOWS _UNICODE _CRT_SECURE_NO_WARNINGS)
 	endif (WIN32)
 
+	if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+		#LNK4099 is for missing pbd of the compiled dependencies, I won't debug them so i don't add them
+		# to git to save space
+		# LNK4204 is similar to 4099
+		add_compile_options(/wd4251 /wd4275 /wd4099 /wd4204 /IGNORE:LNK4204 )
+	endif()
 
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_CXX_FLAGS}")
 

@@ -1,5 +1,10 @@
 #include "platform/windows/graphics/dx12/dx12BufferManager.h"
 
+
+#include "d3dx12.h"
+#include "descriptorHeap.h"
+
+
 #include <cassert>
 
 #include "SirEngine/log.h"
@@ -91,11 +96,12 @@ void BufferManagerDx12::uploadDataToGpuOnlyBuffer(void *initData,
     // calls because the command list has not been executed yet that
     // performs the actual copy. The caller can Release the uploadBuffer
     // after it knows the copy has been executed.
-    m_uploadRequests.emplace_back(
+    m_uploadRequests.pushBack(
         UploadRequest{uploadBuffer, dx12::insertFenceToGlobalQueue()});
   }
 }
 
+//TODO needs some clean up, how come all the checks on the sourceState is not used?
 void BufferManagerDx12::transitionBuffer(const BufferHandle handle,
                                          const BufferTransition &transition) {
   assertMagicNumber(handle);
@@ -198,20 +204,10 @@ BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInBytes,
   return handle;
 }
 
-void BufferManagerDx12::bindBufferAsSRVGraphics(
-    const BufferHandle handle, const int slot,
-    ID3D12GraphicsCommandList2 *commandList, uint32_t offset) const {
-  assertMagicNumber(handle);
-  uint32_t index = getIndexFromHandle(handle);
-  const BufferData &data = m_bufferPool.getConstRef(index);
-
-  commandList->SetGraphicsRootShaderResourceView(
-      slot, data.data->GetGPUVirtualAddress() + offset);
-}
 
 void BufferManagerDx12::createUav(const BufferHandle &buffer,
-                                  DescriptorPair &descriptor, int offset,
-                                  bool descriptorExits) {
+                                  DescriptorPair &descriptor, const int offset,
+                                  const bool descriptorExits) {
   assertMagicNumber(buffer);
   const uint32_t index = getIndexFromHandle(buffer);
   const BufferData &data = m_bufferPool.getConstRef(index);

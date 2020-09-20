@@ -52,12 +52,14 @@ project(SirEngineThe3rdLib)
 	ENABLE_SYSTEM_HEADERS()
 	ADD_EXTERNAL_HEADER(${CMAKE_SOURCE_DIR}/vendors/glm)
 	ADD_EXTERNAL_HEADER(${CMAKE_SOURCE_DIR}/vendors/gli)
+	ADD_EXTERNAL_HEADER(${CMAKE_SOURCE_DIR}/vendors/spdlog)
 	FINALIZE_EXTERNAL_HEADER()
 
 	if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 		#LNK4099 is for missing pbd of the compiled dependencies, I won't debug them so i don't add them
 		# to git to save space
-		add_compile_options(/wd4251 /wd4275 /wd4099)
+		# LNK4204 is similar to 4099
+		add_compile_options(/wd4251 /wd4275 /wd4099 /wd4204 /IGNORE:LNK4204 )
 	endif()
 
 	#lets add specific windows build definitions
@@ -168,6 +170,7 @@ project(SirEngineThe3rdLib)
 	SET(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 
 	target_link_libraries(${PROJECT_NAME} d3dcompiler dxcompiler farmhash DXGI D3D12 imgui DXTK12 WinPixEventRuntime lualib   meshoptimizer)
+
 
 	if(${BUILD_VULKAN})
 		target_link_libraries(${PROJECT_NAME} ${Vulkan_LIBRARIES} )

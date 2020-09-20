@@ -688,10 +688,10 @@ void VkPSOManager::loadRawPSOInFolder(const char *directory) {
   }
 }
 
-void VkPSOManager::loadCachedPSOInFolder(const char *directory) { assert(0); }
+void VkPSOManager::loadCachedPSOInFolder(const char *) { assert(0); }
 
 VkPSOCompileResult VkPSOManager::processComputePSO(const char *filePath,
-                                                   const nlohmann::json &jobj) {
+                                                   const nlohmann::json &jobj) const {
   // creating a compile result that will be later used for caching
   VkPSOCompileResult compileResult{};
   compileResult.psoType = PSO_TYPE::COMPUTE;

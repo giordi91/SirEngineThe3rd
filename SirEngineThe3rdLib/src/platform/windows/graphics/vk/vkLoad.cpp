@@ -11,11 +11,20 @@
 namespace SirEngine {
 namespace vk {
 
+
+//NOTE we use such little number of args from this functions, we are going to remove the
+//parameter names to avoid compiler complaining at us, I will leave the original function signature
+//here for future reference if needed
+//VkBool32 debugCallback(VkDebugReportFlagsEXT flags,
+//                       VkDebugReportObjectTypeEXT objectType, uint64_t object,
+//                       size_t location, int32_t messageCode,
+//                       const char *pLayerPrefix, const char *pMessage,
+//                       void *pUserData) {
 VkBool32 debugCallback(VkDebugReportFlagsEXT flags,
-                       VkDebugReportObjectTypeEXT objectType, uint64_t object,
-                       size_t location, int32_t messageCode,
-                       const char *pLayerPrefix, const char *pMessage,
-                       void *pUserData) {
+                       VkDebugReportObjectTypeEXT , uint64_t ,
+                       size_t , int32_t ,
+                       const char *, const char *pMessage,
+                       void *) {
   const char *type =
       flags & VK_DEBUG_REPORT_ERROR_BIT_EXT
           ? "ERROR"
