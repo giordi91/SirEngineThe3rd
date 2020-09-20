@@ -215,8 +215,8 @@ inline DXGI_FORMAT convertToDXGIFormat(const RenderTargetFormat format) {
 }
 
 TextureHandle Dx12TextureManager::allocateTexture(
-    uint32_t width, uint32_t height, RenderTargetFormat format,
-    const char *name, uint32_t allocFlags, RESOURCE_STATE finalState) {
+    const uint32_t width, const uint32_t height, const RenderTargetFormat format,
+    const char *name, const uint32_t allocFlags, RESOURCE_STATE ) {
   // convert SirEngine format to dx12 format
   DXGI_FORMAT actualFormat = convertToDXGIFormat(format);
 

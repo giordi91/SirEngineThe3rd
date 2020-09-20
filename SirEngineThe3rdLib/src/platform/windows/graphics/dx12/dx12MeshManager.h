@@ -5,6 +5,7 @@
 #include "SirEngine/handle.h"
 #include "SirEngine/memory/cpu/resizableVector.h"
 #include "SirEngine/memory/cpu/sparseMemoryPool.h"
+#include "SirEngine/memory/cpu/stringHashMap.h"
 #include "SirEngine/meshManager.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/dx12BufferManager.h"
@@ -40,9 +41,8 @@ class Dx12MeshManager final : public MeshManager {
   Dx12MeshManager()
       : m_meshPool(RESERVE_SIZE),
         batch(dx12::DEVICE),
-        m_boundingBoxes(RESERVE_SIZE) {
-    m_nameToHandle.reserve(RESERVE_SIZE);
-  }
+        m_boundingBoxes(RESERVE_SIZE),
+        m_nameToHandle(RESERVE_SIZE) {}
   virtual ~Dx12MeshManager() override = default;
 
   void initialize() override{};
@@ -54,11 +54,10 @@ class Dx12MeshManager final : public MeshManager {
   MeshHandle loadMesh(const char *path) override;
 
   MeshHandle getHandleFromName(const char *name) const override {
-    auto found = m_nameToHandle.find(name);
-    if (found != m_nameToHandle.end()) {
-      return found->second;
-    }
-    return MeshHandle{0};
+    MeshHandle handle{};
+    m_nameToHandle.get(name,handle);
+    assert(handle.isHandleValid());
+    return handle;
   }
 
   void free(const MeshHandle handle) {
@@ -146,7 +145,7 @@ class Dx12MeshManager final : public MeshManager {
   SparseMemoryPool<MeshData> m_meshPool;
 
   // change this unordered map
-  std::unordered_map<std::string, MeshHandle> m_nameToHandle;
+  HashMap<const char *, MeshHandle, hashString32> m_nameToHandle;
   static const uint32_t RESERVE_SIZE = 200;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
   DirectX::ResourceUploadBatch batch;

@@ -18,6 +18,12 @@ project(ResourceCompilerLib)
 		add_compile_definitions(RC_PLATFORM_WINDOWS RC_BUILD_DLL SE_PLATFORM_WINDOWS _UNICODE _CRT_SECURE_NO_WARNINGS)
 	endif (WIN32)
 
+	ENABLE_SYSTEM_HEADERS()
+	ADD_EXTERNAL_HEADER(${CMAKE_SOURCE_DIR}/vendors/glm)
+	ADD_EXTERNAL_HEADER(${CMAKE_SOURCE_DIR}/vendors/gli)
+	ADD_EXTERNAL_HEADER(${CMAKE_SOURCE_DIR}/vendors/spdlog)
+	FINALIZE_EXTERNAL_HEADER()
+
 	#making sure to add the common cpp flags, that are defined in the main cpp file
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_CXX_FLAGS}")
 

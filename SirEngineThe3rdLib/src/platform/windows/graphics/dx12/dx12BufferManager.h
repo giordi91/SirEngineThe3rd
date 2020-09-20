@@ -1,14 +1,17 @@
 #pragma once
 
-#include <unordered_map>
+#include <d3d12.h>
 
 #include "SirEngine/bufferManager.h"
+#include "SirEngine/graphics/graphicsDefines.h"
 #include "SirEngine/handle.h"
 #include "SirEngine/memory/cpu/SparseMemoryPool.h"
-#include "d3dx12.h"
-#include "descriptorHeap.h"
+#include "SirEngine/memory/cpu/resizableVector.h"
+#include "SirEngine/memory/cpu/stringHashMap.h"
 
 namespace SirEngine::dx12 {
+struct DescriptorPair;
+
 class BufferManagerDx12 final : public BufferManager {
   struct UploadRequest {
     ID3D12Resource *uploadBuffer;
@@ -16,9 +19,10 @@ class BufferManagerDx12 final : public BufferManager {
   };
 
  public:
-  BufferManagerDx12() : m_bufferPool(RESERVE_SIZE){};
+  BufferManagerDx12()
+      : m_bufferPool(RESERVE_SIZE), m_uploadRequests(RESERVE_SIZE) {}
 
-  virtual ~BufferManagerDx12() = default;
+  ~BufferManagerDx12() override = default;
   ID3D12Resource *getNativeBuffer(const BufferHandle bufferHandle);
   BufferManagerDx12(const BufferManagerDx12 &) = delete;
   BufferManagerDx12 &operator=(const BufferManagerDx12 &) = delete;
@@ -32,11 +36,6 @@ class BufferManagerDx12 final : public BufferManager {
                         BUFFER_FLAGS flags) override;
   void *getMappedData(const BufferHandle handle) const override;
 
-  // dx12 specific functions
-  void bindBufferAsSRVGraphics(BufferHandle handle, int slot,
-                               ID3D12GraphicsCommandList2 *commandList,
-                               uint32_t offset = 0) const;
-
   void createUav(const BufferHandle &buffer, DescriptorPair &descriptor,
                  int offset, bool descriptorExits);
   void createSrv(const BufferHandle &handle, DescriptorPair &descriptorPair,
@@ -44,18 +43,6 @@ class BufferManagerDx12 final : public BufferManager {
   void createSrv(const BufferHandle &handle, DescriptorPair &descriptorPair,
                  MemoryRange range, bool descriptorExists = false,
                  int elementSize = -1) const;
-
-  inline int bufferUAVTransition(const BufferHandle handle,
-                                 D3D12_RESOURCE_BARRIER *barriers,
-                                 int counter) const {
-    assertMagicNumber(handle);
-    const uint32_t index = getIndexFromHandle(handle);
-    const BufferData &data = m_bufferPool.getConstRef(index);
-    barriers[counter].UAV.pResource = data.data;
-    barriers[counter].Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
-    ++counter;
-    return counter;
-  }
 
   void clearUploadRequests();
 
@@ -74,10 +61,11 @@ class BufferManagerDx12 final : public BufferManager {
            "invalid magic handle for constant buffer");
   }
 
-public:
-  void transitionBuffer(const BufferHandle handle, const BufferTransition& transition) override;
+ public:
+  void transitionBuffer(const BufferHandle handle,
+                        const BufferTransition &transition) override;
 
-private:
+ private:
   struct BufferData {
     ID3D12Resource *data = nullptr;
     void *mappedData = nullptr;
@@ -90,8 +78,7 @@ private:
 
   static const int RESERVE_SIZE = 200;
   SparseMemoryPool<BufferData> m_bufferPool;
-  std::unordered_map<std::string, BufferHandle> m_nameToHandle;
-  std::vector<UploadRequest> m_uploadRequests;
+  ResizableVector<UploadRequest> m_uploadRequests;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
 };
 }  // namespace SirEngine::dx12

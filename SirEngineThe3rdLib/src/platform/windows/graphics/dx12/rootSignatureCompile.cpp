@@ -85,8 +85,8 @@ getTypeEnum(graphics::MATERIAL_RESOURCE_TYPE type,
     }
     case graphics::MATERIAL_RESOURCE_TYPE::BUFFER: {
       return (static_cast<uint32_t>(flags) &
-              static_cast<uint32_t>(
-                  graphics::MATERIAL_RESOURCE_FLAGS::READ_ONLY) > 0)
+              (static_cast<uint32_t>(
+                  graphics::MATERIAL_RESOURCE_FLAGS::READ_ONLY) > 0))
                  ? SUB_ROOT_TYPES::SRV
                  : SUB_ROOT_TYPES::UAV;
     }
@@ -393,8 +393,7 @@ void processRootConfiguration(CD3DX12_DESCRIPTOR_RANGE *userRanges,
   }
 }
 void processRootConfiguration(CD3DX12_DESCRIPTOR_RANGE *userRanges,
-                              const graphics::MaterialResource &metadata,
-                              const uint32_t registerSpace) {
+                              const graphics::MaterialResource &metadata) {
   SUB_ROOT_TYPES configType = getTypeEnum(metadata.type, metadata.flags);
 
   switch (configType) {
@@ -576,10 +575,9 @@ RootCompilerResult processSignatureFileToBlob(
   CD3DX12_DESCRIPTOR_RANGE *userRanges = nullptr;
   if (hasConfig) {
     userRanges = new CD3DX12_DESCRIPTOR_RANGE[metadata->objectResourceCount]{};
-    for (int i = 0; i < metadata->objectResourceCount; ++i) {
+    for (uint32_t i = 0; i < metadata->objectResourceCount; ++i) {
       const auto &subConfig = metadata->objectResources[i];
-      processRootConfiguration(&userRanges[userCounter], subConfig,
-                               PSOManager::PER_OBJECT_BINDING_INDEX);
+      processRootConfiguration(&userRanges[userCounter], subConfig);
       ++userCounter;
     }
     rootParams[configIndex].InitAsDescriptorTable(userCounter, userRanges);
@@ -588,10 +586,9 @@ RootCompilerResult processSignatureFileToBlob(
   if (hasPassConfig) {
     passRanges = new CD3DX12_DESCRIPTOR_RANGE[metadata->passResourceCount]{};
     int passCounter = 0;
-    for (int i = 0; i < metadata->passResourceCount; ++i) {
+    for (uint32_t i = 0; i < metadata->passResourceCount; ++i) {
       const auto &subConfig = metadata->passResources[i];
-      processRootConfiguration(&passRanges[passCounter], subConfig,
-                               PSOManager::PER_PASS_BINDING_INDEX);
+      processRootConfiguration(&passRanges[passCounter], subConfig);
       ++passCounter;
     }
     // Magic number here is one because if we have a per pass index the

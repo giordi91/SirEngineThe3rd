@@ -16,8 +16,8 @@ MeshHandle Dx12MeshManager::loadMesh(const char *path) {
   MeshData *meshData;
   MeshHandle handle{};
 
-  const auto found = m_nameToHandle.find(name);
-  if (found == m_nameToHandle.end()) {
+  bool found = m_nameToHandle.get(name.c_str(), handle);
+  if (!found) {
     std::vector<char> binaryData;
     readAllBytes(path, binaryData);
 
@@ -75,7 +75,7 @@ MeshHandle Dx12MeshManager::loadMesh(const char *path) {
     meshRuntime.tangentsRange = mapper->tangentsRange;
 
     // storing the handle and increasing the magic count
-    m_nameToHandle[name] = handle;
+    m_nameToHandle.insert(name.c_str(), handle);
     ++MAGIC_NUMBER_COUNTER;
 
     BufferHandle positionsHandle = dx12::BUFFER_MANAGER->allocate(
@@ -86,15 +86,8 @@ MeshHandle Dx12MeshManager::loadMesh(const char *path) {
     meshRuntime.bufferHandle = positionsHandle;
 
     meshData->meshRuntime = meshRuntime;
-
-  } else {
-    SE_CORE_INFO("Mesh already loaded, returning handle:{0}", name);
-    // we already loaded the mesh so we can just get the handle and index data
-    uint32_t index = getIndexFromHandle(found->second);
-    meshData = &m_meshPool[index];
-    handle = found->second;
   }
-
+  SE_CORE_INFO("Mesh already loaded, returning handle:{0}", name);
   return handle;
 }
 }  // namespace SirEngine::dx12
