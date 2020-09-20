@@ -49,102 +49,7 @@ void processArgs(const std::string args, std::string &target,
 bool compileAndSavePSO(const std::string &assetPath,
                        const std::string &outputPath,
                        const std::string &shaderPath) {
-  // for now we do not support pso compilation BUT we can export all the
-  // metadata stuff
-  SirEngine::graphics::MaterialMetadata metadata =
-      SirEngine::graphics::extractMetadata(assetPath.c_str());
-  // need to serialize metadata
-  uint32_t structSize =
-      (metadata.objectResourceCount + metadata.frameResourceCount +
-       metadata.passResourceCount) *
-      sizeof(SirEngine::graphics::MaterialResource);
-  size_t stringSizes = 0;
-  for (uint32_t i = 0; i < metadata.objectResourceCount; ++i) {
-    stringSizes += (strlen(metadata.objectResources[i].name) + 1);
-  }
-  for (uint32_t i = 0; i < metadata.frameResourceCount; ++i) {
-    stringSizes += (strlen(metadata.frameResources[i].name) + 1);
-  }
-  for (uint32_t i = 0; i < metadata.passResourceCount; ++i) {
-    stringSizes += (strlen(metadata.passResources[i].name) + 1);
-  }
-  size_t totalSize = structSize + stringSizes;
-  std::vector<uint8_t> data;
-  data.resize(totalSize);
-
-  size_t counter = 0;
-  for (uint32_t i = 0; i < metadata.objectResourceCount; ++i) {
-    size_t len = strlen(metadata.objectResources[i].name) + 1;
-    // memcpy(data.data() + counter, metadata.objectResources[i].name, len);
-    //// patching the pointer with an offset pointer from the start
-    // metadata.objectResources[i].name =
-    //    reinterpret_cast<const char *>((data.data() + counter) - data.data());
-    counter += len;
-  }
-  for (uint32_t i = 0; i < metadata.frameResourceCount; ++i) {
-    size_t len = strlen(metadata.frameResources[i].name) + 1;
-    // memcpy(data.data() + counter, metadata.frameResources[i].name, len);
-    //// patching the pointer with an offset pointer from the start
-    // metadata.frameResources[i].name =
-    //    reinterpret_cast<const char *>((data.data() + counter) - data.data());
-    counter += len;
-  }
-  for (uint32_t i = 0; i < metadata.passResourceCount; ++i) {
-    size_t len = strlen(metadata.passResources[i].name) + 1;
-    // memcpy(data.data() + counter, metadata.passResources[i].name, len);
-    //// patching the pointer with an offset pointer from the start
-    // metadata.passResources[i].name =
-    //    reinterpret_cast<const char *>((data.data() + counter) - data.data());
-    counter += len;
-  }
-  assert(counter == stringSizes);
-
-  MaterialMappedData mapped{};
-  // we copied the strings and now can copy the array data
-  uint32_t size = metadata.objectResourceCount *
-                  sizeof(SirEngine::graphics::MaterialResource);
-  memcpy(data.data() + counter, metadata.objectResources, size);
-  mapped.objectResourceDataOffset = static_cast<uint32_t>(counter);
-  counter += size;
-
-  size = metadata.frameResourceCount *
-         sizeof(SirEngine::graphics::MaterialResource);
-  memcpy(data.data() + counter, metadata.frameResources, size);
-  mapped.frameResourceDataOffset = static_cast<uint32_t>(counter);
-  counter += size;
-
-  size = metadata.passResourceCount *
-         sizeof(SirEngine::graphics::MaterialResource);
-  memcpy(data.data() + counter, metadata.passResources, size);
-  mapped.passResourceDataOffset = static_cast<uint32_t>(counter);
-  counter += size;
-
-  assert(counter == totalSize);
-  mapped.objectResourceCount = metadata.objectResourceCount;
-  mapped.frameResourceCount = metadata.frameResourceCount;
-  mapped.passResourceCount = metadata.passResourceCount;
-  mapped.meshBinding = metadata.meshBinding.binding;
-  mapped.meshFlags = metadata.meshBinding.flags;
-
-  // writing the data
-  // writing binary file
-  BinaryFileWriteRequest request;
-  request.fileType = BinaryFileType::MATERIAL_METADATA;
-  request.version =
-      ((VERSION_MAJOR << 16) | (VERSION_MINOR << 8) | VERSION_PATCH);
-
-  request.bulkData = data.data();
-  request.bulkDataSizeInByte = totalSize;
-
-  request.mapperData = &mapped;
-  request.mapperDataSizeInByte = sizeof(PSOMappedData);
-  request.outPath = outputPath.c_str();
-
-  writeBinaryFile(request);
-
-  SE_CORE_INFO("PSO Metadata successfully compiled ---> {0}", outputPath);
-  return true;
-
+    //old code to compile a PSO we will need it in the future
   /*
 SirEngine::dx12::PSOCompileResult result =
     processPSO(assetPath.c_str(), shaderPath.c_str());
@@ -256,6 +161,7 @@ writeBinaryFile(request);
 SE_CORE_INFO("PSO successfully compiled ---> {0}", outFilePath);
 return true;
 */
+return true;
 }
 
 bool compileDx12(const std::string &assetPath, const std::string &outputPath,
@@ -279,7 +185,7 @@ bool compileVK(const std::string &assetPath, const std::string &outputPath,
   // for now we do not support pso compilation BUT we can export all the
   // metadata stuff
   SirEngine::graphics::MaterialMetadata metadata =
-      SirEngine::graphics::extractMetadata(assetPath.c_str());
+      SirEngine::graphics::extractMetadataFromPSO(assetPath.c_str());
   // need to serialize metadata
   size_t structSize =
       (metadata.objectResourceCount + metadata.frameResourceCount +
@@ -398,7 +304,11 @@ bool compileAllDx12(const std::string &assetPath, const std::string &outputPath,
     const std::string fileName = getFileName(path);
     const std::string currOutputPath =
         outputPath + graphicsDirectory + fileName + ".metadata";
-    compileAndSavePSO(path, currOutputPath, shaderPath);
+    //compileAndSavePSO(path, currOutputPath, shaderPath);
+    //here we call the compileVK just because for now we are just extracting metadata from the PSO
+    //no need to do anything else, once we start pre-compiling and caching psos then we will actually
+    //have a dx12 function
+    compileVK(path, currOutputPath, target, shaderPath);
   }
   return true;
 }

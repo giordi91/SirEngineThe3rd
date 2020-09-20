@@ -4,10 +4,8 @@
 
 #include "SirEngine/graphics/bindingTableManager.h"
 #include "SirEngine/handle.h"
-#include "SirEngine/materialManager.h"
 #include "SirEngine/memory/cpu/sparseMemoryPool.h"
 #include "SirEngine/memory/cpu/stringHashMap.h"
-#include "engineMath.h"
 #include "graphics/materialMetadata.h"
 
 namespace SirEngine {
@@ -18,12 +16,11 @@ struct ShaderBind {
 };
 
 enum class STENCIL_REF { CLEAR = 0, SSSSS = 1 };
-#define INVALID_QUEUE_TYPE_FLAGS 0xFFFFFFFF
 
 struct MaterialSourceSubBinding {
   char name[32];
   NUMERICAL_DATA_TYPE type;
-  int sizeInByte;
+  uint32_t sizeInByte;
   char value[64];
 };
 // This is a material binding coming from a file
@@ -86,15 +83,9 @@ class MaterialManager {
     uint32_t index = getIndexFromHandle(handle);
     return m_materialTextureHandles.getConstRef(index);
   }
-  inline PSOHandle getmaterialPSO(const MaterialHandle handle,
-                                  SHADER_QUEUE_FLAGS queue) const {
-    assertMagicNumber(handle);
-    uint32_t index = getIndexFromHandle(handle);
-    const auto &data = m_materialTextureHandles.getConstRef(index);
-    int queueIdx = getFirstBitSet(static_cast<uint32_t>(queue));
-    assert(queueIdx < QUEUE_COUNT);
-    return data.shaderBindPerQueue[queueIdx].pso;
-  };
+
+  PSOHandle getmaterialPSO(const MaterialHandle handle,
+                                  SHADER_QUEUE_FLAGS queue) const;
 
  private:
   inline void assertMagicNumber(const MaterialHandle handle) const {

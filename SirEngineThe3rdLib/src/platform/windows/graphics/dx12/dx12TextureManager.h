@@ -5,7 +5,6 @@
 #include "SirEngine/handle.h"
 #include "SirEngine/memory/cpu/sparseMemoryPool.h"
 #include "SirEngine/textureManager.h"
-#include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/d3dx12.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 
@@ -29,9 +28,7 @@ class SIR_ENGINE_API Dx12TextureManager final : public TextureManager {
 
  public:
   Dx12TextureManager()
-      : TextureManager(), batch(dx12::DEVICE), m_texturePool(RESERVE_SIZE) {
-    m_nameToHandle.reserve(RESERVE_SIZE);
-  }
+      : TextureManager(), batch(dx12::DEVICE), m_texturePool(RESERVE_SIZE) {}
   virtual ~Dx12TextureManager();
   Dx12TextureManager(const Dx12TextureManager &) = delete;
   Dx12TextureManager &operator=(const Dx12TextureManager &) = delete;
@@ -42,12 +39,10 @@ class SIR_ENGINE_API Dx12TextureManager final : public TextureManager {
                                 RenderTargetFormat format, const char *name,
                                 uint32_t allocFlags,
                                 RESOURCE_STATE finalState) override;
-  void bindRenderTarget(TextureHandle handle, TextureHandle depth) override;
-  void bindRenderTargetStencil(TextureHandle handle, TextureHandle depth);
 
   void clearDepth(const TextureHandle depth, const float depthValue,
-                  const float stencilValue) override;
-  void clearRT(const TextureHandle handle, const float color[4]) override;
+                  const float stencilValue) const;
+  void clearRT(const TextureHandle handle, const float color[4]) const;
 
   void initialize() override;
   void cleanup() override;
@@ -68,7 +63,6 @@ class SIR_ENGINE_API Dx12TextureManager final : public TextureManager {
     assert(data.srv.type == DescriptorType::SRV);
     return m_texturePool.getConstRef(index).srv;
   }
-  // handles facilities
   DescriptorPair getSrvStencilDx12(const TextureHandle handle);
   DescriptorPair getUAVDx12(const TextureHandle handle) {
     assertMagicNumber(handle);
@@ -132,7 +126,8 @@ class SIR_ENGINE_API Dx12TextureManager final : public TextureManager {
     }
     return counter;
   }
-  void createSRV(const TextureHandle handle, DescriptorPair &pair, const bool isCubeMap) {
+  void createSRV(const TextureHandle handle, DescriptorPair &pair,
+                 const bool isCubeMap) {
     assertMagicNumber(handle);
     const uint32_t index = getIndexFromHandle(handle);
     // const uint32_t index = getIndexFromHandle(m_whiteTexture);
@@ -141,8 +136,8 @@ class SIR_ENGINE_API Dx12TextureManager final : public TextureManager {
       dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DSRV(pair, data.resource,
                                                         data.format, 0, true);
     } else {
-      dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTextureCubeSRV(
-          pair, data.resource, data.format, true);
+      dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTextureCubeSRV(pair, data.resource,
+                                                          data.format, true);
     }
   }
 

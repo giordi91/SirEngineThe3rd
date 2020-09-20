@@ -1,9 +1,10 @@
 #pragma once
-#include <cstdint>
 
 #include "SirEngine/core.h"
 
 namespace SirEngine {
+
+
 // vendors
 enum class ADAPTER_VENDOR { NVIDIA = 0, AMD, INTEL, WARP, ANY };
 enum class ADAPTER_SELECTION_RULE { LARGEST_FRAME_BUFFER, FIRST_VALID };
@@ -37,6 +38,14 @@ static constexpr float TO_DEG = static_cast<float>(180.0 / SE_PI_D);
 static constexpr double TO_DEG_D = 180.0 / SE_PI_D;
 
 // rendering
+enum class RESOURCE_STATE {
+  GENERIC,
+  RENDER_TARGET,
+  DEPTH_RENDER_TARGET,
+  SHADER_READ_RESOURCE,
+  RANDOM_WRITE
+};
+
 enum class SHADER_QUEUE_FLAGS {
   FORWARD = 1 << 0,
   DEFERRED = 1 << 1,
@@ -75,6 +84,7 @@ enum GRAPHIC_RESOURCE_VISIBILITY_BITS {
   GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT = 2,
   GRAPHICS_RESOURCE_VISIBILITY_COMPUTE = 4,
 };
+typedef uint32_t GRAPHIC_RESOURCE_VISIBILITY;
 
 enum class NUMERICAL_DATA_TYPE {
   UNDEFINED = 0,
@@ -90,7 +100,6 @@ enum class NUMERICAL_DATA_TYPE {
   FLOAT16
 };
 
-typedef uint32_t GRAPHIC_RESOURCE_VISIBILITY;
 
 // memory
 static constexpr uint64_t MB_TO_BYTE = 1024 * 1024;

@@ -5,6 +5,7 @@
 #include <string>
 #include <unordered_map>
 
+#include "SirEngine/engineMath.h"
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/graphics/materialMetadata.h"
@@ -266,6 +267,16 @@ MaterialHandle MaterialManager::loadMaterial(const char *path) {
   return handle;
 }
 
+PSOHandle MaterialManager::getmaterialPSO(const MaterialHandle handle,
+                                          SHADER_QUEUE_FLAGS queue) const {
+  assertMagicNumber(handle);
+  uint32_t index = getIndexFromHandle(handle);
+  const auto &data = m_materialTextureHandles.getConstRef(index);
+  uint32_t queueIdx = getFirstBitSet(static_cast<uint32_t>(queue));
+  assert(queueIdx < QUEUE_COUNT);
+  return data.shaderBindPerQueue[queueIdx].pso;
+}
+
 inline void freeTextureIfNeeded(const TextureHandle handle) {
   if (handle.isHandleValid()) {
     globals::TEXTURE_MANAGER->free(handle);
@@ -438,7 +449,7 @@ void extractDataFromType(const nlohmann::json &jobj,
 void parseConstantBuffer(MaterialSourceBinding *binding,
                          const nlohmann::json &resource) {
   const auto &content = resource["uniformContent"];
-  size_t count = content.size();
+  uint32_t count = static_cast<uint32_t>(content.size());
   auto *uniformData = static_cast<MaterialSourceSubBinding *>(
       globals::PERSISTENT_ALLOCATOR->allocate(sizeof(MaterialSourceSubBinding) *
                                               count));
@@ -479,7 +490,7 @@ MaterialManager::PreliminaryMaterialParse MaterialManager::parseMaterial(
   // parse material resources
   assert(jobj.find("resources") != jobj.end());
   const auto &bindingResources = jobj["resources"];
-  uint32_t count = static_cast<uint32_t>(bindingResources.size());
+  auto count = static_cast<uint32_t>(bindingResources.size());
   auto *bindings = static_cast<MaterialSourceBinding *>(
       globals::PERSISTENT_ALLOCATOR->allocate(sizeof(MaterialSourceBinding) *
                                               count));

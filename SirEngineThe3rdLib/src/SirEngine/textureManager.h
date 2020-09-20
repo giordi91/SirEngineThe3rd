@@ -1,9 +1,9 @@
 #pragma once
 
-#include <unordered_map>
-
-#include "SirEngine/graphics/renderingContext.h"
+#include "SirEngine/graphics/graphicsDefines.h"
 #include "SirEngine/handle.h"
+
+#include "memory/cpu/stringHashMap.h"
 
 namespace SirEngine {
 
@@ -32,7 +32,7 @@ class TextureManager {
   typedef uint32_t TEXTURE_ALLOCATION_FLAGS;
 
  public:
-  TextureManager() { m_nameToHandle.reserve(RESERVE_SIZE); }
+  TextureManager() : m_nameToHandle(RESERVE_SIZE) {}
 
   virtual ~TextureManager() = default;
   TextureManager(const TextureManager &) = delete;
@@ -47,22 +47,19 @@ class TextureManager {
       const char *name, TEXTURE_ALLOCATION_FLAGS allocFlags,
       RESOURCE_STATE finalState = RESOURCE_STATE::RENDER_TARGET) = 0;
 
-  virtual void bindRenderTarget(TextureHandle handle, TextureHandle depth) = 0;
-  virtual void clearDepth(const TextureHandle depth, const float depthValue,
-                          const float stencilValue) = 0;
-  virtual void clearRT(const TextureHandle handle, const float color[4]) = 0;
   virtual TextureHandle getWhiteTexture() const = 0;
 
-  inline TextureHandle getHandleFromName(const char *name) {
-    auto found = m_nameToHandle.find(name);
-    if (found != m_nameToHandle.end()) {
-      return found->second;
+  inline TextureHandle getHandleFromName(const char *name) const {
+    TextureHandle handle{};
+    if (m_nameToHandle.get(name, handle)) {
+      assert(0 && "could not find texture handle");
     }
-    return TextureHandle{0};
+    return handle;
   }
 
  protected:
-  std::unordered_map<std::string, TextureHandle> m_nameToHandle;
+  HashMap<const char *, TextureHandle, hashString32> m_nameToHandle;
+  // std::unordered_map<std::string, TextureHandle> m_nameToHandle;
   static const uint32_t RESERVE_SIZE = 200;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
 };

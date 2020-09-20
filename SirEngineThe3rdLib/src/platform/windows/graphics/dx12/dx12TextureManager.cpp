@@ -50,8 +50,10 @@ TextureHandle Dx12TextureManager::loadTexture(const char *path,
 
   const std::string name = getFileName(texturePath);
 
-  const auto found = m_nameToHandle.find(name);
-  if (found == m_nameToHandle.end()) {
+  TextureHandle handle{};
+  if (!m_nameToHandle.containsKey(name.c_str())) {
+    // const auto found = m_nameToHandle.find(name);
+    // if (found == m_nameToHandle.end()) {
     const std::string extension = getFileExtension(texturePath);
     if (extension != ".dds") {
       assert(0 && "can only load dds");
@@ -74,7 +76,7 @@ TextureHandle Dx12TextureManager::loadTexture(const char *path,
     batch.End(dx12::GLOBAL_COMMAND_QUEUE);
 
     // data is now loaded need to create handle etc
-    const TextureHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
+    handle = {(MAGIC_NUMBER_COUNTER << 16) | index};
 
     data.magicNumber = MAGIC_NUMBER_COUNTER;
     data.format = data.resource->GetDesc().Format;
@@ -82,7 +84,7 @@ TextureHandle Dx12TextureManager::loadTexture(const char *path,
 
     ++MAGIC_NUMBER_COUNTER;
 
-    m_nameToHandle[name] = handle;
+    m_nameToHandle.insert(name.c_str(), handle);
 
     if (!cubeMap) {
       dx12::GLOBAL_CBV_SRV_UAV_HEAP->createTexture2DSRV(data.srv, data.resource,
@@ -95,7 +97,7 @@ TextureHandle Dx12TextureManager::loadTexture(const char *path,
     return handle;
   }
   SE_CORE_INFO("Texture already loaded, returning handle: {0}", name);
-  return found->second;
+  return handle;
 }
 
 TextureHandle Dx12TextureManager::initializeFromResourceDx12(
@@ -118,7 +120,7 @@ TextureHandle Dx12TextureManager::initializeFromResourceDx12(
   dx12::createRTVSRV(dx12::GLOBAL_RTV_HEAP,
                      m_texturePool.getConstRef(index).resource, data.rtsrv);
 
-  m_nameToHandle[name] = handle;
+  m_nameToHandle.insert(name, handle);
   return handle;
 }
 
@@ -266,8 +268,8 @@ TextureHandle Dx12TextureManager::allocateTexture(
   data.magicNumber = MAGIC_NUMBER_COUNTER;
   data.format = data.resource->GetDesc().Format;
   data.state = state;
-  // TODO change texture allocation flags similar to vulkan, with bits and flags
-  // combination
+  // TODO change texture allocation flags similar to vulkan, with bits and
+  // flags combination
   data.flags = allocFlags;
 
   TextureHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
@@ -297,61 +299,13 @@ TextureHandle Dx12TextureManager::allocateTexture(
   }
   data.resource->SetName(frameConvertWide(name));
 
-  m_nameToHandle[name] = handle;
+  m_nameToHandle.insert(name, handle);
   return handle;
-}
-
-void Dx12TextureManager::bindRenderTarget(const TextureHandle handle,
-                                          const TextureHandle depth) {
-  assertMagicNumber(handle);
-  const uint32_t index = getIndexFromHandle(handle);
-  const TextureData &data = m_texturePool.getConstRef(index);
-  assert((data.flags & TEXTURE_ALLOCATION_FLAG_BITS::RENDER_TARGET) > 0);
-
-  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
-  auto commandList = currentFc->commandList;
-
-  D3D12_CPU_DESCRIPTOR_HANDLE handles[1] = {data.rtsrv.cpuHandle};
-  // TODO fix this, should not have a depth the swap chain??
-  // auto backDepth = dx12::SWAP_CHAIN->getDepthCPUDescriptor();
-  const D3D12_CPU_DESCRIPTOR_HANDLE *depthDesc = nullptr;
-  if (depth.isHandleValid()) {
-    assertMagicNumber(depth);
-    const uint32_t depthIndex = getIndexFromHandle(depth);
-    const TextureData &depthData = m_texturePool.getConstRef(depthIndex);
-    assert((depthData.flags & TEXTURE_ALLOCATION_FLAG_BITS::DEPTH_TEXTURE) > 0);
-    depthDesc = &(depthData.rtsrv.cpuHandle);
-  }
-  commandList->OMSetRenderTargets(1, handles, true, depthDesc);
-}
-
-void Dx12TextureManager::bindRenderTargetStencil(TextureHandle handle,
-                                                 TextureHandle depth) {
-  assertMagicNumber(handle);
-  const uint32_t index = getIndexFromHandle(handle);
-  const TextureData &data = m_texturePool.getConstRef(index);
-  assert((data.flags & TEXTURE_ALLOCATION_FLAG_BITS::RENDER_TARGET) > 0);
-
-  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
-  auto commandList = currentFc->commandList;
-
-  D3D12_CPU_DESCRIPTOR_HANDLE handles[1] = {data.rtsrv.cpuHandle};
-  // TODO fix this, should not have a depth the swap chain??
-  // auto backDepth = dx12::SWAP_CHAIN->getDepthCPUDescriptor();
-  const D3D12_CPU_DESCRIPTOR_HANDLE *depthDesc = nullptr;
-  if (depth.isHandleValid()) {
-    assertMagicNumber(depth);
-    const uint32_t depthIndex = getIndexFromHandle(depth);
-    const TextureData &depthData = m_texturePool.getConstRef(depthIndex);
-    assert((depthData.flags & TEXTURE_ALLOCATION_FLAG_BITS::DEPTH_TEXTURE) > 0);
-    depthDesc = &(depthData.dsvStencil.cpuHandle);
-  }
-  commandList->OMSetRenderTargets(1, handles, true, depthDesc);
 }
 
 void Dx12TextureManager::clearDepth(const TextureHandle depth,
                                     const float depthValue,
-                                    const float stencilValue) {
+                                    const float stencilValue) const {
   assertMagicNumber(depth);
   const uint32_t index = getIndexFromHandle(depth);
   const TextureData &data = m_texturePool.getConstRef(index);
@@ -363,7 +317,7 @@ void Dx12TextureManager::clearDepth(const TextureHandle depth,
 }
 
 void Dx12TextureManager::clearRT(const TextureHandle handle,
-                                 const float color[4]) {
+                                 const float color[4]) const {
   assertMagicNumber(handle);
   const uint32_t index = getIndexFromHandle(handle);
   const TextureData &data = m_texturePool.getConstRef(index);
@@ -381,7 +335,7 @@ void Dx12TextureManager::cleanup() {
   assertMagicNumber(m_whiteTexture);
   const uint32_t index = getIndexFromHandle(m_whiteTexture);
   const TextureData &data = m_texturePool.getConstRef(index);
-  // TODO check what other view/resourcess need to be released
+  // TODO check what other view/resources need to be released
   data.resource->Release();
 }
 }  // namespace SirEngine::dx12

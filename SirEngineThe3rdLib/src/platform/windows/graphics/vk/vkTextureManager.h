@@ -10,27 +10,24 @@
 
 namespace SirEngine::vk {
 struct VkTexture2D {
-  uint32_t width;
-  uint32_t height;
-  uint32_t mipLevels;
-  uint32_t magicNumber;
+  const char* name = nullptr;
   VkImage image;
   VkDeviceMemory deviceMemory;
   VkImageLayout imageLayout;
   VkImageView view;
-  // VkDescriptorImageInfo descriptor{};
-  VkDescriptorImageInfo rtv{};
   VkDescriptorImageInfo srv{};
   VkFormat format;
-  VkImageLayout layout;
+  uint32_t width;
+  uint32_t height;
+  uint32_t mipLevels;
+  uint32_t magicNumber;
   uint32_t isRenderTarget : 1;
   uint32_t creationFlags : 31;
 };
 
 class SIR_ENGINE_API VkTextureManager final : public TextureManager {
  public:
-  VkTextureManager() : m_texturePool(RESERVE_SIZE) {
-    m_nameToHandle.reserve(RESERVE_SIZE);
+  VkTextureManager() : TextureManager(),m_texturePool(RESERVE_SIZE) {
   }
   virtual ~VkTextureManager();
 
@@ -44,19 +41,12 @@ class SIR_ENGINE_API VkTextureManager final : public TextureManager {
                                         const char *name,
                                         TEXTURE_ALLOCATION_FLAGS allocFlags,
                                         RESOURCE_STATE finalState) override;
-  virtual void bindRenderTarget(TextureHandle handle,
-                                TextureHandle depth) override;
-  virtual void bindRenderTargetStencil(TextureHandle handle,
-                                       TextureHandle depth);
-
-  virtual void clearDepth(const TextureHandle depth, float depthValue,
-                          float stencilValue) override;
-  virtual void clearRT(const TextureHandle handle,
-                       const float color[4]) override;
 
   void initialize() override;
   void cleanup() override;
-  inline TextureHandle getWhiteTexture() const { return m_whiteTexture; }
+  inline TextureHandle getWhiteTexture() const override {
+    return m_whiteTexture;
+  }
   // vk methods
   const VkTexture2D &getTextureData(const TextureHandle &handle) const {
     assertMagicNumber(handle);
@@ -64,7 +54,7 @@ class SIR_ENGINE_API VkTextureManager final : public TextureManager {
     const auto &data = m_texturePool.getConstRef(idx);
     return data;
   };
-  VkFormat getTextureFormat(const TextureHandle &handle) {
+  VkFormat getTextureFormat(const TextureHandle &handle) const {
     assertMagicNumber(handle);
     const uint32_t idx = getIndexFromHandle(handle);
     const auto &data = m_texturePool.getConstRef(idx);
@@ -87,28 +77,11 @@ class SIR_ENGINE_API VkTextureManager final : public TextureManager {
     writeDescriptorSets[0].descriptorType =
         isCompute ? VK_DESCRIPTOR_TYPE_STORAGE_IMAGE
                   : VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+
     writeDescriptorSets[0].pImageInfo = &data.srv;
     writeDescriptorSets[0].descriptorCount = 1;
-  };
-  void bindTexture(const VkDescriptorImageInfo &info,
-                   VkWriteDescriptorSet *writeDescriptorSets,
-                   const VkDescriptorSet descriptorSet,
-                   const uint32_t bindSlot) {
-    writeDescriptorSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    writeDescriptorSets[0].dstSet = descriptorSet;
-    writeDescriptorSets[0].dstBinding = bindSlot;
-    writeDescriptorSets[0].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-    writeDescriptorSets[0].pImageInfo = &info;
-    writeDescriptorSets[0].descriptorCount = 1;
-  };
-
-  inline VkDescriptorImageInfo getSrvDescriptor(
-      const TextureHandle handle) const {
-    assertMagicNumber(handle);
-    const uint32_t idx = getIndexFromHandle(handle);
-    const auto &data = m_texturePool.getConstRef(idx);
-    return data.srv;
   }
+
 
  private:
   bool loadTextureFromFile(const char *name, VkFormat format, VkDevice device,
