@@ -32,7 +32,9 @@ jobs:
         cmake ../ -DBUILD_VULKAN=ON
         cmake --build . --config ${{matrix.configuration}} 
     - name: Run tests
+      shell: cmd
       run: |
         cd build/bin/${{matrix.configuration}}
         dir
         dir ..\testData
+        .\Tests.exe
