@@ -17,7 +17,7 @@ TEST_CASE("metadata parse 1", "[material]") {
   SirEngine::globals::FRAME_ALLOCATOR = new SirEngine::StackAllocator();
   SirEngine::globals::FRAME_ALLOCATOR->initialize(1024 * 1024 * 10);
   SirEngine::graphics::MaterialMetadata metadata =
-      SirEngine::graphics::extractMetadata(path);
+      SirEngine::graphics::extractMetadataFromPSO(path);
 
   REQUIRE(metadata.objectResourceCount == 7);
   REQUIRE(metadata.frameResourceCount == 1);

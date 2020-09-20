@@ -1,6 +1,5 @@
 #pragma once
-#include <stdint.h>
-
+#include "SirEngine/core.h"
 namespace SirEngine {
 
 template <typename T>

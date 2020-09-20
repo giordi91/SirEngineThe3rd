@@ -4,18 +4,12 @@
 #include "SirEngine/engineConfig.h"
 #include "SirEngine/graphics/cpuGraphicsStructures.h"
 #include "SirEngine/handle.h"
+#include "SirEngine/graphics/graphicsDefines.h"
 
 namespace SirEngine {
 
 class BaseWindow;
 
-enum class RESOURCE_STATE {
-  GENERIC,
-  RENDER_TARGET,
-  DEPTH_RENDER_TARGET,
-  SHADER_READ_RESOURCE,
-  RANDOM_WRITE
-};
 
 struct RTBinding {
   TextureHandle handle{};

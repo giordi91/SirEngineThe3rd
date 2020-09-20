@@ -68,6 +68,8 @@ protected:
   bool m_handled = false;
 };
 
+//TODO refactor this
+//I really really REALLY don't like this, and should go
 class EventDispatcher {
   template <typename T> using EventFn = std::function<bool(T &)>;
 

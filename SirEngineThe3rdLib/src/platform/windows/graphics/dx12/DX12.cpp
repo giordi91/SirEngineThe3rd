@@ -582,7 +582,8 @@ void Dx12RenderingContext::renderQueueType(
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   ID3D12GraphicsCommandList2 *commandList = currentFc->commandList;
 
-  setViewportAndScissor(0, 0, config.width, config.height, 0, 1);
+  setViewportAndScissor(0, 0, static_cast<float>(config.width),
+                        static_cast<float>(config.height), 0, 1);
 
   for (const auto &renderableList : typedQueues) {
     if (globals::MATERIAL_MANAGER->isQueueType(renderableList.first, flag)) {
@@ -699,6 +700,8 @@ void Dx12RenderingContext::setBindingObject(const BufferBindingsHandle handle) {
 
     handles[counter] = dx12::TEXTURE_MANAGER->getRTVDx12(destination).cpuHandle;
 
+    // TODO we are still doing state tracking in dx12 we should not do that
+    // anymore and let get requested state as must requirement
     barrierCounter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
         destination, toDx12ResourceState(binding.neededResourceState), barriers,
         barrierCounter);
@@ -744,16 +747,16 @@ void Dx12RenderingContext::setBindingObject(const BufferBindingsHandle handle) {
               ? dx12::SWAP_CHAIN->currentBackBufferTexture()
               : binding.handle;
 
-      globals::TEXTURE_MANAGER->clearRT(destination, &binding.clearColor.x);
+      dx12::TEXTURE_MANAGER->clearRT(destination, &binding.clearColor.x);
     }
   }
 
   if (data.m_bindings.depthStencil.handle.isHandleValid()) {
     const DepthBinding &binding = data.m_bindings.depthStencil;
     if (binding.shouldClearDepth) {
-      globals::TEXTURE_MANAGER->clearDepth(binding.handle,
-                                           binding.clearDepthColor.x,
-                                           binding.clearStencilColor.x);
+      dx12::TEXTURE_MANAGER->clearDepth(binding.handle,
+                                        binding.clearDepthColor.x,
+                                        binding.clearStencilColor.x);
     }
   }
 

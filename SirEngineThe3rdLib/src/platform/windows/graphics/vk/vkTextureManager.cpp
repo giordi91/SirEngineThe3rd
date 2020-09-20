@@ -590,8 +590,10 @@ TextureHandle VkTextureManager::loadTexture(const char *path,
 
   const std::string name = getFileName(texturePath);
 
-  const auto found = m_nameToHandle.find(name);
-  if (found == m_nameToHandle.end()) {
+  TextureHandle handle{};
+  if (!m_nameToHandle.containsKey(name.c_str())) {
+    // const auto found = m_nameToHandle.find(name);
+    // if (found == m_nameToHandle.end()) {
     const std::string extension = getFileExtension(texturePath);
 
     uint32_t index;
@@ -603,20 +605,21 @@ TextureHandle VkTextureManager::loadTexture(const char *path,
                         usageFlags, layout, isCube);
 
     // data is now loaded need to create handle etc
-    const TextureHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
+    handle = {(MAGIC_NUMBER_COUNTER << 16) | index};
 
     data.magicNumber = MAGIC_NUMBER_COUNTER;
     data.format = format;
-    data.layout = layout;
+    data.imageLayout = layout;
+    data.name = persistentString(name.c_str());
 
     ++MAGIC_NUMBER_COUNTER;
 
-    m_nameToHandle[name] = handle;
+    m_nameToHandle.insert(name.c_str(), handle);
 
     return handle;
   }
   SE_CORE_INFO("Texture already loaded, returning handle: {0}", name);
-  return found->second;
+  return handle;
 }
 
 void VkTextureManager::free(const TextureHandle handle) {
@@ -635,6 +638,9 @@ void VkTextureManager::free(const TextureHandle handle) {
   vkDestroyImageView(vk::LOGICAL_DEVICE, data.view, nullptr);
   vkFreeMemory(vk::LOGICAL_DEVICE, data.deviceMemory, nullptr);
   // invalidating magic number
+  if (m_nameToHandle.containsKey(data.name)) {
+    m_nameToHandle.remove(data.name);
+  }
   data = {};
   // adding the index to the free list
   m_texturePool.free(index);
@@ -647,7 +653,6 @@ TextureHandle VkTextureManager::allocateTexture(
   // NOTE for now this is hardcoded, if necessary will be changed
   VkImageLayout imageLayout = fromStateToLayout(finalState);
 
-  // TODO have this being built by generic flags passed in
   VkImageUsageFlags imageUsageFlags = 0;
   bool isRT = (allocFlags & TEXTURE_ALLOCATION_FLAG_BITS::RENDER_TARGET) > 0;
   bool isSrc = (allocFlags & TEXTURE_ALLOCATION_FLAG_BITS::COPY_SOURCE) > 0;
@@ -772,97 +777,14 @@ TextureHandle VkTextureManager::allocateTexture(
 
   // Update descriptor image info member that can be used for setting up
   // descriptor sets
-  data.rtv.sampler = nullptr;
-  data.rtv.imageView = data.view;
-  data.rtv.imageLayout = imageLayout;
-
   data.srv.sampler = nullptr;
   data.srv.imageView = data.view;
   data.srv.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  data.name = persistentString(textureName.c_str());
 
   // build the handle
   data.magicNumber = MAGIC_NUMBER_COUNTER++;
   return {data.magicNumber << 16 | index};
-}
-
-void VkTextureManager::bindRenderTarget(const TextureHandle handle,
-                                        const TextureHandle depth) {
-  /*
-assertMagicNumber(handle);
-const uint32_t index = getIndexFromHandle(handle);
-const TextureData &data = m_texturePool.getConstRef(index);
-assert((data.flags & TextureFlags::RT) > 0);
-
-auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
-auto commandList = currentFc->commandList;
-
-D3D12_CPU_DESCRIPTOR_HANDLE handles[1] = {data.rtsrv.cpuHandle};
-// TODO fix this, should not have a depth the swap chain??
-// auto backDepth = dx12::SWAP_CHAIN->getDepthCPUDescriptor();
-const D3D12_CPU_DESCRIPTOR_HANDLE *depthDesc = nullptr;
-if (depth.isHandleValid()) {
-  assertMagicNumber(depth);
-  const uint32_t depthIndex = getIndexFromHandle(depth);
-  const TextureData &depthData = m_texturePool.getConstRef(depthIndex);
-  assert((depthData.flags & TextureFlags::DEPTH) > 0);
-  depthDesc = &(depthData.rtsrv.cpuHandle);
-}
-commandList->OMSetRenderTargets(1, handles, true, depthDesc);
-*/
-}
-
-void VkTextureManager::bindRenderTargetStencil(TextureHandle handle,
-                                               TextureHandle depth) {
-  /*
-assertMagicNumber(handle);
-const uint32_t index = getIndexFromHandle(handle);
-const TextureData &data = m_texturePool.getConstRef(index);
-assert((data.flags & TextureFlags::RT) > 0);
-
-auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
-auto commandList = currentFc->commandList;
-
-D3D12_CPU_DESCRIPTOR_HANDLE handles[1] = {data.rtsrv.cpuHandle};
-// TODO fix this, should not have a depth the swap chain??
-// auto backDepth = dx12::SWAP_CHAIN->getDepthCPUDescriptor();
-const D3D12_CPU_DESCRIPTOR_HANDLE *depthDesc = nullptr;
-if (depth.isHandleValid()) {
-  assertMagicNumber(depth);
-  const uint32_t depthIndex = getIndexFromHandle(depth);
-  const TextureData &depthData = m_texturePool.getConstRef(depthIndex);
-  assert((depthData.flags & TextureFlags::DEPTH) > 0);
-  depthDesc = &(depthData.dsvStencil.cpuHandle);
-}
-commandList->OMSetRenderTargets(1, handles, true, depthDesc);
-*/
-}
-
-void VkTextureManager::clearDepth(const TextureHandle depth,
-                                  const float depthValue,
-                                  const float stencilValue) {
-  /*
-assertMagicNumber(depth);
-const uint32_t index = getIndexFromHandle(depth);
-const TextureData &data = m_texturePool.getConstRef(index);
-assert((data.flags & TextureFlags::DEPTH) > 0);
-
-CURRENT_FRAME_RESOURCE->fc.commandList->ClearDepthStencilView(
-    data.rtsrv.cpuHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL,
-    value, 0, 0, nullptr);
-    */
-}
-
-void VkTextureManager::clearRT(const TextureHandle handle,
-                               const float color[4]) {
-  /*
-assertMagicNumber(handle);
-const uint32_t index = getIndexFromHandle(handle);
-const TextureData &data = m_texturePool.getConstRef(index);
-assert((data.flags & TextureFlags::RT) > 0);
-// Clear the back buffer and depth buffer.
-CURRENT_FRAME_RESOURCE->fc.commandList->ClearRenderTargetView(
-    data.rtsrv.cpuHandle, color, 0, nullptr);
-    */
 }
 
 void VkTextureManager::initialize() {
@@ -881,9 +803,17 @@ void VkTextureManager::cleanup() {
   data = {};
   m_texturePool.free(index);
 
-  for (const auto &tex : m_nameToHandle) {
-    const std::string f = tex.first;
-    free(tex.second);
+  uint32_t count = m_nameToHandle.binCount();
+  for (uint32_t i = 0; i < count; ++i) {
+    if (m_nameToHandle.isBinUsed(i)) {
+      const TextureHandle handle = m_nameToHandle.getValueAtBin(i);
+      free(handle);
+    }
   }
+
+  // for (const auto &tex : m_nameToHandle) {
+  //  const std::string f = tex.first;
+  //  free(tex.second);
+  //}
 }
 }  // namespace SirEngine::vk

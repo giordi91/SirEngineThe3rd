@@ -27,8 +27,23 @@ static const std::string PSO_TYPE_KEY = "type";
 static const std::string PSO_TYPE_RASTER = "RASTER";
 static const std::string PSO_TYPE_COMPUTE = "COMPUTE";
 
+// TODO ideally this path would come from the engine config, unluckily this code
+// is mostly called by the offline compiler where there is not an engine config
+// providing the paths this is not ideal and we might want to sort it out in the
+// future
+static const std::string RASTERIZATION_PATH =
+    "../data/shaders/VK/rasterization/";
+static const std::string COMPUTE_PATH = "../data/shaders/VK/compute/";
+static const std::string GLSL_EXTENSION = ".glsl";
+static const std::string VULKAN_PROCESSED_PSO_PATH =
+    "../data/processed/pso/VK/";
+static const std::string DX12_PROCESSED_PSO_PATH =
+    "../data/processed/pso/DX12/";
+static const std::string METADATA_EXTENSION = ".metadata";
+;
+
 static const std::unordered_map<std::string, MATERIAL_RESOURCE_FLAGS>
-    nameToMeshFlag{
+    NAME_TO_MESH_FLAG{
         {PSO_MESH_VERTICES_KEY, MATERIAL_RESOURCE_FLAGS::MESH_VERTICES},
         {PSO_MESH_NORMALS_KEY, MATERIAL_RESOURCE_FLAGS::MESH_NORMALS},
         {PSO_MESH_UVS_KEY, MATERIAL_RESOURCE_FLAGS::MESH_UVS},
@@ -36,15 +51,15 @@ static const std::unordered_map<std::string, MATERIAL_RESOURCE_FLAGS>
     };
 
 MATERIAL_RESOURCE_FLAGS getMeshFlags(const std::string &name) {
-  const auto found = nameToMeshFlag.find(name);
-  if (found != nameToMeshFlag.end()) {
+  const auto found = NAME_TO_MESH_FLAG.find(name);
+  if (found != NAME_TO_MESH_FLAG.end()) {
     return found->second;
   }
   return MATERIAL_RESOURCE_FLAGS::NONE;
 }
 
-NUMERICAL_DATA_TYPE getDatatype(spirv_cross::SPIRType::BaseType base, int width,
-                                uint32_t set) {
+NUMERICAL_DATA_TYPE getDatatype(const spirv_cross::SPIRType::BaseType base,
+                                const int width, const uint32_t set) {
   switch (base) {
     case spirv_cross::SPIRType::Boolean: {
       return NUMERICAL_DATA_TYPE::BOOLEAN;
@@ -96,7 +111,7 @@ NUMERICAL_DATA_TYPE getDatatype(spirv_cross::SPIRType::BaseType base, int width,
             "Unsupported nested struct  in constant buffer in object space "
             "reflection");
       }
-      break;
+      return NUMERICAL_DATA_TYPE::UNDEFINED;
     }
 
     case spirv_cross::SPIRType::Int64:
@@ -126,62 +141,55 @@ NUMERICAL_DATA_TYPE getDatatype(spirv_cross::SPIRType::BaseType base, int width,
 
 MaterialMetadataUniform extractUniformBufferOffset(
     spirv_cross::Compiler &comp, const spirv_cross::Resource &uniform,
-    uint32_t set) {
-  const spirv_cross::SPIRType &base_type = comp.get_type(uniform.base_type_id);
+    const uint32_t set) {
   const spirv_cross::SPIRType &type = comp.get_type(uniform.type_id);
 
   // here should be the outer block, we want to go to the inner type;
   spirv_cross::SPIRType strType = comp.get_type(type.member_types[0]);
   const std::string &strName = comp.get_name(type.member_types[0]);
 
-  size_t count = strType.member_types.size();
+  auto count = static_cast<uint32_t>(strType.member_types.size());
 
   auto *outStructMember = static_cast<MaterialMetadataStructMember *>(
       globals::PERSISTENT_ALLOCATOR->allocate(
           count * sizeof(MaterialMetadataStructMember)));
 
   size_t structSize = comp.get_declared_struct_size(strType);
-  for (size_t i = 0; i < count; ++i) {
+  // here we iterate all the members and extract the necessary information for
+  // each of them
+  for (uint32_t i = 0; i < count; ++i) {
     const spirv_cross::SPIRType &memberType =
         comp.get_type(strType.member_types[i]);
-    size_t member_size = comp.get_declared_struct_member_size(strType, i);
+    size_t memberSize = comp.get_declared_struct_member_size(strType, i);
 
     // Get member offset within this struct.
     size_t offset = comp.type_struct_member_offset(strType, i);
-
-    if (!memberType.array.empty()) {
-      // Get array stride, e.g. float4 foo[]; Will have array stride of 16
-      // bytes.
-      size_t array_stride = comp.type_struct_member_array_stride(strType, i);
-    }
-
-    if (memberType.columns > 1) {
-      // Get bytes stride between columns (if column major), for float4x4 -> 16
-      // bytes.
-      size_t matrix_stride = comp.type_struct_member_matrix_stride(strType, i);
-    }
     const std::string &name = comp.get_member_name(strType.self, i);
 
+    // copying the name
     assert(name.size() <= 31);
-    outStructMember[i].offset = offset;
-    outStructMember[i].size = member_size;
+    outStructMember[i].offset = static_cast<uint32_t>(offset);
+
+    // populate the rest of the tracker, with all the necessary information
+    outStructMember[i].size = static_cast<uint32_t>(memberSize);
     outStructMember[i].datatype = getDatatype(
         memberType.basetype, memberType.vecsize * memberType.columns, set);
     memcpy(&outStructMember[i].name[0], name.c_str(), name.size());
     outStructMember[i].name[name.size()] = '\0';
   }
-  // assert(type.name.size() <=31);
+
   MaterialMetadataUniform toReturn{};
   toReturn.members = outStructMember;
-  toReturn.membersCount = count;
+  toReturn.membersCount = static_cast<uint32_t>(count);
   assert(strName.size() <= 31);
   memcpy(&toReturn.name[0], strName.c_str(), strName.size());
   toReturn.name[strName.size()] = '\0';
-  toReturn.structSize = structSize;
+  toReturn.structSize = static_cast<uint32_t>(structSize);
   return toReturn;
 }
 
-MaterialMetadata processShader(const char *shaderName, SHADER_TYPE type) {
+MaterialMetadata extractMetadataFromShader(const char *shaderName,
+                                           SHADER_TYPE type) {
   GRAPHIC_RESOURCE_VISIBILITY visibility = 0;
   switch (type) {
     case SHADER_TYPE::VERTEX: {
@@ -231,7 +239,6 @@ MaterialMetadata processShader(const char *shaderName, SHADER_TYPE type) {
                        {},
                        MATERIAL_RESOURCE_TYPE::TEXTURE,
                        visibility,
-                       // frameString(image.name.c_str()),
                        MATERIAL_RESOURCE_FLAGS::NONE,
                        set,
                        binding};
@@ -297,9 +304,10 @@ MaterialMetadata processComputeMetadata(const nlohmann::json &jobj) {
   assertInJson(jobj, PSO_CS_KEY);
 
   const std::string &name = getValueIfInJson(jobj, PSO_CS_KEY, DEFAULT_STRING);
-  const std::string path = "../data/shaders/VK/compute/" + name + ".glsl";
+  const std::string path = COMPUTE_PATH + name + GLSL_EXTENSION;
   assert(fileExists(path));
-  MaterialMetadata meta = processShader(path.c_str(), SHADER_TYPE::COMPUTE);
+  MaterialMetadata meta =
+      extractMetadataFromShader(path.c_str(), SHADER_TYPE::COMPUTE);
 
   // let us merge
   MaterialResource space0[16];
@@ -356,7 +364,7 @@ std::string loadFile(const char *path) {
 
 MaterialMeshBinding validateMeshData(const char *name,
                                      const MaterialResource *vsMeta,
-                                     int count) {
+                                     const int count) {
   // we want to build an array of resources bindings, one per mesh binding type
   // we next want to check they have consecutive values, because it is what the
   // binding system expects
@@ -392,6 +400,7 @@ MaterialMeshBinding validateMeshData(const char *name,
       outFlags |= MESH_ATTRIBUTE_FLAGS::TANGENTS;
     }
   }
+  // return an empty slot in case we have no geometry bound
   if (slots[0] == -1) {
     return {-1, MESH_ATTRIBUTE_NONE};
   }
@@ -418,17 +427,22 @@ MaterialMetadata processRasterMetadata(const char *path,
       getValueIfInJson(jobj, PSO_VS_KEY, DEFAULT_STRING);
   const std::string &psName =
       getValueIfInJson(jobj, PSO_PS_KEY, DEFAULT_STRING);
-  const std::string vsPath =
-      "../data/shaders/VK/rasterization/" + vsName + ".glsl";
+
+  // Not ideal to concatenate strings like that but, this is for offline
+  // processing so I am not worrying too much about it
+  const std::string vsPath = RASTERIZATION_PATH + vsName + GLSL_EXTENSION;
   assert(fileExists(vsPath));
-  MaterialMetadata vsMeta = processShader(vsPath.c_str(), SHADER_TYPE::VERTEX);
+  MaterialMetadata vsMeta =
+      extractMetadataFromShader(vsPath.c_str(), SHADER_TYPE::VERTEX);
 
   MaterialMetadata psMeta = {};
+  // Fragment shader might be empty, this is the case because fragment might be
+  // optional in some shaders like shadow mapping, where not having fragment
+  // shader allows the card to go to the fast path
   if (!psName.empty()) {
-    const std::string psPath =
-        "../data/shaders/VK/rasterization/" + psName + ".glsl";
+    const std::string psPath = RASTERIZATION_PATH + psName + GLSL_EXTENSION;
     assert(fileExists(psPath));
-    psMeta = processShader(psPath.c_str(), SHADER_TYPE::FRAGMENT);
+    psMeta = extractMetadataFromShader(psPath.c_str(), SHADER_TYPE::FRAGMENT);
   }
 
   // we want to merge both vertex and fragment shader data and remove duplicates
@@ -510,7 +524,7 @@ MaterialMetadata processRasterMetadata(const char *path,
   return toReturn;
 }
 
-MaterialMetadata extractMetadata(const char *psoPath) {
+MaterialMetadata extractMetadataFromPSO(const char *psoPath) {
   auto jobj = getJsonObj(psoPath);
   assertInJson(jobj, PSO_TYPE_KEY);
 
@@ -521,7 +535,7 @@ MaterialMetadata extractMetadata(const char *psoPath) {
   return processComputeMetadata(jobj);
 }
 
-MaterialMetadata loadBinaryMetadata(const char *psoPath) {
+MaterialMetadata loadPSOBinaryMetadata(const char *psoPath) {
   std::vector<char> binaryData;
   readAllBytes(psoPath, binaryData);
 
@@ -544,6 +558,7 @@ MaterialMetadata loadBinaryMetadata(const char *psoPath) {
       static_cast<MaterialResource *>(globals::PERSISTENT_ALLOCATOR->allocate(
           mapper->passResourceCount * sizeof(MaterialResource)));
 
+  // coping the data to the persistent memory
   memcpy(outData.objectResources, data + mapper->objectResourceDataOffset,
          objectSize);
   memcpy(outData.frameResources, data + mapper->frameResourceDataOffset,
@@ -557,7 +572,7 @@ MaterialMetadata loadBinaryMetadata(const char *psoPath) {
     auto *uniformData = static_cast<char *>(
         globals::PERSISTENT_ALLOCATOR->allocate(uniformSize));
     memcpy(uniformData, data, uniformSize);
-    for (int i = 0; i < mapper->objectResourceCount; ++i) {
+    for (uint32_t i = 0; i < mapper->objectResourceCount; ++i) {
       MaterialResource &res = outData.objectResources[i];
       if (res.type == MATERIAL_RESOURCE_TYPE::CONSTANT_BUFFER) {
         // we need to patch the pointer
@@ -582,21 +597,24 @@ MaterialMetadata loadBinaryMetadata(const char *psoPath) {
 graphics::MaterialMetadata loadMetadata(const char *psoPath,
                                         const GRAPHIC_API api) {
   std::filesystem::path p(psoPath);
-  p.replace_extension(".metadata");
+  p.replace_extension(METADATA_EXTENSION);
   std::string finalP;
   if (api == GRAPHIC_API::VULKAN) {
-    finalP = std::string("../data/processed/pso/VK/") + p.filename().string();
+    finalP = VULKAN_PROCESSED_PSO_PATH + p.filename().string();
   } else {
-    finalP = std::string("../data/processed/pso/DX12/") + p.filename().string();
+    finalP = DX12_PROCESSED_PSO_PATH + p.filename().string();
   }
+  // if the file exists it means we have the necessary binary metadata offline
+  // compiled if not, we extract it again, although is slow, we should not do it
+  // at runtime, but we allow it for faster iteration
   if (std::filesystem::exists(finalP)) {
-    return graphics::loadBinaryMetadata(finalP.c_str());
+    return graphics::loadPSOBinaryMetadata(finalP.c_str());
   }
   SE_CORE_WARN(
       "Could not find compiled metadata for given PSO: {}\nextracting from "
       "source",
       psoPath);
-  return graphics::extractMetadata(psoPath);
+  return graphics::extractMetadataFromPSO(psoPath);
 }
 
 }  // namespace SirEngine::graphics

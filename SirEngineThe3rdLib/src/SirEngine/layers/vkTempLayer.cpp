@@ -123,6 +123,9 @@ void VkTempLayer::onUpdate() {
 
   globals::RENDERING_GRAPH->compute();
 }
+
+
+#define SE_BIND_EVENT_FN(fn) std::bind(&fn, this, std::placeholders::_1)
 void VkTempLayer::onEvent(Event &event) {
   EventDispatcher dispatcher(event);
   dispatcher.dispatch<MouseButtonPressEvent>(
@@ -140,6 +143,7 @@ void VkTempLayer::onEvent(Event &event) {
   // dispatcher.dispatch<ReloadScriptsEvent>(
   //    SE_BIND_EVENT_FN(VkTempLayer::onReloadScriptEvent));
 }
+#undef SE_BIND_EVENT_FN
 
 void VkTempLayer::clear() { globals::RENDERING_GRAPH->clear(); }
 

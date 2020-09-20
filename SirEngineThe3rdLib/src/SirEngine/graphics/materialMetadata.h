@@ -50,9 +50,9 @@ struct MaterialMetadata {
   MaterialMeshBinding meshBinding;
 };
 
-MaterialMetadata SIR_ENGINE_API extractMetadata(const char *psoPath);
+MaterialMetadata SIR_ENGINE_API extractMetadataFromPSO(const char *psoPath);
 MaterialMetadata SIR_ENGINE_API loadMetadata(const char *psoPath,
                                              GRAPHIC_API api);
-MaterialMetadata loadBinaryMetadata(const char *psoPath);
+MaterialMetadata loadPSOBinaryMetadata(const char *psoPath);
 
 }  // namespace SirEngine::graphics
