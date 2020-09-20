@@ -66,7 +66,9 @@ class VkMeshManager final : public MeshManager {
   // I could just pass the pointer at right address but for the time
   // being this will keep symmetry.
   MeshHandle loadMesh(const char *path) override;
-  const BoundingBox *getBoundingBoxes(uint32_t &outSize) const override {
+  //TODO Note original function line suppressing the parameter, remove when implemented properly
+  //const BoundingBox *getBoundingBoxes(uint32_t &outSize) const override {
+  const BoundingBox *getBoundingBoxes(uint32_t &) const override {
     assert(0);
     return nullptr;
   };
