@@ -22,7 +22,7 @@ jobs:
     - name: install vk
       uses: crazy-max/ghaction-chocolatey@v1
       with:
-        args:  install --version=1.2.141.0 -y
+        args:  install vulkan-sdk --version=1.2.141.0 -y
     - name: Build engine
       env:	
         VULKAN_SDK: C:\VulkanSDK\1.2.141.0
