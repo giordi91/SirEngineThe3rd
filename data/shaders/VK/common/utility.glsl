@@ -7,3 +7,9 @@ vec3 createCube( uint vertexID)
 	float z = float((0x31e3 & b) != 0);
 	return vec3(x,y,z);
 }
+
+
+vec2 remapUV(vec2 uv, vec4 remapper)
+{
+	return uv * remapper.xy + remapper.zw;
+}

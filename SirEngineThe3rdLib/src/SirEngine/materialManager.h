@@ -33,6 +33,7 @@ struct MaterialSourceBinding {
   const char *resourcePath = nullptr;
   MaterialSourceSubBinding *subBinding = nullptr;
   uint32_t subBindingCount = 0;
+  uint32_t resourceHandle = 0;
 };
 
 static constexpr uint32_t QUEUE_COUNT = 5;
