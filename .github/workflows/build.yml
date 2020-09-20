@@ -37,4 +37,3 @@ jobs:
         cd build/bin/${{matrix.configuration}}
         dir
         dir ..\testData
-        .\Tests.exe
