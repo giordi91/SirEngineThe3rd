@@ -19,13 +19,11 @@ jobs:
         cd build
         cmake ../ 
         cmake --build . --config ${{matrix.configuration}} 
-    - name: Setup deps
-      shell: powershell
-      run: |
-        ./ciSetup.ps1
+    - name: install vk
+      uses: crazy-max/ghaction-chocolatey@v1
+      with:
+        args: install vulkan-sdk  -y
     - name: Build engine
-      env:
-        VULKAN_SDK: C:\VulkanSDK\1.1.126.0
       run: |
         mkdir build
         cd build
