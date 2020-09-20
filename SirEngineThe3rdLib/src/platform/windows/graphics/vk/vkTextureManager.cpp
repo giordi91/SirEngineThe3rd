@@ -811,10 +811,5 @@ void VkTextureManager::cleanup() {
       free(handle);
     }
   }
-
-  // for (const auto &tex : m_nameToHandle) {
-  //  const std::string f = tex.first;
-  //  free(tex.second);
-  //}
 }
 }  // namespace SirEngine::vk

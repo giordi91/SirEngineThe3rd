@@ -8,50 +8,12 @@
 #include "platform/windows/graphics/vk/volk.h"
 #include "vk.h"
 
-namespace SirEngine {
-namespace vk {
+namespace SirEngine::vk {
 
-
-//NOTE we use such little number of args from this functions, we are going to remove the
-//parameter names to avoid compiler complaining at us, I will leave the original function signature
-//here for future reference if needed
-//VkBool32 debugCallback(VkDebugReportFlagsEXT flags,
-//                       VkDebugReportObjectTypeEXT objectType, uint64_t object,
-//                       size_t location, int32_t messageCode,
-//                       const char *pLayerPrefix, const char *pMessage,
-//                       void *pUserData) {
-VkBool32 debugCallback(VkDebugReportFlagsEXT flags,
-                       VkDebugReportObjectTypeEXT , uint64_t ,
-                       size_t , int32_t ,
-                       const char *, const char *pMessage,
-                       void *) {
-  const char *type =
-      flags & VK_DEBUG_REPORT_ERROR_BIT_EXT
-          ? "ERROR"
-          : (flags & (VK_DEBUG_REPORT_WARNING_BIT_EXT |
-                      VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT))
-                ? "WARNING"
-                : "INFO";
-
-  char message[4096];
-  snprintf(message, ARRAYSIZE(message), "%s: %s\n", type, pMessage);
-#if _WIN32
-  OutputDebugStringA(message);
-#endif
-
-  printf("%s", message);
-  if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT) {
-    assert(0 && "validation layer assertion");
-  }
-
-  // always need to return false, true is reserved for layer development
-  return VK_FALSE;
-}
-VkBool32 VKAPI_PTR
-debugCallback2(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-               VkDebugUtilsMessageTypeFlagsEXT messageType,
-               const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
-               void *pUserData) {
+VkBool32 VKAPI_PTR debugCallback(
+    VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+    VkDebugUtilsMessageTypeFlagsEXT,
+    const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *) {
   const char *type =
       messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT
           ? "ERROR"
@@ -79,7 +41,7 @@ debugCallback2(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
 bool isExtensionSupported(
     std::vector<VkExtensionProperties> const &availableExtensions,
     char const *const extension) {
-  for (const auto& availableExtension : availableExtensions) {
+  for (const auto &availableExtension : availableExtensions) {
     if (strstr(availableExtension.extensionName, extension)) {
       return true;
     }
@@ -212,7 +174,7 @@ assert(callbackResult == VK_SUCCESS);
       VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
       VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT |
       VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT;
-  debug_utils_messenger_create_info.pfnUserCallback = debugCallback2;
+  debug_utils_messenger_create_info.pfnUserCallback = debugCallback;
   if (VK_SUCCESS !=
       vkCreateDebugUtilsMessengerEXT(
           instance, &debug_utils_messenger_create_info, NULL, &DEBUG_CALLBACK2))
@@ -611,5 +573,4 @@ VkFramebuffer createFrameBuffer(const VkDevice logicalDevice,
   return frameBuffer;
 }
 
-}  // namespace vk
-}  // namespace SirEngine
+}  // namespace SirEngine::vk

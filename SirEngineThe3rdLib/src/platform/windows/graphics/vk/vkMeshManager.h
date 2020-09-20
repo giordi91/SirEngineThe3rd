@@ -1,12 +1,11 @@
 #pragma once
 
-#include <unordered_map>
-#include <vector>
-
 #include "SirEngine/graphics/cpuGraphicsStructures.h"
 #include "SirEngine/graphics/graphicsDefines.h"
 #include "SirEngine/handle.h"
 #include "SirEngine/memory/cpu/SparseMemoryPool.h"
+#include "SirEngine/memory/cpu/resizableVector.h"
+#include "SirEngine/memory/cpu/stringHashMap.h"
 #include "SirEngine/meshManager.h"
 #include "platform/windows/graphics/vk/vkMemory.h"
 #include "platform/windows/graphics/vk/volk.h"
@@ -45,12 +44,12 @@ class VkMeshManager final : public MeshManager {
   };
 
  public:
-  VkMeshManager() : m_meshPool(RESERVE_SIZE) {
-    m_nameToHandle.reserve(RESERVE_SIZE);
-    m_uploadRequests.reserve(RESERVE_SIZE);
-  }
-  ~VkMeshManager() override {  // assert(m_meshPool.assertEverythingDealloc());
-  }
+  VkMeshManager()
+      : m_meshPool(RESERVE_SIZE),
+        m_nameToHandle(RESERVE_SIZE),
+        m_uploadRequests(RESERVE_SIZE),
+        m_boundingBoxes(RESERVE_SIZE) {}
+  ~VkMeshManager() override = default;
 
   void initialize() override{};
   void cleanup() override;
@@ -59,14 +58,6 @@ class VkMeshManager final : public MeshManager {
     uint32_t index = getIndexFromHandle(handle);
     const MeshData &data = m_meshPool.getConstRef(index);
     return data.indexCount;
-  }
-
-  vk::Buffer getVertexBuffer(const MeshHandle &handle) const;
-  vk::Buffer getIndexBuffer(const MeshHandle &handle);
-  const MeshData &getMeshData(const MeshHandle &handle) {
-    assertMagicNumber(handle);
-    uint32_t index = getIndexFromHandle(handle);
-    return m_meshPool.getConstRef(index);
   }
 
   VkMeshManager(const VkMeshManager &) = delete;
@@ -99,11 +90,11 @@ class VkMeshManager final : public MeshManager {
     uint32_t index = getIndexFromHandle(handle);
     const MeshData &data = m_meshPool.getConstRef(index);
     return data.meshRuntime;
-  };
+  }
   void bindMesh(const MeshHandle handle, VkWriteDescriptorSet *set,
                 const VkDescriptorSet descriptorSet,
                 VkDescriptorBufferInfo *info, const uint32_t bindFlags,
-                const uint32_t startIdx);
+                const uint32_t startIdx) const;
 
  private:
   inline void assertMagicNumber(const MeshHandle handle) const {
@@ -115,26 +106,24 @@ class VkMeshManager final : public MeshManager {
 #endif
   }
   MeshHandle getHandleFromName(const char *name) const override {
-    auto found = m_nameToHandle.find(name);
-    if (found != m_nameToHandle.end()) {
-      return found->second;
-    }
-    return MeshHandle{0};
+    MeshHandle handle{};
+    m_nameToHandle.get(name, handle);
+    assert(handle.isHandleValid());
+    return handle;
   }
 
-  inline const std::vector<BoundingBox> &getBoundingBoxes() const {
+  inline const ResizableVector<BoundingBox> &getBoundingBoxes() const {
     return m_boundingBoxes;
   }
 
  private:
   SparseMemoryPool<MeshData> m_meshPool;
-  // TODO change this for a custom hash map
-  std::unordered_map<std::string, MeshHandle> m_nameToHandle;
+  HashMap<const char *, MeshHandle, hashString32> m_nameToHandle;
 
   static const uint32_t RESERVE_SIZE = 200;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
-  std::vector<MeshUploadResource> m_uploadRequests;
-  std::vector<BoundingBox> m_boundingBoxes;
+  ResizableVector<MeshUploadResource> m_uploadRequests;
+  ResizableVector<BoundingBox> m_boundingBoxes;
 };
 
 }  // namespace SirEngine::vk

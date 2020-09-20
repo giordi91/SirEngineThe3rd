@@ -1,7 +1,6 @@
 #pragma once
-#include <cassert>
-#include <cstdint>
-#include <cstring>
+#include <assert.h>
+#include <string.h>
 #include "SirEngine/core.h"
 
 namespace SirEngine {

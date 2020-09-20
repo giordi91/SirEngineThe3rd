@@ -8,23 +8,13 @@
 
 namespace SirEngine::vk {
 void VkMeshManager::cleanup() {
-  for (const auto &toDel : m_nameToHandle) {
-    free(toDel.second);
+  uint32_t count = m_nameToHandle.binCount();
+  for (uint32_t i = 0; i < count; ++i) {
+    if (m_nameToHandle.isBinUsed(i)) {
+      const MeshHandle handle = m_nameToHandle.getValueAtBin(i);
+      free(handle);
+    }
   }
-}
-
-vk::Buffer VkMeshManager::getVertexBuffer(const MeshHandle &handle) const {
-  assertMagicNumber(handle);
-  uint32_t index = getIndexFromHandle(handle);
-  const MeshData &data = m_meshPool.getConstRef(index);
-  return vk::BUFFER_MANAGER->getBufferData(data.vtxBuffHandle);
-}
-
-vk::Buffer VkMeshManager::getIndexBuffer(const MeshHandle &handle) {
-  assertMagicNumber(handle);
-  uint32_t index = getIndexFromHandle(handle);
-  const MeshData &data = m_meshPool.getConstRef(index);
-  return vk::BUFFER_MANAGER->getBufferData(data.idxBuffHandle);
 }
 
 MeshHandle VkMeshManager::loadMesh(const char *path) {
@@ -36,8 +26,8 @@ MeshHandle VkMeshManager::loadMesh(const char *path) {
   MeshData *meshData;
   MeshHandle handle{};
 
-  const auto found = m_nameToHandle.find(name);
-  if (found == m_nameToHandle.end()) {
+  bool found = m_nameToHandle.get(name.c_str(), handle);
+  if (!found) {
     std::vector<char> binaryData;
     readAllBytes(path, binaryData);
 
@@ -73,9 +63,9 @@ MeshHandle VkMeshManager::loadMesh(const char *path) {
                       mapper->boundingBox[2]};
     glm::vec3 maxP = {mapper->boundingBox[3], mapper->boundingBox[4],
                       mapper->boundingBox[5]};
-    BoundingBox box{minP, maxP};
+    BoundingBox box{minP, maxP, {}};
     meshData->entityID = static_cast<uint32_t>(m_boundingBoxes.size());
-    m_boundingBoxes.push_back(box);
+    m_boundingBoxes.pushBack(box);
 
     // data is now loaded need to create handle etc
     handle = MeshHandle{(MAGIC_NUMBER_COUNTER << 16) | index};
@@ -92,7 +82,7 @@ MeshHandle VkMeshManager::loadMesh(const char *path) {
     meshRuntime.tangentsRange = mapper->tangentsRange;
 
     // storing the handle and increasing the magic count
-    m_nameToHandle[name] = handle;
+    m_nameToHandle.insert(name.c_str(), handle);
     ++MAGIC_NUMBER_COUNTER;
 
     BufferHandle positionsHandle = vk::BUFFER_MANAGER->allocate(
@@ -107,15 +97,8 @@ MeshHandle VkMeshManager::loadMesh(const char *path) {
     meshData->vertexBuffer = meshRuntime.vertexBuffer;
 
     meshData->meshRuntime = meshRuntime;
-
-  } else {
-    SE_CORE_INFO("Mesh already loaded, returning handle:{0}", name);
-    // we already loaded the mesh so we can just get the handle and index data
-    uint32_t index = getIndexFromHandle(found->second);
-    meshData = &m_meshPool[index];
-    handle = found->second;
   }
-
+  SE_CORE_INFO("Mesh already loaded, returning handle:{0}", name);
   return handle;
 }
 
@@ -123,7 +106,7 @@ void VkMeshManager::bindMesh(const MeshHandle handle, VkWriteDescriptorSet *set,
                              const VkDescriptorSet descriptorSet,
                              VkDescriptorBufferInfo *info,
                              const uint32_t bindFlags,
-                             const uint32_t startIdx) {
+                             const uint32_t startIdx) const {
   assertMagicNumber(handle);
   uint32_t idx = getIndexFromHandle(handle);
   const MeshData &data = m_meshPool.getConstRef(idx);
