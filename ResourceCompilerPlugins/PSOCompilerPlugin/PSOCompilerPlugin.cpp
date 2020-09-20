@@ -278,7 +278,7 @@ bool compileVK(const std::string &assetPath, const std::string &outputPath) {
 }
 
 bool compileAllVK(const std::string &assetPath, const std::string &outputPath,
-                  const std::string &target, const std::string &shaderPath) {
+                  const std::string &target, const std::string &) {
   // get files in folder and process them
   const std::string graphicsDirectory = "/" + target + "/";
 
@@ -294,7 +294,7 @@ bool compileAllVK(const std::string &assetPath, const std::string &outputPath,
 }
 
 bool compileAllDx12(const std::string &assetPath, const std::string &outputPath,
-                    const std::string &target, const std::string &shaderPath) {
+                    const std::string &target, const std::string &) {
   // get files in folder and process them
   const std::string graphicsDirectory = "/" + target + "/";
 
