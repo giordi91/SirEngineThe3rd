@@ -22,14 +22,18 @@ jobs:
     - name: install vk
       uses: crazy-max/ghaction-chocolatey@v1
       with:
-        args: install vulkan-sdk  -y
+        args: --no-progress --yes  --version=1.2.141.0
     - name: Build engine
+      env:	
+        VULKAN_SDK: C:\VulkanSDK\1.2.141.0
       run: |
         mkdir build
         cd build
         cmake ../ -DBUILD_VULKAN=ON
         cmake --build . --config ${{matrix.configuration}} 
     - name: Run tests
+      env:	
+        VULKAN_SDK: C:\VulkanSDK\1.2.141.0
       shell: cmd
       run: |
         cd build/bin/${{matrix.configuration}}
