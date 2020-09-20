@@ -19,6 +19,12 @@ project(PSOCompilerPlugin)
 	#lets add specific windows build definitions
 	if (WIN32)
 		add_compile_definitions(RC_PLATFORM_WINDOWS RC_BUILD_PLUGIN_DLL SE_PLATFORM_WINDOWS _UNICODE _CRT_SECURE_NO_WARNINGS)
+		if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+			#LNK4099 is for missing pbd of the compiled dependencies, I won't debug them so i don't add them
+			# to git to save space
+			add_compile_options(/wd4251 /wd4275 /wd4099)
+		endif()
+
 	endif (WIN32)
 
 	#making sure to add the common cpp flags, that are defined in the main cpp file

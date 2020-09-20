@@ -29,7 +29,7 @@ bool convertPoints(const std::string &path, PointsData &data) {
   const std::string tileKey = "tiles";
   assertInJson(jObj, tileKey);
   const auto &tilesJ = jObj[tileKey];
-  data.tileCount = tilesJ.size();
+  data.tileCount = static_cast<uint32_t>(tilesJ.size());
   std::cout << "tile count" << data.tileCount << std::endl;
   if (data.tileCount <= 0) {
     SE_CORE_ERROR("Not point tiles in the file");
@@ -37,7 +37,7 @@ bool convertPoints(const std::string &path, PointsData &data) {
   }
   size_t pointInTile = tilesJ[0].size();
   data.points.reserve(pointInTile * data.tileCount * 2);
-  data.pointsPerTile = pointInTile;
+  data.pointsPerTile = static_cast<uint32_t>(pointInTile);
 
   for (uint32_t i = 0; i < data.tileCount; ++i) {
     const auto &tileData = tilesJ[i];

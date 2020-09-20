@@ -4,11 +4,10 @@
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
 #include "platform/windows/graphics/dx12/dx12BufferManager.h"
-#include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
 
 namespace SirEngine::dx12 {
 
-MeshHandle Dx12MeshManager::loadMesh(const char *path, bool isInternal) {
+MeshHandle Dx12MeshManager::loadMesh(const char *path) {
   SE_CORE_INFO("Loading mesh {0}", path);
   const bool res = fileExists(path);
   assert(res);
@@ -22,7 +21,8 @@ MeshHandle Dx12MeshManager::loadMesh(const char *path, bool isInternal) {
     std::vector<char> binaryData;
     readAllBytes(path, binaryData);
 
-    const auto mapper = getMapperData<ModelMapperData>(binaryData.data());
+    const auto *const mapper =
+        getMapperData<ModelMapperData>(binaryData.data());
 
     const uint32_t indexCount = mapper->indexDataSizeInByte / sizeof(int);
 
@@ -47,18 +47,14 @@ MeshHandle Dx12MeshManager::loadMesh(const char *path, bool isInternal) {
     meshData->indexBuffer =
         dx12::BUFFER_MANAGER->getNativeBuffer(meshData->idxBuffHandle);
 
-    // TODO if is an internal mesh we don't want to go in the bounding box
-    // this needs to be replaced with a proper scene and asset management
-    if (!isInternal) {
-      // load bounding box
-      glm::vec3 minP = {mapper->boundingBox[0], mapper->boundingBox[1],
-                        mapper->boundingBox[2]};
-      glm::vec3 maxP = {mapper->boundingBox[3], mapper->boundingBox[4],
-                        mapper->boundingBox[5]};
-      BoundingBox box{minP, maxP};
-      static_cast<uint32_t>(meshData->entityID = m_boundingBoxes.size());
-      m_boundingBoxes.push_back(box);
-    }
+    // load bounding box
+    glm::vec3 minP = {mapper->boundingBox[0], mapper->boundingBox[1],
+                      mapper->boundingBox[2]};
+    glm::vec3 maxP = {mapper->boundingBox[3], mapper->boundingBox[4],
+                      mapper->boundingBox[5]};
+    BoundingBox box{minP, maxP};
+    meshData->entityID = m_boundingBoxes.size();
+    m_boundingBoxes.pushBack(box);
 
     // data is now loaded need to create handle etc
     handle = MeshHandle{(MAGIC_NUMBER_COUNTER << 16) | index};
@@ -67,7 +63,12 @@ MeshHandle Dx12MeshManager::loadMesh(const char *path, bool isInternal) {
     // build the runtime mesh
     Dx12MeshRuntime meshRuntime{};
     meshRuntime.indexCount = meshData->indexCount;
-    meshRuntime.iview = getIndexBufferView(handle);
+
+    D3D12_INDEX_BUFFER_VIEW ibv;
+    ibv.BufferLocation = meshData->indexBuffer->GetGPUVirtualAddress();
+    ibv.Format = DXGI_FORMAT_R32_UINT;
+    ibv.SizeInBytes = meshData->indexCount * sizeof(int);
+    meshRuntime.iview = ibv;
     meshRuntime.positionRange = mapper->positionRange;
     meshRuntime.normalsRange = mapper->normalsRange;
     meshRuntime.uvRange = mapper->uvRange;

@@ -36,18 +36,6 @@ ID3DBlob *loadCompiledShader(const std::string &filename) {
   return blob;
 }
 
-void Dx12ShaderManager::loadShaderFile(const char *path) {
-  auto expPath = std::filesystem::path(path);
-  std::string name = expPath.stem().string();
-
-  if (!m_stringToShader.containsKey(name.c_str())) {
-    ID3DBlob *blob = loadCompiledShader(path);
-    const char *cname = globals::STRING_POOL->allocatePersistent(name.c_str());
-    // m_stringToShader[name].shader = blob;
-    m_stringToShader.insert(name.c_str(), {blob, nullptr});
-    m_shaderNames.pushBack(cname);
-  }
-}
 
 ShaderMetadata *extractShaderMetadata(StackAllocator &alloc,
                                       const ShaderMapperData *mapper,
@@ -195,13 +183,6 @@ void Dx12ShaderManager::loadShadersInFolder(const char *directory) {
   listFilesInFolder(directory, paths, "shader");
   for (const auto &p : paths) {
     loadShaderBinaryFile(p.c_str());
-  }
-
-  // lets look for normally compiled shaders from visual studio
-  paths.clear();
-  listFilesInFolder(directory, paths, "cso");
-  for (const auto &p : paths) {
-    loadShaderFile(p.c_str());
   }
 }
 }  // namespace SirEngine::dx12

@@ -23,9 +23,19 @@ project(VkShaderCompilerPlugin)
 		add_compile_definitions(VK_USE_PLATFORM_WIN32_KHR VK_NO_PROTOTYPES)
 	endif (WIN32)
 
+	ENABLE_SYSTEM_HEADERS()
+	ADD_EXTERNAL_HEADER(${CMAKE_SOURCE_DIR}/vendors/glm)
+	ADD_EXTERNAL_HEADER(${CMAKE_SOURCE_DIR}/vendors/gli)
+	FINALIZE_EXTERNAL_HEADER()
+
 	#making sure to add the common cpp flags, that are defined in the main cpp file
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_CXX_FLAGS}")
 
+	if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+		#LNK4099 is for missing pbd of the compiled dependencies, I won't debug them so i don't add them
+		# to git to save space
+		add_compile_options(/wd4251 /wd4275 /wd4099)
+	endif()
 
 	if(WIN32)
 		link_directories(${CMAKE_SOURCE_DIR}/builtDependencies/windows/$<CONFIGURATION>)

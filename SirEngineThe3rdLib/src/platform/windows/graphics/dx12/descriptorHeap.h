@@ -1,15 +1,15 @@
 #pragma once
-#include <vector>
 
 #include "SirEngine/core.h"
 #include "platform/windows/graphics/dx12/DX12.h"
+#include "SirEngine/memory/cpu/resizableVector.h"
 
 namespace SirEngine {
 namespace dx12 {
 
 class SIR_ENGINE_API DescriptorHeap {
  public:
-  DescriptorHeap() = default;
+  DescriptorHeap(): m_freeList(10){};
   ~DescriptorHeap();
   bool initialize(int size, D3D12_DESCRIPTOR_HEAP_TYPE type);
   inline bool initializeAsCBVSRVUAV(const int size) {
@@ -22,7 +22,7 @@ class SIR_ENGINE_API DescriptorHeap {
 
   inline bool initializeAsSampler(const int size) {
     return initialize(size, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
-  };
+  }
 
   inline bool initializeAsDsv(const int size) {
     return initialize(size, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
@@ -104,7 +104,7 @@ class SIR_ENGINE_API DescriptorHeap {
   uint32_t m_descriptorSize = 0;
   D3D12_DESCRIPTOR_HEAP_TYPE m_type;
 
-  std::vector<unsigned int> m_freeList;
+  ResizableVector<unsigned int> m_freeList;
   unsigned int m_freeListIdx = 0;
 };
 

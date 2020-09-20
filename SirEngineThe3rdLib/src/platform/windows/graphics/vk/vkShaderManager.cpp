@@ -27,13 +27,13 @@ VkShaderMetadata *extractShaderMetadata(StackAllocator &alloc,
                                         const void *startOfData) {
   // extract metadata
   // I know, this is not pretty
+  // NOTE: compiler args are stored in the metadata we are just not using them
+  // right now stored here         (char *)(shaderPath) +
+  // mapper->pathSizeInByte;
   SHADER_TYPE type = static_cast<SHADER_TYPE>(mapper->type);
-  const char *entry = (char *)(startOfData) + mapper->shaderSizeInByte;
-  const char *shaderPath = (char *)(entry) + mapper->entryPointInByte;
-  const char *compilerArgs =
-      mapper->compilerArgsInByte == 0
-          ? nullptr
-          : (char *)(shaderPath) + mapper->pathSizeInByte;
+  const char *entry =
+      static_cast<const char *>(startOfData) + mapper->shaderSizeInByte;
+  const char *shaderPath = const_cast<char *>(entry) + mapper->entryPointInByte;
 
   // allocate the metadata
   auto *metadata = reinterpret_cast<VkShaderMetadata *>(
@@ -135,7 +135,7 @@ const char *VkShaderManager::recompileShader(const char *path,
   }
   result = false;
 
-  const char* out  = frameString(log.c_str());
+  const char *out = frameString(log.c_str());
   return out;
 }
 
@@ -146,7 +146,6 @@ void VkShaderManager::initialize() {
   m_compiler = new VkShaderCompiler();
 }
 
-void VkShaderManager::loadShaderFile(const char *path) { assert(0); }
 
 void VkShaderManager::loadShadersInFolder(const char *directory) {
   std::vector<std::string> paths;

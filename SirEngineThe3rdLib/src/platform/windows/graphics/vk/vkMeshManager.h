@@ -74,7 +74,7 @@ class VkMeshManager final : public MeshManager {
   // for now a bit overkill to pass both the index and the memory,
   // I could just pass the pointer at right address but for the time
   // being this will keep symmetry.
-  MeshHandle loadMesh(const char *path, bool isInternal = false) override;
+  MeshHandle loadMesh(const char *path) override;
   const BoundingBox *getBoundingBoxes(uint32_t &outSize) const override {
     assert(0);
     return nullptr;
@@ -114,7 +114,7 @@ class VkMeshManager final : public MeshManager {
            "invalid magic handle for constant buffer");
 #endif
   }
-  MeshHandle getHandleFromName(const char *name) override {
+  MeshHandle getHandleFromName(const char *name) const override {
     auto found = m_nameToHandle.find(name);
     if (found != m_nameToHandle.end()) {
       return found->second;
@@ -128,7 +128,7 @@ class VkMeshManager final : public MeshManager {
 
  private:
   SparseMemoryPool<MeshData> m_meshPool;
-  //TODO change this for a custom hash map
+  // TODO change this for a custom hash map
   std::unordered_map<std::string, MeshHandle> m_nameToHandle;
 
   static const uint32_t RESERVE_SIZE = 200;

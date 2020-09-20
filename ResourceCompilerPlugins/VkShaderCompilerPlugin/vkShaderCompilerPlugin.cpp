@@ -52,14 +52,6 @@ bool processArgs(const std::string args,
       stringType.c_str());
   if (result.count("compilerArgs")) {
     assert(0 && "Compiler args not yet supported for VK compiler");
-    /*
-const std::string cargs = result["compilerArgs"].as<std::string>();
-std::string strippedCargs = cargs.substr(1, cargs.length() - 2);
-returnArgs.compilerArgs = const_cast<wchar_t *>(
-    SirEngine::globals::STRING_POOL->convertWide(strippedCargs.c_str()));
-splitCompilerArgs(strippedCargs,
-                  returnArgs.splitCompilerArgsPointers);
-                                      */
   }
   return true;
 }
@@ -70,7 +62,6 @@ void compileSpirV(const std::string &assetPath, const std::string &outputPath,
   SirEngine::vk::SpirVBlob blob =
       compiler.compileToSpirV(assetPath.c_str(), shaderArgs, &log);
 
-  int size = blob.sizeInByte;
   // save the file by building a binary request
   BinaryFileWriteRequest request;
   request.fileType = BinaryFileType::SHADER;
@@ -104,7 +95,8 @@ void compileSpirV(const std::string &assetPath, const std::string &outputPath,
   // we need to store enough data for everything
   int totalBulkDataInBytes = static_cast<int>(blob.sizeInByte);
   //+1 is to take into account the termination value
-  totalBulkDataInBytes += entryPoint.size() * sizeof(char) + 1;
+  totalBulkDataInBytes +=
+      static_cast<int>(entryPoint.size() * sizeof(char) + 1);
   ;
   totalBulkDataInBytes += static_cast<int>(assetPath.size() + 1);
 
@@ -120,7 +112,7 @@ void compileSpirV(const std::string &assetPath, const std::string &outputPath,
   bulkDataPtr += dataToWriteSizeInByte;
 
   // write down the entry point
-  dataToWriteSizeInByte = (entryPoint.size() + 1) * sizeof(char);
+  dataToWriteSizeInByte = static_cast<int>((entryPoint.size() + 1) * sizeof(char));
   mapperData.entryPointInByte = dataToWriteSizeInByte;
   memcpy(bulkDataPtr, entryPoint.data(), dataToWriteSizeInByte);
   bulkDataPtr += dataToWriteSizeInByte;

@@ -46,19 +46,19 @@ void processArgs(const std::string args, std::string &target,
   processFolder = result.count("allInFolder") > 0;
 }
 
+/*
 bool compileAndSavePSO(const std::string &assetPath,
-                       const std::string &outputPath,
-                       const std::string &shaderPath) {
-    //old code to compile a PSO we will need it in the future
-  /*
+                     const std::string &outputPath,
+                     const std::string &shaderPath) {
+  //old code to compile a PSO we will need it in the future
 SirEngine::dx12::PSOCompileResult result =
-    processPSO(assetPath.c_str(), shaderPath.c_str());
+  processPSO(assetPath.c_str(), shaderPath.c_str());
 
 // writing binary file
 BinaryFileWriteRequest request;
 request.fileType = BinaryFileType::RS;
 request.version =
-    ((VERSION_MAJOR << 16) | (VERSION_MINOR << 8) | VERSION_PATCH);
+  ((VERSION_MAJOR << 16) | (VERSION_MINOR << 8) | VERSION_PATCH);
 
 std::filesystem::path inp(assetPath);
 const std::string fileName = inp.stem().string();
@@ -74,7 +74,7 @@ int totalSize = blobSize + sizeof(char) * assetPath.size() + 1;
 int graphicsSize = sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC);
 int computeSize = sizeof(D3D12_COMPUTE_PIPELINE_STATE_DESC);
 int descReservedSize =
-    (graphicsSize > computeSize ? graphicsSize : computeSize);
+  (graphicsSize > computeSize ? graphicsSize : computeSize);
 totalSize += descReservedSize;
 
 //+1 is \0 for string
@@ -86,9 +86,9 @@ totalSize += (vsNameSize + psNameSize + csNameSize);
 
 // input layout and root signature
 int inputLayoutNameSize =
-    result.inputLayout == nullptr ? 0 : strlen(result.inputLayout) + 1;
+  result.inputLayout == nullptr ? 0 : strlen(result.inputLayout) + 1;
 int rootNameSize =
-    result.rootSignature == nullptr ? 0 : strlen(result.rootSignature) + 1;
+  result.rootSignature == nullptr ? 0 : strlen(result.rootSignature) + 1;
 totalSize += (inputLayoutNameSize + rootNameSize);
 
 std::vector<char> bulkData(totalSize);
@@ -101,40 +101,40 @@ ptrPos += blob->GetBufferSize();
 
 // second we copy the structure description
 if (result.psoType == SirEngine::PSO_TYPE::RASTER) {
-  memcpy(bulkDataPtr + ptrPos, result.graphicDesc, graphicsSize);
+memcpy(bulkDataPtr + ptrPos, result.graphicDesc, graphicsSize);
 } else {
-  memcpy(bulkDataPtr + ptrPos, result.computeDesc, computeSize);
+memcpy(bulkDataPtr + ptrPos, result.computeDesc, computeSize);
 }
 auto tmp = reinterpret_cast<D3D12_GRAPHICS_PIPELINE_STATE_DESC *>(
-    bulkDataPtr + ptrPos);
+  bulkDataPtr + ptrPos);
 ptrPos += descReservedSize;
 // next we copy the actual pso path
 memcpy(bulkDataPtr + ptrPos, assetPath.c_str(), assetPath.size() + 1);
 ptrPos += assetPath.size() + 1;
 // next the shaders
 if (vsNameSize != 0) {
-  memcpy(bulkDataPtr + ptrPos, result.VSName, vsNameSize);
-  ptrPos += vsNameSize;
+memcpy(bulkDataPtr + ptrPos, result.VSName, vsNameSize);
+ptrPos += vsNameSize;
 }
 if (psNameSize != 0) {
-  memcpy(bulkDataPtr + ptrPos, result.PSName, psNameSize);
-  ptrPos += psNameSize;
+memcpy(bulkDataPtr + ptrPos, result.PSName, psNameSize);
+ptrPos += psNameSize;
 }
 if (csNameSize != 0) {
-  memcpy(bulkDataPtr + ptrPos, result.CSName, csNameSize);
-  ptrPos += csNameSize;
+memcpy(bulkDataPtr + ptrPos, result.CSName, csNameSize);
+ptrPos += csNameSize;
 }
 
 // storing input layout
 // TODO can i do memcpy with zero size?
 if (inputLayoutNameSize != 0) {
-  memcpy(bulkDataPtr + ptrPos, result.inputLayout, inputLayoutNameSize);
-  ptrPos += inputLayoutNameSize;
+memcpy(bulkDataPtr + ptrPos, result.inputLayout, inputLayoutNameSize);
+ptrPos += inputLayoutNameSize;
 }
 // finally root signature
 if (rootNameSize != 0) {
-  memcpy(bulkDataPtr + ptrPos, result.rootSignature, rootNameSize);
-  ptrPos += rootNameSize;
+memcpy(bulkDataPtr + ptrPos, result.rootSignature, rootNameSize);
+ptrPos += rootNameSize;
 }
 
 request.bulkData = bulkDataPtr;
@@ -160,9 +160,9 @@ writeBinaryFile(request);
 
 SE_CORE_INFO("PSO successfully compiled ---> {0}", outFilePath);
 return true;
-*/
 return true;
 }
+*/
 
 bool compileDx12(const std::string &assetPath, const std::string &outputPath,
                  std::string target, std::string shaderPath) {
@@ -175,13 +175,13 @@ bool compileDx12(const std::string &assetPath, const std::string &outputPath,
     const std::string fileName = getFileName(path);
     const std::string currOutputPath =
         outputPath + graphicsDirectory + fileName + ".metadata";
-    compileAndSavePSO(path, currOutputPath, shaderPath);
+    assert(0);
+    // compileAndSavePSO(path, currOutputPath, shaderPath);
   }
   return true;
 }
 
-bool compileVK(const std::string &assetPath, const std::string &outputPath,
-               const std::string &target, const std::string &shaderPath) {
+bool compileVK(const std::string &assetPath, const std::string &outputPath) {
   // for now we do not support pso compilation BUT we can export all the
   // metadata stuff
   SirEngine::graphics::MaterialMetadata metadata =
@@ -204,15 +204,15 @@ bool compileVK(const std::string &assetPath, const std::string &outputPath,
     }
   }
 
-  uint32_t totalSize = structSize + uniformsMetaSize;
+  uint32_t totalSize = static_cast<uint32_t>(structSize + uniformsMetaSize);
   std::vector<uint8_t> data;
   data.resize(totalSize);
 
   size_t counter = 0;
 
   for (uint32_t i = 0; i < metadata.objectResourceCount; ++i) {
-    //if the object is a constant buffer it comes with a uniform metadata
-  	//we have have to write on disk and patch the pointer
+    // if the object is a constant buffer it comes with a uniform metadata
+    // we have have to write on disk and patch the pointer
     if (metadata.objectResources[i].type ==
         SirEngine::graphics::MATERIAL_RESOURCE_TYPE::CONSTANT_BUFFER) {
       auto size = sizeof(SirEngine::graphics::MaterialMetadataStructMember) *
@@ -288,7 +288,7 @@ bool compileAllVK(const std::string &assetPath, const std::string &outputPath,
     const std::string fileName = getFileName(path);
     const std::string currOutputPath =
         outputPath + graphicsDirectory + fileName + ".metadata";
-    compileVK(path, currOutputPath, target, shaderPath);
+    compileVK(path, currOutputPath);
   }
   return true;
 }
@@ -304,11 +304,11 @@ bool compileAllDx12(const std::string &assetPath, const std::string &outputPath,
     const std::string fileName = getFileName(path);
     const std::string currOutputPath =
         outputPath + graphicsDirectory + fileName + ".metadata";
-    //compileAndSavePSO(path, currOutputPath, shaderPath);
-    //here we call the compileVK just because for now we are just extracting metadata from the PSO
-    //no need to do anything else, once we start pre-compiling and caching psos then we will actually
-    //have a dx12 function
-    compileVK(path, currOutputPath, target, shaderPath);
+    // compileAndSavePSO(path, currOutputPath, shaderPath);
+    // here we call the compileVK just because for now we are just extracting
+    // metadata from the PSO no need to do anything else, once we start
+    // pre-compiling and caching psos then we will actually have a dx12 function
+    compileVK(path, currOutputPath);
   }
   return true;
 }
@@ -337,23 +337,18 @@ bool process(const std::string &assetPath, const std::string &outputPath,
   }
 
   if (!processFolder) {
-    // compileAndSavePSO(assetPath, outputPath, shaderPath);
-    // return true;
     if (target == "DX12") {
       assert(0);
       return compileDx12(assetPath, outputPath, target, shaderPath);
     } else {
-      return compileVK(assetPath, outputPath, target, shaderPath);
+      return compileVK(assetPath, outputPath);
     }
   }
 
   if (target == "DX12") {
     return compileAllDx12(assetPath, outputPath, target, shaderPath);
-  } else {
-    return compileAllVK(assetPath, outputPath, target, shaderPath);
   }
-
-  return true;
+  return compileAllVK(assetPath, outputPath, target, shaderPath);
 }
 
 bool pluginRegisterFunction(PluginRegistry *registry) {

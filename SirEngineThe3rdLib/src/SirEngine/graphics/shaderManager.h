@@ -18,15 +18,11 @@ class ShaderManager {
   virtual void initialize() = 0;
   virtual void cleanup() = 0;
 
-  virtual void loadShaderFile(const char *path) = 0;
   virtual void loadShaderBinaryFile(const char *path) = 0;
   virtual void loadShadersInFolder(const char *directory) = 0;
 
-  // TODO ideally I would like to remove the string from interface
-  // the log is used to show in the ui the result of compilation
-  // we can probably return a const char* and let the user combine it
-  virtual const char *recompileShader(const char *path,
-                                      const char *offsetPath, bool& result) = 0;
+  virtual const char *recompileShader(const char *path, const char *offsetPath,
+                                      bool &result) = 0;
   virtual const ResizableVector<const char *> &getShaderNames() = 0;
 };
 }  // namespace SirEngine::graphics

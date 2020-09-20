@@ -27,7 +27,7 @@ vk::Buffer VkMeshManager::getIndexBuffer(const MeshHandle &handle) {
   return vk::BUFFER_MANAGER->getBufferData(data.idxBuffHandle);
 }
 
-MeshHandle VkMeshManager::loadMesh(const char *path, bool isInternal) {
+MeshHandle VkMeshManager::loadMesh(const char *path) {
   SE_CORE_INFO("Loading mesh {0}", path);
   const bool res = fileExists(path);
   assert(res);
@@ -68,18 +68,14 @@ MeshHandle VkMeshManager::loadMesh(const char *path, bool isInternal) {
     meshData->indexBuffer =
         vk::BUFFER_MANAGER->getNativeBuffer(meshData->idxBuffHandle);
 
-    // TODO if is an internal mesh we don't want to go in the bounding box
-    // this needs to be replaced with a proper scene and asset management
-    if (!isInternal) {
-      // load bounding box
-      glm::vec3 minP = {mapper->boundingBox[0], mapper->boundingBox[1],
-                        mapper->boundingBox[2]};
-      glm::vec3 maxP = {mapper->boundingBox[3], mapper->boundingBox[4],
-                        mapper->boundingBox[5]};
-      BoundingBox box{minP, maxP};
-      meshData->entityID = static_cast<uint32_t>(m_boundingBoxes.size());
-      m_boundingBoxes.push_back(box);
-    }
+    // load bounding box
+    glm::vec3 minP = {mapper->boundingBox[0], mapper->boundingBox[1],
+                      mapper->boundingBox[2]};
+    glm::vec3 maxP = {mapper->boundingBox[3], mapper->boundingBox[4],
+                      mapper->boundingBox[5]};
+    BoundingBox box{minP, maxP};
+    meshData->entityID = static_cast<uint32_t>(m_boundingBoxes.size());
+    m_boundingBoxes.push_back(box);
 
     // data is now loaded need to create handle etc
     handle = MeshHandle{(MAGIC_NUMBER_COUNTER << 16) | index};

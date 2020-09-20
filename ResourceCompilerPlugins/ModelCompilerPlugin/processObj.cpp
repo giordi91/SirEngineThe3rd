@@ -1,14 +1,16 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 
 #include "processObj.h"
-#include "SirEngine/fileUtils.h"
-#include "SirEngine/log.h"
 
-#include "meshoptimizer.h"
 #include <DirectXMath.h>
+
 #include <limits>
 #include <unordered_map>
 #include <vector>
+
+#include "SirEngine/fileUtils.h"
+#include "SirEngine/log.h"
+#include "meshoptimizer.h"
 
 #ifndef _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
@@ -62,7 +64,8 @@ bool operator==(const VertexCompare &lhs, const VertexCompare &rhs) {
 const int primes[] = {73856093, 19349663, 83492791};
 
 namespace std {
-template <> struct hash<glm::vec2> {
+template <>
+struct hash<glm::vec2> {
   size_t operator()(glm::vec2 const &v) const noexcept {
     auto h1 = std::hash<float>{}(v.x);
     auto h2 = std::hash<float>{}(v.y);
@@ -71,7 +74,8 @@ template <> struct hash<glm::vec2> {
   }
 };
 
-template <> struct hash<glm::vec3> final {
+template <>
+struct hash<glm::vec3> final {
   size_t operator()(glm::vec3 const &v) const noexcept {
     auto h1 = std::hash<float>{}(v.x);
     auto h2 = std::hash<float>{}(v.y);
@@ -80,7 +84,7 @@ template <> struct hash<glm::vec3> final {
     return ((h1 ^ (h2 << 1)) >> 1) ^ (h3 << 1);
   }
 };
-} // namespace std
+}  // namespace std
 
 struct HashFunc final {
   size_t operator()(const VertexCompare &k) const {
@@ -138,7 +142,6 @@ bool loadSkin(const std::string &skinPath, SkinData &skinData) {
   int counter = 0;
 
   for (auto d : s_obj["data"]) {
-
     assert(d.find("j") != d.end());
     assert(d.find("w") != d.end());
     nlohmann::basic_json<> j = d["j"];
@@ -176,7 +179,6 @@ bool loadSkin(const std::string &skinPath, SkinData &skinData) {
 void convertObjNoTangents(const tinyobj::attrib_t &attr,
                           const tinyobj::shape_t &shape, Model &model,
                           const std::string &) {
-
   // TODO need to add skinPath usage
   // how it works:
   // first of all we need  to iterate over all the geometry, we expand all
@@ -245,7 +247,6 @@ void convertObjNoTangents(const tinyobj::attrib_t &attr,
 void convertObj(const tinyobj::attrib_t &attr, const tinyobj::shape_t &shape,
                 Model &model, SkinData &finalSkinData,
                 const std::string &tangentsPath, const std::string &skinPath) {
-
   if (tangentsPath.empty()) {
     convertObjNoTangents(attr, shape, model, skinPath);
     return;
@@ -595,7 +596,6 @@ bool convertObj(const char *path, const char *tangentsPath,
     indexOffset += fv;
   }
 
-  int finalIndexCount = indices.size();
   // lets compute all the offsets
   uint32_t alignRequirement = sizeof(float) * 64;
   uint64_t pointSizeInByte = vertexData.size() * sizeof(float) * 4;
@@ -605,27 +605,27 @@ bool convertObj(const char *path, const char *tangentsPath,
 
   uint64_t normalsSize = vertexData.size() * sizeof(float) * 4;
   uint64_t uvPointerOffset = 0;
-  uint64_t uvOffsetByte =
-      alignSize(normalsOffsetByte +normalsSize, alignRequirement, uvPointerOffset);
+  uint64_t uvOffsetByte = alignSize(normalsOffsetByte + normalsSize,
+                                    alignRequirement, uvPointerOffset);
 
   uint64_t uvSize = vertexData.size() * sizeof(float) * 2;
   uint64_t tangentsPointerOffset = 0;
   uint64_t tangentsOffsetByte =
-      alignSize( uvOffsetByte + uvSize, alignRequirement,
-                tangentsPointerOffset);
+      alignSize(uvOffsetByte + uvSize, alignRequirement, tangentsPointerOffset);
 
   uint64_t totalRequiredAligmentBytes =
       normalPointerOffset + uvPointerOffset + tangentsPointerOffset;
   uint64_t totalRequiredAligmentFloats = totalRequiredAligmentBytes / 4;
 
   model.positionRange.m_offset = 0;
-  model.positionRange.m_size = pointSizeInByte;
-  model.normalsRange.m_offset = normalsOffsetByte;
-  model.normalsRange.m_size = normalsSize;
-  model.uvRange.m_offset = uvOffsetByte;
-  model.uvRange.m_size = uvSize;
-  model.tangentsRange.m_offset = tangentsOffsetByte;
-  model.tangentsRange.m_size = vertexData.size() * sizeof(float) * 4;
+  model.positionRange.m_size = static_cast<uint32_t>(pointSizeInByte);
+  model.normalsRange.m_offset = static_cast<uint32_t>(normalsOffsetByte);
+  model.normalsRange.m_size = static_cast<uint32_t>(normalsSize);
+  model.uvRange.m_offset = static_cast<uint32_t>(uvOffsetByte);
+  model.uvRange.m_size = static_cast<uint32_t>(uvSize);
+  model.tangentsRange.m_offset = static_cast<uint32_t>(tangentsOffsetByte);
+  model.tangentsRange.m_size =
+      static_cast<uint32_t>(vertexData.size() * sizeof(float) * 4);
 
   // positions : vec4
   // normals : vec4
@@ -646,8 +646,8 @@ bool convertObj(const char *path, const char *tangentsPath,
   uint32_t uvOffset = model.uvRange.m_offset / 4;
   uint32_t tanOffset = model.tangentsRange.m_offset / 4;
 
-  int vc = vertexData.size();
-  for (int i = 0; i < vc; ++i) {
+  size_t vc = vertexData.size();
+  for (size_t i = 0; i < vc; ++i) {
     const VertexCompare &cmp = vertexData[i];
     model.vertices[posOffset + 0u] = cmp.p.x;
     model.vertices[posOffset + 1u] = cmp.p.y;
@@ -672,7 +672,6 @@ bool convertObj(const char *path, const char *tangentsPath,
     uvOffset += 2;
     tanOffset += 4;
   }
-
   // int vc = vertexData.size();
   // for (int i = 0; i < vc; ++i) {
   //  const VertexCompare &cmp = vertexData[i];
@@ -705,8 +704,8 @@ bool convertObj(const char *path, const char *tangentsPath,
   model.vertexCount = static_cast<int>(vertexData.size());
   model.triangleCount =
       static_cast<int>(shapes[0].mesh.num_face_vertices.size());
-  model.indexCount = indicesCount;
-  model.vertexCount = vertexData.size();
+  model.indexCount = static_cast<uint32_t>(indicesCount);
+  model.vertexCount = static_cast<uint32_t>(vertexData.size());
   model.flags = 0;
 
   memcpy(model.indices.data(), indices.data(), indicesCount * sizeof(float));
@@ -789,4 +788,5 @@ bool convertObj(const char *path, const char *tangentsPath,
   //      &finalSkinData.weights, &skinData.weights, totalIndices,
   //      sizeof(float) * VERTEX_INFLUENCE_COUNT, &remap[0]);
   //}
+  return true;
 }
