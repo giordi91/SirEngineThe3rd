@@ -31,6 +31,12 @@ jobs:
         cd build
         cmake ../ -DBUILD_VULKAN=ON
         cmake --build . --config ${{matrix.configuration}} 
+    - name: set enviroment
+      run: echo "::add-path::C:\VulkanSDK\1.2.141.0\Bin"
+    - name: copy dxc
+      shell : cmd
+      run : | 
+        copy C:\VulkanSDK\1.2.141.0\Bin\dxcompiler.dll build\bin\${{matrix.configuration}}
     - name: Run tests
       env:	
         VULKAN_SDK: C:\VulkanSDK\1.2.141.0
