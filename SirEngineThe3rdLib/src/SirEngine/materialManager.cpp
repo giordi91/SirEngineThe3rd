@@ -80,18 +80,18 @@ ShaderBind MaterialManager::bindRSandPSO(const uint64_t shaderFlags,
   return {};
 }
 
-uint32_t findBindingIndex(const graphics::MaterialMetadata *meta,
-                          const std::string &bindName) {
+int findBindingIndex(const graphics::MaterialMetadata *meta,
+                     const std::string &bindName) {
   uint32_t count = meta->objectResourceCount;
   for (uint32_t i = 0; i < count; ++i) {
     const auto &resource = meta->objectResources[i];
     bool result = strcmp(resource.name, bindName.c_str()) == 0;
     if (result) {
-      return i;
+      return static_cast<int>(i);
     }
   }
   assert(0 && "could not find binding name");
-  return 9999;
+  return -1;
 }
 
 void MaterialManager::buildBindingTableDefinitionFromMetadta(
@@ -449,7 +449,7 @@ void extractDataFromType(const nlohmann::json &jobj,
 void parseConstantBuffer(MaterialSourceBinding *binding,
                          const nlohmann::json &resource) {
   const auto &content = resource["uniformContent"];
-  uint32_t count = static_cast<uint32_t>(content.size());
+  auto count = static_cast<uint32_t>(content.size());
   auto *uniformData = static_cast<MaterialSourceSubBinding *>(
       globals::PERSISTENT_ALLOCATOR->allocate(sizeof(MaterialSourceSubBinding) *
                                               count));

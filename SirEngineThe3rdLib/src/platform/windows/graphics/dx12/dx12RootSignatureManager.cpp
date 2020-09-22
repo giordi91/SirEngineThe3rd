@@ -16,7 +16,7 @@ void Dx12RootSignatureManager::cleanup() {
 
 RSHandle Dx12RootSignatureManager::loadSignatureFromMeta(
     const char *path, graphics::MaterialMetadata *metadata) {
-  RootCompilerResult result = processSignatureFile2(path, metadata);
+  RootCompilerResult result = processSignatureFile(path, metadata);
   const std::string name = getFileName(path);
 
   // generate the handle

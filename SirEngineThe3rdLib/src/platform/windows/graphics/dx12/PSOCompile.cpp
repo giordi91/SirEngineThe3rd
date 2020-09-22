@@ -307,7 +307,11 @@ PSOCompileResult processComputePSO(nlohmann::json &jobj, const char *path,
       compileResult.blob->GetBufferSize()};
   ID3D12PipelineState *pso;
   // configure compute shader
-  auto *cdesc = new D3D12_COMPUTE_PIPELINE_STATE_DESC{};
+  auto *cdesc = static_cast<D3D12_COMPUTE_PIPELINE_STATE_DESC *>(
+      globals::PERSISTENT_ALLOCATOR->allocate(
+          sizeof(D3D12_COMPUTE_PIPELINE_STATE_DESC)));
+  memset(cdesc, 0, sizeof(D3D12_COMPUTE_PIPELINE_STATE_DESC));
+
   cdesc->pRootSignature = rootS;
   cdesc->CS = computeShaderByteCode;
   cdesc->Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
@@ -464,7 +468,11 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj, const char *path,
       getValueIfInJson(jobj, PSO_KEY_DSV_FORMAT, DEFAULT_STRING);
   DXGI_FORMAT dsvFormat = convertStringToDXGIFormat(dsvFormatString);
 
-  auto *psoDesc = new D3D12_GRAPHICS_PIPELINE_STATE_DESC();
+  auto *psoDesc = static_cast<D3D12_GRAPHICS_PIPELINE_STATE_DESC *>(
+      globals::PERSISTENT_ALLOCATOR->allocate(
+          sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC)));
+  memset(psoDesc, 0, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
+
   ID3D12PipelineState *pso = nullptr;
   ZeroMemory(psoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
   // NOTE: we are not using input assembler at all
