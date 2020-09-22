@@ -57,7 +57,6 @@ BufferManagerDx12 *BUFFER_MANAGER = nullptr;
 Dx12DebugRenderer *DEBUG_RENDERER = nullptr;
 Dx12RenderingContext *RENDERING_CONTEXT = nullptr;
 Dx12BindingTableManager *BINDING_TABLE_MANAGER = nullptr;
-int STATIC_SAMPLERS_COUNT = -1;
 
 struct Dx12Renderable {
   MeshHandle m_meshHandle;
@@ -82,7 +81,6 @@ void createFrameCommand(FrameCommand *fc) {
 
 void allocateSamplers() {
   auto samplers = getSamplers();
-  STATIC_SAMPLERS_COUNT = static_cast<uint32_t>(samplers.size());
   for (int i = 0; i < STATIC_SAMPLERS_COUNT; ++i) {
     D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptor;
     GLOBAL_SAMPLER_HEAP->allocateDescriptor(&cpuDescriptor);

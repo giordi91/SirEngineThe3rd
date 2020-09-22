@@ -137,7 +137,6 @@ extern BufferManagerDx12 *BUFFER_MANAGER;
 extern Dx12DebugRenderer *DEBUG_RENDERER;
 extern Dx12RenderingContext *RENDERING_CONTEXT;
 extern Dx12BindingTableManager *BINDING_TABLE_MANAGER;
-extern int STATIC_SAMPLERS_COUNT;
 
 inline UINT64 insertFenceToGlobalQueue() {
   // Advance the fence value to mark commands up to this fence point.
@@ -176,7 +175,6 @@ inline void flushCommandQueue(ID3D12CommandQueue *queue) {
   }
 }
 
-bool initializeGraphicsDx12(BaseWindow *wnd, uint32_t width, uint32_t height);
 bool shutdownGraphicsDx12();
 bool stopGraphicsDx12();
 bool newFrameDx12();

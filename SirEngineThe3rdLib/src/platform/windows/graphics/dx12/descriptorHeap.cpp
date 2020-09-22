@@ -4,7 +4,7 @@
 #include "platform/windows/graphics/dx12/d3dx12.h"
 
 namespace SirEngine::dx12 {
-bool DescriptorHeap::initialize(int size, D3D12_DESCRIPTOR_HEAP_TYPE type) {
+bool DescriptorHeap::initialize(const int size, const D3D12_DESCRIPTOR_HEAP_TYPE type) {
   D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
 
   // might need to extend this for more customization
