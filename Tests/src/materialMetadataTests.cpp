@@ -95,7 +95,7 @@ TEST_CASE("metadata parse 2", "[material]") {
 
   REQUIRE(metadata.objectResources[8].type ==
           SirEngine::graphics::MATERIAL_RESOURCE_TYPE::CONSTANT_BUFFER);
-  REQUIRE(strcmp(metadata.objectResources[8].name, "material") == 0);
+  REQUIRE(strcmp(metadata.objectResources[8].name, "materialConfig") == 0);
   REQUIRE(metadata.objectResources[8].set == 3);
   REQUIRE(metadata.objectResources[8].binding == 8);
   REQUIRE(metadata.objectResources[8].visibility ==
@@ -103,7 +103,6 @@ TEST_CASE("metadata parse 2", "[material]") {
 
 	
 }
-/*
 TEST_CASE("metadata parse 1", "[material]") {
   const char* path = "../testData/grassForwardPSO.json";
   SirEngine::globals::FRAME_ALLOCATOR = new SirEngine::StackAllocator();
@@ -117,7 +116,7 @@ TEST_CASE("metadata parse 1", "[material]") {
 
   REQUIRE(metadata.objectResources[0].type ==
           SirEngine::graphics::MATERIAL_RESOURCE_TYPE::BUFFER);
-  REQUIRE(strcmp(metadata.objectResources[0].name, "vertices") == 0);
+  REQUIRE(strcmp(metadata.objectResources[0].name, "points") == 0);
   REQUIRE(metadata.objectResources[0].set == 3);
   REQUIRE(metadata.objectResources[0].binding == 0);
   REQUIRE(metadata.objectResources[0].visibility ==
@@ -127,7 +126,7 @@ TEST_CASE("metadata parse 1", "[material]") {
 
   REQUIRE(metadata.objectResources[1].type ==
           SirEngine::graphics::MATERIAL_RESOURCE_TYPE::BUFFER);
-  REQUIRE(strcmp(metadata.objectResources[1].name, "tilesIndices") == 0);
+  REQUIRE(strcmp(metadata.objectResources[1].name, "tileIndices") == 0);
   REQUIRE(metadata.objectResources[1].set == 3);
   REQUIRE(metadata.objectResources[1].binding == 1);
   REQUIRE(metadata.objectResources[1].visibility ==
@@ -145,7 +144,7 @@ TEST_CASE("metadata parse 1", "[material]") {
 
   REQUIRE(metadata.objectResources[3].type ==
           SirEngine::graphics::MATERIAL_RESOURCE_TYPE::CONSTANT_BUFFER);
-  REQUIRE(strcmp(metadata.objectResources[3].name, "ConfigData") == 0);
+  REQUIRE(strcmp(metadata.objectResources[3].name, "grassConfig") == 0);
   REQUIRE(metadata.objectResources[3].set == 3);
   REQUIRE(metadata.objectResources[3].binding == 3);
   REQUIRE(metadata.objectResources[3].visibility ==
@@ -172,7 +171,7 @@ TEST_CASE("metadata parse 1", "[material]") {
 
   REQUIRE(metadata.objectResources[6].type ==
           SirEngine::graphics::MATERIAL_RESOURCE_TYPE::BUFFER);
-  REQUIRE(strcmp(metadata.objectResources[6].name, "lodData") == 0);
+  REQUIRE(strcmp(metadata.objectResources[6].name, "lodToUse") == 0);
   REQUIRE(metadata.objectResources[6].set == 3);
   REQUIRE(metadata.objectResources[6].binding == 6);
   REQUIRE(metadata.objectResources[6].visibility ==
@@ -180,4 +179,3 @@ TEST_CASE("metadata parse 1", "[material]") {
   REQUIRE(isFlagSet(metadata.objectResources[6].flags,
                     SirEngine::graphics::MATERIAL_RESOURCE_FLAGS::READ_ONLY));
 }
-*/

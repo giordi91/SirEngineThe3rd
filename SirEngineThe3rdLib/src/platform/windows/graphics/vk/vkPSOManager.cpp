@@ -10,9 +10,9 @@
 
 namespace SirEngine::vk {
 
-static const char *PSO_VS_SHADER_ENTRY_POINT = "main";
-static const char *PSO_PS_SHADER_ENTRY_POINT = "main";
-static const char *PSO_CS_SHADER_ENTRY_POINT = "main";
+static const char *PSO_VS_SHADER_ENTRY_POINT = "VS";
+static const char *PSO_PS_SHADER_ENTRY_POINT = "PS";
+static const char *PSO_CS_SHADER_ENTRY_POINT = "CS";
 
 static const std::string PSO_KEY_GLOBAL_ROOT = "globalRootSignature";
 static const std::string PSO_KEY_TYPE = "type";
@@ -125,8 +125,7 @@ void getShaderStageCreateInfo(const nlohmann::json &jobj,
     stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     stages[0].stage = VK_SHADER_STAGE_COMPUTE_BIT;
     stages[0].module = vk::SHADER_MANAGER->getShaderFromName(cmpFile.c_str());
-    //stages[0].pName = PSO_CS_SHADER_ENTRY_POINT;
-    stages[0].pName = "CS";
+    stages[0].pName = PSO_CS_SHADER_ENTRY_POINT;
     stages[0].flags = 0;
 
   } else {
@@ -144,14 +143,7 @@ void getShaderStageCreateInfo(const nlohmann::json &jobj,
     stages[id].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     stages[id].stage = VK_SHADER_STAGE_VERTEX_BIT;
     stages[id].module = vk::SHADER_MANAGER->getShaderFromName(vsFile.c_str());
-    // stages[id].pName = PSO_VS_SHADER_ENTRY_POINT;
-    //if (vsFile == "forwardPhongVS" || vsFile == "skyboxVS" ||
-    //    vsFile == "positionColorVS" || vsFile == "grassPlaneVS" ||
-    //    vsFile == "fullScreenQuadVS") {
-      stages[id].pName = "VS";
-    //} else {
-    //  stages[id].pName = PSO_VS_SHADER_ENTRY_POINT;
-    //}
+    stages[id].pName = PSO_VS_SHADER_ENTRY_POINT;
 
     const std::string psFile =
         getValueIfInJson(jobj, PSO_KEY_PS_SHADER, DEFAULT_STRING);
@@ -161,13 +153,7 @@ void getShaderStageCreateInfo(const nlohmann::json &jobj,
       stages[id].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
       stages[id].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
       stages[id].module = vk::SHADER_MANAGER->getShaderFromName(psFile.c_str());
-      //if (psFile == "forwardPhongPS" || psFile == "skyboxPS" ||
-      //    psFile == "HDRtoSDREffectPS" || psFile == "basicColorPS" ||
-      //    psFile == "grassPlanePS" || psFile == "gammaAndToneMappingEffectPS") {
-        stages[id].pName = "PS";
-      //} else {
-      //  stages[id].pName = PSO_PS_SHADER_ENTRY_POINT;
-      //}
+      stages[id].pName = PSO_PS_SHADER_ENTRY_POINT;
       result.PSName = frameString(psFile.c_str());
     }
   }

@@ -127,7 +127,6 @@ PosNormalUVVertexOut VS(uint id : SV_VertexID)
     cullTileData.LOD = tilesCulling.Load<uint16_t>(((cullIndex + 40) + lodOffset) * 8 + 6);
     int tileNumber = int(cullTileData.tileIndex);
 
-    //uint notCulled = cullTileId[tileNumber];
 
     int tilesPerSide = grassConfig.tilesPerSide;
     float halfSize = tilesPerSide*0.5;
@@ -144,26 +143,7 @@ PosNormalUVVertexOut VS(uint id : SV_VertexID)
     float3 position = tileCorner + float3(tilePos.x,0.0f,tilePos.y)*tw;
     float4 offset = float4(offsets[localId], 0.0f, 0.0f);
 
-    /*
-    int tileNumber = int(vid/grassConfig.pointsPerTile);
-    int tilesPerSide = grassConfig.tilesPerSide;
-    float halfSize = tilesPerSide*0.5;
-    float tw = grassConfig.tileSize;
 
-    float3 minCorner = grassConfig.gridOrigin - float3(halfSize,0,halfSize)*tw;
-    float tileX = tileNumber %tilesPerSide;
-    float tileY = tileNumber /tilesPerSide;
-    float3 tileCorner = minCorner + float3(tw*(tileX), 0, tw*tileY);
-
-	float4 offset = float4(offsets[localId],0,0);
-    float3 position = tileCorner + float3(bufferPos.x, 0.0, bufferPos.y)*tw ;
-    */
-
-
-
-
-
-		
     //spinning the blade by random amount
     float3x3 facingRotationMatrix = angleAxis3x3(rand(position.xyz) * TWO_PI, float3(0, 1, 0));
 
@@ -175,18 +155,13 @@ PosNormalUVVertexOut VS(uint id : SV_VertexID)
     float2 windUV = frac( tempUV+ grassConfig.windFrequency* g_frameData.time);
     //float2 windSample = (texture (sampler2D (windTex, colorSampler[2]), windUV).xy*2 -1  );
 	//float3 wind = normalize(float3(windSample.x, 0, windSample.y));
-    float2 windOffset = -0.15*uv.y *grassConfig.windFrequency + windUV;
+    //uint notCulled = cullTileId[tileNumber];
+    float windOffsetHeight = 0.15;
+    float2 windOffset = -windOffsetHeight*uv.y *grassConfig.windFrequency + windUV;
     //float2 windSample = (texture (sampler2D (windTex, [2]), windOffset).xy*2 -1  );
 	float2 windSample =(windTex.SampleLevel(gsamLinearClamp, windOffset,0).xy*2 -1);
 	float3 wind = normalize(float3(windSample.x, 0, windSample.y));
     float3x3 windRotation = angleAxis3x3(lerp(-PI*0.5*grassConfig.windStrength,PI*0.5*grassConfig.windStrength, length(windSample)), wind);
-    /*
-	float2 tempUV = float2((position.x / range)*0.5 + 1,(position.z / range)*0.5 + 1) * 0.1;
-    float2 windUV = frac( tempUV+ grassConfig.windFrequency* g_frameData.time);
-    float2 windSample = windTex.SampleLevel(gsamLinearClamp, windUV,0).xy;
-	float3 wind = normalize(float3(windSample.y, 0, windSample.x));
-    float3x3 windRotation = angleAxis3x3(PI*0.5 * length(windSample), wind);
-    */
 
     //bending the blade
     float3x3 bendRotationMatrix = angleAxis3x3(rand(position.zzx) * grassConfig.grassBend* PI * 0.5, float3(1, 0, 0));
