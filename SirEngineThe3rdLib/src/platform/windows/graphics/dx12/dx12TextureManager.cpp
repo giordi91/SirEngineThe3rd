@@ -51,7 +51,7 @@ TextureHandle Dx12TextureManager::loadTexture(const char *path,
   const std::string name = getFileName(texturePath);
 
   TextureHandle handle{};
-  if (!m_nameToHandle.containsKey(name.c_str())) {
+  if (!m_nameToHandle.get(name.c_str(),handle)) {
     // const auto found = m_nameToHandle.find(name);
     // if (found == m_nameToHandle.end()) {
     const std::string extension = getFileExtension(texturePath);

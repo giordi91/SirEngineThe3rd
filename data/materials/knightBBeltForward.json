@@ -24,6 +24,18 @@
       "type": "mesh",
       "bindingName": "",
       "resourcePath": "../data/processed/meshes/knightB/belt.model"
+    },
+    {
+      "type": "constantBuffer",
+      "bindingName": "materialConfig",
+      "resourcePath": "",
+      "uniformContent": [
+        { "name" : "albedoTexConfig", "type": "vec4", "value":  [1.0,1.0,0.0,0.0] },
+        { "name" : "normalTexConfig", "type": "vec4", "value":  [1.0,1.0,0.0,0.0] },
+        { "name" : "metallicTexConfig", "type": "vec4", "value":  [1.0,1.0,0.0,0.0] },
+        { "name" : "roughnessTexConfig", "type": "vec4", "value":  [1.0,1.0,0.0,0.0] },
+        { "name": "metalRoughMult", "type": "vec2", "value": [ 1.0, 1.0 ]}
+      ] 
     }
   ],
   "queue" :  ["forward"],
