@@ -144,7 +144,9 @@ void getShaderStageCreateInfo(const nlohmann::json &jobj,
     stages[id].stage = VK_SHADER_STAGE_VERTEX_BIT;
     stages[id].module = vk::SHADER_MANAGER->getShaderFromName(vsFile.c_str());
     // stages[id].pName = PSO_VS_SHADER_ENTRY_POINT;
-    if (vsFile == "forwardPhongVS" || vsFile == "skyboxVS" ||
+    if (vsFile == "forwardPhongVS" || 
+        vsFile == "skyboxVS" ||
+        vsFile == "positionColorVS" ||
         vsFile == "fullScreenQuadVS") {
       stages[id].pName = "VS";
     } else {
@@ -161,6 +163,7 @@ void getShaderStageCreateInfo(const nlohmann::json &jobj,
       stages[id].module = vk::SHADER_MANAGER->getShaderFromName(psFile.c_str());
       if (psFile == "forwardPhongPS" || psFile == "skyboxPS" ||
           psFile == "HDRtoSDREffectPS" ||
+          psFile == "basicColorPS" ||
           psFile == "gammaAndToneMappingEffectPS") {
         stages[id].pName = "PS";
       } else {
