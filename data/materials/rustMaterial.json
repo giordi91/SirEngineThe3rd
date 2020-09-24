@@ -1,13 +1,63 @@
 {
-  "kd" : [1.0,1.0,1.0,1.0],
-  "ks" : [1.0,1.0,1.0,1.0],
-  "ka" : [0.1,0.1,0.1,1.0],
-  "pbr" : [1.0,1.0,0.1,1.0],
-  "shiness":200.0,
-  "albedo" :  "../data/processed/textures/rust.texture",
-  "normal" :  "../data/processed/textures/normal.texture",
-  "roughness" :  "../data/processed/textures/roughness.texture",
-  "metallic" :  "../data/processed/textures/metallic.texture",
+  "resources": [
+    {
+      "type": "texture",
+      "bindingName": "albedoTex",
+      "resourcePath": "../data/processed/textures/rust.texture"
+    },
+    {
+      "type": "texture",
+      "bindingName": "tangentTex",
+      "resourcePath": "../data/processed/textures/normal.texture"
+    },
+    {
+      "type": "texture",
+      "bindingName": "roughnessTex",
+      "resourcePath": "../data/processed/textures/roughness.texture"
+    },
+    {
+      "type": "texture",
+      "bindingName": "metallicTex",
+      "resourcePath": "../data/processed/textures/metallic.texture"
+    },
+    {
+      "type": "mesh",
+      "bindingName": "",
+      "resourcePath": "../data/processed/meshes/pSphere1.model"
+    },
+    {
+      "type": "constantBuffer",
+      "bindingName": "materialConfig",
+      "resourcePath": "",
+      "uniformContent": [
+        {
+          "name": "albedoTexConfig",
+          "type": "vec4",
+          "value": [ 1.0, 1.0, 0.0, 0.0 ]
+        },
+        {
+          "name": "normalTexConfig",
+          "type": "vec4",
+          "value": [ 1.0, 1.0, 0.0, 0.0 ]
+        },
+        {
+          "name": "metallicTexConfig",
+          "type": "vec4",
+          "value": [ 1.0, 1.0, 0.0, 0.0 ]
+        },
+        {
+          "name": "roughnessTexConfig",
+          "type": "vec4",
+          "value": [ 1.0, 1.0, 0.0, 0.0 ]
+        },
+        {
+          "name": "metalRoughMult",
+          "type": "vec2",
+          "value": [ 1.0, 1.0 ]
+        }
+      ]
+    }
+  ],
   "queue" :  ["forward"],
   "type" : ["forwardPhongPSO"],
   "isStatic": true 
