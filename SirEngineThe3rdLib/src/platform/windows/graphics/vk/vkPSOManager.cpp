@@ -144,7 +144,8 @@ void getShaderStageCreateInfo(const nlohmann::json &jobj,
     stages[id].stage = VK_SHADER_STAGE_VERTEX_BIT;
     stages[id].module = vk::SHADER_MANAGER->getShaderFromName(vsFile.c_str());
     // stages[id].pName = PSO_VS_SHADER_ENTRY_POINT;
-    if (vsFile == "forwardPhongVS") {
+    if (vsFile == "forwardPhongVS" || vsFile == "skyboxVS" ||
+        vsFile == "fullScreenQuadVS") {
       stages[id].pName = "VS";
     } else {
       stages[id].pName = PSO_VS_SHADER_ENTRY_POINT;
@@ -158,7 +159,9 @@ void getShaderStageCreateInfo(const nlohmann::json &jobj,
       stages[id].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
       stages[id].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
       stages[id].module = vk::SHADER_MANAGER->getShaderFromName(psFile.c_str());
-      if (psFile == "forwardPhongPS") {
+      if (psFile == "forwardPhongPS" || psFile == "skyboxPS" ||
+          psFile == "HDRtoSDREffectPS" ||
+          psFile == "gammaAndToneMappingEffectPS") {
         stages[id].pName = "PS";
       } else {
         stages[id].pName = PSO_PS_SHADER_ENTRY_POINT;
@@ -537,10 +540,6 @@ VkPSOCompileResult VkPSOManager::processRasterPSO(
 
   // load root signature
   const std::string fileName = getFileName(filePath);
-  if(fileName == "forwardPhongPSO")
-  {
-	  int x=0;
-  }
 
   graphics::MaterialMetadata metadata =
       graphics::loadMetadata(filePath, GRAPHIC_API::VULKAN);
@@ -696,8 +695,8 @@ void VkPSOManager::loadRawPSOInFolder(const char *directory) {
   std::vector<std::string> paths;
   listFilesInFolder(directory, paths, "json");
   for (const auto &p : paths) {
-    if(getFileName(p) == "grassForwardPSO")continue;
-    if(getFileName(p) == "grassPlanePSO")continue;
+    if (getFileName(p) == "grassForwardPSO") continue;
+    if (getFileName(p) == "grassPlanePSO") continue;
     auto compileResult = compileRawPSO(p.c_str());
     insertInPSOCache(compileResult);
   }
