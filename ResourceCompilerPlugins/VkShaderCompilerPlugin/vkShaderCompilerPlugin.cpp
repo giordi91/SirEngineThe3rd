@@ -196,7 +196,7 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
     }
     if (shaderArgs.type == SirEngine::SHADER_TYPE::COMPUTE) {
       dxArgs.type = L"cs_6_2";
-      dxArgs.entryPoint = L"PS";
+      dxArgs.entryPoint = L"CS";
     }
 
     SirEngine::dx12::ShaderCompileResult compileResult =

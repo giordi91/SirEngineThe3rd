@@ -125,7 +125,8 @@ void getShaderStageCreateInfo(const nlohmann::json &jobj,
     stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     stages[0].stage = VK_SHADER_STAGE_COMPUTE_BIT;
     stages[0].module = vk::SHADER_MANAGER->getShaderFromName(cmpFile.c_str());
-    stages[0].pName = PSO_CS_SHADER_ENTRY_POINT;
+    //stages[0].pName = PSO_CS_SHADER_ENTRY_POINT;
+    stages[0].pName = "CS";
     stages[0].flags = 0;
 
   } else {
