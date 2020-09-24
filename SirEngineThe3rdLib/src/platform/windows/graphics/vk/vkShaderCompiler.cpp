@@ -302,6 +302,41 @@ std::string VkShaderCompiler::compileToHlsl(const char *shaderPath,
   return source;
 }
 
+std::string VkShaderCompiler::sprivToGlsl(const std::vector<unsigned int>& spirV)
+{
+  // Read SPIR-V from disk or similar.
+  spirv_cross::CompilerGLSL hlsl(spirV);
+
+  // The SPIR-V is now parsed, and we can perform reflection on it.
+  spirv_cross::ShaderResources hlslsresources = hlsl.get_shader_resources();
+
+  // Get all sampled images in the shader.
+  for (auto &resource : hlslsresources.sampled_images) {
+    unsigned set =
+        hlsl.get_decoration(resource.id, spv::DecorationDescriptorSet);
+    unsigned binding = hlsl.get_decoration(resource.id, spv::DecorationBinding);
+    printf("Image %s at set = %u, binding = %u\n", resource.name.c_str(), set,
+           binding);
+
+    // Modify the decoration to prepare it for GLSL.
+    hlsl.unset_decoration(resource.id, spv::DecorationDescriptorSet);
+
+    // Some arbitrary remapping if we want.
+    hlsl.set_decoration(resource.id, spv::DecorationBinding,
+                        set * 16 + binding);
+  }
+
+  // Set some options.
+  spirv_cross::CompilerGLSL::Options options;
+  options.vulkan_semantics = true;
+  options.version=150;
+  hlsl.set_common_options(options);
+
+  // Compile to GLSL, ready to give to GL driver.
+  std::string source = hlsl.compile();
+  return source;
+}
+
 VkShaderModule VkShaderCompiler::spirvToShaderModule(const SpirVBlob &blob) {
   VkShaderModuleCreateInfo createInfo = {
       VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO};

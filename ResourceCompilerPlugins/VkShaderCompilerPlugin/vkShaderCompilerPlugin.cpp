@@ -5,9 +5,11 @@
 #include "SirEngine/argsUtils.h"
 #include "SirEngine/binary/binaryFile.h"
 #include "SirEngine/fileUtils.h"
+#include "SirEngine/graphics/graphicsDefines.h"
 #include "SirEngine/log.h"
 #include "SirEngine/memory/cpu/stringPool.h"
 #include "cxxopts/cxxopts.hpp"
+#include "platform/windows/graphics/dx12/shaderCompiler.h"
 #include "platform/windows/graphics/vk/vkShaderCompiler.h"
 
 const std::string PLUGIN_NAME = "vkShaderCompilerPlugin";
@@ -56,12 +58,9 @@ bool processArgs(const std::string args,
   return true;
 }
 
-void compileSpirV(const std::string &assetPath, const std::string &outputPath,
-                  SirEngine::vk::VkShaderArgs &shaderArgs,
-                  SirEngine::vk::VkShaderCompiler &compiler, std::string &log) {
-  SirEngine::vk::SpirVBlob blob =
-      compiler.compileToSpirV(assetPath.c_str(), shaderArgs, &log);
-
+void blobToFile(const std::string &assetPath, const std::string &outputPath,
+                SirEngine::vk::VkShaderArgs &shaderArgs,
+                SirEngine::SpirVBlob blob) {
   // save the file by building a binary request
   BinaryFileWriteRequest request;
   request.fileType = BinaryFileType::SHADER;
@@ -112,7 +111,8 @@ void compileSpirV(const std::string &assetPath, const std::string &outputPath,
   bulkDataPtr += dataToWriteSizeInByte;
 
   // write down the entry point
-  dataToWriteSizeInByte = static_cast<int>((entryPoint.size() + 1) * sizeof(char));
+  dataToWriteSizeInByte =
+      static_cast<int>((entryPoint.size() + 1) * sizeof(char));
   mapperData.entryPointInByte = dataToWriteSizeInByte;
   memcpy(bulkDataPtr, entryPoint.data(), dataToWriteSizeInByte);
   bulkDataPtr += dataToWriteSizeInByte;
@@ -174,18 +174,48 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
                   PLUGIN_NAME);
   }
 
-  SirEngine::vk::VkShaderCompiler compiler;
-  std::string log;
-  std::string ext = getFileExtension(outputPath);
+  std::string ext = getFileExtension(assetPath);
+  SirEngine::SpirVBlob blob;
   if (ext != ".hlsl") {
-    compileSpirV(assetPath, outputPath, shaderArgs, compiler, log);
+    // compileSpirV(assetPath, outputPath, shaderArgs, compiler, log);
+    SirEngine::vk::VkShaderCompiler compiler;
+    std::string log;
+    blob = compiler.compileToSpirV(assetPath.c_str(), shaderArgs, &log);
+
   } else {
-    std::string hlslSource =
-        compiler.compileToHlsl(assetPath.c_str(), shaderArgs, &log);
-    std::ofstream out(outputPath);
-    out << hlslSource;
-    out.close();
+    SirEngine::dx12::DXCShaderCompiler compiler;
+    SirEngine::dx12::ShaderArgs dxArgs;
+    dxArgs.debug = shaderArgs.debug;
+    if (shaderArgs.type == SirEngine::SHADER_TYPE::VERTEX) {
+      dxArgs.type = L"vs_6_2";
+      dxArgs.entryPoint = L"VS";
+    }
+    if (shaderArgs.type == SirEngine::SHADER_TYPE::FRAGMENT) {
+      dxArgs.type = L"ps_6_2";
+      dxArgs.entryPoint = L"PS";
+    }
+    if (shaderArgs.type == SirEngine::SHADER_TYPE::COMPUTE) {
+      dxArgs.type = L"cs_6_2";
+      dxArgs.entryPoint = L"PS";
+    }
+
+    SirEngine::dx12::ShaderCompileResult compileResult =
+        compiler.toSpirv(assetPath.c_str(), dxArgs);
+
+    auto size = compileResult.blob->GetBufferSize();
+    auto ptr = compileResult.blob->GetBufferPointer();
+    void *mem = SirEngine::globals::FRAME_ALLOCATOR->allocate(size);
+    memcpy(mem, ptr, size);
+    blob = {mem, static_cast<uint32_t>(size)};
+
+    std::vector<unsigned int> spirV;
+    spirV.resize(blob.sizeInByte / 4);
+    memcpy(spirV.data(), blob.memory, blob.sizeInByte);
+    SirEngine::vk::VkShaderCompiler compilerVk;
+    std::string res = compilerVk.sprivToGlsl(spirV);
+    std::cout<<res<<std::endl;
   }
+  blobToFile(assetPath, outputPath, shaderArgs, blob);
 
   SE_CORE_INFO("Shader successfully compiled ---> {0}", outputPath);
   return true;

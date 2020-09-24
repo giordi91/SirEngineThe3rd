@@ -89,9 +89,10 @@ class Camera3DPivot final : public CameraController {
           glm::transpose(getViewInverse(glm::mat4(1.0)));
       m_cameraBuffer.VPinverse = glm::transpose(getMVPInverse(glm::mat4(1.0)));
     } else {
-      m_cameraBuffer.MVP = getMVP(glm::mat4(1.0));
-      m_cameraBuffer.ViewMatrix = getViewInverse(glm::mat4(1.0));
-      m_cameraBuffer.VPinverse = getMVPInverse(glm::mat4(1.0));
+      m_cameraBuffer.MVP = glm::transpose(getMVP(glm::mat4(1.0)));
+      m_cameraBuffer.ViewMatrix =
+          glm::transpose(getViewInverse(glm::mat4(1.0)));
+      m_cameraBuffer.VPinverse = glm::transpose(getMVPInverse(glm::mat4(1.0)));
     }
 
     getFrustum(m_cameraBuffer.frustum);
