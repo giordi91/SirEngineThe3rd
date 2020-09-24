@@ -18,8 +18,8 @@ LPCWSTR COMPILATION_FLAGS_DEBUG[] = {L"/Zi", L"/Od", L"-enable-16bit-types"};
 LPCWSTR COMPILATION_FLAGS[] = {L"/O3", L"-enable-16bit-types"};
 
 LPCWSTR COMPILATION_FLAGS_DEBUG_SPIRV[] = {L"/Zi", L"/Od",
-                                           L"-enable-16bit-types", L"-spirv"};
-LPCWSTR COMPILATION_FLAGS_SPIRV[] = {L"/O3", L"-enable-16bit-types", L"-spirv"};
+                                           L"-enable-16bit-types", L"-spirv",L"-fspv-target-env=vulkan1.1"};
+LPCWSTR COMPILATION_FLAGS_SPIRV[] = {L"/O3", L"-enable-16bit-types", L"-spirv",L"-fspv-target-env=vulkan1.1"};
 
 DXCShaderCompiler::DXCShaderCompiler() {
   // lets create an instance of the compiler
