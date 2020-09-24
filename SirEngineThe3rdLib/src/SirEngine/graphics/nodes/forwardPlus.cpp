@@ -5,6 +5,7 @@
 #include "SirEngine/graphics/lightManager.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/textureManager.h"
+#include "SirEngine/engineConfig.h"
 
 namespace SirEngine {
 

@@ -11,9 +11,7 @@
 #include "SirEngine/globals.h"
 #include "SirEngine/log.h"
 #include "SirEngine/memory/cpu/stackAllocator.h"
-#include "SirEngine/runtimeString.h"
 #include "platform/windows/graphics/dx12/shaderCompiler.h"
-#include "platform/windows/graphics/vk/vkShaderCompiler.h"
 
 namespace SirEngine::graphics {
 

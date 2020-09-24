@@ -6,6 +6,7 @@
 #include "imgui/imgui.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/dx12ShaderManager.h"
+#include "SirEngine/engineConfig.h"
 
 namespace SirEngine::debug {
 

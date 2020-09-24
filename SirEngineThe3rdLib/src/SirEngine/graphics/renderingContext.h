@@ -1,7 +1,6 @@
 #pragma once
 #include <glm/mat4x4.hpp>
 
-#include "SirEngine/engineConfig.h"
 #include "SirEngine/graphics/cpuGraphicsStructures.h"
 #include "SirEngine/handle.h"
 #include "SirEngine/graphics/graphicsDefines.h"

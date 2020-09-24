@@ -6,6 +6,7 @@
 #include "SirEngine/materialManager.h"
 #include "SirEngine/psoManager.h"
 #include "SirEngine/rootSignatureManager.h"
+#include "SirEngine/engineConfig.h"
 
 namespace SirEngine {
 

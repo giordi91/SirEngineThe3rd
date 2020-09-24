@@ -15,6 +15,7 @@
 #include "nlohmann/json.hpp"
 #include "platform/windows/graphics/dx12/dx12RootSignatureManager.h"
 #include "platform/windows/graphics/dx12/dx12ShaderManager.h"
+#include "SirEngine/engineConfig.h"
 
 namespace SirEngine::dx12 {
 

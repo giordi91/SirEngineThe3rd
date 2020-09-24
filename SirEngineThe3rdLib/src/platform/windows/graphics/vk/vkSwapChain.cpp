@@ -1,5 +1,6 @@
 #include "platform/windows/graphics/vk/vkSwapChain.h"
 #include "SirEngine/globals.h"
+#include "SirEngine/engineConfig.h"
 #include "SirEngine/log.h"
 #include "platform/windows/graphics/vk/vk.h"
 #include "platform/windows/graphics/vk/vkLoad.h"

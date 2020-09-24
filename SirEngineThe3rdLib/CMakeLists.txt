@@ -47,8 +47,6 @@ project(SirEngineThe3rdLib)
 						${CMAKE_SOURCE_DIR}/vendors/gli
 	)
 
-	#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /experimental:external  /external:I ${CMAKE_SOURCE_DIR}/vendors/glm /external:W0"  )
-
 	ENABLE_SYSTEM_HEADERS()
 	ADD_EXTERNAL_HEADER(${CMAKE_SOURCE_DIR}/vendors/glm)
 	ADD_EXTERNAL_HEADER(${CMAKE_SOURCE_DIR}/vendors/gli)
@@ -65,7 +63,7 @@ project(SirEngineThe3rdLib)
 	#lets add specific windows build definitions
 	if (WIN32)
 		#TODO add D3DX12_NO_STATE_OBJECT_HELPERS
-		add_compile_definitions(NO_MIN_MAX _CRT_NONSTDC_NO_DEPRECATE )
+		add_compile_definitions(NO_MIN_MAX _CRT_NONSTDC_NO_DEPRECATE WIN32_LEAN_AND_MEAN  )
 		if(${BUILD_AMD})
 			add_compile_definitions(BUILD_AMD SE_PLATFORM_WINDOWS SE_BUILD_DLL _CRT_SECURE_NO_WARNINGS _UNICODE QUIT_ESCAPE GRAPHICS_API=DX12)
 		else(${BUILD_AMD})
