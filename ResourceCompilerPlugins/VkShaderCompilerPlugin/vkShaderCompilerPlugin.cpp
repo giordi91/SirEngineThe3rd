@@ -213,7 +213,7 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
     memcpy(spirV.data(), blob.memory, blob.sizeInByte);
     SirEngine::vk::VkShaderCompiler compilerVk;
     std::string res = compilerVk.sprivToGlsl(spirV);
-    std::cout<<res<<std::endl;
+    //std::cout<<res<<std::endl;
   }
   blobToFile(assetPath, outputPath, shaderArgs, blob);
 

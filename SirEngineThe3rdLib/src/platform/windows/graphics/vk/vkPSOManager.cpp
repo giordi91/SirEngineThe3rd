@@ -144,9 +144,8 @@ void getShaderStageCreateInfo(const nlohmann::json &jobj,
     stages[id].stage = VK_SHADER_STAGE_VERTEX_BIT;
     stages[id].module = vk::SHADER_MANAGER->getShaderFromName(vsFile.c_str());
     // stages[id].pName = PSO_VS_SHADER_ENTRY_POINT;
-    if (vsFile == "forwardPhongVS" || 
-        vsFile == "skyboxVS" ||
-        vsFile == "positionColorVS" ||
+    if (vsFile == "forwardPhongVS" || vsFile == "skyboxVS" ||
+        vsFile == "positionColorVS" || vsFile == "grassPlaneVS" ||
         vsFile == "fullScreenQuadVS") {
       stages[id].pName = "VS";
     } else {
@@ -162,9 +161,8 @@ void getShaderStageCreateInfo(const nlohmann::json &jobj,
       stages[id].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
       stages[id].module = vk::SHADER_MANAGER->getShaderFromName(psFile.c_str());
       if (psFile == "forwardPhongPS" || psFile == "skyboxPS" ||
-          psFile == "HDRtoSDREffectPS" ||
-          psFile == "basicColorPS" ||
-          psFile == "gammaAndToneMappingEffectPS") {
+          psFile == "HDRtoSDREffectPS" || psFile == "basicColorPS" ||
+          psFile == "grassPlanePS" || psFile == "gammaAndToneMappingEffectPS") {
         stages[id].pName = "PS";
       } else {
         stages[id].pName = PSO_PS_SHADER_ENTRY_POINT;
@@ -699,7 +697,6 @@ void VkPSOManager::loadRawPSOInFolder(const char *directory) {
   listFilesInFolder(directory, paths, "json");
   for (const auto &p : paths) {
     if (getFileName(p) == "grassForwardPSO") continue;
-    if (getFileName(p) == "grassPlanePSO") continue;
     auto compileResult = compileRawPSO(p.c_str());
     insertInPSOCache(compileResult);
   }
