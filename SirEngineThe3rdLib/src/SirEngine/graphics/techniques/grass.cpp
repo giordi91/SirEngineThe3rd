@@ -261,7 +261,6 @@ void GrassTechnique::passRender(const uint32_t id,
   }
   tileDebug();
 
-  /*
   globals::CONSTANT_BUFFER_MANAGER->update(m_grassConfigHandle, &m_grassConfig);
 
   for (int i = 0; i < 4; ++i) {
@@ -293,7 +292,6 @@ void GrassTechnique::passRender(const uint32_t id,
     globals::RENDERING_CONTEXT->renderProceduralIndirect(m_outTiles,
                                                          i * sizeof(int) * 4);
   }
-  */
 
   renderGroundPlane(passHandle);
 }
