@@ -2,10 +2,10 @@
 
 #include "SirEngine/binary/binaryFile.h"
 #include "SirEngine/fileUtils.h"
+#include "SirEngine/graphics/materialMetadata.h"
 #include "SirEngine/log.h"
 #include "SirEngine/materialManager.h"
 #include "platform/windows/graphics/vk/vkBindingTableManager.h"
-#include "SirEngine/graphics/materialMetadata.h"
 
 namespace SirEngine::vk {
 
@@ -176,6 +176,35 @@ void createPerFrameDataDescriptorSet(VkDescriptorSetLayout &layout) {
 }
 
 void createStaticSamplerDescriptorSet() {
+  // new
+  VkDescriptorSetLayoutBinding resourceBinding[STATIC_SAMPLER_COUNT] = {};
+  for (int i = 0; i < STATIC_SAMPLERS_COUNT; ++i) {
+    resourceBinding[i].binding = i;
+    resourceBinding[i].descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+    resourceBinding[i].descriptorCount = 1;
+    resourceBinding[i].stageFlags =
+        VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT;
+  resourceBinding[i].pImmutableSamplers = &STATIC_SAMPLERS[i];
+  }
+  VkDescriptorSetLayoutCreateInfo resourceLayoutInfo[1] = {};
+  resourceLayoutInfo[0].sType =
+      VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+  resourceLayoutInfo[0].pNext = nullptr;
+  resourceLayoutInfo[0].bindingCount = STATIC_SAMPLERS_COUNT;
+  resourceLayoutInfo[0].pBindings = resourceBinding;
+
+  VK_CHECK(vkCreateDescriptorSetLayout(vk::LOGICAL_DEVICE, resourceLayoutInfo,
+                                       NULL, &STATIC_SAMPLERS_LAYOUT));
+  SET_DEBUG_NAME(STATIC_SAMPLERS_LAYOUT, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT,
+                 "staticSamplersDescriptorSetLayout");
+
+  STATIC_SAMPLERS_HANDLE = vk::DESCRIPTOR_MANAGER->allocate(
+      STATIC_SAMPLERS_LAYOUT,
+      graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_NONE, "staticSamplers");
+  STATIC_SAMPLERS_DESCRIPTOR_SET =
+      vk::DESCRIPTOR_MANAGER->getDescriptorSet(STATIC_SAMPLERS_HANDLE);
+
+  /*
   // here we are are creating the layout, but we are using static samplers
   // so we are passing immutable samplers directly in the layout that
   // gets built in the graphics pipeline
@@ -185,7 +214,7 @@ void createStaticSamplerDescriptorSet() {
   resourceBinding[0].descriptorCount = STATIC_SAMPLER_COUNT;
   resourceBinding[0].stageFlags =
       VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT;
-  resourceBinding[0].pImmutableSamplers = STATIC_SAMPLERS;
+  //resourceBinding[0].pImmutableSamplers = STATIC_SAMPLERS;
 
   VkDescriptorSetLayoutCreateInfo resourceLayoutInfo[1] = {};
   resourceLayoutInfo[0].sType =
@@ -204,6 +233,7 @@ void createStaticSamplerDescriptorSet() {
       graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_NONE, "staticSamplers");
   STATIC_SAMPLERS_DESCRIPTOR_SET =
       vk::DESCRIPTOR_MANAGER->getDescriptorSet(STATIC_SAMPLERS_HANDLE);
+      */
 }
 
 void destroyStaticSamplers() {

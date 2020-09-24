@@ -2,7 +2,6 @@
 
 #include "SirEngine/graphics/graphicsDefines.h"
 #include "SirEngine/handle.h"
-
 #include "memory/cpu/stringHashMap.h"
 
 namespace SirEngine {
@@ -47,7 +46,7 @@ class TextureManager {
       const char *name, TEXTURE_ALLOCATION_FLAGS allocFlags,
       RESOURCE_STATE finalState = RESOURCE_STATE::RENDER_TARGET) = 0;
 
-  virtual TextureHandle getWhiteTexture() const = 0;
+  [[nodiscard]] virtual TextureHandle getWhiteTexture() const = 0;
 
   inline TextureHandle getHandleFromName(const char *name) const {
     TextureHandle handle{};

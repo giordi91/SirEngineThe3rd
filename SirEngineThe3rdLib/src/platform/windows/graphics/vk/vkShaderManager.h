@@ -11,7 +11,6 @@
 
 namespace SirEngine::vk {
 struct VkShaderArgs;
-struct SpirVBlob;
 
 class VkShaderCompiler;
 

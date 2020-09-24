@@ -3,12 +3,9 @@
 #include "SirEngine/graphics/graphicsDefines.h"
 #include "vulkan/vulkan.h"
 #include <string>
+#include <vector>
 
 namespace SirEngine::vk {
-struct SIR_ENGINE_API SpirVBlob {
-  void *memory = nullptr;
-  uint32_t sizeInByte = 0;
-};
 
 struct SIR_ENGINE_API VkShaderArgs {
   bool debug = false;
@@ -23,6 +20,7 @@ public:
                            std::string *log) const;
   std::string compileToHlsl(const char *shaderPath, VkShaderArgs &shaderArgs,
                            std::string *log) const;
+  std::string sprivToGlsl(const std::vector<unsigned int>& spirV);
   static VkShaderModule spirvToShaderModule(const SpirVBlob& blob);
   VkShaderModule compileToShaderModule(const char *shaderPath,
                                        VkShaderArgs &shaderArgs,

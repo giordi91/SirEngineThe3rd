@@ -1,7 +1,15 @@
 {
   "commands": [
+    "-p ../data/shaders/DX12/rasterization/forwardPhongPS.hlsl -o ../data/processed/shaders/DX12/rasterization/forwardPhongPS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t ps_6_2  -e PS -d \"",
+    "-p ../data/shaders/DX12/rasterization/forwardPhongVS.hlsl -o ../data/processed/shaders/DX12/rasterization/forwardPhongVS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t vs_6_2  -e VS -d \"",
+    "-p ../data/shaders/DX12/rasterization/forwardPhongPS.hlsl -o ../data/processed/shaders/VK/rasterization/forwardPhongPS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d\"",
+    "-p ../data/shaders/DX12/rasterization/forwardPhongVS.hlsl -o ../data/processed/shaders/VK/rasterization/forwardPhongVS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d\"",
+    "-p ../data/shaders/DX12/rasterization/skyboxPS.hlsl -o ../data/processed/shaders/VK/rasterization/skyboxPS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d\"",
+    "-p ../data/shaders/DX12/rasterization/skyboxVS.hlsl -o ../data/processed/shaders/VK/rasterization/skyboxVS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d\"",
     "-p ../data/pso/forwardPhongPSO.json -o ../data/processed/pso/DX12/forwardPhongPSO.metadata --pluginName PSOCompilerPlugin --pluginArgs \"-t DX12 -s ../data/shaders/DX12\"",
-    "-p ../data/pso/forwardPhongPSO.json -o ../data/processed/pso/VK/forwardPhongPSO.metadata --pluginName PSOCompilerPlugin --pluginArgs \"-t DX12 -s ../data/shaders/DX12\""
+    "-p ../data/pso/forwardPhongPSO.json -o ../data/processed/pso/VK/forwardPhongPSO.metadata --pluginName PSOCompilerPlugin --pluginArgs \"-t DX12 -s ../data/shaders/DX12\"",
+    "-p ../data/shaders/VK/rasterization/gammaAndToneMappingEffectPS.glsl -o ../data/processed/shaders/VK/rasterization/gammaAndToneMappingEffectPS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d \"",
+    "-p ../data/shaders/VK/rasterization/HDRtoSDREffectPS.glsl -o ../data/processed/shaders/VK/rasterization/HDRtoSDREffectPS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d \"",
   ],
   "commands-full": [
     "-p ../data/meshes/pSphere1.obj -o ../data/processed/meshes/pSphere1.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/meshes/pSphere1.tangents\"",
