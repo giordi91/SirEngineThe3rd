@@ -10,7 +10,7 @@ Texture2D albedoTex : register(t4, space3);
 Texture2D tangentTex : register(t5, space3);
 Texture2D metallicTex : register(t6, space3);
 Texture2D roughnessTex : register(t7, space3);
-ConstantBuffer<ForwardPBRMaterial> material : register(b8,space3);
+ConstantBuffer<ForwardPBRMaterial> materialConfig : register(b8,space3);
 
 TextureCube skyboxIrradianceTexture : register(t1, space2);
 TextureCube skyboxRadianceTexture : register(t2, space2);

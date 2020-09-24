@@ -93,9 +93,20 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
     return false;
   }
 
+  // check output path if we need to create a spirv
+  bool toSpirv = false;
+  if (outputPath.find(".spv.glsl") != std::string::npos) {
+    toSpirv = true;
+  }
+
   SirEngine::dx12::DXCShaderCompiler compiler;
-  SirEngine::dx12::ShaderCompileResult compileResult =
-      compiler.compileShader(assetPath.c_str(), shaderArgs);
+  SirEngine::dx12::ShaderCompileResult compileResult;
+
+  if (!toSpirv) {
+    compileResult = compiler.compileShader(assetPath.c_str(), shaderArgs);
+  } else {
+    compileResult = compiler.toSpirv(assetPath.c_str(), shaderArgs);
+  }
   if (compileResult.blob == nullptr) {
     SE_CORE_ERROR("failed to compile shader {0}", assetPath);
     return false;

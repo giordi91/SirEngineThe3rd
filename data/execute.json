@@ -1,5 +1,9 @@
 {
   "commands": [
+    "-p ../data/pso/forwardPhongPSO.json -o ../data/processed/pso/DX12/forwardPhongPSO.metadata --pluginName PSOCompilerPlugin --pluginArgs \"-t DX12 -s ../data/shaders/DX12\"",
+    "-p ../data/pso/forwardPhongPSO.json -o ../data/processed/pso/VK/forwardPhongPSO.metadata --pluginName PSOCompilerPlugin --pluginArgs \"-t DX12 -s ../data/shaders/DX12\""
+  ],
+  "commands-full": [
     "-p ../data/meshes/pSphere1.obj -o ../data/processed/meshes/pSphere1.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/meshes/pSphere1.tangents\"",
     "-p ../data/external/meshes/knightB/jacket.obj -o ../data/processed/meshes/knightB/jacket.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/jacket.tangents --skin ../data/external/animation/exported/skin/knightBJacketSkin.json\"",
     "-p ../data/external/meshes/knightB/pants.obj -o ../data/processed/meshes/knightB/pants.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/pants.tangents --skin ../data/external/animation/exported/skin/knightBPantsSkin.json\"",
@@ -14,8 +18,7 @@
     "-p ../data/external/meshes/knightB/eyeNew.obj -o ../data/processed/meshes/knightB/eyeNew.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/eyeNew.tangents --skin ../data/external/animation/exported/skin/knightBEyeSkin.json\"",
     "-p ../data/external/meshes/knightB/hair.obj -o ../data/processed/meshes/knightB/hair.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/hair.tangents --skin ../data/external/animation/exported/skin/knightBHairSkin.json\"",
 
-    "-p ../data/pso -o ../data/processed/pso --pluginName PSOCompilerPlugin --pluginArgs \"-t VK -a -s ../data/shaders/VK\"",
-    "-p ../data/pso -o ../data/processed/pso --pluginName PSOCompilerPlugin --pluginArgs \"-t DX12 -a -s ../data/shaders/VK\"",
+    "-p ../data/pso -o ../data/processed/pso --pluginName PSOCompilerPlugin --pluginArgs \"-t DX12 -a -s ../data/shaders/DX12\"",
 
     "-p ../data/shaders/VK/rasterization/push.glsl -o ../data/processed/shaders/VK/rasterization/push.spv.hlsl --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \"",
     "-p ../data/shaders/VK/rasterization/grassExpansionVS.glsl -o ../data/processed/shaders/VK/rasterization/grassExpansionVS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \"",
@@ -65,6 +68,8 @@
 
   ],
   "comment": [
+    "-p ../data/pso -o ../data/processed/pso --pluginName PSOCompilerPlugin --pluginArgs \"-t VK -a -s ../data/shaders/VK\"",
+    "-p ../data/pso -o ../data/processed/pso --pluginName PSOCompilerPlugin --pluginArgs \"-t DX12 -a -s ../data/shaders/VK\"",
     "-p ../data/external/meshes/trees/tree01/tree01Branches.obj -o ../data/processed/meshes/trees/tree01/tree01Branches.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/trees/tree01/tree01Branches.tangents \"",
     "-p ../data/external/meshes/trees/tree01/tree01Leaves.obj -o ../data/processed/meshes/trees/tree01/tree01Leaves.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/trees/tree01/tree01Leaves.tangents \"",
 
