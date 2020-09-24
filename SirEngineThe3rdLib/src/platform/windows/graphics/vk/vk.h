@@ -1,5 +1,4 @@
 #pragma once
-#include <vulkan/vulkan.h>
 
 
 #include "platform/windows/graphics/vk/volk.h"
@@ -108,9 +107,6 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
     assert(result_ == VK_SUCCESS); \
   } while (0)
 
-#ifndef ARRAYSIZE
-#define ARRAYSIZE(array) sizeof(array) / sizeof(array[0]);
-#endif
 
 #if _DEBUG
 #define SET_DEBUG_NAME(resource, type, name)                                 \

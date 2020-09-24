@@ -2,6 +2,7 @@
 
 #include "SirEngine/graphics/debugRenderer.h"
 #include "SirEngine/graphics/renderingContext.h"
+#include "SirEngine/engineConfig.h"
 #include "SirEngine/handle.h"
 
 namespace SirEngine {
