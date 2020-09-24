@@ -2,6 +2,7 @@
 
 #include <SPIRV-CROSS/spirv_cross.hpp>
 #include <cassert>
+#include <regex>
 #include <string>
 #include <unordered_map>
 
@@ -11,6 +12,7 @@
 #include "SirEngine/log.h"
 #include "SirEngine/memory/cpu/stackAllocator.h"
 #include "SirEngine/runtimeString.h"
+#include "platform/windows/graphics/dx12/shaderCompiler.h"
 #include "platform/windows/graphics/vk/vkShaderCompiler.h"
 
 namespace SirEngine::graphics {
@@ -33,6 +35,8 @@ static const std::string PSO_TYPE_COMPUTE = "COMPUTE";
 // future
 static const std::string RASTERIZATION_PATH =
     "../data/shaders/VK/rasterization/";
+static const std::string RASTERIZATION_PATH_HLSL =
+    "../data/shaders/DX12/rasterization/";
 static const std::string COMPUTE_PATH = "../data/shaders/VK/compute/";
 static const std::string GLSL_EXTENSION = ".glsl";
 static const std::string VULKAN_PROCESSED_PSO_PATH =
@@ -145,8 +149,11 @@ MaterialMetadataUniform extractUniformBufferOffset(
   const spirv_cross::SPIRType &type = comp.get_type(uniform.type_id);
 
   // here should be the outer block, we want to go to the inner type;
-  spirv_cross::SPIRType strType = comp.get_type(type.member_types[0]);
-  const std::string &strName = comp.get_name(type.member_types[0]);
+  // spirv_cross::SPIRType strType = comp.get_type(type.member_types[0]);
+  spirv_cross::SPIRType strType = type;
+  // const std::string &strName = comp.get_name(type.member_types[0]);
+  const std::string &strName = comp.get_name(uniform.id);
+
 
   auto count = static_cast<uint32_t>(strType.member_types.size());
 
@@ -181,9 +188,12 @@ MaterialMetadataUniform extractUniformBufferOffset(
   MaterialMetadataUniform toReturn{};
   toReturn.members = outStructMember;
   toReturn.membersCount = static_cast<uint32_t>(count);
-  assert(strName.size() <= 31);
-  memcpy(&toReturn.name[0], strName.c_str(), strName.size());
-  toReturn.name[strName.size()] = '\0';
+
+  std::string name = strName;
+  //    std::regex_replace(strName, std::regex("type.ConstantBuffer."), "");
+  //assert(name.size() <= 31);
+  memcpy(&toReturn.name[0], name.c_str(), name.size());
+  toReturn.name[name.size()] = '\0';
   toReturn.structSize = static_cast<uint32_t>(structSize);
   return toReturn;
 }
@@ -209,14 +219,33 @@ MaterialMetadata extractMetadataFromShader(const char *shaderName,
   }
   assert(visibility && "wrong visibility found for shader type");
 
+  SirEngine::dx12::DXCShaderCompiler compiler;
+  SirEngine::dx12::ShaderCompileResult compileResult;
+  /*
   vk::VkShaderCompiler vkCompiler;
+  */
   std::string log;
-  vk::VkShaderArgs args{true, type};
-  vk::SpirVBlob blob = vkCompiler.compileToSpirV(shaderName, args, &log);
+  dx12::ShaderArgs args;
+  args.debug = true;
+  if (type == SHADER_TYPE::VERTEX) {
+    args.type = L"vs_6_2";
+    args.entryPoint = L"VS";
+  }
+  if (type == SHADER_TYPE::FRAGMENT) {
+    args.type = L"ps_6_2";
+    args.entryPoint = L"PS";
+  }
+  if (type == SHADER_TYPE::COMPUTE) {
+    args.type = L"cs_6_2";
+    args.entryPoint = L"CS";
+  }
+  dx12::ShaderCompileResult result = compiler.toSpirv(shaderName, args);
+  auto blob = result.blob;
+  auto sizeInByte = blob->GetBufferSize();
 
   std::vector<unsigned int> spirV;
-  spirV.resize(blob.sizeInByte / 4);
-  memcpy(spirV.data(), blob.memory, blob.sizeInByte);
+  spirV.resize(sizeInByte / 4);
+  memcpy(spirV.data(), blob->GetBufferPointer(), sizeInByte);
   spirv_cross::Compiler comp(spirV);
 
   spirv_cross::ShaderResources res = comp.get_shader_resources();
@@ -284,6 +313,8 @@ MaterialMetadata extractMetadataFromShader(const char *shaderName,
     // we need to extract the offset of the datatype
     MaterialMetadataUniform uniformMetadata =
         extractUniformBufferOffset(comp, uniform, set);
+    auto a = comp.get_name(uniform.base_type_id);
+    std::string name = comp.get_name(uniform.id);
 
     memory[counter] = {{},
                        uniformMetadata,
@@ -292,9 +323,12 @@ MaterialMetadata extractMetadataFromShader(const char *shaderName,
                        MATERIAL_RESOURCE_FLAGS::NONE,
                        set,
                        binding};
-    assert(uniform.name.size() <= 31);
-    memcpy(memory[counter].name, uniform.name.c_str(), uniform.name.size());
-    memory[counter].name[uniform.name.size()] = '\0';
+
+    // std::string name = std::regex_replace(
+    //    uniform.name, std::regex("type.ConstantBuffer."), "");
+    assert(name.size() <= 31);
+    memcpy(memory[counter].name, name.c_str(), name.size());
+    memory[counter].name[name.size()] = '\0';
     counter += 1;
   }
   return {memory, nullptr, nullptr, static_cast<uint32_t>(totalCount), 0, 0};
@@ -418,6 +452,110 @@ MaterialMeshBinding validateMeshData(const char *name,
   }
   return {slots[0], static_cast<MESH_ATTRIBUTE_FLAGS>(outFlags)};
 }
+MaterialMetadata processRasterMetadata2(const char *path,
+                                        const nlohmann::json &jobj) {
+  assertInJson(jobj, PSO_VS_KEY);
+
+  const std::string &vsName =
+      getValueIfInJson(jobj, PSO_VS_KEY, DEFAULT_STRING);
+  const std::string &psName =
+      getValueIfInJson(jobj, PSO_PS_KEY, DEFAULT_STRING);
+
+  // Not ideal to concatenate strings like that but, this is for offline
+  // processing so I am not worrying too much about it
+  const std::string vsPath = RASTERIZATION_PATH_HLSL + vsName + ".hlsl";
+  assert(fileExists(vsPath));
+  MaterialMetadata vsMeta =
+      extractMetadataFromShader(vsPath.c_str(), SHADER_TYPE::VERTEX);
+
+  MaterialMetadata psMeta = {};
+  // Fragment shader might be empty, this is the case because fragment might be
+  // optional in some shaders like shadow mapping, where not having fragment
+  // shader allows the card to go to the fast path
+  if (!psName.empty()) {
+    const std::string psPath = RASTERIZATION_PATH_HLSL + psName + ".hlsl";
+    assert(fileExists(psPath));
+    psMeta = extractMetadataFromShader(psPath.c_str(), SHADER_TYPE::FRAGMENT);
+  }
+
+  // we want to merge both vertex and fragment shader data and remove duplicates
+  MaterialResource space0[16];
+  MaterialResource space2[16];
+  MaterialResource space3[32];
+  MaterialResource *resources[4] = {&space0[0], nullptr, &space2[0],
+                                    &space3[0]};
+  int counters[4] = {0, 0, 0, 0};
+  int maxCounters[4] = {16, 0, 16, 32};
+  for (uint32_t i = 0; i < vsMeta.objectResourceCount; ++i) {
+    MaterialResource &res = vsMeta.objectResources[i];
+    resources[res.set][counters[res.set]++] = res;
+    assert(counters[res.set] < maxCounters[res.set]);
+  }
+  // merging in ps
+  if (!psName.empty()) {
+    for (uint32_t i = 0; i < psMeta.objectResourceCount; ++i) {
+      MaterialResource &res = psMeta.objectResources[i];
+      // check if is unique
+      int currCounter = counters[res.set];
+      bool skip = false;
+      for (int bindIdx = 0; bindIdx < currCounter; ++bindIdx) {
+        auto &currRes = resources[res.set][bindIdx];
+        if (currRes.set == res.set && currRes.binding == res.binding) {
+          skip = true;
+          currRes.visibility |= GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT;
+          break;
+        }
+      }
+      if (skip) {
+        // we don't extract metadata for materials constant buffer which are not
+        // on a per object space
+        if (res.type == MATERIAL_RESOURCE_TYPE::CONSTANT_BUFFER) {
+          // free the unused uniform metadata
+          globals::PERSISTENT_ALLOCATOR->free(res.extension.uniform.members);
+        }
+        continue;
+      }
+      resources[res.set][counters[res.set]++] = res;
+      assert(counters[res.set] < maxCounters[res.set]);
+    }
+  }
+  std::sort(space0, space0 + counters[0],
+            [](const MaterialResource &lhs, const MaterialResource &rhs) {
+              return lhs.binding < rhs.binding;
+            });
+  std::sort(space2, space2 + counters[2],
+            [](const MaterialResource &lhs, const MaterialResource &rhs) {
+              return lhs.binding < rhs.binding;
+            });
+  std::sort(space3, space3 + counters[3],
+            [](const MaterialResource &lhs, const MaterialResource &rhs) {
+              return lhs.binding < rhs.binding;
+            });
+
+  MaterialMeshBinding meshBinding = validateMeshData(path, space3, counters[3]);
+
+  MaterialMetadata toReturn{};
+  toReturn.meshBinding = meshBinding;
+  toReturn.frameResources =
+      static_cast<MaterialResource *>(globals::PERSISTENT_ALLOCATOR->allocate(
+          sizeof(MaterialResource) * counters[0]));
+  toReturn.frameResourceCount = counters[0];
+  toReturn.passResources =
+      static_cast<MaterialResource *>(globals::PERSISTENT_ALLOCATOR->allocate(
+          sizeof(MaterialResource) * counters[2]));
+  toReturn.passResourceCount = counters[2];
+  toReturn.objectResources =
+      static_cast<MaterialResource *>(globals::PERSISTENT_ALLOCATOR->allocate(
+          sizeof(MaterialResource) * counters[3]));
+  toReturn.objectResourceCount = counters[3];
+  memcpy(toReturn.frameResources, space0,
+         sizeof(MaterialResource) * counters[0]);
+  memcpy(toReturn.passResources, space2,
+         sizeof(MaterialResource) * counters[2]);
+  memcpy(toReturn.objectResources, space3,
+         sizeof(MaterialResource) * counters[3]);
+  return toReturn;
+}
 
 MaterialMetadata processRasterMetadata(const char *path,
                                        const nlohmann::json &jobj) {
@@ -530,7 +668,7 @@ MaterialMetadata extractMetadataFromPSO(const char *psoPath) {
 
   const std::string &psoType = jobj[PSO_TYPE_KEY].get<std::string>();
   if (psoType == PSO_TYPE_RASTER) {
-    return processRasterMetadata(psoPath, jobj);
+    return processRasterMetadata2(psoPath, jobj);
   }
   return processComputeMetadata(jobj);
 }

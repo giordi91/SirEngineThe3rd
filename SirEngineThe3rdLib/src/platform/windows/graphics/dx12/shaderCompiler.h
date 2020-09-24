@@ -39,6 +39,8 @@ class SIR_ENGINE_API DXCShaderCompiler {
   ~DXCShaderCompiler();
   ShaderCompileResult compileShader(const char *shaderPath,
                                     ShaderArgs &shaderArgs);
+  ShaderCompileResult toSpirv(const char *shaderPath,
+                                    ShaderArgs &shaderArgs);
   unsigned int getShaderFlags(const ShaderArgs &shaderArgs);
 
  private:

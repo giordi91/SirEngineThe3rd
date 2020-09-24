@@ -164,23 +164,6 @@ return true;
 }
 */
 
-bool compileDx12(const std::string &assetPath, const std::string &outputPath,
-                 std::string target, std::string shaderPath) {
-  // get files in folder and process them
-  const std::string graphicsDirectory = "/" + target + "/";
-
-  std::vector<std::string> filePaths;
-  listFilesInFolder(assetPath.c_str(), filePaths, "json");
-  for (auto &path : filePaths) {
-    const std::string fileName = getFileName(path);
-    const std::string currOutputPath =
-        outputPath + graphicsDirectory + fileName + ".metadata";
-    assert(0);
-    // compileAndSavePSO(path, currOutputPath, shaderPath);
-  }
-  return true;
-}
-
 bool compileVK(const std::string &assetPath, const std::string &outputPath) {
   // for now we do not support pso compilation BUT we can export all the
   // metadata stuff
@@ -277,6 +260,22 @@ bool compileVK(const std::string &assetPath, const std::string &outputPath) {
   return true;
 }
 
+bool compileDx12(const std::string &assetPath, const std::string &outputPath,
+                 std::string target, std::string shaderPath) {
+  // get files in folder and process them
+  const std::string graphicsDirectory = "/" + target + "/";
+
+  compileVK(assetPath, outputPath);
+  // std::vector<std::string> filePaths;
+  // listFilesInFolder(assetPath.c_str(), filePaths, "json");
+  // for (auto &path : filePaths) {
+  //  const std::string fileName = getFileName(path);
+  //  const std::string currOutputPath =
+  //      outputPath + graphicsDirectory + fileName + ".metadata";
+  //}
+  return true;
+}
+
 bool compileAllVK(const std::string &assetPath, const std::string &outputPath,
                   const std::string &target, const std::string &) {
   // get files in folder and process them
@@ -338,7 +337,6 @@ bool process(const std::string &assetPath, const std::string &outputPath,
 
   if (!processFolder) {
     if (target == "DX12") {
-      assert(0);
       return compileDx12(assetPath, outputPath, target, shaderPath);
     } else {
       return compileVK(assetPath, outputPath);
