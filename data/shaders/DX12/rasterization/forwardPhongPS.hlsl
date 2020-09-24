@@ -1,5 +1,6 @@
 #include "../common/structures.hlsl"
 #include "../common/vertexDefinitions.hlsl"
+#include "../common/textureSampling.hlsl"
 #include "../common/pbr.hlsl"
 #include "../common/normals.hlsl"
 
@@ -25,18 +26,18 @@ SamplerState gsamAnisotropicClamp : register(s5,space1);
 
 float4 PS(FullMeshVertexOut pin) : SV_Target {
   float2 uv = float2(pin.uv.x, 1.0f - pin.uv.y);
-  float3 albedo = albedoTex.Sample(gsamLinearClamp, uv).xyz;
+  float3 albedo = albedoTex.Sample(gsamLinearWrap, remapUV(uv,materialConfig.albedoTexConfig)).xyz;
 
   float3 texNormal =
-      normalize(tangentTex.Sample(gsamLinearClamp, uv) * 2.0f - 1.0f).xyz;
+      normalize(tangentTex.Sample(gsamLinearWrap, remapUV(uv,materialConfig.normalTexConfig)) * 2.0f - 1.0f).xyz;
   // compute NTB
   float3 N = normalize(pin.Normal.xyz);
   float3 T = normalize(pin.tangent.xyz);
   float3 normal = computeNormalFromNormalMap(N, T, texNormal);
 
   // sampling PBR textures
-  float metallic = metallicTex.Sample(gsamLinearClamp, uv).x;
-  float roughness = roughnessTex.Sample(gsamLinearClamp, uv).x;
+  float metallic = metallicTex.Sample(gsamLinearWrap, remapUV(uv,materialConfig.metallicTexConfig)).x *materialConfig.metalRoughMult.x;
+  float roughness = roughnessTex.Sample(gsamLinearWrap, remapUV(uv,materialConfig.roughnessTexConfig)).x*materialConfig.metalRoughMult.y;
 
   // view vectors
   float3 worldPos = pin.worldPos.xyz;

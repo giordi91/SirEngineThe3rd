@@ -12,7 +12,10 @@
     "-p ../data/shaders/DX12/rasterization/fullScreenQuadVS.hlsl -o ../data/processed/shaders/VK/rasterization/fullScreenQuadVS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d\"",
     "-p ../data/shaders/DX12/rasterization/gammaAndToneMappingEffectPS.hlsl -o ../data/processed/shaders/VK/rasterization/gammaAndToneMappingEffectPS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d\"",
     "-p ../data/shaders/DX12/rasterization/positionColorVS.hlsl -o ../data/processed/shaders/VK/rasterization/positionColorVS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d\"",
-    "-p ../data/shaders/DX12/rasterization/basicColorPS.hlsl -o ../data/processed/shaders/VK/rasterization/basicColorPS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d\""
+    "-p ../data/shaders/DX12/rasterization/basicColorPS.hlsl -o ../data/processed/shaders/VK/rasterization/basicColorPS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d\"",
+
+    "-p ../data/shaders/DX12/rasterization/grassPlaneVS.hlsl -o ../data/processed/shaders/VK/rasterization/grassPlaneVS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d\"",
+    "-p ../data/shaders/DX12/rasterization/grassPlanePS.hlsl -o ../data/processed/shaders/VK/rasterization/grassPlanePS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d\""
   ],
   "commands-full": [
     "-p ../data/meshes/pSphere1.obj -o ../data/processed/meshes/pSphere1.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/meshes/pSphere1.tangents\"",
