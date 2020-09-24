@@ -36,7 +36,9 @@ static const std::string RASTERIZATION_PATH =
 static const std::string RASTERIZATION_PATH_HLSL =
     "../data/shaders/DX12/rasterization/";
 static const std::string COMPUTE_PATH = "../data/shaders/VK/compute/";
+static const std::string DX12_COMPUTE_PATH = "../data/shaders/DX12/compute/";
 static const std::string GLSL_EXTENSION = ".glsl";
+static const std::string HLSL_EXTENSION = ".hlsl";
 static const std::string VULKAN_PROCESSED_PSO_PATH =
     "../data/processed/pso/VK/";
 static const std::string DX12_PROCESSED_PSO_PATH =
@@ -336,7 +338,7 @@ MaterialMetadata processComputeMetadata(const nlohmann::json &jobj) {
   assertInJson(jobj, PSO_CS_KEY);
 
   const std::string &name = getValueIfInJson(jobj, PSO_CS_KEY, DEFAULT_STRING);
-  const std::string path = COMPUTE_PATH + name + GLSL_EXTENSION;
+  const std::string path = DX12_COMPUTE_PATH + name + HLSL_EXTENSION;
   assert(fileExists(path));
   MaterialMetadata meta =
       extractMetadataFromShader(path.c_str(), SHADER_TYPE::COMPUTE);
