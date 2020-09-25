@@ -18,23 +18,23 @@ TEST_CASE("metadata parse 2", "[material]") {
   SirEngine::graphics::MaterialMetadata metadata =
       SirEngine::graphics::extractMetadataFromPSO(path);
 
-  REQUIRE(metadata.objectResourceCount == 9);
+  REQUIRE(metadata.objectResourceCount == 10);
   REQUIRE(metadata.frameResourceCount == 1);
   REQUIRE(metadata.passResourceCount == 4);
 
   REQUIRE(metadata.objectResources[0].type ==
-          SirEngine::graphics::MATERIAL_RESOURCE_TYPE::BUFFER);
-  REQUIRE(strcmp(metadata.objectResources[0].name, "vertices") == 0);
+          SirEngine::graphics::MATERIAL_RESOURCE_TYPE::CONSTANT_BUFFER);
+  REQUIRE(strcmp(metadata.objectResources[0].name, "g_push") == 0);
   REQUIRE(metadata.objectResources[0].set == 3);
   REQUIRE(metadata.objectResources[0].binding == 0);
   REQUIRE(metadata.objectResources[0].visibility ==
           SirEngine::GRAPHICS_RESOURCE_VISIBILITY_VERTEX);
   REQUIRE(isFlagSet(metadata.objectResources[0].flags,
-                    SirEngine::graphics::MATERIAL_RESOURCE_FLAGS::READ_ONLY));
+                    SirEngine::graphics::MATERIAL_RESOURCE_FLAGS::PUSH_CONSTANT_BUFFER));
 
   REQUIRE(metadata.objectResources[1].type ==
           SirEngine::graphics::MATERIAL_RESOURCE_TYPE::BUFFER);
-  REQUIRE(strcmp(metadata.objectResources[1].name, "normals") == 0);
+  REQUIRE(strcmp(metadata.objectResources[1].name, "vertices") == 0);
   REQUIRE(metadata.objectResources[1].set == 3);
   REQUIRE(metadata.objectResources[1].binding == 1);
   REQUIRE(metadata.objectResources[1].visibility ==
@@ -44,7 +44,7 @@ TEST_CASE("metadata parse 2", "[material]") {
 
   REQUIRE(metadata.objectResources[2].type ==
           SirEngine::graphics::MATERIAL_RESOURCE_TYPE::BUFFER);
-  REQUIRE(strcmp(metadata.objectResources[2].name, "uvs") == 0);
+  REQUIRE(strcmp(metadata.objectResources[2].name, "normals") == 0);
   REQUIRE(metadata.objectResources[2].set == 3);
   REQUIRE(metadata.objectResources[2].binding == 2);
   REQUIRE(metadata.objectResources[2].visibility ==
@@ -54,7 +54,7 @@ TEST_CASE("metadata parse 2", "[material]") {
 
   REQUIRE(metadata.objectResources[3].type ==
           SirEngine::graphics::MATERIAL_RESOURCE_TYPE::BUFFER);
-  REQUIRE(strcmp(metadata.objectResources[3].name, "tangents") == 0);
+  REQUIRE(strcmp(metadata.objectResources[3].name, "uvs") == 0);
   REQUIRE(metadata.objectResources[3].set == 3);
   REQUIRE(metadata.objectResources[3].binding == 3);
   REQUIRE(metadata.objectResources[3].visibility ==
@@ -63,16 +63,18 @@ TEST_CASE("metadata parse 2", "[material]") {
                     SirEngine::graphics::MATERIAL_RESOURCE_FLAGS::READ_ONLY));
 
   REQUIRE(metadata.objectResources[4].type ==
-          SirEngine::graphics::MATERIAL_RESOURCE_TYPE::TEXTURE);
-  REQUIRE(strcmp(metadata.objectResources[4].name, "albedoTex") == 0);
+          SirEngine::graphics::MATERIAL_RESOURCE_TYPE::BUFFER);
+  REQUIRE(strcmp(metadata.objectResources[4].name, "tangents") == 0);
   REQUIRE(metadata.objectResources[4].set == 3);
   REQUIRE(metadata.objectResources[4].binding == 4);
   REQUIRE(metadata.objectResources[4].visibility ==
-          SirEngine::GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT);
+          SirEngine::GRAPHICS_RESOURCE_VISIBILITY_VERTEX);
+  REQUIRE(isFlagSet(metadata.objectResources[4].flags,
+                    SirEngine::graphics::MATERIAL_RESOURCE_FLAGS::READ_ONLY));
 
   REQUIRE(metadata.objectResources[5].type ==
           SirEngine::graphics::MATERIAL_RESOURCE_TYPE::TEXTURE);
-  REQUIRE(strcmp(metadata.objectResources[5].name, "tangentTex") == 0);
+  REQUIRE(strcmp(metadata.objectResources[5].name, "albedoTex") == 0);
   REQUIRE(metadata.objectResources[5].set == 3);
   REQUIRE(metadata.objectResources[5].binding == 5);
   REQUIRE(metadata.objectResources[5].visibility ==
@@ -80,25 +82,33 @@ TEST_CASE("metadata parse 2", "[material]") {
 
   REQUIRE(metadata.objectResources[6].type ==
           SirEngine::graphics::MATERIAL_RESOURCE_TYPE::TEXTURE);
-  REQUIRE(strcmp(metadata.objectResources[6].name, "metallicTex") == 0);
+  REQUIRE(strcmp(metadata.objectResources[6].name, "tangentTex") == 0);
   REQUIRE(metadata.objectResources[6].set == 3);
   REQUIRE(metadata.objectResources[6].binding == 6);
   REQUIRE(metadata.objectResources[6].visibility ==
           SirEngine::GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT);
+
   REQUIRE(metadata.objectResources[7].type ==
           SirEngine::graphics::MATERIAL_RESOURCE_TYPE::TEXTURE);
-  REQUIRE(strcmp(metadata.objectResources[7].name, "roughnessTex") == 0);
+  REQUIRE(strcmp(metadata.objectResources[7].name, "metallicTex") == 0);
   REQUIRE(metadata.objectResources[7].set == 3);
   REQUIRE(metadata.objectResources[7].binding == 7);
   REQUIRE(metadata.objectResources[7].visibility ==
           SirEngine::GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT);
-
   REQUIRE(metadata.objectResources[8].type ==
-          SirEngine::graphics::MATERIAL_RESOURCE_TYPE::CONSTANT_BUFFER);
-  REQUIRE(strcmp(metadata.objectResources[8].name, "materialConfig") == 0);
+          SirEngine::graphics::MATERIAL_RESOURCE_TYPE::TEXTURE);
+  REQUIRE(strcmp(metadata.objectResources[8].name, "roughnessTex") == 0);
   REQUIRE(metadata.objectResources[8].set == 3);
   REQUIRE(metadata.objectResources[8].binding == 8);
   REQUIRE(metadata.objectResources[8].visibility ==
+          SirEngine::GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT);
+
+  REQUIRE(metadata.objectResources[9].type ==
+          SirEngine::graphics::MATERIAL_RESOURCE_TYPE::CONSTANT_BUFFER);
+  REQUIRE(strcmp(metadata.objectResources[9].name, "materialConfig") == 0);
+  REQUIRE(metadata.objectResources[9].set == 3);
+  REQUIRE(metadata.objectResources[9].binding == 9);
+  REQUIRE(metadata.objectResources[9].visibility ==
           SirEngine::GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT);
 
 	

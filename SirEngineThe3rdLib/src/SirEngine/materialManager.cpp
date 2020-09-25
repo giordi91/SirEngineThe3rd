@@ -15,6 +15,7 @@
 #include "SirEngine/runtimeString.h"
 #include "SirEngine/textureManager.h"
 #include "constantBufferManager.h"
+#include "engineConfig.h"
 
 namespace SirEngine {
 
@@ -87,6 +88,9 @@ int findBindingIndex(const graphics::MaterialMetadata *meta,
     const auto &resource = meta->objectResources[i];
     bool result = strcmp(resource.name, bindName.c_str()) == 0;
     if (result) {
+      if (globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::VULKAN) {
+        return static_cast<int>(resource.binding);
+      }
       return static_cast<int>(i);
     }
   }
@@ -199,6 +203,7 @@ MaterialHandle MaterialManager::loadMaterial(const char *path) {
             bindingName.c_str());
     materialData.bindingHandle[i] = bindingTable;
 
+    bool isDx12 = globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::DX12;
     // update material
     for (uint32_t res = 0; res < parse.sourceBindingsCount; ++res) {
       MaterialSourceBinding &matBinding = parse.sourceBindings[res];
@@ -219,7 +224,8 @@ MaterialHandle MaterialManager::loadMaterial(const char *path) {
         matBinding.resourceHandle = mHandle.handle;
 
         globals::BINDING_TABLE_MANAGER->bindMesh(
-            materialData.bindingHandle[i], mHandle, meta->meshBinding.binding,
+            materialData.bindingHandle[i], mHandle,
+            isDx12 ? meta->meshBinding.dxBinding : meta->meshBinding.vkBinding,
             meta->meshBinding.flags);
       } else if (strcmp(matBinding.type, "constantBuffer") == 0) {
         // allocate the necessary constant buffer

@@ -10,10 +10,12 @@ enum class MATERIAL_RESOURCE_FLAGS {
   MESH_NORMALS = 4,
   MESH_UVS = 8,
   MESH_TANGENTS = 16,
+  PUSH_CONSTANT_BUFFER = 32,
 };
 
 struct MaterialMeshBinding {
-  int binding;
+  int dxBinding;
+  int vkBinding;
   MESH_ATTRIBUTE_FLAGS flags;
 };
 

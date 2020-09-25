@@ -237,7 +237,8 @@ bool compileVK(const std::string &assetPath, const std::string &outputPath) {
   mapped.objectResourceCount = metadata.objectResourceCount;
   mapped.frameResourceCount = metadata.frameResourceCount;
   mapped.passResourceCount = metadata.passResourceCount;
-  mapped.meshBinding = metadata.meshBinding.binding;
+  mapped.dxMeshBinding = metadata.meshBinding.dxBinding;
+  mapped.vkMeshBinding = metadata.meshBinding.vkBinding;
   mapped.meshFlags = metadata.meshBinding.flags;
 
   // writing the data
