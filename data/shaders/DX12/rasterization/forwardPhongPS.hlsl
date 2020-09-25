@@ -7,11 +7,11 @@
 ConstantBuffer<FrameData> g_frameData : register(b0,space0);
 ConstantBuffer<DirectionalLightData> g_dirLightData : register(b0, space2);
 
-Texture2D albedoTex : register(t4, space3);
-Texture2D tangentTex : register(t5, space3);
-Texture2D metallicTex : register(t6, space3);
-Texture2D roughnessTex : register(t7, space3);
-ConstantBuffer<ForwardPBRMaterial> materialConfig : register(b8,space3);
+Texture2D albedoTex : register(t5, space3);
+Texture2D tangentTex : register(t6, space3);
+Texture2D metallicTex : register(t7, space3);
+Texture2D roughnessTex : register(t8, space3);
+ConstantBuffer<ForwardPBRMaterial> materialConfig : register(b9,space3);
 
 TextureCube skyboxIrradianceTexture : register(t1, space2);
 TextureCube skyboxRadianceTexture : register(t2, space2);

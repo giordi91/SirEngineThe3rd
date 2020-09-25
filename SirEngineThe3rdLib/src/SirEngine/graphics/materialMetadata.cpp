@@ -7,10 +7,12 @@
 #include <unordered_map>
 
 #include "SirEngine/binary/binaryFile.h"
+#include "SirEngine/engineConfig.h"
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/log.h"
 #include "SirEngine/memory/cpu/stackAllocator.h"
+#include "SirEngine/psoManager.h"
 #include "platform/windows/graphics/dx12/shaderCompiler.h"
 
 namespace SirEngine::graphics {
@@ -154,7 +156,6 @@ MaterialMetadataUniform extractUniformBufferOffset(
   // const std::string &strName = comp.get_name(type.member_types[0]);
   const std::string &strName = comp.get_name(uniform.id);
 
-
   auto count = static_cast<uint32_t>(strType.member_types.size());
 
   auto *outStructMember = static_cast<MaterialMetadataStructMember *>(
@@ -191,7 +192,7 @@ MaterialMetadataUniform extractUniformBufferOffset(
 
   std::string name = strName;
   //    std::regex_replace(strName, std::regex("type.ConstantBuffer."), "");
-  //assert(name.size() <= 31);
+  // assert(name.size() <= 31);
   memcpy(&toReturn.name[0], name.c_str(), name.size());
   toReturn.name[name.size()] = '\0';
   toReturn.structSize = static_cast<uint32_t>(structSize);
@@ -250,14 +251,16 @@ MaterialMetadata extractMetadataFromShader(const char *shaderName,
 
   spirv_cross::ShaderResources res = comp.get_shader_resources();
 
-  auto totalCount = static_cast<uint32_t>(res.separate_images.size() +
-                                          res.storage_buffers.size() +
-                                          res.uniform_buffers.size());
+  auto totalCount = static_cast<uint32_t>(
+      res.separate_images.size() + res.storage_buffers.size() +
+      res.uniform_buffers.size() + res.push_constant_buffers.size());
+
   uint32_t allocSize = sizeof(MaterialResource) * totalCount;
   auto *memory = static_cast<MaterialResource *>(
       globals::FRAME_ALLOCATOR->allocate(allocSize));
 
   int counter = 0;
+
   for (const auto &image : res.separate_images) {
     auto set = static_cast<uint16_t>(
         comp.get_decoration(image.id, spv::DecorationDescriptorSet));
@@ -304,6 +307,38 @@ MaterialMetadata extractMetadataFromShader(const char *shaderName,
     counter += 1;
   }
 
+  bool pushConstants = res.push_constant_buffers.size() != 0;
+  // we either have one push constant only or none
+  assert(res.push_constant_buffers.size() == 1 ||
+         res.push_constant_buffers.size() == 0);
+  for (const auto &push : res.push_constant_buffers) {
+    // push constants don't really have a binding set, and they translate
+    // to constant buffers in hlsl, so we set them to space object and binding
+    // 0.
+    // this means if a push constant appears must appear at index 0
+    uint16_t set = PSOManager::PER_OBJECT_BINDING_INDEX;
+    uint16_t binding = 0;
+
+    // we need to extract the offset of the datatype
+    MaterialMetadataUniform uniformMetadata =
+        extractUniformBufferOffset(comp, push, set);
+    auto a = comp.get_name(push.base_type_id);
+    std::string name = comp.get_name(push.id);
+
+    memory[counter] = {{},
+                       uniformMetadata,
+                       MATERIAL_RESOURCE_TYPE::CONSTANT_BUFFER,
+                       visibility,
+                       MATERIAL_RESOURCE_FLAGS::PUSH_CONSTANT_BUFFER,
+                       set,
+                       binding};
+
+    assert(name.size() <= 31);
+    memcpy(memory[counter].name, name.c_str(), name.size());
+    memory[counter].name[name.size()] = '\0';
+    counter += 1;
+  }
+
   for (const auto &uniform : res.uniform_buffers) {
     auto set = static_cast<uint16_t>(
         comp.get_decoration(uniform.id, spv::DecorationDescriptorSet));
@@ -331,6 +366,7 @@ MaterialMetadata extractMetadataFromShader(const char *shaderName,
     memory[counter].name[name.size()] = '\0';
     counter += 1;
   }
+
   return {memory, nullptr, nullptr, static_cast<uint32_t>(totalCount), 0, 0};
 }
 
@@ -402,7 +438,9 @@ MaterialMeshBinding validateMeshData(const char *name,
   // we want to build an array of resources bindings, one per mesh binding type
   // we next want to check they have consecutive values, because it is what the
   // binding system expects
+
   int slots[4] = {-1, -1, -1, -1};
+  int slotsDx[4] = {-1, -1, -1, -1};
   uint32_t outFlags = 0;
 
   int counter = 0;
@@ -412,31 +450,39 @@ MaterialMeshBinding validateMeshData(const char *name,
     if ((flags &
          static_cast<uint32_t>(MATERIAL_RESOURCE_FLAGS::MESH_VERTICES)) > 0) {
       assert(counter < 4);
-      slots[counter++] = meta.binding;
+      slots[counter] = meta.binding;
+      slotsDx[counter] = i;
+      ++counter;
       outFlags |= MESH_ATTRIBUTE_FLAGS::POSITIONS;
     }
     if ((flags & static_cast<uint32_t>(MATERIAL_RESOURCE_FLAGS::MESH_NORMALS)) >
         0) {
       assert(counter < 4);
-      slots[counter++] = meta.binding;
+      slots[counter] = meta.binding;
+      slotsDx[counter] = i;
+      ++counter;
       outFlags |= MESH_ATTRIBUTE_FLAGS::NORMALS;
     }
     if ((flags & static_cast<uint32_t>(MATERIAL_RESOURCE_FLAGS::MESH_UVS)) >
         0) {
       assert(counter < 4);
-      slots[counter++] = meta.binding;
+      slots[counter] = meta.binding;
+      slotsDx[counter] = i;
+      ++counter;
       outFlags |= MESH_ATTRIBUTE_FLAGS::UV;
     }
     if ((flags &
          static_cast<uint32_t>(MATERIAL_RESOURCE_FLAGS::MESH_TANGENTS)) > 0) {
       assert(counter < 4);
-      slots[counter++] = meta.binding;
+      slots[counter] = meta.binding;
+      slotsDx[counter] = i;
+      ++counter;
       outFlags |= MESH_ATTRIBUTE_FLAGS::TANGENTS;
     }
   }
   // return an empty slot in case we have no geometry bound
   if (slots[0] == -1) {
-    return {-1, MESH_ATTRIBUTE_NONE};
+    return {-1, -1, MESH_ATTRIBUTE_NONE};
   }
 
   // lets validate the assumption that they are consecutive
@@ -444,14 +490,61 @@ MaterialMeshBinding validateMeshData(const char *name,
     int prev = slots[i - 1];
     int curr = slots[i];
     if ((curr - prev) != 1) {
-      SE_CORE_ERROR("Mesh validation failed for {}", name);
+      SE_CORE_ERROR("Mesh validation failed for vk bindings {}", name);
       SE_CORE_ERROR(
           "expected consecutive slots but found previous {} and current {}",
           prev, curr);
     }
   }
-  return {slots[0], static_cast<MESH_ATTRIBUTE_FLAGS>(outFlags)};
+  // lets validate the assumption that they are consecutive
+  for (int i = 1; i < counter; ++i) {
+    int prev = slotsDx[i - 1];
+    int curr = slotsDx[i];
+    if ((curr - prev) != 1) {
+      SE_CORE_ERROR("Mesh validation failed for Dx bindings {}", name);
+      SE_CORE_ERROR(
+          "expected consecutive slots but found previous {} and current {}",
+          prev, curr);
+    }
+  }
+  return {slotsDx[0], slots[0], static_cast<MESH_ATTRIBUTE_FLAGS>(outFlags)};
 }
+
+void validatePushConstants(MaterialResource *space3, int counter) {
+  // find lets find push constants
+
+  auto expectedFlag =
+      static_cast<uint32_t>(MATERIAL_RESOURCE_FLAGS::PUSH_CONSTANT_BUFFER);
+  int pushIndex = -1;
+  for (int i = 0; i < counter; ++i) {
+    const auto &meta = space3[i];
+    auto sourceFlag = static_cast<uint32_t>(meta.flags);
+    if ((sourceFlag & expectedFlag) != 0) {
+      pushIndex = i;
+      break;
+    }
+  }
+  if (pushIndex == -1) {
+    return;
+  }
+
+  // now let us iterate all the resources and make sure that they don't have
+  // index 0
+  for (int i = 0; i < counter; ++i) {
+    const auto &meta = space3[i];
+    // skipping the push constant itself
+    if (i == pushIndex) {
+      continue;
+    }
+    if (meta.binding == 0) {
+      SE_CORE_ERROR(
+          "cannot have push constant and a resource bound to index 0");
+      assert(0 && "cannot have push constant and a resource bound to index 0");
+    }
+  }
+
+};  // namespace SirEngine::graphics
+
 MaterialMetadata processRasterMetadata2(const char *path,
                                         const nlohmann::json &jobj) {
   assertInJson(jobj, PSO_VS_KEY);
@@ -469,16 +562,17 @@ MaterialMetadata processRasterMetadata2(const char *path,
       extractMetadataFromShader(vsPath.c_str(), SHADER_TYPE::VERTEX);
 
   MaterialMetadata psMeta = {};
-  // Fragment shader might be empty, this is the case because fragment might be
-  // optional in some shaders like shadow mapping, where not having fragment
-  // shader allows the card to go to the fast path
+  // Fragment shader might be empty, this is the case because fragment might
+  // be optional in some shaders like shadow mapping, where not having
+  // fragment shader allows the card to go to the fast path
   if (!psName.empty()) {
     const std::string psPath = RASTERIZATION_PATH_HLSL + psName + ".hlsl";
     assert(fileExists(psPath));
     psMeta = extractMetadataFromShader(psPath.c_str(), SHADER_TYPE::FRAGMENT);
   }
 
-  // we want to merge both vertex and fragment shader data and remove duplicates
+  // we want to merge both vertex and fragment shader data and remove
+  // duplicates
   MaterialResource space0[16];
   MaterialResource space2[16];
   MaterialResource space3[32];
@@ -507,8 +601,8 @@ MaterialMetadata processRasterMetadata2(const char *path,
         }
       }
       if (skip) {
-        // we don't extract metadata for materials constant buffer which are not
-        // on a per object space
+        // we don't extract metadata for materials constant buffer which are
+        // not on a per object space
         if (res.type == MATERIAL_RESOURCE_TYPE::CONSTANT_BUFFER) {
           // free the unused uniform metadata
           globals::PERSISTENT_ALLOCATOR->free(res.extension.uniform.members);
@@ -532,7 +626,11 @@ MaterialMetadata processRasterMetadata2(const char *path,
               return lhs.binding < rhs.binding;
             });
 
+  // validate mesh bindings
   MaterialMeshBinding meshBinding = validateMeshData(path, space3, counters[3]);
+
+  // let us validate push constants
+  validatePushConstants(space3, counters[3]);
 
   MaterialMetadata toReturn{};
   toReturn.meshBinding = meshBinding;
@@ -574,16 +672,17 @@ MaterialMetadata processRasterMetadata(const char *path,
       extractMetadataFromShader(vsPath.c_str(), SHADER_TYPE::VERTEX);
 
   MaterialMetadata psMeta = {};
-  // Fragment shader might be empty, this is the case because fragment might be
-  // optional in some shaders like shadow mapping, where not having fragment
-  // shader allows the card to go to the fast path
+  // Fragment shader might be empty, this is the case because fragment might
+  // be optional in some shaders like shadow mapping, where not having
+  // fragment shader allows the card to go to the fast path
   if (!psName.empty()) {
     const std::string psPath = RASTERIZATION_PATH + psName + GLSL_EXTENSION;
     assert(fileExists(psPath));
     psMeta = extractMetadataFromShader(psPath.c_str(), SHADER_TYPE::FRAGMENT);
   }
 
-  // we want to merge both vertex and fragment shader data and remove duplicates
+  // we want to merge both vertex and fragment shader data and remove
+  // duplicates
   MaterialResource space0[16];
   MaterialResource space2[16];
   MaterialResource space3[32];
@@ -612,8 +711,8 @@ MaterialMetadata processRasterMetadata(const char *path,
         }
       }
       if (skip) {
-        // we don't extract metadata for materials constant buffer which are not
-        // on a per object space
+        // we don't extract metadata for materials constant buffer which are
+        // not on a per object space
         if (res.type == MATERIAL_RESOURCE_TYPE::CONSTANT_BUFFER) {
           // free the unused uniform metadata
           globals::PERSISTENT_ALLOCATOR->free(res.extension.uniform.members);
@@ -726,7 +825,7 @@ MaterialMetadata loadPSOBinaryMetadata(const char *psoPath) {
   outData.frameResourceCount = mapper->frameResourceCount;
   outData.passResourceCount = mapper->passResourceCount;
   outData.meshBinding =
-      MaterialMeshBinding{mapper->meshBinding,
+      MaterialMeshBinding{mapper->dxMeshBinding, mapper->vkMeshBinding,
                           static_cast<MESH_ATTRIBUTE_FLAGS>(mapper->meshFlags)};
 
   return outData;
@@ -743,8 +842,8 @@ graphics::MaterialMetadata loadMetadata(const char *psoPath,
     finalP = DX12_PROCESSED_PSO_PATH + p.filename().string();
   }
   // if the file exists it means we have the necessary binary metadata offline
-  // compiled if not, we extract it again, although is slow, we should not do it
-  // at runtime, but we allow it for faster iteration
+  // compiled if not, we extract it again, although is slow, we should not do
+  // it at runtime, but we allow it for faster iteration
   if (std::filesystem::exists(finalP)) {
     return graphics::loadPSOBinaryMetadata(finalP.c_str());
   }

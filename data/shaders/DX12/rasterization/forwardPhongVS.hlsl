@@ -2,10 +2,16 @@
 #include "../common/vertexDefinitions.hlsl"
 
 ConstantBuffer<FrameData> g_frameData : register(b0,space0);
-ByteAddressBuffer vertices: register(t0,space3);
-ByteAddressBuffer normals: register(t1,space3);
-ByteAddressBuffer uvs: register(t2,space3);
-ByteAddressBuffer tangents: register(t3,space3);
+struct PushConstant
+{
+    int index;
+};
+[[vk::push_constant]]
+ConstantBuffer<PushConstant> g_push: register(b0,space3);
+ByteAddressBuffer vertices: register(t1,space3);
+ByteAddressBuffer normals: register(t2,space3);
+ByteAddressBuffer uvs: register(t3,space3);
+ByteAddressBuffer tangents: register(t4,space3);
 
 
 FullMeshVertexOut VS( uint vid : SV_VertexID)
