@@ -8,6 +8,8 @@
 #include "platform/windows/graphics/vk/volk.h"
 
 #undef max
+#include "SirEngine/fileUtils.h"
+
 #include <SPIRV/GlslangToSpv.h>
 #include <StandAlone/DirStackFileIncluder.h>
 #include <glslang/Public/ShaderLang.h>

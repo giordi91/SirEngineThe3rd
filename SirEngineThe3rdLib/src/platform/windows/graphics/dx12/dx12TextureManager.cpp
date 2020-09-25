@@ -6,6 +6,7 @@
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
 #include "SirEngine/runtimeString.h"
+#include "nlohmann/json.hpp"
 
 namespace SirEngine::dx12 {
 
@@ -39,7 +40,8 @@ TextureHandle Dx12TextureManager::loadTexture(const char *path,
   const bool res = fileExists(path);
   assert(res);
 
-  const auto jobj = getJsonObj(path);
+  nlohmann::json jobj;
+  SirEngine::getJsonObj(path, jobj);
   const bool isCube = getValueIfInJson(jobj, TEXTURE_CUBE_KEY, DEFAULT_BOOL);
   const bool isGamma = getValueIfInJson(jobj, TEXTURE_GAMMA_KEY, DEFAULT_BOOL);
   const bool hasMips =

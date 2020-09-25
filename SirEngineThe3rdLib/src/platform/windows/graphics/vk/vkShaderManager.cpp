@@ -8,6 +8,7 @@
 #include "SirEngine/runtimeString.h"
 #include "platform/windows/graphics/vk/vkShaderCompiler.h"
 #include "vk.h"
+#include <filesystem>
 
 namespace SirEngine::vk {
 

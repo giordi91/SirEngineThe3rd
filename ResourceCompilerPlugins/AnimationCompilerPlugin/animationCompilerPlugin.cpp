@@ -8,6 +8,8 @@
 #include "SirEngine/argsUtils.h"
 #include "SirEngine/binary/binaryFile.h"
 #include <filesystem>
+#include "nlohmann/json.hpp"
+
 using namespace std::string_literals;
 
 const std::string PLUGIN_NAME = "animationCompilerPlugin";
@@ -39,8 +41,8 @@ bool isNumber(const std::string &s) {
 }
 void convertAnim(const std::string &path, AnimData &data) {
 
-  // TODO compile this with resource compiler
-  auto jObj = getJsonObj(path);
+  nlohmann::json jObj;
+  SirEngine::getJsonObj(path, jObj);
   // we first check the name because if the name is in the cache
   // we just get out
   data.name = jObj["name"].get<std::string>();
@@ -73,13 +75,13 @@ void convertAnim(const std::string &path, AnimData &data) {
     for (auto &joint : pose) {
 
       const glm::vec3 position =
-          getValueIfInJson<glm::vec3>(joint, "pos", zeroV);
+          SirEngine::getValueIfInJson(joint, "pos", zeroV);
 
       // extracting joint quaternion
       // to note I export quaternion as x,y,z,w,  is initialized as
       // w,x,y,z
       auto rotation =
-          getValueIfInJson<glm::quat>(joint, "quat", zeroQ);
+          SirEngine::getValueIfInJson(joint, "quat", zeroQ);
 
       joints[jointCounter].m_rot = rotation;
       joints[jointCounter].m_trans = position;
@@ -184,13 +186,13 @@ bool processAnim(const std::string &assetPath, const std::string &outputPath,
   processArgs(args);
 
   // checking IO files exits
-  bool exits = fileExists(assetPath);
+  bool exits = SirEngine::fileExists(assetPath);
   if (!exits) {
     SE_CORE_ERROR("[Animation Compiler] : could not find path/file {0}",
                   assetPath);
   }
 
-  exits = filePathExists(outputPath);
+  exits = SirEngine::filePathExists(outputPath);
   if (!exits) {
     SE_CORE_ERROR("[Animation Compiler] : could not find path/file {0}",
                   outputPath);

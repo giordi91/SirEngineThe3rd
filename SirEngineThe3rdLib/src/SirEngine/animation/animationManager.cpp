@@ -9,6 +9,7 @@
 #include "luaStatePlayer.h"
 
 #include <string>
+#include "nlohmann/json.hpp"
 
 namespace SirEngine {
 static const std::string TYPE_KEY = "type";
@@ -42,8 +43,8 @@ AnimationManager::loadAnimationConfig(const char *path, const char *assetName) {
     return earlyHandle;
   }
 
-  // TODO move this to resource compiler
-  auto configJson = getJsonObj(path);
+  nlohmann::json configJson;
+  getJsonObj(path, configJson);
   std::string empty;
 
   const std::string type = getValueIfInJson(configJson, TYPE_KEY, empty);

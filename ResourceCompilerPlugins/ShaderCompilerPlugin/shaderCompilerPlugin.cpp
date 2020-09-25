@@ -75,12 +75,12 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
   SirEngine::dx12::ShaderArgs shaderArgs;
 
   // checking IO files exits
-  bool exits = fileExists(assetPath);
+  bool exits = SirEngine::fileExists(assetPath);
   if (!exits) {
     SE_CORE_ERROR("{0} : could not find path/file {1}", PLUGIN_NAME, assetPath);
   }
 
-  exits = filePathExists(outputPath);
+  exits = SirEngine::filePathExists(outputPath);
   if (!exits) {
     SE_CORE_ERROR("{0} : could not find path/file {1}", PLUGIN_NAME,
                   outputPath);

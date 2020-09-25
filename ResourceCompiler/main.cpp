@@ -7,6 +7,7 @@
 
 #include <chrono>
 #include <filesystem>
+#include "nlohmann/json.hpp"
 
 inline cxxopts::Options getCxxOptions() {
   cxxopts::Options options("ResourceCompiler 1.0",
@@ -83,7 +84,8 @@ void executeFromArgs(const cxxopts::ParseResult &result) {
 
 void executeFile(const cxxopts::ParseResult &result) {
   const std::string executeFile = result["execute"].as<std::string>();
-  const nlohmann::json jobj = getJsonObj(executeFile);
+  nlohmann::json jobj;
+  SirEngine::getJsonObj(executeFile, jobj);
 
   // lets check for the  commands
   if (jobj.find("commands") != jobj.end()) {

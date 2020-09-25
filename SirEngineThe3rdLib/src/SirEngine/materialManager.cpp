@@ -16,6 +16,7 @@
 #include "SirEngine/textureManager.h"
 #include "constantBufferManager.h"
 #include "engineConfig.h"
+#include "nlohmann/json.hpp"
 
 namespace SirEngine {
 
@@ -486,7 +487,8 @@ MaterialManager::PreliminaryMaterialParse MaterialManager::parseMaterial(
   assert(fileExists(path));
   const std::string name = getFileName(path);
 
-  auto jobj = getJsonObj(path);
+  nlohmann::json jobj;
+  getJsonObj(path, jobj);
   bool isStatic = getValueIfInJson(jobj, materialKeys::IS_STATIC_KEY, false);
 
   PreliminaryMaterialParse toReturn;

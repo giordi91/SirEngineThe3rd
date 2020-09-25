@@ -10,6 +10,7 @@
 #include "SirEngine/log.h"
 #include "SirEngine/runtimeString.h"
 #include "SirEngine/scripting/scriptingContext.h"
+#include "nlohmann/json.hpp"
 
 extern "C" {
 #include <lua/lua.h>

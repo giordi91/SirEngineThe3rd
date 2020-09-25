@@ -1,6 +1,11 @@
 #include "SirEngine/binary/binaryFile.h"
-#include "SirEngine/log.h"
+
+#include "SirEngine/fileUtils.h"
+
+
 #include <fstream>
+
+#include "SirEngine/log.h"
 
 #define X(name) {name, #name},
 const std::unordered_map<BinaryFileType, std::string> m_binaryFileTypeToString{
@@ -8,7 +13,7 @@ const std::unordered_map<BinaryFileType, std::string> m_binaryFileTypeToString{
 #undef X
 
 bool readAllBytes(const std::string &filename, std::vector<char> &data) {
-  bool res = fileExists(filename);
+  bool res = SirEngine::fileExists(filename);
   if (!res) {
     SE_CORE_ERROR("Could not open binary file {0}", filename);
     return false;
@@ -22,9 +27,16 @@ bool readAllBytes(const std::string &filename, std::vector<char> &data) {
   ifs.read(data.data(), pos);
   return true;
 }
-WriteBinaryFileStatus
-writeBinaryFile(const BinaryFileWriteRequest &request) {
 
+std::string getBinaryFileTypeName(const BinaryFileType type) {
+  const auto found = m_binaryFileTypeToString.find(type);
+  if (found != m_binaryFileTypeToString.end()) {
+    return found->second;
+  }
+  return "";
+}
+
+WriteBinaryFileStatus writeBinaryFile(const BinaryFileWriteRequest &request) {
   std::ofstream myFile(request.outPath, std::ios::out | std::ios::binary);
   assert(myFile.is_open());
   BinaryFileHeader header;

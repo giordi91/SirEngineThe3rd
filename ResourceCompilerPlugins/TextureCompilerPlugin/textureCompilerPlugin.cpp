@@ -51,13 +51,13 @@ bool processTexture(const std::string &assetPath, const std::string &outputPath,
   processArgs(args, format, isGamma, mips);
 
   // checking IO files exits
-  bool exists = fileExists(assetPath);
+  bool exists = SirEngine::fileExists(assetPath);
   if (!exists) {
     SE_CORE_ERROR("[Texture Compiler] : could not find path/file {0}",
                   assetPath);
   }
 
-  exists = filePathExists(outputPath);
+  exists = SirEngine::filePathExists(outputPath);
   if (!exists) {
     SE_CORE_ERROR("[Texture Compiler] : could not find path/file {0}",
                   outputPath);

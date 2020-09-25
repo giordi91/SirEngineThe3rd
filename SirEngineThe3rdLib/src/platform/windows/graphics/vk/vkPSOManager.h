@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cassert>
+#include <assert.h>
 #include <nlohmann/json_fwd.hpp>
 #include <string>
 
@@ -10,7 +10,7 @@
 #include "SirEngine/memory/cpu/resizableVector.h"
 #include "SirEngine/memory/cpu/sparseMemoryPool.h"
 #include "SirEngine/memory/cpu/stringHashMap.h"
-#include "platform/windows/graphics/vk/volk.h"
+#include "platform/windows/graphics/vk/vk.h"
 #include "vkRootSignatureManager.h"
 
 namespace SirEngine::vk {
@@ -61,7 +61,7 @@ class VkPSOManager final : public PSOManager {
   void loadCachedPSOInFolder(const char *directory) override;
   VkPSOCompileResult processComputePSO(const char *file,
                                        const nlohmann::json &jobj) const;
-  VkPSOCompileResult compileRawPSO(const char *file);
+  VkPSOCompileResult compileRawPSO(const char *file) const;
 
   void recompilePSOFromShader(const char *shaderName,
                               const char *getOffsetPath) override;
@@ -82,7 +82,8 @@ class VkPSOManager final : public PSOManager {
     const PSOData &data = m_psoPool.getConstRef(index);
     return data.pso;
   }
-  const graphics::MaterialMetadata *getMetadata(const PSOHandle &handle) override {
+  const graphics::MaterialMetadata *getMetadata(
+      const PSOHandle &handle) override {
     assertMagicNumber(handle);
     const uint32_t index = getIndexFromHandle(handle);
     const PSOData &data = m_psoPool.getConstRef(index);

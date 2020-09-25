@@ -3,6 +3,7 @@
 #include "SirEngine/runtimeString.h"
 #undef max
 #include <glm/gtx/quaternion.hpp>
+#include "nlohmann/json.hpp"
 
 namespace SirEngine {
 
@@ -13,7 +14,8 @@ static const char *SKELETON_KEY_NAME = "name";
 
 bool Skeleton::loadFromFile(const char *path) {
 
-  auto jObj = getJsonObj(path);
+  nlohmann::json jObj;
+  getJsonObj(path, jObj);
 
   // extracting how many bones
   const auto size = static_cast<uint32_t>(jObj[SKELETON_KEY_DATA].size());
@@ -35,7 +37,7 @@ bool Skeleton::loadFromFile(const char *path) {
 
     // then we start extracting the data from the joint
     auto jnt = nlohmann::json(e);
-    joints[counter] = getValueIfInJson<glm::mat4>(
+    joints[counter] = getValueIfInJson(
         jnt, SKELETON_KEY_MATRIX, defaultMatrix);
 
     // bone parent id

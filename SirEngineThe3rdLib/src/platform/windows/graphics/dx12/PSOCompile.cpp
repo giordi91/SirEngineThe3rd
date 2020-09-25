@@ -9,8 +9,8 @@
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/d3dx12.h"
 #include "platform/windows/graphics/dx12/dxgiFormatsDefine.h"
-#include "rootSignatureCompile.h"
 #include "shaderCompiler.h"
+#include "nlohmann/json.hpp"
 
 namespace SirEngine::dx12 {
 static const std::string PSO_KEY_GLOBAL_ROOT = "globalRootSignature";
@@ -523,7 +523,8 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj, const char *path,
 }
 
 PSOCompileResult compileRawPSO(const char *path, const char *shaderPath) {
-  auto jobj = getJsonObj(path);
+  nlohmann::json jobj;
+  getJsonObj(path, jobj);
   SE_CORE_INFO("[Engine]: Loading PSO from: {0}", path);
 
   const std::string psoTypeString =
