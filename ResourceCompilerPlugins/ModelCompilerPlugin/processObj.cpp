@@ -11,6 +11,7 @@
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
 #include "meshoptimizer.h"
+#include "nlohmann/json.hpp"
 
 #ifndef _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
@@ -101,8 +102,9 @@ struct EqualsFunc final {
 };
 
 std::vector<float> loadTangents(const std::string &tanPath) {
-  assert(fileExists(tanPath));
-  nlohmann::json jObj = getJsonObj(tanPath);
+  assert(SirEngine::fileExists(tanPath));
+  nlohmann::json jObj;
+  SirEngine::getJsonObj(tanPath, jObj);
   size_t sz = jObj.size();
   std::vector<float> tempT;
   tempT.resize(sz);
@@ -122,7 +124,8 @@ bool loadSkin(const std::string &skinPath, SkinData &skinData) {
     return false;
   }
   // here we load the skincluster
-  auto s_obj = getJsonObj(skinPath);
+  nlohmann::json s_obj;
+  SirEngine::getJsonObj(skinPath, s_obj);
   // getting the skeleton name
   std::string sk = s_obj["skeleton"].get<std::string>();
   // allocating a new skincluster

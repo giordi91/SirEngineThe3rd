@@ -6,6 +6,7 @@
 #include "SirEngine/log.h"
 #include "SirEngine/materialManager.h"
 #include "platform/windows/graphics/vk/vkBindingTableManager.h"
+#include "platform/windows/graphics/vk/vk.h"
 
 namespace SirEngine::vk {
 
@@ -331,33 +332,6 @@ VkDescriptorType getDescriptorType(const graphics::MATERIAL_RESOURCE_TYPE type,
   }
 }
 
-VkDescriptorType getDescriptorType(const nlohmann::json &config,
-                                   VkShaderStageFlags flags) {
-  const std::string type =
-      getValueIfInJson(config, ROOT_KEY_TYPE, ROOT_DEFAULT_STRING);
-  assert(!type.empty());
-  const std::string resource =
-      getValueIfInJson(config, ROOT_KEY_RESOURCE, ROOT_DEFAULT_STRING);
-  if (type == "SRV") {
-    assert(!resource.empty() &&
-           "a resource needs to definy underlyingResource type in the root "
-           "signature, please add that to the root signature");
-  }
-
-  const std::string actualType = type + "-" + resource;
-  // sampler the map
-  const auto found = STRING_TO_DESCRIPTOR_TYPE.find(actualType);
-  if (found != STRING_TO_DESCRIPTOR_TYPE.end()) {
-    if (actualType == "SRV-texture" &&
-        ((flags & VkShaderStageFlagBits::VK_SHADER_STAGE_COMPUTE_BIT) > 0)) {
-      return VkDescriptorType::VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-    }
-    return found->second;
-  }
-
-  return VK_DESCRIPTOR_TYPE_MAX_ENUM;
-}
-
 VkShaderStageFlags getVisibilityFlags2(
     const GRAPHIC_RESOURCE_VISIBILITY visibility) {
   VkShaderStageFlags flags = 0;
@@ -374,36 +348,6 @@ VkShaderStageFlags getVisibilityFlags2(
   return flags;
 }
 
-VkShaderStageFlags getVisibilityFlags(const nlohmann::json &jobj) {
-  const auto found = jobj.find(ROOT_KEY_VISIBILITY);
-  if (found == jobj.end()) {
-    return 0;
-  }
-
-  const auto &visibility = found.value();
-  if (!visibility.is_array()) {
-    const auto flagFound =
-        STRING_TO_SHADER_FLAGS.find(visibility.get<std::string>());
-    if (flagFound != STRING_TO_SHADER_FLAGS.end()) {
-      return flagFound->second;
-    }
-  } else {
-    VkShaderStageFlags toReturn = 0;
-    for (const auto &flag : visibility) {
-      const auto flagFound =
-          STRING_TO_SHADER_FLAGS.find(flag.get<std::string>());
-      if (flagFound != STRING_TO_SHADER_FLAGS.end()) {
-        toReturn |= flagFound->second;
-      }
-    }
-    assert(toReturn != 0 &&
-           "read root signatures visibility flags are null in array");
-    return toReturn;
-  }
-
-  assert(0 && "could not find requested shader flags");
-  return 0;
-}
 
 void VkPipelineLayoutManager::initialize() {
   vk::initPerFrameDataDescriptor();
@@ -443,23 +387,6 @@ void processConfig(const graphics::MaterialResource &meta,
   binding->descriptorCount = 1;
 }
 
-void processConfig(const nlohmann::json &jobj,
-                   VkDescriptorSetLayoutBinding *binding) {
-  int bindingIdx = getValueIfInJson(jobj, ROOT_KEY_BASE_REGISTER, -1);
-  int descriptorCount = getValueIfInJson(jobj, ROOT_KEY_NUM_DESCRIPTOR, -1);
-
-  assert(bindingIdx != -1);
-  assert(descriptorCount != -1);
-
-  binding->stageFlags = getVisibilityFlags(jobj);
-  VkDescriptorType descriptorType =
-      getDescriptorType(jobj, binding->stageFlags);
-  assert(descriptorType != VK_DESCRIPTOR_TYPE_MAX_ENUM);
-
-  binding->binding = bindingIdx;
-  binding->descriptorType = descriptorType;
-  binding->descriptorCount = descriptorCount;
-}
 
 RSHandle VkPipelineLayoutManager::loadSignatureFile(
     const char *name, graphics::MaterialMetadata *metadata) {

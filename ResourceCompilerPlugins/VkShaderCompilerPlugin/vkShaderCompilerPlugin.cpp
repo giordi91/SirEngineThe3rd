@@ -152,12 +152,12 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
   SirEngine::vk::VkShaderArgs shaderArgs;
 
   // checking IO files exits
-  bool exits = fileExists(assetPath);
+  bool exits = SirEngine::fileExists(assetPath);
   if (!exits) {
     SE_CORE_ERROR("{0} : could not find path/file {1}", PLUGIN_NAME, assetPath);
   }
 
-  exits = filePathExists(outputPath);
+  exits = SirEngine::filePathExists(outputPath);
   if (!exits) {
     SE_CORE_ERROR("{0} : could not find path/file {1}", PLUGIN_NAME,
                   outputPath);
@@ -174,7 +174,7 @@ bool processShader(const std::string &assetPath, const std::string &outputPath,
                   PLUGIN_NAME);
   }
 
-  std::string ext = getFileExtension(assetPath);
+  std::string ext = SirEngine::getFileExtension(assetPath);
   SirEngine::SpirVBlob blob;
   if (ext != ".hlsl") {
     // compileSpirV(assetPath, outputPath, shaderArgs, compiler, log);

@@ -7,6 +7,8 @@
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
 #include "cxxopts/cxxopts.hpp"
+#include "nlohmann/json.hpp"
+
 using namespace std::string_literals;
 
 const std::string PLUGIN_NAME = "PointTilerCompilerPlugin";
@@ -23,11 +25,12 @@ struct PointsData {
 
 bool convertPoints(const std::string &path, PointsData &data) {
   // TODO compile this with resource compiler
-  data.name = getFileName(path);
+  data.name = SirEngine::getFileName(path);
 
-  const auto jObj = getJsonObj(path);
+  nlohmann::json jObj;
+  SirEngine::getJsonObj(path, jObj);
   const std::string tileKey = "tiles";
-  assertInJson(jObj, tileKey);
+  SirEngine::assertInJson(jObj, tileKey);
   const auto &tilesJ = jObj[tileKey];
   data.tileCount = static_cast<uint32_t>(tilesJ.size());
   std::cout << "tile count" << data.tileCount << std::endl;
@@ -55,13 +58,13 @@ bool convertPoints(const std::string &path, PointsData &data) {
 bool processPoints(const std::string &assetPath, const std::string &outputPath,
                    const std::string &) {
   // checking IO files exits
-  bool exits = fileExists(assetPath);
+  bool exits = SirEngine::fileExists(assetPath);
   if (!exits) {
     SE_CORE_ERROR("[Point Tiler Compiler] : could not find path/file {0}",
                   assetPath);
   }
 
-  exits = filePathExists(outputPath);
+  exits = SirEngine::filePathExists(outputPath);
   if (!exits) {
     SE_CORE_ERROR("[Point Tiler Compiler] : could not find path/file {0}",
                   outputPath);

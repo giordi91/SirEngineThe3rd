@@ -1,13 +1,12 @@
 #pragma once
-#include <cassert>
+#include <assert.h>
 
 #include "SirEngine/handle.h"
 #include "SirEngine/hashing.h"
 #include "SirEngine/memory/cpu/sparseMemoryPool.h"
 #include "SirEngine/memory/cpu/stringHashMap.h"
 #include "SirEngine/rootSignatureManager.h"
-#include "vk.h"
-
+#include "platform/windows/graphics/vk/volk.h"
 namespace SirEngine::graphics {
 struct MaterialMetadata;
 }

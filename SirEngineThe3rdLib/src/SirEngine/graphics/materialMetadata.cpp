@@ -1,19 +1,22 @@
 #include "SirEngine/graphics/materialMetadata.h"
 
+#include <assert.h>
+
 #include <SPIRV-CROSS/spirv_cross.hpp>
-#include <cassert>
-#include <regex>
+#include <filesystem>
+#include <fstream>
+#include <sstream>
 #include <string>
 #include <unordered_map>
 
 #include "SirEngine/binary/binaryFile.h"
-#include "SirEngine/engineConfig.h"
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/log.h"
 #include "SirEngine/memory/cpu/stackAllocator.h"
 #include "SirEngine/psoManager.h"
 #include "platform/windows/graphics/dx12/shaderCompiler.h"
+#include "nlohmann/json.hpp"
 
 namespace SirEngine::graphics {
 
@@ -191,8 +194,6 @@ MaterialMetadataUniform extractUniformBufferOffset(
   toReturn.membersCount = static_cast<uint32_t>(count);
 
   std::string name = strName;
-  //    std::regex_replace(strName, std::regex("type.ConstantBuffer."), "");
-  // assert(name.size() <= 31);
   memcpy(&toReturn.name[0], name.c_str(), name.size());
   toReturn.name[name.size()] = '\0';
   toReturn.structSize = static_cast<uint32_t>(structSize);
@@ -221,10 +222,7 @@ MaterialMetadata extractMetadataFromShader(const char *shaderName,
   assert(visibility && "wrong visibility found for shader type");
 
   SirEngine::dx12::DXCShaderCompiler compiler;
-  SirEngine::dx12::ShaderCompileResult compileResult;
-  /*
-  vk::VkShaderCompiler vkCompiler;
-  */
+
   std::string log;
   dx12::ShaderArgs args;
   args.debug = true;
@@ -307,7 +305,6 @@ MaterialMetadata extractMetadataFromShader(const char *shaderName,
     counter += 1;
   }
 
-  bool pushConstants = res.push_constant_buffers.size() != 0;
   // we either have one push constant only or none
   assert(res.push_constant_buffers.size() == 1 ||
          res.push_constant_buffers.size() == 0);
@@ -762,7 +759,8 @@ MaterialMetadata processRasterMetadata(const char *path,
 }
 
 MaterialMetadata extractMetadataFromPSO(const char *psoPath) {
-  auto jobj = getJsonObj(psoPath);
+  nlohmann::json jobj;
+  getJsonObj(psoPath, jobj);
   assertInJson(jobj, PSO_TYPE_KEY);
 
   const std::string &psoType = jobj[PSO_TYPE_KEY].get<std::string>();

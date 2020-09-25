@@ -1,6 +1,9 @@
 #include "SirEngine/engineConfig.h"
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/runtimeString.h"
+#include "nlohmann/json.hpp"
+
+#include <unordered_map>
 
 static std::string CONFIG_DATA_SOURCE_KEY = "dataSource";
 static std::string CONFIG_STARTING_SCENE_KEY = "startingScene";
@@ -83,7 +86,8 @@ ADAPTER_SELECTION_RULE getAdapterSelectionRule(const nlohmann::json &jobj) {
 }
 
 void parseConfigFile(const char *path,const EngineInitializationConfig& initConfig) {
-  const nlohmann::json jobj = getJsonObj(path);
+  nlohmann::json jobj;
+  SirEngine::getJsonObj(path, jobj);
 
   constexpr int mbToBytes = 1024 * 1024;
   // first thing first we need to initialize the allocators

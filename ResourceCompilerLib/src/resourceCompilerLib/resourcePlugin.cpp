@@ -20,11 +20,11 @@ void PluginRegistry::loadPlugin(const std::string &dllPath, bool verbose) {
       if (res) {
         m_dlls.push_back(loadedDLL);
         if (verbose) {
-          SE_CORE_INFO("Successfully loaded plug-in {0}", getFileName(dllPath));
+          SE_CORE_INFO("Successfully loaded plug-in {0}", SirEngine::getFileName(dllPath));
         }
         return;
       } else {
-        SE_CORE_ERROR("Problem in loading plug-in {0}", getFileName(dllPath));
+        SE_CORE_ERROR("Problem in loading plug-in {0}", SirEngine::getFileName(dllPath));
       }
     }
     FreeLibrary(loadedDLL);
@@ -50,10 +50,10 @@ void PluginRegistry::loadPlugin(const std::string &dllPath, bool verbose) {
 void PluginRegistry::loadPluginsInFolder(const std::string &sourcePath,
                                          bool verbose) {
   std::vector<std::string> paths;
-  listFilesInFolder(sourcePath.c_str(), paths, SHARED_LIBRARY_EXTENSION);
+  SirEngine::listFilesInFolder(sourcePath.c_str(), paths, SHARED_LIBRARY_EXTENSION);
   for (const auto &path : paths) {
     if (verbose) {
-      SE_CORE_INFO("Found plug-in: {0}", getFileName(path));
+      SE_CORE_INFO("Found plug-in: {0}", SirEngine::getFileName(path));
     }
     loadPlugin(path, verbose);
   }

@@ -8,6 +8,7 @@
 #include "SirEngine/skinClusterManager.h"
 #include "SirEngine/textureManager.h"
 #include "fileUtils.h"
+#include "nlohmann/json.hpp"
 
 namespace SirEngine {
 namespace AssetManagerKeys {
@@ -26,7 +27,8 @@ static const std::string DEFAULT_STRING = "";
 void AssetManager::cleanup() {}
 
 AssetDataHandle AssetManager::loadAsset(const char *path) {
-  auto jobj = getJsonObj(path);
+  nlohmann::json jobj;
+  getJsonObj(path, jobj);
 
   const std::string assetName = getFileName(path);
   // now that we have the asset we can check that the sub asset is present
@@ -108,7 +110,8 @@ AssetDataHandle AssetManager::loadAsset(const char *path) {
 }
 
 AssetDataHandle AssetManager::loadScene(const char *path) {
-  const auto jobj = getJsonObj(path);
+  nlohmann::json jobj;
+  getJsonObj(path, jobj);
   assert(jobj.find(AssetManagerKeys::ASSETS_KEY) != jobj.end());
 
   // load all the assets

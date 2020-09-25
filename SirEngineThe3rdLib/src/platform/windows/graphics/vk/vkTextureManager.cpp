@@ -5,6 +5,8 @@
 #include "gli/gli.hpp"
 #include "vk.h"
 #include "vkBufferManager.h"
+#include <fstream>
+#include "nlohmann/json.hpp"
 
 namespace SirEngine::vk {
 
@@ -578,7 +580,8 @@ TextureHandle VkTextureManager::loadTexture(const char *path,
   const bool res = fileExists(path);
   assert(res);
 
-  const auto jobj = getJsonObj(path);
+  nlohmann::json jobj;
+  SirEngine::getJsonObj(path, jobj);
   // TODO we need to store this info
   const bool isCube = getValueIfInJson(jobj, TEXTURE_CUBE_KEY, DEFAULT_BOOL);
   const bool isGamma = getValueIfInJson(jobj, TEXTURE_GAMMA_KEY, DEFAULT_BOOL);

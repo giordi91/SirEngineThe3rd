@@ -9,6 +9,8 @@
 #include "SirEngine/graphics/graphicsDefines.h"
 #include "SirEngine/runtimeString.h"
 #include "platform/windows/graphics/dx12/shaderCompiler.h"
+#include <fstream>
+#include <filesystem>
 
 namespace SirEngine::dx12 {
 

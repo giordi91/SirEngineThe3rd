@@ -1,7 +1,10 @@
 #pragma once
 #include "SirEngine/core.h"
-#include "SirEngine/fileUtils.h"
 #include "SirEngine/graphics/graphicsDefines.h"
+
+#include <string>
+#include <vector>
+
 
 struct BinaryFileHeader {
   unsigned int fileType = 0;
@@ -81,17 +84,8 @@ enum BinaryFileType {
   MATERIAL_METADATA = 8
 };
 
-SIR_ENGINE_API
-extern const std::unordered_map<BinaryFileType, std::string>
-    m_binaryFileTypeToString;
 
-inline std::string getBinaryFileTypeName(const BinaryFileType type) {
-  const auto found = m_binaryFileTypeToString.find(type);
-  if (found != m_binaryFileTypeToString.end()) {
-    return found->second;
-  }
-  return "";
-}
+std::string SIR_ENGINE_API getBinaryFileTypeName(const BinaryFileType type);
 
 struct ModelMapperData final {
   uint32_t vertexDataSizeInByte = 0;

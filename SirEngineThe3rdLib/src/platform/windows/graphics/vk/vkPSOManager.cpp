@@ -5,6 +5,7 @@
 #include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
 #include "SirEngine/materialManager.h"
+#include "nlohmann/json.hpp"
 #include "platform/windows/graphics/vk/vk.h"
 #include "platform/windows/graphics/vk/vkShaderManager.h"
 
@@ -313,7 +314,7 @@ inline VkFormat convertStringToTextureFormat(const std::string &format) {
 
 VkRenderPass getRenderPass(const nlohmann::json &jobj, const char *name) {
   const uint32_t renderTargets =
-      getValueIfInJson(jobj, PSO_KEY_RENDER_TARGETS, DEFAULT_INT);
+      getValueIfInJson(jobj, PSO_KEY_RENDER_TARGETS, static_cast<unsigned>(DEFAULT_INT));
 
   assertInJson(jobj, PSO_KEY_RTV_FORMATS);
 
@@ -746,9 +747,10 @@ VkPSOCompileResult VkPSOManager::processComputePSO(
   return compileResult;
 }
 
-VkPSOCompileResult VkPSOManager::compileRawPSO(const char *file) {
+VkPSOCompileResult VkPSOManager::compileRawPSO(const char *file) const {
   const std::string fileName = getFileName(file);
-  auto jobj = getJsonObj(file);
+  nlohmann::json jobj;
+  SirEngine::getJsonObj(file, jobj);
 
   const std::string typeString =
       getValueIfInJson(jobj, PSO_KEY_TYPE, DEFAULT_STRING);
@@ -779,7 +781,7 @@ VkPSOCompileResult VkPSOManager::compileRawPSO(const char *file) {
 
 void VkPSOManager::recompilePSOFromShader(const char *shaderName,
                                           const char *offsetPath) {
-  std::cout << "requested shader reload " << shaderName << std::endl;
+  SE_CORE_INFO("requested shader reload {}", shaderName);
 
   // clearing the log
   compileLog = "";
@@ -796,8 +798,9 @@ void VkPSOManager::recompilePSOFromShader(const char *shaderName,
   int psoCount = psos->size();
   for (int i = 0; i < psoCount; ++i) {
     const char *pso = (*psos)[i];
-    const auto jobj = getJsonObj(pso);
-    std::cout << "[Engine]: Loading PSO from: " << pso << std::endl;
+    nlohmann::json jobj;
+    SirEngine::getJsonObj(pso, jobj);
+    SE_CORE_INFO("[Engine]: Loading PSO from: {}", pso);
 
     const std::string psoTypeString =
         getValueIfInJson(jobj, PSO_KEY_TYPE, DEFAULT_STRING);

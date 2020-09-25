@@ -43,12 +43,12 @@ bool processModel(const std::string &assetPath, const std::string &outputPath,
   processArgs(args, tangentsPath, skinPath);
 
   // checking IO files exits
-  bool exits = fileExists(assetPath);
+  bool exits = SirEngine::fileExists(assetPath);
   if (!exits) {
     SE_CORE_ERROR("[Model Compiler] : could not find path/file {0}", assetPath);
   }
 
-  exits = filePathExists(outputPath);
+  exits = SirEngine::filePathExists(outputPath);
   if (!exits) {
     SE_CORE_ERROR("[Model Compiler] : could not find path/file {0}",
                   outputPath);

@@ -113,7 +113,6 @@ class Dx12PSOManager final : public PSOManager {
  private:
   // debugging function to be able to print to console the composition of a
   // state object
-  static void printStateObjectDesc(const D3D12_STATE_OBJECT_DESC *desc);
   inline ID3D12PipelineState *getComputePSOByName(const char *name) const {
     const PSOHandle handle = getHandleFromName(name);
     assertMagicNumber(handle);

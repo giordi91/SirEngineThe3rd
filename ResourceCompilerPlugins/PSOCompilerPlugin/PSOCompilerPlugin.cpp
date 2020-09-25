@@ -283,9 +283,9 @@ bool compileAllVK(const std::string &assetPath, const std::string &outputPath,
   const std::string graphicsDirectory = "/" + target + "/";
 
   std::vector<std::string> filePaths;
-  listFilesInFolder(assetPath.c_str(), filePaths, "json");
+  SirEngine::listFilesInFolder(assetPath.c_str(), filePaths, "json");
   for (auto &path : filePaths) {
-    const std::string fileName = getFileName(path);
+    const std::string fileName = SirEngine::getFileName(path);
     const std::string currOutputPath =
         outputPath + graphicsDirectory + fileName + ".metadata";
     compileVK(path, currOutputPath);
@@ -299,9 +299,9 @@ bool compileAllDx12(const std::string &assetPath, const std::string &outputPath,
   const std::string graphicsDirectory = "/" + target + "/";
 
   std::vector<std::string> filePaths;
-  listFilesInFolder(assetPath.c_str(), filePaths, "json");
+  SirEngine::listFilesInFolder(assetPath.c_str(), filePaths, "json");
   for (auto &path : filePaths) {
-    const std::string fileName = getFileName(path);
+    const std::string fileName = SirEngine::getFileName(path);
     const std::string currOutputPath =
         outputPath + graphicsDirectory + fileName + ".metadata";
     // compileAndSavePSO(path, currOutputPath, shaderPath);
@@ -316,7 +316,7 @@ bool compileAllDx12(const std::string &assetPath, const std::string &outputPath,
 bool process(const std::string &assetPath, const std::string &outputPath,
              const std::string &args) {
   // checking IO files exits
-  bool exits = fileExists(assetPath);
+  bool exits = SirEngine::fileExists(assetPath);
   if (!exits) {
     SE_CORE_ERROR("[PSO Compiler] : could not find path/file {0}", assetPath);
   }
@@ -326,7 +326,7 @@ bool process(const std::string &assetPath, const std::string &outputPath,
   bool processFolder = false;
   processArgs(args, target, shaderPath, processFolder);
 
-  if (processFolder && !isPathDirectory(assetPath)) {
+  if (processFolder && !SirEngine::isPathDirectory(assetPath)) {
     SE_CORE_ERROR(
         "Requested to compile all PSO in path, but provided path is "
         "not a directory");
