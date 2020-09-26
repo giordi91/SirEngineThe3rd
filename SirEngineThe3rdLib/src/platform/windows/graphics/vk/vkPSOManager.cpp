@@ -2,7 +2,7 @@
 
 #include "SirEngine/application.h"
 #include "SirEngine/events/shaderCompileEvent.h"
-#include "SirEngine/fileUtils.h"
+#include "SirEngine/io/fileUtils.h"
 #include "SirEngine/log.h"
 #include "SirEngine/materialManager.h"
 #include "nlohmann/json.hpp"

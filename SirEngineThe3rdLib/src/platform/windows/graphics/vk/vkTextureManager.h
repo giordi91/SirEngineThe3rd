@@ -42,9 +42,11 @@ class SIR_ENGINE_API VkTextureManager final : public TextureManager {
 
   void initialize() override;
   void cleanup() override;
-  TextureHandle getWhiteTexture() const override {
+
+  [[nodiscard]] TextureHandle getWhiteTexture() const override {
     return m_whiteTexture;
   }
+
   // vk methods
   const VkTexture2D &getTextureData(const TextureHandle &handle) const {
     assertMagicNumber(handle);

@@ -1,7 +1,7 @@
 #include "SirEngine/animation/animationLoopPlayer.h"
 #include "SirEngine/animation/animationManager.h"
 #include "SirEngine/animation/skeleton.h"
-#include "SirEngine/fileUtils.h"
+#include "SirEngine/io/fileUtils.h"
 #include "SirEngine/animation/animationClip.h"
 
 namespace SirEngine {

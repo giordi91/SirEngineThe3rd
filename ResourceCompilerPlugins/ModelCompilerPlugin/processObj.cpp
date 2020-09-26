@@ -8,7 +8,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "SirEngine/fileUtils.h"
+#include "SirEngine/io/fileUtils.h"
 #include "SirEngine/log.h"
 #include "meshoptimizer.h"
 #include "nlohmann/json.hpp"

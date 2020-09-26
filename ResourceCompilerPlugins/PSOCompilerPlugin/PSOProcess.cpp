@@ -2,7 +2,7 @@
 
 #include <cassert>
 
-#include "SirEngine/fileUtils.h"
+#include "SirEngine/io/fileUtils.h"
 #include "SirEngine/log.h"
 #include "platform/windows/graphics/dx12/PSOCompile.h"
 #include "platform/windows/graphics/dx12/d3dx12.h"

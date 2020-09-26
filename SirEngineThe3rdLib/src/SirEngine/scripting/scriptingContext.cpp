@@ -1,10 +1,10 @@
 #include "SirEngine/scripting/scriptingContext.h"
 
-#include <cassert>
+#include <assert.h>
 
 #include "SirEngine/log.h"
 
-#include "SirEngine/fileUtils.h"
+#include "SirEngine/io/fileUtils.h"
 #include "SirEngine/runtimeString.h"
 #include "SirEngine/scripting/scriptingBindings.h"
 

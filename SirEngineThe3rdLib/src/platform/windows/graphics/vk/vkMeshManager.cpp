@@ -1,7 +1,7 @@
 #include "platform/windows/graphics/vk/vkMeshManager.h"
 
-#include "SirEngine/binary/binaryFile.h"
-#include "SirEngine/fileUtils.h"
+#include "SirEngine/io/binaryFile.h"
+#include "SirEngine/io/fileUtils.h"
 #include "SirEngine/log.h"
 #include "platform/windows/graphics/vk/vk.h"
 #include "platform/windows/graphics/vk/vkBufferManager.h"

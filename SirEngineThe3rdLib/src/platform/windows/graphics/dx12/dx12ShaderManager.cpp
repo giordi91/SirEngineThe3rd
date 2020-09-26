@@ -3,9 +3,9 @@
 #include <d3dcommon.h>
 #include <d3dcompiler.h>
 
-#include "SirEngine/argsUtils.h"
-#include "SirEngine/binary/binaryFile.h"
-#include "SirEngine/fileUtils.h"
+#include "SirEngine/io/argsUtils.h"
+#include "SirEngine/io/binaryFile.h"
+#include "SirEngine/io/fileUtils.h"
 #include "SirEngine/graphics/graphicsDefines.h"
 #include "SirEngine/runtimeString.h"
 #include "platform/windows/graphics/dx12/shaderCompiler.h"

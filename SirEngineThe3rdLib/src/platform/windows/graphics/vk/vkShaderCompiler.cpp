@@ -2,13 +2,13 @@
 
 #include <cassert>
 
-#include "SirEngine/binary/binaryFile.h"
+#include "SirEngine/io/binaryFile.h"
+#include "SirEngine/io/fileUtils.h"
 #include "SirEngine/runtimeString.h"
 #include "platform/windows/graphics/vk/vk.h"
 #include "platform/windows/graphics/vk/volk.h"
 
 #undef max
-#include "SirEngine/fileUtils.h"
 
 #include <SPIRV/GlslangToSpv.h>
 #include <StandAlone/DirStackFileIncluder.h>
