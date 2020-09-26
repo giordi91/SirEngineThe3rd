@@ -1,7 +1,7 @@
 #include "vkRootSignatureManager.h"
 
-#include "SirEngine/binary/binaryFile.h"
-#include "SirEngine/fileUtils.h"
+#include "SirEngine/io/binaryFile.h"
+#include "SirEngine/io/fileUtils.h"
 #include "SirEngine/graphics/materialMetadata.h"
 #include "SirEngine/log.h"
 #include "SirEngine/materialManager.h"

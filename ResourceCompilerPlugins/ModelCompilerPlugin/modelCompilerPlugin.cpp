@@ -1,12 +1,11 @@
 #include "modelCompilerPlugin.h"
-#include "SirEngine/fileUtils.h"
+#include "SirEngine/io/fileUtils.h"
+#include "SirEngine/io/argsUtils.h"
+#include "SirEngine/io/binaryFile.h"
 #include "SirEngine/log.h"
 #include "cxxopts/cxxopts.hpp"
 
-#include "SirEngine/argsUtils.h"
-#include "SirEngine/binary/binaryFile.h"
 #include "processObj.h"
-#include "tinyobjloader/tiny_obj_loader.h"
 #include <filesystem>
 const std::string PLUGIN_NAME = "modelCompilerPlugin";
 const unsigned int VERSION_MAJOR = 0;

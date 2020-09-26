@@ -1,6 +1,6 @@
 #include "platform/windows/graphics/dx12/shaderCompiler.h"
 
-#include "SirEngine/fileUtils.h"
+#include "SirEngine/io/fileUtils.h"
 #include "SirEngine/log.h"
 
 // NOTE to work, dxcapi needs to happen after windows.h

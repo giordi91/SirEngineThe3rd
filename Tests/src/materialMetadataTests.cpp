@@ -1,4 +1,4 @@
-#include "SirEngine/fileUtils.h"
+#include "SirEngine/io/fileUtils.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/graphics/materialMetadata.h"
 #include "SirEngine/log.h"
