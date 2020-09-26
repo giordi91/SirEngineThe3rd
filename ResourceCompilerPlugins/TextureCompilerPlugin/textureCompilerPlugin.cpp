@@ -1,10 +1,10 @@
 #include "textureCompilerPlugin.h"
-#include "SirEngine/fileUtils.h"
+#include "SirEngine/io/fileUtils.h"
 #include "SirEngine/log.h"
 #include "cxxopts/cxxopts.hpp"
 
 #include "processTexture.h"
-#include "SirEngine/argsUtils.h"
+#include "SirEngine/io/argsUtils.h"
 
 
 const std::string PLUGIN_NAME = "textureCompilerPlugin";

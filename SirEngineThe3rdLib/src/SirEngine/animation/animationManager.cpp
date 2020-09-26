@@ -1,7 +1,7 @@
 
 #include "SirEngine/animation/animationManager.h"
 
-#include <SirEngine/fileUtils.h>
+#include <SirEngine/io/fileUtils.h>
 #undef max
 #include "SirEngine/animation/animationClip.h"
 #include "SirEngine/animation/animationLoopPlayer.h"

@@ -1,6 +1,6 @@
 #include "platform/windows/graphics/vk/vkTextureManager.h"
 
-#include "SirEngine/fileUtils.h"
+#include "SirEngine/io/fileUtils.h"
 #include "SirEngine/log.h"
 #include "gli/gli.hpp"
 #include "vk.h"

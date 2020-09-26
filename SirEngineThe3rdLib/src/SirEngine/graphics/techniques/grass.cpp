@@ -1,9 +1,9 @@
 #include "SirEngine/graphics/techniques/grass.h"
 
-#include "SirEngine/binary/binaryFile.h"
+#include "SirEngine/io/binaryFile.h"
 #include "SirEngine/bufferManager.h"
 #include "SirEngine/constantBufferManager.h"
-#include "SirEngine/fileUtils.h"
+#include "SirEngine/io/fileUtils.h"
 #include "SirEngine/graphics/bindingTableManager.h"
 #include "SirEngine/graphics/debugRenderer.h"
 #include "SirEngine/graphics/renderingContext.h"

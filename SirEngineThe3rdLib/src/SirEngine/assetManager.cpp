@@ -7,7 +7,7 @@
 #include "SirEngine/runtimeString.h"
 #include "SirEngine/skinClusterManager.h"
 #include "SirEngine/textureManager.h"
-#include "fileUtils.h"
+#include "SirEngine/io/fileUtils.h"
 #include "nlohmann/json.hpp"
 
 namespace SirEngine {

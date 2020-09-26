@@ -3,7 +3,7 @@
 #include <DXTK12/DDSTextureLoader.h>
 #include <platform/windows/graphics/dx12/dx12SwapChain.h>
 
-#include "SirEngine/fileUtils.h"
+#include "SirEngine/io/fileUtils.h"
 #include "SirEngine/log.h"
 #include "SirEngine/runtimeString.h"
 #include "nlohmann/json.hpp"

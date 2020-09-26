@@ -1,6 +1,5 @@
 #pragma once
-#include <cstdint>
-#include <cstring>
+#include "SirEngine/core.h"
 
 namespace SirEngine {
 enum MOUSE_BUTTONS {

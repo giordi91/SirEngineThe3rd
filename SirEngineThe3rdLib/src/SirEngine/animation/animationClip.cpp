@@ -1,6 +1,6 @@
 #include "SirEngine/animation/animationClip.h"
-#include "SirEngine/binary/binaryFile.h"
-#include "SirEngine/fileUtils.h"
+#include "SirEngine/io/binaryFile.h"
+#include "SirEngine/io/fileUtils.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/log.h"
 #include "SirEngine/runtimeString.h"

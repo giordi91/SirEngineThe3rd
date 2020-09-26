@@ -1,12 +1,12 @@
 #include "AnimationCompilerPlugin.h"
-#include "SirEngine/fileUtils.h"
 #include "SirEngine/log.h"
+#include "SirEngine/io/fileUtils.h"
+#include "SirEngine/io/argsUtils.h"
+#include "SirEngine/io/binaryFile.h"
 #include "cxxopts/cxxopts.hpp"
 
 #include "SirEngine/animation/animationManager.h"
 #include "SirEngine/animation/skeleton.h"
-#include "SirEngine/argsUtils.h"
-#include "SirEngine/binary/binaryFile.h"
 #include <filesystem>
 #include "nlohmann/json.hpp"
 

@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "SirEngine/memory/cpu/resizableVector.h"
-#include "runtimeString.h"
+#include "SirEngine/runtimeString.h"
 
 // regex used to pars plugin arguments
 //NOTE this was changed with a double escape because the compiler was

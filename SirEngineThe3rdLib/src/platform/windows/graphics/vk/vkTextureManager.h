@@ -3,14 +3,13 @@
 #include "SirEngine/core.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/handle.h"
-#include "SirEngine/layers/vkTempLayer.h"
 #include "SirEngine/memory/cpu/SparseMemoryPool.h"
 #include "SirEngine/textureManager.h"
 #include "platform/windows/graphics/vk/volk.h"
 
 namespace SirEngine::vk {
 struct VkTexture2D {
-  const char* name = nullptr;
+  const char *name = nullptr;
   VkImage image;
   VkDeviceMemory deviceMemory;
   VkImageLayout imageLayout;
@@ -27,9 +26,8 @@ struct VkTexture2D {
 
 class SIR_ENGINE_API VkTextureManager final : public TextureManager {
  public:
-  VkTextureManager() : TextureManager(),m_texturePool(RESERVE_SIZE) {
-  }
-  virtual ~VkTextureManager();
+  VkTextureManager() : TextureManager(), m_texturePool(RESERVE_SIZE) {}
+  ~VkTextureManager() override;
 
   VkTextureManager(const VkTextureManager &) = delete;
   VkTextureManager &operator=(const VkTextureManager &) = delete;
@@ -44,7 +42,7 @@ class SIR_ENGINE_API VkTextureManager final : public TextureManager {
 
   void initialize() override;
   void cleanup() override;
-  inline TextureHandle getWhiteTexture() const override {
+  TextureHandle getWhiteTexture() const override {
     return m_whiteTexture;
   }
   // vk methods
@@ -54,7 +52,8 @@ class SIR_ENGINE_API VkTextureManager final : public TextureManager {
     const auto &data = m_texturePool.getConstRef(idx);
     return data;
   };
-  VkFormat getTextureFormat(const TextureHandle &handle) const {
+
+  [[nodiscard]] VkFormat getTextureFormat(const TextureHandle &handle) const {
     assertMagicNumber(handle);
     const uint32_t idx = getIndexFromHandle(handle);
     const auto &data = m_texturePool.getConstRef(idx);
@@ -81,7 +80,6 @@ class SIR_ENGINE_API VkTextureManager final : public TextureManager {
     writeDescriptorSets[0].pImageInfo = &data.srv;
     writeDescriptorSets[0].descriptorCount = 1;
   }
-
 
  private:
   bool loadTextureFromFile(const char *name, VkFormat format, VkDevice device,
