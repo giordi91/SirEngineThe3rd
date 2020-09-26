@@ -394,6 +394,7 @@ RSHandle VkPipelineLayoutManager::loadSignatureFile(
   VkPipelineLayoutCreateInfo layoutInfo = {
       VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
 
+  VkPushConstantRange pushRange{};
   // check the number of bindings
   bool hasConfig = metadata->objectResourceCount != 0;
   VkDescriptorSetLayout descriptorLayout = nullptr;
@@ -436,6 +437,30 @@ RSHandle VkPipelineLayoutManager::loadSignatureFile(
                                 &descriptorLayout);
     SET_DEBUG_NAME(descriptorLayout, VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT,
                    frameConcatenation(name, "DescriptorLayout"));
+
+    // setup push constants
+    if (pushConstantOffset != 0) {
+      // if we are here it means we have push constant to deal with
+      const graphics::MaterialResource &meta = metadata->objectResources[0];
+      assert(meta.type == graphics::MATERIAL_RESOURCE_TYPE::CONSTANT_BUFFER);
+      layoutInfo.pushConstantRangeCount = 1;
+      layoutInfo.pPushConstantRanges = &pushRange;
+      pushRange.size = meta.extension.uniform.structSize;
+      pushRange.offset = 0;
+      pushRange.stageFlags = 0;
+      pushRange.stageFlags |=
+          (meta.visibility & GRAPHICS_RESOURCE_VISIBILITY_VERTEX) > 0
+              ? VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT
+              : 0;
+      pushRange.stageFlags |=
+          (meta.visibility & GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT) > 0
+              ? VkShaderStageFlagBits::VK_SHADER_STAGE_FRAGMENT_BIT
+              : 0;
+      pushRange.stageFlags |=
+          (meta.visibility & GRAPHICS_RESOURCE_VISIBILITY_COMPUTE) > 0
+              ? VkShaderStageFlagBits::VK_SHADER_STAGE_COMPUTE_BIT
+              : 0;
+    }
   } else {
     const char *passname =
         frameConcatenation(name, "PerObjectDescriptorLayoutEmpty");

@@ -90,6 +90,7 @@ struct DrawCallConfig {
 class RenderingContext {
  public:
   virtual ~RenderingContext() = default;
+  virtual void bindSamplers(const RSHandle & rs) = 0;
   // private copy and assignment
   RenderingContext(const RenderingContext &) = delete;
   RenderingContext &operator=(const RenderingContext &) = delete;

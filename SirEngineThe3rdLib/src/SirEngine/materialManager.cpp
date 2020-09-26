@@ -1,7 +1,7 @@
 
 #include "SirEngine/materialManager.h"
 
-#include <cassert>
+#include <assert.h>
 #include <string>
 #include <unordered_map>
 
@@ -295,6 +295,7 @@ inline void freeTextureIfNeeded(const TextureHandle handle) {
     globals::TEXTURE_MANAGER->free(handle);
   }
 }
+
 
 void MaterialManager::cleanup() {
   int count = m_nameToHandle.binCount();

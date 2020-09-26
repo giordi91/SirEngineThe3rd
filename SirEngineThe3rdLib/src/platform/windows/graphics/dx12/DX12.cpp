@@ -836,6 +836,10 @@ void Dx12RenderingContext::renderProceduralIndirect(
                                           nullptr, 0);
 }
 
+void Dx12RenderingContext::bindSamplers(const RSHandle &rs) {
+    assert(0);
+}
+
 bool Dx12RenderingContext::newFrame() {
   globals::STRING_POOL->resetFrameMemory();
   globals::FRAME_ALLOCATOR->reset();

@@ -1,6 +1,5 @@
 #include "platform/windows/graphics/vk/vkBufferManager.h"
 
-#include <random>
 
 #include "platform/windows/graphics/vk/vk.h"
 #include "vkMemory.h"
@@ -85,7 +84,7 @@ BufferHandle VkBufferManager::allocate(const uint32_t sizeInBytes,
   bool isVertexBuffer = (flags & BUFFER_FLAGS_BITS::VERTEX_BUFFER) > 0;
   bool isBuffered = (flags & BUFFER_FLAGS_BITS::BUFFERED) > 0;
   bool isStorage = (flags & BUFFER_FLAGS_BITS::STORAGE_BUFFER) > 0;
-  // better be safe than sorry, extensive checks on flags combinations
+  bool isGPUOnly= (flags & BUFFER_FLAGS_BITS::GPU_ONLY) > 0;
   assert(!isBuffered && "not supported yet");
   // assert(!isIndirectBuffer && "not supported yet");
   assert(!(isVertexBuffer && isIndex) &&
@@ -95,7 +94,7 @@ BufferHandle VkBufferManager::allocate(const uint32_t sizeInBytes,
   uint32_t usage = isRandomWrite ? VK_BUFFER_USAGE_STORAGE_BUFFER_BIT : 0;
   usage |= isIndex ? VK_BUFFER_USAGE_INDEX_BUFFER_BIT : 0;
   usage |= isIndirectBuffer ? VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT : 0;
-  usage |= isVertexBuffer | isStorage ? VK_BUFFER_USAGE_STORAGE_BUFFER_BIT : 0;
+  usage |= (isVertexBuffer | isStorage) > 0 ? VK_BUFFER_USAGE_STORAGE_BUFFER_BIT : 0;
   usage |= isIndirectBuffer ? VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT : 0;
 
   VkBufferCreateInfo createInfo{VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};

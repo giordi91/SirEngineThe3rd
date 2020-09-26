@@ -283,6 +283,7 @@ void GrassTechnique::passRender(const uint32_t id,
         PSOManager::PER_OBJECT_BINDING_INDEX, m_bindingTable[i], m_rs);
     globals::PSO_MANAGER->bindPSO(m_pso);
     globals::RENDERING_CONTEXT->bindCameraBuffer(m_rs);
+    globals::RENDERING_CONTEXT->bindSamplers(m_rs);
 
     if (passHandle.isHandleValid()) {
       globals::BINDING_TABLE_MANAGER->bindTable(

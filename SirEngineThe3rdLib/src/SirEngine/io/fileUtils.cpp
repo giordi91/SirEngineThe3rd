@@ -1,11 +1,12 @@
 #include "SirEngine/io/fileUtils.h"
-#include "nlohmann/json.hpp"
 
 #include <exception>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <sstream>
+
+#include "nlohmann/json.hpp"
 
 namespace SirEngine {
 
@@ -42,6 +43,13 @@ std::string getFileExtension(const std::string &path) {
 std::string getPathName(const std::string &path) {
   const auto expPath = std::filesystem::path(path);
   return expPath.parent_path().string();
+}
+
+void writeTextFileToDisk(const std::string &path, const std::string &content) {
+  std::ofstream myfile;
+  myfile.open(path, std::ostream::out | std::ostream::trunc);
+  myfile << content;
+  myfile.close();
 }
 
 bool fileExists(const std::string &name) {

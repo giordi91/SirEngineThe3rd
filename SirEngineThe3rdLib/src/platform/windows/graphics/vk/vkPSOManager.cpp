@@ -532,11 +532,7 @@ VkPSOCompileResult VkPSOManager::processRasterPSO(
 
   graphics::MaterialMetadata metadata =
       graphics::loadMetadata(filePath, GRAPHIC_API::VULKAN);
-  // if (fileName == "forwardPhongPSO") {
-  //  int x = 0;
-  //} else {
-  //  metadata = extractMetadata(filePath);
-  //}
+
   RSHandle layoutHandle2 = vk::PIPELINE_LAYOUT_MANAGER->loadSignatureFile(
       fileName.c_str(), &metadata);
   compileResult.rootSignature = frameString(fileName.c_str());

@@ -1,11 +1,9 @@
 #pragma once
 
-
-#include "platform/windows/graphics/vk/volk.h"
-
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/memory/cpu/sparseMemoryPool.h"
 #include "SirEngine/runtimeString.h"
+#include "platform/windows/graphics/vk/volk.h"
 
 namespace SirEngine {
 namespace vk {
@@ -98,15 +96,11 @@ inline uint32_t selectMemoryType(
   return ~0u;
 }
 
-bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
-                          const uint32_t height);
-
 #define VK_CHECK(call)             \
   do {                             \
     VkResult result_ = call;       \
     assert(result_ == VK_SUCCESS); \
   } while (0)
-
 
 #if _DEBUG
 #define SET_DEBUG_NAME(resource, type, name)                                 \
@@ -178,6 +172,7 @@ class VkRenderingContext final : public RenderingContext {
                        uint32_t blockZ) override;
   void renderProceduralIndirect(const BufferHandle &argsBuffer,
                                 uint32_t offset = 0) override;
+  void bindSamplers(const RSHandle &rs) override;
 
  private:
   inline void assertMagicNumber(const BufferBindingsHandle handle) const {
@@ -188,7 +183,6 @@ class VkRenderingContext final : public RenderingContext {
            "invalid magic handle for constant buffer");
   }
 
-
  private:
   void *queues = nullptr;
   ConstantBufferHandle m_cameraHandle{};
@@ -196,6 +190,9 @@ class VkRenderingContext final : public RenderingContext {
   static constexpr uint32_t RESERVE_SIZE = 400;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
   SparseMemoryPool<FrameBindingsData> m_bindingsPool;
+  void *m_matrixMemory = nullptr;
+  void *m_matrixCounter = 0;
+  BufferHandle m_matrixBufferHandle{};
 };
 
 }  // namespace vk

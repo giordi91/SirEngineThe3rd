@@ -60,6 +60,40 @@ typedef std::unordered_map<uint64_t, std::vector<Renderable>> VkRenderingQueues;
 
 bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
                           const uint32_t height) {
+  return true;
+}
+
+bool acquireSwapchainImage(const VkDevice logicalDevice,
+                           const VkSwapchainKHR swapchain,
+                           const VkSemaphore semaphore, const VkFence fence,
+                           uint32_t &imageIndex) {
+  const VkResult result = vkAcquireNextImageKHR(
+      logicalDevice, swapchain, 2000000000, semaphore, fence, &imageIndex);
+  switch (result) {
+    case VK_SUCCESS:
+    case VK_SUBOPTIMAL_KHR:
+      return true;
+    default:
+      return false;
+  }
+}
+
+RenderingContext *createVkRenderingContext(
+    const RenderingContextCreationSettings &settings, uint32_t width,
+    uint32_t height) {
+  return new VkRenderingContext(settings, width, height);
+}
+
+VkRenderingContext::VkRenderingContext(
+    const RenderingContextCreationSettings &settings, const uint32_t width,
+    const uint32_t height)
+    : RenderingContext(settings, width, height), m_bindingsPool(RESERVE_SIZE) {
+  SE_CORE_INFO("Initializing a Vulkan context");
+  queues = new VkRenderingQueues();
+}
+
+void setDebugNameImpl() {}
+bool VkRenderingContext::initializeGraphics() {
   VK_CHECK(volkInitialize());
 
   std::vector<char const *> instanceExtensions;
@@ -69,12 +103,11 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   }
 
   volkLoadInstance(INSTANCE);
-
   vk::registerDebugCallback(INSTANCE);
 
   assert(sizeof(HWND) == 8);
   assert(sizeof(HINSTANCE) == 8);
-  const NativeWindow *nativeWindow = wnd->getNativeWindow();
+  const NativeWindow *nativeWindow = m_settings.window->getNativeWindow();
   HWND hwnd;
   memcpy(&hwnd, &nativeWindow->data2, sizeof(HWND));
   HINSTANCE hinstance;
@@ -108,7 +141,6 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   }
 
   // assert ballots extensions are available
-
   VkPhysicalDeviceSubgroupProperties subgroupProperties;
   subgroupProperties.sType =
       VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_PROPERTIES;
@@ -137,8 +169,8 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
 
   // create swap
   const auto swapchain = new VkSwapchain();
-  createSwapchain(LOGICAL_DEVICE, PHYSICAL_DEVICE, SURFACE, width, height,
-                  SWAP_CHAIN, *swapchain);
+  createSwapchain(LOGICAL_DEVICE, PHYSICAL_DEVICE, SURFACE, m_settings.width,
+                  m_settings.height, SWAP_CHAIN, *swapchain);
   SWAP_CHAIN = swapchain;
 
   assert(SWAP_CHAIN_IMAGE_COUNT != 0);
@@ -212,7 +244,6 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   PSO_MANAGER = new VkPSOManager();
   PSO_MANAGER->initialize();
   globals::PSO_MANAGER = PSO_MANAGER;
-  // TODO TEMP HACK LOAD, remove this
   vk::PSO_MANAGER->loadRawPSOInFolder("../data/pso");
 
   CONSTANT_BUFFER_MANAGER = new VkConstantBufferManager();
@@ -243,51 +274,24 @@ bool vkInitializeGraphics(BaseWindow *wnd, const uint32_t width,
   globals::INTEROP_DATA = new InteropData();
   globals::INTEROP_DATA->initialize();
 
-  return true;
-}
+  // allocate memory for per frame matrix uploads
+  uint32_t matrixCount = globals::ENGINE_CONFIG->m_matrixBufferSize;
+  uint32_t matrixSize = sizeof(glm::mat4) * matrixCount;
+  m_matrixMemory = globals::PERSISTENT_ALLOCATOR->allocate(matrixSize);
 
-bool acquireSwapchainImage(const VkDevice logicalDevice,
-                           const VkSwapchainKHR swapchain,
-                           const VkSemaphore semaphore, const VkFence fence,
-                           uint32_t &imageIndex) {
-  const VkResult result = vkAcquireNextImageKHR(
-      logicalDevice, swapchain, 2000000000, semaphore, fence, &imageIndex);
-  switch (result) {
-    case VK_SUCCESS:
-    case VK_SUBOPTIMAL_KHR:
-      return true;
-    default:
-      return false;
-  }
-}
-
-RenderingContext *createVkRenderingContext(
-    const RenderingContextCreationSettings &settings, uint32_t width,
-    uint32_t height) {
-  return new VkRenderingContext(settings, width, height);
-}
-
-VkRenderingContext::VkRenderingContext(
-    const RenderingContextCreationSettings &settings, const uint32_t width,
-    const uint32_t height)
-    : RenderingContext(settings, width, height), m_bindingsPool(RESERVE_SIZE) {
-  SE_CORE_INFO("Initializing a Vulkan context");
-  queues = new VkRenderingQueues();
-}
-
-void setDebugNameImpl() {}
-bool VkRenderingContext::initializeGraphics() {
-  const bool result = vkInitializeGraphics(
-      m_settings.window, m_screenInfo.width, m_screenInfo.height);
-  if (!result) {
-    SE_CORE_ERROR("FATAL: could not initialize graphics");
-  }
+  m_matrixBufferHandle = vk::BUFFER_MANAGER->allocate(
+      matrixSize, nullptr, "perFrameMatrixBuffer", matrixCount,
+      sizeof(glm::mat4),
+     // BufferManager::BUFFER_FLAGS_BITS::BUFFERED |
+     //     BufferManager::BUFFER_FLAGS_BITS::GPU_ONLY |
+          BufferManager::BUFFER_FLAGS_BITS::STORAGE_BUFFER
+  );
 
   m_cameraHandle = globals::CONSTANT_BUFFER_MANAGER->allocate(
       sizeof(FrameData),
       ConstantBufferManager::CONSTANT_BUFFER_FLAG_BITS::UPDATED_EVERY_FRAME,
       nullptr);
-  return result;
+  return true;
 }
 
 void VkRenderingContext::setupCameraForFrame() {
@@ -579,6 +583,7 @@ void VkRenderingContext::renderQueueType(
           renderableList.first, renderableList.second[0].m_materialHandle);
 
       bindCameraBuffer(bind.rs);
+      bindSamplers(bind.rs);
 
       if (passBindings.isHandleValid()) {
         globals::BINDING_TABLE_MANAGER->bindTable(
@@ -832,6 +837,16 @@ void VkRenderingContext::renderProceduralIndirect(
   VkCommandBuffer commandList = currentFc->m_commandBuffer;
   auto bufferData = vk::BUFFER_MANAGER->getBufferData(argsBuffer);
   vkCmdDrawIndirect(commandList, bufferData.buffer, offset, 1, sizeof(int) * 4);
+}
+
+void VkRenderingContext::bindSamplers(const RSHandle &rs) {
+  VkPipelineLayout layout =
+      vk::PIPELINE_LAYOUT_MANAGER->getLayoutFromHandle(rs);
+  assert(layout != nullptr);
+  // multiple descriptor sets
+  vkCmdBindDescriptorSets(CURRENT_FRAME_COMMAND->m_commandBuffer,
+                          VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 1, 1,
+                          &STATIC_SAMPLERS_DESCRIPTOR_SET, 0, nullptr);
 }
 
 int vkBarrier(int counter, VkImageMemoryBarrier *barriers,
