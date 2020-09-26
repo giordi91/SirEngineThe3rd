@@ -1,7 +1,7 @@
-#include "SirEngine/fileUtils.h"
+#include "SirEngine/io/fileUtils.h"
 #include "cxxopts/cxxopts.hpp"
 
-#include "SirEngine/argsUtils.h"
+#include "SirEngine/io/argsUtils.h"
 #include "SirEngine/log.h"
 #include "resourceCompilerLib/resourcePlugin.h"
 

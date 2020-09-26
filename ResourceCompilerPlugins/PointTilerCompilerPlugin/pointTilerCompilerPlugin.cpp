@@ -2,9 +2,9 @@
 
 #include <filesystem>
 
-#include "SirEngine/argsUtils.h"
-#include "SirEngine/binary/binaryFile.h"
-#include "SirEngine/fileUtils.h"
+#include "SirEngine/io/argsUtils.h"
+#include "SirEngine/io/binaryFile.h"
+#include "SirEngine/io/fileUtils.h"
 #include "SirEngine/log.h"
 #include "cxxopts/cxxopts.hpp"
 #include "nlohmann/json.hpp"

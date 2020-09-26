@@ -1,4 +1,4 @@
-#include "SirEngine/argsUtils.h"
+#include "SirEngine/io/argsUtils.h"
 #include "catch/catch.hpp"
 
 unsigned int Factorial(unsigned int number) {

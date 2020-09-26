@@ -1,6 +1,6 @@
 #include "resourcePlugin.h"
 
-#include "SirEngine/fileUtils.h"
+#include "SirEngine/io/fileUtils.h"
 #include "SirEngine/log.h"
 #include <cassert>
 

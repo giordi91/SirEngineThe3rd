@@ -1,6 +1,6 @@
 #include "platform/windows/graphics/dx12/PSOCompile.h"
 
-#include "SirEngine/fileUtils.h"
+#include "SirEngine/io/fileUtils.h"
 #include "SirEngine/graphics/materialMetadata.h"
 #include "SirEngine/log.h"
 #include "SirEngine/runtimeString.h"

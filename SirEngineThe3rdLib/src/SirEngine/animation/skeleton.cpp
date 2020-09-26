@@ -1,5 +1,5 @@
 #include "SirEngine/animation/skeleton.h"
-#include "SirEngine/fileUtils.h"
+#include "SirEngine/io/fileUtils.h"
 #include "SirEngine/runtimeString.h"
 #undef max
 #include <glm/gtx/quaternion.hpp>

@@ -1,6 +1,6 @@
-#include "SirEngine/binary/binaryFile.h"
+#include "SirEngine/io//binaryFile.h"
 
-#include "SirEngine/fileUtils.h"
+#include "SirEngine/io/fileUtils.h"
 
 
 #include <fstream>
