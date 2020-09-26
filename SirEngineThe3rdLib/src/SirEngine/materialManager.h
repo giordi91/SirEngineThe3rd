@@ -73,7 +73,7 @@ class MaterialManager {
   ShaderBind bindRSandPSO(const uint64_t shaderFlags,
                           const MaterialHandle handle) const;
 
-  void buildBindingTableDefinitionFromMetadta(
+  int buildBindingTableDefinitionFromMetadta(
       const graphics::MaterialMetadata *meta);
   MaterialHandle loadMaterial(const char *path);
 
@@ -85,7 +85,7 @@ class MaterialManager {
   }
 
   PSOHandle getmaterialPSO(const MaterialHandle handle,
-                                  SHADER_QUEUE_FLAGS queue) const;
+                           SHADER_QUEUE_FLAGS queue) const;
 
  private:
   inline void assertMagicNumber(const MaterialHandle handle) const {

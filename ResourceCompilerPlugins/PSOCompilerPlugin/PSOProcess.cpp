@@ -1,6 +1,6 @@
 #include "PSOProcess.h"
 
-#include <cassert>
+#include <assert.h>
 
 #include "SirEngine/io/fileUtils.h"
 #include "SirEngine/log.h"
