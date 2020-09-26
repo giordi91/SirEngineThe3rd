@@ -50,6 +50,13 @@ struct MaterialMetadata {
   uint32_t frameResourceCount;
   uint32_t passResourceCount;
   MaterialMeshBinding meshBinding;
+
+
+  inline bool hasObjectPushConstant() const {
+  auto flagsU = static_cast<uint32_t>(objectResources[0].flags);
+  auto toCheckU = static_cast<uint32_t>(MATERIAL_RESOURCE_FLAGS::PUSH_CONSTANT_BUFFER);
+  return (flagsU & toCheckU) > 0;
+  }
 };
 
 MaterialMetadata SIR_ENGINE_API extractMetadataFromPSO(const char *psoPath);

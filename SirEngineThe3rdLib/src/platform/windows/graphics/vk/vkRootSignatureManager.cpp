@@ -1,12 +1,12 @@
 #include "vkRootSignatureManager.h"
 
+#include "SirEngine/graphics/materialMetadata.h"
 #include "SirEngine/io/binaryFile.h"
 #include "SirEngine/io/fileUtils.h"
-#include "SirEngine/graphics/materialMetadata.h"
 #include "SirEngine/log.h"
 #include "SirEngine/materialManager.h"
-#include "platform/windows/graphics/vk/vkBindingTableManager.h"
 #include "platform/windows/graphics/vk/vk.h"
+#include "platform/windows/graphics/vk/vkBindingTableManager.h"
 
 namespace SirEngine::vk {
 
@@ -185,7 +185,7 @@ void createStaticSamplerDescriptorSet() {
     resourceBinding[i].descriptorCount = 1;
     resourceBinding[i].stageFlags =
         VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT;
-  resourceBinding[i].pImmutableSamplers = &STATIC_SAMPLERS[i];
+    resourceBinding[i].pImmutableSamplers = &STATIC_SAMPLERS[i];
   }
   VkDescriptorSetLayoutCreateInfo resourceLayoutInfo[1] = {};
   resourceLayoutInfo[0].sType =
@@ -348,7 +348,6 @@ VkShaderStageFlags getVisibilityFlags2(
   return flags;
 }
 
-
 void VkPipelineLayoutManager::initialize() {
   vk::initPerFrameDataDescriptor();
   vk::initStaticSamplers();
@@ -387,7 +386,6 @@ void processConfig(const graphics::MaterialResource &meta,
   binding->descriptorCount = 1;
 }
 
-
 RSHandle VkPipelineLayoutManager::loadSignatureFile(
     const char *name, graphics::MaterialMetadata *metadata) {
   // From spec:  The pipeline layout represents a sequence of descriptor sets
@@ -400,8 +398,10 @@ RSHandle VkPipelineLayoutManager::loadSignatureFile(
   bool hasConfig = metadata->objectResourceCount != 0;
   VkDescriptorSetLayout descriptorLayout = nullptr;
   if (hasConfig) {
+    int pushConstantOffset = metadata->hasObjectPushConstant() ? 1 : 0;
     int allocSize =
-        sizeof(VkDescriptorSetLayoutBinding) * metadata->objectResourceCount;
+        sizeof(VkDescriptorSetLayoutBinding) * metadata->objectResourceCount -
+        pushConstantOffset;
     // allocating enough memory of the set layout binding
     auto *bindings = reinterpret_cast<VkDescriptorSetLayoutBinding *>(
         globals::FRAME_ALLOCATOR->allocate(allocSize));
@@ -417,15 +417,18 @@ RSHandle VkPipelineLayoutManager::loadSignatureFile(
     // object the per  frame data is defined by the engine and will be a
     // different descriptor set
 
-    for (uint32_t i = 0; i < metadata->objectResourceCount; ++i) {
-      const auto &meta = metadata->objectResources[i];
+    for (uint32_t i = 0; i < metadata->objectResourceCount - pushConstantOffset;
+         ++i) {
+      // if we have a push constant we are going to skip it
+      const auto &meta = metadata->objectResources[i + pushConstantOffset];
       processConfig(meta, &bindings[i]);
     }
     // passing in the "root signature"
     VkDescriptorSetLayoutCreateInfo descriptorInfo{
         VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
 
-    descriptorInfo.bindingCount = metadata->objectResourceCount;
+    descriptorInfo.bindingCount =
+        metadata->objectResourceCount - pushConstantOffset;
     descriptorInfo.pBindings = bindings;
 
     // can be freed

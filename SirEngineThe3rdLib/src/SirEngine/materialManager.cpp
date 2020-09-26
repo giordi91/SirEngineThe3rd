@@ -6,9 +6,9 @@
 #include <unordered_map>
 
 #include "SirEngine/engineMath.h"
-#include "SirEngine/io/fileUtils.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/graphics/materialMetadata.h"
+#include "SirEngine/io/fileUtils.h"
 #include "SirEngine/log.h"
 #include "SirEngine/psoManager.h"
 #include "SirEngine/rootSignatureManager.h"
@@ -99,14 +99,18 @@ int findBindingIndex(const graphics::MaterialMetadata *meta,
   return -1;
 }
 
-void MaterialManager::buildBindingTableDefinitionFromMetadta(
+int MaterialManager::buildBindingTableDefinitionFromMetadta(
     const graphics::MaterialMetadata *meta) {
-  uint32_t objectsCount = meta->objectResourceCount;
-  // zeroing out memory jsut to be safe
+  // push constants needs to be skipped because are part of the pipelien state
+  // object not of the binding table, not sure about DX12, need to investigate
+  bool isVK = globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::VULKAN;
+  int pushOffset = meta->hasObjectPushConstant() & isVK ? 1 : 0;
+  uint32_t objectsCount = meta->objectResourceCount - pushOffset;
+  // zeroing out memory just: to be safe
   memset(m_descriptions, 0,
          sizeof(graphics::BindingDescription) * objectsCount);
-  for (uint32_t obj = 0; obj < objectsCount; ++obj) {
-    const graphics::MaterialResource &res = meta->objectResources[obj];
+  for (uint32_t obj = 0 ; obj < objectsCount; ++obj) {
+    const graphics::MaterialResource &res = meta->objectResources[obj + pushOffset];
     auto type = res.type;
     GRAPHIC_RESOURCE_TYPE graphicsType = GRAPHIC_RESOURCE_TYPE::NONE;
     switch (type) {
@@ -130,8 +134,10 @@ void MaterialManager::buildBindingTableDefinitionFromMetadta(
         break;
       }
     }
-    m_descriptions[obj] = {res.binding, graphicsType, res.visibility};
+    m_descriptions[obj] = {res.binding, graphicsType,
+                                        res.visibility};
   }
+  return objectsCount;
 }
 
 int findIndexInObjectMaterialBinding(const char *const bindingName,
@@ -189,7 +195,7 @@ MaterialHandle MaterialManager::loadMaterial(const char *path) {
     const graphics::MaterialMetadata *meta =
         globals::PSO_MANAGER->getMetadata(bind.pso);
 
-    buildBindingTableDefinitionFromMetadta(meta);
+    int bindingTableCount = buildBindingTableDefinitionFromMetadta(meta);
 
     std::string bindingName = name + "-bindingTable";
     assert(parse.isStatic &&
@@ -197,7 +203,7 @@ MaterialHandle MaterialManager::loadMaterial(const char *path) {
 
     BindingTableHandle bindingTable =
         globals::BINDING_TABLE_MANAGER->allocateBindingTable(
-            m_descriptions, meta->objectResourceCount,
+            m_descriptions, bindingTableCount,
             parse.isStatic
                 ? graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_NONE
                 : graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED,

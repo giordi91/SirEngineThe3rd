@@ -7,6 +7,7 @@
 #include "SirEngine/memory/cpu/stringHashMap.h"
 #include "SirEngine/rootSignatureManager.h"
 #include "platform/windows/graphics/vk/volk.h"
+
 namespace SirEngine::graphics {
 struct MaterialMetadata;
 }
