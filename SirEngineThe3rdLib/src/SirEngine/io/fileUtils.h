@@ -18,6 +18,7 @@ std::string SIR_ENGINE_API getFileName(const std::string &path);
 std::string SIR_ENGINE_API getFileExtension(const std::string &path);
 
 std::string SIR_ENGINE_API getPathName(const std::string &path);
+void SIR_ENGINE_API writeTextFileToDisk(const std::string& path, const std::string& content);
 
 bool SIR_ENGINE_API fileExists(const std::string &name);
 

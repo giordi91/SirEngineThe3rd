@@ -19,7 +19,8 @@ static std::string CONFIG_ADAPTER_VENDOR = "adapterVendor";
 static std::string CONFIG_VENDOR_TOLERANT = "vendorTolerant";
 static std::string CONFIG_ADAPTER_SELECTION_RULE = "adapterSelectionRule";
 static std::string CONFIG_USE_CACHED_PSO = "useCachedPSO";
-static std::string CONFIG_FREAME_BUFFERING_COUNT = "frameBufferingCount";
+static std::string CONFIG_FRAME_BUFFERING_COUNT = "frameBufferingCount";
+static std::string CONFIG_MATRIX_BUFFER_COUNT= "matrixBufferSize";
 
 static std::string DEFAULT_STRING = "";
 static std::string DEFAULT_ADAPTER = "any";
@@ -152,7 +153,9 @@ void parseConfigFile(const char *path,const EngineInitializationConfig& initConf
   config.m_adapterSelectionRule = getAdapterSelectionRule(jobj);
 
   config.m_frameBufferingCount =
-      (getValueIfInJson(jobj, CONFIG_FREAME_BUFFERING_COUNT, 2u));
+      (getValueIfInJson(jobj, CONFIG_FRAME_BUFFERING_COUNT, 2u));
+  config.m_matrixBufferSize =
+      (getValueIfInJson(jobj, CONFIG_MATRIX_BUFFER_COUNT, 128));
 
   assert(config.m_windowWidth != -1);
   assert(config.m_windowHeight != -1);

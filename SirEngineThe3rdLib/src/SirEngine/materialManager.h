@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cassert>
+#include <assert.h>
 
 #include "SirEngine/graphics/bindingTableManager.h"
 #include "SirEngine/handle.h"
@@ -53,7 +53,7 @@ class MaterialManager {
   MaterialManager(const MaterialManager &) = delete;
   MaterialManager &operator=(const MaterialManager &) = delete;
 
-  void inititialize() {}
+  void inititialize(){};
   void cleanup();
 
   void bindMaterial(MaterialHandle handle, SHADER_QUEUE_FLAGS queue);
@@ -107,12 +107,15 @@ class MaterialManager {
 
   PreliminaryMaterialParse parseMaterial(const char *path);
 
+private:
+
   HashMap<const char *, MaterialHandle, hashString32> m_nameToHandle;
   static const uint32_t RESERVE_SIZE = 200;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
 
   SparseMemoryPool<MaterialData> m_materialTextureHandles;
   graphics::BindingDescription m_descriptions[16];
+
 };
 
 }  // namespace SirEngine
