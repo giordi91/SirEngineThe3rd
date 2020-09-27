@@ -1,5 +1,7 @@
 #include "platform/windows/graphics/dx12/DX12.h"
 
+#include <glm/gtx/transform.hpp>
+
 #include "SirEngine/Window.h"
 #include "SirEngine/animation/animationManager.h"
 #include "SirEngine/assetManager.h"
@@ -32,6 +34,8 @@
 #undef min
 
 namespace SirEngine::dx12 {
+
+static std::vector<glm::mat4> m(256);
 
 D3D12DeviceType *DEVICE;
 ID3D12Debug *DEBUG_CONTROLLER = nullptr;
@@ -381,6 +385,8 @@ bool dispatchFrameDx12() {
   // bump the frame
   globals::TOTAL_NUMBER_OF_FRAMES += 1;
   globals::CURRENT_FRAME = (globals::CURRENT_FRAME + 1) % FRAME_BUFFERS_COUNT;
+
+  dx12::BUFFER_MANAGER->clearUploadRequests();
   return true;
 }
 
@@ -610,6 +616,7 @@ void Dx12RenderingContext::renderQueueType(
   setViewportAndScissor(0, 0, static_cast<float>(config.width),
                         static_cast<float>(config.height), 0, 1);
 
+  UINT counter = 0;
   for (const auto &renderableList : typedQueues) {
     if (globals::MATERIAL_MANAGER->isQueueType(renderableList.first, flag)) {
       // now that we know the material goes in the the deferred queue we can
@@ -620,7 +627,7 @@ void Dx12RenderingContext::renderQueueType(
           renderableList.first, renderableList.second[0].m_materialHandle);
 
       // binding the camera
-      bindCameraBuffer(bind.rs,false);
+      bindCameraBuffer(bind.rs, false);
 
       if (passBindings.isHandleValid()) {
         // binding the per pass data
@@ -639,7 +646,11 @@ void Dx12RenderingContext::renderQueueType(
         globals::MATERIAL_MANAGER->bindMaterial(renderable.m_materialHandle,
                                                 flag);
 
+        commandList->SetGraphicsRoot32BitConstant(
+            PSOManager::PER_OBJECT_BINDING_INDEX + 1, counter, 0);
+
         MESH_MANAGER->render(renderable.m_meshHandle, currentFc);
+        counter += 1;
       }
       // annotateGraphicsEnd();
     }
@@ -913,6 +924,18 @@ bool Dx12RenderingContext::newFrame() {
   ID3D12DescriptorHeap *heaps[2] = {GLOBAL_CBV_SRV_UAV_HEAP->getResource(),
                                     GLOBAL_SAMPLER_HEAP->getResource()};
   commandList->SetDescriptorHeaps(2, heaps);
+
+  static float angle = 0.0f;
+  angle += 0.01;
+  for (int i = 0; i < 32; ++i) {
+    m[i] = glm::transpose(glm::translate(glm::mat4(1), glm::vec3(i * 6, 0, 0)));
+  }
+
+  auto h = m_matrixBufferHandle[globals::CURRENT_FRAME];
+  dx12::BUFFER_MANAGER->update(h, m.data(), 0, sizeof(float) * 16 * 32);
+
+  // resetting the matrixbuffer counter
+  m_matrixCounter = 0;
 
   return true;
 }

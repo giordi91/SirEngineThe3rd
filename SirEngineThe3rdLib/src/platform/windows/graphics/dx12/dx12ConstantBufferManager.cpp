@@ -152,10 +152,11 @@ ConstantBufferHandle Dx12ConstantBufferManager::allocate(
     auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
     auto bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(actualSize);
 
-    dx12::DEVICE->CreateCommittedResource(
+    HRESULT result = dx12::DEVICE->CreateCommittedResource(
         &heapProperties, D3D12_HEAP_FLAG_NONE, &bufferDesc,
         D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
         IID_PPV_ARGS(&data.cbData[i].resource));
+    assert(SUCCEEDED(result));
 
     // allocating a descriptor
     DescriptorPair pair{};
