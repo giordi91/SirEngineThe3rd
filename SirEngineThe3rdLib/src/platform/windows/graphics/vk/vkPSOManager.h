@@ -1,6 +1,7 @@
 #pragma once
 
 #include <assert.h>
+
 #include <nlohmann/json_fwd.hpp>
 #include <string>
 
@@ -18,6 +19,7 @@ namespace SirEngine::vk {
 struct SIR_ENGINE_API VkPSOCompileResult {
   VkPipeline pso = nullptr;
   PSO_TYPE psoType = PSO_TYPE::INVALID;
+  const char *name = nullptr;
   const char *VSName = nullptr;
   const char *PSName = nullptr;
   const char *CSName = nullptr;
@@ -30,9 +32,9 @@ struct SIR_ENGINE_API VkPSOCompileResult {
   graphics::MaterialMetadata metadata;
 };
 
-// TODO make it not copyable assignable
 class VkPSOManager final : public PSOManager {
   struct PSOData {
+    const char *name;
     VkPipeline pso;
     VkRenderPass renderPass;
     VkPipelineLayout layout;
@@ -55,6 +57,8 @@ class VkPSOManager final : public PSOManager {
   VkPSOManager &operator=(const VkPSOManager &) = delete;
   VkPSOManager(VkPSOManager &&) = delete;
   VkPSOManager &operator=(VkPSOManager &&) = delete;
+
+	
   void initialize() override;
   void cleanup() override;
   void loadRawPSOInFolder(const char *directory) override;
@@ -123,7 +127,14 @@ class VkPSOManager final : public PSOManager {
     const uint32_t index = getIndexFromHandle(handle);
     const PSOData &data = m_psoPool.getConstRef(index);
     return data.rootSignature;
-  };
+  }
+
+  const char *getPSOName(const PSOHandle handle) override {
+    assertMagicNumber(handle);
+    const uint32_t index = getIndexFromHandle(handle);
+    const PSOData &data = m_psoPool.getConstRef(index);
+    return data.name;
+  }
 
  private:
   PSOHandle insertInPSOCache(const VkPSOCompileResult &result);

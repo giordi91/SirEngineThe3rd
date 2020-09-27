@@ -2,18 +2,19 @@
 
 #include "DX12.h"
 #include "SirEngine/PSOManager.h"
+#include "SirEngine/graphics/materialMetadata.h"
 #include "SirEngine/memory/cpu/resizableVector.h"
 #include "SirEngine/memory/cpu/sparseMemoryPool.h"
 #include "SirEngine/memory/cpu/stringHashMap.h"
 #include "nlohmann/json_fwd.hpp"
 #include "platform/windows/graphics/dx12/PSOCompile.h"
 #include "platform/windows/graphics/dx12/d3dx12.h"
-#include "SirEngine/graphics/materialMetadata.h"
 
 namespace SirEngine::dx12 {
 
 class Dx12PSOManager final : public PSOManager {
   struct PSOData {
+    const char *name;
     ID3D12PipelineState *pso;
     uint32_t magicNumber;
     TOPOLOGY_TYPE topology;
@@ -31,7 +32,7 @@ class Dx12PSOManager final : public PSOManager {
         m_psoRegisterHandle(RESERVE_SIZE),
         m_shaderToPSOFile(RESERVE_SIZE),
         m_psoPool(RESERVE_SIZE){};
-  virtual ~Dx12PSOManager() = default;
+  ~Dx12PSOManager() override = default;
   Dx12PSOManager(const Dx12PSOManager &) = delete;
   Dx12PSOManager &operator=(const Dx12PSOManager &) = delete;
   Dx12PSOManager(Dx12PSOManager &&) = delete;
@@ -103,11 +104,18 @@ class Dx12PSOManager final : public PSOManager {
     const PSOData &data = m_psoPool.getConstRef(index);
     return data.rsHandle;
   }
-  const graphics::MaterialMetadata *getMetadata(const PSOHandle &handle) override {
+  const graphics::MaterialMetadata *getMetadata(
+      const PSOHandle &handle) override {
     assertMagicNumber(handle);
     const uint32_t index = getIndexFromHandle(handle);
     const PSOData &data = m_psoPool.getConstRef(index);
     return &data.metadata;
+  }
+  const char *getPSOName(PSOHandle handle) override {
+    assertMagicNumber(handle);
+    const uint32_t index = getIndexFromHandle(handle);
+    const PSOData &data = m_psoPool.getConstRef(index);
+    return data.name;
   }
 
  private:
@@ -121,10 +129,6 @@ class Dx12PSOManager final : public PSOManager {
     return data.pso;
   }
 
-  void processGlobalRootSignature(nlohmann::json &jobj,
-                                  CD3DX12_STATE_OBJECT_DESC &pipe) const;
-  void processPipelineConfig(nlohmann::json &jobj,
-                             CD3DX12_STATE_OBJECT_DESC &pipe) const;
   PSOCompileResult loadCachedPSO(const char *path) const;
 
   void updatePSOCache(const char *name, ID3D12PipelineState *pso);

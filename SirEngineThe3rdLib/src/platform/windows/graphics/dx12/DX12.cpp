@@ -625,6 +625,7 @@ void Dx12RenderingContext::renderQueueType(
       // bind the corresponding RS and PSO
       ShaderBind bind = globals::MATERIAL_MANAGER->bindRSandPSO(
           renderableList.first, renderableList.second[0].m_materialHandle);
+      annotateGraphicsBegin(globals::PSO_MANAGER->getPSOName(bind.pso));
 
       // binding the camera
       bindCameraBuffer(bind.rs, false);
@@ -652,7 +653,7 @@ void Dx12RenderingContext::renderQueueType(
         MESH_MANAGER->render(renderable.m_meshHandle, currentFc);
         counter += 1;
       }
-      // annotateGraphicsEnd();
+      annotateGraphicsEnd();
     }
   }
 }

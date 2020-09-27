@@ -217,6 +217,7 @@ void Dx12PSOManager::insertInPSOCache(const PSOCompileResult &result) {
 
       const std::string rootName = getFileName(result.rootSignature);
 
+      data.name = persistentString(result.name);
       data.metadata = result.metadata;
       data.pso = result.pso;
       data.rsHandle = result.rsHandle;
@@ -237,6 +238,7 @@ void Dx12PSOManager::insertInPSOCache(const PSOCompileResult &result) {
       PSOData &data = m_psoPool.getFreeMemoryData(index);
 
       const std::string rootName = getFileName(result.rootSignature);
+      data.name = persistentString(result.name);
       data.pso = result.pso;
       data.metadata = result.metadata;
       data.rsHandle = result.rsHandle;

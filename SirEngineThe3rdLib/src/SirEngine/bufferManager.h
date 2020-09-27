@@ -58,6 +58,8 @@ class BufferManager {
   virtual void transitionBuffer(const BufferHandle handle,
                                 const BufferTransition &transition) = 0;
   virtual void *getMappedData(const BufferHandle handle) const = 0;
+  virtual void update(BufferHandle handle, void *inData, int offset,
+                      int size) = 0;
 };
 
 }  // namespace SirEngine

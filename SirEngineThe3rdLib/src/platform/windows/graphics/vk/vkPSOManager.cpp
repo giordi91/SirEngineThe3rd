@@ -313,8 +313,8 @@ inline VkFormat convertStringToTextureFormat(const std::string &format) {
 }
 
 VkRenderPass getRenderPass(const nlohmann::json &jobj, const char *name) {
-  const uint32_t renderTargets =
-      getValueIfInJson(jobj, PSO_KEY_RENDER_TARGETS, static_cast<unsigned>(DEFAULT_INT));
+  const uint32_t renderTargets = getValueIfInJson(
+      jobj, PSO_KEY_RENDER_TARGETS, static_cast<unsigned>(DEFAULT_INT));
 
   assertInJson(jobj, PSO_KEY_RTV_FORMATS);
 
@@ -466,6 +466,7 @@ PSOHandle VkPSOManager::insertInPSOCache(const VkPSOCompileResult &result) {
       // generating and storing the handle
       uint32_t index;
       PSOData &data = m_psoPool.getFreeMemoryData(index);
+      data.name = persistentString(result.name);
       data.metadata = result.metadata;
       data.pso = result.pso;
       data.topology = result.topologyType;
@@ -540,8 +541,7 @@ VkPSOCompileResult VkPSOManager::processRasterPSO(
 
   // RSHandle layoutHandle =
   //    vk::PIPELINE_LAYOUT_MANAGER->loadSignatureFile(rootFile.c_str());
-  auto *layout =
-      vk::PIPELINE_LAYOUT_MANAGER->getLayoutFromHandle(layoutHandle);
+  auto *layout = vk::PIPELINE_LAYOUT_MANAGER->getLayoutFromHandle(layoutHandle);
 
   // load shader stage
   // here we define all the stages of the pipeline
@@ -631,23 +631,11 @@ VkPSOCompileResult VkPSOManager::processRasterPSO(
   SET_DEBUG_NAME(pipeline, VK_OBJECT_TYPE_PIPELINE,
                  frameConcatenation(fileName.c_str(), "Pipeline"));
 
-  //// all good we need to store the data
-  //// generating and storing the handle
-  // uint32_t index;
-  // PSOData &data = m_psoPool.getFreeMemoryData(index);
-  // data.pso = pipeline;
-  // data.renderPass = renderPass;
-  // data.rootSignature = layoutHandle;
-  // const PSOHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
-  // data.magicNumber = MAGIC_NUMBER_COUNTER;
-  // data.topology = convertStringToEngineTopology(topology);
-  // m_psoRegisterHandle.insert(fileName.c_str(), handle);
-  //++MAGIC_NUMBER_COUNTER;
-
   compileResult.topologyType = convertStringToEngineTopology(topology);
   compileResult.pso = pipeline;
   compileResult.renderPass = renderPass;
   compileResult.pipelineLayout = layout;
+  compileResult.name = frameString(fileName.c_str());
   return compileResult;
 };
 

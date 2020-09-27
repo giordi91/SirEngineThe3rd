@@ -45,7 +45,7 @@ class BufferManagerDx12 final : public BufferManager {
                  int elementSize = -1) const;
 
   void clearUploadRequests();
-  void update(BufferHandle handle, void *inData, int offset, int size);
+  void update(BufferHandle handle, void *inData, int offset, int size) override;
 
  private:
   ID3D12Resource *allocateCpuVisibleBuffer(uint32_t actualSize) const;

@@ -28,6 +28,7 @@ class PSOManager {
   virtual void bindPSO(PSOHandle handle) const = 0;
   virtual const graphics::MaterialMetadata *getMetadata(
       const PSOHandle &handle) = 0;
+  virtual const char *getPSOName(PSOHandle handle) = 0;
 
  public:
   static const uint32_t PER_FRAME_DATA_BINDING_INDEX = 0;
