@@ -279,13 +279,12 @@ bool VkRenderingContext::initializeGraphics() {
   uint32_t matrixSize = sizeof(glm::mat4) * matrixCount;
   m_matrixMemory = globals::PERSISTENT_ALLOCATOR->allocate(matrixSize);
 
-  m_matrixBufferHandle = vk::BUFFER_MANAGER->allocate(
-      matrixSize, nullptr, "perFrameMatrixBuffer", matrixCount,
-      sizeof(glm::mat4),
-     // BufferManager::BUFFER_FLAGS_BITS::BUFFERED |
-     //     BufferManager::BUFFER_FLAGS_BITS::GPU_ONLY |
-          BufferManager::BUFFER_FLAGS_BITS::STORAGE_BUFFER
-  );
+  //m_matrixBufferHandle = vk::BUFFER_MANAGER->allocate(
+  //    matrixSize, nullptr, "perFrameMatrixBuffer", matrixCount,
+  //    sizeof(glm::mat4),
+  //    // BufferManager::BUFFER_FLAGS_BITS::BUFFERED |
+  //    //     BufferManager::BUFFER_FLAGS_BITS::GPU_ONLY |
+  //    BufferManager::BUFFER_FLAGS_BITS::STORAGE_BUFFER);
 
   m_cameraHandle = globals::CONSTANT_BUFFER_MANAGER->allocate(
       sizeof(FrameData),
@@ -324,7 +323,7 @@ void VkRenderingContext::setupCameraForFrame() {
 }
 
 void VkRenderingContext::bindCameraBuffer(const RSHandle rs,
-                                          bool isCompute) const {
+                                          const bool isCompute) const {
   VkDescriptorSet descriptorSet =
       vk::DESCRIPTOR_MANAGER->getDescriptorSet(PER_FRAME_DATA_HANDLE);
 

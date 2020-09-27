@@ -14,6 +14,7 @@ class BufferManager {
     BUFFERED = 16,
     STORAGE_BUFFER = 32,
     GPU_ONLY = 64,
+    IS_STATIC = 128,
   };
   typedef uint32_t BUFFER_FLAGS;
 

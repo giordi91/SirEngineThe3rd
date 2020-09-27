@@ -31,7 +31,8 @@ MeshHandle VkMeshManager::loadMesh(const char *path) {
     std::vector<char> binaryData;
     readAllBytes(path, binaryData);
 
-    const auto mapper = getMapperData<ModelMapperData>(binaryData.data());
+    const auto *const mapper =
+        getMapperData<ModelMapperData>(binaryData.data());
 
     const uint32_t indexCount = mapper->indexDataSizeInByte / sizeof(int);
 
@@ -53,7 +54,9 @@ MeshHandle VkMeshManager::loadMesh(const char *path) {
     meshData->idxBuffHandle = vk::BUFFER_MANAGER->allocate(
         totalSize, indexData, frameConcatenation(name.c_str(), "-indexBuffer"),
         totalSize / sizeof(int), sizeof(int),
-        BufferManager::BUFFER_FLAGS_BITS::INDEX_BUFFER);
+        BufferManager::BUFFER_FLAGS_BITS::INDEX_BUFFER |
+            BufferManager::BUFFER_FLAGS_BITS::IS_STATIC |
+            BufferManager::BUFFER_FLAGS_BITS::GPU_ONLY);
 
     meshData->indexBuffer =
         vk::BUFFER_MANAGER->getNativeBuffer(meshData->idxBuffHandle);
@@ -89,7 +92,9 @@ MeshHandle VkMeshManager::loadMesh(const char *path) {
         mapper->vertexDataSizeInByte, vertexData,
         frameConcatenation(name.c_str(), "-meshBuffer"),
         static_cast<int>(mapper->vertexDataSizeInByte / 4u), sizeof(float),
-        BufferManager::BUFFER_FLAGS_BITS::VERTEX_BUFFER);
+        BufferManager::BUFFER_FLAGS_BITS::VERTEX_BUFFER |
+            BufferManager::BUFFER_FLAGS_BITS::IS_STATIC |
+            BufferManager::BUFFER_FLAGS_BITS::GPU_ONLY);
     meshData->vtxBuffHandle = positionsHandle;
 
     meshRuntime.vertexBuffer =
