@@ -2,6 +2,7 @@
 #include "../common/vertexDefinitions.hlsl"
 
 ConstantBuffer<FrameData> g_frameData : register(b0,space0);
+StructuredBuffer<float4x4>matrices: register(t1,space0);
 struct PushConstant
 {
     int index;
@@ -20,7 +21,7 @@ FullMeshVertexOut VS( uint vid : SV_VertexID)
 	
     float4 p = vertices.Load<float4>(vid * 16);
 	// Transform to homogeneous clip space.
-	vout.PosH = mul(p, g_frameData.m_activeCamera.MVP);
+    vout.PosH = mul(p, mul(matrices[g_push.index], g_frameData.m_activeCamera.MVP));
 	
 	// Just pass vertex color into the pixel shader.
     vout.Normal= normals.Load<float4>(vid*16).xyz;

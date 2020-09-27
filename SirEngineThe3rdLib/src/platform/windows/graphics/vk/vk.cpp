@@ -2,6 +2,8 @@
 #define VOLK_IMPLEMENTATION
 #include "platform/windows/graphics/vk/vk.h"
 
+#include <glm/gtx/transform.hpp>
+
 #include "SirEngine/Window.h"
 #include "SirEngine/assetManager.h"
 #include "SirEngine/engineConfig.h"
@@ -279,12 +281,14 @@ bool VkRenderingContext::initializeGraphics() {
   uint32_t matrixSize = sizeof(glm::mat4) * matrixCount;
   m_matrixMemory = globals::PERSISTENT_ALLOCATOR->allocate(matrixSize);
 
-  //m_matrixBufferHandle = vk::BUFFER_MANAGER->allocate(
-  //    matrixSize, nullptr, "perFrameMatrixBuffer", matrixCount,
-  //    sizeof(glm::mat4),
-  //    // BufferManager::BUFFER_FLAGS_BITS::BUFFERED |
-  //    //     BufferManager::BUFFER_FLAGS_BITS::GPU_ONLY |
-  //    BufferManager::BUFFER_FLAGS_BITS::STORAGE_BUFFER);
+  assert(globals::ENGINE_CONFIG->m_frameBufferingCount <= 5);
+  for (uint32_t i = 0; i < globals::ENGINE_CONFIG->m_frameBufferingCount; ++i) {
+    m_matrixBufferHandle[i] = vk::BUFFER_MANAGER->allocate(
+        matrixSize, nullptr, "perFrameMatrixBuffer", matrixCount,
+        sizeof(glm::mat4),
+        BufferManager::BUFFER_FLAGS_BITS::STORAGE_BUFFER |
+            BufferManager::BUFFER_FLAGS_BITS::GPU_ONLY);
+  }
 
   m_cameraHandle = globals::CONSTANT_BUFFER_MANAGER->allocate(
       sizeof(FrameData),
@@ -311,14 +315,18 @@ void VkRenderingContext::setupCameraForFrame() {
   // memcpy(m_cameraBuffer.data, &m_camBufferCPU, sizeof(m_camBufferCPU));
   globals::CONSTANT_BUFFER_MANAGER->update(m_cameraHandle, &m_frameData);
 
-  VkWriteDescriptorSet writeDescriptorSets = {};
-  VkDescriptorBufferInfo bufferInfoUniform = {};
+  VkWriteDescriptorSet writeDescriptorSets[2] = {};
+  VkDescriptorBufferInfo bufferInfoUniform[2] = {};
+  auto descriptorSet =
+      vk::DESCRIPTOR_MANAGER->getDescriptorSet(PER_FRAME_DATA_HANDLE);
   vk::CONSTANT_BUFFER_MANAGER->bindConstantBuffer(
-      m_cameraHandle, bufferInfoUniform, 0, &writeDescriptorSets,
-      vk::DESCRIPTOR_MANAGER->getDescriptorSet(PER_FRAME_DATA_HANDLE));
+      m_cameraHandle, bufferInfoUniform[0], 0, &writeDescriptorSets[0],
+      descriptorSet);
+  vk::BUFFER_MANAGER->bindBuffer(m_matrixBufferHandle[globals::CURRENT_FRAME],
+                                 &writeDescriptorSets[1], descriptorSet, 1);
 
   // camera update
-  vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, 1, &writeDescriptorSets, 0,
+  vkUpdateDescriptorSets(vk::LOGICAL_DEVICE, 2, writeDescriptorSets, 0,
                          nullptr);
 }
 
@@ -416,6 +424,18 @@ bool VkRenderingContext::newFrame() {
                           VK_PIPELINE_BIND_POINT_GRAPHICS,
                           vk::ENGINE_PIPELINE_LAYOUT, 0, 2, sets, 0, nullptr);
 
+  static float angle = 0.0f;
+  angle += 0.01;
+  glm::mat4 m[32];
+  for (int i = 0; i < 32; ++i) {
+    m[i] = glm::transpose(glm::translate(glm::mat4(1), glm::vec3(i*6, 0, 0)));
+  }
+
+  auto h = m_matrixBufferHandle[globals::CURRENT_FRAME];
+  vk::BUFFER_MANAGER->update(h, m, 0, sizeof(float) * 16 * 32);
+
+  // resetting the matrixbuffer counter
+  m_matrixCounter = 0;
   return true;
 }
 
@@ -479,6 +499,10 @@ bool VkRenderingContext::stopGraphic() {
 
 bool VkRenderingContext::shutdownGraphic() {
   vkDeviceWaitIdle(LOGICAL_DEVICE);
+
+  for (uint32_t i = 0; i < globals::ENGINE_CONFIG->m_frameBufferingCount; ++i) {
+    globals::BUFFER_MANAGER->free(m_matrixBufferHandle[i]);
+  }
 
   bool result = destroySwapchain(LOGICAL_DEVICE, SWAP_CHAIN);
   assert(result);
@@ -571,6 +595,7 @@ void VkRenderingContext::renderQueueType(
   setViewportAndScissor(0, 0, static_cast<float>(config.width),
                         static_cast<float>(config.height), 0, 1);
 
+  int counter = 0;
   for (const auto &renderableList : typedQueues) {
     if (globals::MATERIAL_MANAGER->isQueueType(renderableList.first, flag)) {
       // now that we know the material goes in the the deferred queue we can
@@ -600,7 +625,13 @@ void VkRenderingContext::renderQueueType(
         globals::MATERIAL_MANAGER->bindMaterial(renderable.m_materialHandle,
                                                 flag);
 
+        auto l = vk::PIPELINE_LAYOUT_MANAGER->getLayoutFromHandle(bind.rs);
+
+        vkCmdPushConstants(commandList, l,
+                           VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT,
+                           0, sizeof(int), &counter);
         MESH_MANAGER->renderMesh(renderable.m_meshHandle, commandList);
+        counter+=1;
       }
       // annotateGraphicsEnd();
     }
