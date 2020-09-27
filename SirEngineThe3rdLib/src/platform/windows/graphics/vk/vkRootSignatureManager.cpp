@@ -150,7 +150,7 @@ void createPerFrameDataDescriptorSet(VkDescriptorSetLayout &layout) {
   // here we are are creating the layout, but we are using static samplers
   // so we are passing immutable samplers directly in the layout that
   // gets built in the graphics pipeline
-  VkDescriptorSetLayoutBinding resourceBinding[1] = {};
+  VkDescriptorSetLayoutBinding resourceBinding[2] = {};
   resourceBinding[0].binding = 0;
   resourceBinding[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
   resourceBinding[0].descriptorCount = 1;
@@ -159,11 +159,19 @@ void createPerFrameDataDescriptorSet(VkDescriptorSetLayout &layout) {
                                   VK_SHADER_STAGE_COMPUTE_BIT;
   resourceBinding[0].pImmutableSamplers = nullptr;
 
+  resourceBinding[1].binding = 1;
+  resourceBinding[1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+  resourceBinding[1].descriptorCount = 1;
+  resourceBinding[1].stageFlags = VK_SHADER_STAGE_VERTEX_BIT |
+                                  VK_SHADER_STAGE_FRAGMENT_BIT |
+                                  VK_SHADER_STAGE_COMPUTE_BIT;
+  resourceBinding[1].pImmutableSamplers = nullptr;
+
   VkDescriptorSetLayoutCreateInfo resourceLayoutInfo[1] = {};
   resourceLayoutInfo[0].sType =
       VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
   resourceLayoutInfo[0].pNext = nullptr;
-  resourceLayoutInfo[0].bindingCount = 1;
+  resourceLayoutInfo[0].bindingCount = 2;
   resourceLayoutInfo[0].pBindings = resourceBinding;
 
   VK_CHECK(vkCreateDescriptorSetLayout(vk::LOGICAL_DEVICE, resourceLayoutInfo,

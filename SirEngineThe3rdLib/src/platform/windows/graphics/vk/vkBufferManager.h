@@ -45,21 +45,22 @@ class VkBufferManager final : public BufferManager {
   const vk::Buffer &getBufferData(const BufferHandle handle) const {
     assertMagicNumber(handle);
     uint32_t idx = getIndexFromHandle(handle);
-    const auto data = m_bufferStorage.getConstRef(idx);
+    const VkBufferInfo &data = m_bufferStorage.getConstRef(idx);
     bool isGPUOnly = (data.flags & BUFFER_FLAGS_BITS::GPU_ONLY) > 0;
     return isGPUOnly ? data.gpuBuffer : data.cpuBuffer;
   }
 
-  VkBuffer getNativeBuffer(const BufferHandle &handle) const {
+  [[nodiscard]] VkBuffer getNativeBuffer(const BufferHandle &handle) const {
     assertMagicNumber(handle);
     uint32_t idx = getIndexFromHandle(handle);
-    const auto data = m_bufferStorage.getConstRef(idx);
+    const VkBufferInfo &data = m_bufferStorage.getConstRef(idx);
     bool isGPUOnly = (data.flags & BUFFER_FLAGS_BITS::GPU_ONLY) > 0;
     return isGPUOnly ? data.gpuBuffer.buffer : data.cpuBuffer.buffer;
   }
 
   void bindBuffer(BufferHandle handle, VkWriteDescriptorSet *write,
                   VkDescriptorSet set, uint32_t bindingIndex) const;
+  void update(BufferHandle handle, void *data, int offset, int size);
 
  private:
   inline void assertMagicNumber(const BufferHandle handle) const {

@@ -3,9 +3,7 @@
     {
       "mesh": "../data/processed/meshes/knightB/jacket.model",
       "material": "../data/materials/knightBJacketForward.json"
-    }
-  ],
-  "t": [
+    },
     {
       "mesh": "../data/processed/meshes/pSphere1.model",
       "material": "../data/materials/rustMaterial.json"
@@ -37,7 +35,9 @@
     {
       "mesh": "../data/processed/meshes/trees/tree01/tree01Branches.model",
       "material": "../data/materials/tree01BarkMaterial.json"
-    },
+    }
+  ],
+  "t": [
     {
       "mesh": "../data/processed/meshes/knightB/face.model",
       "material": "../data/materials/knightBFace.json"

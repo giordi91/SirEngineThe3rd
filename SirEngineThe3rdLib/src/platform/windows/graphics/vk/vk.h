@@ -192,7 +192,7 @@ class VkRenderingContext final : public RenderingContext {
   SparseMemoryPool<FrameBindingsData> m_bindingsPool;
   void *m_matrixMemory = nullptr;
   void *m_matrixCounter = 0;
-  BufferHandle m_matrixBufferHandle{};
+  BufferHandle m_matrixBufferHandle[5]{};
 };
 
 }  // namespace vk

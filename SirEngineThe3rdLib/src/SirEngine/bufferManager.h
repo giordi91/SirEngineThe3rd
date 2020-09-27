@@ -7,14 +7,14 @@ namespace SirEngine {
 class BufferManager {
  public:
   enum BUFFER_FLAGS_BITS {
-    RANDOM_WRITE = 1,
-    INDEX_BUFFER = 2,
-    INDIRECT_BUFFER = 4,
-    VERTEX_BUFFER = 8,
-    BUFFERED = 16,
-    STORAGE_BUFFER = 32,
-    GPU_ONLY = 64,
-    IS_STATIC = 128,
+    RANDOM_WRITE = 1 << 0,
+    INDEX_BUFFER = 1 << 1,
+    INDIRECT_BUFFER = 1 << 2,
+    VERTEX_BUFFER = 1 << 3,
+    BUFFERED = 1 << 4,
+    STORAGE_BUFFER = 1 << 5,
+    GPU_ONLY = 1 << 6,
+    IS_STATIC = 1 << 7,
   };
   typedef uint32_t BUFFER_FLAGS;
 

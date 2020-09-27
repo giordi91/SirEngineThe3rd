@@ -65,6 +65,51 @@ void VkBufferManager::bindBuffer(const BufferHandle handle,
   write->descriptorCount = 1;
 }
 
+void VkBufferManager::update(BufferHandle handle, void *inData, int offset,
+                             int size) {
+  assertMagicNumber(handle);
+  uint32_t idx = getIndexFromHandle(handle);
+  const VkBufferInfo &data = m_bufferStorage.getConstRef(idx);
+
+  int actualOffset = size == -1 ? 0 : offset;
+  int actualSize = size == -1 ? data.cpuBuffer.size : size;
+  // we copy to the cpu memory
+  memcpy(static_cast<char *>(data.cpuBuffer.data) + actualOffset,
+         static_cast<char *>(inData) + actualOffset, actualSize);
+
+  bool isGPUOnly = (data.flags & BUFFER_FLAGS_BITS::GPU_ONLY) > 0;
+  if (isGPUOnly) {
+    // we need to perform a buffer to buffer copy
+    auto *currentFc = CURRENT_FRAME_COMMAND;
+    VkCommandBuffer commandList = currentFc->m_commandBuffer;
+
+    VkBufferCopy copyRegion = {};
+    copyRegion.size = actualSize;
+    vkCmdCopyBuffer(commandList, data.cpuBuffer.buffer, data.gpuBuffer.buffer,
+                    1, &copyRegion);
+
+    VkBufferMemoryBarrier barrier{
+        VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+        nullptr,
+        VkAccessFlagBits::VK_ACCESS_TRANSFER_WRITE_BIT,
+        VkAccessFlagBits::VK_ACCESS_MEMORY_READ_BIT,
+        VK_QUEUE_FAMILY_IGNORED,
+        VK_QUEUE_FAMILY_IGNORED,
+        data.gpuBuffer.buffer,
+        actualOffset,
+        actualSize};
+    vkCmdPipelineBarrier(
+        commandList, VkPipelineStageFlagBits::VK_PIPELINE_STAGE_TRANSFER_BIT,
+        // TODO Need to fix this, might need extra information passed int he
+        // flags to know what the buffer is used for, for example a compute
+        // buffer etc, or maybe I should leave the copy to the user through an
+        // interface?
+        VkPipelineStageFlagBits::VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT |
+            VK_PIPELINE_STAGE_VERTEX_SHADER_BIT,
+        0, 0, nullptr, 1, &barrier, 0, nullptr);
+  }
+}
+
 void VkBufferManager::transitionBuffer(const BufferHandle handle,
                                        const BufferTransition &transition) {
   const Buffer &bufferData = getBufferData(handle);
