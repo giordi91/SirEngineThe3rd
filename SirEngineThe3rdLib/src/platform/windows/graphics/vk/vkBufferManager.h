@@ -60,7 +60,7 @@ class VkBufferManager final : public BufferManager {
 
   void bindBuffer(BufferHandle handle, VkWriteDescriptorSet *write,
                   VkDescriptorSet set, uint32_t bindingIndex) const;
-  void update(BufferHandle handle, void *data, int offset, int size);
+  void update(BufferHandle handle, void *data, int offset, int size) override;
 
  private:
   inline void assertMagicNumber(const BufferHandle handle) const {

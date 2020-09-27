@@ -427,7 +427,7 @@ bool VkRenderingContext::newFrame() {
   angle += 0.01;
   glm::mat4 m[32];
   for (int i = 0; i < 32; ++i) {
-    m[i] = glm::transpose(glm::translate(glm::mat4(1), glm::vec3(i*6, 0, 0)));
+    m[i] = glm::transpose(glm::translate(glm::mat4(1), glm::vec3(i * 6, 0, 0)));
   }
 
   auto h = m_matrixBufferHandle[globals::CURRENT_FRAME];
@@ -600,19 +600,19 @@ void VkRenderingContext::renderQueueType(
       // now that we know the material goes in the the deferred queue we can
       // start rendering it
 
-      // bind the corresponding RS and PSO
-
       ShaderBind bind = globals::MATERIAL_MANAGER->bindRSandPSO(
           renderableList.first, renderableList.second[0].m_materialHandle);
 
       bindCameraBuffer(bind.rs);
       bindSamplers(bind.rs);
 
+      // bind the corresponding RS and PSO
+      annotateGraphicsBegin(globals::PSO_MANAGER->getPSOName(bind.pso));
+
       if (passBindings.isHandleValid()) {
         globals::BINDING_TABLE_MANAGER->bindTable(
             PSOManager::PER_PASS_BINDING_INDEX, passBindings, bind.rs);
       }
-      // annotateGraphicsBegin(typeName.c_str());
 
       // looping each of the object
       const size_t count = renderableList.second.size();
@@ -627,12 +627,12 @@ void VkRenderingContext::renderQueueType(
         auto l = vk::PIPELINE_LAYOUT_MANAGER->getLayoutFromHandle(bind.rs);
 
         vkCmdPushConstants(commandList, l,
-                           VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT,
-                           0, sizeof(int), &counter);
+                           VkShaderStageFlagBits::VK_SHADER_STAGE_VERTEX_BIT, 0,
+                           sizeof(int), &counter);
         MESH_MANAGER->renderMesh(renderable.m_meshHandle, commandList);
-        counter+=1;
+        counter += 1;
       }
-      // annotateGraphicsEnd();
+      annotateGraphicsEnd();
     }
   }
 }

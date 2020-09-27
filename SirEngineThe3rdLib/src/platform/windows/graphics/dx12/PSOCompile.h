@@ -3,11 +3,12 @@
 
 #include "SirEngine/core.h"
 #include "SirEngine/graphics/graphicsDefines.h"
-#include "SirEngine/handle.h"
 #include "SirEngine/graphics/materialMetadata.h"
+#include "SirEngine/handle.h"
 
 namespace SirEngine::dx12 {
 struct SIR_ENGINE_API PSOCompileResult {
+  const char *name;
   D3D12_COMPUTE_PIPELINE_STATE_DESC *computeDesc = nullptr;
   D3D12_GRAPHICS_PIPELINE_STATE_DESC *graphicDesc = nullptr;
   ID3D12PipelineState *pso = nullptr;

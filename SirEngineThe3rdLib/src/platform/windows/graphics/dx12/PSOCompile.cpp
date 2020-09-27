@@ -320,7 +320,8 @@ PSOCompileResult processComputePSO(nlohmann::json &jobj, const char *path,
   assert(SUCCEEDED(result));
 
   const std::string name = getFileName(path);
-  return PSOCompileResult{cdesc,
+  return PSOCompileResult{frameString(name.c_str()),
+                          cdesc,
                           nullptr,
                           pso,
                           rsHandle,
@@ -507,7 +508,8 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj, const char *path,
   // assert(m_psoRegister.find(name) == m_psoRegister.end());
   // m_psoRegister.insert(name.c_str(), pso);
 
-  return PSOCompileResult{nullptr,
+  return PSOCompileResult{frameString(name.c_str()),
+                          nullptr,
                           psoDesc,
                           pso,
                           rsHandle,
@@ -549,7 +551,8 @@ PSOCompileResult compileRawPSO(const char *path, const char *shaderPath) {
       break;
     }
   }
-  return PSOCompileResult{nullptr, nullptr, nullptr, {}, PSO_TYPE::INVALID};
+  return PSOCompileResult{nullptr, nullptr, nullptr,
+                          nullptr, {},      PSO_TYPE::INVALID};
 }
 
 }  // namespace SirEngine::dx12

@@ -1,6 +1,8 @@
 #include "platform/windows/graphics/vk/vkMemory.h"
+
+#include <assert.h>
+
 #include "platform/windows/graphics/vk/vk.h"
-#include <cassert>
 
 namespace SirEngine::vk {
 
@@ -57,6 +59,4 @@ void flushCommandBuffer(VkCommandPool pool, VkCommandBuffer commandBuffer,
   }
 }
 
-
-
-} // namespace SirEngine::vk
+}  // namespace SirEngine::vk
