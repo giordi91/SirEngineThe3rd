@@ -285,15 +285,18 @@ bool Dx12RenderingContext::initializeGraphicsDx12(BaseWindow *wnd,
   DEVICE->CreateCommandSignature(&ProgramDesc, nullptr,
                                  IID_PPV_ARGS(&m_commandIndirect));
 
-  // assert(globals::ENGINE_CONFIG->m_frameBufferingCount <= 5);
-  // for (uint32_t i = 0; i < globals::ENGINE_CONFIG->m_frameBufferingCount;
-  // ++i) {
-  //  m_matrixBufferHandle[i] = vk::BUFFER_MANAGER->allocate(
-  //      matrixSize, nullptr, "perFrameMatrixBuffer", matrixCount,
-  //      sizeof(glm::mat4),
-  //      BufferManager::BUFFER_FLAGS_BITS::STORAGE_BUFFER |
-  //          BufferManager::BUFFER_FLAGS_BITS::GPU_ONLY);
-  //}
+  // allocate memory for per frame matrix uploads
+  uint32_t matrixCount = globals::ENGINE_CONFIG->m_matrixBufferSize;
+  uint32_t matrixSize = sizeof(glm::mat4) * matrixCount;
+
+  assert(globals::ENGINE_CONFIG->m_frameBufferingCount <= 5);
+  for (uint32_t i = 0; i < globals::ENGINE_CONFIG->m_frameBufferingCount; ++i) {
+    m_matrixBufferHandle[i] = globals::BUFFER_MANAGER->allocate(
+        matrixSize, nullptr, "perFrameMatrixBuffer", matrixCount,
+        sizeof(glm::mat4),
+        BufferManager::BUFFER_FLAGS_BITS::STORAGE_BUFFER |
+            BufferManager::BUFFER_FLAGS_BITS::GPU_ONLY);
+  }
   return true;
 }
 void flushDx12() { flushCommandQueue(GLOBAL_COMMAND_QUEUE); }
@@ -403,6 +406,21 @@ bool Dx12RenderingContext::initializeGraphics() {
   if (!result) {
     SE_CORE_ERROR("FATAL: could not initialize graphics");
   }
+
+  graphics::BindingDescription perFrameDescriptrion[] = {
+      {3, GRAPHIC_RESOURCE_TYPE::CONSTANT_BUFFER,  // grass config
+       GRAPHICS_RESOURCE_VISIBILITY_VERTEX |
+           GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT |
+           GRAPHICS_RESOURCE_VISIBILITY_COMPUTE},
+      {1, GRAPHIC_RESOURCE_TYPE::READ_BUFFER,  // albedo texture
+       GRAPHICS_RESOURCE_VISIBILITY_VERTEX |
+           GRAPHICS_RESOURCE_VISIBILITY_FRAGMENT |
+           GRAPHICS_RESOURCE_VISIBILITY_COMPUTE},
+  };
+  m_frameBindingHandle = globals::BINDING_TABLE_MANAGER->allocateBindingTable(
+      perFrameDescriptrion, ARRAYSIZE(perFrameDescriptrion),
+      graphics::BINDING_TABLE_FLAGS_BITS::BINDING_TABLE_BUFFERED,
+      "perFrameDataBindingTable");
 
   // initialize camera and light
   // ask for the camera buffer handle;
@@ -598,18 +616,11 @@ void Dx12RenderingContext::renderQueueType(
       // start rendering it
 
       // bind the corresponding RS and PSO
-      // ShaderBind bind = dx12::MATERIAL_MANAGER->bindRSandPSO(
-      //    renderableList.first, commandList);
-
       ShaderBind bind = globals::MATERIAL_MANAGER->bindRSandPSO(
           renderableList.first, renderableList.second[0].m_materialHandle);
 
       // binding the camera
-      D3D12_GPU_DESCRIPTOR_HANDLE handle =
-          dx12::CONSTANT_BUFFER_MANAGER
-              ->getConstantBufferDx12Handle(m_cameraHandle)
-              .gpuHandle;
-      commandList->SetGraphicsRootDescriptorTable(0, handle);
+      bindCameraBuffer(bind.rs,false);
 
       if (passBindings.isHandleValid()) {
         // binding the per pass data
@@ -805,20 +816,27 @@ void Dx12RenderingContext::renderProcedural(const uint32_t indexCount) {
   currentFc->commandList->DrawInstanced(indexCount, 1, 0, 0);
 }
 
-void Dx12RenderingContext::bindCameraBuffer(RSHandle,
+void Dx12RenderingContext::bindCameraBuffer(RSHandle rs,
                                             const bool isCompute) const {
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   auto commandList = currentFc->commandList;
-  D3D12_GPU_DESCRIPTOR_HANDLE handle =
-      dx12::CONSTANT_BUFFER_MANAGER->getConstantBufferDx12Handle(m_cameraHandle)
-          .gpuHandle;
-  if (!isCompute) {
-    commandList->SetGraphicsRootDescriptorTable(
-        PSOManager::PER_FRAME_DATA_BINDING_INDEX, handle);
-  } else {
-    commandList->SetComputeRootDescriptorTable(
-        PSOManager::PER_FRAME_DATA_BINDING_INDEX, handle);
-  }
+  // D3D12_GPU_DESCRIPTOR_HANDLE handle =
+  //    dx12::CONSTANT_BUFFER_MANAGER->getConstantBufferDx12Handle(m_cameraHandle)
+  //        .gpuHandle;
+  // if (!isCompute) {
+  //  commandList->SetGraphicsRootDescriptorTable(
+  //      PSOManager::PER_FRAME_DATA_BINDING_INDEX, handle);
+  //} else {
+  //  commandList->SetComputeRootDescriptorTable(
+  //      PSOManager::PER_FRAME_DATA_BINDING_INDEX, handle);
+  //}
+  globals::BINDING_TABLE_MANAGER->bindConstantBuffer(m_frameBindingHandle,
+                                                     m_cameraHandle, 0, 0);
+  globals::BINDING_TABLE_MANAGER->bindBuffer(
+      m_frameBindingHandle, m_matrixBufferHandle[globals::CURRENT_FRAME], 1, 1);
+  globals::BINDING_TABLE_MANAGER->bindTable(
+      PSOManager::PER_FRAME_DATA_BINDING_INDEX, m_frameBindingHandle, rs,
+      isCompute);
 }
 
 void Dx12RenderingContext::dispatchCompute(const uint32_t blockX,

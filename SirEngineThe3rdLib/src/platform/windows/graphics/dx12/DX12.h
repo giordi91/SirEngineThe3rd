@@ -273,6 +273,9 @@ class Dx12RenderingContext final : public RenderingContext {
   // hard to put in a ResizableVector as value so for now we don't deal with
   // this
   void *queues;
+  uint32_t m_matrixCounter = 0;
+  BufferHandle m_matrixBufferHandle[5]{};
+  BindingTableHandle m_frameBindingHandle;
 };
 
 }  // namespace dx12
