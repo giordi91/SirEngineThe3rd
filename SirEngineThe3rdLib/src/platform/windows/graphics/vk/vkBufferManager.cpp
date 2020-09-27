@@ -1,6 +1,5 @@
 #include "platform/windows/graphics/vk/vkBufferManager.h"
 
-
 #include "platform/windows/graphics/vk/vk.h"
 #include "vkMemory.h"
 
@@ -19,13 +18,23 @@ void VkBufferManager::initialize() {
 
 void VkBufferManager::cleanup() {}
 
+void freeBuffer(const vk::Buffer &buffer) {
+  vkFreeMemory(vk::LOGICAL_DEVICE, buffer.memory, nullptr);
+  vkDestroyBuffer(vk::LOGICAL_DEVICE, buffer.buffer, nullptr);
+}
 void VkBufferManager::free(const BufferHandle handle) {
   assertMagicNumber(handle);
   uint32_t idx = getIndexFromHandle(handle);
-  const Buffer &buffData = m_bufferStorage.getConstRef(idx);
+  VkBufferInfo &buffData = m_bufferStorage[idx];
 
-  vkFreeMemory(vk::LOGICAL_DEVICE, buffData.memory, nullptr);
-  vkDestroyBuffer(vk::LOGICAL_DEVICE, buffData.buffer, nullptr);
+  bool isStatic = (buffData.flags & BUFFER_FLAGS_BITS::IS_STATIC) > 0;
+  bool isGPUOnly = (buffData.flags & BUFFER_FLAGS_BITS::GPU_ONLY) > 0;
+  freeBuffer(buffData.cpuBuffer);
+
+  if (isGPUOnly) {
+    freeBuffer(buffData.gpuBuffer);
+  }
+  buffData = {};
   // next we just need to free the pool
   m_bufferStorage.free(idx);
 }
@@ -33,8 +42,8 @@ void VkBufferManager::free(const BufferHandle handle) {
 void *VkBufferManager::getMappedData(const BufferHandle handle) const {
   assertMagicNumber(handle);
   uint32_t idx = getIndexFromHandle(handle);
-  const Buffer &data = m_bufferStorage.getConstRef(idx);
-  return data.data;
+  const VkBufferInfo &data = m_bufferStorage.getConstRef(idx);
+  return data.cpuBuffer.data;
 }
 
 void VkBufferManager::bindBuffer(const BufferHandle handle,
@@ -43,14 +52,16 @@ void VkBufferManager::bindBuffer(const BufferHandle handle,
                                  const uint32_t bindingIndex) const {
   assertMagicNumber(handle);
   uint32_t idx = getIndexFromHandle(handle);
-  const Buffer &data = m_bufferStorage.getConstRef(idx);
+  const VkBufferInfo &data = m_bufferStorage.getConstRef(idx);
 
   write->sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
   write->dstSet = set;
   write->dstBinding = bindingIndex;
+
+  bool isGPUOnly = (data.flags & BUFFER_FLAGS_BITS::GPU_ONLY) > 0;
   // TODO this should be probably be queried by the buffer data
   write->descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-  write->pBufferInfo = &data.info;
+  write->pBufferInfo = isGPUOnly ? &data.gpuBuffer.info : &data.cpuBuffer.info;
   write->descriptorCount = 1;
 }
 
@@ -74,36 +85,71 @@ void VkBufferManager::transitionBuffer(const BufferHandle handle,
                        nullptr);
 }
 
-BufferHandle VkBufferManager::allocate(const uint32_t sizeInBytes,
-                                       void *initData, const char *name,
-                                       const int, const int,
-                                       const BUFFER_FLAGS flags) {
-  bool isRandomWrite = (flags & BUFFER_FLAGS_BITS::RANDOM_WRITE) > 0;
-  bool isIndex = (flags & BUFFER_FLAGS_BITS::INDEX_BUFFER) > 0;
-  bool isIndirectBuffer = (flags & BUFFER_FLAGS_BITS::INDIRECT_BUFFER) > 0;
-  bool isVertexBuffer = (flags & BUFFER_FLAGS_BITS::VERTEX_BUFFER) > 0;
-  bool isBuffered = (flags & BUFFER_FLAGS_BITS::BUFFERED) > 0;
-  bool isStorage = (flags & BUFFER_FLAGS_BITS::STORAGE_BUFFER) > 0;
-  bool isGPUOnly= (flags & BUFFER_FLAGS_BITS::GPU_ONLY) > 0;
-  assert(!isBuffered && "not supported yet");
-  // assert(!isIndirectBuffer && "not supported yet");
-  assert(!(isVertexBuffer && isIndex) &&
-         "canont be both vertex and index buffer");
-
-  // process the flags
-  uint32_t usage = isRandomWrite ? VK_BUFFER_USAGE_STORAGE_BUFFER_BIT : 0;
-  usage |= isIndex ? VK_BUFFER_USAGE_INDEX_BUFFER_BIT : 0;
-  usage |= isIndirectBuffer ? VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT : 0;
-  usage |= (isVertexBuffer | isStorage) > 0 ? VK_BUFFER_USAGE_STORAGE_BUFFER_BIT : 0;
-  usage |= isIndirectBuffer ? VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT : 0;
-
+vk::Buffer VkBufferManager::allocateGPUVisibleBuffer(
+    const uint32_t sizeInBytes, const VkBufferUsageFlags usage,
+    const char *name, void *initData) {
   VkBufferCreateInfo createInfo{VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};
   createInfo.size = sizeInBytes;
   createInfo.usage = usage;
   createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-  uint32_t index = 0;
-  vk::Buffer &buffer = m_bufferStorage.getFreeMemoryData(index);
+  vk::Buffer buffer{};
+
+  // this is just a dummy handle
+  VK_CHECK(
+      vkCreateBuffer(vk::LOGICAL_DEVICE, &createInfo, nullptr, &buffer.buffer));
+  SET_DEBUG_NAME(buffer.buffer, VK_OBJECT_TYPE_BUFFER,
+                 frameConcatenation(name, "Buffer"));
+
+  // memory requirement type bits, is going to tell us which type of memory are
+  // compatible with our buffer, meaning each one of them could host the
+  // allocation
+  VkMemoryRequirements requirements;
+  vkGetBufferMemoryRequirements(vk::LOGICAL_DEVICE, buffer.buffer,
+                                &requirements);
+  buffer.size = sizeInBytes;
+  buffer.allocationSize = requirements.size;
+
+  VkPhysicalDeviceMemoryProperties memoryProperties;
+  vkGetPhysicalDeviceMemoryProperties(vk::PHYSICAL_DEVICE, &memoryProperties);
+
+  // only memory we need is device local, since is a GPU only buffer
+  VkMemoryPropertyFlags memoryFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+  uint32_t memoryIndex = selectMemoryType(
+      memoryProperties, requirements.memoryTypeBits, memoryFlags);
+
+  assert(memoryIndex != ~0u);
+
+  VkMemoryAllocateInfo memoryInfo = {VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO};
+  memoryInfo.allocationSize = requirements.size;
+  memoryInfo.memoryTypeIndex = memoryIndex;
+
+  VK_CHECK(vkAllocateMemory(vk::LOGICAL_DEVICE, &memoryInfo, nullptr,
+                            &buffer.memory));
+  SET_DEBUG_NAME(buffer.memory, VK_OBJECT_TYPE_DEVICE_MEMORY,
+                 frameConcatenation(name, "Memory"));
+
+  // binding the memory to our buffer, the dummy handle we allocated previously
+  vkBindBufferMemory(vk::LOGICAL_DEVICE, buffer.buffer, buffer.memory, 0);
+
+  buffer.m_magicNumber = MAGIC_NUMBER_COUNTER++;
+  buffer.info.buffer = buffer.buffer;
+  buffer.info.offset = 0;
+  buffer.info.range = sizeInBytes;
+
+  return buffer;
+}
+
+vk::Buffer VkBufferManager::allocateCPUVisibleBuffer(uint32_t sizeInBytes,
+                                                     VkBufferUsageFlags usage,
+                                                     const char *name,
+                                                     void *initData) {
+  VkBufferCreateInfo createInfo{VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};
+  createInfo.size = sizeInBytes;
+  createInfo.usage = usage;
+  createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+  vk::Buffer buffer{};
 
   // this is just a dummy handle
   VK_CHECK(
@@ -129,6 +175,7 @@ BufferHandle VkBufferManager::allocate(const uint32_t sizeInBytes,
   // We are requesting for memory that is device local BUT  host visible
   // when mapped it will give us a GPU pointer, we can write to directly
   // using memcpy, DO NOT DEREFERENCE ANY OF THE MEMORY!!!
+  // TODO do this only if we request fast cpu update or similar
   VkMemoryPropertyFlags memoryFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT |
                                       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                                       VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
@@ -169,8 +216,90 @@ BufferHandle VkBufferManager::allocate(const uint32_t sizeInBytes,
   buffer.info.buffer = buffer.buffer;
   buffer.info.offset = 0;
   buffer.info.range = sizeInBytes;
+  return buffer;
+}
+
+BufferHandle VkBufferManager::allocate(const uint32_t sizeInBytes,
+                                       void *initData, const char *name,
+                                       const int, const int,
+                                       const BUFFER_FLAGS flags) {
+  bool isRandomWrite = (flags & BUFFER_FLAGS_BITS::RANDOM_WRITE) > 0;
+  bool isIndex = (flags & BUFFER_FLAGS_BITS::INDEX_BUFFER) > 0;
+  bool isIndirectBuffer = (flags & BUFFER_FLAGS_BITS::INDIRECT_BUFFER) > 0;
+  bool isVertexBuffer = (flags & BUFFER_FLAGS_BITS::VERTEX_BUFFER) > 0;
+  bool isBuffered = (flags & BUFFER_FLAGS_BITS::BUFFERED) > 0;
+  bool isStorage = (flags & BUFFER_FLAGS_BITS::STORAGE_BUFFER) > 0;
+  bool isGPUOnly = (flags & BUFFER_FLAGS_BITS::GPU_ONLY) > 0;
+  bool isStatic = (flags & BUFFER_FLAGS_BITS::IS_STATIC) > 0;
+  assert(!isBuffered && "not supported yet");
+  // assert(!isIndirectBuffer && "not supported yet");
+  assert(!(isVertexBuffer && isIndex) &&
+         "canont be both vertex and index buffer");
+
+  // process the flags
+  uint32_t usage = isRandomWrite ? VK_BUFFER_USAGE_STORAGE_BUFFER_BIT : 0;
+  usage |= isIndex ? VK_BUFFER_USAGE_INDEX_BUFFER_BIT : 0;
+  usage |= isIndirectBuffer ? VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT : 0;
+  usage |=
+      (isVertexBuffer | isStorage) > 0 ? VK_BUFFER_USAGE_STORAGE_BUFFER_BIT : 0;
+  usage |= isIndirectBuffer ? VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT : 0;
+
+  uint32_t cpuUsage = usage | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+  uint32_t gpuUsage = usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+
+  // we start by allocating a cpu buffer because is going to be needed no matter
+  // if we perform an upload to gpu or not
+  vk::Buffer cpuBuffer =
+      allocateCPUVisibleBuffer(sizeInBytes, cpuUsage, name, initData);
+
+  // if is GPUOnly we need to create a gpu only buffer
+  vk::Buffer gpuBuffer{};
+  if (isGPUOnly) {
+    gpuBuffer = allocateGPUVisibleBuffer(
+        sizeInBytes, gpuUsage, frameConcatenation(name, "GPU"), initData);
+    if (initData != nullptr) {
+      // we need to perform a buffer to buffer copy
+      auto *currentFc = CURRENT_FRAME_COMMAND;
+      VkCommandBuffer commandList = currentFc->m_commandBuffer;
+
+      VkBufferCopy copyRegion = {};
+      copyRegion.size = sizeInBytes;
+      vkCmdCopyBuffer(commandList, cpuBuffer.buffer, gpuBuffer.buffer, 1,
+                      &copyRegion);
+
+      VkBufferMemoryBarrier barrier{
+          VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+          nullptr,
+          VkAccessFlagBits::VK_ACCESS_TRANSFER_WRITE_BIT,
+          VkAccessFlagBits::VK_ACCESS_MEMORY_READ_BIT,
+          VK_QUEUE_FAMILY_IGNORED,
+          VK_QUEUE_FAMILY_IGNORED,
+          gpuBuffer.buffer,
+          0,
+          sizeInBytes};
+      vkCmdPipelineBarrier(
+          commandList, VkPipelineStageFlagBits::VK_PIPELINE_STAGE_TRANSFER_BIT,
+          // TODO Need to fix this, might need extra information passed int he
+          // flags to know what the buffer is used for, for example a compute
+          // buffer etc, or maybe I should leave the copy to the user through an
+          // interface?
+          VkPipelineStageFlagBits::VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT |
+              VK_PIPELINE_STAGE_VERTEX_SHADER_BIT,
+          0, 0, nullptr, 1, &barrier, 0, nullptr);
+    }
+  }
+
+  uint32_t index = 0;
+  VkBufferInfo &bufferInfo = m_bufferStorage.getFreeMemoryData(index);
+  // TODO we don't want to keep the cpu buffer around if the buffer is static,
+  // this means keeping track of buffer uploaded around and release them after
+  // data reached destination
+  bufferInfo.cpuBuffer = cpuBuffer;
+  bufferInfo.gpuBuffer = gpuBuffer;
+  bufferInfo.flags = flags;
+  bufferInfo.magicNumber = MAGIC_NUMBER_COUNTER++;
   // creating a handle
-  BufferHandle handle{(buffer.m_magicNumber << 16) | index};
+  BufferHandle handle{(bufferInfo.magicNumber << 16) | index};
   return handle;
 }
 

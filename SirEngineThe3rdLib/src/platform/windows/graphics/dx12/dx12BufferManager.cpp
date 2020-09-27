@@ -30,14 +30,13 @@ void BufferManagerDx12::free(const BufferHandle handle) {
 ID3D12Resource *BufferManagerDx12::allocateCpuVisibleBuffer(
     const uint32_t actualSize) const {
   ID3D12Resource *uploadBuffer;
-  HRESULT res;
   // In order to copy CPU memory data into our default buffer, we need to
   // create an intermediate upload heap.
   auto uploadHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
   auto uploadBufferDesc = CD3DX12_RESOURCE_DESC::Buffer(actualSize);
-  res = dx12::DEVICE->CreateCommittedResource(
-      &uploadHeapProperties, D3D12_HEAP_FLAG_NONE, &uploadBufferDesc,
-      D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&uploadBuffer));
+  HRESULT res = dx12::DEVICE->CreateCommittedResource(
+	  &uploadHeapProperties, D3D12_HEAP_FLAG_NONE, &uploadBufferDesc,
+	  D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&uploadBuffer));
   assert(SUCCEEDED(res));
 
   return uploadBuffer;

@@ -1,13 +1,13 @@
 #include "SirEngine/graphics/techniques/grass.h"
 
-#include "SirEngine/io/binaryFile.h"
 #include "SirEngine/bufferManager.h"
 #include "SirEngine/constantBufferManager.h"
-#include "SirEngine/io/fileUtils.h"
 #include "SirEngine/graphics/bindingTableManager.h"
 #include "SirEngine/graphics/debugRenderer.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/interopData.h"
+#include "SirEngine/io/binaryFile.h"
+#include "SirEngine/io/fileUtils.h"
 #include "SirEngine/log.h"
 #include "SirEngine/psoManager.h"
 #include "SirEngine/rootSignatureManager.h"
@@ -182,11 +182,13 @@ void GrassTechnique::setup(const uint32_t id) {
   m_tilesPointsHandle = globals::BUFFER_MANAGER->allocate(
       mapper->pointsSizeInByte, pointData, "grassBuffer",
       mapper->tileCount * mapper->pointsPerTile, sizeof(float) * 2,
-      BufferManager::STORAGE_BUFFER | BufferManager::GPU_ONLY);
+      BufferManager::STORAGE_BUFFER | BufferManager::GPU_ONLY |
+          BufferManager::IS_STATIC);
   m_tilesIndicesHandle = globals::BUFFER_MANAGER->allocate(
       sizeof(uint32_t) * runtimeTilesCount + 64, m_tilesIndices.data(),
       "grassTilesIndicesBuffer", runtimeTilesCount, sizeof(uint32_t),
-      BufferManager::STORAGE_BUFFER);
+      BufferManager::STORAGE_BUFFER | BufferManager::GPU_ONLY |
+          BufferManager::IS_STATIC);
   m_grassConfigHandle = globals::CONSTANT_BUFFER_MANAGER->allocate(
       sizeof(m_grassConfig),
       ConstantBufferManager::CONSTANT_BUFFER_FLAG_BITS::UPDATED_EVERY_FRAME,
