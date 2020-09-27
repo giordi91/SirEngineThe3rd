@@ -190,7 +190,7 @@ class VkRenderingContext final : public RenderingContext {
   static constexpr uint32_t RESERVE_SIZE = 400;
   uint32_t MAGIC_NUMBER_COUNTER = 1;
   SparseMemoryPool<FrameBindingsData> m_bindingsPool;
-  void *m_matrixCounter = 0;
+  uint32_t m_matrixCounter = 0;
   BufferHandle m_matrixBufferHandle[5]{};
 };
 

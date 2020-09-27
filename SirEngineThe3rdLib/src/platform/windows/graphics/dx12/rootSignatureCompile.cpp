@@ -208,6 +208,7 @@ RootCompilerResult processSignatureFileToBlob(
   const std::string &name = getFileName(path);
   // bool useStaticSampler = shouldBindSamplers(jobj);
   bool useStaticSampler = true;
+  bool isPush = metadata->hasObjectPushConstant();
 
   // checking if we have pass definition, if not we shift the indeces
   bool hasPassConfig = metadata->passResourceCount != 0;
@@ -218,15 +219,16 @@ RootCompilerResult processSignatureFileToBlob(
   registerCount += hasPassConfig ? 1 : 0;
   registerCount += hasConfig ? 1 : 0;
   registerCount += useStaticSampler ? 1 : 0;
+  registerCount += isPush ? 1 : 0;
   std::vector<CD3DX12_ROOT_PARAMETER> rootParams(registerCount);
   CD3DX12_DESCRIPTOR_RANGE ranges[2]{};
 
   // create constant buffer for camera values
   int startRegister = 0;
   ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, startRegister,
-              ENGINE_RESIGSTER_SPACE);
-  ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, startRegister+1,
-              ENGINE_RESIGSTER_SPACE);
+                 ENGINE_RESIGSTER_SPACE);
+  ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, startRegister + 1,
+                 ENGINE_RESIGSTER_SPACE);
   rootParams[0].InitAsDescriptorTable(2, ranges);
 
   // this is per object config
@@ -236,7 +238,7 @@ RootCompilerResult processSignatureFileToBlob(
   int userCounter = 0;
   CD3DX12_DESCRIPTOR_RANGE *userRanges = nullptr;
   if (hasConfig) {
-    int pushConstantOffset = metadata->hasObjectPushConstant() ? 1 : 0;
+    int pushConstantOffset = isPush ? 1 : 0;
 
     int allocSize =
         sizeof(CD3DX12_DESCRIPTOR_RANGE) * metadata->objectResourceCount -
@@ -275,6 +277,17 @@ RootCompilerResult processSignatureFileToBlob(
                           baseRegiser, space);
 
   rootParams[1].InitAsDescriptorTable(1, &normalSamplersDesc);
+
+  // setup the root constant if any
+  if (isPush) {
+    const auto &meta = metadata->objectResources[0];
+    assert(meta.type == graphics::MATERIAL_RESOURCE_TYPE::CONSTANT_BUFFER);
+    assert(rootParams.size() - 1 != configIndex);
+    assert(rootParams.size() - 1 == (configIndex + 1));
+    rootParams[rootParams.size() - 1].InitAsConstants(
+        meta.extension.uniform.structSize / sizeof(int), meta.binding,
+        meta.set);
+  }
 
   CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc(
       static_cast<UINT>(rootParams.size()), rootParams.data(), 0, nullptr);
