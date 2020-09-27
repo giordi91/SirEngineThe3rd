@@ -45,12 +45,14 @@ class BufferManagerDx12 final : public BufferManager {
                  int elementSize = -1) const;
 
   void clearUploadRequests();
+  void update(BufferHandle handle, void *inData, int offset, int size);
 
  private:
   ID3D12Resource *allocateCpuVisibleBuffer(uint32_t actualSize) const;
   ID3D12Resource *allocateGpuVisibleBuffer(uint32_t actualSize, bool isUav);
-  void uploadDataToGpuOnlyBuffer(void *initData, uint32_t actualSize,
-                                 bool isTemporary, ID3D12Resource *uploadBuffer,
+  void uploadDataToGpuOnlyBuffer(void *initData, const uint32_t actualSize,
+                                 const uint32_t offset, const bool isTemporary,
+                                 ID3D12Resource *uploadBuffer,
                                  ID3D12Resource *buffer);
 
   inline void assertMagicNumber(const BufferHandle handle) const {
@@ -68,6 +70,7 @@ class BufferManagerDx12 final : public BufferManager {
  private:
   struct BufferData {
     ID3D12Resource *data = nullptr;
+    ID3D12Resource *uploadBuffer = nullptr;
     void *mappedData = nullptr;
     D3D12_RESOURCE_STATES state;
     uint32_t magicNumber;

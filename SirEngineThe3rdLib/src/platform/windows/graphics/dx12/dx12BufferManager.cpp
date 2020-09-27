@@ -1,14 +1,11 @@
 #include "platform/windows/graphics/dx12/dx12BufferManager.h"
 
-
-#include "d3dx12.h"
-#include "descriptorHeap.h"
-
-
 #include <cassert>
 
 #include "SirEngine/log.h"
 #include "SirEngine/runtimeString.h"
+#include "d3dx12.h"
+#include "descriptorHeap.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 
 namespace SirEngine::dx12 {
@@ -35,8 +32,8 @@ ID3D12Resource *BufferManagerDx12::allocateCpuVisibleBuffer(
   auto uploadHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
   auto uploadBufferDesc = CD3DX12_RESOURCE_DESC::Buffer(actualSize);
   HRESULT res = dx12::DEVICE->CreateCommittedResource(
-	  &uploadHeapProperties, D3D12_HEAP_FLAG_NONE, &uploadBufferDesc,
-	  D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&uploadBuffer));
+      &uploadHeapProperties, D3D12_HEAP_FLAG_NONE, &uploadBufferDesc,
+      D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&uploadBuffer));
   assert(SUCCEEDED(res));
 
   return uploadBuffer;
@@ -60,10 +57,12 @@ ID3D12Resource *BufferManagerDx12::allocateGpuVisibleBuffer(
 }
 
 void BufferManagerDx12::uploadDataToGpuOnlyBuffer(void *initData,
-                                                  uint32_t actualSize,
-                                                  bool isTemporary,
+                                                  const uint32_t actualSize,
+                                                  const uint32_t offset,
+                                                  const bool isTemporary,
                                                   ID3D12Resource *uploadBuffer,
                                                   ID3D12Resource *buffer) {
+  assert(offset == 0);
   // Describe the data we want to copy into the default buffer.
   D3D12_SUBRESOURCE_DATA subResourceData = {};
   subResourceData.pData = initData;
@@ -100,7 +99,8 @@ void BufferManagerDx12::uploadDataToGpuOnlyBuffer(void *initData,
   }
 }
 
-//TODO needs some clean up, how come all the checks on the sourceState is not used?
+// TODO needs some clean up, how come all the checks on the sourceState is not
+// used?
 void BufferManagerDx12::transitionBuffer(const BufferHandle handle,
                                          const BufferTransition &transition) {
   assertMagicNumber(handle);
@@ -157,8 +157,10 @@ BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInBytes,
 
   const bool isUav = (flags & BUFFER_FLAGS_BITS::RANDOM_WRITE) > 0;
   const bool isGpuOnly = (flags & BUFFER_FLAGS_BITS::GPU_ONLY) > 0;
+  const bool isStatic = (flags & BUFFER_FLAGS_BITS::IS_STATIC) > 0;
 
-  bool isTemporary = isGpuOnly;
+  bool isTemporary = isGpuOnly & isStatic;
+  // TODO if is GPU only we are leaking this buffer :D
   ID3D12Resource *uploadBuffer = allocateCpuVisibleBuffer(actualSize);
 
   ID3D12Resource *buffer = nullptr;
@@ -175,8 +177,8 @@ BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInBytes,
   // if there is init data we need to take care of that
   if (initData != nullptr) {
     if (isGpuOnly) {
-      uploadDataToGpuOnlyBuffer(initData, actualSize, isTemporary, uploadBuffer,
-                                buffer);
+      uploadDataToGpuOnlyBuffer(initData, actualSize, 0, isTemporary,
+                                uploadBuffer, buffer);
     } else {
       // we can do a memcpy directly since the buffer is cpu visible
       memcpy(uploadMappedData, initData, sizeInBytes);
@@ -188,7 +190,8 @@ BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInBytes,
   BufferData &data = m_bufferPool.getFreeMemoryData(index);
   data = {};
   // if the buffer is not temporary we need to use the upload buffer
-  data.data = isTemporary ? buffer : uploadBuffer;
+  data.data = isGpuOnly ? buffer : uploadBuffer;
+  data.uploadBuffer = uploadBuffer;
 
   // data is now loaded need to create handle etc
   BufferHandle handle{(MAGIC_NUMBER_COUNTER << 16) | index};
@@ -202,7 +205,6 @@ BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInBytes,
 
   return handle;
 }
-
 
 void BufferManagerDx12::createUav(const BufferHandle &buffer,
                                   DescriptorPair &descriptor, const int offset,
@@ -284,5 +286,21 @@ void BufferManagerDx12::clearUploadRequests() {
   }
   // resizing the vector
   m_uploadRequests.resize(stackTopIdx + 1);
+}
+
+void BufferManagerDx12::update(const BufferHandle handle, void *inData,
+                               int offset, int size) {
+  const uint32_t index = getIndexFromHandle(handle);
+  const BufferData &data = m_bufferPool.getConstRef(index);
+  const bool isGpuOnly = (data.flags & BUFFER_FLAGS_BITS::GPU_ONLY) > 0;
+  const bool isStatic = (data.flags & BUFFER_FLAGS_BITS::IS_STATIC) > 0;
+  assert(data.uploadBuffer != nullptr);
+  assert(isStatic == false);
+
+  // if is gpu only we need to perform the buffer copy
+  if (isGpuOnly) {
+    uploadDataToGpuOnlyBuffer(inData, size, offset, false, data.uploadBuffer,
+                              data.data);
+  }
 }
 }  // namespace SirEngine::dx12

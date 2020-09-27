@@ -21,8 +21,9 @@ FullMeshVertexOut VS( uint vid : SV_VertexID)
 	
     float4 p = vertices.Load<float4>(vid * 16);
 	// Transform to homogeneous clip space.
-    //vout.PosH = mul(p, mul(matrices[g_push.index], g_frameData.m_activeCamera.MVP));
-    vout.PosH = mul(p, g_frameData.m_activeCamera.MVP);
+    //vout.PosH = mul(p, mul(matrices[2], g_frameData.m_activeCamera.MVP));
+    vout.PosH = mul(p, mul(matrices[g_push.index], g_frameData.m_activeCamera.MVP));
+    //vout.PosH = mul(p, g_frameData.m_activeCamera.MVP);
 	
 	// Just pass vertex color into the pixel shader.
     vout.Normal= normals.Load<float4>(vid*16).xyz;
