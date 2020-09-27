@@ -279,7 +279,6 @@ bool VkRenderingContext::initializeGraphics() {
   // allocate memory for per frame matrix uploads
   uint32_t matrixCount = globals::ENGINE_CONFIG->m_matrixBufferSize;
   uint32_t matrixSize = sizeof(glm::mat4) * matrixCount;
-  m_matrixMemory = globals::PERSISTENT_ALLOCATOR->allocate(matrixSize);
 
   assert(globals::ENGINE_CONFIG->m_frameBufferingCount <= 5);
   for (uint32_t i = 0; i < globals::ENGINE_CONFIG->m_frameBufferingCount; ++i) {

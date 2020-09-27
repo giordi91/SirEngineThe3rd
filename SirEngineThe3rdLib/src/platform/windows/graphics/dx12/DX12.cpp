@@ -285,6 +285,15 @@ bool Dx12RenderingContext::initializeGraphicsDx12(BaseWindow *wnd,
   DEVICE->CreateCommandSignature(&ProgramDesc, nullptr,
                                  IID_PPV_ARGS(&m_commandIndirect));
 
+  // assert(globals::ENGINE_CONFIG->m_frameBufferingCount <= 5);
+  // for (uint32_t i = 0; i < globals::ENGINE_CONFIG->m_frameBufferingCount;
+  // ++i) {
+  //  m_matrixBufferHandle[i] = vk::BUFFER_MANAGER->allocate(
+  //      matrixSize, nullptr, "perFrameMatrixBuffer", matrixCount,
+  //      sizeof(glm::mat4),
+  //      BufferManager::BUFFER_FLAGS_BITS::STORAGE_BUFFER |
+  //          BufferManager::BUFFER_FLAGS_BITS::GPU_ONLY);
+  //}
   return true;
 }
 void flushDx12() { flushCommandQueue(GLOBAL_COMMAND_QUEUE); }
@@ -607,14 +616,7 @@ void Dx12RenderingContext::renderQueueType(
         globals::BINDING_TABLE_MANAGER->bindTable(
             PSOManager::PER_PASS_BINDING_INDEX, passBindings, bind.rs);
       }
-      // binding samplers
-      int samplersBindSlot =
-          dx12::ROOT_SIGNATURE_MANAGER->getBindingSlot(bind.rs, 1);
-      if (samplersBindSlot != -1) {
-        auto samplersHandle = dx12::GLOBAL_SAMPLER_HEAP->getGpuStart();
-        commandList->SetGraphicsRootDescriptorTable(samplersBindSlot,
-                                                    samplersHandle);
-      }
+      bindSamplers(bind.rs);
 
       // looping each of the object
       const size_t count = renderableList.second.size();
@@ -837,7 +839,15 @@ void Dx12RenderingContext::renderProceduralIndirect(
 }
 
 void Dx12RenderingContext::bindSamplers(const RSHandle &rs) {
-    assert(0);
+  // binding samplers
+  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
+  auto commandList = currentFc->commandList;
+  int samplersBindSlot = dx12::ROOT_SIGNATURE_MANAGER->getBindingSlot(rs, 1);
+  if (samplersBindSlot != -1) {
+    auto samplersHandle = dx12::GLOBAL_SAMPLER_HEAP->getGpuStart();
+    commandList->SetGraphicsRootDescriptorTable(samplersBindSlot,
+                                                samplersHandle);
+  }
 }
 
 bool Dx12RenderingContext::newFrame() {
