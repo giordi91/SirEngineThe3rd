@@ -2,8 +2,8 @@
 
 #include <assert.h>
 
-#include "SirEngine/io/fileUtils.h"
 #include "SirEngine/graphics/materialMetadata.h"
+#include "SirEngine/io/fileUtils.h"
 #include "SirEngine/log.h"
 #include "SirEngine/runtimeString.h"
 #include "platform/windows/graphics/dx12/DX12.h"
@@ -219,13 +219,15 @@ RootCompilerResult processSignatureFileToBlob(
   registerCount += hasConfig ? 1 : 0;
   registerCount += useStaticSampler ? 1 : 0;
   std::vector<CD3DX12_ROOT_PARAMETER> rootParams(registerCount);
-  CD3DX12_DESCRIPTOR_RANGE ranges{};
+  CD3DX12_DESCRIPTOR_RANGE ranges[2]{};
 
   // create constant buffer for camera values
   int startRegister = 0;
-  ranges.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, startRegister,
+  ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, startRegister,
               ENGINE_RESIGSTER_SPACE);
-  rootParams[0].InitAsDescriptorTable(1, &ranges);
+  ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, startRegister+1,
+              ENGINE_RESIGSTER_SPACE);
+  rootParams[0].InitAsDescriptorTable(2, ranges);
 
   // this is per object config
   int configIndex = 0 + useStaticSampler + static_cast<int>(hasPassConfig) +
@@ -234,9 +236,16 @@ RootCompilerResult processSignatureFileToBlob(
   int userCounter = 0;
   CD3DX12_DESCRIPTOR_RANGE *userRanges = nullptr;
   if (hasConfig) {
-    userRanges = new CD3DX12_DESCRIPTOR_RANGE[metadata->objectResourceCount]{};
-    for (uint32_t i = 0; i < metadata->objectResourceCount; ++i) {
-      const auto &subConfig = metadata->objectResources[i];
+    int pushConstantOffset = metadata->hasObjectPushConstant() ? 1 : 0;
+
+    int allocSize =
+        sizeof(CD3DX12_DESCRIPTOR_RANGE) * metadata->objectResourceCount -
+        pushConstantOffset;
+    userRanges = static_cast<CD3DX12_DESCRIPTOR_RANGE *>(
+        globals::FRAME_ALLOCATOR->allocate(allocSize));
+    for (uint32_t i = 0; i < metadata->objectResourceCount - pushConstantOffset;
+         ++i) {
+      const auto &subConfig = metadata->objectResources[i + pushConstantOffset];
       processRootConfiguration(&userRanges[userCounter], subConfig);
       ++userCounter;
     }

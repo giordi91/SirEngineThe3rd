@@ -533,7 +533,7 @@ VkPSOCompileResult VkPSOManager::processRasterPSO(
   graphics::MaterialMetadata metadata =
       graphics::loadMetadata(filePath, GRAPHIC_API::VULKAN);
 
-  RSHandle layoutHandle2 = vk::PIPELINE_LAYOUT_MANAGER->loadSignatureFile(
+  RSHandle layoutHandle = vk::PIPELINE_LAYOUT_MANAGER->loadSignatureFile(
       fileName.c_str(), &metadata);
   compileResult.rootSignature = frameString(fileName.c_str());
   compileResult.metadata = metadata;
@@ -541,7 +541,7 @@ VkPSOCompileResult VkPSOManager::processRasterPSO(
   // RSHandle layoutHandle =
   //    vk::PIPELINE_LAYOUT_MANAGER->loadSignatureFile(rootFile.c_str());
   auto *layout =
-      vk::PIPELINE_LAYOUT_MANAGER->getLayoutFromHandle(layoutHandle2);
+      vk::PIPELINE_LAYOUT_MANAGER->getLayoutFromHandle(layoutHandle);
 
   // load shader stage
   // here we define all the stages of the pipeline

@@ -7,11 +7,11 @@
 #include <iostream>
 
 #include "SirEngine/application.h"
-#include "SirEngine/io/binaryFile.h"
-#include "SirEngine/io/fileUtils.h"
 #include "SirEngine/engineConfig.h"
 #include "SirEngine/events/shaderCompileEvent.h"
 #include "SirEngine/globals.h"
+#include "SirEngine/io/binaryFile.h"
+#include "SirEngine/io/fileUtils.h"
 #include "SirEngine/log.h"
 #include "SirEngine/runtimeString.h"
 #include "nlohmann/json.hpp"
@@ -77,6 +77,7 @@ void Dx12PSOManager::loadCachedPSOInFolder(const char *directory) {
 }
 
 PSOCompileResult Dx12PSOManager::loadCachedPSO(const char *path) const {
+  assert(0);
   const auto expPath = std::filesystem::path(path);
   const std::string name = expPath.stem().string();
 
