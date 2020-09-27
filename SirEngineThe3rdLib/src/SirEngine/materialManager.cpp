@@ -2,6 +2,7 @@
 #include "SirEngine/materialManager.h"
 
 #include <assert.h>
+
 #include <string>
 #include <unordered_map>
 
@@ -85,14 +86,15 @@ ShaderBind MaterialManager::bindRSandPSO(const uint64_t shaderFlags,
 int findBindingIndex(const graphics::MaterialMetadata *meta,
                      const std::string &bindName) {
   uint32_t count = meta->objectResourceCount;
-  for (uint32_t i = 0; i < count; ++i) {
+  uint32_t pushOffset = meta->hasObjectPushConstant() ? 1 : 0;
+  for (uint32_t i = pushOffset; i < count; ++i) {
     const auto &resource = meta->objectResources[i];
     bool result = strcmp(resource.name, bindName.c_str()) == 0;
     if (result) {
       if (globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::VULKAN) {
         return static_cast<int>(resource.binding);
       }
-      return static_cast<int>(i);
+      return static_cast<int>(i) - pushOffset;
     }
   }
   assert(0 && "could not find binding name");
@@ -103,14 +105,14 @@ int MaterialManager::buildBindingTableDefinitionFromMetadta(
     const graphics::MaterialMetadata *meta) {
   // push constants needs to be skipped because are part of the pipelien state
   // object not of the binding table, not sure about DX12, need to investigate
-  bool isVK = globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::VULKAN;
-  int pushOffset = meta->hasObjectPushConstant() & isVK ? 1 : 0;
+  int pushOffset = meta->hasObjectPushConstant() ? 1 : 0;
   uint32_t objectsCount = meta->objectResourceCount - pushOffset;
   // zeroing out memory just: to be safe
   memset(m_descriptions, 0,
          sizeof(graphics::BindingDescription) * objectsCount);
-  for (uint32_t obj = 0 ; obj < objectsCount; ++obj) {
-    const graphics::MaterialResource &res = meta->objectResources[obj + pushOffset];
+  for (uint32_t obj = 0; obj < objectsCount; ++obj) {
+    const graphics::MaterialResource &res =
+        meta->objectResources[obj + pushOffset];
     auto type = res.type;
     GRAPHIC_RESOURCE_TYPE graphicsType = GRAPHIC_RESOURCE_TYPE::NONE;
     switch (type) {
@@ -134,8 +136,7 @@ int MaterialManager::buildBindingTableDefinitionFromMetadta(
         break;
       }
     }
-    m_descriptions[obj] = {res.binding, graphicsType,
-                                        res.visibility};
+    m_descriptions[obj] = {res.binding, graphicsType, res.visibility};
   }
   return objectsCount;
 }
@@ -230,9 +231,18 @@ MaterialHandle MaterialManager::loadMaterial(const char *path) {
             globals::MESH_MANAGER->getHandleFromName(resName.c_str());
         matBinding.resourceHandle = mHandle.handle;
 
+        uint32_t pushOffset = meta->hasObjectPushConstant() ? 1 : 0;
         globals::BINDING_TABLE_MANAGER->bindMesh(
             materialData.bindingHandle[i], mHandle,
-            isDx12 ? meta->meshBinding.dxBinding : meta->meshBinding.vkBinding,
+            // Push/Root constant must appear at the end, this gives us
+            // different bindings, but also if the push constant appears it means
+            // we need to offset by one the binding for dx12, since the root
+            // constant does not goes in descriptor set. This happen the same for
+            // when we find the binding index of something in the constant buffer
+            // below. Be mindful of it, is not as transparent as I would like
+            // but for now it will do
+            isDx12 ? meta->meshBinding.dxBinding - pushOffset
+                   : meta->meshBinding.vkBinding,
             meta->meshBinding.flags);
       } else if (strcmp(matBinding.type, "constantBuffer") == 0) {
         // allocate the necessary constant buffer
@@ -295,7 +305,6 @@ inline void freeTextureIfNeeded(const TextureHandle handle) {
     globals::TEXTURE_MANAGER->free(handle);
   }
 }
-
 
 void MaterialManager::cleanup() {
   int count = m_nameToHandle.binCount();

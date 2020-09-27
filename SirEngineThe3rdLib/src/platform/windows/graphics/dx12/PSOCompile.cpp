@@ -1,16 +1,16 @@
 #include "platform/windows/graphics/dx12/PSOCompile.h"
 
-#include "SirEngine/io/fileUtils.h"
 #include "SirEngine/graphics/materialMetadata.h"
+#include "SirEngine/io/fileUtils.h"
 #include "SirEngine/log.h"
 #include "SirEngine/runtimeString.h"
 #include "dx12RootSignatureManager.h"
 #include "dx12SwapChain.h"
+#include "nlohmann/json.hpp"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/d3dx12.h"
 #include "platform/windows/graphics/dx12/dxgiFormatsDefine.h"
 #include "shaderCompiler.h"
-#include "nlohmann/json.hpp"
 
 namespace SirEngine::dx12 {
 static const std::string PSO_KEY_GLOBAL_ROOT = "globalRootSignature";
@@ -448,8 +448,8 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj, const char *path,
   TOPOLOGY_TYPE engineTopologyType =
       convertStringToEngineTopologyType(topologyString);
 
-  size_t renderTargets =
-      getValueIfInJson(jobj, PSO_KEY_RENDER_TARGETS, DEFAULT_INT);
+  size_t renderTargets = static_cast<size_t>(
+      getValueIfInJson(jobj, PSO_KEY_RENDER_TARGETS, DEFAULT_INT));
 
   assertInJson(jobj, PSO_KEY_RTV_FORMATS);
   std::vector<DXGI_FORMAT> formats;
@@ -535,7 +535,6 @@ PSOCompileResult compileRawPSO(const char *path, const char *shaderPath) {
   switch (psoType) {
     case (PSO_TYPE::COMPUTE): {
       return processComputePSO(jobj, path, shaderPath);
-      break;
     }
     case (PSO_TYPE::DXR): {
       assert(0);
