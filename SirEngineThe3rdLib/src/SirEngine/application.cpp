@@ -6,7 +6,7 @@
 #include "SirEngine/layer.h"
 #include "SirEngine/log.h"
 #include "SirEngine/engineConfig.h"
-#include "SIrEngine/io/fileUtils.h"
+#include "SirEngine/io/fileUtils.h"
 #include "graphics/renderingContext.h"
 #include "layers/imguiLayer.h"
 #include "layers/graphicsLayer.h"
