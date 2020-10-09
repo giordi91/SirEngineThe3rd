@@ -19,7 +19,7 @@ TEST_CASE("metadata parse 2", "[material]") {
       SirEngine::graphics::extractMetadataFromPSO(path);
 
   REQUIRE(metadata.objectResourceCount == 10);
-  REQUIRE(metadata.frameResourceCount == 1);
+  REQUIRE(metadata.frameResourceCount == 2);
   REQUIRE(metadata.passResourceCount == 4);
 
   REQUIRE(metadata.objectResources[0].type ==

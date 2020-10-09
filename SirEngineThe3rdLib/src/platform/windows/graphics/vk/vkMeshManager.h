@@ -38,8 +38,6 @@ struct MeshData final {
 class VkMeshManager final : public MeshManager {
  private:
   struct MeshUploadResource final {
-    // ID3D12Resource *uploadVertexBuffer = nullptr;
-    // ID3D12Resource *uploadIndexBuffer = nullptr;
     UINT64 fence = 0;
   };
 
