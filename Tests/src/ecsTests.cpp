@@ -285,318 +285,315 @@ TEST_CASE("Add component to entity", "[core,ecs]") {
   REQUIRE(movedDummy.e == 6);
 }
 
-TEST_CASE("Delete component to entity") {
-Registry registry;
-Position p{0, 1, 16, 32};
-Health h{100};
+TEST_CASE("Delete component to entity", "[core,ecs]") {
+  Registry registry;
+  Position p{0, 1, 16, 32};
+  Health h{100};
 
-EntityId eid = registry.addEntity(p, h);
-std::vector<std::tuple<size_t,Position*, Health* >> query1;
-registry.query(query1);
+  EntityId eid = registry.addEntity(p, h);
+  std::vector<std::tuple<size_t, Position*, Health*>> query1;
+  registry.query(query1);
 
-// testing that we only get one archetype and one item in it
-REQUIRE(query1.size() == 1);
-const Position* p0 = std::get<1>(query1[0]);
-REQUIRE(std::get<0>(query1[0]) == 1);
-REQUIRE(p0[0].x == 0);
-REQUIRE(p0[0].y == 1);
-REQUIRE(p0[0].z == 16);
-REQUIRE(p0[0].w == 32);
+  // testing that we only get one archetype and one item in it
+  REQUIRE(query1.size() == 1);
+  const Position* p0 = std::get<1>(query1[0]);
+  REQUIRE(std::get<0>(query1[0]) == 1);
+  REQUIRE(p0[0].x == Approx(0));
+  REQUIRE(p0[0].y == Approx(1));
+  REQUIRE(p0[0].z == Approx(16));
+  REQUIRE(p0[0].w == Approx(32));
 
-/*
-// now we delete a component
-registry.removeComponent<Health>(eid);
-std::vector<std::tuple<Position*, Health*, int>> query2;
-registry.query(query2);
-REQUIRE(query2.size() == 0);
-
-std::vector<std::tuple<Position*, int>> query3;
-registry.query(query3);
-REQUIRE(query3.size() == 1);
-*/
-}
-
-/*
-TEST_CASE("Add component to existing archetype") {
-ecs::Registry registry;
-Position p{0, 1, 16, 32};
-Health h{100};
-
-// first we create an entity with both position and health
-ecs::EntityId eid = registry.createEntity(p, h);
-std::vector<std::tuple<Position*, Health*, int>> query1;
-registry.query(query1);
-
-REQUIRE(query1.size() == 1);
-REQUIRE(std::get<2>(query1[0]) == 1);
-
-// next we create an entity with only position
-p.x = 100;
-ecs::EntityId eid2 = registry.createEntity(p);
-std::vector<std::tuple<Position*, int>> query2;
-registry.query(query2);
-// at this point we should have two archetype returned in the query
-// and each archetype has one entity in it
-REQUIRE(query2.size() == 2);
-REQUIRE(std::get<1>(query2[0]) == 1);
-
-// now we wish to add a health component to our entity with just position
-h.hp = 900;
-registry.addComponent(eid2, h);
-// now we should still have one archetype, a new one should not be created
-std::vector<std::tuple<Position*, Health*, int>> query3;
-registry.query(query3);
-REQUIRE(query3.size() == 1);
-// and the current archetype should have two entities with position and
-// health
-
-REQUIRE(std::get<2>(query3[0]) == 2);
-
-// we also want to query we get the right entity components
-const Position* p3 = std::get<0>(query3[0]);
-const Health* h3 = std::get<1>(query3[0]);
-REQUIRE(p3[0].x == Approx(0));
-REQUIRE(p3[0].y == Approx(1));
-REQUIRE(p3[0].z == Approx(16));
-REQUIRE(p3[0].w == Approx(32));
-REQUIRE(p3[1].x == Approx(100));
-REQUIRE(p3[1].y == Approx(1));
-REQUIRE(p3[1].z == Approx(16));
-REQUIRE(p3[1].w == Approx(32));
-
-REQUIRE(h3[0].hp == Approx(100));
-REQUIRE(h3[1].hp == Approx(900));
-
-// the query for position only should return just one archetype
-// because the other archetype is empty
-std::vector<std::tuple<Position*, int>> query4;
-registry.query(query4);
-REQUIRE(query4.size() == 1);
-}
-
-TEST_CASE("Preserve entity tracking on entity deletion") {
-ecs::Registry registry;
-Position p{0, 1, 2, 3};
-Health h{100};
-Position p2{4, 5, 6, 7};
-Health h2{900};
-ecs::EntityId eid = registry.createEntity(p, h);
-ecs::EntityId eid2 = registry.createEntity(p2, h2);
-const ecs::Entity& e2 = registry.getEntity(eid2);
-
-// we are about to remove a component, this will move the
-// the entity from one archetype to the other, so we are going
-// to extract the entity index from the entity before and after
-// the component remove, it should change
-const uint32_t e2idxPre = e2.entityIndex;
-registry.removeComponent<Position>(eid);
-const uint32_t e2idxPost = e2.entityIndex;
-REQUIRE(e2idxPost != e2idxPre);
-
-Position pPost = registry.getComponent<Position>(eid2);
-REQUIRE(pPost.x == Approx(p2.x));
-REQUIRE(pPost.y == Approx(p2.y));
-REQUIRE(pPost.z == Approx(p2.z));
-REQUIRE(pPost.w == Approx(p2.w));
-}
-
-TEST_CASE("Entity with no components") {
-ecs::Registry registry;
-Position p{0, 1, 2, 3};
-ecs::EntityId eid = registry.createEntity(p);
-registry.removeComponent<Position>(eid);
-bool result = registry.hasComponent<Position>(eid);
-REQUIRE(result == false);
-}
-
-TEST_CASE("Delete entity") {
-ecs::Registry registry;
-Position p{0, 1, 2, 3};
-ecs::EntityId eid = registry.createEntity(p);
-registry.deleteEntity(eid);
-REQUIRE(!registry.isEntityValid(eid));
-}
-
-TEST_CASE("Add - Delete entities") {
-ecs::Registry registry;
-Position p{0, 1, 2, 3};
-ecs::EntityId eid1 = registry.createEntity(p);
-registry.deleteEntity(eid1);
-std::vector<std::tuple<Position*, int>> query1;
-registry.query(query1);
-REQUIRE(query1.empty());
-p.x = 10;
-ecs::EntityId eid2 = registry.createEntity(p);
-REQUIRE(!registry.isEntityValid(eid1));
-REQUIRE(registry.isEntityValid(eid2));
-std::vector<std::tuple<Position*, int>> query2;
-registry.query(query2);
-REQUIRE(query2.size() == 1);
-REQUIRE(registry.getEntity(eid2).version == 2);
-}
-
-TEST_CASE("Multiple deletes") {
-ecs::Registry registry;
-Position p{0, 1, 2, 3};
-ecs::EntityId eid1 = registry.createEntity(p);
-p.x = 10;
-ecs::EntityId eid2 = registry.createEntity(p);
-p.x = 20;
-ecs::EntityId eid3 = registry.createEntity(p);
-
-// we start by removing the first entity, should get
-// eid3 to move in the archetype
-registry.deleteEntity(eid2);
-std::vector<std::tuple<Position*, int>> query;
-registry.query(query);
-REQUIRE(query.size() == 1);
-REQUIRE(std::get<1>(query[0]) == 2);
-ecs::Entity e3 = registry.getEntity(eid3);
-// e3 got moved in the archetype
-REQUIRE(e3.entityIndex == 1);
-Position p3 = registry.getComponent<Position>(eid3);
-REQUIRE(p3.x == Approx(20));
-
-// delete now entity1 , so entity3 should be moved again
-registry.deleteEntity(eid1);
-registry.query(query);
-REQUIRE(query.size() == 1);
-REQUIRE(std::get<1>(query[0]) == 1);
-e3 = registry.getEntity(eid3);
-// e3 got moved in the archetype
-REQUIRE(e3.entityIndex == 0);
-p3 = registry.getComponent<Position>(eid3);
-REQUIRE(p3.x == Approx(20));
-}
-
-TEST_CASE("Three components creation") {
-ecs::Registry registry;
-Position p{0, 1, 2, 3};
-Health h{100};
-Dummy d{10, 20};
-Position p2{4, 5, 6, 7};
-Health h2{900};
-Dummy d2{90, 91};
-ecs::EntityId eid = registry.createEntity(p, h, d);
-ecs::EntityId eid2 = registry.createEntity(p2, h2, d2);
-
-std::vector<std::tuple<Position*, Dummy*, int>> query;
-registry.query(query);
-REQUIRE(query.size() == 1);
-REQUIRE(std::get<2>(query[0]) == 2);
-// just checking the components
-Position* posPtr = std::get<0>(query[0]);
-REQUIRE(posPtr[0].x == Approx(0));
-REQUIRE(posPtr[1].x == Approx(4));
-
-Dummy* dummyPtr = std::get<1>(query[0]);
-REQUIRE(dummyPtr[0].a == Approx(10));
-REQUIRE(dummyPtr[1].a == Approx(90));
-
-std::vector<std::tuple<Position*, Health*, Dummy*, int>> query2;
-registry.query(query2);
-REQUIRE(query2.size() == 1);
-REQUIRE(std::get<3>(query2[0]) == 2);
-
-posPtr = std::get<0>(query2[0]);
-REQUIRE(posPtr[0].x == Approx(0));
-REQUIRE(posPtr[1].x == Approx(4));
-
-Health* hPtr = std::get<1>(query2[0]);
-REQUIRE(hPtr[0].hp == Approx(100));
-REQUIRE(hPtr[1].hp == Approx(900));
-
-dummyPtr = std::get<2>(query2[0]);
-REQUIRE(dummyPtr[0].a == Approx(10));
-REQUIRE(dummyPtr[1].a == Approx(90));
-}
-
-TEST_CASE("add remove component multiple times") {
-ecs::Registry registry;
-Position p{0, 1, 2, 3};
-Health h{100};
-
-ecs::EntityId eid = registry.createEntity(p);
-for (int i = 0; i < 10; ++i) {
-  h.hp = static_cast<float>(i);
-  registry.addComponent(eid, h);
+  // now we delete a component
   registry.removeComponent<Health>(eid);
+  std::vector<std::tuple<size_t, Position*, Health*>> query2;
+  registry.query(query2);
+  REQUIRE(query2.size() == 0);
+
+  std::vector<std::tuple<size_t, Position*>> query3;
+  registry.query(query3);
+  REQUIRE(query3.size() == 1);
 }
 
-registry.addComponent(eid, h);
-Health cmp = registry.getComponent<Health>(eid);
-REQUIRE(cmp.hp == Approx(9));
+TEST_CASE("Add component to existing archetype", "[core,ecs]") {
+  Registry registry;
+  Position p{0, 1, 16, 32};
+  Health h{100};
+
+  // first we create an entity with both position and health
+  EntityId eid = registry.addEntity(p, h);
+  std::vector<std::tuple<size_t, Position*, Health*>> query1;
+  registry.query(query1);
+
+  REQUIRE(query1.size() == 1);
+  REQUIRE(std::get<0>(query1[0]) == 1);
+
+  // next we create an entity with only position
+  p.x = 100;
+  EntityId eid2 = registry.addEntity(p);
+  std::vector<std::tuple<size_t, Position*>> query2;
+  registry.query(query2);
+  // at this point we should have two archetype returned in the query
+  // and each archetype has one entity in it
+  REQUIRE(query2.size() == 2);
+  REQUIRE(std::get<0>(query2[0]) == 1);
+
+  // now we wish to add a health component to our entity with just position
+  h.hp = 900;
+  registry.addComponent(eid2, h);
+  // now we should still have one archetype, a new one should not be created
+  std::vector<std::tuple<size_t, Position*, Health*>> query3;
+  registry.query(query3);
+  REQUIRE(query3.size() == 1);
+  // and the current archetype should have two entities with position and
+  // health
+
+  REQUIRE(std::get<0>(query3[0]) == 2);
+
+  // we also want to query we get the right entity components
+  const Position* p3 = std::get<1>(query3[0]);
+  const Health* h3 = std::get<2>(query3[0]);
+  REQUIRE(p3[0].x == Approx(0));
+  REQUIRE(p3[0].y == Approx(1));
+  REQUIRE(p3[0].z == Approx(16));
+  REQUIRE(p3[0].w == Approx(32));
+  REQUIRE(p3[1].x == Approx(100));
+  REQUIRE(p3[1].y == Approx(1));
+  REQUIRE(p3[1].z == Approx(16));
+  REQUIRE(p3[1].w == Approx(32));
+
+  REQUIRE(h3[0].hp == Approx(100));
+  REQUIRE(h3[1].hp == Approx(900));
+
+  // the query for position only should return just one archetype
+  // because the other archetype is empty
+  std::vector<std::tuple<size_t, Position*>> query4;
+  registry.query(query4);
+  REQUIRE(query4.size() == 1);
 }
 
-TEST_CASE("add remove component multiple times single component") {
-ecs::Registry registry;
-Health h{100};
+TEST_CASE("Preserve entity tracking on entity deletion", "[core,ecs]") {
+  Registry registry;
+  Position p{0, 1, 2, 3};
+  Health h{100};
+  Position p2{4, 5, 6, 7};
+  Health h2{900};
+  EntityId eid = registry.addEntity(p, h);
+  EntityId eid2 = registry.addEntity(p2, h2);
+  const Entity& e2 = registry.getEntity(eid2);
 
-ecs::EntityId eid = registry.createEntity(h);
-for (int i = 0; i < 10; ++i) {
-  registry.removeComponent<Health>(eid);
-  h.hp = static_cast<float>(i);
-  registry.addComponent(eid, h);
-}
-
-Health cmp = registry.getComponent<Health>(eid);
-REQUIRE(cmp.hp == Approx(9));
-}
-
-TEST_CASE("add remove component multiple times single component - 2") {
-ecs::Registry registry;
-Position p{0, 1, 2, 3};
-Health h{100};
-
-ecs::EntityId eid = registry.createEntity(h, p);
-for (int i = 0; i < 10; ++i) {
-  registry.removeComponent<Health>(eid);
+  // we are about to remove a component, this will move the
+  // the entity from one archetype to the other, so we are going
+  // to extract the entity index from the entity before and after
+  // the component remove, it should change
+  const uint32_t e2idxPre = e2.localIndex;
   registry.removeComponent<Position>(eid);
-  h.hp = static_cast<float>(i);
-  p.x = static_cast<float>(i);
-  registry.addComponent(eid, h);
-  registry.addComponent(eid, p);
+  const uint32_t e2idxPost = e2.localIndex;
+  REQUIRE(e2idxPost != e2idxPre);
+
+  Position pPost = registry.getComponent<Position>(eid2);
+  REQUIRE(pPost.x == Approx(p2.x));
+  REQUIRE(pPost.y == Approx(p2.y));
+  REQUIRE(pPost.z == Approx(p2.z));
+  REQUIRE(pPost.w == Approx(p2.w));
 }
 
-Health cmpH = registry.getComponent<Health>(eid);
-Position cmpP = registry.getComponent<Position>(eid);
-REQUIRE(cmpH.hp == Approx(9));
-REQUIRE(cmpP.x == Approx(9));
-}
-
-TEST_CASE("add remove component multiple times single component - 3") {
-ecs::Registry registry;
-Position p{0, 1, 2, 3};
-Health h{100};
-Dummy d{};
-
-ecs::EntityId eid = registry.createEntity(h, p, d);
-for (int i = 0; i < 10; ++i) {
-  registry.removeComponent<Health>(eid);
+TEST_CASE("Entity with no components", "[core,ecs]") {
+  Registry registry;
+  Position p{0, 1, 2, 3};
+  EntityId eid = registry.addEntity(p);
   registry.removeComponent<Position>(eid);
-  registry.removeComponent<Dummy>(eid);
-  h.hp = static_cast<float>(i);
-  p.x = static_cast<float>(i);
-  d.a = i;
+  bool result = registry.hasComponent<Position>(eid);
+  REQUIRE(result == false);
+}
+
+TEST_CASE("Delete entity", "[core,ecs]") {
+  Registry registry;
+  Position p{0, 1, 2, 3};
+  EntityId eid = registry.addEntity(p);
+  registry.deleteEntity(eid);
+  REQUIRE(!registry.isEntityValid(eid));
+}
+
+TEST_CASE("Add - Delete entities", "[core,ecs]") {
+  Registry registry;
+  Position p{0, 1, 2, 3};
+  EntityId eid1 = registry.addEntity(p);
+  registry.deleteEntity(eid1);
+  std::vector<std::tuple<size_t, Position*>> query1;
+  registry.query(query1);
+  REQUIRE(query1.empty());
+  p.x = 10;
+  EntityId eid2 = registry.addEntity(p);
+  REQUIRE(!registry.isEntityValid(eid1));
+  REQUIRE(registry.isEntityValid(eid2));
+  std::vector<std::tuple<size_t, Position*>> query2;
+  registry.query(query2);
+  REQUIRE(query2.size() == 1);
+  REQUIRE(registry.getEntity(eid2).version == 2);
+}
+
+TEST_CASE("Multiple deletes", "[core,ecs]") {
+  Registry registry;
+  Position p{0, 1, 2, 3};
+  EntityId eid1 = registry.addEntity(p);
+  p.x = 10;
+  EntityId eid2 = registry.addEntity(p);
+  p.x = 20;
+  EntityId eid3 = registry.addEntity(p);
+  Entity e3 = registry.getEntity(eid3);
+
+  // we start by removing the first entity, should get
+  // eid3 to move in the archetype
+  registry.deleteEntity(eid2);
+  std::vector<std::tuple<size_t, Position*>> query;
+  registry.query(query);
+  REQUIRE(query.size() == 1);
+  REQUIRE(std::get<0>(query[0]) == 2);
+  e3 = registry.getEntity(eid3);
+  // e3 got moved in the archetype
+  REQUIRE(e3.localIndex == 1);
+  Position p3 = registry.getComponent<Position>(eid3);
+  REQUIRE(p3.x == Approx(20));
+
+  // delete now entity1 , so entity3 should be moved again
+  registry.deleteEntity(eid1);
+  registry.query(query);
+  REQUIRE(query.size() == 1);
+  REQUIRE(std::get<0>(query[0]) == 1);
+  e3 = registry.getEntity(eid3);
+  // e3 got moved in the archetype
+  REQUIRE(e3.localIndex == 0);
+  p3 = registry.getComponent<Position>(eid3);
+  REQUIRE(p3.x == Approx(20));
+}
+
+TEST_CASE("Three components creation", "[core,ecs]") {
+  Registry registry;
+  Position p{0, 1, 2, 3};
+  Health h{100};
+  Dummy d{10, 20};
+  Position p2{4, 5, 6, 7};
+  Health h2{900};
+  Dummy d2{90, 91};
+  EntityId eid = registry.addEntity(p, h, d);
+  EntityId eid2 = registry.addEntity(p2, h2, d2);
+
+  std::vector<std::tuple<size_t,Position*, Dummy* >> query;
+  registry.query(query);
+  REQUIRE(query.size() == 1);
+  REQUIRE(std::get<0>(query[0]) == 2);
+  // just checking the components
+  Position* posPtr = std::get<1>(query[0]);
+  REQUIRE(posPtr[0].x == Approx(0));
+  REQUIRE(posPtr[1].x == Approx(4));
+
+  Dummy* dummyPtr = std::get<2>(query[0]);
+  REQUIRE(dummyPtr[0].a == Approx(10));
+  REQUIRE(dummyPtr[1].a == Approx(90));
+
+  std::vector<std::tuple<size_t,Position*, Health*, Dummy* >> query2;
+  registry.query(query2);
+  REQUIRE(query2.size() == 1);
+  REQUIRE(std::get<0>(query2[0]) == 2);
+
+  posPtr = std::get<1>(query2[0]);
+  REQUIRE(posPtr[0].x == Approx(0));
+  REQUIRE(posPtr[1].x == Approx(4));
+
+  Health* hPtr = std::get<2>(query2[0]);
+  REQUIRE(hPtr[0].hp == Approx(100));
+  REQUIRE(hPtr[1].hp == Approx(900));
+
+  dummyPtr = std::get<3>(query2[0]);
+  REQUIRE(dummyPtr[0].a == Approx(10));
+  REQUIRE(dummyPtr[1].a == Approx(90));
+}
+
+TEST_CASE("add remove component multiple times", "[core,ecs]") {
+  Registry registry;
+  Position p{0, 1, 2, 3};
+  Health h{100};
+
+  EntityId eid = registry.addEntity(p);
+  for (int i = 0; i < 10; ++i) {
+    h.hp = static_cast<float>(i);
+    registry.addComponent(eid, h);
+    registry.removeComponent<Health>(eid);
+  }
+
   registry.addComponent(eid, h);
-  registry.addComponent(eid, p);
-  registry.addComponent(eid, d);
+  Health cmp = registry.getComponent<Health>(eid);
+  REQUIRE(cmp.hp == Approx(9));
 }
 
-Health cmpH = registry.getComponent<Health>(eid);
-Position cmpP = registry.getComponent<Position>(eid);
-Dummy cmpD = registry.getComponent<Dummy>(eid);
-REQUIRE(cmpH.hp == Approx(9));
-REQUIRE(cmpP.x == Approx(9));
-REQUIRE(cmpD.a == Approx(9));
+TEST_CASE("add remove component multiple times single component", "[core,ecs]") {
+  Registry registry;
+  Health h{100};
+
+  EntityId eid = registry.addEntity(h);
+  for (int i = 0; i < 10; ++i) {
+    registry.removeComponent<Health>(eid);
+    h.hp = static_cast<float>(i);
+    registry.addComponent(eid, h);
+  }
+
+  Health cmp = registry.getComponent<Health>(eid);
+  REQUIRE(cmp.hp == Approx(9));
 }
 
-TEST_CASE("delete empty entity") {
-ecs::Registry registry;
-Position p{0, 1, 2, 3};
+TEST_CASE("add remove component multiple times single component - 2", "[core,ecs]") {
+  Registry registry;
+  Position p{0, 1, 2, 3};
+  Health h{100};
 
-ecs::EntityId eid = registry.createEntity(p);
-registry.removeComponent<Position>(eid);
-registry.deleteEntity(eid);
+  EntityId eid = registry.addEntity(h, p);
+  for (int i = 0; i < 10; ++i) {
+    registry.removeComponent<Health>(eid);
+    registry.removeComponent<Position>(eid);
+    h.hp = static_cast<float>(i);
+    p.x = static_cast<float>(i);
+    registry.addComponent(eid, h);
+    registry.addComponent(eid, p);
+  }
+
+  Health cmpH = registry.getComponent<Health>(eid);
+  Position cmpP = registry.getComponent<Position>(eid);
+  REQUIRE(cmpH.hp == Approx(9));
+  REQUIRE(cmpP.x == Approx(9));
 }
-*/
+
+TEST_CASE("add remove component multiple times single component - 3", "[core,ecs]") {
+  Registry registry;
+  Position p{0, 1, 2, 3};
+  Health h{100};
+  Dummy d{};
+
+  EntityId eid = registry.addEntity(h, p, d);
+  for (int i = 0; i < 10; ++i) {
+    registry.removeComponent<Health>(eid);
+    registry.removeComponent<Position>(eid);
+    registry.removeComponent<Dummy>(eid);
+    h.hp = static_cast<float>(i);
+    p.x = static_cast<float>(i);
+    d.a = i;
+    registry.addComponent(eid, h);
+    registry.addComponent(eid, p);
+    registry.addComponent(eid, d);
+  }
+
+  Health cmpH = registry.getComponent<Health>(eid);
+  Position cmpP = registry.getComponent<Position>(eid);
+  Dummy cmpD = registry.getComponent<Dummy>(eid);
+  REQUIRE(cmpH.hp == Approx(9));
+  REQUIRE(cmpP.x == Approx(9));
+  REQUIRE(cmpD.a == Approx(9));
+}
+
+TEST_CASE("delete empty entity", "[core,ecs]") {
+  Registry registry;
+  Position p{0, 1, 2, 3};
+
+  EntityId eid = registry.addEntity(p);
+  registry.removeComponent<Position>(eid);
+  registry.deleteEntity(eid);
+}
