@@ -128,7 +128,11 @@ struct ComponentTypeInfo {
   size_t hash;
 };
 
-struct EntityMoveResult {};
+struct EntityMoveResult {
+  int64_t entityGlobalIndex = -1;
+  uint32_t sourceIdx;
+  uint32_t destIdx;
+};
 
 struct Entity {
   size_t archetypeId;
@@ -147,7 +151,7 @@ struct Archetype {
   uint32_t bufferSize = 0;
   size_t id = 0;
   Component* m_components = nullptr;
-  Entity* m_entities = nullptr;
+  size_t* m_entities = nullptr;
   std::unordered_map<size_t, size_t> lookup;
 
   // getting integral constant for index of a template type
@@ -168,7 +172,7 @@ struct Archetype {
     bufferSize = INITIAL_SIZE;
     m_components = new Component[sizeof...(Types)]{Component{
         new Types[INITIAL_SIZE], sizeof(Types), MultiHash<Types>::hash}...};
-    m_entities = new Entity[INITIAL_SIZE];
+    m_entities = new size_t[INITIAL_SIZE];
     lookup = std::unordered_map<size_t, size_t>{
         {MultiHash<Types>::hash, index<Types, Types...>::value}...};
     componentCount = sizeof...(Types);
@@ -176,10 +180,10 @@ struct Archetype {
   }
 
   template <typename... Types>
-  void create(const Entity e, Types... types) {
+  void create(const size_t EntityGlobalIndex, Types... types) {
     create<Types...>();
     (write(types, 0), ...);
-    m_entities[0] = e;
+    m_entities[0] = EntityGlobalIndex;
   }
   void createFromComponents(Component* cmps, size_t size) {
     size_t hash = 0;
@@ -189,7 +193,7 @@ struct Archetype {
     }
     bufferSize = INITIAL_SIZE;
     m_components = cmps;
-    m_entities = new Entity[INITIAL_SIZE];
+    m_entities = new size_t[INITIAL_SIZE];
     entityCount = 0;
     componentCount = static_cast<uint32_t>(size);
     id = hash;
@@ -247,11 +251,12 @@ struct Archetype {
   }
 
   template <typename... Types>
-  size_t addEntity(Types... toAdd) {
+  size_t addEntity(size_t eid, Types... toAdd) {
     // let us do the size check
     resizeIfNeeded();
 
     (write(toAdd, entityCount), ...);
+    m_entities[entityCount] = eid;
     return entityCount++;
   }
   void resizeIfNeeded() {
@@ -273,6 +278,27 @@ struct Archetype {
     bufferSize = newSize;
   }
 
+  [[nodiscard]] EntityMoveResult deleteEntity(const Entity e) {
+    uint32_t destIdx = e.localIndex;
+    uint32_t sourceIdx = entityCount - 1;
+    size_t eid = m_entities[sourceIdx];
+    // if the entity is the last one we do not process it
+    if (destIdx != sourceIdx) {
+      assert(destIdx < sourceIdx);
+      for (uint32_t i = 0; i < componentCount; ++i) {
+        Component& cmp = m_components[i];
+        memcpy(static_cast<char*>(cmp.data) + destIdx * cmp.componentSize,
+               static_cast<char*>(cmp.data) + sourceIdx * cmp.componentSize,
+               cmp.componentSize);
+      }
+    }
+
+    // we have one less entity now
+    --entityCount;
+    return EntityMoveResult{destIdx == sourceIdx ? -1 : static_cast<int64_t>(eid), sourceIdx,
+                            destIdx};
+  }
+
   template <typename T>
   EntityMoveResult move(Archetype* source, T cmp, Entity& e) {
     auto& sourceIds = source->lookup;
@@ -287,8 +313,11 @@ struct Archetype {
       Component* destCmp = getComponent(destIdx);
       // perform the copy
       assert(destCmp->componentSize == sourceCmp->componentSize);
-      memcpy(static_cast<char*>(destCmp->data) + entityCount,
-             static_cast<char*>(sourceCmp->data) + e.localIndex,
+      auto* destPtr = static_cast<char*>(destCmp->data);
+      size_t destOffset = entityCount * destCmp->componentSize;
+      auto* srcPtr = static_cast<char*>(sourceCmp->data);
+      size_t srcOffset = e.localIndex * sourceCmp->componentSize;
+      memcpy(destPtr + destOffset, srcPtr + srcOffset,
              sourceCmp->componentSize);
     }
     // next we need to add the new component
@@ -297,12 +326,12 @@ struct Archetype {
     // we need to remove the old entity from the source component
     // to do so we copy the last entity entity to the hole and return that such
     // entity has been moved
-
+    EntityMoveResult r = source->deleteEntity(e);
     // now we need to update the entity
     e.localIndex = entityCount;
     // updating the entity count
     ++entityCount;
-    return {};
+    return r;
   }
 };
 
@@ -315,9 +344,10 @@ class Registry {
     // let us find an archetype
     size_t id = MultiHash<Types...>::hash;
     Archetype* arch = findArchetype<Types...>();
-    size_t localIndex = arch->addEntity(types...);
 
     size_t eid = m_entities.size();
+    size_t localIndex = arch->addEntity(eid, types...);
+
     m_entities.emplace_back(
         Entity{m_archetypeToIndex[id], static_cast<uint32_t>(localIndex), 0});
     return {static_cast<uint32_t>(eid), 0};
@@ -365,6 +395,7 @@ class Registry {
       Archetype* arch = m_archetypes[i];
       bool result =
           arch->hasComponents<typename std::remove_pointer<QTypes>::type...>();
+      result &= (arch->entityCount != 0);
       if (result) {
         auto componentCount = arch->entityCount;
         std::tuple<size_t, QTypes...> tup{
@@ -415,7 +446,14 @@ class Registry {
     }
     assert(nextIdx != 0);
 
-    next->move(arch, cmp, e);
+    EntityMoveResult moveResult = next->move(arch, cmp, e);
+    if (moveResult.entityGlobalIndex != -1) {
+      // update the moved entity
+      Entity& movedEntity = m_entities[moveResult.entityGlobalIndex];
+      movedEntity.localIndex = moveResult.destIdx;
+    }
+
+    // updated archetype
     e.archetypeId = nextIdx;
   }
 
