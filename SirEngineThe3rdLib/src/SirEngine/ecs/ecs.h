@@ -1,12 +1,10 @@
 #pragma once
 #include <stdint.h>
-#include <stdio.h>
 
 #include <cassert>
 #include <iostream>
 #include <tuple>
 #include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
 namespace SirEngine::ecs {
@@ -67,7 +65,7 @@ constexpr uint32_t crc32(const char* str) {
 
 // This is the stop-recursion function
 template <>
-constexpr uint32_t crc32<size_t(-1)>(const char* str) {
+constexpr uint32_t crc32<size_t(-1)>(const char*) {
   return 0xFFFFFFFF;
 }
 
@@ -123,7 +121,14 @@ struct MultiHash {
 struct Component {
   void* data;
   size_t componentSize;
+  size_t hash;
 };
+struct ComponentTypeInfo {
+  size_t componentSize;
+  size_t hash;
+};
+
+struct EntityMoveResult {};
 
 struct Entity {
   size_t archetypeId;
@@ -136,11 +141,13 @@ struct EntityId {
 };
 
 struct Archetype {
+  static constexpr uint32_t INITIAL_SIZE = 10;
   uint32_t componentCount = 0;
   uint32_t entityCount = 0;
   uint32_t bufferSize = 0;
   size_t id = 0;
   Component* m_components = nullptr;
+  Entity* m_entities = nullptr;
   std::unordered_map<size_t, size_t> lookup;
 
   // getting integral constant for index of a template type
@@ -158,9 +165,10 @@ struct Archetype {
 
   template <typename... Types>
   void create() {
-    bufferSize = Registry::INITIAL_SIZE;
-    m_components = new Component[sizeof...(Types)]{
-        Component{new Types[Registry::INITIAL_SIZE], sizeof(Types)}...};
+    bufferSize = INITIAL_SIZE;
+    m_components = new Component[sizeof...(Types)]{Component{
+        new Types[INITIAL_SIZE], sizeof(Types), MultiHash<Types>::hash}...};
+    m_entities = new Entity[INITIAL_SIZE];
     lookup = std::unordered_map<size_t, size_t>{
         {MultiHash<Types>::hash, index<Types, Types...>::value}...};
     componentCount = sizeof...(Types);
@@ -168,9 +176,23 @@ struct Archetype {
   }
 
   template <typename... Types>
-  void create(Types... types) {
+  void create(const Entity e, Types... types) {
     create<Types...>();
     (write(types, 0), ...);
+    m_entities[0] = e;
+  }
+  void createFromComponents(Component* cmps, size_t size) {
+    size_t hash = 0;
+    for (size_t i = 0; i < size; ++i) {
+      lookup[cmps[i].hash] = i;
+      hash = hash_combine(hash, cmps[i].hash);
+    }
+    bufferSize = INITIAL_SIZE;
+    m_components = cmps;
+    m_entities = new Entity[INITIAL_SIZE];
+    entityCount = 0;
+    componentCount = static_cast<uint32_t>(size);
+    id = hash;
   }
 
   template <typename T>
@@ -227,19 +249,23 @@ struct Archetype {
   template <typename... Types>
   size_t addEntity(Types... toAdd) {
     // let us do the size check
+    resizeIfNeeded();
+
+    (write(toAdd, entityCount), ...);
+    return entityCount++;
+  }
+  void resizeIfNeeded() {
     if (entityCount >= bufferSize) {
       resize();
     }
-    (write(toAdd, entityCount), ...);
-    return entityCount++;
   }
 
   void resize() {
     uint32_t newSize = bufferSize * 2;
     for (uint32_t i = 0; i < componentCount; ++i) {
       Component& cmp = m_components[i];
-      //todo change this for an allocator
-      void* newMemory = new char[newSize* cmp.componentSize];
+      // todo change this for an allocator
+      void* newMemory = new char[newSize * cmp.componentSize];
       memcpy(newMemory, cmp.data, bufferSize * cmp.componentSize);
       delete (static_cast<char*>(cmp.data));
       cmp.data = newMemory;
@@ -248,28 +274,67 @@ struct Archetype {
   }
 
   template <typename T>
-  void move(Archetype* source, T cmp, Entity& e) {
+  EntityMoveResult move(Archetype* source, T cmp, Entity& e) {
     auto& sourceIds = source->lookup;
-    for (auto sourceId : sourceIds) {
+    resizeIfNeeded();
+    // using structured bindings to expand the tuple returned by the hash map
+    // TODO optimize this no need to iterate over a hash map, store the hash in
+    // the component and iterate component list
+    for (const auto [componentHash, componentIndex] : sourceIds) {
+      Component* sourceCmp = source->getComponent(componentIndex);
+      auto destIdx = getComponentIndex(componentHash);
+      assert(destIdx != -1);
+      Component* destCmp = getComponent(destIdx);
+      // perform the copy
+      assert(destCmp->componentSize == sourceCmp->componentSize);
+      memcpy(static_cast<char*>(destCmp->data) + entityCount,
+             static_cast<char*>(sourceCmp->data) + e.localIndex,
+             sourceCmp->componentSize);
     }
+    // next we need to add the new component
+    write(cmp, entityCount);
+
+    // we need to remove the old entity from the source component
+    // to do so we copy the last entity entity to the hole and return that such
+    // entity has been moved
+
+    // now we need to update the entity
+    e.localIndex = entityCount;
+    // updating the entity count
+    ++entityCount;
+    return {};
   }
 };
 
 class Registry {
  public:
-  static constexpr uint32_t INITIAL_SIZE = 10;
-
-  template <typename T, typename... Types>
-  EntityId addEntity(T first, Types... next) {
+  template <typename... Types>
+  EntityId addEntity(Types... types) {
+    // make sure the types exists
+    ensureTypeInfos<Types...>();
     // let us find an archetype
-    size_t id = MultiHash<T, Types...>::hash;
-    Archetype* arch = findArchetype<T, Types...>(id);
-    size_t localIndex = arch->addEntity(first, next...);
+    size_t id = MultiHash<Types...>::hash;
+    Archetype* arch = findArchetype<Types...>();
+    size_t localIndex = arch->addEntity(types...);
 
     size_t eid = m_entities.size();
     m_entities.emplace_back(
         Entity{m_archetypeToIndex[id], static_cast<uint32_t>(localIndex), 0});
     return {static_cast<uint32_t>(eid), 0};
+  }
+  template <typename... Types>
+  void ensureTypeInfos() {
+    (ensureTypeInfo<Types>(), ...);
+  }
+
+  template <typename T>
+  void ensureTypeInfo() {
+    size_t id = MultiHash<T>::hash;
+    auto found = m_componentTypeInfo.find(id);
+    if (found == m_componentTypeInfo.end()) {
+      // we need to add the type info
+      m_componentTypeInfo[id] = {sizeof(T), MultiHash<T>::hash};
+    }
   }
 
   template <typename T>
@@ -314,35 +379,50 @@ class Registry {
 
   template <typename T>
   void addComponent(const EntityId eid, T cmp) {
+    ensureTypeInfo<T>();
     Entity& e = m_entities[eid.index];
     auto* arch = m_archetypes[e.archetypeId];
     const auto& ids = arch->lookup;
     Archetype* next = nullptr;
+    int nextIdx = -1;
+    int counter = 0;
+    scratchIds.clear();
+    for (const auto& [cmpId, cmpIdx] : ids) {
+      scratchIds.push_back(cmpId);
+    }
+    scratchIds.push_back(MultiHash<T>::hash);
+
     for (auto* a : m_archetypes) {
       if (a == arch) continue;
-      for (const auto& currId : ids) {
-        if (a->getComponentIndex(currId.first) == -1) {
-          break;
-        }
-      }
-      // it also needs to have the new component
-      if (a->getComponentIndex(MultiHash<T>::hash) == -1) {
-        continue;
-      }
+      bool found = true;
 
-      next = a;
-      break;
+      // iterating the current components
+      for (const auto currId : scratchIds) {
+        found &= (a->getComponentIndex(currId) == -1) ? false : true;
+      }
+      if (found) {
+        next = a;
+        nextIdx = counter;
+        break;
+      }
+      ++counter;
     }
     if (next == nullptr) {
-      printf("shit");
-      return;
+      next = createArchetypeFromIds(scratchIds);
+      auto found = m_archetypeToIndex.find(next->id);
+      assert(found != m_archetypeToIndex.end());
+      nextIdx = static_cast<int>(found->second);
     }
-    next->move(arch, cmp,e);
+    assert(nextIdx != 0);
+
+    next->move(arch, cmp, e);
+    e.archetypeId = nextIdx;
   }
 
  private:
-  template <typename T, typename... Types>
-  Archetype* findArchetype(size_t id, bool createIfMissing = true) {
+  template <typename... Types>
+  Archetype* findArchetype(const bool createIfMissing = true) {
+    const size_t id = MultiHash<Types...>::hash;
     auto found = m_archetypeToIndex.find(id);
     if (found != m_archetypeToIndex.end()) {
       return m_archetypes[found->second];
@@ -350,16 +430,40 @@ class Registry {
     if (createIfMissing) {
       m_archetypeToIndex[id] = m_archetypes.size();
       auto* arch = new Archetype();
-      arch->create<T, Types...>();
+      arch->create<Types...>();
       m_archetypes.emplace_back(arch);
       return arch;
     }
     return nullptr;
   }
 
+  static Component createComponent(const ComponentTypeInfo& info) {
+    return Component{new char[info.componentSize * Archetype::INITIAL_SIZE],
+                     info.componentSize, info.hash};
+  }
+
+  Archetype* createArchetypeFromIds(const std::vector<size_t>& ids) {
+    // allocating memory for the component array
+    auto* cmps = new Component[ids.size()];
+    int counter = 0;
+    for (const auto cmpId : ids) {
+      auto found = m_componentTypeInfo.find(cmpId);
+      assert(found != m_componentTypeInfo.end());
+      const ComponentTypeInfo& info = found->second;
+      cmps[counter++] = createComponent(info);
+    }
+    auto* arch = new Archetype();
+    arch->createFromComponents(cmps, ids.size());
+    m_archetypeToIndex[arch->id] = m_archetypes.size();
+    m_archetypes.push_back(arch);
+    return arch;
+  }
+
  private:
+  std::vector<size_t> scratchIds;
   std::vector<Archetype*> m_archetypes;
   std::vector<Entity> m_entities;
   std::unordered_map<size_t, size_t> m_archetypeToIndex;
+  std::unordered_map<size_t, ComponentTypeInfo> m_componentTypeInfo;
 };
 }  // namespace SirEngine::ecs

@@ -14,8 +14,9 @@ struct Dummy {
 };
 
 using SirEngine::ecs::Archetype;
-using SirEngine::ecs::EntityId;
 using SirEngine::ecs::Registry;
+using SirEngine::ecs::EntityId;
+using SirEngine::ecs::Entity;
 
 TEST_CASE("basic", "[core,ecs]") {
   Registry registry;
@@ -40,7 +41,8 @@ TEST_CASE("arch query", "[core,ecs]") {
   Position p{0, 1, 2, 3};
   Health h{100};
   Archetype arch;
-  arch.create(p, h);
+  Entity e{};
+  arch.create(e,p, h);
 
   REQUIRE(arch.hasComponent<Position>());
   REQUIRE(arch.hasComponent<Health>());
@@ -126,7 +128,7 @@ TEST_CASE("Check on not existing component","[core,ecs]") {
 }
 
 TEST_CASE("Entity growth over limit","[core,ecs]") {
-  const int capacity = Registry::INITIAL_SIZE;
+  const int capacity = Archetype::INITIAL_SIZE;
   const int toIterate = capacity * 5;
   Registry registry;
   EntityId eid{};
@@ -157,15 +159,14 @@ registry.query(query1);
 REQUIRE(query1.size() == 1);
 const Position* p0 = std::get<1>(query1[0]);
 REQUIRE(std::get<0>(query1[0]) == 1);
-REQUIRE(p0[0].x == 0);
-REQUIRE(p0[0].y == 1);
-REQUIRE(p0[0].z == 16);
-REQUIRE(p0[0].w == 32);
+REQUIRE(p0[0].x == Approx(0));
+REQUIRE(p0[0].y == Approx(1));
+REQUIRE(p0[0].z == Approx(16));
+REQUIRE(p0[0].w == Approx(32));
 
 // let us add a health component
 registry.addComponent(eid, h);
 REQUIRE(registry.hasComponent<Health>(eid));
-/*
 
 // similarly now we query and check that only get one archetype that has
 // both components
@@ -180,7 +181,11 @@ REQUIRE(p2[0].y == Approx(1));
 REQUIRE(p2[0].z == Approx(16));
 REQUIRE(p2[0].w == Approx(32));
 REQUIRE(h2[0].hp == Approx(100));
-*/
+
+//we need to make sure the old query for position only,returns one, since
+//the entity got moved.
+registry.query(query1);
+REQUIRE(query1.size() == 1);
 
 /*
 // adding only two positions entities
