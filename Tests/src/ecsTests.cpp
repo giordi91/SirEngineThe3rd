@@ -128,13 +128,14 @@ TEST_CASE("Check on not existing component", "[core,ecs]") {
 }
 
 TEST_CASE("Entity growth over limit", "[core,ecs]") {
+
   const int capacity = Archetype::INITIAL_SIZE;
-  const int toIterate = capacity * 5;
+  const int toIterate = capacity * 2000;
   Registry registry;
   EntityId eid{};
   for (int i = 0; i < toIterate; ++i) {
     EntityId id = registry.addEntity(
-        Position{0, static_cast<float>(i), static_cast<float>(i)});
+        Position{0, static_cast<float>(i), static_cast<float>(i),99});
     if (i == (capacity + 1)) {
       eid = id;
     }
