@@ -14,9 +14,9 @@ struct Dummy {
 };
 
 using SirEngine::ecs::Archetype;
-using SirEngine::ecs::Registry;
-using SirEngine::ecs::EntityId;
 using SirEngine::ecs::Entity;
+using SirEngine::ecs::EntityId;
+using SirEngine::ecs::Registry;
 
 TEST_CASE("basic", "[core,ecs]") {
   Registry registry;
@@ -41,8 +41,8 @@ TEST_CASE("arch query", "[core,ecs]") {
   Position p{0, 1, 2, 3};
   Health h{100};
   Archetype arch;
-  Entity e{};
-  arch.create(e,p, h);
+  size_t entityGlobalIndex = 0;
+  arch.create(entityGlobalIndex, p, h);
 
   REQUIRE(arch.hasComponent<Position>());
   REQUIRE(arch.hasComponent<Health>());
@@ -119,7 +119,7 @@ TEST_CASE("Basic query", "[core,ecs]") {
   REQUIRE(!registry.hasComponent<Dummy>(eid));
 }
 
-TEST_CASE("Check on not existing component","[core,ecs]") {
+TEST_CASE("Check on not existing component", "[core,ecs]") {
   Registry registry;
   Position p{0, 1, 2, 3};
   Health h{100};
@@ -127,7 +127,7 @@ TEST_CASE("Check on not existing component","[core,ecs]") {
   REQUIRE(!registry.hasComponent<Dummy>(eid));
 }
 
-TEST_CASE("Entity growth over limit","[core,ecs]") {
+TEST_CASE("Entity growth over limit", "[core,ecs]") {
   const int capacity = Archetype::INITIAL_SIZE;
   const int toIterate = capacity * 5;
   Registry registry;
@@ -145,123 +145,165 @@ TEST_CASE("Entity growth over limit","[core,ecs]") {
   REQUIRE(posCmp.z == Approx(capacity + 1));
 }
 
-TEST_CASE("Add component to entity","[core,ecs]") {
+TEST_CASE("Add component to entity", "[core,ecs]") {
+  Registry registry;
+  Position p{0, 1, 16, 32};
+  Health h{100};
+  Dummy d{0, 1, 3.0f, 5, 6};
+
+  EntityId eid = registry.addEntity(p);
+  std::vector<std::tuple<size_t, Position*>> query1;
+  registry.query(query1);
+
+  // Testing we only get one archetype and one item in it
+  REQUIRE(query1.size() == 1);
+  const Position* p0 = std::get<1>(query1[0]);
+  REQUIRE(std::get<0>(query1[0]) == 1);
+  REQUIRE(p0[0].x == Approx(0));
+  REQUIRE(p0[0].y == Approx(1));
+  REQUIRE(p0[0].z == Approx(16));
+  REQUIRE(p0[0].w == Approx(32));
+
+  // let us add a health component
+  registry.addComponent(eid, h);
+  REQUIRE(registry.hasComponent<Health>(eid));
+
+  // similarly now we query and check that only get one archetype that has
+  // both components
+  std::vector<std::tuple<size_t, Position*, Health*>> query2;
+  registry.query(query2);
+  REQUIRE(query2.size() == 1);
+  const Position* p2 = std::get<1>(query2[0]);
+  const Health* h2 = std::get<2>(query2[0]);
+  REQUIRE(std::get<0>(query2[0]) == 1);
+  REQUIRE(p2[0].x == Approx(0));
+  REQUIRE(p2[0].y == Approx(1));
+  REQUIRE(p2[0].z == Approx(16));
+  REQUIRE(p2[0].w == Approx(32));
+  REQUIRE(h2[0].hp == Approx(100));
+
+  // let check that the the look up by entity is still valid
+  Position movedPos = registry.getComponent<Position>(eid);
+  Health movedHealth = registry.getComponent<Health>(eid);
+  REQUIRE(movedPos.x == Approx(0));
+  REQUIRE(movedPos.y == Approx(1));
+  REQUIRE(movedPos.z == Approx(16));
+  REQUIRE(movedPos.w == Approx(32));
+  REQUIRE(movedHealth.hp == Approx(100));
+
+  // we need to make sure the old query for position only,returns one, since
+  // the entity got moved.
+  registry.query(query1);
+  REQUIRE(query1.size() == 1);
+
+  // adding only two positions entities
+  p.x = 30;
+  EntityId eid2 = registry.addEntity(p);
+  p.x = 40;
+  EntityId eid3 = registry.addEntity(p);
+  std::vector<std::tuple<size_t, Position*>> query3;
+  registry.query(query3);
+
+  // now we check that two archetypes actually match the query
+  REQUIRE(query3.size() == 2);
+  const Position* p3 = std::get<1>(query3[0]);
+  REQUIRE(std::get<0>(query3[0]) == 2);
+  REQUIRE(p3[0].x == Approx(30));
+  REQUIRE(p3[1].x == Approx(40));
+
+  // next we check archetype 1, the first returned which is the one with
+  // position and health
+  const Position* p3_1 = std::get<1>(query3[1]);
+  REQUIRE(p3_1[0].z == Approx(16));
+  REQUIRE(registry.hasComponent<Dummy>(eid) == false);
+  REQUIRE(registry.hasComponent<Dummy>(eid3) == false);
+
+  // next we add a dummy component to one of the position only entity, the
+  // last one created
+  registry.addComponent(eid3, d);
+
+  std::vector<std::tuple<size_t, Position*>> query4;
+  registry.query(query4);
+  // we now expect 3 archetypes (position), (position,health),(position,dummy)
+  REQUIRE(query4.size() == 3);
+  const Position* p4 = std::get<1>(query4[0]);
+  REQUIRE(std::get<0>(query4[0]) == 1);
+  // it should only have one entity in it the one with position 30
+  REQUIRE(p4[0].x == Approx(30));
+
+  // next we check archetype 1, the first returned which is the one with
+  // position and health
+  REQUIRE(std::get<1>(query4[1])[0].z == Approx(16));
+
+  // finally  we check the new archetype
+  Position* q4_2pos = std::get<1>(query4[2]);
+  REQUIRE(q4_2pos[0].x == Approx(40));
+
+  // also checking that the original entity did not have a dummy, buy the one
+  // we actually added the component to does have it
+  REQUIRE(registry.hasComponent<Dummy>(eid) == false);
+  REQUIRE(registry.hasComponent<Dummy>(eid3) == true);
+
+  std::vector<std::tuple<size_t, Position*, Dummy*>> query5;
+  registry.query(query5);
+  REQUIRE(query5.size() == 1);
+  REQUIRE(std::get<0>(query5[0]) == 1);
+  REQUIRE(std::get<1>(query5[0])[0].x == Approx(40));
+  REQUIRE(std::get<2>(query5[0])[0].a == 0);
+  REQUIRE(std::get<2>(query5[0])[0].b == 1);
+  REQUIRE(std::get<2>(query5[0])[0].c == Approx(3.0f));
+  REQUIRE(std::get<2>(query5[0])[0].d == 5);
+  REQUIRE(std::get<2>(query5[0])[0].e == 6);
+
+  // let us perform the look up by entityId and check of parameters for all 3
+  // entities
+  movedPos = registry.getComponent<Position>(eid);
+  movedHealth = registry.getComponent<Health>(eid);
+  REQUIRE(movedPos.x == Approx(0));
+  REQUIRE(movedPos.y == Approx(1));
+  REQUIRE(movedPos.z == Approx(16));
+  REQUIRE(movedPos.w == Approx(32));
+  REQUIRE(movedHealth.hp == Approx(100));
+
+  movedPos = registry.getComponent<Position>(eid2);
+  REQUIRE(movedPos.x == Approx(30));
+  REQUIRE(movedPos.y == Approx(1));
+  REQUIRE(movedPos.z == Approx(16));
+  REQUIRE(movedPos.w == Approx(32));
+
+  movedPos = registry.getComponent<Position>(eid3);
+  Dummy movedDummy = registry.getComponent<Dummy>(eid3);
+  REQUIRE(movedPos.x == Approx(40));
+  REQUIRE(movedPos.y == Approx(1));
+  REQUIRE(movedPos.z == Approx(16));
+  REQUIRE(movedPos.w == Approx(32));
+
+  REQUIRE(movedDummy.a == 0);
+  REQUIRE(movedDummy.b == 1);
+  REQUIRE(movedDummy.c == Approx(3.0f));
+  REQUIRE(movedDummy.d == 5);
+  REQUIRE(movedDummy.e == 6);
+}
+
+TEST_CASE("Delete component to entity") {
 Registry registry;
 Position p{0, 1, 16, 32};
 Health h{100};
-Dummy d{0, 1, 3.0f, 5, 6};
 
-EntityId eid = registry.addEntity(p);
-std::vector<std::tuple<size_t,Position*>> query1;
-registry.query(query1);
-
-// Testing we only get one archetype and one item in it
-REQUIRE(query1.size() == 1);
-const Position* p0 = std::get<1>(query1[0]);
-REQUIRE(std::get<0>(query1[0]) == 1);
-REQUIRE(p0[0].x == Approx(0));
-REQUIRE(p0[0].y == Approx(1));
-REQUIRE(p0[0].z == Approx(16));
-REQUIRE(p0[0].w == Approx(32));
-
-// let us add a health component
-registry.addComponent(eid, h);
-REQUIRE(registry.hasComponent<Health>(eid));
-
-// similarly now we query and check that only get one archetype that has
-// both components
-std::vector<std::tuple<size_t,Position*, Health*>> query2;
-registry.query(query2);
-REQUIRE(query2.size() == 1);
-const Position* p2 = std::get<1>(query2[0]);
-const Health* h2 = std::get<2>(query2[0]);
-REQUIRE(std::get<0>(query2[0]) == 1);
-REQUIRE(p2[0].x == Approx(0));
-REQUIRE(p2[0].y == Approx(1));
-REQUIRE(p2[0].z == Approx(16));
-REQUIRE(p2[0].w == Approx(32));
-REQUIRE(h2[0].hp == Approx(100));
-
-//we need to make sure the old query for position only,returns one, since
-//the entity got moved.
-registry.query(query1);
-REQUIRE(query1.size() == 1);
-
-/*
-// adding only two positions entities
-p.x = 30;
-registry.createEntity(p);
-p.x = 40;
-ecs::EntityId eid3 = registry.createEntity(p);
-std::vector<std::tuple<Position*, int>> query3;
-registry.query(query3);
-
-// now we check that two archetypes actually match the query
-REQUIRE(query3.size() == 2);
-const Position* p3 = std::get<0>(query3[0]);
-REQUIRE(std::get<1>(query3[0]) == 2);
-REQUIRE(p3[0].x == Approx(30));
-REQUIRE(p3[1].x == Approx(40));
-
-// next we check archetype 1, the first returned which is the one with
-// position and health
-const Position* p3_1 = std::get<0>(query3[1]);
-REQUIRE(p3_1[0].z == Approx(16));
-REQUIRE(registry.hasComponent<Dummy>(eid) == false);
-REQUIRE(registry.hasComponent<Dummy>(eid3) == false);
-
-// next we add a dummy component to one of the position only entity, the
-// last one created
-registry.addComponent(eid3, d);
-
-std::vector<std::tuple<Position*, int>> query4;
-registry.query(query4);
-// we now expect 3 archetypes (position), (position,health),(position,dummy)
-REQUIRE(query4.size() == 3);
-const Position* p4 = std::get<0>(query4[0]);
-REQUIRE(std::get<1>(query4[0]) == 1);
-// it should only have one entity in it the one with position 30
-REQUIRE(p4[0].x == Approx(30));
-
-// next we check archetype 1, the first returned which is the one with
-// position and health
-REQUIRE(std::get<0>(query4[1])[0].z == Approx(16));
-
-// finally  we check the new archetype
-REQUIRE(std::get<0>(query4[2])[0].x == Approx(40));
-
-// also checking that the original entity did not have a dummy, buy the one
-// we actually added the component to does have it
-REQUIRE(registry.hasComponent<Dummy>(eid) == false);
-REQUIRE(registry.hasComponent<Dummy>(eid3) == true);
-
-std::vector<std::tuple<Position*, Dummy*, int>> query5;
-registry.query(query5);
-REQUIRE(query5.size() == 1);
-REQUIRE(std::get<2>(query5[0]) == 1);
-REQUIRE(std::get<0>(query5[0])[0].x == Approx(40));
-*/
-}
-
-/*
-TEST_CASE("Delete component to entity") {
-ecs::Registry registry;
-Position p{0, 1, 16, 32};
-Health h{100};
-
-ecs::EntityId eid = registry.createEntity(p, h);
-std::vector<std::tuple<Position*, Health*, int>> query1;
+EntityId eid = registry.addEntity(p, h);
+std::vector<std::tuple<size_t,Position*, Health* >> query1;
 registry.query(query1);
 
 // testing that we only get one archetype and one item in it
 REQUIRE(query1.size() == 1);
-const Position* p0 = std::get<0>(query1[0]);
-REQUIRE(std::get<2>(query1[0]) == 1);
+const Position* p0 = std::get<1>(query1[0]);
+REQUIRE(std::get<0>(query1[0]) == 1);
 REQUIRE(p0[0].x == 0);
 REQUIRE(p0[0].y == 1);
 REQUIRE(p0[0].z == 16);
 REQUIRE(p0[0].w == 32);
 
+/*
 // now we delete a component
 registry.removeComponent<Health>(eid);
 std::vector<std::tuple<Position*, Health*, int>> query2;
@@ -271,8 +313,10 @@ REQUIRE(query2.size() == 0);
 std::vector<std::tuple<Position*, int>> query3;
 registry.query(query3);
 REQUIRE(query3.size() == 1);
+*/
 }
 
+/*
 TEST_CASE("Add component to existing archetype") {
 ecs::Registry registry;
 Position p{0, 1, 16, 32};
