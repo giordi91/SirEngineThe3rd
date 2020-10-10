@@ -170,13 +170,20 @@ struct Archetype {
   template <typename... Types>
   void create() {
     bufferSize = INITIAL_SIZE;
-    m_components = new Component[sizeof...(Types)]{Component{
-        new Types[INITIAL_SIZE], sizeof(Types), MultiHash<Types>::hash}...};
+    m_components = new Component[sizeof...(Types)]{
+        Component{new char[INITIAL_SIZE * sizeof(Types)], sizeof(Types),
+                  MultiHash<Types>::hash}...};
     m_entities = new size_t[INITIAL_SIZE];
     lookup = std::unordered_map<size_t, size_t>{
         {MultiHash<Types>::hash, index<Types, Types...>::value}...};
     componentCount = sizeof...(Types);
     id = MultiHash<Types...>::hash;
+
+    // debug
+    for (int i = 0; i < componentCount; ++i) {
+      memset(m_components[i].data, 0xBF,
+             bufferSize * m_components[i].componentSize);
+    }
   }
 
   template <typename... Types>
@@ -200,10 +207,12 @@ struct Archetype {
   }
 
   template <typename T>
-  void write(T first, uint32_t idx) {
+  void write(T cmp, uint32_t idx) {
     auto cmpId = getComponentIndex<T>();
-    assert(idx != -1);
-    static_cast<T*>(m_components[cmpId].data)[idx] = first;
+    assert(cmpId != -1);
+    assert(cmpId < componentCount);
+    assert(idx < bufferSize);
+    static_cast<T*>(m_components[cmpId].data)[idx] = cmp;
   }
 
   // component getters
@@ -270,11 +279,17 @@ struct Archetype {
     for (uint32_t i = 0; i < componentCount; ++i) {
       Component& cmp = m_components[i];
       // todo change this for an allocator
-      void* newMemory = new char[newSize * cmp.componentSize];
+      size_t toAlloc = newSize * cmp.componentSize;
+      char* newMemory = new char[toAlloc];
       memcpy(newMemory, cmp.data, bufferSize * cmp.componentSize);
-      delete (static_cast<char*>(cmp.data));
+      delete[]static_cast<char*>(cmp.data);
       cmp.data = newMemory;
     }
+    auto* newEntities = new size_t[newSize];
+    memcpy(newEntities, m_entities, bufferSize * sizeof(size_t));
+    delete[] m_entities;
+    m_entities = newEntities;
+
     bufferSize = newSize;
   }
 
@@ -446,7 +461,6 @@ class Registry {
     assert(eid.index < m_entities.size());
     Entity& e = m_entities[eid.index];
     auto* arch = m_archetypes[e.archetypeId];
-    const auto& ids = arch->lookup;
 
     EntityMoveResult moveResult = arch->deleteEntity(e);
     if (moveResult.entityGlobalIndex != -1) {
@@ -458,10 +472,11 @@ class Registry {
     e.archetypeId = -1;
   }
 
-  bool isEntityValid(const EntityId eid) const {
+  [[nodiscard]] bool isEntityValid(const EntityId eid) const {
     assert(eid.index < m_entities.size());
     const Entity& e = m_entities[eid.index];
-    return (e.archetypeId != static_cast<size_t>(-1)) & (eid.version == e.version);
+    return (e.archetypeId != static_cast<size_t>(-1)) &
+           (eid.version == e.version);
   }
 
   template <typename T>
