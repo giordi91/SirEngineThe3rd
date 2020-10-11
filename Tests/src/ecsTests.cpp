@@ -23,7 +23,7 @@ TEST_CASE("basic", "[core,ecs]") {
   Position p{0, 1, 2, 3};
   Health h{100};
 
-  EntityId id = registry.addEntity(p, h);
+  EntityId id = registry.createEntity(p, h);
   REQUIRE(registry.hasComponent<Position>(id));
   REQUIRE(registry.hasComponent<Health>(id));
   REQUIRE(!registry.hasComponent<Dummy>(id));
@@ -47,9 +47,9 @@ TEST_CASE("arch query", "[core,ecs]") {
   REQUIRE(arch.hasComponent<Position>());
   REQUIRE(arch.hasComponent<Health>());
   REQUIRE(!arch.hasComponent<Dummy>());
-  REQUIRE(arch.hasComponent(SirEngine::ecs::MultiHash<Position>::hash));
-  REQUIRE(arch.hasComponent(SirEngine::ecs::MultiHash<Health>::hash));
-  REQUIRE(!arch.hasComponent(SirEngine::ecs::MultiHash<Dummy>::hash));
+  REQUIRE(arch.hasComponentFromHash(SirEngine::ecs::MultiHash<Position>::hash));
+  REQUIRE(arch.hasComponentFromHash(SirEngine::ecs::MultiHash<Health>::hash));
+  REQUIRE(!arch.hasComponentFromHash(SirEngine::ecs::MultiHash<Dummy>::hash));
   REQUIRE(arch.hasComponents<Position, Health>());
   REQUIRE(!arch.hasComponents<Position, Health, Dummy>());
   REQUIRE(!arch.hasComponents<Position, Dummy>());
@@ -57,17 +57,17 @@ TEST_CASE("arch query", "[core,ecs]") {
   REQUIRE(!arch.hasComponents<Health, Dummy>());
   REQUIRE(!arch.hasComponents<Dummy, Health>());
   REQUIRE(arch.hasComponents<Health, Position>());
-  REQUIRE(arch.hasComponents({SirEngine::ecs::MultiHash<Position>::hash,
+  REQUIRE(arch.hasComponentFromHashes({SirEngine::ecs::MultiHash<Position>::hash,
                               SirEngine::ecs::MultiHash<Health>::hash}));
-  REQUIRE(!arch.hasComponents({SirEngine::ecs::MultiHash<Position>::hash,
+  REQUIRE(!arch.hasComponentFromHashes({SirEngine::ecs::MultiHash<Position>::hash,
                                SirEngine::ecs::MultiHash<Health>::hash,
                                SirEngine::ecs::MultiHash<Dummy>::hash}));
-  REQUIRE(!arch.hasComponents({SirEngine::ecs::MultiHash<Position>::hash,
+  REQUIRE(!arch.hasComponentFromHashes({SirEngine::ecs::MultiHash<Position>::hash,
                                SirEngine::ecs::MultiHash<Dummy>::hash}));
-  REQUIRE(!arch.hasComponents({SirEngine::ecs::MultiHash<Dummy>::hash}));
-  REQUIRE(!arch.hasComponents({SirEngine::ecs::MultiHash<Health>::hash,
+  REQUIRE(!arch.hasComponentFromHashes({SirEngine::ecs::MultiHash<Dummy>::hash}));
+  REQUIRE(!arch.hasComponentFromHashes({SirEngine::ecs::MultiHash<Health>::hash,
                                SirEngine::ecs::MultiHash<Dummy>::hash}));
-  REQUIRE(arch.hasComponents({SirEngine::ecs::MultiHash<Health>::hash,
+  REQUIRE(arch.hasComponentFromHashes({SirEngine::ecs::MultiHash<Health>::hash,
                               SirEngine::ecs::MultiHash<Position>::hash}));
 }
 
@@ -79,18 +79,18 @@ TEST_CASE("Basic query", "[core,ecs]") {
     if ((i % 2) == 0) {
       Position p{0, static_cast<float>(i), 0};
       Health h{static_cast<float>(i)};
-      auto currentEntity = registry.addEntity(p, h);
+      auto currentEntity = registry.createEntity(p, h);
       if (i == 4) {
         eid = currentEntity;
       }
     } else {
       Health h = {static_cast<float>(i)};
-      registry.addEntity(h);
+      registry.createEntity(h);
     }
   }
 
   std::vector<std::tuple<size_t, Position*, Health*>> query;
-  registry.query(query);
+  registry.populateComponentQuery(query);
   REQUIRE(query.size() == 1);
   REQUIRE(std::get<0>(query[0]) == 10);
 
@@ -123,7 +123,7 @@ TEST_CASE("Check on not existing component", "[core,ecs]") {
   Registry registry;
   Position p{0, 1, 2, 3};
   Health h{100};
-  EntityId eid = registry.addEntity(p, h);
+  EntityId eid = registry.createEntity(p, h);
   REQUIRE(!registry.hasComponent<Dummy>(eid));
 }
 
@@ -134,7 +134,7 @@ TEST_CASE("Entity growth over limit", "[core,ecs]") {
   Registry registry;
   EntityId eid{};
   for (int i = 0; i < toIterate; ++i) {
-    EntityId id = registry.addEntity(
+    EntityId id = registry.createEntity(
         Position{0, static_cast<float>(i), static_cast<float>(i),99});
     if (i == (capacity + 1)) {
       eid = id;
@@ -152,9 +152,9 @@ TEST_CASE("Add component to entity", "[core,ecs]") {
   Health h{100};
   Dummy d{0, 1, 3.0f, 5, 6};
 
-  EntityId eid = registry.addEntity(p);
+  EntityId eid = registry.createEntity(p);
   std::vector<std::tuple<size_t, Position*>> query1;
-  registry.query(query1);
+  registry.populateComponentQuery(query1);
 
   // Testing we only get one archetype and one item in it
   REQUIRE(query1.size() == 1);
@@ -172,7 +172,7 @@ TEST_CASE("Add component to entity", "[core,ecs]") {
   // similarly now we query and check that only get one archetype that has
   // both components
   std::vector<std::tuple<size_t, Position*, Health*>> query2;
-  registry.query(query2);
+  registry.populateComponentQuery(query2);
   REQUIRE(query2.size() == 1);
   const Position* p2 = std::get<1>(query2[0]);
   const Health* h2 = std::get<2>(query2[0]);
@@ -194,16 +194,16 @@ TEST_CASE("Add component to entity", "[core,ecs]") {
 
   // we need to make sure the old query for position only,returns one, since
   // the entity got moved.
-  registry.query(query1);
+  registry.populateComponentQuery(query1);
   REQUIRE(query1.size() == 1);
 
   // adding only two positions entities
   p.x = 30;
-  EntityId eid2 = registry.addEntity(p);
+  EntityId eid2 = registry.createEntity(p);
   p.x = 40;
-  EntityId eid3 = registry.addEntity(p);
+  EntityId eid3 = registry.createEntity(p);
   std::vector<std::tuple<size_t, Position*>> query3;
-  registry.query(query3);
+  registry.populateComponentQuery(query3);
 
   // now we check that two archetypes actually match the query
   REQUIRE(query3.size() == 2);
@@ -224,7 +224,7 @@ TEST_CASE("Add component to entity", "[core,ecs]") {
   registry.addComponent(eid3, d);
 
   std::vector<std::tuple<size_t, Position*>> query4;
-  registry.query(query4);
+  registry.populateComponentQuery(query4);
   // we now expect 3 archetypes (position), (position,health),(position,dummy)
   REQUIRE(query4.size() == 3);
   const Position* p4 = std::get<1>(query4[0]);
@@ -246,7 +246,7 @@ TEST_CASE("Add component to entity", "[core,ecs]") {
   REQUIRE(registry.hasComponent<Dummy>(eid3) == true);
 
   std::vector<std::tuple<size_t, Position*, Dummy*>> query5;
-  registry.query(query5);
+  registry.populateComponentQuery(query5);
   REQUIRE(query5.size() == 1);
   REQUIRE(std::get<0>(query5[0]) == 1);
   REQUIRE(std::get<1>(query5[0])[0].x == Approx(40));
@@ -291,9 +291,9 @@ TEST_CASE("Delete component to entity", "[core,ecs]") {
   Position p{0, 1, 16, 32};
   Health h{100};
 
-  EntityId eid = registry.addEntity(p, h);
+  EntityId eid = registry.createEntity(p, h);
   std::vector<std::tuple<size_t, Position*, Health*>> query1;
-  registry.query(query1);
+  registry.populateComponentQuery(query1);
 
   // testing that we only get one archetype and one item in it
   REQUIRE(query1.size() == 1);
@@ -307,11 +307,11 @@ TEST_CASE("Delete component to entity", "[core,ecs]") {
   // now we delete a component
   registry.removeComponent<Health>(eid);
   std::vector<std::tuple<size_t, Position*, Health*>> query2;
-  registry.query(query2);
+  registry.populateComponentQuery(query2);
   REQUIRE(query2.size() == 0);
 
   std::vector<std::tuple<size_t, Position*>> query3;
-  registry.query(query3);
+  registry.populateComponentQuery(query3);
   REQUIRE(query3.size() == 1);
 }
 
@@ -321,18 +321,18 @@ TEST_CASE("Add component to existing archetype", "[core,ecs]") {
   Health h{100};
 
   // first we create an entity with both position and health
-  EntityId eid = registry.addEntity(p, h);
+  EntityId eid = registry.createEntity(p, h);
   std::vector<std::tuple<size_t, Position*, Health*>> query1;
-  registry.query(query1);
+  registry.populateComponentQuery(query1);
 
   REQUIRE(query1.size() == 1);
   REQUIRE(std::get<0>(query1[0]) == 1);
 
   // next we create an entity with only position
   p.x = 100;
-  EntityId eid2 = registry.addEntity(p);
+  EntityId eid2 = registry.createEntity(p);
   std::vector<std::tuple<size_t, Position*>> query2;
-  registry.query(query2);
+  registry.populateComponentQuery(query2);
   // at this point we should have two archetype returned in the query
   // and each archetype has one entity in it
   REQUIRE(query2.size() == 2);
@@ -343,7 +343,7 @@ TEST_CASE("Add component to existing archetype", "[core,ecs]") {
   registry.addComponent(eid2, h);
   // now we should still have one archetype, a new one should not be created
   std::vector<std::tuple<size_t, Position*, Health*>> query3;
-  registry.query(query3);
+  registry.populateComponentQuery(query3);
   REQUIRE(query3.size() == 1);
   // and the current archetype should have two entities with position and
   // health
@@ -368,7 +368,7 @@ TEST_CASE("Add component to existing archetype", "[core,ecs]") {
   // the query for position only should return just one archetype
   // because the other archetype is empty
   std::vector<std::tuple<size_t, Position*>> query4;
-  registry.query(query4);
+  registry.populateComponentQuery(query4);
   REQUIRE(query4.size() == 1);
 }
 
@@ -378,8 +378,8 @@ TEST_CASE("Preserve entity tracking on entity deletion", "[core,ecs]") {
   Health h{100};
   Position p2{4, 5, 6, 7};
   Health h2{900};
-  EntityId eid = registry.addEntity(p, h);
-  EntityId eid2 = registry.addEntity(p2, h2);
+  EntityId eid = registry.createEntity(p, h);
+  EntityId eid2 = registry.createEntity(p2, h2);
   const Entity& e2 = registry.getEntity(eid2);
 
   // we are about to remove a component, this will move the
@@ -401,7 +401,7 @@ TEST_CASE("Preserve entity tracking on entity deletion", "[core,ecs]") {
 TEST_CASE("Entity with no components", "[core,ecs]") {
   Registry registry;
   Position p{0, 1, 2, 3};
-  EntityId eid = registry.addEntity(p);
+  EntityId eid = registry.createEntity(p);
   registry.removeComponent<Position>(eid);
   bool result = registry.hasComponent<Position>(eid);
   REQUIRE(result == false);
@@ -410,7 +410,7 @@ TEST_CASE("Entity with no components", "[core,ecs]") {
 TEST_CASE("Delete entity", "[core,ecs]") {
   Registry registry;
   Position p{0, 1, 2, 3};
-  EntityId eid = registry.addEntity(p);
+  EntityId eid = registry.createEntity(p);
   registry.deleteEntity(eid);
   REQUIRE(!registry.isEntityValid(eid));
 }
@@ -418,17 +418,17 @@ TEST_CASE("Delete entity", "[core,ecs]") {
 TEST_CASE("Add - Delete entities", "[core,ecs]") {
   Registry registry;
   Position p{0, 1, 2, 3};
-  EntityId eid1 = registry.addEntity(p);
+  EntityId eid1 = registry.createEntity(p);
   registry.deleteEntity(eid1);
   std::vector<std::tuple<size_t, Position*>> query1;
-  registry.query(query1);
+  registry.populateComponentQuery(query1);
   REQUIRE(query1.empty());
   p.x = 10;
-  EntityId eid2 = registry.addEntity(p);
+  EntityId eid2 = registry.createEntity(p);
   REQUIRE(!registry.isEntityValid(eid1));
   REQUIRE(registry.isEntityValid(eid2));
   std::vector<std::tuple<size_t, Position*>> query2;
-  registry.query(query2);
+  registry.populateComponentQuery(query2);
   REQUIRE(query2.size() == 1);
   REQUIRE(registry.getEntity(eid2).version == 2);
 }
@@ -436,18 +436,18 @@ TEST_CASE("Add - Delete entities", "[core,ecs]") {
 TEST_CASE("Multiple deletes", "[core,ecs]") {
   Registry registry;
   Position p{0, 1, 2, 3};
-  EntityId eid1 = registry.addEntity(p);
+  EntityId eid1 = registry.createEntity(p);
   p.x = 10;
-  EntityId eid2 = registry.addEntity(p);
+  EntityId eid2 = registry.createEntity(p);
   p.x = 20;
-  EntityId eid3 = registry.addEntity(p);
+  EntityId eid3 = registry.createEntity(p);
   Entity e3 = registry.getEntity(eid3);
 
   // we start by removing the first entity, should get
   // eid3 to move in the archetype
   registry.deleteEntity(eid2);
   std::vector<std::tuple<size_t, Position*>> query;
-  registry.query(query);
+  registry.populateComponentQuery(query);
   REQUIRE(query.size() == 1);
   REQUIRE(std::get<0>(query[0]) == 2);
   e3 = registry.getEntity(eid3);
@@ -458,7 +458,7 @@ TEST_CASE("Multiple deletes", "[core,ecs]") {
 
   // delete now entity1 , so entity3 should be moved again
   registry.deleteEntity(eid1);
-  registry.query(query);
+  registry.populateComponentQuery(query);
   REQUIRE(query.size() == 1);
   REQUIRE(std::get<0>(query[0]) == 1);
   e3 = registry.getEntity(eid3);
@@ -476,11 +476,11 @@ TEST_CASE("Three components creation", "[core,ecs]") {
   Position p2{4, 5, 6, 7};
   Health h2{900};
   Dummy d2{90, 91};
-  EntityId eid = registry.addEntity(p, h, d);
-  EntityId eid2 = registry.addEntity(p2, h2, d2);
+  EntityId eid = registry.createEntity(p, h, d);
+  EntityId eid2 = registry.createEntity(p2, h2, d2);
 
   std::vector<std::tuple<size_t,Position*, Dummy* >> query;
-  registry.query(query);
+  registry.populateComponentQuery(query);
   REQUIRE(query.size() == 1);
   REQUIRE(std::get<0>(query[0]) == 2);
   // just checking the components
@@ -493,7 +493,7 @@ TEST_CASE("Three components creation", "[core,ecs]") {
   REQUIRE(dummyPtr[1].a == Approx(90));
 
   std::vector<std::tuple<size_t,Position*, Health*, Dummy* >> query2;
-  registry.query(query2);
+  registry.populateComponentQuery(query2);
   REQUIRE(query2.size() == 1);
   REQUIRE(std::get<0>(query2[0]) == 2);
 
@@ -515,7 +515,7 @@ TEST_CASE("add remove component multiple times", "[core,ecs]") {
   Position p{0, 1, 2, 3};
   Health h{100};
 
-  EntityId eid = registry.addEntity(p);
+  EntityId eid = registry.createEntity(p);
   for (int i = 0; i < 10; ++i) {
     h.hp = static_cast<float>(i);
     registry.addComponent(eid, h);
@@ -531,7 +531,7 @@ TEST_CASE("add remove component multiple times single component", "[core,ecs]") 
   Registry registry;
   Health h{100};
 
-  EntityId eid = registry.addEntity(h);
+  EntityId eid = registry.createEntity(h);
   for (int i = 0; i < 10; ++i) {
     registry.removeComponent<Health>(eid);
     h.hp = static_cast<float>(i);
@@ -547,7 +547,7 @@ TEST_CASE("add remove component multiple times single component - 2", "[core,ecs
   Position p{0, 1, 2, 3};
   Health h{100};
 
-  EntityId eid = registry.addEntity(h, p);
+  EntityId eid = registry.createEntity(h, p);
   for (int i = 0; i < 10; ++i) {
     registry.removeComponent<Health>(eid);
     registry.removeComponent<Position>(eid);
@@ -569,7 +569,7 @@ TEST_CASE("add remove component multiple times single component - 3", "[core,ecs
   Health h{100};
   Dummy d{};
 
-  EntityId eid = registry.addEntity(h, p, d);
+  EntityId eid = registry.createEntity(h, p, d);
   for (int i = 0; i < 10; ++i) {
     registry.removeComponent<Health>(eid);
     registry.removeComponent<Position>(eid);
@@ -594,7 +594,7 @@ TEST_CASE("delete empty entity", "[core,ecs]") {
   Registry registry;
   Position p{0, 1, 2, 3};
 
-  EntityId eid = registry.addEntity(p);
+  EntityId eid = registry.createEntity(p);
   registry.removeComponent<Position>(eid);
   registry.deleteEntity(eid);
 }
