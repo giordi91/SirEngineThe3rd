@@ -517,6 +517,7 @@ class Registry {
   void deleteEntity(const EntityId eid) {
     assert(eid.index < m_entities.size());
     Entity& e = m_entities[eid.index];
+    assert(eid.version == e.version);
     auto* arch = m_archetypes[e.archetypeIndex];
 
     // deleting an entity is pretty straight forward, we ask the archetype to
@@ -535,6 +536,7 @@ class Registry {
   template <typename T>
   bool hasComponent(const EntityId eid) {
     Entity e = m_entities[eid.index];
+    assert(eid.version == e.version);
     return m_archetypes[e.archetypeIndex]->getComponentIndex<T>() !=
            Archetype::INVALID_COMPONENT_INDEX;
   }
@@ -554,6 +556,7 @@ class Registry {
   T& getComponent(const EntityId eid) {
     assert(hasComponent<T>(eid));
     const Entity e = m_entities[eid.index];
+    assert(eid.version == e.version);
     Component* cmp = m_archetypes[e.archetypeIndex]->getComponent<T>();
     auto* data = static_cast<T*>(cmp->data);
     return data[e.localIndex];
@@ -567,8 +570,9 @@ class Registry {
   // provided one, this will allow the user to optimize the memory and avoid the
   // registry allocating new memory every time.
   template <typename... TYPES>
-  void populateComponentQuery(std::vector<std::tuple<size_t, TYPES...>>& q) {
-    q.clear();
+  void populateComponentQuery(
+      std::vector<std::tuple<size_t, TYPES...>>& query) {
+    query.clear();
 
     // iterating all the archetypes and find which one match
     // TODO there are interesting: ideas to try here, like using a graph of
@@ -589,7 +593,7 @@ class Registry {
             (static_cast<TYPES>(
                 arch->getComponent<typename std::remove_pointer<TYPES>::type>()
                     ->data))...};
-        q.emplace_back(tup);
+        query.emplace_back(tup);
       }
     }
   }
@@ -600,50 +604,23 @@ class Registry {
     assert(hasComponent<T>(eid));
 
     Entity& e = m_entities[eid.index];
+    assert(eid.version == e.version);
+
     auto* arch = m_archetypes[e.archetypeIndex];
 
-    Archetype* next = nullptr;
-    uint16_t nextIdx = INVALID_ARCHETYPE;
-    uint16_t counter = 0;
     // let us build the list of components we need
     scratchIds.clear();
-    // for (const auto& [cmpId, cmpIdx] : ids) {
     for (uint32_t i = 0; i < arch->componentCount; ++i) {
       auto hash = arch->m_components[i].info.hash;
       if (hash != MultiHash<T>::hash) {
         scratchIds.push_back(hash);
       }
     }
+
     assert(scratchIds.size() == (arch->componentCount - 1));
-	next = findArchetypeFromIds(scratchIds,nextIdx);
+    uint16_t nextIdx = INVALID_ARCHETYPE;
+    Archetype* next = findArchetypeFromIds(scratchIds, nextIdx);
 
-    /*
-    for (auto* a : m_archetypes) {
-      if ((a == arch) | (a->componentCount != scratchIds.size())) {
-        ++counter;
-        continue;
-      }
-      bool found = true;
-
-      // iterating the current components
-      for (const auto currId : scratchIds) {
-        found &= (a->getComponentIndexFromHash(currId) == -1) ? false : true;
-      }
-      if (found) {
-        next = a;
-        nextIdx = counter;
-        break;
-      }
-      ++counter;
-    }
-    if (next == nullptr) {
-      next = createArchetypeFromIds(scratchIds);
-      auto found = m_archetypeToIndex.find(next->hash);
-      assert(found != m_archetypeToIndex.end());
-      nextIdx = found->second;
-    }
-    assert(nextIdx != INVALID_ARCHETYPE);
-    */
     EntityMoveResult moveResult = next->move(arch, e);
     if (moveResult.entityGlobalIndex != -1) {
       // update the moved entity
@@ -651,7 +628,7 @@ class Registry {
       movedEntity.localIndex = moveResult.destIdx;
     }
 
-    // updated archetype
+    // updated archetype in entity
     e.archetypeIndex = nextIdx;
   }
 
@@ -659,45 +636,19 @@ class Registry {
   void addComponent(const EntityId eid, T cmp) {
     ensureTypeInfo<T>();
     Entity& e = m_entities[eid.index];
+    assert(eid.version == e.version);
+
     auto* arch = m_archetypes[e.archetypeIndex];
-    Archetype* next = nullptr;
-    uint16_t nextIdx = INVALID_ARCHETYPE;
-    uint16_t counter = 0;
     scratchIds.clear();
 
+    // populate the list of required components
     for (uint32_t i = 0; i < arch->componentCount; ++i) {
       scratchIds.push_back(arch->m_components[i].info.hash);
     }
     scratchIds.push_back(MultiHash<T>::hash);
 
-	next = findArchetypeFromIds(scratchIds,nextIdx);
-    /*
-    for (auto* a : m_archetypes) {
-      if ((a == arch) | (a->componentCount != scratchIds.size())) {
-        ++counter;
-        continue;
-      }
-      bool found = true;
-
-      // iterating the current components
-      for (const auto currId : scratchIds) {
-        found &= (a->getComponentIndexFromHash(currId) == -1) ? false : true;
-      }
-      if (found) {
-        next = a;
-        nextIdx = counter;
-        break;
-      }
-      ++counter;
-    }
-    if (next == nullptr) {
-      next = createArchetypeFromIds(scratchIds);
-      auto found = m_archetypeToIndex.find(next->hash);
-      assert(found != m_archetypeToIndex.end());
-      nextIdx = found->second;
-    }
-    assert(nextIdx != INVALID_ARCHETYPE);
-    */
+    uint16_t nextIdx = INVALID_ARCHETYPE;
+    Archetype* next = findArchetypeFromIds(scratchIds, nextIdx);
 
     EntityMoveResult moveResult = next->move(arch, cmp, e);
     if (moveResult.entityGlobalIndex != -1) {
@@ -712,10 +663,23 @@ class Registry {
 
   Entity& getEntity(const EntityId eid) {
     assert(eid.index < m_entities.size());
-    return m_entities[eid.index];
+    Entity& e = m_entities[eid.index];
+    assert(eid.version == e.version);
+    return e;
+  }
+
+  [[nodiscard]] const Entity& getEntity(const EntityId eid) const {
+    assert(eid.index < m_entities.size());
+    const Entity& e = m_entities[eid.index];
+    assert(eid.version == e.version);
+    return e;
   }
 
  private:
+  // Every time we come across a concrete type, we generate the type info for
+  // it, meaning the hash and the size of the type. Such that whenever we
+  // encounter that type
+  // without the concrete type we have enough information to deal with it
   template <typename... TYPES>
   void ensureTypeInfos() {
     (ensureTypeInfo<TYPES>(), ...);
@@ -724,27 +688,30 @@ class Registry {
   template <typename T>
   void ensureTypeInfo() {
     size_t id = MultiHash<T>::hash;
-    auto found = m_componentTypeInfo.find(id);
+    const auto found = m_componentTypeInfo.find(id);
     if (found == m_componentTypeInfo.end()) {
       // we need to add the type info
       m_componentTypeInfo[id] = {sizeof(T), MultiHash<T>::hash};
     }
   }
-  Archetype* findArchetypeFromIds(std::vector<size_t> requestedIds,
+
+  // given an array of archetypes we are going to find a matching archetype, if
+  // not potentially create one if requested
+  Archetype* findArchetypeFromIds(const std::vector<size_t>& requestedIds,
                                   uint16_t& outIdx,
                                   const bool createIfMissing = true) {
     Archetype* next = nullptr;
     uint16_t nextIdx = INVALID_ARCHETYPE;
     uint16_t counter = 0;
     for (auto* a : m_archetypes) {
-      if (a->componentCount != scratchIds.size()) {
+      if (a->componentCount != requestedIds.size()) {
         ++counter;
         continue;
       }
       bool found = true;
 
       // iterating the current components
-      for (const auto currId : scratchIds) {
+      for (const auto currId : requestedIds) {
         found &= (a->getComponentIndexFromHash(currId) == -1) ? false : true;
       }
       if (found) {
@@ -754,8 +721,8 @@ class Registry {
       }
       ++counter;
     }
-    if (next == nullptr) {
-      next = createArchetypeFromIds(scratchIds);
+    if ((next == nullptr) & createIfMissing) {
+      next = createArchetypeFromIds(requestedIds);
       auto found = m_archetypeToIndex.find(next->hash);
       assert(found != m_archetypeToIndex.end());
       nextIdx = found->second;
@@ -765,6 +732,7 @@ class Registry {
     return next;
   }
 
+  // find an archetype given the concrete types
   template <typename... TYPES>
   Archetype* findArchetype(const bool createIfMissing = true) {
     const size_t id = MultiHash<TYPES...>::hash;
@@ -788,8 +756,10 @@ class Registry {
         {info.componentDataTypeSize, info.hash}};
   }
 
+  // This function creates an archetype completely from type ids.
   Archetype* createArchetypeFromIds(const std::vector<size_t>& ids) {
     // allocating memory for the component array
+    // memory will be of ownership of the archetypes
     auto* cmps = new Component[ids.size()];
     int counter = 0;
     for (const auto cmpId : ids) {
@@ -806,14 +776,19 @@ class Registry {
   }
 
   size_t getNewEntityId() {
+    // first we check whether or not we have a free entity in the free list
     if (m_freeEntities.empty()) {
       size_t toReturn = m_entities.size();
       m_entities.emplace_back(
-          Entity{0, INVALID_ARCHETYPE, static_cast<uint16_t>(1)});
+          Entity{0, INVALID_ARCHETYPE,
+                 static_cast<uint16_t>(ENTITY_STARTING_VERSION)});
       return toReturn;
     }
+    // if here we recycle a free entity
     size_t toReturn = m_freeEntities[m_freeEntities.size() - 1];
     assert(m_entities[toReturn].archetypeIndex == INVALID_ARCHETYPE);
+    // important: here the version gets updated this will invalidate any stale
+    // EntityId out there
     ++m_entities[toReturn].version;
     m_freeEntities.pop_back();
     return toReturn;
@@ -821,6 +796,7 @@ class Registry {
 
  private:
   static constexpr uint16_t INVALID_ARCHETYPE = static_cast<uint16_t>(-1);
+  static constexpr uint16_t ENTITY_STARTING_VERSION = 1;
 
   std::vector<size_t> scratchIds;
   std::vector<Archetype*> m_archetypes;

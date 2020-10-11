@@ -57,18 +57,24 @@ TEST_CASE("arch query", "[core,ecs]") {
   REQUIRE(!arch.hasComponents<Health, Dummy>());
   REQUIRE(!arch.hasComponents<Dummy, Health>());
   REQUIRE(arch.hasComponents<Health, Position>());
-  REQUIRE(arch.hasComponentFromHashes({SirEngine::ecs::MultiHash<Position>::hash,
-                              SirEngine::ecs::MultiHash<Health>::hash}));
-  REQUIRE(!arch.hasComponentFromHashes({SirEngine::ecs::MultiHash<Position>::hash,
-                               SirEngine::ecs::MultiHash<Health>::hash,
-                               SirEngine::ecs::MultiHash<Dummy>::hash}));
-  REQUIRE(!arch.hasComponentFromHashes({SirEngine::ecs::MultiHash<Position>::hash,
-                               SirEngine::ecs::MultiHash<Dummy>::hash}));
-  REQUIRE(!arch.hasComponentFromHashes({SirEngine::ecs::MultiHash<Dummy>::hash}));
-  REQUIRE(!arch.hasComponentFromHashes({SirEngine::ecs::MultiHash<Health>::hash,
-                               SirEngine::ecs::MultiHash<Dummy>::hash}));
-  REQUIRE(arch.hasComponentFromHashes({SirEngine::ecs::MultiHash<Health>::hash,
-                              SirEngine::ecs::MultiHash<Position>::hash}));
+  REQUIRE(
+      arch.hasComponentFromHashes({SirEngine::ecs::MultiHash<Position>::hash,
+                                   SirEngine::ecs::MultiHash<Health>::hash}));
+  REQUIRE(
+      !arch.hasComponentFromHashes({SirEngine::ecs::MultiHash<Position>::hash,
+                                    SirEngine::ecs::MultiHash<Health>::hash,
+                                    SirEngine::ecs::MultiHash<Dummy>::hash}));
+  REQUIRE(
+      !arch.hasComponentFromHashes({SirEngine::ecs::MultiHash<Position>::hash,
+                                    SirEngine::ecs::MultiHash<Dummy>::hash}));
+  REQUIRE(
+      !arch.hasComponentFromHashes({SirEngine::ecs::MultiHash<Dummy>::hash}));
+  REQUIRE(
+      !arch.hasComponentFromHashes({SirEngine::ecs::MultiHash<Health>::hash,
+                                    SirEngine::ecs::MultiHash<Dummy>::hash}));
+  REQUIRE(
+      arch.hasComponentFromHashes({SirEngine::ecs::MultiHash<Health>::hash,
+                                   SirEngine::ecs::MultiHash<Position>::hash}));
 }
 
 TEST_CASE("Basic query", "[core,ecs]") {
@@ -128,14 +134,13 @@ TEST_CASE("Check on not existing component", "[core,ecs]") {
 }
 
 TEST_CASE("Entity growth over limit", "[core,ecs]") {
-
   const int capacity = Archetype::INITIAL_SIZE;
   const int toIterate = capacity * 2000;
   Registry registry;
   EntityId eid{};
   for (int i = 0; i < toIterate; ++i) {
     EntityId id = registry.createEntity(
-        Position{0, static_cast<float>(i), static_cast<float>(i),99});
+        Position{0, static_cast<float>(i), static_cast<float>(i), 99});
     if (i == (capacity + 1)) {
       eid = id;
     }
@@ -479,7 +484,7 @@ TEST_CASE("Three components creation", "[core,ecs]") {
   EntityId eid = registry.createEntity(p, h, d);
   EntityId eid2 = registry.createEntity(p2, h2, d2);
 
-  std::vector<std::tuple<size_t,Position*, Dummy* >> query;
+  std::vector<std::tuple<size_t, Position*, Dummy*>> query;
   registry.populateComponentQuery(query);
   REQUIRE(query.size() == 1);
   REQUIRE(std::get<0>(query[0]) == 2);
@@ -492,7 +497,7 @@ TEST_CASE("Three components creation", "[core,ecs]") {
   REQUIRE(dummyPtr[0].a == Approx(10));
   REQUIRE(dummyPtr[1].a == Approx(90));
 
-  std::vector<std::tuple<size_t,Position*, Health*, Dummy* >> query2;
+  std::vector<std::tuple<size_t, Position*, Health*, Dummy*>> query2;
   registry.populateComponentQuery(query2);
   REQUIRE(query2.size() == 1);
   REQUIRE(std::get<0>(query2[0]) == 2);
@@ -527,7 +532,8 @@ TEST_CASE("add remove component multiple times", "[core,ecs]") {
   REQUIRE(cmp.hp == Approx(9));
 }
 
-TEST_CASE("add remove component multiple times single component", "[core,ecs]") {
+TEST_CASE("add remove component multiple times single component",
+          "[core,ecs]") {
   Registry registry;
   Health h{100};
 
@@ -542,7 +548,8 @@ TEST_CASE("add remove component multiple times single component", "[core,ecs]") 
   REQUIRE(cmp.hp == Approx(9));
 }
 
-TEST_CASE("add remove component multiple times single component - 2", "[core,ecs]") {
+TEST_CASE("add remove component multiple times single component - 2",
+          "[core,ecs]") {
   Registry registry;
   Position p{0, 1, 2, 3};
   Health h{100};
@@ -563,7 +570,8 @@ TEST_CASE("add remove component multiple times single component - 2", "[core,ecs
   REQUIRE(cmpP.x == Approx(9));
 }
 
-TEST_CASE("add remove component multiple times single component - 3", "[core,ecs]") {
+TEST_CASE("add remove component multiple times single component - 3",
+          "[core,ecs]") {
   Registry registry;
   Position p{0, 1, 2, 3};
   Health h{100};
