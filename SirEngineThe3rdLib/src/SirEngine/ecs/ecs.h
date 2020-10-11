@@ -221,6 +221,13 @@ struct Archetype {
   //---------------------------------------------
   // creation functionality
   //---------------------------------------------
+  Archetype() = default;
+  ~Archetype() {
+    for (uint32_t i = 0; i < componentCount; ++i) {
+      delete[] static_cast<char*>(m_components[i].data);
+    }
+    delete[] m_entitieIndexes;
+  }
 
   // creates an empty archetype with the given required components
   template <typename... TYPES>
@@ -495,6 +502,14 @@ struct Archetype {
 // the user and only manipulated internally by the Register
 class Registry {
  public:
+  Registry() = default;
+  ~Registry() {
+    size_t archCount = m_archetypes.size();
+    for (size_t i = 0; i < archCount; ++i) {
+      delete m_archetypes[i];
+    }
+  }
+
   template <typename... TYPES>
   EntityId createEntity(TYPES... types) {
     // make sure the types exists in our bookkeeping
