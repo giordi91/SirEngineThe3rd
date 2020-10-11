@@ -125,8 +125,31 @@ struct MultiHash {
       hash_combine(CompileHash::hash_fn<strl(fnType<T>())>(fnType<T>()),
                    MultiHash<TYPES...>::hash);
 };
+// this is some meta-template magic to find the index of a type in a list of
+// types
+namespace TypeToIndexMeta {
+// getting integral constant for index of a template type
+template <typename...>
+struct index;
 
-// This is a poorsman metadata about a component type. It is enough information
+// found it
+template <typename T, typename... R>
+struct index<T, T, R...> : std::integral_constant<size_t, 0> {};
+
+// still looking
+template <typename T, typename F, typename... R>
+struct index<T, F, R...>
+    : std::integral_constant<size_t, 1 + index<T, R...>::value> {};
+}  // namespace TypeToIndexMeta
+
+
+
+
+
+
+
+	
+// This is a poor man metadata about a component type. It is enough information
 // to move components around
 struct ComponentTypeInfo {
   // this is the size of the component not the number of elements in the
@@ -179,22 +202,6 @@ struct EntityId {
   uint16_t _padding;
 };
 
-// this is some meta-template magic to find the index of a type in a list of
-// types
-namespace TypeToIndexMeta {
-// getting integral constant for index of a template type
-template <typename...>
-struct index;
-
-// found it
-template <typename T, typename... R>
-struct index<T, T, R...> : std::integral_constant<size_t, 0> {};
-
-// still looking
-template <typename T, typename F, typename... R>
-struct index<T, F, R...>
-    : std::integral_constant<size_t, 1 + index<T, R...>::value> {};
-}  // namespace TypeToIndexMeta
 
 struct Archetype {
   // how many components to allocate on createtion
@@ -218,30 +225,24 @@ struct Archetype {
   void create() {
     bufferElementCount = INITIAL_SIZE;
     m_components = new Component[sizeof...(TYPES)]{
-        Component{new char[INITIAL_SIZE * sizeof(TYPES)], sizeof(TYPES),
-                  MultiHash<TYPES>::hash}...};
+        Component{new char[INITIAL_SIZE * sizeof(TYPES)],
+                  {sizeof(TYPES), MultiHash<TYPES>::hash}}...};
     m_entitieIndexes = new size_t[INITIAL_SIZE];
     lookup = std::unordered_map<size_t, size_t>{
         {MultiHash<TYPES>::hash,
          TypeToIndexMeta::index<TYPES, TYPES...>::value}...};
     componentCount = sizeof...(TYPES);
     hash = MultiHash<TYPES...>::hash;
-
-    // debug
-    for (int i = 0; i < componentCount; ++i) {
-      memset(m_components[i].data, 0xBF,
-             bufferElementCount * m_components[i].info.componentDataTypeSize);
-    }
   }
 
-  template <typename... Types>
-  void create(const size_t EntityGlobalIndex, Types... types) {
-    create<Types...>();
+  template <typename... TYPES>
+  void create(const size_t entityGlobalIndex, TYPES... types) {
+    create<TYPES...>();
     (write(types, 0), ...);
-    m_entitieIndexes[0] = EntityGlobalIndex;
+    m_entitieIndexes[0] = entityGlobalIndex;
   }
-  void createFromComponents(Component* cmps, size_t size) {
-    size_t hash = 0;
+  void createFromComponents(Component* cmps, const size_t size) {
+    hash = 0;
     for (size_t i = 0; i < size; ++i) {
       lookup[cmps[i].info.hash] = i;
       hash = hash_combine(hash, cmps[i].info.hash);
@@ -251,14 +252,13 @@ struct Archetype {
     m_entitieIndexes = new size_t[INITIAL_SIZE];
     entityCount = 0;
     componentCount = static_cast<uint32_t>(size);
-    hash = hash;
   }
 
   template <typename T>
   void write(T cmp, uint32_t idx) {
     auto cmpId = getComponentIndex<T>();
     assert(cmpId != -1);
-    assert(cmpId < componentCount);
+    assert(static_cast<uint32_t>(cmpId) < componentCount);
     assert(idx < bufferElementCount);
     static_cast<T*>(m_components[cmpId].data)[idx] = cmp;
   }
@@ -510,6 +510,7 @@ class Registry {
     }
   }
 
+
   void deleteEntity(const EntityId eid) {
     assert(eid.index < m_entities.size());
     Entity& e = m_entities[eid.index];
@@ -522,7 +523,7 @@ class Registry {
       movedEntity.localIndex = moveResult.destIdx;
     }
     m_freeEntities.push_back(eid.index);
-    e.archetypeIndex = -1;
+    e.archetypeIndex = INVALID_ARCHETYPE;
   }
 
   [[nodiscard]] bool isEntityValid(const EntityId eid) const {
@@ -541,8 +542,8 @@ class Registry {
 
     const auto& ids = arch->lookup;
     Archetype* next = nullptr;
-    int nextIdx = -1;
-    int counter = 0;
+    uint16_t nextIdx = INVALID_ARCHETYPE;
+    uint16_t counter = 0;
     // let us build the list of components we need
     scratchIds.clear();
     for (const auto& [cmpId, cmpIdx] : ids) {
@@ -574,7 +575,7 @@ class Registry {
       next = createArchetypeFromIds(scratchIds);
       auto found = m_archetypeToIndex.find(next->hash);
       assert(found != m_archetypeToIndex.end());
-      nextIdx = static_cast<int>(found->second);
+      nextIdx = found->second;
     }
     assert(nextIdx != -1);
     EntityMoveResult moveResult = next->move(arch, e);
@@ -595,8 +596,8 @@ class Registry {
     auto* arch = m_archetypes[e.archetypeIndex];
     const auto& ids = arch->lookup;
     Archetype* next = nullptr;
-    int nextIdx = -1;
-    int counter = 0;
+    uint16_t nextIdx = INVALID_ARCHETYPE;
+    uint16_t counter = 0;
     scratchIds.clear();
     for (const auto& [cmpId, cmpIdx] : ids) {
       scratchIds.push_back(cmpId);
@@ -625,9 +626,9 @@ class Registry {
       next = createArchetypeFromIds(scratchIds);
       auto found = m_archetypeToIndex.find(next->hash);
       assert(found != m_archetypeToIndex.end());
-      nextIdx = static_cast<int>(found->second);
+      nextIdx = found->second;
     }
-    assert(nextIdx != -1);
+    assert(nextIdx != INVALID_ARCHETYPE);
 
     EntityMoveResult moveResult = next->move(arch, cmp, e);
     if (moveResult.entityGlobalIndex != -1) {
@@ -646,27 +647,28 @@ class Registry {
   }
 
  private:
-  template <typename... Types>
+  template <typename... TYPES>
   Archetype* findArchetype(const bool createIfMissing = true) {
-    const size_t id = MultiHash<Types...>::hash;
+    const size_t id = MultiHash<TYPES...>::hash;
     auto found = m_archetypeToIndex.find(id);
     if (found != m_archetypeToIndex.end()) {
       return m_archetypes[found->second];
     }
     if (createIfMissing) {
-      m_archetypeToIndex[id] = m_archetypes.size();
+      m_archetypeToIndex[id] = static_cast<uint16_t>(m_archetypes.size());
       auto* arch = new Archetype();
-      arch->create<Types...>();
+      arch->create<TYPES...>();
       m_archetypes.emplace_back(arch);
       return arch;
     }
     return nullptr;
   }
 
+
   static Component createComponent(const ComponentTypeInfo& info) {
     return Component{
         new char[info.componentDataTypeSize * Archetype::INITIAL_SIZE],
-        info.componentDataTypeSize, info.hash};
+        {info.componentDataTypeSize, info.hash}};
   }
 
   Archetype* createArchetypeFromIds(const std::vector<size_t>& ids) {
@@ -681,7 +683,7 @@ class Registry {
     }
     auto* arch = new Archetype();
     arch->createFromComponents(cmps, ids.size());
-    m_archetypeToIndex[arch->hash] = m_archetypes.size();
+    m_archetypeToIndex[arch->hash] = static_cast<uint16_t>(m_archetypes.size());
     m_archetypes.push_back(arch);
     return arch;
   }
@@ -706,7 +708,7 @@ class Registry {
   std::vector<size_t> scratchIds;
   std::vector<Archetype*> m_archetypes;
   std::vector<Entity> m_entities;
-  std::unordered_map<size_t, size_t> m_archetypeToIndex;
+  std::unordered_map<size_t, uint16_t> m_archetypeToIndex;
   std::unordered_map<size_t, ComponentTypeInfo> m_componentTypeInfo;
   std::vector<size_t> m_freeEntities;
 };
