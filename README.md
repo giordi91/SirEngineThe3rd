@@ -24,6 +24,7 @@ Here a I will keep a chronological list of the progress:
 [0.5.0: Scripted character animation](#v050)  
 [0.6.0: VK port PT 1](#v060)  
 [0.7.0: VK port PT 2 and grass](#v070)  
+[0.7.1: Material system ](#v071)  
 
 ## 0.1.0 <a name="v010"/>
 This version is the most basic version of the engine, but starts to put togheter the foundation of the engine:
@@ -124,6 +125,17 @@ This release was a huge push in the Vulkan back end and cleanup.
 * Introduced Main and Active camera to start working on debugging culling.
 
 ![alt text](./images/07_grass.gif "grass")
+
+## 0.7.1 <a name="v071"/>
+This release was mostly focused on the new material system building on top of BindingTables.
+
+* Added material metadata, extracted from the shaders using SPIRV-cross
+* From material metadata root signatures can be automatically generated
+* From metadata binding tables can be generated and asset resources automatically bound
+* Added use of push constants/root constants support for fast matrix look up in shader
+
+Image showing push constant in place allowing to use a different matrix per object
+![alt text](./images/08_material.png "material")
 
 ***Credits***
 
