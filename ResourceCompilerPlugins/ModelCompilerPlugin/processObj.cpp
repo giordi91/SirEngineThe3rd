@@ -22,8 +22,8 @@
 uint64_t alignSize(const uint64_t sizeInBytes, const uint64_t boundaryInByte,
                    uint64_t &offset) {
   uint64_t modulus = sizeInBytes % boundaryInByte;
-  offset = modulus;
-  return sizeInBytes + modulus;
+  offset = boundaryInByte - modulus;
+  return sizeInBytes + offset;
 }
 
 static const float VERTEX_DELTA = 0.00001f;

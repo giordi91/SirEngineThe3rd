@@ -226,7 +226,7 @@ uint32_t DescriptorHeap::createBufferSRV(
   if (elementSize == 0) {
     srvDesc.Format = DXGI_FORMAT_R32_TYPELESS;
     srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_RAW;
-    srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
+    //srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
     srvDesc.Buffer.StructureByteStride = 0;
     srvDesc.Buffer.FirstElement = elementOffset;
 
@@ -264,9 +264,7 @@ uint32_t DescriptorHeap::createBufferUAV(
   uavDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
   uavDesc.Buffer.FirstElement = 0;
   uavDesc.Buffer.NumElements = numElements;
-  uavDesc.Buffer.StructureByteStride = elementSize;
 
-  uavDesc.Buffer.NumElements = numElements;
   if (elementSize == 0) {
     uavDesc.Format = DXGI_FORMAT_R32_TYPELESS;
     uavDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_RAW;

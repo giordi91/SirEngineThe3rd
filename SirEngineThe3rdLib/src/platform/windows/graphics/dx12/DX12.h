@@ -251,9 +251,12 @@ class Dx12RenderingContext final : public RenderingContext {
   void dispatchCompute(uint32_t blockX, uint32_t blockY,
                        uint32_t blockW) override;
 
-  void renderProceduralIndirect(const BufferHandle &argsBuffer, uint32_t offset = 0) override;
+  void renderProceduralIndirect(const BufferHandle &argsBuffer,
+                                uint32_t offset = 0) override;
 
   void bindSamplers(const RSHandle &rs) override;
+  void setHeaps();
+
  private:
   // member variable mostly temporary
   // CameraBuffer m_camBufferCPU{};
