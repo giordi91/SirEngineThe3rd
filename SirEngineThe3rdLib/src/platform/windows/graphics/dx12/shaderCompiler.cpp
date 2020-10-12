@@ -178,7 +178,6 @@ ShaderCompileResult DXCShaderCompiler::compileShader(const char *shaderPath,
   memcpy(blob->GetBufferPointer(), pResultBlob->GetBufferPointer(),
          pResultBlob->GetBufferSize());
   pResult->Release();
-  pResult->Release();
   pResultBlob->Release();
 
   stringFree(program);
@@ -274,7 +273,6 @@ ShaderCompileResult DXCShaderCompiler::toSpirv(const char *shaderPath,
   assert(SUCCEEDED(hr) && "could not create shader blob");
   memcpy(blob->GetBufferPointer(), pResultBlob->GetBufferPointer(),
          pResultBlob->GetBufferSize());
-  pResult->Release();
   pResult->Release();
   pResultBlob->Release();
 
