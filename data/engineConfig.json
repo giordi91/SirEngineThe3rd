@@ -6,7 +6,7 @@
   "verboseStartup": true,
 
   "======GPU config=====": 0, 
-  "adapterVendor":"Nvidia",
+  "adapterVendor":"AMD",
   "vendorTolerant": true,
   "adapterSelectionRule":"largestFrameBuffer",
 

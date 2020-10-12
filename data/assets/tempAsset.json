@@ -27,7 +27,9 @@
     {
       "mesh": "../data/processed/meshes/knightB/cape.model",
       "material": "../data/materials/knightBCapeForward.json"
-    },
+    }
+  ],
+  "t": [
     {
       "mesh": "../data/processed/meshes/trees/tree01/tree01Leaves.model",
       "material": "../data/materials/tree01LeavesMaterial.json"
@@ -35,9 +37,7 @@
     {
       "mesh": "../data/processed/meshes/trees/tree01/tree01Branches.model",
       "material": "../data/materials/tree01BarkMaterial.json"
-    }
-  ],
-  "t": [
+    },
     {
       "mesh": "../data/processed/meshes/knightB/face.model",
       "material": "../data/materials/knightBFace.json"
