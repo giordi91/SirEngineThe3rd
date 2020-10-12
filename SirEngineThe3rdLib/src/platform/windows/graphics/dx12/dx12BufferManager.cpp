@@ -208,16 +208,25 @@ BufferHandle BufferManagerDx12::allocate(const uint32_t sizeInBytes,
 
 void BufferManagerDx12::createUav(const BufferHandle &buffer,
                                   DescriptorPair &descriptor, const int offset,
-                                  const bool descriptorExits) {
+                                  const bool descriptorExits) const
+{
   assertMagicNumber(buffer);
   const uint32_t index = getIndexFromHandle(buffer);
   const BufferData &data = m_bufferPool.getConstRef(index);
 
   // we need to check what the offset in elements is
   uint32_t elementOffset = offset / data.elementSize;
+  assert(elementOffset == 0 &&
+         "Offset for a raw buffer view has not been tested yet for uav");
 
+  // NOTE: so we force the user to use ByteAddress buffers, that is due to
+  // several reasons but mostly for consistency and avoid madness with the
+  // views. As such we pass a size of zero which will trigger a code path in
+  // createBufferSRV to create a raw view. The type for such view is
+  // R32_Typless, as such we need to pass how many 32 bit elements we have in
+  // the buffer
   dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferUAV(
-      descriptor, data.data, data.elementCount, data.elementSize, elementOffset,
+      descriptor, data.data, data.elementCount, 0, elementOffset,
       descriptorExits);
 }
 
@@ -232,9 +241,15 @@ void BufferManagerDx12::createSrv(const BufferHandle &handle,
   // we need to check what the offset in elements is
   uint32_t elementOffset = offset / data.elementSize;
 
+  // NOTE: so we force the user to use ByteAddress buffers, that is due to
+  // several reasons but mostly for consistency and avoid madness with the
+  // views. As such we pass a size of zero which will trigger a code path in
+  // createBufferSRV to create a raw view. The type for such view is
+  // R32_Typless, as such we need to pass how many 32 bit elements we have in
+  // the buffer
+  uint32_t count = (data.elementSize * data.elementCount) / 4;
   dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferSRV(
-      descriptorPair, data.data, data.elementCount, data.elementSize,
-      elementOffset, descriptorExits);
+      descriptorPair, data.data, count, 0, elementOffset, descriptorExits);
 }
 void BufferManagerDx12::createSrv(const BufferHandle &handle,
                                   DescriptorPair &descriptorPair,
@@ -250,9 +265,10 @@ void BufferManagerDx12::createSrv(const BufferHandle &handle,
   // different SRV out of it, for float4, float2 and so on, so we pass the
   // elementSize from outside if needed, if none is provided (-1) then we simply
   // use the buffer one
-  int elemSize = elementSize == -1 ? data.elementSize : elementSize;
-  int elementOffset = (range.m_offset / elemSize);
-  int elementCount = range.m_size / elemSize;
+  uint32_t elemSize =
+      elementSize == -1 ? data.elementSize : static_cast<uint32_t>(elementSize);
+  uint32_t elementOffset = (range.m_offset / elemSize);
+  uint32_t elementCount = range.m_size / elemSize;
 
   dx12::GLOBAL_CBV_SRV_UAV_HEAP->createBufferSRV(
       descriptorPair, data.data, elementCount, elemSize, elementOffset,

@@ -37,7 +37,7 @@ class BufferManagerDx12 final : public BufferManager {
   void *getMappedData(const BufferHandle handle) const override;
 
   void createUav(const BufferHandle &buffer, DescriptorPair &descriptor,
-                 int offset, bool descriptorExits);
+                 int offset, bool descriptorExits) const;
   void createSrv(const BufferHandle &handle, DescriptorPair &descriptorPair,
                  uint32_t offset = 0, bool descriptorExits = false) const;
   void createSrv(const BufferHandle &handle, DescriptorPair &descriptorPair,

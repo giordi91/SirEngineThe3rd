@@ -12,6 +12,7 @@
 #include "SirEngine/psoManager.h"
 #include "SirEngine/rootSignatureManager.h"
 #include "SirEngine/textureManager.h"
+#include "platform/windows/graphics/dx12/DX12.h"
 
 namespace SirEngine::graphics {
 
