@@ -18,7 +18,6 @@
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/input.h"
 #include "SirEngine/interopData.h"
-#include "SirEngine/io/binaryFile.h"
 #include "SirEngine/io/fileUtils.h"
 #include "SirEngine/log.h"
 #include "SirEngine/psoManager.h"
@@ -193,9 +192,12 @@ bool GraphicsLayer::onResizeEvent(WindowResizeEvent &e) {
   //next we can issue a resize
   const uint32_t w= e.getWidth();
   const uint32_t h = e.getHeight();
-  globals::RENDERING_CONTEXT->resize(w,h);
   globals::RENDERING_GRAPH->onResizeEvent(w,h);
 
+  //now we flush and resset
+  globals::RENDERING_CONTEXT->executeGlobalCommandList();
+  globals::RENDERING_CONTEXT->flush();
+  globals::RENDERING_CONTEXT->resetGlobalCommandList();
 
   return true;
 }

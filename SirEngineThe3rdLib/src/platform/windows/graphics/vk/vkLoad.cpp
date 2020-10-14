@@ -31,7 +31,7 @@ VkBool32 VKAPI_PTR debugCallback(
 
   printf("%s", message);
   if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
-    assert(0 && "validation layer assertion");
+    //assert(0 && "validation layer assertion");
   }
 
   // always need to return false, true is reserved for layer development

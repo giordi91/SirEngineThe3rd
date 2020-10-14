@@ -70,8 +70,8 @@ void SkyBoxPass::compute() {
 }
 
 void SkyBoxPass::onResizeEvent(int, int) {
-  clear();
-  initialize();
+  clearResolutionDepenantResources();
+  clearResolutionDepenantResources();
 }
 
 void SkyBoxPass::populateNodePorts() {

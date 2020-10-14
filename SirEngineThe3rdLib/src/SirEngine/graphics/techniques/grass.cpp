@@ -90,7 +90,7 @@ void GrassTechnique::buildBindingTables() {
       "clearBindingTable");
 }
 
-void GrassTechnique::setup(const uint32_t id) {
+void GrassTechnique::initialize(const uint32_t id) {
   if (id != GRASS_TECHNIQUE_FORWARD) {
     SE_CORE_WARN("Anything other than forward unsupported for grass for now");
     return;
@@ -169,7 +169,6 @@ void GrassTechnique::setup(const uint32_t id) {
     }
   }
 
-
   // load the buffers
   m_tilesPointsHandle = globals::BUFFER_MANAGER->allocate(
       mapper->pointsSizeInByte, pointData, "grassBuffer",
@@ -234,6 +233,8 @@ void GrassTechnique::setup(const uint32_t id) {
                                                      m_grassConfigHandle, 2, 2);
   globals::BINDING_TABLE_MANAGER->bindBuffer(m_scanBindingTable,
                                              m_tilesIndicesHandle, 3, 3);
+
+  initializeResolutionDepenantResources(id);
 }
 
 void GrassTechnique::renderGroundPlane(
@@ -355,10 +356,25 @@ void GrassTechnique::clear(const uint32_t id) {
     m_clearBindingTable = {0};
   }
 
-  //deregister the data for interop
+  clearResolutionDepenantResources(id);
+  // deregister the data for interop
 }
 
 void GrassTechnique::prePassRender(uint32_t) { performCulling(); }
+
+void GrassTechnique::initializeResolutionDepenantResources(const uint32_t id) {
+  if (id != GRASS_TECHNIQUE_FORWARD) {
+    SE_CORE_WARN("Anything other than forward unsupported for grass for now");
+    return;
+  }
+}
+
+void GrassTechnique::clearResolutionDepenantResources(uint32_t id) {
+  if (id != GRASS_TECHNIQUE_FORWARD) {
+    SE_CORE_WARN("Anything other than forward unsupported for grass for now");
+    return;
+  }
+}
 
 void GrassTechnique::performCulling() {
   // here we compute the surviving tiles

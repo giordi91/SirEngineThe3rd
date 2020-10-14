@@ -24,6 +24,8 @@ class ForwardPlus final : public GNode {
   void populateNodePorts() override;
   void clear() override;
 
+  void initializeResolutionDepenantResources() override;
+  void clearResolutionDepenantResources() override;
  private:
   TextureHandle m_rtHandle{};
   TextureHandle m_depthHandle{};

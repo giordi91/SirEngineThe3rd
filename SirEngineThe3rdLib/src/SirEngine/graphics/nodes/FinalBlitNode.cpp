@@ -95,6 +95,7 @@ void FinalBlitNode::clear() {
   }
   if (m_bindHandle.isHandleValid()) {
     globals::RENDERING_CONTEXT->freeBindingObject(m_bindHandle);
+    m_bindHandle= {};
   }
 }
 }  // namespace SirEngine

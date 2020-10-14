@@ -424,6 +424,7 @@ bool VkRenderingContext::newFrame() {
                           VK_PIPELINE_BIND_POINT_GRAPHICS,
                           vk::ENGINE_PIPELINE_LAYOUT, 0, 2, sets, 0, nullptr);
 
+  //TODO clean this up
   static float angle = 0.0f;
   angle += 0.01;
   glm::mat4 m[32];
