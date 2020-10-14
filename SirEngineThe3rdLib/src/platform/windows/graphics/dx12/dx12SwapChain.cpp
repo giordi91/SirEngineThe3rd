@@ -67,8 +67,8 @@ bool Dx12SwapChain::resize(FrameCommand *command, const int width,
                        const int height) {
 
   // Flush before changing any resources.
-  flushCommandQueue(GLOBAL_COMMAND_QUEUE);
-  resetCommandList(command);
+  //flushCommandQueue(GLOBAL_COMMAND_QUEUE);
+  //resetCommandList(command);
 
   if (m_isInit) {
     for (int i = 0; i < FRAME_BUFFERS_COUNT; ++i) {
@@ -117,11 +117,11 @@ bool Dx12SwapChain::resize(FrameCommand *command, const int width,
   //    m_swapChainDepth, D3D12_RESOURCE_STATE_DEPTH_WRITE, barrier, 0);
   //command->commandList->ResourceBarrier(1, barrier);
 
-  // Execute the resize commands.
-  executeCommandList(GLOBAL_COMMAND_QUEUE, command);
+  //// Execute the resize commands.
+  //executeCommandList(GLOBAL_COMMAND_QUEUE, command);
 
-  // Wait until resize is complete.
-  flushCommandQueue(GLOBAL_COMMAND_QUEUE);
+  //// Wait until resize is complete.
+  //flushCommandQueue(GLOBAL_COMMAND_QUEUE);
 
   // Update the viewport transform to cover the client area.
   m_screenViewport.TopLeftX = 0;

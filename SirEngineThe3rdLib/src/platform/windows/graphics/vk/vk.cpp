@@ -293,6 +293,10 @@ bool VkRenderingContext::initializeGraphics() {
       sizeof(FrameData),
       ConstantBufferManager::CONSTANT_BUFFER_FLAG_BITS::UPDATED_EVERY_FRAME,
       nullptr);
+
+
+  //putting command list in a ready to go status
+  resetGlobalCommandList();
   return true;
 }
 

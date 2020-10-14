@@ -1,5 +1,6 @@
 #pragma once
 #include "SirEngine/core.h"
+
 namespace SirEngine {
 
 template <typename T>
@@ -50,8 +51,7 @@ struct BufferHandle final {
   [[nodiscard]] bool isHandleValid() const { return handle != 0; }
 };
 
-struct BindingTableHandle
-{
+struct BindingTableHandle {
   uint32_t handle;
   [[nodiscard]] bool isHandleValid() const { return handle != 0; }
 };
@@ -91,10 +91,14 @@ struct BufferBindingsHandle {
   [[nodiscard]] bool isHandleValid() const { return handle != 0; }
 };
 
-struct GPUSlabAllocationHandle{
+struct GPUSlabAllocationHandle {
   uint32_t handle;
   [[nodiscard]] bool isHandleValid() const { return handle != 0; }
 };
 
+struct CommandBufferHandle {
+  uint32_t handle;
+  [[nodiscard]] bool isHandleValid() const { return handle != 0; }
+};
 
 }  // namespace SirEngine

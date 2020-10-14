@@ -273,6 +273,7 @@ bool Dx12RenderingContext::initializeGraphicsDx12(BaseWindow *wnd,
     dx12::SWAP_CHAIN = new dx12::Dx12SwapChain();
     dx12::SWAP_CHAIN->initialize(handle, width, height);
     dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
+    resetCommandList(&dx12::CURRENT_FRAME_RESOURCE->fc);
     dx12::SWAP_CHAIN->resize(&dx12::CURRENT_FRAME_RESOURCE->fc, width, height);
   } else {
     SE_CORE_INFO("Requested HEADLESS client, no swapchain is initialized");
@@ -345,6 +346,16 @@ bool endHeadlessWorkDx12() {
   return true;
 }
 
+HRESULT resetCommandList(FrameCommand* command)
+{
+	assert(!command->isListOpen);
+	HRESULT res = command->commandList->Reset(command->commandAllocator, nullptr);
+	assert(SUCCEEDED(res));
+	command->isListOpen = true;
+    dx12::RENDERING_CONTEXT->setHeaps();
+	return res;
+}
+
 bool shutdownGraphicsDx12() {
   flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
 
@@ -361,7 +372,6 @@ bool stopGraphicsDx12() {
   flushCommandQueue(GLOBAL_COMMAND_QUEUE);
   return true;
 }
-bool newFrameDx12() { return true; }
 bool dispatchFrameDx12() {
   D3D12_RESOURCE_BARRIER rtbarrier[1];
   // finally transition the resource to be present
@@ -613,8 +623,10 @@ void Dx12RenderingContext::renderQueueType(
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   ID3D12GraphicsCommandList2 *commandList = currentFc->commandList;
 
+
   setViewportAndScissor(0, 0, static_cast<float>(config.width),
                         static_cast<float>(config.height), 0, 1);
+  setHeaps();
 
   UINT counter = 0;
   for (const auto &renderableList : typedQueues) {
@@ -830,7 +842,6 @@ void Dx12RenderingContext::renderProcedural(const uint32_t indexCount) {
 
 void Dx12RenderingContext::bindCameraBuffer(RSHandle rs,
                                             const bool isCompute) const {
-
   globals::BINDING_TABLE_MANAGER->bindConstantBuffer(m_frameBindingHandle,
                                                      m_cameraHandle, 0, 0);
   globals::BINDING_TABLE_MANAGER->bindBuffer(
@@ -844,7 +855,7 @@ void Dx12RenderingContext::dispatchCompute(const uint32_t blockX,
                                            const uint32_t blockY,
                                            const uint32_t blockZ) {
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
-  auto* commandList = currentFc->commandList;
+  auto *commandList = currentFc->commandList;
   commandList->Dispatch(blockX, blockY, blockZ);
 }
 
@@ -929,18 +940,19 @@ bool Dx12RenderingContext::newFrame() {
 
   return true;
 }
-void Dx12RenderingContext::setHeaps()
-{
+void Dx12RenderingContext::setHeaps() {
   ID3D12DescriptorHeap *heaps[2] = {GLOBAL_CBV_SRV_UAV_HEAP->getResource(),
                                     GLOBAL_SAMPLER_HEAP->getResource()};
   auto *commandList = dx12::CURRENT_FRAME_RESOURCE->fc.commandList;
   commandList->SetDescriptorHeaps(2, heaps);
-	
 }
 
 bool Dx12RenderingContext::dispatchFrame() { return dispatchFrameDx12(); }
 
 bool Dx12RenderingContext::resize(const uint32_t width, const uint32_t height) {
+  executeGlobalCommandList();
+  flushCommandQueue(GLOBAL_COMMAND_QUEUE);
+  resetGlobalCommandList();
   return dx12::SWAP_CHAIN->resize(&dx12::CURRENT_FRAME_RESOURCE->fc, width,
                                   height);
 }
@@ -961,5 +973,6 @@ void Dx12RenderingContext::executeGlobalCommandList() {
 void Dx12RenderingContext::resetGlobalCommandList() {
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   resetAllocatorAndList(currentFc);
+  setHeaps();
 }
 }  // namespace SirEngine::dx12

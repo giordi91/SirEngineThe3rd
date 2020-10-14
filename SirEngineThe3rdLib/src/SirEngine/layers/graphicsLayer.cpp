@@ -48,6 +48,8 @@ void GraphicsLayer::onAttach() {
   globals::DEBUG_CAMERA->setPosition(0, 15, 15);
   globals::DEBUG_CAMERA->updateCamera();
 
+
+  globals::RENDERING_CONTEXT->executeGlobalCommandList();
   globals::RENDERING_CONTEXT->flush();
   globals::RENDERING_CONTEXT->resetGlobalCommandList();
   // globals::ASSET_MANAGER->loadScene(globals::ENGINE_CONFIG->m_startScenePath);

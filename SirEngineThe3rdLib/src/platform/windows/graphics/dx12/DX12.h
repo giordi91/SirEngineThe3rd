@@ -65,13 +65,7 @@ struct FrameResource final {
   UINT64 fence = 0;
 };
 
-inline HRESULT resetCommandList(FrameCommand *command) {
-  assert(!command->isListOpen);
-  HRESULT res = command->commandList->Reset(command->commandAllocator, nullptr);
-  assert(SUCCEEDED(res));
-  command->isListOpen = true;
-  return res;
-}
+inline HRESULT resetCommandList(FrameCommand* command);
 
 // should be used only at the beginning of the frame
 inline HRESULT resetAllocatorAndList(FrameCommand *command) {
@@ -255,7 +249,7 @@ class Dx12RenderingContext final : public RenderingContext {
                                 uint32_t offset = 0) override;
 
   void bindSamplers(const RSHandle &rs) override;
-  void setHeaps();
+  static void setHeaps();
 
  private:
   // member variable mostly temporary
