@@ -13,10 +13,12 @@ class GrassTechnique final : public GNodeCallback {
  public:
   GrassTechnique() = default;
   virtual ~GrassTechnique() = default;
-  void setup(uint32_t id) override;
+  void initialize(uint32_t id) override;
   void passRender(uint32_t id, BindingTableHandle passHandle) override;
   void clear(uint32_t id) override;
   void prePassRender(uint32_t id) override;
+  void initializeResolutionDepenantResources(uint32_t id) override;
+  void clearResolutionDepenantResources(uint32_t id) override;
 
  public:
   static constexpr uint32_t GRASS_TECHNIQUE_FORWARD = 1;
@@ -36,7 +38,7 @@ class GrassTechnique final : public GNodeCallback {
   BufferHandle m_tilesPointsHandle{};
   BufferHandle m_tilesIndicesHandle{};
   ConstantBufferHandle m_grassConfigHandle{};
-  BindingTableHandle m_bindingTable[4]={};
+  BindingTableHandle m_bindingTable[4] = {};
   BindingTableHandle m_groundBindingTable{};
 
   TextureHandle m_windTexture{};

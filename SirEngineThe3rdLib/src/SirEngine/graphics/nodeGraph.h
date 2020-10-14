@@ -22,7 +22,7 @@ struct GraphAllocators {
   ThreeSizesPool *allocator = nullptr;
 };
 
-//forward declaring the node such that we can use it for defining the plug
+// forward declaring the node such that we can use it for defining the plug
 class GNode;
 struct GPlug final {
   GNode *nodePtr = nullptr;
@@ -34,10 +34,12 @@ struct GPlug final {
 class GNodeCallback {
  public:
   virtual ~GNodeCallback() = default;
-  virtual void setup(uint32_t id) = 0;
+  virtual void initialize(uint32_t id) = 0;
+  virtual void initializeResolutionDepenantResources(uint32_t id) = 0;
   virtual void prePassRender(uint32_t id) = 0;
   virtual void passRender(uint32_t id, BindingTableHandle passTable) = 0;
   virtual void clear(uint32_t id) = 0;
+  virtual void clearResolutionDepenantResources(uint32_t id) = 0;
 };
 
 // TODO make node not copyable assignable
@@ -63,9 +65,11 @@ class SIR_ENGINE_API GNode {
   inline int getGeneration() const { return m_generation; }
 
   virtual void compute() {}
-  virtual void initialize(){};
-  virtual void clear() { m_generation = -1; };
-  virtual void populateNodePorts(){};
+  virtual void initialize() {}
+  virtual void initializeResolutionDepenantResources() {}
+  virtual void clearResolutionDepenantResources() {}
+  virtual void clear() { m_generation = -1; }
+  virtual void populateNodePorts() {}
 
   // un-named parameters are screenWidth and screenHeight
   // removing the names just to avoid huge spam;
@@ -296,7 +300,6 @@ class SIR_ENGINE_API DependencyGraph final {
     for (int i = 0; i < count; ++i) {
       m_linearizedGraph[i]->populateNodePorts();
     }
-	
   };
 
  private:
