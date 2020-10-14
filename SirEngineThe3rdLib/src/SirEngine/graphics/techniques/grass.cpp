@@ -169,15 +169,6 @@ void GrassTechnique::setup(const uint32_t id) {
     }
   }
 
-  // load the textures
-  m_windTexture = globals::TEXTURE_MANAGER->loadTexture(
-      "../data/processed/textures/grass/wind.texture");
-
-  m_albedoTexture = globals::TEXTURE_MANAGER->loadTexture(
-      "../data/processed/textures/grass/grassAlbedo.texture");
-
-  m_groundAlbedoTexture = globals::TEXTURE_MANAGER->loadTexture(
-      "../data/processed/textures/grass/grassGround.texture");
 
   // load the buffers
   m_tilesPointsHandle = globals::BUFFER_MANAGER->allocate(
@@ -224,6 +215,15 @@ void GrassTechnique::setup(const uint32_t id) {
         BufferManager::BUFFER_FLAGS_BITS::GPU_ONLY |
             BufferManager::BUFFER_FLAGS_BITS::STORAGE_BUFFER);
   }
+  // load the textures
+  m_windTexture = globals::TEXTURE_MANAGER->loadTexture(
+      "../data/processed/textures/grass/wind.texture");
+
+  m_albedoTexture = globals::TEXTURE_MANAGER->loadTexture(
+      "../data/processed/textures/grass/grassAlbedo.texture");
+
+  m_groundAlbedoTexture = globals::TEXTURE_MANAGER->loadTexture(
+      "../data/processed/textures/grass/grassGround.texture");
 
   // binding
   globals::BINDING_TABLE_MANAGER->bindBuffer(m_scanBindingTable,
@@ -354,6 +354,8 @@ void GrassTechnique::clear(const uint32_t id) {
     globals::BINDING_TABLE_MANAGER->free(m_clearBindingTable);
     m_clearBindingTable = {0};
   }
+
+  //deregister the data for interop
 }
 
 void GrassTechnique::prePassRender(uint32_t) { performCulling(); }

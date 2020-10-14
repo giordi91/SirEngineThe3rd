@@ -293,6 +293,10 @@ class SIR_ENGINE_API DependencyGraph final {
     for (int i = 0; i < count; ++i) {
       m_linearizedGraph[i]->onResizeEvent(screenWidth, screenHeight);
     }
+    for (int i = 0; i < count; ++i) {
+      m_linearizedGraph[i]->populateNodePorts();
+    }
+	
   };
 
  private:
