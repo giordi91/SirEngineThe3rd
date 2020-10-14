@@ -8,7 +8,7 @@ class InteropData {
  public:
   InteropData() : m_data(RESERVE_SIZE){};
   void registerData(const char* key, void* data) {
-    assert(!m_data.containsKey(key));
+    //assert(!m_data.containsKey(key));
     m_data.insert(key, data);
   }
 

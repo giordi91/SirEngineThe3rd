@@ -74,6 +74,13 @@ void Application::run() {
     ++globals::TOTAL_NUMBER_OF_FRAMES;
     m_window->onUpdate();
     globals::RENDERING_CONTEXT->newFrame();
+    EventQueue *currentQueue = m_queuedEndOfFrameEventsCurrent;
+    flipEndOfFrameQueue();
+    for (uint32_t i = 0; i < currentQueue->allocCount; ++i) {
+      onEvent(*(currentQueue->events[i]));
+      delete currentQueue->events[i];
+    }
+    currentQueue->allocCount = 0;
 
     const int count = m_layerStack.count();
     Layer **layers = m_layerStack.begin();
@@ -84,13 +91,6 @@ void Application::run() {
     // update input to cache current input for next frame
     globals::INPUT->swapFrameKey();
 
-    EventQueue *currentQueue = m_queuedEndOfFrameEventsCurrent;
-    flipEndOfFrameQueue();
-    for (uint32_t i = 0; i < currentQueue->allocCount; ++i) {
-      onEvent(*(currentQueue->events[i]));
-      delete currentQueue->events[i];
-    }
-    currentQueue->allocCount = 0;
   }
 
   // lets make sure any graphics operation are done

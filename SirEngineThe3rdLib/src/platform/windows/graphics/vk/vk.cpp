@@ -340,11 +340,12 @@ void VkRenderingContext::bindCameraBuffer(const RSHandle rs,
 
   VkDescriptorSet sets[] = {
       descriptorSet,
+STATIC_SAMPLERS_DESCRIPTOR_SET
   };
   auto bindPoint = isCompute ? VK_PIPELINE_BIND_POINT_COMPUTE
                              : VK_PIPELINE_BIND_POINT_GRAPHICS;
   vkCmdBindDescriptorSets(CURRENT_FRAME_COMMAND->m_commandBuffer, bindPoint,
-                          layout, PSOManager::PER_FRAME_DATA_BINDING_INDEX, 1,
+                          layout, PSOManager::PER_FRAME_DATA_BINDING_INDEX, 2,
                           sets, 0, nullptr);
 }
 

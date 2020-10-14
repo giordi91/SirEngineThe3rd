@@ -2,8 +2,6 @@
 
 #include "SirEngine/application.h"
 #include "SirEngine/assetManager.h"
-#include "SirEngine/io/binaryFile.h"
-#include "SirEngine/io/fileUtils.h"
 #include "SirEngine/constantBufferManager.h"
 #include "SirEngine/events/keyboardEvent.h"
 #include "SirEngine/events/mouseEvent.h"
@@ -20,18 +18,18 @@
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/input.h"
 #include "SirEngine/interopData.h"
+#include "SirEngine/io/binaryFile.h"
+#include "SirEngine/io/fileUtils.h"
 #include "SirEngine/log.h"
 #include "SirEngine/psoManager.h"
 
 namespace SirEngine {
 
-
 void GraphicsLayer::onAttach() {
   globals::MAIN_CAMERA = new Camera3DPivot();
   globals::DEBUG_CAMERA = new Camera3DPivot();
   globals::ACTIVE_CAMERA = globals::MAIN_CAMERA;
-  // globals::MAIN_CAMERA->setLookAt(0, 125, 0);
-  // globals::MAIN_CAMERA->setPosition(00, 125, 60);
+
   // camera in dx12 has negate panX and rotateX, unsure why, might be because
   // vulkan has the negative viewport?
   float negate =
@@ -55,7 +53,6 @@ void GraphicsLayer::onAttach() {
   globals::RENDERING_CONTEXT->resetGlobalCommandList();
   // globals::ASSET_MANAGER->loadScene(globals::ENGINE_CONFIG->m_startScenePath);
   globals::ASSET_MANAGER->loadScene("../data/scenes/tempScene.json");
-
 
   alloc =
       new GraphAllocators{globals::STRING_POOL, globals::PERSISTENT_ALLOCATOR};
@@ -122,7 +119,6 @@ void GraphicsLayer::onUpdate() {
   globals::RENDERING_GRAPH->compute();
 }
 
-
 #define SE_BIND_EVENT_FN(fn) std::bind(&fn, this, std::placeholders::_1)
 void GraphicsLayer::onEvent(Event &event) {
   EventDispatcher dispatcher(event);
@@ -173,9 +169,7 @@ bool GraphicsLayer::onMouseButtonReleaseEvent(MouseButtonReleaseEvent &e) {
   return false;
 }
 
-bool GraphicsLayer::onMouseMoveEvent(MouseMoveEvent &) {
-  return true;
-}
+bool GraphicsLayer::onMouseMoveEvent(MouseMoveEvent &) { return true; }
 
 bool GraphicsLayer::onKeyboardReleaseEvent(KeyboardReleaseEvent &e) {
   // TODO use keycodes
@@ -192,11 +186,16 @@ bool GraphicsLayer::onKeyboardReleaseEvent(KeyboardReleaseEvent &e) {
   return false;
 }
 
-bool GraphicsLayer::onResizeEvent(WindowResizeEvent &) {
-  // need to recreate the frame buffer, this is temporary
-  // TODO re-add resizing
-  // createRenderTargetAndFrameBuffer(globals::ENGINE_CONFIG->m_windowWidth,
-  //                                 globals::ENGINE_CONFIG->m_windowHeight);
+bool GraphicsLayer::onResizeEvent(WindowResizeEvent &e) {
+  //First we flush to make sure there are no inflight frames
+  globals::RENDERING_CONTEXT->flush();
+
+  //next we can issue a resize
+  const uint32_t w= e.getWidth();
+  const uint32_t h = e.getHeight();
+  globals::RENDERING_CONTEXT->resize(w,h);
+  globals::RENDERING_GRAPH->onResizeEvent(w,h);
+
 
   return true;
 }
