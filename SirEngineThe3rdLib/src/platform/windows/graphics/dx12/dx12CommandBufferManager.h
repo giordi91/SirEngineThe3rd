@@ -1,30 +1,37 @@
 #pragma once
 
-#include <vulkan/vulkan_core.h>
+#include <assert.h>
+#include <d3d12.h>
 
 #include "SirEngine/graphics/commandBufferManager.h"
 #include "SirEngine/memory/cpu/SparseMemoryPool.h"
 
-namespace SirEngine::vk {
+namespace SirEngine::dx12 {
 
-class VkCommandBufferManager final : public CommandBufferManager {
+class Dx12CommandBufferManager final : public CommandBufferManager {
   static constexpr uint32_t RESERVE_SIZE = 50;
 
  public:
-  struct VkCommandBufferData {
-    VkCommandPool pool;
-    VkCommandBuffer buffer;
+  struct Dx12CommandBufferData {
+    ID3D12CommandAllocator *commandAllocator = nullptr;
+#if DXR_ENABLED
+    ID3D12GraphicsCommandList4 *commandList = nullptr;
+#else
+    ID3D12GraphicsCommandList2 *commandList = nullptr;
+#endif
     COMMAND_BUFFER_ALLOCATION_FLAGS flags;
     uint32_t version;
+    bool isListOpen = false;
   };
 
  public:
-  VkCommandBufferManager()
+  Dx12CommandBufferManager()
       : CommandBufferManager(), m_bufferPool(RESERVE_SIZE) {}
-  ~VkCommandBufferManager() override = default;
+  ~Dx12CommandBufferManager() override = default;
 
-  VkCommandBufferManager(const VkCommandBufferManager &) = delete;
-  VkCommandBufferManager &operator=(const VkCommandBufferManager &) = delete;
+  Dx12CommandBufferManager(const Dx12CommandBufferManager &) = delete;
+  Dx12CommandBufferManager &operator=(const Dx12CommandBufferManager &) =
+      delete;
 
   void initialize() override {}
   void cleanup() override {}
@@ -40,21 +47,14 @@ class VkCommandBufferManager final : public CommandBufferManager {
   // land might be beneficial to extract the buffer once and do operation on it
   // rather than wrap every single function ,should be faster and less code foot
   // print
-  [[nodiscard]] const VkCommandBufferData &getData(
+  [[nodiscard]] const Dx12CommandBufferData &getData(
       const CommandBufferHandle handle) const {
     assertVersion(handle);
     const uint32_t idx = getIndexFromHandle(handle);
     return m_bufferPool.getConstRef(idx);
   }
 
-  // TODO this is temporary need some rework once we go MT
-  bool executeBufferEndOfFrame(const CommandBufferHandle handle,
-                               const VkSemaphore acquireSemaphore,
-                               const VkSemaphore renderSemaphore,
-                               VkFence fence);
-
  private:
-
   inline void assertVersion(const CommandBufferHandle handle) const {
     const uint32_t magic = getMagicFromHandle(handle);
     const uint32_t idx = getIndexFromHandle(handle);
@@ -62,10 +62,8 @@ class VkCommandBufferManager final : public CommandBufferManager {
     assert(ref.version == magic && "invalid magic handle for command buffer");
   }
 
-
  private:
-  SparseMemoryPool<VkCommandBufferData> m_bufferPool;
+  SparseMemoryPool<Dx12CommandBufferData> m_bufferPool;
   uint32_t m_versionCounter = 1;
 };
-
-}  // namespace SirEngine::vk
+}  // namespace SirEngine::dx12

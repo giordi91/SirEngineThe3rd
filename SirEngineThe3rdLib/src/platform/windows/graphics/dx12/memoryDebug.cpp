@@ -1,13 +1,16 @@
 #include "platform/windows/graphics/dx12/memoryDebug.h"
-#include "SirEngine/log.h"
-#include "platform/windows/graphics/dx12/DX12.h"
-#include "platform/windows/graphics/dx12/dx12Adapter.h"
-#include "platform/windows/graphics/dx12/descriptorHeap.h"
+
 #include <imgui/imgui.h>
+
 #include <iomanip>
 #include <sstream>
-namespace SirEngine {
-namespace dx12 {
+
+#include "SirEngine/log.h"
+#include "platform/windows/graphics/dx12/DX12.h"
+#include "platform/windows/graphics/dx12/descriptorHeap.h"
+#include "platform/windows/graphics/dx12/dx12Adapter.h"
+
+namespace SirEngine::dx12 {
 uint32_t getTotalGpuMemoryMB() {
   DXGI_ADAPTER_DESC desc;
   assert(SUCCEEDED(ADAPTER->GetDesc(&desc)));
@@ -17,8 +20,8 @@ uint32_t getTotalGpuMemoryMB() {
 uint32_t getUsedGpuMemoryMB() {
   // get GPU memory
   DXGI_QUERY_VIDEO_MEMORY_INFO info = {};
-  dx12::ADAPTER->QueryVideoMemoryInfo(
-      0, DXGI_MEMORY_SEGMENT_GROUP_LOCAL, &info);
+  dx12::ADAPTER->QueryVideoMemoryInfo(0, DXGI_MEMORY_SEGMENT_GROUP_LOCAL,
+                                      &info);
   return static_cast<uint32_t>(info.CurrentUsage * 1e-6f);
 }
 
@@ -31,8 +34,8 @@ void renderImGuiMemoryWidget() {
   uint32_t totalMemory = getTotalGpuMemoryMB();
   uint32_t usedMemory = getUsedGpuMemoryMB();
 
-  float totalGPUMemMB = static_cast<float>(totalMemory) ;
-  float usedGPUMemInMB = static_cast<float>(usedMemory) ;
+  float totalGPUMemMB = static_cast<float>(totalMemory);
+  float usedGPUMemInMB = static_cast<float>(usedMemory);
   float ratio = usedGPUMemInMB / totalGPUMemMB;
 
   std::string overlay = std::to_string(ratio * 100.0f) + "%";
@@ -110,5 +113,4 @@ void renderImGuiMemoryWidget() {
   ImGui::ProgressBar(heapRatio, ImVec2(0.f, 0.f), overlayHeap.c_str());
   ImGui::PopItemWidth();
 }
-} // namespace dx12
-} // namespace SirEngine
+}  // namespace SirEngine::dx12

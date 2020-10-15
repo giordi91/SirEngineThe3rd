@@ -19,7 +19,6 @@ class CommandBufferManager {
   virtual void executeBuffer(CommandBufferHandle handle) = 0;
   virtual void freeBuffer(CommandBufferHandle handle) = 0;
   virtual void resetBufferHandle(CommandBufferHandle handle) = 0;
-  virtual void flush(CommandBufferHandle handle) = 0;
   virtual void executeFlushAndReset(CommandBufferHandle handle) = 0;
 };
 

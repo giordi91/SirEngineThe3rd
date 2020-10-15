@@ -18,6 +18,7 @@
 #include "SirEngine/runtimeString.h"
 #include "SirEngine/skinClusterManager.h"
 #include "dx12BindingTableManager.h"
+#include "dx12CommandBufferManager.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/dx12Adapter.h"
 #include "platform/windows/graphics/dx12/dx12BufferManager.h"
@@ -59,8 +60,8 @@ Dx12PSOManager *PSO_MANAGER = nullptr;
 Dx12RootSignatureManager *ROOT_SIGNATURE_MANAGER = nullptr;
 BufferManagerDx12 *BUFFER_MANAGER = nullptr;
 Dx12DebugRenderer *DEBUG_RENDERER = nullptr;
-Dx12RenderingContext *RENDERING_CONTEXT = nullptr;
 Dx12BindingTableManager *BINDING_TABLE_MANAGER = nullptr;
+Dx12CommandBufferManager *COMMAND_BUFFER_MANAGER = nullptr;
 
 struct Dx12Renderable {
   MeshHandle m_meshHandle;
@@ -69,19 +70,6 @@ struct Dx12Renderable {
 
 typedef std::unordered_map<uint64_t, std::vector<Renderable>>
     Dx12RenderingQueues;
-
-void createFrameCommand(FrameCommand *fc) {
-  auto result = DEVICE->CreateCommandAllocator(
-      D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&fc->commandAllocator));
-  assert(SUCCEEDED(result));
-
-  result = DEVICE->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT,
-                                     fc->commandAllocator, nullptr,
-                                     IID_PPV_ARGS(&fc->commandList));
-  assert(SUCCEEDED(result));
-  fc->commandList->Close();
-  fc->isListOpen = false;
-}
 
 void allocateSamplers() {
   auto samplers = getSamplers();
@@ -169,6 +157,10 @@ bool Dx12RenderingContext::initializeGraphicsDx12(BaseWindow *wnd,
     return false;
   }
 
+  COMMAND_BUFFER_MANAGER = new Dx12CommandBufferManager();
+  COMMAND_BUFFER_MANAGER->initialize();
+  globals::COMMAND_BUFFER_MANAGER = COMMAND_BUFFER_MANAGER;
+
   // creating global heaps
   GLOBAL_CBV_SRV_UAV_HEAP = new DescriptorHeap();
   GLOBAL_CBV_SRV_UAV_HEAP->initializeAsCBVSRVUAV(1000);
@@ -185,7 +177,18 @@ bool Dx12RenderingContext::initializeGraphicsDx12(BaseWindow *wnd,
   allocateSamplers();
 
   for (int i = 0; i < FRAME_BUFFERS_COUNT; ++i) {
-    createFrameCommand(&FRAME_RESOURCES[i].fc);
+    assert(i < 9);
+    char idx[1] = {static_cast<char>(i)};
+    auto &fc = FRAME_RESOURCES[i].fc;
+    fc.handle = COMMAND_BUFFER_MANAGER->createBuffer(
+        CommandBufferManager::COMMAND_BUFFER_ALLOCATION_NONE,
+        frameConcatenation("swapChain", idx));
+    const auto &data = COMMAND_BUFFER_MANAGER->getData(fc.handle);
+
+    fc.commandAllocator = data.commandAllocator;
+    fc.commandList = data.commandList;
+    fc.isListOpen = data.isListOpen;
+    // createFrameCommand(&FRAME_RESOURCES[i].fc);
   }
 
   CURRENT_FRAME_RESOURCE = &FRAME_RESOURCES[0];
@@ -272,12 +275,14 @@ bool Dx12RenderingContext::initializeGraphicsDx12(BaseWindow *wnd,
 
     dx12::SWAP_CHAIN = new dx12::Dx12SwapChain();
     dx12::SWAP_CHAIN->initialize(handle, width, height);
-    dx12::flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
-    resetCommandList(&dx12::CURRENT_FRAME_RESOURCE->fc);
+
+    COMMAND_BUFFER_MANAGER->resetBufferHandle(
+        dx12::CURRENT_FRAME_RESOURCE->fc.handle);
     dx12::SWAP_CHAIN->resize(&dx12::CURRENT_FRAME_RESOURCE->fc, width, height);
   } else {
     SE_CORE_INFO("Requested HEADLESS client, no swapchain is initialized");
   }
+
   // create the draw indirect commands
   D3D12_INDIRECT_ARGUMENT_DESC Args[1];
   Args[0].Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW;
@@ -304,7 +309,6 @@ bool Dx12RenderingContext::initializeGraphicsDx12(BaseWindow *wnd,
   }
   return true;
 }
-void flushDx12() { flushCommandQueue(GLOBAL_COMMAND_QUEUE); }
 
 bool beginHeadlessWorkDx12() {
   // here we need to check which frame resource we are going to use
@@ -324,7 +328,7 @@ bool beginHeadlessWorkDx12() {
     CloseHandle(eventHandle);
   }
   // at this point we know we are ready to go
-  resetAllocatorAndList(&dx12::CURRENT_FRAME_RESOURCE->fc);
+  COMMAND_BUFFER_MANAGER->resetBufferHandle(CURRENT_FRAME_RESOURCE->fc.handle);
   // Indicate a state transition on the resource usage.
   auto *commandList = dx12::CURRENT_FRAME_RESOURCE->fc.commandList;
 
@@ -335,29 +339,48 @@ bool beginHeadlessWorkDx12() {
 }
 
 bool endHeadlessWorkDx12() {
-  // Done recording commands.
-  dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE,
-                           &dx12::CURRENT_FRAME_RESOURCE->fc);
+  assert(0);
+  /*
+// Done recording commands.
+dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE,
+                         &dx12::CURRENT_FRAME_RESOURCE->fc);
 
-  dx12::CURRENT_FRAME_RESOURCE->fence = ++dx12::CURRENT_FENCE;
-  dx12::GLOBAL_COMMAND_QUEUE->Signal(dx12::GLOBAL_FENCE, dx12::CURRENT_FENCE);
-  // bump the frame
-  globals::CURRENT_FRAME = (globals::CURRENT_FRAME + 1) % FRAME_BUFFERS_COUNT;
+dx12::CURRENT_FRAME_RESOURCE->fence = ++dx12::CURRENT_FENCE;
+dx12::GLOBAL_COMMAND_QUEUE->Signal(dx12::GLOBAL_FENCE, dx12::CURRENT_FENCE);
+// bump the frame
+globals::CURRENT_FRAME = (globals::CURRENT_FRAME + 1) % FRAME_BUFFERS_COUNT;
+*/
   return true;
 }
 
-HRESULT resetCommandList(FrameCommand* command)
-{
-	assert(!command->isListOpen);
-	HRESULT res = command->commandList->Reset(command->commandAllocator, nullptr);
-	assert(SUCCEEDED(res));
-	command->isListOpen = true;
-    dx12::RENDERING_CONTEXT->setHeaps();
-	return res;
+
+void flushCommandQueue(ID3D12CommandQueue *queue) {
+  // Advance the fence value to mark commands up to this fence point.
+  CURRENT_FENCE++;
+
+  // Add an instruction to the command queue to set a new fence point. Because
+  // we are on the GPU time line, the new fence point won't be set until the
+  // GPU finishes processing all the commands prior to this Signal().
+  HRESULT res = queue->Signal(GLOBAL_FENCE, CURRENT_FENCE);
+  assert(SUCCEEDED(res));
+  auto id = GLOBAL_FENCE->GetCompletedValue();
+  // Wait until the GPU has completed commands up to this fence point.
+  if (id < CURRENT_FENCE) {
+    HANDLE eventHandle =
+        CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
+
+    // Fire event when GPU hits current fence.
+    res = GLOBAL_FENCE->SetEventOnCompletion(CURRENT_FENCE, eventHandle);
+    assert(SUCCEEDED(res));
+
+    // Wait until the GPU hits current fence event is fired.
+    WaitForSingleObject(eventHandle, INFINITE);
+    CloseHandle(eventHandle);
+  }
 }
 
 bool shutdownGraphicsDx12() {
-  flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);
+  globals::RENDERING_CONTEXT->flush();
 
   // free the swapchain
   delete SWAP_CHAIN;
@@ -369,7 +392,7 @@ bool shutdownGraphicsDx12() {
 }
 
 bool stopGraphicsDx12() {
-  flushCommandQueue(GLOBAL_COMMAND_QUEUE);
+  globals::RENDERING_CONTEXT->flush();
   return true;
 }
 bool dispatchFrameDx12() {
@@ -385,8 +408,10 @@ bool dispatchFrameDx12() {
   }
 
   // Done recording commands.
-  dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE,
-                           &dx12::CURRENT_FRAME_RESOURCE->fc);
+  COMMAND_BUFFER_MANAGER->executeBuffer(
+      dx12::CURRENT_FRAME_RESOURCE->fc.handle);
+  // dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE,
+  //                         &dx12::CURRENT_FRAME_RESOURCE->fc);
 
   dx12::CURRENT_FRAME_RESOURCE->fence = ++dx12::CURRENT_FENCE;
   dx12::GLOBAL_COMMAND_QUEUE->Signal(dx12::GLOBAL_FENCE, dx12::CURRENT_FENCE);
@@ -404,7 +429,6 @@ RenderingContext *createDx12RenderingContext(
     const RenderingContextCreationSettings &settings, uint32_t width,
     uint32_t height) {
   auto *ctx = new Dx12RenderingContext(settings, width, height);
-  dx12::RENDERING_CONTEXT = ctx;
   return ctx;
 }
 
@@ -622,7 +646,6 @@ void Dx12RenderingContext::renderQueueType(
 
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
   ID3D12GraphicsCommandList2 *commandList = currentFc->commandList;
-
 
   setViewportAndScissor(0, 0, static_cast<float>(config.width),
                         static_cast<float>(config.height), 0, 1);
@@ -904,7 +927,8 @@ bool Dx12RenderingContext::newFrame() {
   // Reuse the memory associated with command recording.
   // We can only reset when the associated command lists have finished
   // execution on the GPU.
-  resetAllocatorAndList(&dx12::CURRENT_FRAME_RESOURCE->fc);
+  COMMAND_BUFFER_MANAGER->resetBufferHandle(
+      dx12::CURRENT_FRAME_RESOURCE->fc.handle);
   // Indicate a state transition on the resource usage.
   auto *commandList = dx12::CURRENT_FRAME_RESOURCE->fc.commandList;
   D3D12_RESOURCE_BARRIER rtbarrier[1];
@@ -951,7 +975,7 @@ bool Dx12RenderingContext::dispatchFrame() { return dispatchFrameDx12(); }
 
 bool Dx12RenderingContext::resize(const uint32_t width, const uint32_t height) {
   executeGlobalCommandList();
-  flushCommandQueue(GLOBAL_COMMAND_QUEUE);
+  globals::RENDERING_CONTEXT->flush();
   resetGlobalCommandList();
   return dx12::SWAP_CHAIN->resize(&dx12::CURRENT_FRAME_RESOURCE->fc, width,
                                   height);
@@ -967,12 +991,13 @@ void Dx12RenderingContext::flush() {
 
 void Dx12RenderingContext::executeGlobalCommandList() {
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
-  executeCommandList(dx12::GLOBAL_COMMAND_QUEUE, currentFc);
+  // executeCommandList(dx12::GLOBAL_COMMAND_QUEUE, currentFc);
+  COMMAND_BUFFER_MANAGER->executeBuffer(currentFc->handle);
 }
 
 void Dx12RenderingContext::resetGlobalCommandList() {
   auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
-  resetAllocatorAndList(currentFc);
+  COMMAND_BUFFER_MANAGER->resetBufferHandle(currentFc->handle);
   setHeaps();
 }
 }  // namespace SirEngine::dx12
