@@ -2,7 +2,6 @@
 #include "platform/windows/graphics/vk/vkLoad.h"
 
 #include <cassert>
-#include <iostream>
 
 #include "SirEngine/log.h"
 #include "platform/windows/graphics/vk/volk.h"
@@ -56,8 +55,7 @@ bool checkAvailableInstanceExtensions(
   VkResult result = vkEnumerateInstanceExtensionProperties(
       nullptr, &extensionsCount, nullptr);
   if ((result != VK_SUCCESS) || (extensionsCount == 0)) {
-    std::cout << "Could not get the number of instance extensions."
-              << std::endl;
+    SE_CORE_ERROR("Could not get the number of instance extensions.");
     return false;
   }
 
@@ -65,7 +63,7 @@ bool checkAvailableInstanceExtensions(
   result = vkEnumerateInstanceExtensionProperties(nullptr, &extensionsCount,
                                                   availableExtensions.data());
   if ((result != VK_SUCCESS) || (extensionsCount == 0)) {
-    std::cout << "Could not enumerate instance extensions." << std::endl;
+    SE_CORE_ERROR("Could not enumerate instance extensions.");
     return false;
   }
 
@@ -82,8 +80,9 @@ bool createVulkanInstance(std::vector<char const *> const &desiredExtensions,
 
   for (auto &extension : desiredExtensions) {
     if (!isExtensionSupported(availableExtensions, extension)) {
-      std::cout << "Extension named '" << extension
-                << "' is not supported by an Instance object." << std::endl;
+      SE_CORE_ERROR(
+          "Extension named '{0}'is not supported by an Instance object.",
+          extension);
       return false;
     }
   }
@@ -121,8 +120,9 @@ bool createVulkanInstance(std::vector<char const *> const &desiredExtensions,
 
   std::vector<VkLayerProperties> availableLayers(layerCount);
   vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
+  SE_CORE_INFO("Available layers: ");
   for (auto l : availableLayers) {
-    std::cout << l.layerName << std::endl;
+    SE_CORE_INFO(l.layerName);
   }
 
   /*
@@ -141,7 +141,7 @@ bool createVulkanInstance(std::vector<char const *> const &desiredExtensions,
   const VkResult result =
       vkCreateInstance(&instanceCreateInfo, nullptr, &instance);
   if ((result != VK_SUCCESS) || (instance == VK_NULL_HANDLE)) {
-    std::cout << "Could not create Vulkan instance." << std::endl;
+    SE_CORE_ERROR("Could not create Vulkan instance.");
     return false;
   }
 
@@ -200,8 +200,7 @@ bool enumerateAvailablePhysicalDevices(
   // memory and finally you can query
   result = vkEnumeratePhysicalDevices(instance, &devicesCount, nullptr);
   if ((result != VK_SUCCESS) || (devicesCount == 0)) {
-    std::cout << "Could not get the number of available physical devices."
-              << std::endl;
+    SE_CORE_ERROR("Could not get the number of available physical devices.");
     return false;
   }
 
@@ -209,17 +208,16 @@ bool enumerateAvailablePhysicalDevices(
   result = vkEnumeratePhysicalDevices(instance, &devicesCount,
                                       availableDevices.data());
   if ((result != VK_SUCCESS) || (devicesCount == 0)) {
-    std::cout << "Could not enumerate physical devices." << std::endl;
+    SE_CORE_ERROR("Could not enumerate physical devices.");
     return false;
   }
 
   VkPhysicalDeviceProperties properties;
-  std::cout << "Available devices: \n";
+  SE_CORE_INFO("Available devices: \n");
   for (int i = 0; i < availableDevices.size(); ++i) {
     vkGetPhysicalDeviceProperties(availableDevices[i], &properties);
-    std::cout << properties.deviceName << "\n";
+    SE_CORE_INFO("\n {}", properties.deviceName);
   }
-  std::cout << std::endl;
 
   return true;
 }
@@ -240,7 +238,7 @@ bool checkAvailableQueueFamiliesAndTheirProperties(
   vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamiliesCount,
                                            nullptr);
   if (queueFamiliesCount == 0) {
-    std::cout << "Could not get the number of queue families." << std::endl;
+    SE_CORE_ERROR("Could not get the number of queue families.");
     return false;
   }
 
@@ -248,7 +246,7 @@ bool checkAvailableQueueFamiliesAndTheirProperties(
   vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamiliesCount,
                                            queueFamilies.data());
   if (queueFamiliesCount == 0) {
-    std::cout << "Could not acquire properties of queue families." << std::endl;
+    SE_CORE_ERROR("Could not acquire properties of queue families.");
     return false;
   }
 
@@ -285,7 +283,7 @@ bool checkAvailableDeviceExtensions(
   result = vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr,
                                                 &extensionsCount, nullptr);
   if ((result != VK_SUCCESS) || (extensionsCount == 0)) {
-    std::cout << "Could not get the number of device extensions." << std::endl;
+    SE_CORE_ERROR("Could not get the number of device extensions.");
     return false;
   }
 
@@ -293,7 +291,7 @@ bool checkAvailableDeviceExtensions(
   result = vkEnumerateDeviceExtensionProperties(
       physicalDevice, nullptr, &extensionsCount, availableExtensions.data());
   if ((result != VK_SUCCESS) || (extensionsCount == 0)) {
-    std::cout << "Could not enumerate device extensions." << std::endl;
+    SE_CORE_ERROR("Could not enumerate device extensions.");
     return false;
   }
 
@@ -312,8 +310,9 @@ bool createLogicalDevice(const VkPhysicalDevice physicalDevice,
 
   for (auto &extension : desiredExtensions) {
     if (!isExtensionSupported(availableExtensions, extension)) {
-      std::cout << "Extension named '" << extension
-                << "' is not supported by a physical device." << std::endl;
+      SE_CORE_ERROR(
+          "Extension named '{}' is not supported by a physical device.",
+          extension);
       return false;
     }
   }
@@ -342,7 +341,7 @@ bool createLogicalDevice(const VkPhysicalDevice physicalDevice,
   const VkResult result = vkCreateDevice(physicalDevice, &deviceCreateInfo,
                                          nullptr, &logicalDevice);
   if ((result != VK_SUCCESS) || (logicalDevice == VK_NULL_HANDLE)) {
-    std::cout << "Could not create logical device." << std::endl;
+    SE_CORE_ERROR("Could not create logical device.");
     return false;
   }
 
@@ -384,7 +383,7 @@ bool newSemaphore(const VkDevice logicalDevice, VkSemaphore &semaphore) {
   const VkResult result = vkCreateSemaphore(logicalDevice, &semaphoreCreateInfo,
                                             nullptr, &semaphore);
   if (VK_SUCCESS != result) {
-    std::cout << "Could not create a semaphore." << std::endl;
+    SE_CORE_ERROR("Could not create a semaphore.");
     return false;
   }
   return true;
@@ -449,45 +448,6 @@ void setImageMemoryBarrier(
                          static_cast<uint32_t>(imageMemoryBarriers.size()),
                          imageMemoryBarriers.data());
   }
-}
-
-bool endCommandBufferRecordingOperation(const VkCommandBuffer commandBuffer) {
-  const VkResult result = vkEndCommandBuffer(commandBuffer);
-  if (VK_SUCCESS != result) {
-    std::cout << "Error occurred during command buffer recording." << std::endl;
-    return false;
-  }
-  return true;
-}
-bool submitCommandBuffersToQueue(
-    VkQueue queue, std::vector<WaitSemaphoreInfo> waitSemaphoreInfos,
-    std::vector<VkCommandBuffer> commandBuffers,
-    std::vector<VkSemaphore> signalSemaphores, VkFence &fence) {
-  std::vector<VkSemaphore> waitSemaphoreHandles;
-  std::vector<VkPipelineStageFlags> waitSemaphoreStages;
-
-  for (auto &waitSemaphoreInfo : waitSemaphoreInfos) {
-    waitSemaphoreHandles.emplace_back(waitSemaphoreInfo.semaphore);
-    waitSemaphoreStages.emplace_back(waitSemaphoreInfo.waitingStage);
-  }
-
-  VkSubmitInfo submitInfo = {VK_STRUCTURE_TYPE_SUBMIT_INFO,
-                             nullptr,
-                             static_cast<uint32_t>(waitSemaphoreInfos.size()),
-                             waitSemaphoreHandles.data(),
-                             waitSemaphoreStages.data(),
-                             static_cast<uint32_t>(commandBuffers.size()),
-                             commandBuffers.data(),
-                             static_cast<uint32_t>(signalSemaphores.size()),
-                             signalSemaphores.data()};
-
-  const VkResult result = vkQueueSubmit(queue, 1, &submitInfo, fence);
-  if (VK_SUCCESS != result) {
-    std::cout << "Error occurred during command buffer submission."
-              << std::endl;
-    return false;
-  }
-  return true;
 }
 
 // framebuffer is the collection of images you are rendering to plus

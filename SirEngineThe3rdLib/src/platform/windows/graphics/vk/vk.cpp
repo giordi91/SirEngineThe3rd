@@ -411,7 +411,8 @@ bool VkRenderingContext::newFrame() {
                              VK_NULL_HANDLE, globals::CURRENT_FRAME)) {
     return false;
   }
-  globals::COMMAND_BUFFER_MANAGER->resetBufferHandle(CURRENT_FRAME_COMMAND->handle);
+  globals::COMMAND_BUFFER_MANAGER->resetBufferHandle(
+      CURRENT_FRAME_COMMAND->handle);
 
   const ImageTransition imageTransitionBeforeDrawing = {
       SWAP_CHAIN->images[globals::CURRENT_FRAME],
@@ -471,6 +472,7 @@ bool VkRenderingContext::dispatchFrame() {
                         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
                         {imageTransitionBeforePresent});
 
+  /*
   if (!endCommandBufferRecordingOperation(
           CURRENT_FRAME_COMMAND->m_commandBuffer)) {
     return false;
@@ -485,6 +487,11 @@ bool VkRenderingContext::dispatchFrame() {
                                    CURRENT_FRAME_COMMAND->m_endOfFrameFence)) {
     return false;
   }
+  */
+  vk::COMMAND_BUFFER_MANAGER->executeBufferEndOfFrame(
+      CURRENT_FRAME_COMMAND->handle, CURRENT_FRAME_COMMAND->m_acquireSemaphore,
+      CURRENT_FRAME_COMMAND->m_renderSemaphore,
+      CURRENT_FRAME_COMMAND->m_endOfFrameFence);
 
   const PresentInfo presentInfo = {SWAP_CHAIN->swapchain,
                                    globals::CURRENT_FRAME};

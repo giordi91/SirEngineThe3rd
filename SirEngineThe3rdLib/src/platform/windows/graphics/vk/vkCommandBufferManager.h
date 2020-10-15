@@ -38,7 +38,10 @@ class VkCommandBufferManager final : public CommandBufferManager {
   void executeFlushAndReset(CommandBufferHandle handle) override;
   void freeBuffer(CommandBufferHandle handle) override;
 
-  // TODO temporary
+  // We allow to get the data directly, mostly because once we are in Vulkan
+  // land might be beneficial to extract the buffer once and do operation on it
+  // rather than wrap every single function ,should be faster and less code foot
+  // print
   [[nodiscard]] const VkCommandBufferData &getData(
       const CommandBufferHandle handle) const {
     assertVersion(handle);
@@ -46,15 +49,13 @@ class VkCommandBufferManager final : public CommandBufferManager {
     return m_bufferPool.getConstRef(idx);
   }
 
+  // TODO this is temporary need some rework once we go MT
+  bool executeBufferEndOfFrame(const CommandBufferHandle handle,
+                               const VkSemaphore acquireSemaphore,
+                               const VkSemaphore renderSemaphore,
+                               VkFence fence);
+
  private:
-  static bool createCommandPool(const VkDevice logicalDevice,
-                                const VkCommandPoolCreateFlags parameters,
-                                const uint32_t queueFamily,
-                                VkCommandPool &commandPool);
-  static bool allocateCommandBuffer(const VkDevice logicalDevice,
-                                    const VkCommandPool commandPool,
-                                    const VkCommandBufferLevel level,
-                                    VkCommandBuffer &commandBuffer);
 
   inline void assertVersion(const CommandBufferHandle handle) const {
     const uint32_t magic = getMagicFromHandle(handle);
@@ -63,10 +64,6 @@ class VkCommandBufferManager final : public CommandBufferManager {
     assert(ref.version == magic && "invalid magic handle for command buffer");
   }
 
-  static bool beginCommandBufferRecordingOperation(
-      const VkCommandBuffer commandBuffer,
-      const VkCommandBufferUsageFlags usage,
-      VkCommandBufferInheritanceInfo *secondaryCommandBufferInfo);
 
  private:
   SparseMemoryPool<VkCommandBufferData> m_bufferPool;
