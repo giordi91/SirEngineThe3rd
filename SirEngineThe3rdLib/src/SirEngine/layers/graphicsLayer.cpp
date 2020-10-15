@@ -48,7 +48,6 @@ void GraphicsLayer::onAttach() {
   globals::DEBUG_CAMERA->setPosition(0, 15, 15);
   globals::DEBUG_CAMERA->updateCamera();
 
-
   globals::RENDERING_CONTEXT->executeGlobalCommandList();
   globals::RENDERING_CONTEXT->flush();
   globals::RENDERING_CONTEXT->resetGlobalCommandList();
@@ -188,15 +187,15 @@ bool GraphicsLayer::onKeyboardReleaseEvent(KeyboardReleaseEvent &e) {
 }
 
 bool GraphicsLayer::onResizeEvent(WindowResizeEvent &e) {
-  //First we flush to make sure there are no inflight frames
+  // First we flush to make sure there are no inflight frames
   globals::RENDERING_CONTEXT->flush();
 
-  //next we can issue a resize
-  const uint32_t w= e.getWidth();
+  // next we can issue a resize
+  const uint32_t w = e.getWidth();
   const uint32_t h = e.getHeight();
-  globals::RENDERING_GRAPH->onResizeEvent(w,h);
+  globals::RENDERING_GRAPH->onResizeEvent(w, h);
 
-  //now we flush and resset
+  // now we flush and resset
   globals::RENDERING_CONTEXT->executeGlobalCommandList();
   globals::RENDERING_CONTEXT->flush();
   globals::RENDERING_CONTEXT->resetGlobalCommandList();
@@ -212,7 +211,7 @@ bool GraphicsLayer::onShaderCompileEvent(ShaderCompileEvent &e) {
 }
 
 /*
-bool VkTempLayer::onReloadScriptEvent(ReloadScriptsEvent &) {
+bool GraphicsLayer::onReloadScriptEvent(ReloadScriptsEvent &) {
   globals::SCRIPTING_CONTEXT->reloadContext();
   return true;
 }*/

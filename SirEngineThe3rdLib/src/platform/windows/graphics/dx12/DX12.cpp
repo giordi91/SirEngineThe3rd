@@ -63,6 +63,27 @@ Dx12DebugRenderer *DEBUG_RENDERER = nullptr;
 Dx12BindingTableManager *BINDING_TABLE_MANAGER = nullptr;
 Dx12CommandBufferManager *COMMAND_BUFFER_MANAGER = nullptr;
 
+static const std::unordered_map<RESOURCE_STATE, D3D12_RESOURCE_STATES>
+    RESOURCE_STATE_TO_DX_STATE = {
+        {RESOURCE_STATE::GENERIC, D3D12_RESOURCE_STATE_COMMON},
+        {RESOURCE_STATE::RENDER_TARGET, D3D12_RESOURCE_STATE_RENDER_TARGET},
+        {RESOURCE_STATE::SHADER_READ_RESOURCE,
+         D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE},
+        {RESOURCE_STATE::RANDOM_WRITE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS},
+        {RESOURCE_STATE::DEPTH_RENDER_TARGET,
+         D3D12_RESOURCE_STATE_DEPTH_WRITE}};
+
+D3D12_RESOURCE_STATES toDx12ResourceState(RESOURCE_STATE state) {
+  auto found = RESOURCE_STATE_TO_DX_STATE.find(state);
+  if (found != RESOURCE_STATE_TO_DX_STATE.end()) {
+    return found->second;
+  }
+  assert(
+      0 &&
+      "Could not find requested resource state for conversion to dx12 state");
+  return D3D12_RESOURCE_STATE_COMMON;
+}
+
 struct Dx12Renderable {
   MeshHandle m_meshHandle;
   MaterialHandle m_materialHandle;
@@ -72,7 +93,7 @@ typedef std::unordered_map<uint64_t, std::vector<Renderable>>
     Dx12RenderingQueues;
 
 void allocateSamplers() {
-  auto samplers = getSamplers();
+  const D3D12_SAMPLER_DESC *samplers = getSamplers();
   for (int i = 0; i < STATIC_SAMPLERS_COUNT; ++i) {
     D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptor;
     GLOBAL_SAMPLER_HEAP->allocateDescriptor(&cpuDescriptor);
@@ -353,7 +374,6 @@ globals::CURRENT_FRAME = (globals::CURRENT_FRAME + 1) % FRAME_BUFFERS_COUNT;
   return true;
 }
 
-
 void flushCommandQueue(ID3D12CommandQueue *queue) {
   // Advance the fence value to mark commands up to this fence point.
   CURRENT_FENCE++;
@@ -377,52 +397,6 @@ void flushCommandQueue(ID3D12CommandQueue *queue) {
     WaitForSingleObject(eventHandle, INFINITE);
     CloseHandle(eventHandle);
   }
-}
-
-bool shutdownGraphicsDx12() {
-  globals::RENDERING_CONTEXT->flush();
-
-  // free the swapchain
-  delete SWAP_CHAIN;
-
-  // deleting the managers
-  delete MESH_MANAGER;
-  delete TEXTURE_MANAGER;
-  return true;
-}
-
-bool stopGraphicsDx12() {
-  globals::RENDERING_CONTEXT->flush();
-  return true;
-}
-bool dispatchFrameDx12() {
-  D3D12_RESOURCE_BARRIER rtbarrier[1];
-  // finally transition the resource to be present
-  auto *commandList = dx12::CURRENT_FRAME_RESOURCE->fc.commandList;
-
-  TextureHandle backBufferH = dx12::SWAP_CHAIN->currentBackBufferTexture();
-  const int rtcounter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
-      backBufferH, D3D12_RESOURCE_STATE_PRESENT, rtbarrier, 0);
-  if (rtcounter != 0) {
-    commandList->ResourceBarrier(rtcounter, rtbarrier);
-  }
-
-  // Done recording commands.
-  COMMAND_BUFFER_MANAGER->executeBuffer(
-      dx12::CURRENT_FRAME_RESOURCE->fc.handle);
-  // dx12::executeCommandList(dx12::GLOBAL_COMMAND_QUEUE,
-  //                         &dx12::CURRENT_FRAME_RESOURCE->fc);
-
-  dx12::CURRENT_FRAME_RESOURCE->fence = ++dx12::CURRENT_FENCE;
-  dx12::GLOBAL_COMMAND_QUEUE->Signal(dx12::GLOBAL_FENCE, dx12::CURRENT_FENCE);
-  // swap the back and front buffers
-  dx12::SWAP_CHAIN->present();
-  // bump the frame
-  globals::TOTAL_NUMBER_OF_FRAMES += 1;
-  globals::CURRENT_FRAME = (globals::CURRENT_FRAME + 1) % FRAME_BUFFERS_COUNT;
-
-  dx12::BUFFER_MANAGER->clearUploadRequests();
-  return true;
 }
 
 RenderingContext *createDx12RenderingContext(
@@ -710,27 +684,6 @@ BufferBindingsHandle Dx12RenderingContext::prepareBindingObject(
   return {data.m_magicNumber << 16 | index};
 }
 
-static const std::unordered_map<RESOURCE_STATE, D3D12_RESOURCE_STATES>
-    RESOURCE_STATE_TO_DX_STATE = {
-        {RESOURCE_STATE::GENERIC, D3D12_RESOURCE_STATE_COMMON},
-        {RESOURCE_STATE::RENDER_TARGET, D3D12_RESOURCE_STATE_RENDER_TARGET},
-        {RESOURCE_STATE::SHADER_READ_RESOURCE,
-         D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE},
-        {RESOURCE_STATE::RANDOM_WRITE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS},
-        {RESOURCE_STATE::DEPTH_RENDER_TARGET,
-         D3D12_RESOURCE_STATE_DEPTH_WRITE}};
-
-D3D12_RESOURCE_STATES toDx12ResourceState(RESOURCE_STATE state) {
-  auto found = RESOURCE_STATE_TO_DX_STATE.find(state);
-  if (found != RESOURCE_STATE_TO_DX_STATE.end()) {
-    return found->second;
-  }
-  assert(
-      0 &&
-      "Could not find requested resource state for conversion to dx12 state");
-  return D3D12_RESOURCE_STATE_COMMON;
-}
-
 void Dx12RenderingContext::setBindingObject(const BufferBindingsHandle handle) {
   assertMagicNumber(handle);
   const uint32_t idx = getIndexFromHandle(handle);
@@ -971,7 +924,34 @@ void Dx12RenderingContext::setHeaps() {
   commandList->SetDescriptorHeaps(2, heaps);
 }
 
-bool Dx12RenderingContext::dispatchFrame() { return dispatchFrameDx12(); }
+bool Dx12RenderingContext::dispatchFrame() {
+  D3D12_RESOURCE_BARRIER rtbarrier[1];
+  // finally transition the resource to be present
+  auto *commandList = dx12::CURRENT_FRAME_RESOURCE->fc.commandList;
+
+  TextureHandle backBufferH = dx12::SWAP_CHAIN->currentBackBufferTexture();
+  const int rtcounter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
+      backBufferH, D3D12_RESOURCE_STATE_PRESENT, rtbarrier, 0);
+  if (rtcounter != 0) {
+    commandList->ResourceBarrier(rtcounter, rtbarrier);
+  }
+
+  // Done recording commands.
+  COMMAND_BUFFER_MANAGER->executeBuffer(
+      dx12::CURRENT_FRAME_RESOURCE->fc.handle);
+
+  dx12::CURRENT_FRAME_RESOURCE->fence = ++dx12::CURRENT_FENCE;
+  dx12::GLOBAL_COMMAND_QUEUE->Signal(dx12::GLOBAL_FENCE, dx12::CURRENT_FENCE);
+  // swap the back and front buffers
+  dx12::SWAP_CHAIN->present();
+  // bump the frame
+  globals::TOTAL_NUMBER_OF_FRAMES += 1;
+  globals::CURRENT_FRAME = (globals::CURRENT_FRAME + 1) % FRAME_BUFFERS_COUNT;
+
+  // TODO make sure the behaviour is symmetrical with VK
+  dx12::BUFFER_MANAGER->clearUploadRequests();
+  return true;
+}
 
 bool Dx12RenderingContext::resize(const uint32_t width, const uint32_t height) {
   executeGlobalCommandList();
@@ -981,9 +961,45 @@ bool Dx12RenderingContext::resize(const uint32_t width, const uint32_t height) {
                                   height);
 }
 
-bool Dx12RenderingContext::stopGraphic() { return stopGraphicsDx12(); }
+bool Dx12RenderingContext::stopGraphic() {
+  globals::RENDERING_CONTEXT->flush();
+  return true;
+}
 
-bool Dx12RenderingContext::shutdownGraphic() { return shutdownGraphicsDx12(); }
+bool Dx12RenderingContext::shutdownGraphic() {
+  globals::RENDERING_CONTEXT->flush();
+
+  delete SWAP_CHAIN;
+
+  MESH_MANAGER->cleanup();
+  delete MESH_MANAGER;
+
+  TEXTURE_MANAGER->cleanup();
+  delete TEXTURE_MANAGER;
+
+  CONSTANT_BUFFER_MANAGER->cleanup();
+  delete CONSTANT_BUFFER_MANAGER;
+
+  SHADER_MANAGER->cleanup();
+  delete SHADER_MANAGER;
+
+  PSO_MANAGER->cleanup();
+  delete PSO_MANAGER;
+
+  ROOT_SIGNATURE_MANAGER->cleanup();
+  delete ROOT_SIGNATURE_MANAGER;
+
+  BUFFER_MANAGER->cleanup();
+  delete BUFFER_MANAGER;
+
+  BINDING_TABLE_MANAGER->cleanup();
+  delete BINDING_TABLE_MANAGER;
+
+  COMMAND_BUFFER_MANAGER->cleanup();
+  delete COMMAND_BUFFER_MANAGER;
+
+  return true;
+}
 
 void Dx12RenderingContext::flush() {
   flushCommandQueue(dx12::GLOBAL_COMMAND_QUEUE);

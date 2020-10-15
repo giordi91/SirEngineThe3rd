@@ -58,19 +58,24 @@ void Dx12CommandBufferManager::resetBufferHandle(CommandBufferHandle handle) {
   // A command list can be reset after it has been added to the command queue
   // via ExecuteCommandList.
   // Reusing the command list reuses memory.
-  HRESULT result2 =
-      data.commandList->Reset(data.commandAllocator, nullptr);
+  HRESULT result2 = data.commandList->Reset(data.commandAllocator, nullptr);
   assert(SUCCEEDED(result) && "failed resetting allocator");
   data.isListOpen = SUCCEEDED(result) & SUCCEEDED(result2);
 }
 
-
 void Dx12CommandBufferManager::executeFlushAndReset(
-    CommandBufferHandle handle) {
-  assert(0);
+    const CommandBufferHandle handle) {
+  executeBuffer(handle);
+  globals::RENDERING_CONTEXT->flush();
+  resetBufferHandle(handle);
 }
 
-void Dx12CommandBufferManager::freeBuffer(CommandBufferHandle handle) {
-  assert(0);
+void Dx12CommandBufferManager::freeBuffer(const CommandBufferHandle handle) {
+  assertVersion(handle);
+  const uint32_t idx = getIndexFromHandle(handle);
+  auto &data = m_bufferPool[idx];
+  data.commandList->Release();
+  data.commandAllocator->Release();
+  m_bufferPool.free(idx);
 }
 }  // namespace SirEngine::dx12

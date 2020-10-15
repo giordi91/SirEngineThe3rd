@@ -154,10 +154,6 @@ inline UINT64 insertFenceToGlobalQueue() {
 }
 
 
-bool shutdownGraphicsDx12();
-bool stopGraphicsDx12();
-bool dispatchFrameDx12();
-
 
 RenderingContext *createDx12RenderingContext(
     const RenderingContextCreationSettings &settings, uint32_t width,
