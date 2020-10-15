@@ -63,6 +63,11 @@ class VkCommandBufferManager final : public CommandBufferManager {
     assert(ref.version == magic && "invalid magic handle for command buffer");
   }
 
+  static bool beginCommandBufferRecordingOperation(
+      const VkCommandBuffer commandBuffer,
+      const VkCommandBufferUsageFlags usage,
+      VkCommandBufferInheritanceInfo *secondaryCommandBufferInfo);
+
  private:
   SparseMemoryPool<VkCommandBufferData> m_bufferPool;
   uint32_t m_versionCounter = 1;

@@ -32,6 +32,7 @@ struct MeshData final {
   uint32_t vertexCount;
   uint32_t entityID;  // this is an id that is used to index other data that we
                       // are starting to split, for example bounding box;
+  //TODO remove mesh runtime this is legacy and is just duplicated data
   VkMeshRuntime meshRuntime;
 };
 class VkMeshManager final : public MeshManager {
@@ -68,7 +69,7 @@ class VkMeshManager final : public MeshManager {
   const BoundingBox *getBoundingBoxes(uint32_t &) const override {
     assert(0);
     return nullptr;
-  };
+  }
 
   inline void renderMesh(const MeshHandle handle,
                          const VkCommandBuffer commandBuffer) const {

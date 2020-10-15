@@ -31,7 +31,7 @@ VkBool32 VKAPI_PTR debugCallback(
 
   printf("%s", message);
   if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
-    //assert(0 && "validation layer assertion");
+    // assert(0 && "validation layer assertion");
   }
 
   // always need to return false, true is reserved for layer development
@@ -149,20 +149,6 @@ bool createVulkanInstance(std::vector<char const *> const &desiredExtensions,
 }
 
 bool registerDebugCallback(VkInstance instance) {
-  /*
-VkDebugReportCallbackCreateInfoEXT createInfo{
-VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT};
-createInfo.flags = VK_DEBUG_REPORT_WARNING_BIT_EXT |
-               VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT |
-               VK_DEBUG_REPORT_ERROR_BIT_EXT |
-               VK_DEBUG_REPORT_DEBUG_BIT_EXT;
-createInfo.pfnCallback = debugCallback;
-
-const VkResult callbackResult = vkCreateDebugReportCallbackEXT(
-INSTANCE, &createInfo, nullptr, &DEBUG_CALLBACK);
-assert(callbackResult == VK_SUCCESS);
-*/
-
   // create debug utils messenger
   VkDebugUtilsMessengerCreateInfoEXT debug_utils_messenger_create_info = {};
   debug_utils_messenger_create_info.sType =
@@ -431,55 +417,6 @@ bool presentImage(VkQueue queue, std::vector<VkSemaphore> renderingSemaphores,
     default:
       return false;
   }
-}
-
-bool beginCommandBufferRecordingOperation(
-    const VkCommandBuffer commandBuffer, const VkCommandBufferUsageFlags usage,
-    VkCommandBufferInheritanceInfo *secondaryCommandBufferInfo) {
-  VkCommandBufferBeginInfo commandBufferBeginInfo = {
-      VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO, nullptr, usage,
-      secondaryCommandBufferInfo};
-
-  const VkResult result =
-      vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo);
-  if (VK_SUCCESS != result) {
-    std::cout << "Could not begin command buffer recording operation."
-              << std::endl;
-    return false;
-  }
-  return true;
-}
-
-bool createCommandPool(const VkDevice logicalDevice,
-                       const VkCommandPoolCreateFlags parameters,
-                       const uint32_t queueFamily, VkCommandPool &commandPool) {
-  VkCommandPoolCreateInfo commandPoolCreateInfo = {
-      VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO, nullptr, parameters,
-      queueFamily};
-
-  const VkResult result = vkCreateCommandPool(
-      logicalDevice, &commandPoolCreateInfo, nullptr, &commandPool);
-  if (VK_SUCCESS != result) {
-    SE_CORE_ERROR("Could not allocate command pool.");
-    return false;
-  }
-  return true;
-}
-bool allocateCommandBuffer(const VkDevice logicalDevice,
-                           const VkCommandPool commandPool,
-                           const VkCommandBufferLevel level,
-                           VkCommandBuffer &commandBuffer) {
-  VkCommandBufferAllocateInfo commandBufferAllocateInfo = {
-      VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO, nullptr, commandPool,
-      level, 1};
-
-  const VkResult result = vkAllocateCommandBuffers(
-      logicalDevice, &commandBufferAllocateInfo, &commandBuffer);
-  if (VK_SUCCESS != result) {
-    SE_CORE_ERROR("Could not allocate command buffer.");
-    return false;
-  }
-  return true;
 }
 
 void setImageMemoryBarrier(
