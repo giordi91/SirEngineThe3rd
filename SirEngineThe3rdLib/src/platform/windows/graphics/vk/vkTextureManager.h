@@ -1,5 +1,6 @@
 #pragma once
 
+#include "vkCommandBufferManager.h"
 #include "SirEngine/core.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/handle.h"
@@ -94,7 +95,7 @@ class SIR_ENGINE_API VkTextureManager final : public TextureManager {
     const uint32_t idx = getIndexFromHandle(handle);
     auto const &ref = m_texturePool.getConstRef(idx);
     assert(ref.magicNumber == magic &&
-           "invalid magic handle for constant buffer");
+           "invalid magic handle for texture ");
   }
 
  private:
@@ -102,6 +103,7 @@ class SIR_ENGINE_API VkTextureManager final : public TextureManager {
 
   // default texture
   TextureHandle m_whiteTexture;
+  CommandBufferHandle m_workerBuffer;
 };
 
 }  // namespace SirEngine::vk

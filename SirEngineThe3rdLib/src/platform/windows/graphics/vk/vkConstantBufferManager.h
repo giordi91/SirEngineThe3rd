@@ -1,32 +1,36 @@
 #pragma once
 
 #include <unordered_map>
+#include <vector>
 
 #include "SirEngine/constantBufferManager.h"
+#include "SirEngine/globals.h"
 #include "SirEngine/graphics/graphicsDefines.h"
 #include "SirEngine/handle.h"
 #include "SirEngine/memory/cpu/linearBufferManager.h"
 #include "SirEngine/memory/cpu/randomSizeAllocator.h"
 #include "SirEngine/memory/cpu/sparseMemoryPool.h"
-#include "vkMemory.h"
-#include <vector>
-#include "SirEngine/globals.h"
+
+// TODO this include is only really needed because we need Buffer definition
+// which is overkill we want to investigate whether we can turn the constant
+// buffer manager into a generic allocator on top of alower level allocator, that
+// will allow us to remove the difference between dx12 and vk
+#include "platform/windows/graphics/vk/vkBufferManager.h"
 
 namespace SirEngine::vk {
 
 class VkConstantBufferManager final : public ConstantBufferManager {
-
   struct Slab {
     Slab() : m_slabTracker(SLAB_ALLOCATION_IN_MB * MB_TO_BYTE){};
     LinearBufferManager m_slabTracker;
     vk::Buffer m_buffer{};
   };
 
-public:
+ public:
   static constexpr uint64_t SLAB_ALLOCATION_IN_MB = 32;
   static constexpr uint64_t MAX_ALLOCATED_SLABS = 10;
 
-public:
+ public:
   VkConstantBufferManager() : m_allocInfoStorage(RESERVE_SIZE) {}
   virtual ~VkConstantBufferManager() = default;
   void initialize() override;
@@ -35,7 +39,6 @@ public:
   // deleted method to avoid copy, you can still move it though
   VkConstantBufferManager(const VkConstantBufferManager &) = delete;
   VkConstantBufferManager &operator=(const VkConstantBufferManager &) = delete;
-
 
   ConstantBufferHandle allocate(uint32_t sizeInBytes,
                                 CONSTANT_BUFFER_FLAGS flags = 0,
@@ -53,8 +56,8 @@ public:
                           VkDescriptorBufferInfo &bufferInfo,
                           uint32_t bindingIdx, VkWriteDescriptorSet *set,
                           VkDescriptorSet descSet) const;
-  inline VkDescriptorBufferInfo
-  getBufferDescriptor(const ConstantBufferHandle &handle) const {
+  inline VkDescriptorBufferInfo getBufferDescriptor(
+      const ConstantBufferHandle &handle) const {
     assertMagicNumber(handle);
     uint32_t idx = getIndexFromHandle(handle);
     const ConstantBufferData &buffData = m_allocInfoStorage.getConstRef(idx);
@@ -69,10 +72,10 @@ public:
     return bufferInfo;
   }
 
-  [[nodiscard]] const ResizableVector<BufferRangeTracker> *
-  getAllocations() const;
+  [[nodiscard]] const ResizableVector<BufferRangeTracker> *getAllocations()
+      const;
 
-private:
+ private:
   // struct ConstantBufferedData {
   //  ConstantBufferHandle handle;
   //  RandomSizeAllocationHandle dataAllocHandle;
@@ -93,13 +96,13 @@ private:
 
   struct ConstantBufferedData {
     ConstantBufferHandle handle;
-    //this data represent the data we need to copy in the buffer
-  	//this data is on the CPU and will be used for the memcpy
+    // this data represent the data we need to copy in the buffer
+    // this data is on the CPU and will be used for the memcpy
     RandomSizeAllocationHandle dataAllocHandle;
     int counter = 0;
   };
 
-private:
+ private:
   void allocateSlab();
   int getFreeSlabIndex(uint32_t allocSize);
 
@@ -110,7 +113,7 @@ private:
            "invalid magic handle for constant buffer");
   }
 
-private:
+ private:
   SparseMemoryPool<ConstantBufferData> m_allocInfoStorage;
   static const uint32_t INDEX_MASK = (1 << 16) - 1;
   static const uint32_t MAGIC_NUMBER_MASK = ~INDEX_MASK;
@@ -126,4 +129,4 @@ private:
   uint32_t m_requireAlignment = 0;
 };
 
-} // namespace SirEngine::vk
+}  // namespace SirEngine::vk

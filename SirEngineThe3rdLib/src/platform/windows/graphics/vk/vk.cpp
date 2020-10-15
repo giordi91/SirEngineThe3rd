@@ -27,6 +27,7 @@
 #include "platform/windows/graphics/vk/vkShaderManager.h"
 #include "platform/windows/graphics/vk/vkSwapChain.h"
 #include "platform/windows/graphics/vk/vkTextureManager.h"
+#include "vkCommandBufferManager.h"
 
 namespace SirEngine::vk {
 VkInstance INSTANCE = nullptr;
@@ -35,8 +36,11 @@ VkDevice LOGICAL_DEVICE = nullptr;
 VkQueue GRAPHICS_QUEUE = nullptr;
 VkQueue COMPUTE_QUEUE = nullptr;
 VkQueue PRESENTATION_QUEUE = nullptr;
+VkAdapterResult ADAPTER;
+
 VkPhysicalDevice PHYSICAL_DEVICE = nullptr;
 VkSwapchain *SWAP_CHAIN = nullptr;
+VkCommandBufferManager *COMMAND_BUFFER_MANAGER = nullptr;
 
 VkFormat IMAGE_FORMAT = VK_FORMAT_UNDEFINED;
 VkDebugReportCallbackEXT DEBUG_CALLBACK = nullptr;
@@ -132,8 +136,11 @@ bool VkRenderingContext::initializeGraphics() {
   adapterConfig.m_genericRule = globals::ENGINE_CONFIG->m_adapterSelectionRule;
 
   VkAdapterResult adapterResult{};
+
   const bool adapterFound = getBestAdapter(adapterConfig, adapterResult);
   assert(adapterFound);
+  ADAPTER = adapterResult;
+
   PHYSICAL_DEVICE = adapterResult.m_physicalDevice;
   LOGICAL_DEVICE = adapterResult.m_device;
   globals::ENGINE_CONFIG->m_selectdedAdapterVendor =
@@ -170,7 +177,7 @@ bool VkRenderingContext::initializeGraphics() {
                  PRESENTATION_QUEUE);
 
   // create swap
-  const auto swapchain = new VkSwapchain();
+  auto *swapchain = new VkSwapchain();
   createSwapchain(LOGICAL_DEVICE, PHYSICAL_DEVICE, SURFACE, m_settings.width,
                   m_settings.height, SWAP_CHAIN, *swapchain);
   SWAP_CHAIN = swapchain;
@@ -179,6 +186,9 @@ bool VkRenderingContext::initializeGraphics() {
   assert(SWAP_CHAIN_IMAGE_COUNT <= PREALLOCATED_SEMAPHORE_COUNT);
   assert(SWAP_CHAIN_IMAGE_COUNT <= 9);  // used to convert easily the swap chain
                                         // image count to char for debug name
+
+  COMMAND_BUFFER_MANAGER = new VkCommandBufferManager();
+  globals::COMMAND_BUFFER_MANAGER = COMMAND_BUFFER_MANAGER;
 
   // allocating all the per frame resources used for the render,
   // synchronization, command pool etc
@@ -197,6 +207,7 @@ bool VkRenderingContext::initializeGraphics() {
     SET_DEBUG_NAME(FRAME_COMMAND[i].m_renderSemaphore, VK_OBJECT_TYPE_SEMAPHORE,
                    frameConcatenation("renderSemaphore", frame));
 
+    /*
     // Command buffers creation
     if (!createCommandPool(LOGICAL_DEVICE,
                            VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
@@ -217,6 +228,13 @@ bool VkRenderingContext::initializeGraphics() {
     SET_DEBUG_NAME(FRAME_COMMAND[i].m_commandBuffer,
                    VK_OBJECT_TYPE_COMMAND_BUFFER,
                    frameConcatenation("commandBuffer", frame));
+                   */
+    FRAME_COMMAND[i].handle = COMMAND_BUFFER_MANAGER->createBuffer(
+        CommandBufferManager::COMMAND_BUFFER_ALLOCATION_NONE,
+        frameConcatenation("SwapChain", frame));
+    const auto &data = COMMAND_BUFFER_MANAGER->getData(FRAME_COMMAND[i].handle);
+    FRAME_COMMAND[i].m_commandAllocator = data.pool;
+    FRAME_COMMAND[i].m_commandBuffer = data.buffer;
   }
 
   CURRENT_FRAME_COMMAND = &FRAME_COMMAND[0];
@@ -294,8 +312,7 @@ bool VkRenderingContext::initializeGraphics() {
       ConstantBufferManager::CONSTANT_BUFFER_FLAG_BITS::UPDATED_EVERY_FRAME,
       nullptr);
 
-
-  //putting command list in a ready to go status
+  // putting command list in a ready to go status
   resetGlobalCommandList();
   return true;
 }
@@ -342,10 +359,7 @@ void VkRenderingContext::bindCameraBuffer(const RSHandle rs,
       vk::PIPELINE_LAYOUT_MANAGER->getLayoutFromHandle(rs);
   assert(layout != nullptr);
 
-  VkDescriptorSet sets[] = {
-      descriptorSet,
-STATIC_SAMPLERS_DESCRIPTOR_SET
-  };
+  VkDescriptorSet sets[] = {descriptorSet, STATIC_SAMPLERS_DESCRIPTOR_SET};
   auto bindPoint = isCompute ? VK_PIPELINE_BIND_POINT_COMPUTE
                              : VK_PIPELINE_BIND_POINT_GRAPHICS;
   vkCmdBindDescriptorSets(CURRENT_FRAME_COMMAND->m_commandBuffer, bindPoint,
@@ -428,7 +442,7 @@ bool VkRenderingContext::newFrame() {
                           VK_PIPELINE_BIND_POINT_GRAPHICS,
                           vk::ENGINE_PIPELINE_LAYOUT, 0, 2, sets, 0, nullptr);
 
-  //TODO clean this up
+  // TODO clean this up
   static float angle = 0.0f;
   angle += 0.01;
   glm::mat4 m[32];

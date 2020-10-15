@@ -1,7 +1,6 @@
 #include "platform/windows/graphics/vk/vkBufferManager.h"
 
 #include "platform/windows/graphics/vk/vk.h"
-#include "vkMemory.h"
 
 namespace SirEngine::vk {
 static const VkAccessFlags FLAGS_TO_ACCESS_BITS[] = {

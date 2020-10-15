@@ -17,6 +17,7 @@ uint32_t TOTAL_NUMBER_OF_FRAMES = 0;
 uint32_t CURRENT_FRAME = 0;
 float MIN_DEPTH = 1.0f;
 float MAX_DEPTH = 0.0f;
+CommandBufferManager *COMMAND_BUFFER_MANAGER = nullptr;
 ConstantBufferManager *CONSTANT_BUFFER_MANAGER = nullptr;
 BufferManager *BUFFER_MANAGER = nullptr;
 TextureManager *TEXTURE_MANAGER = nullptr;
