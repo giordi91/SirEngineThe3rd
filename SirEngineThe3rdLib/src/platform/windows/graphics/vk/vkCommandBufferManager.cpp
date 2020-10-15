@@ -1,14 +1,12 @@
 
 #include "platform/windows/graphics/vk/vkCommandBufferManager.h"
 
-#include "SirEngine/engineConfig.h"
 #include "SirEngine/log.h"
 #include "platform/windows/graphics/vk/vk.h"
 #include "vkLoad.h"
 
 namespace SirEngine::vk {
-void VkCommandBufferManager::freeBuffer(CommandBufferHandle handle)
-{
+void VkCommandBufferManager::freeBuffer(CommandBufferHandle handle) {
   assertVersion(handle);
   const uint32_t idx = getIndexFromHandle(handle);
   auto &data = m_bufferPool[idx];
@@ -76,7 +74,6 @@ CommandBufferHandle VkCommandBufferManager::createBuffer(
 }
 
 void VkCommandBufferManager::executeBuffer(const CommandBufferHandle handle) {
-
   assertVersion(handle);
   const uint32_t idx = getIndexFromHandle(handle);
   auto &data = m_bufferPool[idx];
@@ -85,6 +82,22 @@ void VkCommandBufferManager::executeBuffer(const CommandBufferHandle handle) {
   submitInfo.commandBufferCount = 1;
   submitInfo.pCommandBuffers = &data.buffer;
   VK_CHECK(vkQueueSubmit(vk::GRAPHICS_QUEUE, 1, &submitInfo, nullptr));
+}
+
+bool VkCommandBufferManager::beginCommandBufferRecordingOperation(
+    const VkCommandBuffer commandBuffer, const VkCommandBufferUsageFlags usage,
+    VkCommandBufferInheritanceInfo *secondaryCommandBufferInfo) {
+  VkCommandBufferBeginInfo commandBufferBeginInfo = {
+      VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO, nullptr, usage,
+      secondaryCommandBufferInfo};
+
+  const VkResult result =
+      vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo);
+  if (VK_SUCCESS != result) {
+    SE_CORE_ERROR("Could not begin command buffer recording operation.");
+    return false;
+  }
+  return true;
 }
 
 void VkCommandBufferManager::resetBufferHandle(CommandBufferHandle handle) {
@@ -96,15 +109,15 @@ void VkCommandBufferManager::resetBufferHandle(CommandBufferHandle handle) {
       data.buffer, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, nullptr);
 }
 
-void VkCommandBufferManager::flush(CommandBufferHandle handle)
-{
-    vkDeviceWaitIdle(vk::LOGICAL_DEVICE);
+void VkCommandBufferManager::flush(CommandBufferHandle handle) {
+  vkDeviceWaitIdle(vk::LOGICAL_DEVICE);
 }
 
-void VkCommandBufferManager::executeFlushAndReset(CommandBufferHandle handle) {
-    executeBuffer(handle);
-    flush(handle);
-    resetBufferHandle(handle);
+void VkCommandBufferManager::executeFlushAndReset(
+    const CommandBufferHandle handle) {
+  executeBuffer(handle);
+  flush(handle);
+  resetBufferHandle(handle);
 }
 
 }  // namespace SirEngine::vk

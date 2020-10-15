@@ -411,11 +411,7 @@ bool VkRenderingContext::newFrame() {
                              VK_NULL_HANDLE, globals::CURRENT_FRAME)) {
     return false;
   }
-  if (!beginCommandBufferRecordingOperation(
-          CURRENT_FRAME_COMMAND->m_commandBuffer,
-          VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, nullptr)) {
-    return false;
-  }
+  globals::COMMAND_BUFFER_MANAGER->resetBufferHandle(CURRENT_FRAME_COMMAND->handle);
 
   const ImageTransition imageTransitionBeforeDrawing = {
       SWAP_CHAIN->images[globals::CURRENT_FRAME],
@@ -577,11 +573,7 @@ void VkRenderingContext::executeGlobalCommandList() {
 }
 
 void VkRenderingContext::resetGlobalCommandList() {
-  vkResetCommandPool(LOGICAL_DEVICE, CURRENT_FRAME_COMMAND->m_commandAllocator,
-                     0);
-  beginCommandBufferRecordingOperation(
-      CURRENT_FRAME_COMMAND->m_commandBuffer,
-      VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, nullptr);
+  vk::COMMAND_BUFFER_MANAGER->resetBufferHandle(CURRENT_FRAME_COMMAND->handle);
 }
 
 void VkRenderingContext::addRenderablesToQueue(const Renderable &renderable) {
