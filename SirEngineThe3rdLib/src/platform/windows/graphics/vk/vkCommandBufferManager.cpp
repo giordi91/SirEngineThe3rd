@@ -6,17 +6,46 @@
 #include "vkLoad.h"
 
 namespace SirEngine::vk {
-void VkCommandBufferManager::freeBuffer(CommandBufferHandle handle) {
-  assertVersion(handle);
-  const uint32_t idx = getIndexFromHandle(handle);
-  auto &data = m_bufferPool[idx];
-  vkFreeCommandBuffers(LOGICAL_DEVICE, data.pool, 1, &data.buffer);
-  vkDestroyCommandPool(LOGICAL_DEVICE, data.pool, nullptr);
+// utility functions
+
+struct SubmitCommandBuffersInfo {
+  // wait semaphores
+  VkSemaphore *waitSemaphore;
+  VkPipelineStageFlags *waitSemaphoreStages;
+  uint32_t waitSemaphoreCount;
+  // signal semaphores
+  VkSemaphore *signalSemaphores;
+  uint32_t signalSemaphoreCount;
+  // buffers
+  VkCommandBuffer *buffers;
+  uint32_t bufferCount;
+
+  VkFence fence;
+};
+
+bool submitCommandBuffersToQueue(const VkQueue queue,
+                                 const SubmitCommandBuffersInfo &info) {
+  VkSubmitInfo submitInfo = {VK_STRUCTURE_TYPE_SUBMIT_INFO,
+                             nullptr,
+                             info.waitSemaphoreCount,
+                             info.waitSemaphore,
+                             info.waitSemaphoreStages,
+                             info.bufferCount,
+                             info.buffers,
+                             info.signalSemaphoreCount,
+                             info.signalSemaphores};
+
+  const VkResult result = vkQueueSubmit(queue, 1, &submitInfo, info.fence);
+  if (VK_SUCCESS != result) {
+    SE_CORE_ERROR("Error occurred during command buffer submission.");
+    return false;
+  }
+  return true;
 }
 
-bool VkCommandBufferManager::createCommandPool(
-    const VkDevice logicalDevice, const VkCommandPoolCreateFlags parameters,
-    const uint32_t queueFamily, VkCommandPool &commandPool) {
+bool createCommandPool(const VkDevice logicalDevice,
+                       const VkCommandPoolCreateFlags parameters,
+                       const uint32_t queueFamily, VkCommandPool &commandPool) {
   VkCommandPoolCreateInfo commandPoolCreateInfo = {
       VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO, nullptr, parameters,
       queueFamily};
@@ -29,9 +58,10 @@ bool VkCommandBufferManager::createCommandPool(
   }
   return true;
 }
-bool VkCommandBufferManager::allocateCommandBuffer(
-    const VkDevice logicalDevice, const VkCommandPool commandPool,
-    const VkCommandBufferLevel level, VkCommandBuffer &commandBuffer) {
+bool allocateCommandBuffer(const VkDevice logicalDevice,
+                           const VkCommandPool commandPool,
+                           const VkCommandBufferLevel level,
+                           VkCommandBuffer &commandBuffer) {
   VkCommandBufferAllocateInfo commandBufferAllocateInfo = {
       VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO, nullptr, commandPool,
       level, 1};
@@ -45,8 +75,59 @@ bool VkCommandBufferManager::allocateCommandBuffer(
   return true;
 }
 
+bool beginCommandBufferRecordingOperation(
+    const VkCommandBuffer commandBuffer, const VkCommandBufferUsageFlags usage,
+    VkCommandBufferInheritanceInfo *secondaryCommandBufferInfo) {
+  VkCommandBufferBeginInfo commandBufferBeginInfo = {
+      VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO, nullptr, usage,
+      secondaryCommandBufferInfo};
+
+  const VkResult result =
+      vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo);
+  if (VK_SUCCESS != result) {
+    SE_CORE_ERROR("Could not begin command buffer recording operation.");
+    return false;
+  }
+  return true;
+}
+
+// interface
+void VkCommandBufferManager::freeBuffer(const CommandBufferHandle handle) {
+  assertVersion(handle);
+  const uint32_t idx = getIndexFromHandle(handle);
+  auto &data = m_bufferPool[idx];
+  vkFreeCommandBuffers(LOGICAL_DEVICE, data.pool, 1, &data.buffer);
+  vkDestroyCommandPool(LOGICAL_DEVICE, data.pool, nullptr);
+}
+
+bool VkCommandBufferManager::executeBufferEndOfFrame(
+    const CommandBufferHandle handle, const VkSemaphore acquireSemaphore,
+    const VkSemaphore renderSemaphore, VkFence fence) {
+  assertVersion(handle);
+  const uint32_t idx = getIndexFromHandle(handle);
+  auto &data = m_bufferPool[idx];
+  const VkResult result = vkEndCommandBuffer(data.buffer);
+  assert(result == VK_SUCCESS);
+
+  VkSemaphore acquireSem[1] = {acquireSemaphore};
+  VkPipelineStageFlags acquireStage[1] = {VK_PIPELINE_STAGE_ALL_COMMANDS_BIT};
+  VkSemaphore sigSem[1] = {renderSemaphore};
+  VkCommandBuffer buffers[1] = {data.buffer};
+  SubmitCommandBuffersInfo submit{// wait semaphores
+                                  acquireSem, acquireStage, 1,
+                                  // signal semaphores
+                                  sigSem, 1,
+                                  // buffers
+                                  buffers, 1, fence};
+
+  if (!submitCommandBuffersToQueue(PRESENTATION_QUEUE, submit)) {
+    return false;
+  }
+  return true;
+}
+
 CommandBufferHandle VkCommandBufferManager::createBuffer(
-    const COMMAND_BUFFER_ALLOCATION_FLAGS flags, const char *name) {
+    const COMMAND_BUFFER_ALLOCATION_FLAGS, const char *name) {
   uint32_t index;
   VkCommandBufferData &data = m_bufferPool.getFreeMemoryData(index);
 
@@ -84,22 +165,6 @@ void VkCommandBufferManager::executeBuffer(const CommandBufferHandle handle) {
   VK_CHECK(vkQueueSubmit(vk::GRAPHICS_QUEUE, 1, &submitInfo, nullptr));
 }
 
-bool VkCommandBufferManager::beginCommandBufferRecordingOperation(
-    const VkCommandBuffer commandBuffer, const VkCommandBufferUsageFlags usage,
-    VkCommandBufferInheritanceInfo *secondaryCommandBufferInfo) {
-  VkCommandBufferBeginInfo commandBufferBeginInfo = {
-      VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO, nullptr, usage,
-      secondaryCommandBufferInfo};
-
-  const VkResult result =
-      vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo);
-  if (VK_SUCCESS != result) {
-    SE_CORE_ERROR("Could not begin command buffer recording operation.");
-    return false;
-  }
-  return true;
-}
-
 void VkCommandBufferManager::resetBufferHandle(CommandBufferHandle handle) {
   assertVersion(handle);
   const uint32_t idx = getIndexFromHandle(handle);
@@ -109,7 +174,7 @@ void VkCommandBufferManager::resetBufferHandle(CommandBufferHandle handle) {
       data.buffer, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, nullptr);
 }
 
-void VkCommandBufferManager::flush(CommandBufferHandle handle) {
+void VkCommandBufferManager::flush(CommandBufferHandle ) {
   vkDeviceWaitIdle(vk::LOGICAL_DEVICE);
 }
 
