@@ -98,6 +98,7 @@ void VkCommandBufferManager::freeBuffer(const CommandBufferHandle handle) {
   auto &data = m_bufferPool[idx];
   vkFreeCommandBuffers(LOGICAL_DEVICE, data.pool, 1, &data.buffer);
   vkDestroyCommandPool(LOGICAL_DEVICE, data.pool, nullptr);
+  m_bufferPool.free(idx);
 }
 
 bool VkCommandBufferManager::executeBufferEndOfFrame(

@@ -28,7 +28,7 @@ class LightManager {
   LightManager() : m_directionalLights(RESERVE_SIZE) {}
   LightHandle addLight(DirectionalLightData data,
                        const LIGHT_CREATION_FLAGS flags);
-  void cleanup(){};
+  void cleanup(){}
 
   [[nodiscard]] static LIGHT_TYPE getLightType(const LightHandle handle) {
     uint32_t raw = handle.handle;

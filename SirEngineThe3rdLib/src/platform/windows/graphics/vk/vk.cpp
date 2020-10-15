@@ -217,7 +217,8 @@ bool VkRenderingContext::initializeGraphics() {
   }
 
   // TODO revisit frame command, we have command buffers now so we should be
-  // able to remove this and move the engine to work with on demand command lists
+  // able to remove this and move the engine to work with on demand command
+  // lists
   CURRENT_FRAME_COMMAND = &FRAME_COMMAND[0];
 
   DESCRIPTOR_MANAGER = new VkBindingTableManager(10000, 10000);
