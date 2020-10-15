@@ -188,6 +188,7 @@ bool VkRenderingContext::initializeGraphics() {
                                         // image count to char for debug name
 
   COMMAND_BUFFER_MANAGER = new VkCommandBufferManager();
+  COMMAND_BUFFER_MANAGER->initialize();
   globals::COMMAND_BUFFER_MANAGER = COMMAND_BUFFER_MANAGER;
 
   // allocating all the per frame resources used for the render,
@@ -207,28 +208,6 @@ bool VkRenderingContext::initializeGraphics() {
     SET_DEBUG_NAME(FRAME_COMMAND[i].m_renderSemaphore, VK_OBJECT_TYPE_SEMAPHORE,
                    frameConcatenation("renderSemaphore", frame));
 
-    /*
-    // Command buffers creation
-    if (!createCommandPool(LOGICAL_DEVICE,
-                           VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-                           adapterResult.m_graphicsQueueFamilyIndex,
-                           FRAME_COMMAND[i].m_commandAllocator)) {
-      assert(0 && "could not create command pool");
-    }
-    SET_DEBUG_NAME(FRAME_COMMAND[i].m_commandAllocator,
-                   VK_OBJECT_TYPE_COMMAND_POOL,
-                   frameConcatenation("commandPool", frame));
-
-    if (!allocateCommandBuffer(LOGICAL_DEVICE,
-                               FRAME_COMMAND[i].m_commandAllocator,
-                               VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-                               FRAME_COMMAND[i].m_commandBuffer)) {
-      assert(0);
-    }
-    SET_DEBUG_NAME(FRAME_COMMAND[i].m_commandBuffer,
-                   VK_OBJECT_TYPE_COMMAND_BUFFER,
-                   frameConcatenation("commandBuffer", frame));
-                   */
     FRAME_COMMAND[i].handle = COMMAND_BUFFER_MANAGER->createBuffer(
         CommandBufferManager::COMMAND_BUFFER_ALLOCATION_NONE,
         frameConcatenation("SwapChain", frame));
@@ -237,6 +216,8 @@ bool VkRenderingContext::initializeGraphics() {
     FRAME_COMMAND[i].m_commandBuffer = data.buffer;
   }
 
+  // TODO revisit frame command, we have command buffers now so we should be
+  // able to remove this and move the engine to work with on demand command lists
   CURRENT_FRAME_COMMAND = &FRAME_COMMAND[0];
 
   DESCRIPTOR_MANAGER = new VkBindingTableManager(10000, 10000);
@@ -552,6 +533,7 @@ bool VkRenderingContext::shutdownGraphic() {
 
   TEXTURE_MANAGER->cleanup();
   DESCRIPTOR_MANAGER->cleanup();
+  COMMAND_BUFFER_MANAGER->cleanup();
 
   vkDestroyDevice(LOGICAL_DEVICE, nullptr);
   vkDestroySurfaceKHR(INSTANCE, SURFACE, nullptr);

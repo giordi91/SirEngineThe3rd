@@ -32,6 +32,7 @@ class Dx12DebugRenderer;
 class Dx12RenderingContext;
 class Dx12MaterialManager;
 class Dx12BindingTableManager;
+class Dx12CommandBufferManager;
 
 enum class DescriptorType {
   NONE = 0,
@@ -50,6 +51,13 @@ struct DescriptorPair {
 #endif
 };
 
+#if _DEBUG
+#define DX_SET_DEBUG_NAME(resource, name) \
+  { resource->SetName(frameConvertWide(name)); }
+#else
+#define DX_SET_DEBUG_NAME(resource, name)
+#endif
+
 struct FrameCommand final {
   ID3D12CommandAllocator *commandAllocator = nullptr;
 #if DXR_ENABLED
@@ -58,6 +66,7 @@ struct FrameCommand final {
   ID3D12GraphicsCommandList2 *commandList = nullptr;
 #endif
   bool isListOpen = false;
+  CommandBufferHandle handle;
 };
 
 struct FrameResource final {
@@ -65,7 +74,7 @@ struct FrameResource final {
   UINT64 fence = 0;
 };
 
-inline HRESULT resetCommandList(FrameCommand* command);
+inline HRESULT resetCommandList(FrameCommand *command);
 
 // should be used only at the beginning of the frame
 inline HRESULT resetAllocatorAndList(FrameCommand *command) {
@@ -120,6 +129,7 @@ extern ID3D12Fence *GLOBAL_FENCE;
 extern Dx12SwapChain *SWAP_CHAIN;
 extern FrameResource FRAME_RESOURCES[FRAME_BUFFERS_COUNT];
 extern FrameResource *CURRENT_FRAME_RESOURCE;
+extern Dx12CommandBufferManager *COMMAND_BUFFER_MANAGER;
 // resource managers
 extern Dx12TextureManager *TEXTURE_MANAGER;
 extern Dx12MeshManager *MESH_MANAGER;
@@ -129,7 +139,6 @@ extern Dx12RootSignatureManager *ROOT_SIGNATURE_MANAGER;
 extern Dx12PSOManager *PSO_MANAGER;
 extern BufferManagerDx12 *BUFFER_MANAGER;
 extern Dx12DebugRenderer *DEBUG_RENDERER;
-extern Dx12RenderingContext *RENDERING_CONTEXT;
 extern Dx12BindingTableManager *BINDING_TABLE_MANAGER;
 
 inline UINT64 insertFenceToGlobalQueue() {
@@ -144,40 +153,11 @@ inline UINT64 insertFenceToGlobalQueue() {
   return CURRENT_FENCE;
 }
 
-inline void flushCommandQueue(ID3D12CommandQueue *queue) {
-  // Advance the fence value to mark commands up to this fence point.
-  CURRENT_FENCE++;
-
-  // Add an instruction to the command queue to set a new fence point. Because
-  // we are on the GPU time line, the new fence point won't be set until the
-  // GPU finishes processing all the commands prior to this Signal().
-  HRESULT res = queue->Signal(GLOBAL_FENCE, CURRENT_FENCE);
-  assert(SUCCEEDED(res));
-  auto id = GLOBAL_FENCE->GetCompletedValue();
-  // Wait until the GPU has completed commands up to this fence point.
-  if (id < CURRENT_FENCE) {
-    HANDLE eventHandle =
-        CreateEventEx(nullptr, nullptr, false, EVENT_ALL_ACCESS);
-
-    // Fire event when GPU hits current fence.
-    res = GLOBAL_FENCE->SetEventOnCompletion(CURRENT_FENCE, eventHandle);
-    assert(SUCCEEDED(res));
-
-    // Wait until the GPU hits current fence event is fired.
-    WaitForSingleObject(eventHandle, INFINITE);
-    CloseHandle(eventHandle);
-  }
-}
 
 bool shutdownGraphicsDx12();
 bool stopGraphicsDx12();
-bool newFrameDx12();
 bool dispatchFrameDx12();
-void flushDx12();
 
-// headless client functions
-bool beginHeadlessWorkDx12();
-bool endHeadlessWorkDx12();
 
 RenderingContext *createDx12RenderingContext(
     const RenderingContextCreationSettings &settings, uint32_t width,

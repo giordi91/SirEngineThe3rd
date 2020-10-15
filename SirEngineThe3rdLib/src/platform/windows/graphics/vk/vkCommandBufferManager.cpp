@@ -174,14 +174,10 @@ void VkCommandBufferManager::resetBufferHandle(CommandBufferHandle handle) {
       data.buffer, VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, nullptr);
 }
 
-void VkCommandBufferManager::flush(CommandBufferHandle ) {
-  vkDeviceWaitIdle(vk::LOGICAL_DEVICE);
-}
-
 void VkCommandBufferManager::executeFlushAndReset(
     const CommandBufferHandle handle) {
   executeBuffer(handle);
-  flush(handle);
+  globals::RENDERING_CONTEXT->flush();
   resetBufferHandle(handle);
 }
 

@@ -347,7 +347,7 @@ void Dx12PSOManager::recompilePSOFromShader(const char *shaderName,
   // now that all shaders are recompiled we can recompile the pso
   // before doing that we do need to flush to make sure none of the PSO are
   // used
-  dx12::flushDx12();
+  globals::RENDERING_CONTEXT->flush();
 
   const char *shaderPath = frameConcatenation(
       globals::ENGINE_CONFIG->m_dataSourcePath, "/shaders/DX12");

@@ -1,10 +1,4 @@
 
-#ifdef _WIN32
-#include <Windows.h>
-#define LIBRARY_TYPE HMODULE
-#elif defined __linux
-#define LIBRARY_TYPE void *
-#endif
 #include <vulkan/vulkan.h>
 
 #include <vector>
@@ -96,17 +90,6 @@ void setImageMemoryBarrier(const VkCommandBuffer commandBuffer,
                            const VkPipelineStageFlags consumingStages,
                            const std::vector<ImageTransition> imageTransitions);
 
-bool endCommandBufferRecordingOperation(const VkCommandBuffer commandBuffer);
-
-struct WaitSemaphoreInfo {
-  VkSemaphore semaphore;
-  VkPipelineStageFlags waitingStage;
-};
-
-bool submitCommandBuffersToQueue(
-    VkQueue queue, std::vector<WaitSemaphoreInfo> waitSemaphoreInfos,
-    std::vector<VkCommandBuffer> commandBuffers,
-    std::vector<VkSemaphore> signalSemaphores, VkFence &fence);
 
 VkFramebuffer createFrameBuffer(VkDevice logicalDevice, VkRenderPass renderPass,
                                 VkImageView imageView, uint32_t width,

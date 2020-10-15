@@ -1,13 +1,12 @@
 #include "platform/windows/graphics/vk/vkAdapter.h"
 
-#include <cassert>
+#include <assert.h>
 #include <iostream>
 #include <vector>
 
 #include "SirEngine/log.h"
 #include "vk.h"
 #include "vkLoad.h"
-#include "volk.h"
 
 namespace SirEngine::vk {
 
