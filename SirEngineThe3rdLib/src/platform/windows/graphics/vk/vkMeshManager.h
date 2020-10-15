@@ -7,7 +7,6 @@
 #include "SirEngine/memory/cpu/resizableVector.h"
 #include "SirEngine/memory/cpu/stringHashMap.h"
 #include "SirEngine/meshManager.h"
-#include "platform/windows/graphics/vk/vkMemory.h"
 #include "platform/windows/graphics/vk/volk.h"
 
 namespace SirEngine::vk {
@@ -38,7 +37,7 @@ struct MeshData final {
 class VkMeshManager final : public MeshManager {
  private:
   struct MeshUploadResource final {
-    UINT64 fence = 0;
+    uint64_t fence = 0;
   };
 
  public:

@@ -1,14 +1,25 @@
 #pragma once
 
+#include <vulkan/vulkan_core.h>
+
 #include "SirEngine/bufferManager.h"
 #include "SirEngine/graphics/graphicsDefines.h"
 #include "SirEngine/handle.h"
 #include "SirEngine/log.h"
 #include "SirEngine/memory/cpu/randomSizeAllocator.h"
 #include "SirEngine/memory/cpu/sparseMemoryPool.h"
-#include "vkMemory.h"
 
 namespace SirEngine::vk {
+// TODO this file seems redundant need to clean it up
+struct Buffer {
+  VkBuffer buffer;
+  VkDeviceMemory memory;
+  VkDescriptorBufferInfo info;
+  void *data;
+  size_t size;
+  size_t allocationSize;
+  uint32_t m_magicNumber;
+};
 
 class VkBufferManager final : public BufferManager {
   struct VkBufferInfo {

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "vkAdapter.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/memory/cpu/sparseMemoryPool.h"
 #include "SirEngine/runtimeString.h"
@@ -16,6 +17,7 @@ class VkPipelineLayoutManager;
 class VkConstantBufferManager;
 class VkBindingTableManager;
 class VkDebugRenderer;
+class VkCommandBufferManager;
 struct VkSwapchain;
 
 static constexpr int PREALLOCATED_SEMAPHORE_COUNT = 4;
@@ -29,6 +31,7 @@ struct VkFrameCommand final {
   VkFence m_endOfFrameFence = nullptr;
   VkSemaphore m_acquireSemaphore = nullptr;
   VkSemaphore m_renderSemaphore = nullptr;
+  CommandBufferHandle handle = {};
 };
 
 // runtime instances
@@ -42,9 +45,11 @@ extern VkFormat IMAGE_FORMAT;
 extern VkDebugReportCallbackEXT DEBUG_CALLBACK;
 extern VkDebugUtilsMessengerEXT DEBUG_CALLBACK2;
 extern VkQueue PRESENTATION_QUEUE;
+extern VkAdapterResult ADAPTER;
 
 // defined by the engine
 extern VkSwapchain *SWAP_CHAIN;
+extern VkCommandBufferManager* COMMAND_BUFFER_MANAGER;
 extern VkPSOManager *PSO_MANAGER;
 extern VkShaderManager *SHADER_MANAGER;
 extern VkPipelineLayoutManager *PIPELINE_LAYOUT_MANAGER;

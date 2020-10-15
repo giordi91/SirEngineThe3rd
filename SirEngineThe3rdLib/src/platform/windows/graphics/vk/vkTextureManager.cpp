@@ -1,12 +1,14 @@
 #include "platform/windows/graphics/vk/vkTextureManager.h"
 
+#include <fstream>
+
 #include "SirEngine/io/fileUtils.h"
 #include "SirEngine/log.h"
 #include "gli/gli.hpp"
+#include "nlohmann/json.hpp"
 #include "vk.h"
 #include "vkBufferManager.h"
-#include <fstream>
-#include "nlohmann/json.hpp"
+#include "vkCommandBufferManager.h"
 
 namespace SirEngine::vk {
 
@@ -203,10 +205,11 @@ bool VkTextureManager::loadTextureFromFile(const char *name, VkFormat format,
     VkMemoryRequirements memReqs;
 
     // create a command buffer separated to execute this stuff
-    VkCommandBuffer buffer =
-        createCommandBuffer(CURRENT_FRAME_COMMAND->m_commandAllocator,
-                            VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
-    SET_DEBUG_NAME(buffer, VK_OBJECT_TYPE_COMMAND_BUFFER, "tempTextureBuffer");
+    // VkCommandBuffer buffer =
+    //    createCommandBuffer(CURRENT_FRAME_COMMAND->m_commandAllocator,
+    //                        VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+    // SET_DEBUG_NAME(buffer, VK_OBJECT_TYPE_COMMAND_BUFFER,
+    // "tempTextureBuffer");
 
     // Create a host-visible staging buffer that contains the raw image data
     VkBuffer stagingBuffer;
@@ -310,13 +313,15 @@ bool VkTextureManager::loadTextureFromFile(const char *name, VkFormat format,
     subresourceRange.levelCount = outTexture.mipLevels;
     subresourceRange.layerCount = 1;
 
+    const VkCommandBufferManager::VkCommandBufferData &buffData =
+        vk::COMMAND_BUFFER_MANAGER->getData(m_workerBuffer);
     // Image barrier for optimal image (target)
     // Optimal image will be used as destination for the copy
-    setImageLayout(buffer, outTexture.image, VK_IMAGE_LAYOUT_UNDEFINED,
+    setImageLayout(buffData.buffer, outTexture.image, VK_IMAGE_LAYOUT_UNDEFINED,
                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresourceRange);
 
     // Copy mip levels from staging buffer
-    vkCmdCopyBufferToImage(buffer, stagingBuffer, outTexture.image,
+    vkCmdCopyBufferToImage(buffData.buffer, stagingBuffer, outTexture.image,
                            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                            static_cast<uint32_t>(bufferCopyRegions.size()),
                            bufferCopyRegions.data());
@@ -324,13 +329,12 @@ bool VkTextureManager::loadTextureFromFile(const char *name, VkFormat format,
     // Change texture image layout to shader read after all mip levels have been
     // copied
     outTexture.imageLayout = imageLayout;
-    setImageLayout(buffer, outTexture.image,
+    setImageLayout(buffData.buffer, outTexture.image,
                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, imageLayout,
                    subresourceRange);
 
     // TODO fix hardcoded
-    flushCommandBuffer(CURRENT_FRAME_COMMAND->m_commandAllocator, buffer,
-                       GRAPHICS_QUEUE, true);
+    vk::COMMAND_BUFFER_MANAGER->executeFlushAndReset(m_workerBuffer);
     // Clean up staging resources
     vkFreeMemory(device, stagingMemory, nullptr);
     vkDestroyBuffer(device, stagingBuffer, nullptr);
@@ -396,10 +400,11 @@ bool VkTextureManager::loadTextureFromFile(const char *name, VkFormat format,
     VkMemoryRequirements memReqs;
 
     // create a command buffer separated to execute this stuff
-    VkCommandBuffer buffer =
-        createCommandBuffer(CURRENT_FRAME_COMMAND->m_commandAllocator,
-                            VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
-    SET_DEBUG_NAME(buffer, VK_OBJECT_TYPE_COMMAND_BUFFER, "tempTextureBuffer");
+    // VkCommandBuffer buffer =
+    //    createCommandBuffer(CURRENT_FRAME_COMMAND->m_commandAllocator,
+    //                        VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+    // SET_DEBUG_NAME(buffer, VK_OBJECT_TYPE_COMMAND_BUFFER,
+    // "tempTextureBuffer");
 
     // Create a host-visible staging buffer that contains the raw image data
     VkBuffer stagingBuffer;
@@ -488,7 +493,9 @@ bool VkTextureManager::loadTextureFromFile(const char *name, VkFormat format,
 
     // Image barrier for optimal image (target)
     // Optimal image will be used as destination for the copy
-    setImageLayout(buffer, outTexture.image, VK_IMAGE_LAYOUT_UNDEFINED,
+    const VkCommandBufferManager::VkCommandBufferData &buffData =
+        vk::COMMAND_BUFFER_MANAGER->getData(m_workerBuffer);
+    setImageLayout(buffData.buffer, outTexture.image, VK_IMAGE_LAYOUT_UNDEFINED,
                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresourceRange);
 
     // Setup buffer copy regions for each face including all of it's miplevels
@@ -519,7 +526,7 @@ bool VkTextureManager::loadTextureFromFile(const char *name, VkFormat format,
     }
 
     // Copy mip levels from staging buffer
-    vkCmdCopyBufferToImage(buffer, stagingBuffer, outTexture.image,
+    vkCmdCopyBufferToImage(buffData.buffer, stagingBuffer, outTexture.image,
                            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                            static_cast<uint32_t>(bufferCopyRegions.size()),
                            bufferCopyRegions.data());
@@ -527,13 +534,12 @@ bool VkTextureManager::loadTextureFromFile(const char *name, VkFormat format,
     // Change texture image layout to shader read after all mip levels have been
     // copied
     outTexture.imageLayout = imageLayout;
-    setImageLayout(buffer, outTexture.image,
+    setImageLayout(buffData.buffer, outTexture.image,
                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, imageLayout,
                    subresourceRange);
 
     // TODO fix hardcoded
-    flushCommandBuffer(CURRENT_FRAME_COMMAND->m_commandAllocator, buffer,
-                       GRAPHICS_QUEUE, true);
+    vk::COMMAND_BUFFER_MANAGER->executeFlushAndReset(m_workerBuffer);
     // Clean up staging resources
     vkFreeMemory(device, stagingMemory, nullptr);
     vkDestroyBuffer(device, stagingBuffer, nullptr);
@@ -595,7 +601,7 @@ TextureHandle VkTextureManager::loadTexture(const char *path,
   const std::string name = getFileName(texturePath);
 
   TextureHandle handle{};
-  if (!m_nameToHandle.get(name.c_str(),handle)) {
+  if (!m_nameToHandle.get(name.c_str(), handle)) {
     // const auto found = m_nameToHandle.find(name);
     // if (found == m_nameToHandle.end()) {
     const std::string extension = getFileExtension(texturePath);
@@ -698,14 +704,6 @@ TextureHandle VkTextureManager::allocateTexture(
   VkMemoryAllocateInfo memAllocInfo = {VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO};
   VkMemoryRequirements memReqs;
 
-  // create a command buffer separated to execute this stuff
-  // TODO fix hardcoded index
-  VkCommandBuffer buffer =
-      createCommandBuffer(CURRENT_FRAME_COMMAND->m_commandAllocator,
-                          VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
-  SET_DEBUG_NAME(buffer, VK_OBJECT_TYPE_COMMAND_BUFFER,
-                 frameConcatenation(name, "CommandBufferTemp"));
-
   // Create optimal tiled target image
   VkImageCreateInfo imageCreateInfo = {VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO};
   imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
@@ -752,11 +750,13 @@ TextureHandle VkTextureManager::allocateTexture(
 
   // Change texture image layout to shader read after
   data.imageLayout = imageLayout;
-  setImageLayout(buffer, data.image, VK_IMAGE_LAYOUT_UNDEFINED, imageLayout,
-                 subresourceRange);
 
-  flushCommandBuffer(CURRENT_FRAME_COMMAND->m_commandAllocator, buffer,
-                     GRAPHICS_QUEUE, true);
+  const VkCommandBufferManager::VkCommandBufferData &buffData =
+      vk::COMMAND_BUFFER_MANAGER->getData(m_workerBuffer);
+  setImageLayout(buffData.buffer, data.image, VK_IMAGE_LAYOUT_UNDEFINED,
+                 imageLayout, subresourceRange);
+
+  vk::COMMAND_BUFFER_MANAGER->executeFlushAndReset(m_workerBuffer);
 
   // Create image view
   // Textures are not directly accessed by the shaders and
@@ -792,10 +792,17 @@ TextureHandle VkTextureManager::allocateTexture(
 }
 
 void VkTextureManager::initialize() {
+  m_workerBuffer = vk::COMMAND_BUFFER_MANAGER->createBuffer(
+      CommandBufferManager::COMMAND_BUFFER_ALLOCATION_NONE,
+      "tempTextureBuffer");
+  vk::COMMAND_BUFFER_MANAGER->resetBufferHandle(m_workerBuffer);
+
   m_whiteTexture = loadTexture(WHITE_TEXTURE_PATH, false);
 }
 
 void VkTextureManager::cleanup() {
+  vk::COMMAND_BUFFER_MANAGER->freeBuffer(m_workerBuffer);
+
   assertMagicNumber(m_whiteTexture);
   uint32_t index = getIndexFromHandle(m_whiteTexture);
   VkTexture2D &data = m_texturePool[index];
