@@ -954,9 +954,7 @@ bool Dx12RenderingContext::dispatchFrame() {
 }
 
 bool Dx12RenderingContext::resize(const uint32_t width, const uint32_t height) {
-  executeGlobalCommandList();
   globals::RENDERING_CONTEXT->flush();
-  resetGlobalCommandList();
   return dx12::SWAP_CHAIN->resize(&dx12::CURRENT_FRAME_RESOURCE->fc, width,
                                   height);
 }

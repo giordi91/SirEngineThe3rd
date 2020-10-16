@@ -45,7 +45,7 @@ void FinalBlitNode::compute() {
   globals::RENDERING_CONTEXT->clearBindingObject(m_bindHandle);
 }
 
-void FinalBlitNode::initialize() {
+void FinalBlitNode::initialize(CommandBufferHandle commandBuffer) {
   m_rs = globals::ROOT_SIGNATURE_MANAGER->getHandleFromName(HDR_RS);
   m_pso = globals::PSO_MANAGER->getHandleFromName(HDR_PSO);
 
@@ -88,14 +88,23 @@ void FinalBlitNode::populateNodePorts() {
 }
 
 void FinalBlitNode::clear() {
-  // TODO why do i need the guard?, clear somehow gets called before
-  // the initialize and populateNodesPorts
-  if (m_bindingTable.isHandleValid()) {
-    globals::BINDING_TABLE_MANAGER->free(m_bindingTable);
-  }
   if (m_bindHandle.isHandleValid()) {
     globals::RENDERING_CONTEXT->freeBindingObject(m_bindHandle);
     m_bindHandle= {};
   }
+  clearResolutionDepenantResources();
+}
+
+void FinalBlitNode::clearResolutionDepenantResources()
+{
+  if (m_bindingTable.isHandleValid()) {
+    globals::BINDING_TABLE_MANAGER->free(m_bindingTable);
+  }
+}
+
+void FinalBlitNode::onResizeEvent(int, int, const CommandBufferHandle commandBuffer)
+{
+    clearResolutionDepenantResources();
+    initializeResolutionDepenantResources(commandBuffer);
 }
 }  // namespace SirEngine

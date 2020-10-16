@@ -50,5 +50,6 @@ private:
 
   GraphAllocators *alloc;
   graphics::GrassTechnique m_grass;
+  CommandBufferHandle m_workerBuffer{};
 };
 } // namespace SirEngine

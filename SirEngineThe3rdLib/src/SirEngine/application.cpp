@@ -72,8 +72,8 @@ void Application::run() {
   while (m_run) {
     globals::LAST_FRAME_TIME_NS = globals::GAME_CLOCK.getDelta();
     ++globals::TOTAL_NUMBER_OF_FRAMES;
-    globals::RENDERING_CONTEXT->newFrame();
     m_window->onUpdate();
+    globals::RENDERING_CONTEXT->newFrame();
     EventQueue *currentQueue = m_queuedEndOfFrameEventsCurrent;
     flipEndOfFrameQueue();
     for (uint32_t i = 0; i < currentQueue->allocCount; ++i) {

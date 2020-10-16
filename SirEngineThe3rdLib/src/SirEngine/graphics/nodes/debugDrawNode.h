@@ -16,13 +16,15 @@ class DebugDrawNode final : public GNode {
  public:
   explicit DebugDrawNode(GraphAllocators &allocators);
   virtual ~DebugDrawNode() = default;
-  void initialize() override;
+  void initialize(CommandBufferHandle commandBuffer) override;
   void compute() override;
 
   void populateNodePorts() override;
 
   void clear() override;
 
+  void clearResolutionDepenantResources() override;
+  void onResizeEvent(int, int, CommandBufferHandle commandBuffer) override;
  private:
   TextureHandle inputRTHandle{};
   TextureHandle inputDepthHandle{};
