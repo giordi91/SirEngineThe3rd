@@ -8,6 +8,7 @@
 #include "SirEngine/events/shaderCompileEvent.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/graphics/camera.h"
+#include "SirEngine/graphics/commandBufferManager.h"
 #include "SirEngine/graphics/debugRenderer.h"
 #include "SirEngine/graphics/nodes/FinalBlitNode.h"
 #include "SirEngine/graphics/nodes/debugDrawNode.h"
@@ -25,6 +26,10 @@
 namespace SirEngine {
 
 void GraphicsLayer::onAttach() {
+  m_workerBuffer = globals::COMMAND_BUFFER_MANAGER->createBuffer(
+      CommandBufferManager::COMMAND_BUFFER_ALLOCATION_NONE, "resize");
+  globals::COMMAND_BUFFER_MANAGER->resetBufferHandle(m_workerBuffer);
+
   globals::MAIN_CAMERA = new Camera3DPivot();
   globals::DEBUG_CAMERA = new Camera3DPivot();
   globals::ACTIVE_CAMERA = globals::MAIN_CAMERA;
@@ -65,7 +70,6 @@ void GraphicsLayer::onAttach() {
   auto *postProcess = new PostProcessStack(*alloc);
   postProcess->allocateRenderPass<GammaAndToneMappingEffect>(
       "GammaToneMapping");
-  postProcess->initialize();
 
   // add callback to forward for grass shader
   forward->addCallbackConfig(graphics::GrassTechnique::GRASS_TECHNIQUE_FORWARD,
@@ -139,7 +143,11 @@ void GraphicsLayer::onEvent(Event &event) {
 }
 #undef SE_BIND_EVENT_FN
 
-void GraphicsLayer::clear() { globals::RENDERING_GRAPH->clear(); }
+void GraphicsLayer::clear()
+{
+    globals::COMMAND_BUFFER_MANAGER->freeBuffer(m_workerBuffer);
+	globals::RENDERING_GRAPH->clear();
+}
 
 bool GraphicsLayer::onMouseButtonPressEvent(MouseButtonPressEvent &e) {
   if (e.getMouseButton() == MOUSE_BUTTONS_EVENT::LEFT) {
@@ -193,12 +201,13 @@ bool GraphicsLayer::onResizeEvent(WindowResizeEvent &e) {
   // next we can issue a resize
   const uint32_t w = e.getWidth();
   const uint32_t h = e.getHeight();
-  globals::RENDERING_GRAPH->onResizeEvent(w, h);
+  globals::RENDERING_GRAPH->onResizeEvent(w, h, m_workerBuffer);
 
-  // now we flush and resset
-  globals::RENDERING_CONTEXT->executeGlobalCommandList();
-  globals::RENDERING_CONTEXT->flush();
-  globals::RENDERING_CONTEXT->resetGlobalCommandList();
+  // now we flush and reset
+  globals::COMMAND_BUFFER_MANAGER->executeFlushAndReset(m_workerBuffer);
+  //globals::RENDERING_CONTEXT->executeGlobalCommandList();
+  //globals::RENDERING_CONTEXT->flush();
+  //globals::RENDERING_CONTEXT->resetGlobalCommandList();
 
   return true;
 }

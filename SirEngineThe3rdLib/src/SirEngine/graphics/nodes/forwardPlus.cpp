@@ -70,8 +70,8 @@ void ForwardPlus::setupLight() {
       "forwardPlusPassDataBindingTable");
 }
 
-void ForwardPlus::initialize() {
-  initializeResolutionDepenantResources();
+void ForwardPlus::initialize(CommandBufferHandle commandBuffer) {
+  initializeResolutionDepenantResources(commandBuffer);
   setupLight();
   uint32_t callbackCount = m_callbacks.size();
   for (uint32_t i = 0; i < callbackCount; ++i) {
@@ -116,9 +116,9 @@ void ForwardPlus::compute() {
   globals::RENDERING_CONTEXT->clearBindingObject(m_bindHandle);
 }
 
-void ForwardPlus::onResizeEvent(int, int) {
+void ForwardPlus::onResizeEvent(int, int,CommandBufferHandle commandBuffer) {
   clearResolutionDepenantResources();
-  initializeResolutionDepenantResources();
+  initializeResolutionDepenantResources(commandBuffer);
 }
 
 void ForwardPlus::populateNodePorts() {
@@ -155,9 +155,6 @@ void ForwardPlus::populateNodePorts() {
 }
 
 void ForwardPlus::clear() {
-  if (m_bindHandle.isHandleValid()) {
-    globals::RENDERING_CONTEXT->freeBindingObject(m_bindHandle);
-  }
   if (m_passBindings.isHandleValid()) {
     globals::BINDING_TABLE_MANAGER->free(m_passBindings);
   }
@@ -168,7 +165,7 @@ void ForwardPlus::clear() {
   clearResolutionDepenantResources();
 }
 
-void ForwardPlus::initializeResolutionDepenantResources() {
+void ForwardPlus::initializeResolutionDepenantResources(CommandBufferHandle commandBuffer) {
   int width = globals::ENGINE_CONFIG->m_windowWidth;
   int height = globals::ENGINE_CONFIG->m_windowHeight;
   m_rtHandle = globals::TEXTURE_MANAGER->allocateTexture(
@@ -189,6 +186,10 @@ void ForwardPlus::initializeResolutionDepenantResources() {
 }
 
 void ForwardPlus::clearResolutionDepenantResources() {
+  if (m_bindHandle.isHandleValid()) {
+    globals::RENDERING_CONTEXT->freeBindingObject(m_bindHandle);
+  }
+
   if (m_rtHandle.isHandleValid()) {
     globals::TEXTURE_MANAGER->free(m_rtHandle);
     m_rtHandle = {};

@@ -255,7 +255,8 @@ void DependencyGraph::finalizeGraph() {
 
   //first we initialize all the nodes
   for (int i = 0; i < linearCount; ++i) {
-    m_linearizedGraph[i]->initialize();
+	//TODO TEMP
+    m_linearizedGraph[i]->initialize({});
   }
   //next we populate all the ports, such that all the rendering resources
   //are known, also you have the hard guarantee that dependencies node

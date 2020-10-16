@@ -30,7 +30,7 @@ DebugDrawNode::DebugDrawNode(GraphAllocators &allocators)
   outTexture.name = "outTexture";
 }
 
-void DebugDrawNode::initialize() {}
+void DebugDrawNode::initialize(CommandBufferHandle commandBuffer) {}
 
 void DebugDrawNode::compute() {
   globals::RENDERING_CONTEXT->setBindingObject(m_bindHandle);
@@ -71,8 +71,19 @@ void DebugDrawNode::populateNodePorts() {
 }
 
 void DebugDrawNode::clear() {
+    clearResolutionDepenantResources();
+}
+
+void DebugDrawNode::clearResolutionDepenantResources()
+{
   if (m_bindHandle.isHandleValid()) {
     globals::RENDERING_CONTEXT->freeBindingObject(m_bindHandle);
   }
+}
+
+void DebugDrawNode::onResizeEvent(int, int, const CommandBufferHandle commandBuffer)
+{
+    clearResolutionDepenantResources();
+	initializeResolutionDepenantResources(commandBuffer);
 }
 }  // namespace SirEngine

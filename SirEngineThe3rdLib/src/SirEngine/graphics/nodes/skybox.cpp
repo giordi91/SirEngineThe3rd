@@ -35,7 +35,7 @@ SkyBoxPass::SkyBoxPass(GraphAllocators &allocators)
   buffer.name = "buffer";
 }
 
-void SkyBoxPass::initialize() {
+void SkyBoxPass::initialize(CommandBufferHandle commandBuffer) {
   m_rs = globals::ROOT_SIGNATURE_MANAGER->getHandleFromName(SKYBOX_RS);
   m_pso = globals::PSO_MANAGER->getHandleFromName(SKYBOX_PSO);
 
@@ -69,9 +69,10 @@ void SkyBoxPass::compute() {
   globals::RENDERING_CONTEXT->clearBindingObject(m_bindHandle);
 }
 
-void SkyBoxPass::onResizeEvent(int, int) {
+void SkyBoxPass::onResizeEvent(int, int,
+                               const CommandBufferHandle commandBuffer) {
   clearResolutionDepenantResources();
-  clearResolutionDepenantResources();
+  initializeResolutionDepenantResources(commandBuffer);
 }
 
 void SkyBoxPass::populateNodePorts() {
@@ -116,11 +117,16 @@ void SkyBoxPass::populateNodePorts() {
 }
 
 void SkyBoxPass::clear() {
-  if (m_bindHandle.isHandleValid()) {
-    globals::RENDERING_CONTEXT->freeBindingObject(m_bindHandle);
-  }
   if (m_bindingTable.isHandleValid()) {
     globals::BINDING_TABLE_MANAGER->free(m_bindingTable);
+  }
+  clearResolutionDepenantResources();
+}
+
+void SkyBoxPass::clearResolutionDepenantResources()
+{
+  if (m_bindHandle.isHandleValid()) {
+    globals::RENDERING_CONTEXT->freeBindingObject(m_bindHandle);
   }
 }
 }  // namespace SirEngine

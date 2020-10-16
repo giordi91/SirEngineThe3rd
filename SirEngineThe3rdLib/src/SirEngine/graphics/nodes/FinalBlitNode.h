@@ -11,9 +11,11 @@ public:
   explicit FinalBlitNode(GraphAllocators &allocators);
   virtual ~FinalBlitNode() = default;
   virtual void compute() override;
-  virtual void initialize() override;
+  virtual void initialize(CommandBufferHandle commandBuffer) override;
   void populateNodePorts() override;
   void clear() override;
+  void clearResolutionDepenantResources() override;
+  void onResizeEvent(int, int, CommandBufferHandle commandBuffer) override;
 private:
   TextureHandle inputRTHandle;
   BufferBindingsHandle m_bindHandle{};

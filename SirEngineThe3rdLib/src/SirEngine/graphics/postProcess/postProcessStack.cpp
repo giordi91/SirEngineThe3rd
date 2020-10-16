@@ -30,26 +30,8 @@ PostProcessStack::PostProcessStack(GraphAllocators &allocators)
   outTexture.name = "outTexture";
 }
 
-void PostProcessStack::initialize() {
-  // initialize all layers
-  const size_t stackSize = m_stack.size();
-  for (size_t i = 0; i < stackSize; ++i) {
-    m_stack[i]->initialize();
-  }
-
-  // allocate ping pong textures
-  handles[0] = globals::TEXTURE_MANAGER->allocateTexture(
-      globals::ENGINE_CONFIG->m_windowWidth,
-      globals::ENGINE_CONFIG->m_windowHeight,
-      RenderTargetFormat::R16G16B16A16_FLOAT, "postProcess1",
-      TextureManager::RENDER_TARGET | TextureManager::SHADER_RESOURCE,
-      RESOURCE_STATE::SHADER_READ_RESOURCE);
-  handles[1] = globals::TEXTURE_MANAGER->allocateTexture(
-      globals::ENGINE_CONFIG->m_windowWidth,
-      globals::ENGINE_CONFIG->m_windowHeight,
-      RenderTargetFormat::R16G16B16A16_FLOAT, "postProcess2",
-      TextureManager::RENDER_TARGET | TextureManager::SHADER_RESOURCE,
-      RESOURCE_STATE::SHADER_READ_RESOURCE);
+void PostProcessStack::initialize(CommandBufferHandle commandBuffer) {
+  initializeResolutionDepenantResources(commandBuffer);
 }
 
 void PostProcessStack::compute() {
@@ -80,33 +62,11 @@ void PostProcessStack::compute() {
   annotateGraphicsEnd();
 }
 
-void PostProcessStack::clear() {
-  if (handles[0].isHandleValid()) {
-    globals::TEXTURE_MANAGER->free(handles[0]);
-    handles[0].handle = 0;
-  }
-  if (handles[1].isHandleValid()) {
-    globals::TEXTURE_MANAGER->free(handles[1]);
-    handles[1].handle = 0;
-  }
-
-  if (m_bindHandles[0].isHandleValid()) {
-    globals::RENDERING_CONTEXT->freeBindingObject(m_bindHandles[0]);
-    m_bindHandles[0] = {};
-  }
-  if (m_bindHandles[1].isHandleValid()) {
-    globals::RENDERING_CONTEXT->freeBindingObject(m_bindHandles[1]);
-    m_bindHandles[1] = {};
-  }
-  //clearing the passes too
-  for(auto* pass : m_stack)
-  {
-      pass->clear();
-  }
-}
-void PostProcessStack::onResizeEvent(int, int) {
-  clear();
-  initialize();
+void PostProcessStack::clear() { clearResolutionDepenantResources(); }
+void PostProcessStack::onResizeEvent(int, int,
+                                     const CommandBufferHandle commandBuffer) {
+  clearResolutionDepenantResources();
+  initializeResolutionDepenantResources(commandBuffer);
 }
 
 void PostProcessStack::populateNodePorts() {
@@ -175,6 +135,53 @@ void PostProcessStack::populateNodePorts() {
     }
 
     m_outputPlugs[0].plugValue = handles[m_internalCounter].handle;
+  }
+}
+
+void PostProcessStack::initializeResolutionDepenantResources(
+    CommandBufferHandle commandBuffer) {
+  // initialize all layers
+  const size_t stackSize = m_stack.size();
+  for (size_t i = 0; i < stackSize; ++i) {
+    m_stack[i]->initialize();
+  }
+
+  // allocate ping pong textures
+  handles[0] = globals::TEXTURE_MANAGER->allocateTexture(
+      globals::ENGINE_CONFIG->m_windowWidth,
+      globals::ENGINE_CONFIG->m_windowHeight,
+      RenderTargetFormat::R16G16B16A16_FLOAT, "postProcess1",
+      TextureManager::RENDER_TARGET | TextureManager::SHADER_RESOURCE,
+      RESOURCE_STATE::SHADER_READ_RESOURCE);
+  handles[1] = globals::TEXTURE_MANAGER->allocateTexture(
+      globals::ENGINE_CONFIG->m_windowWidth,
+      globals::ENGINE_CONFIG->m_windowHeight,
+      RenderTargetFormat::R16G16B16A16_FLOAT, "postProcess2",
+      TextureManager::RENDER_TARGET | TextureManager::SHADER_RESOURCE,
+      RESOURCE_STATE::SHADER_READ_RESOURCE);
+}
+
+void PostProcessStack::clearResolutionDepenantResources() {
+  if (handles[0].isHandleValid()) {
+    globals::TEXTURE_MANAGER->free(handles[0]);
+    handles[0].handle = 0;
+  }
+  if (handles[1].isHandleValid()) {
+    globals::TEXTURE_MANAGER->free(handles[1]);
+    handles[1].handle = 0;
+  }
+
+  if (m_bindHandles[0].isHandleValid()) {
+    globals::RENDERING_CONTEXT->freeBindingObject(m_bindHandles[0]);
+    m_bindHandles[0] = {};
+  }
+  if (m_bindHandles[1].isHandleValid()) {
+    globals::RENDERING_CONTEXT->freeBindingObject(m_bindHandles[1]);
+    m_bindHandles[1] = {};
+  }
+  // clearing the passes too
+  for (auto *pass : m_stack) {
+    pass->clear();
   }
 }
 }  // namespace SirEngine

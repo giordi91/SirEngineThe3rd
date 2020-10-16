@@ -61,19 +61,20 @@ class SIR_ENGINE_API GNode {
     m_allocs.stringPool->free(m_nodeType);
   }
 
-  inline void setGeneration(int generation) { m_generation = generation; }
+  inline void setGeneration(const int generation) { m_generation = generation; }
   inline int getGeneration() const { return m_generation; }
 
   virtual void compute() {}
-  virtual void initialize() {}
-  virtual void initializeResolutionDepenantResources() {}
+  virtual void initialize(CommandBufferHandle commandBuffer) {}
+  virtual void initializeResolutionDepenantResources(
+      CommandBufferHandle commandBuffer) {}
   virtual void clearResolutionDepenantResources() {}
   virtual void clear() { m_generation = -1; }
   virtual void populateNodePorts() {}
 
   // un-named parameters are screenWidth and screenHeight
-  // removing the names just to avoid huge spam;
-  virtual void onResizeEvent(int, int){};
+  // removing the names just to avoid huge spam from compiler warning;
+  virtual void onResizeEvent(int, int,CommandBufferHandle commandBuffer) {}
 
   inline const char *getName() const { return m_nodeName; }
   inline const char *getType() const { return m_nodeType; }
@@ -292,10 +293,12 @@ class SIR_ENGINE_API DependencyGraph final {
   void clear();
   void compute();
   inline uint32_t nodeCount() const { return m_nodes.size(); }
-  void onResizeEvent(const int screenWidth, const int screenHeight) {
+  void onResizeEvent(const int screenWidth, const int screenHeight,
+                     CommandBufferHandle commandBuffer) {
     int count = m_linearizedGraph.size();
     for (int i = 0; i < count; ++i) {
-      m_linearizedGraph[i]->onResizeEvent(screenWidth, screenHeight);
+      m_linearizedGraph[i]->onResizeEvent(screenWidth, screenHeight,
+                                          commandBuffer);
     }
     for (int i = 0; i < count; ++i) {
       m_linearizedGraph[i]->populateNodePorts();
