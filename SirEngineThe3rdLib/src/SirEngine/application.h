@@ -16,7 +16,7 @@ public:
   void queueEventForEndOfFrame(Event *e) const;
   void pushLayer(Layer *layer);
 
-private:
+protected:
   bool onCloseWindow(WindowCloseEvent &e);
   bool onResizeWindow(WindowResizeEvent &e);
   inline void flipEndOfFrameQueue() {
@@ -25,14 +25,14 @@ private:
         &m_queuedEndOfFrameEvents[m_queueEndOfFrameCounter];
   };
 
-private:
+protected:
   struct EventQueue {
     Event**events = nullptr;
     uint32_t totalSize = 0;
     uint32_t allocCount = 0;
   };
 
-private:
+protected:
   EventQueue m_queuedEndOfFrameEvents[2];
   EventQueue *m_queuedEndOfFrameEventsCurrent;
   uint32_t m_queueEndOfFrameCounter = 0;
