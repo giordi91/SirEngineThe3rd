@@ -4,7 +4,8 @@
 #ifdef SE_BUILD_DLL
 #define SIR_ENGINE_API __declspec(dllexport)
 #else
-#define SIR_ENGINE_API __declspec(dllimport)
+#define SIR_ENGINE_API 
+//#define SIR_ENGINE_API __declspec(dllimport)
 #endif
 #else
 #error Sir Engine only runs on windows

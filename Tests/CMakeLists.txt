@@ -31,7 +31,7 @@ project(Tests)
 		#LNK4099 is for missing pbd of the compiled dependencies, I won't debug them so i don't add them
 		# to git to save space
 		# LNK4204 is similar to 4099
-		add_compile_options(/wd4251 /wd4275 /wd4099 /wd4204 /IGNORE:LNK4204 )
+		add_compile_options(/wd4251 /wd4275 /wd4099 /wd4204 )
 	endif()
 
 	#making sure to add the common cpp flags, that are defined in the main cpp file
@@ -46,7 +46,9 @@ project(Tests)
     #adding the executable
     add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 	SET(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
-	target_link_libraries(${PROJECT_NAME} SirEngineThe3rdLib AnimationCompilerPlugin lualib)
+	target_link_libraries(${PROJECT_NAME} SirEngineThe3rdLib lualib)
+	#target_link_libraries(${PROJECT_NAME} SirEngineThe3rdLib AnimationCompilerPlugin lualib)
+
 
 	#setting working directory
 	set_target_properties(

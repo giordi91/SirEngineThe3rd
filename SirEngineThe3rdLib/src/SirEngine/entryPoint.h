@@ -1,7 +1,7 @@
 #pragma once
 
 #ifdef SE_PLATFORM_WINDOWS
-
+/*
 extern SirEngine::Application* SirEngine::createApplication();
 
 int main()
@@ -12,5 +12,6 @@ int main()
 	app->run();
 	delete app;
 }
+*/
 
 #endif
