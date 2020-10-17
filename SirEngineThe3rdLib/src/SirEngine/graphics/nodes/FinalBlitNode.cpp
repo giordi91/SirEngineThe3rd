@@ -88,17 +88,17 @@ void FinalBlitNode::populateNodePorts() {
 }
 
 void FinalBlitNode::clear() {
-  if (m_bindHandle.isHandleValid()) {
-    globals::RENDERING_CONTEXT->freeBindingObject(m_bindHandle);
-    m_bindHandle= {};
+  if (m_bindingTable.isHandleValid()) {
+    globals::BINDING_TABLE_MANAGER->free(m_bindingTable);
   }
   clearResolutionDepenantResources();
 }
 
 void FinalBlitNode::clearResolutionDepenantResources()
 {
-  if (m_bindingTable.isHandleValid()) {
-    globals::BINDING_TABLE_MANAGER->free(m_bindingTable);
+  if (m_bindHandle.isHandleValid()) {
+    globals::RENDERING_CONTEXT->freeBindingObject(m_bindHandle);
+    m_bindHandle= {};
   }
 }
 
