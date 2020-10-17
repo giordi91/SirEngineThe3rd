@@ -65,9 +65,9 @@ project(SirEngineThe3rdLib)
 		#TODO add D3DX12_NO_STATE_OBJECT_HELPERS
 		add_compile_definitions(NO_MIN_MAX _CRT_NONSTDC_NO_DEPRECATE WIN32_LEAN_AND_MEAN  )
 		if(${BUILD_AMD})
-			add_compile_definitions(BUILD_AMD SE_PLATFORM_WINDOWS SE_BUILD_DLL _CRT_SECURE_NO_WARNINGS _UNICODE QUIT_ESCAPE GRAPHICS_API=DX12)
+			add_compile_definitions(BUILD_AMD SE_PLATFORM_WINDOWS _CRT_SECURE_NO_WARNINGS _UNICODE QUIT_ESCAPE GRAPHICS_API=DX12)
 		else(${BUILD_AMD})
-			add_compile_definitions(SE_PLATFORM_WINDOWS SE_BUILD_DLL _CRT_SECURE_NO_WARNINGS _UNICODE QUIT_ESCAPE)
+			add_compile_definitions(SE_PLATFORM_WINDOWS _CRT_SECURE_NO_WARNINGS _UNICODE QUIT_ESCAPE)
 		endif(${BUILD_AMD})
 
 		if(${BUILD_VULKAN})
@@ -142,7 +142,7 @@ project(SirEngineThe3rdLib)
 	endif()
 
     #adding the executable
-    add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES} ${INCLUDES_FILES} ${ASSETS_FILES}
+    add_library(${PROJECT_NAME} STATIC ${SOURCE_FILES} ${INCLUDES_FILES} ${ASSETS_FILES}
 	${MATERIAL_FILES}
 	${MATERIAL_TYPES_FILES}
 	${PSO_FILES}
@@ -167,7 +167,8 @@ project(SirEngineThe3rdLib)
 
 	SET(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 
-	target_link_libraries(${PROJECT_NAME} d3dcompiler dxcompiler farmhash DXGI D3D12 imgui DXTK12 WinPixEventRuntime lualib   meshoptimizer)
+	#target_link_libraries(${PROJECT_NAME} d3dcompiler dxcompiler farmhash DXGI D3D12 imgui DXTK12 WinPixEventRuntime lualib   meshoptimizer)
+	target_link_libraries(${PROJECT_NAME} d3dcompiler dxcompiler farmhash DXGI D3D12 imgui DXTK12 WinPixEventRuntime lualib)
 
 
 	if(${BUILD_VULKAN})

@@ -6,6 +6,7 @@
 #include "catch/catch.hpp"
 #include "resourceCompilerLib/resourcePlugin.h"
 
+/*
 void compileAnim(const char *in, const char *out) {
 
   PluginRegistry *registry = PluginRegistry::getInstance();
@@ -204,3 +205,4 @@ TEST_CASE("animation key 3 read from frame", "[animation]") {
   REQUIRE(resultFrame == 9);
 
 }
+*/
