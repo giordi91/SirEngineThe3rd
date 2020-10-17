@@ -1,15 +1,14 @@
 #include "SirEngine/application.h"
 
-
+#include "SirEngine/engineConfig.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/input.h"
+#include "SirEngine/io/fileUtils.h"
 #include "SirEngine/layer.h"
 #include "SirEngine/log.h"
-#include "SirEngine/engineConfig.h"
-#include "SirEngine/io/fileUtils.h"
 #include "graphics/renderingContext.h"
-#include "layers/imguiLayer.h"
 #include "layers/graphicsLayer.h"
+#include "layers/imguiLayer.h"
 
 namespace SirEngine {
 
@@ -28,17 +27,17 @@ Application::Application() {
   windowProperty.height = globals::ENGINE_CONFIG->m_windowHeight;
   windowProperty.title = globals::ENGINE_CONFIG->m_windowTitle;
 
+  // The window might decide to override the size due to fullscreen, if so
+  // the value of engine config will change
   m_window = BaseWindow::create(windowProperty);
   m_window->setEventCallback([this](Event &e) -> void { this->onEvent(e); });
 
   // now that the window is created we can crate a rendering context
   RenderingContextCreationSettings creationSettings{};
-  creationSettings.width = windowProperty.width;
-  creationSettings.height = windowProperty.height;
+  creationSettings.width = globals::ENGINE_CONFIG->m_windowWidth;
+  creationSettings.height = globals::ENGINE_CONFIG->m_windowHeight;
   creationSettings.graphicsAPI = globals::ENGINE_CONFIG->m_graphicsAPI;
-  // creationSettings.graphicsAPI = GRAPHIC_API::VULKAN;
 
-  // creationSettings.graphicsAPI = GRAPHIC_API::DX12;
   creationSettings.window = m_window;
   creationSettings.apiConfig = {};
 
@@ -90,7 +89,6 @@ void Application::run() {
     globals::RENDERING_CONTEXT->dispatchFrame();
     // update input to cache current input for next frame
     globals::INPUT->swapFrameKey();
-
   }
 
   // lets make sure any graphics operation are done

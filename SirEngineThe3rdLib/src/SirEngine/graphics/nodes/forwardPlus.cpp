@@ -165,7 +165,7 @@ void ForwardPlus::clear() {
   clearResolutionDepenantResources();
 }
 
-void ForwardPlus::initializeResolutionDepenantResources(CommandBufferHandle commandBuffer) {
+void ForwardPlus::initializeResolutionDepenantResources(CommandBufferHandle ) {
   int width = globals::ENGINE_CONFIG->m_windowWidth;
   int height = globals::ENGINE_CONFIG->m_windowHeight;
   m_rtHandle = globals::TEXTURE_MANAGER->allocateTexture(
