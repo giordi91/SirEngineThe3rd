@@ -26,6 +26,7 @@ struct EngineConfig {
   int m_windowHeight;
 
   // graphics  config
+  bool m_startFullScreen;
   GRAPHIC_API m_graphicsAPI;
   bool m_useCachedPSO;
   uint32_t m_frameBufferingCount;

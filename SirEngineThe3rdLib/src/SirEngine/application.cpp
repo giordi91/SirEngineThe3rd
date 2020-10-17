@@ -26,6 +26,7 @@ Application::Application() {
   windowProperty.width = globals::ENGINE_CONFIG->m_windowWidth;
   windowProperty.height = globals::ENGINE_CONFIG->m_windowHeight;
   windowProperty.title = globals::ENGINE_CONFIG->m_windowTitle;
+  windowProperty.startFullScreen = globals::ENGINE_CONFIG->m_startFullScreen;
 
   // The window might decide to override the size due to fullscreen, if so
   // the value of engine config will change
