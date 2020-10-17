@@ -61,11 +61,6 @@ Application::Application() {
   m_queuedEndOfFrameEvents[1].totalSize = RESERVE_ALLOC_EVENT_QUEUE;
   m_queuedEndOfFrameEventsCurrent = &m_queuedEndOfFrameEvents[0];
 
-  //imGuiLayer = new ImguiLayer();
-  imGuiLayer = new EditorLayer();
-  graphicsLayer = new GraphicsLayer();
-  m_layerStack.pushLayer(graphicsLayer);
-  m_layerStack.pushLayer(imGuiLayer);
 
   globals::APPLICATION = this;
 }

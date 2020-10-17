@@ -22,7 +22,7 @@ class RenderGraphChanged;
 class ShaderCompileResultEvent;
 class RequestShaderCompileEvent;
 
-class EditorLayer final : public Layer {
+class SIR_ENGINE_API EditorLayer final : public Layer {
   struct DockIDs {
     ImGuiID root = 0;
     ImGuiID bottom = 0;
