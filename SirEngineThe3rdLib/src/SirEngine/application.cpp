@@ -1,14 +1,16 @@
 #include "SirEngine/application.h"
 
+
+#include "Layers/editorLayer.h"
 #include "SirEngine/engineConfig.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/input.h"
 #include "SirEngine/io/fileUtils.h"
 #include "SirEngine/layer.h"
 #include "SirEngine/log.h"
-#include "graphics/renderingContext.h"
-#include "layers/graphicsLayer.h"
-#include "layers/imguiLayer.h"
+#include "SirEngine/graphics/renderingContext.h"
+#include "SirEngine/layers/graphicsLayer.h"
+#include "SirEngine/layers/imguiDebugLayer.h"
 
 namespace SirEngine {
 
@@ -59,7 +61,8 @@ Application::Application() {
   m_queuedEndOfFrameEvents[1].totalSize = RESERVE_ALLOC_EVENT_QUEUE;
   m_queuedEndOfFrameEventsCurrent = &m_queuedEndOfFrameEvents[0];
 
-  imGuiLayer = new ImguiLayer();
+  //imGuiLayer = new ImguiLayer();
+  imGuiLayer = new EditorLayer();
   graphicsLayer = new GraphicsLayer();
   m_layerStack.pushLayer(graphicsLayer);
   m_layerStack.pushLayer(imGuiLayer);
