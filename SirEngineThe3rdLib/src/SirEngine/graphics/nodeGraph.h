@@ -65,16 +65,16 @@ class SIR_ENGINE_API GNode {
   inline int getGeneration() const { return m_generation; }
 
   virtual void compute() {}
-  virtual void initialize(CommandBufferHandle commandBuffer) {}
+  virtual void initialize(CommandBufferHandle ) {}
   virtual void initializeResolutionDepenantResources(
-      CommandBufferHandle commandBuffer) {}
+      CommandBufferHandle ) {}
   virtual void clearResolutionDepenantResources() {}
   virtual void clear() { m_generation = -1; }
   virtual void populateNodePorts() {}
 
   // un-named parameters are screenWidth and screenHeight
   // removing the names just to avoid huge spam from compiler warning;
-  virtual void onResizeEvent(int, int,CommandBufferHandle commandBuffer) {}
+  virtual void onResizeEvent(int, int,CommandBufferHandle ) {}
 
   inline const char *getName() const { return m_nodeName; }
   inline const char *getType() const { return m_nodeType; }
