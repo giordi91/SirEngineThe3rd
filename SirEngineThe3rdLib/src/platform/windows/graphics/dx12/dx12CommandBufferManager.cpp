@@ -43,7 +43,7 @@ void Dx12CommandBufferManager::executeBuffer(const CommandBufferHandle handle) {
   data.isListOpen = false;
 }
 
-void Dx12CommandBufferManager::resetBufferHandle(CommandBufferHandle handle) {
+void Dx12CommandBufferManager::resetBufferHandle(const CommandBufferHandle handle) {
   assertVersion(handle);
   const uint32_t idx = getIndexFromHandle(handle);
   auto &data = m_bufferPool[idx];
