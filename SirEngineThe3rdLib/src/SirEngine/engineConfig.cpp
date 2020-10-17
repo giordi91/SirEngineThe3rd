@@ -1,13 +1,15 @@
 #include "SirEngine/engineConfig.h"
+
+#include <unordered_map>
+
 #include "SirEngine/io/fileUtils.h"
 #include "SirEngine/runtimeString.h"
 #include "nlohmann/json.hpp"
 
-#include <unordered_map>
-
 static std::string CONFIG_DATA_SOURCE_KEY = "dataSource";
 static std::string CONFIG_STARTING_SCENE_KEY = "startingScene";
 static std::string CONFIG_GRAPHIC_API = "graphicAPI";
+static std::string CONFIG_START_FULL_SCREEN = "startFullScreen";
 static std::string CONFIG_WINDOW_TITLE = "windowTitle";
 static std::string CONFIG_WINDOW_WIDTH = "windowWidth";
 static std::string CONFIG_WINDOW_HEIGHT = "windowHeight";
@@ -20,7 +22,7 @@ static std::string CONFIG_VENDOR_TOLERANT = "vendorTolerant";
 static std::string CONFIG_ADAPTER_SELECTION_RULE = "adapterSelectionRule";
 static std::string CONFIG_USE_CACHED_PSO = "useCachedPSO";
 static std::string CONFIG_FRAME_BUFFERING_COUNT = "frameBufferingCount";
-static std::string CONFIG_MATRIX_BUFFER_COUNT= "matrixBufferSize";
+static std::string CONFIG_MATRIX_BUFFER_COUNT = "matrixBufferSize";
 
 static std::string DEFAULT_STRING = "";
 static std::string DEFAULT_ADAPTER = "any";
@@ -62,7 +64,6 @@ SirEngine::GRAPHIC_API getAPIFromName(const std::string &apiName) {
 }
 
 ADAPTER_VENDOR getAdapterVendor(const nlohmann::json &jobj) {
-
   const std::string &adapter = persistentString(
       getValueIfInJson(jobj, CONFIG_ADAPTER_VENDOR, DEFAULT_ADAPTER).c_str());
   const auto found = NAME_TO_VENDOR.find(adapter);
@@ -86,7 +87,8 @@ ADAPTER_SELECTION_RULE getAdapterSelectionRule(const nlohmann::json &jobj) {
   return ADAPTER_SELECTION_RULE::LARGEST_FRAME_BUFFER;
 }
 
-void parseConfigFile(const char *path,const EngineInitializationConfig& initConfig) {
+void parseConfigFile(const char *path,
+                     const EngineInitializationConfig &initConfig) {
   nlohmann::json jobj;
   SirEngine::getJsonObj(path, jobj);
 
@@ -111,19 +113,14 @@ void parseConfigFile(const char *path,const EngineInitializationConfig& initConf
   globals::PERSISTENT_ALLOCATOR = new ThreeSizesPool(persistentAllocSize);
 
   // start to process the config file
-  globals::ENGINE_CONFIG = reinterpret_cast<EngineConfig *>(
+  globals::ENGINE_CONFIG = static_cast<EngineConfig *>(
       globals::PERSISTENT_ALLOCATOR->allocate(sizeof(EngineConfig)));
 
-
   // resources
-
   EngineConfig &config = *globals::ENGINE_CONFIG;
-  config.m_stringPoolSizeInMb =
-      initConfig.stringPoolSizeInMB;
-  config.m_frameAllocatorSizeInMb =
-      initConfig.frameAllocatorSizeInMB;
-  config.m_persistentAllocatorInMb =
-      initConfig.frameAllocatorSizeInMB;
+  config.m_stringPoolSizeInMb = initConfig.stringPoolSizeInMB;
+  config.m_frameAllocatorSizeInMb = initConfig.frameAllocatorSizeInMB;
+  config.m_persistentAllocatorInMb = initConfig.frameAllocatorSizeInMB;
 
   config.m_dataSourcePath = persistentString(
       getValueIfInJson(jobj, CONFIG_DATA_SOURCE_KEY, DEFAULT_STRING).c_str());
@@ -134,6 +131,11 @@ void parseConfigFile(const char *path,const EngineInitializationConfig& initConf
   assert(config.m_startScenePath[0] != '\0');
   config.m_useCachedPSO = getValueIfInJson(jobj, CONFIG_USE_CACHED_PSO, false);
 
+
+  config.m_startFullScreen = 
+      getValueIfInJson(jobj, CONFIG_START_FULL_SCREEN, false);
+
+	
   const std::string api =
       getValueIfInJson(jobj, CONFIG_GRAPHIC_API, DEFAULT_STRING);
   config.m_graphicsAPI = getAPIFromName(api);
@@ -162,7 +164,6 @@ void parseConfigFile(const char *path,const EngineInitializationConfig& initConf
 }
 
 void initializeConfigDefault() {
-
   // initialize basic engine allocators
   constexpr int toBytes = 1024 * 1024;
   globals::STRING_POOL =
@@ -201,14 +202,13 @@ void initializeConfigDefault() {
 void loadConfigFile(const EngineInitializationConfig &config) {
   const bool exists = fileExists(config.configPath);
   if (exists) {
-    parseConfigFile(config.configPath,config);
+    parseConfigFile(config.configPath, config);
   } else {
     initializeConfigDefault();
   }
 }
 
 void initializeEngine(const EngineInitializationConfig &config) {
-
   if (config.initCoreWithNoConfig) {
     globals::STRING_POOL = new StringPool(config.stringPoolSizeInMB);
     globals::FRAME_ALLOCATOR = new StackAllocator();
@@ -220,4 +220,4 @@ void initializeEngine(const EngineInitializationConfig &config) {
     loadConfigFile(config);
   }
 }
-} // namespace SirEngine
+}  // namespace SirEngine

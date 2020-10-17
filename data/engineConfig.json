@@ -20,6 +20,7 @@
   "windowHeight": 720,
 
   "======graphics config=====": 0, 
+  "startFullScreen": true,
   "graphicAPI": "DX12",
   "useCachedPSO" :  false,
   "frameBufferingCount" : 3, 
