@@ -19,12 +19,13 @@ void Dx12ConstantBufferManager::clearUpQueueFree() {
   int stackTopIdx = count;
 
   for (int i = count; i >= 0; --i) {
+
     const ConstantBufferHandle handle{m_bufferToFree[i]};
     const int32_t index = getIndexFromHandle(handle);
     ConstantBufferDataDynamic &data = m_dynamicStorage[index];
 
     for (int c = 0; c < FRAME_BUFFERS_COUNT; ++c) {
-      if (data.cbData[i].fence < id) {
+      if (data.cbData[c].fence < id) {
         // we need to remove it from the request list if it is there
         auto found = m_bufferedRequests.find(handle.handle);
         if (found != m_bufferedRequests.end()) {
@@ -34,16 +35,16 @@ void Dx12ConstantBufferManager::clearUpQueueFree() {
           m_bufferedRequests.erase(found);
         }
 
-        // we can free the memory
-        data.cbData[i].resource->Release();
+        dx12::GLOBAL_CBV_SRV_UAV_HEAP->freeDescriptor(data.cbData[c].pair);
+        unmapConstantBuffer(data.cbData[c]);
 
-        dx12::GLOBAL_CBV_SRV_UAV_HEAP->freeDescriptor(data.cbData[i].pair);
-        unmapConstantBuffer(data.cbData[i]);
+        // we can free the memory
+        data.cbData[c].resource->Release();
         if (stackTopIdx != i) {
           // lets copy
           m_bufferToFree[i] = m_bufferToFree[stackTopIdx];
+          --stackTopIdx;
         }
-        --stackTopIdx;
       }
     }
   }
@@ -114,6 +115,7 @@ bool Dx12ConstantBufferManager::free(ConstantBufferHandle handle) {
   const uint64_t fence = dx12::insertFenceToGlobalQueue();
   for (int i = 0; i < FRAME_BUFFERS_COUNT; ++i) {
     m_dynamicStorage[index].cbData[i].fence = fence;
+    dx12::GLOBAL_CBV_SRV_UAV_HEAP->freeDescriptor(m_dynamicStorage[index].cbData[i].pair);
   }
   m_bufferToFree.push_back(handle.handle);
   // now we can set the index ready to be freed in the queue
@@ -187,7 +189,6 @@ void Dx12ConstantBufferManager::updateConstantBufferNotBuffered(
   assert(data.mappedData != nullptr);
   memcpy(data.mappedData, dataToUpload, data.size);
 }
-
 
 void Dx12ConstantBufferManager::processBufferedData() {
   std::vector<int> processedIdxs;

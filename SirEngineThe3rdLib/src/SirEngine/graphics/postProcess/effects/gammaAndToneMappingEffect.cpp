@@ -4,7 +4,6 @@
 #include "SirEngine/globals.h"
 #include "SirEngine/graphics/bindingTableManager.h"
 #include "SirEngine/graphics/renderingContext.h"
-#include "SirEngine/materialManager.h"
 #include "SirEngine/psoManager.h"
 #include "SirEngine/rootSignatureManager.h"
 
@@ -33,7 +32,7 @@ void GammaAndToneMappingEffect::initialize() {
 }
 
 void GammaAndToneMappingEffect::render(const TextureHandle input,
-                                       const TextureHandle ,
+                                       const TextureHandle,
                                        const PostProcessResources &) {
   if (updateConfig) {
     updateConstantBuffer();
@@ -55,6 +54,11 @@ void GammaAndToneMappingEffect::updateConstantBuffer() {
 void GammaAndToneMappingEffect::clear() {
   if (m_bindingTable.isHandleValid()) {
     globals::BINDING_TABLE_MANAGER->free(m_bindingTable);
+    m_bindingTable = {};
+  }
+  if (m_constantBufferHandle.isHandleValid()) {
+    globals::CONSTANT_BUFFER_MANAGER->free(m_constantBufferHandle);
+    m_constantBufferHandle = {};
   }
 }
 }  // namespace SirEngine

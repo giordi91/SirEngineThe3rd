@@ -48,7 +48,7 @@ MESSAGE( STATUS "BUILD Vulkan:                 " ${BUILD_VULKAN})
 
 #subfolders
 add_subdirectory(SirEngineThe3rdLib)
-#add_subdirectory(Sandbox)
+add_subdirectory(Sandbox)
 #add_subdirectory(ResourceCompilerLib)
 #add_subdirectory(ResourceCompiler)
 #add_subdirectory(ResourceCompilerPlugins/ModelCompilerPlugin)
@@ -61,7 +61,6 @@ add_subdirectory(SirEngineThe3rdLib)
 #	add_subdirectory(ResourceCompilerPlugins/VkShaderCompilerPlugin)
 #endif(${BUILD_VULKAN})
 
-#add_subdirectory(vendors/meshoptimizer)
 add_subdirectory(Tests)
-#add_subdirectory(Tools/pointScatter/cpp)
+add_subdirectory(Tools/pointScatter/cpp)
 

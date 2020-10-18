@@ -19,6 +19,7 @@
 #include "SirEngine/skinClusterManager.h"
 #include "dx12BindingTableManager.h"
 #include "dx12CommandBufferManager.h"
+#include "dx12ImguiManager.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/dx12Adapter.h"
 #include "platform/windows/graphics/dx12/dx12BufferManager.h"
@@ -62,6 +63,7 @@ BufferManagerDx12 *BUFFER_MANAGER = nullptr;
 Dx12DebugRenderer *DEBUG_RENDERER = nullptr;
 Dx12BindingTableManager *BINDING_TABLE_MANAGER = nullptr;
 Dx12CommandBufferManager *COMMAND_BUFFER_MANAGER = nullptr;
+Dx12ImGuiManager *IMGUI_MANAGER = nullptr;
 
 static const std::unordered_map<RESOURCE_STATE, D3D12_RESOURCE_STATES>
     RESOURCE_STATE_TO_DX_STATE = {
@@ -194,6 +196,10 @@ bool Dx12RenderingContext::initializeGraphicsDx12(BaseWindow *wnd,
 
   GLOBAL_SAMPLER_HEAP = new DescriptorHeap();
   GLOBAL_SAMPLER_HEAP->initializeAsSampler(16);
+
+  IMGUI_MANAGER = new Dx12ImGuiManager();
+  IMGUI_MANAGER->initialize();
+  globals::IMGUI_MANAGER = IMGUI_MANAGER;
 
   allocateSamplers();
 
@@ -950,6 +956,7 @@ bool Dx12RenderingContext::dispatchFrame() {
 
   // TODO make sure the behaviour is symmetrical with VK
   dx12::BUFFER_MANAGER->clearUploadRequests();
+  //dx12::CONSTANT_BUFFER_MANAGER->clearUpQueueFree();
   return true;
 }
 

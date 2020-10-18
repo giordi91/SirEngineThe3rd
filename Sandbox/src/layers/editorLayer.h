@@ -3,10 +3,6 @@
 #include <imgui/imgui.h>
 
 #include "SirEngine/layer.h"
-#if BUILD_VK
-// TODO need to remove this
-#include <vulkan/vulkan.h>
-#endif
 
 namespace SirEngine {
 class Event;
@@ -22,7 +18,7 @@ class RenderGraphChanged;
 class ShaderCompileResultEvent;
 class RequestShaderCompileEvent;
 
-class SIR_ENGINE_API EditorLayer final : public Layer {
+class EditorLayer final : public Layer {
   struct DockIDs {
     ImGuiID root = 0;
     ImGuiID bottom = 0;
@@ -61,10 +57,5 @@ class SIR_ENGINE_API EditorLayer final : public Layer {
   bool m_shouldShow = true;
   DockIDs dockIds;
 
-#if BUILD_VK
-  // TODO find a better solution for this, can it decay to void?
-  // vk imgui render pass
-  VkRenderPass imguiPass{};
-#endif
 };
 }  // namespace SirEngine

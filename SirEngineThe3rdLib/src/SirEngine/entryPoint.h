@@ -1,7 +1,7 @@
 #pragma once
 
 #ifdef SE_PLATFORM_WINDOWS
-/*
+#ifdef SE_DEFINE_ENTRY_POINT
 extern SirEngine::Application* SirEngine::createApplication();
 
 int main()
@@ -12,6 +12,6 @@ int main()
 	app->run();
 	delete app;
 }
-*/
+#endif
 
 #endif

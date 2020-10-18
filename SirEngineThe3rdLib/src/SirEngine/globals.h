@@ -24,6 +24,7 @@ class RootSignatureManager;
 class DependencyGraph;
 class DebugRenderer;
 class CommandBufferManager;
+class ImGuiManager;
 
 class StringPool;
 class StackAllocator;
@@ -71,7 +72,7 @@ extern DebugFrameData *DEBUG_FRAME_DATA;
 extern SIR_ENGINE_API AnimationManager *ANIMATION_MANAGER;
 extern SkinClusterManager *SKIN_MANAGER;
 extern ScriptingContext *SCRIPTING_CONTEXT;
-extern CommandBufferManager* COMMAND_BUFFER_MANAGER;
+extern CommandBufferManager *COMMAND_BUFFER_MANAGER;
 extern Input *INPUT;
 extern MeshManager *MESH_MANAGER;
 extern MaterialManager *MATERIAL_MANAGER;
@@ -83,6 +84,7 @@ extern graphics::ShaderManager *SHADER_MANAGER;
 extern graphics::LightManager *LIGHT_MANAGER;
 extern graphics::BindingTableManager *BINDING_TABLE_MANAGER;
 extern InteropData *INTEROP_DATA;
+extern ImGuiManager *IMGUI_MANAGER;
 
 // generic allocators
 extern SIR_ENGINE_API StringPool *STRING_POOL;

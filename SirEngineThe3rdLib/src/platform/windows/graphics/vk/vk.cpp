@@ -28,6 +28,7 @@
 #include "platform/windows/graphics/vk/vkSwapChain.h"
 #include "platform/windows/graphics/vk/vkTextureManager.h"
 #include "vkCommandBufferManager.h"
+#include "vkImGuiManager.h"
 
 namespace SirEngine::vk {
 VkInstance INSTANCE = nullptr;
@@ -55,6 +56,7 @@ VkMeshManager *MESH_MANAGER = nullptr;
 VkTextureManager *TEXTURE_MANAGER = nullptr;
 VkBindingTableManager *DESCRIPTOR_MANAGER = nullptr;
 VkDebugRenderer *DEBUG_RENDERER = nullptr;
+VkImGuiManager*IMGUI_MANAGER = nullptr;
 uint32_t SWAP_CHAIN_IMAGE_COUNT = 0;
 VkFrameCommand FRAME_COMMAND[PREALLOCATED_SEMAPHORE_COUNT];
 VkFrameCommand *CURRENT_FRAME_COMMAND = nullptr;
@@ -224,6 +226,10 @@ bool VkRenderingContext::initializeGraphics() {
   DESCRIPTOR_MANAGER = new VkBindingTableManager(10000, 10000);
   DESCRIPTOR_MANAGER->initialize();
   globals::BINDING_TABLE_MANAGER = DESCRIPTOR_MANAGER;
+
+  IMGUI_MANAGER = new VkImGuiManager();
+  IMGUI_MANAGER->initialize();
+  globals::IMGUI_MANAGER = IMGUI_MANAGER;
 
   SHADER_MANAGER = new VkShaderManager();
   SHADER_MANAGER->initialize();
@@ -533,6 +539,7 @@ bool VkRenderingContext::shutdownGraphic() {
   globals::MATERIAL_MANAGER->cleanup();
 
   TEXTURE_MANAGER->cleanup();
+  IMGUI_MANAGER->cleanup();
   DESCRIPTOR_MANAGER->cleanup();
   COMMAND_BUFFER_MANAGER->cleanup();
 

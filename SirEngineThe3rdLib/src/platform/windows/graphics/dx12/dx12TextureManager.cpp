@@ -174,6 +174,9 @@ void Dx12TextureManager::free(const TextureHandle handle) {
     if (data.rtsrv.cpuHandle.ptr != 0) {
       dx12::GLOBAL_DSV_HEAP->freeDescriptor(data.rtsrv);
     }
+    if (data.dsvStencil.cpuHandle.ptr != 0) {
+      dx12::GLOBAL_DSV_HEAP->freeDescriptor(data.dsvStencil);
+    }
     if (data.uav.cpuHandle.ptr != 0) {
       assert(0 && "not supported yet check if is correct");
       dx12::GLOBAL_DSV_HEAP->freeDescriptor(data.uav);

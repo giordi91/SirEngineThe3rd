@@ -209,7 +209,7 @@ bool GraphicsLayer::onResizeEvent(WindowResizeEvent &e) {
   //globals::RENDERING_CONTEXT->flush();
   //globals::RENDERING_CONTEXT->resetGlobalCommandList();
 
-  return true;
+  return false;
 }
 
 bool GraphicsLayer::onShaderCompileEvent(ShaderCompileEvent &e) {

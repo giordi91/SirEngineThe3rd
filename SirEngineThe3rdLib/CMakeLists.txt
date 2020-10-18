@@ -167,9 +167,7 @@ project(SirEngineThe3rdLib)
 
 	SET(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 
-	#target_link_libraries(${PROJECT_NAME} d3dcompiler dxcompiler farmhash DXGI D3D12 imgui DXTK12 WinPixEventRuntime lualib   meshoptimizer)
 	target_link_libraries(${PROJECT_NAME} d3dcompiler dxcompiler farmhash DXGI D3D12 imgui DXTK12 WinPixEventRuntime lualib)
-
 
 	if(${BUILD_VULKAN})
 		target_link_libraries(${PROJECT_NAME} ${Vulkan_LIBRARIES} )
@@ -192,4 +190,23 @@ project(SirEngineThe3rdLib)
 		COPY_FILE_TO_BIN_DIRECTORY( "${CMAKE_SOURCE_DIR}/vendors/PixEvent/bin/WinPixEventRuntime_UAP.dll")
 	endif()
 
+	#lets try to find and copy the dll we need
+	set(VS_TOOLKIT_PATH "C:/Program Files (x86)/Windows Kits/10/bin/")
+
+	#C:\Program Files (x86)\Windows Kits\10\bin\10.0.17763.0\x64
+	MESSAGE(STATUS "---------------------------------------------> ${VS_TOOLKIT_PATH}${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}/x64")
+
+	SET(DXIL_DLL_PATH "${VS_TOOLKIT_PATH}${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}/x64/dxil.dll")
+
+	if(EXISTS ${DXIL_DLL_PATH})
+		add_custom_command(
+		TARGET ${PROJECT_NAME} 
+		PRE_BUILD
+		COMMAND ${CMAKE_COMMAND} -E copy
+		   ${DXIL_DLL_PATH}
+		   ${CMAKE_BINARY_DIR}/bin/$<CONFIGURATION>/dxil.dll
+		)
+	else()
+		MESSAGE(WARNING "Could not find dxil.dll, tried to copy from: ${DXIL_DLL_PATH}")
+	endif()
 

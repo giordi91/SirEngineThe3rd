@@ -1,131 +1,22 @@
 
-#include "SirEngine/Layers/editorLayer.h"
-
-#include "SirEngine/core.h"
-#include "SirEngine/globals.h"
-#include "SirEngine/log.h"
-#include "imgui/imgui.h"
-
-#if BUILD_DX12
-// DX12
-#include "platform/windows/graphics/dx12/DX12.h"
-#include "platform/windows/graphics/dx12/descriptorHeap.h"
-#include "platform/windows/graphics/dx12/dx12SwapChain.h"
-#include "platform/windows/graphics/dx12/dx12TextureManager.h"
-#include "platform/windows/graphics/dx12/imgui_impl_dx12.h"
-#endif
-
-#if BUILD_VK
-// VK
-#include "platform/windows/graphics/vk/imgui_impl_vulkan.h"
-#include "platform/windows/graphics/vk/vk.h"
-#include "platform/windows/graphics/vk/vkBindingTableManager.h"
-#include "platform/windows/graphics/vk/vkSwapChain.h"
-#endif
+#include "layers/editorLayer.h"
 
 #include <imgui/imgui_internal.h>
 
-#include "SirEngine/application.h"
+#include "SirEngine/core.h"
 #include "SirEngine/events/applicationEvent.h"
 #include "SirEngine/events/event.h"
 #include "SirEngine/events/keyboardEvent.h"
 #include "SirEngine/events/mouseEvent.h"
-#include "SirEngine/events/renderGraphEvent.h"
-#include "SirEngine/events/scriptingEvent.h"
-#include "SirEngine/events/shaderCompileEvent.h"
+#include "SirEngine/globals.h"
 #include "SirEngine/graphics/debugAnnotations.h"
 #include "SirEngine/input.h"
+#include "SirEngine/log.h"
+#include "SirEngine/ui/imguiManager.h"
+#include "imgui/imgui.h"
 
 namespace SirEngine {
 void EditorLayer::onAttach() {
-  if (globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::DX12) {
-    // need to initialize ImGui dx12
-    dx12::DescriptorPair pair;
-    dx12::GLOBAL_CBV_SRV_UAV_HEAP->reserveDescriptor(pair);
-    ImGui_ImplDX12_Init(dx12::DEVICE, FRAME_BUFFERS_COUNT,
-                        DXGI_FORMAT_R8G8B8A8_UNORM, pair.cpuHandle,
-                        pair.gpuHandle);
-  } else {
-    assert(globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::VULKAN);
-
-#if BUILD_VK
-    ImGui_ImplVulkan_InitInfo vkinfo{};
-    vkinfo.Instance = vk::INSTANCE;
-    vkinfo.PhysicalDevice = vk::PHYSICAL_DEVICE;
-    vkinfo.Device = vk::LOGICAL_DEVICE;
-    vkinfo.QueueFamily = vk::GRAPHICS_QUEUE_FAMILY;
-    vkinfo.Queue = vk::GRAPHICS_QUEUE;
-    vkinfo.PipelineCache = nullptr;
-    vkinfo.DescriptorPool = vk::DESCRIPTOR_MANAGER->getPool();
-    vkinfo.Allocator = nullptr;
-    vkinfo.ImageCount = vk::SWAP_CHAIN_IMAGE_COUNT;
-    vkinfo.MinImageCount = vk::SWAP_CHAIN_IMAGE_COUNT;
-
-    VkAttachmentDescription attachment = {};
-    attachment.format = vk::IMAGE_FORMAT;
-    attachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    attachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    attachment.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-    attachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-    VkAttachmentReference color_attachment = {};
-    color_attachment.attachment = 0;
-    color_attachment.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-    VkSubpassDescription subpass = {};
-    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    subpass.colorAttachmentCount = 1;
-    subpass.pColorAttachments = &color_attachment;
-    VkRenderPassCreateInfo info = {};
-    info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    info.attachmentCount = 1;
-    info.pAttachments = &attachment;
-    info.subpassCount = 1;
-    info.pSubpasses = &subpass;
-    VK_CHECK(
-        vkCreateRenderPass(vk::LOGICAL_DEVICE, &info, nullptr, &imguiPass));
-
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO &io = ImGui::GetIO();
-    (void)io;
-
-    ImGui::StyleColorsDark();
-    ImGui_ImplVulkan_Init(&vkinfo, imguiPass);
-
-    // create a command buffer separated to execute this stuff
-
-    VkCommandBufferBeginInfo beginInfo{
-        VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
-    vkBeginCommandBuffer(vk::CURRENT_FRAME_COMMAND->m_commandBuffer,
-                         &beginInfo);
-    ImGui_ImplVulkan_CreateFontsTexture(
-        vk::CURRENT_FRAME_COMMAND->m_commandBuffer);
-
-    VkSubmitInfo end_info = {};
-    end_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    end_info.commandBufferCount = 1;
-    end_info.pCommandBuffers = &vk::CURRENT_FRAME_COMMAND->m_commandBuffer;
-    VK_CHECK(vkEndCommandBuffer(vk::CURRENT_FRAME_COMMAND->m_commandBuffer));
-    VK_CHECK(vkQueueSubmit(vk::GRAPHICS_QUEUE, 1, &end_info, VK_NULL_HANDLE));
-    VK_CHECK(vkDeviceWaitIdle(vk::LOGICAL_DEVICE));
-    vkResetCommandBuffer(vk::CURRENT_FRAME_COMMAND->m_commandBuffer, 0);
-    ImGui_ImplVulkan_DestroyFontUploadObjects();
-
-    ImGuiStyle &style = ImGui::GetStyle();
-    // if (globals::ENGINE_CONFIG->m_selectdedAdapterVendor ==
-    //    ADAPTER_VENDOR::AMD) {
-    style.Colors[ImGuiCol_WindowBg].w = 1.f;
-    //  style.Colors[ImGuiCol_TitleBgActive] = ImVec4(0.7f, 0.0f, 0.0f, 1.00f);
-    //} else if (globals::ENGINE_CONFIG->m_selectdedAdapterVendor ==
-    //           ADAPTER_VENDOR::NVIDIA) {
-    //  style.Colors[ImGuiCol_WindowBg] = ImVec4(0.0f, 0.4f, 0.0f, 0.75f);
-    //  style.Colors[ImGuiCol_TitleBgActive] = ImVec4(0.0f, 0.7f, 0.0f, 1.00f);
-    //}
-#endif
-  }
-
   // Keyboard mapping. ImGui will use those indices to peek into the
   // io.KeysDown[] array that we will update during the application lifetime.
   ImGuiIO &io = ImGui::GetIO();
@@ -161,7 +52,7 @@ void EditorLayer::onAttach() {
   io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 }
 
-void EditorLayer::onDetach() { ImGui_ImplDX12_Shutdown(); }
+void EditorLayer::onDetach() {}
 
 void EditorLayer::setupDockSpaceLayout(int width, int height) {
   if (ImGui::DockBuilderGetNode(dockIds.root) == NULL) {
@@ -194,20 +85,7 @@ void EditorLayer::onUpdate() {
     return;
   }
 
-  if (globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::DX12) {
-    annotateGraphicsBegin("UI Draw");
-    TextureHandle destination = dx12::SWAP_CHAIN->currentBackBufferTexture();
-    D3D12_RESOURCE_BARRIER barriers[1];
-    int counter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
-        destination, D3D12_RESOURCE_STATE_RENDER_TARGET, barriers, 0);
-    if (counter) {
-      dx12::CURRENT_FRAME_RESOURCE->fc.commandList->ResourceBarrier(counter,
-                                                                    barriers);
-    }
-
-    dx12::TEXTURE_MANAGER->bindBackBuffer();
-    ImGui_ImplDX12_NewFrame();
-  }
+  globals::IMGUI_MANAGER->startFrame();
 
   // Read keyboard modifiers inputs
   ImGuiIO &io = ImGui::GetIO();
@@ -353,6 +231,7 @@ void EditorLayer::onUpdate() {
 
   ImGui::End();
 
+  /*
   ImGui::Render();
 
   if (globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::DX12) {
@@ -379,11 +258,12 @@ void EditorLayer::onUpdate() {
     // Submit command buffer
     vkCmdEndRenderPass(vk::CURRENT_FRAME_COMMAND->m_commandBuffer);
 #endif
-  }
-}
+*/
+  globals::IMGUI_MANAGER->endFrame();
+}  // namespace SirEngine
 
 #define SE_BIND_EVENT_FN(fn) std::bind(&fn, this, std::placeholders::_1)
-void EditorLayer::onEvent(Event &event) {
+void SirEngine::EditorLayer::onEvent(Event &event) {
   EventDispatcher dispatcher(event);
   dispatcher.dispatch<KeyTypeEvent>(
       SE_BIND_EVENT_FN(EditorLayer::onKeyTypeEvent));
@@ -404,16 +284,7 @@ void EditorLayer::onEvent(Event &event) {
 }
 #undef SE_BIND_EVENT_FN
 
-void EditorLayer::clear() {
-#if BUILD_VK
-  if (globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::VULKAN) {
-    VK_CHECK(vkDeviceWaitIdle(vk::LOGICAL_DEVICE));
-    ImGui_ImplVulkan_Shutdown();
-    ImGui::DestroyContext();
-    vkDestroyRenderPass(vk::LOGICAL_DEVICE, imguiPass, nullptr);
-  }
-#endif
-}
+void EditorLayer::clear() {}
 
 bool EditorLayer::onMouseButtonPressEvent(
     const MouseButtonPressEvent &e) const {
@@ -455,12 +326,7 @@ bool EditorLayer::onKeyReleasedEvent(const KeyboardReleaseEvent &e) const {
   return io.WantCaptureKeyboard;
 }
 bool EditorLayer::onWindowResizeEvent(const WindowResizeEvent &e) const {
-  ImGuiIO &io = ImGui::GetIO();
-  io.DisplaySize = ImVec2(static_cast<float>(e.getWidth()),
-                          static_cast<float>(e.getHeight()));
-  io.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
-  ImGui_ImplDX12_InvalidateDeviceObjects();
-
+  globals::IMGUI_MANAGER->onResizeEvent(e);
   return false;
 }
 bool EditorLayer::onKeyTypeEvent(const KeyTypeEvent &e) const {

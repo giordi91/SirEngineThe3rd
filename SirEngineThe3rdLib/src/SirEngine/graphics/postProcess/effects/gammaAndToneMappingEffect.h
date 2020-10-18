@@ -25,7 +25,7 @@ class GammaAndToneMappingEffect final : public PostProcessEffect {
  private:
   RSHandle m_rs{};
   PSOHandle m_pso{};
-  ConstantBufferHandle m_constantBufferHandle;
+  ConstantBufferHandle m_constantBufferHandle{};
   bool updateConfig = false;
   GammaToneMappingConfig m_config;
   BindingTableHandle m_bindingTable{};
