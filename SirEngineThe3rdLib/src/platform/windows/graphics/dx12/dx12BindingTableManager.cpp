@@ -8,7 +8,6 @@
 #include "dx12MeshManager.h"
 #include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "platform/windows/graphics/dx12/dx12ConstantBufferManager.h"
-#include "platform/windows/graphics/dx12/dx12PSOManager.h"
 #include "platform/windows/graphics/dx12/dx12RootSignatureManager.h"
 #include "platform/windows/graphics/dx12/dx12TextureManager.h"
 
@@ -48,6 +47,7 @@ BindingTableHandle Dx12BindingTableManager::allocateBindingTable(
   uint32_t poolIdx;
   BindingTableData &data = m_bindingTablePool.getFreeMemoryData(poolIdx);
   data.descriptors = descriptors;
+  data.descriptorCount = descriptorCount;
   data.magicNumber = MAGIC_NUMBER_COUNTER++;
   data.descriptions = descriptrionMemory;
   data.flags = flags;
@@ -186,5 +186,12 @@ void Dx12BindingTableManager::free(const BindingTableHandle &bindingTable) {
   // TODO freeing descriptor has never been done properly and is currently not
   // supported at runtime. This method mostly exists for clean up in the vulkan
   // back end and make the validation layer happy
+  assertMagicNumber(bindingTable);
+  uint32_t poolIndex = getIndexFromHandle(bindingTable);
+  const BindingTableData &data = m_bindingTablePool.getConstRef(poolIndex);
+  for (uint32_t i = 0; i < data.descriptorCount; ++i) {
+    dx12::GLOBAL_CBV_SRV_UAV_HEAP->freeDescriptor(data.descriptors[i]);
+  }
+  // TODO free descriptions
 }
 }  // namespace SirEngine::dx12

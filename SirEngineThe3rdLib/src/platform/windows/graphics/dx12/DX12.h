@@ -2,7 +2,7 @@
 #include <d3d12.h>
 #include <dxgi1_6.h>
 
-#include <cassert>
+#include <assert.h>
 
 #include "SirEngine/globals.h"
 #include "SirEngine/graphics/cpuGraphicsStructures.h"
@@ -33,6 +33,7 @@ class Dx12RenderingContext;
 class Dx12MaterialManager;
 class Dx12BindingTableManager;
 class Dx12CommandBufferManager;
+class Dx12ImGuiManager;
 
 enum class DescriptorType {
   NONE = 0,
@@ -46,7 +47,7 @@ enum class DescriptorType {
 struct DescriptorPair {
   D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle;
   D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle;
-#if SE_DEBUG
+#if _DEBUG 
   DescriptorType type;
 #endif
 };
@@ -140,6 +141,7 @@ extern Dx12PSOManager *PSO_MANAGER;
 extern BufferManagerDx12 *BUFFER_MANAGER;
 extern Dx12DebugRenderer *DEBUG_RENDERER;
 extern Dx12BindingTableManager *BINDING_TABLE_MANAGER;
+extern Dx12ImGuiManager* IMGUI_MANAGER;
 
 inline UINT64 insertFenceToGlobalQueue() {
   // Advance the fence value to mark commands up to this fence point.

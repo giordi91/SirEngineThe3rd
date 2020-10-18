@@ -4,7 +4,8 @@
 #include "platform/windows/graphics/dx12/d3dx12.h"
 
 namespace SirEngine::dx12 {
-bool DescriptorHeap::initialize(const int size, const D3D12_DESCRIPTOR_HEAP_TYPE type) {
+bool DescriptorHeap::initialize(const int size,
+                                const D3D12_DESCRIPTOR_HEAP_TYPE type) {
   D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
 
   // might need to extend this for more customization
@@ -49,8 +50,12 @@ uint32_t DescriptorHeap::allocateDescriptor(
     if (m_freeListIdx != 0) {
       // get first idx
       descriptorIndexToUse = m_freeList[0];
-      // patch hole
-      m_freeList[0] = m_freeList[m_freeListIdx - 1];
+      //TODO We are doing it in this way to not mess up the order, this is horrible and
+      //needs to be fixed
+      if ((m_freeListIdx  > 0)) {
+        memcpy(&m_freeList[0], &m_freeList[1], (m_freeListIdx - 1)*sizeof(uint32_t));
+      }
+
       m_freeListIdx -= 1;
     } else {
       descriptorIndexToUse = m_descriptorsAllocated++;
@@ -226,7 +231,7 @@ uint32_t DescriptorHeap::createBufferSRV(
   if (elementSize == 0) {
     srvDesc.Format = DXGI_FORMAT_R32_TYPELESS;
     srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_RAW;
-    //srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
+    // srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
     srvDesc.Buffer.StructureByteStride = 0;
     srvDesc.Buffer.FirstElement = elementOffset;
 
@@ -284,8 +289,8 @@ uint32_t DescriptorHeap::createBufferUAV(
   } else {
     // reconstruct the descriptor index using pointers
     auto descriptorHeapCpuBase = getCpuStart();
-    descriptorIndex =
-       static_cast<uint32_t>((pair.cpuHandle.ptr - descriptorHeapCpuBase.ptr) / m_descriptorSize);
+    descriptorIndex = static_cast<uint32_t>(
+        (pair.cpuHandle.ptr - descriptorHeapCpuBase.ptr) / m_descriptorSize);
   }
 
   DEVICE->CreateUnorderedAccessView(resource, nullptr, &uavDesc,

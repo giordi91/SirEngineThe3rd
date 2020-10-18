@@ -19,6 +19,7 @@ class VkBindingTableManager;
 class VkDebugRenderer;
 class VkCommandBufferManager;
 struct VkSwapchain;
+struct VkImGuiManager;
 
 static constexpr int PREALLOCATED_SEMAPHORE_COUNT = 4;
 static constexpr uint32_t VK_TIMEOUT_INFINITE =
@@ -59,6 +60,7 @@ extern VkMeshManager *MESH_MANAGER;
 extern VkTextureManager *TEXTURE_MANAGER;
 extern VkBindingTableManager *DESCRIPTOR_MANAGER;
 extern VkDebugRenderer *DEBUG_RENDERER;
+extern VkImGuiManager*IMGUI_MANAGER;
 extern uint32_t SWAP_CHAIN_IMAGE_COUNT;
 // incremented every frame and used to find the correct set of resources
 // like command buffer pool and allocators

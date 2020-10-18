@@ -1,11 +1,16 @@
 #include "SirEngine/graphics/nodes/forwardPlus.h"
 
+
+#include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "SirEngine/constantBufferManager.h"
 #include "SirEngine/engineConfig.h"
 #include "SirEngine/graphics/bindingTableManager.h"
 #include "SirEngine/graphics/lightManager.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/textureManager.h"
+
+#include "platform/windows/graphics/dx12/DX12.h"
+#include "SirEngine/log.h"
 
 namespace SirEngine {
 
@@ -117,8 +122,10 @@ void ForwardPlus::compute() {
 }
 
 void ForwardPlus::onResizeEvent(int, int,CommandBufferHandle commandBuffer) {
+    //SE_CORE_INFO("before {} {}",dx12::GLOBAL_RTV_HEAP->getAllocatedDescriptorsCount(),dx12::GLOBAL_CBV_SRV_UAV_HEAP->getAllocatedDescriptorsCount());
   clearResolutionDepenantResources();
   initializeResolutionDepenantResources(commandBuffer);
+    //SE_CORE_INFO("after {} {}",dx12::GLOBAL_RTV_HEAP->getAllocatedDescriptorsCount(),dx12::GLOBAL_CBV_SRV_UAV_HEAP->getAllocatedDescriptorsCount());
 }
 
 void ForwardPlus::populateNodePorts() {

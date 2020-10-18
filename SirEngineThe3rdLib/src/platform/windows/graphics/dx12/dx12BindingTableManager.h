@@ -17,6 +17,7 @@ class Dx12BindingTableManager : public graphics::BindingTableManager {
     graphics::BINDING_TABLE_FLAGS flags;
     uint32_t magicNumber;
     uint32_t descriptionsCount;
+    uint32_t descriptorCount;
   };
 
  public:

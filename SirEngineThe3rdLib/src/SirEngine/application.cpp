@@ -1,7 +1,6 @@
 #include "SirEngine/application.h"
 
 
-#include "Layers/editorLayer.h"
 #include "SirEngine/engineConfig.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/input.h"
@@ -9,7 +8,6 @@
 #include "SirEngine/layer.h"
 #include "SirEngine/log.h"
 #include "SirEngine/graphics/renderingContext.h"
-#include "SirEngine/layers/graphicsLayer.h"
 #include "SirEngine/layers/imguiDebugLayer.h"
 
 namespace SirEngine {

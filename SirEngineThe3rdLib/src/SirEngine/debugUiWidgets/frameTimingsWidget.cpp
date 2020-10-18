@@ -1,18 +1,16 @@
 #include "SirEngine/debugUiWidgets/frameTimingsWidget.h"
 #include "SirEngine/globals.h"
-#include <cmath>
 #include <imgui/imgui.h>
 #include <iomanip>
 #include <random>
 #include <sstream>
 #include <string>
-#include <thread>
 
 #include "SirEngine/log.h"
 
 
-namespace SirEngine {
-namespace debug {
+namespace SirEngine::debug
+{
 FrameTimingsWidget::FrameTimingsWidget() {
   for (int i = 0; i < NUMBER_OF_SAMPLES; ++i) {
     samples[i] = 0.0f;
@@ -113,5 +111,4 @@ void FrameTimingsWidget::render() {
                        1.0f, ImVec2(0, 80));
   ImGui::PopItemWidth();
 }
-} // namespace debug
 } // namespace SirEngine

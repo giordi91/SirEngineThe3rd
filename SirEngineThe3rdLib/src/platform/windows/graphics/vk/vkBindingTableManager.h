@@ -81,7 +81,10 @@ class VkBindingTableManager final : public graphics::BindingTableManager {
     return data.isBuffered;
   }
 
-  [[nodiscard]] VkDescriptorPool getPool() const { return m_descriptorPool; }
+  [[nodiscard]] VkDescriptorPool getPool() const
+  {
+	  return m_descriptorPool;
+  }
 
   BindingTableHandle allocateBindingTable(
       const graphics::BindingDescription *descriptions, const uint32_t count,
