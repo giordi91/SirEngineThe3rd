@@ -4,7 +4,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 
 include (${CMAKE_SOURCE_DIR}/cmake/cmakeUtils.cmake)
 
-project(Sandbox)   
+project(Editor)   
 	if(${BUILD_VULKAN})
 		find_package(Vulkan REQUIRED)
 	endif(${BUILD_VULKAN})

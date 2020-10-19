@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.13.0)
 project(ResourceProcessing)   
 
 
-	file(GLOB_RECURSE SOURCE_FILES "src/*.cpp" "includes/*.h")
+	file(GLOB_RECURSE SOURCE_FILES "src/resourceProcessing/*.cpp" "src/resourceProcessing/*.h")
 
 
 
@@ -35,4 +35,7 @@ project(ResourceProcessing)
     add_library(${PROJECT_NAME} STATIC ${SOURCE_FILES})
 	SET(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 	target_link_libraries(${PROJECT_NAME} SirEngineThe3rdLib)
+
+	#setting the plug-in folder in the solution
+	set_target_properties (${PROJECT_NAME} PROPERTIES FOLDER tools)
 

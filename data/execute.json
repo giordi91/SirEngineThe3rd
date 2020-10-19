@@ -1,5 +1,8 @@
 {
   "commands": [
+    "-p ../data/meshes/pSphere1.obj -o ../data/processed/meshes/pSphere1.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/meshes/pSphere1.tangents\""
+  ],
+  "commands-full": [
     "-p ../data/shaders/DX12/compute/grassCullingScan.hlsl -o ../data/processed/shaders/VK/compute/grassCullingScan.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t compute -d\"",
     "-p ../data/shaders/DX12/compute/grassClear.hlsl -o ../data/processed/shaders/VK/compute/grassClear.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t compute -d\"",
     "-p ../data/shaders/DX12/rasterization/grassExpansionVS.hlsl -o ../data/processed/shaders/DX12/rasterization/grassExpansionVS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t vs_6_2  -e VS -d \"",
@@ -25,10 +28,8 @@
     "-p ../data/shaders/DX12/rasterization/basicColorPS.hlsl -o ../data/processed/shaders/VK/rasterization/basicColorPS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d\"",
 
     "-p ../data/shaders/DX12/rasterization/grassPlaneVS.hlsl -o ../data/processed/shaders/VK/rasterization/grassPlaneVS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d\"",
-    "-p ../data/shaders/DX12/rasterization/grassPlanePS.hlsl -o ../data/processed/shaders/VK/rasterization/grassPlanePS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d\""
-  ],
-  "commands-full": [
-    "-p ../data/meshes/pSphere1.obj -o ../data/processed/meshes/pSphere1.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/meshes/pSphere1.tangents\"",
+    "-p ../data/shaders/DX12/rasterization/grassPlanePS.hlsl -o ../data/processed/shaders/VK/rasterization/grassPlanePS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d\"",
+
     "-p ../data/external/meshes/knightB/jacket.obj -o ../data/processed/meshes/knightB/jacket.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/jacket.tangents --skin ../data/external/animation/exported/skin/knightBJacketSkin.json\"",
     "-p ../data/external/meshes/knightB/pants.obj -o ../data/processed/meshes/knightB/pants.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/pants.tangents --skin ../data/external/animation/exported/skin/knightBPantsSkin.json\"",
     "-p ../data/external/meshes/knightB/belt.obj -o ../data/processed/meshes/knightB/belt.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/belt.tangents --skin ../data/external/animation/exported/skin/knightBBeltsSkin.json\"",

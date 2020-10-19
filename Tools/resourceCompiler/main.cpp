@@ -1,12 +1,12 @@
-#include "SirEngine/io/fileUtils.h"
-#include "cxxopts/cxxopts.hpp"
-
 #include "SirEngine/io/argsUtils.h"
+#include "SirEngine/io/fileUtils.h"
 #include "SirEngine/log.h"
-#include "resourceCompilerLib/resourcePlugin.h"
+#include "cxxopts/cxxopts.hpp"
 
 #include <chrono>
 #include <filesystem>
+
+#include "resourceProcessing/processor.h"
 #include "nlohmann/json.hpp"
 
 inline cxxopts::Options getCxxOptions() {
@@ -34,8 +34,8 @@ std::string getExecutablePath() {
 }
 
 inline std::string getPluginsArgs(const cxxopts::ParseResult &result) {
-  const auto&args = result["pluginArgs"].as<std::string>();
-  // lest smake sure it does not start or ends with a quote
+  const auto &args = result["pluginArgs"].as<std::string>();
+  // lets make sure it does not start or ends with a quote
   int start = 0;
   int end = static_cast<int>(args.length() - 1);
   if (args[0] == '"') {
@@ -47,7 +47,8 @@ inline std::string getPluginsArgs(const cxxopts::ParseResult &result) {
   std::string out = args.substr(start, end);
   return out;
 }
-void executeFromArgs(const cxxopts::ParseResult &result) {
+void executeFromArgs(const cxxopts::ParseResult &result,
+                     SirEngine::ResourceProcessing::Processor *processor) {
   size_t countIn = result.count("filePath");
   size_t countOut = result.count("outPath");
   if (countIn == 0) {
@@ -71,18 +72,11 @@ void executeFromArgs(const cxxopts::ParseResult &result) {
     args = getPluginsArgs(result);
   }
 
-  PluginRegistry *registry = PluginRegistry::getInstance();
-  ResourceProcessFunction func = registry->getFunction(name);
-  if (func == nullptr) {
-    SE_CORE_ERROR("Resource compiler: could not find requested plugin {0}",
-                  name);
-    return;
-  }
-
-  func(fpath, opath, args);
+  processor->process(name, fpath, opath, args);
 }
 
-void executeFile(const cxxopts::ParseResult &result) {
+void executeFile(const cxxopts::ParseResult &result,
+                 SirEngine::ResourceProcessing::Processor *processor) {
   const std::string executeFile = result["execute"].as<std::string>();
   nlohmann::json jobj;
   SirEngine::getJsonObj(executeFile, jobj);
@@ -98,7 +92,7 @@ void executeFile(const cxxopts::ParseResult &result) {
       auto options = getCxxOptions();
       char **argv = args.argv.get();
       auto pluginResult = options.parse(args.argc, argv);
-      executeFromArgs(pluginResult);
+      executeFromArgs(pluginResult, processor);
 
       // free memory which is not persistent;
       SirEngine::globals::STRING_POOL->resetFrameMemory();
@@ -111,7 +105,6 @@ void executeFile(const cxxopts::ParseResult &result) {
 }
 
 int main(int argc, char *argv[]) {
-
   SirEngine::StringPool stringPool(1024 * 1024 * 10);
   SirEngine::globals::STRING_POOL = &stringPool;
   SirEngine::globals::FRAME_ALLOCATOR = new SirEngine::StackAllocator();
@@ -122,13 +115,11 @@ int main(int argc, char *argv[]) {
 
   auto options = getCxxOptions();
 
+  //assert(0);
   SE_CORE_INFO("starting the resource compiler");
-  PluginRegistry::init();
 
-  PluginRegistry *registry = PluginRegistry::getInstance();
-
-  const std::string basePath = getExecutablePath();
-  registry->loadPluginsInFolder(basePath + "/plugins", true);
+  SirEngine::ResourceProcessing::Processor processor;
+  processor.initialize();
 
   const cxxopts::ParseResult result = options.parse(argc, argv);
 
@@ -136,9 +127,9 @@ int main(int argc, char *argv[]) {
 
   const auto start = std::chrono::high_resolution_clock::now();
   if (executeCount) {
-    executeFile(result);
+    executeFile(result, &processor);
   } else {
-    executeFromArgs(result);
+    executeFromArgs(result, &processor);
   }
   const auto end = std::chrono::high_resolution_clock::now();
   const auto seconds =

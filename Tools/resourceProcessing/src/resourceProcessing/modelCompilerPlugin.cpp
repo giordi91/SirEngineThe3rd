@@ -207,7 +207,3 @@ bool processModel(const std::string &assetPath, const std::string &outputPath,
   return true;
 }
 
-bool pluginRegisterFunction(PluginRegistry *registry) {
-  registry->registerFunction(PLUGIN_NAME, &processModel);
-  return true;
-}
