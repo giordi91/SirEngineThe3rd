@@ -42,7 +42,6 @@ project(SirEngineThe3rdLib)
 						${CMAKE_SOURCE_DIR}/builtDependencies/includes
 						${CMAKE_CURRENT_SOURCE_DIR}/src
 						${Vulkan_INCLUDE_DIRS}
-						"../vendors/meshoptimizer/src/"
 						${CMAKE_SOURCE_DIR}/vendors/glm
 						${CMAKE_SOURCE_DIR}/vendors/gli
 	)

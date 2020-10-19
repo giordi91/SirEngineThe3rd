@@ -1,13 +1,12 @@
+#include <chrono>
+#include <filesystem>
+
 #include "SirEngine/io/argsUtils.h"
 #include "SirEngine/io/fileUtils.h"
 #include "SirEngine/log.h"
 #include "cxxopts/cxxopts.hpp"
-
-#include <chrono>
-#include <filesystem>
-
-#include "resourceProcessing/processor.h"
 #include "nlohmann/json.hpp"
+#include "resourceProcessing/processor.h"
 
 inline cxxopts::Options getCxxOptions() {
   cxxopts::Options options("ResourceCompiler 1.0",
@@ -23,14 +22,6 @@ inline cxxopts::Options getCxxOptions() {
       "e,execute", "pass in a bundle of commands in json format",
       cxxopts::value<std::string>());
   return options;
-}
-
-std::string getExecutablePath() {
-  HMODULE hModule = GetModuleHandleW(NULL);
-  WCHAR path[MAX_PATH];
-  GetModuleFileName(hModule, path, MAX_PATH);
-  auto expPath = std::filesystem::path(path);
-  return expPath.parent_path().string();
 }
 
 inline std::string getPluginsArgs(const cxxopts::ParseResult &result) {
@@ -67,7 +58,7 @@ void executeFromArgs(const cxxopts::ParseResult &result,
   const std::string name = result["pluginName"].as<std::string>();
 
   size_t plugArgsCount = result.count("pluginArgs");
-  std::string args{""};
+  std::string args;
   if (plugArgsCount != 0) {
     args = getPluginsArgs(result);
   }
@@ -87,7 +78,7 @@ void executeFile(const cxxopts::ParseResult &result,
 
     for (auto &command : commandsj) {
       // we now have the command as a string we need to tokenize it
-      const std::string cs = command.get<std::string>();
+      const auto cs = command.get<std::string>();
       SplitArgs args = splitArgs(cs);
       auto options = getCxxOptions();
       char **argv = args.argv.get();
@@ -115,7 +106,7 @@ int main(int argc, char *argv[]) {
 
   auto options = getCxxOptions();
 
-  //assert(0);
+  // assert(0);
   SE_CORE_INFO("starting the resource compiler");
 
   SirEngine::ResourceProcessing::Processor processor;
