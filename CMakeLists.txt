@@ -47,21 +47,12 @@ MESSAGE( STATUS "BUILD Vulkan:                 " ${BUILD_VULKAN})
 
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
 #subfolders
 add_subdirectory(SirEngineThe3rdLib)
-add_subdirectory(Sandbox)
-#add_subdirectory(ResourceCompilerLib)
+add_subdirectory(Editor)
 add_subdirectory(Tools/resourceCompiler)
 add_subdirectory(Tools/resourceProcessing)
 add_subdirectory(Tools/pointScatter/cpp)
-#add_subdirectory(ResourceCompilerPlugins/ShaderCompilerPlugin)
-#add_subdirectory(ResourceCompilerPlugins/TextureCompilerPlugin)
-#add_subdirectory(ResourceCompilerPlugins/AnimationCompilerPlugin)
-#add_subdirectory(ResourceCompilerPlugins/PSOCompilerPlugin)
-#add_subdirectory(ResourceCompilerPlugins/PointTilerCompilerPlugin)
-#if(${BUILD_VULKAN})
-#	add_subdirectory(ResourceCompilerPlugins/VkShaderCompilerPlugin)
-#endif(${BUILD_VULKAN})
-
 add_subdirectory(Tests)
 

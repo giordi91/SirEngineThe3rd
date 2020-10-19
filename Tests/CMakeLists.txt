@@ -10,7 +10,7 @@ project(Tests)
     include_directories(
 						${CMAKE_CURRENT_SOURCE_DIR}
 						${CMAKE_SOURCE_DIR}/SirEngineThe3rdLib/src
-						${CMAKE_SOURCE_DIR}/ResourceCompilerLib/src
+						${CMAKE_SOURCE_DIR}/Tools/resourceProcessing/src
 						${CMAKE_SOURCE_DIR}/builtDependencies/includes
 						${CMAKE_SOURCE_DIR}/vendors/glm
 	)
@@ -46,8 +46,7 @@ project(Tests)
     #adding the executable
     add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 	SET(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
-	target_link_libraries(${PROJECT_NAME} SirEngineThe3rdLib lualib)
-	#target_link_libraries(${PROJECT_NAME} SirEngineThe3rdLib AnimationCompilerPlugin lualib)
+	target_link_libraries(${PROJECT_NAME} SirEngineThe3rdLib lualib ResourceProcessing)
 
 
 	#setting working directory
