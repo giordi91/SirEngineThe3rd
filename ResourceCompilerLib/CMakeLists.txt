@@ -15,7 +15,7 @@ project(ResourceCompilerLib)
 
 	#lets add specific windows build definitions
 	if (WIN32)
-		add_compile_definitions(RC_PLATFORM_WINDOWS RC_BUILD_DLL SE_PLATFORM_WINDOWS _UNICODE _CRT_SECURE_NO_WARNINGS)
+		add_compile_definitions(_UNICODE _CRT_SECURE_NO_WARNINGS)
 	endif (WIN32)
 
 	ENABLE_SYSTEM_HEADERS()
@@ -32,7 +32,7 @@ project(ResourceCompilerLib)
 		link_directories(${CMAKE_SOURCE_DIR}/builtDependencies/windows/$<CONFIGURATION>)
 	endif()
     #adding the executable
-    add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES} ${INCLUDES_FILES})
+    add_library(${PROJECT_NAME} STATIC ${SOURCE_FILES} ${INCLUDES_FILES})
 	SET(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
-	target_link_libraries(${PROJECT_NAME} SirEngineThe3rdLib WinPixEventRuntime)
+	target_link_libraries(${PROJECT_NAME} ResourceProcessing SirEngineThe3rdLib WinPixEventRuntime)
 

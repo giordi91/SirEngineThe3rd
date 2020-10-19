@@ -22,7 +22,6 @@ project(ResourceCompiler)
 	endif()
 
 	file(COPY "../external" DESTINATION "${CMAKE_BINARY_DIR}/bin/data" )
-	
 
 	add_compile_definitions(RC_PLATFORM_WINDOWS SE_PLATFORM_WINDOWS _UNICODE _CRT_SECURE_NO_WARNINGS)
 

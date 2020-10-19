@@ -8,21 +8,21 @@ typedef bool (*ResourceProcessFunction)(const std::string &assetPath,
                                         const std::string &pluginArgs);
 class PluginRegistry {
 public:
-  static RC_API void init();
-  RC_API void clear();
-  static RC_API PluginRegistry *getInstance() { return registryInst; }
+  static void init();
+  void clear();
+  static PluginRegistry *getInstance() { return registryInst; }
 
-  void RC_API registerFunction(const std::string &name,
+  void registerFunction(const std::string &name,
                                ResourceProcessFunction func);
-  RC_API void loadPlugin(const std::string &dllPath, bool verbose);
-  RC_API ResourceProcessFunction getFunction(const std::string &name) const {
+  void loadPlugin(const std::string &dllPath, bool verbose);
+  ResourceProcessFunction getFunction(const std::string &name) const {
     auto found = m_registry.find(name);
     if (found != m_registry.end()) {
       return found->second;
     }
     return nullptr;
   }
-  RC_API void loadPluginsInFolder(const std::string &path, bool verbose =false);
+  void loadPluginsInFolder(const std::string &path, bool verbose =false);
 
   PluginRegistry() = default;
   ~PluginRegistry() {

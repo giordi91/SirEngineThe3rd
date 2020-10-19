@@ -5,10 +5,7 @@
 #define SIR_ENGINE_API __declspec(dllexport)
 #else
 #define SIR_ENGINE_API 
-//#define SIR_ENGINE_API __declspec(dllimport)
 #endif
-#else
-#error Sir Engine only runs on windows
 #endif
 
 // defined here such that I don't have to worry about including cstdint
