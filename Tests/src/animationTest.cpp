@@ -1,69 +1,29 @@
+#include "resourceProcessing/processor.h"
 #include "SirEngine/animation/animationClip.h"
 #include "SirEngine/animation/animationManager.h"
 #include "SirEngine/io/argsUtils.h"
-#include "SirEngine/io/fileUtils.h"
 #include "SirEngine/log.h"
 #include "catch/catch.hpp"
-#include "resourceCompilerLib/resourcePlugin.h"
 
-/*
 void compileAnim(const char *in, const char *out) {
-
-  PluginRegistry *registry = PluginRegistry::getInstance();
-  const ResourceProcessFunction func =
-      registry->getFunction("animationCompilerPlugin");
-  if (func == nullptr) {
-    SE_CORE_ERROR("Resource compiler: could not find requested plugin "
-                  "animationCompilerPlugin");
-    return;
-  }
-
-  func(in, out, "");
+  SirEngine::ResourceProcessing::Processor p;
+  p.initialize();
+  p.process("animationCompilerPlugin", in, out, "");
 }
 
 TEST_CASE("animation key 1", "[animation]") {
-
-
-  PluginRegistry::init();
-  PluginRegistry *registry = PluginRegistry::getInstance();
-  registry->loadPluginsInFolder("plugins");
-  // compiling animation clip on the fly, then we read it back as the engine
-  // would
   compileAnim("../testData/idle1.json", "../testData/idle1.clip");
-
 }
 
 TEST_CASE("animation no data", "[animation]") {
-
-
-  PluginRegistry::init();
-  PluginRegistry *registry = PluginRegistry::getInstance();
-  registry->loadPluginsInFolder("plugins");
-  // compiling animation clip on the fly, then we read it back as the engine
-  // would
   compileAnim("../testData/noMetaAnim.json", "../testData/noMetaAnim.clip");
-
 }
 
 TEST_CASE("animation knight", "[animation]") {
-
-
-  PluginRegistry::init();
-  PluginRegistry *registry = PluginRegistry::getInstance();
-  registry->loadPluginsInFolder("plugins");
-  // compiling animation clip on the fly, then we read it back as the engine
-  // would
   compileAnim("../testData/knightBIdle.json", "../testData/knightBIdle.clip");
-
 }
 
 TEST_CASE("animation key 1 read", "[animation]") {
-
-  PluginRegistry::init();
-  PluginRegistry *registry = PluginRegistry::getInstance();
-  registry->loadPluginsInFolder("plugins");
-  // compiling animation clip on the fly, then we read it back as the engine
-  // would
   compileAnim("../testData/idle1.json", "../testData/idle1.clip");
   SirEngine::AnimationManager animManager;
   animManager.init();
@@ -78,15 +38,8 @@ TEST_CASE("animation key 1 read", "[animation]") {
               SirEngine::ANIM_CLIP_KEYWORDS::L_FOOT_DOWN) == 1);
   REQUIRE(clip->findFirstMetadataFrame(
               SirEngine::ANIM_CLIP_KEYWORDS::R_FOOT_DOWN) == 1);
-
 }
 TEST_CASE("animation key 2 read", "[animation]") {
-
-  PluginRegistry::init();
-  PluginRegistry *registry = PluginRegistry::getInstance();
-  registry->loadPluginsInFolder("plugins");
-  // compiling animation clip on the fly, then we read it back as the engine
-  // would
   compileAnim("../testData/idle2.json", "../testData/idle2.clip");
 
   SirEngine::AnimationManager animManager;
@@ -102,16 +55,9 @@ TEST_CASE("animation key 2 read", "[animation]") {
               SirEngine::ANIM_CLIP_KEYWORDS::L_FOOT_DOWN) == 30);
   REQUIRE(clip->findFirstMetadataFrame(
               SirEngine::ANIM_CLIP_KEYWORDS::R_FOOT_DOWN) == 10);
-
 }
 
 TEST_CASE("animation key 2 read from frame", "[animation]") {
-
-  PluginRegistry::init();
-  PluginRegistry *registry = PluginRegistry::getInstance();
-  registry->loadPluginsInFolder("plugins");
-  // compiling animation clip on the fly, then we read it back as the engine
-  // would
   compileAnim("../testData/idle2.json", "../testData/idle2.clip");
 
   SirEngine::AnimationManager animManager;
@@ -142,19 +88,14 @@ TEST_CASE("animation key 2 read from frame", "[animation]") {
       SirEngine::ANIM_CLIP_KEYWORDS::L_FOOT_DOWN, 30);
   REQUIRE(resultFrame == 30);
   resultFrame = clip->findMetadataFrameFromGivenFrame(
-      SirEngine::ANIM_CLIP_KEYWORDS::R_FOOT_DOWN, 70 );
+      SirEngine::ANIM_CLIP_KEYWORDS::R_FOOT_DOWN, 70);
   REQUIRE(resultFrame == 10);
   resultFrame = clip->findMetadataFrameFromGivenFrame(
       SirEngine::ANIM_CLIP_KEYWORDS::L_FOOT_DOWN, 35);
   REQUIRE(resultFrame == 30);
-
 }
 
 TEST_CASE("animation key 3 read from frame", "[animation]") {
-
-  PluginRegistry::init();
-  PluginRegistry *registry = PluginRegistry::getInstance();
-  registry->loadPluginsInFolder("plugins");
   // compiling animation clip on the fly, then we read it back as the engine
   // would
   compileAnim("../testData/knightBWalk.json", "../testData/knightBWalk.clip");
@@ -203,6 +144,4 @@ TEST_CASE("animation key 3 read from frame", "[animation]") {
   resultFrame = clip->findMetadataFrameFromGivenFrame(
       SirEngine::ANIM_CLIP_KEYWORDS::L_FOOT_DOWN, 9);
   REQUIRE(resultFrame == 9);
-
 }
-*/
