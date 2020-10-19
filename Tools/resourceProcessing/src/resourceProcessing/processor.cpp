@@ -1,11 +1,25 @@
 #include "processor.h"
 
+
+#include "animationCompilerPlugin/AnimationCompilerPlugin.h"
 #include "SirEngine/log.h"
-#include "modelCompilerPlugin.h"
+#include "obj/modelCompilerPlugin.h"
+#include "pointTilerCompilerPlugin/pointTilerCompilerPlugin.h"
+#include "psoCompilerPlugin/PSOCompilerPlugin.h"
+#include "shaderCompilerPlugin/shaderCompilerPlugin.h"
+#include "textureCompilerPlugin/textureCompilerPlugin.h"
+#include "vkShaderCompilerPlugin/vkShaderCompilerPlugin.h"
 
 namespace SirEngine::ResourceProcessing {
 void Processor::initialize() {
   registerFunction("modelCompilerPlugin", processModel);
+  registerFunction("PointTilerCompilerPlugin", processPoints);
+  registerFunction("shaderCompilerPlugin", processShader);
+  registerFunction("vkShaderCompilerPlugin", processVkShader);
+  registerFunction("animationCompilerPlugin", processAnim);
+  registerFunction("textureCompilerPlugin", processTexture);
+  registerFunction("PSOCompilerPlugin", processPSO);
+
 }
 
 void Processor::registerFunction(const std::string& name,

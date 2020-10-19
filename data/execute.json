@@ -1,8 +1,6 @@
 {
   "commands": [
-    "-p ../data/meshes/pSphere1.obj -o ../data/processed/meshes/pSphere1.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/meshes/pSphere1.tangents\""
-  ],
-  "commands-full": [
+    "-p ../data/meshes/pSphere1.obj -o ../data/processed/meshes/pSphere1.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/meshes/pSphere1.tangents\"",
     "-p ../data/shaders/DX12/compute/grassCullingScan.hlsl -o ../data/processed/shaders/VK/compute/grassCullingScan.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t compute -d\"",
     "-p ../data/shaders/DX12/compute/grassClear.hlsl -o ../data/processed/shaders/VK/compute/grassClear.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t compute -d\"",
     "-p ../data/shaders/DX12/rasterization/grassExpansionVS.hlsl -o ../data/processed/shaders/DX12/rasterization/grassExpansionVS.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t vs_6_2  -e VS -d \"",
@@ -44,8 +42,10 @@
     "-p ../data/external/meshes/knightB/hair.obj -o ../data/processed/meshes/knightB/hair.model --pluginName modelCompilerPlugin  --pluginArgs \"--tangents  ../data/external/meshes/knightB/hair.tangents --skin ../data/external/animation/exported/skin/knightBHairSkin.json\"",
 
     "-p ../data/pso -o ../data/processed/pso --pluginName PSOCompilerPlugin --pluginArgs \"-t DX12 -a -s ../data/shaders/DX12\"",
+    "-p ../data/external/grass/points.json -o ../data/processed/grass/grass.points --pluginName PointTilerCompilerPlugin"
 
-    "-p ../data/shaders/VK/rasterization/push.glsl -o ../data/processed/shaders/VK/rasterization/push.spv.hlsl --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \"",
+  ],
+  "commands-full": [
     "-p ../data/shaders/VK/rasterization/grassExpansionVS.glsl -o ../data/processed/shaders/VK/rasterization/grassExpansionVS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t vertex -d \"",
     "-p ../data/shaders/VK/rasterization/grassForwardPS.glsl -o ../data/processed/shaders/VK/rasterization/grassForwardPS.shader --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d \"",
     "-p ../data/shaders/VK/rasterization/grassForwardPS.glsl -o ../data/processed/shaders/VK/rasterization/grassForwardPS.spv.hlsl --pluginName vkShaderCompilerPlugin --pluginArgs \"-t fragment -d \"",
@@ -90,6 +90,7 @@
     "-p ../data/shaders/VK/compute/grassClear.glsl -o ../data/processed/shaders/VK/compute/grassClear.spv.hlsl --pluginName vkShaderCompilerPlugin --pluginArgs \"-t compute -d \"",
     "-p ../data/processed/shaders/VK/compute/grassCullingScan.spv.hlsl -o ../data/processed/shaders/DX12/compute/grassCullingScan.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t cs_6_2  -e CS -d \"",
     "-p ../data/processed/shaders/VK/compute/grassClear.spv.hlsl -o ../data/processed/shaders/DX12/compute/grassClearScan.shader --pluginName shaderCompilerPlugin --pluginArgs \"-t cs_6_2  -e CS -d \""
+
 
   ],
   "comment": [
