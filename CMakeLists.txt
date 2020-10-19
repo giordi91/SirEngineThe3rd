@@ -46,12 +46,14 @@ MESSAGE( STATUS "BUILD DX12:                   " ${BUILD_DX12})
 MESSAGE( STATUS "BUILD Vulkan:                 " ${BUILD_VULKAN})
 
 
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 #subfolders
 add_subdirectory(SirEngineThe3rdLib)
 add_subdirectory(Sandbox)
-add_subdirectory(ResourceCompilerLib)
-add_subdirectory(ResourceCompiler)
+#add_subdirectory(ResourceCompilerLib)
+add_subdirectory(Tools/resourceCompiler)
 add_subdirectory(Tools/resourceProcessing)
+add_subdirectory(Tools/pointScatter/cpp)
 #add_subdirectory(ResourceCompilerPlugins/ShaderCompilerPlugin)
 #add_subdirectory(ResourceCompilerPlugins/TextureCompilerPlugin)
 #add_subdirectory(ResourceCompilerPlugins/AnimationCompilerPlugin)
@@ -62,5 +64,4 @@ add_subdirectory(Tools/resourceProcessing)
 #endif(${BUILD_VULKAN})
 
 add_subdirectory(Tests)
-add_subdirectory(Tools/pointScatter/cpp)
 
