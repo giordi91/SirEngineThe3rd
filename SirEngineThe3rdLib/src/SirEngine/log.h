@@ -8,13 +8,13 @@ namespace SirEngine {
 
 class Log {
 public:
-  static void SIR_ENGINE_API init();
-  static void SIR_ENGINE_API free();
-  inline static SIR_ENGINE_API std::shared_ptr<spdlog::logger> &
+  static void  init();
+  static void  free();
+  inline static  std::shared_ptr<spdlog::logger> &
   getCoreLogger() {
     return s_coreLogger;
   }
-  inline static SIR_ENGINE_API std::shared_ptr<spdlog::logger> &
+  inline static  std::shared_ptr<spdlog::logger> &
   getClientLogger() {
     return s_clientLogger;
   }
