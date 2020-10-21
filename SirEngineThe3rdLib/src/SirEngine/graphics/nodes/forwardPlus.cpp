@@ -1,29 +1,27 @@
 #include "SirEngine/graphics/nodes/forwardPlus.h"
 
-
-#include "platform/windows/graphics/dx12/descriptorHeap.h"
 #include "SirEngine/constantBufferManager.h"
 #include "SirEngine/engineConfig.h"
 #include "SirEngine/graphics/bindingTableManager.h"
 #include "SirEngine/graphics/lightManager.h"
 #include "SirEngine/graphics/renderingContext.h"
-#include "SirEngine/textureManager.h"
-
-#include "platform/windows/graphics/dx12/DX12.h"
 #include "SirEngine/log.h"
+#include "SirEngine/textureManager.h"
+#include "platform/windows/graphics/dx12/DX12.h"
+#include "platform/windows/graphics/dx12/descriptorHeap.h"
 
 namespace SirEngine {
 
-ForwardPlus::ForwardPlus(GraphAllocators &allocators)
+ForwardPlus::ForwardPlus(GraphAllocators& allocators)
     : GNode("ForwardPlus", "ForwardPlus", allocators) {
   defaultInitializePlugsAndConnections(0, 2);
-  GPlug &outTexture = m_outputPlugs[getPlugIndex(PLUGS::OUT_TEXTURE)];
+  GPlug& outTexture = m_outputPlugs[getPlugIndex(PLUGS::OUT_TEXTURE)];
   outTexture.plugValue = 0;
   outTexture.flags = PLUG_FLAGS::PLUG_OUTPUT | PLUG_FLAGS::PLUG_TEXTURE;
   outTexture.nodePtr = this;
   outTexture.name = "outTexture";
 
-  GPlug &depthBuffer = m_outputPlugs[getPlugIndex(PLUGS::DEPTH_RT)];
+  GPlug& depthBuffer = m_outputPlugs[getPlugIndex(PLUGS::DEPTH_RT)];
   depthBuffer.plugValue = 0;
   depthBuffer.flags = PLUG_FLAGS::PLUG_OUTPUT | PLUG_FLAGS::PLUG_TEXTURE;
   depthBuffer.nodePtr = this;
@@ -75,8 +73,9 @@ void ForwardPlus::setupLight() {
       "forwardPlusPassDataBindingTable");
 }
 
-void ForwardPlus::initialize(CommandBufferHandle commandBuffer) {
-  initializeResolutionDepenantResources(commandBuffer);
+void ForwardPlus::initialize(CommandBufferHandle commandBuffer,
+                             RenderGraphContext* context) {
+  initializeResolutionDepenantResources(commandBuffer, context);
   setupLight();
   uint32_t callbackCount = m_callbacks.size();
   for (uint32_t i = 0; i < callbackCount; ++i) {
@@ -121,14 +120,13 @@ void ForwardPlus::compute() {
   globals::RENDERING_CONTEXT->clearBindingObject(m_bindHandle);
 }
 
-void ForwardPlus::onResizeEvent(int, int,CommandBufferHandle commandBuffer) {
-    //SE_CORE_INFO("before {} {}",dx12::GLOBAL_RTV_HEAP->getAllocatedDescriptorsCount(),dx12::GLOBAL_CBV_SRV_UAV_HEAP->getAllocatedDescriptorsCount());
+void ForwardPlus::onResizeEvent(int, int, CommandBufferHandle commandBuffer,
+                                RenderGraphContext* context) {
   clearResolutionDepenantResources();
-  initializeResolutionDepenantResources(commandBuffer);
-    //SE_CORE_INFO("after {} {}",dx12::GLOBAL_RTV_HEAP->getAllocatedDescriptorsCount(),dx12::GLOBAL_CBV_SRV_UAV_HEAP->getAllocatedDescriptorsCount());
+  initializeResolutionDepenantResources(commandBuffer, context);
 }
 
-void ForwardPlus::populateNodePorts() {
+void ForwardPlus::populateNodePorts(RenderGraphContext*) {
   // setting the render target output handle
   m_outputPlugs[0].plugValue = m_rtHandle.handle;
   m_outputPlugs[1].plugValue = m_depthHandle.handle;
@@ -172,7 +170,7 @@ void ForwardPlus::clear() {
   clearResolutionDepenantResources();
 }
 
-void ForwardPlus::initializeResolutionDepenantResources(CommandBufferHandle ) {
+void ForwardPlus::initializeResolutionDepenantResources(CommandBufferHandle,RenderGraphContext*) {
   int width = globals::ENGINE_CONFIG->m_windowWidth;
   int height = globals::ENGINE_CONFIG->m_windowHeight;
   m_rtHandle = globals::TEXTURE_MANAGER->allocateTexture(
@@ -188,7 +186,8 @@ void ForwardPlus::initializeResolutionDepenantResources(CommandBufferHandle ) {
 
   uint32_t callbackCount = m_callbacks.size();
   for (uint32_t i = 0; i < callbackCount; ++i) {
-    m_callbacks[i].callback->initializeResolutionDepenantResources(m_callbacks[i].id);
+    m_callbacks[i].callback->initializeResolutionDepenantResources(
+        m_callbacks[i].id);
   }
 }
 
@@ -208,7 +207,8 @@ void ForwardPlus::clearResolutionDepenantResources() {
 
   uint32_t callbackCount = m_callbacks.size();
   for (uint32_t i = 0; i < callbackCount; ++i) {
-    m_callbacks[i].callback->clearResolutionDepenantResources(m_callbacks[i].id);
+    m_callbacks[i].callback->clearResolutionDepenantResources(
+        m_callbacks[i].id);
   }
 }
 }  // namespace SirEngine

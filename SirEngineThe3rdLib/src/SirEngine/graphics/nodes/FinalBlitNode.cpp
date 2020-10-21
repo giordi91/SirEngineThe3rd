@@ -1,12 +1,12 @@
 
 #include "SirEngine/graphics/nodes/FinalBlitNode.h"
 
+#include "SirEngine/engineConfig.h"
 #include "SirEngine/graphics/bindingTableManager.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/materialManager.h"
 #include "SirEngine/psoManager.h"
 #include "SirEngine/rootSignatureManager.h"
-#include "SirEngine/engineConfig.h"
 
 namespace SirEngine {
 
@@ -45,7 +45,7 @@ void FinalBlitNode::compute() {
   globals::RENDERING_CONTEXT->clearBindingObject(m_bindHandle);
 }
 
-void FinalBlitNode::initialize(CommandBufferHandle commandBuffer) {
+void FinalBlitNode::initialize(CommandBufferHandle, RenderGraphContext *) {
   m_rs = globals::ROOT_SIGNATURE_MANAGER->getHandleFromName(HDR_RS);
   m_pso = globals::PSO_MANAGER->getHandleFromName(HDR_PSO);
 
@@ -59,7 +59,7 @@ void FinalBlitNode::initialize(CommandBufferHandle commandBuffer) {
       "HDRtoSDREffect");
 }
 
-void FinalBlitNode::populateNodePorts() {
+void FinalBlitNode::populateNodePorts(RenderGraphContext *context) {
   inputRTHandle =
       getInputConnection<TextureHandle>(m_inConnections, IN_TEXTURE);
 
@@ -94,17 +94,17 @@ void FinalBlitNode::clear() {
   clearResolutionDepenantResources();
 }
 
-void FinalBlitNode::clearResolutionDepenantResources()
-{
+void FinalBlitNode::clearResolutionDepenantResources() {
   if (m_bindHandle.isHandleValid()) {
     globals::RENDERING_CONTEXT->freeBindingObject(m_bindHandle);
-    m_bindHandle= {};
+    m_bindHandle = {};
   }
 }
 
-void FinalBlitNode::onResizeEvent(int, int, const CommandBufferHandle commandBuffer)
-{
-    clearResolutionDepenantResources();
-    initializeResolutionDepenantResources(commandBuffer);
+void FinalBlitNode::onResizeEvent(int, int,
+                                  const CommandBufferHandle commandBuffer,
+                                  RenderGraphContext *context) {
+  clearResolutionDepenantResources();
+  initializeResolutionDepenantResources(commandBuffer, context);
 }
 }  // namespace SirEngine
