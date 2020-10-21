@@ -55,10 +55,10 @@ struct BinaryFileWriteRequest {
 
 enum WriteBinaryFileStatus { SUCCESS };
 
-WriteBinaryFileStatus SIR_ENGINE_API
+WriteBinaryFileStatus 
 writeBinaryFile(const BinaryFileWriteRequest &request);
 
-bool SIR_ENGINE_API readAllBytes(const std::string &filename,
+bool  readAllBytes(const std::string &filename,
                                  std::vector<char> &data);
 
 #define BINARY_FILE_TYPES \
@@ -85,7 +85,7 @@ enum BinaryFileType {
 };
 
 
-std::string SIR_ENGINE_API getBinaryFileTypeName(const BinaryFileType type);
+std::string  getBinaryFileTypeName(const BinaryFileType type);
 
 struct ModelMapperData final {
   uint32_t vertexDataSizeInByte = 0;

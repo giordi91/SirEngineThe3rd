@@ -11,7 +11,7 @@
 namespace SirEngine {
 namespace dx12 {
 
-class SIR_ENGINE_API Dx12TextureManager final : public TextureManager {
+class  Dx12TextureManager final : public TextureManager {
   struct TextureData final {
     uint32_t magicNumber;
     ID3D12Resource *resource;

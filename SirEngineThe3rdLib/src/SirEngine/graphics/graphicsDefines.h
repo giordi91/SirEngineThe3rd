@@ -20,7 +20,7 @@ inline const uint32_t VENDOR_ID[] = {
 enum class GRAPHIC_API { DX12 = 0, VULKAN = 1, UNKNOWN };
 enum class PSO_TYPE { DXR = 0, RASTER, COMPUTE, INVALID };
 
-struct SIR_ENGINE_API AdapterRequestConfig {
+struct  AdapterRequestConfig {
   ADAPTER_VENDOR m_vendor;
   ADAPTER_SELECTION_RULE m_genericRule;
   bool m_vendorTolerant;
@@ -103,7 +103,7 @@ enum class NUMERICAL_DATA_TYPE {
 static constexpr uint32_t STATIC_SAMPLERS_COUNT = 7;
 
 // memory
-struct SIR_ENGINE_API SpirVBlob {
+struct  SpirVBlob {
   void *memory = nullptr;
   uint32_t sizeInByte = 0;
 };

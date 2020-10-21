@@ -26,7 +26,7 @@ class RenderGraphChanged;
 class ShaderCompileResultEvent;
 class RequestShaderCompileEvent;
 
-class SIR_ENGINE_API ImguiLayer : public Layer {
+class  ImguiLayer : public Layer {
 public:
   ImguiLayer() : Layer("ImGuiLayer") {}
 

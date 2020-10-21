@@ -10,10 +10,9 @@ struct IDxcValidator;
 struct IDxcIncludeHandler;
 
 namespace SirEngine {
-template class SIR_ENGINE_API ResizableVector<wchar_t *>;
 namespace dx12 {
 
-struct SIR_ENGINE_API ShaderArgs {
+struct ShaderArgs {
   ShaderArgs()
       : entryPoint(nullptr),
         type(nullptr),
@@ -28,12 +27,12 @@ struct SIR_ENGINE_API ShaderArgs {
   ResizableVector<wchar_t *> splitCompilerArgsPointers;
 };
 
-struct SIR_ENGINE_API ShaderCompileResult {
+struct ShaderCompileResult {
   ID3D10Blob *blob;
   const char *logResult;
 };
 
-class SIR_ENGINE_API DXCShaderCompiler {
+class DXCShaderCompiler {
  public:
   DXCShaderCompiler();
   ~DXCShaderCompiler();

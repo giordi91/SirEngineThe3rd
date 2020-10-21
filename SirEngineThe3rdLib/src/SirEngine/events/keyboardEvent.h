@@ -3,7 +3,7 @@
 #include "SirEngine/events/event.h"
 
 namespace SirEngine {
-class SIR_ENGINE_API KeyboardPressEvent final : public Event {
+class  KeyboardPressEvent final : public Event {
 public:
   KeyboardPressEvent(const uint32_t button) : m_button(button) {}
 
@@ -20,7 +20,7 @@ private:
   uint32_t m_button;
 };
 
-class SIR_ENGINE_API KeyboardReleaseEvent : public Event {
+class  KeyboardReleaseEvent : public Event {
 public:
   explicit KeyboardReleaseEvent(const uint32_t button) : m_button(button) {}
 
@@ -38,7 +38,7 @@ private:
   uint32_t m_button;
 };
 
-class SIR_ENGINE_API KeyTypeEvent : public Event {
+class  KeyTypeEvent : public Event {
 public:
   explicit KeyTypeEvent(const uint32_t button) : m_button(button) {}
 

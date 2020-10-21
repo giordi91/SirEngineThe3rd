@@ -5,7 +5,7 @@
 
 namespace SirEngine {
 
-class SIR_ENGINE_API WindowCloseEvent final : public Event {
+class  WindowCloseEvent final : public Event {
 public:
   WindowCloseEvent() = default;
 
@@ -13,7 +13,7 @@ public:
   EVENT_CLASS_CATEGORY(EventCategoryApplication)
 };
 
-class SIR_ENGINE_API WindowResizeEvent final : public Event {
+class  WindowResizeEvent final : public Event {
 public:
   WindowResizeEvent(const uint32_t width, const uint32_t height)
       : m_width(width), m_height(height) {}

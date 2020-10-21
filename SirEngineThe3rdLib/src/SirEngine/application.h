@@ -6,7 +6,7 @@
 #include "SirEngine/events/event.h"
 #include "SirEngine/layerStack.h"
 namespace SirEngine {
-class SIR_ENGINE_API Application {
+class  Application {
 public:
   Application();
   virtual ~Application();

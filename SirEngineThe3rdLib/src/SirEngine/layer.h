@@ -5,7 +5,7 @@
 
 namespace SirEngine {
 
-class SIR_ENGINE_API Layer {
+class Layer {
 
 public:
   using EventCallbackFn = std::function<void(Event &)>;

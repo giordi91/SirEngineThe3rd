@@ -25,12 +25,7 @@ struct ScriptData {
   uint32_t magicNumber;
 };
 
-template class SIR_ENGINE_API HashMap<const char *, ScriptHandle, hashString32>;
-template class SIR_ENGINE_API HashMap<uint32_t, const char *, hashUint32>;
-template class SIR_ENGINE_API
-    HashMap<const char *, lua_CFunction, hashString32>;
-template class SIR_ENGINE_API ResizableVector<ScriptData>;
-class SIR_ENGINE_API ScriptingContext final {
+class  ScriptingContext final {
 
 public:
   ScriptingContext()

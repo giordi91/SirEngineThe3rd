@@ -4,7 +4,7 @@
 
 namespace SirEngine {
 
-class SIR_ENGINE_API ReloadScriptsEvent final : public Event {
+class  ReloadScriptsEvent final : public Event {
 public:
   ReloadScriptsEvent() = default;
 

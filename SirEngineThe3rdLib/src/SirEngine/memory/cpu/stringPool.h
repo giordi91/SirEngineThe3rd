@@ -14,7 +14,7 @@ enum STRING_MANIPULATION_FLAGS {
   FREE_JOINER_AFTER_OPERATION = 1 << 3
 };
 // NOTE: this class does not handle a string starting with leading spaces
-class SIR_ENGINE_API StringPool final {
+class  StringPool final {
  public:
  public:
   explicit StringPool(const uint32_t sizeInByte) : m_pool(sizeInByte) {

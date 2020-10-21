@@ -5,7 +5,7 @@
 #include "SirEngine/runtimeString.h"
 
 namespace SirEngine {
-class SIR_ENGINE_API DebugLayerChanged final : public Event {
+class  DebugLayerChanged final : public Event {
 public:
   explicit DebugLayerChanged(const int newLayerToShow)
       : m_newLayerToShow(newLayerToShow) {}
@@ -23,7 +23,7 @@ private:
   int m_newLayerToShow = 0;
 };
 
-class SIR_ENGINE_API DebugRenderConfigChanged final : public Event {
+class  DebugRenderConfigChanged final : public Event {
 public:
   explicit DebugRenderConfigChanged(DebugLayerConfig config)
       : m_config{config} {}

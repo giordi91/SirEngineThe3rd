@@ -25,7 +25,7 @@ struct VkTexture2D {
   uint32_t creationFlags : 31;
 };
 
-class SIR_ENGINE_API VkTextureManager final : public TextureManager {
+class  VkTextureManager final : public TextureManager {
  public:
   VkTextureManager() : TextureManager(), m_texturePool(RESERVE_SIZE) {}
   ~VkTextureManager() override;

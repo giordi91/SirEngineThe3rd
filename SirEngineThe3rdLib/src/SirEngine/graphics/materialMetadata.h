@@ -59,8 +59,8 @@ struct MaterialMetadata {
   }
 };
 
-MaterialMetadata SIR_ENGINE_API extractMetadataFromPSO(const char *psoPath);
-MaterialMetadata SIR_ENGINE_API loadMetadata(const char *psoPath,
+MaterialMetadata  extractMetadataFromPSO(const char *psoPath);
+MaterialMetadata  loadMetadata(const char *psoPath,
                                              GRAPHIC_API api);
 MaterialMetadata loadPSOBinaryMetadata(const char *psoPath);
 

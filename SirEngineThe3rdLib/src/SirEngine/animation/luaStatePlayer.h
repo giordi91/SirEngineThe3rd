@@ -30,7 +30,7 @@ public:
 
   void init(AnimationManager *manager, nlohmann::json &configJson);
   void evaluate(long long stampNS) override;
-  uint32_t getJointCount() const override;
+  [[nodiscard]] uint32_t getJointCount() const override;
 
 private:
   void evaluateStateMachine();

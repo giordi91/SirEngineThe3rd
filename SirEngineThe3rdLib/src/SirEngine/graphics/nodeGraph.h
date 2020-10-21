@@ -41,8 +41,7 @@ class GNodeCallback {
   virtual void clearResolutionDepenantResources(uint32_t id) = 0;
 };
 
-// TODO make node not copyable assignable
-class SIR_ENGINE_API GNode {
+class GNode {
  public:
   GNode(const GNode &) = delete;
   GNode &operator=(const GNode &) = delete;
@@ -219,8 +218,8 @@ inline T getInputConnection(ResizableVector<const GPlug *> **conns,
   assert(h.isHandleValid());
   return h;
 }
-template class SIR_ENGINE_API ResizableVector<GNode *>;
-class SIR_ENGINE_API DependencyGraph final {
+template class  ResizableVector<GNode *>;
+class  DependencyGraph final {
  public:
   DependencyGraph()
       : m_nodes(GRAPH_DEFAULT_RESERVE_SIZE),

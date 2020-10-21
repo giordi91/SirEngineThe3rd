@@ -3,7 +3,7 @@
 #include "SirEngine/events/event.h"
 
 namespace SirEngine {
-class SIR_ENGINE_API RenderGraphChanged final : public Event {
+class  RenderGraphChanged final : public Event {
 public:
   RenderGraphChanged() = default;
 
