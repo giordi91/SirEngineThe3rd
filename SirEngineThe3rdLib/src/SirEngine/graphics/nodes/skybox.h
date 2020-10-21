@@ -18,12 +18,12 @@ class SkyBoxPass final : public GNode {
  public:
   explicit SkyBoxPass(GraphAllocators &allocators);
   virtual ~SkyBoxPass() = default;
-  virtual void initialize(CommandBufferHandle commandBuffer) override;
+  virtual void initialize(CommandBufferHandle commandBuffer,RenderGraphContext* context) override;
   virtual void compute() override;
   virtual void onResizeEvent(int screenWidth, int screenHeight,
-                             CommandBufferHandle commandBuffer) override;
+                             CommandBufferHandle commandBuffer,RenderGraphContext* context) override;
 
-  void populateNodePorts() override;
+  void populateNodePorts(RenderGraphContext* context) override;
   void clear() override;
 
   void clearResolutionDepenantResources() override;

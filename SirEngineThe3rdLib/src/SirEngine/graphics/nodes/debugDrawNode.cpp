@@ -1,8 +1,8 @@
 #include "SirEngine/graphics/nodes/debugDrawNode.h"
 
+#include "SirEngine/engineConfig.h"
 #include "SirEngine/graphics/debugRenderer.h"
 #include "SirEngine/graphics/renderingContext.h"
-#include "SirEngine/engineConfig.h"
 #include "SirEngine/handle.h"
 
 namespace SirEngine {
@@ -30,7 +30,7 @@ DebugDrawNode::DebugDrawNode(GraphAllocators &allocators)
   outTexture.name = "outTexture";
 }
 
-void DebugDrawNode::initialize(CommandBufferHandle commandBuffer) {}
+void DebugDrawNode::initialize(CommandBufferHandle, RenderGraphContext *) {}
 
 void DebugDrawNode::compute() {
   globals::RENDERING_CONTEXT->setBindingObject(m_bindHandle);
@@ -40,7 +40,7 @@ void DebugDrawNode::compute() {
   m_outputPlugs[0].plugValue = inputRTHandle.handle;
 }
 
-void DebugDrawNode::populateNodePorts() {
+void DebugDrawNode::populateNodePorts(RenderGraphContext *context) {
   inputRTHandle =
       getInputConnection<TextureHandle>(m_inConnections, IN_TEXTURE);
   inputDepthHandle =
@@ -70,20 +70,18 @@ void DebugDrawNode::populateNodePorts() {
       bindings, "DebugDrawPass");
 }
 
-void DebugDrawNode::clear() {
-    clearResolutionDepenantResources();
-}
+void DebugDrawNode::clear() { clearResolutionDepenantResources(); }
 
-void DebugDrawNode::clearResolutionDepenantResources()
-{
+void DebugDrawNode::clearResolutionDepenantResources() {
   if (m_bindHandle.isHandleValid()) {
     globals::RENDERING_CONTEXT->freeBindingObject(m_bindHandle);
   }
 }
 
-void DebugDrawNode::onResizeEvent(int, int, const CommandBufferHandle commandBuffer)
-{
-    clearResolutionDepenantResources();
-	initializeResolutionDepenantResources(commandBuffer);
+void DebugDrawNode::onResizeEvent(int, int,
+                                  const CommandBufferHandle commandBuffer,
+                                  RenderGraphContext *context) {
+  clearResolutionDepenantResources();
+  initializeResolutionDepenantResources(commandBuffer, context);
 }
 }  // namespace SirEngine

@@ -103,7 +103,7 @@ void GraphicsLayer::onAttach() {
       FinalBlitNode::IN_TEXTURE);
 
   // TODO this whole reset execute flush needs to be reworked
-  globals::RENDERING_GRAPH->finalizeGraph();
+  globals::RENDERING_GRAPH->finalizeGraph(m_workerBuffer,&m_graphContext);
   globals::RENDERING_CONTEXT->executeGlobalCommandList();
   globals::RENDERING_CONTEXT->flush();
 }
@@ -201,7 +201,7 @@ bool GraphicsLayer::onResizeEvent(WindowResizeEvent &e) {
   // next we can issue a resize
   const uint32_t w = e.getWidth();
   const uint32_t h = e.getHeight();
-  globals::RENDERING_GRAPH->onResizeEvent(w, h, m_workerBuffer);
+  globals::RENDERING_GRAPH->onResizeEvent(w, h, m_workerBuffer,&m_graphContext);
 
   // now we flush and reset
   globals::COMMAND_BUFFER_MANAGER->executeFlushAndReset(m_workerBuffer);

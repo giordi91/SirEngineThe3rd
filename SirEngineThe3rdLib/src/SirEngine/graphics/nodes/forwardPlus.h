@@ -17,14 +17,14 @@ class ForwardPlus final : public GNode {
   explicit ForwardPlus(GraphAllocators& allocators);
   virtual ~ForwardPlus()=default;
   void setupLight();
-  virtual void initialize(CommandBufferHandle commandBuffer) override;
+  virtual void initialize(CommandBufferHandle commandBuffer,RenderGraphContext* context) override;
   virtual void compute() override;
-  virtual void onResizeEvent(int screenWidth, int screenHeight, CommandBufferHandle commandBuffer) override;
+  virtual void onResizeEvent(int screenWidth, int screenHeight, CommandBufferHandle commandBuffer,RenderGraphContext* context) override;
 
-  void populateNodePorts() override;
+  void populateNodePorts(RenderGraphContext* context) override;
   void clear() override;
 
-  void initializeResolutionDepenantResources(CommandBufferHandle commandBuffer) override;
+  void initializeResolutionDepenantResources(CommandBufferHandle commandBuffer,RenderGraphContext* context) override;
   void clearResolutionDepenantResources() override;
  private:
   TextureHandle m_rtHandle{};

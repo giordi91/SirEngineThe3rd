@@ -42,12 +42,12 @@ class PostProcessStack final : public GNode {
  public:
   explicit PostProcessStack(GraphAllocators &allocators);
   ~PostProcessStack() override = default;
-  void initialize(CommandBufferHandle commandBuffer) override;
-  void initializeResolutionDepenantResources(CommandBufferHandle commandBuffer) override;
+  void initialize(CommandBufferHandle commandBuffer,RenderGraphContext* context) override;
+  void initializeResolutionDepenantResources(CommandBufferHandle commandBuffer,RenderGraphContext* context) override;
   void clearResolutionDepenantResources() override;
   void clear() override;
   void compute() override;
-  void onResizeEvent(int screenWidth, int screenHeight,CommandBufferHandle commandBuffer) override;
+  void onResizeEvent(int screenWidth, int screenHeight,CommandBufferHandle commandBuffer,RenderGraphContext* context) override;
   inline void registerPassToStack(PostProcessEffect *pass) {
     m_stack.push_back(pass);
   };
@@ -61,7 +61,7 @@ class PostProcessStack final : public GNode {
     return m_stack;
   }
 
-  void populateNodePorts() override;
+  void populateNodePorts(RenderGraphContext* context) override;
 
  private:
   std::vector<PostProcessEffect *> m_stack;

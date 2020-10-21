@@ -2,6 +2,7 @@
 #include <assert.h>
 
 #include "SirEngine/core.h"
+#include "SirEngine/graphics/renderGraphContext.h"
 #include "SirEngine/memory/cpu/resizableVector.h"
 #include "SirEngine/runtimeString.h"
 
@@ -63,15 +64,17 @@ class GNode {
   inline int getGeneration() const { return m_generation; }
 
   virtual void compute() {}
-  virtual void initialize(CommandBufferHandle) {}
-  virtual void initializeResolutionDepenantResources(CommandBufferHandle) {}
+  virtual void initialize(CommandBufferHandle, RenderGraphContext *) {}
+  virtual void initializeResolutionDepenantResources(CommandBufferHandle,
+                                                     RenderGraphContext *) {}
   virtual void clearResolutionDepenantResources() {}
   virtual void clear() { m_generation = -1; }
-  virtual void populateNodePorts() {}
+  virtual void populateNodePorts(RenderGraphContext *) {}
 
   // un-named parameters are screenWidth and screenHeight
   // removing the names just to avoid huge spam from compiler warning;
-  virtual void onResizeEvent(int, int, CommandBufferHandle) {}
+  virtual void onResizeEvent(int, int, CommandBufferHandle,
+                             RenderGraphContext *) {}
 
   inline const char *getName() const { return m_nodeName; }
   inline const char *getType() const { return m_nodeType; }
@@ -218,8 +221,8 @@ inline T getInputConnection(ResizableVector<const GPlug *> **conns,
   assert(h.isHandleValid());
   return h;
 }
-template class  ResizableVector<GNode *>;
-class  DependencyGraph final {
+template class ResizableVector<GNode *>;
+class DependencyGraph final {
  public:
   DependencyGraph()
       : m_nodes(GRAPH_DEFAULT_RESERVE_SIZE),
@@ -286,19 +289,21 @@ class  DependencyGraph final {
 
   [[nodiscard]] GNode *getFinalNode() const { return finalNode; }
   inline void setFinalNode(GNode *node) { finalNode = node; }
-  void finalizeGraph();
+  void finalizeGraph(CommandBufferHandle commandBuffer,
+                     RenderGraphContext *context);
   void clear();
   void compute();
   inline uint32_t nodeCount() const { return m_nodes.size(); }
   void onResizeEvent(const int screenWidth, const int screenHeight,
-                     CommandBufferHandle commandBuffer) {
+                     CommandBufferHandle commandBuffer,
+                     RenderGraphContext *context) {
     int count = m_linearizedGraph.size();
     for (int i = 0; i < count; ++i) {
       m_linearizedGraph[i]->onResizeEvent(screenWidth, screenHeight,
-                                          commandBuffer);
+                                          commandBuffer, context);
     }
     for (int i = 0; i < count; ++i) {
-      m_linearizedGraph[i]->populateNodePorts();
+      m_linearizedGraph[i]->populateNodePorts(context);
     }
   };
 

@@ -30,8 +30,9 @@ PostProcessStack::PostProcessStack(GraphAllocators &allocators)
   outTexture.name = "outTexture";
 }
 
-void PostProcessStack::initialize(CommandBufferHandle commandBuffer) {
-  initializeResolutionDepenantResources(commandBuffer);
+void PostProcessStack::initialize(CommandBufferHandle commandBuffer,
+                                  RenderGraphContext *context) {
+  initializeResolutionDepenantResources(commandBuffer, context);
 }
 
 void PostProcessStack::compute() {
@@ -64,12 +65,13 @@ void PostProcessStack::compute() {
 
 void PostProcessStack::clear() { clearResolutionDepenantResources(); }
 void PostProcessStack::onResizeEvent(int, int,
-                                     const CommandBufferHandle commandBuffer) {
+                                     const CommandBufferHandle commandBuffer,
+                                     RenderGraphContext *context) {
   clearResolutionDepenantResources();
-  initializeResolutionDepenantResources(commandBuffer);
+  initializeResolutionDepenantResources(commandBuffer, context);
 }
 
-void PostProcessStack::populateNodePorts() {
+void PostProcessStack::populateNodePorts(RenderGraphContext *context) {
   inputRTHandle =
       getInputConnection<TextureHandle>(m_inConnections, IN_TEXTURE);
   inputDepthHandle =
@@ -139,7 +141,7 @@ void PostProcessStack::populateNodePorts() {
 }
 
 void PostProcessStack::initializeResolutionDepenantResources(
-    CommandBufferHandle commandBuffer) {
+    CommandBufferHandle commandBuffer, RenderGraphContext *context) {
   // initialize all layers
   const size_t stackSize = m_stack.size();
   for (size_t i = 0; i < stackSize; ++i) {

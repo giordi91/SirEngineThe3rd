@@ -202,7 +202,7 @@ bool compareNodes(const GNode *&lhs, const GNode *&rhs) {
   return lhs->getGeneration() < rhs->getGeneration();
 }
 
-void DependencyGraph::finalizeGraph() {
+void DependencyGraph::finalizeGraph(CommandBufferHandle commandBuffer,RenderGraphContext* context) {
   // for the time being we will linearize the graph
   m_linearizedGraph.clear();
   // m_linearizedGraph.reserve(m_nodeCounter);
@@ -255,13 +255,13 @@ void DependencyGraph::finalizeGraph() {
 
   //first we initialize all the nodes
   for (int i = 0; i < linearCount; ++i) {
-    m_linearizedGraph[i]->initialize({});
+    m_linearizedGraph[i]->initialize(commandBuffer,context);
   }
   //next we populate all the ports, such that all the rendering resources
   //are known, also you have the hard guarantee that dependencies node
   //have their port already initialized thanks to the sort
   for (int i = 0; i < linearCount; ++i) {
-    m_linearizedGraph[i]->populateNodePorts();
+    m_linearizedGraph[i]->populateNodePorts(context);
   }
 }
 

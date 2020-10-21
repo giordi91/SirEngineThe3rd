@@ -158,7 +158,7 @@ TEST_CASE("finalize graph 1", "[graphics,graph]") {
   res = graph.connectNodes(&gbuffer, LegacyGBufferPassPBR::GEOMETRY_RT, &blit,
                            LegacyFinalBlitNode::IN_TEXTURE);
   REQUIRE(res == true);
-  graph.finalizeGraph();
+  graph.finalizeGraph({},nullptr);
 
   const ResizableVector<GNode *> &list = graph.getLinearizedGraph();
   int assetId = getIndexOfNodeOfType(list, asset.getType());
@@ -192,7 +192,7 @@ TEST_CASE("remove connection", "[graphics,graph]") {
   res = graph.connectNodes(&gbuffer, LegacyGBufferPassPBR::GEOMETRY_RT, &blit,
                            LegacyFinalBlitNode::IN_TEXTURE);
   REQUIRE(res == true);
-  graph.finalizeGraph();
+  graph.finalizeGraph({},nullptr);
 
   int outSourceCount;
   const GPlug *outPlugs = asset.getOutputPlugs(outSourceCount);
@@ -315,7 +315,7 @@ TEST_CASE("sort graph 1", "[graphics,graph]") {
   graph.connectNodes(&debugDraw, DebugDrawNode::OUT_TEXTURE, &finalBlit,
                      FinalBlitNode::IN_TEXTURE);
 
-  graph.finalizeGraph();
+  graph.finalizeGraph({},nullptr);
 
   const ResizableVector<GNode *> &linearizedGraph = graph.getLinearizedGraph();
   int assetIdx = getIndexOfNodeOfType(linearizedGraph, "AssetManagerNode");

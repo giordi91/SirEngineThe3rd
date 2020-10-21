@@ -35,7 +35,7 @@ SkyBoxPass::SkyBoxPass(GraphAllocators &allocators)
   buffer.name = "buffer";
 }
 
-void SkyBoxPass::initialize(CommandBufferHandle commandBuffer) {
+void SkyBoxPass::initialize(CommandBufferHandle ,RenderGraphContext* ) {
   m_rs = globals::ROOT_SIGNATURE_MANAGER->getHandleFromName(SKYBOX_RS);
   m_pso = globals::PSO_MANAGER->getHandleFromName(SKYBOX_PSO);
 
@@ -70,12 +70,12 @@ void SkyBoxPass::compute() {
 }
 
 void SkyBoxPass::onResizeEvent(int, int,
-                               const CommandBufferHandle commandBuffer) {
+                               const CommandBufferHandle commandBuffer,RenderGraphContext* context) {
   clearResolutionDepenantResources();
-  initializeResolutionDepenantResources(commandBuffer);
+  initializeResolutionDepenantResources(commandBuffer,context);
 }
 
-void SkyBoxPass::populateNodePorts() {
+void SkyBoxPass::populateNodePorts(RenderGraphContext* ) {
   inputRTHandle =
       getInputConnection<TextureHandle>(m_inConnections, IN_TEXTURE);
   inputDepthHandle = getInputConnection<TextureHandle>(m_inConnections, DEPTH);
