@@ -3,7 +3,7 @@
 #include "SirEngine/events/event.h"
 
 namespace SirEngine {
-class SIR_ENGINE_API MouseMoveEvent final : public Event {
+class  MouseMoveEvent final : public Event {
 public:
   MouseMoveEvent(const float posX, const float posY)
       : m_posX(posX), m_posY(posY) {}
@@ -23,7 +23,7 @@ private:
   float m_posY;
 };
 
-class SIR_ENGINE_API MouseScrollEvent final : public Event {
+class  MouseScrollEvent final : public Event {
 public:
   MouseScrollEvent(const float offsetX, const float offsetY)
       : m_offsetX(offsetX), m_offsetY(offsetY) {}
@@ -46,7 +46,7 @@ private:
 
 enum class MOUSE_BUTTONS_EVENT { LEFT = 0, RIGHT, MIDDLE };
 
-class SIR_ENGINE_API MouseButtonPressEvent final : public Event {
+class  MouseButtonPressEvent final : public Event {
 public:
   explicit MouseButtonPressEvent(const MOUSE_BUTTONS_EVENT mouseButton)
       : m_button(mouseButton) {}
@@ -76,7 +76,7 @@ private:
   MOUSE_BUTTONS_EVENT m_button;
 };
 
-class SIR_ENGINE_API MouseButtonReleaseEvent final : public Event {
+class  MouseButtonReleaseEvent final : public Event {
 public:
   explicit MouseButtonReleaseEvent(const MOUSE_BUTTONS_EVENT mouseButton)
       : m_button(mouseButton) {}

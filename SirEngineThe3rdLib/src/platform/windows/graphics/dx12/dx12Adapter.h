@@ -11,9 +11,9 @@ struct Dx12AdapterResult {
   D3D12DeviceType *m_device;
 };
 
-bool SIR_ENGINE_API getBestAdapter(const AdapterRequestConfig &config,
+bool  getBestAdapter(const AdapterRequestConfig &config,
                     Dx12AdapterResult &adapterResult,
                     IDXGIFactory4 *dxgiFactory);
-void SIR_ENGINE_API logPhysicalDevice(IDXGIAdapter3 *physicalDevice);
+void  logPhysicalDevice(IDXGIAdapter3 *physicalDevice);
 
 } // namespace SirEngine::dx12

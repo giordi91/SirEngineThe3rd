@@ -479,7 +479,7 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj, const char *path,
   // NOTE: we are not using input assembler at all
   psoDesc->InputLayout = {nullptr, 0};
   psoDesc->pRootSignature = rootSignature;
-  psoDesc->VS = {reinterpret_cast<BYTE *>(vsResult.blob->GetBufferPointer()),
+  psoDesc->VS = {static_cast<BYTE *>(vsResult.blob->GetBufferPointer()),
                  vsResult.blob->GetBufferSize()};
 
   psoDesc->PS = {nullptr, 0};

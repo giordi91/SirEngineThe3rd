@@ -7,7 +7,7 @@
 #include "SirEngine/handle.h"
 
 namespace SirEngine::dx12 {
-struct SIR_ENGINE_API PSOCompileResult {
+struct  PSOCompileResult {
   const char *name;
   D3D12_COMPUTE_PIPELINE_STATE_DESC *computeDesc = nullptr;
   D3D12_GRAPHICS_PIPELINE_STATE_DESC *graphicDesc = nullptr;
@@ -26,7 +26,7 @@ struct SIR_ENGINE_API PSOCompileResult {
 
 // loads a PSO json definition and compiles everything from scratch
 // this means the PSO, the Root signature and shaders
-PSOCompileResult SIR_ENGINE_API compileRawPSO(const char *path,
+PSOCompileResult  compileRawPSO(const char *path,
                                               const char *shaderPath);
 PSO_TYPE convertStringPSOTypeToEnum(const char *type);
 

@@ -7,8 +7,7 @@
 namespace SirEngine {
 
 class Layer;
-template class SIR_ENGINE_API ResizableVector<Layer*>;
-class SIR_ENGINE_API LayerStack final {
+class  LayerStack final {
 public:
   LayerStack() : m_layers(20) {}
   ~LayerStack();

@@ -1,5 +1,4 @@
 #pragma once
-#include "SirEngine/core.h"
 #include <d3d12.h>
 
 namespace SirEngine {
@@ -15,7 +14,7 @@ class DescriptorHeap;
 // to run graphics and or compute without spawning a window and maybe without
 // the whole game editor event but a much simpler one off code execution. An
 // example might be generation of MIPS or convolution of irradiance maps.
-class SIR_ENGINE_API HeadlessClient {
+class  HeadlessClient {
 public:
   HeadlessClient();
   virtual ~HeadlessClient();

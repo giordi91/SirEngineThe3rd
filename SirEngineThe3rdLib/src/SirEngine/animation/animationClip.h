@@ -1,6 +1,5 @@
 #pragma once
 
-#include "SirEngine/core.h"
 #include "SirEngine/animation/animationManipulation.h"
 
 namespace SirEngine {
@@ -8,7 +7,7 @@ namespace SirEngine {
 
 struct JointPose;
 
-struct SIR_ENGINE_API AnimationClip {
+struct AnimationClip {
 
   AnimationClip() = default;
   ~AnimationClip();

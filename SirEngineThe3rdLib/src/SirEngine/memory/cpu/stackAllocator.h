@@ -5,7 +5,7 @@
 // not thread safe
 namespace SirEngine {
 
-class SIR_ENGINE_API StackAllocator final {
+class  StackAllocator final {
  public:
   StackAllocator() = default;
   ~StackAllocator() { delete[] m_start; }

@@ -69,7 +69,7 @@ extern AssetManager *ASSET_MANAGER;
 extern Application *APPLICATION;
 extern RenderingContext *RENDERING_CONTEXT;
 extern DebugFrameData *DEBUG_FRAME_DATA;
-extern SIR_ENGINE_API AnimationManager *ANIMATION_MANAGER;
+extern  AnimationManager *ANIMATION_MANAGER;
 extern SkinClusterManager *SKIN_MANAGER;
 extern ScriptingContext *SCRIPTING_CONTEXT;
 extern CommandBufferManager *COMMAND_BUFFER_MANAGER;
@@ -87,9 +87,9 @@ extern InteropData *INTEROP_DATA;
 extern ImGuiManager *IMGUI_MANAGER;
 
 // generic allocators
-extern SIR_ENGINE_API StringPool *STRING_POOL;
-extern SIR_ENGINE_API StackAllocator *FRAME_ALLOCATOR;
-extern SIR_ENGINE_API ThreeSizesPool *PERSISTENT_ALLOCATOR;
+extern  StringPool *STRING_POOL;
+extern  StackAllocator *FRAME_ALLOCATOR;
+extern  ThreeSizesPool *PERSISTENT_ALLOCATOR;
 
 // config
 extern EngineConfig *ENGINE_CONFIG;

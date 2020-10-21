@@ -31,8 +31,7 @@ struct BufferRangeTracker {
  * accessible, for example GPU ram, but from the CPU side you will be able to
  * know which part is free, usable , make sub allocations and so on.
  */
-template class SIR_ENGINE_API ResizableVector<BufferRangeTracker>;
-class SIR_ENGINE_API LinearBufferManager {
+class  LinearBufferManager {
  public:
   static constexpr uint32_t DEFAULT_ALLOCATION_RESERVE = 64;
 

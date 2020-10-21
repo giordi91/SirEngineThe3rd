@@ -7,7 +7,7 @@
 namespace SirEngine {
 namespace dx12 {
 
-class SIR_ENGINE_API DescriptorHeap {
+class  DescriptorHeap {
  public:
   DescriptorHeap(): m_freeList(10){};
   ~DescriptorHeap();

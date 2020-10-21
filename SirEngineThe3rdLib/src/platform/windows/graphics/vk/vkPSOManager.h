@@ -16,7 +16,7 @@
 
 namespace SirEngine::vk {
 
-struct SIR_ENGINE_API VkPSOCompileResult {
+struct  VkPSOCompileResult {
   VkPipeline pso = nullptr;
   PSO_TYPE psoType = PSO_TYPE::INVALID;
   const char *name = nullptr;

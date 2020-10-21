@@ -16,7 +16,7 @@ struct NativeWindow {
   uint64_t data2;
 };
 
-class SIR_ENGINE_API BaseWindow {
+class  BaseWindow {
 public:
   using EventCallbackFn = std::function<void(Event &)>;
 

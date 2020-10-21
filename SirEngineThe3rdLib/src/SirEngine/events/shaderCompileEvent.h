@@ -4,7 +4,7 @@
 #include "SirEngine/runtimeString.h"
 
 namespace SirEngine {
-class SIR_ENGINE_API ShaderCompileEvent final : public Event {
+class  ShaderCompileEvent final : public Event {
 public:
   ShaderCompileEvent(const char *shaderToCompile, const char *offsetPath)
       : m_shaderToCompile(persistentString(shaderToCompile)),
@@ -33,7 +33,7 @@ private:
   const char *m_shaderToCompile;
   const char *m_offsetPath;
 };
-class SIR_ENGINE_API RequestShaderCompileEvent final : public Event {
+class  RequestShaderCompileEvent final : public Event {
 public:
   RequestShaderCompileEvent() = default;
 
@@ -45,7 +45,7 @@ public:
   }
 };
 
-class SIR_ENGINE_API ShaderCompileResultEvent final : public Event {
+class  ShaderCompileResultEvent final : public Event {
 public:
   explicit ShaderCompileResultEvent(const char *log)
       : m_log(persistentString(log)) {}

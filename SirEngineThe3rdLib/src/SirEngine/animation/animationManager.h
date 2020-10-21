@@ -1,5 +1,6 @@
 #pragma once
 
+
 #include "SirEngine/clock.h"
 #include "SirEngine/handle.h"
 #include "SirEngine/hashing.h"
@@ -21,28 +22,16 @@ class AnimationPlayer;
 //  AnimState *m_anim_state = nullptr;
 //};
 
-// Anim metadata mostly used for blending, can be extended by user in case is
-// needed
-
-// upeasing dll interface for interfaces
-template class SIR_ENGINE_API Clock<std::chrono::nanoseconds>;
 using AnimClock = Clock<std::chrono::nanoseconds>;
-template class SIR_ENGINE_API ResizableVector<AnimationPlayer *>;
-// template class SIR_ENGINE_API HashMap<uint32_t, AnimationConfig, hashUint32>;
-template class SIR_ENGINE_API
-    HashMap<const char *, AnimationConfigHandle, hashString32>;
-template class SIR_ENGINE_API
-    HashMap<const char *, AnimationClip *, hashString32>;
-template class SIR_ENGINE_API HashMap<const char *, Skeleton *, hashString32>;
-template class SIR_ENGINE_API
-    HashMap<const char *, SkeletonPose *, hashString32>;
-template class SIR_ENGINE_API HashMap<const char *, int, hashString32>;
-class SIR_ENGINE_API AnimationManager final {
 
-public:
+class AnimationManager final {
+ public:
   AnimationManager()
-      : m_activeAnims(200), m_handleToConfig(500), m_nameToConfigHandle(50),
-        m_animationClipCache(500), m_skeletonCache(50),
+      : m_activeAnims(200),
+        m_handleToConfig(500),
+        m_nameToConfigHandle(50),
+        m_animationClipCache(500),
+        m_skeletonCache(50),
         m_keywordRegisterMap(50){};
   ~AnimationManager() = default;
 
@@ -93,37 +82,36 @@ public:
     return clip;
   }
 
-  inline AnimationConfigHandle
-  getConfigHandleFromName(const char *configName) const {
+  inline AnimationConfigHandle getConfigHandleFromName(
+      const char *configName) const {
     AnimationConfigHandle handle;
     const bool found = m_nameToConfigHandle.get(configName, handle);
     assert(found);
     return handle;
   }
 
-  inline AnimationPlayer *
-  getAnimationPlayer(const AnimationConfigHandle handle) const {
+  inline AnimationPlayer *getAnimationPlayer(
+      const AnimationConfigHandle handle) const {
     AnimationPlayer *player;
     const bool found = m_handleToConfig.get(handle.handle, player);
     assert(found);
     return player;
   }
 
-public:
-private:
+ public:
+ private:
   inline AnimationClip *getCachedAnimationClip(const char *name) const {
     AnimationClip *clip = nullptr;
     const auto found = m_animationClipCache.get(name, clip);
     return found ? clip : nullptr;
   };
   inline Skeleton *getCachedSkeleton(const char *name) const {
-
     Skeleton *skeleton = nullptr;
     const auto found = m_skeletonCache.get(name, skeleton);
     return found ? skeleton : nullptr;
   };
 
-private:
+ private:
   typedef uint64_t string64;
   // resources to be evaluated per frame
   ResizableVector<AnimationPlayer *> m_activeAnims;
@@ -138,4 +126,4 @@ private:
   HashMap<const char *, int, hashString32> m_keywordRegisterMap;
   unsigned int configIndex = 0;
 };
-} // namespace SirEngine
+}  // namespace SirEngine

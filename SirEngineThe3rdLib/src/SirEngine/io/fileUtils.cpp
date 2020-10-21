@@ -128,7 +128,7 @@ unsigned int getValueIfInJson(const nlohmann::json &data,
   return defValue;
 }
 
-glm::mat4 SIR_ENGINE_API getValueIfInJson(const nlohmann::json &data,
+glm::mat4  getValueIfInJson(const nlohmann::json &data,
                                           const std::string &key,
                                           const glm::mat4 &default_value) {
   if (data.find(key) != data.end()) {

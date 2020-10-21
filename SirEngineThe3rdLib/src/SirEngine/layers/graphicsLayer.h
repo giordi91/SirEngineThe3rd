@@ -18,7 +18,7 @@ struct Skeleton;
 struct GraphAllocators;
 
 
-class SIR_ENGINE_API GraphicsLayer final : public Layer {
+class  GraphicsLayer final : public Layer {
 public:
   GraphicsLayer() : Layer("VkTempLayer") {}
   ~GraphicsLayer() override = default;
