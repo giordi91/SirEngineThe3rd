@@ -83,6 +83,11 @@ class  VkTextureManager final : public TextureManager {
     writeDescriptorSets[0].pImageInfo = &data.srv;
     writeDescriptorSets[0].descriptorCount = 1;
   }
+void setImageLayout(
+    VkCommandBuffer cmdbuffer, VkImage image, VkImageLayout oldImageLayout,
+    VkImageLayout newImageLayout, VkImageSubresourceRange subresourceRange,
+    VkPipelineStageFlags srcStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+    VkPipelineStageFlags dstStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT) const;
 
  private:
   bool loadTextureFromFile(const char *name, VkFormat format, VkDevice device,

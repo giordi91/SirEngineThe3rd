@@ -34,7 +34,7 @@ void DebugDrawNode::initialize(CommandBufferHandle, RenderGraphContext *) {}
 
 void DebugDrawNode::compute(RenderGraphContext* context) {
   globals::RENDERING_CONTEXT->setBindingObject(m_bindHandle);
-  globals::DEBUG_RENDERER->render();
+  globals::DEBUG_RENDERER->render(context->renderTargetWidth,context->renderTargetHeight);
   globals::RENDERING_CONTEXT->clearBindingObject(m_bindHandle);
 
   m_outputPlugs[0].plugValue = inputRTHandle.handle;

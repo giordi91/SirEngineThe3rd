@@ -189,6 +189,7 @@ void EditorLayer::onUpdate() {
 
   ImGui::SetNextWindowDockID(dockIds.root, ImGuiCond_Appearing);
   ImGui::Begin("Viewport", (bool *)0);
+  ImVec2 newViewportSize = ImGui::GetContentRegionAvail();
 
   // if our viewport is hovered we set the flag, that will allow
   // our camera controller to behave properly
@@ -197,6 +198,8 @@ void EditorLayer::onUpdate() {
   // the image, so we can use it to overlay imguizmo
   float x = ImGui::GetCursorScreenPos().x;
   float y = ImGui::GetCursorScreenPos().y;
+
+  ImGui::Image(globals::IMGUI_VIEWPORT, newViewportSize);
 
   ImGui::End();
 

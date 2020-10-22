@@ -59,11 +59,12 @@ inline VkFormat convertIntFormatToVKFormat(const int format) {
 VkTextureManager::~VkTextureManager() {
   // assert(m_texturePool.assertEverythingDealloc());
 }
-static void setImageLayout(
-    VkCommandBuffer cmdbuffer, VkImage image, VkImageLayout oldImageLayout,
-    VkImageLayout newImageLayout, VkImageSubresourceRange subresourceRange,
-    VkPipelineStageFlags srcStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-    VkPipelineStageFlags dstStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT) {
+void VkTextureManager::setImageLayout(VkCommandBuffer cmdbuffer, VkImage image,
+                                      VkImageLayout oldImageLayout,
+                                      VkImageLayout newImageLayout,
+                                      VkImageSubresourceRange subresourceRange,
+                                      VkPipelineStageFlags srcStageMask,
+                                      VkPipelineStageFlags dstStageMask) const {
   // Create an image barrier object
   VkImageMemoryBarrier imageMemoryBarrier = {
       VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER};
@@ -661,7 +662,6 @@ TextureHandle VkTextureManager::allocateTexture(
     uint32_t width, uint32_t height, RenderTargetFormat format,
     const char *name, TEXTURE_ALLOCATION_FLAGS allocFlags,
     RESOURCE_STATE finalState) {
-  // NOTE for now this is hardcoded, if necessary will be changed
   VkImageLayout imageLayout = fromStateToLayout(finalState);
 
   VkImageUsageFlags imageUsageFlags = 0;

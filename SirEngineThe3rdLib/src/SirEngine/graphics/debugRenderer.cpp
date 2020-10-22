@@ -129,7 +129,7 @@ void DebugRenderer::cleanup() {
 void DebugRenderer::free() {}
 
 
-void DebugRenderer::render() {
+void DebugRenderer::render(uint32_t renderWidth,uint32_t renderHeight) {
   // draw lines
   int slabCount = m_lineSlab[globals::CURRENT_FRAME].getSlabCount();
   assureLinesTables(slabCount);
@@ -151,8 +151,8 @@ void DebugRenderer::render() {
     globals::PSO_MANAGER->bindPSO(m_linePSO);
     globals::BINDING_TABLE_MANAGER->bindTable(3, bindHandle, m_lineRS);
 
-    auto w = static_cast<float>(globals::ENGINE_CONFIG->m_windowWidth);
-    auto h = static_cast<float>(globals::ENGINE_CONFIG->m_windowHeight);
+    auto w = static_cast<float>(renderWidth);
+    auto h = static_cast<float>(renderHeight);
 
     globals::RENDERING_CONTEXT->setViewportAndScissor(0, 0, w, h, 0, 1.0f);
     globals::RENDERING_CONTEXT->renderProcedural(primCount);
