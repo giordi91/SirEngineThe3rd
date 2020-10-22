@@ -7,6 +7,8 @@
 #include "SirEngine/materialManager.h"
 #include "SirEngine/psoManager.h"
 #include "SirEngine/rootSignatureManager.h"
+#include "platform/windows/graphics/vk/vk.h"
+#include "platform/windows/graphics/vk/vkTextureManager.h"
 
 namespace SirEngine {
 
@@ -26,7 +28,7 @@ FinalBlitNode::FinalBlitNode(GraphAllocators &allocators)
   inTexture.name = "inTexture";
 }
 
-void FinalBlitNode::compute(RenderGraphContext* context) {
+void FinalBlitNode::compute(RenderGraphContext *context) {
   // this will take care of binding the back buffer and the input and transition
   // both the back buffer  and input texture
   globals::RENDERING_CONTEXT->setBindingObject(m_bindHandle);
@@ -43,6 +45,17 @@ void FinalBlitNode::compute(RenderGraphContext* context) {
 
   // finishing the pass
   globals::RENDERING_CONTEXT->clearBindingObject(m_bindHandle);
+  auto d = vk::TEXTURE_MANAGER->getTextureData(context->m_renderTarget);
+
+  VkImageSubresourceRange subresourceRange = {};
+  subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  subresourceRange.baseMipLevel = 0;
+  subresourceRange.levelCount= VK_REMAINING_ARRAY_LAYERS;
+  subresourceRange.layerCount = 1;
+  vk::TEXTURE_MANAGER->setImageLayout(
+      vk::CURRENT_FRAME_COMMAND->m_commandBuffer, d.image,
+      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresourceRange);
 }
 
 void FinalBlitNode::initialize(CommandBufferHandle, RenderGraphContext *) {
@@ -69,7 +82,7 @@ void FinalBlitNode::populateNodePorts(RenderGraphContext *context) {
   bindings.colorRT[0].isSwapChainBackBuffer =
       !context->m_renderTarget.isHandleValid();
   bindings.colorRT[0].shouldClearColor = false;
-  bindings.colorRT[0].currentResourceState = RESOURCE_STATE::RENDER_TARGET;
+  bindings.colorRT[0].currentResourceState = RESOURCE_STATE::SHADER_READ_RESOURCE;
   bindings.colorRT[0].neededResourceState = RESOURCE_STATE::RENDER_TARGET;
   bindings.width = context->renderTargetWidth;
   bindings.height = context->renderTargetHeight;

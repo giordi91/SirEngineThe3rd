@@ -27,7 +27,7 @@ class DebugRenderer final {
   void cleanup();
   void free();
 
-  void render();
+  void render(uint32_t renderWidth,uint32_t renderHeight);
   void drawBoundingBoxes(const BoundingBox* data, int count, glm::vec4 color);
   void drawLines(const float* data, uint32_t sizeInByte, glm::vec4 color);
   void newFrame();
