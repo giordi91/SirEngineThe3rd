@@ -63,7 +63,7 @@ class GNode {
   inline void setGeneration(const int generation) { m_generation = generation; }
   inline int getGeneration() const { return m_generation; }
 
-  virtual void compute() {}
+  virtual void compute(RenderGraphContext* context) {}
   virtual void initialize(CommandBufferHandle, RenderGraphContext *) {}
   virtual void initializeResolutionDepenantResources(CommandBufferHandle,
                                                      RenderGraphContext *) {}
@@ -292,7 +292,7 @@ class DependencyGraph final {
   void finalizeGraph(CommandBufferHandle commandBuffer,
                      RenderGraphContext *context);
   void clear();
-  void compute();
+  void compute(RenderGraphContext* context);
   inline uint32_t nodeCount() const { return m_nodes.size(); }
   void onResizeEvent(const int screenWidth, const int screenHeight,
                      CommandBufferHandle commandBuffer,

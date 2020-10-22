@@ -47,7 +47,7 @@ void SkyBoxPass::initialize(CommandBufferHandle ,RenderGraphContext* ) {
       "skyboxBindingTable");
 }
 
-void SkyBoxPass::compute() {
+void SkyBoxPass::compute(RenderGraphContext* context) {
   // this will take care of binding the back buffer and the input and transition
   // both the back buffer  and input texture
   globals::RENDERING_CONTEXT->setBindingObject(m_bindHandle);
@@ -60,9 +60,10 @@ void SkyBoxPass::compute() {
 
   // we clamp the viewport depth to the far plan. this means no matter how big
   // our sphere is it will be pushed to the far plane without artifacts:
-  auto w = static_cast<float>(globals::ENGINE_CONFIG->m_windowWidth);
-  auto h = static_cast<float>(globals::ENGINE_CONFIG->m_windowHeight);
+  auto w = static_cast<float>(context->renderTargetWidth);
+  auto h = static_cast<float>(context->renderTargetHeight);
   globals::RENDERING_CONTEXT->setViewportAndScissor(0, 0, w, h, 0, 0);
+  //number vertices needed to render the cube
   globals::RENDERING_CONTEXT->renderProcedural(14);
 
   // finishing the pass
@@ -75,7 +76,7 @@ void SkyBoxPass::onResizeEvent(int, int,
   initializeResolutionDepenantResources(commandBuffer,context);
 }
 
-void SkyBoxPass::populateNodePorts(RenderGraphContext* ) {
+void SkyBoxPass::populateNodePorts(RenderGraphContext* context) {
   inputRTHandle =
       getInputConnection<TextureHandle>(m_inConnections, IN_TEXTURE);
   inputDepthHandle = getInputConnection<TextureHandle>(m_inConnections, DEPTH);
@@ -102,8 +103,8 @@ void SkyBoxPass::populateNodePorts(RenderGraphContext* ) {
   bindings.depthStencil.neededResourceState =
       RESOURCE_STATE::DEPTH_RENDER_TARGET;
 
-  bindings.width = globals::ENGINE_CONFIG->m_windowWidth;
-  bindings.height = globals::ENGINE_CONFIG->m_windowHeight;
+  bindings.width = context->renderTargetWidth;
+  bindings.height = context->renderTargetHeight;
 
   m_bindHandle =
       globals::RENDERING_CONTEXT->prepareBindingObject(bindings, "Skybox");

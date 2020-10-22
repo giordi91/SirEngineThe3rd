@@ -26,7 +26,7 @@ FinalBlitNode::FinalBlitNode(GraphAllocators &allocators)
   inTexture.name = "inTexture";
 }
 
-void FinalBlitNode::compute() {
+void FinalBlitNode::compute(RenderGraphContext* context) {
   // this will take care of binding the back buffer and the input and transition
   // both the back buffer  and input texture
   globals::RENDERING_CONTEXT->setBindingObject(m_bindHandle);
@@ -65,13 +65,14 @@ void FinalBlitNode::populateNodePorts(RenderGraphContext *context) {
 
   // empty binding since we bind to the swap chain buffer
   FrameBufferBindings bindings{};
-  bindings.colorRT[0].handle = {};
-  bindings.colorRT[0].isSwapChainBackBuffer = true;
+  bindings.colorRT[0].handle = context->m_renderTarget;
+  bindings.colorRT[0].isSwapChainBackBuffer =
+      !context->m_renderTarget.isHandleValid();
   bindings.colorRT[0].shouldClearColor = false;
   bindings.colorRT[0].currentResourceState = RESOURCE_STATE::RENDER_TARGET;
   bindings.colorRT[0].neededResourceState = RESOURCE_STATE::RENDER_TARGET;
-  bindings.width = globals::ENGINE_CONFIG->m_windowWidth;
-  bindings.height = globals::ENGINE_CONFIG->m_windowHeight;
+  bindings.width = context->renderTargetWidth;
+  bindings.height = context->renderTargetHeight;
 
   bindings.extraBindings = static_cast<RTBinding *>(
       globals::PERSISTENT_ALLOCATOR->allocate(sizeof(RTBinding)));

@@ -14,7 +14,8 @@ enum class RenderTargetFormat {
   R11G11B10_UNORM,
   R16G16B16A16_FLOAT,
   BC1_UNORM,
-  DEPTH_F32_S8
+  DEPTH_F32_S8,
+  BGRA32
 };
 
 class TextureManager {

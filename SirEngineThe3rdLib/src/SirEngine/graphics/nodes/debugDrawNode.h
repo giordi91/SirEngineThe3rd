@@ -17,7 +17,7 @@ class DebugDrawNode final : public GNode {
   explicit DebugDrawNode(GraphAllocators &allocators);
   virtual ~DebugDrawNode() = default;
   void initialize(CommandBufferHandle commandBuffer,RenderGraphContext* context) override;
-  void compute() override;
+  void compute(RenderGraphContext *context) override;
 
   void populateNodePorts(RenderGraphContext* context) override;
 

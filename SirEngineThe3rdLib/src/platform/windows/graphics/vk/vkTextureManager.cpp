@@ -28,7 +28,8 @@ static std::unordered_map<RenderTargetFormat, VkFormat>
         {RenderTargetFormat::RGBA32, VK_FORMAT_R8G8B8A8_UNORM},
         {RenderTargetFormat::R16G16B16A16_FLOAT, VK_FORMAT_R16G16B16A16_SFLOAT},
         {RenderTargetFormat::BC1_UNORM, VK_FORMAT_BC1_RGBA_UNORM_BLOCK},
-        {RenderTargetFormat::DEPTH_F32_S8, VK_FORMAT_D32_SFLOAT_S8_UINT}};
+        {RenderTargetFormat::DEPTH_F32_S8, VK_FORMAT_D32_SFLOAT_S8_UINT},
+        {RenderTargetFormat::BGRA32, VK_FORMAT_B8G8R8A8_UNORM}};
 
 // TODO This value come from the texture compiler which spits out dxgi formats,
 // should fix this at one point?

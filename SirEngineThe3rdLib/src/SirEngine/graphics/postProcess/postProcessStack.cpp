@@ -35,7 +35,7 @@ void PostProcessStack::initialize(CommandBufferHandle commandBuffer,
   initializeResolutionDepenantResources(commandBuffer, context);
 }
 
-void PostProcessStack::compute() {
+void PostProcessStack::compute(RenderGraphContext *context) {
   if (m_stack.empty()) {
     return;
   }
@@ -109,8 +109,8 @@ void PostProcessStack::populateNodePorts(RenderGraphContext *context) {
   bindings.depthStencil.neededResourceState =
       RESOURCE_STATE::DEPTH_RENDER_TARGET;
 
-  bindings.width = globals::ENGINE_CONFIG->m_windowWidth;
-  bindings.height = globals::ENGINE_CONFIG->m_windowHeight;
+  bindings.width = context->renderTargetWidth;
+  bindings.height = context->renderTargetHeight;
 
   m_bindHandles[0] = globals::RENDERING_CONTEXT->prepareBindingObject(
       bindings, "postProcess1");
@@ -148,17 +148,16 @@ void PostProcessStack::initializeResolutionDepenantResources(
     m_stack[i]->initialize();
   }
 
+  int w = context->renderTargetWidth;
+  int h = context->renderTargetHeight;
+
   // allocate ping pong textures
   handles[0] = globals::TEXTURE_MANAGER->allocateTexture(
-      globals::ENGINE_CONFIG->m_windowWidth,
-      globals::ENGINE_CONFIG->m_windowHeight,
-      RenderTargetFormat::R16G16B16A16_FLOAT, "postProcess1",
+      w, h, RenderTargetFormat::R16G16B16A16_FLOAT, "postProcess1",
       TextureManager::RENDER_TARGET | TextureManager::SHADER_RESOURCE,
       RESOURCE_STATE::SHADER_READ_RESOURCE);
   handles[1] = globals::TEXTURE_MANAGER->allocateTexture(
-      globals::ENGINE_CONFIG->m_windowWidth,
-      globals::ENGINE_CONFIG->m_windowHeight,
-      RenderTargetFormat::R16G16B16A16_FLOAT, "postProcess2",
+      w, h, RenderTargetFormat::R16G16B16A16_FLOAT, "postProcess2",
       TextureManager::RENDER_TARGET | TextureManager::SHADER_RESOURCE,
       RESOURCE_STATE::SHADER_READ_RESOURCE);
 }

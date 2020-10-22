@@ -22,6 +22,7 @@
 #include "SirEngine/io/fileUtils.h"
 #include "SirEngine/log.h"
 #include "SirEngine/psoManager.h"
+#include "SirEngine/textureManager.h"
 
 namespace SirEngine {
 
@@ -41,6 +42,18 @@ void GraphicsLayer::onAttach() {
   CameraManipulationConfig camConfig{
       -0.01f * negate, 0.01f, 0.012f * negate, 0.012f, -0.07f,
   };
+
+  //uint32_t w = globals::ENGINE_CONFIG->m_windowWidth;
+  //uint32_t h = globals::ENGINE_CONFIG->m_windowHeight;
+  uint32_t w = 1200;
+  uint32_t h = 600;
+  offscreenBuffer = globals::TEXTURE_MANAGER->allocateTexture(
+      w, h, RenderTargetFormat::BGRA32, "offscreenBuffer",
+      TextureManager::TEXTURE_ALLOCATION_FLAG_BITS::RENDER_TARGET);
+
+  // render graph context
+  m_graphContext = {offscreenBuffer, w, h};
+
   globals::MAIN_CAMERA->setManipulationMultipliers(camConfig);
   globals::MAIN_CAMERA->setCameraPhyisicalParameters(60.0f, 0.1, 200.0f);
   globals::MAIN_CAMERA->setLookAt(0, 15, 0);
@@ -102,8 +115,7 @@ void GraphicsLayer::onAttach() {
       postProcess, PostProcessStack::OUT_TEXTURE, finalBlit,
       FinalBlitNode::IN_TEXTURE);
 
-  // TODO this whole reset execute flush needs to be reworked
-  globals::RENDERING_GRAPH->finalizeGraph(m_workerBuffer,&m_graphContext);
+  globals::RENDERING_GRAPH->finalizeGraph(m_workerBuffer, &m_graphContext);
   globals::RENDERING_CONTEXT->executeGlobalCommandList();
   globals::RENDERING_CONTEXT->flush();
 }
@@ -120,7 +132,7 @@ void GraphicsLayer::onUpdate() {
                                         glm::vec4(1, 1, 1, 1));
   }
 
-  globals::RENDERING_GRAPH->compute();
+  globals::RENDERING_GRAPH->compute(&m_graphContext);
 }
 
 #define SE_BIND_EVENT_FN(fn) std::bind(&fn, this, std::placeholders::_1)
@@ -143,10 +155,10 @@ void GraphicsLayer::onEvent(Event &event) {
 }
 #undef SE_BIND_EVENT_FN
 
-void GraphicsLayer::clear()
-{
-    globals::COMMAND_BUFFER_MANAGER->freeBuffer(m_workerBuffer);
-	globals::RENDERING_GRAPH->clear();
+void GraphicsLayer::clear() {
+  globals::COMMAND_BUFFER_MANAGER->freeBuffer(m_workerBuffer);
+  globals::TEXTURE_MANAGER->free(offscreenBuffer);
+  globals::RENDERING_GRAPH->clear();
 }
 
 bool GraphicsLayer::onMouseButtonPressEvent(MouseButtonPressEvent &e) {
@@ -201,13 +213,14 @@ bool GraphicsLayer::onResizeEvent(WindowResizeEvent &e) {
   // next we can issue a resize
   const uint32_t w = e.getWidth();
   const uint32_t h = e.getHeight();
-  globals::RENDERING_GRAPH->onResizeEvent(w, h, m_workerBuffer,&m_graphContext);
+  globals::RENDERING_GRAPH->onResizeEvent(w, h, m_workerBuffer,
+                                          &m_graphContext);
 
   // now we flush and reset
   globals::COMMAND_BUFFER_MANAGER->executeFlushAndReset(m_workerBuffer);
-  //globals::RENDERING_CONTEXT->executeGlobalCommandList();
-  //globals::RENDERING_CONTEXT->flush();
-  //globals::RENDERING_CONTEXT->resetGlobalCommandList();
+  // globals::RENDERING_CONTEXT->executeGlobalCommandList();
+  // globals::RENDERING_CONTEXT->flush();
+  // globals::RENDERING_CONTEXT->resetGlobalCommandList();
 
   return false;
 }

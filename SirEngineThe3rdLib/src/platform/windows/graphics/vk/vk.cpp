@@ -56,7 +56,7 @@ VkMeshManager *MESH_MANAGER = nullptr;
 VkTextureManager *TEXTURE_MANAGER = nullptr;
 VkBindingTableManager *DESCRIPTOR_MANAGER = nullptr;
 VkDebugRenderer *DEBUG_RENDERER = nullptr;
-VkImGuiManager*IMGUI_MANAGER = nullptr;
+VkImGuiManager *IMGUI_MANAGER = nullptr;
 uint32_t SWAP_CHAIN_IMAGE_COUNT = 0;
 VkFrameCommand FRAME_COMMAND[PREALLOCATED_SEMAPHORE_COUNT];
 VkFrameCommand *CURRENT_FRAME_COMMAND = nullptr;
@@ -809,6 +809,8 @@ BufferBindingsHandle VkRenderingContext::prepareBindingObject(
       createFrameBuffer(data.m_pass, bindings, name, data.m_frameBufferCount);
   data.name = persistentString(name);
   data.m_bindings = bindings;
+  data.frameWidth = bindings.width;
+  data.frameHeight = bindings.height;
   data.m_magicNumber = MAGIC_NUMBER_COUNTER++;
   return {data.m_magicNumber << 16 | index};
 }
@@ -976,10 +978,8 @@ void VkRenderingContext::setBindingObject(const BufferBindingsHandle handle) {
 
   // similar to a viewport mostly used on "tiled renderers" to optimize, talking
   // about hardware based tile renderer, aka mobile GPUs.
-  beginInfo.renderArea.extent.width =
-      static_cast<int32_t>(globals::ENGINE_CONFIG->m_windowWidth);
-  beginInfo.renderArea.extent.height =
-      static_cast<int32_t>(globals::ENGINE_CONFIG->m_windowHeight);
+  beginInfo.renderArea.extent.width = static_cast<int32_t>(data.frameWidth);
+  beginInfo.renderArea.extent.height = static_cast<int32_t>(data.frameHeight);
   beginInfo.clearValueCount = count;
   beginInfo.pClearValues = colors;
 
