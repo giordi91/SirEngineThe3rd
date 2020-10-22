@@ -1,11 +1,12 @@
 #pragma once
 #include <cassert>
+
 #include "SirEngine/core.h"
 
 // not thread safe
 namespace SirEngine {
 
-class  StackAllocator final {
+class StackAllocator final {
  public:
   StackAllocator() = default;
   ~StackAllocator() { delete[] m_start; }
@@ -13,7 +14,7 @@ class  StackAllocator final {
   // request n bytes of memory
   void *allocate(const size_t sizeInByte) {
     assert(isAllocatorValid());
-    auto basePtr = m_SP;
+    char *basePtr = m_SP;
     m_SP += sizeInByte;
     assert(isAllocatorValid());
     return basePtr;
@@ -29,7 +30,7 @@ class  StackAllocator final {
     return m_SP;
   };
 
-  void initialize(size_t sizeInByte) {
+  void initialize(const size_t sizeInByte) {
     assert(m_start == nullptr);
     assert(m_end == nullptr);
     m_start = new char[sizeInByte];
@@ -39,7 +40,7 @@ class  StackAllocator final {
   };
 
   // this function  won't allocate anything but will get initialized
-  // from a start and end and manange that memory, won't own it
+  // from a start and end and manage that memory, won't own it
   void setMemoryStartEnd(void *start, void *end) {
     assert(start != nullptr);
     assert(end != nullptr);
@@ -54,15 +55,15 @@ class  StackAllocator final {
     assert(isAllocatorValid());
   };
 
-  float getUsedMemoryPercentage() const {
+  [[nodiscard]] float getUsedMemoryPercentage() const {
     assert(isAllocatorValid());
     return (static_cast<float>(m_SP - m_start) /
             static_cast<float>(m_end - m_start));
   };
 
-  inline void *getStartPtr() const { return m_start; }
-  inline void *getStackPtr() const { return m_SP; }
-  inline void *getEndPtr() const { return m_end; }
+  [[nodiscard]] void *getStartPtr() const { return m_start; }
+  [[nodiscard]] void *getStackPtr() const { return m_SP; }
+  [[nodiscard]] void *getEndPtr() const { return m_end; }
 
   // deleted copy constructor and assignment operator
   StackAllocator(StackAllocator const &) = delete;

@@ -83,7 +83,7 @@ void ForwardPlus::initialize(CommandBufferHandle commandBuffer,
   }
 }
 
-void ForwardPlus::compute() {
+void ForwardPlus::compute(RenderGraphContext* context) {
   // prepass callbacks
   uint32_t callbackCount = m_callbacks.size();
   for (uint32_t i = 0; i < callbackCount; ++i) {
@@ -108,8 +108,8 @@ void ForwardPlus::compute() {
                                               false);
 
   DrawCallConfig config{
-      static_cast<uint32_t>(globals::ENGINE_CONFIG->m_windowWidth),
-      static_cast<uint32_t>(globals::ENGINE_CONFIG->m_windowHeight), 0};
+      static_cast<uint32_t>(context->renderTargetWidth),
+      static_cast<uint32_t>(context->renderTargetHeight), 0};
   globals::RENDERING_CONTEXT->renderQueueType(
       config, SHADER_QUEUE_FLAGS::FORWARD, m_passBindings);
 
@@ -126,7 +126,7 @@ void ForwardPlus::onResizeEvent(int, int, CommandBufferHandle commandBuffer,
   initializeResolutionDepenantResources(commandBuffer, context);
 }
 
-void ForwardPlus::populateNodePorts(RenderGraphContext*) {
+void ForwardPlus::populateNodePorts(RenderGraphContext* context) {
   // setting the render target output handle
   m_outputPlugs[0].plugValue = m_rtHandle.handle;
   m_outputPlugs[1].plugValue = m_depthHandle.handle;
@@ -152,8 +152,8 @@ void ForwardPlus::populateNodePorts(RenderGraphContext*) {
   bindings.depthStencil.neededResourceState =
       RESOURCE_STATE::DEPTH_RENDER_TARGET;
 
-  bindings.width = globals::ENGINE_CONFIG->m_windowWidth;
-  bindings.height = globals::ENGINE_CONFIG->m_windowHeight;
+  bindings.width = context->renderTargetWidth;
+  bindings.height = context->renderTargetHeight;
 
   m_bindHandle =
       globals::RENDERING_CONTEXT->prepareBindingObject(bindings, "ForwardPlus");
@@ -170,9 +170,10 @@ void ForwardPlus::clear() {
   clearResolutionDepenantResources();
 }
 
-void ForwardPlus::initializeResolutionDepenantResources(CommandBufferHandle,RenderGraphContext*) {
-  int width = globals::ENGINE_CONFIG->m_windowWidth;
-  int height = globals::ENGINE_CONFIG->m_windowHeight;
+void ForwardPlus::initializeResolutionDepenantResources(
+    CommandBufferHandle, RenderGraphContext* context) {
+  int width = context->renderTargetWidth;
+  int height = context->renderTargetHeight;
   m_rtHandle = globals::TEXTURE_MANAGER->allocateTexture(
       width, height, RenderTargetFormat::R16G16B16A16_FLOAT, "simpleForwardRT",
       TextureManager::TEXTURE_ALLOCATION_FLAG_BITS::RENDER_TARGET |

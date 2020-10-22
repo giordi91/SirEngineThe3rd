@@ -10,7 +10,7 @@ public:
 public:
   explicit FinalBlitNode(GraphAllocators &allocators);
   virtual ~FinalBlitNode() = default;
-  virtual void compute() override;
+  virtual void compute(RenderGraphContext* context) override;
   virtual void initialize(CommandBufferHandle commandBuffer,RenderGraphContext* context) override;
   void populateNodePorts(RenderGraphContext* context) override;
   void clear() override;

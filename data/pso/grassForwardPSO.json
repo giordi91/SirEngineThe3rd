@@ -1,6 +1,5 @@
 {
   "type": "RASTER",
-  "globalRootSignature": "../data/rs/grassForwardRS.json",
   "VS": "grassExpansionVS",
   "PS": "grassForwardPS",
   "rasterState": "custom",

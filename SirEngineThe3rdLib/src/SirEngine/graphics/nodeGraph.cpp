@@ -276,10 +276,10 @@ void DependencyGraph::clear()
 
 }
 
-void DependencyGraph::compute() {
+void DependencyGraph::compute(RenderGraphContext* context) {
   const int count = m_linearizedGraph.size();
   for (int i = 0; i < count; ++i) {
-    m_linearizedGraph[i]->compute();
+    m_linearizedGraph[i]->compute(context);
   }
 }
 } // namespace SirEngine

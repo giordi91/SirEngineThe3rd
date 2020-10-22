@@ -52,5 +52,6 @@ private:
   graphics::GrassTechnique m_grass;
   CommandBufferHandle m_workerBuffer{};
   RenderGraphContext m_graphContext{};
+  TextureHandle offscreenBuffer{};
 };
 } // namespace SirEngine

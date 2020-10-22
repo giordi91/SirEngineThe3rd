@@ -356,8 +356,6 @@ MaterialMetadata extractMetadataFromShader(const char *shaderName,
                        set,
                        binding};
 
-    // std::string name = std::regex_replace(
-    //    uniform.name, std::regex("type.ConstantBuffer."), "");
     assert(name.size() <= 31);
     memcpy(memory[counter].name, name.c_str(), name.size());
     memory[counter].name[name.size()] = '\0';

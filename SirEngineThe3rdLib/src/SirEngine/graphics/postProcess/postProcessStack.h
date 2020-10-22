@@ -46,7 +46,7 @@ class PostProcessStack final : public GNode {
   void initializeResolutionDepenantResources(CommandBufferHandle commandBuffer,RenderGraphContext* context) override;
   void clearResolutionDepenantResources() override;
   void clear() override;
-  void compute() override;
+  void compute(RenderGraphContext* context) override;
   void onResizeEvent(int screenWidth, int screenHeight,CommandBufferHandle commandBuffer,RenderGraphContext* context) override;
   inline void registerPassToStack(PostProcessEffect *pass) {
     m_stack.push_back(pass);

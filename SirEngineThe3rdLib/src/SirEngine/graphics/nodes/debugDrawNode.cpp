@@ -32,7 +32,7 @@ DebugDrawNode::DebugDrawNode(GraphAllocators &allocators)
 
 void DebugDrawNode::initialize(CommandBufferHandle, RenderGraphContext *) {}
 
-void DebugDrawNode::compute() {
+void DebugDrawNode::compute(RenderGraphContext* context) {
   globals::RENDERING_CONTEXT->setBindingObject(m_bindHandle);
   globals::DEBUG_RENDERER->render();
   globals::RENDERING_CONTEXT->clearBindingObject(m_bindHandle);
@@ -63,8 +63,8 @@ void DebugDrawNode::populateNodePorts(RenderGraphContext *context) {
   bindings.depthStencil.neededResourceState =
       RESOURCE_STATE::DEPTH_RENDER_TARGET;
 
-  bindings.width = globals::ENGINE_CONFIG->m_windowWidth;
-  bindings.height = globals::ENGINE_CONFIG->m_windowHeight;
+  bindings.width = context->renderTargetWidth;
+  bindings.height = context->renderTargetHeight;
 
   m_bindHandle = globals::RENDERING_CONTEXT->prepareBindingObject(
       bindings, "DebugDrawPass");
