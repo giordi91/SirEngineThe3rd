@@ -1,6 +1,7 @@
 
 #include "layers/editorLayer.h"
 
+#include "imgui/imgui.h"
 #include <imgui/imgui_internal.h>
 
 #include "SirEngine/core.h"
@@ -13,7 +14,6 @@
 #include "SirEngine/input.h"
 #include "SirEngine/log.h"
 #include "SirEngine/ui/imguiManager.h"
-#include "imgui/imgui.h"
 
 namespace SirEngine {
 void EditorLayer::onAttach() {
@@ -55,15 +55,11 @@ void EditorLayer::onAttach() {
     offscreenTexture =
         globals::IMGUI_MANAGER->getImguiImageHandle(globals::OFFSCREEN_BUFFER);
   }
-  // auto d = vk::TEXTURE_MANAGER->getTextureData(offscreenBuffer);
-  // globals::IMGUI_VIEWPORT = (void *)ImGui_ImplVulkan_AddTexture(
-  //    vk::STATIC_SAMPLERS[2], d.view,
-  //    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 
 void EditorLayer::onDetach() {}
 
-void EditorLayer::setupDockSpaceLayout(int width, int height) {
+void EditorLayer::setupDockSpaceLayout(const int width, const int height) {
   if (ImGui::DockBuilderGetNode(dockIds.root) == NULL) {
     dockIds.root = ImGui::GetID("Root_Dockspace");
 
@@ -233,7 +229,7 @@ void EditorLayer::onUpdate() {
     //  m_hierarchy.render(&CONTEXT->world.hierarchy, &m_showHierarchy);
 
     ImGui::End();
-  };
+  }
 
   ImGui::SetNextWindowDockID(dockIds.right, ImGuiCond_Appearing);
   ImGui::Begin("Inspector", (bool *)0);
@@ -243,34 +239,6 @@ void EditorLayer::onUpdate() {
 
   ImGui::End();
 
-  /*
-  ImGui::Render();
-
-  if (globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::DX12) {
-#if BUILD_DX12
-    ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(),
-                                  dx12::CURRENT_FRAME_RESOURCE->fc.commandList);
-#endif
-    annotateGraphicsEnd();
-  } else {
-#if BUILD_VK
-    VkRenderPassBeginInfo info = {};
-    info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    info.renderPass = imguiPass;
-    info.framebuffer = vk::SWAP_CHAIN->frameBuffers[globals::CURRENT_FRAME];
-    info.renderArea.extent.width = globals::ENGINE_CONFIG->m_windowWidth;
-    info.renderArea.extent.height = globals::ENGINE_CONFIG->m_windowHeight;
-    info.clearValueCount = 0;
-    info.pClearValues = nullptr;
-    vkCmdBeginRenderPass(vk::CURRENT_FRAME_COMMAND->m_commandBuffer, &info,
-                         VK_SUBPASS_CONTENTS_INLINE);
-
-    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(),
-                                    vk::CURRENT_FRAME_COMMAND->m_commandBuffer);
-    // Submit command buffer
-    vkCmdEndRenderPass(vk::CURRENT_FRAME_COMMAND->m_commandBuffer);
-#endif
-*/
   globals::IMGUI_MANAGER->endFrame();
 }  // namespace SirEngine
 
