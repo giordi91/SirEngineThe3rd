@@ -792,6 +792,30 @@ TextureHandle VkTextureManager::allocateTexture(
   return {data.magicNumber << 16 | index};
 }
 
+void VkTextureManager::transitionTexture(
+    const CommandBufferHandle commandBuffer, const TextureHandle texHandle,
+    const RESOURCE_STATE currState, const RESOURCE_STATE newState) {
+  // TODO use the command buffer when we transition to a not global command list
+  // const VkCommandBufferManager::VkCommandBufferData &listData =
+  //    vk::COMMAND_BUFFER_MANAGER->getData(commandBuffer);
+
+  assertMagicNumber(texHandle);
+  uint32_t index = getIndexFromHandle(texHandle);
+  const VkTexture2D &data = m_texturePool.getConstRef(index);
+
+  VkImageLayout oldLayout = fromStateToLayout(currState);
+  VkImageLayout newLayout = fromStateToLayout(newState);
+
+  VkImageSubresourceRange subresourceRange = {};
+  subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  subresourceRange.baseMipLevel = 0;
+  subresourceRange.levelCount = data.mipLevels;
+  subresourceRange.layerCount = 1;
+
+  setImageLayout(CURRENT_FRAME_COMMAND->m_commandBuffer, data.image, oldLayout,
+                 newLayout, subresourceRange);
+}
+
 void VkTextureManager::initialize() {
   m_workerBuffer = vk::COMMAND_BUFFER_MANAGER->createBuffer(
       CommandBufferManager::COMMAND_BUFFER_ALLOCATION_NONE,

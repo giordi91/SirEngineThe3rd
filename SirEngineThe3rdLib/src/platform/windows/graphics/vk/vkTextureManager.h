@@ -40,6 +40,8 @@ class  VkTextureManager final : public TextureManager {
                                         const char *name,
                                         TEXTURE_ALLOCATION_FLAGS allocFlags,
                                         RESOURCE_STATE finalState) override;
+  void transitionTexture(CommandBufferHandle commandBuffer, TextureHandle texHandle, RESOURCE_STATE currState,
+	  RESOURCE_STATE newState) override;
 
   void initialize() override;
   void cleanup() override;

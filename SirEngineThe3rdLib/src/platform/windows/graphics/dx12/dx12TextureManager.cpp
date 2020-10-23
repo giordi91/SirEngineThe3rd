@@ -53,7 +53,7 @@ TextureHandle Dx12TextureManager::loadTexture(const char *path,
   const std::string name = getFileName(texturePath);
 
   TextureHandle handle{};
-  if (!m_nameToHandle.get(name.c_str(),handle)) {
+  if (!m_nameToHandle.get(name.c_str(), handle)) {
     // const auto found = m_nameToHandle.find(name);
     // if (found == m_nameToHandle.end()) {
     const std::string extension = getFileExtension(texturePath);
@@ -100,6 +100,13 @@ TextureHandle Dx12TextureManager::loadTexture(const char *path,
   }
   SE_CORE_INFO("Texture already loaded, returning handle: {0}", name);
   return handle;
+}
+
+void Dx12TextureManager::transitionTexture(CommandBufferHandle commandBuffer,
+                                           TextureHandle texHandle,
+                                           RESOURCE_STATE currState,
+                                           RESOURCE_STATE newState) {
+  assert(0);
 }
 
 TextureHandle Dx12TextureManager::initializeFromResourceDx12(
@@ -220,8 +227,9 @@ inline DXGI_FORMAT convertToDXGIFormat(const RenderTargetFormat format) {
 }
 
 TextureHandle Dx12TextureManager::allocateTexture(
-    const uint32_t width, const uint32_t height, const RenderTargetFormat format,
-    const char *name, const uint32_t allocFlags, RESOURCE_STATE ) {
+    const uint32_t width, const uint32_t height,
+    const RenderTargetFormat format, const char *name,
+    const uint32_t allocFlags, RESOURCE_STATE) {
   // convert SirEngine format to dx12 format
   DXGI_FORMAT actualFormat = convertToDXGIFormat(format);
 

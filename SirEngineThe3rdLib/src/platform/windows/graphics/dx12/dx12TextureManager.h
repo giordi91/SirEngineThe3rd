@@ -47,6 +47,11 @@ class  Dx12TextureManager final : public TextureManager {
   void initialize() override;
   void cleanup() override;
   TextureHandle getWhiteTexture() const override { return m_whiteTexture; }
+
+  void transitionTexture(CommandBufferHandle commandBuffer, TextureHandle texHandle, RESOURCE_STATE currState,
+	  RESOURCE_STATE newState) override;
+
+	
   // dx12 methods
   TextureHandle initializeFromResourceDx12(ID3D12Resource *resource,
                                            const char *name,

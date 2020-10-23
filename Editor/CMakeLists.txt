@@ -46,6 +46,9 @@ project(Editor)
 	ADD_EXTERNAL_HEADER(${CMAKE_SOURCE_DIR}/vendors/spdlog)
 	FINALIZE_EXTERNAL_HEADER()
 
+	#grouping in the IDE based on path
+	SOURCE_GROUP_BY_FOLDER(Editor)
+
 	if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 		#LNK4099 is for missing pbd of the compiled dependencies, I won't debug them so i don't add them
 		# to git to save space
@@ -54,6 +57,7 @@ project(Editor)
 	endif()
 
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_CXX_FLAGS}")
+
 
 	link_directories(${CMAKE_SOURCE_DIR}/builtDependencies/windows/$<CONFIGURATION>)
     #adding the executable

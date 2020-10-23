@@ -85,7 +85,7 @@ extern graphics::LightManager *LIGHT_MANAGER;
 extern graphics::BindingTableManager *BINDING_TABLE_MANAGER;
 extern InteropData *INTEROP_DATA;
 extern ImGuiManager *IMGUI_MANAGER;
-extern void* IMGUI_VIEWPORT;
+extern TextureHandle OFFSCREEN_BUFFER;
 
 // generic allocators
 extern  StringPool *STRING_POOL;

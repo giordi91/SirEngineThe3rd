@@ -1,14 +1,11 @@
 
 #include "SirEngine/graphics/nodes/FinalBlitNode.h"
 
-#include "SirEngine/engineConfig.h"
 #include "SirEngine/graphics/bindingTableManager.h"
 #include "SirEngine/graphics/renderingContext.h"
-#include "SirEngine/materialManager.h"
 #include "SirEngine/psoManager.h"
 #include "SirEngine/rootSignatureManager.h"
-#include "platform/windows/graphics/vk/vk.h"
-#include "platform/windows/graphics/vk/vkTextureManager.h"
+#include "SirEngine/textureManager.h"
 
 namespace SirEngine {
 
@@ -45,17 +42,13 @@ void FinalBlitNode::compute(RenderGraphContext *context) {
 
   // finishing the pass
   globals::RENDERING_CONTEXT->clearBindingObject(m_bindHandle);
-  auto d = vk::TEXTURE_MANAGER->getTextureData(context->m_renderTarget);
-
-  VkImageSubresourceRange subresourceRange = {};
-  subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-  subresourceRange.baseMipLevel = 0;
-  subresourceRange.levelCount= VK_REMAINING_ARRAY_LAYERS;
-  subresourceRange.layerCount = 1;
-  vk::TEXTURE_MANAGER->setImageLayout(
-      vk::CURRENT_FRAME_COMMAND->m_commandBuffer, d.image,
-      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-      VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresourceRange);
+  // if handle is valid we are rendering to an offscreen buffer, as such we
+  // transition to being sampled state
+  if (context->m_renderTarget.isHandleValid()) {
+    globals::TEXTURE_MANAGER->transitionTexture(
+        {}, context->m_renderTarget, RESOURCE_STATE::RENDER_TARGET,
+        RESOURCE_STATE::SHADER_READ_RESOURCE);
+  }
 }
 
 void FinalBlitNode::initialize(CommandBufferHandle, RenderGraphContext *) {
@@ -82,7 +75,13 @@ void FinalBlitNode::populateNodePorts(RenderGraphContext *context) {
   bindings.colorRT[0].isSwapChainBackBuffer =
       !context->m_renderTarget.isHandleValid();
   bindings.colorRT[0].shouldClearColor = false;
-  bindings.colorRT[0].currentResourceState = RESOURCE_STATE::SHADER_READ_RESOURCE;
+  // if is not a swapchain backbuffer, the state is going to be different, we
+  // would have bound the buffer for display so we transition it from shader read
+  // to render target
+  bindings.colorRT[0].currentResourceState =
+      bindings.colorRT[0].isSwapChainBackBuffer
+          ? RESOURCE_STATE::RENDER_TARGET
+          : RESOURCE_STATE::SHADER_READ_RESOURCE;
   bindings.colorRT[0].neededResourceState = RESOURCE_STATE::RENDER_TARGET;
   bindings.width = context->renderTargetWidth;
   bindings.height = context->renderTargetHeight;

@@ -35,7 +35,7 @@ graphics::LightManager *LIGHT_MANAGER = nullptr;
 graphics::BindingTableManager *BINDING_TABLE_MANAGER = nullptr;
 InteropData *INTEROP_DATA = nullptr;
 ImGuiManager *IMGUI_MANAGER = nullptr;
-void *IMGUI_VIEWPORT = nullptr;
+TextureHandle OFFSCREEN_BUFFER= {};
 
 // generic allocators
 StringPool *STRING_POOL = nullptr;

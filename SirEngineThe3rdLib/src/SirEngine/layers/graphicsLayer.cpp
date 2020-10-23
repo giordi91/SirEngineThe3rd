@@ -23,10 +23,6 @@
 #include "SirEngine/log.h"
 #include "SirEngine/psoManager.h"
 #include "SirEngine/textureManager.h"
-#include "platform/windows/graphics/vk/imgui_impl_vulkan.h"
-#include "platform/windows/graphics/vk/vk.h"
-#include "platform/windows/graphics/vk/vkRootSignatureManager.h"
-#include "platform/windows/graphics/vk/vkTextureManager.h"
 
 namespace SirEngine {
 
@@ -55,11 +51,7 @@ void GraphicsLayer::onAttach() {
       w, h, RenderTargetFormat::BGRA32, "offscreenBuffer",
       TextureManager::TEXTURE_ALLOCATION_FLAG_BITS::RENDER_TARGET |
           TextureManager::TEXTURE_ALLOCATION_FLAG_BITS::SHADER_RESOURCE,RESOURCE_STATE::SHADER_READ_RESOURCE);
-  // globals::IMGUI_VIEWPORT =
-  //    (void *)vk::TEXTURE_MANAGER->getTextureData(offscreenBuffer).image;
-  auto d = vk::TEXTURE_MANAGER->getTextureData(offscreenBuffer);
-  globals::IMGUI_VIEWPORT = (void *)ImGui_ImplVulkan_AddTexture(
-      vk::STATIC_SAMPLERS[2], d.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+  globals::OFFSCREEN_BUFFER = offscreenBuffer;
 
   // render graph context
   m_graphContext = {offscreenBuffer, w, h};

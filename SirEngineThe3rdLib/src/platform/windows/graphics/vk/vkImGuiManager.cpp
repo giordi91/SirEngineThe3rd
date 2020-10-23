@@ -2,6 +2,9 @@
 
 #include <imgui/imgui.h>
 
+
+#include "vkRootSignatureManager.h"
+#include "vkTextureManager.h"
 #include "platform/windows/graphics/vk/imgui_impl_vulkan.h"
 #include "platform/windows/graphics/vk/vk.h"
 #include "platform/windows/graphics/vk/vkBindingTableManager.h"
@@ -108,5 +111,13 @@ void vk::VkImGuiManager::onResizeEvent(const WindowResizeEvent& e)
   io.DisplaySize = ImVec2(static_cast<float>(e.getWidth()),
                           static_cast<float>(e.getHeight()));
   io.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
+}
+
+ImTextureID vk::VkImGuiManager::getImguiImageHandle(const TextureHandle& handle)
+{
+  auto d = vk::TEXTURE_MANAGER->getTextureData(handle);
+  return (ImTextureID)(void*)ImGui_ImplVulkan_AddTexture(
+      vk::STATIC_SAMPLERS[2], d.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
 }
 }  // namespace SirEngine

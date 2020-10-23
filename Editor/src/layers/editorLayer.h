@@ -56,6 +56,7 @@ class EditorLayer final : public Layer {
   uint64_t g_TicksPerSecond = 0;
   bool m_shouldShow = true;
   DockIDs dockIds;
+  ImTextureID offscreenTexture{};
 
 };
 }  // namespace SirEngine
