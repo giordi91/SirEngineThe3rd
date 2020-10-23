@@ -1,7 +1,6 @@
 
 #include "layers/editorLayer.h"
 
-#include "imgui/imgui.h"
 #include <imgui/imgui_internal.h>
 
 #include "SirEngine/core.h"
@@ -14,6 +13,9 @@
 #include "SirEngine/input.h"
 #include "SirEngine/log.h"
 #include "SirEngine/ui/imguiManager.h"
+#include "imgui/imgui.h"
+#include "SirEngine/application.h"
+#include "SirEngine/events/renderGraphEvent.h"
 
 namespace SirEngine {
 void EditorLayer::onAttach() {
@@ -88,6 +90,11 @@ void EditorLayer::setupDockSpaceLayout(const int width, const int height) {
 void EditorLayer::onUpdate() {
   if (!m_shouldShow) {
     return;
+  }
+  if (dirty) {
+    offscreenTexture =
+        globals::IMGUI_MANAGER->getImguiImageHandle(globals::OFFSCREEN_BUFFER);
+    dirty = false;
   }
 
   globals::IMGUI_MANAGER->startFrame();
@@ -196,6 +203,18 @@ void EditorLayer::onUpdate() {
   ImGui::Begin("Viewport", (bool *)0);
   ImVec2 newViewportSize = ImGui::GetContentRegionAvail();
 
+  constexpr float delta = 0.001f;
+  bool viewportSizeChanged = (fabs(newViewportSize.x - viewportPanelSize.x) > delta) |
+                             (fabs(newViewportSize.y - viewportPanelSize.y)> delta);
+
+  if(viewportSizeChanged)
+  {
+      viewportPanelSize = newViewportSize;
+      auto* e = new RenderSizeChanged (viewportPanelSize.x,viewportPanelSize.y);
+      globals::APPLICATION->queueEventForEndOfFrame(e);
+      dirty  = true;
+  }
+
   // if our viewport is hovered we set the flag, that will allow
   // our camera controller to behave properly
   bool isWindowFocused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootWindow);
@@ -203,6 +222,7 @@ void EditorLayer::onUpdate() {
   // the image, so we can use it to overlay imguizmo
   float x = ImGui::GetCursorScreenPos().x;
   float y = ImGui::GetCursorScreenPos().y;
+
 
   ImGui::Image(offscreenTexture, newViewportSize);
 

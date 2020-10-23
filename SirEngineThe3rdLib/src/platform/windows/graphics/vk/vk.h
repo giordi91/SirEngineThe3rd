@@ -149,7 +149,7 @@ class VkRenderingContext final : public RenderingContext {
 
   bool initializeGraphics() override;
 
-  void setupCameraForFrame() override;
+  void setupCameraForFrame(uint32_t renderWidth, uint32_t renderHeight) override;
   void bindCameraBuffer(RSHandle, bool isCompute = false) const override;
 
   bool newFrame() override;

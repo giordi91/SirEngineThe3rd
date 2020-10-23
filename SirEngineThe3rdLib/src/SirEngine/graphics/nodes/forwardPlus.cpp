@@ -107,9 +107,8 @@ void ForwardPlus::compute(RenderGraphContext* context) {
   globals::BINDING_TABLE_MANAGER->bindTexture(m_passBindings, brdfHandle, 3, 3,
                                               false);
 
-  DrawCallConfig config{
-      static_cast<uint32_t>(context->renderTargetWidth),
-      static_cast<uint32_t>(context->renderTargetHeight), 0};
+  DrawCallConfig config{static_cast<uint32_t>(context->renderTargetWidth),
+                        static_cast<uint32_t>(context->renderTargetHeight), 0};
   globals::RENDERING_CONTEXT->renderQueueType(
       config, SHADER_QUEUE_FLAGS::FORWARD, m_passBindings);
 
@@ -120,7 +119,7 @@ void ForwardPlus::compute(RenderGraphContext* context) {
   globals::RENDERING_CONTEXT->clearBindingObject(m_bindHandle);
 }
 
-void ForwardPlus::onResizeEvent(int, int, CommandBufferHandle commandBuffer,
+void ForwardPlus::onResizeEvent(int, int, const CommandBufferHandle commandBuffer,
                                 RenderGraphContext* context) {
   clearResolutionDepenantResources();
   initializeResolutionDepenantResources(commandBuffer, context);

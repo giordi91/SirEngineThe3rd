@@ -457,16 +457,16 @@ bool Dx12RenderingContext::initializeGraphics() {
   return result;
 }
 
-void Dx12RenderingContext::setupCameraForFrame() {
-  globals::ACTIVE_CAMERA->updateCamera();
+void Dx12RenderingContext::setupCameraForFrame(uint32_t renderWidth, uint32_t renderHeight) {
+  globals::ACTIVE_CAMERA->updateCamera(renderWidth,renderHeight);
 
   m_frameData.m_mainCamera = globals::MAIN_CAMERA->getCameraBuffer();
   m_frameData.m_activeCamera = globals::ACTIVE_CAMERA->getCameraBuffer();
 
   m_frameData.screenWidth =
-      static_cast<float>(globals::ENGINE_CONFIG->m_windowWidth);
+      static_cast<float>(renderWidth);
   m_frameData.screenHeight =
-      static_cast<float>(globals::ENGINE_CONFIG->m_windowHeight);
+      static_cast<float>(renderHeight);
   m_frameData.time =
       static_cast<float>(globals::GAME_CLOCK.getDeltaFromOrigin() * 1e-9);
 

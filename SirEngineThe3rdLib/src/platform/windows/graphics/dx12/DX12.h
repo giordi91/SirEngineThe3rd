@@ -179,7 +179,7 @@ class Dx12RenderingContext final : public RenderingContext {
 
   bool initializeGraphics() override;
 
-  void setupCameraForFrame() override;
+  void setupCameraForFrame(uint32_t renderWidth, uint32_t renderHeight) override;
 
   void updateSceneBoundingBox();
   void updateDirectionalLightMatrix();

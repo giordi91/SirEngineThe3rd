@@ -38,7 +38,7 @@ class CameraController {
   inline float getNear() const { return m_near; }
   inline float getFar() const { return m_far; }
 
-  virtual void updateCamera() = 0;
+  virtual void updateCamera(uint32_t renderWidth, uint32_t renderHeight) = 0;
   virtual glm::mat4 getViewInverse(glm::mat4 modelM) const = 0;
   virtual void getFrustum(Plane* planes) const = 0;
   virtual glm::vec3 getViewDirection() const = 0;
@@ -77,40 +77,45 @@ class Camera3DPivot final : public CameraController {
     previousY = globals::INPUT->m_mousePosY;
   }
 
-  void updateCameraBuffer() {
+  void updateCameraBuffer(uint32_t renderWidth, uint32_t renderHeight) {
     m_cameraBuffer.vFov = m_vfov;
 
     auto pos = getPosition();
     m_cameraBuffer.position = glm::vec4(pos, 1.0f);
 
     if (globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::DX12) {
-      m_cameraBuffer.MVP = glm::transpose(getMVP(glm::mat4(1.0)));
+      m_cameraBuffer.MVP =
+          glm::transpose(getMVP(renderWidth, renderHeight, glm::mat4(1.0)));
       m_cameraBuffer.ViewMatrix =
           glm::transpose(getViewInverse(glm::mat4(1.0)));
-      m_cameraBuffer.VPinverse = glm::transpose(getMVPInverse(glm::mat4(1.0)));
+      m_cameraBuffer.VPinverse = glm::transpose(
+          getMVPInverse(renderWidth, renderHeight, glm::mat4(1.0)));
     } else {
-      m_cameraBuffer.MVP = glm::transpose(getMVP(glm::mat4(1.0)));
+      m_cameraBuffer.MVP =
+          glm::transpose(getMVP(renderWidth, renderHeight, glm::mat4(1.0)));
       m_cameraBuffer.ViewMatrix =
           glm::transpose(getViewInverse(glm::mat4(1.0)));
-      m_cameraBuffer.VPinverse = glm::transpose(getMVPInverse(glm::mat4(1.0)));
+      m_cameraBuffer.VPinverse = glm::transpose(
+          getMVPInverse(renderWidth, renderHeight, glm::mat4(1.0)));
     }
 
     getFrustum(m_cameraBuffer.frustum);
     m_cameraBuffer.cameraViewDir = glm::vec4(getViewDirection(), 0.0);
     m_cameraBuffer.position = glm::vec4(getPosition(), 1.0);
-    m_cameraBuffer.perspectiveValues = getProjParams();
+    m_cameraBuffer.perspectiveValues = getProjParams(renderWidth, renderHeight);
   }
 
-  void updateCamera() override {
-    if (!globals::INPUT->m_uiCapturingMouse) {
+  void updateCamera(uint32_t renderWidth, uint32_t renderHeight) override {
+    //if (!globals::INPUT->m_uiCapturingMouse) {
       manipulateCamera();
-      updateCameraBuffer();
-    }
+      updateCameraBuffer(renderWidth, renderHeight);
+    //}
   }
 
   [[nodiscard]] glm::vec3 getPosition() const { return glm::vec3(posV); }
   [[nodiscard]] glm::vec3 getLookAt() const { return glm::vec3(lookAtPosV); }
-  [[nodiscard]] glm::vec4 getProjParams() const;
+  [[nodiscard]] glm::vec4 getProjParams(uint32_t renderWidth,
+                                        uint32_t renderHeight) const;
 
   inline void setPosition(const float x, const float y, const float z) {
     posV = glm::vec4(x, y, z, 1.0f);
@@ -127,8 +132,10 @@ class Camera3DPivot final : public CameraController {
   void panCamera(float deltaX, float deltaY);
   void rotCamera(float deltaX, float deltaY);
   void zoomCamera(float deltaX);
-  glm::mat4 getMVP(glm::mat4 modelM) const;
-  glm::mat4 getMVPInverse(glm::mat4 modelM) const;
+  glm::mat4 getMVP(uint32_t renderWidth, uint32_t renderHeight,
+                   glm::mat4 modelM) const;
+  glm::mat4 getMVPInverse(uint32_t renderWidth, uint32_t renderHeight,
+                          glm::mat4 modelM) const;
 
  private:
   // Constants

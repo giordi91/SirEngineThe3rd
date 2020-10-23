@@ -15,7 +15,6 @@ public:
   void onEvent(Event &e);
   void queueEventForEndOfFrame(Event *e) const;
   void pushLayer(Layer *layer);
-  virtual void initLayers(){};
 
 protected:
   bool onCloseWindow(WindowCloseEvent &e);

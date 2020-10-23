@@ -8,9 +8,11 @@
 
 namespace SirEngine {
 
-glm::mat4 Camera3DPivot::getMVP(const glm::mat4 modelM) const {
-  const int screenW = globals::ENGINE_CONFIG->m_windowWidth;
-  const int screenH = globals::ENGINE_CONFIG->m_windowHeight;
+glm::mat4 Camera3DPivot::getMVP(const uint32_t renderWidth,
+                                const uint32_t renderHeight,
+                                const glm::mat4 modelM) const {
+  const int screenW = static_cast<int>(renderWidth);
+  const int screenH = static_cast<int>(renderHeight);
 
   // By default the engine uses inverted floating point depth
   const glm::mat4 projectionMatrix =
@@ -20,9 +22,11 @@ glm::mat4 Camera3DPivot::getMVP(const glm::mat4 modelM) const {
   return vp;
 }
 
-glm::mat4 Camera3DPivot::getMVPInverse(const glm::mat4 modelM) const {
-  const int screenW = globals::ENGINE_CONFIG->m_windowWidth;
-  const int screenH = globals::ENGINE_CONFIG->m_windowHeight;
+glm::mat4 Camera3DPivot::getMVPInverse(const uint32_t renderWidth,
+                                       const uint32_t renderHeight,
+                                       const glm::mat4 modelM) const {
+  const int screenW = static_cast<int>(renderWidth);
+  const int screenH = static_cast<int>(renderHeight);
 
   // By default the engine uses inverted floating point depth
   const glm::mat4 projectionMatrix =
@@ -48,7 +52,7 @@ void Camera3DPivot::getFrustum(Plane* outPlanes) const {
       globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::DX12 ? 1.0f : -1.0f;
   float nnear = getNear() * apiCompensateFactor;
   float hnear = 2.0f * tanf(angle / 2.0f) * glm::abs(nnear);
-  //flipping hnear because we are going left
+  // flipping hnear because we are going left
   float wnear = -hnear * aspsectRatio;
 
   float hnearhalf = hnear / 2.0f;
@@ -69,37 +73,42 @@ void Camera3DPivot::getFrustum(Plane* outPlanes) const {
   glm::vec4 wBottomLeft = (cameraM * bottomLeft) - camPos;
   glm::vec4 wBottomRight = (cameraM * bottomRight) - camPos;
 
-  outPlanes[0].normal = -apiCompensateFactor*glm::vec4(
-      glm::normalize(glm::cross(glm::vec3(wTopLeft), glm::vec3(wBottomLeft))),
-      0.0);
-  outPlanes[1].normal = apiCompensateFactor*glm::vec4(
-      glm::normalize(glm::cross(glm::vec3(wTopRight), glm::vec3(wBottomRight))),
-      0.0);
-  outPlanes[2].normal = apiCompensateFactor*glm::vec4(
-      glm::normalize(glm::cross(glm::vec3(wTopLeft), glm::vec3(wTopRight))),
-      0.0);
+  outPlanes[0].normal =
+      -apiCompensateFactor *
+      glm::vec4(glm::normalize(
+                    glm::cross(glm::vec3(wTopLeft), glm::vec3(wBottomLeft))),
+                0.0);
+  outPlanes[1].normal =
+      apiCompensateFactor *
+      glm::vec4(glm::normalize(
+                    glm::cross(glm::vec3(wTopRight), glm::vec3(wBottomRight))),
+                0.0);
+  outPlanes[2].normal =
+      apiCompensateFactor *
+      glm::vec4(
+          glm::normalize(glm::cross(glm::vec3(wTopLeft), glm::vec3(wTopRight))),
+          0.0);
   outPlanes[3].normal =
-      -apiCompensateFactor*glm::vec4(glm::normalize(glm::cross(glm::vec3(wBottomLeft),
-                                           glm::vec3(wBottomRight))),
-                 0.0);
+      -apiCompensateFactor *
+      glm::vec4(glm::normalize(glm::cross(glm::vec3(wBottomLeft),
+                                          glm::vec3(wBottomRight))),
+                0.0);
   outPlanes[4].normal = glm::vec4(viewDir, 0.0);
   outPlanes[5].normal = glm::vec4(-viewDir, 0.0);
 
-
   // setting positions
-  outPlanes[0].position = cameraM*((topLeft + bottomLeft) * 0.5f);
-  outPlanes[1].position = cameraM*((topRight + bottomRight) * 0.5f);
-  outPlanes[2].position = cameraM*((topLeft + topRight) * 0.5f);
-  outPlanes[3].position = cameraM*((bottomLeft + bottomRight) * 0.5f);
+  outPlanes[0].position = cameraM * ((topLeft + bottomLeft) * 0.5f);
+  outPlanes[1].position = cameraM * ((topRight + bottomRight) * 0.5f);
+  outPlanes[2].position = cameraM * ((topLeft + topRight) * 0.5f);
+  outPlanes[3].position = cameraM * ((bottomLeft + bottomRight) * 0.5f);
   outPlanes[4].position = camPos + glm::vec4(viewDir * getFar(), 0);
   outPlanes[5].position = camPos + glm::vec4(viewDir * getNear(), 0);
 }
 
 glm::vec3 Camera3DPivot::getViewDirection() const {
-
   float apiCompensateFactor =
       globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::DX12 ? 1.0f : -1.0f;
-  return apiCompensateFactor* glm::vec3(getViewInverse(glm::mat4(1))[2]);
+  return apiCompensateFactor * glm::vec3(getViewInverse(glm::mat4(1))[2]);
 }
 
 void Camera3DPivot::spinCameraWorldYAxis(const float angleInDegrees) {
@@ -114,10 +123,11 @@ void Camera3DPivot::spinCameraWorldYAxis(const float angleInDegrees) {
   posV = compensatedPosition + lookAtPosV;
 }
 
-glm::vec4 Camera3DPivot::getProjParams() const {
+glm::vec4 Camera3DPivot::getProjParams(const uint32_t renderWidth,
+                                       const uint32_t renderHeight) const {
   // preparing camera values for deferred
-  int screenW = globals::ENGINE_CONFIG->m_windowWidth;
-  int screenH = globals::ENGINE_CONFIG->m_windowHeight;
+  int screenW = static_cast<int>(renderWidth);
+  int screenH = static_cast<int>(renderHeight);
   // By default the engine uses inverted floating point depth
   const auto projectionMatrix =
       getPerspectiveMatrix(screenW, screenH, m_vfov, m_far, m_near);

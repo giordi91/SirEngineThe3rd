@@ -57,6 +57,7 @@ class EditorLayer final : public Layer {
   bool m_shouldShow = true;
   DockIDs dockIds;
   ImTextureID offscreenTexture{};
-
+  ImVec2 viewportPanelSize;
+  bool dirty = false;
 };
 }  // namespace SirEngine
