@@ -51,7 +51,10 @@ void Dx12ImGuiManager::onResizeEvent(const WindowResizeEvent& e) {
 }
 
 ImTextureID Dx12ImGuiManager::getImguiImageHandle(const TextureHandle& handle) {
-  assert(0);
-  return {};
+  DescriptorPair descriptor = dx12::TEXTURE_MANAGER->getSRVDx12(handle);
+  ImTextureID toReturn{};
+  assert(sizeof(descriptor.gpuHandle) == sizeof(toReturn));
+  memcpy(&toReturn, &descriptor.gpuHandle, sizeof(toReturn));
+  return toReturn;
 }
 }  // namespace SirEngine::dx12

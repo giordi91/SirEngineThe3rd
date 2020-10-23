@@ -47,10 +47,19 @@ void GraphicsLayer::onAttach() {
   // uint32_t h = globals::ENGINE_CONFIG->m_windowHeight;
   uint32_t w = 1620;
   uint32_t h = 924;
+  if(globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::VULKAN){
   offscreenBuffer = globals::TEXTURE_MANAGER->allocateTexture(
       w, h, RenderTargetFormat::BGRA32, "offscreenBuffer",
       TextureManager::TEXTURE_ALLOCATION_FLAG_BITS::RENDER_TARGET |
           TextureManager::TEXTURE_ALLOCATION_FLAG_BITS::SHADER_RESOURCE,RESOURCE_STATE::SHADER_READ_RESOURCE);
+  } else
+  {
+  offscreenBuffer = globals::TEXTURE_MANAGER->allocateTexture(
+      w, h, RenderTargetFormat::RGBA32, "offscreenBuffer",
+      TextureManager::TEXTURE_ALLOCATION_FLAG_BITS::RENDER_TARGET |
+          TextureManager::TEXTURE_ALLOCATION_FLAG_BITS::SHADER_RESOURCE,RESOURCE_STATE::SHADER_READ_RESOURCE);
+	  
+  }
   globals::OFFSCREEN_BUFFER = offscreenBuffer;
 
   // render graph context
