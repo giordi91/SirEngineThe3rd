@@ -5,6 +5,7 @@
 #include "SirEngine/constantBufferManager.h"
 #include "SirEngine/events/keyboardEvent.h"
 #include "SirEngine/events/mouseEvent.h"
+#include "SirEngine/events/renderGraphEvent.h"
 #include "SirEngine/events/shaderCompileEvent.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/graphics/camera.h"
@@ -25,6 +26,22 @@
 #include "SirEngine/textureManager.h"
 
 namespace SirEngine {
+void GraphicsLayer::allocateOffscreenBuffer(uint32_t w, uint32_t h) {
+  if (globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::VULKAN) {
+    offscreenBuffer = globals::TEXTURE_MANAGER->allocateTexture(
+        w, h, RenderTargetFormat::BGRA32, "offscreenBuffer",
+        TextureManager::TEXTURE_ALLOCATION_FLAG_BITS::RENDER_TARGET |
+            TextureManager::TEXTURE_ALLOCATION_FLAG_BITS::SHADER_RESOURCE,
+        RESOURCE_STATE::SHADER_READ_RESOURCE);
+  } else {
+    offscreenBuffer = globals::TEXTURE_MANAGER->allocateTexture(
+        w, h, RenderTargetFormat::RGBA32, "offscreenBuffer",
+        TextureManager::TEXTURE_ALLOCATION_FLAG_BITS::RENDER_TARGET |
+            TextureManager::TEXTURE_ALLOCATION_FLAG_BITS::SHADER_RESOURCE,
+        RESOURCE_STATE::SHADER_READ_RESOURCE);
+  }
+  globals::OFFSCREEN_BUFFER = offscreenBuffer;
+}
 
 void GraphicsLayer::onAttach() {
   m_workerBuffer = globals::COMMAND_BUFFER_MANAGER->createBuffer(
@@ -47,20 +64,7 @@ void GraphicsLayer::onAttach() {
   // uint32_t h = globals::ENGINE_CONFIG->m_windowHeight;
   uint32_t w = 1620;
   uint32_t h = 924;
-  if(globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::VULKAN){
-  offscreenBuffer = globals::TEXTURE_MANAGER->allocateTexture(
-      w, h, RenderTargetFormat::BGRA32, "offscreenBuffer",
-      TextureManager::TEXTURE_ALLOCATION_FLAG_BITS::RENDER_TARGET |
-          TextureManager::TEXTURE_ALLOCATION_FLAG_BITS::SHADER_RESOURCE,RESOURCE_STATE::SHADER_READ_RESOURCE);
-  } else
-  {
-  offscreenBuffer = globals::TEXTURE_MANAGER->allocateTexture(
-      w, h, RenderTargetFormat::RGBA32, "offscreenBuffer",
-      TextureManager::TEXTURE_ALLOCATION_FLAG_BITS::RENDER_TARGET |
-          TextureManager::TEXTURE_ALLOCATION_FLAG_BITS::SHADER_RESOURCE,RESOURCE_STATE::SHADER_READ_RESOURCE);
-	  
-  }
-  globals::OFFSCREEN_BUFFER = offscreenBuffer;
+  allocateOffscreenBuffer(w, h);
 
   // render graph context
   m_graphContext = {offscreenBuffer, w, h};
@@ -69,13 +73,13 @@ void GraphicsLayer::onAttach() {
   globals::MAIN_CAMERA->setCameraPhyisicalParameters(60.0f, 0.1, 200.0f);
   globals::MAIN_CAMERA->setLookAt(0, 15, 0);
   globals::MAIN_CAMERA->setPosition(0, 15, 15);
-  globals::MAIN_CAMERA->updateCamera();
+  globals::MAIN_CAMERA->updateCamera(w, h);
 
   globals::DEBUG_CAMERA->setManipulationMultipliers(camConfig);
   globals::DEBUG_CAMERA->setCameraPhyisicalParameters(60.0f, 0.1, 200.0f);
   globals::DEBUG_CAMERA->setLookAt(0, 15, 0);
   globals::DEBUG_CAMERA->setPosition(0, 15, 15);
-  globals::DEBUG_CAMERA->updateCamera();
+  globals::DEBUG_CAMERA->updateCamera(w, h);
 
   globals::RENDERING_CONTEXT->executeGlobalCommandList();
   globals::RENDERING_CONTEXT->flush();
@@ -133,7 +137,14 @@ void GraphicsLayer::onAttach() {
 
 void GraphicsLayer::onDetach() {}
 void GraphicsLayer::onUpdate() {
-  globals::RENDERING_CONTEXT->setupCameraForFrame();
+  uint32_t w = globals::ENGINE_CONFIG->m_windowWidth;
+  uint32_t h = globals::ENGINE_CONFIG->m_windowHeight;
+  if (m_graphContext.m_renderTarget.isHandleValid()) {
+    w = m_graphContext.renderTargetWidth;
+    h = m_graphContext.renderTargetHeight;
+  }
+
+  globals::RENDERING_CONTEXT->setupCameraForFrame(w, h);
   // evaluating rendering graph
   globals::CONSTANT_BUFFER_MANAGER->processBufferedData();
   globals::DEBUG_RENDERER->newFrame();
@@ -161,6 +172,8 @@ void GraphicsLayer::onEvent(Event &event) {
       SE_BIND_EVENT_FN(GraphicsLayer::onResizeEvent));
   dispatcher.dispatch<ShaderCompileEvent>(
       SE_BIND_EVENT_FN(GraphicsLayer::onShaderCompileEvent));
+  dispatcher.dispatch<RenderSizeChanged>(
+      SE_BIND_EVENT_FN(GraphicsLayer::onRenderSizeChanged));
   // dispatcher.dispatch<ReloadScriptsEvent>(
   //    SE_BIND_EVENT_FN(VkTempLayer::onReloadScriptEvent));
 }
@@ -224,6 +237,8 @@ bool GraphicsLayer::onResizeEvent(WindowResizeEvent &e) {
   // next we can issue a resize
   const uint32_t w = e.getWidth();
   const uint32_t h = e.getHeight();
+  m_graphContext.renderTargetWidth = w;
+  m_graphContext.renderTargetHeight = h;
   globals::RENDERING_GRAPH->onResizeEvent(w, h, m_workerBuffer,
                                           &m_graphContext);
 
@@ -240,6 +255,27 @@ bool GraphicsLayer::onShaderCompileEvent(ShaderCompileEvent &e) {
   SE_CORE_INFO("Reading to compile shader");
   globals::PSO_MANAGER->recompilePSOFromShader(e.getShader(),
                                                e.getOffsetPath());
+  return true;
+}
+
+bool GraphicsLayer::onRenderSizeChanged(RenderSizeChanged &e) {
+  // First we flush to make sure there are no inflight frames
+  globals::RENDERING_CONTEXT->flush();
+
+  // next we can issue a resize
+  const uint32_t w = e.getWidth();
+  const uint32_t h = e.getHeight();
+
+  globals::TEXTURE_MANAGER->free(offscreenBuffer);
+  allocateOffscreenBuffer(w, h);
+  m_graphContext = {offscreenBuffer, w, h};
+
+  globals::RENDERING_GRAPH->onResizeEvent(w, h, m_workerBuffer,
+                                          &m_graphContext);
+  SE_CORE_INFO("{}", e.toString());
+
+  // now we flush and reset
+  globals::COMMAND_BUFFER_MANAGER->executeFlushAndReset(m_workerBuffer);
   return true;
 }
 

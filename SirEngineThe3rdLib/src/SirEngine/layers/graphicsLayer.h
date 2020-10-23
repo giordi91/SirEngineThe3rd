@@ -14,6 +14,7 @@ class MouseMoveEvent;
 class WindowResizeEvent;
 class DebugLayerChanged;
 class ShaderCompileEvent;
+class RenderSizeChanged;
 struct Skeleton;
 struct GraphAllocators;
 
@@ -23,6 +24,7 @@ public:
   GraphicsLayer() : Layer("VkTempLayer") {}
   ~GraphicsLayer() override = default;
 
+  void allocateOffscreenBuffer(uint32_t w, uint32_t h);
   void onAttach() override;
   void onDetach() override;
   void onUpdate() override;
@@ -40,6 +42,7 @@ private:
   bool onDebugConfigChanged(DebugRenderConfigChanged &e);
   bool onShaderCompileEvent(ShaderCompileEvent &e);
   bool onReloadScriptEvent(ReloadScriptsEvent &e);
+  bool onRenderSizeChanged(RenderSizeChanged&e);
 
   // camera event control
   bool leftDown = false;

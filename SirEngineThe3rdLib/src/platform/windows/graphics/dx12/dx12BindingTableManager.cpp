@@ -40,7 +40,7 @@ BindingTableHandle Dx12BindingTableManager::allocateBindingTable(
                                                     descriptorCount);
 
   uint32_t descriptrionSize = sizeof(graphics::BindingDescription) * count;
-  auto *descriptrionMemory = reinterpret_cast<graphics::BindingDescription *>(
+  auto *descriptrionMemory = static_cast<graphics::BindingDescription *>(
       m_allocator.allocate(descriptrionSize));
   memcpy(descriptrionMemory, descriptions, descriptrionSize);
   // store data in the pool
