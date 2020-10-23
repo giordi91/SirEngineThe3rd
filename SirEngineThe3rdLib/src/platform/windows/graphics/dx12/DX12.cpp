@@ -65,26 +65,7 @@ Dx12BindingTableManager *BINDING_TABLE_MANAGER = nullptr;
 Dx12CommandBufferManager *COMMAND_BUFFER_MANAGER = nullptr;
 Dx12ImGuiManager *IMGUI_MANAGER = nullptr;
 
-static const std::unordered_map<RESOURCE_STATE, D3D12_RESOURCE_STATES>
-    RESOURCE_STATE_TO_DX_STATE = {
-        {RESOURCE_STATE::GENERIC, D3D12_RESOURCE_STATE_COMMON},
-        {RESOURCE_STATE::RENDER_TARGET, D3D12_RESOURCE_STATE_RENDER_TARGET},
-        {RESOURCE_STATE::SHADER_READ_RESOURCE,
-         D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE},
-        {RESOURCE_STATE::RANDOM_WRITE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS},
-        {RESOURCE_STATE::DEPTH_RENDER_TARGET,
-         D3D12_RESOURCE_STATE_DEPTH_WRITE}};
 
-D3D12_RESOURCE_STATES toDx12ResourceState(RESOURCE_STATE state) {
-  auto found = RESOURCE_STATE_TO_DX_STATE.find(state);
-  if (found != RESOURCE_STATE_TO_DX_STATE.end()) {
-    return found->second;
-  }
-  assert(
-      0 &&
-      "Could not find requested resource state for conversion to dx12 state");
-  return D3D12_RESOURCE_STATE_COMMON;
-}
 
 struct Dx12Renderable {
   MeshHandle m_meshHandle;
@@ -719,9 +700,15 @@ void Dx12RenderingContext::setBindingObject(const BufferBindingsHandle handle) {
 
     // TODO we are still doing state tracking in dx12 we should not do that
     // anymore and let get requested state as must requirement
-    barrierCounter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
-        destination, toDx12ResourceState(binding.neededResourceState), barriers,
-        barrierCounter);
+    // barrierCounter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
+    //    destination, toDx12ResourceState(binding.neededResourceState),
+    //    barriers, barrierCounter);
+
+    if (binding.currentResourceState != binding.neededResourceState) {
+      dx12::TEXTURE_MANAGER->transitionTexture({}, destination,
+                                               binding.currentResourceState,
+                                               binding.neededResourceState);
+    }
     counter++;
   }
 
@@ -730,9 +717,18 @@ void Dx12RenderingContext::setBindingObject(const BufferBindingsHandle handle) {
   // transitioned from write to read
   for (uint32_t i = 0; i < data.m_bindings.extraBindingsCount; ++i) {
     const RTBinding &binding = data.m_bindings.extraBindings[i];
+    /*
     barrierCounter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
         binding.handle, toDx12ResourceState(binding.neededResourceState),
         barriers, barrierCounter);
+    */
+
+
+    if (binding.currentResourceState != binding.neededResourceState) {
+      dx12::TEXTURE_MANAGER->transitionTexture({}, binding.handle,
+                                               binding.currentResourceState,
+                                               binding.neededResourceState);
+    }
   }
 
   // processing the depth
@@ -740,9 +736,17 @@ void Dx12RenderingContext::setBindingObject(const BufferBindingsHandle handle) {
   if (data.m_bindings.depthStencil.handle.isHandleValid()) {
     const DepthBinding &binding = data.m_bindings.depthStencil;
     depthHandle = dx12::TEXTURE_MANAGER->getRTVDx12(binding.handle).cpuHandle;
+    /*
     barrierCounter = dx12::TEXTURE_MANAGER->transitionTexture2DifNeeded(
         binding.handle, toDx12ResourceState(binding.neededResourceState),
         barriers, barrierCounter);
+        */
+
+    if (binding.currentResourceState != binding.neededResourceState) {
+      dx12::TEXTURE_MANAGER->transitionTexture({}, binding.handle,
+                                               binding.currentResourceState,
+                                               binding.neededResourceState);
+    }
   }
 
   // transitioning resources if needed
@@ -956,7 +960,7 @@ bool Dx12RenderingContext::dispatchFrame() {
 
   // TODO make sure the behaviour is symmetrical with VK
   dx12::BUFFER_MANAGER->clearUploadRequests();
-  //dx12::CONSTANT_BUFFER_MANAGER->clearUpQueueFree();
+  // dx12::CONSTANT_BUFFER_MANAGER->clearUpQueueFree();
   return true;
 }
 

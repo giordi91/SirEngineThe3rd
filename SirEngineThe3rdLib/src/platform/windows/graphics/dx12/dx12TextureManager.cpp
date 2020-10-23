@@ -29,7 +29,18 @@ static std::unordered_map<RenderTargetFormat, DXGI_FORMAT>
         {RenderTargetFormat::R16G16B16A16_FLOAT,
          DXGI_FORMAT_R16G16B16A16_FLOAT},
         {RenderTargetFormat::BC1_UNORM, DXGI_FORMAT_BC1_UNORM},
-        {RenderTargetFormat::DEPTH_F32_S8, DXGI_FORMAT_D32_FLOAT_S8X24_UINT}};
+        {RenderTargetFormat::DEPTH_F32_S8, DXGI_FORMAT_D32_FLOAT_S8X24_UINT},
+        {RenderTargetFormat::BGRA32, DXGI_FORMAT_B8G8R8A8_UNORM}};
+
+static const std::unordered_map<RESOURCE_STATE, D3D12_RESOURCE_STATES>
+    RESOURCE_STATE_TO_DX_STATE = {
+        {RESOURCE_STATE::GENERIC, D3D12_RESOURCE_STATE_COMMON},
+        {RESOURCE_STATE::RENDER_TARGET, D3D12_RESOURCE_STATE_RENDER_TARGET},
+        {RESOURCE_STATE::SHADER_READ_RESOURCE,
+         D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE},
+        {RESOURCE_STATE::RANDOM_WRITE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS},
+        {RESOURCE_STATE::DEPTH_RENDER_TARGET,
+         D3D12_RESOURCE_STATE_DEPTH_WRITE}};
 
 Dx12TextureManager::~Dx12TextureManager() {
   // assert(m_texturePool.assertEverythingDealloc());
@@ -102,11 +113,41 @@ TextureHandle Dx12TextureManager::loadTexture(const char *path,
   return handle;
 }
 
+D3D12_RESOURCE_STATES convertState(const RESOURCE_STATE state) {
+  // Source layouts (old)
+  // Source access mask controls actions that have to be finished on the old
+  // layout before it will be transitioned to the new layout
+  switch (state) {
+    case RESOURCE_STATE::SHADER_READ_RESOURCE:
+      return D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+    case RESOURCE_STATE::GENERIC:
+      return D3D12_RESOURCE_STATE_COMMON;
+    case RESOURCE_STATE::RENDER_TARGET:
+      return D3D12_RESOURCE_STATE_RENDER_TARGET;
+    case RESOURCE_STATE::DEPTH_RENDER_TARGET:
+      return D3D12_RESOURCE_STATE_DEPTH_WRITE;
+    case RESOURCE_STATE::RANDOM_WRITE:
+      return D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+    default:
+      assert(0 && "unsupported texture resource state case");
+      return D3D12_RESOURCE_STATE_COMMON;
+  }
+}
+
 void Dx12TextureManager::transitionTexture(CommandBufferHandle commandBuffer,
                                            TextureHandle texHandle,
                                            RESOURCE_STATE currState,
                                            RESOURCE_STATE newState) {
-  assert(0);
+  assertMagicNumber(texHandle);
+  const uint32_t index = getIndexFromHandle(texHandle);
+  TextureData &data = m_texturePool[index];
+  D3D12_RESOURCE_BARRIER barriers[1];
+
+  barriers[0] = CD3DX12_RESOURCE_BARRIER::Transition(
+      data.resource, convertState(currState), convertState(newState));
+  auto *currentFc = &dx12::CURRENT_FRAME_RESOURCE->fc;
+  auto commandList = currentFc->commandList;
+  commandList->ResourceBarrier(1, barriers);
 }
 
 TextureHandle Dx12TextureManager::initializeFromResourceDx12(
@@ -166,6 +207,18 @@ DescriptorPair Dx12TextureManager::getSrvStencilDx12(
     assert(data.srv.type == DescriptorType::SRV);
     return m_texturePool.getConstRef(index).srv;
   }
+}
+
+D3D12_RESOURCE_STATES Dx12TextureManager::toDx12ResourceState(
+    const RESOURCE_STATE state) {
+  auto found = RESOURCE_STATE_TO_DX_STATE.find(state);
+  if (found != RESOURCE_STATE_TO_DX_STATE.end()) {
+    return found->second;
+  }
+  assert(
+      0 &&
+      "Could not find requested resource state for conversion to dx12 state");
+  return D3D12_RESOURCE_STATE_COMMON;
 }
 
 void Dx12TextureManager::free(const TextureHandle handle) {
@@ -229,7 +282,7 @@ inline DXGI_FORMAT convertToDXGIFormat(const RenderTargetFormat format) {
 TextureHandle Dx12TextureManager::allocateTexture(
     const uint32_t width, const uint32_t height,
     const RenderTargetFormat format, const char *name,
-    const uint32_t allocFlags, RESOURCE_STATE) {
+    const uint32_t allocFlags, RESOURCE_STATE finalState) {
   // convert SirEngine format to dx12 format
   DXGI_FORMAT actualFormat = convertToDXGIFormat(format);
 
@@ -268,10 +321,7 @@ TextureHandle Dx12TextureManager::allocateTexture(
     clear.DepthStencil.Stencil = 0;
   }
   clear.Format = actualFormat;
-  D3D12_RESOURCE_STATES state = isRenderTexture
-                                    ? D3D12_RESOURCE_STATE_RENDER_TARGET
-                                    : D3D12_RESOURCE_STATE_COMMON;
-  state = isDepth ? D3D12_RESOURCE_STATE_DEPTH_WRITE : state;
+  D3D12_RESOURCE_STATES state = convertState(finalState);
   auto defaultHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
   HRESULT hr = dx12::DEVICE->CreateCommittedResource(
       &defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &description, state, &clear,
@@ -310,7 +360,7 @@ TextureHandle Dx12TextureManager::allocateTexture(
                                                         data.format);
     }
   }
-  data.resource->SetName(frameConvertWide(name));
+  data.resource->SetName(persistentConvertWide(name));
 
   m_nameToHandle.insert(name, handle);
   return handle;

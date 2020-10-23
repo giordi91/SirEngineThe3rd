@@ -51,6 +51,7 @@ class  Dx12TextureManager final : public TextureManager {
   void transitionTexture(CommandBufferHandle commandBuffer, TextureHandle texHandle, RESOURCE_STATE currState,
 	  RESOURCE_STATE newState) override;
 
+
 	
   // dx12 methods
   TextureHandle initializeFromResourceDx12(ID3D12Resource *resource,
@@ -145,6 +146,8 @@ class  Dx12TextureManager final : public TextureManager {
                                                           data.format, true);
     }
   }
+
+  D3D12_RESOURCE_STATES toDx12ResourceState(const RESOURCE_STATE state);
 
  private:
   inline void assertMagicNumber(const TextureHandle handle) const {
