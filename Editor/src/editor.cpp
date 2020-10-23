@@ -2,11 +2,14 @@
 #include "SirEngine/layers/graphicsLayer.h"
 
 
-#include <SirEngine.h>
+#include "SirEngine/application.h"
+#include "SirEngine/log.h"
 
-class Sandbox : public SirEngine::Application {
+#include "SirEngine/entryPoint.h"
+
+class Editor final : public SirEngine::Application {
 public:
-  Sandbox(): Application()
+  Editor(): Application()
   {
   //imGuiLayer = new ImguiLayer();
   imGuiLayer = new SirEngine::EditorLayer();
@@ -15,11 +18,11 @@ public:
   m_layerStack.pushLayer(imGuiLayer);
 	  
   };
-  ~Sandbox() = default;
+  ~Editor() = default;
 };
 
 
 SirEngine::Application* SirEngine::createApplication()
 {
-	return new Sandbox();
+	return new Editor();
 }

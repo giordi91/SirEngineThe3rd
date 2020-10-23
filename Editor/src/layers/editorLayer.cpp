@@ -50,6 +50,15 @@ void EditorLayer::onAttach() {
       ImVec2(static_cast<float>(globals::ENGINE_CONFIG->m_windowWidth),
              static_cast<float>(globals::ENGINE_CONFIG->m_windowHeight));
   io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
+  if (globals::OFFSCREEN_BUFFER.isHandleValid()) {
+    offscreenTexture =
+        globals::IMGUI_MANAGER->getImguiImageHandle(globals::OFFSCREEN_BUFFER);
+  }
+  // auto d = vk::TEXTURE_MANAGER->getTextureData(offscreenBuffer);
+  // globals::IMGUI_VIEWPORT = (void *)ImGui_ImplVulkan_AddTexture(
+  //    vk::STATIC_SAMPLERS[2], d.view,
+  //    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 
 void EditorLayer::onDetach() {}
@@ -199,7 +208,7 @@ void EditorLayer::onUpdate() {
   float x = ImGui::GetCursorScreenPos().x;
   float y = ImGui::GetCursorScreenPos().y;
 
-  ImGui::Image(globals::IMGUI_VIEWPORT, newViewportSize);
+  ImGui::Image(offscreenTexture, newViewportSize);
 
   ImGui::End();
 

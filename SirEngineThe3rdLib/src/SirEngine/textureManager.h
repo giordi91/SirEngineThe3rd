@@ -46,6 +46,10 @@ class TextureManager {
       uint32_t width, uint32_t height, RenderTargetFormat format,
       const char *name, TEXTURE_ALLOCATION_FLAGS allocFlags,
       RESOURCE_STATE finalState = RESOURCE_STATE::RENDER_TARGET) = 0;
+  virtual void transitionTexture(CommandBufferHandle commandBuffer,
+                                 TextureHandle texHandle,
+                                 RESOURCE_STATE currState,
+                                 RESOURCE_STATE newState) = 0;
 
   [[nodiscard]] virtual TextureHandle getWhiteTexture() const = 0;
 

@@ -1,12 +1,12 @@
 #include "platform/windows/graphics/dx12/dx12ImguiManager.h"
 
+#include "SirEngine/events/applicationEvent.h"
 #include "SirEngine/graphics/debugAnnotations.h"
 #include "descriptorHeap.h"
 #include "dx12SwapChain.h"
 #include "imgui/imgui.h"
 #include "platform/windows/graphics/dx12/DX12.h"
 #include "platform/windows/graphics/dx12/imgui_impl_dx12.h"
-#include "SirEngine/events/applicationEvent.h"
 
 namespace SirEngine::dx12 {
 void Dx12ImGuiManager::initialize() {
@@ -42,13 +42,16 @@ void Dx12ImGuiManager::endFrame() {
   annotateGraphicsEnd();
 }
 
-void Dx12ImGuiManager::onResizeEvent(const WindowResizeEvent& e)
-{
-  ImGuiIO &io = ImGui::GetIO();
+void Dx12ImGuiManager::onResizeEvent(const WindowResizeEvent& e) {
+  ImGuiIO& io = ImGui::GetIO();
   io.DisplaySize = ImVec2(static_cast<float>(e.getWidth()),
                           static_cast<float>(e.getHeight()));
   io.DisplayFramebufferScale = ImVec2(1.0f, 1.0f);
   ImGui_ImplDX12_InvalidateDeviceObjects();
-	
+}
+
+ImTextureID Dx12ImGuiManager::getImguiImageHandle(const TextureHandle& handle) {
+  assert(0);
+  return {};
 }
 }  // namespace SirEngine::dx12

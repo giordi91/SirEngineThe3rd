@@ -56,7 +56,7 @@ project(SirEngineThe3rdLib)
 		#LNK4099 is for missing pbd of the compiled dependencies, I won't debug them so i don't add them
 		# to git to save space
 		# LNK4204 is similar to 4099
-		add_compile_options(/wd4251 /wd4275 /wd4099 /wd4204 /IGNORE:LNK4204 )
+		add_compile_options(/wd4251 /wd4275 /wd4099 /wd4204 )
 	endif()
 
 	#lets add specific windows build definitions

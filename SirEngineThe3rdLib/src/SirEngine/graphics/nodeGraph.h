@@ -63,7 +63,7 @@ class GNode {
   inline void setGeneration(const int generation) { m_generation = generation; }
   inline int getGeneration() const { return m_generation; }
 
-  virtual void compute(RenderGraphContext* context) {}
+  virtual void compute(RenderGraphContext* ) {}
   virtual void initialize(CommandBufferHandle, RenderGraphContext *) {}
   virtual void initializeResolutionDepenantResources(CommandBufferHandle,
                                                      RenderGraphContext *) {}
