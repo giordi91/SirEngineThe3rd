@@ -120,7 +120,7 @@ class RenderingContext {
   // simply submit a full screen quad to the render pipeline
   virtual void fullScreenPass() = 0;
 
-  virtual void setupCameraForFrame(uint32_t renderWidth, uint32_t renderHeight) = 0;
+  virtual void setupCameraForFrame(uint32_t renderWidth, uint32_t renderHeight, bool updateCameraMovment) = 0;
   virtual BufferBindingsHandle prepareBindingObject(
       const FrameBufferBindings &bindings, const char *name) = 0;
   virtual void setBindingObject(const BufferBindingsHandle handle) = 0;

@@ -454,8 +454,8 @@ bool Dx12RenderingContext::initializeGraphics() {
   return result;
 }
 
-void Dx12RenderingContext::setupCameraForFrame(uint32_t renderWidth, uint32_t renderHeight) {
-  globals::ACTIVE_CAMERA->updateCamera(renderWidth,renderHeight);
+void Dx12RenderingContext::setupCameraForFrame(const uint32_t renderWidth, const uint32_t renderHeight, const bool updateCameraMovment) {
+  globals::ACTIVE_CAMERA->updateCamera(renderWidth,renderHeight,updateCameraMovment);
 
   m_frameData.m_mainCamera = globals::MAIN_CAMERA->getCameraBuffer();
   m_frameData.m_activeCamera = globals::ACTIVE_CAMERA->getCameraBuffer();

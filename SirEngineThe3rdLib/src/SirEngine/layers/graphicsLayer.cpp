@@ -73,13 +73,13 @@ void GraphicsLayer::onAttach() {
   globals::MAIN_CAMERA->setCameraPhyisicalParameters(60.0f, 0.1, 200.0f);
   globals::MAIN_CAMERA->setLookAt(0, 15, 0);
   globals::MAIN_CAMERA->setPosition(0, 15, 15);
-  globals::MAIN_CAMERA->updateCamera(w, h);
+  globals::MAIN_CAMERA->updateCamera(w, h,true);
 
   globals::DEBUG_CAMERA->setManipulationMultipliers(camConfig);
   globals::DEBUG_CAMERA->setCameraPhyisicalParameters(60.0f, 0.1, 200.0f);
   globals::DEBUG_CAMERA->setLookAt(0, 15, 0);
   globals::DEBUG_CAMERA->setPosition(0, 15, 15);
-  globals::DEBUG_CAMERA->updateCamera(w, h);
+  globals::DEBUG_CAMERA->updateCamera(w, h,true);
 
   globals::RENDERING_CONTEXT->executeGlobalCommandList();
   globals::RENDERING_CONTEXT->flush();
@@ -143,8 +143,9 @@ void GraphicsLayer::onUpdate() {
     w = m_graphContext.renderTargetWidth;
     h = m_graphContext.renderTargetHeight;
   }
-
-  globals::RENDERING_CONTEXT->setupCameraForFrame(w, h);
+  bool updateCamera = isFlagSet(globals::ENGINE_FLAGS->m_interaction,
+            EngineFlagsInteraction::EngineFlagsInteraction_AllowInput);
+      globals::RENDERING_CONTEXT->setupCameraForFrame(w, h,updateCamera);
   // evaluating rendering graph
   globals::CONSTANT_BUFFER_MANAGER->processBufferedData();
   globals::DEBUG_RENDERER->newFrame();

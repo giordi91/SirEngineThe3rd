@@ -178,8 +178,7 @@ class Dx12RenderingContext final : public RenderingContext {
   Dx12RenderingContext &operator=(const Dx12RenderingContext &) = delete;
 
   bool initializeGraphics() override;
-
-  void setupCameraForFrame(uint32_t renderWidth, uint32_t renderHeight) override;
+  void setupCameraForFrame(uint32_t renderWidth, uint32_t renderHeight, bool updateCameraMovment) override;
 
   void updateSceneBoundingBox();
   void updateDirectionalLightMatrix();
