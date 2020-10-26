@@ -20,7 +20,7 @@ class InteropData {
   }
 
   //mostly here for symmetry with rest of the manager
-  void initialize(){};
+  void initialize(){}
 
 private:
   HashMap<const char*, void*, hashString32> m_data;

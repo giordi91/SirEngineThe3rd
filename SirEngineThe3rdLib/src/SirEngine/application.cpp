@@ -1,14 +1,14 @@
 #include "SirEngine/application.h"
 
-
 #include "SirEngine/engineConfig.h"
 #include "SirEngine/globals.h"
+#include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/input.h"
 #include "SirEngine/io/fileUtils.h"
 #include "SirEngine/layer.h"
-#include "SirEngine/log.h"
-#include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/layers/imguiDebugLayer.h"
+#include "SirEngine/log.h"
+#include "flags.h"
 
 namespace SirEngine {
 
@@ -42,6 +42,7 @@ Application::Application() {
   creationSettings.window = m_window;
   creationSettings.apiConfig = {};
 
+  globals::ENGINE_FLAGS = new EngineFlags();
   globals::RENDERING_CONTEXT = RenderingContext::create(
       creationSettings, creationSettings.width, creationSettings.height);
   const bool result = globals::RENDERING_CONTEXT->initializeGraphics();
@@ -59,11 +60,13 @@ Application::Application() {
   m_queuedEndOfFrameEvents[1].totalSize = RESERVE_ALLOC_EVENT_QUEUE;
   m_queuedEndOfFrameEventsCurrent = &m_queuedEndOfFrameEvents[0];
 
-
   globals::APPLICATION = this;
 }
 
-Application::~Application() { delete m_window; }
+Application::~Application() {
+  delete globals::ENGINE_FLAGS;
+  delete m_window;
+}
 void Application::run() {
   while (m_run) {
     globals::LAST_FRAME_TIME_NS = globals::GAME_CLOCK.getDelta();
@@ -118,7 +121,7 @@ void Application::onEvent(Event &e) {
   dispatcher.dispatch<WindowResizeEvent>([this](WindowResizeEvent &e) -> bool {
     return (this->onResizeWindow(e));
   });
-
+  ;
   if (e.handled()) {
     return;
   }

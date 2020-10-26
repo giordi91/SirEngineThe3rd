@@ -19,7 +19,6 @@ TextureManager *TEXTURE_MANAGER = nullptr;
 AssetManager *ASSET_MANAGER = nullptr;
 Application *APPLICATION = nullptr;
 RenderingContext *RENDERING_CONTEXT = nullptr;
-DebugFrameData *DEBUG_FRAME_DATA = nullptr;
 AnimationManager *ANIMATION_MANAGER = nullptr;
 SkinClusterManager *SKIN_MANAGER = nullptr;
 ScriptingContext *SCRIPTING_CONTEXT = nullptr;
@@ -43,5 +42,6 @@ StackAllocator *FRAME_ALLOCATOR = nullptr;
 ThreeSizesPool *PERSISTENT_ALLOCATOR = nullptr;
 
 EngineConfig *ENGINE_CONFIG = nullptr;
+EngineFlags* ENGINE_FLAGS =nullptr;
 
 }  // namespace SirEngine::globals

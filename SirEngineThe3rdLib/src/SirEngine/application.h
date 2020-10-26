@@ -23,7 +23,7 @@ protected:
     m_queueEndOfFrameCounter = (m_queueEndOfFrameCounter + 1) % 2;
     m_queuedEndOfFrameEventsCurrent =
         &m_queuedEndOfFrameEvents[m_queueEndOfFrameCounter];
-  };
+  }
 
 protected:
   struct EventQueue {
