@@ -3,19 +3,20 @@
 
 #include <imgui/imgui_internal.h>
 
+#include "SirEngine/application.h"
 #include "SirEngine/core.h"
 #include "SirEngine/events/applicationEvent.h"
 #include "SirEngine/events/event.h"
 #include "SirEngine/events/keyboardEvent.h"
 #include "SirEngine/events/mouseEvent.h"
+#include "SirEngine/events/renderGraphEvent.h"
+#include "SirEngine/flags.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/graphics/debugAnnotations.h"
 #include "SirEngine/input.h"
 #include "SirEngine/log.h"
 #include "SirEngine/ui/imguiManager.h"
 #include "imgui/imgui.h"
-#include "SirEngine/application.h"
-#include "SirEngine/events/renderGraphEvent.h"
 
 namespace SirEngine {
 void EditorLayer::onAttach() {
@@ -204,25 +205,37 @@ void EditorLayer::onUpdate() {
   ImVec2 newViewportSize = ImGui::GetContentRegionAvail();
 
   constexpr float delta = 0.001f;
-  bool viewportSizeChanged = (fabs(newViewportSize.x - viewportPanelSize.x) > delta) |
-                             (fabs(newViewportSize.y - viewportPanelSize.y)> delta);
+  bool viewportSizeChanged =
+      (fabs(newViewportSize.x - viewportPanelSize.x) > delta) |
+      (fabs(newViewportSize.y - viewportPanelSize.y) > delta);
 
-  if(viewportSizeChanged)
-  {
-      viewportPanelSize = newViewportSize;
-      auto* e = new RenderSizeChanged (viewportPanelSize.x,viewportPanelSize.y);
-      globals::APPLICATION->queueEventForEndOfFrame(e);
-      dirty  = true;
+  if (viewportSizeChanged) {
+    viewportPanelSize = newViewportSize;
+    auto *e = new RenderSizeChanged(viewportPanelSize.x, viewportPanelSize.y);
+    globals::APPLICATION->queueEventForEndOfFrame(e);
+    dirty = true;
   }
 
   // if our viewport is hovered we set the flag, that will allow
   // our camera controller to behave properly
   bool isWindowFocused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootWindow);
+  bool isWindowOvered = ImGui::IsWindowHovered();
+  bool inputFlag = isWindowFocused | isWindowOvered;
+
+  setFlagBitfield(globals::ENGINE_FLAGS->m_interaction,
+                  EngineFlagsInteraction_AllowInput,
+                  inputFlag);
+  setFlagBitfield(globals::ENGINE_FLAGS->m_interaction,
+                  EngineFlagsInteraction_ViewportFocused,
+                  isWindowFocused);
+  setFlagBitfield(globals::ENGINE_FLAGS->m_interaction,
+                  EngineFlagsInteraction_ViewportHovered,
+                  isWindowOvered);
+
   // storing the start of the cursor in the window before we add
   // the image, so we can use it to overlay imguizmo
   float x = ImGui::GetCursorScreenPos().x;
   float y = ImGui::GetCursorScreenPos().y;
-
 
   ImGui::Image(offscreenTexture, newViewportSize);
 

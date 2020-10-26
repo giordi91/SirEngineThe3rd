@@ -6,6 +6,7 @@
 namespace SirEngine {
 
 struct EngineConfig;
+struct EngineFlags;
 class MaterialManager;
 class AssetManager;
 class ConstantBufferManager;
@@ -40,14 +41,6 @@ class BindingTableManager;
 
 namespace globals {
 
-struct DebugFrameData {
-  TextureHandle geometryBuffer;
-  TextureHandle normalBuffer;
-  TextureHandle specularBuffer;
-  TextureHandle gbufferDepth;
-  TextureHandle directionalShadow;
-};
-
 extern Camera3DPivot *MAIN_CAMERA;
 extern Camera3DPivot *DEBUG_CAMERA;
 extern Camera3DPivot *ACTIVE_CAMERA;
@@ -68,8 +61,7 @@ extern TextureManager *TEXTURE_MANAGER;
 extern AssetManager *ASSET_MANAGER;
 extern Application *APPLICATION;
 extern RenderingContext *RENDERING_CONTEXT;
-extern DebugFrameData *DEBUG_FRAME_DATA;
-extern  AnimationManager *ANIMATION_MANAGER;
+extern AnimationManager *ANIMATION_MANAGER;
 extern SkinClusterManager *SKIN_MANAGER;
 extern ScriptingContext *SCRIPTING_CONTEXT;
 extern CommandBufferManager *COMMAND_BUFFER_MANAGER;
@@ -85,15 +77,17 @@ extern graphics::LightManager *LIGHT_MANAGER;
 extern graphics::BindingTableManager *BINDING_TABLE_MANAGER;
 extern InteropData *INTEROP_DATA;
 extern ImGuiManager *IMGUI_MANAGER;
+// TODO remove this, figure out a way to make imgui and the engine communicate
 extern TextureHandle OFFSCREEN_BUFFER;
 
 // generic allocators
-extern  StringPool *STRING_POOL;
-extern  StackAllocator *FRAME_ALLOCATOR;
-extern  ThreeSizesPool *PERSISTENT_ALLOCATOR;
+extern StringPool *STRING_POOL;
+extern StackAllocator *FRAME_ALLOCATOR;
+extern ThreeSizesPool *PERSISTENT_ALLOCATOR;
 
 // config
 extern EngineConfig *ENGINE_CONFIG;
+extern EngineFlags *ENGINE_FLAGS;
 
 }  // namespace globals
 }  // namespace SirEngine

@@ -2,6 +2,7 @@
 
 #include "SirEngine/engineConfig.h"
 #include "SirEngine/engineMath.h"
+#include "SirEngine/flags.h"
 #include "SirEngine/globals.h"
 #include "SirEngine/graphics/cpuGraphicsStructures.h"
 #include "SirEngine/input.h"
@@ -105,11 +106,14 @@ class Camera3DPivot final : public CameraController {
     m_cameraBuffer.perspectiveValues = getProjParams(renderWidth, renderHeight);
   }
 
-  void updateCamera(uint32_t renderWidth, uint32_t renderHeight) override {
-    //if (!globals::INPUT->m_uiCapturingMouse) {
+  void updateCamera(const uint32_t renderWidth,
+                    const uint32_t renderHeight) override {
+    // if (!globals::INPUT->m_uiCapturingMouse) {
+    if (isFlagSet(globals::ENGINE_FLAGS->m_interaction,
+                  EngineFlagsInteraction::EngineFlagsInteraction_AllowInput)) {
       manipulateCamera();
-      updateCameraBuffer(renderWidth, renderHeight);
-    //}
+    }
+    updateCameraBuffer(renderWidth, renderHeight);
   }
 
   [[nodiscard]] glm::vec3 getPosition() const { return glm::vec3(posV); }

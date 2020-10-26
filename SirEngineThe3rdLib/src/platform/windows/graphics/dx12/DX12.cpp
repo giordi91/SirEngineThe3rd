@@ -66,7 +66,6 @@ Dx12CommandBufferManager *COMMAND_BUFFER_MANAGER = nullptr;
 Dx12ImGuiManager *IMGUI_MANAGER = nullptr;
 
 
-
 struct Dx12Renderable {
   MeshHandle m_meshHandle;
   MaterialHandle m_materialHandle;
@@ -269,8 +268,6 @@ bool Dx12RenderingContext::initializeGraphicsDx12(BaseWindow *wnd,
 
   globals::SKIN_MANAGER = new SkinClusterManager();
   globals::SKIN_MANAGER->init();
-
-  globals::DEBUG_FRAME_DATA = new globals::DebugFrameData();
 
   const bool isHeadless = (wnd == nullptr) | (width == 0) | (height == 0);
 
