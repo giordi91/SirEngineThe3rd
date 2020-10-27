@@ -1,5 +1,6 @@
 #include "SirEngine/io/fileUtils.h"
 
+
 #include <exception>
 #include <filesystem>
 #include <fstream>
@@ -66,6 +67,7 @@ bool isPathDirectory(const std::string &name) {
   return std::filesystem::is_directory(name);
 }
 
+
 bool inJson(const nlohmann::json &jobj, const std::string &key) {
   const auto found = jobj.find(key);
   return found != jobj.end();
@@ -128,9 +130,8 @@ unsigned int getValueIfInJson(const nlohmann::json &data,
   return defValue;
 }
 
-glm::mat4  getValueIfInJson(const nlohmann::json &data,
-                                          const std::string &key,
-                                          const glm::mat4 &default_value) {
+glm::mat4 getValueIfInJson(const nlohmann::json &data, const std::string &key,
+                           const glm::mat4 &default_value) {
   if (data.find(key) != data.end()) {
     auto &mat = data[key];
     return glm::mat4(

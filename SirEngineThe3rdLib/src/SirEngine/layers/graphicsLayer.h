@@ -43,6 +43,7 @@ private:
   bool onShaderCompileEvent(ShaderCompileEvent &e);
   bool onReloadScriptEvent(ReloadScriptsEvent &e);
   bool onRenderSizeChanged(RenderSizeChanged&e);
+  void prepareRenderGraph();
 
   // camera event control
   bool leftDown = false;
