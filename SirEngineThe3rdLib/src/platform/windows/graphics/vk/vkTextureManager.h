@@ -1,31 +1,30 @@
 #pragma once
 
-#include "vkCommandBufferManager.h"
-#include "SirEngine/core.h"
 #include "SirEngine/graphics/renderingContext.h"
 #include "SirEngine/handle.h"
 #include "SirEngine/memory/cpu/SparseMemoryPool.h"
 #include "SirEngine/textureManager.h"
 #include "platform/windows/graphics/vk/volk.h"
+#include "vkCommandBufferManager.h"
 
 namespace SirEngine::vk {
 struct VkTexture2D {
   const char *name = nullptr;
   VkImage image;
   VkDeviceMemory deviceMemory;
-  VkImageLayout imageLayout;
   VkImageView view;
   VkDescriptorImageInfo srv{};
+  VkImageLayout imageLayout;
   VkFormat format;
-  uint32_t width;
-  uint32_t height;
-  uint32_t mipLevels;
-  uint32_t magicNumber;
+  uint32_t width : 16;
+  uint32_t height : 16;
+  uint32_t mipLevels : 16;
+  uint32_t magicNumber : 16;
   uint32_t isRenderTarget : 1;
   uint32_t creationFlags : 31;
 };
 
-class  VkTextureManager final : public TextureManager {
+class VkTextureManager final : public TextureManager {
  public:
   VkTextureManager() : TextureManager(), m_texturePool(RESERVE_SIZE) {}
   ~VkTextureManager() override;
@@ -40,8 +39,9 @@ class  VkTextureManager final : public TextureManager {
                                         const char *name,
                                         TEXTURE_ALLOCATION_FLAGS allocFlags,
                                         RESOURCE_STATE finalState) override;
-  void transitionTexture(CommandBufferHandle commandBuffer, TextureHandle texHandle, RESOURCE_STATE currState,
-	  RESOURCE_STATE newState) override;
+  void transitionTexture(CommandBufferHandle commandBuffer,
+                         TextureHandle texHandle, RESOURCE_STATE currState,
+                         RESOURCE_STATE newState) override;
 
   void initialize() override;
   void cleanup() override;
@@ -85,11 +85,12 @@ class  VkTextureManager final : public TextureManager {
     writeDescriptorSets[0].pImageInfo = &data.srv;
     writeDescriptorSets[0].descriptorCount = 1;
   }
-void setImageLayout(
-    VkCommandBuffer cmdbuffer, VkImage image, VkImageLayout oldImageLayout,
-    VkImageLayout newImageLayout, VkImageSubresourceRange subresourceRange,
-    VkPipelineStageFlags srcStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
-    VkPipelineStageFlags dstStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT) const;
+  void setImageLayout(
+      VkCommandBuffer cmdbuffer, VkImage image, VkImageLayout oldImageLayout,
+      VkImageLayout newImageLayout, VkImageSubresourceRange subresourceRange,
+      VkPipelineStageFlags srcStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+      VkPipelineStageFlags dstStageMask =
+          VK_PIPELINE_STAGE_ALL_COMMANDS_BIT) const;
 
  private:
   bool loadTextureFromFile(const char *name, VkFormat format, VkDevice device,
@@ -101,8 +102,7 @@ void setImageLayout(
     const uint32_t magic = getMagicFromHandle(handle);
     const uint32_t idx = getIndexFromHandle(handle);
     auto const &ref = m_texturePool.getConstRef(idx);
-    assert(ref.magicNumber == magic &&
-           "invalid magic handle for texture ");
+    assert(ref.magicNumber == magic && "invalid magic handle for texture ");
   }
 
  private:

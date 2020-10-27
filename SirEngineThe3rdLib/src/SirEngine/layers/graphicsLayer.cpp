@@ -43,6 +43,54 @@ void GraphicsLayer::allocateOffscreenBuffer(uint32_t w, uint32_t h) {
   globals::OFFSCREEN_BUFFER = offscreenBuffer;
 }
 
+void GraphicsLayer::prepareRenderGraph()
+{
+	alloc =
+		new GraphAllocators{globals::STRING_POOL, globals::PERSISTENT_ALLOCATOR};
+
+	globals::RENDERING_GRAPH = new DependencyGraph();
+	auto *const forward = new ForwardPlus(*alloc);
+	auto *const skybox = new SkyBoxPass(*alloc);
+	auto *const debugDraw = new DebugDrawNode(*alloc);
+	auto *const finalBlit = new FinalBlitNode(*alloc);
+	auto *postProcess = new PostProcessStack(*alloc);
+	postProcess->allocateRenderPass<GammaAndToneMappingEffect>(
+		"GammaToneMapping");
+
+	// add callback to forward for grass shader
+	forward->addCallbackConfig(graphics::GrassTechnique::GRASS_TECHNIQUE_FORWARD,
+	                           &m_grass);
+
+	// temporary graph for testing
+	globals::RENDERING_GRAPH->addNode(forward);
+	globals::RENDERING_GRAPH->addNode(skybox);
+	globals::RENDERING_GRAPH->addNode(debugDraw);
+	globals::RENDERING_GRAPH->addNode(finalBlit);
+	globals::RENDERING_GRAPH->addNode(postProcess);
+	globals::RENDERING_GRAPH->setFinalNode(finalBlit);
+
+	SirEngine::DependencyGraph::connectNodes(forward, ForwardPlus::OUT_TEXTURE,
+	                                         skybox, SkyBoxPass::IN_TEXTURE);
+	SirEngine::DependencyGraph::connectNodes(forward, ForwardPlus::DEPTH_RT,
+	                                         skybox, SkyBoxPass::DEPTH);
+
+	SirEngine::DependencyGraph::connectNodes(
+		skybox, SkyBoxPass::OUT_TEX, debugDraw, DebugDrawNode::IN_TEXTURE);
+	SirEngine::DependencyGraph::connectNodes(forward, ForwardPlus::DEPTH_RT,
+	                                         debugDraw, DebugDrawNode::DEPTH_RT);
+
+	globals::RENDERING_GRAPH->connectNodes(debugDraw, DebugDrawNode::OUT_TEXTURE,
+	                                       postProcess,
+	                                       PostProcessStack::IN_TEXTURE);
+	globals::RENDERING_GRAPH->connectNodes(
+		forward, ForwardPlus::DEPTH_RT, postProcess, PostProcessStack::DEPTH_RT);
+	SirEngine::DependencyGraph::connectNodes(
+		postProcess, PostProcessStack::OUT_TEXTURE, finalBlit,
+		FinalBlitNode::IN_TEXTURE);
+
+	globals::RENDERING_GRAPH->finalizeGraph(m_workerBuffer, &m_graphContext);
+}
+
 void GraphicsLayer::onAttach() {
   m_workerBuffer = globals::COMMAND_BUFFER_MANAGER->createBuffer(
       CommandBufferManager::COMMAND_BUFFER_ALLOCATION_NONE, "resize");
@@ -87,50 +135,7 @@ void GraphicsLayer::onAttach() {
   // globals::ASSET_MANAGER->loadScene(globals::ENGINE_CONFIG->m_startScenePath);
   globals::ASSET_MANAGER->loadScene("../data/scenes/tempScene.json");
 
-  alloc =
-      new GraphAllocators{globals::STRING_POOL, globals::PERSISTENT_ALLOCATOR};
-
-  globals::RENDERING_GRAPH = new DependencyGraph();
-  auto *const forward = new ForwardPlus(*alloc);
-  auto *const skybox = new SkyBoxPass(*alloc);
-  auto *const debugDraw = new DebugDrawNode(*alloc);
-  auto *const finalBlit = new FinalBlitNode(*alloc);
-  auto *postProcess = new PostProcessStack(*alloc);
-  postProcess->allocateRenderPass<GammaAndToneMappingEffect>(
-      "GammaToneMapping");
-
-  // add callback to forward for grass shader
-  forward->addCallbackConfig(graphics::GrassTechnique::GRASS_TECHNIQUE_FORWARD,
-                             &m_grass);
-
-  // temporary graph for testing
-  globals::RENDERING_GRAPH->addNode(forward);
-  globals::RENDERING_GRAPH->addNode(skybox);
-  globals::RENDERING_GRAPH->addNode(debugDraw);
-  globals::RENDERING_GRAPH->addNode(finalBlit);
-  globals::RENDERING_GRAPH->addNode(postProcess);
-  globals::RENDERING_GRAPH->setFinalNode(finalBlit);
-
-  SirEngine::DependencyGraph::connectNodes(forward, ForwardPlus::OUT_TEXTURE,
-                                           skybox, SkyBoxPass::IN_TEXTURE);
-  SirEngine::DependencyGraph::connectNodes(forward, ForwardPlus::DEPTH_RT,
-                                           skybox, SkyBoxPass::DEPTH);
-
-  SirEngine::DependencyGraph::connectNodes(
-      skybox, SkyBoxPass::OUT_TEX, debugDraw, DebugDrawNode::IN_TEXTURE);
-  SirEngine::DependencyGraph::connectNodes(forward, ForwardPlus::DEPTH_RT,
-                                           debugDraw, DebugDrawNode::DEPTH_RT);
-
-  globals::RENDERING_GRAPH->connectNodes(debugDraw, DebugDrawNode::OUT_TEXTURE,
-                                         postProcess,
-                                         PostProcessStack::IN_TEXTURE);
-  globals::RENDERING_GRAPH->connectNodes(
-      forward, ForwardPlus::DEPTH_RT, postProcess, PostProcessStack::DEPTH_RT);
-  SirEngine::DependencyGraph::connectNodes(
-      postProcess, PostProcessStack::OUT_TEXTURE, finalBlit,
-      FinalBlitNode::IN_TEXTURE);
-
-  globals::RENDERING_GRAPH->finalizeGraph(m_workerBuffer, &m_graphContext);
+  prepareRenderGraph();
   globals::RENDERING_CONTEXT->executeGlobalCommandList();
   globals::RENDERING_CONTEXT->flush();
 }
