@@ -305,10 +305,11 @@ bool VkRenderingContext::initializeGraphics() {
   return true;
 }
 
-void VkRenderingContext::setupCameraForFrame(uint32_t renderWidth,
-                                             uint32_t renderHeight,
-                                             bool updateCameraMovment) {
-  globals::ACTIVE_CAMERA->updateCamera(renderWidth, renderHeight,updateCameraMovment);
+void VkRenderingContext::setupCameraForFrame(const uint32_t renderWidth,
+                                             const uint32_t renderHeight,
+                                             const bool updateCameraMovment) {
+  globals::ACTIVE_CAMERA->updateCamera(renderWidth, renderHeight,
+                                       updateCameraMovment);
 
   m_frameData.m_mainCamera = globals::MAIN_CAMERA->getCameraBuffer();
   m_frameData.m_activeCamera = globals::ACTIVE_CAMERA->getCameraBuffer();
@@ -320,12 +321,9 @@ void VkRenderingContext::setupCameraForFrame(uint32_t renderWidth,
 
   globals::CONSTANT_BUFFER_MANAGER->update(m_cameraHandle, &m_frameData);
 
-  // memcpy(m_cameraBuffer.data, &m_camBufferCPU, sizeof(m_camBufferCPU));
-  globals::CONSTANT_BUFFER_MANAGER->update(m_cameraHandle, &m_frameData);
-
   VkWriteDescriptorSet writeDescriptorSets[2] = {};
   VkDescriptorBufferInfo bufferInfoUniform[2] = {};
-  auto descriptorSet =
+  VkDescriptorSet_T *descriptorSet =
       vk::DESCRIPTOR_MANAGER->getDescriptorSet(PER_FRAME_DATA_HANDLE);
   vk::CONSTANT_BUFFER_MANAGER->bindConstantBuffer(
       m_cameraHandle, bufferInfoUniform[0], 0, &writeDescriptorSets[0],

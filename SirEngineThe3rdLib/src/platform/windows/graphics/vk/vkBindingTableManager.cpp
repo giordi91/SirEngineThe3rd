@@ -309,6 +309,7 @@ void VkBindingTableManager::free(const BindingTableHandle &bindingTable) {
   const auto &data = m_bindingTablePool.getConstRef(index);
 
   vkDestroyDescriptorSetLayout(vk::LOGICAL_DEVICE, data.layout, nullptr);
+  m_bindingTablePool.free(index);
 }
 
 void createDescriptorPool(const VkDevice device,

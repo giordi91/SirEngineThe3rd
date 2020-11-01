@@ -1,5 +1,6 @@
 #include "SirEngine/graphics/camera.h"
 
+
 #include <glm/gtx/transform.hpp>
 
 #include "SirEngine/engineConfig.h"
@@ -41,13 +42,13 @@ glm::mat4 Camera3DPivot::getViewInverse(const glm::mat4 modelM) const {
   return glm::inverse(viewMatrix) * modelM;
 }
 
-void Camera3DPivot::getFrustum(Plane* outPlanes) const {
+void Camera3DPivot::getFrustum(Plane* outPlanes, uint32_t screenWidth, uint32_t screenHeight) const {
   glm::mat4x4 cameraM = getViewInverse(glm::mat4x4(1.0f));
 
   float angle = getVfov();
   float aspsectRatio =
-      static_cast<float>(globals::ENGINE_CONFIG->m_windowWidth) /
-      static_cast<float>(globals::ENGINE_CONFIG->m_windowHeight);
+      static_cast<float>(screenWidth) /
+      static_cast<float>(screenHeight);
   float apiCompensateFactor =
       globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::DX12 ? 1.0f : -1.0f;
   float nnear = getNear() * apiCompensateFactor;

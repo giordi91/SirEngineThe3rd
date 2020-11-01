@@ -128,8 +128,7 @@ void DebugRenderer::cleanup() {
 
 void DebugRenderer::free() {}
 
-
-void DebugRenderer::render(uint32_t renderWidth,uint32_t renderHeight) {
+void DebugRenderer::render(uint32_t renderWidth, uint32_t renderHeight) {
   // draw lines
   int slabCount = m_lineSlab[globals::CURRENT_FRAME].getSlabCount();
   assureLinesTables(slabCount);
@@ -247,7 +246,8 @@ void DebugRenderer::assureLinesTables(const int slabCount) {
 void DebugRenderer::newFrame() { m_lineSlab[globals::CURRENT_FRAME].clear(); }
 
 void DebugRenderer::drawCamera(const CameraController *camera,
-                               glm::vec4 color) {
+                               uint32_t renderWidth, uint32_t renderHeight,
+                               const glm::vec4 color) {
   // 12 is the number of lines needed for the AABB, 4 top, 4 bottom, 4
   // vertical two is because we need two points per line, we are not doing
   // line-strip
@@ -264,8 +264,8 @@ void DebugRenderer::drawCamera(const CameraController *camera,
 
   // NOTE at one point this might be something that the camera decides?
   float aspsectRatio =
-      static_cast<float>(globals::ENGINE_CONFIG->m_windowWidth) /
-      static_cast<float>(globals::ENGINE_CONFIG->m_windowHeight);
+      static_cast<float>(renderWidth) /
+      static_cast<float>(renderHeight);
   float apiCompensateFactor =
       globals::ENGINE_CONFIG->m_graphicsAPI == GRAPHIC_API::DX12 ? 1.0f : -1.0f;
   float nnear = camera->getNear() * apiCompensateFactor;
@@ -283,34 +283,34 @@ void DebugRenderer::drawCamera(const CameraController *camera,
   float wfarhalf = wfar / 2.0f;
 
   // near plane
-  counter = push3toVec(points, glm::vec3{wnearhalf, -hnearhalf, nnear},
-                       counter, cameraM);
+  counter = push3toVec(points, glm::vec3{wnearhalf, -hnearhalf, nnear}, counter,
+                       cameraM);
   counter = push3toVec(points, glm::vec3{wnearhalf, hnearhalf, nnear}, counter,
                        cameraM);
 
   counter = push3toVec(points, glm::vec3{wnearhalf, hnearhalf, nnear}, counter,
                        cameraM);
-  counter = push3toVec(points, glm::vec3{-wnearhalf, hnearhalf, nnear},
-                       counter, cameraM);
+  counter = push3toVec(points, glm::vec3{-wnearhalf, hnearhalf, nnear}, counter,
+                       cameraM);
 
-  counter = push3toVec(points, glm::vec3{-wnearhalf, hnearhalf, nnear},
-                       counter, cameraM);
+  counter = push3toVec(points, glm::vec3{-wnearhalf, hnearhalf, nnear}, counter,
+                       cameraM);
   counter = push3toVec(points, glm::vec3{-wnearhalf, -hnearhalf, nnear},
                        counter, cameraM);
 
   counter = push3toVec(points, glm::vec3{-wnearhalf, -hnearhalf, nnear},
                        counter, cameraM);
-  counter = push3toVec(points, glm::vec3{wnearhalf, -hnearhalf, nnear},
-                       counter, cameraM);
+  counter = push3toVec(points, glm::vec3{wnearhalf, -hnearhalf, nnear}, counter,
+                       cameraM);
 
   // far plane
   counter = push3toVec(points, glm::vec3{wfarhalf, -hfarhalf, ffar}, counter,
                        cameraM);
-  counter = push3toVec(points, glm::vec3{wfarhalf, hfarhalf, ffar}, counter,
-                       cameraM);
+  counter =
+      push3toVec(points, glm::vec3{wfarhalf, hfarhalf, ffar}, counter, cameraM);
 
-  counter = push3toVec(points, glm::vec3{wfarhalf, hfarhalf, ffar}, counter,
-                       cameraM);
+  counter =
+      push3toVec(points, glm::vec3{wfarhalf, hfarhalf, ffar}, counter, cameraM);
   counter = push3toVec(points, glm::vec3{-wfarhalf, hfarhalf, ffar}, counter,
                        cameraM);
 
@@ -325,20 +325,20 @@ void DebugRenderer::drawCamera(const CameraController *camera,
                        cameraM);
 
   // sides
-  counter = push3toVec(points, glm::vec3{wfarhalf, hfarhalf, ffar}, counter,
-                       cameraM);
+  counter =
+      push3toVec(points, glm::vec3{wfarhalf, hfarhalf, ffar}, counter, cameraM);
   counter = push3toVec(points, glm::vec3{wnearhalf, hnearhalf, nnear}, counter,
                        cameraM);
 
   counter = push3toVec(points, glm::vec3{wfarhalf, -hfarhalf, ffar}, counter,
                        cameraM);
-  counter = push3toVec(points, glm::vec3{wnearhalf, -hnearhalf, nnear},
-                       counter, cameraM);
+  counter = push3toVec(points, glm::vec3{wnearhalf, -hnearhalf, nnear}, counter,
+                       cameraM);
 
   counter = push3toVec(points, glm::vec3{-wfarhalf, hfarhalf, ffar}, counter,
                        cameraM);
-  counter = push3toVec(points, glm::vec3{-wnearhalf, hnearhalf, nnear},
-                       counter, cameraM);
+  counter = push3toVec(points, glm::vec3{-wnearhalf, hnearhalf, nnear}, counter,
+                       cameraM);
 
   counter = push3toVec(points, glm::vec3{-wfarhalf, -hfarhalf, ffar}, counter,
                        cameraM);
@@ -347,7 +347,7 @@ void DebugRenderer::drawCamera(const CameraController *camera,
 
   // drawing camera normals
   Plane planes[6];
-  camera->getFrustum(planes);
+  camera->getFrustum(planes,renderWidth,renderHeight);
   glm::vec3 viewDir = camera->getViewDirection();
   float pushOffset = 0.5f;
   for (int i = 0; i < 6; ++i) {
@@ -358,8 +358,8 @@ void DebugRenderer::drawCamera(const CameraController *camera,
         glm::normalize(viewDir - (glm::vec3(planes[i].normal) * amount)) *
         pushOffset;
     // since we offset based on the view direction, plane 4,5 are far and near
-    // respectively and we would project to nothing and then normalize so we skip
-    // it
+    // respectively and we would project to nothing and then normalize so we
+    // skip it
     pushDir = i < 4 ? pushDir : glm::vec3{};
 
     counter =

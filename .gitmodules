@@ -67,3 +67,6 @@
 [submodule "vendors/SPIRV-Cross"]
 	path = vendors/SPIRV-Cross
 	url = https://github.com/giordi91/SPIRV-Cross.git
+[submodule "vendors/df_serialize"]
+	path = vendors/df_serialize
+	url = https://github.com/Atrix256/df_serialize.git
