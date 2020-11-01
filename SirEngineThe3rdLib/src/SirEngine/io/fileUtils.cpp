@@ -1,12 +1,12 @@
 #include "SirEngine/io/fileUtils.h"
 
-
 #include <exception>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 
+#include "SirEngine/log.h"
 #include "nlohmann/json.hpp"
 
 namespace SirEngine {
@@ -67,6 +67,17 @@ bool isPathDirectory(const std::string &name) {
   return std::filesystem::is_directory(name);
 }
 
+bool createDirectory(const std::string &directoryPath) {
+  if (!std::filesystem::exists(directoryPath)) {
+    try {
+      return std::filesystem::create_directory(directoryPath);
+    } catch (...) {
+      SE_CORE_ERROR("Could not create directory {}", directoryPath);
+      return false;
+    }
+  }
+  return true;
+}
 
 bool inJson(const nlohmann::json &jobj, const std::string &key) {
   const auto found = jobj.find(key);
@@ -130,8 +141,16 @@ unsigned int getValueIfInJson(const nlohmann::json &data,
   return defValue;
 }
 
+int getValueIfInJson(const nlohmann::json &data, const std::string &key,
+                     const int &defValue) {
+  if (data.find(key) != data.end()) {
+    return data[key].get<int>();
+  }
+  return defValue;
+}
+
 glm::mat4 getValueIfInJson(const nlohmann::json &data, const std::string &key,
-                           const glm::mat4 &default_value) {
+                           const glm::mat4 &defaultValue) {
   if (data.find(key) != data.end()) {
     auto &mat = data[key];
     return glm::mat4(
@@ -142,7 +161,7 @@ glm::mat4 getValueIfInJson(const nlohmann::json &data, const std::string &key,
         mat[12].get<float>(), mat[13].get<float>(), mat[14].get<float>(),
         mat[15].get<float>());
   }
-  return default_value;
+  return defaultValue;
 }
 
 void assertInJson(const nlohmann::json &jobj, const std::string &key) {
@@ -174,5 +193,10 @@ void getJsonObj(const std::string &path, nlohmann::json &outJson) {
     assert(0);
     outJson = nlohmann::json();
   }
+}
+
+void writeJsonObj(const char *outPath, nlohmann::json &outJson) {
+  std::ofstream o(outPath);
+  o << std::setw(4) << outJson << std::endl;
 }
 }  // namespace SirEngine

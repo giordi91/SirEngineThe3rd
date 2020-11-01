@@ -50,6 +50,7 @@ static const std::string PSO_KEY_STENCIL_COMPARISON_FUNCTION = "stencilFunc";
 static const std::string SWAP_CHAIN_FORMAT_KEY = "SWAP_CHAIN_FORMAT";
 
 static const int DEFAULT_INT = -1;
+static constexpr  uint32_t DEFAULT_UINT = 0;
 static const bool DEFAULT_BOOL = false;
 static const std::unordered_map<std::string, PSO_TYPE> STRING_TO_PSO_TYPE{
     {PSO_KEY_TYPE_DXR, PSO_TYPE::DXR},
@@ -450,7 +451,7 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj, const char *path,
       convertStringToEngineTopologyType(topologyString);
 
   size_t renderTargets = static_cast<size_t>(
-      getValueIfInJson(jobj, PSO_KEY_RENDER_TARGETS, DEFAULT_INT));
+      getValueIfInJson(jobj, PSO_KEY_RENDER_TARGETS, DEFAULT_UINT));
 
   assertInJson(jobj, PSO_KEY_RTV_FORMATS);
   std::vector<DXGI_FORMAT> formats;
@@ -461,7 +462,7 @@ PSOCompileResult processRasterPSO(nlohmann::json &jobj, const char *path,
          "number of render targets and provided formats don't match");
 
   int sampleDescCount =
-      getValueIfInJson(jobj, PSO_KEY_SAMPLE_DESC_COUNT, DEFAULT_INT);
+      getValueIfInJson(jobj, PSO_KEY_SAMPLE_DESC_COUNT, DEFAULT_UINT);
   int sampleDescQuality =
       getValueIfInJson(jobj, PSO_KEY_SAMPLE_DESC_QUALITY, DEFAULT_INT);
 

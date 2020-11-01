@@ -34,6 +34,7 @@ endif()
 
 add_subdirectory(lua)
 add_subdirectory(Compressonator)
+set(BUILD_SIR ON)
 add_subdirectory(crunch)
 add_subdirectory(imgui)
 add_subdirectory(DirectXTK12)
@@ -55,6 +56,8 @@ file(COPY "display-library/include/adl_sdk.h" DESTINATION ${CMAKE_SOURCE_DIR}/..
 file(COPY "display-library/include/adl_structures.h" DESTINATION ${CMAKE_SOURCE_DIR}/../builtDependencies/includes/amd )
 
 file(COPY "stb/stb_image.h" DESTINATION ${CMAKE_SOURCE_DIR}/../builtDependencies/includes/stb )
+file(COPY "df_serialize/df_serialize" DESTINATION ${CMAKE_SOURCE_DIR}/../builtDependencies/includes/df_serialize )
+file(COPY "df_serialize/rapidjson" DESTINATION ${CMAKE_SOURCE_DIR}/../builtDependencies/includes/rapidjson )
 
 #pix event, might want to do this only on windows
 if(WIN32)

@@ -156,7 +156,7 @@ void GraphicsLayer::onUpdate() {
   globals::DEBUG_RENDERER->newFrame();
 
   if (globals::ACTIVE_CAMERA == globals::DEBUG_CAMERA) {
-    globals::DEBUG_RENDERER->drawCamera(globals::MAIN_CAMERA,
+    globals::DEBUG_RENDERER->drawCamera(globals::MAIN_CAMERA, w,h,
                                         glm::vec4(1, 1, 1, 1));
   }
 
