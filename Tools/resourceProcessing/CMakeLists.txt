@@ -14,11 +14,9 @@ project(ResourceProcessing)
     message (STATUS ${CMAKE_CURRENT_SOURCE_DIR})
     include_directories(
 						${CMAKE_SOURCE_DIR}/builtDependencies/includes
-						${CMAKE_CURRENT_SOURCE_DIR}
+						${CMAKE_CURRENT_SOURCE_DIR}/src
 						${CMAKE_SOURCE_DIR}/SirEngineThe3rdLib/src
-						${CMAKE_SOURCE_DIR}/ResourceCompilerLib/src
 						${CMAKE_SOURCE_DIR}/vendors/glm
-						${CMAKE_CURRENT_SOURCE_DIR}/includes
 						${Vulkan_INCLUDE_DIRS}
 	)
 

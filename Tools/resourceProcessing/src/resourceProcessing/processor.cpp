@@ -1,14 +1,15 @@
-#include "processor.h"
+#include "resourceProcessing/processor.h"
 
 
-#include "animationCompilerPlugin/AnimationCompilerPlugin.h"
 #include "SirEngine/log.h"
-#include "obj/modelCompilerPlugin.h"
-#include "pointTilerCompilerPlugin/pointTilerCompilerPlugin.h"
-#include "psoCompilerPlugin/PSOCompilerPlugin.h"
-#include "shaderCompilerPlugin/shaderCompilerPlugin.h"
-#include "textureCompilerPlugin/textureCompilerPlugin.h"
-#include "vkShaderCompilerPlugin/vkShaderCompilerPlugin.h"
+
+#include "resourceProcessing/animationCompilerPlugin/animationCompilerPlugin.h"
+#include "resourceProcessing/obj/modelCompilerPlugin.h"
+#include "resourceProcessing/pointTilerCompilerPlugin/pointTilerCompilerPlugin.h"
+#include "resourceProcessing/psoCompilerPlugin/PSOCompilerPlugin.h"
+#include "resourceProcessing/shaderCompilerPlugin/shaderCompilerPlugin.h"
+#include "resourceProcessing/textureCompilerPlugin/textureCompilerPlugin.h"
+#include "resourceProcessing/vkShaderCompilerPlugin/vkShaderCompilerPlugin.h"
 
 namespace SirEngine::ResourceProcessing {
 void Processor::initialize() {
