@@ -13,10 +13,10 @@ namespace SirEngine::debug
 {
 FrameTimingsWidget::FrameTimingsWidget() {
   for (int i = 0; i < NUMBER_OF_SAMPLES; ++i) {
-    samples[i] = 0.0f;
+    m_samples[i] = 0.0f;
   }
   for (int i = 0; i < NUMBER_OF_HISTOGRAMS_BUCKETS; ++i) {
-    framesHistogram[i] = 0.0f;
+    m_framesHistogram[i] = 0.0f;
   }
 
 }
@@ -36,8 +36,8 @@ void FrameTimingsWidget::render() {
 
   float lastFrameInMs = static_cast<float>(globals::LAST_FRAME_TIME_NS) * 1e-6f;
   // render frame graphs
-  samples[runningCounter] = lastFrameInMs;
-  runningCounter = ((runningCounter + 1) % NUMBER_OF_SAMPLES);
+  m_samples[m_runningCounter] = lastFrameInMs;
+  m_runningCounter = ((m_runningCounter + 1) % NUMBER_OF_SAMPLES);
   float finalSamples[NUMBER_OF_SAMPLES];
   float average = 0.0f;
   float maxV = -100.0f;
@@ -45,7 +45,7 @@ void FrameTimingsWidget::render() {
 
   // lets compute min max and average
   for (int i = 0; i < NUMBER_OF_SAMPLES; ++i) {
-    float v = samples[i];
+    float v = m_samples[i];
     maxV = maxV > v ? maxV : v;
     minV = minV < v ? minV : v;
     average += v;
@@ -54,8 +54,8 @@ void FrameTimingsWidget::render() {
 
   // final
   for (int i = 0; i < NUMBER_OF_SAMPLES; ++i) {
-    int idx = (runningCounter + i) % NUMBER_OF_SAMPLES;
-    finalSamples[i] = ((samples[idx] - minV) / (maxV - minV) - 0.5f) * 2.0f;
+    int idx = (m_runningCounter + i) % NUMBER_OF_SAMPLES;
+    finalSamples[i] = ((m_samples[idx] - minV) / (maxV - minV) - 0.5f) * 2.0f;
   }
   std::string overlay{"avg "};
   overlay += std::to_string(average) + " ms";
@@ -85,9 +85,9 @@ void FrameTimingsWidget::render() {
   // update the histogram, we reserved last bucket for all the frames greater
   // than the max
   if (lastFrameInMs > MAX_FRAME_TIME) {
-    ++framesHistogram[NUMBER_OF_HISTOGRAMS_BUCKETS - 1];
+    ++m_framesHistogram[NUMBER_OF_HISTOGRAMS_BUCKETS - 1];
   } else {
-    ++framesHistogram[bucket];
+    ++m_framesHistogram[bucket];
   }
 
   float finalHisto[NUMBER_OF_HISTOGRAMS_BUCKETS];
@@ -96,13 +96,13 @@ void FrameTimingsWidget::render() {
   // imgui accepts values from 0-1
   float tallestValue = 0.0f;
   for (int i = 0; i < NUMBER_OF_HISTOGRAMS_BUCKETS; ++i) {
-    if (framesHistogram[i] > tallestValue) {
-      tallestValue = framesHistogram[i];
+    if (m_framesHistogram[i] > tallestValue) {
+      tallestValue = m_framesHistogram[i];
     }
   }
   // now that we have it we can normalize and populate the final histogram array
   for (int i = 0; i < NUMBER_OF_HISTOGRAMS_BUCKETS; ++i) {
-    finalHisto[i] = framesHistogram[i] / tallestValue;
+    finalHisto[i] = m_framesHistogram[i] / tallestValue;
   }
   std::string histoLabel{"Frame distribution: bucket size "};
   histoLabel += std::to_string(bucketSize) + "ms";
