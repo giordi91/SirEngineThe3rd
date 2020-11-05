@@ -1,8 +1,6 @@
 #include "resourceProcessing/processor.h"
 
-
 #include "SirEngine/log.h"
-
 #include "resourceProcessing/animationCompilerPlugin/animationCompilerPlugin.h"
 #include "resourceProcessing/obj/modelCompilerPlugin.h"
 #include "resourceProcessing/pointTilerCompilerPlugin/pointTilerCompilerPlugin.h"
@@ -20,7 +18,6 @@ void Processor::initialize() {
   registerFunction("animationCompilerPlugin", processAnim);
   registerFunction("textureCompilerPlugin", processTexture);
   registerFunction("PSOCompilerPlugin", processPSO);
-
 }
 
 void Processor::registerFunction(const std::string& name,

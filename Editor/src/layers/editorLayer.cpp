@@ -58,6 +58,9 @@ void EditorLayer::onAttach() {
     offscreenTexture =
         globals::IMGUI_MANAGER->getImguiImageHandle(globals::OFFSCREEN_BUFFER);
   }
+  m_console.initialize();
+  m_console.log("[error] test");
+  m_console.log("[warning] test2");
 }
 
 void EditorLayer::onDetach() {}
@@ -248,10 +251,11 @@ void EditorLayer::onUpdate() {
   ImGui::End();
 
   ImGui::SetNextWindowDockID(dockIds.bottom, ImGuiCond_Appearing);
-  ImGui::Begin("log", (bool *)0);
+  m_console.render();
+  //ImGui::Begin("log", (bool *)0);
   // const std::string *buff = Log::getBuffer();
   // ImGui::Text("%s", buff->c_str());
-  ImGui::End();
+  //ImGui::End();
 
   ImGui::SetNextWindowDockID(dockIds.left, ImGuiCond_Appearing);
   bool m_showHierarchy = true;

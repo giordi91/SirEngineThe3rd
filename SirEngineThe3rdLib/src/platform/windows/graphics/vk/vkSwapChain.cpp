@@ -1,13 +1,14 @@
 #include "platform/windows/graphics/vk/vkSwapChain.h"
-#include "SirEngine/globals.h"
-#include "SirEngine/engineConfig.h"
-#include "SirEngine/log.h"
-#include "platform/windows/graphics/vk/vk.h"
-#include "platform/windows/graphics/vk/vkLoad.h"
+
 #include <algorithm>
 #include <cassert>
 #include <iostream>
 
+#include "SirEngine/engineConfig.h"
+#include "SirEngine/globals.h"
+#include "SirEngine/log.h"
+#include "platform/windows/graphics/vk/vk.h"
+#include "platform/windows/graphics/vk/vkLoad.h"
 #include "vkBindingTableManager.h"
 
 namespace SirEngine::vk {
@@ -78,7 +79,6 @@ bool getCapabilitiesOfPresentationSurface(
 bool selectNumberOfSwapchainImages(
     VkSurfaceCapabilitiesKHR const &surfaceCapabilities,
     uint32_t &numberOfImages) {
-
   // here we clamp our value of images wanted expressed in the config, such that
   // must be least/equal than max and min, but if in range keeping our wanted
   // value
@@ -87,10 +87,10 @@ bool selectNumberOfSwapchainImages(
                         globals::ENGINE_CONFIG->m_frameBufferingCount),
                surfaceCapabilities.minImageCount);
   if (finalImageCount != globals::ENGINE_CONFIG->m_frameBufferingCount) {
-    SE_CORE_WARN("Swap chain: could not create requested number of images:{0}, "
-                 "created {1} instead",
-                 globals::ENGINE_CONFIG->m_frameBufferingCount,
-                 finalImageCount);
+    SE_CORE_WARN(
+        "Swap chain: could not create requested number of images:{0}, "
+        "created {1} instead",
+        globals::ENGINE_CONFIG->m_frameBufferingCount, finalImageCount);
   }
   numberOfImages = finalImageCount;
 
@@ -205,9 +205,8 @@ bool selectFormatOfSwapchainImages(
   return true;
 }
 
-VkCompositeAlphaFlagBitsKHR getAlphaComposite(VkPhysicalDevice physicalDevice,
-                                              VkSurfaceKHR surface) {
-
+VkCompositeAlphaFlagBitsKHR getAlphaComposite(
+    const VkPhysicalDevice physicalDevice, const VkSurfaceKHR surface) {
   // we want to check what alpha transform/composition is supported
   VkSurfaceCapabilitiesKHR surfCaps;
   VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface,
@@ -274,7 +273,6 @@ bool createSwapchainWithR8G8B8A8FormatAndMailboxPresentMode(
     VkFormat &imageFormat, VkSwapchainKHR &oldSwapchain,
     VkSwapchainKHR &swapchain, std::vector<VkImage> &swapchainImages,
     std::vector<VkImageView> &swapchainImageViews) {
-
   VkPresentModeKHR desiredPresentMode;
   // TODO should support v-sync
   if (!selectDesiredPresentationMode(physicalDevice, presentationSurface,
@@ -381,7 +379,6 @@ bool createSwapchain(const VkDevice logicalDevice,
                      const VkSurfaceKHR surface, const uint32_t width,
                      const uint32_t height, VkSwapchain *oldSwapchain,
                      VkSwapchain &outSwapchain) {
-
   VK_CHECK(vkDeviceWaitIdle(logicalDevice));
 
   // Ready = false;
@@ -478,4 +475,4 @@ void resizeSwapchain(const VkDevice logicalDevice,
   createSwapchain(logicalDevice, physicalDevice, surface, width, height, &old,
                   outSwapchain);
 }
-} // namespace SirEngine::vk
+}  // namespace SirEngine::vk

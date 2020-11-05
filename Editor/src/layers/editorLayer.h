@@ -3,6 +3,7 @@
 #include <imgui/imgui.h>
 
 #include "SirEngine/layer.h"
+#include "ui/logConsole.h"
 
 namespace SirEngine {
 class Event;
@@ -59,5 +60,6 @@ class EditorLayer final : public Layer {
   ImTextureID offscreenTexture{};
   ImVec2 viewportPanelSize;
   bool dirty = false;
+  ::Editor::LogConsoleWidget m_console;
 };
 }  // namespace SirEngine
