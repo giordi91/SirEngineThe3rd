@@ -59,8 +59,10 @@ void EditorLayer::onAttach() {
         globals::IMGUI_MANAGER->getImguiImageHandle(globals::OFFSCREEN_BUFFER);
   }
   m_console.initialize();
-  m_console.log("[error] test");
-  m_console.log("[warning] test2");
+  for(int i=0; i < 300;++i)
+  {
+	m_console.log((std::string("[error] test ") + std::to_string(i)).c_str(),Editor::EditorLogLevel::LOG_ERROR);
+  }
 }
 
 void EditorLayer::onDetach() {}

@@ -2,29 +2,31 @@
 
 #include <string>
 
+#include "SirEngine/memory/cpu/overridingRingBuffer.h"
 #include "imgui/imgui.h"
+
 namespace Editor {
+
+struct LogItem {
+  const char *message = nullptr;
+  ImColor color{255, 255, 255, 255};
+};
+
+void destroyLogItem(LogItem &item) {
+  free((void *)(item.message));
+}
 
 struct LogConsole {
   char InputBuf[256];
-  ImVector<char *> Items;
+  SirEngine::OverridingRingBuffer<LogItem> Items;
   bool ScrollToBottom;
-  ImVector<char *> History;
-  int HistoryPos;  // -1: new line, 0..History.Size-1 browsing history.
-  ImVector<const char *> Commands;
 
-  LogConsole() {
-    ClearLog();
+  LogConsole() : Items(100, nullptr) {
+    clearLog();
     memset(InputBuf, 0, sizeof(InputBuf));
-    HistoryPos = -1;
-    Commands.push_back("HISTORY");
-    Commands.push_back("CLEAR");
-    // AddLog("Welcome to Dear ImGui!");
+    Items.registerDestroyCallback(destroyLogItem);
   }
-  ~LogConsole() {
-    ClearLog();
-    for (int i = 0; i < History.Size; i++) free(History[i]);
-  }
+  ~LogConsole() { clearLog(); }
 
   // Portable helpers
   static int Stricmp(const char *str1, const char *str2) {
@@ -44,24 +46,24 @@ struct LogConsole {
     }
     return d;
   }
-  static char *Strdup(const char *str) {
+  static char *strdup(const char *str) {
     size_t len = strlen(str) + 1;
     void *buff = malloc(len);
-    return (char *)memcpy(buff, (const void *)str, len);
+    return static_cast<char *>(
+        memcpy(buff, static_cast<const void *>(str), len));
   }
-  static void Strtrim(char *str) {
-    char *str_end = str + strlen(str);
-    while (str_end > str && str_end[-1] == ' ') str_end--;
-    *str_end = 0;
+  static void strtrim(char *str) {
+    char *strEnd = str + strlen(str);
+    while (strEnd > str && strEnd[-1] == ' ') strEnd--;
+    *strEnd = 0;
   }
 
-  void ClearLog() {
-    for (int i = 0; i < Items.Size; i++) free(Items[i]);
+  void clearLog() {
     Items.clear();
     ScrollToBottom = true;
   }
 
-  void AddLog(const char *fmt, ...) IM_FMTARGS(2) {
+  void addLog(const EditorLogLevel level, const char *fmt, ...) IM_FMTARGS(2) {
     // FIXME-OPT
     char buf[1024];
     va_list args;
@@ -69,7 +71,19 @@ struct LogConsole {
     vsnprintf(buf, IM_ARRAYSIZE(buf), fmt, args);
     buf[IM_ARRAYSIZE(buf) - 1] = 0;
     va_end(args);
-    Items.push_back(Strdup(buf));
+    ImColor color;
+    switch (level) {
+      case EditorLogLevel::LOG_NONE:
+        color = ImColor{255, 255, 255};
+        break;
+      case EditorLogLevel::LOG_WARNING:
+        color = ImColor{255, 255, 0};
+        break;
+      case EditorLogLevel::LOG_ERROR:
+        color = ImColor{255, 0, 0};
+        break;
+    }
+    Items.push(LogItem{strdup(buf), color});
     ScrollToBottom = true;
   }
 
@@ -90,12 +104,9 @@ struct LogConsole {
     }
     // TODO: display items starting from the bottom
 
-    if (ImGui::SmallButton("Add Dummy Error")) {
-      AddLog("[error] something went wrong");
-    }
     ImGui::SameLine();
     if (ImGui::SmallButton("Clear")) {
-      ClearLog();
+      clearLog();
     }
     ImGui::SameLine();
     if (ImGui::SmallButton("Scroll to bottom")) ScrollToBottom = true;
@@ -113,7 +124,7 @@ struct LogConsole {
         ImGuiWindowFlags_HorizontalScrollbar);  // Leave room for 1 separator +
                                                 // 1 InputText
     if (ImGui::BeginPopupContextWindow()) {
-      if (ImGui::Selectable("Clear")) ClearLog();
+      if (ImGui::Selectable("Clear")) clearLog();
       ImGui::EndPopup();
     }
 
@@ -143,17 +154,17 @@ struct LogConsole {
                         ImVec2(4, 1));  // Tighten spacing
 
     ImVec4 col_default_text = ImGui::GetStyleColorVec4(ImGuiCol_Text);
-    for (int i = 0; i < Items.Size; i++) {
-      const char *item = Items[i];
-      ImVec4 col = col_default_text;
-      if (strstr(item, "[error]"))
-        col = ImColor(1.0f, 0.4f, 0.4f, 1.0f);
-      else if (strstr(item, "[warning]"))
-        col = ImColor(1.0f, 1.4f, 0.4f, 1.0f);
-      else if (strncmp(item, "# ", 2) == 0)
-        col = ImColor(1.0f, 0.78f, 0.58f, 1.0f);
+
+    uint32_t start = Items.getFirstElementIndex();
+    uint32_t size = Items.getSize();
+    uint32_t count = Items.usedElementCount();
+    const LogItem *itemData = Items.getData();
+    for (int i = 0; i < count; i++) {
+      uint32_t idx = (start + i) % size;
+      const LogItem &item = itemData[idx];
+      ImVec4 col = item.color;
       ImGui::PushStyleColor(ImGuiCol_Text, col);
-      ImGui::TextUnformatted(item);
+      ImGui::TextUnformatted(item.message);
       ImGui::PopStyleColor();
     }
 
@@ -166,27 +177,16 @@ struct LogConsole {
 };
 
 void LogConsoleWidget::initialize() { m_console = new LogConsole(); }
-// static bool fuzzy_match_simple(char const *pattern, char const *str) {
-//  while (*pattern != '\0' && *str != '\0') {
-//    if (tolower(*pattern) == tolower(*str)) ++pattern;
-//    ++str;
-//  }
-//
-//  return *pattern == '\0' ? true : false;
-//}
 void LogConsoleWidget::render() {
-  // ImVec2 winPos{globals::ENGINE_CONFIG->m_windowWidth - m_width - 100, 0};
-  // ImGui::SetNextWindowPos(winPos, ImGuiCond_FirstUseEver);
-  // ImGui::SetNextWindowSize(ImVec2(m_width, m_height),
-  // ImGuiCond_FirstUseEver);
   ImGui::Begin("Log", (bool *)0);
   m_console->Draw(&m_shouldRenderConsole);
 
   ImGui::Separator();
   ImGui::End();
 }
-void LogConsoleWidget::log(const char *logValue) {
-  m_console->AddLog(logValue);
+void LogConsoleWidget::log(const char *logValue,
+                           const EditorLogLevel level) const {
+  m_console->addLog(level, logValue);
 }
 
 }  // namespace Editor
