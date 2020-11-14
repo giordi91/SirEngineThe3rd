@@ -1,7 +1,7 @@
 # Sir Engine the 3rd [![Actions Status](https://github.com/giordi91/SirEngineThe3rd/workflows/build/badge.svg)](https://github.com/giordi91/SirEngineThe3rd/actions) 
 
 
-![alt text](./images/logo.png "logo")
+![alt text](./docs/images/logo.png "logo")
 
 
 A Windows DX12/Vulkan game engine (kind of).
@@ -44,6 +44,8 @@ If you don't find what you are looking for, or want to know something specific o
 The build should be fairly straight forward but there might be a couple of gotchas you might need to be aware of.
 The engine is made and tested on Windows, the windowing system allows for implementing other windowing system for other operating systems but has never been a priority, as such you can only build on Windows.
 
+The following commands are made for normal windows terminal. If you use powershell you will need to change the command concatenation.
+
 ## Dependencies
 Most of the dependencies are git submodules and get built serparatedly, but you will need to install the Vulkan SDK: https://vulkan.lunarg.com/sdk/home#windows, latest tested version is Vulkan SDK 1.2.154.1
 
@@ -51,13 +53,36 @@ Once you installed the Vulkan SDK you can proceed in cloning the repository and 
 ```bash
 git clone --recurse-submodules -j8 https://github.com/giordi91/SirEngineThe3rd.git
 ```
+This should take a while, some beefy dependnecies in there. Dependencies came pre-built, but especially if in debug you might need to rebuild them. I highly recomand you do it anyway. 
+create a folder ```build``` inside vendors, and from inside there run:
+```bash
+cmake ../ && cmake --build . --config Debug
+```
+I have omitted the generator to be Visual Studio 2019 because that is my default and what you ***MUST*** use for all build operations.
+If you wish to build the engine in debug you will need to run the same command but change the config from Debug to Release.
+Everything will be built and put where the engine expects, both headers and libraries for linking.
+
+## Engine
+Go in the root of the project (inside SirEngineThe3rd) create a build folder, go inside that and build the engine with the following command
+```
+cmake ../ -DBUILD_VULKAN=ON && cmake --build . --config Debug
+```
+***IMPORTANT***
+Several thing happens during the cmake generation and build. First of all, building Vulkan is mandatory, I did not finish yet the work to have it competely optional. I hope to get around to do it soon. 
+Few dlls will be copied (or tried to) during creation, specifically the dxil library from the windows SDK. Hopefully all should work, otherwise open an issue with the cmake's log.
+
+The vulkan SDK needs to be in the path for cmake to find it, the installer should take care of that, but you might need to reboot.
 
 
+## Build the resources
+To know more how the resource compiler works refer to the engine structure document. The resource compiler should have been built during the build of the engine.
+This tool is in charge of compiling some resources, you won't need to do that but if interested in how to poke around have a look at the execute.json file. 
+I will be providing a prebuilt mesh (nothing fancy a sphere) such that you should be able to  skip this step.
 
 
+# Development releases  
 Here a I will keep a chronological list of the progress:
 
-##### Development releases  
 [0.1.0: basic window](#v010)  
 [0.2.0: basic engine arch](#v020)  
 [0.3.0: PBR shader](#v030)  
