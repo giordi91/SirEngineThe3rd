@@ -1,5 +1,9 @@
 # Sir Engine the 3rd [![Actions Status](https://github.com/giordi91/SirEngineThe3rd/workflows/build/badge.svg)](https://github.com/giordi91/SirEngineThe3rd/actions) 
 
+
+![alt text](./images/logo "logo")
+
+
 A DX12/Vulkan game engine (kind of).
 
 **TRELLO BOARD**: https://trello.com/b/iMSdavzF/sirenginethe3rd 
