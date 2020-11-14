@@ -1,7 +1,7 @@
 # Sir Engine the 3rd [![Actions Status](https://github.com/giordi91/SirEngineThe3rd/workflows/build/badge.svg)](https://github.com/giordi91/SirEngineThe3rd/actions) 
 
 
-![alt text](./images/logo "logo")
+![alt text](./images/logo.png "logo")
 
 
 A DX12/Vulkan game engine (kind of).
@@ -15,21 +15,32 @@ Finally this is my third attempt trying to use modern API and a more sane code.
 It is my pleasure to introduce you to Sir Engine, the 3rd of his name.
 
 ##### Table of content  
-[What is this project](#whatis)
-[What is not](#whatisnot)
-[Why open source it](#whyopen)
+[The why](#thewhy)
+  1. [What is this project](#whatis)
+  2. [What is not](#whatisnot)
+  3. [Why open source it](#whyopen)
+[Engine structure](#struct)
 
-## What is this project <a name="whatis">
+## The why <a name="thewhy">
+### What is this project <a name="whatis">
 This project was my sandbox, the place where I would try new things and improve my graphics and programming skills. I have learned so much with this project, especially in try to abstract both DX12 and Vulkan! I tried to be as tidy as possible but at the end of the day is a sandbox, I can't spend the planning and care time I would spend in production to make sure everything is up to standard. It follows that this engine is full of ***SHARP EDGES*** you have been warned. For example the dx12 backend does not care about unloading resources on shutdown or there might be some hacking thing done for testing and ... they stayed there and went forgotten.
 If something is particularly outrageous feel free to open an issue and I will look into it! There is always more to learn
 
-## What is not <a name="whatisnot">
+### What is not <a name="whatisnot">
 This project is ***NOT*** meant to make a game, it is just made to mess around with graphics, this project is ***NOT*** meant for you to make a game or even run it! When I decided to open source it, I started to work on a editor to make it user friendly to create stuff, but ultimately due to time constraint, this project is and will always be a "runtime" engine, meaning it expects data to be ready to go (compiled resources and so on). I will provide instructions in how to build and hopefully a demo scene but do not expect to find the same renders you find in the development diary.
   
-## Why open source it?
+### Why open source it? <a name="whyopen">
 You might very well be wondering, why bother open source it if is not really useful to me (the reader)? Simply I think there are interesting ideas in here that can be useful to someone, I often try to explain how I do stuff in chats with friends, collegues and so on, and is much harder when the code is not available.  Having it open source will make my life easier to point people to specifc places. With the below small documentation I hope to illustrate the main ideas and point roughly to the main direction.
 
+## Engine structure
+As promised I will try to guide you in how the engine is structured and point you in the right direction if you are interested in something specific. The content is hosted in this different page
+[link](docs/structure.md#section)
 
+If you don't find what you are looking for, or want to know something specific open an issue and I will do my best to answer
+
+## Build
+The build should be fairly straight forward but there might be a couple of gotchas you might need to be aware of.
+Most of the resources are ...
 
 Here a I will keep a chronological list of the progress:
 
