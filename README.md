@@ -1,22 +1,35 @@
 # Sir Engine the 3rd [![Actions Status](https://github.com/giordi91/SirEngineThe3rd/workflows/build/badge.svg)](https://github.com/giordi91/SirEngineThe3rd/actions) 
 
+A DX12/Vulkan game engine (kind of).
 
-*TRELLO BOARD*: https://trello.com/b/iMSdavzF/sirenginethe3rd 
+**TRELLO BOARD**: https://trello.com/b/iMSdavzF/sirenginethe3rd 
 
-
-A dx12 game engine (kind of).
-
-Initially inspired by The Cherno project game engine series: https://www.youtube.com/user/TheChernoProject before going my own way. The series is pretty cool, check it out!
-
-This is my attempt to a dx12 engine, this is my third iteration to a so called engine. 
+This is my attempt to a DirectX 12/Vulkan engine, this is my third iteration of a so called engine. 
 My first one was a poor Opengl viewport, then a more serious approach to a dx11 engine, but mostly geared toward getting stuff on screen quickly. 
-Finally this is my third attempt trying to use dx12. 
+Finally this is my third attempt trying to use modern API and a more sane code. 
 
 It is my pleasure to introduce you to Sir Engine, the 3rd of his name.
 
+##### Table of content  
+[What is this project](#whatis)
+[What is not](#whatisnot)
+[Why open source it](#whyopen)
+
+## What is this project <a name="whatis">
+This project was my sandbox, the place where I would try new things and improve my graphics and programming skills. I have learned so much with this project, especially in try to abstract both DX12 and Vulkan! I tried to be as tidy as possible but at the end of the day is a sandbox, I can't spend the planning and care time I would spend in production to make sure everything is up to standard. It follows that this engine is full of ***SHARP EDGES*** you have been warned. For example the dx12 backend does not care about unloading resources on shutdown or there might be some hacking thing done for testing and ... they stayed there and went forgotten.
+If something is particularly outrageous feel free to open an issue and I will look into it! There is always more to learn
+
+## What is not <a name="whatisnot">
+This project is ***NOT*** meant to make a game, it is just made to mess around with graphics, this project is ***NOT*** meant for you to make a game or even run it! When I decided to open source it, I started to work on a editor to make it user friendly to create stuff, but ultimately due to time constraint, this project is and will always be a "runtime" engine, meaning it expects data to be ready to go (compiled resources and so on). I will provide instructions in how to build and hopefully a demo scene but do not expect to find the same renders you find in the development diary.
+  
+## Why open source it?
+You might very well be wondering, why bother open source it if is not really useful to me (the reader)? Simply I think there are interesting ideas in here that can be useful to someone, I often try to explain how I do stuff in chats with friends, collegues and so on, and is much harder when the code is not available.  Having it open source will make my life easier to point people to specifc places. With the below small documentation I hope to illustrate the main ideas and point roughly to the main direction.
+
+
+
 Here a I will keep a chronological list of the progress:
 
-##### Table of Contents  
+##### Development releases  
 [0.1.0: basic window](#v010)  
 [0.2.0: basic engine arch](#v020)  
 [0.3.0: PBR shader](#v030)  
@@ -25,6 +38,7 @@ Here a I will keep a chronological list of the progress:
 [0.6.0: VK port PT 1](#v060)  
 [0.7.0: VK port PT 2 and grass](#v070)  
 [0.7.1: Material system ](#v071)  
+[0.7.5: Editor mocup ](#v075)  
 
 ## 0.1.0 <a name="v010"/>
 This version is the most basic version of the engine, but starts to put togheter the foundation of the engine:
@@ -136,6 +150,16 @@ This release was mostly focused on the new material system building on top of Bi
 
 Image showing push constant in place allowing to use a different matrix per object
 ![alt text](./images/08_material.png "material")
+
+## 0.7.5 <a name="v071"/>
+
+The goal of this release is to focus on the release that will be open source.
+* Cleanup of rendering loop
+* Expanded rendering loop to start working on commands provided and not global state
+* Properly handle resizing and render to offscreen texture for editor work
+* Initial mock up of editor window and setup of editor project
+![alt text](./images/09_editor.png "editor")
+
 
 ***Credits***
 
