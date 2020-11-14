@@ -79,6 +79,15 @@ To know more how the resource compiler works refer to the engine structure docum
 This tool is in charge of compiling some resources, you won't need to do that but if interested in how to poke around have a look at the execute.json file. 
 I will be providing a prebuilt mesh (nothing fancy a sphere) such that you should be able to  skip this step.
 
+## Run the demo scene
+Altough I said I don't expect you to use the engine, being able to at least run a demo scene might help to use the debugger and follow the code flow. 
+The demo scene is really simple with a PBR sphere and the grass shader.
+To run it you can download the resources from here: https://github.com/giordi91/SirEngineThe3rd/releases/tag/resources-data
+I used a temporary release to host the zip. Download it, unzip it and make sure to put the data folder inside build/bin. You should see something like this:
+
+![alt text](./docs/images/resources.png "resources")
+
+Once that is done you can double click the Editor.exe file from inside either Debug or Release. 
 
 # Development releases  
 Here a I will keep a chronological list of the progress:
