@@ -35,8 +35,8 @@ This project is ***NOT*** meant to make a game, it is just made to mess around w
 You might very well be wondering, why bother open source it if is not really useful to me (the reader)? Simply I think there are interesting ideas in here that can be useful to someone, I often try to explain how I do stuff in chats with friends, collegues and so on, and is much harder when the code is not available.  Having it open source will make my life easier to point people to specifc places. With the below small documentation I hope to illustrate the main ideas and point roughly to the main direction.
 
 # Engine structure<a name="struct">
-As promised I will try to guide you in how the engine is structured and point you in the right direction if you are interested in something specific. The content is hosted in this different page
-[link](docs/structure.md)
+As promised I will try to guide you in how the engine is structured and point you in the right direction if you are interested in something specific. The content is hosted in this different 
+[page](docs/structure.md)
 
 If you don't find what you are looking for, or want to know something specific open an issue and I will do my best to answer
 
@@ -82,7 +82,10 @@ I will be providing a prebuilt mesh (nothing fancy a sphere) such that you shoul
 ## Run the demo scene
 Altough I said I don't expect you to use the engine, being able to at least run a demo scene might help to use the debugger and follow the code flow. 
 The demo scene is really simple with a PBR sphere and the grass shader.
-To run it you can download the resources from here: https://github.com/giordi91/SirEngineThe3rd/releases/tag/resources-data
+To run it you can download the resources from here: https://github.com/giordi91/SirEngineThe3rd/releases/tag/resources-data .
+
+***IMPORTANT***: It is critical that you download the data from the link above, and not simply copy the data folder from inside the root of the project. The data folder inside the project contains the un-processed raw data, which the engine does not load. The folder in the archive instead contains the necessary data that has be pre-compiled to engine ready data.
+
 I used a temporary release to host the zip. Download it, unzip it and make sure to put the data folder inside build/bin. You should see something like this:
 
 ![alt text](./docs/images/resources.png "resources")
