@@ -32,7 +32,7 @@ jobs:
         cmake ../ -DBUILD_VULKAN=ON
         cmake --build . --config ${{matrix.configuration}} 
     - name: set enviroment
-      run: echo "::add-path::C:\VulkanSDK\1.2.141.0\Bin"
+      run: echo 'C:\VulkanSDK\1.2.141.0\Bin' >> $GITHUB_PATH
     - name: copy dxc
       shell : cmd
       run : | 
