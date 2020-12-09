@@ -25,8 +25,8 @@ Organization inside platform is not great and probably too nested, but the most 
 
 Here we are going to go through how the games starts from main and ends up into the main loop.
 
-The actual entry point of the game is inside the engine library and not inside the application, I am not particularly sold on this setup but it comes mostly from how The Cherno ***LINK HERE*** setup his engine and I was curious to try it.
-You can find the entry point in the "entryPoint.h" ***LINK HERE*** file.
+The actual entry point of the game is inside the engine library and not inside the application, I am not particularly sold on this setup but it comes mostly from how [The Cherno](https://www.youtube.com/watch?v=meARMOmTLgE&list=PLlrATfBNZ98dC-V-N3m0Go4deliWHPFwT&index=5) setups his engine and I was curious to try it.
+You can find the entry point in the [entryPoint.h](https://github.com/giordi91/SirEngineThe3rd/blob/develop/SirEngineThe3rdLib/src/SirEngine/entryPoint.h) file.
 The entry point will be in charge to instantiate the application.
 
 The instantiation happens in the createApplication method, which is actually the method that needs to be provided by the "application/game". That is how the inversion of the entry point is implemented.
@@ -47,13 +47,21 @@ When the base application is instantiated the whole engine gets bootstrapped. A 
 
 Once the ```run()``` method is called on the application the main loop is started, ```run()``` will never return unless shut down has been requested.
 
-During the main loop the layers are evaluated, events processed and the frame is rendered. For more informations check Application.cpp ***LINK HERE***
-
+During the main loop the layers are evaluated, events processed and the frame is rendered. For more informations check the [application.cpp](https://github.com/giordi91/SirEngineThe3rd/blob/develop/SirEngineThe3rdLib/src/SirEngine/application.cpp)
+file
 ## Managers
-The engine heavily relies on the concept of handles and managers to load and manage data. I have wrote a blog article about it ***LINKHERE ***
+The engine heavily relies on the concept of handles and managers to load and manage data. I have wrote a 
+[blog article](https://giordi91.github.io/post/resourcesystem/)
+about it. 
 
 The base class of the manager is declared in the SirEngine part of the library, meanwhile the actual API Specific implementation will live in platform. 
-For example the generic interface for a texture manager lives here, meanwhile here you can find the VK version and here the dx12 version. ***LINK HERE***
+For example the generic interface for a texture manager lives 
+[here](https://github.com/giordi91/SirEngineThe3rd/blob/develop/SirEngineThe3rdLib/src/SirEngine/textureManager.h)
+meanwhile here you can find the 
+[VK](https://github.com/giordi91/SirEngineThe3rd/blob/develop/SirEngineThe3rdLib/src/platform/windows/graphics/vk/vkTextureManager.h)
+version and here the 
+[dx12](https://github.com/giordi91/SirEngineThe3rd/blob/develop/SirEngineThe3rdLib/src/platform/windows/graphics/dx12/dx12TextureManager.h)
+version. 
 
 ## You implementation
 
@@ -63,10 +71,11 @@ You can see in there custom logic to load data, build a render graph and then re
 You are not forced to use a render graph, is just one of the tools you can use to setup your frame. What you do in the graphics layer is up to you.
 
 # Core 
-A lot of code has been written to support the engine, especially when it comes to memory management, a lot of custom allocators/containers have been writen and can be found here: ***LINK HERE***
-
-Tests for the containers to give an idea in how they works can be found here: ***LINK HERE***
-
+A lot of code has been written to support the engine, especially when it comes to memory management, a lot of custom allocators/containers have been writen and can be found here: 
+[here](https://github.com/giordi91/SirEngineThe3rd/tree/develop/SirEngineThe3rdLib/src/SirEngine/memory).
+version. 
+Tests for the containers to give an idea in how they works can be found  
+[here](https://github.com/giordi91/SirEngineThe3rd/tree/develop/Tests/src).
 
 # Conclusion
-This was a brief overview of some part of the engine, if you wish to know more about specific part open an issue and I will expand on it
+This was a brief overview of some part of the engine, if you wish to know more about specific part open an issue and I will expand on it.
