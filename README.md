@@ -3,7 +3,7 @@
 
 ![alt text](./docs/images/logo.png "logo")
 
-*** NOTE: There is currently an issue with git lfs, which was enabled on this repo, I need to disable it and make sure all files are still availabe,
+***NOTE: There is currently an issue with git lfs, which was enabled on this repo, I need to disable it and make sure all files are still availabe,
 in the meanwhile some meshes and or textures might not pull correctly***
 
 A Windows DX12/Vulkan game engine (kind of).
